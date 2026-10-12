@@ -1,0 +1,153 @@
+{
+  "competency_id": "C-03",
+  "templates": [
+    {
+      "id": "T-C03-01",
+      "competency_id": "C-03",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Analyze",
+      "stem": "Considere el diagrama de fases del modelo de Solow con equilibrio estacionario en $\\bar{k} = {kbar}$. ¿Cuáles de las siguientes afirmaciones respecto a la dinámica fuera del equilibrio son teóricamente válidas?",
+      "stem_variants": [
+        "Considere el diagrama de fases del modelo de Solow con equilibrio estacionario en $\\bar{k} = {kbar}$. ¿Cuáles de las siguientes afirmaciones respecto a la dinámica fuera del equilibrio son teóricamente válidas?",
+        "Para una economía con estado estacionario en $\\bar{k} = {kbar}$, donde la curva de inversión interseca la recta de dilución, identifique las proposiciones correctas sobre la acumulación per cápita:",
+        "En el análisis cualitativo del crecimiento de Solow con capital de equilibrio $\\bar{k} = {kbar}$, determine cuáles de las siguientes propiedades sobre la dinámica de transición son verdaderas:",
+        "Sea $\\bar{k} = {kbar}$ el punto de equilibrio intertemporal del modelo de Solow. Seleccione todas las afirmaciones correctas sobre el signo y comportamiento de la tasa de acumulación $\\dot{k}$:"
+      ],
+      "generate_py": "def generate(rng):\n    kbar = rng.choice([9, 16, 25, 36, 49, 64, 81])\n    options = [\n        {\n            'content': 'Para cualquier dotación $0 < k < ' + str(kbar) + '$, la inversión por trabajador supera a la dilución ($s\\\\phi(k) > \\\\lambda k$), por lo que $\\\\dot{k} > 0$ y el capital per cápita se expande.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Para niveles de capital $k > ' + str(kbar) + '$, la dilución supera a la inversión ($s\\\\phi(k) < \\\\lambda k$), de modo que $\\\\dot{k} < 0$ y el capital per cápita decrece.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'En el intervalo $0 < k < ' + str(kbar) + '$, la tasa de acumulación $\\\\dot{k}$ es negativa debido a que la productividad marginal $\\\\phi\\'(k)$ es una función estrictamente decreciente.',\n            'is_correct': False,\n            'distractor_id': 'D-C03-01',\n            'error_rationale': 'Confunde la pendiente decreciente de la curva s\\\\phi(k) con una distancia vertical negativa entre la curva de inversión y el rayo de dilución demográfica.'\n        },\n        {\n            'content': 'El hecho de que la línea de fase $\\\\dot{k}$ corte el eje horizontal en $\\\\bar{k} = ' + str(kbar) + '$ con pendiente negativa indica que el equilibrio es inestable.',\n            'is_correct': False,\n            'distractor_id': 'D-C03-02',\n            'error_rationale': 'Una pendiente estrictamente negativa en la línea de fase al cruzar el eje horizontal es precisamente la condición matemática que garantiza la estabilidad asintótica del equilibrio.'\n        },\n        {\n            'content': 'Una economía que parte sin dotación de capital ($k(0) = 0$) acumulará capital espontáneamente a lo largo del tiempo hasta converger al equilibrio $\\\\bar{k} = ' + str(kbar) + '$.',\n            'is_correct': False,\n            'distractor_id': 'D-C03-03',\n            'error_rationale': 'Si k(0) = 0, el producto per cápita es nulo y la acumulación neta es cero; la convergencia al estado estacionario positivo requiere una dotación inicial estrictamente positiva k(0) > 0.'\n        }\n    ]\n    return {\n        'vars': {'kbar': kbar},\n        'options': options,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    opts = res.get('options', [])\n    correct_opts = [o for o in opts if o.get('is_correct')]\n    return len(opts) == 5 and len(correct_opts) == 2 and res['vars']['kbar'] > 0",
+      "hints": [
+        "Compare la curva de ahorro e inversión per cápita $s\\phi(k)$ con la recta de requerimiento demográfico $\\lambda k$ a ambos lados de $\\bar{k}$.",
+        "Analice el signo de la diferencia vertical $\\dot{k} = s\\phi(k) - \\lambda k$ para deducir la dirección del movimiento temporal del capital por trabajador.",
+        "Recuerde que una pendiente negativa al cruzar el eje horizontal restaura el sistema hacia el punto de reposo, garantizando estabilidad global para $k(0) > 0$."
+      ],
+      "solution": "Para $0 < k < \\bar{k}$, la curva $s\\phi(k)$ se ubica por encima de $\\lambda k$, lo que genera $\\dot{k} > 0$ y acumulación neta de capital. Para $k > \\bar{k}$, la recta $\\lambda k$ supera a la curva de inversión, lo que produce $\\dot{k} < 0$. Como la pendiente en $\\bar{k}$ es negativa, cualquier economía con dotación inicial $k(0) > 0$ converge a $\\bar{k} = {kbar}$.",
+      "distractor_ids": [
+        "D-C03-01",
+        "D-C03-02",
+        "D-C03-03"
+      ]
+    },
+    {
+      "id": "T-C03-02",
+      "competency_id": "C-03",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Sea la ecuación diferencial autónoma de Solow $\\dot{k} = s\\phi(k) - \\lambda k$ con estado estacionario en $\\bar{k} = {kbar}$. ¿Cuáles de las siguientes condiciones matemáticas y propiedades de estabilidad caracterizan formalmente dicho equilibrio?",
+      "stem_variants": [
+        "Sea la ecuación diferencial autónoma de Solow $\\dot{k} = s\\phi(k) - \\lambda k$ con estado estacionario en $\\bar{k} = {kbar}$. ¿Cuáles de las siguientes condiciones matemáticas y propiedades de estabilidad caracterizan formalmente dicho equilibrio?",
+        "Al linealizar la trayectoria dinámica $\\dot{k} = s\\phi(k) - \\lambda k$ alrededor del estado estacionario $\\bar{k} = {kbar}$, ¿qué proposiciones sobre la estabilidad asintótica son rigurosamente correctas?",
+        "Para el análisis de estabilidad local y global del equilibrio $\\bar{k} = {kbar}$ en el modelo neoclásico de Solow, seleccione todas las afirmaciones teóricamente válidas:",
+        "Considere la dinámica intertemporal de acumulación de capital en torno a $\\bar{k} = {kbar}$. ¿Cuáles de las siguientes proposiciones analíticas describen con exactitud la estabilidad del modelo?"
+      ],
+      "generate_py": "def generate(rng):\n    kbar = rng.choice([4, 9, 16, 25, 36, 49, 64])\n    options = [\n        {\n            'content': 'La derivada de la línea de fase evaluada en el estado estacionario satisface $s\\\\phi\\'(\\\\bar{k}) - \\\\lambda < 0$, confirmando analíticamente que $\\\\bar{k}$ es asintóticamente estable.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Toda trayectoria temporal que parte de una dotación inicial estrictamente positiva $k(0) > 0$ converge monótonamente hacia $\\\\bar{k}$ cuando el tiempo $t \\\\to \\\\infty$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'El criterio de estabilidad dinámica exige que la línea de fase cruce el eje horizontal con pendiente positiva, es decir, $s\\\\phi\\'(\\\\bar{k}) - \\\\lambda > 0$.',\n            'is_correct': False,\n            'distractor_id': 'D-C03-02',\n            'error_rationale': 'Una pendiente positiva causaría divergencia e inestabilidad: ante un aumento de capital sobre kbar, dot{k} se volvería positivo alejando el sistema indefinidamente.'\n        },\n        {\n            'content': 'El estado estacionario $\\\\bar{k}$ es un atractor global incondicional al que convergen incluso economías cuya dotación inicial de capital es nula ($k(0) = 0$).',\n            'is_correct': False,\n            'distractor_id': 'D-C03-03',\n            'error_rationale': 'Sin capital inicial k(0) = 0 la producción es cero y no puede haber acumulación; el equilibrio kbar solo es atractor para dotaciones iniciales estrictamente positivas k(0) > 0.'\n        }\n    ]\n    return {\n        'vars': {'kbar': kbar},\n        'options': options,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    opts = res.get('options', [])\n    correct_opts = [o for o in opts if o.get('is_correct')]\n    return len(opts) == 4 and len(correct_opts) == 2",
+      "hints": [
+        "Efectúe la derivada de la función de acumulación con respecto a $k$: $d\\dot{k}/dk = s\\phi'(k) - \\lambda$.",
+        "Verifique el signo de dicha derivada en $\\bar{k}$ recordando que la productividad marginal en $\\bar{k}$ es menor que la productividad media.",
+        "Considere la condición de partida sobre el capital $k(0) > 0$ necesaria para que exista actividad productiva."
+      ],
+      "solution": "La estabilidad del equilibrio estacionario $\\bar{k}$ en una ecuación diferencial de una variable requiere que la derivada de la tasa de cambio sea estrictamente negativa: $s\\phi'(\\bar{k}) - \\lambda < 0$. Además, este equilibrio es globalmente estable sobre el conjunto de condiciones iniciales estrictamente positivas $k(0) > 0$.",
+      "distractor_ids": [
+        "D-C03-02",
+        "D-C03-03"
+      ]
+    },
+    {
+      "id": "T-C03-03",
+      "competency_id": "C-03",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "En el plano $(k, y)$, se representan simultáneamente la curva de ahorro por trabajador $s\\phi(k)$ y la recta de dilución demográfica $\\lambda k$, con punto de corte en $\\bar{k} = {kbar}$. ¿Cuáles afirmaciones describen adecuadamente las propiedades de este diagrama?",
+      "stem_variants": [
+        "En el plano $(k, y)$, se representan simultáneamente la curva de ahorro por trabajador $s\\phi(k)$ y la recta de dilución demográfica $\\lambda k$, con punto de corte en $\\bar{k} = {kbar}$. ¿Cuáles afirmaciones describen adecuadamente las propiedades de este diagrama?",
+        "Considere la construcción geométrica del modelo de Solow formada por las curvas $s\\phi(k)$ y $\\lambda k$ que se intersectan en $\\bar{k} = {kbar}$. ¿Cuáles proposiciones explican fielmente las fuerzas del modelo?",
+        "Al analizar la representación gráfica de dos curvas de Solow con punto de equilibrio $\\bar{k} = {kbar}$, ¿cuáles de las siguientes propiedades teóricas son válidas?",
+        "Respecto a la comparación visual entre la curva cóncava $s\\phi(k)$ y el rayo $\\lambda k$ que se cruzan en $\\bar{k} = {kbar}$, identifique todas las proposiciones ciertas:"
+      ],
+      "generate_py": "def generate(rng):\n    kbar = rng.choice([9, 16, 25, 36, 49, 64])\n    options = [\n        {\n            'content': 'La distancia vertical entre la curva de inversión $s\\\\phi(k)$ y la recta de dilución $\\\\lambda k$ representa exactamente la tasa instantánea de acumulación $\\\\dot{k}$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Dado que $\\\\phi(k)$ es estrictamente cóncava ($\\\\phi\\'\\'(k) < 0$) y pasa por el origen, la curva $s\\\\phi(k)$ corta a la recta $\\\\lambda k$ en un único valor positivo $\\\\bar{k}$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Debido a la concavidad estricta de $s\\\\phi(k)$, la distancia vertical $s\\\\phi(k) - \\\\lambda k$ es negativa en todo el intervalo $0 < k < \\\\bar{k}$.',\n            'is_correct': False,\n            'distractor_id': 'D-C03-01',\n            'error_rationale': 'La concavidad y el hecho de que s\\\\phi(0)=0 con derivada inicial muy alta implican que s\\\\phi(k) está por encima de la recta lambda*k, de modo que la distancia es estrictamente positiva para k < kbar.'\n        },\n        {\n            'content': 'Cualquier economía sin dotación de capital previa ($k(0) = 0$) experimenta una distancia vertical positiva inmediata que la impulsa automáticamente hacia $\\\\bar{k}$.',\n            'is_correct': False,\n            'distractor_id': 'D-C03-03',\n            'error_rationale': 'En el origen k = 0, tanto la inversión s\\\\phi(0) como la dilución lambda*0 son nulas, por lo que la distancia vertical es cero y no existe fuerza impulsora sin dotación inicial positiva.'\n        }\n    ]\n    return {\n        'vars': {'kbar': kbar},\n        'options': options,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    opts = res.get('options', [])\n    correct_opts = [o for o in opts if o.get('is_correct')]\n    return len(opts) == 4 and len(correct_opts) == 2",
+      "hints": [
+        "Observe que $\\dot{k}$ se define como la diferencia directa entre el flujo de inversión $s\\phi(k)$ y la dilución $\\lambda k$.",
+        "La concavidad de la función de producción garantiza rendimientos marginales decrecientes del capital por trabajador.",
+        "Examine el punto $k = 0$: si el capital inicial es nulo, la economía no puede producir ni generar ahorro."
+      ],
+      "solution": "La distancia vertical $s\\phi(k) - \\lambda k$ mide la velocidad de cambio $\\dot{k}$. La concavidad estricta asegura un equilibrio positivo único $\\bar{k} = {kbar}$. Para $k < \\bar{k}$ la distancia es positiva, y en $k = 0$ la economía carece de impulso sin dotación inicial previa.",
+      "distractor_ids": [
+        "D-C03-01",
+        "D-C03-03"
+      ]
+    },
+    {
+      "id": "T-C03-04",
+      "competency_id": "C-03",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el modelo de Solow con función de producción intensiva $\\phi(k) = {A}\\sqrt{k}$, tasa de ahorro $s = {s}$ y crecimiento demográfico $\\lambda = {lam}$, determine el nivel de capital por trabajador en el estado estacionario $\\bar{k}$.",
+      "stem_variants": [
+        "En el modelo de Solow con función de producción intensiva $\\phi(k) = {A}\\sqrt{k}$, tasa de ahorro $s = {s}$ y crecimiento demográfico $\\lambda = {lam}$, determine el nivel de capital por trabajador en el estado estacionario $\\bar{k}$.",
+        "Una economía presenta función per cápita $\\phi(k) = {A}\\sqrt{k}$, tasa de ahorro $s = {s}$ y tasa de expansión laboral $\\lambda = {lam}$. Calcule el valor numérico del stock de capital por trabajador en el estado estacionario $\\bar{k}$:",
+        "Halle la solución no nula $\\bar{k} > 0$ que satisface la condición de equilibrio intertemporal $s\\phi(\\bar{k}) = \\lambda \\bar{k}$, para $\\phi(k) = {A}\\sqrt{k}$, ahorro $s = {s}$ y dilución $\\lambda = {lam}$:",
+        "Calcule el valor escalar de $\\bar{k}$ correspondiente al punto de corte entre la curva $s\\phi(k)$ y la recta $\\lambda k$, con $\\phi(k) = {A}\\sqrt{k}$, $s = {s}$ y $\\lambda = {lam}$:"
+      ],
+      "generate_py": "def generate(rng):\n    m = rng.choice([4, 5, 6, 7, 8, 9, 10])\n    s = rng.choice([0.2, 0.25, 0.4, 0.5])\n    lam = rng.choice([0.02, 0.04, 0.05])\n    A = round(m * lam / s, 3)\n    kbar = m**2\n    return {\n        'vars': {'A': A, 's': s, 'lam': lam, 'kbar': kbar},\n        'correct': kbar,\n        'value': str(kbar),\n        'canonical_algebraic': str(kbar),\n        'accepted_equivalents': [str(kbar), f'{kbar}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    A = res['vars']['A']\n    s = res['vars']['s']\n    lam = res['vars']['lam']\n    kbar = res['vars']['kbar']\n    m = round(s * A / lam)\n    return int(res['correct']) == m**2",
+      "hints": [
+        "Plantee la condición de estado estacionario $\\dot{k} = 0$, que equivale a igualar la inversión con la dilución: $s\\phi(\\bar{k}) = \\lambda \\bar{k}$.",
+        "Sustituya $\\phi(k) = {A}\\sqrt{k}$ en la igualdad: $s({A})\\sqrt{\\bar{k}} = \\lambda \\bar{k}$.",
+        "Divida entre $\\sqrt{\\bar{k}} > 0$ y eleve al cuadrado para despejar $\\bar{k} = \\left(\\frac{s {A}}{\\lambda}\\right)^2$."
+      ],
+      "solution": "En el estado estacionario, $s\\phi(\\bar{k}) = \\lambda \\bar{k} \\implies {s} \\cdot {A} \\sqrt{\\bar{k}} = {lam} \\bar{k}$. Dividiendo por $\\sqrt{\\bar{k}}$, tenemos $\\sqrt{\\bar{k}} = \\frac{{s} \\cdot {A}}{{lam}} \\implies \\bar{k} = {kbar}$.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C03-05",
+      "competency_id": "C-03",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Analyze",
+      "stem": "Para una economía con tecnología $\\phi(k) = {A}\\sqrt{k}$, propensión al ahorro $s = {s}$ y crecimiento demográfico $\\lambda = {lam}$, calcule el valor numérico de la pendiente de la línea de fase en el equilibrio intertemporal: $\\left. \\frac{d\\dot{k}}{dk} \\right|_{\\bar{k}} = s\\phi'(\\bar{k}) - \\lambda$.",
+      "stem_variants": [
+        "Para una economía con tecnología $\\phi(k) = {A}\\sqrt{k}$, propensión al ahorro $s = {s}$ y crecimiento demográfico $\\lambda = {lam}$, calcule el valor numérico de la pendiente de la línea de fase en el equilibrio intertemporal: $\\left. \\frac{d\\dot{k}}{dk} \\right|_{\\bar{k}} = s\\phi'(\\bar{k}) - \\lambda$.",
+        "Determine el valor escalar de la derivada de la tasa de acumulación con respecto al capital evaluada en el estado estacionario $\\bar{k}$, sabiendo que $\\phi(k) = {A}\\sqrt{k}$, $s = {s}$ y $\\lambda = {lam}$:",
+        "En el análisis de estabilidad lineal de Solow con parámetros $s = {s}$, $\\lambda = {lam}$ y $\\phi(k) = {A}\\sqrt{k}$, halle el valor de la pendiente $s\\phi'(\\bar{k}) - \\lambda$ en el punto de reposo $\\bar{k}$:",
+        "Evalúe numéricamente la pendiente de la línea de fase $\\left. \\frac{d\\dot{k}}{dk} \\right|_{\\bar{k}}$ en el equilibrio estacionario, dados los coeficientes $s = {s}$, $\\lambda = {lam}$ y $\\phi(k) = {A}\\sqrt{k}$:"
+      ],
+      "generate_py": "def generate(rng):\n    lam = rng.choice([0.02, 0.04, 0.06, 0.08, 0.10])\n    s = rng.choice([0.2, 0.25, 0.4, 0.5])\n    m = rng.choice([4, 5, 6, 7, 8])\n    A = round(m * lam / s, 3)\n    kbar = m**2\n    slope = round(-lam / 2.0, 4)\n    slope_str = f'{slope:.4f}'\n    return {\n        'vars': {'A': A, 's': s, 'lam': lam, 'slope': slope, 'kbar': kbar},\n        'correct': slope,\n        'value': str(slope),\n        'canonical_algebraic': str(slope),\n        'accepted_equivalents': [str(slope), slope_str, f'{slope:.2f}'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    lam = res['vars']['lam']\n    expected = round(-lam / 2.0, 4)\n    return float(res['correct']) == expected and expected < 0",
+      "hints": [
+        "Calcule la derivada de $\\phi(k) = {A}\\sqrt{k}$, que es $\\phi'(k) = \\frac{{A}}{2\\sqrt{k}}$.",
+        "Recuerde que en $\\bar{k}$, se cumple $s\\phi(\\bar{k}) = \\lambda \\bar{k}$, de modo que $s {A} / \\sqrt{\\bar{k}} = \\lambda$.",
+        "Sustituyendo esto en la pendiente: $s\\phi'(\\bar{k}) - \\lambda = \\frac{s {A}}{2\\sqrt{\\bar{k}}} - \\lambda = \\frac{\\lambda}{2} - \\lambda = -\\frac{\\lambda}{2}$."
+      ],
+      "solution": "La derivada de la función intensiva es $\\phi'(k) = \\frac{{A}}{2\\sqrt{k}}$. En el equilibrio $\\bar{k}$, tenemos $s\\phi'(\\bar{k}) = \\frac{s {A}}{2\\sqrt{\\bar{k}}} = \\frac{\\lambda}{2}$. Por lo tanto, la pendiente de la línea de fase es $\\frac{\\lambda}{2} - \\lambda = -\\frac{\\lambda}{2} = {slope}$, la cual es estrictamente negativa y confirma la estabilidad.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C03-06",
+      "competency_id": "C-03",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere una economía de Solow con parámetros $s = {s}$, $\\lambda = {lam}$ y $\\phi(k) = {A}\\sqrt{k}$, cuyo estado estacionario es $\\bar{k} = {kbar}$. Calcule la tasa instantánea de acumulación de capital por trabajador $\\dot{k} = s\\phi(k) - \\lambda k$ cuando la economía se encuentra en el nivel de capital $k = {k_eval}$.",
+      "stem_variants": [
+        "Considere una economía de Solow con parámetros $s = {s}$, $\\lambda = {lam}$ y $\\phi(k) = {A}\\sqrt{k}$, cuyo estado estacionario es $\\bar{k} = {kbar}$. Calcule la tasa instantánea de acumulación de capital por trabajador $\\dot{k} = s\\phi(k) - \\lambda k$ cuando la economía se encuentra en el nivel de capital $k = {k_eval}$.",
+        "Una economía en transición tiene $s = {s}$, tasa de crecimiento demográfico $\\lambda = {lam}$ y producción per cápita $\\phi(k) = {A}\\sqrt{k}$. Para una dotación de capital $k = {k_eval}$, halle el valor escalar de la acumulación neta $\\dot{k}$:",
+        "A partir de la ecuación de acumulación $\\dot{k} = s\\phi(k) - \\lambda k$, evalúe numéricamente el valor de $\\dot{k}$ en el punto $k = {k_eval}$, sabiendo que $s = {s}$, $\\lambda = {lam}$ y $\\phi(k) = {A}\\sqrt{k}$:",
+        "Calcule la velocidad instantánea de acumulación de capital por trabajador $\\dot{k} = s\\phi(k) - \\lambda k$ evaluada en $k = {k_eval}$, con parámetros estructurales $s = {s}$, $\\lambda = {lam}$ y $\\phi(k) = {A}\\sqrt{k}$:"
+      ],
+      "generate_py": "def generate(rng):\n    m = rng.choice([4, 5, 6, 7, 8])\n    p = rng.randint(1, m - 1)\n    lam = rng.choice([0.02, 0.04, 0.05])\n    s = rng.choice([0.2, 0.25, 0.4])\n    A = round(m * lam / s, 3)\n    k_eval = p**2\n    kbar = m**2\n    dot_k = round(lam * p * (m - p), 4)\n    dot_k_str = f'{dot_k:.4f}'\n    return {\n        'vars': {'A': A, 's': s, 'lam': lam, 'k_eval': k_eval, 'kbar': kbar, 'dot_k': dot_k},\n        'correct': dot_k,\n        'value': str(dot_k),\n        'canonical_algebraic': str(dot_k),\n        'accepted_equivalents': [str(dot_k), dot_k_str],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    dot_k = float(res['correct'])\n    return dot_k > 0 and res['vars']['k_eval'] < res['vars']['kbar']",
+      "hints": [
+        "Calcule primero el producto por trabajador en $k = {k_eval}$: $\\phi({k_eval}) = {A}\\sqrt{{k_eval}}$.",
+        "Determine el flujo de ahorro por trabajador multiplicando por $s$: $s\\phi({k_eval})$.",
+        "Reste la dilución demográfica $\\lambda k$: $\\dot{k} = s\\phi({k_eval}) - \\lambda({k_eval})$."
+      ],
+      "solution": "Evaluando en $k = {k_eval}$: la inversión por trabajador es $s\\phi({k_eval}) = {s} \\times {A} \\times \\sqrt{{k_eval}}$. La dilución demográfica es $\\lambda k = {lam} \\times {k_eval}$. Restando ambos términos obtenemos la acumulación neta $\\dot{k} = {dot_k} > 0$.",
+      "distractor_ids": []
+    }
+  ]
+}

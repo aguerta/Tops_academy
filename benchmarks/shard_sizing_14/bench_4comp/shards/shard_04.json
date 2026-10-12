@@ -1,0 +1,150 @@
+{
+  "shard_id": "shard_04",
+  "shard_index": 4,
+  "total_shards": 4,
+  "competency_ids": [
+    "C-05",
+    "C-06"
+  ],
+  "competencies": [
+    {
+      "id": "C-05",
+      "type": "concept",
+      "name": "Función de producción neoclásica con rendimientos constantes a escala",
+      "description_latex": "La producción agregada neta se determina por $Y = F(K, L)$, homogénea de grado 1 ($F(\\lambda K, \\lambda L) = \\lambda F(K, L)$), lo que permite expresar el producto per cápita como $y = F(r, 1)$ donde $r = K/L$ representa la intensidad de capital.",
+      "bloom": "Understand",
+      "prerequisites": [
+        "H-03",
+        "C-02"
+      ],
+      "session": "Section 02",
+      "unit_index": 2,
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 3
+        },
+        {
+          "doc": "solow1956.pdf",
+          "page": 4
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-C05-01",
+          "name": "Confusión entre rendimientos a escala y rendimientos marginales",
+          "trigger": "El estudiante confunde la homogeneidad de grado 1 de la función con el comportamiento de la derivada parcial individual.",
+          "manifestation": "Afirma que porque la función tiene rendimientos constantes a escala, el producto marginal del capital debe ser constante al acumular más capital.",
+          "error_type": "conceptual_swap",
+          "severity": "high",
+          "origin": "inferred",
+          "evidence": {
+            "doc": "solow1956.pdf",
+            "page": 4
+          },
+          "remediation_hint": "Los rendimientos constantes a escala coexisten con rendimientos marginales decrecientes en cada factor individual ($F_{KK} < 0$).",
+          "wrong_belief": "Cree que duplicar solo el capital duplica el producto agregado."
+        },
+        {
+          "id": "D-C05-02",
+          "name": "Extensión indebida de rendimientos constantes a entornos con recursos fijos",
+          "trigger": "El estudiante ignora el supuesto de ausencia de recursos no reproducibles como la tierra.",
+          "manifestation": "Aplica rendimientos constantes a escala en capital y trabajo a economías con escasez severa de tierra sin ajustar el marco a uno ricardiano.",
+          "error_type": "overgeneralization",
+          "severity": "medium",
+          "origin": "source",
+          "evidence": {
+            "doc": "solow1956.pdf",
+            "page": 4
+          },
+          "remediation_hint": "La presencia de un factor no reproducible como la tierra generaría rendimientos decrecientes a escala conjunta de capital y trabajo (modelo ricardiano).",
+          "wrong_belief": "Cree que los rendimientos constantes a escala se cumplen sin importar si existen factores fijos no reproducibles."
+        },
+        {
+          "id": "D-C05-03",
+          "name": "Dependencia del producto per cápita del nivel absoluto de empleo",
+          "trigger": "El estudiante calcula $y = Y/L$ pero incluye indebidamente el término escalar $L$ dentro de la forma intensiva.",
+          "manifestation": "Afirma que el producto por trabajador depende no solo del ratio $r = K/L$, sino también del tamaño absoluto de la fuerza laboral $L$.",
+          "error_type": "notation",
+          "severity": "medium",
+          "origin": "inferred",
+          "evidence": {
+            "doc": "solow1956.pdf",
+            "page": 6
+          },
+          "remediation_hint": "Por homogeneidad de primer grado, $Y/L = F(K/L, 1) = F(r, 1)$, función dependiente únicamente de la relación capital-trabajo $r$.",
+          "wrong_belief": "Cree que el tamaño de la población afecta directamente el producto por trabajador en ausencia de economías de escala."
+        }
+      ]
+    },
+    {
+      "id": "C-06",
+      "type": "concept",
+      "name": "Oferta de trabajo exógena y pleno empleo permanente",
+      "description_latex": "La oferta laboral crece exponencialmente a una tasa exógena $n$ ($L(t) = L_0 e^{nt}$) y se ofrece de manera perfectamente inelástica; los salarios reales se ajustan flexiblemente para garantizar el pleno empleo perpetuo de la mano de obra disponible.",
+      "bloom": "Understand",
+      "prerequisites": [
+        "C-05"
+      ],
+      "session": "Section 02",
+      "unit_index": 2,
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 4
+        },
+        {
+          "doc": "solow1956.pdf",
+          "page": 5
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-C06-01",
+          "name": "Endogeneización malthusiana de la tasa de crecimiento poblacional",
+          "trigger": "El estudiante asume que la población responde al nivel de salario o ingreso per cápita.",
+          "manifestation": "Considera que la tasa de crecimiento de la fuerza de trabajo $n$ aumenta cuando sube el salario real por encima de la subsistencia.",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "inferred",
+          "evidence": {
+            "doc": "solow1956.pdf",
+            "page": 4
+          },
+          "remediation_hint": "En el modelo básico de Solow, el crecimiento de la fuerza laboral es estrictamente exógeno y constante a tasa $n$.",
+          "wrong_belief": "Cree que el modelo asume una dinámica demográfica endógena de tipo clásico o malthusiano."
+        },
+        {
+          "id": "D-C06-02",
+          "name": "Incompatibilidad errónea entre inelasticidad laboral y pleno empleo",
+          "trigger": "El estudiante interpreta la curva vertical de oferta de trabajo como causa de desempleo estructural.",
+          "manifestation": "Concluye que al ofrecerse la mano de obra inelásticamente habrá desempleo si las empresas no demandan todo el trabajo.",
+          "error_type": "boundary_case",
+          "severity": "medium",
+          "origin": "inferred",
+          "evidence": {
+            "doc": "solow1956.pdf",
+            "page": 5
+          },
+          "remediation_hint": "El salario real es perfectamente flexible e igual a la productividad marginal $\\partial F/\\partial L$, despejando el mercado y garantizando pleno empleo en todo momento.",
+          "wrong_belief": "Cree que una oferta inelástica no puede ser absorbida plenamente por el mercado competitivo."
+        },
+        {
+          "id": "D-C06-03",
+          "name": "Confusión entre tasa de crecimiento del trabajo y del capital en transición",
+          "trigger": "El estudiante identifica la tasa natural $n$ como la tasa universal de crecimiento de todas las variables macroeconómicas en cualquier periodo.",
+          "manifestation": "Afirma que durante la transición fuera del estado estacionario el stock de capital debe crecer obligatoriamente a la tasa $n$.",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "inferred",
+          "evidence": {
+            "doc": "solow1956.pdf",
+            "page": 4
+          },
+          "remediation_hint": "La tasa $n$ es la tasa de crecimiento de la mano de obra; el capital crece a tasa $sF(K, L)/K$, la cual difiere de $n$ fuera del estado estacionario.",
+          "wrong_belief": "Cree que el supuesto de pleno empleo obliga a que capital y trabajo crezcan siempre a la misma tasa constante."
+        }
+      ]
+    }
+  ]
+}

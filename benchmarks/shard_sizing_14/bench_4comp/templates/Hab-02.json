@@ -1,0 +1,167 @@
+{
+  "competency_id": "Hab-02",
+  "templates": [
+    {
+      "id": "T-Hab02-01",
+      "competency_id": "Hab-02",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "A partir de la identidad agregada $K(t) = k(t)L(t)$, la función de inversión bruta $\\dot{K} = sQ = {s}L\\phi(k)$ y la dinámica demográfica $\\dot{L} = {lam}L$, determine la ecuación diferencial intensiva para la tasa de acumulación de capital por trabajador $\\dot{k}$:",
+      "stem_variants": [
+        "A partir de la identidad agregada $K(t) = k(t)L(t)$, la función de inversión bruta $\\dot{K} = sQ = {s}L\\phi(k)$ y la dinámica demográfica $\\dot{L} = {lam}L$, determine la ecuación diferencial intensiva para la tasa de acumulación de capital por trabajador $\\dot{k}$:",
+        "En una economía descrita por el modelo de Solow con ahorro $s = {s}$, producto por trabajador $\\phi(k)$ y crecimiento de la fuerza laboral $\\dot{L}/L = {lam}$, deduzca la trayectoria dinámica exacta de $\\dot{k}$:",
+        "Aplicando la regla del producto temporal a la relación $K = kL$, con tasa de inversión $s = {s}$ y expansión demográfica $\\lambda = {lam}$, ¿cuál es la ecuación diferencial fundamental resultante para $\\dot{k}$?",
+        "Considere los supuestos analíticos de Solow con propensión marginal a ahorrar $s = {s}$, tecnología intensiva $\\phi(k)$ y tasa poblacional $\\lambda = {lam}$. La formulación matemática de $\\dot{k}$ corresponde a:"
+      ],
+      "generate_py": "def generate(rng):\n    s = rng.choice([0.2, 0.25, 0.3, 0.35, 0.4])\n    lam = rng.choice([0.01, 0.02, 0.03, 0.04, 0.05])\n    cons = round(1.0 - s, 2)\n    s_str = f'{s:.2f}'\n    lam_str = f'{lam:.2f}'\n    c_str = f'{cons:.2f}'\n    correct_str = 'Ecuación diferencial: \\\\dot{k} = ' + s_str + ' \\\\phi(k) - ' + lam_str + ' k'\n    d1 = 'Ecuación diferencial: \\\\dot{k} = ' + s_str + ' \\\\phi(k) - 0.00 k'\n    d2 = 'Ecuación diferencial: L\\\\dot{k} = ' + s_str + ' L\\\\phi(k) - ' + lam_str + ' L k'\n    d3 = 'Ecuación diferencial: \\\\dot{k} = ' + s_str + ' \\\\phi(k) + ' + lam_str + ' k'\n    d4 = 'Ecuación diferencial: \\\\dot{k} = ' + s_str + ' \\\\phi(k) - ' + lam_str + ' / L'\n    d5 = 'Ecuación diferencial: \\\\dot{k} = ' + c_str + ' \\\\phi(k) - ' + lam_str + ' k'\n    d6 = 'Ecuación diferencial: \\\\dot{k} = ' + s_str + ' \\\\phi(k) + ' + lam_str + ' k/L'\n    return {\n        'vars': {'s': s, 'lam': lam, 'cons': cons},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab02-01', 'error_rationale': 'Omite la diferenciación temporal del factor de mano de obra L(t) al aplicar la regla del producto a K = kL.'},\n            {'value': d2, 'distractor_id': 'D-Hab02-02', 'error_rationale': 'Olvida simplificar el factor común L en ambos miembros para obtener la ecuación intensiva autónoma en k.'},\n            {'value': d3, 'distractor_id': 'D-Hab02-03', 'error_rationale': 'Comete un error de signo al despejar: la dilución demográfica debe restarse, no sumarse.'},\n            {'value': d4, 'distractor_id': 'D-Hab02-04', 'error_rationale': 'Confunde la tasa de crecimiento relativo dot{L}/L = lambda con la variación absoluta dot{L}.'},\n            {'value': d5, 'distractor_id': 'D-Hab02-05', 'error_rationale': 'Utiliza la propensión al consumo (1-s) en lugar de la tasa de ahorro e inversión s.'},\n            {'value': d6, 'distractor_id': 'D-Hab02-06', 'error_rationale': 'Incurre en un desliz de signo procedimental al diferenciar mediante la regla del cociente.'}\n        ]\n    }",
+      "cross_check_py": "def verify(res):\n    s = res['vars']['s']\n    lam = res['vars']['lam']\n    c_opt = res['correct']\n    return f'{s:.2f}' in c_opt and f'{lam:.2f}' in c_opt and '-' in c_opt and len(res['distractors']) == 6",
+      "hints": [
+        "Diferencie la identidad $K = kL$ respecto al tiempo mediante la regla del producto: $\\dot{K} = L\\dot{k} + k\\dot{L}$.",
+        "Sustituya las hipótesis dinámicas $\\dot{K} = sL\\phi(k)$ y $\\dot{L} = \\lambda L$ en la ecuación del producto.",
+        "Divida todos los términos entre la fuerza laboral $L$ y despeje algebraicamente $\\dot{k}$."
+      ],
+      "solution": "Aplicando la regla del producto a $K = kL$: $\\dot{K} = L\\dot{k} + k\\dot{L}$. Sustituyendo $\\dot{K} = {s}L\\phi(k)$ y $\\dot{L} = {lam}L$, tenemos ${s}L\\phi(k) = L\\dot{k} + k({lam}L)$. Al dividir por $L$ obtenemos ${s}\\phi(k) = \\dot{k} + {lam}k$, de donde $\\dot{k} = {s}\\phi(k) - {lam}k$.",
+      "distractor_ids": [
+        "D-Hab02-01",
+        "D-Hab02-02",
+        "D-Hab02-03",
+        "D-Hab02-04",
+        "D-Hab02-05",
+        "D-Hab02-06"
+      ]
+    },
+    {
+      "id": "T-Hab02-02",
+      "competency_id": "Hab-02",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "bloom": "Apply",
+      "stem": "Considere una economía de Solow con función de producción intensiva $\\phi(k) = {A}\\sqrt{k}$, tasa de ahorro $s = {s}$ y crecimiento laboral $\\dot{L} = {lam}L$. Deduzca la ecuación diferencial de evolución del capital por trabajador $\\dot{k}$ expresada en términos de sus parámetros numéricos:",
+      "stem_variants": [
+        "Considere una economía de Solow con función de producción intensiva $\\phi(k) = {A}\\sqrt{k}$, tasa de ahorro $s = {s}$ y crecimiento laboral $\\dot{L} = {lam}L$. Deduzca la ecuación diferencial de evolución del capital por trabajador $\\dot{k}$ expresada en términos de sus parámetros numéricos:",
+        "Para una función de producción agregada tipo Cobb-Douglas donde $\\phi(k) = {A}\\sqrt{k}$, con propensión al ahorro $s = {s}$ y expansión demográfica $\\lambda = {lam}$, derive formalmente la dinámica de $\\dot{k}$:",
+        "A partir de las condiciones $K = kL$, inversión bruta $\\dot{K} = {s}Q$ con producto $Q = {A}L\\sqrt{k}$ y dinámica laboral $\\dot{L}/L = {lam}$, determine la forma explícita de $\\dot{k}$:",
+        "En el marco analítico de Solow con tecnología per cápita $\\phi(k) = {A}\\sqrt{k}$, ahorro constante $s = {s}$ y dilución $\\lambda = {lam}$, la ecuación de movimiento de $\\dot{k}$ es:"
+      ],
+      "generate_py": "def generate(rng):\n    A = rng.choice([2.0, 3.0, 4.0, 5.0])\n    s = rng.choice([0.2, 0.25, 0.3, 0.4])\n    lam = rng.choice([0.02, 0.03, 0.04, 0.05])\n    sA = round(s * A, 2)\n    cA = round((1.0 - s) * A, 2)\n    sA_str = f'{sA:.2f}'\n    cA_str = f'{cA:.2f}'\n    lam_str = f'{lam:.2f}'\n    correct_str = 'Formulación de Solow: \\\\dot{k} = ' + sA_str + ' \\\\sqrt{k} - ' + lam_str + ' k'\n    d1 = 'Formulación de Solow: \\\\dot{k} = ' + sA_str + ' \\\\sqrt{k} - 0.00 k'\n    d2 = 'Formulación de Solow: L\\\\dot{k} = ' + sA_str + ' L\\\\sqrt{k} - ' + lam_str + ' L k'\n    d3 = 'Formulación de Solow: \\\\dot{k} = ' + sA_str + ' \\\\sqrt{k} + ' + lam_str + ' k'\n    d4 = 'Formulación de Solow: \\\\dot{k} = ' + sA_str + ' \\\\sqrt{k} - ' + lam_str + ' / L'\n    d5 = 'Formulación de Solow: \\\\dot{k} = ' + cA_str + ' \\\\sqrt{k} - ' + lam_str + ' k'\n    d6 = 'Formulación de Solow: \\\\dot{k} = ' + sA_str + ' \\\\sqrt{k} + ' + lam_str + ' k/L'\n    return {\n        'vars': {'A': A, 's': s, 'lam': lam, 'sA': sA},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab02-01', 'error_rationale': 'Omite la derivada del factor laboral al expandir la derivada de K = kL.'},\n            {'value': d2, 'distractor_id': 'D-Hab02-02', 'error_rationale': 'No cancela la escala agregada de la fuerza laboral L en ambos lados de la igualdad.'},\n            {'value': d3, 'distractor_id': 'D-Hab02-03', 'error_rationale': 'Error de signo en la dilución demográfica: suma el término demográfico en lugar de restarlo.'},\n            {'value': d4, 'distractor_id': 'D-Hab02-04', 'error_rationale': 'Confunde el cambio relativo dot{L}/L con la derivada temporal absoluta dot{L}.'},\n            {'value': d5, 'distractor_id': 'D-Hab02-05', 'error_rationale': 'Aplica erróneamente la tasa de consumo (1-s) al flujo de producción agregada.'},\n            {'value': d6, 'distractor_id': 'D-Hab02-06', 'error_rationale': 'Error algebraico de signos en el numerador al usar la regla del cociente.'}\n        ]\n    }",
+      "cross_check_py": "def verify(res):\n    sA = res['vars']['sA']\n    lam = res['vars']['lam']\n    c_opt = res['correct']\n    return f'{sA:.2f}' in c_opt and f'{lam:.2f}' in c_opt and len(res['distractors']) == 6",
+      "hints": [
+        "Calcule la inversión por trabajador como $s\\phi(k) = s \\cdot ({A}\\sqrt{k})$.",
+        "Plantee la dilución demográfica del capital por trabajador como $\\lambda k = {lam} k$.",
+        "Reste la dilución de la inversión para formar $\\dot{k} = s\\phi(k) - \\lambda k$."
+      ],
+      "solution": "Con $\\phi(k) = {A}\\sqrt{k}$, la inversión por trabajador es $s\\phi(k) = {s} \\cdot {A}\\sqrt{k} = {sA}\\sqrt{k}$. La dilución demográfica es $\\lambda k = {lam}k$. Al aplicar la derivación de Solow obtenemos $\\dot{k} = {sA}\\sqrt{k} - {lam}k$.",
+      "distractor_ids": [
+        "D-Hab02-01",
+        "D-Hab02-02",
+        "D-Hab02-03",
+        "D-Hab02-04",
+        "D-Hab02-05",
+        "D-Hab02-06"
+      ]
+    },
+    {
+      "id": "T-Hab02-03",
+      "competency_id": "Hab-02",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere una economía de Solow con función de producción intensiva $\\phi(k) = {A}\\sqrt{k}$, propensión al ahorro $s = {s}$ y tasa de crecimiento de la fuerza de trabajo $\\lambda = {lam}$. Calcule la tasa instantánea de acumulación de capital por trabajador $\\dot{k}$ cuando el nivel actual de capital es $k = {k_val}$.",
+      "stem_variants": [
+        "Considere una economía de Solow con función de producción intensiva $\\phi(k) = {A}\\sqrt{k}$, propensión al ahorro $s = {s}$ y tasa de crecimiento de la fuerza de trabajo $\\lambda = {lam}$. Calcule la tasa instantánea de acumulación de capital por trabajador $\\dot{k}$ cuando el nivel actual de capital es $k = {k_val}$.",
+        "En un país modelado según la teoría de Solow, la tasa de ahorro es $s = {s}$, la población crece al ritmo $\\lambda = {lam}$ anual y la tecnología es $\\phi(k) = {A}\\sqrt{k}$. Para una dotación $k = {k_val}$, halle el valor numérico de $\\dot{k}$:",
+        "A partir de la ecuación diferencial fundamental $\\dot{k} = s\\phi(k) - \\lambda k$, determine el valor escalar de $\\dot{k}$ evaluado en $k = {k_val}$, bajo los parámetros $s = {s}$, $\\lambda = {lam}$ y $\\phi(k) = {A}\\sqrt{k}$:",
+        "Evalúe cuantitativamente la tasa neta de acumulación de capital per cápita $\\dot{k} = s\\phi(k) - \\lambda k$ cuando $k = {k_val}$, sabiendo que $s = {s}$, $\\lambda = {lam}$ y $\\phi(k) = {A}\\sqrt{k}$:"
+      ],
+      "generate_py": "def generate(rng):\n    A = rng.choice([2, 3, 4, 5])\n    k_sqrt = rng.choice([2, 3, 4, 5])\n    k_val = k_sqrt**2\n    s = rng.choice([0.2, 0.25, 0.3, 0.4])\n    lam = rng.choice([0.01, 0.02, 0.03, 0.04])\n    inv = s * A * k_sqrt\n    dil = lam * k_val\n    dot_k = round(inv - dil, 4)\n    dot_k_str = f'{dot_k:.4f}'\n    return {\n        'vars': {'A': A, 'k_val': k_val, 's': s, 'lam': lam, 'k_sqrt': k_sqrt, 'dot_k': dot_k},\n        'correct': dot_k,\n        'value': str(dot_k),\n        'canonical_algebraic': str(dot_k),\n        'accepted_equivalents': [str(dot_k), dot_k_str],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    s = res['vars']['s']\n    A = res['vars']['A']\n    k_sqrt = res['vars']['k_sqrt']\n    lam = res['vars']['lam']\n    k_val = res['vars']['k_val']\n    expected = round(s * A * k_sqrt - lam * k_val, 4)\n    return float(res['correct']) == expected",
+      "hints": [
+        "Calcule la inversión por trabajador sustituyendo $k = {k_val}$ en $s\\phi(k) = {s} \\cdot {A} \\sqrt{{{k_val}}}$.",
+        "Calcule el término de dilución demográfica como $\\lambda k = {lam} \\cdot {k_val}$.",
+        "Efectúe la sustracción $\\dot{k} = s\\phi(k) - \\lambda k$ para obtener la acumulación neta."
+      ],
+      "solution": "Para $k = {k_val}$: la inversión por trabajador es $s\\phi(k) = {s} \\cdot {A} \\cdot {k_sqrt} = {s} \\times {A} \\times {k_sqrt}$. La dilución demográfica es $\\lambda k = {lam} \\times {k_val}$. Restando ambos resultados: $\\dot{k} = {dot_k}$.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab02-04",
+      "competency_id": "Hab-02",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el modelo de Solow con función intensiva $\\phi(k) = {A}\\sqrt{k}$, propensión al ahorro $s = {s}$ y tasa de crecimiento de la población $\\lambda = {lam}$, calcule el nivel de capital por trabajador de estado estacionario $k^*$ en el cual la acumulación neta se anula ($\\dot{k} = 0$).",
+      "stem_variants": [
+        "En el modelo de Solow con función intensiva $\\phi(k) = {A}\\sqrt{k}$, propensión al ahorro $s = {s}$ y tasa de crecimiento de la población $\\lambda = {lam}$, calcule el nivel de capital por trabajador de estado estacionario $k^*$ en el cual la acumulación neta se anula ($\\dot{k} = 0$).",
+        "Halle el valor numérico de la dotación de capital per cápita $k^*$ para el cual la inversión bruta $s\\phi(k)$ iguala con exactitud a la dilución demográfica $\\lambda k$, con $\\phi(k) = {A}\\sqrt{k}$, $s = {s}$ y $\\lambda = {lam}$:",
+        "A partir de la condición dinámica $\\dot{k} = s{A}\\sqrt{k} - {lam}k = 0$ con $k > 0$, determine la cantidad escalar de capital por trabajador $k^*$:",
+        "Calcule la solución positiva $k^*$ de la ecuación diferencial fundamental cuando $\\dot{k} = 0$, dados $s = {s}$, $\\lambda = {lam}$ y $\\phi(k) = {A}\\sqrt{k}$:"
+      ],
+      "generate_py": "def generate(rng):\n    m = rng.choice([4, 5, 6, 7, 8, 9, 10])\n    s = rng.choice([0.2, 0.25, 0.4, 0.5])\n    lam = rng.choice([0.02, 0.04, 0.05])\n    A = round(m * lam / s, 3)\n    k_star = m**2\n    return {\n        'vars': {'A': A, 's': s, 'lam': lam, 'k_star': k_star, 'm': m},\n        'correct': k_star,\n        'value': str(k_star),\n        'canonical_algebraic': str(k_star),\n        'accepted_equivalents': [str(k_star), f'{k_star}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    s = res['vars']['s']\n    A = res['vars']['A']\n    lam = res['vars']['lam']\n    k_star = res['vars']['k_star']\n    m = round(s * A / lam)\n    return int(res['correct']) == m**2",
+      "hints": [
+        "Plantee la condición $\\dot{k} = 0$, que significa $s\\phi(k^*) - \\lambda k^* = 0$.",
+        "Sustituya $\\phi(k^*) = {A}\\sqrt{k^*}$ para obtener $s{A}\\sqrt{k^*} = \\lambda k^*$.",
+        "Divida entre $\\sqrt{k^*}$ y eleve al cuadrado: $k^* = \\left(\\frac{s{A}}{\\lambda}\\right)^2$."
+      ],
+      "solution": "Haciendo $\\dot{k} = 0$: ${s} \\cdot {A} \\sqrt{k^*} = {lam} k^*$. Dividiendo entre $\\sqrt{k^*}$ resulta $\\sqrt{k^*} = \\frac{{s} \\cdot {A}}{{lam}} = {m}$, por lo que $k^* = {m}^2 = {k_star}$.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab02-05",
+      "competency_id": "Hab-02",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Analyze",
+      "stem": "Para una economía con tasa de ahorro $s = {s}$ y crecimiento laboral $\\lambda = {lam}$, al derivar la ecuación diferencial de Solow $\\dot{k} = s\\phi(k) - \\lambda k$, ¿cuáles de las siguientes proposiciones procedimentales y conceptuales son matemáticamente correctas?",
+      "stem_variants": [
+        "Para una economía con tasa de ahorro $s = {s}$ y crecimiento laboral $\\lambda = {lam}$, al derivar la ecuación diferencial de Solow $\\dot{k} = s\\phi(k) - \\lambda k$, ¿cuáles de las siguientes proposiciones procedimentales y conceptuales son matemáticamente correctas?",
+        "Al deducir la ley de movimiento del capital por trabajador $\\dot{k}$ en un país donde $s = {s}$ y $\\dot{L}/L = {lam}$, ¿qué afirmaciones analíticas son rigurosamente ciertas?",
+        "Considere los pasos requeridos para obtener la ecuación intensiva $\\dot{k} = {s}\\phi(k) - {lam}k$ a partir de agregados macroeconómicos con $s = {s}$ y $\\lambda = {lam}$. Seleccione todas las aseveraciones verdaderas:",
+        "En la derivación matemática de la acumulación per cápita $\\dot{k}$ para un modelo con parámetros $s = {s}$ y $\\lambda = {lam}$, identifique las afirmaciones teóricas correctas:",
+        "Bajo las condiciones estructurales de Solow con ahorro constante $s = {s}$ y dilución $\\lambda = {lam}$, ¿cuáles de los siguientes pasos formales son correctos al derivar $\\dot{k}$?"
+      ],
+      "generate_py": "def generate(rng):\n    s = rng.choice([0.15, 0.2, 0.25, 0.3, 0.35, 0.4])\n    lam = rng.choice([0.01, 0.02, 0.03, 0.04, 0.05])\n    cons = round(1.0 - s, 2)\n    options = [\n        {\n            'content': 'La regla de la derivada del producto aplicada a la definición del capital agregado $K(t) = k(t)L(t)$ produce $\\\\dot{K} = L\\\\dot{k} + k\\\\dot{L}$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'La hipótesis de crecimiento demográfico constante establece que la variación absoluta de la mano de obra es $\\\\dot{L} = ' + str(lam) + ' L$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Tratar a la mano de obra $L$ como constante temporal al diferenciar $K = kL$, escribiendo de forma simplificada $\\\\dot{K} = L\\\\dot{k}$.',\n            'is_correct': False,\n            'distractor_id': 'D-Hab02-01',\n            'error_rationale': 'Omite la diferenciación temporal del factor de mano de obra L(t) aplicando la regla del producto a K = kL.'\n        },\n        {\n            'content': 'Sumar la dilución de capital en lugar de restarla al despejar la tasa de acumulación, formulando $\\\\dot{k} = ' + str(s) + '\\\\phi(k) + ' + str(lam) + ' k$.',\n            'is_correct': False,\n            'distractor_id': 'D-Hab02-03',\n            'error_rationale': 'El crecimiento poblacional expande la fuerza de trabajo diluyendo el capital per cápita, por lo que su término debe restarse en dot{k}.'\n        },\n        {\n            'content': 'Definir la acumulación de capital agregada a partir de la propensión al consumo, estableciendo $\\\\dot{K} = ' + str(cons) + ' Q$.',\n            'is_correct': False,\n            'distractor_id': 'D-Hab02-05',\n            'error_rationale': 'Sustituye indebidamente la tasa de consumo (1-s) en lugar de la tasa de inversión/ahorro s en la acumulación de capital.'\n        }\n    ]\n    return {\n        'vars': {'s': s, 'lam': lam, 'cons': cons},\n        'options': options,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    opts = res.get('options', [])\n    correct_opts = [o for o in opts if o.get('is_correct')]\n    return len(opts) == 5 and len(correct_opts) == 2 and res['vars']['s'] > 0",
+      "hints": [
+        "Recuerde que tanto el capital por trabajador $k(t)$ como la mano de obra $L(t)$ varían en el tiempo.",
+        "Considere el supuesto del modelo de Solow respecto a la inversión: todo el ahorro $sQ$ se invierte íntegramente.",
+        "Analice el efecto de nuevos trabajadores sobre la dotación de capital por cada trabajador ya existente."
+      ],
+      "solution": "La derivación analítica exige aplicar la regla del producto $\\dot{K} = L\\dot{k} + k\\dot{L}$ y utilizar la hipótesis de crecimiento laboral $\\dot{L} = \\lambda L$. La inversión bruta es $\\dot{K} = {s}Q$. Al despejar, el término poblacional resta capital per cápita por dilución: $\\dot{k} = {s}\\phi(k) - {lam}k$.",
+      "distractor_ids": [
+        "D-Hab02-01",
+        "D-Hab02-03",
+        "D-Hab02-05"
+      ]
+    },
+    {
+      "id": "T-Hab02-06",
+      "competency_id": "Hab-02",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Al contrastar diferentes rutas algebraicas para obtener la ecuación diferencial de Solow $\\dot{k} = {s}\\phi(k) - {lam}k$ con ahorro $s = {s}$ y dilución $\\lambda = {lam}$, ¿cuáles enunciados reflejan procedimientos analíticos válidos?",
+      "stem_variants": [
+        "Al contrastar diferentes rutas algebraicas para obtener la ecuación diferencial de Solow $\\dot{k} = {s}\\phi(k) - {lam}k$ con ahorro $s = {s}$ y dilución $\\lambda = {lam}$, ¿cuáles enunciados reflejan procedimientos analíticos válidos?",
+        "Respecto a los métodos alternativos de diferenciación de $k = K/L$ bajo parámetros $s = {s}$ y $\\lambda = {lam}$, seleccione las afirmaciones correctas:",
+        "En el análisis de las operaciones algebraicas que conducen a $\\dot{k} = {s}\\phi(k) - {lam}k$, ¿qué proposiciones son matemáticamente ciertas?",
+        "Considere la simplificación de escala y la regla del cociente para una economía con $s = {s}$ y $\\lambda = {lam}$. Identifique las proposiciones válidas:",
+        "Para derivar formalmente la relación intensiva con tasa de ahorro $s = {s}$ y tasa poblacional $\\lambda = {lam}$, ¿cuáles afirmaciones procedimentales son rigurosas?"
+      ],
+      "generate_py": "def generate(rng):\n    s = rng.choice([0.15, 0.2, 0.25, 0.3, 0.35, 0.4])\n    lam = rng.choice([0.01, 0.02, 0.03, 0.04, 0.05])\n    options = [\n        {\n            'content': 'Al dividir la ecuación balanceada $L\\\\dot{k} = ' + str(s) + ' L\\\\phi(k) - ' + str(lam) + ' k L$ por la fuerza laboral $L$, se cancela el factor de escala poblacional obteniendo un sistema autónomo en $k$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'La derivación directa por la regla del cociente a partir de $k = K/L$ requiere $\\\\dot{k} = \\\\frac{L\\\\dot{K} - K\\\\dot{L}}{L^2} = \\\\frac{\\\\dot{K}}{L} - k\\\\frac{\\\\dot{L}}{L}$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Mantener la ecuación diferencial en términos de la escala agregada dependiente de $L$ sin dividir por la fuerza de trabajo: $L\\\\dot{k} = ' + str(s) + ' L\\\\phi(k) - ' + str(lam) + ' k L$.',\n            'is_correct': False,\n            'distractor_id': 'D-Hab02-02',\n            'error_rationale': 'Omite la cancelación del factor común L en ambos miembros para obtener la ecuación intensiva autónoma en una variable.'\n        },\n        {\n            'content': 'Sustituir la derivada temporal absoluta $\\\\dot{L}$ por la constante ' + str(lam) + ' en vez de ' + str(lam) + ' L, introduciendo el término dimensionalmente incorrecto $k\\\\cdot ' + str(lam) + '$.',\n            'is_correct': False,\n            'distractor_id': 'D-Hab02-04',\n            'error_rationale': 'Confunde la tasa de crecimiento relativo dot{L}/L = lambda con el cambio absoluto dot{L} = lambda*L.'\n        },\n        {\n            'content': 'Al derivar la relación de cociente $k = K/L$, escribir $\\\\dot{k} = \\\\frac{L\\\\dot{K} + K\\\\dot{L}}{L^2}$ sumando los términos en el numerador.',\n            'is_correct': False,\n            'distractor_id': 'D-Hab02-06',\n            'error_rationale': 'Comete un error procedimental de signo en la fórmula de diferenciación de cocientes: la regla exige restar el segundo término.'\n        }\n    ]\n    return {\n        'vars': {'s': s, 'lam': lam},\n        'options': options,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    opts = res.get('options', [])\n    correct_opts = [o for o in opts if o.get('is_correct')]\n    return len(opts) == 5 and len(correct_opts) == 2",
+      "hints": [
+        "Verifique la regla del cociente: la derivada de $u/v$ es $(u'v - uv')/v^2$, con signo negativo entre términos.",
+        "Dividir entre la escala agregada $L$ permite independizar la dinámica per cápita del tamaño absoluto del país.",
+        "Distinga claramente entre la tasa relativa $\\dot{L}/L = \\lambda$ y la derivada absoluta $\\dot{L} = \\lambda L$."
+      ],
+      "solution": "La cancelación de $L$ condensa el sistema en una ecuación autónoma intensiva. Al utilizar la regla del cociente para $k = K/L$, el signo en el numerador es estrictamente negativo: $\\dot{k} = \\frac{L\\dot{K} - K\\dot{L}}{L^2} = \\frac{\\dot{K}}{L} - k\\lambda$.",
+      "distractor_ids": [
+        "D-Hab02-02",
+        "D-Hab02-04",
+        "D-Hab02-06"
+      ]
+    }
+  ]
+}

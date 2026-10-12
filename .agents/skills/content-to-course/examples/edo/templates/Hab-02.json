@@ -1,0 +1,63 @@
+{
+  "competency_id": "Hab-02",
+  "templates": [
+    {
+      "id": "T-Hab02-01",
+      "competency_id": "Hab-02",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el sistema no lineal plano $$\\dot{{x}} = {a} x - x^2 - x y, \\quad \\dot{{y}} = {b} y - y^2 - x y$$. Calcule la matriz Jacobiana evaluada en el punto de equilibrio en el origen $(0,0)$:",
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 5)\n    b = rng.randint(2, 5)\n    correct_str = f'\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {a} & 0 \\\\\\\\ 0 & {b} \\\\end{{bmatrix}}, diagonal positiva.'\n    d1 = f'\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} 0 & {a} \\\\\\\\ {b} & 0 \\\\end{{bmatrix}}, antidiagonal pura.'\n    d2 = f'\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} -{a} & 0 \\\\\\\\ 0 & -{b} \\\\end{{bmatrix}}, diagonal negativa.'\n    d3 = f'\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {a} & 1 \\\\\\\\ 1 & {b} \\\\end{{bmatrix}}, matriz con unos fuera.'\n    d4 = f'\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {2*a} & 0 \\\\\\\\ 0 & {2*b} \\\\end{{bmatrix}}, con valores dobles.'\n    d5 = f'\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} 1 & {a} \\\\\\\\ {b} & 1 \\\\end{{bmatrix}}, diagonal unitaria fija.'\n    d6 = f'\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {a} & -1 \\\\\\\\ -1 & {b} \\\\end{{bmatrix}}, signos cruzados.'\n    return {\n        'vars': {'a': a, 'b': b},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab02-01'},\n            {'value': d2, 'distractor_id': 'D-Hab02-02'},\n            {'value': d3, 'distractor_id': 'D-Hab02-03'},\n            {'value': d4, 'distractor_id': 'D-Hab02-04'},\n            {'value': d5, 'distractor_id': 'D-Hab02-05'},\n            {'value': d6, 'distractor_id': 'D-Hab02-06'},\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    a = result['vars']['a']\n    b = result['vars']['b']\n    return f'{a} & 0' in result['correct'] and f'0 & {b}' in result['correct']",
+      "hints": [
+        "Obtenga las derivadas parciales de f(x,y) = a x - x^2 - x y respecto de x e y.",
+        "Obtenga las derivadas parciales de g(x,y) = b y - y^2 - x y respecto de x e y.",
+        "Evalúe la matriz resultante en las coordenadas del origen (x=0, y=0)."
+      ],
+      "solution": "La matriz Jacobiana general es J(x,y) = [[{a} - 2x - y, -x], [-y, {b} - 2y - x]]. Al evaluar en (x,y) = (0,0), los términos no lineales se anulan, resultando J(0,0) = [[{a}, 0], [0, {b}]].",
+      "distractor_ids": [
+        "D-Hab02-01",
+        "D-Hab02-02",
+        "D-Hab02-03",
+        "D-Hab02-04",
+        "D-Hab02-05",
+        "D-Hab02-06"
+      ]
+    },
+    {
+      "id": "T-Hab02-02",
+      "competency_id": "Hab-02",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Para el sistema $\\dot{{x}} = {a} x - x^2, \\quad \\dot{{y}} = {b} y - y^2$, determine el valor escalar de la traza de la matriz Jacobiana $\\mathrm{{tr}}(\\mathbf{{J}})$ evaluada en el origen $(0,0)$.",
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 6)\n    b = rng.randint(2, 6)\n    tr_val = a + b\n    return {\n        'vars': {'a': a, 'b': b, 'tr_val': tr_val},\n        'correct': tr_val,\n        'value': str(tr_val),\n        'canonical_algebraic': str(tr_val),\n        'accepted_equivalents': [str(tr_val), f'{tr_val}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    return int(result['correct']) == (result['vars']['a'] + result['vars']['b'])",
+      "hints": [
+        "Calcule la matriz Jacobiana evaluando df/dx y dg/dy en el origen.",
+        "Observe que en (0,0), df/dx = a y dg/dy = b.",
+        "Sume los elementos de la diagonal principal para obtener la traza: tr = a + b."
+      ],
+      "solution": "La Jacobiana en el origen es diagonal con entradas J_11 = {a} y J_22 = {b}. La traza es tr(J) = {a} + {b} = {tr_val}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab02-03",
+      "competency_id": "Hab-02",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Para un sistema plano con matriz Jacobiana $\\mathbf{{J}}(x_0, y_0) = \\begin{{bmatrix}} -{a} & 0 \\\\ 0 & -{b} \\end{{bmatrix}}$ donde $a = {a} > 0$ y $b = {b} > 0$, seleccione todas las afirmaciones correctas sobre la estabilidad local:",
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 5)\n    b = rng.randint(2, 5)\n    opts = [\n        {'content': 'La traza de la Jacobiana es estrictamente negativa: tr(J) < 0.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'El determinante de la Jacobiana es estrictamente positivo: det(J) > 0.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'El punto de equilibrio es asintóticamente estable en el plano.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'El punto es un punto de silla inestable debido a autovalores.', 'is_correct': False, 'distractor_id': 'D-Hab02-04'},\n    ]\n    return {\n        'vars': {'a': a, 'b': b},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    return True",
+      "hints": [
+        "Examine los signos de los elementos diagonales -a y -b.",
+        "Calcule tr(J) = -a - b < 0 y det(J) = (-a)(-b) = a*b > 0.",
+        "Concluya la estabilidad según el criterio traza-determinante."
+      ],
+      "solution": "Los autovalores son lambda_1 = -{a} < 0 y lambda_2 = -{b} < 0. Ambos son reales negativos, garantizando que el equilibrio es un nodo asintóticamente estable.",
+      "distractor_ids": ["D-Hab02-04"]
+    }
+  ]
+}

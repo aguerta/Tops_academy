@@ -1,0 +1,566 @@
+{
+  "shard_id": "shard_01",
+  "shard_index": 1,
+  "total_shards": 2,
+  "competency_ids": [
+    "C-01",
+    "Hab-01",
+    "H-01",
+    "C-02",
+    "Hab-02",
+    "C-03",
+    "H-02"
+  ],
+  "competencies": [
+    {
+      "id": "C-01",
+      "type": "concept",
+      "name": "Estabilidad dinámica y determinación de equilibrios en líneas de fase unidimensionales",
+      "description_latex": "Comprensión del criterio de estabilidad dinámica en una ecuación diferencial autónoma de primer orden $\\dot{y} = f(y)$. Un punto de equilibrio $\\bar{y}$ cumple $f(\\bar{y}) = 0$. La trayectoria converge hacia $\\bar{y}$ si la pendiente de la línea de fase en el equilibrio es negativa ($f'(\\bar{y}) < 0$), pues para $y < \\bar{y}$, $\\dot{y} > 0$ (flujo hacia la derecha) y para $y > \\bar{y}$, $\\dot{y} < 0$ (flujo hacia la izquierda). Si la pendiente es positiva, el equilibrio es inestable.",
+      "bloom": "Understand",
+      "prerequisites": [],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 1
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-C01-01",
+          "name": "Inversión del criterio de estabilidad de la pendiente",
+          "trigger": "Al determinar si un punto de equilibrio es dinámicamente estable evaluando el signo de la pendiente de la línea de fase",
+          "manifestation": "Concluye que una pendiente positiva $f'(\\bar{y}) > 0$ implica estabilidad porque la función es creciente",
+          "error_type": "sign_error",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Creer que $f'(\\bar{y}) > 0$ implica estabilidad dinámica porque la derivada es positiva",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 1
+          },
+          "remediation_hint": "Recuerde que para converger a $\\bar{y}$, cuando $y > \\bar{y}$ la tasa de cambio debe ser negativa ($\\dot{y} < 0$) para reducir $y$ hacia el equilibrio, lo que requiere una pendiente negativa."
+        },
+        {
+          "id": "D-C01-02",
+          "name": "Confusión entre extremos locales de trayectoria y equilibrios intertemporales",
+          "trigger": "Al identificar equilibrios en sistemas dinámicos donde la derivada temporal se anula tangencialmente",
+          "manifestation": "Considera que cualquier punto donde $\\dot{y} = 0$ representa un equilibrio estático o intertemporal de largo plazo",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "source",
+          "wrong_belief": "Creer que todo punto donde $dy/dt = 0$ representa un estado de equilibrio dinámico del sistema",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 1
+          },
+          "remediation_hint": "En el texto se advierte que no todas las intersecciones o puntos donde $\\dot{y}=0$ son posiciones de equilibrio intertemporal, como ocurre en ciclos cerrados donde la trayectoria solo toca límites extremos."
+        },
+        {
+          "id": "D-C01-03",
+          "name": "Atribución de la dirección dinámica al nivel de la variable de estado",
+          "trigger": "Al determinar si la variable $y$ crece o decrece en el tiempo",
+          "manifestation": "Afirma que porque $y > 0$, la variable $y$ necesariamente aumenta con el tiempo",
+          "error_type": "overgeneralization",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Creer que el signo de $y$ determina la dirección del movimiento en lugar del signo de la derivada temporal $\\dot{y}$",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 1
+          },
+          "remediation_hint": "La dirección temporal de la trayectoria depende exclusivamente del signo de la derivada $\\dot{y} = dy/dt$, no del signo de la variable de estado $y$."
+        }
+      ]
+    },
+    {
+      "id": "Hab-01",
+      "type": "skill",
+      "name": "Construcción y análisis analítico-cualitativo de líneas de fase para ecuaciones diferenciales de primer orden",
+      "description_latex": "Habilidad para encontrar los equilibrios de $\\dot{y} = f(y)$ resolviendo $f(y) = 0$, trazar la línea de fase graficando $\\dot{y}$ contra $y$, evaluar algebraicamente la derivada $\\frac{d}{dy}(\\dot{y})$ en cada punto de equilibrio y clasificar su estabilidad dinámica (estable o inestable) como en el Ejercicio 15.6.",
+      "bloom": "Apply",
+      "prerequisites": [
+        "C-01"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 1
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-Hab01-01",
+          "name": "Omisión de la evaluación formal de la pendiente de la línea de fase",
+          "trigger": "Al clasificar la estabilidad de los puntos de equilibrio hallados",
+          "manifestation": "Declara un equilibrio como estable o inestable sin calcular el signo de $\\frac{d}{dy}(\\dot{y})$ ni verificar la dirección del flujo de fase",
+          "error_type": "skipped_step",
+          "severity": "high",
+          "origin": "inferred",
+          "omitted_step": "Omitir el cálculo de $\\frac{d}{dy}(\\dot{y})$ en los puntos críticos de equilibrio para determinar rigurosamente la estabilidad.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 1
+          },
+          "remediation_hint": "Siempre calcule y evalúe el signo de la derivada $\\frac{d}{dy}(\\dot{y})$ en el valor de equilibrio para justificar la convergencia o divergencia."
+        },
+        {
+          "id": "D-Hab01-02",
+          "name": "Omisión de restricciones de no negatividad del dominio económico",
+          "trigger": "Al resolver ecuaciones diferenciales para variables restringidas como $y \\ge 0$",
+          "manifestation": "Acepta raíces negativas de equilibrio que están fuera del dominio admisible del problema",
+          "error_type": "boundary_case",
+          "severity": "medium",
+          "origin": "inferred",
+          "omitted_step": "Omitir verificar si los puntos de equilibrio satisfacen la restricción de dominio no negativo $y \\ge 0$.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 1
+          },
+          "remediation_hint": "Verifique siempre el dominio admisible de las variables en las especificaciones del ejercicio (por ejemplo $y \\ge 0$)."
+        },
+        {
+          "id": "D-Hab01-03",
+          "name": "Error de signos en la factorización de polinomios cuadráticos",
+          "trigger": "Al encontrar raíces de $\\dot{y} = y^2 - 8y + 15 = 0$",
+          "manifestation": "Factoriza como $(y+3)(y+5)=0$ concluyendo que los equilibrios son $y = -3$ y $y = -5$",
+          "error_type": "sign_error",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Asignar signos invertidos a las raíces al factorizar la ecuación cuadrática",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 1
+          },
+          "remediation_hint": "Revise que $(y-3)(y-5) = y^2 - 8y + 15$, por lo que las raíces son $y = 3$ y $y = 5$."
+        },
+        {
+          "id": "D-Hab01-04",
+          "name": "Confusión en los ejes del espacio de fase",
+          "trigger": "Al trazar gráficamente la línea de fase",
+          "manifestation": "Grafica $\\dot{y}$ contra el tiempo $t$ en lugar de $\\dot{y}$ contra la variable de estado $y$",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Creer que la línea de fase tiene al tiempo $t$ en el eje horizontal",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 1
+          },
+          "remediation_hint": "Una línea de fase es un gráfico autónomo que relaciona $\\dot{y}$ en el eje vertical con la variable de estado $y$ en el eje horizontal, eliminando el tiempo $t$ explícito."
+        },
+        {
+          "id": "D-Hab01-05",
+          "name": "Desliz algebraico en la derivada polinómica de la función de fase",
+          "trigger": "Al derivar la función $\\dot{y} = y^2 - 8y + 15$ respecto a $y$",
+          "manifestation": "Calcula la derivada como $2y - 15$ o $y - 8$",
+          "error_type": "procedural_slip",
+          "severity": "low",
+          "origin": "inferred",
+          "wrong_belief": "Cometer un desliz en la regla de la potencia lineal al derivar el término cuadrático o lineal",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 1
+          },
+          "remediation_hint": "La derivada de $y^2 - 8y + 15$ respecto a $y$ es $\\frac{d}{dy}(\\dot{y}) = 2y - 8$."
+        },
+        {
+          "id": "D-Hab01-06",
+          "name": "Asignación errónea de estabilidad en raíces de pendiente positiva",
+          "trigger": "Al interpretar el signo de $\\frac{d}{dy}(\\dot{y}) = 2y - 8$ evaluado en $y = 5$",
+          "manifestation": "Como $2(5) - 8 = +2 > 0$, concluye que $y = 5$ es un equilibrio asintóticamente estable",
+          "error_type": "sign_error",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Interpretar que una pendiente positiva en el punto de corte atrae las trayectorias hacia el equilibrio",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 1
+          },
+          "remediation_hint": "Cuando la pendiente es positiva, valores a la derecha ($y > 5$) tienen $\\dot{y} > 0$ y se alejan del equilibrio, mientras que valores a la izquierda ($y < 5$) tienen $\\dot{y} < 0$ y también se alejan; por lo tanto, es inestable."
+        }
+      ]
+    },
+    {
+      "id": "H-01",
+      "type": "fact",
+      "name": "Fundamentos y contrastes estructurales del modelo de crecimiento de Solow frente a Domar",
+      "description_latex": "Conocimiento fáctico de los postulados distintivos del modelo de Solow respecto al modelo de Domar: Solow introduce sustitución factorial entre capital y trabajo ($Q = f(K,L)$ con proporciones variables) para evitar el crecimiento en 'filo de navaja' de Domar, donde la función de producción dependía sólo del capital ($\\kappa = \\rho K$) asumiendo proporciones fijas capital-trabajo.",
+      "bloom": "Remember",
+      "prerequisites": [],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 1
+        },
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 2
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-H01-01",
+          "name": "Atribución errónea de proporciones variables al modelo de Domar",
+          "trigger": "Al contrastar los supuestos de las funciones de producción de Solow y Domar",
+          "manifestation": "Afirma que el modelo de Domar permitía sustitución fluida entre mano de obra y capital",
+          "error_type": "conceptual_swap",
+          "severity": "high",
+          "origin": "source",
+          "wrong_belief": "Creer que en el modelo de Domar la tecnología permitía variar libremente la relación capital-trabajo",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 1
+          },
+          "remediation_hint": "En el modelo de Domar la función es $\\kappa = \\rho K$, lo que implica proporciones fijas y ausencia de sustitución factorial explícita."
+        },
+        {
+          "id": "D-H01-02",
+          "name": "Atribución de coeficientes fijos al modelo de Solow",
+          "trigger": "Al identificar la hipótesis central de Solow sobre la combinación de factores",
+          "manifestation": "Afirma que Solow adoptó una función de coeficientes técnicos fijos de tipo Leontief",
+          "error_type": "overgeneralization",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Creer que Solow mantiene la hipótesis de proporciones fijas del modelo de Harrod-Domar",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "La innovación seminal de Solow fue permitir explícitamente que el capital y la mano de obra se combinen en proporciones variables."
+        },
+        {
+          "id": "D-H01-03",
+          "name": "Confusión sobre el objetivo analítico de Solow respecto al filo de navaja",
+          "trigger": "Al explicar por qué surge la trayectoria de filo de navaja",
+          "manifestation": "Afirma que el modelo de Solow confirma la inevitabilidad del crecimiento en filo de navaja",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "source",
+          "wrong_belief": "Creer que el modelo de Solow genera y defiende el resultado de crecimiento en filo de navaja",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 1
+          },
+          "remediation_hint": "El modelo de Solow muestra que el filo de navaja de Domar era resultado de la hipótesis de proporciones fijas y que con proporciones variables no surge la necesidad de ese delicado balance."
+        }
+      ]
+    },
+    {
+      "id": "C-02",
+      "type": "concept",
+      "name": "Propiedades neoclásicas de la función de producción y formulación intensiva per cápita",
+      "description_latex": "Comprensión de las propiedades de la función de producción neoclásica $Q = f(K, L)$: productos marginales positivos ($f_K > 0, f_L > 0$), rendimientos marginales decrecientes ($f_{KK} < 0, f_{LL} < 0$) y rendimientos constantes a escala (homogeneidad de grado 1). En virtud de la homogeneidad, el producto por trabajador es $q \\equiv Q/L = f(K/L, 1) = \\phi(k)$ con relación capital-trabajo $k \\equiv K/L$. La función intensiva cumple $\\phi'(k) = f_K > 0$ y $\\phi''(k) = f_{KK}/L < 0$, representando una curva estrictamente cóncava y creciente que parte del origen si el capital es indispensable.",
+      "bloom": "Understand",
+      "prerequisites": [
+        "H-01"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 2
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-C02-01",
+          "name": "Confusión entre producto medio y producto marginal en la forma intensiva",
+          "trigger": "Al interpretar la función $\\phi(k)$ y su derivada $\\phi'(k)$",
+          "manifestation": "Afirma que $\\phi(k)$ representa el producto marginal del capital",
+          "error_type": "conceptual_swap",
+          "severity": "high",
+          "origin": "source",
+          "wrong_belief": "Creer que $\\phi(k)$ da el producto marginal del capital en lugar de $\\text{APP}_L$ (producto medio del trabajo o producto por trabajador)",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "Recuerde que $\\phi(k) \\equiv Q/L$ es el producto medio del trabajo (o producto por trabajador), mientras que la derivada $\\phi'(k)$ es el producto marginal del capital ($f_K$)."
+        },
+        {
+          "id": "D-C02-02",
+          "name": "Confusión entre rendimientos constantes a escala y rendimientos marginales",
+          "trigger": "Al analizar las consecuencias de la homogeneidad lineal de $f(K,L)$",
+          "manifestation": "Sostiene que porque $f$ es homogénea de grado 1, cada insumo individual debe exhibir rendimientos marginales constantes ($f_{KK} = 0$ y $\\phi''(k) = 0$)",
+          "error_type": "overgeneralization",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Creer que rendimientos constantes a escala implica rendimientos marginales constantes para cada factor individual",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "La homogeneidad de grado 1 convive con la ley de rendimientos decrecientes para cada factor individual ($f_{KK} < 0$), lo que garantiza $\\phi''(k) < 0$."
+        },
+        {
+          "id": "D-C02-03",
+          "name": "Confusión entre tasa decreciente y función decreciente",
+          "trigger": "Al caracterizar la pendiente y curvatura de $\\phi(k)$",
+          "manifestation": "Afirma que $\\phi'(k) < 0$ debido a que la producción experimenta retornos decrecientes",
+          "error_type": "sign_error",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Confundir el signo de la primera derivada con el de la segunda derivada",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "La función $\\phi(k)$ es creciente ($\\phi'(k) > 0$) a una tasa decreciente ($\\phi''(k) < 0$), lo que describe concavidad estricta."
+        }
+      ]
+    },
+    {
+      "id": "Hab-02",
+      "type": "skill",
+      "name": "Derivación analítica de la ecuación diferencial fundamental de Solow",
+      "description_latex": "Habilidad para derivar la ecuación diferencial de la relación capital-trabajo $\\dot{k} = s\\phi(k) - \\lambda k$ a partir de la identidad $K = kL$, la regla de la derivada del producto $\\dot{K} = L\\dot{k} + k\\dot{L}$, la hipótesis de inversión $\\dot{K} = sQ = sL\\phi(k)$ y el crecimiento de la fuerza de trabajo $\\dot{L} = \\lambda L$.",
+      "bloom": "Apply",
+      "prerequisites": [
+        "C-02"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 2
+        },
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 3
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-Hab02-01",
+          "name": "Omisión de la diferenciación de la mano de obra en la regla del producto",
+          "trigger": "Al calcular $\\dot{K}$ a partir de $K = kL$",
+          "manifestation": "Escribe $\\dot{K} = L\\dot{k}$, tratando $L$ erróneamente como una constante en el tiempo",
+          "error_type": "skipped_step",
+          "severity": "high",
+          "origin": "inferred",
+          "omitted_step": "Omitir la diferenciación temporal del factor de mano de obra $L(t)$ aplicando la regla del producto a $K = kL$.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "Dado que $L$ crece en el tiempo a tasa $\\lambda$, la regla del producto exige $\\dot{K} = L\\dot{k} + k\\dot{L} = L\\dot{k} + k\\lambda L$."
+        },
+        {
+          "id": "D-Hab02-02",
+          "name": "Omisión de la cancelación del factor de escala poblacional",
+          "trigger": "Al igualar $\\dot{K} = sL\\phi(k)$ con $\\dot{K} = L\\dot{k} + \\lambda k L$",
+          "manifestation": "Deja la ecuación diferencial en términos dependientes de $L$ sin dividir por la fuerza laboral",
+          "error_type": "skipped_step",
+          "severity": "medium",
+          "origin": "inferred",
+          "omitted_step": "Omitir la simplificación del factor común $L$ en ambos miembros para obtener la ecuación intensiva autónoma en $k$.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 3
+          },
+          "remediation_hint": "Divida toda la expresión por $L$ para condensar el sistema en una única ecuación diferencial autónoma de una variable: $\\dot{k} = s\\phi(k) - \\lambda k$."
+        },
+        {
+          "id": "D-Hab02-03",
+          "name": "Error de signo en la dilución demográfica del capital",
+          "trigger": "Al despejar $\\dot{k}$ en la ecuación igualada",
+          "manifestation": "Escribe $\\dot{k} = s\\phi(k) + \\lambda k$, sumando la dilución de capital en lugar de restarla",
+          "error_type": "sign_error",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Creer que el crecimiento de la fuerza laboral incrementa positivamente la dotación de capital por trabajador",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 3
+          },
+          "remediation_hint": "Al despejar $L\\dot{k} = sL\\phi(k) - \\lambda k L$, el término de crecimiento poblacional se resta porque nuevos trabajadores diluyen el capital disponible."
+        },
+        {
+          "id": "D-Hab02-04",
+          "name": "Confusión entre tasa de crecimiento relativo y cambio absoluto de mano de obra",
+          "trigger": "Al sustituir la hipótesis de crecimiento laboral en la regla del producto",
+          "manifestation": "Sustituye $\\dot{L}$ por $\\lambda$ en lugar de $\\lambda L$, obteniendo $k\\lambda$ en lugar de $k\\lambda L$",
+          "error_type": "unit_or_scale",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Confundir la tasa de crecimiento relativo $\\dot{L}/L = \\lambda$ con la derivada absoluta $\\dot{L}$",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "La hipótesis dinámica establece $\\dot{L}/L = \\lambda$, por lo que la derivada temporal es $\\dot{L} = \\lambda L$."
+        },
+        {
+          "id": "D-Hab02-05",
+          "name": "Sustitución indebida de la propensión al consumo por ahorro",
+          "trigger": "Al formular la tasa de acumulación de capital a partir del producto",
+          "manifestation": "Formula $\\dot{K} = (1-s)Q$, usando la tasa de consumo en lugar de la tasa de inversión/ahorro",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Asignar la propensión marginal a consumir $(1-s)$ en la ecuación de inversión bruta o neta",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "La hipótesis de Solow es que se ahorra e invierte una proporción constante $s$ del producto: $\\dot{K} = sQ$."
+        },
+        {
+          "id": "D-Hab02-06",
+          "name": "Error de derivación al diferenciar directamente la relación per cápita como cociente",
+          "trigger": "Al intentar derivar $\\dot{k}$ directamente mediante la regla del cociente de $k = K/L$",
+          "manifestation": "Escribe $\\dot{k} = \\frac{L\\dot{K} + K\\dot{L}}{L^2}$ con signo positivo en el numerador",
+          "error_type": "procedural_slip",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Cometer un desliz de signo en la fórmula de diferenciación de cocientes",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "La regla del cociente requiere $\\dot{k} = \\frac{L\\dot{K} - K\\dot{L}}{L^2} = \\frac{\\dot{K}}{L} - k\\dot{L}/L$."
+        }
+      ]
+    },
+    {
+      "id": "C-03",
+      "type": "concept",
+      "name": "Análisis gráfico-cualitativo del equilibrio y estabilidad en el diagrama de fases de Solow",
+      "description_latex": "Comprensión del diagrama de dos curvas $s\\phi(k)$ (inversión por trabajador) y $\\lambda k$ (requerimiento de inversión para mantener constante $k$) y su traslación a la línea de fase $\\dot{k} = s\\phi(k) - \\lambda k$. La intersección en $k = \\bar{k} > 0$ determina el equilibrio intertemporal. Para $0 < k < \\bar{k}$, $s\\phi(k) > \\lambda k \\implies \\dot{k} > 0$ (acumulación neta de capital por trabajador); para $k > \\bar{k}$, $s\\phi(k) < \\lambda k \\implies \\dot{k} < 0$. Dado que la pendiente de la línea de fase en $\\bar{k}$ es estrictamente negativa ($s\\phi'(\\bar{k}) - \\lambda < 0$), el equilibrio $\\bar{k}$ es globalmente estable para cualquier dotación inicial positiva $k(0) > 0$.",
+      "bloom": "Analyze",
+      "prerequisites": [
+        "Hab-02",
+        "C-01"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 3
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-C03-01",
+          "name": "Interpretación errónea de la dinámica antes del equilibrio",
+          "trigger": "Al analizar el intervalo $0 < k < \\bar{k}$ en la figura 15.5",
+          "manifestation": "Afirma que porque la pendiente de $s\\phi(k)$ es decreciente, la tasa de acumulación $\\dot{k}$ es negativa a la izquierda de $\\bar{k}$",
+          "error_type": "conceptual_swap",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Confundir la pendiente decreciente de la curva con una distancia vertical negativa entre $s\\phi(k)$ y $\\lambda k$",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 3
+          },
+          "remediation_hint": "Para $0 < k < \\bar{k}$, la curva $s\\phi(k)$ está por encima del rayo $\\lambda k$, por lo que la distancia vertical $\\dot{k} = s\\phi(k) - \\lambda k$ es positiva y $k$ se incrementa."
+        },
+        {
+          "id": "D-C03-02",
+          "name": "Contradicción sobre la pendiente negativa de la línea de fase",
+          "trigger": "Al observar que la curva $\\dot{k}$ corta el eje $k$ en $\\bar{k}$ con pendiente negativa",
+          "manifestation": "Declara que una pendiente negativa al cruzar el eje horizontal señala inestabilidad",
+          "error_type": "sign_error",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Creer que cruzar el eje horizontal con pendiente descendente hace que el equilibrio sea inestable",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 3
+          },
+          "remediation_hint": "Precisamente una pendiente negativa en la línea de fase garantiza estabilidad: si $k > \\bar{k}$, $\\dot{k} < 0$ y $k$ desciende hacia $\\bar{k}$; si $k < \\bar{k}$, $\\dot{k} > 0$ y $k$ asciende hacia $\\bar{k}$."
+        },
+        {
+          "id": "D-C03-03",
+          "name": "Omisión de la condición de partida de capital estrictamente positivo",
+          "trigger": "Al discutir la convergencia global hacia $\\bar{k}$",
+          "manifestation": "Sostiene que incluso con una economía que parte de $k(0) = 0$ alcanzará espontáneamente $\\bar{k}$",
+          "error_type": "boundary_case",
+          "severity": "medium",
+          "origin": "source",
+          "wrong_belief": "Creer que el equilibrio se alcanza sin dotación inicial de capital a pesar de que el capital es factor indispensable",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 3
+          },
+          "remediation_hint": "Si $K=0$ y $k=0$, el producto es cero y $\\dot{k} = 0$; por lo que la convergencia a $\\bar{k}$ requiere un valor inicial positivo $k(0) > 0$."
+        }
+      ]
+    },
+    {
+      "id": "H-02",
+      "type": "fact",
+      "name": "Definición y propiedades macroeconómicas del estado uniforme (steady state)",
+      "description_latex": "Conocimiento fáctico de la definición de estado uniforme en el modelo de Solow: condición en la cual la relación capital-trabajo permanece constante en $\\bar{k}$, de modo que las variables agregadas de capital ($K$), producto ($Q$) e inversión ($I$) crecen todas a la tasa idéntica y constante $\\lambda$ (la tasa de crecimiento de la fuerza laboral). Se distingue explícitamente del 'estado estacionario' clásico, en el cual las variables no crecen (tasa de crecimiento cero).",
+      "bloom": "Remember",
+      "prerequisites": [
+        "C-03"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 4
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-H02-01",
+          "name": "Confusión entre estado uniforme y estado estacionario clásico",
+          "trigger": "Al definir la dinámica de los agregados económicos en el largo plazo de Solow",
+          "manifestation": "Afirma que en el estado uniforme las variables macroeconómicas agregadas $K$ y $Q$ permanecen estáticas con tasa de crecimiento nula",
+          "error_type": "conceptual_swap",
+          "severity": "high",
+          "origin": "source",
+          "wrong_belief": "Creer que el estado uniforme implica crecimiento cero de los niveles agregados como en un estado estacionario estático",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "El estado uniforme es una generalización donde las variables relevantes crecen a una tasa idéntica $\\lambda > 0$, mientras que en el estado estacionario todas crecen a tasa cero."
+        },
+        {
+          "id": "D-H02-02",
+          "name": "Atribución de crecimiento a las variables intensivas en estado uniforme sin tecnología",
+          "trigger": "Al evaluar el comportamiento del producto por trabajador $q$ en el estado uniforme",
+          "manifestation": "Afirma que el producto por trabajador $\\phi(\\bar{k})$ crece a la tasa $\\lambda$ en el estado uniforme",
+          "error_type": "overgeneralization",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Creer que las variables per cápita también crecen a la tasa $\\lambda$ en ausencia de progreso tecnológico",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "En el estado uniforme sin tecnología, $k = \\bar{k}$ es constante y por ende el producto por trabajador $\\phi(\\bar{k})$ es constante en el tiempo (su tasa de crecimiento es cero)."
+        },
+        {
+          "id": "D-H02-03",
+          "name": "Creencia en la necesidad de intervención exógena para mantener el balance",
+          "trigger": "Al explicar por qué se alcanza el estado de crecimiento uniforme",
+          "manifestation": "Sostiene que el estado uniforme solo se alcanza si el gobierno impone regulaciones directas de inversión como en Domar",
+          "error_type": "other",
+          "severity": "medium",
+          "origin": "source",
+          "wrong_belief": "Creer que alcanzar el estado uniforme requiere una política directiva en lugar de ocurrir de manera automática",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "El modelo de Solow muestra que la economía alcanza el estado uniforme de forma automática por fuerzas de ajuste endógenas del mercado."
+        }
+      ]
+    }
+  ]
+}

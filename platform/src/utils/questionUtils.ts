@@ -1,0 +1,133 @@
+import { Question, QuestionOption } from '../types';
+
+/**
+ * Checks whether an option (by its optId) in the given question is correct.
+ * Handles:
+ * 1. Explicit `opt.is_correct === true` (present in generated courses and validator fixtures).
+ * 2. Letter-based `correct_answer` (e.g. "C", matching opt.option_id "C" or opt.id "opt_c").
+ * 3. Id-based `correct_answer` (e.g. "opt_c", matching opt.id "opt_c").
+ * 4. Multi-select array formats (both ["A", "B"] and ["opt_a", "opt_b"]).
+ */
+export function isOptionCorrect(question: Question, optId: string): boolean {
+  if (!question || !question.options || question.options.length === 0) {
+    return false;
+  }
+
+  const opt = question.options.find((o) => o.id === optId);
+  if (!opt) {
+    return false;
+  }
+
+  // 1. If explicit is_correct boolean exists on option, it is authoritative
+  if (typeof opt.is_correct === 'boolean') {
+    return opt.is_correct === true;
+  }
+
+  // 2. Fall back to comparing against question.correct_answer
+  const rawAnswer = question.correct_answer;
+  if (rawAnswer === undefined || rawAnswer === null) {
+    return false;
+  }
+
+  const optIdStr = (opt.id || '').trim();
+  const optIdLower = optIdStr.toLowerCase();
+  const optLetter = (opt.option_id || optIdStr.replace(/^opt_/, '')).trim().toLowerCase();
+
+  // Case A: Single string correct_answer (MCQ)
+  if (typeof rawAnswer === 'string') {
+    const target = rawAnswer.trim().toLowerCase();
+    if (optIdLower === target) return true;
+    if (optLetter === target) return true;
+    if (optIdLower === `opt_${target}`) return true;
+    if (`opt_${optLetter}` === target) return true;
+    return false;
+  }
+
+  // Case B: Array of correct answers (Multiple Select)
+  if (Array.isArray(rawAnswer)) {
+    const targetList = rawAnswer.map((t) => String(t).trim().toLowerCase());
+    return targetList.some(
+      (t) =>
+        t === optIdLower ||
+        t === optLetter ||
+        `opt_${t}` === optIdLower ||
+        t === `opt_${optLetter}`
+    );
+  }
+
+  // Case C: Numeric correct answer
+  if (typeof rawAnswer === 'number') {
+    return String(rawAnswer) === opt.id || String(rawAnswer) === opt.option_id;
+  }
+
+  return false;
+}
+
+/**
+ * Returns canonical list of option IDs that are correct for the question.
+ */
+export function getCorrectOptionIds(question: Question): string[] {
+  if (!question || !question.options) {
+    return [];
+  }
+  return question.options
+    .filter((opt) => isOptionCorrect(question, opt.id))
+    .map((opt) => opt.id);
+}
+
+/**
+ * Normalizes a question so that:
+ * 1. Every option in `options` has a valid `id`, `option_id`, and `is_correct` boolean.
+ * 2. `correct_answer` is aligned with the option IDs for both MCQ and Multiple Select.
+ */
+export function normalizeQuestion(question: Question): Question {
+  if (!question) {
+    return question;
+  }
+
+  const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+
+  if (!question.options || question.options.length === 0) {
+    return { ...question };
+  }
+
+  // First pass: ensure basic IDs and determine correctness
+  const normalizedOptions: QuestionOption[] = question.options.map((opt, idx) => {
+    const fallbackLetter = OPTION_LETTERS[idx] || `${idx + 1}`;
+    const id = opt.id || (opt.option_id ? `opt_${opt.option_id.toLowerCase()}` : `opt_${fallbackLetter.toLowerCase()}`);
+    const option_id = opt.option_id || id.replace(/^opt_/, '').toUpperCase();
+    
+    const isCorrect = typeof opt.is_correct === 'boolean'
+      ? opt.is_correct
+      : isOptionCorrect(question, opt.id || id);
+
+    return {
+      ...opt,
+      id,
+      option_id,
+      is_correct: isCorrect,
+    };
+  });
+
+  const q: Question = {
+    ...question,
+    options: normalizedOptions,
+  };
+
+  // Align correct_answer with option IDs for runtime consistency
+  if (q.type === 'multiple_choice_7_options') {
+    const correctOpt = normalizedOptions.find((o) => o.is_correct === true);
+    if (correctOpt) {
+      q.correct_answer = correctOpt.id;
+    }
+  } else if (q.type === 'multiple_select') {
+    const correctIds = normalizedOptions
+      .filter((o) => o.is_correct === true)
+      .map((o) => o.id);
+    if (correctIds.length > 0) {
+      q.correct_answer = correctIds;
+    }
+  }
+
+  return q;
+}

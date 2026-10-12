@@ -1,0 +1,49 @@
+# ==============================================================================
+# Top's Academy / Competence Analyser - .gitignore
+# ==============================================================================
+
+# 1. Dependencias y Paquetes Externos
+node_modules/
+platform/node_modules/
+package-lock.json.bak
+
+# 2. Artefactos de Build y Compilación Frontend
+platform/dist/
+dist/
+build/
+tests/dist/
+
+# 3. Cachés y Artefactos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+src/*.egg-info/
+.pytest_cache/
+
+# 4. Pipelines Transitorios y Carpetas de Trabajo (Zero-Bloat)
+work/
+work_test_v3/
+**/work/
+**/work/**
+
+# 5. Materiales de Estudio de Entrada (Fuentes Pesadas / Escalamiento Externo)
+# Los materiales fuente (PDFs/PNGs pesados) viven fuera del control de versiones
+content/*
+!content/README.md
+sample_content/*
+!sample_content/README.md
+
+# 6. Artefactos de Testing y Screenshots E2E
+tests/e2e/screenshots/
+
+# 7. Scratch y Archivos Temporales de Desarrollo
+scratch/
+*.tmp
+*.temp
+
+# 8. Logs y Archivos de Sistema Operativo
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini

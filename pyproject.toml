@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "competence-analyser"
+version = "1.0.0"
+description = "Top's Academy Course and Validator System"
+authors = [{ name = "Top's Academy Team" }]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "jsonschema>=4.20.0",
+    "pydantic>=2.0.0",
+    "sympy>=1.12",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "PyMuPDF>=1.23.0",
+    "Pillow>=10.0.0",
+]
+
+[project.scripts]
+validate-course = "validator.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "src"]

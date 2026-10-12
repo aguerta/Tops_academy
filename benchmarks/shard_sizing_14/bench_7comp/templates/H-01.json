@@ -1,0 +1,152 @@
+{
+  "competency_id": "H-01",
+  "templates": [
+    {
+      "id": "T-H01-01",
+      "competency_id": "H-01",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "En el análisis macroeconómico del crecimiento con una tasa de ahorro-inversión del {inv_rate}% y productividad del capital $\\rho = {rho_val}\\%$, compare los postulados de Solow frente a Domar. Seleccione todas las afirmaciones correctas:",
+      "stem_variants": [
+        "En el análisis macroeconómico del crecimiento con una tasa de ahorro-inversión del {inv_rate}% y productividad del capital $\\rho = {rho_val}\\%$, compare los postulados de Solow frente a Domar. Seleccione todas las afirmaciones correctas:",
+        "Considere una economía en desarrollo que ahorra el {inv_rate}% de su producto y cuenta con un coeficiente $\\rho = {rho_val}\\%$. Al contrastar el modelo de Solow con el de Harrod-Domar, ¿cuáles de las siguientes proposiciones son válidas?",
+        "Desde una perspectiva estructural comparada bajo una tasa de acumulación de capital del {inv_rate}% y $\\rho = {rho_val}\\%$, evalúe los supuestos tecnológicos de Solow y Domar. Elija todas las opciones correctas:",
+        "Al examinar la transición teórica del modelo de Domar al de Solow para una economía con tasa de inversión igual al {inv_rate}% y $\\rho = {rho_val}\\%$, identifique todas las afirmaciones teóricamente verdaderas:"
+      ],
+      "generate_py": "def generate(rng):\n    inv_rate = rng.randint(12, 35)\n    rho_val = rng.choice([20, 25, 30, 35, 40, 50])\n    opts = [\n        {\n            'content': 'Solow introduce sustitución factorial continua $Q = f(K, L)$ con proporciones variables, superando el crecimiento en filo de navaja.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'En el modelo de Domar la producción agregada responde a una relación proporcional rígida $\\\\kappa = \\\\rho K$, sin sustitución entre factores.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'El modelo de Domar asumió originalmente una tecnología neoclásica con sustitución factorial fluida entre mano de obra y capital.',\n            'is_correct': False,\n            'distractor_id': 'D-H01-01',\n            'error_rationale': 'El modelo de Domar asume proporciones fijas (función $\\\\kappa = \\\\rho K$) y carece de sustitución factorial entre capital y trabajo.'\n        },\n        {\n            'content': 'Solow adoptó una función de coeficientes técnicos fijos de tipo Leontief para modelar la rigidez factorial agregada.',\n            'is_correct': False,\n            'distractor_id': 'D-H01-02',\n            'error_rationale': 'Solow rechazó explícitamente los coeficientes fijos e introdujo proporciones variables con sustitución continua.'\n        },\n        {\n            'content': 'La sustitución factorial en Solow permite que la relación capital-trabajo $k = K/L$ varíe de forma continua para equilibrar la economía.',\n            'is_correct': True,\n            'distractor_id': None\n        }\n    ]\n    return {\n        'vars': {'inv_rate': inv_rate, 'rho_val': rho_val},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    c_opts = [o for o in result.get('options', []) if o.get('is_correct')]\n    i_opts = [o for o in result.get('options', []) if not o.get('is_correct')]\n    return len(c_opts) == 3 and len(i_opts) == 2",
+      "hints": [
+        "Revise las hipótesis de la función de producción en el modelo de Domar frente al modelo neoclásico de Solow.",
+        "Identifique si el modelo de Domar permitía o no sustituir capital por trabajo.",
+        "Recuerde que la innovación seminal de Solow fue permitir proporciones variables $Q = f(K, L)$ con una tasa de ahorro del {inv_rate}%."
+      ],
+      "solution": "En el modelo de Domar, la función de producción asume proporciones fijas ($\\kappa = \\rho K$), lo que genera la trayectoria de filo de navaja. La innovación de Solow consistió en postular proporciones variables $Q = f(K, L)$ con sustitución factorial, permitiendo el ajuste dinámico continuo con una tasa de ahorro del {inv_rate}%.",
+      "distractor_ids": [
+        "D-H01-01",
+        "D-H01-02"
+      ]
+    },
+    {
+      "id": "T-H01-02",
+      "competency_id": "H-01",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Para una economía con tasa de crecimiento poblacional $n = {n_rate}\\%$, ahorro $s = {s_rate}\\%$ y depreciación $\\delta = {delta_rate}\\%$, analice la resolución que ofrece Solow frente al filo de navaja de Domar. Marque todas las opciones verdaderas:",
+      "stem_variants": [
+        "Para una economía con tasa de crecimiento poblacional $n = {n_rate}\\%$, ahorro $s = {s_rate}\\%$ y depreciación $\\delta = {delta_rate}\\%$, analice la resolución que ofrece Solow frente al filo de navaja de Domar. Marque todas las opciones verdaderas:",
+        "Al evaluar la trayectoria dinámica de largo plazo con demografía $n = {n_rate}\\%$, tasa de ahorro $s = {s_rate}\\%$ y $\\delta = {delta_rate}\\%$, ¿qué proposiciones explican adecuadamente la crítica de Solow a Harrod-Domar?",
+        "Bajo las condiciones macroeconómicas $n = {n_rate}\\%$, $s = {s_rate}\\%$ y $\\delta = {delta_rate}\\%$, examine el contraste metodológico entre Solow y Domar sobre el filo de navaja. Seleccione todas las afirmaciones teóricamente rigurosas:",
+        "Considere el problema analítico del filo de navaja de Domar frente a la respuesta de Solow para parámetros $n = {n_rate}\\%$, $s = {s_rate}\\%$ y tasa de desgaste $\\delta = {delta_rate}\\%$. Identifique todas las proposiciones ciertas:"
+      ],
+      "generate_py": "def generate(rng):\n    n_rate = rng.randint(1, 5)\n    s_rate = rng.randint(10, 30)\n    delta_rate = rng.randint(2, 8)\n    opts = [\n        {\n            'content': 'Solow demuestra que la inestabilidad de filo de navaja de Domar era resultado del supuesto restrictivo de proporciones factoriales fijas.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'El modelo de Solow confirma la inevitabilidad del sendero en filo de navaja, concluyendo que el crecimiento capitalista es siempre inestable.',\n            'is_correct': False,\n            'distractor_id': 'D-H01-03',\n            'error_rationale': 'Solow demuestra lo opuesto: con proporciones variables no surge el filo de navaja y el sistema converge a un equilibrio estable.'\n        },\n        {\n            'content': 'En el marco de Solow se impone la hipótesis de coeficientes técnicos fijos e inmutables ante variaciones en la dotación factorial.',\n            'is_correct': False,\n            'distractor_id': 'D-H01-02',\n            'error_rationale': 'El aporte central de Solow es abandonar los coeficientes fijos y adoptar proporciones variables.'\n        },\n        {\n            'content': 'Con proporciones variables, el ajuste de la relación capital-trabajo $k$ asegura la convergencia estable al estado estacionario.',\n            'is_correct': True,\n            'distractor_id': None\n        }\n    ]\n    return {\n        'vars': {'n_rate': n_rate, 's_rate': s_rate, 'delta_rate': delta_rate},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    c_opts = [o for o in result.get('options', []) if o.get('is_correct')]\n    return len(c_opts) == 2 and result['vars']['n_rate'] >= 1",
+      "hints": [
+        "Recuerde cuál era el objetivo del modelo de Solow respecto a los resultados de Harrod y Domar.",
+        "Considere si el filo de navaja era visto por Solow como una realidad inevitable o como consecuencia de un supuesto tecnológico rígido.",
+        "Analice cómo la tasa de crecimiento demográfico $n = {n_rate}\\%$ es absorbida mediante la variación de $k$."
+      ],
+      "solution": "Solow demostró que el equilibrio en filo de navaja surge artificialmente de la rigidez en las proporciones de factores en Harrod-Domar. Al permitir proporciones variables con tasa $n = {n_rate}\\%$ y ahorro $s = {s_rate}\\%$, la economía converge endógenamente al estado estacionario.",
+      "distractor_ids": [
+        "D-H01-02",
+        "D-H01-03"
+      ]
+    },
+    {
+      "id": "T-H01-03",
+      "competency_id": "H-01",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere una economía con dotación capital-trabajo $k = {k_ratio}$ y parámetro de productividad $\\rho = {rho_param}\\%$. Al contrastar los fundamentos de la función de producción en Domar frente a Solow, elija todas las afirmaciones correctas:",
+      "stem_variants": [
+        "Considere una economía con dotación capital-trabajo $k = {k_ratio}$ y parámetro de productividad $\\rho = {rho_param}\\%$. Al contrastar los fundamentos de la función de producción en Domar frente a Solow, elija todas las afirmaciones correctas:",
+        "Un estudio de crecimiento económico evalúa la relación capital-trabajo observada $k = {k_ratio}$ y $\\rho = {rho_param}\\%$ a la luz de los modelos de Domar y Solow. ¿Cuáles de las siguientes proposiciones son teóricamente válidas?",
+        "Analice las premisas de la función de producción agregada en Domar frente a la formulación neoclásica de Solow para un nivel de capital por trabajador $k = {k_ratio}$ y $\\rho = {rho_param}\\%$. Seleccione las aseveraciones verdaderas:",
+        "Bajo los parámetros tecnológicos $k = {k_ratio}$ y $\\rho = {rho_param}\\%$, examine el contraste en los postulados de sustitución de factores entre Domar y Solow. Identifique todas las proposiciones ciertas:"
+      ],
+      "generate_py": "def generate(rng):\n    k_ratio = rng.randint(2, 25)\n    rho_param = rng.choice([15, 20, 25, 30, 35, 40])\n    opts = [\n        {\n            'content': 'La función de Domar $\\\\kappa = \\\\rho K$ establece que el producto depende únicamente del capital con coeficiente fijo, prescindiendo de sustitución factorial.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'El modelo de Domar permitía que las empresas sustituyeran mano de obra por maquinaria ante cambios en la remuneración factorial.',\n            'is_correct': False,\n            'distractor_id': 'D-H01-01',\n            'error_rationale': 'El modelo de Domar no incluye sustitución factorial; asume coeficientes rígidos donde el producto depende únicamente del capital.'\n        },\n        {\n            'content': 'El objetivo fundamental de Solow fue defender que el crecimiento en filo de navaja es el único equilibrio posible en economías de mercado.',\n            'is_correct': False,\n            'distractor_id': 'D-H01-03',\n            'error_rationale': 'Solow formuló su modelo para superar el filo de navaja, mostrando que con proporciones variables el crecimiento converge a un equilibrio estable.'\n        },\n        {\n            'content': 'En Solow, la flexibilidad en la relación capital-trabajo $k = K/L$ permite absorber el crecimiento de la fuerza de trabajo sin desempleo permanente.',\n            'is_correct': True,\n            'distractor_id': None\n        }\n    ]\n    return {\n        'vars': {'k_ratio': k_ratio, 'rho_param': rho_param},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    c_opts = [o for o in result.get('options', []) if o.get('is_correct')]\n    return len(c_opts) == 2 and result['vars']['k_ratio'] >= 2",
+      "hints": [
+        "Examine cómo se formaliza la función de producción en el modelo de Domar (dependencia exclusiva de K).",
+        "Verifique si Domar permitía la sustitución continua entre factores ante variaciones de salarios.",
+        "Recuerde que con $k = {k_ratio}$, Solow concibe el ajuste a través de la flexibilidad factorial."
+      ],
+      "solution": "La función de Domar $\\kappa = \\rho K$ implica coeficientes técnicos fijos y ausencia de sustitución factorial. Solow supera esto con proporciones variables $Q = f(K, L)$, permitiendo que la economía alcance estabilidad para cualquier dotación $k = {k_ratio}$.",
+      "distractor_ids": [
+        "D-H01-01",
+        "D-H01-03"
+      ]
+    },
+    {
+      "id": "T-H01-04",
+      "competency_id": "H-01",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el modelo de crecimiento de Domar con proporciones fijas, si la propensión al ahorro es $s = {s}\\%$ y la productividad del capital es $\\rho = {rho}$, calcule la tasa de crecimiento porcentual requerida de la inversión $g = s \\rho$:",
+      "stem_variants": [
+        "En el modelo de crecimiento de Domar con proporciones fijas, si la propensión al ahorro es $s = {s}\\%$ y la productividad del capital es $\\rho = {rho}$, calcule la tasa de crecimiento porcentual requerida de la inversión $g = s \\rho$:",
+        "Bajo los supuestos de rigidez factorial de Harrod-Domar, calcule el valor porcentual de la tasa de crecimiento garantizada $g = s \\rho$ cuando $s = {s}\\%$ y $\\rho = {rho}$:",
+        "Determine la tasa porcentual de expansión de la inversión $g = s \\rho$ que previene la capacidad ociosa en el modelo de Domar con ahorro $s = {s}\\%$ y coeficiente $\\rho = {rho}$:",
+        "Para una economía descrita por el modelo de Domar con parámetros $s = {s}\\%$ y $\\rho = {rho}$, halle la tasa requerida de acumulación $g = s \\rho$ en términos porcentuales:"
+      ],
+      "generate_py": "def generate(rng):\n    s = rng.randint(10, 30)\n    rho_tenth = rng.choice([2, 3, 4, 5])\n    g_val = round((s * rho_tenth) / 10.0, 2)\n    rho_str = f\"0.{rho_tenth}\"\n    return {\n        'vars': {'s': s, 'rho': rho_str, 'g': g_val},\n        'correct': g_val,\n        'value': str(g_val),\n        'canonical_algebraic': str(g_val),\n        'accepted_equivalents': [str(g_val), f\"{g_val:.1f}\" if g_val == int(g_val) else f\"{g_val:.2f}\"],\n        'tolerance': 0.01,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    s = result['vars']['s']\n    rho = float(result['vars']['rho'])\n    expected = round(s * rho, 2)\n    return abs(float(result['correct']) - expected) < 1e-4",
+      "hints": [
+        "Identifique los valores de la tasa de ahorro s y la productividad del capital rho en el enunciado.",
+        "Aplique la relación lineal de Domar g = s * rho.",
+        "Multiplique el porcentaje {s} por {rho} para obtener la tasa porcentual final."
+      ],
+      "solution": "En el modelo de Domar, la tasa requerida de crecimiento de la inversión es g = s * rho = {s} * {rho} = {g}%.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-H01-05",
+      "competency_id": "H-01",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "En el modelo de Solow, si el acervo de capital agregado es $K = {K_val}$ y el volumen de empleo es $L = {L_val}$, calcule el valor de la relación capital-trabajo $k = K/L$:",
+      "stem_variants": [
+        "En el modelo de Solow, si el acervo de capital agregado es $K = {K_val}$ y el volumen de empleo es $L = {L_val}$, calcule el valor de la relación capital-trabajo $k = K/L$:",
+        "Para una economía neoclásica con $K = {K_val}$ unidades de capital y $L = {L_val}$ trabajadores, determine el valor numérico del capital por trabajador $k = K/L$:",
+        "Calcule la intensidad de capital $k = K/L$ postulada en la formulación de Solow cuando la dotación total es $K = {K_val}$ y la mano de obra es $L = {L_val}$:",
+        "Dada una economía sujeta al modelo de Solow con factores de producción $K = {K_val}$ y $L = {L_val}$, halle el valor escalar de $k = K/L$:"
+      ],
+      "generate_py": "def generate(rng):\n    L_val = rng.randint(4, 25)\n    k_val = rng.randint(2, 18)\n    K_val = k_val * L_val\n    return {\n        'vars': {'K_val': K_val, 'L_val': L_val, 'k_val': k_val},\n        'correct': k_val,\n        'value': str(k_val),\n        'canonical_algebraic': str(k_val),\n        'accepted_equivalents': [str(k_val), f\"{k_val}.0\"],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    return result['vars']['K_val'] == result['vars']['L_val'] * result['vars']['k_val'] and int(result['correct']) == result['vars']['k_val']",
+      "hints": [
+        "La variable fundamental en la formulación intensiva de Solow es el capital por trabajador k = K / L.",
+        "Divida el capital total {K_val} entre la fuerza de trabajo {L_val}.",
+        "El cociente exacto representa la intensidad de capital de la economía."
+      ],
+      "solution": "La relación capital-trabajo es k = K / L = {K_val} / {L_val} = {k_val}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-H01-06",
+      "competency_id": "H-01",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "hard",
+      "bloom": "Apply",
+      "stem": "En el modelo de Domar con función de producción de proporciones fijas $Y = \\rho K$, si la productividad del capital es $\\rho = {rho_int}\\%$ y el capital instalado es $K = {K_val}$, calcule el nivel de producto $Y$:",
+      "stem_variants": [
+        "En el modelo de Domar con función de producción de proporciones fijas $Y = \\rho K$, si la productividad del capital es $\\rho = {rho_int}\\%$ y el capital instalado es $K = {K_val}$, calcule el nivel de producto $Y$:",
+        "Bajo la función de producción de Domar sin sustitución factorial, halle el producto agregado $Y = \\rho K$ cuando $\\rho = {rho_int}\\%$ y el stock de capital asciende a $K = {K_val}$:",
+        "Determine el producto $Y$ generado por una capacidad instalada $K = {K_val}$ en el esquema de Domar donde la relación producto-capital es $\\rho = {rho_int}\\%$:",
+        "Calcule el nivel de producción agregada $Y = \\rho K$ que predice el modelo de Domar con parámetro tecnológico $\\rho = {rho_int}\\%$ y dotación de capital $K = {K_val}$:"
+      ],
+      "generate_py": "def generate(rng):\n    rho_int = rng.choice([20, 25, 40, 50])\n    K_mult = rng.randint(10, 80)\n    K_val = K_mult * 10\n    Y_val = int((rho_int / 100.0) * K_val)\n    return {\n        'vars': {'rho_int': rho_int, 'K_val': K_val, 'Y_val': Y_val},\n        'correct': Y_val,\n        'value': str(Y_val),\n        'canonical_algebraic': str(Y_val),\n        'accepted_equivalents': [str(Y_val), f\"{Y_val}.0\"],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    return int(result['correct']) == result['vars']['Y_val']",
+      "hints": [
+        "Recuerde la función de producción de Domar: Y = rho * K.",
+        "Convierta la productividad {rho_int}% a fracción decimal multiplicando por K = {K_val}.",
+        "Efectúe el producto directo entre rho y K."
+      ],
+      "solution": "El producto en el modelo de Domar es Y = rho * K = ({rho_int}/100) * {K_val} = {Y_val}.",
+      "distractor_ids": []
+    }
+  ]
+}

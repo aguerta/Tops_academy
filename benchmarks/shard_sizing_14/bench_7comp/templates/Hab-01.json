@@ -1,0 +1,163 @@
+{
+  "competency_id": "Hab-01",
+  "templates": [
+    {
+      "id": "T-Hab01-01",
+      "competency_id": "Hab-01",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Para la ecuación diferencial autónoma $\\dot{y} = y^2 - {S}y + {P}$ en el dominio $y \\ge 0$, determine los puntos de equilibrio y su correspondiente clasificación de estabilidad dinámica:",
+      "stem_variants": [
+        "Para la ecuación diferencial autónoma $\\dot{y} = y^2 - {S}y + {P}$ en el dominio $y \\ge 0$, determine los puntos de equilibrio y su correspondiente clasificación de estabilidad dinámica:",
+        "En un modelo de ajuste no lineal de estado estacionario donde $\\dot{y} = y^2 - {S}y + {P}$ con variable económica $y \\ge 0$, determine los niveles de equilibrio admisibles y su estabilidad:",
+        "Analice analíticamente la línea de fase para el campo $\\dot{y} = y^2 - {S}y + {P}$ con $y \\ge 0$, calculando sus raíces de reposo y la estabilidad según la derivada $\\frac{d\\dot{y}}{dy}$:",
+        "A partir de la línea de fase $\\dot{y} = y^2 - {S}y + {P}$ para $y \\ge 0$, identifique las intersecciones con el eje horizontal y la naturaleza dinámica de cada equilibrio:"
+      ],
+      "generate_py": "def generate(rng):\n    r1 = rng.randint(2, 10)\n    diff = rng.randint(2, 10)\n    r2 = r1 + diff\n    S = r1 + r2\n    P = r1 * r2\n    s1 = r1 - r2\n    s2 = r2 - r1\n    correct_str = f'Equilibrios en $y = {r1}$ (estable, derivada {s1}) e $y = {r2}$ (inestable, derivada +{s2}).'\n    d1 = f'Equilibrios en $y = {r1}$ e $y = {r2}$, catalogados estables sin evaluar la derivada de fase.'\n    d2 = f'Equilibrios en $y = -{r1}$ e $y = -{r2}$, aceptando raíces negativas que violan el dominio $y \\\\ge 0$.'\n    d3 = f'Equilibrios en $y = -{r1}$ e $y = -{r2}$, tras factorizar erróneamente con signos positivos.'\n    d4 = f'Equilibrios trazando la línea de fase frente al tiempo $t$ en vez de la variable de estado $y$.'\n    d5 = f'Equilibrios en $y = {r1}$ e $y = {r2}$, calculando la derivada errónea como $y - {S}$ en vez de $2y - {S}$.'\n    d6 = f'Equilibrios en $y = {r1}$ (inestable) e $y = {r2}$ (estable por presentar pendiente positiva +{s2}).'\n    return {\n        'vars': {'r1': r1, 'r2': r2, 'S': S, 'P': P, 's1': s1, 's2': s2},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab01-01'},\n            {'value': d2, 'distractor_id': 'D-Hab01-02'},\n            {'value': d3, 'distractor_id': 'D-Hab01-03'},\n            {'value': d4, 'distractor_id': 'D-Hab01-04'},\n            {'value': d5, 'distractor_id': 'D-Hab01-05'},\n            {'value': d6, 'distractor_id': 'D-Hab01-06'}\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    r1 = result['vars']['r1']\n    r2 = result['vars']['r2']\n    S = result['vars']['S']\n    P = result['vars']['P']\n    return r1 + r2 == S and r1 * r2 == P and r1 < r2",
+      "hints": [
+        "Factorice el polinomio cuadrático y^2 - S*y + P para hallar las raíces donde \\dot{y} = 0.",
+        "Calcule la derivada de primer orden respecto al estado: d/dy(\\dot{y}) = 2y - S.",
+        "Evalúe dicha derivada en cada raíz: una pendiente negativa indica convergencia estable y una positiva indica inestabilidad."
+      ],
+      "solution": "Factorizando obtenemos (y - {r1})(y - {r2}) = 0, con equilibrios en y = {r1} e y = {r2}. La derivada es 2y - {S}. En y = {r1}, la derivada es {s1} < 0 (estable). En y = {r2}, la derivada es +{s2} > 0 (inestable).",
+      "distractor_ids": [
+        "D-Hab01-01",
+        "D-Hab01-02",
+        "D-Hab01-03",
+        "D-Hab01-04",
+        "D-Hab01-05",
+        "D-Hab01-06"
+      ]
+    },
+    {
+      "id": "T-Hab01-02",
+      "competency_id": "Hab-01",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Para la ecuación logística autónoma $\\dot{y} = {K}y - y^2$ definida en el dominio económico $y \\ge 0$, determine los puntos de equilibrio y la estabilidad dinámica de cada uno:",
+      "stem_variants": [
+        "Para la ecuación logística autónoma $\\dot{y} = {K}y - y^2$ definida en el dominio económico $y \\ge 0$, determine los puntos de equilibrio y la estabilidad dinámica de cada uno:",
+        "En un modelo de crecimiento de recursos con dinámica $\\dot{y} = {K}y - y^2$ y estado admisible $y \\ge 0$, establezca los niveles de equilibrio y su carácter asintótico:",
+        "A partir de la línea de fase para $\\dot{y} = {K}y - y^2$ con $y \\ge 0$, calcule la derivada $\\frac{d\\dot{y}}{dy}$ en cada estado estacionario y clasifique su estabilidad:",
+        "Considere la parábola de fase $\\dot{y} = {K}y - y^2$ en el semiplano $y \\ge 0$. Identifique los puntos de corte con el eje horizontal y su convergencia dinámica:"
+      ],
+      "generate_py": "def generate(rng):\n    K = rng.randint(3, 30)\n    correct_str = f'Equilibrios en $y = 0$ (inestable, pendiente +{K}) e $y = {K}$ (estable, pendiente -{K}).'\n    d1 = f'Equilibrios en $y = 0$ e $y = {K}$, afirmando estabilidad sin evaluar formalmente la derivada.'\n    d2 = f'Equilibrios en $y = -{K}$ e $y = 0$, aceptando una raíz negativa que viola el dominio $y \\\\ge 0$.'\n    d3 = f'Equilibrios en $y = -{K}$ e $y = 0$, al cometer un error de signo al despejar el factor lineal.'\n    d4 = f'Equilibrios trazando la curva contra el eje temporal $t$ en vez de la variable de estado $y$.'\n    d5 = f'Equilibrios en $y = 0$ e $y = {K}$, derivando erróneamente la función de fase como ${K} - y$.'\n    d6 = f'Equilibrios en $y = 0$ (estable por pendiente +{K}) e $y = {K}$ (inestable por pendiente -{K}).'\n    return {\n        'vars': {'K': K},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab01-01'},\n            {'value': d2, 'distractor_id': 'D-Hab01-02'},\n            {'value': d3, 'distractor_id': 'D-Hab01-03'},\n            {'value': d4, 'distractor_id': 'D-Hab01-04'},\n            {'value': d5, 'distractor_id': 'D-Hab01-05'},\n            {'value': d6, 'distractor_id': 'D-Hab01-06'}\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    K = result['vars']['K']\n    return K >= 3 and f'pendiente -{K}' in result['correct']",
+      "hints": [
+        "Extraiga el factor común y para plantear la condición de equilibrio: y(K - y) = 0.",
+        "Calcule la derivada de la tasa temporal respecto al estado: d/dy(\\dot{y}) = K - 2y.",
+        "Evalúe la derivada en y = 0 (pendiente positiva, inestable) y en y = K (pendiente negativa, estable)."
+      ],
+      "solution": "Igualando a cero: y({K} - y) = 0, con soluciones y = 0 e y = {K}. La derivada de fase es K - 2y. En y = 0 la pendiente es +{K} > 0 (inestable); en y = {K} la pendiente es -{K} < 0 (estable).",
+      "distractor_ids": [
+        "D-Hab01-01",
+        "D-Hab01-02",
+        "D-Hab01-03",
+        "D-Hab01-04",
+        "D-Hab01-05",
+        "D-Hab01-06"
+      ]
+    },
+    {
+      "id": "T-Hab01-03",
+      "competency_id": "Hab-01",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Para la ecuación diferencial autónoma $\\dot{y} = {a}y - {b}y^2$ restringida al dominio $y > 0$, determine el valor numérico del punto de equilibrio no nulo $\\bar{y}$:",
+      "stem_variants": [
+        "Para la ecuación diferencial autónoma $\\dot{y} = {a}y - {b}y^2$ restringida al dominio $y > 0$, determine el valor numérico del punto de equilibrio no nulo $\\bar{y}$:",
+        "En una dinámica poblacional regida por $\\dot{y} = {a}y - {b}y^2$, calcule el nivel de equilibrio positivo $\\bar{y}$ correspondiente a la capacidad de carga del sistema:",
+        "Encuentre la raíz estrictamente positiva $\\bar{y} > 0$ que satisface la condición de estado estacionario $f(y) = {a}y - {b}y^2 = 0$:",
+        "Determine la coordenada no nula $y = \\bar{y}$ donde la curva de fase parabólica $\\dot{y} = {a}y - {b}y^2$ corta el eje horizontal:"
+      ],
+      "generate_py": "def generate(rng):\n    b = rng.randint(2, 8)\n    k = rng.randint(3, 25)\n    a = b * k\n    return {\n        'vars': {'a': a, 'b': b, 'k': k},\n        'correct': k,\n        'value': str(k),\n        'canonical_algebraic': str(k),\n        'accepted_equivalents': [str(k), f'{k}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    a = result['vars']['a']\n    b = result['vars']['b']\n    k = result['vars']['k']\n    return a == b * k and int(result['correct']) == k",
+      "hints": [
+        "Plantee la ecuación de estado estacionario \\dot{y} = 0.",
+        "Dado que y > 0, divida la ecuación entre y para obtener a - b*y = 0.",
+        "Despeje la variable de estado obteniendo y = a / b."
+      ],
+      "solution": "Haciendo \\dot{y} = y({a} - {b}y) = 0, y descartando la solución trivial y = 0 dado que y > 0, se obtiene {a} - {b}y = 0, por lo que \\bar{y} = {a} / {b} = {k}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab01-04",
+      "competency_id": "Hab-01",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere la ecuación autónoma $\\dot{y} = {a}y - {b}y^2$ con equilibrio positivo en $\\bar{y} = {k}$. Calcule el valor numérico de la derivada de fase $\\frac{d\\dot{y}}{dy}$ evaluada en dicho equilibrio $\\bar{y}$:",
+      "stem_variants": [
+        "Considere la ecuación autónoma $\\dot{y} = {a}y - {b}y^2$ con equilibrio positivo en $\\bar{y} = {k}$. Calcule el valor numérico de la derivada de fase $\\frac{d\\dot{y}}{dy}$ evaluada en dicho equilibrio $\\bar{y}$:",
+        "En la ley de movimiento $\\dot{y} = {a}y - {b}y^2$ con estado estacionario $\\bar{y} = {k}$, determine la pendiente $\\frac{d\\dot{y}}{dy}$ que califica la velocidad de estabilización:",
+        "Para el campo polinómico $f(y) = {a}y - {b}y^2$, evalúe analíticamente la derivada ordinaria $f'(y)$ en el punto crítico $y = {k}$:",
+        "Determine la pendiente de la recta tangente a la línea de fase $\\dot{y} = {a}y - {b}y^2$ en su punto de intersección $y = {k}$:"
+      ],
+      "generate_py": "def generate(rng):\n    b = rng.randint(2, 6)\n    k = rng.randint(2, 15)\n    a = b * k\n    slope = -a\n    return {\n        'vars': {'a': a, 'b': b, 'k': k, 'slope': slope},\n        'correct': slope,\n        'value': str(slope),\n        'canonical_algebraic': str(slope),\n        'accepted_equivalents': [str(slope), f'{slope}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    a = result['vars']['a']\n    slope = result['vars']['slope']\n    return slope == -a and int(result['correct']) == -a",
+      "hints": [
+        "Calcule formalmente la derivada d/dy(a*y - b*y^2) utilizando la regla de la potencia.",
+        "La derivada analítica es f'(y) = a - 2*b*y.",
+        "Sustituya y = k (donde a = b*k) para hallar el valor numérico final."
+      ],
+      "solution": "La derivada de la función de fase es f'(y) = {a} - 2({b})y. Evaluando en y = {k}, obtenemos f'({k}) = {a} - 2({b})({k}) = {a} - 2({a}) = -{a}. Al ser negativa, confirma que el equilibrio es estable.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab01-05",
+      "competency_id": "Hab-01",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Considere la ecuación cuadrática $\\dot{y} = y^2 - {S}y + {P}$ en el dominio $y \\ge 0$. ¿Cuáles de las siguientes afirmaciones sobre la línea de fase y la estabilidad son correctas?",
+      "stem_variants": [
+        "Considere la ecuación cuadrática $\\dot{y} = y^2 - {S}y + {P}$ en el dominio $y \\ge 0$. ¿Cuáles de las siguientes afirmaciones sobre la línea de fase y la estabilidad son correctas?",
+        "Para un proceso de dinámica no lineal gobernado por $\\dot{y} = y^2 - {S}y + {P}$ con variable económica no negativa $y \\ge 0$, seleccione las propiedades dinámicas válidas:",
+        "Sea el campo autónomo $\\dot{y} = f(y) = y^2 - {S}y + {P}$ con raíces positivas {r1} y {r2}. Identifique todas las proposiciones rigurosas sobre la derivada $f'(y)$ y el comportamiento de las órbitas:",
+        "A partir de la parábola de fase que describe $\\dot{y} = y^2 - {S}y + {P}$ para $y \\ge 0$, determine qué aseveraciones geométricas y cualitativas son ciertas:"
+      ],
+      "generate_py": "def generate(rng):\n    r1 = rng.randint(2, 10)\n    diff = rng.randint(2, 8)\n    r2 = r1 + diff\n    S = r1 + r2\n    P = r1 * r2\n    s1 = r1 - r2\n    s2 = r2 - r1\n    opts = [\n        {'content': f'El equilibrio menor $y = {r1}$ es asintóticamente estable porque la derivada de fase cumple $\\\\frac{{d\\\\dot{{y}}}}{{dy}} = {s1} < 0$.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'El equilibrio mayor $y = {r2}$ es dinámicamente inestable porque la derivada de fase cumple $\\\\frac{{d\\\\dot{{y}}}}{{dy}} = +{s2} > 0$.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'Las raíces de equilibrio del sistema son $y = -{r1}$ e $y = -{r2}$ obtenidas por factorización directa.', 'is_correct': False, 'error_rationale': 'Error de signos en la factorización de polinomios cuadráticos: el polinomio y^2 - Sy + P tiene raíces positivas.', 'distractor_id': 'D-Hab01-03'},\n        {'content': f'La derivada de la velocidad de fase respecto a $y$ es idéntica a $y - {S}$ en todo el espacio de estados.', 'is_correct': False, 'error_rationale': 'Desliz algebraico en la derivada polinómica: la derivada de y^2 es 2y, por lo que la derivada total es 2y - S.', 'distractor_id': 'D-Hab01-05'}\n    ]\n    return {\n        'vars': {'r1': r1, 'r2': r2, 'S': S, 'P': P, 's1': s1, 's2': s2},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    r1 = result['vars']['r1']\n    r2 = result['vars']['r2']\n    S = result['vars']['S']\n    P = result['vars']['P']\n    return r1 + r2 == S and r1 * r2 == P",
+      "hints": [
+        "Verifique las raíces factorizando el trinomio como (y - r1)(y - r2) = 0.",
+        "Obtenga la función derivada d/dy(\\dot{y}) = 2y - S mediante derivación polinómica exacta.",
+        "Recuerde que una pendiente negativa determina estabilidad local mientras que una positiva determina divergencia."
+      ],
+      "solution": "Factorizando: (y - {r1})(y - {r2}) = 0. En y = {r1}, f'({r1}) = 2({r1}) - {S} = {s1} < 0 (estable). En y = {r2}, f'({r2}) = 2({r2}) - {S} = +{s2} > 0 (inestable). La derivada correcta es 2y - {S}.",
+      "distractor_ids": [
+        "D-Hab01-03",
+        "D-Hab01-05"
+      ]
+    },
+    {
+      "id": "T-Hab01-06",
+      "competency_id": "Hab-01",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Analyze",
+      "stem": "Al construir y analizar la línea de fase de una ecuación diferencial autónoma $\\dot{y} = f(y)$ con parámetro de escala {M}, seleccione todas las directrices metodológicas correctas:",
+      "stem_variants": [
+        "Al construir y analizar la línea de fase de una ecuación diferencial autónoma $\\dot{y} = f(y)$ con parámetro de escala {M}, seleccione todas las directrices metodológicas correctas:",
+        "En la formulación económica de sistemas dinámicos continuos indexados por {M}, ¿cuáles de las siguientes condiciones metodológicas deben cumplirse al analizar la estabilidad?",
+        "Para el estudio cualitativo riguroso del espacio de fase unidimensional bajo escala {M}, identifique todas las proposiciones teóricas que son verdaderas:",
+        "Respecto a la representación gráfica del flujo autónomo en una dimensión con factor {M}, determine las propiedades estructurales correctas:"
+      ],
+      "generate_py": "def generate(rng):\n    M = rng.randint(2, 35)\n    opts = [\n        {'content': 'La línea de fase se grafica ubicando la variable de estado $y$ en el eje horizontal y su derivada temporal $\\\\dot{{y}}$ en el eje vertical.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La clasificación de estabilidad exige evaluar formalmente el signo algebraico de la derivada $\\\\frac{{d\\\\dot{{y}}}}{{dy}}$ en el punto de corte con el eje horizontal.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La línea de fase representa la evolución temporal graficando directamente $\\\\dot{{y}}$ en función del tiempo $t$ en el eje horizontal.', 'is_correct': False, 'error_rationale': 'Confusión en los ejes del espacio de fase: la línea de fase prescinde del tiempo t explícito y relaciona \\\\dot{{y}} contra y.', 'distractor_id': 'D-Hab01-04'},\n        {'content': 'En problemas con variables no negativas, se deben admitir como equilibrios válidos raíces negativas $y < 0$ generadas algebraicamente.', 'is_correct': False, 'error_rationale': 'Omisión de restricciones de no negatividad del dominio económico: los puntos de equilibrio deben respetar el dominio admisible y >= 0.', 'distractor_id': 'D-Hab01-02'}\n    ]\n    return {\n        'vars': {'M': M},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    M = result['vars']['M']\n    return M >= 2",
+      "hints": [
+        "Identifique las variables representadas en los ejes cartesiano de una línea de fase autónoma.",
+        "Considere la necesidad de comprobar el signo de la derivada de fase para justificar rigurosamente la atracción o repulsión.",
+        "Tenga presente las restricciones del dominio económico como la no negatividad de los bienes o factores."
+      ],
+      "solution": "La línea de fase ubica y en el eje de abscisas y \\dot{y} en el de ordenadas, eliminando la variable temporal t. La estabilidad se determina calculando d\\dot{y}/dy en cada equilibrio, y se deben respetar las restricciones de no negatividad del dominio.",
+      "distractor_ids": [
+        "D-Hab01-04",
+        "D-Hab01-02"
+      ]
+    }
+  ]
+}

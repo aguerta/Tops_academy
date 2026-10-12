@@ -1,0 +1,153 @@
+{
+  "competency_id": "C-04",
+  "templates": [
+    {
+      "id": "T-C04-01",
+      "competency_id": "C-04",
+      "interaction_type": "multiple_select",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "Al incorporar progreso técnico neutral continuo $dT/dt > 0$ en el modelo de Solow para el sector {sector}, seleccione todas las afirmaciones correctas sobre el desplazamiento de las curvas del diagrama de fase:",
+      "stem_variants": [
+        "Al incorporar progreso técnico neutral continuo $dT/dt > 0$ en el modelo de Solow para el sector {sector}, seleccione todas las afirmaciones correctas sobre el desplazamiento de las curvas del diagrama de fase:",
+        "En el diagrama fundamental de Solow, suponga que el factor tecnológico neutral $T(t)$ crece sostenidamente en el ámbito {sector}. ¿Cuáles de las siguientes proposiciones describen adecuadamente los cambios gráficos?",
+        "Analice el impacto geométrico de un aumento secular en el índice de tecnología neutral $T(t)$ sobre el equilibrio de Solow en el entorno {sector}. Marque todos los enunciados verdaderos:",
+        "Para una economía donde la función de producción intensiva es $q = T(t)\\phi(k)$ con $T'(t) > 0$ en el sector {sector}, identifique las aseveraciones correctas sobre la dinámica gráfica del modelo:"
+      ],
+      "generate_py": "def generate(rng):\n    sector = rng.choice(['industrial', 'manufacturero', 'agregado', 'nacional', 'avanzado'])\n    opts = [\n        {\n            'content': 'La curva de ahorro e inversión efectiva $s T(t)\\\\phi(k)$ experimenta un desplazamiento ascendente continuo a lo largo del tiempo.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'El rayo de dilución demográfica $\\\\lambda k$ mantiene su pendiente inalterada frente a las mejoras en el factor de tecnología $T(t)$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'El progreso tecnológico neutral desplaza o rota hacia arriba el rayo de crecimiento de la fuerza laboral $\\\\lambda k$.',\n            'is_correct': False,\n            'distractor_id': 'D-C04-01',\n            'error_rationale': 'Atribución errónea del progreso técnico al rayo demográfico; el factor $T(t)$ multiplica a la función de producción y desplaza $s T(t)\\\\phi(k)$, dejando intacta la pendiente demográfica $\\\\lambda$.'\n        },\n        {\n            'content': 'El desplazamiento ascendente de la función de ahorro provoca una reducción secular del capital por trabajador de equilibrio $\\\\bar{k}$.',\n            'is_correct': False,\n            'distractor_id': 'D-C04-02',\n            'error_rationale': 'Inversión del efecto del desplazamiento; al elevarse la curva de ahorro, corta al rayo lineal más a la derecha, incrementando el capital por trabajador de equilibrio $\\\\bar{k}$.'\n        }\n    ]\n    return {\n        'vars': {'sector': sector},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    return res['vars']['sector'] in ['industrial', 'manufacturero', 'agregado', 'nacional', 'avanzado'] and len(res['options']) == 4",
+      "hints": [
+        "Identifique qué curva contiene la función de producción que se beneficia del factor multiplicativo T(t).",
+        "Recuerde que el rayo de dilución del capital tiene pendiente igual a la tasa de crecimiento demográfico lambda.",
+        "Analice en qué dirección se desplaza el punto de corte con la recta lineal con pendiente positiva."
+      ],
+      "solution": "El progreso técnico neutral aumenta la producción para cualquier dotación factorial dada, desplazando hacia arriba la curva de inversión s T(t) phi(k). La recta demográfica lambda k no se altera porque depende únicamente del parámetro demográfico lambda. El nuevo corte se sitúa más a la derecha, elevando k_barra.",
+      "distractor_ids": [
+        "D-C04-01",
+        "D-C04-02"
+      ]
+    },
+    {
+      "id": "T-C04-02",
+      "competency_id": "C-04",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere los efectos del progreso tecnológico neutral en el modelo de Solow {period}. Seleccione las proposiciones que son económicamente verdaderas:",
+      "stem_variants": [
+        "Considere los efectos del progreso tecnológico neutral en el modelo de Solow {period}. Seleccione las proposiciones que son económicamente verdaderas:",
+        "Respecto a la evolución intertemporal del capital por operario y la productividad laboral bajo cambio técnico continuo en Solow {period}, elija todas las afirmaciones ciertas:",
+        "En una economía sujeta a una sucesión de estados uniformes inducida por $dT/dt > 0$ {period}, ¿cuáles de las siguientes características se verifican?",
+        "Evalúe las consecuencias dinámicas del crecimiento del índice tecnológico $T(t)$ sobre el bienestar y la productividad de los trabajadores en Solow {period}:"
+      ],
+      "generate_py": "def generate(rng):\n    period = rng.choice(['en el largo plazo', 'durante la transición dinámica', 'en la senda temporal', 'en el régimen secular', 'en la trayectoria intertemporal'])\n    opts = [\n        {\n            'content': 'La economía transita por una sucesión de estados uniformes caracterizados por niveles sucesivamente más altos de capital por trabajador $\\\\bar{k}$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'La productividad del trabajo $q = T(t)\\\\phi(\\\\bar{k})$ crece de forma sostenida a lo largo del tiempo impulsada por la acumulación y el avance técnico.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Cada avance en el índice tecnológico $T(t)$ destruye equipo de capital, provocando un equilibrio $\\\\bar{k}$ menor al inicial.',\n            'is_correct': False,\n            'distractor_id': 'D-C04-02',\n            'error_rationale': 'Invierte el efecto sobre el capital de equilibrio; el avance técnico eleva la inversión por trabajador para todo $k$, induciendo un mayor nivel de capital de equilibrio.'\n        },\n        {\n            'content': 'A pesar del incremento secular de $T(t)$, el producto por trabajador en estado uniforme permanece rigurosamente constante e invariable.',\n            'is_correct': False,\n            'distractor_id': 'D-C04-03',\n            'error_rationale': 'Suposición de invarianza de la productividad laboral; con progreso técnico continuo, la productividad laboral aumenta continuamente a lo largo de los sucesivos equilibrios.'\n        },\n        {\n            'content': 'El progreso técnico incrementa de forma directa y proporcional la tasa de crecimiento biológico de la población $\\\\lambda$.',\n            'is_correct': False,\n            'distractor_id': 'D-C04-01',\n            'error_rationale': 'Confusión entre variables demográficas y tecnológicas; el parámetro demográfico $\\\\lambda$ es exógeno e independiente de la mejora tecnológica $T(t)$.'\n        }\n    ]\n    return {\n        'vars': {'period': period},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    return 'largo plazo' in res['vars']['period'] or 'dinámica' in res['vars']['period'] or 'temporal' in res['vars']['period'] or 'secular' in res['vars']['period']",
+      "hints": [
+        "Analice cómo se desplaza el punto de equilibrio k_barra cuando s T(t) phi(k) se desplaza continuamente hacia arriba.",
+        "Considere la definición de productividad laboral q = T(t) phi(k) cuando ambos factores crecen.",
+        "Distinga claramente entre la tasa demográfica de población y el progreso tecnológico exógeno."
+      ],
+      "solution": "Bajo progreso técnico neutral creciente, la curva s T(t) phi(k) se desplaza secularmente hacia arriba cortando a lambda k en valores sucesivamente mayores de k_barra. Por consiguiente, la productividad laboral q = T(t) phi(k_barra) crece continuamente a lo largo de una sucesión de estados uniformes.",
+      "distractor_ids": [
+        "D-C04-02",
+        "D-C04-03",
+        "D-C04-01"
+      ]
+    },
+    {
+      "id": "T-C04-03",
+      "competency_id": "C-04",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Understand",
+      "stem": "Para una función de producción intensiva $q = T(t)\\phi(k)$ con progreso tecnológico {tech_label} y rendimientos decrecientes ($\\phi''(k) < 0$), determine las proposiciones correctas sobre la dinámica de Solow:",
+      "stem_variants": [
+        "Para una función de producción intensiva $q = T(t)\\phi(k)$ con progreso tecnológico {tech_label} y rendimientos decrecientes ($\\phi''(k) < 0$), determine las proposiciones correctas sobre la dinámica de Solow:",
+        "Bajo los supuestos de rendimientos marginales decrecientes del capital ($\\phi''(k) < 0$) y avance tecnológico {tech_label} con $dT/dt > 0$, identifique las sentencias analíticas válidas:",
+        "Analice formalmente el modelo de Solow con cambio tecnológico {tech_label} donde $\\phi'(k) > 0$ y $\\phi''(k) < 0$. ¿Cuáles de las siguientes conclusiones son correctas?",
+        "En el marco analítico de Solow con progreso {tech_label} secular positivo, ¿qué afirmaciones describen con rigor el comportamiento de $\\bar{k}$ y $q$?"
+      ],
+      "generate_py": "def generate(rng):\n    tech_label = rng.choice(['neutral de Hicks', 'neutral multiplicativo', 'de Solow', 'neutral agregado'])\n    opts = [\n        {\n            'content': 'La concavidad de la función ($\\\\phi''(k) < 0$) garantiza que cada curva desplazada $s T(t)\\\\phi(k)$ intersecte en un punto único y estable al rayo $\\\\lambda k$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'El crecimiento continuo de $T(t)$ evita el estancamiento de la productividad del trabajo, contrarrestando los rendimientos decrecientes del capital.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Debido a los rendimientos decrecientes del capital, el progreso tecnológico neutral es incapaz de alterar la productividad laboral de equilibrio.',\n            'is_correct': False,\n            'distractor_id': 'D-C04-03',\n            'error_rationale': 'Afirmación errónea de invarianza de productividad; la tecnología contrarresta los rendimientos decrecientes y eleva sostenidamente la productividad por trabajador.'\n        },\n        {\n            'content': 'El término $T(t)$ actúa modificando la pendiente del rayo demográfico $\\\\lambda k$, haciendo que este se vuelva más empinado con el tiempo.',\n            'is_correct': False,\n            'distractor_id': 'D-C04-01',\n            'error_rationale': 'Confusión conceptual de curvas; la tecnología traslada la curva de producción/ahorro, mientras que el rayo demográfico $\\\\lambda k$ permanece inalterado.'\n        }\n    ]\n    return {\n        'vars': {'tech_label': tech_label},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    return res['vars']['tech_label'] in ['neutral de Hicks', 'neutral multiplicativo', 'de Solow', 'neutral agregado'] and len(res['options']) == 4",
+      "hints": [
+        "Verifique las consecuencias de la concavidad estricta phi''(k) < 0 sobre la existencia y unicidad del punto de corte.",
+        "Analice cómo el avance de T(t) permite escapar a la trampa del estado estacionario con producto por trabajador constante.",
+        "Recuerde que el rayo demográfico lambda k depende exclusivamente del crecimiento poblacional lambda."
+      ],
+      "solution": "La propiedad phi''(k) < 0 asegura que s T(t) phi(k) sea estrictamente cóncava, cortando a la recta lineal lambda k en un equilibrio único y dinámicamente estable. Al incrementarse T(t), la curva se eleva superando el estancamiento derivado de los rendimientos decrecientes y elevando q de forma continuada.",
+      "distractor_ids": [
+        "D-C04-03",
+        "D-C04-01"
+      ]
+    },
+    {
+      "id": "T-C04-04",
+      "competency_id": "C-04",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "Considere una economía de Solow con función intensiva $q = T \\sqrt{k}$, tasa de ahorro $s = {s_val}$, crecimiento poblacional $\\lambda = {lam_val}$ e índice tecnológico $T = {T_val}$. Calcule el capital por trabajador de equilibrio $\\bar{k}$:",
+      "stem_variants": [
+        "Considere una economía de Solow con función intensiva $q = T \\sqrt{k}$, tasa de ahorro $s = {s_val}$, crecimiento poblacional $\\lambda = {lam_val}$ e índice tecnológico $T = {T_val}$. Calcule el capital por trabajador de equilibrio $\\bar{k}$:",
+        "Para una función intensiva $q = T \\sqrt{k}$ bajo los parámetros $s = {s_val}$, $\\lambda = {lam_val}$ y tecnología $T = {T_val}$, determine el valor numérico del capital por operario de equilibrio $\\bar{k}$:",
+        "En el modelo de Solow con tecnología neutral $q = T \\sqrt{k}$, calcule el nivel de equilibrio $\\bar{k}$ correspondiente a $s = {s_val}$, $\\lambda = {lam_val}$ y factor tecnológico $T = {T_val}$:",
+        "Halle el capital por trabajador de estado uniforme $\\bar{k}$ sabiendo que la curva de inversión es $s T \\sqrt{k}$ con $s = {s_val}$, $T = {T_val}$ y la tasa demográfica es $\\lambda = {lam_val}$:"
+      ],
+      "generate_py": "def generate(rng):\n    params = rng.choice([\n        (0.20, 0.05, 2, 64),\n        (0.20, 0.05, 3, 144),\n        (0.30, 0.10, 2, 36),\n        (0.30, 0.10, 3, 81),\n        (0.30, 0.10, 4, 144),\n        (0.25, 0.05, 1, 25),\n        (0.25, 0.05, 2, 100)\n    ])\n    s_val, lam_val, T_val, k_bar = params\n    return {\n        'vars': {'s_val': s_val, 'lam_val': lam_val, 'T_val': T_val, 'k_bar': k_bar},\n        'correct': k_bar,\n        'value': str(k_bar),\n        'canonical_algebraic': str(k_bar),\n        'accepted_equivalents': [str(k_bar), f'{k_bar}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    v = res['vars']\n    ratio = v['s_val'] * v['T_val'] / v['lam_val']\n    return abs(int(res['correct']) - round(ratio**2)) == 0",
+      "hints": [
+        "Plantee la condición de estado uniforme: s T sqrt(k) = lambda k.",
+        "Divida ambos lados por sqrt(k) para obtener: s T = lambda sqrt(k).",
+        "Despeje sqrt(k) = (s T) / lambda y eleve al cuadrado para hallar k_barra."
+      ],
+      "solution": "La condición de equilibrio en el estado uniforme es s T sqrt(k_barra) = lambda k_barra. Despejando sqrt(k_barra) = (s * T) / lambda = ({s_val} * {T_val}) / {lam_val}. Elevando al cuadrado: k_barra = [({s_val} * {T_val}) / {lam_val}]^2 = {k_bar}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C04-05",
+      "competency_id": "C-04",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "En el modelo de Solow con función intensiva $q = T \\sqrt{k}$, tasa de ahorro $s = {s_val}$, tasa de población $\\lambda = {lam_val}$ y tecnología $T = {T_val}$, calcule la productividad laboral de equilibrio $q^*$:",
+      "stem_variants": [
+        "En el modelo de Solow con función intensiva $q = T \\sqrt{k}$, tasa de ahorro $s = {s_val}$, tasa de población $\\lambda = {lam_val}$ y tecnología $T = {T_val}$, calcule la productividad laboral de equilibrio $q^*$:",
+        "Determine el producto por trabajador de equilibrio $q^*$ para una economía de Solow con $q = T \\sqrt{k}$, cuando $s = {s_val}$, $\\lambda = {lam_val}$ y el factor tecnológico es $T = {T_val}$:",
+        "Calcule el valor de la productividad del trabajo $q^* = T \\phi(\\bar{k})$ en el estado uniforme de Solow para los parámetros $s = {s_val}$, $\\lambda = {lam_val}$ y $T = {T_val}$:",
+        "Para un sistema económico con tecnología neutral $q = T \\sqrt{k}$, halle el producto por operario de equilibrio $q^*$ dados $s = {s_val}$, $\\lambda = {lam_val}$ y $T = {T_val}$:"
+      ],
+      "generate_py": "def generate(rng):\n    params = rng.choice([\n        (0.20, 0.05, 2, 16),\n        (0.20, 0.05, 3, 36),\n        (0.30, 0.10, 2, 12),\n        (0.30, 0.10, 3, 27),\n        (0.30, 0.10, 4, 48),\n        (0.25, 0.05, 1, 5),\n        (0.25, 0.05, 2, 20)\n    ])\n    s_val, lam_val, T_val, q_star = params\n    return {\n        'vars': {'s_val': s_val, 'lam_val': lam_val, 'T_val': T_val, 'q_star': q_star},\n        'correct': q_star,\n        'value': str(q_star),\n        'canonical_algebraic': str(q_star),\n        'accepted_equivalents': [str(q_star), f'{q_star}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    v = res['vars']\n    k_b = (v['s_val'] * v['T_val'] / v['lam_val'])**2\n    return abs(int(res['correct']) - round(v['T_val'] * (k_b**0.5))) == 0",
+      "hints": [
+        "Halle primero el capital por trabajador de equilibrio: sqrt(k_barra) = (s T) / lambda.",
+        "Sustituya sqrt(k_barra) en la función de producción intensiva q* = T sqrt(k_barra).",
+        "El producto resultante es q* = (s / lambda) * T^2."
+      ],
+      "solution": "En el estado uniforme, sqrt(k_barra) = (s * T) / lambda. Sustituyendo en la productividad laboral: q* = T * sqrt(k_barra) = (s / lambda) * T^2 = ({s_val} / {lam_val}) * ({T_val})^2 = {q_star}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C04-06",
+      "competency_id": "C-04",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "En el modelo de Solow con $q = T \\sqrt{k}$, ahorro $s = {s_val}$ y tasa poblacional $\\lambda = {lam_val}$, el factor tecnológico avanza de $T_1 = {T1}$ a $T_2 = {T2}$. Calcule el incremento absoluto en el capital por trabajador $\\Delta \\bar{k} = \\bar{k}_2 - \\bar{k}_1$:",
+      "stem_variants": [
+        "En el modelo de Solow con $q = T \\sqrt{k}$, ahorro $s = {s_val}$ y tasa poblacional $\\lambda = {lam_val}$, el factor tecnológico avanza de $T_1 = {T1}$ a $T_2 = {T2}$. Calcule el incremento absoluto en el capital por trabajador $\\Delta \\bar{k} = \\bar{k}_2 - \\bar{k}_1$:",
+        "Si la tecnología neutral de una economía de Solow con $q = T \\sqrt{k}$ progresa de $T = {T1}$ a $T = {T2}$, dados $s = {s_val}$ y $\\lambda = {lam_val}$, determine la variación $\\Delta \\bar{k}$ en el capital de equilibrio:",
+        "Calcule en cuánto aumenta el capital por operario de estado uniforme $\\Delta \\bar{k}$ cuando el índice tecnológico pasa de {T1} a {T2}, bajo $s = {s_val}$ y $\\lambda = {lam_val}$:",
+        "Para una función $q = T \\sqrt{k}$ con $s = {s_val}$ y $\\lambda = {lam_val}$, halle la diferencia $\\bar{k}_2 - \\bar{k}_1$ originada por la mejora tecnológica de $T_1 = {T1}$ a $T_2 = {T2}$:"
+      ],
+      "generate_py": "def generate(rng):\n    params = rng.choice([\n        (0.20, 0.05, 2, 3, 80),\n        (0.30, 0.10, 2, 3, 45),\n        (0.30, 0.10, 2, 4, 108),\n        (0.30, 0.10, 3, 4, 63),\n        (0.25, 0.05, 1, 2, 75)\n    ])\n    s_val, lam_val, T1, T2, delta_k = params\n    return {\n        'vars': {'s_val': s_val, 'lam_val': lam_val, 'T1': T1, 'T2': T2, 'delta_k': delta_k},\n        'correct': delta_k,\n        'value': str(delta_k),\n        'canonical_algebraic': str(delta_k),\n        'accepted_equivalents': [str(delta_k), f'{delta_k}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    v = res['vars']\n    k1 = (v['s_val'] * v['T1'] / v['lam_val'])**2\n    k2 = (v['s_val'] * v['T2'] / v['lam_val'])**2\n    return abs(int(res['correct']) - round(k2 - k1)) == 0",
+      "hints": [
+        "Calcule el capital de equilibrio inicial k_barra_1 = (s * T_1 / lambda)^2.",
+        "Calcule el nuevo capital de equilibrio k_barra_2 = (s * T_2 / lambda)^2.",
+        "Obtenga la diferencia Delta k_barra = k_barra_2 - k_barra_1."
+      ],
+      "solution": "Con T_1 = {T1}, k_barra_1 = [({s_val} * {T1}) / {lam_val}]^2. Con T_2 = {T2}, k_barra_2 = [({s_val} * {T2}) / {lam_val}]^2. El incremento en el capital por trabajador es Delta k_barra = k_barra_2 - k_barra_1 = {delta_k}.",
+      "distractor_ids": []
+    }
+  ]
+}

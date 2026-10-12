@@ -1,0 +1,163 @@
+--- a/.agents/skills/content-to-course/engine/sandbox.py
++++ b/.agents/skills/content-to-course/engine/sandbox.py
+@@ -41,7 +41,6 @@
+     "numpy",
+     "scipy",
+     "random",
+     "decimal",
+-    "engine",
+ }
+ 
+ BANNED_NAMES = {
+@@ -77,35 +76,64 @@
+     "pickle",
+     "shelve",
+     "tempfile",
++    "modules",
++    "attrgetter",
++    "itemgetter",
++    "methodcaller",
++    "ctypeslib",
++    "operator",
++    "system",
++    "popen",
+ }
+ 
+ 
++def is_module_allowed(mod_name: Optional[str]) -> bool:
++    """Check if a module path is permitted under sandbox whitelist policy.
++    
++    Permits allowed root modules (e.g. math, numpy, scipy.stats) and engine.render only.
++    Bare 'engine' or 'engine.sandbox' are strictly prohibited.
++    """
++    if not mod_name:
++        return False
++    if mod_name == "engine.render" or mod_name.startswith("engine.render."):
++        return True
++    root = mod_name.split(".")[0]
++    return root in ALLOWED_ROOT_MODULES
++
++
+ class SandboxASTValidator(ast.NodeVisitor):
+     """Validates that Python code complies with AST whitelist constraints."""
+ 
+     def visit_Import(self, node: ast.Import) -> None:
+         for alias in node.names:
+-            root = alias.name.split(".")[0]
+-            if root not in ALLOWED_ROOT_MODULES:
++            if not is_module_allowed(alias.name):
+                 raise SecurityViolationError(
+                     f"Import of module '{alias.name}' is prohibited. "
+-                    f"Only {sorted(ALLOWED_ROOT_MODULES)} are allowed."
++                    f"Only {sorted(ALLOWED_ROOT_MODULES)} and 'engine.render' are allowed."
++                )
++            if alias.asname:
++                if alias.asname in BANNED_NAMES or alias.asname.startswith("__") or alias.asname.endswith("__"):
++                    raise SecurityViolationError(
++                        f"Import alias '{alias.asname}' uses a banned or dunder identifier."
++                    )
+         self.generic_visit(node)
+ 
+     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+-        if node.module:
+-            root = node.module.split(".")[0]
+-            if root not in ALLOWED_ROOT_MODULES:
+-                raise SecurityViolationError(
+-                    f"Import from module '{node.module}' is prohibited. "
+-                    f"Only {sorted(ALLOWED_ROOT_MODULES)} are allowed."
+-                )
++        if node.level > 0 or node.module is None:
++            raise SecurityViolationError("Relative imports are prohibited in sandbox templates.")
++        if not is_module_allowed(node.module):
++            raise SecurityViolationError(
++                f"Import from module '{node.module}' is prohibited. "
++                f"Only {sorted(ALLOWED_ROOT_MODULES)} and 'engine.render' are allowed."
++            )
++        for alias in node.names:
++            if alias.name in BANNED_NAMES or alias.name.startswith("__") or alias.name.endswith("__"):
++                raise SecurityViolationError(
++                    f"Importing banned symbol '{alias.name}' is prohibited."
++                )
++            if alias.asname:
++                if alias.asname in BANNED_NAMES or alias.asname.startswith("__") or alias.asname.endswith("__"):
++                    raise SecurityViolationError(
++                        f"Import alias '{alias.asname}' uses a banned or dunder identifier."
++                    )
+         self.generic_visit(node)
+ 
+     def visit_Name(self, node: ast.Name) -> None:
+         if node.id in BANNED_NAMES:
+             raise SecurityViolationError(f"Use of banned identifier '{node.id}' is prohibited.")
+-        if node.id.startswith("__") and node.id.endswith("__"):
++        if node.id.startswith("__") or node.id.endswith("__"):
+             raise SecurityViolationError(f"Use of dunder identifier '{node.id}' is prohibited.")
+         self.generic_visit(node)
+ 
+     def visit_Attribute(self, node: ast.Attribute) -> None:
+-        if node.attr.startswith("__"):
++        if node.attr.startswith("__") or node.attr.endswith("__"):
+             raise SecurityViolationError(f"Access to dunder attribute '{node.attr}' is prohibited.")
++        if node.attr in BANNED_NAMES:
++            raise SecurityViolationError(f"Access to banned attribute '{node.attr}' is prohibited.")
+         self.generic_visit(node)
+ 
+@@ -155,9 +183,15 @@
+     orig_import = builtins.__import__
+ 
+     def safe_import(name, globals=None, locals=None, fromlist=(), level=0):
+-        root = name.split(".")[0]
+-        if root not in ALLOWED_ROOT_MODULES:
++        if level > 0:
++            raise SecurityViolationError("Relative imports are prohibited in sandbox templates.")
++        if not is_module_allowed(name):
+             raise SecurityViolationError(
+-                f"Import of module '{name}' is prohibited. Only {sorted(ALLOWED_ROOT_MODULES)} are allowed."
++                f"Import of module '{name}' is prohibited. Only {sorted(ALLOWED_ROOT_MODULES)} and 'engine.render' are allowed."
+             )
++        if fromlist:
++            for item in fromlist:
++                if isinstance(item, str) and (item in BANNED_NAMES or item.startswith("__") or item.endswith("__")):
++                    raise SecurityViolationError(f"Importing banned symbol '{item}' is prohibited.")
+         return orig_import(name, globals, locals, fromlist, level)
+ 
+@@ -190,6 +224,20 @@
+     import random
+     from engine.render import bmatrix, table_array, fmt, latex_frac
+ 
++    # Purge re-exported internal leaks from whitelisted modules
++    for mod in (fractions, statistics):
++        if hasattr(mod, "sys"):
++            try:
++                delattr(mod, "sys")
++            except Exception:
++                setattr(mod, "sys", None)
++    if hasattr(fractions, "operator"):
++        try:
++            delattr(fractions, "operator")
++        except Exception:
++            setattr(fractions, "operator", None)
++    try:
++        np.ctypeslib = None
++    except Exception:
++        pass
++
+     env = {
+@@ -223,6 +271,11 @@
+     import random
+     import numpy as np
+ 
+     if seed is not None:
++        random.seed(seed)
++        try:
++            np.random.seed(int(seed) % (2**32 - 1))
++        except Exception:
++            pass
+         rng = random.Random(seed)
+         # Attach numpy random generator if helpful
+         rng.np = np.random.default_rng(seed)
+@@ -250,5 +303,5 @@
+     seed: int,
+     cross_check_py: Optional[str] = None,
+-    timeout: float = 2.0,
++    timeout: float = 5.0,
+ ) -> Dict[str, Any]:

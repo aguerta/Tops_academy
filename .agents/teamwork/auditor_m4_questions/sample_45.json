@@ -1,0 +1,2408 @@
+[
+  {
+    "sample_index": 1,
+    "id": "Q-C05-223",
+    "competency_id": "C-05",
+    "competency_category": "Concept",
+    "competency_name": "Condición de No Tangencia en el Problema de Cauchy",
+    "type": "fill_in_the_blank",
+    "difficulty": "medium",
+    "bloom_level": "Analyze",
+    "context_application": "Cálculo analítico directo para Condición de No Tangencia en el Problema de Cauchy",
+    "stem": "Para la EDP $U_x + 3 U_y = 0$, las curvas características tienen pendiente $\\frac{dy}{dx} = 3$. ¿Para qué pendiente $m$ de una curva inicial rectilínea $y = m x$ falla la condición de transversalidad por tangencia a las características? Ingrese el valor entero.",
+    "options": [],
+    "correct_answer": {
+      "value": "3",
+      "canonical_algebraic": "3",
+      "accepted_equivalents": [
+        "3",
+        "3.0"
+      ]
+    },
+    "hints": [
+      "La dirección característica es $(a, b) = (1, 3)$, cuya pendiente es $b/a = 3$.",
+      "La recta inicial $y = m x$ tiene vector director $(1, m)$ y pendiente $m$.",
+      "La tangencia ocurre cuando ambas pendientes coinciden: $m = 3$."
+    ],
+    "detailed_solution": "La pendiente característica es $\\frac{dy}{dx} = \\frac{b}{a} = 3$. La tangencia se produce cuando $m = 3$.",
+    "misconception_warning": "La no tangencia exige que la pendiente inicial sea distinta a la característica."
+  },
+  {
+    "sample_index": 2,
+    "id": "Q-C01-154",
+    "competency_id": "C-01",
+    "competency_category": "Concept",
+    "competency_name": "Interpretación Económica del Teorema de Euler y Agotamiento del Producto",
+    "type": "fill_in_the_blank",
+    "difficulty": "easy",
+    "bloom_level": "Apply",
+    "context_application": "Cálculo analítico directo para Interpretación Económica del Teorema de Euler y Agotamiento del Producto",
+    "stem": "Para una función de producción Cobb-Douglas $F(K, L) = A K^{0.5} L^{\\beta}$, ¿cuál debe ser el valor del exponente $\\beta$ para que se cumpla el agotamiento del producto ($n = 1$) bajo el Teorema de Euler? Ingrese el valor decimal exacto.",
+    "options": [],
+    "correct_answer": {
+      "value": "0.5",
+      "canonical_algebraic": "0.5",
+      "accepted_equivalents": [
+        "0.5",
+        "0.5",
+        "1 - 0.5"
+      ]
+    },
+    "hints": [
+      "El agotamiento del producto requiere rendimientos constantes a escala: $n = \\alpha + \\beta = 1$.",
+      "Sustituya $\\alpha = 0.5$: $0.5 + \\beta = 1$.",
+      "Despeje $\\beta = 1 - 0.5 = 0.5$."
+    ],
+    "detailed_solution": "Para agotamiento del producto, $\\alpha + \\beta = 1 \\implies \\beta = 1 - 0.5 = 0.5$.",
+    "misconception_warning": "Asegúrese de que la suma de los exponentes sea exactamente 1."
+  },
+  {
+    "sample_index": 3,
+    "id": "Q-C01-143",
+    "competency_id": "C-01",
+    "competency_category": "Concept",
+    "competency_name": "Interpretación Económica del Teorema de Euler y Agotamiento del Producto",
+    "type": "fill_in_the_blank",
+    "difficulty": "medium",
+    "bloom_level": "Remember",
+    "context_application": "Cálculo analítico directo para Interpretación Económica del Teorema de Euler y Agotamiento del Producto",
+    "stem": "Para una función de producción Cobb-Douglas $F(K, L) = A K^{0.6} L^{\\beta}$, ¿cuál debe ser el valor del exponente $\\beta$ para que se cumpla el agotamiento del producto ($n = 1$) bajo el Teorema de Euler? Ingrese el valor decimal exacto.",
+    "options": [],
+    "correct_answer": {
+      "value": "0.4",
+      "canonical_algebraic": "0.4",
+      "accepted_equivalents": [
+        "0.4",
+        "0.4",
+        "1 - 0.6"
+      ]
+    },
+    "hints": [
+      "El agotamiento del producto requiere rendimientos constantes a escala: $n = \\alpha + \\beta = 1$.",
+      "Sustituya $\\alpha = 0.6$: $0.6 + \\beta = 1$.",
+      "Despeje $\\beta = 1 - 0.6 = 0.4$."
+    ],
+    "detailed_solution": "Para agotamiento del producto, $\\alpha + \\beta = 1 \\implies \\beta = 1 - 0.6 = 0.4$.",
+    "misconception_warning": "Asegúrese de que la suma de los exponentes sea exactamente 1."
+  },
+  {
+    "sample_index": 4,
+    "id": "Q-C05-231",
+    "competency_id": "C-05",
+    "competency_category": "Concept",
+    "competency_name": "Condición de No Tangencia en el Problema de Cauchy",
+    "type": "fill_in_the_blank",
+    "difficulty": "easy",
+    "bloom_level": "Analyze",
+    "context_application": "Cálculo analítico directo para Condición de No Tangencia en el Problema de Cauchy",
+    "stem": "Para la EDP $U_x + 2 U_y = 0$, las curvas características tienen pendiente $\\frac{dy}{dx} = 2$. ¿Para qué pendiente $m$ de una curva inicial rectilínea $y = m x$ falla la condición de transversalidad por tangencia a las características? Ingrese el valor entero.",
+    "options": [],
+    "correct_answer": {
+      "value": "2",
+      "canonical_algebraic": "2",
+      "accepted_equivalents": [
+        "2",
+        "2.0"
+      ]
+    },
+    "hints": [
+      "La dirección característica es $(a, b) = (1, 2)$, cuya pendiente es $b/a = 2$.",
+      "La recta inicial $y = m x$ tiene vector director $(1, m)$ y pendiente $m$.",
+      "La tangencia ocurre cuando ambas pendientes coinciden: $m = 2$."
+    ],
+    "detailed_solution": "La pendiente característica es $\\frac{dy}{dx} = \\frac{b}{a} = 2$. La tangencia se produce cuando $m = 2$.",
+    "misconception_warning": "La no tangencia exige que la pendiente inicial sea distinta a la característica."
+  },
+  {
+    "sample_index": 5,
+    "id": "Q-C02-172",
+    "competency_id": "C-02",
+    "competency_category": "Concept",
+    "competency_name": "Geometría de Curvas Características y Superficies Integrales",
+    "type": "fill_in_the_blank",
+    "difficulty": "hard",
+    "bloom_level": "Analyze",
+    "context_application": "Cálculo analítico directo para Geometría de Curvas Características y Superficies Integrales",
+    "stem": "Para la superficie integral representada en forma implícita $U(x,y) - u = 0$, el vector normal en cada punto es $(U_x, U_y, c_3)$. ¿Cuál es el valor escalar constante de $c_3$?",
+    "options": [],
+    "correct_answer": {
+      "value": "-1",
+      "canonical_algebraic": "-1",
+      "accepted_equivalents": [
+        "-1",
+        "-1.0"
+      ]
+    },
+    "hints": [
+      "Escriba la función implícita $F(x, y, u) = U(x, y) - u = 0$.",
+      "El gradiente formal es $(\\frac{\\partial F}{\\partial x}, \\frac{\\partial F}{\\partial y}, \\frac{\\partial F}{\\partial u})$.",
+      "La derivada respecto a $u$ es $\\frac{\\partial}{\\partial u}(-u) = -1$."
+    ],
+    "detailed_solution": "El gradiente normal a la superficie $U(x,y) - u = 0$ es $(U_x, U_y, -1)$, de modo que $c_3 = -1$.",
+    "misconception_warning": "El signo es negativo por estar la variable dependiente restada."
+  },
+  {
+    "sample_index": 6,
+    "id": "Q-C02-173",
+    "competency_id": "C-02",
+    "competency_category": "Concept",
+    "competency_name": "Geometría de Curvas Características y Superficies Integrales",
+    "type": "multiple_choice_7_options",
+    "difficulty": "medium",
+    "bloom_level": "Understand",
+    "context_application": "Aplicación operativa para la unidad Geometría de Curvas Características y Superficies Integrales",
+    "stem": "Desde el punto de vista geométrico en $\\mathbb{R}^3$, ¿cómo se relaciona el campo vectorial $(a(x,y,u), b(x,y,u), c(x,y,u))$ con la superficie integral $U = U(x,y)$ de una EDP cuasilineal?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "No existe ninguna relación geométrica entre los coeficientes de la EDP y el plano tangente a la superficie.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "El campo vectorial colapsa a un punto singular en cada curva característica impidiendo la foliación suave.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "El campo vectorial describe únicamente las líneas de nivel horizontales donde la función $U$ es constante.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "El campo vectorial intersecta transversalmente a la superficie integral sin compartir ninguna dirección tangente, en todo el plano.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "El campo vectorial es ortogonal en cada punto a la superficie integral coincidiendo con su vector normal.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "El campo vectorial es tangente en cada punto regular a la superficie integral, definiendo sus curvas características.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "El campo vectorial es paralelo al plano coordenado $(x,y)$ independientemente del valor de la función $c(x,y,u)$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      }
+    ],
+    "correct_answer": "F",
+    "hints": [
+      "Escriba la ecuación de la superficie como $F(x,y,u) = U(x,y) - u = 0$.",
+      "El gradiente normal es $(U_x, U_y, -1)$.",
+      "La EDP $a U_x + b U_y = c$ equivale a $(a, b, c) \\cdot (U_x, U_y, -1) = 0$, demostrando tangencia."
+    ],
+    "detailed_solution": "El producto escalar del campo $(a,b,c)$ con el vector normal $(\\nabla U, -1)$ es $a U_x + b U_y - c = 0$. Por tanto, el campo es tangente a la superficie integral.",
+    "misconception_warning": "El campo vectorial es tangente a la superficie, mientras que el gradiente $(\\nabla U, -1)$ es normal a ella."
+  },
+  {
+    "sample_index": 7,
+    "id": "Q-C02-169",
+    "competency_id": "C-02",
+    "competency_category": "Concept",
+    "competency_name": "Geometría de Curvas Características y Superficies Integrales",
+    "type": "multiple_choice_7_options",
+    "difficulty": "medium",
+    "bloom_level": "Apply",
+    "context_application": "Aplicación operativa para la unidad Geometría de Curvas Características y Superficies Integrales",
+    "stem": "Desde el punto de vista geométrico en $\\mathbb{R}^3$, ¿cómo se relaciona el campo vectorial $(a(x,y,u), b(x,y,u), c(x,y,u))$ con la superficie integral $U = U(x,y)$ de una EDP cuasilineal?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "El campo vectorial intersecta transversalmente a la superficie integral sin compartir ninguna dirección tangente, en todo el plano.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "El campo vectorial colapsa a un punto singular en cada curva característica impidiendo la foliación suave.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "El campo vectorial es tangente en cada punto regular a la superficie integral, definiendo sus curvas características.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "El campo vectorial es paralelo al plano coordenado $(x,y)$ independientemente del valor de la función $c(x,y,u)$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "El campo vectorial describe únicamente las líneas de nivel horizontales donde la función $U$ es constante.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "El campo vectorial es ortogonal en cada punto a la superficie integral coincidiendo con su vector normal.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "No existe ninguna relación geométrica entre los coeficientes de la EDP y el plano tangente a la superficie.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Geometría de Curvas Características y Superficies Integrales."
+      }
+    ],
+    "correct_answer": "C",
+    "hints": [
+      "Escriba la ecuación de la superficie como $F(x,y,u) = U(x,y) - u = 0$.",
+      "El gradiente normal es $(U_x, U_y, -1)$.",
+      "La EDP $a U_x + b U_y = c$ equivale a $(a, b, c) \\cdot (U_x, U_y, -1) = 0$, demostrando tangencia."
+    ],
+    "detailed_solution": "El producto escalar del campo $(a,b,c)$ con el vector normal $(\\nabla U, -1)$ es $a U_x + b U_y - c = 0$. Por tanto, el campo es tangente a la superficie integral.",
+    "misconception_warning": "El campo vectorial es tangente a la superficie, mientras que el gradiente $(\\nabla U, -1)$ es normal a ella."
+  },
+  {
+    "sample_index": 8,
+    "id": "Q-C01-156",
+    "competency_id": "C-01",
+    "competency_category": "Concept",
+    "competency_name": "Interpretación Económica del Teorema de Euler y Agotamiento del Producto",
+    "type": "multiple_choice_7_options",
+    "difficulty": "medium",
+    "bloom_level": "Analyze",
+    "context_application": "Aplicación operativa para la unidad Interpretación Económica del Teorema de Euler y Agotamiento del Producto",
+    "stem": "En el contexto de la teoría de la producción bajo competencia perfecta donde los factores reciben su producto marginal ($P_K = F_K, P_L = F_L$), ¿qué implicación económica se deduce del Teorema de Euler si la función presenta rendimientos decrecientes a escala ($n < 1$)?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "El pago total a los factores supera el producto total, provocando un déficit financiero estructural para la firma.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "El pago total a los factores agota exactamente el producto total sin generar superávit ni déficit económico.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "La remuneración del capital debe ser necesariamente nula para evitar pérdidas operativas en el largo plazo.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Los productos marginales de ambos factores se anulan idénticamente impidiendo la fijación de precios competitivos.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "El pago total a los factores no agota el producto, generando un excedente económico positivo para la firma.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "La firma opera con costos marginales estrictamente decrecientes violando las condiciones de equilibrio de mercado.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "El teorema de Euler deja de ser aplicable al no existir rendimientos constantes a escala en la tecnología.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      }
+    ],
+    "correct_answer": "E",
+    "hints": [
+      "La identidad de Euler establece $K F_K + L F_L = n F(K, L)$.",
+      "Si cada factor recibe su productividad marginal, el gasto en factores es $K F_K + L F_L = n F$.",
+      "Si $n < 1$, el gasto $n F$ es menor que el producto total $F$, quedando un remanente $F(1-n) > 0$."
+    ],
+    "detailed_solution": "Con $n < 1$, el pago a factores es $K F_K + L F_L = n F < F$. Esto deja un excedente económico de $(1-n)F$.",
+    "misconception_warning": "Rendimientos decrecientes a escala ($n < 1$) dejan excedente; rendimientos crecientes ($n > 1$) generan déficit."
+  },
+  {
+    "sample_index": 9,
+    "id": "Q-C05-235",
+    "competency_id": "C-05",
+    "competency_category": "Concept",
+    "competency_name": "Condición de No Tangencia en el Problema de Cauchy",
+    "type": "multiple_choice_7_options",
+    "difficulty": "easy",
+    "bloom_level": "Understand",
+    "context_application": "Aplicación operativa para la unidad Condición de No Tangencia en el Problema de Cauchy",
+    "stem": "En el problema de Cauchy para una EDP cuasilineal de primer orden con curva inicial $\\Gamma_0$, ¿por qué es indispensable que la curva inicial no sea tangente a las curvas características?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Porque la condición de tangencia generaría infinitas derivadas de orden fraccionario en la frontera.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Condición de No Tangencia en el Problema de Cauchy."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "Porque si la curva es tangente, la ecuación diferencial de primer orden se transforma en una de segundo orden.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Condición de No Tangencia en el Problema de Cauchy."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Porque la condición de no tangencia (transversalidad) garantiza la invertibilidad del jacobiano y la unicidad local.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Porque la tangencia exige que los coeficientes de la EDP sean números complejos conjugados sin parte real.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Condición de No Tangencia en el Problema de Cauchy."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Porque la curva inicial debe ser obligatoriamente paralela a las asíntotas del campo vectorial de derivadas.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Condición de No Tangencia en el Problema de Cauchy."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "Porque la tangencia provocaría que la función solución colapsara a cero en todos los puntos del espacio.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Condición de No Tangencia en el Problema de Cauchy."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "No existe inconveniente si la curva es tangente; el teorema de Cauchy-Kowalevski garantiza solución única siempre, en todo el plano.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Condición de No Tangencia en el Problema de Cauchy."
+      }
+    ],
+    "correct_answer": "C",
+    "hints": [
+      "Al parametrizar en $t=0$, se requiere invertir $(s, t) \\mapsto (x, y)$ para expresar la solución en $(x, y)$.",
+      "El Teorema de la Función Inversa exige que el determinante jacobiano no se anule.",
+      "El determinante jacobiano se anula precisamente cuando el vector tangente a la curva inicial es paralelo al vector característico."
+    ],
+    "detailed_solution": "Si la curva inicial es tangente a una característica, el jacobiano de la transformación paramétrica se anula, perdiéndose la unicidad de la solución local.",
+    "misconception_warning": "Datos iniciales impuestos sobre una característica provocan infinitas soluciones (si son compatibles) o ninguna (si son incompatibles)."
+  },
+  {
+    "sample_index": 10,
+    "id": "Q-C01-149",
+    "competency_id": "C-01",
+    "competency_category": "Concept",
+    "competency_name": "Interpretación Económica del Teorema de Euler y Agotamiento del Producto",
+    "type": "multiple_choice_7_options",
+    "difficulty": "hard",
+    "bloom_level": "Apply",
+    "context_application": "Aplicación operativa para la unidad Interpretación Económica del Teorema de Euler y Agotamiento del Producto",
+    "stem": "En el contexto de la teoría de la producción bajo competencia perfecta donde los factores reciben su producto marginal ($P_K = F_K, P_L = F_L$), ¿qué implicación económica se deduce del Teorema de Euler si la función presenta rendimientos decrecientes a escala ($n < 1$)?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "La remuneración del capital debe ser necesariamente nula para evitar pérdidas operativas en el largo plazo.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "El teorema de Euler deja de ser aplicable al no existir rendimientos constantes a escala en la tecnología.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "El pago total a los factores supera el producto total, provocando un déficit financiero estructural para la firma.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Los productos marginales de ambos factores se anulan idénticamente impidiendo la fijación de precios competitivos.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "El pago total a los factores agota exactamente el producto total sin generar superávit ni déficit económico.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "El pago total a los factores no agota el producto, generando un excedente económico positivo para la firma.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "La firma opera con costos marginales estrictamente decrecientes violando las condiciones de equilibrio de mercado.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Interpretación Económica del Teorema de Euler y Agotamiento del Producto."
+      }
+    ],
+    "correct_answer": "F",
+    "hints": [
+      "La identidad de Euler establece $K F_K + L F_L = n F(K, L)$.",
+      "Si cada factor recibe su productividad marginal, el gasto en factores es $K F_K + L F_L = n F$.",
+      "Si $n < 1$, el gasto $n F$ es menor que el producto total $F$, quedando un remanente $F(1-n) > 0$."
+    ],
+    "detailed_solution": "Con $n < 1$, el pago a factores es $K F_K + L F_L = n F < F$. Esto deja un excedente económico de $(1-n)F$.",
+    "misconception_warning": "Rendimientos decrecientes a escala ($n < 1$) dejan excedente; rendimientos crecientes ($n > 1$) generan déficit."
+  },
+  {
+    "sample_index": 11,
+    "id": "Q-C05-228",
+    "competency_id": "C-05",
+    "competency_category": "Concept",
+    "competency_name": "Condición de No Tangencia en el Problema de Cauchy",
+    "type": "multiple_select",
+    "difficulty": "easy",
+    "bloom_level": "Remember",
+    "context_application": "Análisis multifactorial de propiedades para Condición de No Tangencia en el Problema de Cauchy",
+    "stem": "En relación con el problema de valores iniciales de Cauchy y la transversalidad en Condición de No Tangencia en el Problema de Cauchy, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "El problema de Cauchy posee solución local única si y solo si la curva inicial no es tangente a las curvas características.",
+        "is_correct": true,
+        "error_rationale": "Condición de transversality del Teorema de Cauchy-Kowalevski."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "Si la curva inicial es tangente a una característica pero los datos iniciales son incompatibles, el problema no tiene solución.",
+        "is_correct": true,
+        "error_rationale": "Fallo de existencia bajo incompatibilidad tangencial."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Si la curva inicial coincide con una característica y los datos son compatibles, existen infinitas soluciones distintas.",
+        "is_correct": true,
+        "error_rationale": "Pérdida de unicidad: cualquier superficie que contenga la característica es solución."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "La condición de no tangencia exige que la curva inicial sea obligatoriamente una circunferencia cerrada en el plano.",
+        "is_correct": false,
+        "error_rationale": "Falso: la curva inicial puede ser cualquier curva regular abierta o cerrada."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Imponer datos sobre una curva tangente a las características siempre garantiza la unicidad absoluta de la solución.",
+        "is_correct": false,
+        "error_rationale": "Falso: la tangencia destruye la unicidad local."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es una restricción innecesaria y la 5 afirma lo contrario del teorema.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 12,
+    "id": "Q-C05-236",
+    "competency_id": "C-05",
+    "competency_category": "Concept",
+    "competency_name": "Condición de No Tangencia en el Problema de Cauchy",
+    "type": "multiple_select",
+    "difficulty": "hard",
+    "bloom_level": "Remember",
+    "context_application": "Análisis multifactorial de propiedades para Condición de No Tangencia en el Problema de Cauchy",
+    "stem": "En relación con el problema de valores iniciales de Cauchy y la transversalidad en Condición de No Tangencia en el Problema de Cauchy, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "El problema de Cauchy posee solución local única si y solo si la curva inicial no es tangente a las curvas características.",
+        "is_correct": true,
+        "error_rationale": "Condición de transversality del Teorema de Cauchy-Kowalevski."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "Si la curva inicial es tangente a una característica pero los datos iniciales son incompatibles, el problema no tiene solución.",
+        "is_correct": true,
+        "error_rationale": "Fallo de existencia bajo incompatibilidad tangencial."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Si la curva inicial coincide con una característica y los datos son compatibles, existen infinitas soluciones distintas.",
+        "is_correct": true,
+        "error_rationale": "Pérdida de unicidad: cualquier superficie que contenga la característica es solución."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "La condición de no tangencia exige que la curva inicial sea obligatoriamente una circunferencia cerrada en el plano.",
+        "is_correct": false,
+        "error_rationale": "Falso: la curva inicial puede ser cualquier curva regular abierta o cerrada."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Imponer datos sobre una curva tangente a las características siempre garantiza la unicidad absoluta de la solución.",
+        "is_correct": false,
+        "error_rationale": "Falso: la tangencia destruye la unicidad local."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es una restricción innecesaria y la 5 afirma lo contrario del teorema.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 13,
+    "id": "Q-C06-257",
+    "competency_id": "C-06",
+    "competency_category": "Concept",
+    "competency_name": "Partición Superposicional y Reducción en Cascada",
+    "type": "multiple_select",
+    "difficulty": "easy",
+    "bloom_level": "Analyze",
+    "context_application": "Análisis multifactorial de propiedades para Partición Superposicional y Reducción en Cascada",
+    "stem": "Respecto a la partición superposicional $U = U_h + U_p$ y la reducción en cascada en Partición Superposicional y Reducción en Cascada, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Por el principio de superposición lineal, la solución completa de la EDP se descompone como $U = U_h + U_p$.",
+        "is_correct": true,
+        "error_rationale": "Principio fundamental de linealidad."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "La factorización $(D_x - r_1 D_y)(D_x - r_2 D_y) U = d(x,y)$ desacopla la resolución en dos EDPs de primer orden consecutivas.",
+        "is_correct": true,
+        "error_rationale": "Método de reducción en cascada con variable intermedia $V$."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "La solución complementaria $U_h$ aporta las funciones arbitrarias necesarias para satisfacer las condiciones de contorno.",
+        "is_correct": true,
+        "error_rationale": "Rol pedagógico y analítico de la parte homogénea."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "El principio de superposición aditiva $U_h + U_p$ es aplicable a cualquier ecuación diferencial no lineal o cuasilineal.",
+        "is_correct": false,
+        "error_rationale": "Falso: la superposición es válida únicamente para operadores estrictamente lineales."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "La determinación de la solución particular $U_p$ es suficiente por sí sola para constituir la solución general completa.",
+        "is_correct": false,
+        "error_rationale": "Falso: se requiere indispensablemente sumar la solución homogénea $U_h$."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 falla por no linealidad y la 5 omite la parte homogénea $U_h$.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 14,
+    "id": "Q-C04-210",
+    "competency_id": "C-04",
+    "competency_category": "Concept",
+    "competency_name": "Independencia Funcional de Integrales Primeras",
+    "type": "multiple_select",
+    "difficulty": "hard",
+    "bloom_level": "Remember",
+    "context_application": "Análisis multifactorial de propiedades para Independencia Funcional de Integrales Primeras",
+    "stem": "Respecto a la independencia funcional de integrales primeras en Independencia Funcional de Integrales Primeras, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Dos integrales primeras $m$ y $n$ son funcionalmente independientes si y solo si sus gradientes son linealmente independientes.",
+        "is_correct": true,
+        "error_rationale": "Condición necesaria y suficiente de independencia funcional."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "La matriz jacobiana asociada a las integrales primeras independientes debe tener rango 2 para garantizar superficies no colineales.",
+        "is_correct": true,
+        "error_rationale": "Criterio de rango jacobiano para integrales de Lagrange."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Si una integral primera es función diferenciable de la otra ($n = g(m)$), la relación $\\Phi(m,n)=0$ no genera la solución general.",
+        "is_correct": true,
+        "error_rationale": "Degeneración de la solución general por dependencia funcional."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "La independencia funcional exige que las integrales primeras contengan únicamente potencias impares de las variables.",
+        "is_correct": false,
+        "error_rationale": "Falso: no existe ninguna restricción de paridad sobre las funciones."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Cualquier par de funciones continuas resulta automáticamente funcionalmente independiente sin evaluar determinantes.",
+        "is_correct": false,
+        "error_rationale": "Falso: debe verificarse explícitamente el rango jacobiano."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 introduce una restricción absurda de paridad y la 5 omite la prueba jacobiana.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 15,
+    "id": "Q-C01-155",
+    "competency_id": "C-01",
+    "competency_category": "Concept",
+    "competency_name": "Interpretación Económica del Teorema de Euler y Agotamiento del Producto",
+    "type": "multiple_select",
+    "difficulty": "medium",
+    "bloom_level": "Analyze",
+    "context_application": "Análisis multifactorial de propiedades para Interpretación Económica del Teorema de Euler y Agotamiento del Producto",
+    "stem": "En relación con la interpretación económica del Teorema de Euler y el agotamiento del producto en Interpretación Económica del Teorema de Euler y Agotamiento del Producto, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Si una función de producción presenta rendimientos constantes a escala ($n=1$), pagar a los factores su producto marginal agota exactamente el producto.",
+        "is_correct": true,
+        "error_rationale": "Teorema de agotamiento del producto de Wicksteed-Euler."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "Bajo rendimientos crecientes a escala ($n > 1$), remunerar a cada factor por su producto marginal genera un déficit financiero para la empresa.",
+        "is_correct": true,
+        "error_rationale": "Consecuencia matemática: $K F_K + L F_L = n F > F$."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "El teorema de Euler vincula el grado de homogeneidad tecnológica con la distribución factorial del ingreso en competencia perfecta.",
+        "is_correct": true,
+        "error_rationale": "Relevancia económica fundamental del Teorema de Euler."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Rendimientos constantes a escala impiden que los productos marginales de los factores individuales sean decrecientes.",
+        "is_correct": false,
+        "error_rationale": "Falso: una función puede tener rendimientos constantes a escala ($n=1$) y productos marginales decrecientes ($F_{KK} < 0, F_{LL} < 0$)."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "La identidad de Euler solo es aplicable si la empresa no incurre en costos de capital ni trabajo en el proceso productivo.",
+        "is_correct": false,
+        "error_rationale": "Falso: la identidad de Euler es una relación puramente tecnológica entre insumos y producto."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 confunde rendimientos a escala con rendimientos marginales y la 5 es absurda.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 16,
+    "id": "Q-H06-117",
+    "competency_id": "H-06",
+    "competency_category": "Fact",
+    "competency_name": "Formas Canónicas Homogéneas según el Signo de Discriminante",
+    "type": "fill_in_the_blank",
+    "difficulty": "hard",
+    "bloom_level": "Analyze",
+    "context_application": "Cálculo analítico directo para Formas Canónicas Homogéneas según el Signo de Discriminante",
+    "stem": "En una EDP de segundo orden con discriminante nulo $\\Delta = 0$ (régimen parabólico), ¿cuál es la multiplicidad algebraica de la raíz característica real obtenida? Ingrese el valor entero.",
+    "options": [],
+    "correct_answer": {
+      "value": "2",
+      "canonical_algebraic": "2",
+      "accepted_equivalents": [
+        "2",
+        "2.0"
+      ]
+    },
+    "hints": [
+      "La ecuación cuadrática característica es $a n^2 + b n + c = 0$.",
+      "Cuando $\\Delta = b^2 - 4ac = 0$, la fórmula cuadrática da $n = \\frac{-b \\pm 0}{2a}$.",
+      "Ambas raíces coinciden, constituyendo una raíz doble de multiplicidad 2."
+    ],
+    "detailed_solution": "Con $\\Delta = 0$, la raíz es única pero doble, con multiplicidad algebraica 2.",
+    "misconception_warning": "Una raíz doble tiene multiplicidad 2."
+  },
+  {
+    "sample_index": 17,
+    "id": "Q-H01-010",
+    "competency_id": "H-01",
+    "competency_category": "Fact",
+    "competency_name": "Definición de Homogeneidad e Identidad de Euler",
+    "type": "fill_in_the_blank",
+    "difficulty": "medium",
+    "bloom_level": "Remember",
+    "context_application": "Cálculo analítico directo para Definición de Homogeneidad e Identidad de Euler",
+    "stem": "Determine el grado de homogeneidad $n$ de la función de producción $f(x, y) = 5 x^{2} y^{4}$. Ingrese el valor entero exacto.",
+    "options": [],
+    "correct_answer": {
+      "value": "6",
+      "canonical_algebraic": "6",
+      "accepted_equivalents": [
+        "6",
+        "6.0",
+        "2 + 4"
+      ]
+    },
+    "hints": [
+      "Escriba $f(tx, ty) = 5 (tx)^{2} (ty)^{4}$.",
+      "Factorice $t^{2 + 4} = t^{6}$.",
+      "El exponente de $t$ es el grado de homogeneidad $n = 6$."
+    ],
+    "detailed_solution": "Dado que $f(tx, ty) = t^{6} f(x,y)$, el grado es $n = 6$.",
+    "misconception_warning": "No confunda los exponentes individuales con el grado conjunto a escala."
+  },
+  {
+    "sample_index": 18,
+    "id": "Q-H01-006",
+    "competency_id": "H-01",
+    "competency_category": "Fact",
+    "competency_name": "Definición de Homogeneidad e Identidad de Euler",
+    "type": "fill_in_the_blank",
+    "difficulty": "hard",
+    "bloom_level": "Remember",
+    "context_application": "Cálculo analítico directo para Definición de Homogeneidad e Identidad de Euler",
+    "stem": "Determine el grado de homogeneidad $n$ de la función de producción $f(x, y) = 5 x^{1} y^{4}$. Ingrese el valor entero exacto.",
+    "options": [],
+    "correct_answer": {
+      "value": "5",
+      "canonical_algebraic": "5",
+      "accepted_equivalents": [
+        "5",
+        "5.0",
+        "1 + 4"
+      ]
+    },
+    "hints": [
+      "Escriba $f(tx, ty) = 5 (tx)^{1} (ty)^{4}$.",
+      "Factorice $t^{1 + 4} = t^{5}$.",
+      "El exponente de $t$ es el grado de homogeneidad $n = 5$."
+    ],
+    "detailed_solution": "Dado que $f(tx, ty) = t^{5} f(x,y)$, el grado es $n = 5$.",
+    "misconception_warning": "No confunda los exponentes individuales con el grado conjunto a escala."
+  },
+  {
+    "sample_index": 19,
+    "id": "Q-H02-021",
+    "competency_id": "H-02",
+    "competency_category": "Fact",
+    "competency_name": "Taxonomía de Orden, Grado y Cuasilinealidad",
+    "type": "fill_in_the_blank",
+    "difficulty": "hard",
+    "bloom_level": "Apply",
+    "context_application": "Cálculo analítico directo para Taxonomía de Orden, Grado y Cuasilinealidad",
+    "stem": "Determine el orden de la ecuación en derivadas parciales $x^2 \\frac{\\partial^{2} U}{\\partial x^{2}} + \\left(\\frac{\\partial U}{\\partial y}\\right)^2 = \\sin(x)$. Ingrese el valor entero correspondiente.",
+    "options": [],
+    "correct_answer": {
+      "value": "2",
+      "canonical_algebraic": "2",
+      "accepted_equivalents": [
+        "2",
+        "2.0"
+      ]
+    },
+    "hints": [
+      "Identifique todas las derivadas presentes en la ecuación.",
+      "La derivada de mayor orden es $\\frac{\\partial^{2} U}{\\partial x^{2}}$.",
+      "El orden de dicha derivada es 2."
+    ],
+    "detailed_solution": "La derivada de mayor orden presente en la ecuación es de orden 2, por lo que el orden de la EDP es 2.",
+    "misconception_warning": "El exponente cuadrático en la derivada de primer orden determina el grado, no el orden."
+  },
+  {
+    "sample_index": 20,
+    "id": "Q-H03-048",
+    "competency_id": "H-03",
+    "competency_category": "Fact",
+    "competency_name": "Identidad de Verificación de Solución",
+    "type": "fill_in_the_blank",
+    "difficulty": "hard",
+    "bloom_level": "Understand",
+    "context_application": "Cálculo analítico directo para Identidad de Verificación de Solución",
+    "stem": "Para que la función $U(x,y) = \\cos(2 x) e^{m y}$ satisfaga la ecuación de Laplace $U_{xx} + U_{yy} = 0$, ¿cuál debe ser el valor de $m^2$? Ingrese el valor numérico exacto.",
+    "options": [],
+    "correct_answer": {
+      "value": "4",
+      "canonical_algebraic": "4",
+      "accepted_equivalents": [
+        "4",
+        "4.0",
+        "2^2"
+      ]
+    },
+    "hints": [
+      "Calcule $U_{xx} = -2^2 \\cos(2 x) e^{my} = -4 U$.",
+      "Calcule $U_{{yy}} = m^2 \\cos({k_val} x) e^{{my}} = m^2 U$.",
+      "Sustituya en Laplace: $(-4 + m^2)U = 0 \\implies m^2 = 4$."
+    ],
+    "detailed_solution": "Como $U_{xx} = -4 U$ y $U_{yy} = m^2 U$, la ecuación de Laplace exige $-4 + m^2 = 0 \\implies m^2 = 4$.",
+    "misconception_warning": "Recuerde que la segunda derivada del coseno introduce un signo negativo."
+  },
+  {
+    "sample_index": 21,
+    "id": "Q-H03-060",
+    "competency_id": "H-03",
+    "competency_category": "Fact",
+    "competency_name": "Identidad de Verificación de Solución",
+    "type": "multiple_choice_7_options",
+    "difficulty": "medium",
+    "bloom_level": "Apply",
+    "context_application": "Aplicación operativa para la unidad Identidad de Verificación de Solución",
+    "stem": "Considere la ecuación diferencial en derivadas parciales $2 U_x - 1 U_y = 0$. ¿Cuál de las siguientes funciones candidatas satisface idénticamente la ecuación como solución clásica?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "La función $U(x,y) = e^{1 x + 2 y}$, pues $2(1 U) - 1(2 U) = 0$, en todo el dominio.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "La función $U(x,y) = x^{1} + y^{2}$, pues las derivadas no se cancelan algebraicamente.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Ninguna función diferenciable puede satisfacer la ecuación al tener coeficientes de signos opuestos.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "La función $U(x,y) = \\ln(1 x + 2 y)$, pues el argumento no anula el operador lineal.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "La función $U(x,y) = e^{1 x - 2 y}$, pues los signos iguales impiden la anulación mutua.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "La función $U(x,y) = e^{2 x + 1 y}$, pues produce $2(2 U) - 1(1 U) \\neq 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "La función $U(x,y) = \\sin(1 x)\\cos(2 y)$, pues las funciones trigonométricas alternan signos.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      }
+    ],
+    "correct_answer": "A",
+    "hints": [
+      "Calcule $U_x$ y $U_y$ para la función propuesta $U(x,y) = e^{ax+by}$.",
+      "Sustituya en el operador: $2 U_x - 1 U_y = 2(a U) - 1(b U)$.",
+      "Para anularse idénticamente se requiere $2 a - 1 b = 0$, lo que exige $a=1$ y $b=2$."
+    ],
+    "detailed_solution": "Derivando $U(x,y) = e^{1 x + 2 y}$, se tiene $U_x = 1 U$ y $U_y = 2 U$. Luego $2(1 U) - 1(2 U) = 0$.",
+    "misconception_warning": "Compruebe que la sustitución produce una anulación idéntica en todo punto del plano."
+  },
+  {
+    "sample_index": 22,
+    "id": "Q-H07-130",
+    "competency_id": "H-07",
+    "competency_category": "Fact",
+    "competency_name": "Representación por Operadores Diferenciales",
+    "type": "multiple_choice_7_options",
+    "difficulty": "medium",
+    "bloom_level": "Remember",
+    "context_application": "Aplicación operativa para la unidad Representación por Operadores Diferenciales",
+    "stem": "En la notación operacional $D_x \\equiv \\frac{\\partial}{\\partial x}$ y $D_y \\equiv \\frac{\\partial}{\\partial y}$, ¿cómo se factoriza el operador $D_x^2 - 9 D_y^2$?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Se factoriza como $(D_x - 3 D_y)^2$ asumiendo erróneamente un trinomio cuadrado perfecto formal.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "Se factoriza como $(D_x + 3 D_y)^2$ invirtiendo los signos de las derivadas de primer orden.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Se factoriza como $(D_x - 3 D_y)(D_x + 3 D_y)$ en virtud del Teorema de Schwarz, en todo el dominio.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "El operador no es factorizable algebraicamente al contener derivadas respecto a variables distintas.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Se factoriza como $(D_x - 9 D_y)(D_x + D_y)$ aplicando una descomposición asimétrica irregular.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "Se factoriza como $D_x(D_x - 9 D_y)$ omitiendo la segunda potencia de la derivada respecto a $y$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "Se factoriza como $(D_x^2 - D_y^2)(3)$ separando escalares del operador diferencial continuo.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      }
+    ],
+    "correct_answer": "C",
+    "hints": [
+      "Reconozca la diferencia de cuadrados formal $A^2 - B^2 = (A - B)(A + B)$.",
+      "Identifique $A = D_x$ y $B = 3 D_y$, ya que $(3 D_y)^2 = 9 D_y^2$.",
+      "Dado que $D_x D_y = D_y D_x$ por conmutatividad, el producto produce exactamente $D_x^2 - 9 D_y^2$."
+    ],
+    "detailed_solution": "Tratando los operadores como elementos conmutativos, $D_x^2 - 9 D_y^2 = (D_x - 3 D_y)(D_x + 3 D_y)$.",
+    "misconception_warning": "Los operadores diferenciales lineales con coeficientes constantes conmutan libremente."
+  },
+  {
+    "sample_index": 23,
+    "id": "Q-H01-009",
+    "competency_id": "H-01",
+    "competency_category": "Fact",
+    "competency_name": "Definición de Homogeneidad e Identidad de Euler",
+    "type": "multiple_choice_7_options",
+    "difficulty": "hard",
+    "bloom_level": "Apply",
+    "context_application": "Aplicación operativa para la unidad Definición de Homogeneidad e Identidad de Euler",
+    "stem": "Considere la función de producción homogénea $F(K, L) = A K^{1} L^{3}$. ¿Cuál es el grado de homogeneidad $n$ y la expresión exacta de la identidad de Euler $K F_K + L F_L$?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "El grado es $n = 4$, y la identidad se anula idénticamente resultando en $K F_K + L F_L = 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Definición de Homogeneidad e Identidad de Euler."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "El grado es $n = 3$, y la identidad de Euler satisface $K F_K + L F_L = 3 F(K, L)$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Definición de Homogeneidad e Identidad de Euler."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "El grado es $n = 5$, y la identidad de Euler satisface $K F_K + L F_L = 5 F(K, L)$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Definición de Homogeneidad e Identidad de Euler."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "El grado es $n = \\frac{1}{3}$, y la identidad de Euler satisface $K F_K + L F_L = \\frac{1}{3} F$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Definición de Homogeneidad e Identidad de Euler."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "El grado es $n = 4$, y la identidad de Euler satisface $K F_K + L F_L = 4 F(K, L)$, en todo el dominio.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "El grado es $n = 3$, y la identidad de Euler satisface $K F_K + L F_L = 3 F(K, L)$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Definición de Homogeneidad e Identidad de Euler."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "El grado es $n = 4$, pero la identidad de Euler exige rendimientos constantes $K F_K + L F_L = F(K, L)$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Definición de Homogeneidad e Identidad de Euler."
+      }
+    ],
+    "correct_answer": "E",
+    "hints": [
+      "Evalúe formalmente $F(tK, tL)$ factorizando las potencias del escalar $t$.",
+      "Note que $t^{1} t^{3} = t^{4} = t^{4}$.",
+      "Aplique el Teorema de Euler: la suma ponderada de derivadas parciales iguala $n F(K, L)$."
+    ],
+    "detailed_solution": "Al evaluar $F(tK, tL) = t^{4} F(K, L)$, se deduce el grado $n = 4$. Por Euler, $K F_K + L F_L = 4 F(K, L)$.",
+    "misconception_warning": "No confunda los exponentes individuales con el grado conjunto a escala total."
+  },
+  {
+    "sample_index": 24,
+    "id": "Q-H03-052",
+    "competency_id": "H-03",
+    "competency_category": "Fact",
+    "competency_name": "Identidad de Verificación de Solución",
+    "type": "multiple_choice_7_options",
+    "difficulty": "hard",
+    "bloom_level": "Apply",
+    "context_application": "Aplicación operativa para la unidad Identidad de Verificación de Solución",
+    "stem": "Considere la ecuación diferencial en derivadas parciales $3 U_x - 2 U_y = 0$. ¿Cuál de las siguientes funciones candidatas satisface idénticamente la ecuación como solución clásica?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "La función $U(x,y) = e^{2 x + 3 y}$, pues $3(2 U) - 2(3 U) = 0$, en todo el dominio.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "La función $U(x,y) = \\sin(2 x)\\cos(3 y)$, pues las funciones trigonométricas alternan signos.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "La función $U(x,y) = \\ln(2 x + 3 y)$, pues el argumento no anula el operador lineal.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Ninguna función diferenciable puede satisfacer la ecuación al tener coeficientes de signos opuestos.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "La función $U(x,y) = x^{2} + y^{3}$, pues las derivadas no se cancelan algebraicamente.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "La función $U(x,y) = e^{2 x - 3 y}$, pues los signos iguales impiden la anulación mutua.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "La función $U(x,y) = e^{3 x + 2 y}$, pues produce $3(3 U) - 2(2 U) \\neq 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Identidad de Verificación de Solución."
+      }
+    ],
+    "correct_answer": "A",
+    "hints": [
+      "Calcule $U_x$ y $U_y$ para la función propuesta $U(x,y) = e^{ax+by}$.",
+      "Sustituya en el operador: $3 U_x - 2 U_y = 3(a U) - 2(b U)$.",
+      "Para anularse idénticamente se requiere $3 a - 2 b = 0$, lo que exige $a=2$ y $b=3$."
+    ],
+    "detailed_solution": "Derivando $U(x,y) = e^{2 x + 3 y}$, se tiene $U_x = 2 U$ y $U_y = 3 U$. Luego $3(2 U) - 2(3 U) = 0$.",
+    "misconception_warning": "Compruebe que la sustitución produce una anulación idéntica en todo punto del plano."
+  },
+  {
+    "sample_index": 25,
+    "id": "Q-H07-139",
+    "competency_id": "H-07",
+    "competency_category": "Fact",
+    "competency_name": "Representación por Operadores Diferenciales",
+    "type": "multiple_choice_7_options",
+    "difficulty": "easy",
+    "bloom_level": "Understand",
+    "context_application": "Aplicación operativa para la unidad Representación por Operadores Diferenciales",
+    "stem": "En la notación operacional $D_x \\equiv \\frac{\\partial}{\\partial x}$ y $D_y \\equiv \\frac{\\partial}{\\partial y}$, ¿cómo se factoriza el operador $D_x^2 - 9 D_y^2$?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "El operador no es factorizable algebraicamente al contener derivadas respecto a variables distintas.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "Se factoriza como $(D_x^2 - D_y^2)(3)$ separando escalares del operador diferencial continuo.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Se factoriza como $(D_x - 3 D_y)^2$ asumiendo erróneamente un trinomio cuadrado perfecto formal.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Se factoriza como $(D_x - 9 D_y)(D_x + D_y)$ aplicando una descomposición asimétrica irregular.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Se factoriza como $(D_x + 3 D_y)^2$ invirtiendo los signos de las derivadas de primer orden.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "Se factoriza como $D_x(D_x - 9 D_y)$ omitiendo la segunda potencia de la derivada respecto a $y$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Representación por Operadores Diferenciales."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "Se factoriza como $(D_x - 3 D_y)(D_x + 3 D_y)$ en virtud del Teorema de Schwarz, en todo el dominio.",
+        "is_correct": true,
+        "error_rationale": null
+      }
+    ],
+    "correct_answer": "G",
+    "hints": [
+      "Reconozca la diferencia de cuadrados formal $A^2 - B^2 = (A - B)(A + B)$.",
+      "Identifique $A = D_x$ y $B = 3 D_y$, ya que $(3 D_y)^2 = 9 D_y^2$.",
+      "Dado que $D_x D_y = D_y D_x$ por conmutatividad, el producto produce exactamente $D_x^2 - 9 D_y^2$."
+    ],
+    "detailed_solution": "Tratando los operadores como elementos conmutativos, $D_x^2 - 9 D_y^2 = (D_x - 3 D_y)(D_x + 3 D_y)$.",
+    "misconception_warning": "Los operadores diferenciales lineales con coeficientes constantes conmutan libremente."
+  },
+  {
+    "sample_index": 26,
+    "id": "Q-H06-103",
+    "competency_id": "H-06",
+    "competency_category": "Fact",
+    "competency_name": "Formas Canónicas Homogéneas según el Signo de Discriminante",
+    "type": "multiple_select",
+    "difficulty": "easy",
+    "bloom_level": "Remember",
+    "context_application": "Análisis multifactorial de propiedades para Formas Canónicas Homogéneas según el Signo de Discriminante",
+    "stem": "En relación con las formas canónicas de la solución homogénea $U_h$ en Formas Canónicas Homogéneas según el Signo de Discriminante, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "En el régimen hiperbólico ($\\Delta > 0$), la solución homogénea se compone de dos ondas viajeras independientes $f_1(y+n_1 x) + f_2(y+n_2 x)$.",
+        "is_correct": true,
+        "error_rationale": "Forma canónica de d'Alembert para EDPs hiperbólicas."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "En el régimen parabólico ($\\Delta = 0$), la raíz doble requiere multiplicar la segunda función arbitraria por $x$ para preservar la independencia.",
+        "is_correct": true,
+        "error_rationale": "Término secular indispensable en el caso parabólico."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Las funciones $f_1$ y $f_2$ son funciones arbitrarias dos veces diferenciables determinadas por las condiciones de contorno.",
+        "is_correct": true,
+        "error_rationale": "Propiedad de generalidad de la solución homogénea."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "En el régimen elíptico ($\\Delta < 0$), las soluciones homogéneas son ondas puramente reales sin ninguna componente compleja conjugada.",
+        "is_correct": false,
+        "error_rationale": "Falso: las raíces son complejas conjugadas $w \\pm vi$, requiriendo funciones con argumentos complejos."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "En el caso parabólico, la solución general homogénea consta únicamente de una función arbitraria $f_1(y+nx)$ sin término adicional.",
+        "is_correct": false,
+        "error_rationale": "Falso: se requieren dos funciones arbitrarias para una ecuación de segundo orden."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es falsa (raíces complejas) y la 5 omite la segunda función arbitraria necesaria.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 27,
+    "id": "Q-H03-057",
+    "competency_id": "H-03",
+    "competency_category": "Fact",
+    "competency_name": "Identidad de Verificación de Solución",
+    "type": "multiple_select",
+    "difficulty": "medium",
+    "bloom_level": "Apply",
+    "context_application": "Análisis multifactorial de propiedades para Identidad de Verificación de Solución",
+    "stem": "Respecto a los principios y procedimientos de verificación de soluciones en Identidad de Verificación de Solución, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Una función $U(x,y)$ es solución si al sustituir sus derivadas en la EDP se reduce a una identidad nula en todo el dominio.",
+        "is_correct": true,
+        "error_rationale": "Definición matemática formal de solución de una EDP."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "La función candidata debe ser diferenciable en el dominio al menos tantas veces como el orden de la EDP.",
+        "is_correct": true,
+        "error_rationale": "Condición de regularidad para soluciones clásicas."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "La solución general de una EDP de primer orden contiene una función arbitraria diferenciable de las variables.",
+        "is_correct": true,
+        "error_rationale": "Estructura fundamental de la solución general de EDPs de 1er orden."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Para certificar la validez de una solución clásica basta con comprobar que la igualdad se cumple en un único punto del plano.",
+        "is_correct": false,
+        "error_rationale": "Falso: la ecuación debe satisfacerse idénticamente en todo punto interior del dominio."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Una solución particular de una EDP contiene constantes de integración libres que pueden fijarse arbitrariamente.",
+        "is_correct": false,
+        "error_rationale": "Falso: la solución particular no contiene funciones ni constantes libres; está unívocamente determinada."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es falsa (se exige identidad en todo el dominio) y la 5 confunde solución particular con general.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 28,
+    "id": "Q-H06-109",
+    "competency_id": "H-06",
+    "competency_category": "Fact",
+    "competency_name": "Formas Canónicas Homogéneas según el Signo de Discriminante",
+    "type": "multiple_select",
+    "difficulty": "easy",
+    "bloom_level": "Understand",
+    "context_application": "Análisis multifactorial de propiedades para Formas Canónicas Homogéneas según el Signo de Discriminante",
+    "stem": "En relación con las formas canónicas de la solución homogénea $U_h$ en Formas Canónicas Homogéneas según el Signo de Discriminante, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "En el régimen hiperbólico ($\\Delta > 0$), la solución homogénea se compone de dos ondas viajeras independientes $f_1(y+n_1 x) + f_2(y+n_2 x)$.",
+        "is_correct": true,
+        "error_rationale": "Forma canónica de d'Alembert para EDPs hiperbólicas."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "En el régimen parabólico ($\\Delta = 0$), la raíz doble requiere multiplicar la segunda función arbitraria por $x$ para preservar la independencia.",
+        "is_correct": true,
+        "error_rationale": "Término secular indispensable en el caso parabólico."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Las funciones $f_1$ y $f_2$ son funciones arbitrarias dos veces diferenciables determinadas por las condiciones de contorno.",
+        "is_correct": true,
+        "error_rationale": "Propiedad de generalidad de la solución homogénea."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "En el régimen elíptico ($\\Delta < 0$), las soluciones homogéneas son ondas puramente reales sin ninguna componente compleja conjugada.",
+        "is_correct": false,
+        "error_rationale": "Falso: las raíces son complejas conjugadas $w \\pm vi$, requiriendo funciones con argumentos complejos."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "En el caso parabólico, la solución general homogénea consta únicamente de una función arbitraria $f_1(y+nx)$ sin término adicional.",
+        "is_correct": false,
+        "error_rationale": "Falso: se requieren dos funciones arbitrarias para una ecuación de segundo orden."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es falsa (raíces complejas) y la 5 omite la segunda función arbitraria necesaria.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 29,
+    "id": "Q-H04-069",
+    "competency_id": "H-04",
+    "competency_category": "Fact",
+    "competency_name": "Sistema Simétrico Auxiliar de Lagrange",
+    "type": "multiple_select",
+    "difficulty": "medium",
+    "bloom_level": "Understand",
+    "context_application": "Análisis multifactorial de propiedades para Sistema Simétrico Auxiliar de Lagrange",
+    "stem": "En relación con el sistema simétrico auxiliar de Lagrange y sus integrales características en Sistema Simétrico Auxiliar de Lagrange, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Para la EDP $a u_x + b u_y = c$, el sistema simétrico característico es $\\frac{dx}{a} = \\frac{dy}{b} = \\frac{du}{c}$.",
+        "is_correct": true,
+        "error_rationale": "Formulación canónica del sistema auxiliar de Charpit-Lagrange."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "Las curvas características del sistema son curvas integrales tangentes al campo vectorial $(a, b, c)$ en cada punto.",
+        "is_correct": true,
+        "error_rationale": "Propiedad geométrica fundamental de las trayectorias características."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Cualquier par de integrales primeras independientes del sistema permite parametrizar la superficie integral.",
+        "is_correct": true,
+        "error_rationale": "Base del método de Lagrange para obtener la solución general $\\Phi(m,n)=0$."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "El método de Lagrange solo es aplicable si los coeficientes $a, b, c$ son números constantes independientes de $x$ e $y$.",
+        "is_correct": false,
+        "error_rationale": "Falso: el método de Lagrange es válido para coeficientes variables $a(x,y,u), b(x,y,u), c(x,y,u)$."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "La solución general de Lagrange se obtiene sumando directamente las dos integrales primeras sin requerir una función $\\Phi$.",
+        "is_correct": false,
+        "error_rationale": "Falso: la relación implícita exige una función arbitraria $\\Phi(m, n) = 0$."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es falsa (admite coeficientes variables) y la 5 olvida la función arbitraria $\\Phi$.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 30,
+    "id": "Q-H01-001",
+    "competency_id": "H-01",
+    "competency_category": "Fact",
+    "competency_name": "Definición de Homogeneidad e Identidad de Euler",
+    "type": "multiple_select",
+    "difficulty": "hard",
+    "bloom_level": "Understand",
+    "context_application": "Análisis multifactorial de propiedades para Definición de Homogeneidad e Identidad de Euler",
+    "stem": "Respecto a la definición formal de homogeneidad y el Teorema de Euler en Definición de Homogeneidad e Identidad de Euler, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Una función es homogénea de grado $n$ si $f(t\\mathbf{x}) = t^n f(\\mathbf{x})$ para todo escalar positivo $t$.",
+        "is_correct": true,
+        "error_rationale": "Definición matemática formal de función homogénea."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "La identidad de Euler establece que $\\sum_{i=1}^k x_i \\frac{\\partial f}{\\partial x_i} = n f(\\mathbf{x})$ para funciones diferenciables.",
+        "is_correct": true,
+        "error_rationale": "Teorema fundamental de Euler para funciones homogéneas."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Las derivadas parciales de primer orden de una función homogénea de grado $n$ son homogéneas de grado $n - 1$.",
+        "is_correct": true,
+        "error_rationale": "Propiedad diferencial de las funciones homogéneas."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Toda función homogénea de grado 1 es necesariamente una forma cuadrática respecto a sus variables.",
+        "is_correct": false,
+        "error_rationale": "Falso: una función homogénea de grado 1 es lineal a escala, no cuadrática."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "La identidad de Euler solo es aplicable si todas las segundas derivadas parciales son estrictamente nulas.",
+        "is_correct": false,
+        "error_rationale": "Falso: Euler requiere diferenciabilidad de primer orden, no anulación de segundas derivadas."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es falsa (grado 1 no es cuadrático) y la 5 es una restricción inválida.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 31,
+    "id": "Q-Hab07-468",
+    "competency_id": "Hab-07",
+    "competency_category": "Skill",
+    "competency_name": "Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden",
+    "type": "fill_in_the_blank",
+    "difficulty": "easy",
+    "bloom_level": "Understand",
+    "context_application": "Cálculo analítico directo para Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden",
+    "stem": "Para la EDP de segundo orden $U_{xx} - 5 U_{xy} + 6 U_{yy} = 0$, calcule la suma de sus raíces características $n_1 + n_2$. Ingrese el valor entero exacto.",
+    "options": [],
+    "correct_answer": {
+      "value": "5",
+      "canonical_algebraic": "5",
+      "accepted_equivalents": [
+        "5",
+        "5.0"
+      ]
+    },
+    "hints": [
+      "El polinomio característico asociado es $n^2 - 5 n + 6 = 0$.",
+      "Por las relaciones de Cardano-Vieta, la suma de las raíces es igual al coeficiente lineal con signo cambiado.",
+      "Por tanto, $n_1 + n_2 = 5$."
+    ],
+    "detailed_solution": "Las raíces son $n_1 = 2$ y $n_2 = 3$, cuya suma es $n_1 + n_2 = 5$.",
+    "misconception_warning": "El coeficiente central en $n^2 - S n + P = 0$ representa directamente la suma de las raíces."
+  },
+  {
+    "sample_index": 32,
+    "id": "Q-Hab08-474",
+    "competency_id": "Hab-08",
+    "competency_category": "Skill",
+    "competency_name": "Determinación de la Solución Particular vía Factorización de Operadores",
+    "type": "fill_in_the_blank",
+    "difficulty": "medium",
+    "bloom_level": "Analyze",
+    "context_application": "Cálculo analítico directo para Determinación de la Solución Particular vía Factorización de Operadores",
+    "stem": "Para la EDP factorizada $(D_x - 4 D_y)(D_x + 3 D_y) U = x$, introduciendo la variable intermedia $V = (D_x + 3 D_y) U$, se obtiene la ecuación de primer orden $(D_x - m D_y) V = x$. ¿Cuál es el valor del coeficiente $m$? Ingrese el valor entero.",
+    "options": [],
+    "correct_answer": {
+      "value": "4",
+      "canonical_algebraic": "4",
+      "accepted_equivalents": [
+        "4",
+        "4.0"
+      ]
+    },
+    "hints": [
+      "El operador exterior es $(D_x - 4 D_y)$.",
+      "Al actuar sobre $V$, la ecuación es $(D_x - 4 D_y) V = x$.",
+      "Comparando con $(D_x - m D_y) V = x$, se deduce $m = 4$."
+    ],
+    "detailed_solution": "El operador exterior aplicado sobre la variable intermedia es $(D_x - 4 D_y)$, por lo que $m = 4$.",
+    "misconception_warning": "El coeficiente del operador exterior se mantiene idéntico al actuar sobre $V$."
+  },
+  {
+    "sample_index": 33,
+    "id": "Q-Hab02-303",
+    "competency_id": "Hab-02",
+    "competency_category": "Skill",
+    "competency_name": "Verificación Operativa de Soluciones Candidatas",
+    "type": "fill_in_the_blank",
+    "difficulty": "hard",
+    "bloom_level": "Analyze",
+    "context_application": "Cálculo analítico directo para Verificación Operativa de Soluciones Candidatas",
+    "stem": "Para que la función $U(x,y) = \\cos(5 x) e^{m y}$ satisfaga la ecuación de Laplace $U_{xx} + U_{yy} = 0$, ¿cuál debe ser el valor de $m^2$? Ingrese el valor numérico exacto.",
+    "options": [],
+    "correct_answer": {
+      "value": "25",
+      "canonical_algebraic": "25",
+      "accepted_equivalents": [
+        "25",
+        "25.0",
+        "5^2"
+      ]
+    },
+    "hints": [
+      "Calcule $U_{xx} = -5^2 \\cos(5 x) e^{my} = -25 U$.",
+      "Calcule $U_{{yy}} = m^2 \\cos({k_val} x) e^{{my}} = m^2 U$.",
+      "Sustituya en Laplace: $(-25 + m^2)U = 0 \\implies m^2 = 25$."
+    ],
+    "detailed_solution": "Como $U_{xx} = -25 U$ y $U_{yy} = m^2 U$, la ecuación de Laplace exige $-25 + m^2 = 0 \\implies m^2 = 25$.",
+    "misconception_warning": "Recuerde que la segunda derivada del coseno introduce un signo negativo."
+  },
+  {
+    "sample_index": 34,
+    "id": "Q-Hab07-451",
+    "competency_id": "Hab-07",
+    "competency_category": "Skill",
+    "competency_name": "Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden",
+    "type": "fill_in_the_blank",
+    "difficulty": "easy",
+    "bloom_level": "Apply",
+    "context_application": "Cálculo analítico directo para Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden",
+    "stem": "Para la EDP de segundo orden $U_{xx} - 7 U_{xy} + 12 U_{yy} = 0$, calcule la suma de sus raíces características $n_1 + n_2$. Ingrese el valor entero exacto.",
+    "options": [],
+    "correct_answer": {
+      "value": "7",
+      "canonical_algebraic": "7",
+      "accepted_equivalents": [
+        "7",
+        "7.0"
+      ]
+    },
+    "hints": [
+      "El polinomio característico asociado es $n^2 - 7 n + 12 = 0$.",
+      "Por las relaciones de Cardano-Vieta, la suma de las raíces es igual al coeficiente lineal con signo cambiado.",
+      "Por tanto, $n_1 + n_2 = 7$."
+    ],
+    "detailed_solution": "Las raíces son $n_1 = 3$ y $n_2 = 4$, cuya suma es $n_1 + n_2 = 7$.",
+    "misconception_warning": "El coeficiente central en $n^2 - S n + P = 0$ representa directamente la suma de las raíces."
+  },
+  {
+    "sample_index": 35,
+    "id": "Q-Hab04-380",
+    "competency_id": "Hab-04",
+    "competency_category": "Skill",
+    "competency_name": "Integración Directa del Sistema Auxiliar de Lagrange",
+    "type": "fill_in_the_blank",
+    "difficulty": "easy",
+    "bloom_level": "Understand",
+    "context_application": "Cálculo analítico directo para Integración Directa del Sistema Auxiliar de Lagrange",
+    "stem": "Para la EDP $4 U_x + 6 U_y = 0$, la primera integral característica tiene la forma $m(x,y) = k x - 4 y = c_1$. Ingrese el valor entero del coeficiente $k$.",
+    "options": [],
+    "correct_answer": {
+      "value": "6",
+      "canonical_algebraic": "6",
+      "accepted_equivalents": [
+        "6",
+        "6.0"
+      ]
+    },
+    "hints": [
+      "Escriba la ecuación simétrica: $\\frac{dx}{4} = \\frac{dy}{6}$.",
+      "Multiplique en cruz: $6 dx - 4 dy = 0$.",
+      "Integrando resulta $6 x - 4 y = c_1$, por lo que $k = 6$."
+    ],
+    "detailed_solution": "De $\\frac{dx}{4} = \\frac{dy}{6}$, multiplicando en cruz se tiene $6 dx - 4 dy = 0$, luego $k = 6$.",
+    "misconception_warning": "Al cruzar denominadores, el coeficiente de $dx$ proviene del denominador de $dy$."
+  },
+  {
+    "sample_index": 36,
+    "id": "Q-Hab03-348",
+    "competency_id": "Hab-03",
+    "competency_category": "Skill",
+    "competency_name": "Desacoplamiento por Separación de Variables en EDPs Físico-Económicas",
+    "type": "multiple_choice_7_options",
+    "difficulty": "medium",
+    "bloom_level": "Analyze",
+    "context_application": "Aplicación operativa para la unidad Desacoplamiento por Separación de Variables en EDPs Físico-Económicas",
+    "stem": "Aplique la separación de variables $U(x,t) = X(x)T(t)$ a la ecuación de difusión/calor 1D $U_t - 2 U_{xx} = 0$ con constante de separación $-\\lambda$. ¿Cuál es el sistema ordinario desacoplado resultante?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "El sistema desacoplado es $T' + 2 T = 0$ y $X'' + \\lambda^2 X = 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "El sistema desacoplado es $T' - 2 \\lambda T = 0$ y $X'' - \\lambda X = 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "El sistema desacoplado es $T' - \\lambda T = 0$ y $X'' + 2 X = 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "El sistema desacoplado es $T' + 2 \\lambda T = 0$ y $X'' + \\lambda X = 0$.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "La ecuación no es desacoplable analíticamente por la presencia del coeficiente de difusión $2$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "El sistema desacoplado es $T'' + 2 \\lambda T = 0$ y $X' + \\lambda X = 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "El sistema desacoplado es $T' + \\lambda T = 0$ y $X'' + 2 \\lambda X = 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      }
+    ],
+    "correct_answer": "D",
+    "hints": [
+      "Calcule $U_t = X T'$ y $U_{xx} = X'' T$.",
+      "Sustituya: $X T' - 2 X'' T = 0 \\implies X T' = 2 X'' T$.",
+      "Divida entre $2 X T$: $\\frac{T'}{2 T} = \\frac{X''}{X} = -\\lambda$, lo que da $T' + 2 \\lambda T = 0$ y $X'' + \\lambda X = 0$."
+    ],
+    "detailed_solution": "Dividiendo entre $2 X T$, obtenemos $\\frac{T'}{2 T} = \\frac{X''}{X} = -\\lambda$. Reordenando resulta $T' + 2\\lambda T = 0$ y $X'' + \\lambda X = 0$.",
+    "misconception_warning": "El coeficiente $\\kappa$ acompaña a la derivada espacial en la EDP, quedando con la derivada temporal tras dividir."
+  },
+  {
+    "sample_index": 37,
+    "id": "Q-Hab03-334",
+    "competency_id": "Hab-03",
+    "competency_category": "Skill",
+    "competency_name": "Desacoplamiento por Separación de Variables en EDPs Físico-Económicas",
+    "type": "multiple_choice_7_options",
+    "difficulty": "easy",
+    "bloom_level": "Apply",
+    "context_application": "Aplicación operativa para la unidad Desacoplamiento por Separación de Variables en EDPs Físico-Económicas",
+    "stem": "Aplique la separación de variables $U(x,t) = X(x)T(t)$ a la ecuación de difusión/calor 1D $U_t - 3 U_{xx} = 0$ con constante de separación $-\\lambda$. ¿Cuál es el sistema ordinario desacoplado resultante?",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "El sistema desacoplado es $T' + \\lambda T = 0$ y $X'' + 3 \\lambda X = 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "El sistema desacoplado es $T' + 3 T = 0$ y $X'' + \\lambda^2 X = 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "El sistema desacoplado es $T'' + 3 \\lambda T = 0$ y $X' + \\lambda X = 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "El sistema desacoplado es $T' - 3 \\lambda T = 0$ y $X'' - \\lambda X = 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "El sistema desacoplado es $T' + 3 \\lambda T = 0$ y $X'' + \\lambda X = 0$.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "La ecuación no es desacoplable analíticamente por la presencia del coeficiente de difusión $3$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "El sistema desacoplado es $T' - \\lambda T = 0$ y $X'' + 3 X = 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Desacoplamiento por Separación de Variables en EDPs Físico-Económicas."
+      }
+    ],
+    "correct_answer": "E",
+    "hints": [
+      "Calcule $U_t = X T'$ y $U_{xx} = X'' T$.",
+      "Sustituya: $X T' - 3 X'' T = 0 \\implies X T' = 3 X'' T$.",
+      "Divida entre $3 X T$: $\\frac{T'}{3 T} = \\frac{X''}{X} = -\\lambda$, lo que da $T' + 3 \\lambda T = 0$ y $X'' + \\lambda X = 0$."
+    ],
+    "detailed_solution": "Dividiendo entre $3 X T$, obtenemos $\\frac{T'}{3 T} = \\frac{X''}{X} = -\\lambda$. Reordenando resulta $T' + 3\\lambda T = 0$ y $X'' + \\lambda X = 0$.",
+    "misconception_warning": "El coeficiente $\\kappa$ acompaña a la derivada espacial en la EDP, quedando con la derivada temporal tras dividir."
+  },
+  {
+    "sample_index": 38,
+    "id": "Q-Hab02-298",
+    "competency_id": "Hab-02",
+    "competency_category": "Skill",
+    "competency_name": "Verificación Operativa de Soluciones Candidatas",
+    "type": "multiple_choice_7_options",
+    "difficulty": "hard",
+    "bloom_level": "Apply",
+    "context_application": "Aplicación operativa para la unidad Verificación Operativa de Soluciones Candidatas",
+    "stem": "Verifique operativamente cuál de las siguientes funciones candidatas satisface la EDP $U_x - 3 U_y = 0$ calculando formalmente sus derivadas parciales.",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "La función $U(x,y) = e^{3 x + y}$, pues $U_x = 3 U$ y $U_y = U$, dando $3 U - 3(U) = 0$.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "La función $U(x,y) = 3 x^2 + y^2$, pues las derivadas lineales no satisfacen la homogeneidad requerida.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "La función $U(x,y) = e^{3 x - y}$, pues $U_x = 3 U$ y $U_y = -U$, dando $23 U \\neq 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "La función $U(x,y) = \\sin(3 x + y)$, pues las derivadas trigonométricas no se anulan algebraicamente.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "La función $U(x,y) = e^{x + 3 y}$, pues $U_x = U$ y $U_y = 3 U$, dando $U - 3^2 U \\neq 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "La función $U(x,y) = \\ln(3 x - y)$, pues el argumento produce denominadores variables disjuntos.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "Ninguna función exponencial puede satisfacer la ecuación debido a la presencia del signo negativo en el operador.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      }
+    ],
+    "correct_answer": "A",
+    "hints": [
+      "Para $U = e^{ax+by}$, $U_x = a U$ y $U_y = b U$.",
+      "Sustituyendo en la EDP: $a U - 3 b U = (a - 3 b) U = 0$.",
+      "Esto exige $a = 3 b$. Con $b=1$, tenemos $a=3$, resultando en $U = e^{3 x + y}$."
+    ],
+    "detailed_solution": "Derivando $U = e^{3 x + y}$: $U_x = 3 e^{3 x + y}$ y $U_y = e^{3 x + y}$. Luego $U_x - 3 U_y = 3 U - 3 U = 0$.",
+    "misconception_warning": "Verifique siempre el signo al transponer coeficientes entre derivadas."
+  },
+  {
+    "sample_index": 39,
+    "id": "Q-Hab02-312",
+    "competency_id": "Hab-02",
+    "competency_category": "Skill",
+    "competency_name": "Verificación Operativa de Soluciones Candidatas",
+    "type": "multiple_choice_7_options",
+    "difficulty": "easy",
+    "bloom_level": "Analyze",
+    "context_application": "Aplicación operativa para la unidad Verificación Operativa de Soluciones Candidatas",
+    "stem": "Verifique operativamente cuál de las siguientes funciones candidatas satisface la EDP $U_x - 2 U_y = 0$ calculando formalmente sus derivadas parciales.",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Ninguna función exponencial puede satisfacer la ecuación debido a la presencia del signo negativo en el operador.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "La función $U(x,y) = \\ln(2 x - y)$, pues el argumento produce denominadores variables disjuntos.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "La función $U(x,y) = \\sin(2 x + y)$, pues las derivadas trigonométricas no se anulan algebraicamente.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "La función $U(x,y) = e^{2 x + y}$, pues $U_x = 2 U$ y $U_y = U$, dando $2 U - 2(U) = 0$.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "La función $U(x,y) = e^{x + 2 y}$, pues $U_x = U$ y $U_y = 2 U$, dando $U - 2^2 U \\neq 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "La función $U(x,y) = 2 x^2 + y^2$, pues las derivadas lineales no satisfacen la homogeneidad requerida.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "La función $U(x,y) = e^{2 x - y}$, pues $U_x = 2 U$ y $U_y = -U$, dando $22 U \\neq 0$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Verificación Operativa de Soluciones Candidatas."
+      }
+    ],
+    "correct_answer": "D",
+    "hints": [
+      "Para $U = e^{ax+by}$, $U_x = a U$ y $U_y = b U$.",
+      "Sustituyendo en la EDP: $a U - 2 b U = (a - 2 b) U = 0$.",
+      "Esto exige $a = 2 b$. Con $b=1$, tenemos $a=2$, resultando en $U = e^{2 x + y}$."
+    ],
+    "detailed_solution": "Derivando $U = e^{2 x + y}$: $U_x = 2 e^{2 x + y}$ y $U_y = e^{2 x + y}$. Luego $U_x - 2 U_y = 2 U - 2 U = 0$.",
+    "misconception_warning": "Verifique siempre el signo al transponer coeficientes entre derivadas."
+  },
+  {
+    "sample_index": 40,
+    "id": "Q-Hab07-458",
+    "competency_id": "Hab-07",
+    "competency_category": "Skill",
+    "competency_name": "Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden",
+    "type": "multiple_choice_7_options",
+    "difficulty": "easy",
+    "bloom_level": "Apply",
+    "context_application": "Aplicación operativa para la unidad Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden",
+    "stem": "Resuelva la ecuación cuadrática característica para la EDP de segundo orden $U_{xx} - 8 U_{xy} + 15 U_{yy} = 0$ y determine su solución general homogénea $U_h$.",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Las raíces son $n_1=3, n_2=5$, pero la solución es $U_h = f_1(y + 3 x) + x f_2(y + 5 x)$. (considerando la invariancia en el espacio).",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "Las raíces son $n_1=3, n_2=5$, y la solución es $U_h = f_1(y + 3 x) + f_2(y + 5 x)$, en todo el dominio.",
+        "is_correct": true,
+        "error_rationale": null
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Las raíces son $n_1=-3, n_2=-5$, y la solución es $U_h = f_1(y - 3 x) + f_2(y - 5 x)$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Las raíces son imaginarias puras y la solución es $U_h = \\cos(3 x) f_1(y) + \\sin(5 x) f_2(y)$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "La raíz es doble $n=3$, resultando en la solución parabólica $U_h = f_1(y + 3 x) + x f_2(y + 3 x)$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden."
+      },
+      {
+        "id": "opt_f",
+        "option_id": "F",
+        "content": "La ecuación no admite solución homogénea al ser el discriminante estrictamente imaginario complejo.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden."
+      },
+      {
+        "id": "opt_g",
+        "option_id": "G",
+        "content": "Las raíces son $n_1=8, n_2=15$, y la solución es $U_h = f_1(y + 8 x) + f_2(y + 15 x)$.",
+        "is_correct": false,
+        "error_rationale": "Distractor basado en misconception de Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden."
+      }
+    ],
+    "correct_answer": "B",
+    "hints": [
+      "Plantee el polinomio característico: $n^2 - 8 n + 15 = 0$.",
+      "Factorice: $(n - 3)(n - 5) = 0$, de donde $n_1 = 3$ y $n_2 = 5$.",
+      "Dado que las raíces son reales y distintas ($\\Delta > 0$), la solución es $U_h = f_1(y + 3 x) + f_2(y + 5 x)$."
+    ],
+    "detailed_solution": "El polinomio $n^2 - 8 n + 15 = (n-3)(n-5) = 0$ tiene raíces $n_1=3, n_2=5$. Como son reales distintas, $U_h = f_1(y+3x) + f_2(y+5x)$.",
+    "misconception_warning": "Compruebe los signos en el argumento de las funciones arbitrarias."
+  },
+  {
+    "sample_index": 41,
+    "id": "Q-Hab06-424",
+    "competency_id": "Hab-06",
+    "competency_category": "Skill",
+    "competency_name": "Resolución del Problema de Cauchy e Inversión Paramétrica",
+    "type": "multiple_select",
+    "difficulty": "medium",
+    "bloom_level": "Understand",
+    "context_application": "Análisis multifactorial de propiedades para Resolución del Problema de Cauchy e Inversión Paramétrica",
+    "stem": "En relación con el problema de valores iniciales de Cauchy y la transversalidad en Resolución del Problema de Cauchy e Inversión Paramétrica, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "El problema de Cauchy posee solución local única si y solo si la curva inicial no es tangente a las curvas características.",
+        "is_correct": true,
+        "error_rationale": "Condición de transversality del Teorema de Cauchy-Kowalevski."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "Si la curva inicial es tangente a una característica pero los datos iniciales son incompatibles, el problema no tiene solución.",
+        "is_correct": true,
+        "error_rationale": "Fallo de existencia bajo incompatibilidad tangencial."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Si la curva inicial coincide con una característica y los datos son compatibles, existen infinitas soluciones distintas.",
+        "is_correct": true,
+        "error_rationale": "Pérdida de unicidad: cualquier superficie que contenga la característica es solución."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "La condición de no tangencia exige que la curva inicial sea obligatoriamente una circunferencia cerrada en el plano.",
+        "is_correct": false,
+        "error_rationale": "Falso: la curva inicial puede ser cualquier curva regular abierta o cerrada."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Imponer datos sobre una curva tangente a las características siempre garantiza la unicidad absoluta de la solución.",
+        "is_correct": false,
+        "error_rationale": "Falso: la tangencia destruye la unicidad local."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es una restricción innecesaria y la 5 afirma lo contrario del teorema.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 42,
+    "id": "Q-Hab02-317",
+    "competency_id": "Hab-02",
+    "competency_category": "Skill",
+    "competency_name": "Verificación Operativa de Soluciones Candidatas",
+    "type": "multiple_select",
+    "difficulty": "medium",
+    "bloom_level": "Apply",
+    "context_application": "Análisis multifactorial de propiedades para Verificación Operativa de Soluciones Candidatas",
+    "stem": "Respecto a los principios y procedimientos de verificación de soluciones en Verificación Operativa de Soluciones Candidatas, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Una función $U(x,y)$ es solución si al sustituir sus derivadas en la EDP se reduce a una identidad nula en todo el dominio.",
+        "is_correct": true,
+        "error_rationale": "Definición matemática formal de solución de una EDP."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "La función candidata debe ser diferenciable en el dominio al menos tantas veces como el orden de la EDP.",
+        "is_correct": true,
+        "error_rationale": "Condición de regularidad para soluciones clásicas."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "La solución general de una EDP de primer orden contiene una función arbitraria diferenciable de las variables.",
+        "is_correct": true,
+        "error_rationale": "Estructura fundamental de la solución general de EDPs de 1er orden."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Para certificar la validez de una solución clásica basta con comprobar que la igualdad se cumple en un único punto del plano.",
+        "is_correct": false,
+        "error_rationale": "Falso: la ecuación debe satisfacerse idénticamente en todo punto interior del dominio."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Una solución particular de una EDP contiene constantes de integración libres que pueden fijarse arbitrariamente.",
+        "is_correct": false,
+        "error_rationale": "Falso: la solución particular no contiene funciones ni constantes libres; está unívocamente determinada."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es falsa (se exige identidad en todo el dominio) y la 5 confunde solución particular con general.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 43,
+    "id": "Q-Hab02-307",
+    "competency_id": "Hab-02",
+    "competency_category": "Skill",
+    "competency_name": "Verificación Operativa de Soluciones Candidatas",
+    "type": "multiple_select",
+    "difficulty": "easy",
+    "bloom_level": "Analyze",
+    "context_application": "Análisis multifactorial de propiedades para Verificación Operativa de Soluciones Candidatas",
+    "stem": "Respecto a los principios y procedimientos de verificación de soluciones en Verificación Operativa de Soluciones Candidatas, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Una función $U(x,y)$ es solución si al sustituir sus derivadas en la EDP se reduce a una identidad nula en todo el dominio.",
+        "is_correct": true,
+        "error_rationale": "Definición matemática formal de solución de una EDP."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "La función candidata debe ser diferenciable en el dominio al menos tantas veces como el orden de la EDP.",
+        "is_correct": true,
+        "error_rationale": "Condición de regularidad para soluciones clásicas."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "La solución general de una EDP de primer orden contiene una función arbitraria diferenciable de las variables.",
+        "is_correct": true,
+        "error_rationale": "Estructura fundamental de la solución general de EDPs de 1er orden."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Para certificar la validez de una solución clásica basta con comprobar que la igualdad se cumple en un único punto del plano.",
+        "is_correct": false,
+        "error_rationale": "Falso: la ecuación debe satisfacerse idénticamente en todo punto interior del dominio."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Una solución particular de una EDP contiene constantes de integración libres que pueden fijarse arbitrariamente.",
+        "is_correct": false,
+        "error_rationale": "Falso: la solución particular no contiene funciones ni constantes libres; está unívocamente determinada."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es falsa (se exige identidad en todo el dominio) y la 5 confunde solución particular con general.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 44,
+    "id": "Q-Hab07-446",
+    "competency_id": "Hab-07",
+    "competency_category": "Skill",
+    "competency_name": "Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden",
+    "type": "multiple_select",
+    "difficulty": "easy",
+    "bloom_level": "Remember",
+    "context_application": "Análisis multifactorial de propiedades para Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden",
+    "stem": "Respecto al polinomio característico y la clasificación espectral en Cálculo Espectral y Ensamblado de la Solución Homogénea de 2do Orden, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "El polinomio característico surge del ansatz $U = \\phi(y + nx)$, resultando en la ecuación cuadrática $a n^2 + b n + c = 0$.",
+        "is_correct": true,
+        "error_rationale": "Deducción de la ecuación característica de 2do orden."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "El discriminante característico $\\Delta = b^2 - 4ac$ clasifica la ecuación en hiperbólica ($\\Delta > 0$), parabólica ($\\Delta = 0$) y elíptica ($\\Delta < 0$).",
+        "is_correct": true,
+        "error_rationale": "Criterio de clasificación canónica de EDPs de 2do orden."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "Si $\\Delta > 0$, la ecuación cuadrática admite dos raíces reales distintas correspondientes a dos direcciones características.",
+        "is_correct": true,
+        "error_rationale": "Naturaleza geométrica del régimen hiperbólico."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "El discriminante característico de una EDP lineal con coeficientes constantes depende activamente de la función incógnita $U$.",
+        "is_correct": false,
+        "error_rationale": "Falso: en ecuaciones lineales con coeficientes constantes, $\\Delta$ es un escalar fijo independiente de $U$."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Toda EDP de segundo orden con coeficiente mixto nulo $b = 0$ es estrictamente de tipo parabólico.",
+        "is_correct": false,
+        "error_rationale": "Falso: si $b=0$, $\\Delta = -4ac$, que puede ser positivo (hiperbólica) si $ac < 0$ o negativo (elíptica) si $ac > 0$."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es falsa (coeficientes constantes) y la 5 ignora el producto $-4ac$.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  },
+  {
+    "sample_index": 45,
+    "id": "Q-Hab02-316",
+    "competency_id": "Hab-02",
+    "competency_category": "Skill",
+    "competency_name": "Verificación Operativa de Soluciones Candidatas",
+    "type": "multiple_select",
+    "difficulty": "hard",
+    "bloom_level": "Analyze",
+    "context_application": "Análisis multifactorial de propiedades para Verificación Operativa de Soluciones Candidatas",
+    "stem": "Respecto a los principios y procedimientos de verificación de soluciones en Verificación Operativa de Soluciones Candidatas, seleccione todas las afirmaciones verdaderas:",
+    "options": [
+      {
+        "id": "opt_a",
+        "option_id": "A",
+        "content": "Una función $U(x,y)$ es solución si al sustituir sus derivadas en la EDP se reduce a una identidad nula en todo el dominio.",
+        "is_correct": true,
+        "error_rationale": "Definición matemática formal de solución de una EDP."
+      },
+      {
+        "id": "opt_b",
+        "option_id": "B",
+        "content": "La función candidata debe ser diferenciable en el dominio al menos tantas veces como el orden de la EDP.",
+        "is_correct": true,
+        "error_rationale": "Condición de regularidad para soluciones clásicas."
+      },
+      {
+        "id": "opt_c",
+        "option_id": "C",
+        "content": "La solución general de una EDP de primer orden contiene una función arbitraria diferenciable de las variables.",
+        "is_correct": true,
+        "error_rationale": "Estructura fundamental de la solución general de EDPs de 1er orden."
+      },
+      {
+        "id": "opt_d",
+        "option_id": "D",
+        "content": "Para certificar la validez de una solución clásica basta con comprobar que la igualdad se cumple en un único punto del plano.",
+        "is_correct": false,
+        "error_rationale": "Falso: la ecuación debe satisfacerse idénticamente en todo punto interior del dominio."
+      },
+      {
+        "id": "opt_e",
+        "option_id": "E",
+        "content": "Una solución particular de una EDP contiene constantes de integración libres que pueden fijarse arbitrariamente.",
+        "is_correct": false,
+        "error_rationale": "Falso: la solución particular no contiene funciones ni constantes libres; está unívocamente determinada."
+      }
+    ],
+    "correct_answer": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Analice cada afirmación de manera independiente evaluando sus hipótesis analíticas.",
+      "Recuerde que el principio de superposición exige linealidad estricta del operador.",
+      "Verifique la consistencia lógica de las definiciones frente a los casos particulares."
+    ],
+    "detailed_solution": "Las afirmaciones 1, 2 y 3 son verdaderas. La 4 es falsa (se exige identidad en todo el dominio) y la 5 confunde solución particular con general.",
+    "misconception_warning": "No asuma propiedades de operadores lineales para ecuaciones que contengan términos no lineales."
+  }
+]

@@ -1,0 +1,43 @@
+{
+  "course_metadata": {
+    "unit_title": "Estadística III: Econometría y Modelo de Regresión Lineal",
+    "detected_objective": "Dominar la especificación matemática, estimación MCO en notación matricial, propiedades estadísticas y asintóticas de Gauss-Markov, álgebra geométrica de proyecciones, descomposición ANOVA de sumas de cuadrados, inferencia de hipótesis lineales y diagnóstico econométrico integral."
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 3.8,
+      "max": 4.0,
+      "feedback": "Descomposición curricular ejemplar en 16 competencias atómicas categorizadas explícitamente en Hechos (4), Conceptos (5) y Habilidades (7), con meta de dominio del 100% y objetivos de microaprendizaje claramente definidos en sus descripciones matemáticas. Se sugiere formalizar jerarquías modulares intermedias y grafos de prerrequisitos (DAG) en el esquema raíz."
+    },
+    "assessment_quality": {
+      "score": 4.8,
+      "max": 5.0,
+      "feedback": "Excelente suficiencia y variedad de reactivos (390 ítems totales, distribuidos en 142 de opción múltiple de 7 opciones, 124 de respuesta numérica y 124 de selección múltiple). Cada distractor de opción múltiple posee un 'error_rationale' pedagógico riguroso (100% de cobertura). Margen de mejora menor en la reducción de repetición paramétrica de distractores dentro de una misma competencia."
+    },
+    "scaffolding_hints": {
+      "score": 5.0,
+      "max": 5.0,
+      "feedback": "Andamiaje impecable conforme a estándares de Mastery Learning. El 100% de las 390 preguntas dispone de exactamente 3 pistas progresivas estructuradas (conceptual -> procedimental -> operativa). Además, el 100% incorpora advertencias preventivas de conceptos erróneos ('misconception_warning') y soluciones analíticas exhaustivas paso a paso."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación semántica perfecta entre la teoría declarada y los ejercicios de evaluación. No se detectaron preguntas huérfanas ni conceptos no cubiertos previamente. Predominancia saludable de habilidades cognitivas de orden superior según la Taxonomía de Bloom (67.4% en Analizar y Aplicar)."
+    },
+    "technical_ergonomics": {
+      "score": 1.6,
+      "max": 2.0,
+      "feedback": "Notación matemática y fórmulas en LaTeX de gran rigor formal. No obstante, se detectaron errores de sintaxis en delimitadores LaTeX en 5 preguntas específicas (Q-H02-085 con cierre '$' faltante; Q-Hab02-118 con triple delimitador '$$$'; y Q-C04-272, Q-C04-273, Q-C04-274 con dobles delimitadores inline no balanceados '$N \\times $N$'), lo que compromete el renderizado en frontend."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 19.2,
+  "quality_tier": "EXCELENTE (17-20)",
+  "remediation_actions": [
+    "Corregir el delimitador faltante en Q-H02-085: cambiar '$k_i.' por '$k_i$.' en el stem.",
+    "Corregir el triple delimitador en Q-Hab02-118: reemplazar '$$$' por '$$' al final de la expresión del costo medio en el stem.",
+    "Corregir la sintaxis de delimitadores en Q-C04-272, Q-C04-273 y Q-C04-274: reemplazar '$N \\times $N$' por '$N \\times N$' en los enunciados y soluciones detalladas correspondientes.",
+    "Incorporar en la metadata raíz del curso una estructura formal de macro-unidades temáticas y un grafo de dependencias de prerrequisitos (DAG) entre competencias para optimizar la navegación adaptativa.",
+    "Aumentar la variabilidad léxica de los distractores en preguntas de opción múltiple que comparten la misma plantilla paramétrica."
+  ]
+}

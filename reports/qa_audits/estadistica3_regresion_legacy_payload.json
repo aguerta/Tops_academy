@@ -1,0 +1,1383 @@
+{
+  "course_id": "estadistica3_regresion",
+  "title": "Estadística III: Modelo de Regresión Lineal",
+  "description": "Formulación, estimación matricial MCO, descomposición ANOVA e inferencia clásica en el modelo de regresión lineal",
+  "total_competencies": 6,
+  "total_questions": 150,
+  "question_types_distribution": {
+    "multiple_choice_7_options": 51,
+    "fill_in_the_blank": 51,
+    "multiple_select": 48
+  },
+  "questions_per_competency": {
+    "H-01": 20,
+    "C-01": 20,
+    "C-02": 20,
+    "Hab-01": 30,
+    "Hab-02": 30,
+    "Hab-03": 30
+  },
+  "questions_with_zero_hints_count": 0,
+  "sample_questions_count": 18,
+  "competencies": [
+    {
+      "id": "H-01",
+      "name": "Supuestos Clásicos y Fundamentos Matriciales del MRLC",
+      "category": "Fact",
+      "description": "Identificación de los supuestos clásicos de Gauss-Markov ($E(u|X)=0$, $\\operatorname{Var}(u|X)=\\sigma^2 I_n$, $\\operatorname{rango}(X)=k$), dimensiones conformables y condición MELI/BLUE.",
+      "question_count": 20
+    },
+    {
+      "id": "C-01",
+      "name": "Geometría y Álgebra de Proyección: Matrices P, M y M0",
+      "category": "Concept",
+      "description": "Propiedades de las matrices de proyección ortogonal: Hat Matrix $P = X(X'X)^{-1}X'$ (proyecta $Y$ sobre $\\operatorname{col}(X)$, $\\operatorname{tr}(P)=k$, simétrica e idempotente), Matriz Aniquiladora $M = I_n - P$ ($MX = 0$, $\\operatorname{tr}(M)=n-k$) y Matriz de Centrado $M_0 = I_n - \\frac{1}{n}\\iota\\iota'$ ($\\operatorname{tr}(M_0)=n-1$).",
+      "question_count": 20
+    },
+    {
+      "id": "C-02",
+      "name": "Formas Funcionales, Efectos Marginales y Elasticidades",
+      "category": "Concept",
+      "description": "Distinción analítica entre modelos Lineal, Doble-Log (elasticidad constante $\\beta_2$), Log-Lin (semielasticidad $100\\beta_2$), Lin-Log (cambio absoluto $\\beta_2/100$), Cuadrático ($X^* = -\\beta_1/(2\\beta_2)$) y Recíproco (asíntota de saturación $\\beta_1$).",
+      "question_count": 20
+    },
+    {
+      "id": "Hab-01",
+      "name": "Estimación MCO Matricial, Ajuste y Residuos",
+      "category": "Skill",
+      "description": "Cálculo procedimental de la matriz de momentos $X'X$, su determinante e inversa $(X'X)^{-1}$, el vector de producto cruzado $X'Y$, el estimador $\\hat{\\beta} = (X'X)^{-1}X'Y$, el vector de predicción $\\hat{Y} = X\\hat{\\beta}$ y los residuos muestrales $e = Y - \\hat{Y}$.",
+      "question_count": 30
+    },
+    {
+      "id": "Hab-02",
+      "name": "Descomposición ANOVA, Coeficiente de Determinación (R^2) y Varianza Residual (s^2)",
+      "category": "Skill",
+      "description": "Cálculo de las sumas de cuadrados matriciales: $STC = Y'M_0 Y$, $SRC = e'e$, $SEC = \\hat{Y}'M_0 \\hat{Y}$, verificación de la identidad $STC = SEC + SRC$, determinación de $R^2 = 1 - \\frac{SRC}{STC}$ y estimación de la varianza del error $s^2 = \\frac{e'e}{n-k}$.",
+      "question_count": 30
+    },
+    {
+      "id": "Hab-03",
+      "name": "Inferencia Estadística: Contrastes t-Student, F-Fisher y P-Valores",
+      "category": "Skill",
+      "description": "Cálculo de errores estándar de los coeficientes $SE(\\hat{\\beta}_j) = \\sqrt{s^2 c_{jj}}$, estadístico individual $t_{\\mathrm{calc}} = \\frac{\\hat{\\beta}_j - \\beta_{j0}}{SE(\\hat{\\beta}_j)}$, estadístico de significancia global $F = \\frac{SEC/(k-1)}{SRC/(n-k)} = \\frac{R^2/(k-1)}{(1-R^2)/(n-k)}$, comparación con valores críticos y reglas de decisión basadas en p-valores.",
+      "question_count": 30
+    }
+  ],
+  "sample_questions": [
+    {
+      "id": "Q-H01-001",
+      "competency_id": "H-01",
+      "competency_name": "Supuestos Clásicos y Fundamentos Matriciales del MRLC",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para un modelo de regresión lineal múltiple con $n = 50$ observaciones y $k = 3$ parámetros ($y = X\\beta + u$), identifique la proposición teórica correcta sobre los supuestos y dimensiones del modelo:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La matriz X es de orden 50 x 3, y la varianza de errores se define por el escalar E(u'u|X).",
+          "is_correct": false,
+          "error_rationale": "Define Var(u|X) como un escalar sigma^2 en vez de la matriz diagonal sigma^2 I_n.",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La matriz X es de orden 50 x 3, y el estimador MCO solo es MELI si los errores son normales.",
+          "is_correct": false,
+          "error_rationale": "Exige el supuesto de normalidad para demostrar insesgadez y varianza mínima.",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La matriz X es de orden 50 x 3, pero Gauss-Markov exige solo covarianza contemporánea nula en X.",
+          "is_correct": false,
+          "error_rationale": "Ignora la correlación entre regresores pasados o futuros con el error.",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La matriz X es de orden 50 x 3, y el vector de errores poblacionales u coincide con los residuos.",
+          "is_correct": false,
+          "error_rationale": "Afirma que la suma de los errores poblacionales es exactamente cero en toda muestra.",
+          "distractor_id": "D-H01-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La matriz X es de orden 50 x 3, y la condición MELI de Gauss-Markov no exige normalidad del error.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La matriz X es de orden 50 x 3, y beta se estima de forma única aun si rango(X) es menor que 3.",
+          "is_correct": false,
+          "error_rationale": "Intenta calcular (X'X)^(-1) cuando det(X'X) = 0.",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La matriz X es de orden 3 x 50, y la condición MELI de Gauss-Markov no exige normalidad del error.",
+          "is_correct": false,
+          "error_rationale": "Dimensiona X como k x n, provocando no conformabilidad en X'X.",
+          "distractor_id": "D-H01-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que cada fila de X representa una observación (n filas) y cada columna una covariable (k columnas).",
+        "Analice los requisitos del Teorema de Gauss-Markov sobre los dos primeros momentos del error.",
+        "Considere que la normalidad es un supuesto adicional para inferencia exacta, no para la optimalidad MELI."
+      ],
+      "detailed_solution": "La matriz de diseño X tiene dimensión n x k (n observaciones y k columnas regresoras). Gauss-Markov demuestra que MCO es el Mejor Estimador Lineal Insesgado (MELI / BLUE) considerando únicamente los supuestos de linealidad, exogeneidad estricta, rango completo y errores esféricos, sin requerir distribución normal."
+    },
+    {
+      "id": "Q-H01-002",
+      "competency_id": "H-01",
+      "competency_name": "Supuestos Clásicos y Fundamentos Matriciales del MRLC",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para un modelo de regresión lineal múltiple con $n = 30$ observaciones y $k = 4$ parámetros ($y = X\\beta + u$), identifique la proposición teórica correcta sobre los supuestos y dimensiones del modelo:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La matriz X es de orden 30 x 4, y la varianza de errores se define por el escalar E(u'u|X).",
+          "is_correct": false,
+          "error_rationale": "Define Var(u|X) como un escalar sigma^2 en vez de la matriz diagonal sigma^2 I_n.",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La matriz X es de orden 30 x 4, pero Gauss-Markov exige solo covarianza contemporánea nula en X.",
+          "is_correct": false,
+          "error_rationale": "Ignora la correlación entre regresores pasados o futuros con el error.",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La matriz X es de orden 30 x 4, y el estimador MCO solo es MELI si los errores son normales.",
+          "is_correct": false,
+          "error_rationale": "Exige el supuesto de normalidad para demostrar insesgadez y varianza mínima.",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La matriz X es de orden 4 x 30, y la condición MELI de Gauss-Markov no exige normalidad del error.",
+          "is_correct": false,
+          "error_rationale": "Dimensiona X como k x n, provocando no conformabilidad en X'X.",
+          "distractor_id": "D-H01-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La matriz X es de orden 30 x 4, y la condición MELI de Gauss-Markov no exige normalidad del error.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La matriz X es de orden 30 x 4, y beta se estima de forma única aun si rango(X) es menor que 4.",
+          "is_correct": false,
+          "error_rationale": "Intenta calcular (X'X)^(-1) cuando det(X'X) = 0.",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La matriz X es de orden 30 x 4, y el vector de errores poblacionales u coincide con los residuos.",
+          "is_correct": false,
+          "error_rationale": "Afirma que la suma de los errores poblacionales es exactamente cero en toda muestra.",
+          "distractor_id": "D-H01-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que cada fila de X representa una observación (n filas) y cada columna una covariable (k columnas).",
+        "Analice los requisitos del Teorema de Gauss-Markov sobre los dos primeros momentos del error.",
+        "Considere que la normalidad es un supuesto adicional para inferencia exacta, no para la optimalidad MELI."
+      ],
+      "detailed_solution": "La matriz de diseño X tiene dimensión n x k (n observaciones y k columnas regresoras). Gauss-Markov demuestra que MCO es el Mejor Estimador Lineal Insesgado (MELI / BLUE) considerando únicamente los supuestos de linealidad, exogeneidad estricta, rango completo y errores esféricos, sin requerir distribución normal."
+    },
+    {
+      "id": "Q-H01-003",
+      "competency_id": "H-01",
+      "competency_name": "Supuestos Clásicos y Fundamentos Matriciales del MRLC",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para un modelo de regresión lineal múltiple con $n = 30$ observaciones y $k = 5$ parámetros ($y = X\\beta + u$), identifique la proposición teórica correcta sobre los supuestos y dimensiones del modelo:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La matriz X es de orden 5 x 30, y la condición MELI de Gauss-Markov no exige normalidad del error.",
+          "is_correct": false,
+          "error_rationale": "Dimensiona X como k x n, provocando no conformabilidad en X'X.",
+          "distractor_id": "D-H01-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La matriz X es de orden 30 x 5, y el estimador MCO solo es MELI si los errores son normales.",
+          "is_correct": false,
+          "error_rationale": "Exige el supuesto de normalidad para demostrar insesgadez y varianza mínima.",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La matriz X es de orden 30 x 5, y la varianza de errores se define por el escalar E(u'u|X).",
+          "is_correct": false,
+          "error_rationale": "Define Var(u|X) como un escalar sigma^2 en vez de la matriz diagonal sigma^2 I_n.",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La matriz X es de orden 30 x 5, pero Gauss-Markov exige solo covarianza contemporánea nula en X.",
+          "is_correct": false,
+          "error_rationale": "Ignora la correlación entre regresores pasados o futuros con el error.",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La matriz X es de orden 30 x 5, y el vector de errores poblacionales u coincide con los residuos.",
+          "is_correct": false,
+          "error_rationale": "Afirma que la suma de los errores poblacionales es exactamente cero en toda muestra.",
+          "distractor_id": "D-H01-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La matriz X es de orden 30 x 5, y beta se estima de forma única aun si rango(X) es menor que 5.",
+          "is_correct": false,
+          "error_rationale": "Intenta calcular (X'X)^(-1) cuando det(X'X) = 0.",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La matriz X es de orden 30 x 5, y la condición MELI de Gauss-Markov no exige normalidad del error.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que cada fila de X representa una observación (n filas) y cada columna una covariable (k columnas).",
+        "Analice los requisitos del Teorema de Gauss-Markov sobre los dos primeros momentos del error.",
+        "Considere que la normalidad es un supuesto adicional para inferencia exacta, no para la optimalidad MELI."
+      ],
+      "detailed_solution": "La matriz de diseño X tiene dimensión n x k (n observaciones y k columnas regresoras). Gauss-Markov demuestra que MCO es el Mejor Estimador Lineal Insesgado (MELI / BLUE) considerando únicamente los supuestos de linealidad, exogeneidad estricta, rango completo y errores esféricos, sin requerir distribución normal."
+    },
+    {
+      "id": "Q-C01-021",
+      "competency_id": "C-01",
+      "competency_name": "Geometría y Álgebra de Proyección: Matrices P, M y M0",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En un modelo de regresión lineal múltiple con $n = 30$ observaciones y $k = 3$ parámetros que incluye término constante ($y = X\\beta + u$), considere las matrices $P = X(X'X)^{-1}X'$, $M = I_n - P$ y $M_0 = I_n - \\frac{1}30\\iota\\iota'$. ¿Cuál de las siguientes afirmaciones es algebraicamente exacta?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "tr(M_0) = 30, MX = 0, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Usa n en lugar de n-1 como grados de libertad de la varianza total.",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "tr(P) = 3, MX = 0, M^2 = M, PM = 0 y M_0 M = M sin importar si hay constante.",
+          "is_correct": false,
+          "error_rationale": "Asume que la suma de residuos siempre es cero sin verificar si existe intercepto.",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "tr(P) = 3, MX = 0, M^2 = I, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Aplica M^2 = I_n en expansiones algebraicas de formas cuadráticas.",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "tr(P) = 3, MX = X, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Afirma que M X = X en lugar de MX = 0.",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "tr(P) = 30, MX = 0, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Calcula traza(P) = n en vez de k.",
+          "distractor_id": "D-C01-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "tr(P) = 3, MX = 0, M^2 = M, PM = P - M y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Supone que los valores ajustados y los residuos tienen covarianza no nula.",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "tr(P) = 3, MX = 0, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que por la propiedad cíclica del operador traza, tr(P) = tr(X(X'X)^(-1)X') = tr(I_k) = k.",
+        "Verifique que M proyecta sobre el complemento ortogonal de las columnas de X, por lo que MX = (I - P)X = 0.",
+        "Considere que la condición M_0 M = M requiere que el vector constante pertenezca al espacio columna de X (modelo con intercepto)."
+      ],
+      "detailed_solution": "La matriz Hat P tiene traza igual a k (número de regresores). La matriz aniquiladora M cumple MX = 0, es idempotente (M^2 = M) y ortogonal a P (PM = 0). Finalmente, M_0 M = M es exacta cuando el modelo cuenta con intercepto, puesto que M iota = 0."
+    },
+    {
+      "id": "Q-C01-022",
+      "competency_id": "C-01",
+      "competency_name": "Geometría y Álgebra de Proyección: Matrices P, M y M0",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En un modelo de regresión lineal múltiple con $n = 60$ observaciones y $k = 4$ parámetros que incluye término constante ($y = X\\beta + u$), considere las matrices $P = X(X'X)^{-1}X'$, $M = I_n - P$ y $M_0 = I_n - \\frac{1}60\\iota\\iota'$. ¿Cuál de las siguientes afirmaciones es algebraicamente exacta?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "tr(P) = 4, MX = 0, M^2 = I, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Aplica M^2 = I_n en expansiones algebraicas de formas cuadráticas.",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "tr(P) = 4, MX = 0, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "tr(P) = 4, MX = 0, M^2 = M, PM = 0 y M_0 M = M sin importar si hay constante.",
+          "is_correct": false,
+          "error_rationale": "Asume que la suma de residuos siempre es cero sin verificar si existe intercepto.",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "tr(P) = 4, MX = X, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Afirma que M X = X en lugar de MX = 0.",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "tr(P) = 4, MX = 0, M^2 = M, PM = P - M y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Supone que los valores ajustados y los residuos tienen covarianza no nula.",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "tr(M_0) = 60, MX = 0, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Usa n en lugar de n-1 como grados de libertad de la varianza total.",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "tr(P) = 60, MX = 0, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Calcula traza(P) = n en vez de k.",
+          "distractor_id": "D-C01-01"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que por la propiedad cíclica del operador traza, tr(P) = tr(X(X'X)^(-1)X') = tr(I_k) = k.",
+        "Verifique que M proyecta sobre el complemento ortogonal de las columnas de X, por lo que MX = (I - P)X = 0.",
+        "Considere que la condición M_0 M = M requiere que el vector constante pertenezca al espacio columna de X (modelo con intercepto)."
+      ],
+      "detailed_solution": "La matriz Hat P tiene traza igual a k (número de regresores). La matriz aniquiladora M cumple MX = 0, es idempotente (M^2 = M) y ortogonal a P (PM = 0). Finalmente, M_0 M = M es exacta cuando el modelo cuenta con intercepto, puesto que M iota = 0."
+    },
+    {
+      "id": "Q-C01-023",
+      "competency_id": "C-01",
+      "competency_name": "Geometría y Álgebra de Proyección: Matrices P, M y M0",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En un modelo de regresión lineal múltiple con $n = 30$ observaciones y $k = 5$ parámetros que incluye término constante ($y = X\\beta + u$), considere las matrices $P = X(X'X)^{-1}X'$, $M = I_n - P$ y $M_0 = I_n - \\frac{1}30\\iota\\iota'$. ¿Cuál de las siguientes afirmaciones es algebraicamente exacta?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "tr(P) = 5, MX = 0, M^2 = M, PM = P - M y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Supone que los valores ajustados y los residuos tienen covarianza no nula.",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "tr(P) = 5, MX = 0, M^2 = M, PM = 0 y M_0 M = M sin importar si hay constante.",
+          "is_correct": false,
+          "error_rationale": "Asume que la suma de residuos siempre es cero sin verificar si existe intercepto.",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "tr(P) = 5, MX = 0, M^2 = I, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Aplica M^2 = I_n en expansiones algebraicas de formas cuadráticas.",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "tr(P) = 30, MX = 0, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Calcula traza(P) = n en vez de k.",
+          "distractor_id": "D-C01-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "tr(M_0) = 30, MX = 0, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Usa n en lugar de n-1 como grados de libertad de la varianza total.",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "tr(P) = 5, MX = X, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": false,
+          "error_rationale": "Afirma que M X = X en lugar de MX = 0.",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "tr(P) = 5, MX = 0, M^2 = M, PM = 0 y M_0 M = M por incluir constante.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que por la propiedad cíclica del operador traza, tr(P) = tr(X(X'X)^(-1)X') = tr(I_k) = k.",
+        "Verifique que M proyecta sobre el complemento ortogonal de las columnas de X, por lo que MX = (I - P)X = 0.",
+        "Considere que la condición M_0 M = M requiere que el vector constante pertenezca al espacio columna de X (modelo con intercepto)."
+      ],
+      "detailed_solution": "La matriz Hat P tiene traza igual a k (número de regresores). La matriz aniquiladora M cumple MX = 0, es idempotente (M^2 = M) y ortogonal a P (PM = 0). Finalmente, M_0 M = M es exacta cuando el modelo cuenta con intercepto, puesto que M iota = 0."
+    },
+    {
+      "id": "Q-C02-041",
+      "competency_id": "C-02",
+      "competency_name": "Formas Funcionales, Efectos Marginales y Elasticidades",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En una estimación econométrica se analizan diversas especificaciones funcionales con pendiente estimada $\\hat{\\beta}_2 = 0.03$. ¿Cuál de las siguientes proposiciones sobre la interpretación económica y matemática del modelo es rigurosamente exacta?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En el modelo recíproco Y=b1+0.03(1/X), el efecto marginal dY/dX es positivo e igual a 0.03/(X^2).",
+          "is_correct": false,
+          "error_rationale": "Indica que si beta_2 > 0 el efecto marginal es positivo.",
+          "distractor_id": "D-C02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En Log-Lin ln(Y)=b1+0.03X, un incremento del 1% en la variable X modifica Y en exactamente 0.03%.",
+          "is_correct": false,
+          "error_rationale": "Afirma que ante un aumento del 1% en X, Y cambia en beta_2 %.",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "En el modelo recíproco Y=b1+0.03(1/X), el parámetro b1 representa el valor esperado cuando X=0.",
+          "is_correct": false,
+          "error_rationale": "Evalúa el modelo en X = 0 produciendo una división por cero no reconocida.",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En Doble-Log ln(Y)=b1+0.03ln(X), el efecto marginal absoluto dY/dX es constante e igual a 0.03.",
+          "is_correct": false,
+          "error_rationale": "Usa dY/dX = beta_2 para calcular cambios absolutos en Y.",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "En Lin-Log Y=b1+0.03ln(X), ante un aumento de 1 unidad en X, la variable Y varía en un 3%.",
+          "is_correct": false,
+          "error_rationale": "Aplica interpretación porcentual a Y cuando la que está en logaritmos es X.",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "En el modelo cuadrático Y=b0+b1*X+0.03X^2, el efecto marginal respecto a X es igual a b1 + 0.03X.",
+          "is_correct": false,
+          "error_rationale": "Calcula el efecto marginal como beta_1 + beta_2 X y el punto de giro como -beta_1 / beta_2.",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "En Log-Lin ln(Y)=b1+0.03X, un aumento de 1 unidad en X incrementa Y en aproximadamente 3%.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "En el modelo Log-Lin ln(Y) = b1 + b2 X, derive respecto a X: d(ln Y)/dX = (1/Y)(dY/dX) = b2.",
+        "Observe que un cambio de 1 unidad en X produce un cambio relativo dY/Y = b2, es decir, (100 * b2)% en Y.",
+        "Distinga cuidadosamente entre semielasticidad (Log-Lin y Lin-Log) y elasticidad constante (Doble-Log)."
+      ],
+      "detailed_solution": "En el modelo Log-Lin, la variable dependiente está en logaritmos y el regresor en niveles. Por tanto, b2 representa una semielasticidad: un incremento de una unidad en X modifica Y en aproximadamente (100 * b2)%. En Lin-Log Y varía en b2/100 unidades físicas ante un 1% en X; en el recíproco dY/dX = -b2/X^2 y b1 es el límite asintótico; en el cuadrático la derivada es b1 + 2*b2*X; y en Doble-Log b2 es la elasticidad, no el efecto marginal absoluto."
+    },
+    {
+      "id": "Q-C02-042",
+      "competency_id": "C-02",
+      "competency_name": "Formas Funcionales, Efectos Marginales y Elasticidades",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En una estimación econométrica se analizan diversas especificaciones funcionales con pendiente estimada $\\hat{\\beta}_2 = 0.1$. ¿Cuál de las siguientes proposiciones sobre la interpretación económica y matemática del modelo es rigurosamente exacta?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En Lin-Log Y=b1+0.1ln(X), ante un aumento de 1 unidad en X, la variable Y varía en un 10%.",
+          "is_correct": false,
+          "error_rationale": "Aplica interpretación porcentual a Y cuando la que está en logaritmos es X.",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En el modelo cuadrático Y=b0+b1*X+0.1X^2, el efecto marginal respecto a X es igual a b1 + 0.1X.",
+          "is_correct": false,
+          "error_rationale": "Calcula el efecto marginal como beta_1 + beta_2 X y el punto de giro como -beta_1 / beta_2.",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "En Doble-Log ln(Y)=b1+0.1ln(X), el efecto marginal absoluto dY/dX es constante e igual a 0.1.",
+          "is_correct": false,
+          "error_rationale": "Usa dY/dX = beta_2 para calcular cambios absolutos en Y.",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En Log-Lin ln(Y)=b1+0.1X, un incremento del 1% en la variable X modifica Y en exactamente 0.1%.",
+          "is_correct": false,
+          "error_rationale": "Afirma que ante un aumento del 1% en X, Y cambia en beta_2 %.",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "En Log-Lin ln(Y)=b1+0.1X, un aumento de 1 unidad en X incrementa Y en aproximadamente 10%.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "En el modelo recíproco Y=b1+0.1(1/X), el parámetro b1 representa el valor esperado cuando X=0.",
+          "is_correct": false,
+          "error_rationale": "Evalúa el modelo en X = 0 produciendo una división por cero no reconocida.",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "En el modelo recíproco Y=b1+0.1(1/X), el efecto marginal dY/dX es positivo e igual a 0.1/(X^2).",
+          "is_correct": false,
+          "error_rationale": "Indica que si beta_2 > 0 el efecto marginal es positivo.",
+          "distractor_id": "D-C02-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "En el modelo Log-Lin ln(Y) = b1 + b2 X, derive respecto a X: d(ln Y)/dX = (1/Y)(dY/dX) = b2.",
+        "Observe que un cambio de 1 unidad en X produce un cambio relativo dY/Y = b2, es decir, (100 * b2)% en Y.",
+        "Distinga cuidadosamente entre semielasticidad (Log-Lin y Lin-Log) y elasticidad constante (Doble-Log)."
+      ],
+      "detailed_solution": "En el modelo Log-Lin, la variable dependiente está en logaritmos y el regresor en niveles. Por tanto, b2 representa una semielasticidad: un incremento de una unidad en X modifica Y en aproximadamente (100 * b2)%. En Lin-Log Y varía en b2/100 unidades físicas ante un 1% en X; en el recíproco dY/dX = -b2/X^2 y b1 es el límite asintótico; en el cuadrático la derivada es b1 + 2*b2*X; y en Doble-Log b2 es la elasticidad, no el efecto marginal absoluto."
+    },
+    {
+      "id": "Q-C02-043",
+      "competency_id": "C-02",
+      "competency_name": "Formas Funcionales, Efectos Marginales y Elasticidades",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En una estimación econométrica se analizan diversas especificaciones funcionales con pendiente estimada $\\hat{\\beta}_2 = 0.04$. ¿Cuál de las siguientes proposiciones sobre la interpretación económica y matemática del modelo es rigurosamente exacta?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En Doble-Log ln(Y)=b1+0.04ln(X), el efecto marginal absoluto dY/dX es constante e igual a 0.04.",
+          "is_correct": false,
+          "error_rationale": "Usa dY/dX = beta_2 para calcular cambios absolutos en Y.",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En Lin-Log Y=b1+0.04ln(X), ante un aumento de 1 unidad en X, la variable Y varía en un 4%.",
+          "is_correct": false,
+          "error_rationale": "Aplica interpretación porcentual a Y cuando la que está en logaritmos es X.",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "En Log-Lin ln(Y)=b1+0.04X, un aumento de 1 unidad en X incrementa Y en aproximadamente 4%.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En el modelo recíproco Y=b1+0.04(1/X), el efecto marginal dY/dX es positivo e igual a 0.04/(X^2).",
+          "is_correct": false,
+          "error_rationale": "Indica que si beta_2 > 0 el efecto marginal es positivo.",
+          "distractor_id": "D-C02-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "En el modelo cuadrático Y=b0+b1*X+0.04X^2, el efecto marginal respecto a X es igual a b1 + 0.04X.",
+          "is_correct": false,
+          "error_rationale": "Calcula el efecto marginal como beta_1 + beta_2 X y el punto de giro como -beta_1 / beta_2.",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "En Log-Lin ln(Y)=b1+0.04X, un incremento del 1% en la variable X modifica Y en exactamente 0.04%.",
+          "is_correct": false,
+          "error_rationale": "Afirma que ante un aumento del 1% en X, Y cambia en beta_2 %.",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "En el modelo recíproco Y=b1+0.04(1/X), el parámetro b1 representa el valor esperado cuando X=0.",
+          "is_correct": false,
+          "error_rationale": "Evalúa el modelo en X = 0 produciendo una división por cero no reconocida.",
+          "distractor_id": "D-C02-04"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "En el modelo Log-Lin ln(Y) = b1 + b2 X, derive respecto a X: d(ln Y)/dX = (1/Y)(dY/dX) = b2.",
+        "Observe que un cambio de 1 unidad en X produce un cambio relativo dY/Y = b2, es decir, (100 * b2)% en Y.",
+        "Distinga cuidadosamente entre semielasticidad (Log-Lin y Lin-Log) y elasticidad constante (Doble-Log)."
+      ],
+      "detailed_solution": "En el modelo Log-Lin, la variable dependiente está en logaritmos y el regresor en niveles. Por tanto, b2 representa una semielasticidad: un incremento de una unidad en X modifica Y en aproximadamente (100 * b2)%. En Lin-Log Y varía en b2/100 unidades físicas ante un 1% en X; en el recíproco dY/dX = -b2/X^2 y b1 es el límite asintótico; en el cuadrático la derivada es b1 + 2*b2*X; y en Doble-Log b2 es la elasticidad, no el efecto marginal absoluto."
+    },
+    {
+      "id": "Q-Hab01-061",
+      "competency_id": "Hab-01",
+      "competency_name": "Estimación MCO Matricial, Ajuste y Residuos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere un modelo de regresión lineal simple $y = \\beta_1 + \\beta_2 x + u$ estimado por MCO con una muestra de $n = 35$ observaciones. Se dispone de las sumatorias muestrales $\\sum x_i = 175$ y $\\sum x_i^2 = 915$, las cuales determinan la matriz de momentos $X'X = \\begin{bmatrix} 35 & 175 \\\\ 175 & 915 \\end{bmatrix}$ con determinante $\\det(X'X) = 1400$. ¿Cuál es la expresión matricial exacta para la inversa $(X'X)^{-1}$ y el estimador $\\hat{\\beta}$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "(X'X)^{-1} = \\frac{1}{1400} \\begin{bmatrix} 915 & 175 \\\\ 175 & 35 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": false,
+          "error_rationale": "Usa (1/det) * [[d, b], [c, a]] produciendo estimadores beta con pendientes de signo erróneo.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "(X'X)^{-1} = \\frac{1}{1400} \\begin{bmatrix} 915 & -175 \\\\ -175 & 35 \\end{bmatrix} \\text{ con residuos } e = \\hat{y} - y",
+          "is_correct": false,
+          "error_rationale": "Invierte el signo de todos los residuos muestrales.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "(X'X)^{-1} = \\frac{1}{1} \\begin{bmatrix} 915 & -175 \\\\ -175 & 35 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": false,
+          "error_rationale": "Multiplica los coeficientes beta por un factor espurio igual a det(X'X).",
+          "distractor_id": "D-Hab01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "(X'X)^{-1} = \\frac{1}{1400} \\begin{bmatrix} 35 & -175 \\\\ -175 & 915 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": false,
+          "error_rationale": "Usa (1/det) * [[a, -b], [-c, d]] invirtiendo la ponderación del intercepto y la pendiente.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "(X'X)^{-1} = \\frac{1}{1400} \\begin{bmatrix} 915 & -175 \\\\ -175 & 35 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "(X'X)^{-1} = \\frac{1}{915} \\begin{bmatrix} 1 & 0 \\\\ 0 & 1 \\end{bmatrix} \\text{ al omitir la constante } \\iota, para cualquier punto del plano.",
+          "is_correct": false,
+          "error_rationale": "Construye una matriz n x 1, omitiendo el parámetro del intercepto beta_1.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "(X'X)^{-1} = \\frac{1}{1400} \\begin{bmatrix} 915 & -175 \\\\ -175 & 35 \\end{bmatrix} \\text{ y } \\hat{\\beta} = X'y(X'X)^{-1}",
+          "is_correct": false,
+          "error_rationale": "Intenta multiplicar un vector columna k x 1 por una matriz k x k por la derecha.",
+          "distractor_id": "D-Hab01-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que para una matriz cuadrada 2x2, la inversa se obtiene multiplicando el escalar 1/det por la matriz adjunta traspuesta.",
+        "En la matriz adjunta de X'X, los elementos diagonales se intercambian y los elementos fuera de la diagonal cambian de signo a -\\sum x_i.",
+        "El estimador MCO se obtiene premultiplicando X'y por la inversa: \\hat{\\beta} = (X'X)^{-1}X'y."
+      ],
+      "detailed_solution": "Para invertir la matriz de momentos 2x2 X'X = [[n, sx], [sx, sx2]], se intercambian los elementos diagonales, se cambia de signo a los elementos cruzados y se divide entre el determinante det(X'X) = n*sx2 - (sx)^2. Luego, por las ecuaciones normales de MCO, beta_hat = (X'X)^(-1) X'y."
+    },
+    {
+      "id": "Q-Hab01-062",
+      "competency_id": "Hab-01",
+      "competency_name": "Estimación MCO Matricial, Ajuste y Residuos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere un modelo de regresión lineal simple $y = \\beta_1 + \\beta_2 x + u$ estimado por MCO con una muestra de $n = 25$ observaciones. Se dispone de las sumatorias muestrales $\\sum x_i = 50$ y $\\sum x_i^2 = 180$, las cuales determinan la matriz de momentos $X'X = \\begin{bmatrix} 25 & 50 \\\\ 50 & 180 \\end{bmatrix}$ con determinante $\\det(X'X) = 2000$. ¿Cuál es la expresión matricial exacta para la inversa $(X'X)^{-1}$ y el estimador $\\hat{\\beta}$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "(X'X)^{-1} = \\frac{1}{180} \\begin{bmatrix} 1 & 0 \\\\ 0 & 1 \\end{bmatrix} \\text{ al omitir la constante } \\iota, en el espacio de parámetros.",
+          "is_correct": false,
+          "error_rationale": "Construye una matriz n x 1, omitiendo el parámetro del intercepto beta_1.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "(X'X)^{-1} = \\frac{1}{2000} \\begin{bmatrix} 25 & -50 \\\\ -50 & 180 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": false,
+          "error_rationale": "Usa (1/det) * [[a, -b], [-c, d]] invirtiendo la ponderación del intercepto y la pendiente.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "(X'X)^{-1} = \\frac{1}{2000} \\begin{bmatrix} 180 & 50 \\\\ 50 & 25 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": false,
+          "error_rationale": "Usa (1/det) * [[d, b], [c, a]] produciendo estimadores beta con pendientes de signo erróneo.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "(X'X)^{-1} = \\frac{1}{2000} \\begin{bmatrix} 180 & -50 \\\\ -50 & 25 \\end{bmatrix} \\text{ y } \\hat{\\beta} = X'y(X'X)^{-1}",
+          "is_correct": false,
+          "error_rationale": "Intenta multiplicar un vector columna k x 1 por una matriz k x k por la derecha.",
+          "distractor_id": "D-Hab01-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "(X'X)^{-1} = \\frac{1}{2000} \\begin{bmatrix} 180 & -50 \\\\ -50 & 25 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "(X'X)^{-1} = \\frac{1}{2000} \\begin{bmatrix} 180 & -50 \\\\ -50 & 25 \\end{bmatrix} \\text{ con residuos } e = \\hat{y} - y",
+          "is_correct": false,
+          "error_rationale": "Invierte el signo de todos los residuos muestrales.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "(X'X)^{-1} = \\frac{1}{1} \\begin{bmatrix} 180 & -50 \\\\ -50 & 25 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": false,
+          "error_rationale": "Multiplica los coeficientes beta por un factor espurio igual a det(X'X).",
+          "distractor_id": "D-Hab01-02"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que para una matriz cuadrada 2x2, la inversa se obtiene multiplicando el escalar 1/det por la matriz adjunta traspuesta.",
+        "En la matriz adjunta de X'X, los elementos diagonales se intercambian y los elementos fuera de la diagonal cambian de signo a -\\sum x_i.",
+        "El estimador MCO se obtiene premultiplicando X'y por la inversa: \\hat{\\beta} = (X'X)^{-1}X'y."
+      ],
+      "detailed_solution": "Para invertir la matriz de momentos 2x2 X'X = [[n, sx], [sx, sx2]], se intercambian los elementos diagonales, se cambia de signo a los elementos cruzados y se divide entre el determinante det(X'X) = n*sx2 - (sx)^2. Luego, por las ecuaciones normales de MCO, beta_hat = (X'X)^(-1) X'y."
+    },
+    {
+      "id": "Q-Hab01-063",
+      "competency_id": "Hab-01",
+      "competency_name": "Estimación MCO Matricial, Ajuste y Residuos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere un modelo de regresión lineal simple $y = \\beta_1 + \\beta_2 x + u$ estimado por MCO con una muestra de $n = 15$ observaciones. Se dispone de las sumatorias muestrales $\\sum x_i = 60$ y $\\sum x_i^2 = 340$, las cuales determinan la matriz de momentos $X'X = \\begin{bmatrix} 15 & 60 \\\\ 60 & 340 \\end{bmatrix}$ con determinante $\\det(X'X) = 1500$. ¿Cuál es la expresión matricial exacta para la inversa $(X'X)^{-1}$ y el estimador $\\hat{\\beta}$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "(X'X)^{-1} = \\frac{1}{1500} \\begin{bmatrix} 340 & -60 \\\\ -60 & 15 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "(X'X)^{-1} = \\frac{1}{340} \\begin{bmatrix} 1 & 0 \\\\ 0 & 1 \\end{bmatrix} \\text{ al omitir la constante } \\iota, para todo par $(x,y)$ admisible.",
+          "is_correct": false,
+          "error_rationale": "Construye una matriz n x 1, omitiendo el parámetro del intercepto beta_1.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "(X'X)^{-1} = \\frac{1}{1500} \\begin{bmatrix} 340 & -60 \\\\ -60 & 15 \\end{bmatrix} \\text{ con residuos } e = \\hat{y} - y",
+          "is_correct": false,
+          "error_rationale": "Invierte el signo de todos los residuos muestrales.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "(X'X)^{-1} = \\frac{1}{1500} \\begin{bmatrix} 340 & -60 \\\\ -60 & 15 \\end{bmatrix} \\text{ y } \\hat{\\beta} = X'y(X'X)^{-1}",
+          "is_correct": false,
+          "error_rationale": "Intenta multiplicar un vector columna k x 1 por una matriz k x k por la derecha.",
+          "distractor_id": "D-Hab01-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "(X'X)^{-1} = \\frac{1}{1500} \\begin{bmatrix} 15 & -60 \\\\ -60 & 340 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": false,
+          "error_rationale": "Usa (1/det) * [[a, -b], [-c, d]] invirtiendo la ponderación del intercepto y la pendiente.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "(X'X)^{-1} = \\frac{1}{1} \\begin{bmatrix} 340 & -60 \\\\ -60 & 15 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": false,
+          "error_rationale": "Multiplica los coeficientes beta por un factor espurio igual a det(X'X).",
+          "distractor_id": "D-Hab01-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "(X'X)^{-1} = \\frac{1}{1500} \\begin{bmatrix} 340 & 60 \\\\ 60 & 15 \\end{bmatrix} \\text{ y } \\hat{\\beta} = (X'X)^{-1}X'y",
+          "is_correct": false,
+          "error_rationale": "Usa (1/det) * [[d, b], [c, a]] produciendo estimadores beta con pendientes de signo erróneo.",
+          "distractor_id": "D-Hab01-01"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que para una matriz cuadrada 2x2, la inversa se obtiene multiplicando el escalar 1/det por la matriz adjunta traspuesta.",
+        "En la matriz adjunta de X'X, los elementos diagonales se intercambian y los elementos fuera de la diagonal cambian de signo a -\\sum x_i.",
+        "El estimador MCO se obtiene premultiplicando X'y por la inversa: \\hat{\\beta} = (X'X)^{-1}X'y."
+      ],
+      "detailed_solution": "Para invertir la matriz de momentos 2x2 X'X = [[n, sx], [sx, sx2]], se intercambian los elementos diagonales, se cambia de signo a los elementos cruzados y se divide entre el determinante det(X'X) = n*sx2 - (sx)^2. Luego, por las ecuaciones normales de MCO, beta_hat = (X'X)^(-1) X'y."
+    },
+    {
+      "id": "Q-Hab02-091",
+      "competency_id": "Hab-02",
+      "competency_name": "Descomposición ANOVA, Coeficiente de Determinación (R^2) y Varianza Residual (s^2)",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En un modelo de regresión lineal múltiple con término constante estimado por MCO con $n = 45$ observaciones y $k = 3$ coeficientes, la Suma Total de Cuadrados es $STC = 378$ y la Suma de Residuos al Cuadrado es $SRC = 126$. ¿Cuál es la alternativa que presenta los valores correctos de la Suma Explicada de Cuadrados ($SEC$), el coeficiente de determinación ($R^2$) y la varianza residual insesgada ($s^2$)?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "SEC = 252, R^2 = SRC/STC = 0.3333 y la varianza residual insesgada es s^2 = 3.0000.",
+          "is_correct": false,
+          "error_rationale": "Reporta 1 - R^2 como si fuera el coeficiente de determinación.",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "SEC = 252, asumiendo STC = y'y sin centrar con la matriz M_0, obteniendo s^2 = 3.0000.",
+          "is_correct": false,
+          "error_rationale": "Calcula STC = Y'Y, inflando artificialmente el valor de STC y distorsionando R^2.",
+          "distractor_id": "D-Hab02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "SEC = 252, R^2 = 0.6667 y la varianza residual insesgada es s^2 = SRC/(n - k) = 3.0000.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "SEC = STC + SRC = 504, produciendo R^2 = 1.3333 y varianza residual estimada s^2 = 3.0000.",
+          "is_correct": false,
+          "error_rationale": "Calcula SEC = STC + SRC obteniendo un R^2 mayor a 1.",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "SEC = \\hat{y}'\\hat{y} sin centrar respecto a la media muestral, con s^2 = 3.0000.",
+          "is_correct": false,
+          "error_rationale": "Obtiene SEC no centrada que excede a STC.",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "SEC = 252, R^2 = 0.6667 y la varianza residual dividiendo entre n es s^2 = SRC/n = 2.8000.",
+          "is_correct": false,
+          "error_rationale": "Calcula s^2 = SRC / n, subestimando la varianza del error.",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "SEC = 252, R^2 = 0.6667 y la varianza residual dividiendo entre n - 1 es s^2 = 2.8636.",
+          "is_correct": false,
+          "error_rationale": "Divide SRC entre n - 1 en vez de n - k.",
+          "distractor_id": "D-Hab02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Aplique la descomposición fundamental de la variabilidad total: STC = SEC + SRC, despejando SEC = STC - SRC.",
+        "Calcule el coeficiente de determinación como la proporción de varianza explicada: R^2 = 1 - SRC / STC = SEC / STC.",
+        "Recuerde que el estimador insesgado de la varianza residual divide la suma de residuos al cuadrado entre los grados de libertad n - k, no entre n ni n - 1."
+      ],
+      "detailed_solution": "Por la descomposición ANOVA, SEC = STC - SRC = 378 - 126 = 252. El coeficiente de determinación es R^2 = 1 - SRC / STC = 0.6667. La varianza residual insesgada es s^2 = SRC / (n - k) = 3.0000."
+    },
+    {
+      "id": "Q-Hab02-092",
+      "competency_id": "Hab-02",
+      "competency_name": "Descomposición ANOVA, Coeficiente de Determinación (R^2) y Varianza Residual (s^2)",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En un modelo de regresión lineal múltiple con término constante estimado por MCO con $n = 70$ observaciones y $k = 3$ coeficientes, la Suma Total de Cuadrados es $STC = 402$ y la Suma de Residuos al Cuadrado es $SRC = 134$. ¿Cuál es la alternativa que presenta los valores correctos de la Suma Explicada de Cuadrados ($SEC$), el coeficiente de determinación ($R^2$) y la varianza residual insesgada ($s^2$)?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "SEC = 268, R^2 = SRC/STC = 0.3333 y la varianza residual insesgada es s^2 = 2.0000.",
+          "is_correct": false,
+          "error_rationale": "Reporta 1 - R^2 como si fuera el coeficiente de determinación.",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "SEC = 268, R^2 = 0.6667 y la varianza residual dividiendo entre n es s^2 = SRC/n = 1.9143.",
+          "is_correct": false,
+          "error_rationale": "Calcula s^2 = SRC / n, subestimando la varianza del error.",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "SEC = \\hat{y}'\\hat{y} sin centrar respecto a la media muestral, con s^2 = 2.0000.",
+          "is_correct": false,
+          "error_rationale": "Obtiene SEC no centrada que excede a STC.",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "SEC = 268, R^2 = 0.6667 y la varianza residual dividiendo entre n - 1 es s^2 = 1.9420.",
+          "is_correct": false,
+          "error_rationale": "Divide SRC entre n - 1 en vez de n - k.",
+          "distractor_id": "D-Hab02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "SEC = STC + SRC = 536, produciendo R^2 = 1.3333 y varianza residual estimada s^2 = 2.0000.",
+          "is_correct": false,
+          "error_rationale": "Calcula SEC = STC + SRC obteniendo un R^2 mayor a 1.",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "SEC = 268, R^2 = 0.6667 y la varianza residual insesgada es s^2 = SRC/(n - k) = 2.0000.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "SEC = 268, asumiendo STC = y'y sin centrar con la matriz M_0, obteniendo s^2 = 2.0000.",
+          "is_correct": false,
+          "error_rationale": "Calcula STC = Y'Y, inflando artificialmente el valor de STC y distorsionando R^2.",
+          "distractor_id": "D-Hab02-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Aplique la descomposición fundamental de la variabilidad total: STC = SEC + SRC, despejando SEC = STC - SRC.",
+        "Calcule el coeficiente de determinación como la proporción de varianza explicada: R^2 = 1 - SRC / STC = SEC / STC.",
+        "Recuerde que el estimador insesgado de la varianza residual divide la suma de residuos al cuadrado entre los grados de libertad n - k, no entre n ni n - 1."
+      ],
+      "detailed_solution": "Por la descomposición ANOVA, SEC = STC - SRC = 402 - 134 = 268. El coeficiente de determinación es R^2 = 1 - SRC / STC = 0.6667. La varianza residual insesgada es s^2 = SRC / (n - k) = 2.0000."
+    },
+    {
+      "id": "Q-Hab02-093",
+      "competency_id": "Hab-02",
+      "competency_name": "Descomposición ANOVA, Coeficiente de Determinación (R^2) y Varianza Residual (s^2)",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En un modelo de regresión lineal múltiple con término constante estimado por MCO con $n = 60$ observaciones y $k = 5$ coeficientes, la Suma Total de Cuadrados es $STC = 660$ y la Suma de Residuos al Cuadrado es $SRC = 220$. ¿Cuál es la alternativa que presenta los valores correctos de la Suma Explicada de Cuadrados ($SEC$), el coeficiente de determinación ($R^2$) y la varianza residual insesgada ($s^2$)?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "SEC = STC + SRC = 880, produciendo R^2 = 1.3333 y varianza residual estimada s^2 = 4.0000.",
+          "is_correct": false,
+          "error_rationale": "Calcula SEC = STC + SRC obteniendo un R^2 mayor a 1.",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "SEC = \\hat{y}'\\hat{y} sin centrar respecto a la media muestral, con s^2 = 4.0000.",
+          "is_correct": false,
+          "error_rationale": "Obtiene SEC no centrada que excede a STC.",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "SEC = 440, R^2 = 0.6667 y la varianza residual dividiendo entre n es s^2 = SRC/n = 3.6667.",
+          "is_correct": false,
+          "error_rationale": "Calcula s^2 = SRC / n, subestimando la varianza del error.",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "SEC = 440, R^2 = 0.6667 y la varianza residual insesgada es s^2 = SRC/(n - k) = 4.0000.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "SEC = 440, R^2 = SRC/STC = 0.3333 y la varianza residual insesgada es s^2 = 4.0000.",
+          "is_correct": false,
+          "error_rationale": "Reporta 1 - R^2 como si fuera el coeficiente de determinación.",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "SEC = 440, R^2 = 0.6667 y la varianza residual dividiendo entre n - 1 es s^2 = 3.7288.",
+          "is_correct": false,
+          "error_rationale": "Divide SRC entre n - 1 en vez de n - k.",
+          "distractor_id": "D-Hab02-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "SEC = 440, asumiendo STC = y'y sin centrar con la matriz M_0, obteniendo s^2 = 4.0000.",
+          "is_correct": false,
+          "error_rationale": "Calcula STC = Y'Y, inflando artificialmente el valor de STC y distorsionando R^2.",
+          "distractor_id": "D-Hab02-03"
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "Aplique la descomposición fundamental de la variabilidad total: STC = SEC + SRC, despejando SEC = STC - SRC.",
+        "Calcule el coeficiente de determinación como la proporción de varianza explicada: R^2 = 1 - SRC / STC = SEC / STC.",
+        "Recuerde que el estimador insesgado de la varianza residual divide la suma de residuos al cuadrado entre los grados de libertad n - k, no entre n ni n - 1."
+      ],
+      "detailed_solution": "Por la descomposición ANOVA, SEC = STC - SRC = 660 - 220 = 440. El coeficiente de determinación es R^2 = 1 - SRC / STC = 0.6667. La varianza residual insesgada es s^2 = SRC / (n - k) = 4.0000."
+    },
+    {
+      "id": "Q-Hab03-121",
+      "competency_id": "Hab-03",
+      "competency_name": "Inferencia Estadística: Contrastes t-Student, F-Fisher y P-Valores",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En un modelo de regresión lineal múltiple con $n = 75$ observaciones y $k = 3$ parámetros ($y = X\\beta + u$), se desea contrastar hipótesis sobre coeficientes individuales y significancia global. ¿Cuál de las siguientes afirmaciones describe de manera formalmente correcta los estadísticos de contraste y sus reglas de decisión?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ se distribuye como $F_{2, 72}$ y se rechaza $H_0$ si $p > \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Concluye significancia estadística cuando el p-valor es 0.40 y no significancia cuando es 0.001.",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El estadístico individual usa el elemento diagonal de $X'X$ sin invertir, la prueba $F$ sigue $F_{2, 72}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Calcula SE(beta_hat_j) = sqrt(s^2 * (X'X)_{jj}), invirtiendo la escala del error estándar.",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ se distribuye como $F_{72, 2}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Compara F_calc con el cuantil F con grados de libertad invertidos.",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El estadístico individual usa varianza muestral $s^2 c_{jj}$ sin raíz, la prueba $F$ se distribuye como $F_{2, 72}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Calcula t = beta_hat / (s^2 * c_jj), obteniendo estadísticos t con unidades cuadráticas.",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, su p-valor bilateral omite el factor 2 en la cola y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Reporta la mitad del p-valor real, llevando a falsos rechazos de H_0.",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ se distribuye como $F_{2, 72}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ usa $k = 3$ grados en su numerador y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Calcula F = (SEC / k) / (SRC / (n - k)), subestimando el estadístico F.",
+          "distractor_id": "D-Hab03-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que el error estándar de $\\hat{\\beta}_j$ se define como la raíz cuadrada positiva de la varianza estimada: $\\text{SE}(\\hat{\\beta}_j) = \\sqrt{s^2 c_{jj}}$, donde $c_{jj}$ es el elemento diagonal de $(X'X)^{-1}$.",
+        "El contraste global $F$ evalúa la significancia conjunta de las $k-1$ pendientes, por lo que tiene $k-1$ grados de libertad en el numerador y $n-k$ en el denominador.",
+        "La regla fundamental de decisión por p-valor establece que se rechaza la hipótesis nula si y solo si el p-valor es menor o igual al nivel de significancia $\\alpha$."
+      ],
+      "detailed_solution": "El estadístico t individual se construye como el cociente entre el estimador y su error estándar $\\text{SE}(\\hat{\\beta}_j) = \\sqrt{s^2 c_{jj}}$ (donde $c_{jj}$ proviene de la inversa $(X'X)^{-1}$). El contraste $F$ de significancia global evalúa las $k-1$ pendientes y posee $k-1$ grados de libertad en el numerador y $n-k$ en el denominador: $F \\sim F_{k-1, n-k}$. Finalmente, la regla fundamental de decisión rechaza $H_0$ cuando $p \\le \\alpha$."
+    },
+    {
+      "id": "Q-Hab03-122",
+      "competency_id": "Hab-03",
+      "competency_name": "Inferencia Estadística: Contrastes t-Student, F-Fisher y P-Valores",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En un modelo de regresión lineal múltiple con $n = 30$ observaciones y $k = 3$ parámetros ($y = X\\beta + u$), se desea contrastar hipótesis sobre coeficientes individuales y significancia global. ¿Cuál de las siguientes afirmaciones describe de manera formalmente correcta los estadísticos de contraste y sus reglas de decisión?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ usa $k = 3$ grados en su numerador y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Calcula F = (SEC / k) / (SRC / (n - k)), subestimando el estadístico F.",
+          "distractor_id": "D-Hab03-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ se distribuye como $F_{27, 2}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Compara F_calc con el cuantil F con grados de libertad invertidos.",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El estadístico individual usa varianza muestral $s^2 c_{jj}$ sin raíz, la prueba $F$ se distribuye como $F_{2, 27}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Calcula t = beta_hat / (s^2 * c_jj), obteniendo estadísticos t con unidades cuadráticas.",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El estadístico individual usa el elemento diagonal de $X'X$ sin invertir, la prueba $F$ sigue $F_{2, 27}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Calcula SE(beta_hat_j) = sqrt(s^2 * (X'X)_{jj}), invirtiendo la escala del error estándar.",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ se distribuye como $F_{2, 27}$ y se rechaza $H_0$ si $p > \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Concluye significancia estadística cuando el p-valor es 0.40 y no significancia cuando es 0.001.",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, su p-valor bilateral omite el factor 2 en la cola y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Reporta la mitad del p-valor real, llevando a falsos rechazos de H_0.",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ se distribuye como $F_{2, 27}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que el error estándar de $\\hat{\\beta}_j$ se define como la raíz cuadrada positiva de la varianza estimada: $\\text{SE}(\\hat{\\beta}_j) = \\sqrt{s^2 c_{jj}}$, donde $c_{jj}$ es el elemento diagonal de $(X'X)^{-1}$.",
+        "El contraste global $F$ evalúa la significancia conjunta de las $k-1$ pendientes, por lo que tiene $k-1$ grados de libertad en el numerador y $n-k$ en el denominador.",
+        "La regla fundamental de decisión por p-valor establece que se rechaza la hipótesis nula si y solo si el p-valor es menor o igual al nivel de significancia $\\alpha$."
+      ],
+      "detailed_solution": "El estadístico t individual se construye como el cociente entre el estimador y su error estándar $\\text{SE}(\\hat{\\beta}_j) = \\sqrt{s^2 c_{jj}}$ (donde $c_{jj}$ proviene de la inversa $(X'X)^{-1}$). El contraste $F$ de significancia global evalúa las $k-1$ pendientes y posee $k-1$ grados de libertad en el numerador y $n-k$ en el denominador: $F \\sim F_{k-1, n-k}$. Finalmente, la regla fundamental de decisión rechaza $H_0$ cuando $p \\le \\alpha$."
+    },
+    {
+      "id": "Q-Hab03-123",
+      "competency_id": "Hab-03",
+      "competency_name": "Inferencia Estadística: Contrastes t-Student, F-Fisher y P-Valores",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En un modelo de regresión lineal múltiple con $n = 45$ observaciones y $k = 6$ parámetros ($y = X\\beta + u$), se desea contrastar hipótesis sobre coeficientes individuales y significancia global. ¿Cuál de las siguientes afirmaciones describe de manera formalmente correcta los estadísticos de contraste y sus reglas de decisión?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El estadístico individual usa el elemento diagonal de $X'X$ sin invertir, la prueba $F$ sigue $F_{5, 39}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Calcula SE(beta_hat_j) = sqrt(s^2 * (X'X)_{jj}), invirtiendo la escala del error estándar.",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ se distribuye como $F_{5, 39}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ se distribuye como $F_{5, 39}$ y se rechaza $H_0$ si $p > \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Concluye significancia estadística cuando el p-valor es 0.40 y no significancia cuando es 0.001.",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ se distribuye como $F_{39, 5}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Compara F_calc con el cuantil F con grados de libertad invertidos.",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, la prueba $F$ usa $k = 6$ grados en su numerador y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Calcula F = (SEC / k) / (SRC / (n - k)), subestimando el estadístico F.",
+          "distractor_id": "D-Hab03-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El estadístico individual usa error estándar $\\sqrt{s^2 c_{jj}}$, su p-valor bilateral omite el factor 2 en la cola y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Reporta la mitad del p-valor real, llevando a falsos rechazos de H_0.",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El estadístico individual usa varianza muestral $s^2 c_{jj}$ sin raíz, la prueba $F$ se distribuye como $F_{5, 39}$ y se rechaza $H_0$ si $p \\le \\alpha$.",
+          "is_correct": false,
+          "error_rationale": "Calcula t = beta_hat / (s^2 * c_jj), obteniendo estadísticos t con unidades cuadráticas.",
+          "distractor_id": "D-Hab03-01"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que el error estándar de $\\hat{\\beta}_j$ se define como la raíz cuadrada positiva de la varianza estimada: $\\text{SE}(\\hat{\\beta}_j) = \\sqrt{s^2 c_{jj}}$, donde $c_{jj}$ es el elemento diagonal de $(X'X)^{-1}$.",
+        "El contraste global $F$ evalúa la significancia conjunta de las $k-1$ pendientes, por lo que tiene $k-1$ grados de libertad en el numerador y $n-k$ en el denominador.",
+        "La regla fundamental de decisión por p-valor establece que se rechaza la hipótesis nula si y solo si el p-valor es menor o igual al nivel de significancia $\\alpha$."
+      ],
+      "detailed_solution": "El estadístico t individual se construye como el cociente entre el estimador y su error estándar $\\text{SE}(\\hat{\\beta}_j) = \\sqrt{s^2 c_{jj}}$ (donde $c_{jj}$ proviene de la inversa $(X'X)^{-1}$). El contraste $F$ de significancia global evalúa las $k-1$ pendientes y posee $k-1$ grados de libertad en el numerador y $n-k$ en el denominador: $F \\sim F_{k-1, n-k}$. Finalmente, la regla fundamental de decisión rechaza $H_0$ cuando $p \\le \\alpha$."
+    }
+  ],
+  "filename": "estadistica3_regresion_legacy.json"
+}

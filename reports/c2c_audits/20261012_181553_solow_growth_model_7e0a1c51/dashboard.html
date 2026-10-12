@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>C2C Architectural Forensic Dashboard - solow_growth_model</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); padding: 24px; line-height: 1.5; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { font-size: 1.5rem; color: var(--accent); }
+    .header .meta { color: var(--text-muted); font-size: 0.85rem; }
+    .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .kpi-card .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-card .val { font-size: 1.6rem; font-weight: bold; color: var(--text); margin-top: 4px; }
+    .kpi-card .sub { font-size: 0.75rem; color: var(--accent-green); margin-top: 2px; }
+    .section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .section h2 { font-size: 1.1rem; color: var(--accent); margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-high { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); }
+    .badge-med { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }
+    .badge-ok { background: rgba(74, 222, 128, 0.2); color: var(--accent-green); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>C2C Architectural Forensic Telemetry</h1>
+      <div class="meta">El Modelo de Crecimiento Económico de Solow (1956) (<code>solow_growth_model</code>) | Conv: <code>7e0a1c51-e72...</code></div>
+    </div>
+    <div class="meta">Audit Date: 2026-10-12T23:15:53 UTC</div>
+  </div>
+
+  <div class="grid-kpi">
+    <div class="kpi-card">
+      <div class="label">Wall-Clock Time</div>
+      <div class="val">89.03 min</div>
+      <div class="sub">5342.0s elapsed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Parallel Speedup</div>
+      <div class="val">2.97x</div>
+      <div class="sub">264.32m compute time</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Total Tokens</div>
+      <div class="val">82,434,282</div>
+      <div class="sub">Active: 5,912,836 | Cache: 76,521,446</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Tokens / Question</div>
+      <div class="val">142,128.1</div>
+      <div class="sub">580 questions generated</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Seconds / Question</div>
+      <div class="val">9.21s</div>
+      <div class="sub">6.51 questions/min</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Supervisor Interventions</div>
+      <div class="val">3</div>
+      <div class="sub">0.5m spent repairing</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Stage 3: Shard Question Authoring & Competency Metrics</h2>
+    <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
+      Critical Straggler: <strong>Shard Author shard_03</strong> (2154.0s | +125.0s vs median) |
+      Avg Tokens / Competency: <strong>152,161.0</strong>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Shard ID</th>
+          <th>Competencias</th>
+          <th>Comps</th>
+          <th>Tokens In</th>
+          <th>Tokens Out</th>
+          <th>Active Tokens</th>
+          <th>Tokens / Comp</th>
+          <th>Turns</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Shard Author shard_01</strong></td>
+          <td><code>H-01, C-01, Hab-01...</code></td>
+          <td>7</td>
+          <td>615,852</td>
+          <td>168,372</td>
+          <td><strong>784,224</strong></td>
+          <td><strong>112,032.0</strong></td>
+          <td>125</td>
+          <td><strong>2029.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_02</strong></td>
+          <td><code>H-03, C-04, Hab-03...</code></td>
+          <td>6</td>
+          <td>1,069,131</td>
+          <td>175,460</td>
+          <td><strong>1,244,591</strong></td>
+          <td><strong>207,431.8</strong></td>
+          <td>117</td>
+          <td><strong>1808.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_03</strong></td>
+          <td><code>Hab-04, Hab-05, Hab-06...</code></td>
+          <td>6</td>
+          <td>647,429</td>
+          <td>208,031</td>
+          <td><strong>855,460</strong></td>
+          <td><strong>142,576.7</strong></td>
+          <td>88</td>
+          <td><strong>2154.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_04</strong></td>
+          <td><code>Hab-08, C-09, C-10...</code></td>
+          <td>6</td>
+          <td>798,254</td>
+          <td>121,497</td>
+          <td><strong>919,751</strong></td>
+          <td><strong>153,291.8</strong></td>
+          <td>108</td>
+          <td><strong>1745.0s</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Blind Judges & Psychometric Verification</h2>
+    <div style="margin-bottom: 12px; font-size: 0.9rem;">
+      <span class="badge badge-high">❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)</span>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+      Los blind judges y la verificación psicométrica NO pasaron limpios al primer intento. En la corrida inicial de verificación (Task-271), la validación previa colapsó con 126 errores y violaciones psicométricas bloqueantes (regla R-18 de meta-información en opciones y regla R-19 de fugas de respuesta en reactivos FIB). El bucle de auto-reparación no pudo resolver los fallos de forma autónoma, requiriendo intervención directa del supervisor.
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Lote Estratificado</th>
+          <th>Primer Intento</th>
+          <th>Auto-Repair Iterations</th>
+          <th>Supervisor Fixes</th>
+          <th>Status Final</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>50 reactivos</strong></td>
+          <td><span class="badge badge-high">FAILED</span></td>
+          <td>2 iteraciones</td>
+          <td><strong>3 fixes</strong></td>
+          <td><span class="badge badge-ok">CERTIFICADO</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top: 14px; font-size: 0.85rem;">
+      <strong>Acciones Correctivas Tomadas:</strong>
+      <ul style="margin-left: 20px; margin-top: 6px; color: var(--text-muted);">
+        <li>1. **Bucle de Auto-Reparación Autónomo**: El motor ejecutó RepairLoop con 127 errores iniciales, pero colapsó al persistir fugas en `Q-C02-089`, `Q-H02-152` y `Q-Hab03-186..188`.</li><li>2. **Intervención Manual del Supervisor (3 operaciones)**: El orquestador intervino directamente en caliente sobre los archivos `Hab-03.json`, `C-02.json`, `H-02.json` y `Hab-05.json` mediante `replace_file_content`.</li><li>3. **Desarrollo de Scripts Ad-Hoc**: Se crearon y ejecutaron scripts de parcheo masivo regex (`fix_hab03.py`, `check_leaks.py`, `fix_all_templates.py`, `fix_cta_math.py`) para purgar pistas y fugas residuales.</li><li>4. **Re-Ejecución y Certificación Final**: Se relanzó la etapa de verificación (`task-602`), completando con éxito la validación tras 2 iteraciones de auto-reparación sobre el lote de 50 reactivos.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Orchestrator Manual Interventions (Supervisor Repair Anti-Pattern)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Target File</th>
+          <th>Action Type</th>
+          <th>Root Cause / Snippet</th>
+          <th>Tool</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>399</strong></td>
+          <td><code>assemble.py</code></td>
+          <td>Refactorización Core</td>
+          <td>Colisión de IDs locales en fusión de partes (Ciclo en DAG)</td>
+          <td><code>replace_file_content</code></td>
+        </tr><tr>
+          <td><strong>427</strong></td>
+          <td><code>assemble.py</code></td>
+          <td>Refactorización Core</td>
+          <td>Colisión de IDs locales en fusión de partes (Ciclo en DAG)</td>
+          <td><code>replace_file_content</code></td>
+        </tr><tr>
+          <td><strong>457</strong></td>
+          <td><code>assemble.py</code></td>
+          <td>Refactorización Core</td>
+          <td>Colisión de IDs locales en fusión de partes (Ciclo en DAG)</td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>

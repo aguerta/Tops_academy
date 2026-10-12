@@ -1,0 +1,165 @@
+{
+  "competency_id": "Hab-04",
+  "templates": [
+    {
+      "id": "T-Hab04-01",
+      "competency_id": "Hab-04",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "A partir de la ecuación linealizada $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$ con variable $z = k^{1-\\alpha}$, y con parámetros $\\alpha = {alpha_frac}$, $s = {s_val}$, $\\lambda = {lambda_val}$ y capital inicial $k(0) = k_0$, determine la trayectoria temporal exacta $k(t)$ de la relación capital-trabajo:",
+      "stem_variants": [
+        "A partir de la ecuación linealizada $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$ con variable $z = k^{1-\\alpha}$, y con parámetros $\\alpha = {alpha_frac}$, $s = {s_val}$, $\\lambda = {lambda_val}$ y capital inicial $k(0) = k_0$, determine la trayectoria temporal exacta $k(t)$ de la relación capital-trabajo:",
+        "En una economía con propensión al ahorro $s = {s_val}$, dilución $\\lambda = {lambda_val}$ y tecnología Cobb-Douglas con $\\alpha = {alpha_frac}$, la ecuación linealizada para $z(t) = k(t)^{{one_minus_alpha_frac}}$ se resuelve con condición inicial $k(0) = k_0$. ¿Cuál es la función temporal cerrada $k(t)$ del capital por trabajador?",
+        "Considere el modelo de Solow con coeficientes $\\alpha = {alpha_frac}$, $s = {s_val}$ y $\\lambda = {lambda_val}$. Tras resolver la ecuación lineal para $z(t)$ y revertir la sustitución $z = k^{1-\\alpha}$, seleccione la solución analítica exacta que describe $k(t)$:",
+        "Dada la solución de la ecuación complementaria y particular para $z(t)$, ¿cuál es la trayectoria temporal resultante $k(t)$ de acumulación de capital partiendo de una dotación inicial $k(0) = k_0$ bajo parámetros $\\alpha = {alpha_frac}$, $s = {s_val}$ y $\\lambda = {lambda_val}$?"
+      ],
+      "generate_py": "def generate(rng):\n    alpha_choices = [(1, 2), (1, 3), (2, 3), (1, 4), (3, 4)]\n    num, den = rng.choice(alpha_choices)\n    alpha_frac = latex_frac(num, den)\n    one_minus_alpha_frac = latex_frac(den - num, den)\n    inv_one_minus_alpha_frac = latex_frac(den, den - num)\n    one_minus_alpha = (den - num) / den\n    lambda_val = rng.choice([0.02, 0.04, 0.05])\n    s_choices = [0.10, 0.12, 0.16, 0.20, 0.24, 0.28, 0.30, 0.32, 0.36, 0.40]\n    s_val = rng.choice(s_choices)\n    z_bar = round(s_val / lambda_val, 4)\n    z_bar_str = fmt(z_bar, 4)\n    a_num = round(one_minus_alpha * lambda_val, 5)\n    a_str = fmt(a_num, 4)\n    s_str = fmt(s_val, 4)\n    lam_str = fmt(lambda_val, 4)\n    correct_val = f'La trayectoria exacta es $k(t) = \\\\left( [k_0^{{{one_minus_alpha_frac}}} - {z_bar_str}] e^{{-{a_str} t}} + {z_bar_str} \\\\right)^{{{inv_one_minus_alpha_frac}}}$, revirtiendo la potencia $1-\\\\alpha$ de la solución linealizada.'\n    d1 = f'La trayectoria exacta es $k^{{{one_minus_alpha_frac}}}(t) = [k_0^{{{one_minus_alpha_frac}}} - {z_bar_str}] e^{{-{a_str} t}} + {z_bar_str}$, omitiendo aplicar el exponente inverso $\\\\frac{{1}}{{1-\\\\alpha}}$ para despejar $k(t)$.'\n    d2 = f'La trayectoria exacta es $k(t) = \\\\left( [k_0^{{{one_minus_alpha_frac}}} - {z_bar_str}] e^{{+{a_str} t}} + {z_bar_str} \\\\right)^{{{inv_one_minus_alpha_frac}}}$, omitiendo el signo negativo en el argumento exponencial.'\n    d3 = f'La trayectoria exacta es $k(t) = \\\\left( [k_0^{{{one_minus_alpha_frac}}} + {z_bar_str}] e^{{-{a_str} t}} - {z_bar_str} \\\\right)^{{{inv_one_minus_alpha_frac}}}$, introduciendo un signo negativo erróneo en la integral particular.'\n    d4 = f'La trayectoria converge a un estado uniforme donde un mayor ahorro $s$ reduce el capital final, dado por $\\\\bar{{k}} = ({lam_str}/{s_str})^{{{inv_one_minus_alpha_frac}}}$ al invertir el cociente.'\n    d5 = f'La trayectoria converge a un estado uniforme donde una mayor dilución $\\\\lambda$ eleva el capital final, dado por $\\\\bar{{k}} = ({s_str} \\\\cdot {lam_str})^{{{inv_one_minus_alpha_frac}}}$ al multiplicar tasas.'\n    d6 = f'La trayectoria predice un límite $t \\\\to \\\\infty$ no convergente porque el factor exponencial $e^{{-{a_str} t}}$ tiende erróneamente a la unidad en vez de anularse.'\n    return {\n        'vars': {'alpha_frac': alpha_frac, 'one_minus_alpha_frac': one_minus_alpha_frac, 's_val': s_str, 'lambda_val': lam_str, 'z_bar_str': z_bar_str, 'a_str': a_str, 'inv_one_minus_alpha_frac': inv_one_minus_alpha_frac},\n        'correct': correct_val,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab04-01'},\n            {'value': d2, 'distractor_id': 'D-Hab04-02'},\n            {'value': d3, 'distractor_id': 'D-Hab04-03'},\n            {'value': d4, 'distractor_id': 'D-Hab04-04'},\n            {'value': d5, 'distractor_id': 'D-Hab04-05'},\n            {'value': d6, 'distractor_id': 'D-Hab04-06'}\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    return result['correct'].startswith('La trayectoria exacta es') and len(result['distractors']) == 6",
+      "hints": [
+        "Resuelva primero la ecuación lineal $\\frac{dz}{dt} + a z = b$ obteniendo $z(t) = [z(0) - b/a]e^{-at} + b/a$.",
+        "Observe que $b/a = \\frac{(1-\\alpha)s}{(1-\\alpha)\\lambda} = \\frac{s}{\\lambda}$ y el coeficiente de decaimiento es $a = (1-\\alpha)\\lambda$.",
+        "Revierta la sustitución recordando que $z(t) = k(t)^{1-\\alpha}$, por lo que debe elevar ambos miembros a la potencia $\\frac{1}{1-\\alpha}$."
+      ],
+      "solution": "La solución de la EDO lineal $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$ con condición inicial $z(0) = k(0)^{1-\\alpha}$ es $z(t) = [k(0)^{1-\\alpha} - s/\\lambda]e^{-(1-\\alpha)\\lambda t} + s/\\lambda$. Despejando $k(t) = z(t)^{1/(1-\\alpha)}$, se obtiene $k(t) = \\left( [k_0^{1-\\alpha} - {z_bar_str}] e^{-{a_str} t} + {z_bar_str} \\right)^{{inv_one_minus_alpha_frac}}$.",
+      "distractor_ids": [
+        "D-Hab04-01",
+        "D-Hab04-02",
+        "D-Hab04-03",
+        "D-Hab04-04",
+        "D-Hab04-05",
+        "D-Hab04-06"
+      ]
+    },
+    {
+      "id": "T-Hab04-02",
+      "competency_id": "Hab-04",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Para el modelo de Solow con función Cobb-Douglas $Q = K^\\alpha L^{1-\\alpha}$ y parámetros $\\alpha = {alpha_frac}$, $s = {s_val}$ y $\\lambda = {lambda_val}$, analice la convergencia asintótica de la trayectoria temporal $k(t)$ y las propiedades de estática comparativa del estado uniforme $\\bar{k}$. ¿Cuál es la conclusión matemáticamente rigurosa?",
+      "stem_variants": [
+        "Para el modelo de Solow con función Cobb-Douglas $Q = K^\\alpha L^{1-\\alpha}$ y parámetros $\\alpha = {alpha_frac}$, $s = {s_val}$ y $\\lambda = {lambda_val}$, analice la convergencia asintótica de la trayectoria temporal $k(t)$ y las propiedades de estática comparativa del estado uniforme $\\bar{k}$. ¿Cuál es la conclusión matemáticamente rigurosa?",
+        "En un análisis de largo plazo del modelo de Solow con elasticidad $\\alpha = {alpha_frac}$, propensión al ahorro $s = {s_val}$ y tasa de dilución $\\lambda = {lambda_val}$, ¿cómo se comportan el límite cuando $t \\to \\infty$ y las respuestas de $\\bar{k}$ ante variaciones en los parámetros $s$ y $\\lambda$?",
+        "Considere la solución cerrada $k(t) = \\left( [k_0^{1-\\alpha} - \\frac{s}{\\lambda}] e^{-(1-\\alpha)\\lambda t} + \\frac{s}{\\lambda} \\right)^{\\frac{1}{1-\\alpha}}$ con parámetros $\\alpha = {alpha_frac}$, $s = {s_val}$ y $\\lambda = {lambda_val}$. Al evaluar el límite asintótico y las derivadas de estática comparativa, se concluye que:",
+        "Para una economía descrita por $\\alpha = {alpha_frac}$, $s = {s_val}$ y $\\lambda = {lambda_val}$, determine el comportamiento asintótico de $k(t)$ cuando $t \\to \\infty$ y los signos de las derivadas parciales de estática comparativa $\\frac{\\partial \\bar{k}}{\\partial s}$ y $\\frac{\\partial \\bar{k}}{\\partial \\lambda}$:"
+      ],
+      "generate_py": "def generate(rng):\n    alpha_choices = [(1, 2), (1, 3), (2, 3), (1, 4), (3, 4)]\n    num, den = rng.choice(alpha_choices)\n    alpha_frac = latex_frac(num, den)\n    inv_one_minus_alpha_frac = latex_frac(den, den - num)\n    one_minus_alpha = (den - num) / den\n    lambda_val = rng.choice([0.02, 0.04, 0.05])\n    s_choices = [0.10, 0.12, 0.16, 0.20, 0.24, 0.28, 0.30, 0.32, 0.36, 0.40]\n    s_val = rng.choice(s_choices)\n    a_num = round(one_minus_alpha * lambda_val, 5)\n    a_str = fmt(a_num, 4)\n    s_str = fmt(s_val, 4)\n    lam_str = fmt(lambda_val, 4)\n    correct_val = f'Como $e^{{-{a_str} t}} \\\\to 0$, $k(t)$ converge a $\\\\bar{{k}} = ({s_str}/{lam_str})^{{{inv_one_minus_alpha_frac}}}$, cumpliendo $\\\\frac{{\\\\partial \\\\bar{{k}}}}{{\\\\partial s}} > 0$ y $\\\\frac{{\\\\partial \\\\bar{{k}}}}{{\\\\partial \\\\lambda}} < 0$.'\n    d1 = f'La solución converge en la variable transformada pero se omite elevar a $\\\\frac{{1}}{{1-\\\\alpha}}$, concluyendo erróneamente que el equilibrio es $\\\\bar{{z}} = {s_str}/{lam_str}$.'\n    d2 = f'La trayectoria contiene un factor explosivo $e^{{+{a_str} t}}$ que diverge hacia infinito para todo $t > 0$, impidiendo la existencia de un estado uniforme estacionario.'\n    d3 = f'El cálculo de la integral particular asigna un valor negativo $\\\\bar{{z}} = -{s_str}/{lam_str}$, prediciendo un estado uniforme económicamente inadmisible.'\n    d4 = f'La economía converge asintóticamente pero con estática comparativa invertida respecto al ahorro: un incremento en $s$ reduce el capital uniforme ($\\\\frac{{\\\\partial \\\\bar{{k}}}}{{\\\\partial s}} < 0$).'\n    d5 = f'La economía converge asintóticamente pero con estática comparativa invertida en demografía: una mayor tasa de dilución $\\\\lambda$ incrementa el capital ($\\\\frac{{\\\\partial \\\\bar{{k}}}}{{\\\\partial \\\\lambda}} > 0$).'\n    d6 = f'Al tomar el límite $t \\\\to \\\\infty$, se asume erróneamente que $e^{{-{a_str} t}} \\\\to 1$, lo que impide la extinción del término transitorio inicial $k(0)$.'\n    return {\n        'vars': {'alpha_frac': alpha_frac, 's_val': s_str, 'lambda_val': lam_str, 'a_str': a_str, 'inv_one_minus_alpha_frac': inv_one_minus_alpha_frac},\n        'correct': correct_val,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab04-01'},\n            {'value': d2, 'distractor_id': 'D-Hab04-02'},\n            {'value': d3, 'distractor_id': 'D-Hab04-03'},\n            {'value': d4, 'distractor_id': 'D-Hab04-04'},\n            {'value': d5, 'distractor_id': 'D-Hab04-05'},\n            {'value': d6, 'distractor_id': 'D-Hab04-06'}\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    return result['correct'].startswith('Como $e^{-') and len(result['distractors']) == 6",
+      "hints": [
+        "Analice el límite de la función temporal $e^{-(1-\\alpha)\\lambda t}$ cuando $t \\to \\infty$ dado que $(1-\\alpha)\\lambda > 0$.",
+        "Halle el valor asintótico resultante $\\bar{k} = \\lim_{t \\to \\infty} k(t) = (s/\\lambda)^{1/(1-\\alpha)}$.",
+        "Derive parcialmente $\\bar{k}$ respecto a $s$ y respecto a $\\lambda$ para determinar el signo de la estática comparativa."
+      ],
+      "solution": "Cuando $t \\to \\infty$, el término exponencial transitorio $e^{-(1-\\alpha)\\lambda t}$ tiende a cero. En consecuencia, $k(t)$ converge asintóticamente al estado estacionario $\\bar{k} = (s/\\lambda)^{1/(1-\\alpha)}$. Dado que $s$ está en el numerador y $\\lambda$ en el denominador con exponente positivo $1/(1-\\alpha) > 0$, la derivada respecto a $s$ es estrictamente positiva (más ahorro incrementa $\\bar{k}$) y la derivada respecto a $\\lambda$ es estrictamente negativa (más dilución reduce $\\bar{k}$).",
+      "distractor_ids": [
+        "D-Hab04-01",
+        "D-Hab04-02",
+        "D-Hab04-03",
+        "D-Hab04-04",
+        "D-Hab04-05",
+        "D-Hab04-06"
+      ]
+    },
+    {
+      "id": "T-Hab04-03",
+      "competency_id": "Hab-04",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el modelo de Solow-Cobb-Douglas, la función de producción es $Q = K^\\alpha L^{1-\\alpha}$ con $\\alpha = {alpha_frac}$, la tasa de ahorro es $s = {s_val}$ y la tasa efectiva de dilución es $\\lambda = {lambda_val}$. Calcule el valor numérico exacto del capital por trabajador en el estado uniforme $\\bar{k} = \\left(\\frac{s}{\\lambda}\\right)^{\\frac{1}{1-\\alpha}}$:",
+      "stem_variants": [
+        "En el modelo de Solow-Cobb-Douglas, la función de producción es $Q = K^\\alpha L^{1-\\alpha}$ con $\\alpha = {alpha_frac}$, la tasa de ahorro es $s = {s_val}$ y la tasa efectiva de dilución es $\\lambda = {lambda_val}$. Calcule el valor numérico exacto del capital por trabajador en el estado uniforme $\\bar{k} = \\left(\\frac{s}{\\lambda}\\right)^{\\frac{1}{1-\\alpha}}$:",
+        "Para una economía con parámetros $\\alpha = {alpha_frac}$, propensión al ahorro $s = {s_val}$ y tasa de depreciación y crecimiento poblacional $\\lambda = {lambda_val}$, determine el nivel de capital per cápita estacionario de largo plazo $\\bar{k}$:",
+        "A partir de la solución asintótica del modelo de Solow $t \\to \\infty$ con $\\alpha = {alpha_frac}$, $s = {s_val}$ y $\\lambda = {lambda_val}$, halle el valor escalar del estado estacionario $\\bar{k} = (s/\\lambda)^{1/(1-\\alpha)}$:",
+        "Calcule el valor de equilibrio de largo plazo $\\bar{k}$ al que converge la trayectoria temporal del capital en una economía de Solow con $\\alpha = {alpha_frac}$, $s = {s_val}$ y $\\lambda = {lambda_val}$:"
+      ],
+      "generate_py": "def generate(rng):\n    scenarios = [\n        (1, 2, 0.05, 0.10, 4),\n        (1, 2, 0.05, 0.15, 9),\n        (1, 2, 0.05, 0.20, 16),\n        (1, 2, 0.05, 0.25, 25),\n        (1, 2, 0.04, 0.16, 16),\n        (1, 2, 0.04, 0.24, 36),\n        (1, 2, 0.04, 0.28, 49),\n        (1, 2, 0.04, 0.32, 64),\n        (1, 2, 0.04, 0.36, 81),\n        (2, 3, 0.05, 0.10, 8),\n        (2, 3, 0.05, 0.15, 27),\n        (2, 3, 0.05, 0.20, 64),\n        (2, 3, 0.04, 0.12, 27),\n        (3, 4, 0.05, 0.10, 16),\n        (1, 3, 0.05, 0.20, 8),\n        (1, 3, 0.04, 0.16, 8),\n        (1, 3, 0.02, 0.18, 27)\n    ]\n    num, den, lam, s, k_bar = rng.choice(scenarios)\n    alpha_frac = latex_frac(num, den)\n    equivs = [str(k_bar), f'{k_bar}.0']\n    return {\n        'vars': {'alpha_frac': alpha_frac, 's_val': fmt(s, 4), 'lambda_val': fmt(lam, 4), 'k_bar': str(k_bar)},\n        'correct': k_bar,\n        'value': str(k_bar),\n        'canonical_algebraic': str(k_bar),\n        'accepted_equivalents': equivs,\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    params = result['vars']\n    return int(result['correct']) == int(params['k_bar'])",
+      "hints": [
+        "Calcule primero el cociente entre la tasa de ahorro y la dilución: s / lambda.",
+        "Determine la potencia inversa 1 / (1 - alpha).",
+        "Eleve el cociente s / lambda a la potencia 1 / (1 - alpha) para obtener k_bar."
+      ],
+      "solution": "El capital de estado uniforme se obtiene evaluando $\\bar{k} = (s/\\lambda)^{1/(1-\\alpha)}$. Con $s = {s_val}$, $\\lambda = {lambda_val}$ y $\\alpha = {alpha_frac}$, el resultado exacto es $\\bar{k} = {k_bar}$.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab04-04",
+      "competency_id": "Hab-04",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En la solución linealizada de Solow para la variable transformada $z(t) = k(t)^{1-\\alpha}$, la ecuación diferencial es $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$. Calcule el valor del estado uniforme transformado (integral particular) $\\bar{z} = \\frac{s}{\\lambda}$ cuando la tasa de ahorro es $s = {s_val}$ y la tasa de dilución es $\\lambda = {lambda_val}$:",
+      "stem_variants": [
+        "En la solución linealizada de Solow para la variable transformada $z(t) = k(t)^{1-\\alpha}$, la ecuación diferencial es $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$. Calcule el valor del estado uniforme transformado (integral particular) $\\bar{z} = \\frac{s}{\\lambda}$ cuando la tasa de ahorro es $s = {s_val}$ y la tasa de dilución es $\\lambda = {lambda_val}$:",
+        "Para una economía con tasa de ahorro $s = {s_val}$ y parámetro de depreciación y crecimiento poblacional $\\lambda = {lambda_val}$, determine el valor estacionario de la variable linealizada $\\bar{z} = b/a = s/\\lambda$:",
+        "Dada la ecuación lineal $\\frac{dz}{dt} + a z = b$, la solución particular constante satisface $\\bar{z} = b/a$. Si $s = {s_val}$ y $\\lambda = {lambda_val}$, calcule el valor numérico escalar de $\\bar{z}$:",
+        "Halle el valor de equilibrio constante $\\bar{z} = \\frac{s}{\\lambda}$ al que tiende la variable transformada $z(t)$ en el modelo de Solow cuando $s = {s_val}$ y $\\lambda = {lambda_val}$:"
+      ],
+      "generate_py": "def generate(rng):\n    pairs = [\n        (0.10, 0.05, 2),\n        (0.15, 0.05, 3),\n        (0.20, 0.05, 4),\n        (0.25, 0.05, 5),\n        (0.30, 0.05, 6),\n        (0.35, 0.05, 7),\n        (0.40, 0.05, 8),\n        (0.12, 0.04, 3),\n        (0.16, 0.04, 4),\n        (0.20, 0.04, 5),\n        (0.24, 0.04, 6),\n        (0.28, 0.04, 7),\n        (0.32, 0.04, 8),\n        (0.36, 0.04, 9),\n        (0.10, 0.02, 5),\n        (0.14, 0.02, 7),\n        (0.16, 0.02, 8),\n        (0.20, 0.02, 10),\n        (0.24, 0.02, 12)\n    ]\n    s, lam, z_bar = rng.choice(pairs)\n    equivs = [str(z_bar), f'{z_bar}.0']\n    return {\n        'vars': {'s_val': fmt(s, 4), 'lambda_val': fmt(lam, 4), 'z_bar': str(z_bar)},\n        'correct': z_bar,\n        'value': str(z_bar),\n        'canonical_algebraic': str(z_bar),\n        'accepted_equivalents': equivs,\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    params = result['vars']\n    return int(result['correct']) == int(params['z_bar'])",
+      "hints": [
+        "Identifique que la integral particular constante de $\\frac{dz}{dt} + a z = b$ es $\\bar{z} = b/a$.",
+        "Con $a = (1-\\alpha)\\lambda$ y $b = (1-\\alpha)s$, la razón es $b/a = s/\\lambda$.",
+        "Divida el valor de la tasa de ahorro s entre la tasa de dilución lambda."
+      ],
+      "solution": "El valor constante particular de la ecuación lineal es $\\bar{z} = \\frac{b}{a} = \\frac{(1-\\alpha)s}{(1-\\alpha)\\lambda} = \\frac{s}{\\lambda} = \\frac{{s_val}}{{lambda_val}} = {z_bar}$.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab04-05",
+      "competency_id": "Hab-04",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Considere el modelo de Solow con función Cobb-Douglas $Q = K^\\alpha L^{1-\\alpha}$, tasa de ahorro $s = {s_val}$, tasa de dilución $\\lambda = {lambda_val}$ y capital de equilibrio $\\bar{k} = \\left(\\frac{s}{\\lambda}\\right)^{\\frac{1}{1-\\alpha}}$. Seleccione todas las afirmaciones teóricas y de estática comparativa que son matemáticamente verdaderas:",
+      "stem_variants": [
+        "Considere el modelo de Solow con función Cobb-Douglas $Q = K^\\alpha L^{1-\\alpha}$, tasa de ahorro $s = {s_val}$, tasa de dilución $\\lambda = {lambda_val}$ y capital de equilibrio $\\bar{k} = \\left(\\frac{s}{\\lambda}\\right)^{\\frac{1}{1-\\alpha}}$. Seleccione todas las afirmaciones teóricas y de estática comparativa que son matemáticamente verdaderas:",
+        "En el análisis de largo plazo del modelo de Solow con parámetros $s = {s_val}$ y $\\lambda = {lambda_val}$, evalúe el impacto de variaciones paramétricas y la estabilidad de $\\bar{k}$. ¿Cuáles de las siguientes proposiciones son ciertas?",
+        "Respecto a las propiedades analíticas del estado uniforme $\\bar{k} = (s/\\lambda)^{1/(1-\\alpha)}$ y la convergencia dinámica con $s = {s_val}$ y $\\lambda = {lambda_val}$, identifique todas las afirmaciones formalmente válidas:",
+        "Para la economía de Solow caracterizada por $s = {s_val}$ y $\\lambda = {lambda_val}$, determine todas las conclusiones válidas sobre la estática comparativa y la estabilidad del capital por trabajador:"
+      ],
+      "generate_py": "def generate(rng):\n    s_choices = [0.15, 0.20, 0.25, 0.30, 0.35]\n    lam_choices = [0.03, 0.04, 0.05, 0.06]\n    s_val = rng.choice(s_choices)\n    lam_val = rng.choice(lam_choices)\n    opts = [\n        {'content': 'La estática comparativa respecto a la tasa de ahorro es estrictamente positiva: $\\\\frac{\\\\partial \\\\bar{k}}{\\\\partial s} > 0$.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La estática comparativa respecto a la tasa de dilución es estrictamente negativa: $\\\\frac{\\\\partial \\\\bar{k}}{\\\\partial \\\\lambda} < 0$.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'Un incremento en la propensión marginal al ahorro $s$ reduce el capital per cápita de equilibrio, cumpliendo $\\\\frac{\\\\partial \\\\bar{k}}{\\\\partial s} < 0$.', 'is_correct': False, 'distractor_id': 'D-Hab04-04', 'error_rationale': 'Inversión del efecto de estática comparativa: dado que s aparece en el numerador y 1/(1-\\\\alpha) > 0, la derivada parcial d(k_bar)/ds es estrictamente positiva.'},\n        {'content': 'Una mayor tasa de crecimiento demográfico o depreciación $\\\\lambda$ incrementa el capital de estado uniforme, cumpliendo $\\\\frac{\\\\partial \\\\bar{k}}{\\\\partial \\\\lambda} > 0$.', 'is_correct': False, 'distractor_id': 'D-Hab04-05', 'error_rationale': 'Inversión del efecto de dilución: \\\\lambda aparece en el denominador de s/\\\\lambda, por lo que un aumento de \\\\lambda reduce la dotación de capital por trabajador en el equilibrio.'},\n        {'content': 'El decaimiento hacia el equilibrio contiene el término exponencial $e^{+(1-\\\\alpha)\\\\lambda t}$, originando una trayectoria divergente y explosiva.', 'is_correct': False, 'distractor_id': 'D-Hab04-02', 'error_rationale': 'Omisión del signo negativo en la exponencial: la solución lineal homogénea decae con e^{-at} = e^{-(1-\\\\alpha)\\\\lambda t}, asegurando convergencia asintótica estable hacia el estado uniforme.'}\n    ]\n    rng.shuffle(opts)\n    return {\n        'vars': {'s_val': fmt(s_val, 4), 'lambda_val': fmt(lam_val, 4)},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    corrects = [opt for opt in result['options'] if opt['is_correct']]\n    return len(corrects) == 2 and len(result['options']) == 5",
+      "hints": [
+        "Examine la expresión $\\bar{k} = (s/\\lambda)^{1/(1-\\alpha)}$ y derive parcialmente respecto a $s$.",
+        "Derive parcialmente $\\bar{k}$ respecto a $\\lambda$ y determine su signo algebraico.",
+        "Recuerde que el factor temporal transitorio tiene signo negativo en el exponente: $e^{-(1-\\alpha)\\lambda t}$."
+      ],
+      "solution": "El capital de estado uniforme $\\bar{k} = (s/\\lambda)^{1/(1-\\alpha)}$ aumenta con mayores tasas de ahorro $s$ y disminuye con mayores tasas de dilución $\\lambda$. Las opciones incorrectas invierten estas derivadas o afirman erróneamente un exponente positivo divergente en la solución.",
+      "distractor_ids": [
+        "D-Hab04-02",
+        "D-Hab04-04",
+        "D-Hab04-05"
+      ]
+    },
+    {
+      "id": "T-Hab04-06",
+      "competency_id": "Hab-04",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Considere la derivación de la trayectoria temporal exacta $k(t)$ a partir de la solución de la ecuación linealizada de Solow con $z = k^{1-\\alpha}$, $s = {s_val}$ y $\\lambda = {lambda_val}$. Seleccione todas las afirmaciones analíticas correctas sobre la solución y su comportamiento asintótico:",
+      "stem_variants": [
+        "Considere la derivación de la trayectoria temporal exacta $k(t)$ a partir de la solución de la ecuación linealizada de Solow con $z = k^{1-\\alpha}$, $s = {s_val}$ y $\\lambda = {lambda_val}$. Seleccione todas las afirmaciones analíticas correctas sobre la solución y su comportamiento asintótico:",
+        "Para resolver la trayectoria temporal del capital $k(t)$ y su límite asintótico en el modelo de Solow con parámetros $s = {s_val}$ y $\\lambda = {lambda_val}$, ¿cuáles de las siguientes proposiciones matemáticas son correctas?",
+        "Dada la solución de la variable transformada $z(t) = [z(0) - \\bar{z}]e^{-(1-\\alpha)\\lambda t} + \\bar{z}$ con $s = {s_val}$ y $\\lambda = {lambda_val}$, identifique todas las propiedades válidas de la reversión de variables y el límite $t \\to \\infty$:",
+        "En el análisis de la convergencia temporal de la economía de Solow con $s = {s_val}$ y $\\lambda = {lambda_val}$, determine todas las aseveraciones matemáticamente rigurosas sobre $k(t)$ y su estado uniforme:"
+      ],
+      "generate_py": "def generate(rng):\n    s_choices = [0.15, 0.20, 0.25, 0.30, 0.35]\n    lam_choices = [0.03, 0.04, 0.05, 0.06]\n    s_val = rng.choice(s_choices)\n    lam_val = rng.choice(lam_choices)\n    opts = [\n        {'content': 'Para obtener la trayectoria $k(t)$ es indispensable revertir la sustitución elevando la solución $z(t)$ a la potencia inversa $\\\\frac{1}{1-\\\\alpha}$.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'Dado que $(1-\\\\alpha)\\\\lambda > 0$, el término transitorio cumple $\\\\lim_{t \\\\to \\\\infty} e^{-(1-\\\\alpha)\\\\lambda t} = 0$, asegurando convergencia asintótica.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La trayectoria temporal cerrada del capital queda completamente resuelta expresando $k^{1-\\\\alpha}(t)$ sin necesidad de aplicar ninguna potencia inversa.', 'is_correct': False, 'distractor_id': 'D-Hab04-01', 'error_rationale': 'Omisión de la reversión de la sustitución: para obtener la trayectoria de k(t) se debe despejar elevando ambos miembros a la potencia 1/(1-\\\\alpha).'},\n        {'content': 'El término constante de la solución particular es $\\\\bar{z} = -\\\\frac{s}{\\\\lambda}$, de modo que el estado uniforme implica capital negativo.', 'is_correct': False, 'distractor_id': 'D-Hab04-03', 'error_rationale': 'Error de signos en la integral particular: el valor particular constante es b/a = (1-\\\\alpha)s / ((1-\\\\alpha)\\\\lambda) = +s/\\\\lambda > 0.'},\n        {'content': 'Al evaluar el límite $t \\\\to \\\\infty$, el término exponencial tiende a $\\\\lim_{t \\\\to \\\\infty} e^{-(1-\\\\alpha)\\\\lambda t} = 1$, manteniendo constante la brecha inicial.', 'is_correct': False, 'distractor_id': 'D-Hab04-06', 'error_rationale': 'Evaluación asintótica errónea: cuando t -> +\\\\infty con argumento negativo, e^{-(1-\\\\alpha)\\\\lambda t} tiende estrictamente a 0, no a 1.'}\n    ]\n    rng.shuffle(opts)\n    return {\n        'vars': {'s_val': fmt(s_val, 4), 'lambda_val': fmt(lam_val, 4)},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    corrects = [opt for opt in result['options'] if opt['is_correct']]\n    return len(corrects) == 2 and len(result['options']) == 5",
+      "hints": [
+        "Recuerde que $z(t) = k(t)^{1-\\alpha}$, por lo que aislar $k(t)$ requiere aplicar $(\\cdot)^{\\frac{1}{1-\\alpha}}$.",
+        "Verifique que la solución particular constante es positiva: $\\bar{z} = +s/\\lambda > 0$.",
+        "Analice el límite exponencial: con exponente negativo y $t \\to \\infty$, $e^{-ct} \\to 0$."
+      ],
+      "solution": "La trayectoria de $k(t)$ requiere revertir la sustitución elevando a $1/(1-\\alpha)$. El límite asintótico $t \\to \\infty$ anula el factor exponencial decreciente $e^{-(1-\\alpha)\\lambda t} \\to 0$. Las opciones incorrectas omiten despejar $k(t)$, asignan signo negativo a la integral particular o evalúan erróneamente el límite de la exponencial.",
+      "distractor_ids": [
+        "D-Hab04-01",
+        "D-Hab04-03",
+        "D-Hab04-06"
+      ]
+    }
+  ]
+}
