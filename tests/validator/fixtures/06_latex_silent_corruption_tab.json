@@ -1,0 +1,2199 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schema_version": "1.0.0",
+  "course_id": "demo",
+  "course_title": "Curso de Demostracion y Validacion Psicometrica",
+  "description": "Banco de ejercicios canonico y completo para validacion del sistema Top's Academy.",
+  "language": "es",
+  "created_at": "2026-10-11T00:00:00Z",
+  "competencies": [
+    {
+      "id": "Hab-01",
+      "code": "HAB-01",
+      "name": "Analisis Cualitativo de Sistemas Dinamicos Planos",
+      "category": "Skill",
+      "description": "Determinacion de estabilidad asintotica y retratos de fase en sistemas bidimensionales.",
+      "mastery_target": 100
+    }
+  ],
+  "questions": [
+    {
+      "id": "Q-001",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-001",
+      "stem": "Considere la tasa impositiva $\tau$ del modelo.",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-001.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-001.",
+        "Tercer paso: verificar el discriminante espectral para Q-001."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-001. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-001: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-002",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-002",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-002. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-002.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-002.",
+        "Tercer paso: verificar el discriminante espectral para Q-002."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-002. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-002: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-003",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-003",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-003. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-003.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-003.",
+        "Tercer paso: verificar el discriminante espectral para Q-003."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-003. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-003: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-004",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-004",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-004. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-004.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-004.",
+        "Tercer paso: verificar el discriminante espectral para Q-004."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-004. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-004: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-005",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-005",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-005. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-005.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-005.",
+        "Tercer paso: verificar el discriminante espectral para Q-005."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-005. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-005: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-006",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-006",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-006. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-006.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-006.",
+        "Tercer paso: verificar el discriminante espectral para Q-006."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-006. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-006: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-007",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-007",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-007. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-007.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-007.",
+        "Tercer paso: verificar el discriminante espectral para Q-007."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-007. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-007: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-008",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-008",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-008. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-008.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-008.",
+        "Tercer paso: verificar el discriminante espectral para Q-008."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-008. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-008: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-009",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-009",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-009. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-009.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-009.",
+        "Tercer paso: verificar el discriminante espectral para Q-009."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-009. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-009: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-010",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-010",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-010. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-010.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-010.",
+        "Tercer paso: verificar el discriminante espectral para Q-010."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-010. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-010: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-011",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-011",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-011. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-011 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-011 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-011 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-011 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-011 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-011 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-011 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-011.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-011.",
+        "Tercer paso: verificar el discriminante espectral para Q-011."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-011. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-011: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-012",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-012",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-012. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-012 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-012 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-012 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-012 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-012 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-012 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-012 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-012.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-012.",
+        "Tercer paso: verificar el discriminante espectral para Q-012."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-012. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-012: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-013",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-013",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-013. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-013 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-013 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-013 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-013 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-013 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-013 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-013 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-013.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-013.",
+        "Tercer paso: verificar el discriminante espectral para Q-013."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-013. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-013: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-014",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-014",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-014. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-014 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-014 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-014 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-014 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-014 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-014 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-014 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-014.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-014.",
+        "Tercer paso: verificar el discriminante espectral para Q-014."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-014. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-014: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-015",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-015",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-015. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-015 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-015 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-015 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-015 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-015 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-015 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-015 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-015.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-015.",
+        "Tercer paso: verificar el discriminante espectral para Q-015."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-015. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-015: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-016",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-016",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-016. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-016 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-016 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-016 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-016 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-016 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-016 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-016 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-016.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-016.",
+        "Tercer paso: verificar el discriminante espectral para Q-016."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-016. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-016: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-017",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-017",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-017. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-017 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-017 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-017 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-017 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-017 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-017 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-017 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-017.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-017.",
+        "Tercer paso: verificar el discriminante espectral para Q-017."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-017. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-017: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-018",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-018",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-018. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-018 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-018 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-018 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-018 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-018 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-018 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-018 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-018.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-018.",
+        "Tercer paso: verificar el discriminante espectral para Q-018."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-018. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-018: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-019",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-019",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-019. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-019 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-019 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-019 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-019 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-019 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-019 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-019 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-019.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-019.",
+        "Tercer paso: verificar el discriminante espectral para Q-019."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-019. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-019: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-020",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-020",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-020. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-020 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-020 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-020 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-020 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-020 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-020 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-020 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-020.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-020.",
+        "Tercer paso: verificar el discriminante espectral para Q-020."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-020. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-020: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-021",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-021",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-021. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-021 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-021 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-021 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-021 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-021 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-021 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-021 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-021.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-021.",
+        "Tercer paso: verificar el discriminante espectral para Q-021."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-021. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-021: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-022",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-022",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-022. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-022 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-022 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-022 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-022 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-022 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-022 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-022 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-022.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-022.",
+        "Tercer paso: verificar el discriminante espectral para Q-022."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-022. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-022: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-023",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-023",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-023. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-023 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-023 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-023 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-023 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-023 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-023 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-023 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-023.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-023.",
+        "Tercer paso: verificar el discriminante espectral para Q-023."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-023. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-023: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-024",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-024",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-024. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-024 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-024 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-024 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-024 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-024 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-024 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-024 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-024.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-024.",
+        "Tercer paso: verificar el discriminante espectral para Q-024."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-024. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-024: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-025",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Understand",
+      "difficulty": "medium",
+      "interaction_type": "multiple_select",
+      "context_application": "Seleccion multiple de invariantes en Q-025",
+      "stem": "Seleccione todas las afirmaciones verdaderas respecto a la matriz del sistema en Q-025:",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "multiple_selection",
+        "grading_policy": "binary_all_or_nothing"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Propiedad espectral A verificada en Q-025",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Propiedad espectral B verificada en Q-025",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Afirmacion incorrecta C para Q-025",
+          "is_correct": false,
+          "error_rationale": "Falla la condicion de signo."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Afirmacion incorrecta D para Q-025",
+          "is_correct": false,
+          "error_rationale": "Confunde parte real con imaginaria."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Afirmacion incorrecta E para Q-025",
+          "is_correct": false,
+          "error_rationale": "Determinante nulo."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B"
+      ],
+      "hints": [
+        "Analice cada afirmacion de manera independiente para Q-025.",
+        "Verifique las relaciones entre traza y determinante para Q-025.",
+        "Compruebe que exactamente dos opciones satisfacen los teoremas para Q-025."
+      ],
+      "detailed_solution": "Solucion paso a paso para seleccion multiple en Q-025.",
+      "common_misconception_warning": "Misconception en seleccion multiple Q-025."
+    },
+    {
+      "id": "Q-026",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Understand",
+      "difficulty": "medium",
+      "interaction_type": "multiple_select",
+      "context_application": "Seleccion multiple de invariantes en Q-026",
+      "stem": "Seleccione todas las afirmaciones verdaderas respecto a la matriz del sistema en Q-026:",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "multiple_selection",
+        "grading_policy": "binary_all_or_nothing"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Propiedad espectral A verificada en Q-026",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Propiedad espectral B verificada en Q-026",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Afirmacion incorrecta C para Q-026",
+          "is_correct": false,
+          "error_rationale": "Falla la condicion de signo."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Afirmacion incorrecta D para Q-026",
+          "is_correct": false,
+          "error_rationale": "Confunde parte real con imaginaria."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Afirmacion incorrecta E para Q-026",
+          "is_correct": false,
+          "error_rationale": "Determinante nulo."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B"
+      ],
+      "hints": [
+        "Analice cada afirmacion de manera independiente para Q-026.",
+        "Verifique las relaciones entre traza y determinante para Q-026.",
+        "Compruebe que exactamente dos opciones satisfacen los teoremas para Q-026."
+      ],
+      "detailed_solution": "Solucion paso a paso para seleccion multiple en Q-026.",
+      "common_misconception_warning": "Misconception en seleccion multiple Q-026."
+    },
+    {
+      "id": "Q-027",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-027",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-027:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-027.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-027.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-027."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-027.",
+      "common_misconception_warning": "Misconception tipica en Q-027."
+    },
+    {
+      "id": "Q-028",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-028",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-028:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-028.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-028.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-028."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-028.",
+      "common_misconception_warning": "Misconception tipica en Q-028."
+    },
+    {
+      "id": "Q-029",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-029",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-029. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-029 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-029 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-029 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-029 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-029 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-029 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-029 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-029.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-029.",
+        "Tercer paso: verificar el discriminante espectral para Q-029."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-029. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-029: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-030",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-030",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-030. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-030 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-030 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-030 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-030 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-030 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-030 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-030 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-030.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-030.",
+        "Tercer paso: verificar el discriminante espectral para Q-030."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-030. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-030: no confundir foco estable con centro conservativo."
+    }
+  ]
+}

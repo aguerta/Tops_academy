@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExerciseTemplateSchema",
+  "description": "Schema for parametric exercise templates in content-to-course v2",
+  "oneOf": [
+    { "$ref": "#/definitions/competency_templates_file" },
+    { "$ref": "#/definitions/template_item" }
+  ],
+  "definitions": {
+    "template_item": {
+      "type": "object",
+      "required": [
+        "id",
+        "interaction_type",
+        "difficulty",
+        "bloom",
+        "stem",
+        "generate_py",
+        "cross_check_py",
+        "hints",
+        "solution",
+        "distractor_ids"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^T-[A-Za-z0-9_-]+$"
+        },
+        "competency_id": { "type": "string" },
+        "interaction_type": {
+          "type": "string",
+          "enum": ["multiple_choice_7_options", "fill_in_the_blank", "multiple_select"]
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "medium", "hard"]
+        },
+        "bloom": {
+          "type": "string",
+          "enum": ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]
+        },
+        "stem": { "type": "string", "minLength": 5 },
+        "stem_variants": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 5 }
+        },
+        "generate_py": { "type": "string", "minLength": 10 },
+        "cross_check_py": { "type": "string", "minLength": 5 },
+        "hints": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 3,
+          "maxItems": 5
+        },
+        "solution": { "type": "string", "minLength": 5 },
+        "detailed_solution": { "type": "string" },
+        "distractor_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "graph": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "competency_templates_file": {
+      "type": "object",
+      "required": ["competency_id", "templates"],
+      "properties": {
+        "competency_id": { "type": "string" },
+        "templates": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/template_item" },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

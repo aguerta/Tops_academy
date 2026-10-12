@@ -1,0 +1,63 @@
+{
+  "competency_id": "Hab-01",
+  "templates": [
+    {
+      "id": "T-Hab01-01",
+      "competency_id": "Hab-01",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Al aplicar el método de curvas características de Lagrange a la ecuación cuasilineal $${a} x u_x + {b} y u_y = {c} u$$, ¿cuál es la forma correcta de la primera integral característica $C_1$ obtenida de $\\frac{{dx}}{{{a}x}} = \\frac{{dy}}{{{b}y}}$?",
+      "generate_py": "def generate(rng):\n    a = rng.randint(1, 3)\n    b = rng.randint(1, 3)\n    while b == a:\n        b = rng.randint(1, 4)\n    c = rng.randint(1, 4)\n    correct_str = f'La primera curva característica es $x^{{{b}}} / y^{{{a}}} = C_1$, según el método analítico.'\n    d1 = f'La primera curva característica es $x^{{{b}}} \\\\cdot y^{{{a}}} = C_1$, según el método analítico.'\n    d2 = f'La primera curva característica es $x^{{{a+b}}} / y = C_1$, según el método analítico.'\n    d3 = f'La primera curva característica es ${a}x - {b}y = C_1$, según el método analítico.'\n    d4 = f'La primera curva característica es $x / y = {a+b} C_1$, según el método analítico.'\n    d5 = f'La primera curva característica es $y / x^{{{b}}} = C_1$, según el método analítico.'\n    d6 = f'La primera curva característica es $x^{{{b}}} + y^{{{a}}} = C_1$, según el método analítico.'\n    return {\n        'vars': {'a': a, 'b': b, 'c': c},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab01-01'},\n            {'value': d2, 'distractor_id': 'D-Hab01-02'},\n            {'value': d3, 'distractor_id': 'D-Hab01-03'},\n            {'value': d4, 'distractor_id': 'D-Hab01-04'},\n            {'value': d5, 'distractor_id': 'D-Hab01-05'},\n            {'value': d6, 'distractor_id': 'D-Hab01-06'},\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    a = result['vars']['a']\n    b = result['vars']['b']\n    return f'x^{{{b}}} / y^{{{a}}}' in result['correct']",
+      "hints": [
+        "Plantee el sistema auxiliar de Lagrange dx/(a x) = dy/(b y) = du/(c u).",
+        "Tome la primera igualdad dx/(a x) = dy/(b y) e integre ambos lados: (1/a) ln(x) = (1/b) ln(y) + C.",
+        "Multiplique por a*b y aplique propiedades de logaritmos: b ln(x) - a ln(y) = k, luego exponente: x^b / y^a = C_1."
+      ],
+      "solution": "Integrando (1/{a}) ln(x) = (1/{b}) ln(y) + C obtenemos ln(x^{b}) - ln(y^{a}) = k, de donde se desprende inmediatamente la curva característica x^{b} / y^{a} = C_1.",
+      "distractor_ids": [
+        "D-Hab01-01",
+        "D-Hab01-02",
+        "D-Hab01-03",
+        "D-Hab01-04",
+        "D-Hab01-05",
+        "D-Hab01-06"
+      ]
+    },
+    {
+      "id": "T-Hab01-02",
+      "competency_id": "Hab-01",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Para la ecuación cuasilineal $${a} x u_x + y u_y = {c} u$$, la segunda integral característica tiene la forma $u / x^p = C_2$. ¿Cuál es el exponente escalar $p$ en dicha expresión?",
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 4)\n    c = rng.randint(1, 3) * a\n    p = c // a\n    return {\n        'vars': {'a': a, 'c': c, 'p': p},\n        'correct': p,\n        'value': str(p),\n        'canonical_algebraic': str(p),\n        'accepted_equivalents': [str(p), f'{p}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    return int(result['correct']) == (result['vars']['c'] // result['vars']['a'])",
+      "hints": [
+        "Plantee el cociente diferencial entre x y u: dx/(a x) = du/(c u).",
+        "Integre formalmente: (1/a) ln(x) = (1/c) ln(u) + C.",
+        "Despeje u en función de x: ln(u) = (c/a) ln(x) + k, por lo que u = k * x^(c/a) y p = c/a."
+      ],
+      "solution": "De la ecuación dx/({a} x) = du/({c} u) se obtiene (1/{a}) ln(x) = (1/{c}) ln(u) + k, luego ln(u) = ({c}/{a}) ln(x) + k' y u / x^{p} = C_2 con exponente p = {p}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab01-03",
+      "competency_id": "Hab-01",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Dada la ecuación cuasilineal de Lagrange $${a} x u_x + {b} y u_y = {c} u$$, seleccione todas las afirmaciones operativas correctas sobre el proceso de resolución:",
+      "generate_py": "def generate(rng):\n    a = rng.randint(1, 4)\n    b = rng.randint(1, 4)\n    c = rng.randint(1, 4)\n    opts = [\n        {'content': 'El sistema característico de Lagrange asocia dx con el coeficiente ax y dy con by.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La solución general puede expresarse como una relación funcional entre dos integrales primeras independientes.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'Basta con una única constante de integración para fijar unívocamente la solución general sin curva de Cauchy.', 'is_correct': False, 'distractor_id': 'D-Hab01-03'},\n        {'content': 'El sistema característico intercambia dx con by y dy con ax.', 'is_correct': False, 'distractor_id': 'D-Hab01-02'},\n    ]\n    return {\n        'vars': {'a': a, 'b': b, 'c': c},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    return True",
+      "hints": [
+        "Recuerde la estructura del sistema característico dx/P = dy/Q = du/R.",
+        "Considere el número de constantes necesarias para definir la solución general.",
+        "Marque sólo las propiedades que reflejan fielmente el teorema de Lagrange."
+      ],
+      "solution": "El método de Lagrange construye el sistema característico dx/(ax) = dy/(by) = du/(cu) y requiere dos integrales primeras independientes para expresar la solución general Phi(C_1, C_2) = 0.",
+      "distractor_ids": ["D-Hab01-02", "D-Hab01-03"]
+    }
+  ]
+}

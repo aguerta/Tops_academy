@@ -1,0 +1,151 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CognitiveTaskAnalysisSchema",
+  "description": "Schema for cta.json containing knowledge taxonomy and fused distractors in content-to-course v2",
+  "type": "object",
+  "required": ["competencies"],
+  "properties": {
+    "course_id": { "type": "string" },
+    "title": { "type": "string" },
+    "macro_competency": { "type": "string" },
+    "competencies": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/competency" }
+    }
+  },
+  "definitions": {
+    "evidence_ref": {
+      "type": "object",
+      "required": ["page"],
+      "properties": {
+        "doc": { "type": "string" },
+        "pdf": { "type": "string" },
+        "page": { "type": ["integer", "string"] },
+        "tile": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "anyOf": [
+        { "required": ["doc"] },
+        { "required": ["pdf"] }
+      ],
+      "additionalProperties": true
+    },
+    "distractor": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "trigger",
+        "manifestation",
+        "error_type",
+        "severity",
+        "origin",
+        "evidence",
+        "remediation_hint"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^D-[A-Za-z0-9_-]+$"
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "wrong_belief": { "type": ["string", "null"] },
+        "correct_belief": { "type": ["string", "null"] },
+        "omitted_step": { "type": ["string", "null"] },
+        "trigger": { "type": "string", "minLength": 1 },
+        "manifestation": { "type": "string", "minLength": 1 },
+        "error_type": {
+          "type": "string",
+          "enum": [
+            "sign_error",
+            "overgeneralization",
+            "procedural_slip",
+            "conceptual_swap",
+            "boundary_case",
+            "unit_or_scale",
+            "notation",
+            "skipped_step",
+            "other"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "origin": {
+          "type": "string",
+          "enum": ["source", "inferred"]
+        },
+        "evidence": { "$ref": "#/definitions/evidence_ref" },
+        "remediation_hint": { "type": "string", "minLength": 1 }
+      },
+      "anyOf": [
+        {
+          "properties": { "wrong_belief": { "type": "string", "minLength": 1 } },
+          "required": ["wrong_belief"]
+        },
+        {
+          "properties": { "omitted_step": { "type": "string", "minLength": 1 } },
+          "required": ["omitted_step"]
+        }
+      ],
+      "additionalProperties": true
+    },
+    "competency": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "name",
+        "description_latex",
+        "bloom",
+        "prerequisites",
+        "distractors"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(H|C|Hab|Fact|Concept|Skill)-[A-Za-z0-9_-]+$"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["fact", "concept", "skill"]
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "description_latex": { "type": "string" },
+        "bloom": {
+          "type": "string",
+          "enum": ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]
+        },
+        "session": { "type": "string" },
+        "unit_index": { "type": "integer" },
+        "prerequisites": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "source_examples": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              { "type": "string" },
+              { "type": "object" }
+            ]
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/evidence_ref" }
+        },
+        "distractors": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/distractor" }
+        },
+        "automation_seeds": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

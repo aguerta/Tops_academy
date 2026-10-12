@@ -1,0 +1,77 @@
+{
+  "course_metadata": {
+    "course_id": "solow_growth_model",
+    "unit_title": "El Modelo de Crecimiento Económico de Solow (1956)",
+    "detected_objective": "Comprender, formular y resolver dinámicamente el modelo neoclásico de crecimiento económico de Solow (1956), analizando sus propiedades de estabilidad, implicaciones de precios factoriales, dinámicas de transición y extensiones analíticas.",
+    "total_competencies": 25,
+    "total_questions": 580
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.5,
+      "max": 4.0,
+      "feedback": "Excelente granularidad y atomización conceptual con 25 competencias bien balanceadas (5 Hechos, 12 Conceptos y 8 Habilidades) que cubren exhaustivamente la dinámica de Solow (1956) y Chiang cap. 15. No obstante, el grafo de dependencias (DAG) está completamente desconectado: el 100% de las competencias (25/25) tienen 'prerequisites: []', careciendo de la modelización de prerrequisitos jerárquicos requerida por Mastery Learning."
+    },
+    "assessment_quality": {
+      "score": 3.5,
+      "max": 5.0,
+      "feedback": "Banco extenso (580 reactivos) con buena diversidad tipológica y cobertura del 100% en rationales diagnósticos de distractores (996/996). Sin embargo, se evidencian tres vicios psicométricos críticos: (1) fuga del cálculo y respuesta en el enunciado por sustitución ciega de variables (ej. Q-C07-271 con '\\dot36 = 4\\sqrt36'), (2) fuga de variables internas del generador en opciones visibles para el estudiante ('a_val' en Q-Hab05-321 y Q-Hab05-322), y (3) trivialización aritmética en reactivos fill-in-the-blank para conceptos que demandan mayor profundidad analítica."
+    },
+    "scaffolding_hints": {
+      "score": 3.5,
+      "max": 5.0,
+      "feedback": "Cumplimiento formal del 100% en pistas progresivas (exactamente 3 pistas por ítem, cero ítems desprovistos de pistas) y adecuada progresión socrática (conceptual -> procedimental -> operativa). No obstante, se detectan residuos de variables de plantilla en pistas para el estudiante ('c_val' en Q-C01-021 y Q-C01-022), ausencia de alertas explícitas de ideas preconcebidas ('misconception warnings') en las soluciones y fórmulas KaTeX sintácticamente rotas en los textos explicativos."
+    },
+    "instructional_alignment": {
+      "score": 3.8,
+      "max": 4.0,
+      "feedback": "Alineación instruccional sobresaliente entre el objetivo declarado, la teoría macroeconómica neoclásica y los reactivos de prueba. Cobertura fiel y exhaustiva de todas las secciones del artículo seminal de Solow (1956, Figuras I a IX) y Chiang cap. 15, con cero preguntas huérfanas. Se descuentan 0.2 puntos por la asimetría cognitiva en ciertos ejercicios numéricos respecto al rigor del objetivo declarado."
+    },
+    "technical_ergonomics": {
+      "score": 0.5,
+      "max": 2.0,
+      "feedback": "Falla técnica severa por sintaxis KaTeX inválida: se registran 58 incidencias de llaves sin cerrar ('unclosed braces') en 48 reactivos de alta relevancia (10% del total). Patrones sistemáticos defectuosos como '\\frac{\\dot{r}{r}', '\\frac{\\dot{K}{K}', '\\frac{\\dot{p}{p}', '\\frac{d\\dot{k}', '\\frac{\\partial \\text{Share}', '\\frac{(1-a) r^a}{a r^{a-1}' y exponentes abiertos '^{\\frac{1}{1-\\alpha}' provocan colapsos de renderizado y bloques de error en el visor web."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 13.8,
+  "quality_tier": "DEFICIENTE (11-13)",
+  "remediation_actions": [
+    "Reparar urgentemente los 58 errores de sintaxis KaTeX en stems, opciones y soluciones, balanceando llaves en fracciones con derivadas temporales y parciales (reemplazar '\\frac{\\dot{X}{X}' por '\\frac{\\dot{X}}{X}', '\\frac{d\\dot{k}{dk}' por '\\frac{d\\dot{k}}{dk}' y '\\frac{\\partial \\text{Share}' por '\\frac{\\partial \\text{Share}}{\\partial s}').",
+    "Sanear el motor de generación para evitar el reemplazo ciego de caracteres por regex ('string replace') que sustituyó el símbolo de variable 'r' por escalares bajo operadores diferenciales (restaurar notación formal '\\dot{r}' y eliminar enunciados con fuga de respuesta como '\\dot36 = 4\\sqrt36').",
+    "Purgar identificadores internos de variables en textos visibles al estudiante, reemplazando 'a_val' en opciones de Q-Hab05-321/322 y 'c_val' en pistas de Q-C01-021/022 por sus valores numéricos o expresiones matemáticas LaTeX.",
+    "Modelar y estructurar el Grafo Acíclico Dirigido (DAG) de prerrequisitos entre las 25 competencias, enlazando dependencias conceptuales y operativas para habilitar el aprendizaje adaptativo y Mastery Learning.",
+    "Elevar el nivel de desafío psicométrico en reactivos fill-in-the-blank de competencias avanzadas (C-06, C-09, C-11, C-12), sustituyendo operaciones aritméticas triviales por deducciones de equilibrio y análisis de sensibilidad de parámetros.",
+    "Incorporar advertencias explícitas de errores frecuentes ('misconception warnings') en las soluciones detalladas de todos los reactivos."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "template_variable_residue_linter",
+      "severity": "high",
+      "description": "Detecta nombres de variables crudos de código o plantillas (ej. '*_val', '*_param', '*_var') que no fueron sustituidos durante la renderización y quedan visibles al estudiante en stems, distractores, pistas o soluciones.",
+      "regex_pattern": "\\b[a-zA-Z0-9_]+_(?:val|param|var|arg)\\b",
+      "evidence_items": ["Q-C01-021", "Q-C01-022", "Q-Hab05-321", "Q-Hab05-322"]
+    },
+    {
+      "rule_id": "blind_string_replacement_linter",
+      "severity": "critical",
+      "description": "Detecta sustituciones ciegas de texto donde un escalar numérico reemplaza el símbolo de una variable bajo un operador diferencial (ej. '\\dot{36}', '\\dot36'), o donde el enunciado revela la respuesta exacta en su formulación matemática.",
+      "regex_pattern": "\\\\(?:dot|ddot)\\{?\\d+\\}?",
+      "evidence_items": ["Q-C07-271", "Q-C07-272"]
+    },
+    {
+      "rule_id": "nested_fraction_derivative_delimiter_linter",
+      "severity": "critical",
+      "description": "Detecta fracciones en KaTeX donde el numerador contiene una derivada o acento y carece de la llave de cierre antes de abrir el denominador, produciendo '\\frac{\\dot{X}{X}' o '\\frac{d\\dot{k}{dk}'.",
+      "regex_pattern": "\\\\frac\\{[^}]*\\\\(?:dot|ddot|partial)\\b[^}]*\\{[^}]*\\}",
+      "evidence_items": ["Q-C02-075", "Q-Hab03-201", "Q-Hab05-321", "Q-Hab07-421"]
+    },
+    {
+      "rule_id": "unclosed_latex_exponent_brace_linter",
+      "severity": "critical",
+      "description": "Detecta grupos de exponentes LaTeX iniciados con '^{' seguidos de expresiones fraccionarias u operaciones complejas donde se omite la llave de cierre antes de texto plano o comandos como '\\text'.",
+      "regex_pattern": "\\^\\{[^}]*\\\\frac\\{[^}]*\\}\\{[^}]*\\}\\s+\\\\text",
+      "evidence_items": ["Q-Hab02-111", "Q-Hab02-112"]
+    }
+  ]
+}

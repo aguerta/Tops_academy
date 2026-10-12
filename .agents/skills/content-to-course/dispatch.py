@@ -1,0 +1,1116 @@
+"""Scope Isolation, Subagent Dispatch Payload Generator, and Scope Check.
+
+Provides strict scope isolation contracts for all pipeline subagents:
+- vision: Handout Vision Analyzers
+- cta-map: Sectional CTA Mappers
+- cta-reduce: CTA Harmonizer
+- author: Shard Exercise Authors
+- judge: Blind Evaluation Judges
+- cta-direct / vision-legacy: Fallback legacy flows
+"""
+
+from __future__ import annotations
+
+import argparse
+import fnmatch
+import json
+import logging
+import os
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+logger = logging.getLogger("dispatch")
+
+# Directory of the skill
+SKILL_DIR = Path(__file__).parent.resolve()
+
+TYPE_DEFINITIONS: List[Dict[str, Any]] = [
+    {
+        "name": "c2c-vision",
+        "description": "Handout Vision Analyzer for mathematical transcriptions",
+        "system_prompt": "You are a specialized Handout Vision Analyzer for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and produce transcription patches. Terminate strictly with DONE: <files>.",
+        "enable_write_tools": True,
+        "enable_subagent_tools": False,
+        "enable_mcp_tools": False,
+    },
+    {
+        "name": "c2c-cta-mapper",
+        "description": "Sectional Cognitive Task Analysis Mapper",
+        "system_prompt": "You are a Sectional Curriculum Analyst for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and produce cta_part JSON. Terminate strictly with DONE: <files>.",
+        "enable_write_tools": True,
+        "enable_subagent_tools": False,
+        "enable_mcp_tools": False,
+    },
+    {
+        "name": "c2c-cta-harmonizer",
+        "description": "Curriculum Harmonization subagent",
+        "system_prompt": "You are a Curriculum Harmonization specialist for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and resolve duplicate competencies. Terminate strictly with DONE: <files>.",
+        "enable_write_tools": True,
+        "enable_subagent_tools": False,
+        "enable_mcp_tools": False,
+    },
+    {
+        "name": "c2c-author",
+        "description": "Psychometric Exercise Author for parametric templates",
+        "system_prompt": "You are a Lead Psychometric Assessment Author for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and author parametric templates following the 4-phase atomic protocol. Terminate strictly with DONE: <files>.",
+        "enable_write_tools": True,
+        "enable_subagent_tools": False,
+        "enable_mcp_tools": False,
+    },
+    {
+        "name": "c2c-judge",
+        "description": "Blind Psychometric Evaluation Judge",
+        "system_prompt": "You are an Independent Blind Evaluation Judge for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and analytically solve questions with zero access to answer keys. Terminate strictly with DONE: <files>.",
+        "enable_write_tools": True,
+        "enable_subagent_tools": False,
+        "enable_mcp_tools": False,
+    },
+    {
+        "name": "c2c-cta-direct",
+        "description": "Direct CTA Architect for concise courses",
+        "system_prompt": "You are a Direct CTA Architect for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and produce cta.json. Terminate strictly with DONE: <files>.",
+        "enable_write_tools": True,
+        "enable_subagent_tools": False,
+        "enable_mcp_tools": False,
+    },
+    {
+        "name": "c2c-repair",
+        "description": "Targeted Repair subagent for fixing failing templates or discordances",
+        "system_prompt": "You are a Targeted Quality Repair Engineer for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and resolve only diagnosed errors on failing templates. Terminate strictly with DONE: <files>.",
+        "enable_write_tools": True,
+        "enable_subagent_tools": False,
+        "enable_mcp_tools": False,
+    },
+]
+
+ROLE_SPECS: Dict[str, Dict[str, Any]] = {
+    "vision": {
+        "type_name": "c2c-vision",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_handout_transcriber.md",
+        "read": [
+            "work/handouts/handout_<id>.png",
+            "work/handouts/handout_<id>_text.md",
+        ],
+        "write": [
+            "work/handout_patches/patch_<id>.md",
+            "work/handout_patches/patch_handout_<id>.md",
+        ],
+        "forbidden": [
+            "código fuente",
+            "corpus*.md",
+            "otros handouts no asignados",
+            "SKILL.md",
+        ],
+        "turn_budget": 10,
+    },
+    "cta-map": {
+        "type_name": "c2c-cta-mapper",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_cta_sectional.md",
+        "read": [
+            "work/sections/section_XX.md",
+            "work/sections/section_*.md",
+        ],
+        "write": [
+            "work/cta_parts/cta_part_XX.json",
+            "work/cta_parts/cta_part_*.json",
+        ],
+        "forbidden": [
+            "otras secciones",
+            "handouts",
+            "código fuente",
+        ],
+        "turn_budget": 15,
+    },
+    "cta-reduce": {
+        "type_name": "c2c-cta-harmonizer",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_cta_harmonizer.md",
+        "read": [
+            "work/cta_outline.json",
+            "work/duplicate_candidates.json",
+        ],
+        "write": [
+            "work/cta_harmonize.json",
+        ],
+        "forbidden": [
+            "corpus*.md",
+            "secciones",
+            "código fuente",
+        ],
+        "turn_budget": 10,
+    },
+    "author": {
+        "type_name": "c2c-author",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_shard_author.md",
+        "read": [
+            "work/shards/shard_XX.json",
+            "work/shards/shard_*.json",
+        ],
+        "write": [
+            "work/templates/<comp_id>.json",
+            "work/templates/*.json",
+        ],
+        "forbidden": [
+            "engine/*",
+            "SKILL.md",
+            "otras plantillas fuera de su shard",
+        ],
+        "turn_budget": 25,
+    },
+    "judge": {
+        "type_name": "c2c-judge",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_blind_judge.md",
+        "read": [
+            "work/judge_batch_XX.json",
+            "work/judge_batch_*.json",
+        ],
+        "write": [
+            "work/judge_responses_XX.json",
+            "work/judge_responses_*.json",
+        ],
+        "forbidden": [
+            "judge_ground_truth.json",
+            "templates/*",
+            "respuestas ajenas",
+        ],
+        "turn_budget": 15,
+    },
+    "cta-direct": {
+        "type_name": "c2c-cta-direct",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_cta_direct.md",
+        "read": [
+            "work/corpus.md",
+            "work/patches/*.md",
+            "work/pages/manifest.json",
+        ],
+        "write": [
+            "work/cta.json",
+            "work/cta.md",
+        ],
+        "forbidden": [
+            "engine/*",
+            "SKILL.md",
+        ],
+        "turn_budget": 20,
+    },
+    "repair": {
+        "type_name": "c2c-repair",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_shard_author.md",
+        "read": [
+            "work/shards/shard_*.json",
+            "work/reports/templates_report.json",
+            "work/judge_report.json",
+        ],
+        "write": [
+            "work/templates/*.json",
+        ],
+        "forbidden": [
+            "engine/*",
+            "SKILL.md",
+        ],
+        "turn_budget": 15,
+    },
+    "vision-legacy": {
+        "type_name": "c2c-vision",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_page_patcher.md",
+        "read": [
+            "work/pages/*",
+            "work/vision_pages.json",
+        ],
+        "write": [
+            "work/patches/*.md",
+        ],
+        "forbidden": [
+            "código fuente",
+            "corpus*.md",
+            "SKILL.md",
+        ],
+        "turn_budget": 10,
+    },
+}
+
+
+def _create_task_bundle(
+    work_dir: Path,
+    bundle_name: str,
+    role_name: str,
+    role_title: str,
+    system_prompt_rel: str,
+    read_paths: List[str],
+    write_paths: List[str],
+    forbidden_items: List[str],
+    turn_budget: int,
+    extra_context: str = "",
+) -> Path:
+    """Writes a self-contained task bundle markdown file to work/dispatch/bundles/."""
+    bundles_dir = work_dir / "dispatch" / "bundles"
+    bundles_dir.mkdir(parents=True, exist_ok=True)
+    bundle_file = bundles_dir / f"{bundle_name}.md"
+
+    sys_text = ""
+    sys_file = SKILL_DIR / system_prompt_rel
+    if sys_file.is_file():
+        try:
+            sys_text = sys_file.read_text(encoding="utf-8")
+        except Exception as e:
+            logger.warning("Could not load system prompt file %s: %s", sys_file, e)
+
+    lines = [
+        f"# TASK BUNDLE: {role_title}",
+        f"**Role:** `{role_name}` | **Presupuesto:** {turn_budget} turnos",
+        "",
+        "## 1. SCOPE-LOCK OBLIGATORIO",
+        "- **READ permitido:**",
+    ]
+    for r in read_paths:
+        lines.append(f"  * `{r}`")
+    lines.append("- **WRITE permitido:**")
+    for w in write_paths:
+        lines.append(f"  * `{w}`")
+    lines.append("- **PROHIBIDO:**")
+    for f in forbidden_items:
+        lines.append(f"  * {f}")
+
+    if extra_context:
+        lines.extend(["", "## 2. CONTEXTO Y DIAGNÓSTICO ESPECÍFICO", extra_context])
+
+    lines.extend([
+        "",
+        "## 3. INSTRUCCIONES OPERATIVAS Y DIRECTIVAS",
+        sys_text,
+        "",
+        "## 4. TERMINACIÓN OBLIGATORIA",
+        "Al finalizar el trabajo responde ÚNICAMENTE con:",
+        "`DONE: <archivos escritos>`",
+        "o si encuentras un bloqueo insalvable: `BLOCKED: <motivo>`.",
+        "PROHIBIDO redactar resúmenes, explicaciones o saludos adicionales.",
+    ])
+
+    bundle_file.write_text("\n".join(lines), encoding="utf-8")
+    return bundle_file
+
+
+def _bundle_display_path(bundle_file: Path) -> str:
+    """Returns bundle path relative to current working directory or absolute."""
+    try:
+        return bundle_file.relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        return bundle_file.resolve().as_posix()
+
+
+def _format_prompt(
+    role_name: str,
+    role_title: str,
+    bundle_path: str,
+    turn_budget: int,
+    read_paths: Optional[List[str]] = None,
+    write_paths: Optional[List[str]] = None,
+    forbidden_items: Optional[List[str]] = None,
+    system_prompt_rel: Optional[str] = None,
+) -> str:
+    """Formats an assignment prompt including bundle reference and explicit SCOPE-LOCK block."""
+    read_str = "\n".join(f"  * {r}" for r in (read_paths or []))
+    write_str = "\n".join(f"  * {w}" for w in (write_paths or []))
+    forbid_str = "\n".join(f"  * {f}" for f in (forbidden_items or []))
+
+    prompt = (
+        f"# Asignación de Tarea para {role_title}\n"
+        f"Tu paquete de trabajo y directivas están en: {bundle_path}\n"
+    )
+    if system_prompt_rel:
+        prompt += f"System Prompt: {system_prompt_rel}\n"
+    prompt += (
+        f"\n## SCOPE-LOCK (OBLIGATORIO)\n"
+        f"- READ permitido:\n{read_str}\n"
+        f"- WRITE permitido:\n{write_str}\n"
+        f"- PROHIBIDO:\n{forbid_str}\n\n"
+        f"Lee tu bundle en Turno 1 con view_file, ejecuta las directivas en tu scope y finaliza estrictamente con:\n"
+        f"DONE: <archivos escritos> (o BLOCKED: <motivo>).\n"
+        f"Presupuesto sugerido: {turn_budget} turnos."
+    )
+    return prompt
+
+
+def build_dispatch(
+    role: str,
+    work_dir: Union[str, Path],
+    ids: Optional[List[Union[str, int]]] = None,
+    ready_only: bool = False,
+) -> Dict[str, Any]:
+    """Generates invoke_subagent payload with strict SCOPE-LOCK for the given role.
+    
+    Args:
+        role: Subagent role ('vision', 'cta-map', 'cta-reduce', 'author', 'judge', etc.)
+        work_dir: Path to course working directory.
+        ids: Optional list of specific item IDs to dispatch.
+        ready_only: For pipelined roles (e.g. cta-map), dispatch only items that are ready
+                    and have not yet been dispatched.
+
+    Returns:
+        Dictionary conforming to invoke_subagent format: `{"Subagents": [...]}`.
+    """
+    if role not in ROLE_SPECS:
+        raise ValueError(f"Unknown role: '{role}'. Available roles: {list(ROLE_SPECS.keys())}")
+
+    work = Path(work_dir).resolve()
+    spec = ROLE_SPECS[role]
+    sys_prompt = spec["system_prompt"]
+    turn_budget = spec["turn_budget"]
+    forbidden = list(spec["forbidden"])
+
+    dispatch_dir = work / "dispatch"
+    dispatch_dir.mkdir(parents=True, exist_ok=True)
+    state_file = dispatch_dir / "state.json"
+
+    # Load dispatch state if exists
+    state: Dict[str, Any] = {"dispatched": {}}
+    if state_file.is_file():
+        try:
+            state = json.loads(state_file.read_text(encoding="utf-8"))
+        except Exception as e:
+            logger.warning("Could not read dispatch state: %s", e)
+
+    dispatched_ids: List[str] = state.get("dispatched", {}).get(role, [])
+
+    subagents: List[Dict[str, Any]] = []
+
+    # 1. VISION
+    if role == "vision":
+        manifest_file = work / "handouts" / "handouts_manifest.json"
+        assigned_units: List[Dict[str, Any]] = []
+
+        if manifest_file.is_file():
+            try:
+                mdata = json.loads(manifest_file.read_text(encoding="utf-8"))
+                shards = mdata.get("shards", [])
+                if shards:
+                    for s in shards:
+                        s_id = str(s.get("shard_id", ""))
+                        h_ids = s.get("handout_ids", [])
+                        assigned_units.append({
+                            "id": s_id,
+                            "role_title": f"Handout Vision Analyzer Shard {s_id}",
+                            "handout_ids": h_ids,
+                        })
+                else:
+                    handouts = mdata.get("handouts", [])
+                    for h in handouts:
+                        h_id = h.get("handout_id", "")
+                        assigned_units.append({
+                            "id": h_id,
+                            "role_title": f"Handout Vision Analyzer {h_id}",
+                            "handout_ids": [h_id],
+                        })
+            except Exception as e:
+                logger.warning("Error reading handouts_manifest.json: %s", e)
+
+        if not assigned_units:
+            # Fallback: glob images in work/handouts
+            handout_imgs = sorted((work / "handouts").glob("handout_*.png"))
+            for img in handout_imgs:
+                h_id = img.stem
+                assigned_units.append({
+                    "id": h_id,
+                    "role_title": f"Handout Vision Analyzer {h_id}",
+                    "handout_ids": [h_id],
+                })
+
+        # Filter by ids if provided
+        if ids is not None:
+            ids_str = {str(i) for i in ids}
+            assigned_units = [u for u in assigned_units if str(u["id"]) in ids_str or any(str(hid) in ids_str for hid in u["handout_ids"])]
+
+        for unit in assigned_units:
+            u_id = str(unit["id"])
+            if ready_only and u_id in dispatched_ids:
+                continue
+
+            read_paths = []
+            write_paths = []
+            for hid in unit["handout_ids"]:
+                # Normalise to standard patch file name
+                read_paths.append(f"work/handouts/{hid}.png")
+                read_paths.append(f"work/handouts/{hid}_text.md")
+                # Both patch_<id>.md and patch_handout_<id>.md are allowed, use patch_<id>.md canonically
+                patch_name = f"patch_{hid}.md" if hid.startswith("handout_") else f"patch_handout_{hid}.md"
+                write_paths.append(f"work/handout_patches/{patch_name}")
+
+            bundle_file = _create_task_bundle(
+                work_dir=work,
+                bundle_name=f"vision_{u_id}",
+                role_name=role,
+                role_title=unit["role_title"],
+                system_prompt_rel=sys_prompt,
+                read_paths=read_paths,
+                write_paths=write_paths,
+                forbidden_items=forbidden,
+                turn_budget=turn_budget,
+            )
+
+            prompt_text = _format_prompt(
+                role_name=role,
+                role_title=unit["role_title"],
+                bundle_path=_bundle_display_path(bundle_file),
+                turn_budget=turn_budget,
+                read_paths=read_paths,
+                write_paths=write_paths,
+                forbidden_items=forbidden,
+                system_prompt_rel=sys_prompt,
+            )
+
+            subagents.append({
+                "TypeName": spec["type_name"],
+                "Role": unit["role_title"],
+                "Model": spec["model"],
+                "Prompt": prompt_text,
+            })
+            dispatched_ids.append(u_id)
+
+    # 2. CTA-MAP
+    elif role == "cta-map":
+        sections_manifest = work / "sections" / "sections_manifest.json"
+        section_items: List[Dict[str, Any]] = []
+
+        if sections_manifest.is_file():
+            try:
+                sm = json.loads(sections_manifest.read_text(encoding="utf-8"))
+                for s in sm.get("sections", []):
+                    s_idx = s.get("section_index", 1)
+                    s_id = f"{s_idx:02d}"
+                    is_ready = s.get("ready", True)
+                    section_items.append({
+                        "id": s_id,
+                        "file": f"work/sections/section_{s_id}.md",
+                        "ready": is_ready,
+                    })
+            except Exception as e:
+                logger.warning("Error reading sections_manifest.json: %s", e)
+
+        if not section_items:
+            # Glob sections directory
+            sec_files = sorted((work / "sections").glob("section_*.md"))
+            for sf in sec_files:
+                # Extract number if possible
+                m = re.search(r"section_(\d+)", sf.name)
+                s_id = m.group(1) if m else sf.stem
+                section_items.append({
+                    "id": s_id,
+                    "file": f"work/sections/{sf.name}",
+                    "ready": True,
+                })
+
+        if ids is not None:
+            ids_str = {str(i) for i in ids}
+            section_items = [s for s in section_items if str(s["id"]) in ids_str or str(int(s["id"])) in ids_str]
+
+        for s in section_items:
+            s_id = str(s["id"])
+            if ready_only:
+                if not s.get("ready", False) or s_id in dispatched_ids:
+                    continue
+
+            read_paths = [s["file"]]
+            write_paths = [f"work/cta_parts/cta_part_{s_id}.json"]
+
+            bundle_file = _create_task_bundle(
+                work_dir=work,
+                bundle_name=f"cta_map_{s_id}",
+                role_name=role,
+                role_title=f"CTA Section Mapper {s_id}",
+                system_prompt_rel=sys_prompt,
+                read_paths=read_paths,
+                write_paths=write_paths,
+                forbidden_items=forbidden,
+                turn_budget=turn_budget,
+            )
+
+            prompt_text = _format_prompt(
+                role_name=role,
+                role_title=f"CTA Section Mapper {s_id}",
+                bundle_path=_bundle_display_path(bundle_file),
+                turn_budget=turn_budget,
+                read_paths=read_paths,
+                write_paths=write_paths,
+                forbidden_items=forbidden,
+                system_prompt_rel=sys_prompt,
+            )
+
+            subagents.append({
+                "TypeName": spec["type_name"],
+                "Role": f"CTA Section Mapper {s_id}",
+                "Model": spec["model"],
+                "Prompt": prompt_text,
+            })
+            dispatched_ids.append(s_id)
+
+    # 3. CTA-REDUCE
+    elif role == "cta-reduce":
+        read_paths = [
+            "work/cta_outline.json",
+            "work/duplicate_candidates.json",
+        ]
+        write_paths = [
+            "work/cta_harmonize.json",
+        ]
+        bundle_file = _create_task_bundle(
+            work_dir=work,
+            bundle_name="cta_harmonize",
+            role_name=role,
+            role_title="CTA Harmonizer",
+            system_prompt_rel=sys_prompt,
+            read_paths=read_paths,
+            write_paths=write_paths,
+            forbidden_items=forbidden,
+            turn_budget=turn_budget,
+        )
+        prompt_text = _format_prompt(
+            role_name=role,
+            role_title="CTA Harmonizer",
+            bundle_path=_bundle_display_path(bundle_file),
+            turn_budget=turn_budget,
+            read_paths=read_paths,
+            write_paths=write_paths,
+            forbidden_items=forbidden,
+            system_prompt_rel=sys_prompt,
+        )
+        subagents.append({
+            "TypeName": spec["type_name"],
+            "Role": "CTA Harmonizer",
+            "Model": spec["model"],
+            "Prompt": prompt_text,
+        })
+        dispatched_ids.append("harmonizer")
+
+    # 4. AUTHOR
+    elif role == "author":
+        shards_manifest = work / "shards" / "manifest.json"
+        shard_items: List[Dict[str, Any]] = []
+
+        if shards_manifest.is_file():
+            try:
+                sm = json.loads(shards_manifest.read_text(encoding="utf-8"))
+                for s in sm.get("shards", []):
+                    shard_items.append(s)
+            except Exception as e:
+                logger.warning("Error reading shards manifest: %s", e)
+
+        if not shard_items:
+            shard_files = sorted((work / "shards").glob("shard_*.json"))
+            for sf in shard_files:
+                try:
+                    sdata = json.loads(sf.read_text(encoding="utf-8"))
+                    shard_items.append(sdata)
+                except Exception as e:
+                    logger.warning("Error reading shard file %s: %s", sf, e)
+
+        if ids is not None:
+            ids_str = {str(i) for i in ids}
+            shard_items = [
+                s for s in shard_items
+                if str(s.get("shard_id")) in ids_str or str(s.get("shard_index")) in ids_str
+            ]
+
+        for s in shard_items:
+            s_id = s.get("shard_id", "shard_01")
+            c_ids = s.get("competency_ids", [])
+            if not c_ids and "competencies" in s:
+                c_ids = [c.get("id") for c in s["competencies"] if "id" in c]
+
+            read_paths = [f"work/shards/{s_id}.json"]
+            write_paths = [f"work/templates/{cid}.json" for cid in c_ids]
+
+            bundle_file = _create_task_bundle(
+                work_dir=work,
+                bundle_name=f"author_{s_id}",
+                role_name=role,
+                role_title=f"Shard Author {s_id}",
+                system_prompt_rel=sys_prompt,
+                read_paths=read_paths,
+                write_paths=write_paths,
+                forbidden_items=forbidden,
+                turn_budget=turn_budget,
+            )
+
+            prompt_text = _format_prompt(
+                role_name=role,
+                role_title=f"Shard Author {s_id}",
+                bundle_path=_bundle_display_path(bundle_file),
+                turn_budget=turn_budget,
+                read_paths=read_paths,
+                write_paths=write_paths,
+                forbidden_items=forbidden,
+                system_prompt_rel=sys_prompt,
+            )
+
+            subagents.append({
+                "TypeName": spec["type_name"],
+                "Role": f"Shard Author {s_id}",
+                "Model": spec["model"],
+                "Prompt": prompt_text,
+            })
+            dispatched_ids.append(str(s_id))
+
+    # 5. JUDGE
+    elif role == "judge":
+        # Look for split batches work/judge_batch_*.json
+        judge_files = sorted(work.glob("judge_batch_*.json"))
+        # Exclude un-split judge_batch.json if split batches exist
+        split_batches = [jf for jf in judge_files if jf.name != "judge_batch.json"]
+
+        if not split_batches and (work / "judge_batch.json").is_file():
+            # Auto-split if split_judge_batch is available
+            try:
+                from judge import split_judge_batch
+                split_batches = split_judge_batch(work)
+            except Exception as e:
+                logger.warning("Could not auto-split judge batch: %s", e)
+                split_batches = [work / "judge_batch.json"]
+
+        batch_items: List[Dict[str, Any]] = []
+        for jf in split_batches:
+            m = re.search(r"judge_batch_(\d+)", jf.name)
+            j_id = m.group(1) if m else "01"
+            batch_items.append({
+                "id": j_id,
+                "file": f"work/{jf.name}",
+            })
+
+        if ids is not None:
+            ids_str = {str(i) for i in ids}
+            batch_items = [b for b in batch_items if str(b["id"]) in ids_str or str(int(b["id"])) in ids_str]
+
+        for b in batch_items:
+            j_id = str(b["id"])
+            read_paths = [b["file"]]
+            write_paths = [f"work/judge_responses_{j_id}.json"]
+
+            # ABSOLUTE RULE: judge prompt must NEVER include ground_truth in READ!
+            assert not any("ground_truth" in r.lower() for r in read_paths), "FATAL: judge cannot have ground truth in READ!"
+
+            bundle_file = _create_task_bundle(
+                work_dir=work,
+                bundle_name=f"judge_{j_id}",
+                role_name=role,
+                role_title=f"Blind Judge {j_id}",
+                system_prompt_rel=sys_prompt,
+                read_paths=read_paths,
+                write_paths=write_paths,
+                forbidden_items=forbidden,
+                turn_budget=turn_budget,
+            )
+
+            prompt_text = _format_prompt(
+                role_name=role,
+                role_title=f"Blind Judge {j_id}",
+                bundle_path=_bundle_display_path(bundle_file),
+                turn_budget=turn_budget,
+                read_paths=read_paths,
+                write_paths=write_paths,
+                forbidden_items=forbidden,
+                system_prompt_rel=sys_prompt,
+            )
+
+            subagents.append({
+                "TypeName": spec["type_name"],
+                "Role": f"Blind Judge {j_id}",
+                "Model": spec["model"],
+                "Prompt": prompt_text,
+            })
+            dispatched_ids.append(j_id)
+
+    # 6. REPAIR
+    elif role == "repair":
+        templates_report_file = work / "reports" / "templates_report.json"
+        judge_report_file = work / "judge_report.json"
+
+        failing_targets: Dict[str, Dict[str, Any]] = {}
+
+        if templates_report_file.is_file():
+            try:
+                tr = json.loads(templates_report_file.read_text(encoding="utf-8"))
+                for res in tr.get("results", []):
+                    if res.get("status") == "fail":
+                        cid = res.get("cid") or res.get("competency_id")
+                        if cid:
+                            failing_targets.setdefault(cid, {})["template_errors"] = res.get("errors", [])
+            except Exception as e:
+                logger.warning("Error reading templates_report.json: %s", e)
+
+        if judge_report_file.is_file():
+            try:
+                jr = json.loads(judge_report_file.read_text(encoding="utf-8"))
+                for disc in jr.get("disagreements", []):
+                    cid = disc.get("cid") or disc.get("competency_id")
+                    if cid:
+                        failing_targets.setdefault(cid, {})["judge_disagreement"] = disc
+            except Exception as e:
+                logger.warning("Error reading judge_report.json: %s", e)
+
+        # Map competencies to shards
+        shard_map: Dict[str, str] = {}
+        for sf in sorted((work / "shards").glob("shard_*.json")):
+            try:
+                sdata = json.loads(sf.read_text(encoding="utf-8"))
+                s_id = sdata.get("shard_id", sf.stem)
+                for cid in sdata.get("competency_ids", []):
+                    shard_map[cid] = s_id
+                for comp in sdata.get("competencies", []):
+                    if "id" in comp:
+                        shard_map[comp["id"]] = s_id
+            except Exception:
+                pass
+
+        if ids is not None:
+            ids_str = {str(i) for i in ids}
+            failing_targets = {cid: data for cid, data in failing_targets.items() if cid in ids_str}
+
+        if not failing_targets and ids:
+            for cid in ids:
+                failing_targets[str(cid)] = {"manual_request": True}
+
+        for cid, diag in failing_targets.items():
+            shard_id = shard_map.get(cid, "shard_01")
+            read_paths = [
+                f"work/shards/{shard_id}.json",
+                f"work/templates/{cid}.json",
+            ]
+            if templates_report_file.is_file():
+                read_paths.append("work/reports/templates_report.json")
+            if judge_report_file.is_file():
+                read_paths.append("work/judge_report.json")
+
+            write_paths = [f"work/templates/{cid}.json"]
+            extra_lines = [f"### Reparación Específica para Competencia: `{cid}` (Shard `{shard_id}`)"]
+            if "template_errors" in diag:
+                extra_lines.append("**Errores de validación de plantilla detectados:**")
+                for err in diag["template_errors"]:
+                    extra_lines.append(f"- {err}")
+            if "judge_disagreement" in diag:
+                extra_lines.append(f"**Desacuerdo con Juez Ciego:**\n```json\n{json.dumps(diag['judge_disagreement'], indent=2, ensure_ascii=False)}\n```")
+
+            bundle_file = _create_task_bundle(
+                work_dir=work,
+                bundle_name=f"repair_{cid}",
+                role_name=role,
+                role_title=f"Repair Engineer {cid}",
+                system_prompt_rel=sys_prompt,
+                read_paths=read_paths,
+                write_paths=write_paths,
+                forbidden_items=forbidden,
+                turn_budget=turn_budget,
+                extra_context="\n".join(extra_lines),
+            )
+
+            prompt_text = _format_prompt(
+                role_name=role,
+                role_title=f"Repair Engineer {cid}",
+                bundle_path=_bundle_display_path(bundle_file),
+                turn_budget=turn_budget,
+                read_paths=read_paths,
+                write_paths=write_paths,
+                forbidden_items=forbidden,
+                system_prompt_rel=sys_prompt,
+            )
+
+            subagents.append({
+                "TypeName": spec["type_name"],
+                "Role": f"Repair Engineer {cid}",
+                "Model": spec["model"],
+                "Prompt": prompt_text,
+            })
+            dispatched_ids.append(cid)
+
+    # 7. Fallback legacy / direct roles
+    elif role == "cta-direct":
+        # Diagnostic check: verify if handouts exist and vision/stitching was executed
+        handouts_manifest_file = work / "handouts" / "handouts_manifest.json"
+        if handouts_manifest_file.is_file():
+            try:
+                h_data = json.loads(handouts_manifest_file.read_text(encoding="utf-8"))
+                total_h = h_data.get("total_handouts", len(h_data.get("handouts", [])))
+                if total_h > 0 and not (work / "patches").is_dir() and not (work / "handout_patches").is_dir():
+                    logger.warning(
+                        "Advertencia: Existen %d handouts en work/handouts pero no se detectaron parches cosidos. "
+                        "Asegúrate de ejecutar los subagentes de visión y 'run.py --stage stitch' antes de sintetizar cta-direct.",
+                        total_h,
+                    )
+            except Exception:
+                pass
+
+        read_paths = ["work/corpus.md", "work/pages/manifest.json"]
+        if (work / "patches").is_dir():
+            read_paths.append("work/patches/*.md")
+        if (work / "handout_patches").is_dir():
+            read_paths.append("work/handout_patches/*.md")
+        write_paths = ["work/cta.json", "work/cta.md"]
+        bundle_file = _create_task_bundle(
+            work_dir=work,
+            bundle_name="cta_direct",
+            role_name=role,
+            role_title="Direct CTA Architect",
+            system_prompt_rel=sys_prompt,
+            read_paths=read_paths,
+            write_paths=write_paths,
+            forbidden_items=forbidden,
+            turn_budget=turn_budget,
+        )
+        prompt_text = _format_prompt(
+            role_name=role,
+            role_title="Direct CTA Architect",
+            bundle_path=_bundle_display_path(bundle_file),
+            turn_budget=turn_budget,
+            read_paths=read_paths,
+            write_paths=write_paths,
+            forbidden_items=forbidden,
+            system_prompt_rel=sys_prompt,
+        )
+        subagents.append({
+            "TypeName": spec["type_name"],
+            "Role": "Direct CTA Architect",
+            "Model": spec["model"],
+            "Prompt": prompt_text,
+        })
+        dispatched_ids.append("direct")
+
+    elif role == "vision-legacy":
+        read_paths = ["work/pages/*", "work/vision_pages.json"]
+        write_paths = ["work/patches/*.md"]
+        bundle_file = _create_task_bundle(
+            work_dir=work,
+            bundle_name="vision_legacy",
+            role_name=role,
+            role_title="Legacy Page Patcher",
+            system_prompt_rel=sys_prompt,
+            read_paths=read_paths,
+            write_paths=write_paths,
+            forbidden_items=forbidden,
+            turn_budget=turn_budget,
+        )
+        prompt_text = _format_prompt(
+            role_name=role,
+            role_title="Legacy Page Patcher",
+            bundle_path=_bundle_display_path(bundle_file),
+            turn_budget=turn_budget,
+            read_paths=read_paths,
+            write_paths=write_paths,
+            forbidden_items=forbidden,
+            system_prompt_rel=sys_prompt,
+        )
+        subagents.append({
+            "TypeName": spec["type_name"],
+            "Role": "Legacy Page Patcher",
+            "Model": spec["model"],
+            "Prompt": prompt_text,
+        })
+        dispatched_ids.append("legacy")
+
+    payload = {"Subagents": subagents}
+
+    # Snapshot pre-dispatch for automated scope verification
+    snap = snapshot_work_dir(work)
+    snap_file = dispatch_dir / f"{role}_snapshot.json"
+    snap_payload = {k: list(v) for k, v in snap.items()}
+    snap_file.write_text(json.dumps(snap_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    # Write audit log to work/dispatch/{role}.json
+    audit_file = dispatch_dir / f"{role}.json"
+    audit_payload = {
+        "role": role,
+        "dispatched_at": datetime.now(timezone.utc).isoformat(),
+        "subagents_count": len(subagents),
+        "Subagents": subagents,
+    }
+    audit_file.write_text(json.dumps(audit_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    # Update state.json
+    state.setdefault("dispatched", {})[role] = list(sorted(set(dispatched_ids)))
+    state_file.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    return payload
+
+
+def snapshot_work_dir(work_dir: Union[str, Path]) -> Dict[str, Tuple[int, float]]:
+    """Takes a snapshot of all files and their sizes/mtimes in work_dir.
+    
+    Returns:
+        Dict mapping POSIX relative paths to (size_bytes, mtime_timestamp).
+    """
+    work = Path(work_dir).resolve()
+    snapshot: Dict[str, Tuple[int, float]] = {}
+    if not work.is_dir():
+        return snapshot
+
+    for root, _, files in os.walk(work):
+        root_path = Path(root)
+        for fname in files:
+            fpath = root_path / fname
+            try:
+                st = fpath.stat()
+                rel = fpath.relative_to(work).as_posix()
+                snapshot[rel] = (st.st_size, st.st_mtime)
+            except OSError:
+                pass
+    return snapshot
+
+
+def _is_allowed_path(rel_path: str, role: str) -> bool:
+    """Checks whether rel_path is an allowed write destination for the specified role."""
+    norm = rel_path.replace("\\", "/").lstrip("/")
+
+    # Internal pipeline / audit files that are always permitted
+    if (
+        norm.startswith("dispatch/")
+        or norm.startswith("work/dispatch/")
+        or norm in ("timings.json", "work/timings.json", "order.json", "work/order.json")
+        or norm.startswith("__pycache__/")
+        or norm.startswith(".pytest_cache/")
+        or norm.startswith(".git/")
+    ):
+        return True
+
+    spec = ROLE_SPECS.get(role)
+    if not spec:
+        return False
+
+    write_patterns = spec.get("write", [])
+    candidates = [norm]
+    if norm.startswith("work/"):
+        candidates.append(norm[5:])
+    else:
+        candidates.append(f"work/{norm}")
+
+    for pattern in write_patterns:
+        pat_clean = pattern.replace("\\", "/").lstrip("/")
+        pat_candidates = [pat_clean]
+        if pat_clean.startswith("work/"):
+            pat_candidates.append(pat_clean[5:])
+        else:
+            pat_candidates.append(f"work/{pat_clean}")
+
+        for cand in candidates:
+            for pat in pat_candidates:
+                # Direct glob match
+                if fnmatch.fnmatch(cand, pat):
+                    return True
+                # Match parameterized templates like <comp_id> or <id> or _XX
+                wildcard_pat = re.sub(r"<[^>]+>", "*", pat)
+                wildcard_pat = re.sub(r"_XX\b", "_*", wildcard_pat)
+                wildcard_pat = re.sub(r"XX\b", "*", wildcard_pat)
+                if fnmatch.fnmatch(cand, wildcard_pat):
+                    return True
+
+    return False
+
+
+def get_type_definitions() -> List[Dict[str, Any]]:
+    """Returns type definitions for define_subagent registration."""
+    return TYPE_DEFINITIONS
+
+
+def scope_check(
+    work_dir: Union[str, Path],
+    role: str,
+    snapshot: Optional[Dict[str, Tuple[int, float]]] = None,
+) -> Tuple[bool, List[str]]:
+    """Detects files created or modified outside the permitted write paths for role.
+    
+    Args:
+        work_dir: Course working directory.
+        role: Subagent role that just executed.
+        snapshot: Snapshot dictionary from snapshot_work_dir prior to execution.
+                 If None or empty, attempts to load work/dispatch/{role}_snapshot.json.
+
+    Returns:
+        Tuple of (is_clean, violations_list).
+    """
+    work = Path(work_dir).resolve()
+    if not snapshot:
+        snap_file = work / "dispatch" / f"{role}_snapshot.json"
+        if snap_file.is_file():
+            try:
+                raw_snap = json.loads(snap_file.read_text(encoding="utf-8"))
+                snapshot = {k: (v[0], v[1]) for k, v in raw_snap.items()}
+            except Exception as e:
+                logger.warning("Could not load snapshot file %s: %s", snap_file, e)
+    if snapshot is None:
+        snapshot = {}
+
+    current_snapshot = snapshot_work_dir(work)
+    violations: List[str] = []
+
+    for rel_path, (size, mtime) in current_snapshot.items():
+        if rel_path not in snapshot:
+            # File newly created
+            if not _is_allowed_path(rel_path, role):
+                violations.append(rel_path)
+        else:
+            # File modified
+            old_size, old_mtime = snapshot[rel_path]
+            if (size, mtime) != (old_size, old_mtime):
+                if not _is_allowed_path(rel_path, role):
+                    violations.append(rel_path)
+
+    violations.sort()
+    is_clean = len(violations) == 0
+    return is_clean, violations
+
+
+def main() -> None:
+    """CLI utility for subagent dispatch and scope checking."""
+    parser = argparse.ArgumentParser(description="Subagent Scope-Lock & Dispatch Generator")
+    subparsers = parser.add_subparsers(dest="action", required=True)
+
+    # dispatch subcommand
+    disp = subparsers.add_parser("build", help="Generate invoke_subagent payload for role")
+    disp.add_argument("--role", required=True, choices=list(ROLE_SPECS.keys()), help="Subagent role")
+    disp.add_argument("--work-dir", required=True, help="Course working directory")
+    disp.add_argument("--ready-only", action="store_true", help="Dispatch only ready sections")
+    disp.add_argument("--ids", nargs="*", help="Optional specific IDs to dispatch")
+
+    # check subcommand
+    chk = subparsers.add_parser("check", help="Run scope violation check")
+    chk.add_argument("--role", required=True, choices=list(ROLE_SPECS.keys()), help="Subagent role")
+    chk.add_argument("--work-dir", required=True, help="Course working directory")
+
+    # define-types subcommand
+    subparsers.add_parser("define-types", help="Print define_subagent payloads for all c2c types")
+
+    args = parser.parse_args()
+
+    if args.action == "define-types":
+        print(json.dumps(get_type_definitions(), indent=2, ensure_ascii=False))
+
+    elif args.action == "build":
+        payload = build_dispatch(
+            role=args.role,
+            work_dir=args.work_dir,
+            ids=args.ids,
+            ready_only=args.ready_only,
+        )
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+
+    elif args.action == "check":
+        # Check against persisted pre-dispatch snapshot or empty if not present
+        is_clean, violations = scope_check(args.work_dir, args.role, None)
+        if is_clean:
+            print(f"[+] Scope-check PASSED for role '{args.role}'.")
+            sys.exit(0)
+        else:
+            print(f"[-] Scope-check FAILED for role '{args.role}'. {len(violations)} violations detected:")
+            for v in violations:
+                print(f"    * {v}")
+            sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

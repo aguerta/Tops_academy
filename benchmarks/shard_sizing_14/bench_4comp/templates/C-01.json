@@ -1,0 +1,146 @@
+{
+  "competency_id": "C-01",
+  "templates": [
+    {
+      "id": "T-C01-01",
+      "competency_id": "C-01",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "Considere la ecuación diferencial autónoma $\\dot{y} = {a} - {b}y$. Determine el valor numérico del punto de equilibrio intertemporal $\\bar{y}$.",
+      "stem_variants": [
+        "Considere la ecuación diferencial autónoma $\\dot{y} = {a} - {b}y$. Determine el valor numérico del punto de equilibrio intertemporal $\\bar{y}$.",
+        "Dada la trayectoria dinámica unidimensional $\\dot{y} = {a} - {b}y$, halle el nivel de equilibrio $\\bar{y}$ donde se anula la tasa de cambio.",
+        "Para el sistema dinámico continuo $\\dot{y} = {a} - {b}y$, calcule el punto crítico estacionario $\\bar{y}$ tal que f(\\bar{y}) = 0.",
+        "En la línea de fase definida por $\\dot{y} = {a} - {b}y$, determine el valor escalar de la posición de equilibrio $\\bar{y}$."
+      ],
+      "generate_py": "def generate(rng):\n    b = rng.choice([2, 3, 4, 5, 6, 7])\n    mult = rng.choice([2, 3, 4, 5, 6, 7, 8, 9])\n    a = b * mult\n    y_bar = mult\n    return {\n        'vars': {'a': a, 'b': b, 'y_bar': y_bar},\n        'correct': y_bar,\n        'value': str(y_bar),\n        'canonical_algebraic': str(y_bar),\n        'accepted_equivalents': [str(y_bar), f'{y_bar}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    v = res['vars']\n    return v['a'] - v['b'] * int(res['correct']) == 0",
+      "hints": [
+        "Un punto de equilibrio y_bar de la ecuación diferencial satisface la condición estacionaria dy/dt = 0.",
+        "Plantee la ecuación algebraica lineal igualando la tasa de cambio a cero: a - b * y = 0.",
+        "Despeje y dividiendo el término constante entre el coeficiente lineal: y_bar = a / b."
+      ],
+      "solution": "Para hallar el equilibrio, igualamos la derivada temporal a cero: {a} - {b}y = 0. Despejando se obtiene y_bar = {a} / {b} = {y_bar}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C01-02",
+      "competency_id": "C-01",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Para la ecuación diferencial autónoma $\\dot{y} = {a} - {b}y$, determine el valor numérico de la pendiente de la línea de fase $\\frac{d\\dot{y}}{dy}$ evaluada en cualquier punto del espacio de estados.",
+      "stem_variants": [
+        "Para la ecuación diferencial autónoma $\\dot{y} = {a} - {b}y$, determine el valor numérico de la pendiente de la línea de fase $\\frac{d\\dot{y}}{dy}$ evaluada en cualquier punto del espacio de estados.",
+        "En el sistema autónomo $\\dot{y} = {a} - {b}y$, calcule el valor escalar de la derivada de la tasa de cambio respecto a la variable de estado: $\\frac{d\\dot{y}}{dy}$.",
+        "Dada la línea de fase lineal $\\dot{y} = {a} - {b}y$, evalúe la pendiente constante f'(y) que gobierna la velocidad de convergencia.",
+        "Determine la pendiente algebraica f'(y) asociada a la dinámica unidimensional $\\dot{y} = {a} - {b}y$."
+      ],
+      "generate_py": "def generate(rng):\n    b = rng.choice([2, 3, 4, 5, 6, 7, 8, 9, 10, 12])\n    a = rng.choice([10, 15, 20, 24, 30, 36, 40])\n    slope = -b\n    return {\n        'vars': {'a': a, 'b': b, 'slope': slope},\n        'correct': slope,\n        'value': str(slope),\n        'canonical_algebraic': str(slope),\n        'accepted_equivalents': [str(slope), f'{slope}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    return int(res['correct']) == -res['vars']['b']",
+      "hints": [
+        "La línea de fase grafica la tasa de cambio dy/dt = f(y) en el eje vertical contra la variable de estado y en el horizontal.",
+        "La pendiente de la línea de fase se obtiene derivando la función f(y) = a - b * y respecto a y.",
+        "La derivada de una constante es cero y la derivada de -b * y respecto a y es -b."
+      ],
+      "solution": "Derivando f(y) = {a} - {b}y con respecto a y obtenemos f'(y) = d/dy({a} - {b}y) = -{b} = {slope}. Como la pendiente es negativa, el sistema exhibe convergencia estable hacia el equilibrio.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C01-03",
+      "competency_id": "C-01",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere la ecuación autónoma no lineal $\\dot{y} = y({K} - y)$ en el dominio $y > 0$. Calcule el valor numérico de la pendiente de la línea de fase $f'(\\bar{y})$ evaluada en el equilibrio positivo $\\bar{y} = {K}$.",
+      "stem_variants": [
+        "Considere la ecuación autónoma no lineal $\\dot{y} = y({K} - y)$ en el dominio $y > 0$. Calcule el valor numérico de la pendiente de la línea de fase $f'(\\bar{y})$ evaluada en el equilibrio positivo $\\bar{y} = {K}$.",
+        "Dada la dinámica cuadrática $\\dot{y} = y({K} - y)$, determine el valor escalar de la derivada f'(\\bar{y}) en el punto de equilibrio estacionario $\\bar{y} = {K}$.",
+        "Para el modelo de ajuste $\\dot{y} = y({K} - y)$, evalúe la pendiente de la línea de fase en la raíz positiva no nula $\\bar{y} = {K}$.",
+        "En el espacio de fase de $\\dot{y} = y({K} - y)$, halle el valor numérico de la pendiente de estabilidad evaluada en y = {K}."
+      ],
+      "generate_py": "def generate(rng):\n    K = rng.choice([3, 4, 5, 6, 7, 8, 9, 10, 12, 15])\n    slope = -K\n    return {\n        'vars': {'K': K, 'slope': slope},\n        'correct': slope,\n        'value': str(slope),\n        'canonical_algebraic': str(slope),\n        'accepted_equivalents': [str(slope), f'{slope}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    return int(res['correct']) == -res['vars']['K']",
+      "hints": [
+        "Exprese la función como un polinomio expandiendo el producto: f(y) = K * y - y^2.",
+        "Calcule la derivada ordinaria respecto a y: f'(y) = K - 2y.",
+        "Sustituya el valor del equilibrio y = K en la derivada: f'(K) = K - 2(K) = -K."
+      ],
+      "solution": "Expandiendo la función se tiene f(y) = {K}y - y^2. Su derivada respecto a y es f'(y) = {K} - 2y. Al evaluarla en el equilibrio y = {K}, obtenemos f'({K}) = {K} - 2({K}) = -{K} = {slope}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C01-04",
+      "competency_id": "C-01",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere una ecuación diferencial autónoma de primer orden $\\dot{y} = f(y)$ con un punto de equilibrio $\\bar{y} = {y_bar}$ tal que $f({y_bar}) = 0$. Si la pendiente en dicho equilibrio es $f'({y_bar}) = -{k} < 0$, seleccione todas las afirmaciones dinámicas verdaderas:",
+      "stem_variants": [
+        "Considere una ecuación diferencial autónoma de primer orden $\\dot{y} = f(y)$ con un punto de equilibrio $\\bar{y} = {y_bar}$ tal que $f({y_bar}) = 0$. Si la pendiente en dicho equilibrio es $f'({y_bar}) = -{k} < 0$, seleccione todas las afirmaciones dinámicas verdaderas:",
+        "En un sistema dinámico unidimensional $\\dot{y} = f(y)$, suponga que $f({y_bar}) = 0$ y $f'({y_bar}) = -{k} < 0$. ¿Cuáles de las siguientes propiedades sobre la estabilidad del punto $\\bar{y} = {y_bar}$ son formalmente correctas?",
+        "Dada la línea de fase de $\\dot{y} = f(y)$ que cruza el eje horizontal en $\\bar{y} = {y_bar}$ con pendiente negativa $f'({y_bar}) = -{k} < 0$, identifique todas las proposiciones teóricas válidas:"
+      ],
+      "generate_py": "def generate(rng):\n    y_bar = rng.choice([2, 3, 4, 5, 6, 7, 8, 10])\n    k = rng.choice([1, 2, 3, 4, 5, 6])\n    opts = [\n        {'content': f'El punto de equilibrio \\\\bar{{y}} = {y_bar} es dinámicamente estable porque las trayectorias convergen hacia él.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': f'Para valores $y > {y_bar}$ suficientemente cercanos, se cumple $\\\\dot{{y}} < 0$, reduciendo $y$ hacia el equilibrio.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': f'El punto de equilibrio \\\\bar{{y}} = {y_bar} es inestable porque una pendiente negativa repele las trayectorias.', 'is_correct': False, 'distractor_id': 'D-C01-01', 'error_rationale': 'Inversión del criterio de estabilidad: cree que una pendiente negativa repele trayectorias en lugar de atraerlas.'},\n        {'content': 'La convergencia dinámica hacia el equilibrio exige necesariamente una pendiente positiva f\\'(\\\\bar{y}) > 0 en la línea de fase.', 'is_correct': False, 'distractor_id': 'D-C01-01', 'error_rationale': 'Concluye erróneamente que una pendiente positiva f\\'(\\\\bar{y}) > 0 implica estabilidad porque la función es creciente.'},\n    ]\n    return {\n        'vars': {'y_bar': y_bar, 'k': k},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    correct_opts = [o for o in res['options'] if o['is_correct']]\n    return len(correct_opts) == 2 and len(res['options']) == 4",
+      "hints": [
+        "Analice el signo de dy/dt a ambos lados de y_bar cuando la pendiente f'(y_bar) es estrictamente negativa.",
+        "Si y > y_bar y la función es decreciente, f(y) < 0, lo que significa que dy/dt < 0 y la variable disminuye hacia y_bar.",
+        "Recuerde que f'(y_bar) < 0 es la condición analítica necesaria y suficiente para estabilidad local."
+      ],
+      "solution": "Dado que f'({y_bar}) = -{k} < 0, a la derecha del equilibrio (y > {y_bar}) se tiene dy/dt < 0 (flujo hacia la izquierda), y a la izquierda (y < {y_bar}) se tiene dy/dt > 0 (flujo hacia la derecha). Ambas direcciones convergen hacia {y_bar}, demostrando estabilidad dinámica.",
+      "distractor_ids": [
+        "D-C01-01"
+      ]
+    },
+    {
+      "id": "T-C01-05",
+      "competency_id": "C-01",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Understand",
+      "stem": "En el análisis cualitativo de líneas de fase para ecuaciones autónomas $\\dot{y} = f(y)$ con un valor crítico $y^* = {y_star}$, seleccione todas las afirmaciones matemáticamente correctas sobre la identificación rigurosa de equilibrios:",
+      "stem_variants": [
+        "En el análisis cualitativo de líneas de fase para ecuaciones autónomas $\\dot{y} = f(y)$ con un valor crítico $y^* = {y_star}$, seleccione todas las afirmaciones matemáticamente correctas sobre la identificación rigurosa de equilibrios:",
+        "Al examinar el comportamiento intertemporal de una trayectoria unidimensional $\\dot{y} = f(y)$ en torno a $y^* = {y_star}$, ¿cuáles de las siguientes proposiciones sobre los puntos donde $\\dot{y} = 0$ son válidas?",
+        "Considere el trazado cualitativo del flujo dinámico $\\dot{y} = f(y)$ evaluado cerca de $y^* = {y_star}$. Identifique todas las aseveraciones teóricas verdaderas respecto a los estados de equilibrio:"
+      ],
+      "generate_py": "def generate(rng):\n    y_star = rng.choice([1, 2, 3, 4, 5, 6, 7, 8])\n    opts = [\n        {'content': 'Un equilibrio dinámico intertemporal requiere que el sistema permanezca en reposo permanente una vez situado en dicho estado.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': 'Un cruce transversal del eje horizontal donde f(\\\\bar{y}) = 0 con derivada no nula define un punto de equilibrio del sistema.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': f'Cualquier punto donde la velocidad instantánea se anula tangencialmente ($\\\\dot{{y}} = 0$) en $y = {y_star}$ representa un equilibrio de largo plazo.', 'is_correct': False, 'distractor_id': 'D-C01-02', 'error_rationale': 'Confusión conceptual: asume que todo punto donde dy/dt = 0 es un equilibrio intertemporal permanente, ignorando puntos de tangencia o extremos de ciclo.'},\n        {'content': f'Si una trayectoria cíclica toca temporalmente el límite con $\\\\dot{{y}} = 0$ en $y = {y_star}$, dicho extremo es una posición de reposo estático final.', 'is_correct': False, 'distractor_id': 'D-C01-02', 'error_rationale': 'Considera que los límites extremos tocados momentáneamente por trayectorias representan equilibrios estáticos intertemporales.'},\n    ]\n    return {\n        'vars': {'y_star': y_star},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    correct_opts = [o for o in res['options'] if o['is_correct']]\n    return len(correct_opts) == 2 and len(res['options']) == 4",
+      "hints": [
+        "Distinga entre una trayectoria que se detiene permanentemente y una que se anula de forma tangencial o momentánea.",
+        "En un ciclo cerrado o punto de inflexión con f(y) >= 0 a ambos lados, el estado no es un atractor de reposo estándar.",
+        "Un equilibrio dinámico intertemporal genuino exige f(y) = 0 y define una solución constante y(t) = y_bar para todo tiempo."
+      ],
+      "solution": "Un equilibrio dinámico intertemporal requiere que el estado satisfaga f(y_bar) = 0 de modo que y(t) = y_bar sea una solución estacionaria permanente. No todo punto donde dy/dt se anula tangencialmente o en extremos de ciclos cerrados constituye un equilibrio intertemporal estable.",
+      "distractor_ids": [
+        "D-C01-02"
+      ]
+    },
+    {
+      "id": "T-C01-06",
+      "competency_id": "C-01",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Sea un sistema dinámico continuo modelado por $\\dot{y} = {c} - {d}y$, y considere un estado particular donde la variable $y$ toma el valor positivo $y_0 = {y_zero} > 0$ tal que $\\dot{y}(y_0) = -{gap} < 0$. Seleccione todas las afirmaciones válidas:",
+      "stem_variants": [
+        "Sea un sistema dinámico continuo modelado por $\\dot{y} = {c} - {d}y$, y considere un estado particular donde la variable $y$ toma el valor positivo $y_0 = {y_zero} > 0$ tal que $\\dot{y}(y_0) = -{gap} < 0$. Seleccione todas las afirmaciones válidas:",
+        "Para la ecuación diferencial $\\dot{y} = {c} - {d}y$, suponga que en el estado actual $y_0 = {y_zero} > 0$ la tasa de cambio resultante es $\\dot{y} = -{gap} < 0$. ¿Cuáles de las siguientes proposiciones describen correctamente la evolución temporal?",
+        "En el análisis dinámico de $\\dot{y} = {c} - {d}y$ en un punto con $y_0 = {y_zero} > 0$ y $\\dot{y} = -{gap} < 0$, seleccione todas las afirmaciones teóricas rigurosas:"
+      ],
+      "generate_py": "def generate(rng):\n    d = rng.choice([2, 3, 4, 5])\n    gap = rng.choice([2, 3, 4, 5, 6, 8])\n    c = rng.choice([6, 8, 10, 12])\n    y_zero = (c + gap) // d\n    if (c + gap) % d != 0:\n        y_zero = 6\n        gap = d * y_zero - c\n    opts = [\n        {'content': f'La variable $y$ decrece en el tiempo a partir de $y_0 = {y_zero}$ debido a que su derivada temporal $\\\\dot{{y}} = -{gap} < 0$ es negativa.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': 'La dirección temporal de la trayectoria depende exclusivamente del signo de la derivada $\\\\dot{y}$, no del signo del nivel de $y$.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': f'La variable $y$ debe forzosamente aumentar en el tiempo porque su nivel actual $y_0 = {y_zero} > 0$ es estrictamente positivo.', 'is_correct': False, 'distractor_id': 'D-C01-03', 'error_rationale': 'Atribución errónea de la dirección dinámica al nivel de la variable de estado: afirma que porque y > 0 la variable necesariamente aumenta.'},\n        {'content': 'El signo positivo de la variable de estado siempre anula y revierte cualquier derivada temporal negativa en la línea de fase.', 'is_correct': False, 'distractor_id': 'D-C01-03', 'error_rationale': 'Creer que el signo de y determina la dirección del movimiento temporal en lugar del signo de la derivada temporal dy/dt.'},\n    ]\n    return {\n        'vars': {'c': c, 'd': d, 'gap': gap, 'y_zero': y_zero},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    v = res['vars']\n    return (v['c'] - v['d'] * v['y_zero']) == -v['gap']",
+      "hints": [
+        "Recuerde el significado físico de la derivada: dy/dt mide la tasa instantánea de cambio de y respecto al tiempo t.",
+        "Si dy/dt < 0, la variable decrece en el tiempo, sin importar si el nivel de y es positivo, cero o negativo.",
+        "El signo de la variable de estado y indica su posición en el eje real, pero únicamente el signo de dy/dt indica la dirección del movimiento."
+      ],
+      "solution": "Dado que dy/dt = -{gap} < 0, la variable de estado y disminuye en el tiempo. El hecho de que y_0 = {y_zero} > 0 sea positivo no implica que la variable deba crecer; la dirección del flujo depende exclusivamente del signo de la derivada temporal dy/dt.",
+      "distractor_ids": [
+        "D-C01-03"
+      ]
+    }
+  ]
+}

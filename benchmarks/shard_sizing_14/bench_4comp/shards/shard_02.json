@@ -1,0 +1,324 @@
+{
+  "shard_id": "shard_02",
+  "shard_index": 2,
+  "total_shards": 4,
+  "competency_ids": [
+    "Hab-02",
+    "C-03",
+    "H-02",
+    "C-04"
+  ],
+  "competencies": [
+    {
+      "id": "Hab-02",
+      "type": "skill",
+      "name": "Derivación analítica de la ecuación diferencial fundamental de Solow",
+      "description_latex": "Habilidad para derivar la ecuación diferencial de la relación capital-trabajo $\\dot{k} = s\\phi(k) - \\lambda k$ a partir de la identidad $K = kL$, la regla de la derivada del producto $\\dot{K} = L\\dot{k} + k\\dot{L}$, la hipótesis de inversión $\\dot{K} = sQ = sL\\phi(k)$ y el crecimiento de la fuerza de trabajo $\\dot{L} = \\lambda L$.",
+      "bloom": "Apply",
+      "prerequisites": [
+        "C-02"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 2
+        },
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 3
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-Hab02-01",
+          "name": "Omisión de la diferenciación de la mano de obra en la regla del producto",
+          "trigger": "Al calcular $\\dot{K}$ a partir de $K = kL$",
+          "manifestation": "Escribe $\\dot{K} = L\\dot{k}$, tratando $L$ erróneamente como una constante en el tiempo",
+          "error_type": "skipped_step",
+          "severity": "high",
+          "origin": "inferred",
+          "omitted_step": "Omitir la diferenciación temporal del factor de mano de obra $L(t)$ aplicando la regla del producto a $K = kL$.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "Dado que $L$ crece en el tiempo a tasa $\\lambda$, la regla del producto exige $\\dot{K} = L\\dot{k} + k\\dot{L} = L\\dot{k} + k\\lambda L$."
+        },
+        {
+          "id": "D-Hab02-02",
+          "name": "Omisión de la cancelación del factor de escala poblacional",
+          "trigger": "Al igualar $\\dot{K} = sL\\phi(k)$ con $\\dot{K} = L\\dot{k} + \\lambda k L$",
+          "manifestation": "Deja la ecuación diferencial en términos dependientes de $L$ sin dividir por la fuerza laboral",
+          "error_type": "skipped_step",
+          "severity": "medium",
+          "origin": "inferred",
+          "omitted_step": "Omitir la simplificación del factor común $L$ en ambos miembros para obtener la ecuación intensiva autónoma en $k$.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 3
+          },
+          "remediation_hint": "Divida toda la expresión por $L$ para condensar el sistema en una única ecuación diferencial autónoma de una variable: $\\dot{k} = s\\phi(k) - \\lambda k$."
+        },
+        {
+          "id": "D-Hab02-03",
+          "name": "Error de signo en la dilución demográfica del capital",
+          "trigger": "Al despejar $\\dot{k}$ en la ecuación igualada",
+          "manifestation": "Escribe $\\dot{k} = s\\phi(k) + \\lambda k$, sumando la dilución de capital en lugar de restarla",
+          "error_type": "sign_error",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Creer que el crecimiento de la fuerza laboral incrementa positivamente la dotación de capital por trabajador",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 3
+          },
+          "remediation_hint": "Al despejar $L\\dot{k} = sL\\phi(k) - \\lambda k L$, el término de crecimiento poblacional se resta porque nuevos trabajadores diluyen el capital disponible."
+        },
+        {
+          "id": "D-Hab02-04",
+          "name": "Confusión entre tasa de crecimiento relativo y cambio absoluto de mano de obra",
+          "trigger": "Al sustituir la hipótesis de crecimiento laboral en la regla del producto",
+          "manifestation": "Sustituye $\\dot{L}$ por $\\lambda$ en lugar de $\\lambda L$, obteniendo $k\\lambda$ en lugar de $k\\lambda L$",
+          "error_type": "unit_or_scale",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Confundir la tasa de crecimiento relativo $\\dot{L}/L = \\lambda$ con la derivada absoluta $\\dot{L}$",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "La hipótesis dinámica establece $\\dot{L}/L = \\lambda$, por lo que la derivada temporal es $\\dot{L} = \\lambda L$."
+        },
+        {
+          "id": "D-Hab02-05",
+          "name": "Sustitución indebida de la propensión al consumo por ahorro",
+          "trigger": "Al formular la tasa de acumulación de capital a partir del producto",
+          "manifestation": "Formula $\\dot{K} = (1-s)Q$, usando la tasa de consumo en lugar de la tasa de inversión/ahorro",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Asignar la propensión marginal a consumir $(1-s)$ en la ecuación de inversión bruta o neta",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "La hipótesis de Solow es que se ahorra e invierte una proporción constante $s$ del producto: $\\dot{K} = sQ$."
+        },
+        {
+          "id": "D-Hab02-06",
+          "name": "Error de derivación al diferenciar directamente la relación per cápita como cociente",
+          "trigger": "Al intentar derivar $\\dot{k}$ directamente mediante la regla del cociente de $k = K/L$",
+          "manifestation": "Escribe $\\dot{k} = \\frac{L\\dot{K} + K\\dot{L}}{L^2}$ con signo positivo en el numerador",
+          "error_type": "procedural_slip",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Cometer un desliz de signo en la fórmula de diferenciación de cocientes",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 2
+          },
+          "remediation_hint": "La regla del cociente requiere $\\dot{k} = \\frac{L\\dot{K} - K\\dot{L}}{L^2} = \\frac{\\dot{K}}{L} - k\\dot{L}/L$."
+        }
+      ]
+    },
+    {
+      "id": "C-03",
+      "type": "concept",
+      "name": "Análisis gráfico-cualitativo del equilibrio y estabilidad en el diagrama de fases de Solow",
+      "description_latex": "Comprensión del diagrama de dos curvas $s\\phi(k)$ (inversión por trabajador) y $\\lambda k$ (requerimiento de inversión para mantener constante $k$) y su traslación a la línea de fase $\\dot{k} = s\\phi(k) - \\lambda k$. La intersección en $k = \\bar{k} > 0$ determina el equilibrio intertemporal. Para $0 < k < \\bar{k}$, $s\\phi(k) > \\lambda k \\implies \\dot{k} > 0$ (acumulación neta de capital por trabajador); para $k > \\bar{k}$, $s\\phi(k) < \\lambda k \\implies \\dot{k} < 0$. Dado que la pendiente de la línea de fase en $\\bar{k}$ es estrictamente negativa ($s\\phi'(\\bar{k}) - \\lambda < 0$), el equilibrio $\\bar{k}$ es globalmente estable para cualquier dotación inicial positiva $k(0) > 0$.",
+      "bloom": "Analyze",
+      "prerequisites": [
+        "Hab-02",
+        "C-01"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 3
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-C03-01",
+          "name": "Interpretación errónea de la dinámica antes del equilibrio",
+          "trigger": "Al analizar el intervalo $0 < k < \\bar{k}$ en la figura 15.5",
+          "manifestation": "Afirma que porque la pendiente de $s\\phi(k)$ es decreciente, la tasa de acumulación $\\dot{k}$ es negativa a la izquierda de $\\bar{k}$",
+          "error_type": "conceptual_swap",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Confundir la pendiente decreciente de la curva con una distancia vertical negativa entre $s\\phi(k)$ y $\\lambda k$",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 3
+          },
+          "remediation_hint": "Para $0 < k < \\bar{k}$, la curva $s\\phi(k)$ está por encima del rayo $\\lambda k$, por lo que la distancia vertical $\\dot{k} = s\\phi(k) - \\lambda k$ es positiva y $k$ se incrementa."
+        },
+        {
+          "id": "D-C03-02",
+          "name": "Contradicción sobre la pendiente negativa de la línea de fase",
+          "trigger": "Al observar que la curva $\\dot{k}$ corta el eje $k$ en $\\bar{k}$ con pendiente negativa",
+          "manifestation": "Declara que una pendiente negativa al cruzar el eje horizontal señala inestabilidad",
+          "error_type": "sign_error",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Creer que cruzar el eje horizontal con pendiente descendente hace que el equilibrio sea inestable",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 3
+          },
+          "remediation_hint": "Precisamente una pendiente negativa en la línea de fase garantiza estabilidad: si $k > \\bar{k}$, $\\dot{k} < 0$ y $k$ desciende hacia $\\bar{k}$; si $k < \\bar{k}$, $\\dot{k} > 0$ y $k$ asciende hacia $\\bar{k}$."
+        },
+        {
+          "id": "D-C03-03",
+          "name": "Omisión de la condición de partida de capital estrictamente positivo",
+          "trigger": "Al discutir la convergencia global hacia $\\bar{k}$",
+          "manifestation": "Sostiene que incluso con una economía que parte de $k(0) = 0$ alcanzará espontáneamente $\\bar{k}$",
+          "error_type": "boundary_case",
+          "severity": "medium",
+          "origin": "source",
+          "wrong_belief": "Creer que el equilibrio se alcanza sin dotación inicial de capital a pesar de que el capital es factor indispensable",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 3
+          },
+          "remediation_hint": "Si $K=0$ y $k=0$, el producto es cero y $\\dot{k} = 0$; por lo que la convergencia a $\\bar{k}$ requiere un valor inicial positivo $k(0) > 0$."
+        }
+      ]
+    },
+    {
+      "id": "H-02",
+      "type": "fact",
+      "name": "Definición y propiedades macroeconómicas del estado uniforme (steady state)",
+      "description_latex": "Conocimiento fáctico de la definición de estado uniforme en el modelo de Solow: condición en la cual la relación capital-trabajo permanece constante en $\\bar{k}$, de modo que las variables agregadas de capital ($K$), producto ($Q$) e inversión ($I$) crecen todas a la tasa idéntica y constante $\\lambda$ (la tasa de crecimiento de la fuerza laboral). Se distingue explícitamente del 'estado estacionario' clásico, en el cual las variables no crecen (tasa de crecimiento cero).",
+      "bloom": "Remember",
+      "prerequisites": [
+        "C-03"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 4
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-H02-01",
+          "name": "Confusión entre estado uniforme y estado estacionario clásico",
+          "trigger": "Al definir la dinámica de los agregados económicos en el largo plazo de Solow",
+          "manifestation": "Afirma que en el estado uniforme las variables macroeconómicas agregadas $K$ y $Q$ permanecen estáticas con tasa de crecimiento nula",
+          "error_type": "conceptual_swap",
+          "severity": "high",
+          "origin": "source",
+          "wrong_belief": "Creer que el estado uniforme implica crecimiento cero de los niveles agregados como en un estado estacionario estático",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "El estado uniforme es una generalización donde las variables relevantes crecen a una tasa idéntica $\\lambda > 0$, mientras que en el estado estacionario todas crecen a tasa cero."
+        },
+        {
+          "id": "D-H02-02",
+          "name": "Atribución de crecimiento a las variables intensivas en estado uniforme sin tecnología",
+          "trigger": "Al evaluar el comportamiento del producto por trabajador $q$ en el estado uniforme",
+          "manifestation": "Afirma que el producto por trabajador $\\phi(\\bar{k})$ crece a la tasa $\\lambda$ en el estado uniforme",
+          "error_type": "overgeneralization",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Creer que las variables per cápita también crecen a la tasa $\\lambda$ en ausencia de progreso tecnológico",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "En el estado uniforme sin tecnología, $k = \\bar{k}$ es constante y por ende el producto por trabajador $\\phi(\\bar{k})$ es constante en el tiempo (su tasa de crecimiento es cero)."
+        },
+        {
+          "id": "D-H02-03",
+          "name": "Creencia en la necesidad de intervención exógena para mantener el balance",
+          "trigger": "Al explicar por qué se alcanza el estado de crecimiento uniforme",
+          "manifestation": "Sostiene que el estado uniforme solo se alcanza si el gobierno impone regulaciones directas de inversión como en Domar",
+          "error_type": "other",
+          "severity": "medium",
+          "origin": "source",
+          "wrong_belief": "Creer que alcanzar el estado uniforme requiere una política directiva en lugar de ocurrir de manera automática",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "El modelo de Solow muestra que la economía alcanza el estado uniforme de forma automática por fuerzas de ajuste endógenas del mercado."
+        }
+      ]
+    },
+    {
+      "id": "C-04",
+      "type": "concept",
+      "name": "Efectos del progreso tecnológico neutral en el equilibrio dinámico de Solow",
+      "description_latex": "Comprensión del efecto del cambio tecnológico sobre el modelo de Solow: al introducir un factor tecnológico creciente $Q = T(t) f(K, L)$ con $dT/dt > 0$, la curva de ahorro/inversión efectiva $s\\phi(k)$ experimenta un desplazamiento secular ascendente continuo. Esto genera intersecciones sucesivamente más altas con el rayo $\\lambda k$, incrementando de forma sostenida el nivel de capital por trabajador de equilibrio $\\bar{k}$ y elevando la productividad del trabajo a lo largo de una sucesión de estados uniformes.",
+      "bloom": "Understand",
+      "prerequisites": [
+        "C-03",
+        "H-02"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 4
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-C04-01",
+          "name": "Atribución del cambio tecnológico al rayo de crecimiento demográfico",
+          "trigger": "Al graficar el efecto de una mejora tecnológica $T(t)$",
+          "manifestation": "Desplaza o rota la línea $\\lambda k$ en vez de desplazar la curva de ahorro por trabajador $s\\phi(k)$",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Creer que la tecnología modifica la pendiente del rayo de dilución de capital",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "La mejora tecnológica aumenta la producción para cualquier dotación factorial dada, desplazando hacia arriba la curva de producto y ahorro $s\\phi(k)$, dejando $\\lambda k$ inalterada."
+        },
+        {
+          "id": "D-C04-02",
+          "name": "Inversión del efecto del desplazamiento tecnológico sobre el capital por trabajador",
+          "trigger": "Al determinar la consecuencia del desplazamiento hacia arriba de $s\\phi(k)$",
+          "manifestation": "Afirma que un avance tecnológico produce una disminución del capital por trabajador de equilibrio $\\bar{k}$",
+          "error_type": "sign_error",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Creer que un desplazamiento secular ascendente de la curva de inversión genera un equilibrio $\\bar{k}$ inferior",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "Al desplazarse $s\\phi(k)$ hacia arriba, corta el rayo lineal con pendiente positiva $\\lambda k$ más a la derecha, conduciendo a valores de $\\bar{k}$ sucesivamente mayores."
+        },
+        {
+          "id": "D-C04-03",
+          "name": "Suposición de invarianza de la productividad laboral frente al progreso técnico",
+          "trigger": "Al evaluar el bienestar y la productividad de los trabajadores a lo largo del tiempo con tecnología",
+          "manifestation": "Afirma que a pesar del crecimiento de $T(t)$, la productividad del trabajador permanece fija en el tiempo",
+          "error_type": "overgeneralization",
+          "severity": "medium",
+          "origin": "source",
+          "wrong_belief": "Asumir que el producto por trabajador en estado uniforme no aumenta cuando hay progreso tecnológico",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "Con mejora tecnológica, la economía accede a una sucesión de estados uniformes con mayor equipo capital por trabajador y aumento sostenido en la productividad laboral."
+        }
+      ]
+    }
+  ]
+}

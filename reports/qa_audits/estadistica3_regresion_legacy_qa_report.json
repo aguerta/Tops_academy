@@ -1,0 +1,43 @@
+{
+  "course_metadata": {
+    "unit_title": "Estadística III: Modelo de Regresión Lineal (Versión Legacy)",
+    "detected_objective": "Dominio formal de la formulación matricial MCO, geometría y álgebra de proyecciones ortogonales (matrices P, M, M0), análisis analítico de especificaciones funcionales, descomposición de variabilidad ANOVA e inferencia clásica (contrastes t-Student y F-Fisher) en el modelo de regresión lineal general."
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.8,
+      "max": 4.0,
+      "feedback": "La versión legacy estructura el curso en 6 macro-competencias que agrupan conceptos y habilidades densos y heterogéneos (H-01 unifica supuestos de Gauss-Markov, dimensiones y teorema MELI; C-01 reúne tres matrices de proyección complejas P, M y M0; Hab-01 agrupa inversión de momentos, estimación y álgebra de residuos). Aunque la secuencia macro es pedagógicamente coherente (Hecho -> Conceptos -> Habilidades procedimentales -> Inferencia), adolece de la atomicidad requerida por los estándares de Mastery Learning (desagregada posteriormente en 16 micro-competencias en la versión actualizada). Adicionalmente, los prerrequisitos cognitivos no se encuentran formalizados dentro de los metadatos JSON de las competencias."
+    },
+    "assessment_quality": {
+      "score": 3.8,
+      "max": 5.0,
+      "feedback": "El banco dispone de un volumen robusto de 150 reactivos con balance equitativo en 3 modalidades interactivas (51 de opción múltiple de 7 alternativas, 51 numéricas con tolerancia y 48 de selección múltiple). Los distractores en las preguntas de 7 opciones están sólidamente modelados en base a conceptos erróneos frecuentes de la literatura econométrica. No obstante, existe una alta rigidez en el diseño: cada competencia utiliza exactamente 2 plantillas paramétricas repetidas con variación de constantes numéricas simples, careciendo de datasets o contextos empíricos realistas. Asimismo, las 48 preguntas de selección múltiple carecen de rationales explicativos en sus opciones incorrectas."
+    },
+    "scaffolding_hints": {
+      "score": 3.8,
+      "max": 5.0,
+      "feedback": "El 100% de los reactivos (150/150) cuenta con 3 pistas progresivas escalonadas y una solución detallada con advertencia de ideas preconcebidas erróneas (misconception warnings). Sin embargo, se constató una omisión formativa crítica: en las 48 preguntas de tipo 'multiple_select', el 100% de los distractores (99 en total) presentan el campo 'error_rationale' en nulo (null), impidiendo que el motor de evaluación ofrezca feedback diagnóstico correctivo inmediato cuando el estudiante marca una alternativa inválida."
+    },
+    "instructional_alignment": {
+      "score": 3.4,
+      "max": 4.0,
+      "feedback": "Existe una rigurosa concordancia semántica entre los objetivos descritos en las 6 competencias, las diapositivas de clase del Prof. Cano (UNMSM) y las preguntas evaluadas. No se identificaron preguntas huérfanas críticas. Se observa una limitación curricular menor: la descripción del curso promete abarcar 'diagnóstico econométrico integral', pero los diagnósticos de multicolinealidad, heterocedasticidad y autocorrelación no fueron incorporados en esta versión legacy."
+    },
+    "technical_ergonomics": {
+      "score": 1.0,
+      "max": 2.0,
+      "feedback": "Se identificó un fallo de sintaxis LaTeX sistemático en 15 preguntas de la competencia Hab-03 (Q-Hab03-131 a Q-Hab03-135, Q-Hab03-136 a Q-Hab03-140 y Q-Hab03-146 a Q-Hab03-150), acumulando 55 opciones con delimitadores de modo matemático '$' abiertos sin cierre correspondiente (e.g., '$p \\le 0.1.' o 'como $F = \\frac{R^2/(k-1)}{(1-R^2)/(n-k)}.'). Esta anomalía genera errores de renderizado en librerías frontend KaTeX/MathJax. El 90% restante del contenido matemático y textual está impecablemente formulado."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 14.8,
+  "quality_tier": "ACEPTABLE (14-16)",
+  "remediation_actions": [
+    "Corregir con máxima prioridad los delimitadores LaTeX en las 55 opciones afectadas de la competencia Hab-03 (Q-Hab03-131 a Q-Hab03-135, Q-Hab03-136 a Q-Hab03-140 y Q-Hab03-146 a Q-Hab03-150) cerrando cada fórmula con '$'.",
+    "Completar el campo 'error_rationale' para los 99 distractores de las 48 preguntas de tipo 'multiple_select', asegurando retroalimentación formativa inmediata ante cualquier error.",
+    "Refactorizar la granularidad del curso dividiendo las 6 macro-competencias en micro-habilidades atómicas (migrando al estándar de 16 competencias implementado en 'estadistica3_regresion.json').",
+    "Integrar en el esquema JSON de las competencias el campo 'prerequisites' con los IDs correspondientes para modelar formalmente la ruta de aprendizaje en grafo.",
+    "Ampliar la variabilidad de los generadores de reactivos para superar el esquema de 2 plantillas por competencia, incorporando enunciados con tablas de regresión reales (salidas de Stata/R) y datos empíricos."
+  ]
+}

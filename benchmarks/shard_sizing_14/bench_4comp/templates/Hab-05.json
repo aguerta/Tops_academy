@@ -1,0 +1,165 @@
+{
+  "competency_id": "Hab-05",
+  "templates": [
+    {
+      "id": "T-Hab05-01",
+      "competency_id": "Hab-05",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "En un modelo de crecimiento de Solow para {context_label}, la tasa de ahorro es $s = {s_val}$, la relación producto-capital es $\\frac{Q}{K} = {qk_val}$ y la tasa de crecimiento de la fuerza laboral es $\\lambda = {lam_val}$. Dividiendo la ecuación fundamental $\\dot{k} = s\\phi(k) - \\lambda k$ entre $k$, ¿cuál es la tasa de crecimiento de la relación capital-trabajo $\\frac{\\dot{k}}{k}$ y su interpretación adecuada?",
+      "stem_variants": [
+        "En un modelo de crecimiento de Solow para {context_label}, la tasa de ahorro es $s = {s_val}$, la relación producto-capital es $\\frac{Q}{K} = {qk_val}$ y la tasa de crecimiento de la fuerza laboral es $\\lambda = {lam_val}$. Dividiendo la ecuación fundamental $\\dot{k} = s\\phi(k) - \\lambda k$ entre $k$, ¿cuál es la tasa de crecimiento de la relación capital-trabajo $\\frac{\\dot{k}}{k}$ y su interpretación adecuada?",
+        "Considere una economía analizada bajo {context_label} con parámetros $s = {s_val}$, $\\frac{\\phi(k)}{k} = \\frac{Q}{K} = {qk_val}$ y $\\lambda = {lam_val}$. A partir de la descomposición dinámica de la ecuación de Solow, determine la tasa de variación $\\frac{\\dot{k}}{k}$ y el significado formal del término de producción:",
+        "Para el marco macroeconómico de {context_label}, donde $s = {s_val}$, $\\frac{Q}{K} = {qk_val}$ y el empleo crece a $\\lambda = {lam_val}$, deduzca la tasa de expansión de la dotación de capital por trabajador $\\frac{\\dot{k}}{k} = \\frac{\\dot{K}}{K} - \\frac{\\dot{L}}{L}$:",
+        "A partir de la dinámica fundamental de acumulación en {context_label} con $s = {s_val}$, productividad media del capital $\\frac{Q}{K} = {qk_val}$ y crecimiento demográfico $\\lambda = {lam_val}$, halle la tasa $\\frac{\\dot{k}}{k}$ identificando la opción matemáticamente exacta:"
+      ],
+      "generate_py": "def generate(rng):\n    contexts = [\n        'un sector industrial moderno',\n        'una economía en proceso de convergencia',\n        'un sistema productivo agregado',\n        'un modelo macroeconómico de escala',\n        'una estructura de acumulación cerrada'\n    ]\n    ctx = rng.choice(contexts)\n    combos = [\n        (0.20, 0.40, 0.03, 0.05),\n        (0.25, 0.40, 0.02, 0.08),\n        (0.30, 0.40, 0.03, 0.09),\n        (0.20, 0.50, 0.04, 0.06),\n        (0.25, 0.48, 0.04, 0.08),\n        (0.30, 0.50, 0.05, 0.10),\n        (0.20, 0.45, 0.03, 0.06),\n        (0.25, 0.36, 0.02, 0.07)\n    ]\n    s_val, qk_val, lam_val, gk_val = rng.choice(combos)\n\n    d1_val = round((s_val * qk_val) / lam_val, 2)\n    d2_val = round(s_val * qk_val, 4)\n    d3_val = round(s_val * qk_val - lam_val, 4)\n    d4_val = round(lam_val - s_val * qk_val, 4)\n    d5_val = round(lam_val**2, 4)\n    d6_val = 0.0\n\n    c_str = rf'Crecimiento $\\dot{{k}}/k = {gk_val}$: diferencia $\\dot{{K}}/K - \\lambda$, interpretando $\\phi(k)/k = Q/K$ como la relación producto-capital.'\n    d1_str = rf'Crecimiento $\\dot{{k}}/k = {d1_val}$: división directa $(\\dot{{K}}/K)/(\\dot{{L}}/L)$, omitiendo la propiedad logarítmica de la tasa del cociente.'\n    d2_str = rf'Crecimiento $\\dot{{k}}/k = {d2_val}$: asumiendo expansión exógena sin diferenciar temporalmente la trayectoria del stock de capital acumulado.'\n    d3_str = rf'Crecimiento $\\dot{{k}}/k = {d3_val}$: interpretando el término $\\phi(k)/k$ como producto medio laboral en vez de producto-capital.'\n    d4_str = rf'Crecimiento $\\dot{{k}}/k = {d4_val}$: invirtiendo la sustracción de tasas con la expresión $\\dot{{L}}/L - \\dot{{K}}/K$.'\n    d5_str = rf'Crecimiento $\\dot{{k}}/k = {d5_val}$: considerando la tasa como una aceleración cuadrática $\\lambda^2$.'\n    d6_str = rf'Crecimiento $\\dot{{k}}/k = {d6_val}$: deduciendo que en estado uniforme el stock agregado de capital permanece completamente estacionario.'\n\n    distractors = [\n        {'value': d1_str, 'distractor_id': 'D-Hab05-01'},\n        {'value': d2_str, 'distractor_id': 'D-Hab05-02'},\n        {'value': d3_str, 'distractor_id': 'D-Hab05-03'},\n        {'value': d4_str, 'distractor_id': 'D-Hab05-04'},\n        {'value': d5_str, 'distractor_id': 'D-Hab05-05'},\n        {'value': d6_str, 'distractor_id': 'D-Hab05-06'}\n    ]\n    return {\n        'vars': {'context_label': ctx, 's_val': s_val, 'qk_val': qk_val, 'lam_val': lam_val, 'gk_val': gk_val},\n        'correct': c_str,\n        'distractors': distractors\n    }",
+      "cross_check_py": "def verify(result):\n    vars_dict = result.get('vars', {})\n    s = vars_dict['s_val']\n    qk = vars_dict['qk_val']\n    lam = vars_dict['lam_val']\n    expected_gk = round(s * qk - lam, 4)\n    return 'producto-capital' in result['correct'] and str(expected_gk) in result['correct']",
+      "hints": [
+        "Divida la ecuación fundamental del modelo de Solow dk/dt = s*phi(k) - lambda*k entre el capital por trabajador k.",
+        "Observe que phi(k)/k = (Q/L)/(K/L) = Q/K representa la relación producto-capital (productividad media del capital).",
+        "Calcule la tasa como s*(Q/K) - lambda = {s_val}*{qk_val} - {lam_val} = {gk_val}."
+      ],
+      "solution": "Dividiendo $\\dot{k} = s\\phi(k) - \\lambda k$ entre $k$, obtenemos $\\frac{\\dot{k}}{k} = s\\frac{\\phi(k)}{k} - \\lambda$. Dado que $\\phi(k) = Q/L$ y $k = K/L$, el cociente $\\frac{\\phi(k)}{k} = \\frac{Q/L}{K/L} = \\frac{Q}{K}$ representa la relación producto-capital. Sustituyendo los parámetros: $\\frac{\\dot{k}}{k} = ({s_val})({qk_val}) - {lam_val} = {gk_val}$.",
+      "distractor_ids": [
+        "D-Hab05-01",
+        "D-Hab05-02",
+        "D-Hab05-03",
+        "D-Hab05-04",
+        "D-Hab05-05",
+        "D-Hab05-06"
+      ]
+    },
+    {
+      "id": "T-Hab05-02",
+      "competency_id": "Hab-05",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "En un régimen de crecimiento uniforme para {setup_desc}, el stock de capital evoluciona según $K(t) = {A_val} e^{{lam_dec} t}$, con una tasa constante de crecimiento laboral $\\lambda = {lam_pct}\\%$ anual. Evaluando la inversión neta $I(t) = \\dot{K}(t) = \\lambda K(t)$, determine la tasa de crecimiento de la inversión neta $\\frac{\\dot{I}}{I}$ y el fundamento matemático de su cálculo:",
+      "stem_variants": [
+        "En un régimen de crecimiento uniforme para {setup_desc}, el stock de capital evoluciona según $K(t) = {A_val} e^{{lam_dec} t}$, con una tasa constante de crecimiento laboral $\\lambda = {lam_pct}\\%$ anual. Evaluando la inversión neta $I(t) = \\dot{K}(t) = \\lambda K(t)$, determine la tasa de crecimiento de la inversión neta $\\frac{\\dot{I}}{I}$ y el fundamento matemático de su cálculo:",
+        "Considere una economía que opera bajo {setup_desc} donde el capital agregado sigue la trayectoria $K(t) = {A_val} e^{{lam_dec} t}$. Al diferenciar temporalmente la inversión neta $I = \\dot{K} = \\lambda K$, ¿cuál es el ritmo de crecimiento de la inversión $\\frac{\\dot{I}}{I}$?",
+        "Para el marco analítico de {setup_desc}, si el capital crece exponencialmente a tasa $\\lambda = {lam_pct}\\%$ ($K(t) = {A_val} e^{{lam_dec} t}$), establezca la tasa de expansión de la inversión neta $\\frac{\\dot{I}}{I}$ demostrada mediante su derivada temporal:",
+        "Demuestre la tasa relativa de expansión de la inversión neta $\\frac{\\dot{I}}{I}$ en {setup_desc}, dado que el capital sigue $K(t) = {A_val} e^{{lam_dec} t}$ con $\\lambda = {lam_pct}\\%$:"
+      ],
+      "generate_py": "def generate(rng):\n    setups = [\n        'una trayectoria de estado uniforme',\n        'un equilibrio de largo plazo',\n        'un sendero de crecimiento balanceado',\n        'un régimen dinámico estacionario',\n        'un modelo de expansión sostenida'\n    ]\n    setup = rng.choice(setups)\n    A_val = rng.choice([100, 150, 200, 250, 300, 400])\n    lam_pairs = [\n        (2, '0.02'),\n        (3, '0.03'),\n        (4, '0.04'),\n        (5, '0.05')\n    ]\n    lam_pct, lam_dec = rng.choice(lam_pairs)\n\n    d1_pct = lam_pct * 2\n    d2_pct = lam_pct + 2\n    d3_pct = lam_pct + 1\n    d4_pct = -lam_pct\n    d5_pct = lam_pct ** 2\n    d6_pct = 0\n\n    c_str = rf'La inversión neta crece al {lam_pct}% anual con $\\dot{{I}}/I = {lam_pct}$%, verificando $\\dot{{I}} = \\ddot{{K}} = \\lambda^2 K = \\lambda I$ mediante diferenciación temporal.'\n    d1_str = rf'La inversión neta crece al {d1_pct}% anual con $\\dot{{I}}/I = {d1_pct}$%, postulando el cociente directo de tasas agregadas.'\n    d2_str = rf'La inversión neta crece al {d2_pct}% anual con $\\dot{{I}}/I = {d2_pct}$%, postulando el resultado directamente sin diferenciar temporalmente $I = \\lambda K$.'\n    d3_str = rf'La inversión neta crece al {d3_pct}% anual con $\\dot{{I}}/I = {d3_pct}$%, igualando la tasa de inversión con el producto medio por trabajador agregado.'\n    d4_str = rf'La inversión neta crece al {d4_pct}% anual con $\\dot{{I}}/I = {d4_pct}$%, invirtiendo los signos de la diferencia al descomponer la tasa del cociente de capital.'\n    d5_str = rf'La inversión neta crece al {d5_pct}% anual con $\\dot{{I}}/I = {d5_pct}$%, postulando la tasa porcentual como la aceleración $\\lambda^2$ del stock de capital.'\n    d6_str = rf'La inversión neta crece al {d6_pct}% anual con $\\dot{{I}}/I = {d6_pct}$%, deduciendo que en equilibrio estacionario la inversión agregada no crece.'\n\n    distractors = [\n        {'value': d1_str, 'distractor_id': 'D-Hab05-01'},\n        {'value': d2_str, 'distractor_id': 'D-Hab05-02'},\n        {'value': d3_str, 'distractor_id': 'D-Hab05-03'},\n        {'value': d4_str, 'distractor_id': 'D-Hab05-04'},\n        {'value': d5_str, 'distractor_id': 'D-Hab05-05'},\n        {'value': d6_str, 'distractor_id': 'D-Hab05-06'}\n    ]\n    return {\n        'vars': {'setup_desc': setup, 'A_val': A_val, 'lam_pct': lam_pct, 'lam_dec': lam_dec},\n        'correct': c_str,\n        'distractors': distractors\n    }",
+      "cross_check_py": "def verify(result):\n    vars_dict = result.get('vars', {})\n    lam_pct = vars_dict['lam_pct']\n    return str(lam_pct) in result['correct'] and 'diferenciación temporal' in result['correct']",
+      "hints": [
+        "Diferencie la inversión neta I(t) = dK/dt = lambda*K respecto al tiempo para obtener dI/dt.",
+        "Como dK/dt = lambda*K, la derivada de la inversión es dI/dt = lambda*(dK/dt) = lambda*(lambda*K) = lambda*I.",
+        "Divida dI/dt entre I para obtener la tasa de crecimiento: (dI/dt)/I = lambda*I / I = lambda."
+      ],
+      "solution": "Dado que el capital evoluciona como $K(t) = {A_val} e^{{lam_dec} t}$, la inversión neta es $I = \\dot{K} = \\lambda K$. Para encontrar su tasa de crecimiento, diferenciamos temporalmente: $\\dot{I} = \\lambda \\dot{K} = \\lambda(\\lambda K) = \\lambda^2 K = \\lambda I$. Por consiguiente, la tasa de crecimiento de la inversión neta es $\\frac{\\dot{I}}{I} = \\frac{\\lambda I}{I} = \\lambda = {lam_pct}\\%$.",
+      "distractor_ids": [
+        "D-Hab05-01",
+        "D-Hab05-02",
+        "D-Hab05-03",
+        "D-Hab05-04",
+        "D-Hab05-05",
+        "D-Hab05-06"
+      ]
+    },
+    {
+      "id": "T-Hab05-03",
+      "competency_id": "Hab-05",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En una economía modelada según Solow para {market_context}, la tasa de ahorro es $s = {s_val}$, la relación producto-capital es $\\frac{Q}{K} = {qk_val}$ y la mano de obra crece a $\\lambda = {lam_val}$. Calcule la tasa porcentual anual de crecimiento de la relación capital-trabajo $\\frac{\\dot{k}}{k} = s\\frac{Q}{K} - \\lambda$ (ingrese el valor numérico entero):",
+      "stem_variants": [
+        "En una economía modelada según Solow para {market_context}, la tasa de ahorro es $s = {s_val}$, la relación producto-capital es $\\frac{Q}{K} = {qk_val}$ y la mano de obra crece a $\\lambda = {lam_val}$. Calcule la tasa porcentual anual de crecimiento de la relación capital-trabajo $\\frac{\\dot{k}}{k} = s\\frac{Q}{K} - \\lambda$ (ingrese el valor numérico entero):",
+        "Determine el valor porcentual entero de la tasa de crecimiento del capital por trabajador $\\frac{\\dot{k}}{k}$ en {market_context}, dados $s = {s_val}$, $\\frac{Q}{K} = {qk_val}$ y $\\lambda = {lam_val}$:",
+        "Para el marco productivo de {market_context} con propensión al ahorro $s = {s_val}$, relación producto-capital $\\frac{Q}{K} = {qk_val}$ y tasa poblacional $\\lambda = {lam_val}$, halle la magnitud porcentual de $\\frac{\\dot{k}}{k}$:",
+        "Evalúe numéricamente la tasa porcentual $\\frac{\\dot{k}}{k} = s\\frac{\\phi(k)}{k} - \\lambda$ en {market_context}, utilizando los coeficientes $s = {s_val}$, $\\frac{Q}{K} = {qk_val}$ y $\\lambda = {lam_val}$:"
+      ],
+      "generate_py": "def generate(rng):\n    contexts = [\n        'el sector de manufactura ligera',\n        'la economía regional en expansión',\n        'un mercado competitivo cerrado',\n        'el sector de servicios industriales',\n        'un sistema económico tecnificado'\n    ]\n    ctx = rng.choice(contexts)\n    combos = [\n        (0.20, 0.40, 0.03, 5),\n        (0.25, 0.40, 0.02, 8),\n        (0.30, 0.40, 0.03, 9),\n        (0.20, 0.50, 0.04, 6),\n        (0.25, 0.48, 0.04, 8),\n        (0.30, 0.50, 0.05, 10),\n        (0.20, 0.45, 0.03, 6),\n        (0.25, 0.36, 0.02, 7)\n    ]\n    s_val, qk_val, lam_val, gk_int = rng.choice(combos)\n    return {\n        'vars': {'market_context': ctx, 's_val': s_val, 'qk_val': qk_val, 'lam_val': lam_val, 'gk_int': gk_int},\n        'correct': gk_int,\n        'value': str(gk_int),\n        'canonical_algebraic': str(gk_int),\n        'accepted_equivalents': [str(gk_int), f'{gk_int}.0', f'{gk_int}%'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    s = result['vars']['s_val']\n    qk = result['vars']['qk_val']\n    lam = result['vars']['lam_val']\n    expected = int(round(100 * (s * qk - lam)))\n    return int(result['correct']) == expected",
+      "hints": [
+        "Aplique la fórmula de descomposición dinámica: (dk/dt)/k = s*(Q/K) - lambda.",
+        "Calcule el producto s * (Q/K): {s_val} * {qk_val} = {s_val * qk_val:.4f}.",
+        "Reste la tasa demográfica lambda: {s_val * qk_val:.4f} - {lam_val} y multiplique por 100 para obtener el porcentaje entero."
+      ],
+      "solution": "La tasa de crecimiento de la relación capital-trabajo es $\\frac{\\dot{k}}{k} = s\\frac{Q}{K} - \\lambda = ({s_val})({qk_val}) - {lam_val} = {gk_int / 100:.2f} = {gk_int}\\%$.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab05-04",
+      "competency_id": "Hab-05",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "En un modelo de Solow para {domain_desc}, el stock agregado de capital sigue una senda de crecimiento exponencial $K(t) = {A_val} e^{{lam_dec} t}$, donde la mano de obra se expande a un ritmo constante del {lam_pct}\\% anual (tasa $\\lambda$). Sabiendo que la inversión neta es $I(t) = \\dot{K}(t) = \\lambda K(t)$, ¿cuál es la tasa porcentual anual de crecimiento de la inversión neta $\\frac{\\dot{I}}{I}$? (ingrese el valor numérico entero):",
+      "stem_variants": [
+        "En un modelo de Solow para {domain_desc}, el stock agregado de capital sigue una senda de crecimiento exponencial $K(t) = {A_val} e^{{lam_dec} t}$, donde la mano de obra se expande a un ritmo constante del {lam_pct}\\% anual (tasa $\\lambda$). Sabiendo que la inversión neta es $I(t) = \\dot{K}(t) = \\lambda K(t)$, ¿cuál es la tasa porcentual anual de crecimiento de la inversión neta $\\frac{\\dot{I}}{I}$? (ingrese el valor numérico entero):",
+        "Calcule la tasa porcentual de expansión de la inversión neta $\\frac{\\dot{I}}{I}$ en {domain_desc}, dado que el capital agregado crece a una tasa demográfica del {lam_pct}\\% anual mediante $K(t) = {A_val} e^{{lam_dec} t}$:",
+        "Para el sistema económico de {domain_desc} donde $K(t) = {A_val} e^{{lam_dec} t}$, determine la magnitud numérica entera de la tasa de crecimiento de la inversión neta $\\frac{\\dot{I}}{I}$ sabiendo que el empleo avanza al {lam_pct}\\% anual:",
+        "Halle el valor escalar porcentual de la tasa de crecimiento temporal de la inversión $\\frac{\\dot{I}}{I}$ en {domain_desc}, sabiendo que $I = \\lambda K$ y la mano de obra se expande al {lam_pct}\\% anual:"
+      ],
+      "generate_py": "def generate(rng):\n    domains = [\n        'el sector de bienes de capital',\n        'la economía agregada nacional',\n        'un mercado de acumulación continua',\n        'la industria manufacturera moderna',\n        'el sistema productivo en régimen balanceado'\n    ]\n    dom = rng.choice(domains)\n    A_val = rng.choice([100, 200, 250, 300, 500])\n    lam_pairs = [\n        (2, '0.02'),\n        (3, '0.03'),\n        (4, '0.04'),\n        (5, '0.05'),\n        (6, '0.06')\n    ]\n    lam_pct, lam_dec = rng.choice(lam_pairs)\n    return {\n        'vars': {'domain_desc': dom, 'A_val': A_val, 'lam_pct': lam_pct, 'lam_dec': lam_dec},\n        'correct': lam_pct,\n        'value': str(lam_pct),\n        'canonical_algebraic': str(lam_pct),\n        'accepted_equivalents': [str(lam_pct), f'{lam_pct}.0', f'{lam_pct}%'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    lam_pct = result['vars']['lam_pct']\n    return int(result['correct']) == lam_pct",
+      "hints": [
+        "Recuerde que I(t) = dK/dt = lambda * K(t).",
+        "Diferencie I(t) respecto al tiempo: dI/dt = lambda * (dK/dt) = lambda * (lambda * K) = lambda * I.",
+        "La tasa relativa de crecimiento es (dI/dt)/I = (lambda * I) / I = lambda, que corresponde exactamente al {lam_pct}%."
+      ],
+      "solution": "Como $I = \\dot{K} = \\lambda K$, al diferenciar respecto al tiempo obtenemos $\\dot{I} = \\lambda \\dot{K} = \\lambda^2 K = \\lambda I$. Por tanto, la tasa de crecimiento de la inversión neta es exactamente $\\frac{\\dot{I}}{I} = \\frac{\\lambda I}{I} = \\lambda = {lam_pct}\\%$.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab05-05",
+      "competency_id": "Hab-05",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Analyze",
+      "stem": "En el marco de la descomposición dinámica de la ecuación de acumulación de Solow $\\dot{k} = s\\phi(k) - \\lambda k$ para {framework_desc}, seleccione todas las afirmaciones teóricas que son analíticamente correctas:",
+      "stem_variants": [
+        "En el marco de la descomposición dinámica de la ecuación de acumulación de Solow $\\dot{k} = s\\phi(k) - \\lambda k$ para {framework_desc}, seleccione todas las afirmaciones teóricas que son analíticamente correctas:",
+        "Al descomponer las tasas de crecimiento del capital y del trabajo en {framework_desc}, ¿cuáles de las siguientes proposiciones sobre la relación $\\frac{\\dot{k}}{k} = s\\frac{\\phi(k)}{k} - \\lambda$ son matemáticamente válidas?",
+        "Considere la ecuación fundamental de Solow dividida entre $k$ en {framework_desc}. Marque todos los enunciados verdaderos acerca de la tasa de crecimiento de la relación capital-trabajo:",
+        "Desde la perspectiva formal de tasas relativas de crecimiento en {framework_desc}, identifique las aseveraciones acertadas sobre $\\frac{\\dot{k}}{k}$ y sus componentes:"
+      ],
+      "generate_py": "def generate(rng):\n    frameworks = [\n        'el análisis macroeconómico de largo plazo',\n        'un modelo de crecimiento con progreso técnico exógeno',\n        'la dinámica de la acumulación neoclásica',\n        'el estudio formal de convergencia económica',\n        'el equilibrio macroeconómico continuo'\n    ]\n    fw = rng.choice(frameworks)\n    options = [\n        {\n            'content': 'La tasa de crecimiento de la relación capital-trabajo equivale a la diferencia entre la tasa de crecimiento del capital y la del trabajo: $\\\\dot{{k}}/k = \\\\dot{{K}}/K - \\\\dot{{L}}/L$.',\n            'is_correct': True,\n            'distractor_id': None,\n            'error_rationale': None\n        },\n        {\n            'content': 'El término $\\\\frac{{\\\\phi(k)}}{{k}}$ en la ecuación dividida representa la relación producto-capital $\\\\frac{{Q}}{{K}}$ (productividad media del capital).',\n            'is_correct': True,\n            'distractor_id': None,\n            'error_rationale': None\n        },\n        {\n            'content': 'La tasa de crecimiento de un cociente $k = K/L$ se calcula dividiendo la tasa del numerador entre la del denominador: $\\\\dot{{k}}/k = \\\\frac{{\\\\dot{{K}}/K}}{{\\\\dot{{L}}/L}}$.',\n            'is_correct': False,\n            'distractor_id': 'D-Hab05-01',\n            'error_rationale': 'La regla de derivación logarítmica para un cociente establece que su tasa de crecimiento es la resta de tasas dK/K - dL/L y no su división.'\n        },\n        {\n            'content': 'Al derivar logarítmicamente la relación capital-trabajo se obtiene $\\\\dot{{k}}/k = \\\\dot{{L}}/L - \\\\dot{{K}}/K$, invirtiendo el signo de las tasas de los componentes.',\n            'is_correct': False,\n            'distractor_id': 'D-Hab05-04',\n            'error_rationale': 'Al tomar ln(k) = ln(K) - ln(L) y diferenciar, la tasa de K tiene signo positivo y la de L signo negativo.'\n        },\n        {\n            'content': 'En la condición de estado estacionario ($\\\\dot{{k}} = 0$), el stock agregado de capital $K$ permanece constante sin experimentar crecimiento alguno ($\\\\dot{{K}}/K = 0$).',\n            'is_correct': False,\n            'distractor_id': 'D-Hab05-06',\n            'error_rationale': 'En estado estacionario dk/k = 0 implica dK/K = lambda > 0; el capital agregado sigue creciendo a la tasa de la población.'\n        }\n    ]\n    return {\n        'vars': {'framework_desc': fw},\n        'options': options,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    opts = result.get('options', [])\n    correct_count = sum(1 for o in opts if o.get('is_correct'))\n    return correct_count == 2 and len(opts) == 5",
+      "hints": [
+        "Recuerde la propiedad de diferenciación logarítmica: d/dt ln(K/L) = d/dt ln(K) - d/dt ln(L).",
+        "Sustituya phi(k) = Q/L y k = K/L para simplificar el cociente phi(k)/k.",
+        "Analice la diferencia fundamental entre el capital intensivo k (que se estabiliza) y el capital agregado K (que crece a tasa lambda en estado estacionario)."
+      ],
+      "solution": "Tomando logaritmo natural de $k = K/L$ y derivando respecto al tiempo, se obtiene $\\frac{\\dot{k}}{k} = \\frac{\\dot{K}}{K} - \\frac{\\dot{L}}{L} = s\\frac{\\phi(k)}{k} - \\lambda$. Como $\\phi(k) = Q/L$, el término $\\frac{\\phi(k)}{k} = \\frac{Q}{K}$ es la relación producto-capital. En estado uniforme $\\dot{k} = 0$, por lo que $\\frac{\\dot{K}}{K} = \\lambda > 0$.",
+      "distractor_ids": [
+        "D-Hab05-01",
+        "D-Hab05-04",
+        "D-Hab05-06"
+      ]
+    },
+    {
+      "id": "T-Hab05-06",
+      "competency_id": "Hab-05",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "En relación con el comportamiento de la inversión neta $I = \\dot{K} = \\lambda K$ y la aceleración del capital cuando $K(t) = A e^{\\lambda t}$ en {regime_desc}, elija todas las aseveraciones verdaderas:",
+      "stem_variants": [
+        "En relación con el comportamiento de la inversión neta $I = \\dot{K} = \\lambda K$ y la aceleración del capital cuando $K(t) = A e^{\\lambda t}$ en {regime_desc}, elija todas las aseveraciones verdaderas:",
+        "Al estudiar la dinámica temporal de la inversión neta $I = \\dot{K}$ en {regime_desc} con crecimiento de capital a tasa constante $\\lambda$, ¿cuáles de las siguientes proposiciones son válidas?",
+        "Considere la trayectoria de acumulación $K(t) = A e^{\\lambda t}$ en {regime_desc}. Seleccione todas las conclusiones analíticas que se derivan al evaluar la tasa de crecimiento $\\frac{\\dot{I}}{I}$:",
+        "Para el régimen dinámico de {regime_desc}, evalúe las propiedades analíticas de la inversión neta $I = \\dot{K}$ y determine cuáles enunciados son matemáticamente correctos:"
+      ],
+      "generate_py": "def generate(rng):\n    regimes = [\n        'un estado uniforme de Solow',\n        'una senda de crecimiento balanceado agregada',\n        'un modelo macroeconómico de estado estacionario',\n        'una trayectoria dinámica de largo plazo',\n        'un sistema de acumulación óptima de capital'\n    ]\n    rg = rng.choice(regimes)\n    options = [\n        {\n            'content': 'La tasa de crecimiento de la inversión neta es idéntica a la tasa de crecimiento del capital agregado: $\\\\frac{{\\\\dot{{I}}}}{{I}} = \\\\lambda$.',\n            'is_correct': True,\n            'distractor_id': None,\n            'error_rationale': None\n        },\n        {\n            'content': 'La derivada temporal de la inversión neta satisface $\\\\dot{{I}} = \\\\ddot{{K}} = \\\\lambda \\\\dot{{K}} = \\\\lambda^2 K = \\\\lambda I$.',\n            'is_correct': True,\n            'distractor_id': None,\n            'error_rationale': None\n        },\n        {\n            'content': 'La tasa de crecimiento de la inversión neta se deduce de manera axiomática sin requerir la diferenciación temporal $\\\\dot{{I}} = \\\\ddot{{K}}$.',\n            'is_correct': False,\n            'distractor_id': 'D-Hab05-02',\n            'error_rationale': 'La demostración rigurosa exige diferenciar I = lambda K respecto al tiempo para comprobar que dI = lambda I.'\n        },\n        {\n            'content': 'La tasa porcentual de expansión de la inversión neta es $\\\\lambda^2$, confundiéndola con la aceleración del stock agregado $\\\\ddot{{K}}$.',\n            'is_correct': False,\n            'distractor_id': 'D-Hab05-05',\n            'error_rationale': 'La tasa de crecimiento es el cociente relativo dI/I = (lambda^2 K)/(lambda K) = lambda, no lambda^2.'\n        },\n        {\n            'content': 'En la ecuación de acumulación, el cociente $\\\\frac{{\\\\phi(k)}}{{k}}$ mide el producto medio del trabajo $\\\\text{{APP}}_L$ de la economía.',\n            'is_correct': False,\n            'distractor_id': 'D-Hab05-03',\n            'error_rationale': 'phi(k)/k = (Q/L)/(K/L) = Q/K, que representa la relación producto-capital y no la productividad media laboral.'\n        }\n    ]\n    return {\n        'vars': {'regime_desc': rg},\n        'options': options,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    opts = result.get('options', [])\n    correct_count = sum(1 for o in opts if o.get('is_correct'))\n    return correct_count == 2 and len(opts) == 5",
+      "hints": [
+        "Parta de la definición de inversión neta: I = dK/dt = lambda*K.",
+        "Calcule la segunda derivada del stock de capital para hallar dI/dt: dI/dt = d^2K/dt^2 = lambda*(dK/dt) = lambda^2 * K = lambda * I.",
+        "Divida dI/dt entre I para obtener la tasa de crecimiento porcentual (dI/dt)/I = lambda."
+      ],
+      "solution": "Dado que $K(t) = A e^{\\lambda t}$, la inversión neta es $I = \\dot{K} = \\lambda K$. Al diferenciar respecto al tiempo obtenemos $\\dot{I} = \\ddot{K} = \\lambda \\dot{K} = \\lambda(\\lambda K) = \\lambda I$. Por tanto, la tasa de crecimiento relativo es $\\frac{\\dot{I}}{I} = \\frac{\\lambda I}{I} = \\lambda$. La aceleración del capital es $\\ddot{K} = \\lambda^2 K$, pero la tasa porcentual es $\\lambda$.",
+      "distractor_ids": [
+        "D-Hab05-02",
+        "D-Hab05-05",
+        "D-Hab05-03"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "competency_id": "C-06",
+  "templates": [
+    {
+      "id": "T-C06-01",
+      "competency_id": "C-06",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el país {country}, la fuerza laboral evoluciona según la trayectoria temporal exógena $L(t) = {L0} e^{{n_dec} t}$, con una tasa demográfica del {p}%. Calcule el incremento absoluto inicial de trabajadores en el instante $t = 0$, dado por $\\dot{L}(0) = n L_0$:",
+      "stem_variants": [
+        "En el país {country}, la fuerza laboral evoluciona según la trayectoria temporal exógena $L(t) = {L0} e^{{n_dec} t}$, con una tasa demográfica del {p}%. Calcule el incremento absoluto inicial de trabajadores en el instante $t = 0$, dado por $\\dot{L}(0) = n L_0$:",
+        "Dada una economía nacional denominada {country} donde el empleo inicial es $L_0 = {L0}$ y la tasa demográfica exógena es $n = {n_dec}$ ({p}%), determine la variación instantánea inicial de la mano de obra $\\dot{L}(0) = n L_0$:",
+        "Para el sistema demográfico de {country} que obedece a $L(t) = {L0} e^{{n_dec} t}$, halle el flujo anual de nuevos trabajadores $\\dot{L}(0)$ incorporados en el periodo inicial $t = 0$:",
+        "Bajo el postulado de crecimiento exponencial $L(t) = {L0} e^{{n_dec} t}$ en {country}, calcule el valor escalar de la derivada temporal $\\dot{L}(0)$:"
+      ],
+      "generate_py": "def generate(rng):\n    countries = ['Alfa', 'Beta', 'Gamma', 'Delta', 'Épsilon', 'Zeta', 'Eta', 'Theta', 'Iota', 'Kappa', 'Lambda', 'Sigma']\n    country = rng.choice(countries)\n    k_mult = rng.randint(2, 50)\n    L0 = k_mult * 1000\n    p = rng.randint(1, 6)\n    n_dec = f'{p / 100:.2f}'\n    delta_L0 = (p * L0) // 100\n    return {\n        'vars': {\n            'country': country,\n            'L0': L0,\n            'p': p,\n            'n_dec': n_dec,\n            'delta_L0': delta_L0\n        },\n        'correct': delta_L0,\n        'value': str(delta_L0),\n        'canonical_algebraic': str(delta_L0),\n        'accepted_equivalents': [str(delta_L0), f'{delta_L0}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    L0 = result['vars']['L0']\n    p = result['vars']['p']\n    return int(result['correct']) == (p * L0) // 100",
+      "hints": [
+        "Derive la expresión temporal L(t) = L_0 e^(nt) respecto al tiempo para obtener dL/dt = n L_0 e^(nt).",
+        "Evalúe la derivada temporal en el momento inicial t = 0 donde e^0 = 1, obteniendo dL/dt(0) = n L_0.",
+        "Multiplique la tasa demográfica en forma decimal n = {n_dec} por la dotación inicial de trabajadores L_0 = {L0}."
+      ],
+      "solution": "La derivada temporal del stock de trabajo es dL/dt = n L(t). En t = 0, se tiene dL/dt(0) = n L_0 = ({p}/100) * {L0} = {delta_L0}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C06-02",
+      "competency_id": "C-06",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "En la región {region}, la mano de obra disponible se rige por la ecuación $L(t) = {L0} e^{{n_dec} t}$. Determine la tasa de crecimiento porcentual constante de la oferta de trabajo, calculada como $\\frac{\\dot{L}(t)}{L(t)} \\times 100$:",
+      "stem_variants": [
+        "En la región {region}, la mano de obra disponible se rige por la ecuación $L(t) = {L0} e^{{n_dec} t}$. Determine la tasa de crecimiento porcentual constante de la oferta de trabajo, calculada como $\\frac{\\dot{L}(t)}{L(t)} \\times 100$:",
+        "Para el mercado laboral de la región {region} con trayectoria $L(t) = {L0} e^{{n_dec} t}$, calcule el porcentaje anual de expansión continua de la fuerza de trabajo $\\frac{\\dot{L}}{L} \\times 100$:",
+        "A partir de la función de oferta laboral exógena $L(t) = {L0} e^{{n_dec} t}$ en {region}, halle el valor numérico de la tasa porcentual instantánea de crecimiento $\\frac{d \\ln L}{dt} \\times 100$:",
+        "Dentro del modelo neoclásico para {region}, determine el porcentaje de crecimiento demográfico constante de la mano de obra dado por $100 \\times \\frac{\\dot{L}(t)}{L(t)}$ cuando $L(t) = {L0} e^{{n_dec} t}$:"
+      ],
+      "generate_py": "def generate(rng):\n    regions = ['norte', 'sur', 'central', 'oriental', 'occidental', 'costera', 'metropolitana', 'fronteriza', 'andina', 'rural']\n    region = rng.choice(regions)\n    L0 = rng.randint(5, 80) * 500\n    p = rng.randint(1, 8)\n    n_dec = f'{p / 100:.2f}'\n    return {\n        'vars': {\n            'region': region,\n            'L0': L0,\n            'p': p,\n            'n_dec': n_dec\n        },\n        'correct': p,\n        'value': str(p),\n        'canonical_algebraic': str(p),\n        'accepted_equivalents': [str(p), f'{p}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    p = result['vars']['p']\n    return int(result['correct']) == p",
+      "hints": [
+        "Recuerde que la tasa de crecimiento porcentual de una exponencial L_0 e^(nt) es la constante n.",
+        "La derivada logarítmica d ln(L)/dt = n representa la tasa continua de crecimiento.",
+        "Convierta la tasa decimal n = {n_dec} a porcentaje multiplicando por 100."
+      ],
+      "solution": "La tasa relativa de cambio de la oferta laboral es (dL/dt)/L = n. Expresada en términos porcentuales, equivale a {n_dec} * 100 = {p}%.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C06-03",
+      "competency_id": "C-06",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "hard",
+      "bloom": "Apply",
+      "stem": "Durante una fase de transición en el sector {sector}, el producto agregado es $Y = {Y}$ y el stock de capital es $K = {K}$, con una tasa de ahorro del $s = {s_pct}\\%$. Calcule la tasa de crecimiento porcentual del capital $\\frac{\\dot{K}}{K} \\times 100$:",
+      "stem_variants": [
+        "Durante una fase de transición en el sector {sector}, el producto agregado es $Y = {Y}$ y el stock de capital es $K = {K}$, con una tasa de ahorro del $s = {s_pct}\\%$. Calcule la tasa de crecimiento porcentual del capital $\\frac{\\dot{K}}{K} \\times 100$:",
+        "En un periodo fuera del estado estacionario en el sector {sector}, donde $K = {K}$, $Y = {Y}$ y la tasa de ahorro es $s = {s_pct}\\%$, determine la tasa porcentual de acumulación de capital $100 \\times \\frac{\\dot{K}}{K}$:",
+        "Para una trayectoria de transición en el sector {sector} con razón producto-capital $Y/K = 0.25$ y propensión a ahorrar $s = {s_pct}\\%$, halle el valor numérico porcentual de la tasa de acumulación $\\frac{\\dot{K}}{K} \\times 100$:",
+        "Considere la ecuación de acumulación $\\dot{K} = sY$ en el sector {sector}. Con $Y = {Y}$, $K = {K}$ y $s = {s_pct}\\%$, calcule el porcentaje exacto de crecimiento del capital físico:"
+      ],
+      "generate_py": "def generate(rng):\n    sectors = ['manufacturero', 'industrial', 'agrícola', 'tecnológico', 'de bienes de capital', 'energético', 'textil', 'automotriz', 'químico', 'metalúrgico']\n    sector = rng.choice(sectors)\n    k_mult = rng.randint(2, 25)\n    Y = 250 * k_mult\n    K = 1000 * k_mult\n    m = rng.randint(3, 10)\n    s_pct = 4 * m\n    g_K = m\n    return {\n        'vars': {\n            'sector': sector,\n            'Y': Y,\n            'K': K,\n            's_pct': s_pct,\n            'g_K': g_K\n        },\n        'correct': g_K,\n        'value': str(g_K),\n        'canonical_algebraic': str(g_K),\n        'accepted_equivalents': [str(g_K), f'{g_K}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    s_pct = result['vars']['s_pct']\n    return int(result['correct']) == (s_pct // 4)",
+      "hints": [
+        "Recuerde que la inversión neta es dK/dt = sY, por lo que la tasa de crecimiento del capital es (dK/dt)/K = s(Y/K).",
+        "Calcule la relación producto-capital Y/K dividiendo {Y} entre {K}.",
+        "Multiplique la tasa de ahorro s = {s_pct}% por la relación Y/K para obtener la tasa de crecimiento del capital."
+      ],
+      "solution": "La tasa de crecimiento del capital físico se determina por (dK/dt)/K = s * (Y/K) = ({s_pct}/100) * ({Y}/{K}) = ({s_pct}/100) * 0.25 = {g_K}%. Esta tasa difiere de la demográfica n en la transición.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C06-04",
+      "competency_id": "C-06",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "En el sector {sector}, la población trabajadora crece según la especificación neoclásica $L(t) = L_0 e^{{n_pct} t/100}$. Seleccione todas las afirmaciones que caracterizan correctamente la exogeneidad demográfica frente a supuestos malthusianos:",
+      "stem_variants": [
+        "En el sector {sector}, la población trabajadora crece según la especificación neoclásica $L(t) = L_0 e^{{n_pct} t/100}$. Seleccione todas las afirmaciones que caracterizan correctamente la exogeneidad demográfica frente a supuestos malthusianos:",
+        "Al examinar la hipótesis de crecimiento poblacional a tasa constante $n = {n_pct}\\%$ en el sector {sector}, ¿cuáles de las siguientes proposiciones sobre la independencia del salario son teóricamente válidas?",
+        "Considere la fuerza laboral del sector {sector} con tasa exógena del {n_pct}%. Identifique todas las propiedades verdaderas que contrastan el modelo de Solow con los mecanismos demográficos de tipo malthusiano:",
+        "Dentro del marco macroeconómico de Solow para el sector {sector}, evalúe cómo responde la tasa demográfica $n = {n_pct}\\%$ ante variaciones en el nivel de vida y salarios reales:"
+      ],
+      "generate_py": "def generate(rng):\n    sectors = ['manufacturero', 'industrial', 'agrícola', 'tecnológico', 'de bienes de capital', 'energético', 'textil', 'automotriz', 'químico', 'metalúrgico']\n    sector = rng.choice(sectors)\n    n_pct = rng.randint(1, 6)\n    opts = [\n        {\n            'content': 'La tasa de crecimiento de la fuerza de trabajo $n$ es un parámetro estrictamente exógeno y constante en el modelo neoclásico de Solow.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Las fluctuaciones en el salario real o en el ingreso por habitante no alteran la trayectoria demográfica $L(t) = L_0 e^{nt}$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': f'La tasa de crecimiento de la población se acelera por encima del {n_pct}% cuando los salarios reales superan el nivel biológico de subsistencia.',\n            'is_correct': False,\n            'distractor_id': 'D-C06-01',\n            'error_rationale': 'En el modelo básico de Solow, el crecimiento demográfico es estrictamente exógeno a tasa n y no responde a dinámicas endógenas clásicas o malthusianas de subsistencia.'\n        },\n        {\n            'content': f'Si el ingreso medio cae temporalmente por debajo del costo de vida, la tasa demográfica del {n_pct}% frena a cero para restablecer el equilibrio malthusiano.',\n            'is_correct': False,\n            'distractor_id': 'D-C06-01',\n            'error_rationale': 'El modelo no incorpora frenos malthusianos preventivos o positivos; la oferta de trabajo continúa expandiéndose a la tasa exógena constante n.'\n        }\n    ]\n    return {\n        'vars': {'sector': sector, 'n_pct': n_pct},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    opts = result.get('options', [])\n    correct_cnt = sum(1 for o in opts if o.get('is_correct'))\n    return correct_cnt == 2 and len(opts) == 4",
+      "hints": [
+        "Revise los supuestos sobre la función L(t) = L_0 e^(nt) en el modelo de Solow.",
+        "Verifique si el salario real o la renta per cápita influyen en la tasa de natalidad o mortalidad en el modelo básico.",
+        "Distinga el enfoque exógeno neoclásico del modelo de subsistencia clásico de Malthus."
+      ],
+      "solution": "En el modelo de crecimiento de Solow, la tasa de crecimiento demográfico n es exógena y constante. No responde al salario real ni a condiciones de subsistencia, en contraste directo con las teorías malthusianas.",
+      "distractor_ids": [
+        "D-C06-01"
+      ]
+    },
+    {
+      "id": "T-C06-05",
+      "competency_id": "C-06",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "En la economía {economy_name}, donde la participación del capital es del {alpha_pct}%, se analiza el mercado de trabajo. Seleccione todas las proposiciones rigurosas sobre la inelasticidad de la oferta laboral y el mecanismo de pleno empleo:",
+      "stem_variants": [
+        "En la economía {economy_name}, donde la participación del capital es del {alpha_pct}%, se analiza el mercado de trabajo. Seleccione todas las proposiciones rigurosas sobre la inelasticidad de la oferta laboral y el mecanismo de pleno empleo:",
+        "Considere el mercado de trabajo competitivo en {economy_name} con parámetro tecnológico del {alpha_pct}%. ¿Cuáles de las siguientes afirmaciones sobre la oferta inelástica y flexibilidad salarial son correctas?",
+        "Para el marco macroeconómico de {economy_name}, analice cómo interactúan la curva vertical de oferta de trabajo y la determinación del salario real con participación factorial del {alpha_pct}%:",
+        "Al examinar la garantía de pleno empleo perpetuo en {economy_name} frente a una participación del capital del {alpha_pct}%, marque todas las tesis analíticamente ciertas:"
+      ],
+      "generate_py": "def generate(rng):\n    economies = ['Nórdica', 'Báltica', 'Mediterránea', 'Atlántica', 'Pacífica', 'Continental', 'Insular', 'Alpina', 'Cantábrica', 'Egea', 'Adriática', 'Caribeña']\n    economy_name = rng.choice(economies)\n    alpha_pct = rng.randint(25, 45)\n    opts = [\n        {\n            'content': 'La oferta de mano de obra es perfectamente inelástica en cada instante, ofreciéndose la totalidad de los trabajadores disponibles sin importar el salario real.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'La flexibilidad instantánea y perfecta del salario real, igualándose a la productividad marginal $\\\\partial F / \\\\partial L$, asegura el vaciado continuo del mercado y el pleno empleo permanente.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': f'Dado que la oferta de trabajo es totalmente inelástica, se genera desempleo estructural permanente si las empresas demandan menos del {alpha_pct}% del producto agregado.',\n            'is_correct': False,\n            'distractor_id': 'D-C06-02',\n            'error_rationale': 'El salario real es perfectamente flexible y se ajusta continuamente para igualar la demanda de trabajo a la oferta inelástica, garantizando el pleno empleo en todo momento sin desempleo involuntario.'\n        },\n        {\n            'content': f'Para evitar el desempleo en presencia de una oferta laboral inelástica, el gobierno de {economy_name} debe fijar salarios mínimos obligatorios que estabilicen la contratación.',\n            'is_correct': False,\n            'distractor_id': 'D-C06-02',\n            'error_rationale': 'En el modelo neoclásico, la flexibilidad de los salarios competitivos despeja el mercado laboral de forma automática y descentralizada sin requerir fijación salarial externa.'\n        }\n    ]\n    return {\n        'vars': {'economy_name': economy_name, 'alpha_pct': alpha_pct},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    opts = result.get('options', [])\n    correct_cnt = sum(1 for o in opts if o.get('is_correct'))\n    return correct_cnt == 2 and len(opts) == 4",
+      "hints": [
+        "Analice cómo el salario real de equilibrio se determina por la intersección de la oferta vertical y la curva de productividad marginal.",
+        "Compruebe si la rigidez salarial existe en el modelo básico de Solow o si los salarios se ajustan instantáneamente.",
+        "Recuerde que una oferta perfectamente inelástica es compatible con el pleno empleo si los precios son perfectamente flexibles."
+      ],
+      "solution": "La oferta de trabajo inelástica se absorbe íntegramente gracias a la completa flexibilidad del salario real, el cual se iguala en todo momento a la productividad marginal del trabajo, eliminando cualquier desempleo involuntario.",
+      "distractor_ids": [
+        "D-C06-02"
+      ]
+    },
+    {
+      "id": "T-C06-06",
+      "competency_id": "C-06",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "En la región {region}, tras {year_t} años de desarrollo, se analiza el comportamiento dinámico de los factores de producción. Seleccione todas las proposiciones válidas sobre las tasas de crecimiento del capital y del trabajo en transición frente al estado estacionario:",
+      "stem_variants": [
+        "En la región {region}, tras {year_t} años de desarrollo, se analiza el comportamiento dinámico de los factores de producción. Seleccione todas las proposiciones válidas sobre las tasas de crecimiento del capital y del trabajo en transición frente al estado estacionario:",
+        "Al evaluar la trayectoria dinámica de {region} a lo largo de un horizonte de {year_t} periodos, ¿cuáles de las siguientes proposiciones sobre la tasa de acumulación de capital frente a la tasa demográfica $n$ son analíticamente ciertas?",
+        "Considere la transición macroeconómica en {region} sujeta a un periodo de ajuste de {year_t} años. Identifique las diferencias fundamentales entre la tasa de crecimiento del capital $\\dot{K}/K$ y la tasa de crecimiento laboral $n$:",
+        "Dentro del análisis intertemporal para {region} con horizonte temporal de {year_t} años, marque todas las conclusiones teóricas válidas sobre el crecimiento factorial fuera del estado uniforme:"
+      ],
+      "generate_py": "def generate(rng):\n    regions = ['norte', 'sur', 'central', 'oriental', 'occidental', 'costera', 'metropolitana', 'fronteriza', 'andina', 'rural']\n    region = rng.choice(regions)\n    year_t = rng.randint(5, 40)\n    opts = [\n        {\n            'content': 'Durante la transición fuera del estado estacionario, el capital se acumula a la tasa $\\\\dot{K}/K = s F(K, L)/K$, la cual difiere de la tasa de crecimiento demográfico $n$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'La tasa de crecimiento del stock de capital solo converge e iguala a la tasa poblacional $n$ cuando la relación capital-trabajo alcanza su valor de estado estacionario.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': f'El supuesto de pleno empleo perpetuo obliga a que el stock de capital físico crezca obligatoriamente a la tasa demográfica $n$ en el año {year_t} de transición.',\n            'is_correct': False,\n            'distractor_id': 'D-C06-03',\n            'error_rationale': 'La tasa n es la tasa de crecimiento de la mano de obra; durante la transición el capital crece a tasa s F(K, L)/K, la cual es diferente de n mientras la intensidad de capital se ajusta dinámicamente.'\n        },\n        {\n            'content': f'Fuera del estado estacionario, tras {year_t} años de ajuste, el capital y el trabajo deben expandirse siempre a una tasa idéntica para evitar crisis de sobreacumulación.',\n            'is_correct': False,\n            'distractor_id': 'D-C06-03',\n            'error_rationale': 'El ajuste hacia el estado estacionario ocurre precisamente porque el capital y el trabajo crecen a ritmos diferentes, permitiendo que la intensidad de capital r varíe hacia su valor de equilibrio.'\n        }\n    ]\n    return {\n        'vars': {'region': region, 'year_t': year_t},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    opts = result.get('options', [])\n    correct_cnt = sum(1 for o in opts if o.get('is_correct'))\n    return correct_cnt == 2 and len(opts) == 4",
+      "hints": [
+        "Exprese la tasa de crecimiento del capital dK/dt / K = s Y/K a partir de la función de ahorro.",
+        "Recuerde que en la transición r = K/L no es constante, lo que implica que el capital y el trabajo crecen a tasas diferentes.",
+        "Compruebe en qué condición específica (estado estacionario) ambas tasas coinciden."
+      ],
+      "solution": "La tasa de crecimiento de la mano de obra es n, mientras que la del capital es s F(K, L)/K. Fuera del estado estacionario ambas tasas difieren, y solo se igualan cuando la economía converge a la relación capital-trabajo de equilibrio.",
+      "distractor_ids": [
+        "D-C06-03"
+      ]
+    }
+  ]
+}

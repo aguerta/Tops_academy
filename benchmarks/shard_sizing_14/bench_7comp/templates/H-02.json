@@ -1,0 +1,153 @@
+{
+  "competency_id": "H-02",
+  "templates": [
+    {
+      "id": "T-H02-01",
+      "competency_id": "H-02",
+      "interaction_type": "multiple_select",
+      "difficulty": "easy",
+      "bloom": "Remember",
+      "stem": "En el modelo de crecimiento de Solow sin progreso técnico, donde la fuerza laboral crece a una tasa constante $\\lambda = {lambda_pct}\\%$, seleccione todas las afirmaciones verdaderas sobre el comportamiento de las variables en el estado uniforme:",
+      "stem_variants": [
+        "En el modelo de crecimiento de Solow sin progreso técnico, donde la fuerza laboral crece a una tasa constante $\\lambda = {lambda_pct}\\%$, seleccione todas las afirmaciones verdaderas sobre el comportamiento de las variables en el estado uniforme:",
+        "Considere una economía cerrada que satisface las hipótesis de Solow con crecimiento demográfico $\\lambda = {lambda_pct}\\%$ en estado uniforme. ¿Cuáles de las siguientes proposiciones describen correctamente la dinámica macroeconómica?",
+        "Para un sistema económico en equilibrio de largo plazo (estado uniforme) según Solow, con tasa de expansión de la población $\\lambda = {lambda_pct}\\%$, identifique las propiedades que se verifican rigurosamente:",
+        "Bajo el análisis del estado uniforme de Solow con tasa de mano de obra $\\lambda = {lambda_pct}\\%$, elija todas las aseveraciones teóricamente válidas respecto a las variables agregadas y per cápita:"
+      ],
+      "generate_py": "def generate(rng):\n    lambda_pct = rng.choice([2, 3, 4, 5, 6])\n    opts = [\n        {\n            'content': 'El capital agregado $K$ y el producto agregado $Q$ crecen ambos a la tasa demográfica $\\\\lambda = ' + str(lambda_pct) + '\\\\%$ anual.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'La relación capital-trabajo $k = \\\\bar{k}$ permanece estrictamente constante en el tiempo, con tasa de variación $\\\\dot{k} = 0$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Las variables agregadas $K$ y $Q$ se mantienen fijas en nivel, presentando una tasa de crecimiento nula en el estado uniforme.',\n            'is_correct': False,\n            'distractor_id': 'D-H02-01',\n            'error_rationale': 'Confunde el estado uniforme con el estado estacionario clásico: los agregados $K$ y $Q$ se expanden a la tasa $\\\\lambda > 0$, no con crecimiento nulo.'\n        },\n        {\n            'content': 'El producto por trabajador $q = \\\\phi(\\\\bar{k})$ crece de forma sostenida a la tasa demográfica $\\\\lambda = ' + str(lambda_pct) + '\\\\%$ anual.',\n            'is_correct': False,\n            'distractor_id': 'D-H02-02',\n            'error_rationale': 'En ausencia de progreso tecnológico, el producto por trabajador $q = \\\\phi(\\\\bar{k})$ es constante en el tiempo y su tasa de crecimiento es cero.'\n        }\n    ]\n    return {\n        'vars': {'lambda_pct': lambda_pct},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    v = res['vars']\n    return v['lambda_pct'] in [2, 3, 4, 5, 6] and len(res['options']) == 4",
+      "hints": [
+        "Recuerde la definición de estado uniforme: la relación capital-trabajo k permanece constante en un valor k_barra.",
+        "Dado que K = k_barra * L y L crece a tasa lambda, las magnitudes agregadas como K y Q crecen a la tasa demográfica lambda.",
+        "Las variables intensivas o per cápita (como k y q) son constantes en el tiempo, por lo que su tasa de variación temporal es exactamente cero."
+      ],
+      "solution": "En el estado uniforme de Solow sin cambio técnico, la relación capital-trabajo k se estabiliza en k_barra. Como la población activa crece a tasa lambda = {lambda_pct}%, los agregados K, Q e I crecen al {lambda_pct}%. En contraste, las magnitudes por trabajador permanecen constantes (crecimiento cero).",
+      "distractor_ids": [
+        "D-H02-01",
+        "D-H02-02"
+      ]
+    },
+    {
+      "id": "T-H02-02",
+      "competency_id": "H-02",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "Respecto a los mecanismos de ajuste y condiciones de equilibrio del estado uniforme en el modelo de Solow para el sector {sector}, seleccione las afirmaciones teóricas verdaderas:",
+      "stem_variants": [
+        "Respecto a los mecanismos de ajuste y condiciones de equilibrio del estado uniforme en el modelo de Solow para el sector {sector}, seleccione las afirmaciones teóricas verdaderas:",
+        "Analice las características dinámicas que rigen el alcance del estado uniforme de Solow en el ámbito {sector}. Marque las proposiciones correctas:",
+        "¿Cuáles de los siguientes enunciados reflejan con exactitud la naturaleza del equilibrio y la convergencia al estado uniforme de Solow en un contexto {sector}?",
+        "En el contexto de la teoría del crecimiento de Solow para el sector {sector}, determine cuáles de las siguientes aseveraciones sobre la estabilidad y el equilibrio son ciertas:"
+      ],
+      "generate_py": "def generate(rng):\n    sector = rng.choice(['industrial', 'manufacturero', 'agregado', 'nacional', 'productivo'])\n    s_val = rng.choice([15, 20, 25, 30])\n    opts = [\n        {\n            'content': 'La convergencia hacia la relación capital-trabajo de equilibrio $\\\\bar{k}$ ocurre de forma automática y endógena a través de las fuerzas de mercado.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'La inversión agregada $I = s Q$ crece a la misma tasa idéntica y constante $\\\\lambda$ que el producto total y la fuerza de trabajo.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Para alcanzar y preservar el estado uniforme es indispensable una intervención regulatoria directa del Estado que dicte cuotas de inversión fija.',\n            'is_correct': False,\n            'distractor_id': 'D-H02-03',\n            'error_rationale': 'El modelo de Solow demuestra que la economía converge automáticamente al estado uniforme sin requerir planificación central ni regulaciones exógenas de inversión.'\n        },\n        {\n            'content': 'El estado uniforme exige que la inversión bruta y el capital agregado permanezcan estáticos en el tiempo con tasa de crecimiento cero.',\n            'is_correct': False,\n            'distractor_id': 'D-H02-01',\n            'error_rationale': 'En el estado uniforme las variables agregadas de capital e inversión se expanden continuamente a la tasa $\\\\lambda > 0$, a diferencia del estado estacionario clásico.'\n        }\n    ]\n    return {\n        'vars': {'sector': sector, 's_val': s_val},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    return res['vars']['sector'] in ['industrial', 'manufacturero', 'agregado', 'nacional', 'productivo'] and len(res['options']) == 4",
+      "hints": [
+        "Analice si el modelo de Solow requiere planificación exógena o si el ajuste de k es endógeno y automático.",
+        "Considere la tasa de crecimiento de la inversión agregada I = s Q cuando Q crece a tasa lambda.",
+        "Distinga entre el crecimiento nulo del estado estacionario clásico y el crecimiento equilibrado a tasa lambda del estado uniforme."
+      ],
+      "solution": "El modelo de Solow se distingue por demostrar que las fuerzas de mercado ajustan automáticamente la relación capital-trabajo hacia k_barra sin intervención gubernamental. En dicho estado, tanto Q como I = s Q crecen a la tasa demográfica lambda.",
+      "distractor_ids": [
+        "D-H02-03",
+        "D-H02-01"
+      ]
+    },
+    {
+      "id": "T-H02-03",
+      "competency_id": "H-02",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Remember",
+      "stem": "Para una economía caracterizada por una tasa de ahorro $s = {s_pct}\\%$ y crecimiento demográfico $\\lambda = {lambda_pct}\\%$, evalúe las propiedades del estado uniforme de Solow frente al estado estacionario clásico:",
+      "stem_variants": [
+        "Para una economía caracterizada por una tasa de ahorro $s = {s_pct}\\%$ y crecimiento demográfico $\\lambda = {lambda_pct}\\%$, evalúe las propiedades del estado uniforme de Solow frente al estado estacionario clásico:",
+        "Considere un marco de Solow con ahorro del {s_pct}\\% y tasa laboral $\\lambda = {lambda_pct}\\%$. ¿Qué afirmaciones distinguen correctamente el estado uniforme del estado estacionario clásico?",
+        "Bajo los parámetros $s = {s_pct}\\%$ y $\\lambda = {lambda_pct}\\%$, identifique todas las proposiciones rigurosamente ciertas sobre el equilibrio de largo plazo en Solow:",
+        "En un modelo macroeconómico con parámetros $s = {s_pct}\\%$ y expansión laboral del {lambda_pct}\\% anual, señale las aseveraciones correctas sobre el estado uniforme:"
+      ],
+      "generate_py": "def generate(rng):\n    s_pct = rng.choice([15, 20, 25, 30])\n    lambda_pct = rng.choice([1, 2, 3, 4])\n    opts = [\n        {\n            'content': 'En el estado estacionario clásico las variables agregadas no crecen, mientras que en el estado uniforme de Solow crecen a la tasa $\\\\lambda > 0$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'El consumo total $C = (1-s)Q$ crece a la tasa constante $\\\\lambda = ' + str(lambda_pct) + '\\\\%$ anual idéntica a la del producto agregado.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'El estado uniforme se define formalmente por presentar una tasa de crecimiento nula del producto agregado $Q$ y del capital agregado $K$.',\n            'is_correct': False,\n            'distractor_id': 'D-H02-01',\n            'error_rationale': 'Confusión con el estado estacionario clásico: en el estado uniforme de Solow, $Q$ y $K$ crecen a la tasa positiva $\\\\lambda$, no a tasa cero.'\n        },\n        {\n            'content': 'El consumo por trabajador $c = (1-s)\\\\phi(\\\\bar{k})$ crece continuamente a la tasa $\\\\lambda = ' + str(lambda_pct) + '\\\\%$ anual.',\n            'is_correct': False,\n            'distractor_id': 'D-H02-02',\n            'error_rationale': 'En ausencia de progreso tecnológico, las variables por trabajador permanecen invariantes en el tiempo, con tasa de crecimiento cero.'\n        },\n        {\n            'content': 'Para sostener este equilibrio es imprescindible que una junta estatal regule de forma estricta las decisiones privadas de ahorro e inversión.',\n            'is_correct': False,\n            'distractor_id': 'D-H02-03',\n            'error_rationale': 'El equilibrio de estado uniforme de Solow es un resultado descentralizado y estable, alcanzado de manera endógena sin intervención exógena.'\n        }\n    ]\n    return {\n        'vars': {'s_pct': s_pct, 'lambda_pct': lambda_pct},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    v = res['vars']\n    return v['s_pct'] in [15, 20, 25, 30] and len(res['options']) == 5",
+      "hints": [
+        "Distinga entre estado estacionario clásico (tasa de crecimiento 0) y estado uniforme de Solow (crecimiento de agregados a tasa lambda).",
+        "Analice si las variables intensivas (per cápita) crecen en ausencia de progreso técnico.",
+        "Recuerde que el equilibrio de Solow es un mecanismo endógeno y autorregulado por el mercado."
+      ],
+      "solution": "El estado uniforme de Solow generaliza el concepto de estado estacionario: mientras en el clásico el crecimiento de los agregados es cero, en Solow los agregados (K, Q, I, C) crecen a la tasa demográfica lambda = {lambda_pct}%. Las variables por trabajador son constantes y el equilibrio se alcanza sin intervención estatal.",
+      "distractor_ids": [
+        "D-H02-01",
+        "D-H02-02",
+        "D-H02-03"
+      ]
+    },
+    {
+      "id": "T-H02-04",
+      "competency_id": "H-02",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Remember",
+      "stem": "En una economía en estado uniforme de Solow sin cambio técnico, la población activa crece a una tasa del {lambda_pct}\\% anual. Ingrese la tasa de crecimiento porcentual anual del capital agregado $K$:",
+      "stem_variants": [
+        "En una economía en estado uniforme de Solow sin cambio técnico, la población activa crece a una tasa del {lambda_pct}\\% anual. Ingrese la tasa de crecimiento porcentual anual del capital agregado $K$:",
+        "Si la fuerza laboral de un país se expande a una tasa del {lambda_pct}\\% anual en el estado uniforme de Solow, determine el porcentaje de crecimiento anual del stock total de capital $K$:",
+        "Bajo las condiciones de estado uniforme del modelo de Solow, con tasa de incremento demográfico de {lambda_pct}\\%, ¿a qué tasa porcentual anual crece el capital total $K$?",
+        "Calcule la tasa porcentual anual de crecimiento del acervo de capital agregado $K$ en el estado uniforme de Solow cuando la fuerza de trabajo aumenta a razón de {lambda_pct}\\% por año:"
+      ],
+      "generate_py": "def generate(rng):\n    lambda_pct = rng.choice([2, 3, 4, 5, 6, 7])\n    return {\n        'vars': {'lambda_pct': lambda_pct},\n        'correct': lambda_pct,\n        'value': str(lambda_pct),\n        'canonical_algebraic': str(lambda_pct),\n        'accepted_equivalents': [str(lambda_pct), f'{lambda_pct}.0', f'{lambda_pct}.00'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    return int(res['correct']) == res['vars']['lambda_pct']",
+      "hints": [
+        "En el estado uniforme, la relación capital-trabajo k = K / L permanece constante en k_barra.",
+        "Dado que K = k_barra * L, la tasa de crecimiento del capital agregado es exactamente dK/dt / K = dL/dt / L = lambda.",
+        "Por lo tanto, la tasa de crecimiento del capital agregado es igual a la tasa demográfica dada."
+      ],
+      "solution": "Dado que k = K / L = k_barra es constante, se cumple que K = k_barra * L. Derivando logarítmicamente respecto al tiempo, dot(K)/K = dot(L)/L = lambda = {lambda_pct}%.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-H02-05",
+      "competency_id": "H-02",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Remember",
+      "stem": "En el estado uniforme de Solow sin progreso técnico, con crecimiento demográfico de {lambda_pct}\\% y tasa de ahorro del {s_pct}\\%, ingrese el valor numérico de la tasa de crecimiento porcentual anual del producto por trabajador $q$:",
+      "stem_variants": [
+        "En el estado uniforme de Solow sin progreso técnico, con crecimiento demográfico de {lambda_pct}\\% y tasa de ahorro del {s_pct}\\%, ingrese el valor numérico de la tasa de crecimiento porcentual anual del producto por trabajador $q$:",
+        "Para una economía en estado uniforme con tasa demográfica $\\lambda = {lambda_pct}\\%$ y sin avance tecnológico, calcule la tasa porcentual de variación temporal del producto por trabajador $\\phi(\\bar{k})$:",
+        "Determine la tasa de crecimiento porcentual del producto por obrero $q$ en el estado uniforme de Solow (en ausencia de cambio tecnológico) cuando $\\lambda = {lambda_pct}\\%$ y $s = {s_pct}\\%$:",
+        "Bajo el régimen de crecimiento uniforme de Solow sin progreso técnico, con parámetro poblacional $\\lambda = {lambda_pct}\\%$, indique la tasa porcentual anual a la que varía el producto por habitante $q$:"
+      ],
+      "generate_py": "def generate(rng):\n    lambda_pct = rng.choice([2, 3, 4, 5, 6])\n    s_pct = rng.choice([15, 20, 25, 30])\n    return {\n        'vars': {'lambda_pct': lambda_pct, 's_pct': s_pct},\n        'correct': 0,\n        'value': '0',\n        'canonical_algebraic': '0',\n        'accepted_equivalents': ['0', '0.0', '0.00'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    return int(res['correct']) == 0 and res['vars']['lambda_pct'] in [2, 3, 4, 5, 6]",
+      "hints": [
+        "En el estado uniforme sin tecnología, la relación capital-trabajo k es constante en el valor k_barra.",
+        "El producto por trabajador está determinado por q = phi(k_barra), que es un valor fijo en el tiempo.",
+        "La tasa de cambio porcentual de una variable constante en el tiempo es exactamente cero."
+      ],
+      "solution": "En ausencia de progreso técnico, el producto por trabajador q = phi(k_barra) permanece invariable en el tiempo. Su derivada temporal es cero, de modo que la tasa porcentual de crecimiento es 0%.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-H02-06",
+      "competency_id": "H-02",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "En una economía en estado uniforme de Solow, la relación capital-trabajo es $\\bar{k} = {k_bar}$ unidades de capital por trabajador y la fuerza laboral asciende a $L = {L_val}$ trabajadores. Calcule el stock de capital agregado $K$:",
+      "stem_variants": [
+        "En una economía en estado uniforme de Solow, la relación capital-trabajo es $\\bar{k} = {k_bar}$ unidades de capital por trabajador y la fuerza laboral asciende a $L = {L_val}$ trabajadores. Calcule el stock de capital agregado $K$:",
+        "Sabiendo que en el estado uniforme de Solow el capital por trabajador se mantiene en $\\bar{k} = {k_bar}$, determine el stock total de capital $K$ cuando la economía cuenta con $L = {L_val}$ trabajadores:",
+        "Para un sistema económico en equilibrio de estado uniforme con dotación laboral $L = {L_val}$ y capital por trabajador $\\bar{k} = {k_bar}$, halle el valor del capital agregado $K$:",
+        "Si una economía alcanza el estado uniforme con $\\bar{k} = {k_bar}$ unidades de capital por operario y una población ocupada de $L = {L_val}$, ¿cuál es el volumen total de capital acumulado $K$?"
+      ],
+      "generate_py": "def generate(rng):\n    k_bar = rng.choice([4, 5, 6, 8, 10, 12])\n    L_val = rng.choice([100, 200, 300, 400, 500])\n    K_val = k_bar * L_val\n    return {\n        'vars': {'k_bar': k_bar, 'L_val': L_val, 'K_val': K_val},\n        'correct': K_val,\n        'value': str(K_val),\n        'canonical_algebraic': str(K_val),\n        'accepted_equivalents': [str(K_val), f'{K_val}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    v = res['vars']\n    return int(res['correct']) == v['k_bar'] * v['L_val']",
+      "hints": [
+        "Recuerde la definición de la relación capital-trabajo: k = K / L.",
+        "Por lo tanto, el capital agregado se obtiene despejando K = k * L.",
+        "Multiplique el valor de k_barra por el número de trabajadores L."
+      ],
+      "solution": "Por definición de la relación intensiva, k = K / L = k_barra. Despejando el capital agregado: K = k_barra * L = {k_bar} * {L_val} = {K_val}.",
+      "distractor_ids": []
+    }
+  ]
+}

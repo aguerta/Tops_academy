@@ -1,0 +1,416 @@
+{
+  "shard_id": "shard_03",
+  "shard_index": 3,
+  "total_shards": 4,
+  "competency_ids": [
+    "Hab-03",
+    "Hab-04",
+    "Hab-05",
+    "H-03"
+  ],
+  "competencies": [
+    {
+      "id": "Hab-03",
+      "type": "skill",
+      "name": "Linealización de la ecuación diferencial de Solow-Cobb-Douglas mediante sustitución de Bernoulli",
+      "description_latex": "Habilidad para formular cuantitativamente el modelo de Solow con tecnología Cobb-Douglas $Q = K^\\alpha L^{1-\\alpha}$ como una ecuación diferencial no lineal de Bernoulli $\\dot{k} + \\lambda k = s k^\\alpha$, aplicar la transformación de variable $z = k^{1-\\alpha}$ y derivar la ecuación diferencial lineal ordinaria de coeficientes constantes $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$.",
+      "bloom": "Apply",
+      "prerequisites": [
+        "Hab-02",
+        "C-01"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 4
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-Hab03-01",
+          "name": "Omisión del factor de la derivada interna en la sustitución de Bernoulli",
+          "trigger": "Al diferenciar la transformación $z = k^{1-\\alpha}$ respecto al tiempo",
+          "manifestation": "Escribe $\\frac{dz}{dt} = k^{-\\alpha}\\dot{k}$ omitiendo el coeficiente multiplicativo $(1-\\alpha)$",
+          "error_type": "skipped_step",
+          "severity": "high",
+          "origin": "inferred",
+          "omitted_step": "Omitir el coeficiente $(1-\\alpha)$ resultante de la regla de la potencia al derivar $z = k^{1-\\alpha}$ respecto al tiempo.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "Por regla de la cadena, $\\frac{dz}{dt} = (1-\\alpha)k^{-\\alpha}\\frac{dk}{dt} = (1-\\alpha)k^{-\\alpha}\\dot{k}$."
+        },
+        {
+          "id": "D-Hab03-02",
+          "name": "Omisión de la distribución del factor de escala al término independiente",
+          "trigger": "Al multiplicar la ecuación diferencial por $(1-\\alpha)k^{-\\alpha}$",
+          "manifestation": "Escribe $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = s$, olvidando multiplicar el miembro derecho por $(1-\\alpha)$",
+          "error_type": "skipped_step",
+          "severity": "medium",
+          "origin": "inferred",
+          "omitted_step": "Omitir multiplicar el término constante derecho $s$ por el factor de linealización $(1-\\alpha)$.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "Al multiplicar toda la ecuación por $(1-\\alpha)$, el término de la derecha se convierte en $b = (1-\\alpha)s$."
+        },
+        {
+          "id": "D-Hab03-03",
+          "name": "Elección incorrecta de la potencia en la transformación de Bernoulli",
+          "trigger": "Al definir la nueva variable dependiente para linealizar $\\dot{k} + \\lambda k = s k^\\alpha$",
+          "manifestation": "Define $z = k^\\alpha$ o $z = k^{-\\alpha}$ en lugar de $z = k^{1-\\alpha}$",
+          "error_type": "procedural_slip",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Creer que la sustitución estándar de Bernoulli utiliza el exponente directo de la función no lineal en lugar de $1-m$",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "Para una ecuación de Bernoulli $\\dot{y} + Ry = Ty^m$, la transformación adecuada es siempre $z = y^{1-m}$; aquí $m = \\alpha$, por lo que $z = k^{1-\\alpha}$."
+        },
+        {
+          "id": "D-Hab03-04",
+          "name": "Error de exponente en la forma intensiva de Cobb-Douglas",
+          "trigger": "Al expresar la función per cápita $\\phi(k) = f(k, 1)$ para $Q = K^\\alpha L^{1-\\alpha}$",
+          "manifestation": "Escribe $\\phi(k) = k^{1-\\alpha}$ o $\\phi(k) = k^{-\\alpha}$",
+          "error_type": "sign_error",
+          "severity": "low",
+          "origin": "inferred",
+          "wrong_belief": "Cometer un desliz de exponentes al dividir $K^\\alpha L^{1-\\alpha}$ por $L$",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "Dividiendo por $L$: $Q/L = K^\\alpha L^{1-\\alpha - 1} = K^\\alpha L^{-\\alpha} = (K/L)^\\alpha = k^\\alpha$."
+        },
+        {
+          "id": "D-Hab03-05",
+          "name": "Identificación errónea del coeficiente lineal homogéneo",
+          "trigger": "Al identificar los parámetros constantes $a$ y $b$ de $\\frac{dz}{dt} + az = b$",
+          "manifestation": "Identifica $a = \\lambda$ en lugar de $a = (1-\\alpha)\\lambda$",
+          "error_type": "notation",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "No contemplar el coeficiente ponderador $(1-\\alpha)$ en el término lineal de $z$",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "El término lineal es $(1-\\alpha)\\lambda z$, de modo que el coeficiente constante de la ecuación diferencial es $a = (1-\\alpha)\\lambda$."
+        },
+        {
+          "id": "D-Hab03-06",
+          "name": "Confusión entre signo de absorción y adición en la forma estándar de Bernoulli",
+          "trigger": "Al ordenar los términos de la ecuación diferencial para igualarla a cero o forma estándar",
+          "manifestation": "Escribe $\\dot{k} - \\lambda k = sk^\\alpha$, invirtiendo el signo del término de dilución lineal",
+          "error_type": "sign_error",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Cambiar el signo al pasar $-\\lambda k$ al miembro izquierdo",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 4
+          },
+          "remediation_hint": "Como $\\dot{k} = sk^\\alpha - \\lambda k$, al sumar $\\lambda k$ a ambos lados se obtiene $\\dot{k} + \\lambda k = sk^\\alpha$."
+        }
+      ]
+    },
+    {
+      "id": "Hab-04",
+      "type": "skill",
+      "name": "Resolución de la trayectoria temporal de $k(t)$ y estática comparativa del estado uniforme",
+      "description_latex": "Habilidad para resolver la ecuación linealizada obteniendo $z(t) = \\left[z(0) - \\frac{s}{\\lambda}\\right]e^{-(1-\\alpha)\\lambda t} + \\frac{s}{\\lambda}$, revertir la sustitución para hallar la trayectoria temporal exacta $k(t) = \\left( \\left[k(0)^{1-\\alpha} - \\frac{s}{\\lambda}\\right] e^{-(1-\\alpha)\\lambda t} + \\frac{s}{\\lambda} \\right)^{\\frac{1}{1-\\alpha}}$, evaluar el límite asintótico $t \\to \\infty$ demostrando la convergencia al valor de estado uniforme $\\bar{k} = \\left(\\frac{s}{\\lambda}\\right)^{\\frac{1}{1-\\alpha}}$, y analizar la estática comparativa (derivadas parciales positivas respecto a $s$ y negativas respecto a $\\lambda$).",
+      "bloom": "Apply",
+      "prerequisites": [
+        "Hab-03",
+        "C-03",
+        "H-02"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 5
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-Hab04-01",
+          "name": "Omisión de la reversión de la sustitución al despejar $k(t)$",
+          "trigger": "Al expresar la solución temporal final para la relación capital-trabajo",
+          "manifestation": "Deja la solución como $k^{1-\\alpha}(t) = \\left[k(0)^{1-\\alpha} - \\frac{s}{\\lambda}\\right]e^{-(1-\\alpha)\\lambda t} + \\frac{s}{\\lambda}$ sin despejar $k(t)$",
+          "error_type": "skipped_step",
+          "severity": "high",
+          "origin": "inferred",
+          "omitted_step": "Omitir aplicar la potencia inversa $\\frac{1}{1-\\alpha}$ a toda la expresión para aislar la trayectoria $k(t)$.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "Para obtener la trayectoria de $k(t)$, debe elevar ambos miembros a la potencia $\\frac{1}{1-\\alpha}$."
+        },
+        {
+          "id": "D-Hab04-02",
+          "name": "Omisión del signo negativo en el decaimiento exponencial homogéneo",
+          "trigger": "Al aplicar la fórmula de solución general $e^{-at}$",
+          "manifestation": "Escribe $e^{+(1-\\alpha)\\lambda t}$, prediciendo una divergencia explosiva hacia el infinito en lugar de convergencia asintótica",
+          "error_type": "skipped_step",
+          "severity": "high",
+          "origin": "inferred",
+          "omitted_step": "Omitir el signo negativo en el argumento de la exponencial de la solución complementaria $e^{-at}$.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "La solución de una ecuación diferencial lineal de primer orden de coeficiente constante $a$ contiene el factor transitorio $e^{-at} = e^{-(1-\\alpha)\\lambda t}$."
+        },
+        {
+          "id": "D-Hab04-03",
+          "name": "Error de signos en la integral particular de la ecuación lineal",
+          "trigger": "Al calcular el valor constante particular $\\bar{z} = b/a$",
+          "manifestation": "Escribe $\\bar{z} = -\\frac{s}{\\lambda}$ introduciendo un signo negativo espurio en la solución",
+          "error_type": "sign_error",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Calcular la solución particular con signo invertido respecto a la razón $b/a$",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "La solución particular constante es $b/a = \\frac{(1-\\alpha)s}{(1-\\alpha)\\lambda} = \\frac{s}{\\lambda} > 0$."
+        },
+        {
+          "id": "D-Hab04-04",
+          "name": "Inversión del efecto de estática comparativa de la tasa de ahorro",
+          "trigger": "Al calcular la derivada parcial de $\\bar{k} = (s/\\lambda)^{1/(1-\\alpha)}$ respecto a $s$",
+          "manifestation": "Afirma que un aumento de la propensión marginal al ahorro disminuye el capital por trabajador de largo plazo",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Creer que la estática comparativa respecto a la propensión al ahorro es negativa",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "Dado que $s$ aparece en el numerador y el exponente $\\frac{1}{1-\\alpha} > 0$, $\\frac{\\partial \\bar{k}}{\\partial s} > 0$; el ahorro incrementa directamente $\\bar{k}$."
+        },
+        {
+          "id": "D-Hab04-05",
+          "name": "Inversión del efecto de la tasa de crecimiento poblacional sobre el capital de equilibrio",
+          "trigger": "Al analizar el impacto de $\\lambda$ sobre el valor de estado uniforme",
+          "manifestation": "Sostiene que un mayor crecimiento poblacional incrementa $\\bar{k}$",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Creer que una mayor tasa demográfica incrementa la dotación de capital por trabajador en el equilibrio",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "La tasa demográfica $\\lambda$ entra en el denominador de $(s/\\lambda)$, de modo que $\\bar{k}$ varía inversamente con la tasa de crecimiento demográfico $\\lambda$."
+        },
+        {
+          "id": "D-Hab04-06",
+          "name": "Evaluación asintótica errónea del término exponencial decreciente",
+          "trigger": "Al calcular el límite $\\lim_{t \\to \\infty} e^{-(1-\\alpha)\\lambda t}$",
+          "manifestation": "Evalúa el límite como 1 o $-\\infty$ en lugar de 0",
+          "error_type": "boundary_case",
+          "severity": "low",
+          "origin": "inferred",
+          "wrong_belief": "Confundir el comportamiento asintótico de una exponencial de exponente negativo tendiendo a infinito",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "Como $(1-\\alpha)\\lambda > 0$, cuando $t \\to \\infty$ el exponente tiende a $-\\infty$, por lo que $e^{-(1-\\alpha)\\lambda t} \\to 0$."
+        }
+      ]
+    },
+    {
+      "id": "Hab-05",
+      "type": "skill",
+      "name": "Descomposición dinámica de tasas de crecimiento y tasa de expansión de la inversión neta",
+      "description_latex": "Habilidad para dividir la ecuación fundamental $\\dot{k} = s\\phi(k) - \\lambda k$ entre $k$ e interpretar la tasa de crecimiento de la relación capital-trabajo como la diferencia entre la tasa de crecimiento del capital y la de la mano de obra: $\\frac{\\dot{k}}{k} = \\frac{\\dot{K}}{K} - \\frac{\\dot{L}}{L} = s\\frac{\\phi(k)}{k} - \\lambda = s\\frac{Q}{K} - \\lambda$; y demostrar que si el capital crece a tasa constante $\\lambda$ ($K(t) = Ae^{\\lambda t}$), la inversión neta $I = \\dot{K} = \\lambda K$ crece idénticamente a la tasa $\\lambda$ ($\\frac{\\dot{I}}{I} = \\lambda$) (Ejercicio 15.7).",
+      "bloom": "Apply",
+      "prerequisites": [
+        "Hab-02",
+        "H-02"
+      ],
+      "session": "1",
+      "unit_index": 1,
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 4
+        },
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 5
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-Hab05-01",
+          "name": "Omisión de la propiedad de crecimiento de un cociente",
+          "trigger": "Al relacionar la tasa de crecimiento de $k$ con las tasas de $K$ y $L$",
+          "manifestation": "Escribe la tasa de crecimiento de un cociente como una división de tasas $\\dot{k}/k = \\frac{\\dot{K}/K}{\\dot{L}/L}$",
+          "error_type": "skipped_step",
+          "severity": "high",
+          "origin": "inferred",
+          "omitted_step": "Omitir aplicar la regla logarítmica de tasas de crecimiento para un cociente $\\frac{\\dot{k}}{k} = \\frac{\\dot{K}}{K} - \\frac{\\dot{L}}{L}$.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "La tasa de crecimiento de un cociente $k = K/L$ es igual a la resta de las tasas de crecimiento de sus componentes: $\\dot{k}/k = \\dot{K}/K - \\dot{L}/L$."
+        },
+        {
+          "id": "D-Hab05-02",
+          "name": "Omisión de la diferenciación temporal de la inversión neta para hallar su tasa de crecimiento",
+          "trigger": "Al demostrar que la inversión neta crece a la tasa $\\lambda$ en estado uniforme",
+          "manifestation": "Asume sin demostración que $I$ crece a tasa $\\lambda$ omitiendo calcular $\\dot{I} = \\ddot{K}$",
+          "error_type": "skipped_step",
+          "severity": "medium",
+          "origin": "inferred",
+          "omitted_step": "Omitir la diferenciación de $I = \\lambda K$ respecto al tiempo para verificar que $\\dot{I} = \\lambda \\dot{K} = \\lambda^2 K$ y por ende $\\dot{I}/I = \\lambda$.",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "Dado que $I = \\dot{K} = \\lambda K$, diferenciando se obtiene $\\dot{I} = \\lambda \\dot{K} = \\lambda(\\lambda K) = \\lambda I$, lo que demuestra formalmente que $\\dot{I}/I = \\lambda$."
+        },
+        {
+          "id": "D-Hab05-03",
+          "name": "Confusión entre relación producto-capital y producto medio del trabajo",
+          "trigger": "Al simplificar el término $s\\frac{\\phi(k)}{k}$",
+          "manifestation": "Interpreta $\\frac{\\phi(k)}{k}$ como el producto medio del trabajo $\\text{APP}_L$ en lugar de la relación producto-capital $Q/K$",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Creer que $\\frac{\\phi(k)}{k}$ representa la productividad media del trabajo",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "Como $\\phi(k) = Q/L$ y $k = K/L$, el cociente $\\frac{\\phi(k)}{k} = \\frac{Q/L}{K/L} = \\frac{Q}{K}$, que es la relación producto-capital (productividad media del capital)."
+        },
+        {
+          "id": "D-Hab05-04",
+          "name": "Inversión de signos en la diferencia de tasas de crecimiento",
+          "trigger": "Al descomponer la tasa de crecimiento de $k = K/L$",
+          "manifestation": "Escribe $\\dot{k}/k = \\dot{L}/L - \\dot{K}/K$",
+          "error_type": "sign_error",
+          "severity": "medium",
+          "origin": "inferred",
+          "wrong_belief": "Restar la tasa del numerador a la del denominador al calcular la tasa de crecimiento de un cociente",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "Al tomar logaritmo natural $\\ln k = \\ln K - \\ln L$, derivando respecto al tiempo se obtiene $\\dot{k}/k = \\dot{K}/K - \\dot{L}/L$."
+        },
+        {
+          "id": "D-Hab05-05",
+          "name": "Confusión sobre la tasa porcentual frente a la aceleración de la inversión",
+          "trigger": "Al calcular la tasa relativa de la inversión neta $\\dot{I}/I$",
+          "manifestation": "Calcula erróneamente que la tasa de crecimiento de $I$ es $\\lambda^2$",
+          "error_type": "unit_or_scale",
+          "severity": "low",
+          "origin": "inferred",
+          "wrong_belief": "Confundir la segunda derivada $\\ddot{K} = \\lambda^2 K$ con la tasa de crecimiento relativo $\\dot{I}/I$",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "La tasa de crecimiento de $I$ es $\\dot{I}/I = \\frac{\\lambda^2 K}{\\lambda K} = \\lambda$, no $\\lambda^2$."
+        },
+        {
+          "id": "D-Hab05-06",
+          "name": "Confusión entre tasa de crecimiento nula del capital intensivo y agregado",
+          "trigger": "Al analizar la condición de estado uniforme $\\dot{k} = 0$",
+          "manifestation": "Concluye que en el estado uniforme el stock agregado de capital no crece ($\\dot{K}/K = 0$)",
+          "error_type": "conceptual_swap",
+          "severity": "high",
+          "origin": "inferred",
+          "wrong_belief": "Asumir que $\\dot{k}/k = 0$ implica que la tasa de acumulación de capital agregado es cero",
+          "evidence": {
+            "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+            "page": 5
+          },
+          "remediation_hint": "Como $\\dot{k}/k = \\dot{K}/K - \\lambda = 0$, la tasa de crecimiento del capital agregado es $\\dot{K}/K = \\lambda > 0$."
+        }
+      ]
+    },
+    {
+      "id": "H-03",
+      "type": "fact",
+      "name": "Origen del filo de la navaja en Harrod-Domar según Solow",
+      "description_latex": "En el modelo de Harrod-Domar, la inestabilidad del crecimiento ('filo de la navaja') se debe a la hipótesis crucial de proporciones fijas en la producción (imposibilidad de sustitución entre capital y trabajo), y no a la tasa de ahorro o crecimiento demográfico per se.",
+      "bloom": "Remember",
+      "prerequisites": [
+        "H-01"
+      ],
+      "session": "Section 02",
+      "unit_index": 2,
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 2
+        }
+      ],
+      "distractors": [
+        {
+          "id": "D-H03-01",
+          "name": "Atribución a rigideces de precios o salarios monetarios",
+          "trigger": "El estudiante busca explicaciones habituales de la macroeconomía keynesiana de corto plazo.",
+          "manifestation": "Afirma que el filo de la navaja en Harrod-Domar es consecuencia de rigideces nominales de salarios o precios en lugar de la tecnología de producción.",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "inferred",
+          "evidence": {
+            "doc": "solow1956.pdf",
+            "page": 2
+          },
+          "remediation_hint": "Solow subraya que el resultado crítico de Harrod-Domar surge exclusivamente de la imposibilidad tecnológica de sustituir capital por trabajo (proporciones fijas).",
+          "wrong_belief": "Cree que el desequilibrio proviene de fallas en el mecanismo de precios monetarios y no de la función de producción."
+        },
+        {
+          "id": "D-H03-02",
+          "name": "Atribución a la variabilidad de la tasa de ahorro",
+          "trigger": "El estudiante confunde la condición de ahorro constante con una fuente de inestabilidad.",
+          "manifestation": "Sostiene que la inestabilidad surge porque los agentes modifican impredeciblemente su propensión al ahorro.",
+          "error_type": "overgeneralization",
+          "severity": "medium",
+          "origin": "inferred",
+          "evidence": {
+            "doc": "solow1956.pdf",
+            "page": 2
+          },
+          "remediation_hint": "En el modelo de Harrod-Domar la tasa de ahorro $s$ es un parámetro fijo; la inestabilidad radica en la rigidez del coeficiente capital-producto.",
+          "wrong_belief": "Cree que la tasa de ahorro fluctúa erráticamente rompiendo el equilibrio dinámico."
+        },
+        {
+          "id": "D-H03-03",
+          "name": "Persistencia de inestabilidad con sustitución factorial",
+          "trigger": "El estudiante asume que la inestabilidad es intrínseca a la dinámica capitalista independientemente de la tecnología.",
+          "manifestation": "Argumenta que el filo de la navaja persiste incluso si existe sustitución suave y continua entre capital y trabajo.",
+          "error_type": "boundary_case",
+          "severity": "medium",
+          "origin": "inferred",
+          "evidence": {
+            "doc": "solow1956.pdf",
+            "page": 2
+          },
+          "remediation_hint": "Al abandonar la hipótesis de proporciones fijas y admitir sustitución de factores, la noción de equilibrio inestable de filo de la navaja desaparece por completo.",
+          "wrong_belief": "Cree que la sustitución factorial no elimina la incompatibilidad entre la tasa garantizada y la natural."
+        }
+      ]
+    }
+  ]
+}

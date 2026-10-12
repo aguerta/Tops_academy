@@ -1,0 +1,209 @@
+{
+  "course_id": "edo_fewshot",
+  "title": "Sistemas de EDOs Dinámicas (Few-Shot)",
+  "macro_competency": "Análisis cualitativo y estabilidad local de sistemas de ecuaciones diferenciales ordinarias",
+  "competencies": [
+    {
+      "id": "C-02",
+      "type": "concept",
+      "name": "Clasificación de puntos de equilibrio en sistemas continuos planos",
+      "description_latex": "Clasificación de equilibrios (silla, nodo, foco, centro) según los invariantes traza, determinante y discriminante $\\Delta = \\mathrm{tr}(A)^2 - 4\\det(A)$.",
+      "bloom": "Understand",
+      "prerequisites": [],
+      "source_examples": [
+        "det(A) < 0: Punto de silla (inestable)",
+        "det(A) > 0 y tr(A) < 0 con Delta >= 0: Nodo estable",
+        "det(A) > 0 y tr(A) = 0: Centro"
+      ],
+      "evidence": [
+        { "doc": "edos_lecture.pdf", "page": 10 }
+      ],
+      "distractors": [
+        {
+          "id": "D-C02-01",
+          "name": "Confundir traza con determinante al evaluar estabilidad",
+          "wrong_belief": "Un determinante positivo garantiza por sí solo que el punto de equilibrio es asintóticamente estable.",
+          "correct_belief": "La estabilidad asintótica exige simultáneamente det(A) > 0 y tr(A) < 0.",
+          "omitted_step": null,
+          "trigger": "Verificar únicamente det(A) > 0 y omitir el signo de la traza.",
+          "manifestation": "Declara 'nodo estable' con traza positiva.",
+          "error_type": "overgeneralization",
+          "severity": "high",
+          "origin": "source",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 11 },
+          "remediation_hint": "Recuerde evaluar primero el determinante y luego el signo de la traza para juzgar estabilidad."
+        },
+        {
+          "id": "D-C02-02",
+          "name": "Omitir el cálculo del discriminante Delta para distinguir nodo de foco",
+          "wrong_belief": "Con det(A) > 0 y tr(A) < 0 siempre se tiene un nodo sin importar el discriminante.",
+          "correct_belief": "Se debe comparar tr(A)^2 con 4 det(A): si Delta >= 0 es nodo, si Delta < 0 es foco (espiral).",
+          "omitted_step": "Calcular Delta = tr(A)^2 - 4 det(A) para verificar si los autovalores son complejos.",
+          "trigger": "Clasificar apresuradamente de la traza y el determinante sin comprobar Delta.",
+          "manifestation": "Declara 'nodo' cuando los autovalores tienen parte imaginaria no nula.",
+          "error_type": "skipped_step",
+          "severity": "medium",
+          "origin": "source",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 12 },
+          "remediation_hint": "Antes de nombrar nodo o foco, calcule Delta = tr(A)^2 - 4 det(A)."
+        },
+        {
+          "id": "D-C02-03",
+          "name": "Considerar estable un punto de silla",
+          "wrong_belief": "Un punto de silla es estable a lo largo de su variedad estable, por tanto es estable.",
+          "correct_belief": "Un punto de silla posee al menos una dirección inestable y por definición es globalmente inestable.",
+          "omitted_step": null,
+          "trigger": "Confundir estabilidad condicional sobre una trayectoria con estabilidad de Lyapunov.",
+          "manifestation": "Clasifica un punto con det(A) < 0 como estable.",
+          "error_type": "conceptual_swap",
+          "severity": "high",
+          "origin": "source",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 13 },
+          "remediation_hint": "Un punto con det(A) < 0 es siempre un punto de silla y es estrictamente inestable."
+        },
+        {
+          "id": "D-C02-04",
+          "name": "Error de signo en la definición de la traza",
+          "wrong_belief": "La traza es a_11 - a_22 en lugar de la suma de los elementos de la diagonal.",
+          "correct_belief": "La traza de una matriz 2x2 es tr(A) = a_11 + a_22.",
+          "omitted_step": null,
+          "trigger": "Confusión con el determinante o diferencias de elementos.",
+          "manifestation": "Invierte el signo de la estabilidad.",
+          "error_type": "sign_error",
+          "severity": "medium",
+          "origin": "inferred",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 10 },
+          "remediation_hint": "Recuerde que la traza es la suma directa de los elementos diagonales tr(A) = a_11 + a_22."
+        },
+        {
+          "id": "D-C02-05",
+          "name": "Ignorar la no hiperbolicidad en el centro lineal",
+          "wrong_belief": "Un centro lineal tr(A) = 0 siempre garantiza órbitas periódicas cerradas en el sistema no lineal.",
+          "correct_belief": "Cuando tr(A) = 0, el punto no es hiperbólico y el teorema de Hartman-Grobman no aplica.",
+          "omitted_step": "Comprobar si el sistema original es no lineal antes de extrapolar un centro lineal.",
+          "trigger": "Extrapolar la linealización a casos límite no hiperbólicos.",
+          "manifestation": "Garantiza estabilidad orbital cerrada sin verificar si el sistema es conservativo.",
+          "error_type": "boundary_case",
+          "severity": "low",
+          "origin": "inferred",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 14 },
+          "remediation_hint": "En centros lineales con tr(A) = 0, la linealización no determina la estabilidad del sistema no lineal."
+        },
+        {
+          "id": "D-C02-06",
+          "name": "Invertir la fórmula del determinante en matrices 2x2",
+          "wrong_belief": "El determinante es a_12 a_21 - a_11 a_22.",
+          "correct_belief": "El determinante de una matriz 2x2 es det(A) = a_11 a_22 - a_12 a_21.",
+          "omitted_step": null,
+          "trigger": "Confusión en el orden de los productos cruzados.",
+          "manifestation": "Obtiene el signo opuesto del determinante.",
+          "error_type": "procedural_slip",
+          "severity": "medium",
+          "origin": "inferred",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 10 },
+          "remediation_hint": "Recuerde que el producto diagonal principal resta al producto secundario: a_11 a_22 - a_12 a_21."
+        }
+      ]
+    },
+    {
+      "id": "Hab-02",
+      "type": "skill",
+      "name": "Cálculo de la matriz Jacobiana y evaluación de estabilidad local",
+      "description_latex": "Cálculo analítico de la matriz Jacobiana $J(x,y)$ mediante derivadas parciales y evaluación en puntos fijos.",
+      "bloom": "Apply",
+      "prerequisites": ["C-02"],
+      "source_examples": [
+        "$\\dot{x} = x(1-x-y)$, $\\dot{y} = y(2-x-2y) \\implies J(x,y) = \\begin{bmatrix} 1-2x-y & -x \\\\ -y & 2-x-4y \\end{bmatrix}$"
+      ],
+      "evidence": [
+        { "doc": "edos_lecture.pdf", "page": 18 }
+      ],
+      "distractors": [
+        {
+          "id": "D-Hab02-01",
+          "name": "Evaluar la Jacobiana fuera del punto de equilibrio",
+          "wrong_belief": "La estabilidad local se determina evaluando la Jacobiana en el origen independientemente del punto fijo.",
+          "correct_belief": "La matriz Jacobiana debe evaluarse exactamente en las coordenadas (x*, y*) del punto de equilibrio bajo estudio.",
+          "omitted_step": "Sustituir las coordenadas exactas del punto de equilibrio en la matriz Jacobiana.",
+          "trigger": "Evaluar en (0,0) por hábito cuando el punto fijo está en (x*, y*) != (0,0).",
+          "manifestation": "Calcula invariantes de un punto de equilibrio diferente.",
+          "error_type": "skipped_step",
+          "severity": "high",
+          "origin": "source",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 19 },
+          "remediation_hint": "Sustituya las coordenadas (x*, y*) del punto de equilibrio específico en las derivadas de J."
+        },
+        {
+          "id": "D-Hab02-02",
+          "name": "Intercambiar filas y columnas en la matriz Jacobiana",
+          "wrong_belief": "La primera fila contiene las derivadas respecto de x: [df/dx, dg/dx].",
+          "correct_belief": "La primera fila corresponde al gradiente de f: [df/dx, df/dy], y la segunda al de g: [dg/dx, dg/dy].",
+          "omitted_step": null,
+          "trigger": "Confusión entre matriz Jacobiana y su transpuesta.",
+          "manifestation": "Transpone la matriz Jacobiana al calcular derivadas.",
+          "error_type": "procedural_slip",
+          "severity": "medium",
+          "origin": "source",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 18 },
+          "remediation_hint": "La fila i contiene las derivadas parciales de la ecuación i respecto a todas las variables."
+        },
+        {
+          "id": "D-Hab02-03",
+          "name": "Omitir la regla del producto al derivar términos bilineales x*y",
+          "wrong_belief": "La derivada parcial de x*y respecto de x es x.",
+          "correct_belief": "La derivada parcial de x*y respecto de x es y (tratando y como constante).",
+          "omitted_step": "Tratar la otra variable como constante multiplicativa al derivar parcialmente.",
+          "trigger": "Confundir la variable respecto a la cual se deriva.",
+          "manifestation": "Asigna el coeficiente de la variable equivocada en los términos cruzados de J.",
+          "error_type": "conceptual_swap",
+          "severity": "medium",
+          "origin": "source",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 19 },
+          "remediation_hint": "Al derivar parcialmente respecto de x, trate a y como una constante multiplicativa: d(xy)/dx = y."
+        },
+        {
+          "id": "D-Hab02-04",
+          "name": "Error de signo en la derivada de términos cuadráticos",
+          "wrong_belief": "La derivada de -x^2 respecto de x es 2x.",
+          "correct_belief": "La derivada de -x^2 respecto de x es -2x, conservando el signo negativo del término.",
+          "omitted_step": null,
+          "trigger": "Olvidar el signo negativo que antecede al término no lineal.",
+          "manifestation": "Cambia el signo de la traza y por tanto la clasificación de estabilidad.",
+          "error_type": "sign_error",
+          "severity": "high",
+          "origin": "source",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 20 },
+          "remediation_hint": "Conserve cuidadosamente los signos negativos al derivar términos cuadráticos y cúbicos."
+        },
+        {
+          "id": "D-Hab02-05",
+          "name": "No verificar que el punto evaluado sea realmente de equilibrio",
+          "wrong_belief": "Cualquier punto del plano puede usarse para la prueba de estabilidad local.",
+          "correct_belief": "La linealización local sólo es válida en puntos donde dx/dt = 0 y dy/dt = 0 simultáneamente.",
+          "omitted_step": "Comprobar que f(x*, y*) = 0 y g(x*, y*) = 0 antes de linealizar.",
+          "trigger": "Linealizar sobre un punto arbitrario del espacio de fases.",
+          "manifestation": "Aplica criterios de estabilidad a puntos ordinarios en lugar de equilibrios.",
+          "error_type": "skipped_step",
+          "severity": "medium",
+          "origin": "inferred",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 21 },
+          "remediation_hint": "Verifique siempre que f(x*, y*) = 0 y g(x*, y*) = 0 antes de analizar la Jacobiana."
+        },
+        {
+          "id": "D-Hab02-06",
+          "name": "Confundir la traza de la Jacobiana con la divergencia espacial",
+          "wrong_belief": "La traza de la Jacobiana es constante e independiente de la posición para cualquier sistema no lineal.",
+          "correct_belief": "En sistemas no lineales la traza tr(J(x,y)) varía de un punto de equilibrio a otro.",
+          "omitted_step": null,
+          "trigger": "Asumir comportamiento lineal global.",
+          "manifestation": "Concluye que todos los puntos de equilibrio tienen la misma estabilidad.",
+          "error_type": "overgeneralization",
+          "severity": "low",
+          "origin": "inferred",
+          "evidence": { "doc": "edos_lecture.pdf", "page": 22 },
+          "remediation_hint": "Calcule la traza y el determinante de J individualmente para cada punto de equilibrio."
+        }
+      ]
+    }
+  ]
+}

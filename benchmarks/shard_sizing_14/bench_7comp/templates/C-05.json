@@ -1,0 +1,149 @@
+{
+  "competency_id": "C-05",
+  "templates": [
+    {
+      "id": "T-C05-01",
+      "competency_id": "C-05",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considere una función de producción neoclásica agregada $Y = {A} K^{1/2} L^{1/2}$ con rendimientos constantes a escala. Si una economía cuenta con $K = {K}$ unidades de capital y $L = {L}$ trabajadores, determine la intensidad de capital $r = K/L$:",
+      "stem_variants": [
+        "Considere una función de producción neoclásica agregada $Y = {A} K^{1/2} L^{1/2}$ con rendimientos constantes a escala. Si una economía cuenta con $K = {K}$ unidades de capital y $L = {L}$ trabajadores, determine la intensidad de capital $r = K/L$:",
+        "En un sistema productivo neoclásico con $K = {K}$ máquinas y una fuerza de trabajo de $L = {L}$ empleados, calcule el ratio capital-trabajo $r = K/L$:",
+        "Para la tecnología homogénea de grado 1 especificada por $Y = {A} K^{1/2} L^{1/2}$, halle el valor escalar de la relación capital por trabajador $r = K/L$ cuando $K = {K}$ y $L = {L}$:",
+        "Dada una dotación factorial de $K = {K}$ unidades de equipo y $L = {L}$ unidades laborales, evalúe la intensidad media $r = K/L$ bajo rendimientos constantes:"
+      ],
+      "generate_py": "def generate(rng):\n    A = rng.randint(2, 9)\n    r_val = rng.randint(2, 35)\n    L = rng.randint(10, 80)\n    K = r_val * L\n    return {\n        'vars': {\n            'A': A,\n            'r_val': r_val,\n            'L': L,\n            'K': K\n        },\n        'correct': r_val,\n        'value': str(r_val),\n        'canonical_algebraic': str(r_val),\n        'accepted_equivalents': [str(r_val), f'{r_val}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    K = result['vars']['K']\n    L = result['vars']['L']\n    return int(result['correct']) == (K // L)",
+      "hints": [
+        "Identifique la definición de la intensidad de capital como el cociente entre el stock de capital y la mano de obra disponible.",
+        "Divida el stock total de capital K entre el número de trabajadores L.",
+        "El cociente exacto K/L arroja el valor numérico del ratio capital-trabajo r."
+      ],
+      "solution": "La intensidad de capital por trabajador se define como r = K/L. Sustituyendo los valores dados obtenemos r = {K} / {L} = {r_val}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C05-02",
+      "competency_id": "C-05",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Dada la función de producción neoclásica $Y = {A} K^{1/2} L^{1/2}$ con rendimientos constantes a escala, una economía presenta una intensidad de capital $r = K/L = {r_val}$. Calcule el producto por trabajador $y = Y/L = F(r, 1)$:",
+      "stem_variants": [
+        "Dada la función de producción neoclásica $Y = {A} K^{1/2} L^{1/2}$ con rendimientos constantes a escala, una economía presenta una intensidad de capital $r = K/L = {r_val}$. Calcule el producto por trabajador $y = Y/L = F(r, 1)$:",
+        "Para una economía con función de producción agregada $Y = {A} K^{1/2} L^{1/2}$ y relación capital-trabajo $r = {r_val}$, evalúe cuantitativamente el producto per cápita $y$:",
+        "Bajo la formulación intensiva $y = {A} r^{1/2}$ asociada a una tecnología homogénea de primer grado, halle la productividad media del trabajo si $r = {r_val}$:",
+        "A partir de la función per cápita $y = F(r, 1) = {A} \\sqrt{r}$, determine el volumen de producto por trabajador correspondiente a $r = {r_val}$:"
+      ],
+      "generate_py": "def generate(rng):\n    A = rng.randint(2, 8)\n    m = rng.randint(2, 12)\n    r_val = m ** 2\n    y_val = A * m\n    return {\n        'vars': {'A': A, 'm': m, 'r_val': r_val, 'y_val': y_val},\n        'correct': y_val,\n        'value': str(y_val),\n        'canonical_algebraic': str(y_val),\n        'accepted_equivalents': [str(y_val), f'{y_val}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    A = result['vars']['A']\n    m = result['vars']['m']\n    return int(result['correct']) == A * m",
+      "hints": [
+        "Exprese la función de producción en forma intensiva dividiendo Y entre L: y = Y/L = A (K/L)^(1/2) = A r^(1/2).",
+        "Sustituya el valor de r = {r_val} en la forma intensiva para obtener r^(1/2).",
+        "Multiplique el coeficiente A = {A} por la raíz cuadrada de r para hallar el producto por trabajador."
+      ],
+      "solution": "Por la homogeneidad de grado 1, el producto per cápita se expresa como y = F(r, 1) = {A} r^(1/2). Con r = {r_val}, obtenemos y = {A} * sqrt({r_val}) = {A} * {m} = {y_val}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C05-03",
+      "competency_id": "C-05",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Una economía con rendimientos constantes a escala $F(\\lambda K, \\lambda L) = \\lambda F(K, L)$ produce inicialmente $Y_0 = {Y0}$ unidades de producto. Si tanto el stock de capital como el empleo se multiplican por un factor de escala $\\lambda = {lambda_scale}$, determine el nuevo nivel de producto agregado $Y_1$:",
+      "stem_variants": [
+        "Una economía con rendimientos constantes a escala $F(\\lambda K, \\lambda L) = \\lambda F(K, L)$ produce inicialmente $Y_0 = {Y0}$ unidades de producto. Si tanto el stock de capital como el empleo se multiplican por un factor de escala $\\lambda = {lambda_scale}$, determine el nuevo nivel de producto agregado $Y_1$:",
+        "Si una empresa macroeconómica opera con rendimientos constantes a escala produciendo $Y_0 = {Y0}$ y decide escalar simultáneamente todos sus factores productivos por $\\lambda = {lambda_scale}$, ¿cuál es el volumen de producción resultante $Y_1$?",
+        "Considere la propiedad de homogeneidad lineal $F(\\lambda K, \\lambda L) = \\lambda F(K, L)$. Con una producción base de $Y_0 = {Y0}$ y un factor de amplificación factorial $\\lambda = {lambda_scale}$, calcule el producto final $Y_1$:",
+        "En un marco neoclásico con producción de referencia $Y_0 = {Y0}$, halle la producción final $Y_1$ si se aplica una escala homogénea $\\lambda = {lambda_scale}$ a todos los factores:"
+      ],
+      "generate_py": "def generate(rng):\n    Y0 = rng.randint(50, 400)\n    lambda_scale = rng.randint(2, 9)\n    Y1 = lambda_scale * Y0\n    return {\n        'vars': {'Y0': Y0, 'lambda_scale': lambda_scale, 'Y1': Y1},\n        'correct': Y1,\n        'value': str(Y1),\n        'canonical_algebraic': str(Y1),\n        'accepted_equivalents': [str(Y1), f'{Y1}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    Y0 = result['vars']['Y0']\n    lam = result['vars']['lambda_scale']\n    return int(result['correct']) == Y0 * lam",
+      "hints": [
+        "Recuerde la definición de rendimientos constantes a escala: una función es homogénea de grado 1 si F(lambda K, lambda L) = lambda F(K, L).",
+        "Identifique que el factor de escala lambda multiplica de forma estrictamente lineal a la producción original.",
+        "Calcule el producto final multiplicando Y0 por el factor lambda."
+      ],
+      "solution": "Por la definición de rendimientos constantes a escala (homogeneidad de grado 1), multiplicar todos los factores por lambda = {lambda_scale} multiplica el producto agregado por el mismo factor: Y_1 = {lambda_scale} * {Y0} = {Y1}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C05-04",
+      "competency_id": "C-05",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "En el sector {sector}, la función de producción agregada $Y = F(K, L)$ opera con rendimientos constantes a escala. Si el capital aumenta en un factor de {delta_k}, seleccione todas las proposiciones teóricas válidas sobre los rendimientos factoriales:",
+      "stem_variants": [
+        "En el sector {sector}, la función de producción agregada $Y = F(K, L)$ opera con rendimientos constantes a escala. Si el capital aumenta en un factor de {delta_k}, seleccione todas las proposiciones teóricas válidas sobre los rendimientos factoriales:",
+        "Considere la tecnología de producción neoclásica $Y = F(K, L)$ aplicada al sector {sector}. Ante una expansión de {delta_k} veces en los insumos, identifique las afirmaciones analíticamente certeras respecto a la escala y derivadas parciales:",
+        "Para una economía con actividad en el sector {sector} y función de producción homogénea de primer grado $Y = F(K, L)$, evalúe los efectos de incrementar el capital físico {delta_k} veces manteniendo el empleo fijo:",
+        "Dentro del análisis neoclásico del sector {sector}, donde $Y = F(K, L)$ satisface $F(\\lambda K, \\lambda L) = \\lambda F(K, L)$, seleccione las afirmaciones rigurosas sobre la productividad marginal cuando el capital se multiplica por {delta_k}:"
+      ],
+      "generate_py": "def generate(rng):\n    sectors = ['manufacturero', 'industrial', 'agrícola', 'tecnológico', 'de bienes de capital', 'energético', 'textil', 'automotriz', 'químico', 'metalúrgico']\n    sector = rng.choice(sectors)\n    delta_k = rng.randint(2, 20)\n    opts = [\n        {\n            'content': 'La función de producción exhibe rendimientos constantes a escala global coexistiendo con rendimientos marginales decrecientes en cada factor individual ($F_{KK} < 0$).',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'La productividad marginal del capital $\\\\partial F / \\\\partial K$ es estrictamente decreciente conforme se eleva la intensidad de capital $r = K/L$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': f'Porque la función tiene rendimientos constantes a escala, el producto marginal del capital debe ser constante cuando se acumulan {delta_k} veces más capital manteniendo el trabajo fijo.',\n            'is_correct': False,\n            'distractor_id': 'D-C05-01',\n            'error_rationale': 'Confunde la homogeneidad de grado 1 de la función conjunta con el comportamiento de la derivada parcial individual; los rendimientos constantes a escala coexisten con rendimientos marginales decrecientes en cada factor.'\n        },\n        {\n            'content': f'Multiplicar únicamente el stock de capital físico por {delta_k} manteniendo inalterado el trabajo genera exactamente {delta_k} veces más producto total en la economía.',\n            'is_correct': False,\n            'distractor_id': 'D-C05-01',\n            'error_rationale': 'Para multiplicar el producto agregado bajo rendimientos constantes a escala se requiere multiplicar todos los factores simultáneamente; incrementar únicamente el capital produce un aumento subproporcional.'\n        }\n    ]\n    return {\n        'vars': {'sector': sector, 'delta_k': delta_k},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    opts = result.get('options', [])\n    correct_cnt = sum(1 for o in opts if o.get('is_correct'))\n    return correct_cnt == 2 and len(opts) == 4",
+      "hints": [
+        "Distinga cuidadosamente entre el efecto de variar todos los insumos proporcionalmente (escala) y variar un solo insumo manteniendo el otro fijo (rendimiento marginal).",
+        "Verifique la concavidad estricta de la función de producción en cada factor individual (F_KK < 0).",
+        "Recuerde que los rendimientos constantes a escala no implican producto marginal constante."
+      ],
+      "solution": "En la teoría neoclásica, la homogeneidad de primer grado coexiste plenamente con la ley de rendimientos marginales decrecientes para cada factor individual (F_KK < 0 y F_LL < 0). Un aumento en el capital con trabajo fijo eleva la producción a tasa decreciente.",
+      "distractor_ids": [
+        "D-C05-01"
+      ]
+    },
+    {
+      "id": "T-C05-05",
+      "competency_id": "C-05",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Para la economía de la región {region}, el producto per cápita se formula como $y = Y/L = F(r, 1)$ con $r = K/L$. Si la fuerza laboral se expande por un factor de {factor_l}, seleccione todas las afirmaciones teóricamente válidas:",
+      "stem_variants": [
+        "Para la economía de la región {region}, el producto per cápita se formula como $y = Y/L = F(r, 1)$ con $r = K/L$. Si la fuerza laboral se expande por un factor de {factor_l}, seleccione todas las afirmaciones teóricamente válidas:",
+        "En el análisis macroeconómico de la región {region}, donde la producción per cápita obedece a $y = F(r, 1)$, ¿cuáles de las siguientes proposiciones sobre la escala demográfica y una variación de {factor_l} veces en el empleo son correctas?",
+        "Considere la función intensiva $y = F(r, 1)$ en la región {region} sujeta a un factor de escala laboral {factor_l}. Identifique las propiedades analíticas certeras sobre la relación entre el tamaño absoluto de la población y el producto por trabajador:",
+        "Dentro del marco neoclásico para la región {region}, evalúe cómo incide un cambio de {factor_l} veces en el número absoluto de trabajadores sobre el producto por trabajador $y = F(r, 1)$:"
+      ],
+      "generate_py": "def generate(rng):\n    regions = ['norte', 'sur', 'central', 'oriental', 'occidental', 'costera', 'metropolitana', 'fronteriza', 'andina', 'rural']\n    region = rng.choice(regions)\n    factor_l = rng.randint(2, 20)\n    opts = [\n        {\n            'content': 'El producto per cápita $y = Y/L$ depende exclusivamente de la intensidad de capital $r = K/L$ y es independiente del nivel absoluto de empleo $L$.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'Si el capital y el trabajo aumentan en la misma proporción, la intensidad $r = K/L$ no varía y el producto por trabajador $y$ permanece inalterado.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': f'El producto por trabajador $y$ depende explícitamente tanto de la razón $r = K/L$ como del tamaño absoluto de la fuerza laboral multiplicado por {factor_l}.',\n            'is_correct': False,\n            'distractor_id': 'D-C05-03',\n            'error_rationale': 'Por homogeneidad de grado 1, Y/L = F(K/L, 1) = F(r, 1), por lo que el producto per cápita depende únicamente de la intensidad de capital r y no del tamaño absoluto de la fuerza laboral.'\n        },\n        {\n            'content': f'Una economía con {factor_l} veces mayor población siempre experimentará un mayor producto per cápita aun cuando su dotación de capital por trabajador sea idéntica.',\n            'is_correct': False,\n            'distractor_id': 'D-C05-03',\n            'error_rationale': 'En ausencia de rendimientos crecientes a escala, el tamaño absoluto de la población no genera ventajas per cápita si la relación capital-trabajo r es la misma.'\n        }\n    ]\n    return {\n        'vars': {'region': region, 'factor_l': factor_l},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    opts = result.get('options', [])\n    correct_cnt = sum(1 for o in opts if o.get('is_correct'))\n    return correct_cnt == 2 and len(opts) == 4",
+      "hints": [
+        "Divida ambos lados de Y = F(K, L) entre L aprovechando la homogeneidad de grado 1.",
+        "Observe que F(K/L, 1) solo contiene la variable r = K/L.",
+        "Compruebe si el tamaño absoluto de la fuerza laboral L aparece en la expresión intensiva final."
+      ],
+      "solution": "Por la homogeneidad de grado 1 de la función de producción, Y/L = F(K/L, 1) = F(r, 1). Esta función intensiva depende únicamente del ratio r = K/L, descartando cualquier dependencia directa del tamaño absoluto de la población.",
+      "distractor_ids": [
+        "D-C05-03"
+      ]
+    },
+    {
+      "id": "T-C05-06",
+      "competency_id": "C-05",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "En la economía {country}, la producción agregada se modela mediante $Y = F(K, L)$ con rendimientos constantes a escala. Si se considera una disponibilidad de tierra fija multiplicada por un factor base {scale_param}, seleccione todas las proposiciones válidas sobre la presencia de recursos no reproducibles:",
+      "stem_variants": [
+        "En la economía {country}, la producción agregada se modela mediante $Y = F(K, L)$ con rendimientos constantes a escala. Si se considera una disponibilidad de tierra fija multiplicada por un factor base {scale_param}, seleccione todas las proposiciones válidas sobre la presencia de recursos no reproducibles:",
+        "Para el sistema macroeconómico de {country}, analice la validez de la homogeneidad de grado 1 cuando existen factores fijos en magnitud {scale_param}. Elija todas las afirmaciones correctas sobre el contraste con el modelo ricardiano:",
+        "Considere una economía como {country} donde el capital y el trabajo se expanden en proporción {scale_param} en presencia de una dotación fija de recursos naturales. Identifique las consecuencias teóricas certeras sobre los rendimientos a escala:",
+        "Al evaluar la función de producción en el país {country} frente a la hipótesis de factores fijos no reproducibles con ponderación {scale_param}, marque todas las afirmaciones rigurosas sobre los rendimientos decrecientes conjuntos:"
+      ],
+      "generate_py": "def generate(rng):\n    countries = ['Alfa', 'Beta', 'Gamma', 'Delta', 'Épsilon', 'Zeta', 'Eta', 'Theta', 'Iota', 'Kappa', 'Lambda', 'Sigma']\n    country = rng.choice(countries)\n    scale_param = rng.randint(2, 20)\n    opts = [\n        {\n            'content': 'El supuesto de rendimientos constantes a escala en capital y trabajo requiere que no existan factores fijos no reproducibles no contemplados en la función.',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': 'La presencia de un factor no reproducible fijo como la tierra generaría rendimientos decrecientes a escala conjunta de capital y trabajo (modelo ricardiano).',\n            'is_correct': True,\n            'distractor_id': None\n        },\n        {\n            'content': f'Los rendimientos constantes a escala en capital y trabajo se cumplen de forma universal incluso en economías con escasez severa de tierra multiplicada por {scale_param}.',\n            'is_correct': False,\n            'distractor_id': 'D-C05-02',\n            'error_rationale': 'La presencia de un factor no reproducible fijo como la tierra rompe los rendimientos constantes respecto a capital y trabajo solos, originando rendimientos decrecientes conjuntos.'\n        },\n        {\n            'content': f'La existencia de {scale_param} recursos naturales fijos no altera en absoluto la homogeneidad de grado 1 entre capital y trabajo en la función de producción.',\n            'is_correct': False,\n            'distractor_id': 'D-C05-02',\n            'error_rationale': 'Si la tierra es fija y no puede duplicarse junto con el capital y el trabajo, duplicar solo K y L generará un incremento subproporcional del producto debido a la saturación del factor fijo.'\n        }\n    ]\n    return {\n        'vars': {'country': country, 'scale_param': scale_param},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    opts = result.get('options', [])\n    correct_cnt = sum(1 for o in opts if o.get('is_correct'))\n    return correct_cnt == 2 and len(opts) == 4",
+      "hints": [
+        "Considere qué ocurre cuando existe un tercer factor productivo (como la tierra) que no puede reproducirse ni expandirse.",
+        "Recuerde la distinción entre el modelo neoclásico puro de Solow y el modelo clásico ricardiano con tierra fija.",
+        "Verifique si duplicar K y L con tierra fija duplica la producción."
+      ],
+      "solution": "El supuesto de rendimientos constantes a escala en capital y trabajo asume que todos los factores son reproducibles. Si existiera un factor fijo como la tierra, el producto conjunto exhibiría rendimientos decrecientes ante la expansión de capital y trabajo (retornos ricardianos).",
+      "distractor_ids": [
+        "D-C05-02"
+      ]
+    }
+  ]
+}

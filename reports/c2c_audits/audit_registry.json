@@ -1,0 +1,114 @@
+[
+  {
+    "run_id": "baseline_estadistica3_regresion_v3",
+    "is_baseline": true,
+    "timestamp": "2026-10-10T12:00:00+00:00",
+    "course_id": "estadistica3_regresion_v3",
+    "course_title": "Estadística III (Regresión Lineal y Multivariante)",
+    "conversation_id": "baseline-estadistica-v3",
+    "workload": {
+      "source_files_count": 5,
+      "pages_or_slides": 50,
+      "input_mb": 1.2,
+      "competencies": 16,
+      "questions": 480,
+      "handouts": 5
+    },
+    "metrics": {
+      "wall_clock_seconds": 3600.0,
+      "agent_compute_seconds": 7200.0,
+      "speedup": 2.0,
+      "total_tokens": 8645000,
+      "total_active_tokens": 699000,
+      "input_tokens": 600000,
+      "output_tokens": 45000,
+      "cache_read_tokens": 8000000,
+      "total_turns": 240,
+      "subagents_count": 6,
+      "tool_errors": 2,
+      "stage_1a_max_wall": 180.0,
+      "stage_1b_total_wall": 150.0,
+      "stage_3_max_wall": 450.0,
+      "orchestrator_interventions": 0
+    },
+    "unit_economics": {
+      "tokens_per_page": 172900.0,
+      "active_tokens_per_page": 13980.0,
+      "tokens_per_input_kb": 7204.0,
+      "tokens_per_competency": 540312.5,
+      "active_tokens_per_competency": 43687.5,
+      "author_tokens_per_competency": 38000.0,
+      "tokens_per_question": 18010.4,
+      "active_tokens_per_question": 1456.3,
+      "seconds_per_page": 72.0,
+      "seconds_per_question": 7.5,
+      "questions_per_minute": 8.0,
+      "agent_seconds_per_question": 15.0,
+      "output_tokens_per_question": 93.8
+    },
+    "bottlenecks_count": 0
+  },
+  {
+    "run_id": "20261012_181553_solow_growth_model_7e0a1c51",
+    "timestamp": "2026-10-12T23:15:53.375415+00:00",
+    "course_id": "solow_growth_model",
+    "course_title": "El Modelo de Crecimiento Económico de Solow (1956)",
+    "conversation_id": "7e0a1c51-e722-4233-960d-c20db07e0806",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 25,
+      "questions": 580,
+      "handouts": 10
+    },
+    "metrics": {
+      "wall_clock_seconds": 5342.0,
+      "agent_compute_seconds": 15859.0,
+      "speedup": 2.97,
+      "total_tokens": 82434282,
+      "total_active_tokens": 5912836,
+      "input_tokens": 3863680,
+      "output_tokens": 902271,
+      "cache_read_tokens": 76521446,
+      "total_turns": 767,
+      "subagents_count": 9,
+      "tool_errors": 97,
+      "stage_1a_max_wall": 636.0,
+      "stage_1b_total_wall": 558.0,
+      "stage_3_max_wall": 2154.0,
+      "orchestrator_interventions": 3,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 50,
+        "initial_errors_count": 126,
+        "repair_iterations": 2,
+        "supervisor_interventions_count": 3,
+        "summary_desc": "Los blind judges y la verificación psicométrica NO pasaron limpios al primer intento. En la corrida inicial de verificación (Task-271), la validación previa colapsó con 126 errores y violaciones psicométricas bloqueantes (regla R-18 de meta-información en opciones y regla R-19 de fugas de respuesta en reactivos FIB). El bucle de auto-reparación no pudo resolver los fallos de forma autónoma, requiriendo intervención directa del supervisor.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación Autónomo**: El motor ejecutó RepairLoop con 127 errores iniciales, pero colapsó al persistir fugas en `Q-C02-089`, `Q-H02-152` y `Q-Hab03-186..188`.",
+          "2. **Intervención Manual del Supervisor (3 operaciones)**: El orquestador intervino directamente en caliente sobre los archivos `Hab-03.json`, `C-02.json`, `H-02.json` y `Hab-05.json` mediante `replace_file_content`.",
+          "3. **Desarrollo de Scripts Ad-Hoc**: Se crearon y ejecutaron scripts de parcheo masivo regex (`fix_hab03.py`, `check_leaks.py`, `fix_all_templates.py`, `fix_cta_math.py`) para purgar pistas y fugas residuales.",
+          "4. **Re-Ejecución y Certificación Final**: Se relanzó la etapa de verificación (`task-602`), completando con éxito la validación tras 2 iteraciones de auto-reparación sobre el lote de 50 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 2289841.2,
+      "active_tokens_per_page": 164245.4,
+      "tokens_per_input_kb": 54131.0,
+      "tokens_per_competency": 3297371.3,
+      "active_tokens_per_competency": 236513.4,
+      "author_tokens_per_competency": 152161.0,
+      "tokens_per_question": 142128.1,
+      "active_tokens_per_question": 10194.5,
+      "seconds_per_page": 148.39,
+      "seconds_per_question": 9.21,
+      "questions_per_minute": 6.51,
+      "agent_seconds_per_question": 27.34,
+      "output_tokens_per_question": 1681.4
+    },
+    "bottlenecks_count": 4
+  }
+]

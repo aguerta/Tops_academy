@@ -1,0 +1,50 @@
+{
+  "course_metadata": {
+    "unit_title": "Ecuaciones en derivadas parciales",
+    "detected_objective": "Formular, clasificar analíticamente, reducir operacionalmente y resolver con precisión cuantitativa ecuaciones en derivadas parciales de primer y segundo orden (lineales y cuasilineales) aplicadas a modelos económicos y dinámicos."
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.5,
+      "max": 4.0,
+      "feedback": "El curso desglosa 21 competencias en tres categorías taxonómicas (7 Hechos, 6 Conceptos, 8 Habilidades) con una sólida fundamentación matemática. No obstante, adolece de una arquitectura curricular plana y monolítica: no existe agrupación jerárquica en unidades o módulos secuenciales (ej. Homogeneidad, Lagrange, Cauchy, EDPs de 2do orden), faltan objetivos de micro-aprendizaje medibles por hito formativo y no se define un grafo explícito de prerrequisitos y dependencias para guiar el Mastery Learning adaptativo."
+    },
+    "assessment_quality": {
+      "score": 2.0,
+      "max": 5.0,
+      "feedback": "Existe diversidad de tipos de reactivos (129 selección múltiple, 250 opción múltiple de 7 opciones, 121 respuesta numérica/algebraica directa). Sin embargo, la calidad psicométrica es deficiente: en las 250 preguntas de opción múltiple, el 85.7% (1,500 de 1,750 distractores) presenta la justificación genérica 'Distractor basado en misconception de [Competencia]', sin modelar errores conceptuales plausibles. Adicionalmente, el banco de 500 reactivos sufre de clonación artificial severa, existiendo únicamente 138 enunciados únicos (106 enunciados se repiten hasta 15 veces idénticos, como en el problema de Cauchy y multiplicadores de Lagrange)."
+    },
+    "scaffolding_hints": {
+      "score": 1.5,
+      "max": 5.0,
+      "feedback": "Aunque todas las preguntas registran formalmente 3 pistas en metadatos, el andamiaje presenta fallos pedagógicos críticos. En las 129 preguntas de selección múltiple (100%), se utiliza el mismo triplete de pistas genéricas; en 108 de ellas (83.7%), la pista 2 alucina la instrucción 'Recuerde que el principio de superposición exige linealidad estricta del operador' en contenidos no lineales o inconexos (Euler, orden/grado, Lagrange). Además, 12 preguntas filtran variables de plantilla sin renderizar ('{k_val}') y llaves dobles de formateo en las pistas, y el 85.7% de los reactivos carece de feedback constructivo específico al fallo."
+    },
+    "instructional_alignment": {
+      "score": 2.0,
+      "max": 4.0,
+      "feedback": "El curso carece de un corpus expositivo integrado, funcionando como un banco de reactivos apoyado únicamente en descripciones sintéticas de competencias. Se detectaron preguntas huérfanas críticas como Q-C03-184 (evalúa frecuencia angular en EDOs espaciales sin teoría de osciladores armónicos), Q-C02-161 (vector normal a superficies implícitas no explicado) y Q-H03-043 (ecuación de Laplace de 2do orden evaluada en verificación básica de 1er orden). Asimismo, en Hab-05 se incluyeron 7 ejercicios de integración directa elemental que no emplean multiplicadores de Lagrange."
+    },
+    "technical_ergonomics": {
+      "score": 1.2,
+      "max": 2.0,
+      "feedback": "La notación matemática general respeta la sintaxis LaTeX entre delimitadores '$'. No obstante, se detectaron 12 incidencias de variables de plantilla no renderizadas ('{k_val}' en Q-H03-043, Q-H03-046, Q-H03-047, Q-H03-048, Q-H03-056, Q-Hab02-292, Q-Hab02-293, Q-Hab02-294, Q-Hab02-303, Q-Hab02-310, Q-Hab02-313, Q-Hab02-315) y llaves dobles residuales ('{{yy}}', '{{my}}'), lo que degrada la legibilidad y confiabilidad técnica del frontend."
+    }
+  },
+  "penalties_applied": [
+    {
+      "reason": "Detección de preguntas huérfanas críticas (Q-C03-184 sobre frecuencia angular en oscilador armónico espacial de 2do orden y Q-C02-161 sobre vector normal a superficie implícita, conceptos no cubiertos en las definiciones teóricas del curso)",
+      "deduction": -2.0
+    }
+  ],
+  "final_score": 7.2,
+  "quality_tier": "CRÍTICO (0-10)",
+  "remediation_actions": [
+    "Estructurar el curso en 4 módulos o unidades jerárquicas temáticas (M1: Homogeneidad y Euler; M2: EDPs Cuasilineales de 1er Orden y Lagrange; M3: Problema de Cauchy y Curvas Características; M4: EDPs de 2do Orden y Operadores) con grafo explícito de dependencias.",
+    "Reescribir las pistas de las 129 preguntas de selección múltiple, eliminando la pista plantilla alucinada sobre 'principio de superposición' y sustituyéndola por pistas progresivas conceptuales, analíticas y de descarte contextualizadas.",
+    "Corregir el generador de plantillas para eliminar las fugas sintácticas '{k_val}', '{{yy}}' y '{{my}}' en Q-H03-043 y las 11 preguntas asociadas de H-03 y Hab-02.",
+    "Reemplazar los 1,500 error_rationale genéricos ('Distractor basado en misconception...') por retroalimentación diagnóstica real que explique el error de cálculo o la trampa conceptual específica para cada opción distractora.",
+    "Eliminar la duplicación masiva de reactivos (únicamente 138 stems únicos para 500 preguntas), implementando parametrización aleatoria controlada con validación analítica de respuestas.",
+    "Resolver las preguntas huérfanas incorporando píldoras teóricas de repaso de EDOs (oscilador armónico espacial) y cálculo multivariable (gradientes de superficies implícitas), o realineando dichos reactivos a sus unidades correspondientes.",
+    "Reubicar las 7 preguntas de integración directa elemental en Hab-05 que no utilizan multiplicadores de Lagrange hacia Hab-04."
+  ]
+}

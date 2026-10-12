@@ -1,0 +1,209 @@
+{
+  "course_id": "pde_fewshot",
+  "title": "Ecuaciones en Derivadas Parciales (Few-Shot)",
+  "macro_competency": "Clasificación y resolución analítica de ecuaciones diferenciales en derivadas parciales",
+  "competencies": [
+    {
+      "id": "C-01",
+      "type": "concept",
+      "name": "Clasificación de EDPs lineales de segundo orden",
+      "description_latex": "Clasificación en elíptica, parabólica o hiperbólica según el signo del discriminante $\\Delta = B^2 - 4AC$.",
+      "bloom": "Understand",
+      "prerequisites": [],
+      "source_examples": [
+        "Ecuación de Laplace: $\\Delta < 0$ (elíptica)",
+        "Ecuación de onda: $\\Delta > 0$ (hiperbólica)",
+        "Ecuación del calor: $\\Delta = 0$ (parabólica)"
+      ],
+      "evidence": [
+        { "doc": "edp_lecture.pdf", "page": 5 }
+      ],
+      "distractors": [
+        {
+          "id": "D-C01-01",
+          "name": "Confundir el signo del discriminante entre elíptica e hiperbólica",
+          "wrong_belief": "Un discriminante negativo indica una ecuación hiperbólica por semejanza con raíces complejas.",
+          "correct_belief": "Un discriminante negativo Delta < 0 define una ecuación elíptica.",
+          "omitted_step": null,
+          "trigger": "Asociación incorrecta de la regla de signos de cónicas.",
+          "manifestation": "Declara 'hiperbólica' cuando B^2 - 4AC < 0.",
+          "error_type": "conceptual_swap",
+          "severity": "high",
+          "origin": "source",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 5 },
+          "remediation_hint": "Recuerde que Delta < 0 corresponde al tipo elíptico, Delta = 0 al parabólico y Delta > 0 al hiperbólico."
+        },
+        {
+          "id": "D-C01-02",
+          "name": "Omitir el factor 4 en el discriminante B^2 - 4AC",
+          "wrong_belief": "El discriminante de segundo orden es B^2 - AC.",
+          "correct_belief": "La forma estándar cuadrática en dos variables exige el factor 4: Delta = B^2 - 4AC.",
+          "omitted_step": "Incluir el factor 4 al multiplicar los coeficientes cruzados A y C.",
+          "trigger": "Confusión con la forma reducida de coeficientes pares.",
+          "manifestation": "Calcula B^2 - AC para clasificar la ecuación.",
+          "error_type": "skipped_step",
+          "severity": "medium",
+          "origin": "source",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 6 },
+          "remediation_hint": "Asegúrese de usar la fórmula completa Delta = B^2 - 4AC con el factor 4."
+        },
+        {
+          "id": "D-C01-03",
+          "name": "Ignorar la dependencia espacial de los coeficientes",
+          "wrong_belief": "El tipo de EDP es constante en todo el plano independientemente de x e y.",
+          "correct_belief": "Cuando los coeficientes dependen de variables espaciales, el tipo puede cambiar según la región.",
+          "omitted_step": null,
+          "trigger": "Evaluar la ecuación sólo en el origen.",
+          "manifestation": "Clasifica globalmente sin especificar el dominio donde Delta mantiene el signo.",
+          "error_type": "overgeneralization",
+          "severity": "medium",
+          "origin": "inferred",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 7 },
+          "remediation_hint": "Compruebe si los coeficientes dependen de las variables independientes antes de clasificar."
+        },
+        {
+          "id": "D-C01-04",
+          "name": "Inversión de signos al transponer términos",
+          "wrong_belief": "Los coeficientes se leen directamente sin igualar a cero.",
+          "correct_belief": "La EDP debe expresarse en la forma A u_xx + B u_xy + C u_yy = ... antes de identificar coeficientes.",
+          "omitted_step": "Normalizar todos los términos diferenciales al mismo lado de la igualdad.",
+          "trigger": "Lectura apresurada de una ecuación como u_xx = -u_yy.",
+          "manifestation": "Cambio de signo erróneo en A, B o C.",
+          "error_type": "sign_error",
+          "severity": "high",
+          "origin": "source",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 8 },
+          "remediation_hint": "Transponga todos los términos de segundo orden al miembro izquierdo antes de calcular Delta."
+        },
+        {
+          "id": "D-C01-05",
+          "name": "Confundir coeficientes de derivadas mixtas",
+          "wrong_belief": "El coeficiente B es el doble del término frente a u_xy en cualquier notación.",
+          "correct_belief": "En la forma A u_xx + B u_xy + C u_yy = 0, B es el coeficiente total de u_xy.",
+          "omitted_step": null,
+          "trigger": "Confusión entre notación matricial y notación escalar.",
+          "manifestation": "Duplica o divide entre dos el coeficiente B erróneamente.",
+          "error_type": "notation",
+          "severity": "low",
+          "origin": "inferred",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 6 },
+          "remediation_hint": "Tome B como el coeficiente completo que acompaña a la derivada mixta u_xy."
+        },
+        {
+          "id": "D-C01-06",
+          "name": "Declarar tipo parabólico ante coeficientes nulos simultáneos",
+          "wrong_belief": "Si A = B = C = 0 en algún punto, la ecuación es parabólica.",
+          "correct_belief": "Si los tres coeficientes de segundo orden se anulan, la ecuación degenera a primer orden.",
+          "omitted_step": "Comprobar que al menos un coeficiente de segundo orden no sea nulo.",
+          "trigger": "Aplicar Delta = 0 mecánicamente cuando todos los coeficientes son cero.",
+          "manifestation": "Clasifica como parabólica una ecuación degenerada.",
+          "error_type": "boundary_case",
+          "severity": "low",
+          "origin": "inferred",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 9 },
+          "remediation_hint": "Verifique que la ecuación sea genuinamente de segundo orden antes de aplicar el criterio."
+        }
+      ]
+    },
+    {
+      "id": "Hab-01",
+      "type": "skill",
+      "name": "Resolución de EDPs cuasilineales por el método de Lagrange",
+      "description_latex": "Integración del sistema característico $\\frac{dx}{P} = \\frac{dy}{Q} = \\frac{du}{R}$ para hallar dos integrales primeras independientes.",
+      "bloom": "Apply",
+      "prerequisites": ["C-01"],
+      "source_examples": [
+        "$x u_x + y u_y = 2u \\implies u = x^2 f(y/x)$"
+      ],
+      "evidence": [
+        { "doc": "edp_lecture.pdf", "page": 18 }
+      ],
+      "distractors": [
+        {
+          "id": "D-Hab01-01",
+          "name": "Integrar sin constante en la primera curva característica",
+          "wrong_belief": "La integral primera se obtiene igualando las funciones sin constante de integración.",
+          "correct_belief": "Cada curva característica corresponde a una constante de integración u_1(x,y,u) = C_1.",
+          "omitted_step": "Definir explícitamente la constante de integración en la primera ecuación característica.",
+          "trigger": "Olvidar la constante de integración al resolver dx/P = dy/Q.",
+          "manifestation": "Plantea una relación fija en lugar de una familia de curvas dependientes de C_1.",
+          "error_type": "skipped_step",
+          "severity": "high",
+          "origin": "source",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 19 },
+          "remediation_hint": "Recuerde que cada cociente diferencial integrado genera una constante C_1 o C_2."
+        },
+        {
+          "id": "D-Hab01-02",
+          "name": "Confundir cocientes en el sistema auxiliar de Lagrange",
+          "wrong_belief": "El sistema auxiliar se plantea como dx/Q = dy/P = du/R.",
+          "correct_belief": "El sistema característico de Lagrange asocia dx con P (coeficiente de u_x) y dy con Q (coeficiente de u_y).",
+          "omitted_step": null,
+          "trigger": "Intercambiar los coeficientes de las derivadas parciales.",
+          "manifestation": "Invierte las variables en las integrales primeras.",
+          "error_type": "procedural_slip",
+          "severity": "high",
+          "origin": "source",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 18 },
+          "remediation_hint": "Verifique que dx esté dividido por el coeficiente de u_x y dy por el de u_y."
+        },
+        {
+          "id": "D-Hab01-03",
+          "name": "Omitir la segunda integral primera independiente",
+          "wrong_belief": "Una sola integral característica es suficiente para construir la solución general.",
+          "correct_belief": "Se requieren dos integrales primeras funcionalmente independientes para definir Phi(C_1, C_2) = 0.",
+          "omitted_step": "Integrar un segundo par diferencial para obtener la constante C_2.",
+          "trigger": "Detener el procedimiento tras resolver el primer par diferencial dx/P = dy/Q.",
+          "manifestation": "Escribe u como función directa de una sola curva característica.",
+          "error_type": "skipped_step",
+          "severity": "high",
+          "origin": "source",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 20 },
+          "remediation_hint": "Integre un segundo par del sistema auxiliar para obtener la segunda constante independiente C_2."
+        },
+        {
+          "id": "D-Hab01-04",
+          "name": "Error de signo en la integración logarítmica",
+          "wrong_belief": "La integral de 1/x dx y -1/y dy produce ln(x) + ln(y) = C sin signo negativo.",
+          "correct_belief": "La integral conserva el signo negativo: ln(x) = -ln(y) + C implica x*y = C, no x/y = C.",
+          "omitted_step": null,
+          "trigger": "Pérdida del signo menos al aplicar exponenciales.",
+          "manifestation": "Obtiene la relación funcional recíproca.",
+          "error_type": "sign_error",
+          "severity": "medium",
+          "origin": "source",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 21 },
+          "remediation_hint": "Cuide los signos al despejar expresiones logarítmicas con exponenciales."
+        },
+        {
+          "id": "D-Hab01-05",
+          "name": "Dependencia funcional lineal en lugar de arbitraria",
+          "wrong_belief": "La solución general exige una combinación lineal fija C_1 + k C_2 = 0.",
+          "correct_belief": "La relación es una función arbitraria Phi(C_1, C_2) = 0 o C_2 = f(C_1).",
+          "omitted_step": null,
+          "trigger": "Confusión con sistemas de ecuaciones algebraicas lineales.",
+          "manifestation": "Restringe la solución a constantes aditivas.",
+          "error_type": "overgeneralization",
+          "severity": "low",
+          "origin": "inferred",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 22 },
+          "remediation_hint": "La solución general vincula las integrales mediante una función arbitraria f(C_1)."
+        },
+        {
+          "id": "D-Hab01-06",
+          "name": "Olvidar sustituir la condición inicial en las características",
+          "wrong_belief": "La condición de Cauchy se aplica evaluando u(x,y) directamente sin parametrizar la curva inicial.",
+          "correct_belief": "La condición inicial exige parametrizar la curva de Cauchy x(s), y(s), u(s) y eliminar el parámetro s.",
+          "omitted_step": "Parametrizar la curva inicial de Cauchy con un parámetro auxiliar s.",
+          "trigger": "Sustitución directa de variables sin parametrización.",
+          "manifestation": "Produce expresiones contradictorias al evaluar la condición de frontera.",
+          "error_type": "skipped_step",
+          "severity": "medium",
+          "origin": "source",
+          "evidence": { "doc": "edp_lecture.pdf", "page": 23 },
+          "remediation_hint": "Parametrice la curva inicial con s para relacionar unívocamente C_1 y C_2."
+        }
+      ]
+    }
+  ]
+}

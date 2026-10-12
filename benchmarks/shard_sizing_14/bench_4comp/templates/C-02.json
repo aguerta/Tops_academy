@@ -1,0 +1,149 @@
+{
+  "competency_id": "C-02",
+  "templates": [
+    {
+      "id": "T-C02-01",
+      "competency_id": "C-02",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "Dada la función de producción agregada neoclásica $Q = {A} K^{1/2} L^{1/2}$, si la relación capital-trabajo es $k = {k}$, calcule el valor numérico del producto por trabajador $q = \\phi(k)$.",
+      "stem_variants": [
+        "Dada la función de producción agregada neoclásica $Q = {A} K^{1/2} L^{1/2}$, si la relación capital-trabajo es $k = {k}$, calcule el valor numérico del producto por trabajador $q = \\phi(k)$.",
+        "En una economía con tecnología intensiva $\\phi(k) = {A} k^{1/2}$, determine el producto por trabajador correspondiente a $k = {k}$.",
+        "Para la función de producción Cobb-Douglas $Q = {A} K^{1/2} L^{1/2}$, halle el valor escalar de la producción per cápita $q = Q/L$ evaluada en $k = {k}$.",
+        "Calcule el producto medio del trabajo $\\phi(k)$ para la tecnología intensiva $\\phi(k) = {A} \\sqrt{k}$ con relación capital-trabajo $k = {k}$."
+      ],
+      "generate_py": "def generate(rng):\n    A = rng.choice([2, 3, 4, 5, 6, 8])\n    sqrt_k = rng.choice([2, 3, 4, 5, 6, 7, 8])\n    k = sqrt_k ** 2\n    q_val = A * sqrt_k\n    return {\n        'vars': {'A': A, 'k': k, 'sqrt_k': sqrt_k, 'q_val': q_val},\n        'correct': q_val,\n        'value': str(q_val),\n        'canonical_algebraic': str(q_val),\n        'accepted_equivalents': [str(q_val), f'{q_val}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    v = res['vars']\n    return int(res['correct']) == v['A'] * v['sqrt_k']",
+      "hints": [
+        "Divida la función agregada entre L para obtener la forma intensiva: q = Q / L = A * (K / L)^(1/2) = A * k^(1/2).",
+        "Calcule la raíz cuadrada de la relación capital-trabajo k = {k}.",
+        "Multiplique el coeficiente A = {A} por la raíz calculada."
+      ],
+      "solution": "Dividiendo por L se obtiene q = phi(k) = {A}k^(1/2). Sustituyendo k = {k}: phi({k}) = {A} * ({k})^(1/2) = {A} * {sqrt_k} = {q_val}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C02-02",
+      "competency_id": "C-02",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Para la tecnología intensiva neoclásica $\\phi(k) = {A} k^{1/2}$, determine el valor numérico del producto marginal del capital $\\phi'({k})$ evaluado en la relación capital-trabajo $k = {k}$.",
+      "stem_variants": [
+        "Para la tecnología intensiva neoclásica $\\phi(k) = {A} k^{1/2}$, determine el valor numérico del producto marginal del capital $\\phi'({k})$ evaluado en la relación capital-trabajo $k = {k}$.",
+        "Dada la función per cápita $\\phi(k) = {A} k^{1/2}$, calcule el valor escalar de la derivada $\\phi'({k})$ que mide el producto marginal del capital.",
+        "Halle el valor de la productividad marginal del capital $f_K = \\phi'({k})$ para una función intensiva $\\phi(k) = {A} \\sqrt{k}$ en $k = {k}$.",
+        "Evalúe la derivada de la forma intensiva $\\phi'(k) = \\frac{d\\phi}{dk}$ en $k = {k}$ para $\\phi(k) = {A} k^{1/2}$."
+      ],
+      "generate_py": "def generate(rng):\n    mult = rng.choice([1, 2, 3, 4, 5])\n    sqrt_k = rng.choice([2, 4, 5, 8, 10])\n    k = sqrt_k ** 2\n    A = 2 * sqrt_k * mult\n    mpk = mult\n    return {\n        'vars': {'A': A, 'k': k, 'sqrt_k': sqrt_k, 'mpk': mpk},\n        'correct': mpk,\n        'value': str(mpk),\n        'canonical_algebraic': str(mpk),\n        'accepted_equivalents': [str(mpk), f'{mpk}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    v = res['vars']\n    return int(res['correct']) * 2 * v['sqrt_k'] == v['A']",
+      "hints": [
+        "Derive phi(k) = A * k^(1/2) respecto a k: phi'(k) = A * (1/2) * k^(-1/2) = A / (2 * sqrt(k)).",
+        "Sustituya k = {k} en la derivada para calcular sqrt({k}).",
+        "Divida A = {A} entre 2 * sqrt({k}) para obtener el producto marginal."
+      ],
+      "solution": "La derivada de la función intensiva es phi'(k) = d/dk({A}k^(1/2)) = ({A}/2) * k^(-1/2) = {A} / (2 * {sqrt_k}) = {mpk}. Este valor coincide exactamente con el producto marginal del capital f_K.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C02-03",
+      "competency_id": "C-02",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "En una economía con función de producción linealmente homogénea $Q = F(K, L)$, si la fuerza laboral es $L = {L}$ trabajadores y el producto por trabajador es $q = \\phi(k) = {q}$, calcule el valor numérico del producto agregado total $Q$.",
+      "stem_variants": [
+        "En una economía con función de producción linealmente homogénea $Q = F(K, L)$, si la fuerza laboral es $L = {L}$ trabajadores y el producto por trabajador es $q = \\phi(k) = {q}$, calcule el valor numérico del producto agregado total $Q$.",
+        "Dada la definición de producto por trabajador $q = Q/L = {q}$ para una fuerza laboral $L = {L}$, halle el nivel total del producto agregado $Q$.",
+        "A partir de la relación intensiva $Q = L \\phi(k)$ con $L = {L}$ y $\\phi(k) = {q}$, determine el valor escalar de la producción nacional total $Q$.",
+        "Calcule el producto macroeconómico agregado $Q = L \\cdot q$ para una economía con $L = {L}$ trabajadores y productividad media $q = {q}$."
+      ],
+      "generate_py": "def generate(rng):\n    L = rng.choice([50, 80, 100, 120, 150, 200, 250, 300])\n    q = rng.choice([10, 15, 20, 25, 30, 40, 50])\n    Q_val = L * q\n    return {\n        'vars': {'L': L, 'q': q, 'Q_val': Q_val},\n        'correct': Q_val,\n        'value': str(Q_val),\n        'canonical_algebraic': str(Q_val),\n        'accepted_equivalents': [str(Q_val), f'{Q_val}.0'],\n        'tolerance': 0.001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    v = res['vars']\n    return int(res['correct']) == v['L'] * v['q']",
+      "hints": [
+        "Recuerde que por definición de producto por trabajador se tiene q = Q / L.",
+        "Despeje el producto agregado multiplicando ambos miembros por L: Q = L * q = L * phi(k).",
+        "Multiplique L = {L} por q = {q}."
+      ],
+      "solution": "De la identidad intensiva q = Q/L se desprende inmediatamente Q = L * q = ({L}) * ({q}) = {Q_val}.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-C02-04",
+      "competency_id": "C-02",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "En la formulación intensiva per cápita neoclásica $q \\equiv Q/L = \\phi(k)$ evaluada en una relación capital-trabajo $k = {k}$, seleccione todas las afirmaciones matemáticamente correctas sobre la interpretación económica de $\\phi(k)$ y su derivada $\\phi'(k)$:",
+      "stem_variants": [
+        "En la formulación intensiva per cápita neoclásica $q \\equiv Q/L = \\phi(k)$ evaluada en una relación capital-trabajo $k = {k}$, seleccione todas las afirmaciones matemáticamente correctas sobre la interpretación económica de $\\phi(k)$ y su derivada $\\phi'(k)$:",
+        "Al distinguir conceptualmente entre producto medio y marginal en la forma intensiva para $k = {k}$, ¿cuáles de las siguientes proposiciones son válidas?",
+        "Considere las propiedades de la función por trabajador $\\phi(k)$ y su pendiente $\\phi'(k)$ en $k = {k}$. Identifique todas las definiciones teóricas rigurosas:",
+        "Para un nivel de equipamiento de capital $k = {k}$, seleccione las afirmaciones exactas respecto a $\\phi(k)$ y su tasa de cambio marginal:"
+      ],
+      "generate_py": "def generate(rng):\n    k = rng.choice([2, 4, 6, 8, 10, 12, 16])\n    opts = [\n        {'content': r'La función $\\phi(k) \\equiv Q/L$ representa el producto medio del trabajo ($\\text{APP}_L$) o producto por trabajador.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': r'La primera derivada $\\phi\\'(k)$ representa el producto marginal del capital ($f_K = \\frac{\\partial Q}{\\partial K}$).', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': f'La función $\\\\phi(k)$ representa directamente el producto marginal del capital para la dotación $k = {k}$.', 'is_correct': False, 'distractor_id': 'D-C02-01', 'error_rationale': 'Confusión entre producto medio y producto marginal: cree que phi(k) da el producto marginal del capital en lugar de APP_L.'},\n        {'content': f'El producto por trabajador $\\\\phi({k})$ coincide conceptualmente con la productividad marginal del factor trabajo $f_L$.', 'is_correct': False, 'distractor_id': 'D-C02-01', 'error_rationale': 'Confunde el producto medio del trabajo phi(k) con el producto marginal del trabajo f_L.'},\n    ]\n    return {\n        'vars': {'k': k},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    correct_opts = [o for o in res['options'] if o['is_correct']]\n    return len(correct_opts) == 2 and len(res['options']) == 4",
+      "hints": [
+        "Recuerde que phi(k) se define dividiendo el producto total Q entre el número de trabajadores L.",
+        "La derivada parcial respecto a K es d/dK[L * phi(K/L)] = L * phi'(k) * (1/L) = phi'(k).",
+        "Distinga con cuidado entre producto medio (cociente) y producto marginal (derivada)."
+      ],
+      "solution": "La forma intensiva phi(k) = Q/L es por definición el producto medio del trabajo (producto por trabajador). Por la regla de la cadena, la derivada parcial f_K = dQ/dK es igual a phi'(k). Confundir phi(k) con f_K invierte producto medio con marginal.",
+      "distractor_ids": [
+        "D-C02-01"
+      ]
+    },
+    {
+      "id": "T-C02-05",
+      "competency_id": "C-02",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Understand",
+      "stem": "Al analizar las consecuencias teóricas de la homogeneidad lineal de grado 1 en la función de producción neoclásica $Q = F(K, L)$ con factor de escala $\\lambda = {scale_factor}$, seleccione todas las afirmaciones rigurosas:",
+      "stem_variants": [
+        "Al analizar las consecuencias teóricas de la homogeneidad lineal de grado 1 en la función de producción neoclásica $Q = F(K, L)$ con factor de escala $\\lambda = {scale_factor}$, seleccione todas las afirmaciones rigurosas:",
+        "En relación con los rendimientos constantes a escala frente a los rendimientos marginales ante una escala factorial $\\lambda = {scale_factor}$, ¿cuáles afirmaciones son teóricamente válidas?",
+        "Dada la propiedad $F(\\lambda K, \\lambda L) = \\lambda F(K, L)$ con factor $\\lambda = {scale_factor}$, identifique todas las propiedades verdaderas sobre las derivadas de la función:",
+        "Para una función linealmente homogénea escalada por $\\lambda = {scale_factor}$, determine las afirmaciones correctas sobre curvatura y retornos marginales:"
+      ],
+      "generate_py": "def generate(rng):\n    scale_factor = rng.choice([2, 3, 4, 5, 6])\n    opts = [\n        {'content': 'La homogeneidad de grado 1 convive armónicamente con rendimientos marginales decrecientes para cada factor individual ($f_{KK} < 0$, $f_{LL} < 0$).', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': r'La segunda derivada de la función intensiva satisface estrictamente $\\phi\\'\\'(k) < 0$, garantizando concavidad estricta.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': f'Porque la función es homogénea de grado 1 escalada por {scale_factor}, cada insumo individual exhibe rendimientos marginales constantes ($f_{{KK}} = 0$ y $\\\\phi\\'\\'(k) = 0$).', 'is_correct': False, 'distractor_id': 'D-C02-02', 'error_rationale': 'Confusión entre rendimientos constantes a escala y rendimientos marginales: cree que rendimientos constantes a escala implica rendimientos marginales constantes.'},\n        {'content': f'Multiplicar únicamente el capital por {scale_factor} manteniendo fijo el trabajo multiplica el producto total exactamente por {scale_factor}.', 'is_correct': False, 'distractor_id': 'D-C02-02', 'error_rationale': 'Confunde el aumento conjunto de todos los factores (escala) con la variación de un solo factor individual (proporciones).'},\n    ]\n    return {\n        'vars': {'scale_factor': scale_factor},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    correct_opts = [o for o in res['options'] if o['is_correct']]\n    return len(correct_opts) == 2 and len(res['options']) == 4",
+      "hints": [
+        "Distinga con precisión entre el concepto de escala (variar todos los factores proporcionalmente) y el concepto marginal (variar un factor ceteris paribus).",
+        "La homogeneidad lineal establece rendimientos constantes a escala, pero la ley de rendimientos decrecientes rige sobre insumos individuales.",
+        "La concavidad estricta exige phi''(k) < 0 y f_KK < 0."
+      ],
+      "solution": "Los rendimientos constantes a escala (homogeneidad de grado 1) implican que F(m*K, m*L) = m*F(K, L), pero no que cada factor tenga producto marginal constante. Al mantener un factor fijo, rigen rendimientos decrecientes (f_KK < 0 y phi''(k) < 0).",
+      "distractor_ids": [
+        "D-C02-02"
+      ]
+    },
+    {
+      "id": "T-C02-06",
+      "competency_id": "C-02",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Respecto a la pendiente y curvatura de la función de producción intensiva $\\phi(k)$ para una relación capital-trabajo $k = {k_val}$, seleccione todas las proposiciones geométricas y económicas verdaderas:",
+      "stem_variants": [
+        "Respecto a la pendiente y curvatura de la función de producción intensiva $\\phi(k)$ para una relación capital-trabajo $k = {k_val}$, seleccione todas las proposiciones geométricas y económicas verdaderas:",
+        "Al evaluar el comportamiento gráfico de la curva intensiva $\\phi(k)$ en torno a $k = {k_val}$, ¿cuáles de las siguientes características de pendiente y concavidad son ciertas?",
+        "Para la trayectoria intensiva de Solow $\\phi(k)$ en un punto $k = {k_val}$, identifique todas las afirmaciones exactas sobre sus derivadas primera y segunda:",
+        "Determine las propiedades de monotonicidad y curvatura de $\\phi(k)$ en el entorno de $k = {k_val}$:"
+      ],
+      "generate_py": "def generate(rng):\n    k_val = rng.choice([3, 5, 7, 9, 12, 15, 20])\n    opts = [\n        {'content': r'La función intensiva es estrictamente creciente ($\\phi\\'(k) > 0$), indicando que mayor capital por trabajador eleva el producto per cápita.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': r'La función intensiva crece a una tasa decreciente ($\\phi\\'\\'(k) < 0$), lo que describe concavidad estricta hacia el origen.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n        {'content': f'El producto por trabajador decrece con el capital ($\\\\phi\\'({k_val}) < 0$) debido a que la tecnología experimenta retornos decrecientes.', 'is_correct': False, 'distractor_id': 'D-C02-03', 'error_rationale': 'Confusión entre tasa decreciente y función decreciente: afirma que la derivada primera es negativa debido a retornos decrecientes en lugar de la segunda derivada.'},\n        {'content': f'La concavidad estricta exige que la primera derivada sea negativa para el nivel de capital $k = {k_val}$.', 'is_correct': False, 'distractor_id': 'D-C02-03', 'error_rationale': 'Confunde el signo de la primera derivada con el de la segunda derivada al caracterizar la concavidad de la función.'},\n    ]\n    return {\n        'vars': {'k_val': k_val},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(res):\n    correct_opts = [o for o in res['options'] if o['is_correct']]\n    return len(correct_opts) == 2 and len(res['options']) == 4",
+      "hints": [
+        "Recuerde que el producto marginal del capital es positivo: f_K = phi'(k) > 0 para todo k > 0.",
+        "La ley de rendimientos decrecientes se refleja en la segunda derivada: phi''(k) < 0.",
+        "Una función creciente a tasa decreciente es estrictamente creciente (primera derivada positiva) y estrictamente cóncava (segunda derivada negativa)."
+      ],
+      "solution": "La función intensiva phi(k) es estrictamente creciente (phi'(k) > 0) a una tasa decreciente (phi''(k) < 0). Decir que phi'(k) < 0 confunde una tasa de crecimiento decreciente (concavidad) con una función decreciente.",
+      "distractor_ids": [
+        "D-C02-03"
+      ]
+    }
+  ]
+}

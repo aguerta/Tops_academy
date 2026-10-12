@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PagesManifestAndItemSchema",
+  "description": "Schema for content ingestion manifest and page item descriptors in content-to-course v2",
+  "oneOf": [
+    { "$ref": "#/definitions/manifest" },
+    { "$ref": "#/definitions/page_item" }
+  ],
+  "definitions": {
+    "tile_info": {
+      "type": "object",
+      "required": ["row", "col", "rows", "cols", "overlap_pct"],
+      "properties": {
+        "row": { "type": "integer", "minimum": 0 },
+        "col": { "type": "integer", "minimum": 0 },
+        "rows": { "type": "integer", "minimum": 1 },
+        "cols": { "type": "integer", "minimum": 1 },
+        "overlap_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+        "box": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 4,
+          "maxItems": 4
+        }
+      },
+      "additionalProperties": false
+    },
+    "page_item": {
+      "type": "object",
+      "required": ["doc", "page", "kind", "sha256", "render_dpi", "has_text_layer"],
+      "properties": {
+        "doc": { "type": "string", "minLength": 1 },
+        "page": { "type": "integer", "minimum": 0 },
+        "kind": {
+          "type": "string",
+          "enum": ["beamer_text", "ink_pdf", "image_tile", "image_overview", "image_single", "scanned_pdf"]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        },
+        "render_dpi": {
+          "type": ["integer", "null"],
+          "minimum": 50
+        },
+        "tile": {
+          "anyOf": [
+            { "$ref": "#/definitions/tile_info" },
+            { "type": "null" }
+          ]
+        },
+        "has_text_layer": { "type": "boolean" },
+        "image_path": { "type": "string" },
+        "text_layer_path": { "type": ["string", "null"] },
+        "transcription_path": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "manifest": {
+      "type": "object",
+      "required": ["manifest_version", "items"],
+      "properties": {
+        "manifest_version": { "type": "string" },
+        "source_path": { "type": "string" },
+        "generated_at": { "type": "string" },
+        "total_items": { "type": "integer", "minimum": 0 },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/page_item" }
+        },
+        "pages": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/page_item" }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

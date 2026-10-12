@@ -1,0 +1,54 @@
+{
+  "course_metadata": {
+    "unit_title": "Sistemas de Ecuaciones Diferenciales Ordinarias y Aplicaciones Macroeconómicas Dinámicas",
+    "detected_objective": "Dominar el análisis cualitativo y cuantitativo de sistemas de ecuaciones diferenciales ordinarias lineales y no lineales planos (2x2), incluyendo polinomios característicos, espectro e invariantes (traza, determinante, discriminante), clasificación topológica de equilibrios (puntos silla, nodos, focos, centros), linealización jacobiana, teorema de Hartman-Grobman, y su aplicación formal a modelos dinámicos macroeconómicos (ajuste IS-LM y ciclos distributivos de Goodwin)."
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.8,
+      "max": 4.0,
+      "feedback": "Descomposición curricular conceptualmente coherente en 20 competencias categorizadas en Hechos (8), Conceptos (5) y Habilidades (7). Sin embargo, presenta dos fallas estructurales mayores: (1) Ausencia de módulos o unidades previas de fundamentos macroeconómicos antes de evaluar súbitamente dinámicas de Goodwin y ajustes IS-LM; (2) Falsa granularidad y redundancia masiva en los bancos de preguntas: de 470 reactivos nominales, solo existen 84 escenarios únicos en todo el curso (las habilidades Hab-01 a Hab-07 contienen apenas 3 problemas base cada una, clonados 10 veces de forma artificial)."
+    },
+    "assessment_quality": {
+      "score": 1.8,
+      "max": 5.0,
+      "feedback": "Severamente comprometida por defectos críticos de diseño psicométrico: (1) Fuga flagrante de respuesta en el enunciado (Answer Leaks) en al menos 5 reactivos de tipo fill-in-the-blank (Q-H04-061, Q-H04-062, Q-H04-068, Q-H04-071, Q-H04-075) donde se indica literalmente 'Si el equilibrio de reposo satisface x^* = k, ingrese el valor de x^*'; (2) Metainformación delatora en 476 opciones de respuesta que delatan el error ('sumando erróneamente...', 'olvidando permutar...'); (3) Opciones matemáticamente idénticas con calificaciones contradictorias (e.g., Q-H01-002 donde lambda^2 - 5 = 0 es correcta y lambda^2 + 0lambda - 5 = 0 se marca falsa); (4) Duplicación clónica masiva (64 preguntas idénticas al 100% y un ítem macroeconómico repetido 72 veces)."
+    },
+    "scaffolding_hints": {
+      "score": 2.3,
+      "max": 5.0,
+      "feedback": "Cumplimiento formal en pistas progresivas (el 100% de los reactivos tiene 3 pistas y solución detallada), pero grave fallo en el andamiaje correctivo: (1) En el 100% de los 235 reactivos de opción múltiple con 7 alternativas (1,410 distractores en total, representando el 85.4% de todos los distractores incorrectos del curso), el 'error_rationale' es un texto comodín genérico ('Distractor basado en misconception de [Competency Name]') sin diagnóstico pedagógico ni explicación constructiva del fallo; (2) Pistas tautológicas en reactivos con fuga de respuesta donde la última pista simplemente repite el valor ya dado en el enunciado."
+    },
+    "instructional_alignment": {
+      "score": 1.5,
+      "max": 4.0,
+      "feedback": "Críticamente afectada por contaminación cruzada y desalineación conceptual: (1) Pregunta huérfana masiva crítica: el reactivo sobre IS-LM dinámico y ciclos de Goodwin ('Considere las aplicaciones dinámicas macroeconómicas...') se insertó como relleno 72 veces a lo largo de 12 competencias ajenas, evaluando dinámicas presa-depredador, participación salarial u^* = 1 - (alpha + n)sigma y progreso técnico en temas de álgebra lineal pura como H-03 (Inversa 2x2), H-05 (Autovalores complejos), H-06 (Autovectores generalizados), H-08, C-01, C-04 y Hab-05; (2) Desalineación de habilidades prácticas: en Hab-04 (Autovectores), 8 reactivos evalúan tipología traza-determinante en lugar de subespacios propios."
+    },
+    "technical_ergonomics": {
+      "score": 1.1,
+      "max": 2.0,
+      "feedback": "Notación de álgebra lineal formalmente correcta en su mayoría. No obstante, se registran 68 incidencias severas de sintaxis LaTeX y formateo algebraico aberrante causadas por interpolación de signos negativos dobles ('- -4', '+ -4', '- -9', 'e^{--1t}' en Q-H01-002, Q-H01-004, Q-H01-005, Q-H01-009, Q-H01-013, Q-H01-015, Q-H05-081), afectando gravemente la legibilidad y presentación formal del curso."
+    }
+  },
+  "penalties_applied": [
+    {
+      "reason": "Banco de ejercicios por unidad con menos de 3 problemas prácticos reales e independientes (C-01 tiene 0 problemas prácticos de cálculo; H-08 tiene solo 1 problema práctico real; y Hab-01 a Hab-07 presentan solo 2 problemas prácticos únicos inflados mediante clonación artificial y reactivos de relleno ajenos)",
+      "deduction": 2.0
+    },
+    {
+      "reason": "Detección crítica de pregunta huérfana masiva contaminante (reactivo de Goodwin e IS-LM dinámico inyectado 72 veces en 12 competencias no relacionadas que no enseñan dichos conceptos económicos, tales como H-03, H-05, H-06, H-08, C-01, C-04, Hab-05)",
+      "deduction": 2.0
+    }
+  ],
+  "final_score": 5.5,
+  "quality_tier": "CRÍTICO (0-10)",
+  "remediation_actions": [
+    "Erradicar de inmediato el reactivo de relleno macroeconómico de IS-LM y Goodwin de las 12 competencias no pertinentes (H-03, H-05, H-06, H-08, C-01, C-04, Hab-01, Hab-02, Hab-05, Hab-07) y sustituirlo por problemas auténticamente alineados a cada competencia.",
+    "Corregir la fuga directa de respuestas (Answer Leaks) en Q-H04-061, Q-H04-062, Q-H04-068, Q-H04-071 y Q-H04-075, reformulando los enunciados para que el estudiante calcule las coordenadas del estado estacionario a partir de las isoclinas sin entregar el valor en el texto.",
+    "Reemplazar los 1,410 textos comodín en 'error_rationale' de los 235 reactivos de opción múltiple (7 opciones) por diagnósticos pedagógicos constructivos que expliquen puntualmente la causa matemática del error.",
+    "Eliminar la metainformación delatora en las 476 opciones de respuesta que incluyen justificaciones dentro del texto visible ('sumando erróneamente...', 'olvidando...', 'permutando...'), trasladando tales descripciones exclusivamente al campo 'error_rationale'.",
+    "Subsanar las 68 anomalías de sintaxis LaTeX causadas por interpolación de dobles signos negativos ('- -', '+ -', 'e^{--1t}'), implementando simplificación algebraica de signos en el pipeline de generación.",
+    "Resolver las contradicciones de clave entre opciones matemáticamente equivalentes (e.g., en Q-H01-002, donde lambda^2 - 5 = 0 y lambda^2 + 0lambda - 5 = 0 tienen claves opuestas; y en Q-Hab06-411, donde distractores comparten la misma matriz que la respuesta correcta).",
+    "Diseñar un banco real de evaluación con un mínimo de 5 problemas prácticos genuinamente independientes por competencia, eliminando la duplicación en bucle clónico de 1 o 2 reactivos base."
+  ]
+}

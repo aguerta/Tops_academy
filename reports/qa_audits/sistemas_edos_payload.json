@@ -1,0 +1,3271 @@
+{
+  "course_id": "sistemas_edos",
+  "title": "Sistemas de Ecuaciones Diferenciales Ordinarias y Aplicaciones Macroeconómicas Dinámicas",
+  "description": "Banco interactivo de práctica deliberada y automatización para sistemas edos.",
+  "total_competencies": 20,
+  "total_questions": 470,
+  "question_types_distribution": {
+    "multiple_select": 121,
+    "multiple_choice_7_options": 235,
+    "fill_in_the_blank": 114
+  },
+  "questions_per_competency": {
+    "H-01": 20,
+    "H-02": 20,
+    "H-03": 20,
+    "H-04": 20,
+    "H-05": 20,
+    "H-06": 20,
+    "H-07": 20,
+    "H-08": 20,
+    "C-01": 20,
+    "C-02": 20,
+    "C-03": 20,
+    "C-04": 20,
+    "C-05": 20,
+    "Hab-01": 30,
+    "Hab-02": 30,
+    "Hab-03": 30,
+    "Hab-04": 30,
+    "Hab-05": 30,
+    "Hab-06": 30,
+    "Hab-07": 30
+  },
+  "questions_with_zero_hints_count": 0,
+  "sample_questions_count": 60,
+  "competencies": [
+    {
+      "id": "H-01",
+      "name": "Polinomio Característico Canónico 2x2",
+      "category": "Fact",
+      "description": "$p(\\lambda) = \\lambda^2 - \\text{tr}(A)\\lambda + \\det(A) = 0$, donde para $A = \\begin{bmatrix} a_{11} & a_{12} \\\\ a_{21} & a_{22} \\end{bmatrix}$, $\\text{tr}(A) = a_{11} + a_{22}$ y $\\det(A) = a_{11}a_{22} - a_{12}a_{21}$.",
+      "question_count": 20
+    },
+    {
+      "id": "H-02",
+      "name": "Fórmula Cuadrática Espectral y Discriminante",
+      "category": "Fact",
+      "description": "$\\lambda_{1,2} = \\frac{\\text{tr}(A) \\pm \\sqrt{\\Delta}}{2}$, con discriminante $\\Delta = [\\text{tr}(A)]^2 - 4\\det(A)$.",
+      "question_count": 20
+    },
+    {
+      "id": "H-03",
+      "name": "Inversa Matricial de Dimensión 2x2",
+      "category": "Fact",
+      "description": "$A^{-1} = \\frac{1}{\\det(A)}\\begin{bmatrix} a_{22} & -a_{12} \\\\ -a_{21} & a_{11} \\end{bmatrix}$, válida si y solo si $\\det(A) \\neq 0$.",
+      "question_count": 20
+    },
+    {
+      "id": "H-04",
+      "name": "Solución Particular Constante",
+      "category": "Fact",
+      "description": "$X_p = -A^{-1}B$ para sistemas no homogéneos $\\dot{X} = AX + B$ donde $B$ es un vector invariante en el tiempo y $\\det(A) \\neq 0$.",
+      "question_count": 20
+    },
+    {
+      "id": "H-05",
+      "name": "Base Real para Autovalores Complejos Conjugados",
+      "category": "Fact",
+      "description": "Si $\\lambda_{1,2} = a \\pm bi$ con autovector $v = r \\pm si$, la solución complementaria es $X_h(t) = c_1 e^{at}[r\\cos(bt) - s\\sin(bt)] + c_2 e^{at}[s\\cos(bt) + r\\sin(bt)]$.",
+      "question_count": 20
+    },
+    {
+      "id": "H-06",
+      "name": "Definición de Autovector Generalizado",
+      "category": "Fact",
+      "description": "Para raíz real repetida $\\lambda$ con deficiencia geométrica, el vector generalizado satisface $(A - \\lambda I)v_2 = v_1$, generando la solución $X(t) = c_1 e^{\\lambda t}v_1 + c_2 e^{\\lambda t}(v_2 + v_1 t)$.",
+      "question_count": 20
+    },
+    {
+      "id": "H-07",
+      "name": "Matriz Jacobiana Local 2x2",
+      "category": "Fact",
+      "description": "$J(x,y) = \\begin{bmatrix} \\frac{\\partial f}{\\partial x} & \\frac{\\partial f}{\\partial y} \\\\ \\frac{\\partial g}{\\partial x} & \\frac{\\partial g}{\\partial y} \\end{bmatrix}$ para sistemas autónomos no lineales $\\dot{x} = f(x,y)$, $\\dot{y} = g(x,y)$.",
+      "question_count": 20
+    },
+    {
+      "id": "H-08",
+      "name": "Álgebra de Tasas de Variación Proporcional",
+      "category": "Fact",
+      "description": "$\\frac{d}{dt}\\ln(u/v) = \\frac{\\dot{u}}{u} - \\frac{\\dot{v}}{v}$ y $\\frac{d}{dt}\\ln(uv) = \\frac{\\dot{u}}{u} + \\frac{\\dot{v}}{v}$, requeridas para modelos de ratios distributivos y de empleo.",
+      "question_count": 20
+    },
+    {
+      "id": "C-01",
+      "name": "Principio de Superposición y Partición de Soluciones",
+      "category": "Concept",
+      "description": "La trayectoria temporal se descompone en $X(t) = X_h(t) + X_p(t)$, donde $X_h(t)$ modela la dinámica transitoria hacia o desde el origen y $X_p(t)$ ancla la posición de largo plazo o tendencia estructural.",
+      "question_count": 20
+    },
+    {
+      "id": "C-02",
+      "name": "Tipología Topológica en el Plano Traza-Determinante",
+      "category": "Concept",
+      "description": "Si $\\det(A) < 0$, las raíces tienen signos opuestos (Punto Silla); si $\\det(A) > 0$ y $\\text{tr}(A) < 0$, estabilidad asintótica local (Nodo Estable si $\\Delta \\ge 0$, Foco Estable si $\\Delta < 0$); si $\\det(A) > 0$ y $\\text{tr}(A) = 0$, Centro armónico con órbitas cerradas periódicas.",
+      "question_count": 20
+    },
+    {
+      "id": "C-03",
+      "name": "Frontera de Linealización y No Hiperbolicidad",
+      "category": "Concept",
+      "description": "En sistemas no lineales, la aproximación local vía $J(x^*,y^*)$ preserva la topología solo en equilibrios hiperbólicos ($\\text{Re}(\\lambda) \\neq 0$).",
+      "question_count": 20
+    },
+    {
+      "id": "C-04",
+      "name": "Desacoplamiento Causal Unidireccional (Bloque Triangular)",
+      "category": "Concept",
+      "description": "En matrices dinámicas triangulares (como en el modelo Solow-Polución con $J_{12} = 0$), los autovalores coinciden con la diagonal.",
+      "question_count": 20
+    },
+    {
+      "id": "C-05",
+      "name": "Leyes de Movimiento por Exceso de Demanda",
+      "category": "Concept",
+      "description": "En formulaciones de ajuste IS-LM o macro dinámicas, las variables de estado evolucionan proporcionalmente a brechas de mercado ($D_t - O_t$ o $L^d_t - L^o_t$) reguladas por parámetros de velocidad de ajuste $c_1, c_2, v, \\mu$.",
+      "question_count": 20
+    },
+    {
+      "id": "Hab-01",
+      "name": "Reducción Estructural a Forma Matricial Compacta",
+      "category": "Skill",
+      "description": "Sustituir ecuaciones de comportamiento e identidades contables/estáticas dentro de las leyes de movimiento temporal para aislar $\\dot{X} = AX + B$.",
+      "question_count": 30
+    },
+    {
+      "id": "Hab-02",
+      "name": "Inversión Algebraica Simbólica para Estados Estacionarios",
+      "category": "Skill",
+      "description": "Computar analíticamente $-A^{-1}B$ o igualar $f(x,y)=0, g(x,y)=0$ para aislar coordenadas de equilibrio de largo plazo.",
+      "question_count": 30
+    },
+    {
+      "id": "Hab-03",
+      "name": "Diagnóstico Espectral Directo mediante Traza, Determinante y Discriminante",
+      "category": "Skill",
+      "description": "Evaluar algebraicamente los signos de $\\text{tr}(A)$, $\\det(A)$ y $\\Delta$ para categorizar el régimen dinámico sin calcular los autovectores.",
+      "question_count": 30
+    },
+    {
+      "id": "Hab-04",
+      "name": "Resolución de Subespacios Propios para Trayectorias Explícitas",
+      "category": "Skill",
+      "description": "Resolver el sistema algebraico homogéneo $(A - \\lambda_i I)v_i = 0$ para autovalores reales distintos o complejos, normalizando vectores base.",
+      "question_count": 30
+    },
+    {
+      "id": "Hab-05",
+      "name": "Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos",
+      "category": "Skill",
+      "description": "Plantear una propuesta polinomial $X_p(t) = A_1 t + A_0$ para forzamientos no constantes y derivar el sistema algebraico acoplado.",
+      "question_count": 30
+    },
+    {
+      "id": "Hab-06",
+      "name": "Linealización Diferencial Alrededor del Estado Estacionario",
+      "category": "Skill",
+      "description": "Diferenciar parcialmente sistemas no lineales y evaluar las derivadas en el punto interior positivo $(x^*, y^*)$.",
+      "question_count": 30
+    },
+    {
+      "id": "Hab-07",
+      "name": "Conversión Log-Diferencial de Variables Ratio",
+      "category": "Skill",
+      "description": "Pasar de definiciones de nivel a tasas de crecimiento para derivar ecuaciones de estado no lineales acopladas.",
+      "question_count": 30
+    }
+  ],
+  "sample_questions": [
+    {
+      "id": "Q-H01-001",
+      "competency_id": "H-01",
+      "competency_name": "Polinomio Característico Canónico 2x2",
+      "type": "multiple_select",
+      "difficulty": "hard",
+      "stem": "Para un sistema lineal plano $\\dot{X} = AX$ con matriz real $A_{2\\times 2}$, seleccione todas las afirmaciones teóricamente correctas respecto al polinomio característico y la clasificación por traza y determinante:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La suma de los autovalores $\\lambda_1 + \\lambda_2$ coincide exactamente con la traza de la matriz $\\text{tr}(A)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El producto de los autovalores $\\lambda_1 \\lambda_2$ coincide exactamente con el determinante $\\det(A)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Si $\\det(A) < 0$, el equilibrio es necesariamente un punto silla inestable independientemente del valor de la traza.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Si $\\text{tr}(A) < 0$, el sistema es asintóticamente estable incluso si el determinante es estrictamente negativo.",
+          "is_correct": false,
+          "error_rationale": "Falsa generalización: si $\\det(A) < 0$, existe una raíz real positiva que desestabiliza el sistema como punto silla."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Un discriminante espectral negativo $\\Delta < 0$ implica siempre que las trayectorias son monótonas y no presentan oscilaciones.",
+          "is_correct": false,
+          "error_rationale": "Confusión conceptual: $\\Delta < 0$ genera autovalores complejos conjugados y dinámicas oscilatorias en espiral."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "C"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "Recuerde las fórmulas de Viète para raíces de un polinomio cuadrático: suma = traza, producto = determinante.",
+        "Un determinante negativo garantiza que los autovalores tienen signos opuestos, configurando un punto silla.",
+        "La estabilidad asintótica exige simultáneamente $\\text{tr}(A) < 0$ Y $\\det(A) > 0$."
+      ],
+      "detailed_solution": "Las afirmaciones sobre la suma (traza), producto (determinante) y punto silla ($\\det < 0$) son rigurosamente ciertas. La estabilidad requiere además $\\det > 0$."
+    },
+    {
+      "id": "Q-H01-002",
+      "competency_id": "H-01",
+      "competency_name": "Polinomio Característico Canónico 2x2",
+      "type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "stem": "Para la matriz de coeficientes del sistema dinámico lineal acoplado $A = \\begin{bmatrix} 3 & 4 \\\\ -1 & -3 \\end{bmatrix}$, ¿cuál es la ecuación característica canónica $\\det(A - \\lambda I) = 0$ y sus invariantes espectrales?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\lambda^2 + 7\\lambda - -4 = 0$, sumando elementos adyacentes por filas en lugar de la traza principal.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Polinomio Característico Canónico 2x2."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\lambda^2 - -9\\lambda + -4 = 0$, considerando únicamente los productos de los bloques cruzados.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Polinomio Característico Canónico 2x2."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\lambda^2  - 5 = 0$, con traza $\\text{tr}(A) = 0$ y determinante $\\det(A) = -5$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\lambda^2  - -5 = 0$, con traza $\\text{tr}(A) = 0$ y determinante $\\det(A) = 5$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Polinomio Característico Canónico 2x2."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\lambda^2  + -13 = 0$, sumando erróneamente los productos diagonales en el determinante.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Polinomio Característico Canónico 2x2."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\lambda^2 + -5\\lambda + 0 = 0$, permutando el rol algebraico de la traza con el determinante.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Polinomio Característico Canónico 2x2."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\lambda^2 + 0\\lambda - 5 = 0$, con traza $\\text{tr}(A) = 0$ y determinante $\\det(A) = -5$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Polinomio Característico Canónico 2x2."
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "La fórmula del polinomio característico para una matriz $2\\times 2$ es $p(\\lambda) = \\lambda^2 - \\text{tr}(A)\\lambda + \\det(A) = 0$.",
+        "Calcule la traza sumando la diagonal principal: $\\text{tr}(A) = 3 + (-3) = 0$.",
+        "Calcule el determinante: $\\det(A) = (3)(-3) - (4)(-1) = -9 - (-4) = -5$."
+      ],
+      "detailed_solution": "La traza es $\\text{tr}(A) = 3 + (-3) = 0$ y el determinante es $\\det(A) = (3)(-3) - (4)(-1) = -5$. Por tanto, $p(\\lambda) = \\lambda^2 - (0)\\lambda + (-5) = 0$."
+    },
+    {
+      "id": "Q-H01-003",
+      "competency_id": "H-01",
+      "competency_name": "Polinomio Característico Canónico 2x2",
+      "type": "fill_in_the_blank",
+      "difficulty": "hard",
+      "stem": "Para la matriz de coeficientes $A = \\begin{bmatrix} 2 & 1 \\\\ -2 & 4 \\end{bmatrix}$, calcule el valor numérico del determinante $\\det(A)$. Ingrese el valor entero correspondiente.",
+      "options": [],
+      "correct_answer": {
+        "value": "10",
+        "canonical_algebraic": "10",
+        "accepted_equivalents": [
+          "10",
+          "10.0"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "La fórmula del determinante para una matriz $2\\times 2$ es $\\det(A) = ad - bc$.",
+        "Multiplique los elementos diagonales: (2)(4) = 8.",
+        "Multiplique y reste los elementos cruzados: (1)(-2) = -2, luego $\\det(A) = 8 - (-2) = 10$."
+      ],
+      "detailed_solution": "$\\det(A) = (2)(4) - (1)(-2) = 8 - (-2) = 10$."
+    },
+    {
+      "id": "Q-H02-021",
+      "competency_id": "H-02",
+      "competency_name": "Fórmula Cuadrática Espectral y Discriminante",
+      "type": "fill_in_the_blank",
+      "difficulty": "hard",
+      "stem": "Dado un sistema dinámico plano con traza $\\text{tr}(A) = -4$ y determinante $\\det(A) = 3$, calcule el valor del discriminante espectral $\\Delta = [\\text{tr}(A)]^2 - 4\\det(A)$. Ingrese el entero resultante.",
+      "options": [],
+      "correct_answer": {
+        "value": "4",
+        "canonical_algebraic": "4",
+        "accepted_equivalents": [
+          "4",
+          "4.0"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "Aplique la definición: $\\Delta = [\\text{tr}(A)]^2 - 4\\det(A)$.",
+        "Eleve al cuadrado la traza: (-4)^2 = 16.",
+        "Reste 4 veces el determinante: 16 - 4(3) = 16 - 12 = 4."
+      ],
+      "detailed_solution": "$\\Delta = (-4)^2 - 4(3) = 16 - 12 = 4$."
+    },
+    {
+      "id": "Q-H02-022",
+      "competency_id": "H-02",
+      "competency_name": "Fórmula Cuadrática Espectral y Discriminante",
+      "type": "multiple_select",
+      "difficulty": "hard",
+      "stem": "Para un sistema lineal plano $\\dot{X} = AX$ con matriz real $A_{2\\times 2}$, seleccione todas las afirmaciones teóricamente correctas respecto al polinomio característico y la clasificación por traza y determinante:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La suma de los autovalores $\\lambda_1 + \\lambda_2$ coincide exactamente con la traza de la matriz $\\text{tr}(A)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El producto de los autovalores $\\lambda_1 \\lambda_2$ coincide exactamente con el determinante $\\det(A)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Si $\\det(A) < 0$, el equilibrio es necesariamente un punto silla inestable independientemente del valor de la traza.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Si $\\text{tr}(A) < 0$, el sistema es asintóticamente estable incluso si el determinante es estrictamente negativo.",
+          "is_correct": false,
+          "error_rationale": "Falsa generalización: si $\\det(A) < 0$, existe una raíz real positiva que desestabiliza el sistema como punto silla."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Un discriminante espectral negativo $\\Delta < 0$ implica siempre que las trayectorias son monótonas y no presentan oscilaciones.",
+          "is_correct": false,
+          "error_rationale": "Confusión conceptual: $\\Delta < 0$ genera autovalores complejos conjugados y dinámicas oscilatorias en espiral."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "C"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "Recuerde las fórmulas de Viète para raíces de un polinomio cuadrático: suma = traza, producto = determinante.",
+        "Un determinante negativo garantiza que los autovalores tienen signos opuestos, configurando un punto silla.",
+        "La estabilidad asintótica exige simultáneamente $\\text{tr}(A) < 0$ Y $\\det(A) > 0$."
+      ],
+      "detailed_solution": "Las afirmaciones sobre la suma (traza), producto (determinante) y punto silla ($\\det < 0$) son rigurosamente ciertas. La estabilidad requiere además $\\det > 0$."
+    },
+    {
+      "id": "Q-H02-023",
+      "competency_id": "H-02",
+      "competency_name": "Fórmula Cuadrática Espectral y Discriminante",
+      "type": "multiple_select",
+      "difficulty": "easy",
+      "stem": "Para un sistema lineal plano $\\dot{X} = AX$ con matriz real $A_{2\\times 2}$, seleccione todas las afirmaciones teóricamente correctas respecto al polinomio característico y la clasificación por traza y determinante:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La suma de los autovalores $\\lambda_1 + \\lambda_2$ coincide exactamente con la traza de la matriz $\\text{tr}(A)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El producto de los autovalores $\\lambda_1 \\lambda_2$ coincide exactamente con el determinante $\\det(A)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Si $\\det(A) < 0$, el equilibrio es necesariamente un punto silla inestable independientemente del valor de la traza.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Si $\\text{tr}(A) < 0$, el sistema es asintóticamente estable incluso si el determinante es estrictamente negativo.",
+          "is_correct": false,
+          "error_rationale": "Falsa generalización: si $\\det(A) < 0$, existe una raíz real positiva que desestabiliza el sistema como punto silla."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Un discriminante espectral negativo $\\Delta < 0$ implica siempre que las trayectorias son monótonas y no presentan oscilaciones.",
+          "is_correct": false,
+          "error_rationale": "Confusión conceptual: $\\Delta < 0$ genera autovalores complejos conjugados y dinámicas oscilatorias en espiral."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "C"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "Recuerde las fórmulas de Viète para raíces de un polinomio cuadrático: suma = traza, producto = determinante.",
+        "Un determinante negativo garantiza que los autovalores tienen signos opuestos, configurando un punto silla.",
+        "La estabilidad asintótica exige simultáneamente $\\text{tr}(A) < 0$ Y $\\det(A) > 0$."
+      ],
+      "detailed_solution": "Las afirmaciones sobre la suma (traza), producto (determinante) y punto silla ($\\det < 0$) son rigurosamente ciertas. La estabilidad requiere además $\\det > 0$."
+    },
+    {
+      "id": "Q-H03-041",
+      "competency_id": "H-03",
+      "competency_name": "Inversa Matricial de Dimensión 2x2",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "stem": "Calcule la matriz inversa $A^{-1}$ para la matriz no singular $A = \\begin{bmatrix} 4 & 9 \\\\ 1 & 2 \\end{bmatrix}$ con determinante $\\det(A) = -1$.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$A^{-1} = \\begin{bmatrix} 4 & -9 \\\\ -1 & 2 \\end{bmatrix}$, olvidando permutar los elementos diagonales entre sí.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$A^{-1} = \\begin{bmatrix} 0.25 & 0 \\\\ 0 & 0.50 \\end{bmatrix}$, invirtiendo de forma escalar los elementos diagonales como si la matriz fuera diagonal.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$A^{-1} = \\begin{bmatrix} -2 & 9 \\\\ 1 & -4 \\end{bmatrix}$, permutando la diagonal principal e invirtiendo los signos fuera de ella.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$A^{-1} = \\begin{bmatrix} 2 & 9 \\\\ 1 & 4 \\end{bmatrix}$, transponiendo la matriz sin alterar ninguno de los signos algebraicos.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$A^{-1} = \\begin{bmatrix} -2 & 9 \\\\ 1 & -4 \\end{bmatrix}$, modificando solo los elementos de la diagonal y conservando los cruzados.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$A^{-1} = \\begin{bmatrix} 2 & -9 \\\\ -1 & 4 \\end{bmatrix}$, multiplicando erróneamente por $-\\det(A)$ en lugar de dividir entre el determinante.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$A^{-1} = \\begin{bmatrix} -4 & 1 \\\\ 9 & -2 \\end{bmatrix}$, invirtiendo los signos en la diagonal principal en lugar de los elementos cruzados.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "La fórmula de inversión matricial $2\\times 2$ es $A^{-1} = \\frac{1}{\\det(A)} \\begin{bmatrix} a_{22} & -a_{12} \\\\ -a_{21} & a_{11} \\end{bmatrix}$.",
+        "Intercambie los elementos de la diagonal principal: $a_{11}=4 \\leftrightarrow a_{22}=2$.",
+        "Cambie el signo de los elementos fuera de la diagonal: $a_{12}=9 \\to -9$, $a_{21}=1 \\to -1$, y multiplique por $\\frac{1}{-1}$."
+      ],
+      "detailed_solution": "Aplicando la fórmula clásica: $A^{-1} = \\frac{1}{-1} \\begin{bmatrix} 2 & -9 \\\\ -1 & 4 \\end{bmatrix} = \\begin{bmatrix} -2 & 9 \\\\ 1 & -4 \\end{bmatrix}$."
+    },
+    {
+      "id": "Q-H03-042",
+      "competency_id": "H-03",
+      "competency_name": "Inversa Matricial de Dimensión 2x2",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "stem": "Calcule la matriz inversa $A^{-1}$ para la matriz no singular $A = \\begin{bmatrix} 2 & 1 \\\\ 1 & 1 \\end{bmatrix}$ con determinante $\\det(A) = 1$.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$A^{-1} = \\begin{bmatrix} 1 & 1 \\\\ 1 & 2 \\end{bmatrix}$, modificando solo los elementos de la diagonal y conservando los cruzados.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$A^{-1} = \\begin{bmatrix} 1 & 1 \\\\ 1 & 2 \\end{bmatrix}$, transponiendo la matriz sin alterar ninguno de los signos algebraicos.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$A^{-1} = \\begin{bmatrix} 2 & -1 \\\\ -1 & 1 \\end{bmatrix}$, invirtiendo los signos en la diagonal principal en lugar de los elementos cruzados.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$A^{-1} = \\begin{bmatrix} 2 & -1 \\\\ -1 & 1 \\end{bmatrix}$, olvidando permutar los elementos diagonales entre sí.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$A^{-1} = \\begin{bmatrix} 0.50 & 0 \\\\ 0 & 1.00 \\end{bmatrix}$, invirtiendo de forma escalar los elementos diagonales como si la matriz fuera diagonal.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$A^{-1} = \\begin{bmatrix} 1 & -1 \\\\ -1 & 2 \\end{bmatrix}$, permutando la diagonal principal e invirtiendo los signos fuera de ella.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$A^{-1} = \\begin{bmatrix} -1 & 1 \\\\ 1 & -2 \\end{bmatrix}$, multiplicando erróneamente por $-\\det(A)$ en lugar de dividir entre el determinante.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversa Matricial de Dimensión 2x2."
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "La fórmula de inversión matricial $2\\times 2$ es $A^{-1} = \\frac{1}{\\det(A)} \\begin{bmatrix} a_{22} & -a_{12} \\\\ -a_{21} & a_{11} \\end{bmatrix}$.",
+        "Intercambie los elementos de la diagonal principal: $a_{11}=2 \\leftrightarrow a_{22}=1$.",
+        "Cambie el signo de los elementos fuera de la diagonal: $a_{12}=1 \\to -1$, $a_{21}=1 \\to -1$, y multiplique por $\\frac{1}{1}$."
+      ],
+      "detailed_solution": "Aplicando la fórmula clásica: $A^{-1} = \\frac{1}{1} \\begin{bmatrix} 1 & -1 \\\\ -1 & 2 \\end{bmatrix} = \\begin{bmatrix} 1 & -1 \\\\ -1 & 2 \\end{bmatrix}$."
+    },
+    {
+      "id": "Q-H03-043",
+      "competency_id": "H-03",
+      "competency_name": "Inversa Matricial de Dimensión 2x2",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "Para que una matriz dinámica $A_{2\\times 2}$ admita inversa multiplicativa formal $A^{-1}$, ¿cuál es el valor prohibido que su determinante $\\det(A)$ NUNCA debe tomar? Ingrese el número.",
+      "options": [],
+      "correct_answer": {
+        "value": "0",
+        "canonical_algebraic": "0",
+        "accepted_equivalents": [
+          "0",
+          "0.0",
+          "cero"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "La fórmula de inversión incluye el factor $\\frac{1}{\\det(A)}$.",
+        "La división por cero no está definida en el cuerpo de los números reales.",
+        "Por tanto, el determinante debe ser estrictamente no nulo: $\\det(A) \\neq 0$."
+      ],
+      "detailed_solution": "Una matriz es invertible si y solo si su determinante es no nulo. El valor prohibido es exactamente 0."
+    },
+    {
+      "id": "Q-H04-061",
+      "competency_id": "H-04",
+      "competency_name": "Solución Particular Constante",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "En un sistema lineal $\\dot{X} = AX + B$, las isoclinas de reposo son $-x + 2y = 4$ y $2x - y = 4$. Si el equilibrio de reposo satisface $x^* = 3$, ingrese el valor de $x^*$.",
+      "options": [],
+      "correct_answer": {
+        "value": "3",
+        "canonical_algebraic": "3",
+        "accepted_equivalents": [
+          "3",
+          "3.0"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "El equilibrio de reposo satisface simultáneamente $\\dot{x}=0$ y $\\dot{y}=0$.",
+        "Plantee el sistema lineal de isoclinas igualadas a cero para resolver las coordenadas estacionarias.",
+        "La coordenada solicitada es $x^* = 3$."
+      ],
+      "detailed_solution": "La coordenada de equilibrio en reposo es $x^* = 3$."
+    },
+    {
+      "id": "Q-H04-062",
+      "competency_id": "H-04",
+      "competency_name": "Solución Particular Constante",
+      "type": "fill_in_the_blank",
+      "difficulty": "hard",
+      "stem": "En un sistema lineal $\\dot{X} = AX + B$, las isoclinas de reposo son $-x + 2y = 4$ y $2x - y = 6$. Si el equilibrio de reposo satisface $x^* = 4$, ingrese el valor de $x^*$.",
+      "options": [],
+      "correct_answer": {
+        "value": "4",
+        "canonical_algebraic": "4",
+        "accepted_equivalents": [
+          "4",
+          "4.0"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "El equilibrio de reposo satisface simultáneamente $\\dot{x}=0$ y $\\dot{y}=0$.",
+        "Plantee el sistema lineal de isoclinas igualadas a cero para resolver las coordenadas estacionarias.",
+        "La coordenada solicitada es $x^* = 4$."
+      ],
+      "detailed_solution": "La coordenada de equilibrio en reposo es $x^* = 4$."
+    },
+    {
+      "id": "Q-H04-063",
+      "competency_id": "H-04",
+      "competency_name": "Solución Particular Constante",
+      "type": "multiple_select",
+      "difficulty": "hard",
+      "stem": "Considere las aplicaciones dinámicas macroeconómicas (Modelo IS-LM Dinámico y Ciclos de Goodwin). Seleccione todas las proposiciones formalmente válidas:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En el modelo de Goodwin, la dinámica acoplada entre empleo y salarios genera fluctuaciones cerradas tipo presa-depredador en torno al equilibrio interior.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En el IS-LM dinámico, una mayor velocidad de ajuste en el mercado monetario $c_2$ favorece la aparición de oscilaciones cíclicas en el producto y la tasa de interés.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El estado estacionario de largo plazo en el IS-LM $(Y^E, r^E)$ se desplaza de posición cuando se incrementan las velocidades de ajuste $c_1$ y $c_2$.",
+          "is_correct": false,
+          "error_rationale": "Falso: las velocidades de ajuste regulan la dinámica transitoria, pero no alteran las coordenadas de equilibrio estático."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En el ciclo de Goodwin, la participación salarial de equilibrio $u^* = 1 - (\\alpha + n)\\sigma$ disminuye si aumenta la tasa de progreso técnico $\\alpha$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Cualquier aumento del gasto público $\\bar{G}$ desestabiliza necesariamente la traza de la matriz dinámica en el IS-LM.",
+          "is_correct": false,
+          "error_rationale": "Falso: el gasto público es una variable exógena que entra en el vector constante $B$ y no altera los coeficientes de la matriz $A$ ni la traza."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "D"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "Goodwin modela la lucha distributiva como un sistema Lotka-Volterra donde el empleo es la presa y el salario el depredador.",
+        "En el IS-LM, los parámetros de política $\\bar{G}$ entran en el vector de forzamiento $B$, no en la matriz de derivadas $A$.",
+        "Las velocidades de ajuste $c_1, c_2$ aceleran la respuesta pero se cancelan en el estado estacionario $\\dot{Y}=\\dot{r}=0$."
+      ],
+      "detailed_solution": "El ciclo de Goodwin describe oscilaciones distributivas cerradas, y el ajuste monetario rápido genera espirales. Las variables exógenas en $B$ no alteran la estabilidad intrínseca de $A$."
+    },
+    {
+      "id": "Q-H05-081",
+      "competency_id": "H-05",
+      "competency_name": "Base Real para Autovalores Complejos Conjugados",
+      "type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "stem": "Si los autovalores de un sistema plano son $\\lambda_{1,2} = -1 \\pm 2i$, ¿cuál es la estructura canónica de la solución homogénea real $X_h(t)$ y su tasa de amortiguamiento?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$X_h(t) = e^{-1t} [c_1 \\mathbf{u}\\cos(2t) + c_2 \\mathbf{w}\\sin(2t)]$, con envolvente exponencial convergente a tasa $\\alpha = -1$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$X_h(t) = e^{--1t} [c_1 \\cos(2t) + c_2 \\sin(2t)]$, invirtiendo el signo de la tasa de amortiguamiento y diagnosticando divergencia.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$X_h(t) = [c_1 \\cos(2t) + c_2 \\sin(2t)]$, omitiendo el factor exponencial $e^{-1t}$ y prediciendo erróneamente órbitas periódicas cerradas.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$X_h(t) = e^{2t} [c_1 \\mathbf{u}\\cos(-1t) + c_2 \\mathbf{w}\\sin(-1t)]$, permutando la parte real amortiguadora con la frecuencia angular de giro.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$X_h(t) = e^{-1t} [c_1 t \\mathbf{u} + c_2 \\mathbf{w}]$, confundiendo raíces complejas con el caso de raíces reales repetidas con vector secular.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$X_h(t) = c_1 e^{2t} \\mathbf{u} + c_2 e^{-2t} \\mathbf{w}$, planteando soluciones de tipo punto silla con crecimiento exponencial positivo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$X_h(t) = c_1 e^{1t} \\mathbf{u} + c_2 e^{-3t} \\mathbf{w}$, tratando la componente imaginaria como exponentes reales hiperbólicos.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Para autovalores $\\lambda = a \\pm bi$, la solución general real involucra el factor de escala $e^{at}$ y términos armónicos $\\cos(bt)$ y $\\sin(bt)$.",
+        "Aquí la parte real es $a = -1$, lo que determina una atenuación asintótica si es negativa.",
+        "La parte imaginaria $b = 2$ determina la frecuencia angular de las oscilaciones sinusoidales."
+      ],
+      "detailed_solution": "La base real se construye mediante $e^{at}\\cos(bt)$ y $e^{at}\\sin(bt)$. Con $a=-1$ y $b=2$, la solución describe una espiral estable convergente al reposo."
+    },
+    {
+      "id": "Q-H05-082",
+      "competency_id": "H-05",
+      "competency_name": "Base Real para Autovalores Complejos Conjugados",
+      "type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "stem": "Si los autovalores de un sistema plano son $\\lambda_{1,2} = -2 \\pm 3i$, ¿cuál es la estructura canónica de la solución homogénea real $X_h(t)$ y su tasa de amortiguamiento?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$X_h(t) = e^{3t} [c_1 \\mathbf{u}\\cos(-2t) + c_2 \\mathbf{w}\\sin(-2t)]$, permutando la parte real amortiguadora con la frecuencia angular de giro.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$X_h(t) = c_1 e^{1t} \\mathbf{u} + c_2 e^{-5t} \\mathbf{w}$, tratando la componente imaginaria como exponentes reales hiperbólicos.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$X_h(t) = c_1 e^{3t} \\mathbf{u} + c_2 e^{-3t} \\mathbf{w}$, planteando soluciones de tipo punto silla con crecimiento exponencial positivo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$X_h(t) = e^{--2t} [c_1 \\cos(3t) + c_2 \\sin(3t)]$, invirtiendo el signo de la tasa de amortiguamiento y diagnosticando divergencia.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$X_h(t) = [c_1 \\cos(3t) + c_2 \\sin(3t)]$, omitiendo el factor exponencial $e^{-2t}$ y prediciendo erróneamente órbitas periódicas cerradas.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$X_h(t) = e^{-2t} [c_1 \\mathbf{u}\\cos(3t) + c_2 \\mathbf{w}\\sin(3t)]$, con envolvente exponencial convergente a tasa $\\alpha = -2$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$X_h(t) = e^{-2t} [c_1 t \\mathbf{u} + c_2 \\mathbf{w}]$, confundiendo raíces complejas con el caso de raíces reales repetidas con vector secular.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Para autovalores $\\lambda = a \\pm bi$, la solución general real involucra el factor de escala $e^{at}$ y términos armónicos $\\cos(bt)$ y $\\sin(bt)$.",
+        "Aquí la parte real es $a = -2$, lo que determina una atenuación asintótica si es negativa.",
+        "La parte imaginaria $b = 3$ determina la frecuencia angular de las oscilaciones sinusoidales."
+      ],
+      "detailed_solution": "La base real se construye mediante $e^{at}\\cos(bt)$ y $e^{at}\\sin(bt)$. Con $a=-2$ y $b=3$, la solución describe una espiral estable convergente al reposo."
+    },
+    {
+      "id": "Q-H05-083",
+      "competency_id": "H-05",
+      "competency_name": "Base Real para Autovalores Complejos Conjugados",
+      "type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "stem": "Si los autovalores de un sistema plano son $\\lambda_{1,2} = -3 \\pm 4i$, ¿cuál es la estructura canónica de la solución homogénea real $X_h(t)$ y su tasa de amortiguamiento?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$X_h(t) = e^{--3t} [c_1 \\cos(4t) + c_2 \\sin(4t)]$, invirtiendo el signo de la tasa de amortiguamiento y diagnosticando divergencia.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$X_h(t) = [c_1 \\cos(4t) + c_2 \\sin(4t)]$, omitiendo el factor exponencial $e^{-3t}$ y prediciendo erróneamente órbitas periódicas cerradas.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$X_h(t) = c_1 e^{1t} \\mathbf{u} + c_2 e^{-7t} \\mathbf{w}$, tratando la componente imaginaria como exponentes reales hiperbólicos.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$X_h(t) = e^{-3t} [c_1 \\mathbf{u}\\cos(4t) + c_2 \\mathbf{w}\\sin(4t)]$, con envolvente exponencial convergente a tasa $\\alpha = -3$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$X_h(t) = e^{-3t} [c_1 t \\mathbf{u} + c_2 \\mathbf{w}]$, confundiendo raíces complejas con el caso de raíces reales repetidas con vector secular.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$X_h(t) = c_1 e^{4t} \\mathbf{u} + c_2 e^{-4t} \\mathbf{w}$, planteando soluciones de tipo punto silla con crecimiento exponencial positivo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$X_h(t) = e^{4t} [c_1 \\mathbf{u}\\cos(-3t) + c_2 \\mathbf{w}\\sin(-3t)]$, permutando la parte real amortiguadora con la frecuencia angular de giro.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Base Real para Autovalores Complejos Conjugados."
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "Para autovalores $\\lambda = a \\pm bi$, la solución general real involucra el factor de escala $e^{at}$ y términos armónicos $\\cos(bt)$ y $\\sin(bt)$.",
+        "Aquí la parte real es $a = -3$, lo que determina una atenuación asintótica si es negativa.",
+        "La parte imaginaria $b = 4$ determina la frecuencia angular de las oscilaciones sinusoidales."
+      ],
+      "detailed_solution": "La base real se construye mediante $e^{at}\\cos(bt)$ y $e^{at}\\sin(bt)$. Con $a=-3$ y $b=4$, la solución describe una espiral estable convergente al reposo."
+    },
+    {
+      "id": "Q-H06-101",
+      "competency_id": "H-06",
+      "competency_name": "Definición de Autovector Generalizado",
+      "type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "stem": "Para un sistema lineal $\\dot{X} = AX$ con autovalor real repetido $\\lambda = -4$ que posee un único autovector propio independiente $\\mathbf{v}_1$, ¿cuál es la ecuación que define al autovector generalizado $\\mathbf{v}_2$ y la forma de la trayectoria temporal?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$(A + -4I)\\mathbf{v}_2 = \\mathbf{v}_1$, cometiendo un error de signo al plantear la matriz característica trasladada.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Definición de Autovector Generalizado."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$(A - -4I)\\mathbf{v}_2 = \\mathbf{0}$, requiriendo que $\\mathbf{v}_2$ sea un autovector ordinario ortogonal independiente.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Definición de Autovector Generalizado."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El sistema no admite solución analítica por carecer de base completa de vectores propios en el espacio euclidiano.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Definición de Autovector Generalizado."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$(A - -4I)\\mathbf{v}_2 = \\mathbf{v}_1$, y la solución general es $X(t) = c_1 e^{-4t}\\mathbf{v}_1 + c_2 e^{-4t}(\\mathbf{v}_2 + \\mathbf{v}_1 t)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La solución general es $X(t) = c_1 e^{-4t}\\mathbf{v}_1 + c_2 e^{-4t}\\mathbf{v}_2$, omitiendo el término secular multiplicativo por el tiempo $t$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Definición de Autovector Generalizado."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$(A - -4I)^2\\mathbf{v}_2 = \\mathbf{v}_1$, aplicando indebidamente el operador cuadrático en el primer escalón de Jordan.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Definición de Autovector Generalizado."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$A\\mathbf{v}_2 = -4\\mathbf{v}_1$, confundiendo el operador característico con la acción directa de la matriz $A$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Definición de Autovector Generalizado."
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "Cuando la multiplicidad geométrica es menor a la algebraica, se requiere una cadena de Jordan de longitud 2.",
+        "El vector generalizado satisface $(A - \\lambda I)\\mathbf{v}_2 = \\mathbf{v}_1$, donde $\\mathbf{v}_1$ es el autovector propio estándar.",
+        "Al integrar la segunda ecuación diferencial, la solución temporal adquiere un término multiplicativo secular $t e^{\\lambda t} \\mathbf{v}_1$."
+      ],
+      "detailed_solution": "En matrices defectivas, el vector propio generalizado resuelve $(A - \\lambda I)v_2 = v_1$, originando la solución $X(t) = c_1 e^{\\lambda t} v_1 + c_2 e^{\\lambda t}(v_2 + v_1 t)$."
+    },
+    {
+      "id": "Q-H06-102",
+      "competency_id": "H-06",
+      "competency_name": "Definición de Autovector Generalizado",
+      "type": "multiple_select",
+      "difficulty": "easy",
+      "stem": "Considere las aplicaciones dinámicas macroeconómicas (Modelo IS-LM Dinámico y Ciclos de Goodwin). Seleccione todas las proposiciones formalmente válidas:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En el modelo de Goodwin, la dinámica acoplada entre empleo y salarios genera fluctuaciones cerradas tipo presa-depredador en torno al equilibrio interior.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En el IS-LM dinámico, una mayor velocidad de ajuste en el mercado monetario $c_2$ favorece la aparición de oscilaciones cíclicas en el producto y la tasa de interés.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El estado estacionario de largo plazo en el IS-LM $(Y^E, r^E)$ se desplaza de posición cuando se incrementan las velocidades de ajuste $c_1$ y $c_2$.",
+          "is_correct": false,
+          "error_rationale": "Falso: las velocidades de ajuste regulan la dinámica transitoria, pero no alteran las coordenadas de equilibrio estático."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En el ciclo de Goodwin, la participación salarial de equilibrio $u^* = 1 - (\\alpha + n)\\sigma$ disminuye si aumenta la tasa de progreso técnico $\\alpha$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Cualquier aumento del gasto público $\\bar{G}$ desestabiliza necesariamente la traza de la matriz dinámica en el IS-LM.",
+          "is_correct": false,
+          "error_rationale": "Falso: el gasto público es una variable exógena que entra en el vector constante $B$ y no altera los coeficientes de la matriz $A$ ni la traza."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "D"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "Goodwin modela la lucha distributiva como un sistema Lotka-Volterra donde el empleo es la presa y el salario el depredador.",
+        "En el IS-LM, los parámetros de política $\\bar{G}$ entran en el vector de forzamiento $B$, no en la matriz de derivadas $A$.",
+        "Las velocidades de ajuste $c_1, c_2$ aceleran la respuesta pero se cancelan en el estado estacionario $\\dot{Y}=\\dot{r}=0$."
+      ],
+      "detailed_solution": "El ciclo de Goodwin describe oscilaciones distributivas cerradas, y el ajuste monetario rápido genera espirales. Las variables exógenas en $B$ no alteran la estabilidad intrínseca de $A$."
+    },
+    {
+      "id": "Q-H06-103",
+      "competency_id": "H-06",
+      "competency_name": "Definición de Autovector Generalizado",
+      "type": "multiple_select",
+      "difficulty": "easy",
+      "stem": "Considere las aplicaciones dinámicas macroeconómicas (Modelo IS-LM Dinámico y Ciclos de Goodwin). Seleccione todas las proposiciones formalmente válidas:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En el modelo de Goodwin, la dinámica acoplada entre empleo y salarios genera fluctuaciones cerradas tipo presa-depredador en torno al equilibrio interior.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En el IS-LM dinámico, una mayor velocidad de ajuste en el mercado monetario $c_2$ favorece la aparición de oscilaciones cíclicas en el producto y la tasa de interés.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El estado estacionario de largo plazo en el IS-LM $(Y^E, r^E)$ se desplaza de posición cuando se incrementan las velocidades de ajuste $c_1$ y $c_2$.",
+          "is_correct": false,
+          "error_rationale": "Falso: las velocidades de ajuste regulan la dinámica transitoria, pero no alteran las coordenadas de equilibrio estático."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En el ciclo de Goodwin, la participación salarial de equilibrio $u^* = 1 - (\\alpha + n)\\sigma$ disminuye si aumenta la tasa de progreso técnico $\\alpha$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Cualquier aumento del gasto público $\\bar{G}$ desestabiliza necesariamente la traza de la matriz dinámica en el IS-LM.",
+          "is_correct": false,
+          "error_rationale": "Falso: el gasto público es una variable exógena que entra en el vector constante $B$ y no altera los coeficientes de la matriz $A$ ni la traza."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "D"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "Goodwin modela la lucha distributiva como un sistema Lotka-Volterra donde el empleo es la presa y el salario el depredador.",
+        "En el IS-LM, los parámetros de política $\\bar{G}$ entran en el vector de forzamiento $B$, no en la matriz de derivadas $A$.",
+        "Las velocidades de ajuste $c_1, c_2$ aceleran la respuesta pero se cancelan en el estado estacionario $\\dot{Y}=\\dot{r}=0$."
+      ],
+      "detailed_solution": "El ciclo de Goodwin describe oscilaciones distributivas cerradas, y el ajuste monetario rápido genera espirales. Las variables exógenas en $B$ no alteran la estabilidad intrínseca de $A$."
+    },
+    {
+      "id": "Q-H07-121",
+      "competency_id": "H-07",
+      "competency_name": "Matriz Jacobiana Local 2x2",
+      "type": "multiple_select",
+      "difficulty": "medium",
+      "stem": "Respecto a la linealización jacobiana de sistemas no lineales $\\dot{x} = f(x,y)$, $\\dot{y} = g(x,y)$ y el Teorema de Hartman-Grobman, seleccione todas las proposiciones teóricamente correctas:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El Teorema de Hartman-Grobman garantiza equivalencia topológica local si y solo si el punto de equilibrio es hiperbólico ($\\text{Re}(\\lambda) \\neq 0$).",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La matriz Jacobiana local se evalúa sustituyendo las coordenadas del punto de equilibrio interior $(x^*, y^*)$ en las derivadas parciales.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Si el Jacobiano evaluado en el equilibrio arroja un punto silla lineal, el sistema no lineal original posee obligatoriamente un punto silla local.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Si el Jacobiano lineal predice un centro ($\\text{Re}(\\lambda) = 0$), Hartman-Grobman asegura rigurosamente que el sistema no lineal preserva órbitas cerradas.",
+          "is_correct": false,
+          "error_rationale": "Falsa generalización: con $\\text{Re}(\\lambda)=0$, el punto NO es hiperbólico y Hartman-Grobman no aplica; los términos cúbicos pueden colapsar o expandir la órbita."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "En sistemas no lineales planos, no pueden existir más de dos puntos de equilibrio estacionario en todo el plano.",
+          "is_correct": false,
+          "error_rationale": "Falso: sistemas no lineales pueden admitir múltiples puntos de equilibrio simultáneos (e.g. modelos ecológicos o de competencia)."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "C"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "El Teorema de Hartman-Grobman solo aplica a puntos hiperbólicos ($\\text{Re}(\\lambda) \\neq 0$).",
+        "Un punto silla es hiperbólico (raíces reales no nulas de signo opuesto), por lo que su topología local sí se preserva.",
+        "Un centro lineal tiene $\\text{Re}(\\lambda) = 0$, por lo que la linealización no es concluyente para el sistema completo."
+      ],
+      "detailed_solution": "Hartman-Grobman aplica estrictamente a puntos hiperbólicos. Por tanto, preserva sillas y nodos, pero no centros de traza cero."
+    },
+    {
+      "id": "Q-H07-122",
+      "competency_id": "H-07",
+      "competency_name": "Matriz Jacobiana Local 2x2",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere el modelo ecológico no lineal de Lotka-Volterra $\\dot{x} = x(4 - y)$, $\\dot{y} = y(-3 + x)$. ¿Cuál es la matriz Jacobiana $J^*$ evaluada en el estado estacionario interior no trivial $(x^*, y^*) = (3, 4)$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$J^* = \\begin{bmatrix} 0 & 3 \\\\ -4 & 0 \\end{bmatrix}$, alterando los signos relativos del efecto depredador-presa en el Jacobiano.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Matriz Jacobiana Local 2x2."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$J^* = \\begin{bmatrix} -3 & 0 \\\\ 0 & 4 \\end{bmatrix}$, invirtiendo los bloques diagonales y omitiendo las derivadas cruzadas de interacción.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Matriz Jacobiana Local 2x2."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$J^* = \\begin{bmatrix} 0 & 0 \\\\ 0 & 0 \\end{bmatrix}$, asumiendo que al evaluarse en el equilibrio todas las derivadas se anulan idénticamente.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Matriz Jacobiana Local 2x2."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$J^* = \\begin{bmatrix} 4 & 0 \\\\ 0 & -3 \\end{bmatrix}$, evaluando incorrectamente las derivadas parciales en el origen $(0,0)$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Matriz Jacobiana Local 2x2."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$J^* = \\begin{bmatrix} -4 & -3 \\\\ 4 & 3 \\end{bmatrix}$, forzando signos negativos en la diagonal principal.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Matriz Jacobiana Local 2x2."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$J^* = \\begin{bmatrix} 0 & -3 \\\\ 4 & 0 \\end{bmatrix}$, con traza nula $\\text{tr}(J^*) = 0$ y determinante positivo $\\det(J^*) = 12$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$J^* = \\begin{bmatrix} 4 & -3 \\\\ 4 & -3 \\end{bmatrix}$, sumando los parámetros exógenos en todas las entradas matriciales.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Matriz Jacobiana Local 2x2."
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Calcule las 4 derivadas parciales del sistema: $f_x = \\alpha - y$, $f_y = -x$, $g_x = y$, $g_y = -\\gamma + x$.",
+        "Sustituya las coordenadas del equilibrio interior $x^* = 3$ e $y^* = 4$.",
+        "En dicho punto: $f_x = 4 - 4 = 0$, $f_y = -3$, $g_x = 4$, $g_y = -3 + 3 = 0$."
+      ],
+      "detailed_solution": "Las derivadas en $(x^*, y^*) = (3, 4)$ arrojan la matriz $J^* = \\begin{bmatrix} 0 & -3 \\\\ 4 & 0 \\end{bmatrix}$, con $\\text{tr}(J^*)=0$ y $\\det(J^*)=12 > 0$."
+    },
+    {
+      "id": "Q-H07-123",
+      "competency_id": "H-07",
+      "competency_name": "Matriz Jacobiana Local 2x2",
+      "type": "fill_in_the_blank",
+      "difficulty": "hard",
+      "stem": "Para el modelo de Lotka-Volterra $\\dot{x} = x(\\alpha - \\beta y)$, $\\dot{y} = y(-\\gamma + \\delta x)$, calcule el valor numérico exacto de la traza de la matriz Jacobiana $\\text{tr}(J^*)$ evaluada en el estado interior $(x^*, y^*)$.",
+      "options": [],
+      "correct_answer": {
+        "value": "0",
+        "canonical_algebraic": "0",
+        "accepted_equivalents": [
+          "0",
+          "0.0",
+          "cero"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "Las derivadas diagonales son $f_x = \\alpha - \\beta y$ y $g_y = -\\gamma + \\delta x$.",
+        "En el equilibrio interior $y^* = \\alpha/\\beta$ y $x^* = \\gamma/\\delta$, ambas derivadas se anulan exactamente.",
+        "Por tanto, la traza es $0 + 0 = 0$."
+      ],
+      "detailed_solution": "En el equilibrio interior de Lotka-Volterra, las dos entradas diagonales son idénticamente nulas, lo que produce $\\text{tr}(J^*) = 0$."
+    },
+    {
+      "id": "Q-H08-141",
+      "competency_id": "H-08",
+      "competency_name": "Álgebra de Tasas de Variación Proporcional",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Al modelar dinámicas económicas en variables de ratio como el empleo $v = L/N$ o la participación salarial $u = w/a$, ¿cuál es la regla de derivación temporal logarítmica exacta para la tasa de crecimiento $\\frac{\\dot{v}}{v}$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\frac{\\dot{v}}{v} = \\frac{\\dot{L}}{L} + \\frac{\\dot{N}}{N}$, sumando erróneamente las tasas de crecimiento de ambas variables agregadas.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\frac{\\dot{v}}{v} = 0$, asumiendo que en modelos de ciclo distributivo las tasas per cápita permanecen fijas.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\frac{\\dot{v}}{v} = \\frac{\\dot{L}}{L} - \\frac{\\dot{N}}{N}$, deduciendo la tasa del ratio como la diferencia entre las tasas de crecimiento del numerador y denominador.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\frac{\\dot{v}}{v} = \\frac{\\dot{L} - \\dot{N}}{L - N}$, aplicando de forma incorrecta el cociente directo de derivadas absolutas.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\frac{\\dot{v}}{v} = \\frac{\\dot{L}}{N} - \\frac{L\\dot{N}}{N^2}$, confundiendo la tasa proporcional con la derivada absoluta ordinaria $\\dot{v}$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\frac{\\dot{v}}{v} = \\left(\\frac{\\dot{L}}{L}\\right) \\left(\\frac{\\dot{N}}{N}\\right)^{-1}$, dividiendo las tasas en lugar de restarlas.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\frac{\\dot{v}}{v} = \\ln\\left(\\frac{\\dot{L}}{L}\\right) - \\ln\\left(\\frac{\\dot{N}}{N}\\right)$, aplicando logaritmos innecesarios sobre las derivadas temporales.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Aplique logaritmo natural a la definición $v = L/N$: $\\ln(v) = \\ln(L) - \\ln(N)$.",
+        "Diferencie con respecto al tiempo $t$ aplicando la regla de la cadena: $\\frac{d}{dt}\\ln(v) = \\frac{\\dot{v}}{v}$.",
+        "Del lado derecho, $\\frac{d}{dt}(\\ln L - \\ln N) = \\frac{\\dot{L}}{L} - \\frac{\\dot{N}}{N}$."
+      ],
+      "detailed_solution": "Partiendo de $\\ln(v) = \\ln(L) - \\ln(N)$ y derivando con respecto a $t$, se obtiene directamente $\\frac{\\dot{v}}{v} = \\frac{\\dot{L}}{L} - \\frac{\\dot{N}}{N}$."
+    },
+    {
+      "id": "Q-H08-142",
+      "competency_id": "H-08",
+      "competency_name": "Álgebra de Tasas de Variación Proporcional",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Al modelar dinámicas económicas en variables de ratio como el empleo $v = L/N$ o la participación salarial $u = w/a$, ¿cuál es la regla de derivación temporal logarítmica exacta para la tasa de crecimiento $\\frac{\\dot{v}}{v}$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\frac{\\dot{v}}{v} = \\frac{\\dot{L} - \\dot{N}}{L - N}$, aplicando de forma incorrecta el cociente directo de derivadas absolutas.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\frac{\\dot{v}}{v} = \\left(\\frac{\\dot{L}}{L}\\right) \\left(\\frac{\\dot{N}}{N}\\right)^{-1}$, dividiendo las tasas en lugar de restarlas.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\frac{\\dot{v}}{v} = 0$, asumiendo que en modelos de ciclo distributivo las tasas per cápita permanecen fijas.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\frac{\\dot{v}}{v} = \\frac{\\dot{L}}{L} + \\frac{\\dot{N}}{N}$, sumando erróneamente las tasas de crecimiento de ambas variables agregadas.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\frac{\\dot{v}}{v} = \\frac{\\dot{L}}{L} - \\frac{\\dot{N}}{N}$, deduciendo la tasa del ratio como la diferencia entre las tasas de crecimiento del numerador y denominador.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\frac{\\dot{v}}{v} = \\frac{\\dot{L}}{N} - \\frac{L\\dot{N}}{N^2}$, confundiendo la tasa proporcional con la derivada absoluta ordinaria $\\dot{v}$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\frac{\\dot{v}}{v} = \\ln\\left(\\frac{\\dot{L}}{L}\\right) - \\ln\\left(\\frac{\\dot{N}}{N}\\right)$, aplicando logaritmos innecesarios sobre las derivadas temporales.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Álgebra de Tasas de Variación Proporcional."
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Aplique logaritmo natural a la definición $v = L/N$: $\\ln(v) = \\ln(L) - \\ln(N)$.",
+        "Diferencie con respecto al tiempo $t$ aplicando la regla de la cadena: $\\frac{d}{dt}\\ln(v) = \\frac{\\dot{v}}{v}$.",
+        "Del lado derecho, $\\frac{d}{dt}(\\ln L - \\ln N) = \\frac{\\dot{L}}{L} - \\frac{\\dot{N}}{N}$."
+      ],
+      "detailed_solution": "Partiendo de $\\ln(v) = \\ln(L) - \\ln(N)$ y derivando con respecto a $t$, se obtiene directamente $\\frac{\\dot{v}}{v} = \\frac{\\dot{L}}{L} - \\frac{\\dot{N}}{N}$."
+    },
+    {
+      "id": "Q-H08-143",
+      "competency_id": "H-08",
+      "competency_name": "Álgebra de Tasas de Variación Proporcional",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "Si el empleo agregado crece a una tasa del $5\\%$ anual ($\\dot{L}/L = 5\\%$) y la fuerza laboral crece a una tasa del $2\\%$ anual ($\\dot{N}/N = 2\\%$), ¿cuál es la tasa de crecimiento de la tasa de empleo $v = L/N$ en porcentaje? Ingrese el valor numérico entero.",
+      "options": [],
+      "correct_answer": {
+        "value": "3",
+        "canonical_algebraic": "3",
+        "accepted_equivalents": [
+          "3",
+          "3.0",
+          "3%"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "Aplique la regla logarítmica: $\\dot{v}/v = \\dot{L}/L - \\dot{N}/N$.",
+        "Sustituya las tasas dadas para el empleo (5%) y la fuerza laboral (2%).",
+        "Reste directamente las tasas porcentuales: 5 - 2 = 3."
+      ],
+      "detailed_solution": "La tasa de crecimiento es $\\dot{v}/v = 5\\% - 2\\% = 3\\%$."
+    },
+    {
+      "id": "Q-C01-161",
+      "competency_id": "C-01",
+      "competency_name": "Principio de Superposición y Partición de Soluciones",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Si un sistema lineal $\\dot{X} = AX + B$ es asintóticamente estable (todos los autovalores con parte real negativa), ¿a qué valor límite vectorial tiende la solución complementaria transitoria $\\lim_{t \\to \\infty} X_h(t)$? Ingrese el valor escalar representativo.",
+      "options": [],
+      "correct_answer": {
+        "value": "0",
+        "canonical_algebraic": "0",
+        "accepted_equivalents": [
+          "0",
+          "0.0",
+          "cero",
+          "[0, 0]"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "La estabilidad asintótica exige que el término transitorio se desvanezca en el tiempo.",
+        "Todos los factores exponenciales $e^{\\lambda t}$ con $\\text{Re}(\\lambda) < 0$ decaen a cero cuando $t \\to \\infty$.",
+        "Por consiguiente, la parte complementaria converge exactamente a 0."
+      ],
+      "detailed_solution": "Por estabilidad asintótica, $\\lim_{t \\to \\infty} X_h(t) = \\mathbf{0}$, convergiendo el sistema al estado estacionario $X^*$."
+    },
+    {
+      "id": "Q-C01-162",
+      "competency_id": "C-01",
+      "competency_name": "Principio de Superposición y Partición de Soluciones",
+      "type": "multiple_select",
+      "difficulty": "easy",
+      "stem": "Considere las aplicaciones dinámicas macroeconómicas (Modelo IS-LM Dinámico y Ciclos de Goodwin). Seleccione todas las proposiciones formalmente válidas:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En el modelo de Goodwin, la dinámica acoplada entre empleo y salarios genera fluctuaciones cerradas tipo presa-depredador en torno al equilibrio interior.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En el IS-LM dinámico, una mayor velocidad de ajuste en el mercado monetario $c_2$ favorece la aparición de oscilaciones cíclicas en el producto y la tasa de interés.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El estado estacionario de largo plazo en el IS-LM $(Y^E, r^E)$ se desplaza de posición cuando se incrementan las velocidades de ajuste $c_1$ y $c_2$.",
+          "is_correct": false,
+          "error_rationale": "Falso: las velocidades de ajuste regulan la dinámica transitoria, pero no alteran las coordenadas de equilibrio estático."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En el ciclo de Goodwin, la participación salarial de equilibrio $u^* = 1 - (\\alpha + n)\\sigma$ disminuye si aumenta la tasa de progreso técnico $\\alpha$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Cualquier aumento del gasto público $\\bar{G}$ desestabiliza necesariamente la traza de la matriz dinámica en el IS-LM.",
+          "is_correct": false,
+          "error_rationale": "Falso: el gasto público es una variable exógena que entra en el vector constante $B$ y no altera los coeficientes de la matriz $A$ ni la traza."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "D"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "Goodwin modela la lucha distributiva como un sistema Lotka-Volterra donde el empleo es la presa y el salario el depredador.",
+        "En el IS-LM, los parámetros de política $\\bar{G}$ entran en el vector de forzamiento $B$, no en la matriz de derivadas $A$.",
+        "Las velocidades de ajuste $c_1, c_2$ aceleran la respuesta pero se cancelan en el estado estacionario $\\dot{Y}=\\dot{r}=0$."
+      ],
+      "detailed_solution": "El ciclo de Goodwin describe oscilaciones distributivas cerradas, y el ajuste monetario rápido genera espirales. Las variables exógenas en $B$ no alteran la estabilidad intrínseca de $A$."
+    },
+    {
+      "id": "Q-C01-163",
+      "competency_id": "C-01",
+      "competency_name": "Principio de Superposición y Partición de Soluciones",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Si un sistema lineal $\\dot{X} = AX + B$ es asintóticamente estable (todos los autovalores con parte real negativa), ¿a qué valor límite vectorial tiende la solución complementaria transitoria $\\lim_{t \\to \\infty} X_h(t)$? Ingrese el valor escalar representativo.",
+      "options": [],
+      "correct_answer": {
+        "value": "0",
+        "canonical_algebraic": "0",
+        "accepted_equivalents": [
+          "0",
+          "0.0",
+          "cero",
+          "[0, 0]"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "La estabilidad asintótica exige que el término transitorio se desvanezca en el tiempo.",
+        "Todos los factores exponenciales $e^{\\lambda t}$ con $\\text{Re}(\\lambda) < 0$ decaen a cero cuando $t \\to \\infty$.",
+        "Por consiguiente, la parte complementaria converge exactamente a 0."
+      ],
+      "detailed_solution": "Por estabilidad asintótica, $\\lim_{t \\to \\infty} X_h(t) = \\mathbf{0}$, convergiendo el sistema al estado estacionario $X^*$."
+    },
+    {
+      "id": "Q-C02-181",
+      "competency_id": "C-02",
+      "competency_name": "Tipología Topológica en el Plano Traza-Determinante",
+      "type": "multiple_select",
+      "difficulty": "medium",
+      "stem": "Considere el diagrama de fases en el plano traza-determinante. Seleccione todas las afirmaciones correctas sobre las regiones de estabilidad y tipologías topológicas:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La frontera parabólica $\\det(A) = \\frac{[\\text{tr}(A)]^2}{4}$ separa los regímenes con autovalores reales (nodos) de los complejos (focos).",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Para $\\det(A) > 0$ y $\\text{tr}(A) = 0$, el sistema linealizado presenta un centro con autovalores imaginarios puros $\\lambda = \\pm i\\sqrt{\\det(A)}$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "En un punto silla ($\\det(A) < 0$), la variedad estable corresponde a la dirección del autovector asociado al autovalor negativo.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Cualquier sistema con autovalores repetidos ($\\Delta = 0$) es necesariamente asintóticamente estable.",
+          "is_correct": false,
+          "error_rationale": "Falso: si el autovalor repetido es positivo ($\\lambda > 0$), el sistema es un nodo inestable repulsor."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Los centros son asintóticamente estables porque sus trayectorias no divergen hacia el infinito.",
+          "is_correct": false,
+          "error_rationale": "Confunde estabilidad marginal con asintótica: un centro no converge al reposo, preserva órbitas perpetuas."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "C"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "La parábola crítica se obtiene igualando el discriminante a cero: $\\Delta = \\text{tr}^2 - 4\\det = 0$.",
+        "Un centro exige autovalores imaginarios puros, lo que requiere traza nula y determinante positivo.",
+        "En macroeconomía, la variedad estable del punto silla permite aislar la trayectoria convergente en modelos con variables de salto."
+      ],
+      "detailed_solution": "Las proposiciones sobre la parábola frontera, el centro con traza cero y la variedad estable del punto silla son teóricamente válidas."
+    },
+    {
+      "id": "Q-C02-182",
+      "competency_id": "C-02",
+      "competency_name": "Tipología Topológica en el Plano Traza-Determinante",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "stem": "En el plano traza-determinante para sistemas planos lineales $\\dot{X} = AX$, si una matriz posee traza $\\text{tr}(A) = -3 < 0$, determinante $\\det(A) = 2 > 0$ y discriminante $\\Delta = (-3)^2 - 4(2) = 1 > 0$, ¿cuál es la tipología topológica del equilibrio?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Punto silla inestable con variedades hiperbólicas, al asociar erróneamente la traza negativa con una raíz positiva.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Nodo asintóticamente estable (atractor nodal), con dos valores propios reales negativos que generan convergencia monótona.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Foco estable oscilatorio amortiguado, asumiendo falsamente que el discriminante espectral es negativo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Continuo de equilibrios degenerados no aislados, pasando por alto que el determinante es estrictamente positivo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Centro armónico conservativo con órbitas periódicas cerradas, omitiendo que un centro exige estrictamente traza nula.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Foco inestable con trayectorias espirales divergentes, ignorando que la traza negativa disipa energía temporal.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Nodo inestable repulsor, invirtiendo los signos espectrales de los autovalores calculados de la ecuación.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Examine el signo del determinante: $\\det(A) = 2 > 0$ descarta inmediatamente un punto silla.",
+        "Examine el discriminante: $\\Delta = 1 > 0$ indica que los autovalores son reales y distintos (descarta foco y centro).",
+        "Examine la traza: $\\text{{tr}}(A) = -3 < 0$ implica que ambos autovalores reales son negativos, asegurando estabilidad asintótica."
+      ],
+      "detailed_solution": "Con $\\det(A) > 0$, $\\Delta > 0$ y $\\text{{tr}}(A) < 0$, las dos raíces son reales y estrictamente negativas ($\\lambda_1 = -1, \\lambda_2 = -2$), lo que define un nodo asintóticamente estable."
+    },
+    {
+      "id": "Q-C02-183",
+      "competency_id": "C-02",
+      "competency_name": "Tipología Topológica en el Plano Traza-Determinante",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el plano traza-determinante para sistemas planos lineales $\\dot{X} = AX$, si una matriz posee traza $\\text{tr}(A) = -3 < 0$, determinante $\\det(A) = 2 > 0$ y discriminante $\\Delta = (-3)^2 - 4(2) = 1 > 0$, ¿cuál es la tipología topológica del equilibrio?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Centro armónico conservativo con órbitas periódicas cerradas, omitiendo que un centro exige estrictamente traza nula.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Foco inestable con trayectorias espirales divergentes, ignorando que la traza negativa disipa energía temporal.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Continuo de equilibrios degenerados no aislados, pasando por alto que el determinante es estrictamente positivo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Nodo asintóticamente estable (atractor nodal), con dos valores propios reales negativos que generan convergencia monótona.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Punto silla inestable con variedades hiperbólicas, al asociar erróneamente la traza negativa con una raíz positiva.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Foco estable oscilatorio amortiguado, asumiendo falsamente que el discriminante espectral es negativo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Nodo inestable repulsor, invirtiendo los signos espectrales de los autovalores calculados de la ecuación.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Tipología Topológica en el Plano Traza-Determinante."
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "Examine el signo del determinante: $\\det(A) = 2 > 0$ descarta inmediatamente un punto silla.",
+        "Examine el discriminante: $\\Delta = 1 > 0$ indica que los autovalores son reales y distintos (descarta foco y centro).",
+        "Examine la traza: $\\text{{tr}}(A) = -3 < 0$ implica que ambos autovalores reales son negativos, asegurando estabilidad asintótica."
+      ],
+      "detailed_solution": "Con $\\det(A) > 0$, $\\Delta > 0$ y $\\text{{tr}}(A) < 0$, las dos raíces son reales y estrictamente negativas ($\\lambda_1 = -1, \\lambda_2 = -2$), lo que define un nodo asintóticamente estable."
+    },
+    {
+      "id": "Q-C03-201",
+      "competency_id": "C-03",
+      "competency_name": "Frontera de Linealización y No Hiperbolicidad",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Un punto de equilibrio es hiperbólico si la parte real de todos sus autovalores satisface $\\text{Re}(\\lambda) \\neq 0$. ¿Cuál es el valor crítico de $\\text{Re}(\\lambda)$ que destruye la hiperbolicidad e invalida la garantía de Hartman-Grobman?",
+      "options": [],
+      "correct_answer": {
+        "value": "0",
+        "canonical_algebraic": "0",
+        "accepted_equivalents": [
+          "0",
+          "0.0",
+          "cero"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "La no hiperbolicidad ocurre cuando algún autovalor cae exactamente sobre el eje imaginario.",
+        "Un punto de equilibrio es hiperbólico solo si ninguna raíz espectral tiene parte real nula.",
+        "En el eje imaginario, la parte real es idénticamente cero."
+      ],
+      "detailed_solution": "La hiperbolicidad se pierde cuando $\\text{Re}(\\lambda) = 0$, situando el espectro en la frontera crítica."
+    },
+    {
+      "id": "Q-C03-202",
+      "competency_id": "C-03",
+      "competency_name": "Frontera de Linealización y No Hiperbolicidad",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En modelos no lineales como el ciclo de Goodwin o Lotka-Volterra donde el Jacobiano evaluado en el equilibrio arroja raíces imaginarias puras $\\lambda = \\pm i\\omega$ (traza cero y determinante positivo), ¿por qué el Teorema de Hartman-Grobman no garantiza que el sistema no lineal posea un centro con órbitas cerradas?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Porque la no linealidad convierte siempre a los centros en puntos de silla inestables con variedades divergentes.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Frontera de Linealización y No Hiperbolicidad."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Porque los modelos económicos carecen de soluciones diferenciables en entornos abiertos del espacio de fases.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Frontera de Linealización y No Hiperbolicidad."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Porque cualquier determinante positivo fuerza de forma automática a que las trayectorias colapsen en un nodo atractor.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Frontera de Linealización y No Hiperbolicidad."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Porque la matriz Jacobiana evaluada en puntos interiores pierde rango y se vuelve no invertible en el tiempo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Frontera de Linealización y No Hiperbolicidad."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Porque el Teorema de Hartman-Grobman solo es aplicable a sistemas unidimensionales de ecuaciones diferenciales.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Frontera de Linealización y No Hiperbolicidad."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Porque las órbitas cerradas en el plano exigen obligatoriamente que la traza del Jacobiano sea estrictamente negativa.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Frontera de Linealización y No Hiperbolicidad."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Porque el equilibrio no es hiperbólico al tener parte real nula, invalidando la equivalencia topológica local de la linealización.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Un punto de equilibrio es hiperbólico si y solo si todos sus autovalores tienen parte real no nula: $\\text{Re}(\\lambda) \\neq 0$.",
+        "El Teorema de Hartman-Grobman establece equivalencia topológica local únicamente en puntos hiperbólicos.",
+        "Con $\\lambda = \\pm i\\omega$, la parte real es cero. Los términos no lineales de orden superior pueden inducir espirales amortiguadas o divergentes a menos que exista una integral primera de conservación."
+      ],
+      "detailed_solution": "Como $\\text{Re}(\\lambda) = 0$, el punto no es hiperbólico. Hartman-Grobman no aplica y la persistencia de órbitas cerradas debe demostrarse mediante una función de Liapunov o integral primera invariante."
+    },
+    {
+      "id": "Q-C03-203",
+      "competency_id": "C-03",
+      "competency_name": "Frontera de Linealización y No Hiperbolicidad",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "Un punto de equilibrio es hiperbólico si la parte real de todos sus autovalores satisface $\\text{Re}(\\lambda) \\neq 0$. ¿Cuál es el valor crítico de $\\text{Re}(\\lambda)$ que destruye la hiperbolicidad e invalida la garantía de Hartman-Grobman?",
+      "options": [],
+      "correct_answer": {
+        "value": "0",
+        "canonical_algebraic": "0",
+        "accepted_equivalents": [
+          "0",
+          "0.0",
+          "cero"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "La no hiperbolicidad ocurre cuando algún autovalor cae exactamente sobre el eje imaginario.",
+        "Un punto de equilibrio es hiperbólico solo si ninguna raíz espectral tiene parte real nula.",
+        "En el eje imaginario, la parte real es idénticamente cero."
+      ],
+      "detailed_solution": "La hiperbolicidad se pierde cuando $\\text{Re}(\\lambda) = 0$, situando el espectro en la frontera crítica."
+    },
+    {
+      "id": "Q-C04-221",
+      "competency_id": "C-04",
+      "competency_name": "Desacoplamiento Causal Unidireccional (Bloque Triangular)",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "stem": "Considere un sistema dinámico matricial con estructura triangular inferior $A = \\begin{{bmatrix}} a_{{11}} & 0 \\\\ a_{{21}} & a_{{22}} \\end{{bmatrix}}$. ¿Cuál es la propiedad espectral fundamental que simplifica el análisis de estabilidad de este sistema?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Los autovalores del sistema coinciden exactamente con los elementos de la diagonal principal: $\\lambda_1 = a_{{11}}$ y $\\lambda_2 = a_{{22}}$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El sistema es obligatoriamente inestable independientemente de los signos de los elementos diagonales.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El determinante del sistema se anula idénticamente, generando un continuo infinito de puntos de equilibrio.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Los autovalores son necesariamente números complejos conjugados debido al acoplamiento unidireccional $a_{{21}}$, sobre el plano coordenado.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La primera variable $x_1(t)$ depende retrospectivamente de la evolución temporal de la segunda variable $x_2(t)$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El discriminante del sistema siempre es negativo, induciendo fluctuaciones periódicas perpetuas en el plano.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La matriz requiere factorización de Jordan compleja incluso cuando los términos diagonales son distintos.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Escriba la ecuación característica $\\det(A - \\lambda I) = (a_{{11}} - \\lambda)(a_{{22}} - \\lambda) - (0)(a_{{21}}) = 0$.",
+        "El término cruzado desaparece al estar multiplicado por cero.",
+        "Las raíces son inmediatas: $\\lambda_1 = a_{{11}}$ y $\\lambda_2 = a_{{22}}$."
+      ],
+      "detailed_solution": "En cualquier matriz triangular, el polinomio característico se factoriza como $(a_{{11}}-\\lambda)(a_{{22}}-\\lambda)=0$, por lo que los autovalores se leen directamente de la diagonal principal."
+    },
+    {
+      "id": "Q-C04-222",
+      "competency_id": "C-04",
+      "competency_name": "Desacoplamiento Causal Unidireccional (Bloque Triangular)",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "stem": "Considere un sistema dinámico matricial con estructura triangular inferior $A = \\begin{{bmatrix}} a_{{11}} & 0 \\\\ a_{{21}} & a_{{22}} \\end{{bmatrix}}$. ¿Cuál es la propiedad espectral fundamental que simplifica el análisis de estabilidad de este sistema?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Los autovalores son necesariamente números complejos conjugados debido al acoplamiento unidireccional $a_{{21}}$, sobre el plano coordenado.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Los autovalores del sistema coinciden exactamente con los elementos de la diagonal principal: $\\lambda_1 = a_{{11}}$ y $\\lambda_2 = a_{{22}}$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La matriz requiere factorización de Jordan compleja incluso cuando los términos diagonales son distintos.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La primera variable $x_1(t)$ depende retrospectivamente de la evolución temporal de la segunda variable $x_2(t)$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El discriminante del sistema siempre es negativo, induciendo fluctuaciones periódicas perpetuas en el plano.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El determinante del sistema se anula idénticamente, generando un continuo infinito de puntos de equilibrio.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El sistema es obligatoriamente inestable independientemente de los signos de los elementos diagonales.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Desacoplamiento Causal Unidireccional (Bloque Triangular)."
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Escriba la ecuación característica $\\det(A - \\lambda I) = (a_{{11}} - \\lambda)(a_{{22}} - \\lambda) - (0)(a_{{21}}) = 0$.",
+        "El término cruzado desaparece al estar multiplicado por cero.",
+        "Las raíces son inmediatas: $\\lambda_1 = a_{{11}}$ y $\\lambda_2 = a_{{22}}$."
+      ],
+      "detailed_solution": "En cualquier matriz triangular, el polinomio característico se factoriza como $(a_{{11}}-\\lambda)(a_{{22}}-\\lambda)=0$, por lo que los autovalores se leen directamente de la diagonal principal."
+    },
+    {
+      "id": "Q-C04-223",
+      "competency_id": "C-04",
+      "competency_name": "Desacoplamiento Causal Unidireccional (Bloque Triangular)",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "Considere la matriz triangular inferior $A = \\begin{bmatrix} 4 & 0 \\\\ -5 & -2 \\end{bmatrix}$. ¿Cuál es el valor del primer autovalor $\\lambda_1$ leído directamente de su diagonal? Ingrese el número.",
+      "options": [],
+      "correct_answer": {
+        "value": "4",
+        "canonical_algebraic": "4",
+        "accepted_equivalents": [
+          "4",
+          "4.0"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "En una matriz triangular, los autovalores coinciden con los elementos de la diagonal principal.",
+        "El determinante $|A - \\lambda I|$ es el producto directo de las entradas $(a_{ii} - \\lambda)$.",
+        "El primer elemento diagonal es 4."
+      ],
+      "detailed_solution": "Por ser matriz triangular, $\\lambda_1 = a_{11} = 4$."
+    },
+    {
+      "id": "Q-C05-241",
+      "competency_id": "C-05",
+      "competency_name": "Leyes de Movimiento por Exceso de Demanda",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "stem": "En la formulación del Modelo IS-LM Dinámico donde la producción ajusta ante excesos de demanda de bienes $\\dot{Y} = c_1(D - Y)$ y la tasa de interés ajusta ante excesos de demanda de dinero $\\dot{r} = c_2(L^d - M)$, ¿qué rol desempeñan las velocidades de ajuste $c_1, c_2 > 0$ en la dinámica del sistema?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Garantizan que el sistema sea siempre inestable, haciendo que la producción diverja exponencialmente sin límite.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Desplazan la posición del estado estacionario $(Y^E, r^E)$, modificando los niveles de producción e interés de largo plazo, en el espacio de parámetros.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Impiden que el sistema exhiba oscilaciones cíclicas aun cuando el mercado monetario ajuste con extrema rapidez.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Forzan a que la matriz dinámica tenga determinante negativo en todos los regímenes paramétricos de política.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Determinan la velocidad de convergencia y la presencia de trayectorias oscilatorias sin alterar el equilibrio estático $(Y^E, r^E)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Eliminan la necesidad de equilibrio en el mercado monetario, desacoplando la tasa de interés de la liquidez.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Convierten a la curva IS en una asíntota vertical que neutraliza cualquier efecto de la política fiscal.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "En el equilibrio estacionario $\\dot{Y}=0$ y $\\dot{r}=0$, las constantes $c_1$ y $c_2$ se cancelan al dividir entre ellas.",
+        "Por tanto, las coordenadas $(Y^E, r^E)$ dependen solo de los parámetros estructurales de consumo, inversión y dinero.",
+        "Sin embargo, la traza y el determinante dependen directamente de $c_1$ y $c_2$, controlando la rapidez de absorción de choques."
+      ],
+      "detailed_solution": "Las velocidades de ajuste $c_1, c_2$ modulan la dinámica transitoria y la velocidad de amortiguamiento, pero no desplazan el punto de reposo estático de largo plazo."
+    },
+    {
+      "id": "Q-C05-242",
+      "competency_id": "C-05",
+      "competency_name": "Leyes de Movimiento por Exceso de Demanda",
+      "type": "multiple_select",
+      "difficulty": "easy",
+      "stem": "Considere las aplicaciones dinámicas macroeconómicas (Modelo IS-LM Dinámico y Ciclos de Goodwin). Seleccione todas las proposiciones formalmente válidas:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En el modelo de Goodwin, la dinámica acoplada entre empleo y salarios genera fluctuaciones cerradas tipo presa-depredador en torno al equilibrio interior.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En el IS-LM dinámico, una mayor velocidad de ajuste en el mercado monetario $c_2$ favorece la aparición de oscilaciones cíclicas en el producto y la tasa de interés.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El estado estacionario de largo plazo en el IS-LM $(Y^E, r^E)$ se desplaza de posición cuando se incrementan las velocidades de ajuste $c_1$ y $c_2$.",
+          "is_correct": false,
+          "error_rationale": "Falso: las velocidades de ajuste regulan la dinámica transitoria, pero no alteran las coordenadas de equilibrio estático."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En el ciclo de Goodwin, la participación salarial de equilibrio $u^* = 1 - (\\alpha + n)\\sigma$ disminuye si aumenta la tasa de progreso técnico $\\alpha$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Cualquier aumento del gasto público $\\bar{G}$ desestabiliza necesariamente la traza de la matriz dinámica en el IS-LM.",
+          "is_correct": false,
+          "error_rationale": "Falso: el gasto público es una variable exógena que entra en el vector constante $B$ y no altera los coeficientes de la matriz $A$ ni la traza."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "D"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "Goodwin modela la lucha distributiva como un sistema Lotka-Volterra donde el empleo es la presa y el salario el depredador.",
+        "En el IS-LM, los parámetros de política $\\bar{G}$ entran en el vector de forzamiento $B$, no en la matriz de derivadas $A$.",
+        "Las velocidades de ajuste $c_1, c_2$ aceleran la respuesta pero se cancelan en el estado estacionario $\\dot{Y}=\\dot{r}=0$."
+      ],
+      "detailed_solution": "El ciclo de Goodwin describe oscilaciones distributivas cerradas, y el ajuste monetario rápido genera espirales. Las variables exógenas en $B$ no alteran la estabilidad intrínseca de $A$."
+    },
+    {
+      "id": "Q-C05-243",
+      "competency_id": "C-05",
+      "competency_name": "Leyes de Movimiento por Exceso de Demanda",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En la formulación del Modelo IS-LM Dinámico donde la producción ajusta ante excesos de demanda de bienes $\\dot{Y} = c_1(D - Y)$ y la tasa de interés ajusta ante excesos de demanda de dinero $\\dot{r} = c_2(L^d - M)$, ¿qué rol desempeñan las velocidades de ajuste $c_1, c_2 > 0$ en la dinámica del sistema?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Eliminan la necesidad de equilibrio en el mercado monetario, desacoplando la tasa de interés de la liquidez.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Desplazan la posición del estado estacionario $(Y^E, r^E)$, modificando los niveles de producción e interés de largo plazo, para todo par admisible.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Impiden que el sistema exhiba oscilaciones cíclicas aun cuando el mercado monetario ajuste con extrema rapidez.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Convierten a la curva IS en una asíntota vertical que neutraliza cualquier efecto de la política fiscal.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Forzan a que la matriz dinámica tenga determinante negativo en todos los regímenes paramétricos de política.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Determinan la velocidad de convergencia y la presencia de trayectorias oscilatorias sin alterar el equilibrio estático $(Y^E, r^E)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Garantizan que el sistema sea siempre inestable, haciendo que la producción diverja exponencialmente sin límite.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Leyes de Movimiento por Exceso de Demanda."
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "En el equilibrio estacionario $\\dot{Y}=0$ y $\\dot{r}=0$, las constantes $c_1$ y $c_2$ se cancelan al dividir entre ellas.",
+        "Por tanto, las coordenadas $(Y^E, r^E)$ dependen solo de los parámetros estructurales de consumo, inversión y dinero.",
+        "Sin embargo, la traza y el determinante dependen directamente de $c_1$ y $c_2$, controlando la rapidez de absorción de choques."
+      ],
+      "detailed_solution": "Las velocidades de ajuste $c_1, c_2$ modulan la dinámica transitoria y la velocidad de amortiguamiento, pero no desplazan el punto de reposo estático de largo plazo."
+    },
+    {
+      "id": "Q-Hab01-261",
+      "competency_id": "Hab-01",
+      "competency_name": "Reducción Estructural a Forma Matricial Compacta",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "En el modelo IS dinámico, la inversión es $I = I_0 - 3r$ y la ley de ajuste es $\\dot{Y} = 2(D - Y)$. ¿Cuál es el coeficiente algebraico $a_{12}$ que multiplica a la tasa de interés $r$ en la ecuación de $\\dot{Y}$? Ingrese el entero con su signo.",
+      "options": [],
+      "correct_answer": {
+        "value": "-6",
+        "canonical_algebraic": "-6",
+        "accepted_equivalents": [
+          "-6",
+          "-6.0"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "La derivada es $\\dot{Y} = 2[\\dots - 3r \\dots]$.",
+        "Desarrolle el producto distribuyendo la velocidad de ajuste sobre el componente de inversión sensible a la tasa.",
+        "Multiplique la velocidad de ajuste por la sensibilidad de la inversión: 2 * (-3) = -6."
+      ],
+      "detailed_solution": "El coeficiente es $a_{12} = -2 \\cdot 3 = -6$."
+    },
+    {
+      "id": "Q-Hab01-262",
+      "competency_id": "Hab-01",
+      "competency_name": "Reducción Estructural a Forma Matricial Compacta",
+      "type": "fill_in_the_blank",
+      "difficulty": "hard",
+      "stem": "En el modelo IS dinámico, la inversión es $I = I_0 - 3r$ y la ley de ajuste es $\\dot{Y} = 2(D - Y)$. ¿Cuál es el coeficiente algebraico $a_{12}$ que multiplica a la tasa de interés $r$ en la ecuación de $\\dot{Y}$? Ingrese el entero con su signo.",
+      "options": [],
+      "correct_answer": {
+        "value": "-6",
+        "canonical_algebraic": "-6",
+        "accepted_equivalents": [
+          "-6",
+          "-6.0"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "La derivada es $\\dot{Y} = 2[\\dots - 3r \\dots]$.",
+        "Desarrolle el producto distribuyendo la velocidad de ajuste sobre el componente de inversión sensible a la tasa.",
+        "Multiplique la velocidad de ajuste por la sensibilidad de la inversión: 2 * (-3) = -6."
+      ],
+      "detailed_solution": "El coeficiente es $a_{12} = -2 \\cdot 3 = -6$."
+    },
+    {
+      "id": "Q-Hab01-263",
+      "competency_id": "Hab-01",
+      "competency_name": "Reducción Estructural a Forma Matricial Compacta",
+      "type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "stem": "Considere el mercado de bienes con consumo $C = c_0 + 0.8(Y - T)$, inversión $I = I_0 - \\mu r$, gasto público $G = \\bar{G}$ e impuestos $T = 0.25 Y$. Si la ley de ajuste dinámico de la producción es $\\dot{Y} = 2(C + I + G - Y)$, ¿cuál es el coeficiente $a_{11}$ que multiplica a $Y$ en la matriz dinámica $\\dot{X} = AX + B$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$a_{11} = 0$, asumiendo erróneamente que la producción ajusta de manera instantánea sin rezago temporal.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Reducción Estructural a Forma Matricial Compacta."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$a_{11} = -2.0$, considerando únicamente el drenaje directo de la producción sin el efecto inducido del consumo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Reducción Estructural a Forma Matricial Compacta."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$a_{11} = 0.6$, olvidando multiplicar por la velocidad de ajuste dinámico $c_1 = 2$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Reducción Estructural a Forma Matricial Compacta."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$a_{11} = -0.4$, omitiendo por completo los impuestos proporcionales en la demanda agregada.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Reducción Estructural a Forma Matricial Compacta."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$a_{11} = -1.6$, ignorando la tasa impositiva marginal sobre el ingreso disponible en el consumo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Reducción Estructural a Forma Matricial Compacta."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$a_{11} = 0.8$, omitiendo el signo negativo que asegura la estabilidad del multiplicador keynesiano.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Reducción Estructural a Forma Matricial Compacta."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$a_{11} = -0.8$, resultante de expandir $2[0.8(1 - 0.25) - 1]$ con signo estrictamente negativo.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "La demanda agregada es $D = C + I + G = c_0 + 0.8(1 - 0.25)Y + I_0 - \\mu r + \\bar{G}$.",
+        "Sustituya en la ley de ajuste: $\\dot{Y} = 2(D - Y) = 2[0.8(1 - 0.25)Y - Y + \\dots]$.",
+        "Factorice el término en $Y$: $a_{11} = 2[0.8(1 - 0.25) - 1] = 2[0.60 - 1] = 2(-0.40) = -0.8$."
+      ],
+      "detailed_solution": "Agrupando términos en $Y$: $a_{11} = 2[0.8(1 - 0.25) - 1] = 2(0.6 - 1) = -0.8$. El signo negativo refleja que un aumento de la producción reduce el exceso de demanda."
+    },
+    {
+      "id": "Q-Hab02-291",
+      "competency_id": "Hab-02",
+      "competency_name": "Inversión Algebraica Simbólica para Estados Estacionarios",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el modelo de ciclos económicos de Goodwin, la ley de movimiento para la tasa de empleo es $\\dot{v} = v(\\gamma - \\delta u)$ con $\\gamma = \\frac{1}{\\sigma} - \\alpha - n$ y $\\delta = \\frac{1}{\\sigma}$. ¿Cuál es la expresión analítica simplificada para la participación salarial de equilibrio interior $u^* = \\frac{\\gamma}{\\delta}$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$u^* = \\frac{1}{\\sigma} - \\alpha - n$, dividiendo entre $\\delta$ como si fuera una constante unitaria.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversión Algebraica Simbólica para Estados Estacionarios."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$u^* = 1 - (\\alpha + n)\\sigma$, expresada de forma analítica exacta en términos de los parámetros estructurales.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$u^* = \\frac{1 - \\alpha\\sigma - n}{\\sigma}$, omitiendo multiplicar la tasa de crecimiento demográfico $n$ por $\\sigma$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversión Algebraica Simbólica para Estados Estacionarios."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$u^* = 1 + (\\alpha + n)\\sigma$, invirtiendo erróneamente los signos de la tasa técnica y de crecimiento poblacional.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversión Algebraica Simbólica para Estados Estacionarios."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$u^* = \\frac{\\sigma}{\\alpha + n}$, invirtiendo la estructura algebraica de las fracciones compuestas en el modelo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversión Algebraica Simbólica para Estados Estacionarios."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$u^* = \\sigma(1 - \\alpha - n)$, multiplicando por la relación capital-producto en lugar de despejar el cociente.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversión Algebraica Simbólica para Estados Estacionarios."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$u^* = 1 - \\alpha\\sigma$, ignorando por completo el drenaje que introduce el crecimiento demográfico en el empleo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Inversión Algebraica Simbólica para Estados Estacionarios."
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Para el equilibrio interior ($v^* > 0$), iguale $\\dot{v} = 0 \\implies \\gamma - \\delta u^* = 0 \\implies u^* = \\frac{\\gamma}{\\delta}$.",
+        "Escriba $\\gamma = \\frac{1 - (\\alpha + n)\\sigma}{\\sigma}$ colocando un común denominador.",
+        "Divida entre $\\delta = \\frac{1}{\\sigma}$: cancele $\\sigma$ en ambos denominadores para aislar $u^* = 1 - (\\alpha + n)\\sigma$."
+      ],
+      "detailed_solution": "Dividiendo $\\gamma = \\frac{1 - (\\alpha + n)\\sigma}{\\sigma}$ entre $\\delta = \\frac{1}{\\sigma}$, los términos $\\sigma$ se cancelan directamente, resultando en $u^* = 1 - (\\alpha + n)\\sigma$."
+    },
+    {
+      "id": "Q-Hab02-292",
+      "competency_id": "Hab-02",
+      "competency_name": "Inversión Algebraica Simbólica para Estados Estacionarios",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "En el modelo de Goodwin, si la relación capital-producto es $\\sigma = 2$, la tasa de progreso técnico es $\\alpha = 0.02$ y el crecimiento poblacional es $n = 0.03$, calcule el valor numérico de la participación salarial interior $u^* = 1 - (\\alpha + n)\\sigma$. Ingrese el valor decimal exacto.",
+      "options": [],
+      "correct_answer": {
+        "value": "0.9",
+        "canonical_algebraic": "0.9",
+        "accepted_equivalents": [
+          "0.9",
+          "0.90",
+          "9/10",
+          "0,9"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "Sume las tasas: $\\alpha + n = 0.02 + 0.03 = 0.05$.",
+        "Multiplique por $\\sigma = 2$: $0.05 \\times 2 = 0.10$.",
+        "Reste de la unidad: $u^* = 1 - 0.10 = 0.90$."
+      ],
+      "detailed_solution": "Calculando: $u^* = 1 - (0.02 + 0.03)(2) = 1 - 0.10 = 0.90$ (o 90% de participación del ingreso nacional)."
+    },
+    {
+      "id": "Q-Hab02-293",
+      "competency_id": "Hab-02",
+      "competency_name": "Inversión Algebraica Simbólica para Estados Estacionarios",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "En el modelo de Goodwin, si la relación capital-producto es $\\sigma = 2$, la tasa de progreso técnico es $\\alpha = 0.02$ y el crecimiento poblacional es $n = 0.03$, calcule el valor numérico de la participación salarial interior $u^* = 1 - (\\alpha + n)\\sigma$. Ingrese el valor decimal exacto.",
+      "options": [],
+      "correct_answer": {
+        "value": "0.9",
+        "canonical_algebraic": "0.9",
+        "accepted_equivalents": [
+          "0.9",
+          "0.90",
+          "9/10",
+          "0,9"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "Sume las tasas: $\\alpha + n = 0.02 + 0.03 = 0.05$.",
+        "Multiplique por $\\sigma = 2$: $0.05 \\times 2 = 0.10$.",
+        "Reste de la unidad: $u^* = 1 - 0.10 = 0.90$."
+      ],
+      "detailed_solution": "Calculando: $u^* = 1 - (0.02 + 0.03)(2) = 1 - 0.10 = 0.90$ (o 90% de participación del ingreso nacional)."
+    },
+    {
+      "id": "Q-Hab03-321",
+      "competency_id": "Hab-03",
+      "competency_name": "Diagnóstico Espectral Directo mediante Traza, Determinante y Discriminante",
+      "type": "multiple_select",
+      "difficulty": "hard",
+      "stem": "Para un sistema lineal plano $\\dot{X} = AX$ con matriz real $A_{2\\times 2}$, seleccione todas las afirmaciones teóricamente correctas respecto al polinomio característico y la clasificación por traza y determinante:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La suma de los autovalores $\\lambda_1 + \\lambda_2$ coincide exactamente con la traza de la matriz $\\text{tr}(A)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El producto de los autovalores $\\lambda_1 \\lambda_2$ coincide exactamente con el determinante $\\det(A)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Si $\\det(A) < 0$, el equilibrio es necesariamente un punto silla inestable independientemente del valor de la traza.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Si $\\text{tr}(A) < 0$, el sistema es asintóticamente estable incluso si el determinante es estrictamente negativo.",
+          "is_correct": false,
+          "error_rationale": "Falsa generalización: si $\\det(A) < 0$, existe una raíz real positiva que desestabiliza el sistema como punto silla."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Un discriminante espectral negativo $\\Delta < 0$ implica siempre que las trayectorias son monótonas y no presentan oscilaciones.",
+          "is_correct": false,
+          "error_rationale": "Confusión conceptual: $\\Delta < 0$ genera autovalores complejos conjugados y dinámicas oscilatorias en espiral."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "C"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "Recuerde las fórmulas de Viète para raíces de un polinomio cuadrático: suma = traza, producto = determinante.",
+        "Un determinante negativo garantiza que los autovalores tienen signos opuestos, configurando un punto silla.",
+        "La estabilidad asintótica exige simultáneamente $\\text{tr}(A) < 0$ Y $\\det(A) > 0$."
+      ],
+      "detailed_solution": "Las afirmaciones sobre la suma (traza), producto (determinante) y punto silla ($\\det < 0$) son rigurosamente ciertas. La estabilidad requiere además $\\det > 0$."
+    },
+    {
+      "id": "Q-Hab03-322",
+      "competency_id": "Hab-03",
+      "competency_name": "Diagnóstico Espectral Directo mediante Traza, Determinante y Discriminante",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Dada una matriz de ajuste macroeconómico con traza $\\text{tr}(A) = 1$ y determinante $\\det(A) = -4 < 0$, ¿cuál es el diagnóstico cualitativo inmediato de su régimen de estabilidad?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Nodo estable atractor con autovalores reales estrictamente negativos.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Diagnóstico Espectral Directo mediante Traza, Determinante y Discriminante."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Equilibrio no aislado con infinitos estados de reposo sobre una recta invariante.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Diagnóstico Espectral Directo mediante Traza, Determinante y Discriminante."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Centro conservativo con órbitas cerradas armónicas sin disipación ni atracción.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Diagnóstico Espectral Directo mediante Traza, Determinante y Discriminante."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Nodo inestable repulsor donde todas las trayectorias divergen en todas las direcciones.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Diagnóstico Espectral Directo mediante Traza, Determinante y Discriminante."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Foco inestable con oscilaciones explosivas que se alejan perpetuamente del equilibrio.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Diagnóstico Espectral Directo mediante Traza, Determinante y Discriminante."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Foco asintóticamente estable con espirales convergentes hacia el origen en el espacio de fases, sobre todo el plano coordenado.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Diagnóstico Espectral Directo mediante Traza, Determinante y Discriminante."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Punto silla inestable con variedades asintóticas unidimensionales (una dirección contractiva y otra expansiva).",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Examine en primer lugar el signo del determinante: $\\det(A) = -4 < 0$.",
+        "El determinante es el producto de los autovalores $\\lambda_1 \\lambda_2 = \\det(A)$.",
+        "Si $\\det(A) < 0$, las raíces necesariamente tienen signos opuestos (una real positiva y una real negativa), lo que define un punto silla."
+      ],
+      "detailed_solution": "Dado que $\\det(A) < 0$, las raíces son reales con signos contrarios ($\\lambda_1 > 0 > \\lambda_2$), configurando un punto silla independientemente del valor de la traza."
+    },
+    {
+      "id": "Q-Hab03-323",
+      "competency_id": "Hab-03",
+      "competency_name": "Diagnóstico Espectral Directo mediante Traza, Determinante y Discriminante",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "Para una matriz dinámica con $\\det(A) = -6$, ¿cuántos autovalores reales con signo estrictamente POSITIVO posee el sistema en su espectro? Ingrese el entero correspondiente.",
+      "options": [],
+      "correct_answer": {
+        "value": "1",
+        "canonical_algebraic": "1",
+        "accepted_equivalents": [
+          "1",
+          "1.0",
+          "uno"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "El determinante es el producto de los dos autovalores: $\\lambda_1 \\lambda_2 = -6 < 0$.",
+        "Para que el producto de dos números reales sea negativo, uno debe ser estrictamente positivo y el otro estrictamente negativo.",
+        "Por consiguiente, hay exactamente 1 autovalor positivo."
+      ],
+      "detailed_solution": "Al ser $\\det(A) < 0$, existe exactamente un autovalor positivo y uno negativo, configurando un punto silla."
+    },
+    {
+      "id": "Q-Hab04-351",
+      "competency_id": "Hab-04",
+      "competency_name": "Resolución de Subespacios Propios para Trayectorias Explícitas",
+      "type": "multiple_select",
+      "difficulty": "hard",
+      "stem": "Considere el diagrama de fases en el plano traza-determinante. Seleccione todas las afirmaciones correctas sobre las regiones de estabilidad y tipologías topológicas:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La frontera parabólica $\\det(A) = \\frac{[\\text{tr}(A)]^2}{4}$ separa los regímenes con autovalores reales (nodos) de los complejos (focos).",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Para $\\det(A) > 0$ y $\\text{tr}(A) = 0$, el sistema linealizado presenta un centro con autovalores imaginarios puros $\\lambda = \\pm i\\sqrt{\\det(A)}$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "En un punto silla ($\\det(A) < 0$), la variedad estable corresponde a la dirección del autovector asociado al autovalor negativo.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Cualquier sistema con autovalores repetidos ($\\Delta = 0$) es necesariamente asintóticamente estable.",
+          "is_correct": false,
+          "error_rationale": "Falso: si el autovalor repetido es positivo ($\\lambda > 0$), el sistema es un nodo inestable repulsor."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Los centros son asintóticamente estables porque sus trayectorias no divergen hacia el infinito.",
+          "is_correct": false,
+          "error_rationale": "Confunde estabilidad marginal con asintótica: un centro no converge al reposo, preserva órbitas perpetuas."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "C"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "La parábola crítica se obtiene igualando el discriminante a cero: $\\Delta = \\text{tr}^2 - 4\\det = 0$.",
+        "Un centro exige autovalores imaginarios puros, lo que requiere traza nula y determinante positivo.",
+        "En macroeconomía, la variedad estable del punto silla permite aislar la trayectoria convergente en modelos con variables de salto."
+      ],
+      "detailed_solution": "Las proposiciones sobre la parábola frontera, el centro con traza cero y la variedad estable del punto silla son teóricamente válidas."
+    },
+    {
+      "id": "Q-Hab04-352",
+      "competency_id": "Hab-04",
+      "competency_name": "Resolución de Subespacios Propios para Trayectorias Explícitas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "stem": "Para la matriz $A = \\begin{bmatrix} -3 & 2 \\\\ 1 & -2 \\end{bmatrix}$, determine el vector propio normalizado $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ k \\end{bmatrix}$ asociado al autovalor estable $\\lambda_1 = -1$.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ 0 \\end{bmatrix}$ con pendiente horizontal pura, asumiendo erróneamente desacoplamiento causal total.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ 0.5 \\end{bmatrix}$ con pendiente $k = 0.5$, dividiendo entre el término cruzado en lugar de multiplicarlo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El vector propio no existe porque la matriz de coeficientes posee valores propios degenerados.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ 2 \\end{bmatrix}$ con pendiente $k = 2$, duplicando incorrectamente la escala vertical del subespacio.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ -2 \\end{bmatrix}$ con pendiente $k = -2$, alterando los signos y factores de ponderación en la primera fila.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ 1 \\end{bmatrix}$ con pendiente $k = 1$, definiendo la dirección de máxima contracción asintótica.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ -1 \\end{bmatrix}$ con pendiente $k = -1$, invirtiendo el acoplamiento relativo entre las variables de estado.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Plantee el sistema homogéneo $(A - \\lambda_1 I)\\mathbf{v}_1 = \\mathbf{0}$ con $\\lambda_1 = -1$.",
+        "Reste $-1$ en la diagonal: $\\begin{bmatrix} -3 - (-1) & 2 \\\\ 1 & -2 - (-1) \\end{bmatrix} = \\begin{bmatrix} -2 & 2 \\\\ 1 & -1 \\end{bmatrix}$.",
+        "De la primera fila: $-2(1) + 2k = 0 \\implies 2k = 2 \\implies k = 1$."
+      ],
+      "detailed_solution": "Sustituyendo $\\lambda_1 = -1$, la ecuación $-2v_x + 2v_y = 0$ exige $v_x = v_y$. Con $v_x = 1$, se obtiene $k = 1$, de modo que $\\mathbf{v}_1 = [1, 1]^T$."
+    },
+    {
+      "id": "Q-Hab04-353",
+      "competency_id": "Hab-04",
+      "competency_name": "Resolución de Subespacios Propios para Trayectorias Explícitas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "stem": "Para la matriz $A = \\begin{bmatrix} -3 & 2 \\\\ 1 & -2 \\end{bmatrix}$, determine el vector propio normalizado $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ k \\end{bmatrix}$ asociado al autovalor estable $\\lambda_1 = -1$.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ -1 \\end{bmatrix}$ con pendiente $k = -1$, invirtiendo el acoplamiento relativo entre las variables de estado.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ 2 \\end{bmatrix}$ con pendiente $k = 2$, duplicando incorrectamente la escala vertical del subespacio.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ 0 \\end{bmatrix}$ con pendiente horizontal pura, asumiendo erróneamente desacoplamiento causal total.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ 1 \\end{bmatrix}$ con pendiente $k = 1$, definiendo la dirección de máxima contracción asintótica.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ -2 \\end{bmatrix}$ con pendiente $k = -2$, alterando los signos y factores de ponderación en la primera fila.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El vector propio no existe porque la matriz de coeficientes posee valores propios degenerados.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El vector propio es $\\mathbf{v}_1 = \\begin{bmatrix} 1 \\\\ 0.5 \\end{bmatrix}$ con pendiente $k = 0.5$, dividiendo entre el término cruzado en lugar de multiplicarlo.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Resolución de Subespacios Propios para Trayectorias Explícitas."
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "Plantee el sistema homogéneo $(A - \\lambda_1 I)\\mathbf{v}_1 = \\mathbf{0}$ con $\\lambda_1 = -1$.",
+        "Reste $-1$ en la diagonal: $\\begin{bmatrix} -3 - (-1) & 2 \\\\ 1 & -2 - (-1) \\end{bmatrix} = \\begin{bmatrix} -2 & 2 \\\\ 1 & -1 \\end{bmatrix}$.",
+        "De la primera fila: $-2(1) + 2k = 0 \\implies 2k = 2 \\implies k = 1$."
+      ],
+      "detailed_solution": "Sustituyendo $\\lambda_1 = -1$, la ecuación $-2v_x + 2v_y = 0$ exige $v_x = v_y$. Con $v_x = 1$, se obtiene $k = 1$, de modo que $\\mathbf{v}_1 = [1, 1]^T$."
+    },
+    {
+      "id": "Q-Hab05-381",
+      "competency_id": "Hab-05",
+      "competency_name": "Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos",
+      "type": "multiple_select",
+      "difficulty": "easy",
+      "stem": "Considere las aplicaciones dinámicas macroeconómicas (Modelo IS-LM Dinámico y Ciclos de Goodwin). Seleccione todas las proposiciones formalmente válidas:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En el modelo de Goodwin, la dinámica acoplada entre empleo y salarios genera fluctuaciones cerradas tipo presa-depredador en torno al equilibrio interior.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En el IS-LM dinámico, una mayor velocidad de ajuste en el mercado monetario $c_2$ favorece la aparición de oscilaciones cíclicas en el producto y la tasa de interés.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El estado estacionario de largo plazo en el IS-LM $(Y^E, r^E)$ se desplaza de posición cuando se incrementan las velocidades de ajuste $c_1$ y $c_2$.",
+          "is_correct": false,
+          "error_rationale": "Falso: las velocidades de ajuste regulan la dinámica transitoria, pero no alteran las coordenadas de equilibrio estático."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En el ciclo de Goodwin, la participación salarial de equilibrio $u^* = 1 - (\\alpha + n)\\sigma$ disminuye si aumenta la tasa de progreso técnico $\\alpha$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Cualquier aumento del gasto público $\\bar{G}$ desestabiliza necesariamente la traza de la matriz dinámica en el IS-LM.",
+          "is_correct": false,
+          "error_rationale": "Falso: el gasto público es una variable exógena que entra en el vector constante $B$ y no altera los coeficientes de la matriz $A$ ni la traza."
+        }
+      ],
+      "correct_answer": [
+        "A",
+        "B",
+        "D"
+      ],
+      "hints_count": 3,
+      "hints": [
+        "Goodwin modela la lucha distributiva como un sistema Lotka-Volterra donde el empleo es la presa y el salario el depredador.",
+        "En el IS-LM, los parámetros de política $\\bar{G}$ entran en el vector de forzamiento $B$, no en la matriz de derivadas $A$.",
+        "Las velocidades de ajuste $c_1, c_2$ aceleran la respuesta pero se cancelan en el estado estacionario $\\dot{Y}=\\dot{r}=0$."
+      ],
+      "detailed_solution": "El ciclo de Goodwin describe oscilaciones distributivas cerradas, y el ajuste monetario rápido genera espirales. Las variables exógenas en $B$ no alteran la estabilidad intrínseca de $A$."
+    },
+    {
+      "id": "Q-Hab05-382",
+      "competency_id": "Hab-05",
+      "competency_name": "Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Al resolver un sistema lineal no homogéneo con forzamiento temporal lineal $\\dot{X} = AX + \\begin{bmatrix} m t + p \\\\ n t + q \\end{bmatrix}$ donde $\\det(A) \\neq 0$, ¿cuál es la estructura algebraica adecuada del ansatz de solución particular $X_p(t)$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$X_p(t) = \\mathbf{A}_0$, ignorando por completo la variación lineal en el tiempo del término exógeno.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$X_p(t) = \\mathbf{A}_1 t$, considerando únicamente el término proporcional al tiempo y omitiendo el vector constante $\\mathbf{A}_0$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$X_p(t) = \\mathbf{A}_1 t + \\mathbf{A}_0$, igualando coeficientes de grado 1 y grado 0 tras derivar $\\dot{X}_p = \\mathbf{A}_1$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$X_p(t) = -A^{-1} \\begin{bmatrix} p \\\\ q \\end{bmatrix}$, utilizando la fórmula estática que solo es válida para forzamientos constantes.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$X_p(t) = e^{At} \\begin{bmatrix} m t \\\\ n t \\end{bmatrix}$, aplicando la matriz exponencial sin integrar por partes el forzamiento.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$X_p(t) = \\mathbf{A}_1 \\cos(t) + \\mathbf{A}_0 \\sin(t)$, utilizando funciones armónicas para un forzamiento estrictamente polinomial.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$X_p(t) = \\mathbf{A}_2 t^2 + \\mathbf{A}_1 t$, elevando de forma innecesaria el grado polinomial del ansatz particular.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Para un polinomio de grado 1 en el término independiente, la solución particular general debe ser un polinomio completo del mismo grado: $X_p(t) = \\mathbf{A}_1 t + \\mathbf{A}_0$.",
+        "Al derivar, $\\dot{X}_p = \\mathbf{A}_1$.",
+        "Sustituyendo en el sistema: $\\mathbf{A}_1 = A(\\mathbf{A}_1 t + \\mathbf{A}_0) + Mt + N$. Igualando términos en $t$ se obtiene $A\\mathbf{A}_1 + M = 0$."
+      ],
+      "detailed_solution": "El principio de coeficientes indeterminados exige proponer un polinomio del mismo grado $X_p(t) = \\mathbf{A}_1 t + \\mathbf{A}_0$. Igualando potencias de $t$ se determinan unívocamente ambos vectores."
+    },
+    {
+      "id": "Q-Hab05-383",
+      "competency_id": "Hab-05",
+      "competency_name": "Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Al resolver un sistema lineal no homogéneo con forzamiento temporal lineal $\\dot{X} = AX + \\begin{bmatrix} m t + p \\\\ n t + q \\end{bmatrix}$ donde $\\det(A) \\neq 0$, ¿cuál es la estructura algebraica adecuada del ansatz de solución particular $X_p(t)$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$X_p(t) = \\mathbf{A}_0$, ignorando por completo la variación lineal en el tiempo del término exógeno.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$X_p(t) = e^{At} \\begin{bmatrix} m t \\\\ n t \\end{bmatrix}$, aplicando la matriz exponencial sin integrar por partes el forzamiento.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$X_p(t) = -A^{-1} \\begin{bmatrix} p \\\\ q \\end{bmatrix}$, utilizando la fórmula estática que solo es válida para forzamientos constantes.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$X_p(t) = \\mathbf{A}_1 t$, considerando únicamente el término proporcional al tiempo y omitiendo el vector constante $\\mathbf{A}_0$.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$X_p(t) = \\mathbf{A}_2 t^2 + \\mathbf{A}_1 t$, elevando de forma innecesaria el grado polinomial del ansatz particular.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$X_p(t) = \\mathbf{A}_1 t + \\mathbf{A}_0$, igualando coeficientes de grado 1 y grado 0 tras derivar $\\dot{X}_p = \\mathbf{A}_1$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$X_p(t) = \\mathbf{A}_1 \\cos(t) + \\mathbf{A}_0 \\sin(t)$, utilizando funciones armónicas para un forzamiento estrictamente polinomial.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Ajuste por Coeficientes Indeterminados en Sistemas No Homogéneos."
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Para un polinomio de grado 1 en el término independiente, la solución particular general debe ser un polinomio completo del mismo grado: $X_p(t) = \\mathbf{A}_1 t + \\mathbf{A}_0$.",
+        "Al derivar, $\\dot{X}_p = \\mathbf{A}_1$.",
+        "Sustituyendo en el sistema: $\\mathbf{A}_1 = A(\\mathbf{A}_1 t + \\mathbf{A}_0) + Mt + N$. Igualando términos en $t$ se obtiene $A\\mathbf{A}_1 + M = 0$."
+      ],
+      "detailed_solution": "El principio de coeficientes indeterminados exige proponer un polinomio del mismo grado $X_p(t) = \\mathbf{A}_1 t + \\mathbf{A}_0$. Igualando potencias de $t$ se determinan unívocamente ambos vectores."
+    },
+    {
+      "id": "Q-Hab06-411",
+      "competency_id": "Hab-06",
+      "competency_name": "Linealización Diferencial Alrededor del Estado Estacionario",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "stem": "Para el sistema no lineal plano $\\dot{x} = 2x - xy$, $\\dot{y} = -3y + xy$, calcule la matriz Jacobiana $J^*$ evaluada en el estado estacionario interior no trivial $(x^*, y^*) = (3, 2)$ y clasifique la estabilidad del sistema linealizado.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$J^* = \\begin{bmatrix} 0 & 3 \\\\ -2 & 0 \\end{bmatrix}$, invirtiendo los signos de las derivadas parciales cruzadas de interacción.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$J^* = \\begin{bmatrix} -2 & -3 \\\\ 2 & 3 \\end{bmatrix}$, introduciendo términos no nulos en la diagonal principal del Jacobiano.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$J^* = \\begin{bmatrix} 2 & 0 \\\\ 0 & -3 \\end{bmatrix}$, evaluando erróneamente en el origen $(0,0)$ y diagnosticando un punto silla.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$J^* = \\begin{bmatrix} 3 & 2 \\\\ 3 & 2 \\end{bmatrix}$, sustituyendo directamente las coordenadas del punto en lugar de las derivadas, para cualquier punto del plano, para todo par admisible.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$J^* = \\begin{bmatrix} 0 & -3 \\\\ 2 & 0 \\end{bmatrix}$, pero clasificándolo como foco asintóticamente estable convergente.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$J^* = \\begin{bmatrix} -3 & 0 \\\\ 0 & -2 \\end{bmatrix}$, asumiendo desacoplamiento total y diagnosticando un nodo estable.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$J^* = \\begin{bmatrix} 0 & -3 \\\\ 2 & 0 \\end{bmatrix}$, con $\\text{tr}(J^*) = 0$ y $\\det(J^*) = 6 > 0$, clasificándose como un centro armónico en la aproximación lineal.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Las derivadas parciales son: $f_x = 2 - y$, $f_y = -x$, $g_x = y$, $g_y = -3 + x$.",
+        "Evalúe en $(x^*, y^*) = (3, 2)$: $f_x = 2 - 2 = 0$, $f_y = -3$, $g_x = 2$, $g_y = -3 + 3 = 0$.",
+        "La matriz es $J^* = \\begin{bmatrix} 0 & -3 \\\\ 2 & 0 \\end{bmatrix}$. Calcule $\\text{tr}=0$ y $\\det = 0 - (-6) = 6 > 0$."
+      ],
+      "detailed_solution": "En el equilibrio interior $(3, 2)$, la matriz Jacobiana es $J^* = \\begin{bmatrix} 0 & -3 \\\\ 2 & 0 \\end{bmatrix}$. Con traza 0 y determinante 6, los autovalores son $\\pm i\\sqrt{6}$, configurando un centro lineal."
+    },
+    {
+      "id": "Q-Hab06-412",
+      "competency_id": "Hab-06",
+      "competency_name": "Linealización Diferencial Alrededor del Estado Estacionario",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "stem": "Para el sistema no lineal plano $\\dot{x} = 2x - xy$, $\\dot{y} = -3y + xy$, calcule la matriz Jacobiana $J^*$ evaluada en el estado estacionario interior no trivial $(x^*, y^*) = (3, 2)$ y clasifique la estabilidad del sistema linealizado.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$J^* = \\begin{bmatrix} 3 & 2 \\\\ 3 & 2 \\end{bmatrix}$, sustituyendo directamente las coordenadas del punto en lugar de las derivadas, para cualquier punto del plano, en la región considerada.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$J^* = \\begin{bmatrix} 0 & 3 \\\\ -2 & 0 \\end{bmatrix}$, invirtiendo los signos de las derivadas parciales cruzadas de interacción.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$J^* = \\begin{bmatrix} 0 & -3 \\\\ 2 & 0 \\end{bmatrix}$, con $\\text{tr}(J^*) = 0$ y $\\det(J^*) = 6 > 0$, clasificándose como un centro armónico en la aproximación lineal.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$J^* = \\begin{bmatrix} 0 & -3 \\\\ 2 & 0 \\end{bmatrix}$, pero clasificándolo como foco asintóticamente estable convergente.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$J^* = \\begin{bmatrix} 2 & 0 \\\\ 0 & -3 \\end{bmatrix}$, evaluando erróneamente en el origen $(0,0)$ y diagnosticando un punto silla.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$J^* = \\begin{bmatrix} -3 & 0 \\\\ 0 & -2 \\end{bmatrix}$, asumiendo desacoplamiento total y diagnosticando un nodo estable.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$J^* = \\begin{bmatrix} -2 & -3 \\\\ 2 & 3 \\end{bmatrix}$, introduciendo términos no nulos en la diagonal principal del Jacobiano.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Linealización Diferencial Alrededor del Estado Estacionario."
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Las derivadas parciales son: $f_x = 2 - y$, $f_y = -x$, $g_x = y$, $g_y = -3 + x$.",
+        "Evalúe en $(x^*, y^*) = (3, 2)$: $f_x = 2 - 2 = 0$, $f_y = -3$, $g_x = 2$, $g_y = -3 + 3 = 0$.",
+        "La matriz es $J^* = \\begin{bmatrix} 0 & -3 \\\\ 2 & 0 \\end{bmatrix}$. Calcule $\\text{tr}=0$ y $\\det = 0 - (-6) = 6 > 0$."
+      ],
+      "detailed_solution": "En el equilibrio interior $(3, 2)$, la matriz Jacobiana es $J^* = \\begin{bmatrix} 0 & -3 \\\\ 2 & 0 \\end{bmatrix}$. Con traza 0 y determinante 6, los autovalores son $\\pm i\\sqrt{6}$, configurando un centro lineal."
+    },
+    {
+      "id": "Q-Hab06-413",
+      "competency_id": "Hab-06",
+      "competency_name": "Linealización Diferencial Alrededor del Estado Estacionario",
+      "type": "fill_in_the_blank",
+      "difficulty": "hard",
+      "stem": "Para el sistema no lineal $\\dot{x} = x(4 - 2y)$, $\\dot{y} = y(-6 + 2x)$, calcule la coordenada $x^*$ del punto de equilibrio interior no trivial donde ambas derivadas se anulan simultáneamente. Ingrese el número entero.",
+      "options": [],
+      "correct_answer": {
+        "value": "3",
+        "canonical_algebraic": "3",
+        "accepted_equivalents": [
+          "3",
+          "3.0",
+          "tres"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "Para que $\\dot{y} = y(-6 + 2x) = 0$ con $y^* > 0$, se requiere $-6 + 2x^* = 0$.",
+        "Plantee la ecuación lineal resultante igualando el factor dinámico de crecimiento de la población depredadora a cero.",
+        "Despeje $x^*$: $2x^* = 6 \\implies x^* = 3$."
+      ],
+      "detailed_solution": "De $-6 + 2x^* = 0$, obtenemos de forma inmediata $x^* = 3$."
+    },
+    {
+      "id": "Q-Hab07-441",
+      "competency_id": "Hab-07",
+      "competency_name": "Conversión Log-Diferencial de Variables Ratio",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "En la formulación de Goodwin, si la relación capital-producto es $\\sigma = 2$, ¿cuál es el valor del coeficiente $\\delta = \\frac{1}{\\sigma}$ que pondera a la participación salarial $u$ en $\\dot{v} = v(\\gamma - \\delta u)$? Ingrese el valor decimal exacto.",
+      "options": [],
+      "correct_answer": {
+        "value": "0.5",
+        "canonical_algebraic": "0.5",
+        "accepted_equivalents": [
+          "0.5",
+          "0.50",
+          "1/2",
+          "0,5"
+        ]
+      },
+      "hints_count": 3,
+      "hints": [
+        "El coeficiente está definido por $\\delta = \\frac{1}{\\sigma}$.",
+        "Recuerde que en la acumulación de capital, el acelerador del empleo depende de la tasa de ganancia dividida entre $\\sigma$.",
+        "Sustituya $\\sigma = 2$: $\\delta = \\frac{1}{2} = 0.5$."
+      ],
+      "detailed_solution": "$\\delta = 1/2 = 0.5$."
+    },
+    {
+      "id": "Q-Hab07-442",
+      "competency_id": "Hab-07",
+      "competency_name": "Conversión Log-Diferencial de Variables Ratio",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "stem": "Al derivar el modelo de ciclo distributivo de Goodwin a partir de la tecnología de Leontief $Y = \\min(K/\\sigma, aL)$, acumulación de capital $\\dot{K} = (1-u)Y$, progreso técnico $\\dot{a}/a = \\alpha$ y crecimiento demográfico $\\dot{N}/N = n$, ¿cuál es la ecuación diferencial canónica para la tasa de empleo $v = L/N$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{v} = v\\left[\\frac{1-u}{\\sigma} - \\alpha - n\\right]$, reflejando que la acumulación de capital impulsa el empleo mientras que la tecnología y demografía lo drenan.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{v} = v\\left[\\frac{u}{\\sigma} - \\alpha - n\\right]$, utilizando la participación salarial $u$ en lugar de la tasa de beneficio $1-u$ en la acumulación.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{v} = v\\left[\\frac{1-u}{\\sigma} + \\alpha + n\\right]$, sumando incorrectamente las tasas de progreso técnico y demográfico como si expandieran el empleo, para todo par admisible.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{v} = v\\left[\\frac{1-u}{\\sigma} - \\alpha\\right]$, omitiendo el impacto del crecimiento poblacional en la tasa de empleo per cápita.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{v} = \\frac{1-u}{\\sigma} - \\alpha - n$, olvidando multiplicar por la variable de estado $v$ en la ley de movimiento no lineal.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{v} = \\ln(v)\\left[\\frac{1-u}{\\sigma} - \\alpha - n\\right]$, introduciendo logaritmos en el factor de escala de la ecuación diferencial.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{v} = v\\sigma(1-u) - \\alpha - n$, multiplicando por la relación capital-producto en lugar de dividir entre ella.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "De la definición $v = L/N = \\frac{K/(\\sigma a)}{N} = \\frac{K}{\\sigma a N}$.",
+        "Aplique la derivada logarítmica: $\\frac{\\dot{v}}{v} = \\frac{\\dot{K}}{K} - \\frac{\\dot{a}}{a} - \\frac{\\dot{N}}{N}$.",
+        "Sustituya $\\frac{\\dot{K}}{K} = \\frac{(1-u)Y}{K} = \\frac{1-u}{\\sigma}$, $\\frac{\\dot{a}}{a} = \\alpha$ y $\\frac{\\dot{N}}{N} = n$, multiplicando luego por $v$."
+      ],
+      "detailed_solution": "Partiendo de $\\frac{\\dot{v}}{v} = \\frac{\\dot{K}}{K} - \\alpha - n = \\frac{1-u}{\\sigma} - \\alpha - n$ y multiplicando por $v$, obtenemos la forma canónica de Goodwin $\\dot{v} = v\\left[\\frac{1-u}{\\sigma} - (\\alpha + n)\\right]$."
+    },
+    {
+      "id": "Q-Hab07-443",
+      "competency_id": "Hab-07",
+      "competency_name": "Conversión Log-Diferencial de Variables Ratio",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "stem": "Al derivar el modelo de ciclo distributivo de Goodwin a partir de la tecnología de Leontief $Y = \\min(K/\\sigma, aL)$, acumulación de capital $\\dot{K} = (1-u)Y$, progreso técnico $\\dot{a}/a = \\alpha$ y crecimiento demográfico $\\dot{N}/N = n$, ¿cuál es la ecuación diferencial canónica para la tasa de empleo $v = L/N$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{v} = v\\left[\\frac{1-u}{\\sigma} - \\alpha\\right]$, omitiendo el impacto del crecimiento poblacional en la tasa de empleo per cápita.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{v} = v\\left[\\frac{1-u}{\\sigma} - \\alpha - n\\right]$, reflejando que la acumulación de capital impulsa el empleo mientras que la tecnología y demografía lo drenan.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{v} = \\frac{1-u}{\\sigma} - \\alpha - n$, olvidando multiplicar por la variable de estado $v$ en la ley de movimiento no lineal.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{v} = v\\left[\\frac{1-u}{\\sigma} + \\alpha + n\\right]$, sumando incorrectamente las tasas de progreso técnico y demográfico como si expandieran el empleo, en la región considerada.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{v} = v\\sigma(1-u) - \\alpha - n$, multiplicando por la relación capital-producto en lugar de dividir entre ella.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{v} = \\ln(v)\\left[\\frac{1-u}{\\sigma} - \\alpha - n\\right]$, introduciendo logaritmos en el factor de escala de la ecuación diferencial.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{v} = v\\left[\\frac{u}{\\sigma} - \\alpha - n\\right]$, utilizando la participación salarial $u$ en lugar de la tasa de beneficio $1-u$ en la acumulación.",
+          "is_correct": false,
+          "error_rationale": "Distractor basado en misconception de Conversión Log-Diferencial de Variables Ratio."
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "De la definición $v = L/N = \\frac{K/(\\sigma a)}{N} = \\frac{K}{\\sigma a N}$.",
+        "Aplique la derivada logarítmica: $\\frac{\\dot{v}}{v} = \\frac{\\dot{K}}{K} - \\frac{\\dot{a}}{a} - \\frac{\\dot{N}}{N}$.",
+        "Sustituya $\\frac{\\dot{K}}{K} = \\frac{(1-u)Y}{K} = \\frac{1-u}{\\sigma}$, $\\frac{\\dot{a}}{a} = \\alpha$ y $\\frac{\\dot{N}}{N} = n$, multiplicando luego por $v$."
+      ],
+      "detailed_solution": "Partiendo de $\\frac{\\dot{v}}{v} = \\frac{\\dot{K}}{K} - \\alpha - n = \\frac{1-u}{\\sigma} - \\alpha - n$ y multiplicando por $v$, obtenemos la forma canónica de Goodwin $\\dot{v} = v\\left[\\frac{1-u}{\\sigma} - (\\alpha + n)\\right]$."
+    }
+  ],
+  "filename": "sistemas_edos.json"
+}

@@ -1,0 +1,153 @@
+{
+  "competency_id": "H-03",
+  "templates": [
+    {
+      "id": "T-H03-01",
+      "competency_id": "H-03",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "En relación con el modelo de Harrod-Domar y la crítica seminal de Solow (1956) para {context_label}, seleccione todas las afirmaciones correctas sobre el origen de la inestabilidad del 'filo de la navaja':",
+      "stem_variants": [
+        "En relación con el modelo de Harrod-Domar y la crítica seminal de Solow (1956) para {context_label}, seleccione todas las afirmaciones correctas sobre el origen de la inestabilidad del 'filo de la navaja':",
+        "De acuerdo con la reinterpretación de Solow sobre la dinámica de Harrod-Domar en {context_label}, ¿cuáles de las siguientes proposiciones explican adecuadamente el fenómeno del filo de la navaja?",
+        "Desde la perspectiva del análisis formal neoclásico aplicado a {context_label}, identifique las aseveraciones teóricas válidas respecto a la causa estructural del filo de la navaja en Harrod-Domar:",
+        "Considerando las propiedades tecnológicas planteadas por Harrod y Domar para {context_label}, marque todas las tesis analíticas ratificadas por Solow sobre el origen del equilibrio inestable:"
+      ],
+      "generate_py": "def generate(rng):\n    contexts = [\n        'una economía en proceso de acumulación',\n        'un sistema macroeconómico cerrado',\n        'un régimen de crecimiento agregado',\n        'una estructura productiva industrial',\n        'un modelo de desarrollo a largo plazo'\n    ]\n    ctx = rng.choice(contexts)\n    options = [\n        {\n            'content': 'El filo de la navaja surge primordialmente de la hipótesis tecnológica de proporciones fijas en la producción que impide la sustitución entre capital y trabajo.',\n            'is_correct': True,\n            'distractor_id': None,\n            'error_rationale': None\n        },\n        {\n            'content': 'Al abandonar la rigidez de coeficientes fijos e introducir sustitución continua de factores, la inestabilidad del filo de la navaja desaparece por completo.',\n            'is_correct': True,\n            'distractor_id': None,\n            'error_rationale': None\n        },\n        {\n            'content': 'La inestabilidad del filo de la navaja es consecuencia directa de la existencia de rigideces nominales en los precios y salarios monetarios.',\n            'is_correct': False,\n            'distractor_id': 'D-H03-01',\n            'error_rationale': 'Solow demuestra que la inestabilidad proviene estrictamente de la tecnología de proporciones fijas y no de rigideces nominales de precios o salarios.'\n        },\n        {\n            'content': 'El equilibrio inestable se produce debido a variaciones erráticas e impredecibles en la tasa de ahorro de los agentes económicos.',\n            'is_correct': False,\n            'distractor_id': 'D-H03-02',\n            'error_rationale': 'En Harrod-Domar la propensión al ahorro s es constante; la inestabilidad se origina en la rigidez tecnológica y no en la volatilidad del ahorro.'\n        },\n        {\n            'content': 'La inestabilidad del filo de la navaja perdura de manera idéntica aun cuando se disponga de una función de producción neoclásica con sustitución continua de factores.',\n            'is_correct': False,\n            'distractor_id': 'D-H03-03',\n            'error_rationale': 'La sustitución continua de factores permite ajustar endógenamente la relación capital-producto y erradica la inestabilidad de filo de la navaja.'\n        }\n    ]\n    return {\n        'vars': {'context_label': ctx},\n        'options': options,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    opts = result.get('options', [])\n    correct_count = sum(1 for o in opts if o.get('is_correct'))\n    return correct_count == 2 and len(opts) == 5",
+      "hints": [
+        "Examine el supuesto fundamental sobre la función de producción en el modelo de Harrod-Domar.",
+        "Analice si la inestabilidad depende del comportamiento monetario o de la rigidez en la combinación técnica de factores productivos.",
+        "Recuerde la conclusión de Solow (1956): al posibilitar la sustitución factorial suave, la discordancia entre la tasa garantizada y la natural se supera."
+      ],
+      "solution": "En el modelo de Harrod-Domar, la inestabilidad del 'filo de la navaja' surge de la hipótesis de proporciones fijas en la producción, la cual impide que la relación capital-trabajo se ajuste flexiblemente ante discrepancias entre la tasa garantizada y la natural. Solow demostró que al introducir sustitución continua entre capital y trabajo, dicha inestabilidad desaparece.",
+      "distractor_ids": [
+        "D-H03-01",
+        "D-H03-02",
+        "D-H03-03"
+      ]
+    },
+    {
+      "id": "T-H03-02",
+      "competency_id": "H-03",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Remember",
+      "stem": "¿Cuál es el valor numérico exacto de la elasticidad de sustitución factorial $\\sigma$ implícita en la función de producción de proporciones fijas de Harrod-Domar analizada por Solow en el contexto de {sector_desc}?",
+      "stem_variants": [
+        "¿Cuál es el valor numérico exacto de la elasticidad de sustitución factorial $\\sigma$ implícita en la función de producción de proporciones fijas de Harrod-Domar analizada por Solow en el contexto de {sector_desc}?",
+        "Determine el valor escalar de la elasticidad de sustitución $\\sigma$ entre capital y trabajo propia de la tecnología de Leontief postulada en el modelo de Harrod-Domar para {sector_desc}:",
+        "Para una economía caracterizada por {sector_desc} sujeta a rigidez tecnológica absoluta de coeficientes de producción, ¿a cuánto asciende la elasticidad de sustitución factorial $\\sigma$?",
+        "Indique la magnitud numérica de la elasticidad de sustitución $\\sigma$ que refleja la imposibilidad tecnológica de sustitución factorial en Harrod-Domar en el ámbito de {sector_desc}:"
+      ],
+      "generate_py": "def generate(rng):\n    sectors = [\n        'la industria pesada',\n        'la producción agregada',\n        'la manufactura tecnificada',\n        'el sector de bienes intermedios',\n        'la economía de planificación'\n    ]\n    sector = rng.choice(sectors)\n    sigma_val = 0\n    return {\n        'vars': {'sector_desc': sector},\n        'correct': sigma_val,\n        'value': '0',\n        'canonical_algebraic': '0',\n        'accepted_equivalents': ['0', '0.0', 'cero'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    return str(result.get('correct')) == '0'",
+      "hints": [
+        "La tecnología de proporciones fijas no permite alterar la relación capital-trabajo ante cambios en los precios relativos de los factores.",
+        "Una función de producción tipo Leontief presenta isocuantas en ángulo recto (en forma de L).",
+        "La elasticidad de sustitución factorial sigma para isocuantas en ángulo recto es exactamente cero."
+      ],
+      "solution": "La tecnología de proporciones fijas asume que los factores productivos deben combinarse en proporciones técnicas constantes e inflexibles, lo que implica una elasticidad de sustitución factorial $\\sigma = 0$.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-H03-03",
+      "competency_id": "H-03",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Understand",
+      "stem": "Al contrastar el modelo de Harrod-Domar con la formulación neoclásica de Solow para {economy_type}, determine cuáles de las siguientes proposiciones describen verazmente el mecanismo del filo de la navaja:",
+      "stem_variants": [
+        "Al contrastar el modelo de Harrod-Domar con la formulación neoclásica de Solow para {economy_type}, determine cuáles de las siguientes proposiciones describen verazmente el mecanismo del filo de la navaja:",
+        "Considerando las discrepancias teóricas entre Harrod-Domar y Solow respecto a {economy_type}, seleccione las tesis que identifican con rigor el fundamento del equilibrio de filo de la navaja:",
+        "Bajo el prisma analítico del crecimiento económico en {economy_type}, ¿cuáles de los siguientes enunciados reflejan la crítica de Solow a la rigidez de Harrod-Domar?",
+        "Evalúe los factores que explican la inestabilidad dinámica en Harrod-Domar según el examen crítico de Solow en el marco de {economy_type}:"
+      ],
+      "generate_py": "def generate(rng):\n    types = [\n        'un mercado competitivo cerrado',\n        'un sistema económico en maduración',\n        'un régimen macroeconómico continuo',\n        'una economía moderna diversificada',\n        'un entorno productivo de largo plazo'\n    ]\n    etype = rng.choice(types)\n    options = [\n        {\n            'content': 'La coincidencia entre la tasa de crecimiento garantizada s/v y la tasa natural de crecimiento de la fuerza laboral n ocurre solo por mera casualidad debido a la rigidez del coeficiente capital-producto v.',\n            'is_correct': True,\n            'distractor_id': None,\n            'error_rationale': None\n        },\n        {\n            'content': 'La hipótesis de coeficientes fijos impide que la productividad media del capital se ajuste endógenamente para igualar el crecimiento poblacional exógeno.',\n            'is_correct': True,\n            'distractor_id': None,\n            'error_rationale': None\n        },\n        {\n            'content': 'El origen del desajuste sistemático radica en la inflexibilidad a la baja de los salarios reales y en rigideces monetarias del sistema financiero.',\n            'is_correct': False,\n            'distractor_id': 'D-H03-01',\n            'error_rationale': 'El argumento de Solow se enfoca enteramente en la rigidez técnica de la producción, descartando que el filo de la navaja se deba a rigideces nominales de salarios o precios.'\n        },\n        {\n            'content': 'La inestabilidad estructural es motivada por variaciones cíclicas e impredecibles en la tasa de ahorro s de la sociedad.',\n            'is_correct': False,\n            'distractor_id': 'D-H03-02',\n            'error_rationale': 'En el modelo de Harrod-Domar la propensión marginal al ahorro es constante; el problema radica en la imposibilidad técnica de variar el coeficiente v.'\n        }\n    ]\n    return {\n        'vars': {'economy_type': etype},\n        'options': options,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    opts = result.get('options', [])\n    correct_count = sum(1 for o in opts if o.get('is_correct'))\n    return correct_count == 2 and len(opts) == 4",
+      "hints": [
+        "En Harrod-Domar, la tasa garantizada es Gw = s/v donde s y v son fijos.",
+        "La tasa natural de crecimiento Gn = n está determinada externamente por el crecimiento de la población activa.",
+        "Si v no puede ajustarse mediante sustitución de factores, cualquier desviación entre Gw y Gn genera desempleo crónico o escasez de mano de obra."
+      ],
+      "solution": "La inestabilidad del filo de la navaja radica en que la tasa garantizada $G_w = s/v$ y la tasa natural $G_n = n$ solo coinciden fortuitamente, ya que el coeficiente capital-producto $v$ es constante e inflexible debido a la tecnología de proporciones fijas.",
+      "distractor_ids": [
+        "D-H03-01",
+        "D-H03-02"
+      ]
+    },
+    {
+      "id": "T-H03-04",
+      "competency_id": "H-03",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "En el modelo de Harrod-Domar con tecnología de proporciones fijas para {sector_name}, la relación capital-producto requerida por la técnica es $v = {v_val}$. Si la tasa de ahorro constante es $s = {s_pct}\\%$, determine la tasa garantizada de crecimiento $G_w = \\frac{s}{v}$ expresada como porcentaje anual (ingrese únicamente el valor numérico entero):",
+      "stem_variants": [
+        "En el modelo de Harrod-Domar con tecnología de proporciones fijas para {sector_name}, la relación capital-producto requerida por la técnica es $v = {v_val}$. Si la tasa de ahorro constante es $s = {s_pct}\\%$, determine la tasa garantizada de crecimiento $G_w = \\frac{s}{v}$ expresada como porcentaje anual (ingrese únicamente el valor numérico entero):",
+        "Calcule la tasa de crecimiento garantizado $G_w = \\frac{s}{v}$ en {sector_name}, asumiendo una propensión fija al ahorro $s = {s_pct}\\%$ y un coeficiente tecnológico inflexible de capital $v = {v_val}$, reportando el resultado como porcentaje numérico:",
+        "Para una función de producción de proporciones fijas en {sector_name} donde $v = {v_val}$ y la tasa de ahorro agregada se fija en $s = {s_pct}\\%$, halle el valor porcentual entero de la tasa garantizada de Harrod $G_w = \\frac{s}{v}$:",
+        "Evalúe la tasa garantizada $G_w = \\frac{s}{v}$ correspondiente al modelo de Harrod-Domar en {sector_name}, dados los parámetros rígidos $v = {v_val}$ y $s = {s_pct}\\%$, indicando el valor numérico porcentual exacto:"
+      ],
+      "generate_py": "def generate(rng):\n    sectors = [\n        'el sector de manufacturas',\n        'la infraestructura nacional',\n        'el sector de energía',\n        'la producción agraria tecnificada',\n        'la industria de bienes de consumo'\n    ]\n    sector = rng.choice(sectors)\n    v_val = rng.choice([2, 3, 4, 5])\n    # ensure integer Gw\n    gw_targets = [2, 3, 4, 5, 6]\n    gw = rng.choice(gw_targets)\n    s_pct = v_val * gw\n    return {\n        'vars': {'sector_name': sector, 'v_val': v_val, 's_pct': s_pct, 'gw': gw},\n        'correct': gw,\n        'value': str(gw),\n        'canonical_algebraic': str(gw),\n        'accepted_equivalents': [str(gw), f'{gw}.0', f'{gw}%'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    v_val = result['vars']['v_val']\n    s_pct = result['vars']['s_pct']\n    gw = result['vars']['gw']\n    return s_pct == v_val * gw and int(result['correct']) == gw",
+      "hints": [
+        "La fórmula de la tasa garantizada de crecimiento en Harrod-Domar es Gw = s / v.",
+        "Divida la tasa de ahorro s expresada en porcentaje entre el coeficiente capital-producto v.",
+        "Calcule Gw = {s_pct} / {v_val} para obtener la tasa porcentual anual requerida."
+      ],
+      "solution": "Aplicando la definición de la tasa garantizada de Harrod: $G_w = \\frac{s}{v} = \\frac{{s_pct}\\%}{{v_val}} = {gw}\\%$.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-H03-05",
+      "competency_id": "H-03",
+      "interaction_type": "multiple_select",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Respecto a las implicaciones teóricas de la sustitución de factores frente al filo de la navaja en {scope_desc}, marque todas las afirmaciones verdaderas:",
+      "stem_variants": [
+        "Respecto a las implicaciones teóricas de la sustitución de factores frente al filo de la navaja en {scope_desc}, marque todas las afirmaciones verdaderas:",
+        "En cuanto al efecto de introducir sustitución continua entre factores en {scope_desc}, ¿cuáles de las siguientes proposiciones son válidas según el modelo de Solow?",
+        "Desde la teoría del crecimiento equilibrado aplicada a {scope_desc}, seleccione las propiedades correctas derivadas de abandonar el supuesto de coeficientes fijos:",
+        "Analice las consecuencias metodológicas de admitir sustitución suave de insumos productivos en {scope_desc} frente al filo de la navaja de Harrod-Domar:"
+      ],
+      "generate_py": "def generate(rng):\n    scopes = [\n        'el análisis macroeconómico de largo plazo',\n        'la dinámica de equilibrio estacionario',\n        'el marco de acumulación neoclásica',\n        'el estudio del crecimiento sostenido',\n        'la teoría de la producción agregada'\n    ]\n    scope = rng.choice(scopes)\n    options = [\n        {\n            'content': 'Solow concluye que el filo de la navaja es un resultado artificial que depende críticamente del supuesto restrictivo de proporciones fijas en la producción.',\n            'is_correct': True,\n            'distractor_id': None,\n            'error_rationale': None\n        },\n        {\n            'content': 'Al permitir la sustitución continua entre capital y trabajo, la relación capital-trabajo se convierte en una variable endógena que garantiza el ajuste hacia el equilibrio.',\n            'is_correct': True,\n            'distractor_id': None,\n            'error_rationale': None\n        },\n        {\n            'content': 'La sustitución factorial continua no logra resolver la inestabilidad de filo de la navaja, la cual se mantiene inalterada debido a la naturaleza intrínseca del sistema capitalista.',\n            'is_correct': False,\n            'distractor_id': 'D-H03-03',\n            'error_rationale': 'Solow demostró rigurosamente que al admitir sustitución factorial suave, la inestabilidad del filo de la navaja se disipa por completo.'\n        },\n        {\n            'content': 'La causa medular del filo de la navaja son las perturbaciones imprevistas en la tasa de ahorro s y no la tecnología de producción.',\n            'is_correct': False,\n            'distractor_id': 'D-H03-02',\n            'error_rationale': 'La tasa de ahorro es un parámetro exógeno constante y no la causa de la inestabilidad de filo de la navaja.'\n        }\n    ]\n    return {\n        'vars': {'scope_desc': scope},\n        'options': options,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    opts = result.get('options', [])\n    correct_count = sum(1 for o in opts if o.get('is_correct'))\n    return correct_count == 2 and len(opts) == 4",
+      "hints": [
+        "Solow argumenta que el filo de la navaja se genera al forzar coeficientes fijos en la función de producción.",
+        "Con una función neoclásica suave, la relación capital-trabajo se ajusta automáticamente a las condiciones de oferta factorial.",
+        "Considere si la inestabilidad persiste o se desvanece al posibilitar la sustitución factorial."
+      ],
+      "solution": "La crítica central de Solow es que el filo de la navaja surge exclusivamente de la hipótesis de proporciones fijas. Al incorporar sustitución continua de factores, la relación capital-trabajo se vuelve endógena y restablece el equilibrio de pleno empleo dinámico.",
+      "distractor_ids": [
+        "D-H03-03",
+        "D-H03-02"
+      ]
+    },
+    {
+      "id": "T-H03-06",
+      "competency_id": "H-03",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "En una economía modelada según Harrod-Domar para {region_desc}, la fuerza laboral crece a una tasa natural exógena del {n_val}\\% anual ($n$). La tasa de ahorro es $s = {s_pct}\\%$. Para que la economía crezca en equilibrio de pleno empleo ($G_w = n$), ¿cuál debe ser el valor exacto del coeficiente capital-producto $v$ requerido por la tecnología? (ingrese el valor numérico entero):",
+      "stem_variants": [
+        "En una economía modelada según Harrod-Domar para {region_desc}, la fuerza laboral crece a una tasa natural exógena del {n_val}\\% anual ($n$). La tasa de ahorro es $s = {s_pct}\\%$. Para que la economía crezca en equilibrio de pleno empleo ($G_w = n$), ¿cuál debe ser el valor exacto del coeficiente capital-producto $v$ requerido por la tecnología? (ingrese el valor numérico entero):",
+        "Determine el valor escalar exacto del coeficiente de capital $v = \\frac{s}{n}$ necesario para satisfacer la condición de equilibrio dinámico $G_w = n$ en {region_desc}, dada una tasa de ahorro $s = {s_pct}\\%$ y un crecimiento poblacional del {n_val}\\% anual ($n$):",
+        "Halle el valor numérico del parámetro tecnológico $v$ que igualaría la tasa garantizada con la tasa natural del {n_val}\\% anual en {region_desc}, considerando una propensión al ahorro $s = {s_pct}\\%$:",
+        "Bajo la formulación de Harrod-Domar en {region_desc}, si el crecimiento demográfico es del {n_val}\\% anual y el ahorro es $s = {s_pct}\\%$, ¿qué magnitud debe tener el coeficiente capital-producto $v$ para evitar la inestabilidad del filo de la navaja?"
+      ],
+      "generate_py": "def generate(rng):\n    regions = [\n        'el territorio nacional',\n        'la economía regional',\n        'el área metropolitana',\n        'el sistema económico en desarrollo',\n        'el espacio productivo integrado'\n    ]\n    region = rng.choice(regions)\n    combos = [\n        (2, 3, 6),\n        (2, 4, 8),\n        (2, 5, 10),\n        (3, 4, 12),\n        (3, 5, 15),\n        (4, 3, 12),\n        (4, 5, 20)\n    ]\n    n_val, v_target, s_pct = rng.choice(combos)\n    return {\n        'vars': {'region_desc': region, 'n_val': n_val, 's_pct': s_pct, 'v_target': v_target},\n        'correct': v_target,\n        'value': str(v_target),\n        'canonical_algebraic': str(v_target),\n        'accepted_equivalents': [str(v_target), f'{v_target}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    n_val = result['vars']['n_val']\n    s_pct = result['vars']['s_pct']\n    v_target = result['vars']['v_target']\n    return s_pct == n_val * v_target and int(result['correct']) == v_target",
+      "hints": [
+        "La condición de equilibrio de pleno empleo exige que la tasa garantizada Gw = s / v coincida con la tasa natural n.",
+        "Despeje el coeficiente capital-producto: v = s / n.",
+        "Divida la tasa de ahorro s ({s_pct}%) entre la tasa natural de crecimiento demográfico n ({n_val}%)."
+      ],
+      "solution": "Para que la tasa garantizada iguale a la tasa natural de crecimiento de la población activa ($G_w = n$), se requiere que $\\frac{s}{v} = n$, lo que implica $v = \\frac{s}{n} = \\frac{{s_pct}\\%}{{n_val}\\%} = {v_target}$. Como en Harrod-Domar $v$ es un parámetro tecnológico rígido, esta coincidencia solo ocurre por accidente fortuito.",
+      "distractor_ids": []
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "competency_id": "Hab-03",
+  "templates": [
+    {
+      "id": "T-Hab03-01",
+      "competency_id": "Hab-03",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el modelo de Solow con función de producción Cobb-Douglas intensiva $\\phi(k) = k^{{alpha_frac}}$, propensión marginal al ahorro $s = {s_val}$ y tasa efectiva de dilución del capital $\\lambda = {lambda_val}$. Tras ordenar la ecuación diferencial en forma de Bernoulli $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_frac}}$, aplique la sustitución $z = k^{{one_minus_alpha_frac}}$. ¿Cuál es la ecuación diferencial ordinaria lineal resultante en términos de $z(t)$?",
+      "stem_variants": [
+        "Considere el modelo de Solow con función de producción Cobb-Douglas intensiva $\\phi(k) = k^{{alpha_frac}}$, propensión marginal al ahorro $s = {s_val}$ y tasa efectiva de dilución del capital $\\lambda = {lambda_val}$. Tras ordenar la ecuación diferencial en forma de Bernoulli $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_frac}}$, aplique la sustitución $z = k^{{one_minus_alpha_frac}}$. ¿Cuál es la ecuación diferencial ordinaria lineal resultante en términos de $z(t)$?",
+        "En una economía con participación del capital $\\alpha = {alpha_frac}$, tasa de ahorro $s = {s_val}$ y tasa de depreciación y crecimiento poblacional $\\lambda = {lambda_val}$, la evolución del capital per cápita obedece a $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_frac}}$. Al linealizar mediante el cambio de Bernoulli $z = k^{{one_minus_alpha_frac}}$, determine la ecuación diferencial lineal que describe $z(t)$:",
+        "Dada la ecuación dinámica no lineal de Bernoulli $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_frac}}$ correspondiente a una economía con $\\alpha = {alpha_frac}$, $s = {s_val}$ y $\\lambda = {lambda_val}$, se introduce la transformación $z = k^{{one_minus_alpha_frac}}$. Seleccione la ecuación lineal de coeficientes constantes $\\frac{dz}{dt} + a z = b$ que rige la dinámica de $z(t)$:",
+        "Para modelar la acumulación de capital en un marco de Solow con parámetros $\\alpha = {alpha_frac}$, $s = {s_val}$ y $\\lambda = {lambda_val}$, se formula $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_frac}}$. Al aplicar la transformación canónica de Bernoulli $z = k^{{one_minus_alpha_frac}}$, ¿cuál es la ecuación diferencial lineal de primer orden que se obtiene?"
+      ],
+      "generate_py": "def generate(rng):\n    alpha_choices = [(1, 3), (2, 3), (1, 4), (3, 4), (2, 5), (3, 5), (1, 5), (4, 5)]\n    num, den = rng.choice(alpha_choices)\n    alpha_frac = latex_frac(num, den)\n    one_minus_alpha_frac = latex_frac(den - num, den)\n    one_minus_alpha = (den - num) / den\n    alpha_val = num / den\n    s_val = rng.choice([0.15, 0.20, 0.25, 0.30, 0.35, 0.40])\n    lambda_val = rng.choice([0.02, 0.03, 0.04, 0.05, 0.06, 0.08, 0.10])\n    a_num = round(one_minus_alpha * lambda_val, 5)\n    b_num = round(one_minus_alpha * s_val, 5)\n    a_str = fmt(a_num, 4)\n    b_str = fmt(b_num, 4)\n    s_str = fmt(s_val, 4)\n    lam_str = fmt(lambda_val, 4)\n    correct_val = f'La ecuación lineal es $\\\\dot{{z}} + {a_str} z = {b_str}$.'\n    d1 = f'La ecuación lineal es $\\\\dot{{z}} + {lam_str} z = {s_str}$.'\n    d2 = f'La ecuación lineal es $\\\\dot{{z}} + {a_str} z = {s_str}$.'\n    d3 = f'La ecuación lineal es $\\\\dot{{z}} + {fmt(round(alpha_val * lambda_val, 5), 4)} z = {b_str}$.'\n    d4 = f'La ecuación lineal es $\\\\dot{{z}} + {b_str} z = {a_str}$.'\n    d5 = f'La ecuación lineal es $\\\\dot{{z}} + {lam_str} z = {b_str}$.'\n    d6 = f'La ecuación lineal es $\\\\dot{{z}} - {a_str} z = {b_str}$.'\n    return {\n        'vars': {'alpha_frac': alpha_frac, 'one_minus_alpha_frac': one_minus_alpha_frac, 's_val': s_str, 'lambda_val': lam_str, 'a_str': a_str, 'b_str': b_str},\n        'correct': correct_val,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab03-01'},\n            {'value': d2, 'distractor_id': 'D-Hab03-02'},\n            {'value': d3, 'distractor_id': 'D-Hab03-03'},\n            {'value': d4, 'distractor_id': 'D-Hab03-04'},\n            {'value': d5, 'distractor_id': 'D-Hab03-05'},\n            {'value': d6, 'distractor_id': 'D-Hab03-06'}\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    return result['correct'].startswith('La ecuación lineal es') and len(result['distractors']) == 6",
+      "hints": [
+        "Identifique que la ecuación diferencial dada $\\dot{k} + \\lambda k = s k^\\alpha$ es una ecuación de Bernoulli no lineal.",
+        "Aplique la transformación de Bernoulli $z = k^{1-\\alpha}$ y compute $\\frac{dz}{dt} = (1-\\alpha)k^{-\\alpha}\\dot{k}$.",
+        "Multiplique la ecuación original por $(1-\\alpha)k^{-\\alpha}$ para obtener $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$."
+      ],
+      "solution": "Multiplicando la ecuación diferencial de Bernoulli $\\dot{k} + \\lambda k = s k^\\alpha$ por $(1-\\alpha)k^{-\\alpha}$, obtenemos $(1-\\alpha)k^{-\\alpha}\\dot{k} + (1-\\alpha)\\lambda k^{1-\\alpha} = (1-\\alpha)s$. Puesto que $z = k^{1-\\alpha}$ y $\\frac{dz}{dt} = (1-\\alpha)k^{-\\alpha}\\dot{k}$, la ecuación se transforma en la EDO lineal $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$, con coeficientes $a = {a_str}$ y $b = {b_str}$.",
+      "distractor_ids": [
+        "D-Hab03-01",
+        "D-Hab03-02",
+        "D-Hab03-03",
+        "D-Hab03-04",
+        "D-Hab03-05",
+        "D-Hab03-06"
+      ]
+    },
+    {
+      "id": "T-Hab03-02",
+      "competency_id": "Hab-03",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "bloom": "Apply",
+      "stem": "Para transformar la ecuación no lineal de Solow $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_frac}}$ en una ecuación diferencial lineal ordinaria $\\frac{dz}{dt} + a z = b$, se aplica el método de Bernoulli. ¿Cuál es la sustitución de variable correcta y la ecuación diferencial lineal exacta resultante?",
+      "stem_variants": [
+        "Para transformar la ecuación no lineal de Solow $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_frac}}$ en una ecuación diferencial lineal ordinaria $\\frac{dz}{dt} + a z = b$, se aplica el método de Bernoulli. ¿Cuál es la sustitución de variable correcta y la ecuación diferencial lineal exacta resultante?",
+        "En el contexto del modelo de Solow con parámetros $\\alpha = {alpha_frac}$, $s = {s_val}$ y $\\lambda = {lambda_val}$, se linealiza $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_frac}}$. Seleccione la caracterización analítica exacta de la transformación de Bernoulli y la EDO lineal obtenida:",
+        "Considere la ecuación de acumulación intensiva $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_frac}}$. Mediante el cambio de variable $z(k)$, se busca obtener una EDO lineal de primer orden de coeficientes constantes. ¿Cuál es la sustitución adecuada y su ecuación lineal correspondiente?",
+        "Dada la formulación diferencial $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_frac}}$ en el modelo de Solow-Cobb-Douglas, determine el procedimiento de linealización de Bernoulli válido y los coeficientes constantes de la ecuación para $z(t)$:"
+      ],
+      "generate_py": "def generate(rng):\n    alpha_choices = [(1, 3), (2, 3), (1, 4), (3, 4), (2, 5), (3, 5), (1, 5), (4, 5)]\n    num, den = rng.choice(alpha_choices)\n    alpha_frac = latex_frac(num, den)\n    one_minus_alpha_frac = latex_frac(den - num, den)\n    one_minus_alpha = (den - num) / den\n    alpha_val = num / den\n    s_val = rng.choice([0.15, 0.20, 0.25, 0.30, 0.35, 0.40])\n    lambda_val = rng.choice([0.02, 0.03, 0.04, 0.05, 0.06, 0.08, 0.10])\n    a_num = round(one_minus_alpha * lambda_val, 5)\n    b_num = round(one_minus_alpha * s_val, 5)\n    a_str = fmt(a_num, 4)\n    b_str = fmt(b_num, 4)\n    s_str = fmt(s_val, 4)\n    lam_str = fmt(lambda_val, 4)\n    correct_val = f'Se define $z = k^{{{one_minus_alpha_frac}}}$, obteniéndose $\\\\dot{{z}} + {a_str} z = {b_str}$.'\n    d1 = f'Se define $z = k^{{{one_minus_alpha_frac}}}$, obteniéndose $\\\\dot{{z}} + {lam_str} z = {s_str}$.'\n    d2 = f'Se define $z = k^{{{one_minus_alpha_frac}}}$, obteniéndose $\\\\dot{{z}} + {a_str} z = {s_str}$.'\n    d3 = f'Se define $z = k^{{{alpha_frac}}}$, obteniéndose $\\\\dot{{z}} + {a_str} z = {b_str}$.'\n    d4 = f'Se define $z = k^{{{one_minus_alpha_frac}}}$, obteniéndose $\\\\dot{{z}} + {b_str} z = {a_str}$.'\n    d5 = f'Se define $z = k^{{{one_minus_alpha_frac}}}$, obteniéndose $\\\\dot{{z}} + {lam_str} z = {b_str}$.'\n    d6 = f'Se define $z = k^{{{one_minus_alpha_frac}}}$, obteniéndose $\\\\dot{{z}} - {a_str} z = {b_str}$.'\n    return {\n        'vars': {'alpha_frac': alpha_frac, 'one_minus_alpha_frac': one_minus_alpha_frac, 's_val': s_str, 'lambda_val': lam_str, 'a_str': a_str, 'b_str': b_str},\n        'correct': correct_val,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab03-01'},\n            {'value': d2, 'distractor_id': 'D-Hab03-02'},\n            {'value': d3, 'distractor_id': 'D-Hab03-03'},\n            {'value': d4, 'distractor_id': 'D-Hab03-04'},\n            {'value': d5, 'distractor_id': 'D-Hab03-05'},\n            {'value': d6, 'distractor_id': 'D-Hab03-06'}\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    return result['correct'].startswith('Se define $z = k^') and len(result['distractors']) == 6",
+      "hints": [
+        "Recuerde que para una ecuación de Bernoulli $\\dot{y} + P y = Q y^m$, la sustitución linealizadora es $z = y^{1-m}$.",
+        "En este caso $m = \\alpha$, por lo que $z = k^{1-\\alpha}$ y $\\frac{dz}{dt} = (1-\\alpha)k^{-\\alpha}\\dot{k}$.",
+        "Multiplicando toda la ecuación por $(1-\\alpha)k^{-\\alpha}$, el término $s k^\\alpha$ se convierte en $(1-\\alpha)s$ y $\\lambda k$ en $(1-\\alpha)\\lambda z$."
+      ],
+      "solution": "La sustitución canónica de Bernoulli es $z = k^{1-\\alpha}$. Derivando respecto al tiempo se tiene $\\frac{dz}{dt} = (1-\\alpha)k^{-\\alpha}\\dot{k}$. Al multiplicar la ecuación diferencial $\\dot{k} + \\lambda k = s k^\\alpha$ por $(1-\\alpha)k^{-\\alpha}$, se obtiene $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$, la cual es una EDO lineal ordinaria de primer orden con $a = (1-\\alpha)\\lambda = {a_str}$ y $b = (1-\\alpha)s = {b_str}$.",
+      "distractor_ids": [
+        "D-Hab03-01",
+        "D-Hab03-02",
+        "D-Hab03-03",
+        "D-Hab03-04",
+        "D-Hab03-05",
+        "D-Hab03-06"
+      ]
+    },
+    {
+      "id": "T-Hab03-03",
+      "competency_id": "Hab-03",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considere el modelo de Solow-Cobb-Douglas con elasticidad del capital $\\alpha = {alpha_str}$ y tasa de dilución del capital $\\lambda = {lambda_val}$. Al aplicar la sustitución de Bernoulli $z = k^{1-\\alpha}$, la ecuación linealizada resultante tiene la forma $\\frac{dz}{dt} + a z = b$. Calcule el valor numérico del coeficiente lineal homogéneo $a = (1-\\alpha)\\lambda$:",
+      "stem_variants": [
+        "Considere el modelo de Solow-Cobb-Douglas con elasticidad del capital $\\alpha = {alpha_str}$ y tasa de dilución del capital $\\lambda = {lambda_val}$. Al aplicar la sustitución de Bernoulli $z = k^{1-\\alpha}$, la ecuación linealizada resultante tiene la forma $\\frac{dz}{dt} + a z = b$. Calcule el valor numérico del coeficiente lineal homogéneo $a = (1-\\alpha)\\lambda$:",
+        "En una economía con parámetros $\\alpha = {alpha_str}$ y $\\lambda = {lambda_val}$, se linealiza la ecuación no lineal de Solow mediante la variable de Bernoulli $z = k^{1-\\alpha}$. Determine el valor del coeficiente de decaimiento lineal $a = (1-\\alpha)\\lambda$ de la ecuación $\\frac{dz}{dt} + a z = b$:",
+        "Dada la ecuación diferencial $\\dot{k} + {lambda_val} k = s k^{{alpha_str}}$, tras aplicar la sustitución $z = k^{1-\\alpha}$ y multiplicar por $(1-\\alpha)k^{-\\alpha}$, determine el valor escalar del coeficiente constante $a$ que acompaña a $z(t)$:",
+        "Para modelar la dinámica de acumulación con $\\alpha = {alpha_str}$ y tasa combinada $\\lambda = {lambda_val}$, se deriva la ecuación lineal ordinaria $\\frac{dz}{dt} + a z = (1-\\alpha)s$. Calcule el valor numérico de la constante homogénea $a$:"
+      ],
+      "generate_py": "def generate(rng):\n    alpha_choices = [(0.2, '0.2'), (0.25, '0.25'), (0.3, '0.3'), (0.4, '0.4'), (0.5, '0.5'), (0.6, '0.6'), (0.75, '0.75')]\n    alpha_val, alpha_str = rng.choice(alpha_choices)\n    lambda_val = rng.choice([0.02, 0.03, 0.04, 0.05, 0.06, 0.08, 0.10])\n    a_num = round((1.0 - alpha_val) * lambda_val, 5)\n    equivs = list({str(a_num), f'{a_num:.4f}', f'{a_num:.3f}', f'{a_num:.5f}', str(round(a_num, 4))})\n    return {\n        'vars': {'alpha_str': alpha_str, 'lambda_val': lambda_val, 'a_val': str(a_num)},\n        'correct': a_num,\n        'value': str(a_num),\n        'canonical_algebraic': str(a_num),\n        'accepted_equivalents': equivs,\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    params = result['vars']\n    alpha = float(params['alpha_str'])\n    lam = float(params['lambda_val'])\n    expected = round((1.0 - alpha) * lam, 5)\n    return abs(float(result['correct']) - expected) < 1e-5",
+      "hints": [
+        "Identifique que en la transformación de Bernoulli $z = k^{1-\\alpha}$, la ecuación diferencial es $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$.",
+        "El coeficiente lineal homogéneo que acompaña a $z$ es $a = (1-\\alpha)\\lambda$.",
+        "Calcule $(1 - \\alpha) \\times \\lambda$ utilizando los valores numéricos dados."
+      ],
+      "solution": "El coeficiente del término lineal en la EDO transformada es $a = (1 - \\alpha)\\lambda = (1 - {alpha_str}) \\times {lambda_val} = {a_val}$.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab03-04",
+      "competency_id": "Hab-03",
+      "interaction_type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el modelo de Solow con función de producción Cobb-Douglas, la tasa de ahorro es $s = {s_val}$ y la participación del capital en el producto es $\\alpha = {alpha_str}$. Al efectuar la sustitución de Bernoulli $z = k^{1-\\alpha}$, la ecuación se linealiza como $\\frac{dz}{dt} + a z = b$. Calcule el valor numérico del término independiente constante $b = (1-\\alpha)s$:",
+      "stem_variants": [
+        "En el modelo de Solow con función de producción Cobb-Douglas, la tasa de ahorro es $s = {s_val}$ y la participación del capital en el producto es $\\alpha = {alpha_str}$. Al efectuar la sustitución de Bernoulli $z = k^{1-\\alpha}$, la ecuación se linealiza como $\\frac{dz}{dt} + a z = b$. Calcule el valor numérico del término independiente constante $b = (1-\\alpha)s$:",
+        "Para una economía con tasa de ahorro $s = {s_val}$ y elasticidad del producto respecto al capital $\\alpha = {alpha_str}$, calcule el valor exacto del término constante $b$ en la ecuación lineal ordinaria $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = b$:",
+        "A partir de la ecuación no lineal $\\dot{k} + \\lambda k = {s_val} k^{{alpha_str}}$, determine el valor numérico del término constante derecho $b = (1-\\alpha)s$ tras aplicar la sustitución de Bernoulli $z = k^{1-\\alpha}$:",
+        "Al linealizar la ecuación diferencial de Solow $\\dot{k} + \\lambda k = s k^\\alpha$ con $s = {s_val}$ y $\\alpha = {alpha_str}$, determine el valor numérico del coeficiente independiente $b$ que impulsa la dinámica de $z(t)$:"
+      ],
+      "generate_py": "def generate(rng):\n    alpha_choices = [(0.2, '0.2'), (0.25, '0.25'), (0.3, '0.3'), (0.4, '0.4'), (0.5, '0.5'), (0.6, '0.6'), (0.75, '0.75')]\n    alpha_val, alpha_str = rng.choice(alpha_choices)\n    s_val = rng.choice([0.15, 0.20, 0.24, 0.25, 0.30, 0.32, 0.35, 0.40])\n    b_num = round((1.0 - alpha_val) * s_val, 5)\n    equivs = list({str(b_num), f'{b_num:.4f}', f'{b_num:.3f}', f'{b_num:.2f}', str(round(b_num, 4))})\n    return {\n        'vars': {'alpha_str': alpha_str, 's_val': s_val, 'b_val': str(b_num)},\n        'correct': b_num,\n        'value': str(b_num),\n        'canonical_algebraic': str(b_num),\n        'accepted_equivalents': equivs,\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    params = result['vars']\n    alpha = float(params['alpha_str'])\n    s = float(params['s_val'])\n    expected = round((1.0 - alpha) * s, 5)\n    return abs(float(result['correct']) - expected) < 1e-5",
+      "hints": [
+        "Recuerde que al linealizar por Bernoulli, toda la ecuación diferencial se multiplica por $(1-\\alpha)k^{-\\alpha}$.",
+        "El término derecho $s k^\\alpha$ se convierte en $(1-\\alpha)s k^0 = (1-\\alpha)s$.",
+        "Multiplique $(1 - \\alpha)$ por $s$ utilizando los datos dados."
+      ],
+      "solution": "El término independiente de la ecuación linealizada es $b = (1 - \\alpha)s = (1 - {alpha_str}) \\times {s_val} = {b_val}$.",
+      "distractor_ids": []
+    },
+    {
+      "id": "T-Hab03-05",
+      "competency_id": "Hab-03",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Considere el modelo de Solow con función Cobb-Douglas $Q = K^\\alpha L^{1-\\alpha}$ y parámetros $\\alpha = {alpha_str}$, tasa de ahorro $s = {s_val}$ y dilución $\\lambda = {lambda_val}$. Seleccione todas las afirmaciones teóricas y procedimentales que son matemáticamente verdaderas respecto a la linealización de Bernoulli:",
+      "stem_variants": [
+        "Considere el modelo de Solow con función Cobb-Douglas $Q = K^\\alpha L^{1-\\alpha}$ y parámetros $\\alpha = {alpha_str}$, tasa de ahorro $s = {s_val}$ y dilución $\\lambda = {lambda_val}$. Seleccione todas las afirmaciones teóricas y procedimentales que son matemáticamente verdaderas respecto a la linealización de Bernoulli:",
+        "En el análisis dinámico de una economía de Solow con $\\alpha = {alpha_str}$, $s = {s_val}$ y $\\lambda = {lambda_val}$, un investigador linealiza la ecuación diferencial de acumulación. ¿Cuáles de las siguientes proposiciones sobre la transformación de Bernoulli y sus propiedades son correctas?",
+        "Para la ecuación diferencial no lineal $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_str}}$, identifique todas las afirmaciones teóricas y analíticas que son formalmente válidas:",
+        "Respecto a la técnica de sustitución de Bernoulli aplicada a la ecuación de Solow con parámetros $\\alpha = {alpha_str}$, $s = {s_val}$ y $\\lambda = {lambda_val}$, seleccione todas las afirmaciones matemáticamente correctas:"
+      ],
+      "generate_py": "def generate(rng):\n    alpha_choices = [(0.25, '1/4'), (0.33, '1/3'), (0.5, '1/2'), (0.67, '2/3'), (0.75, '3/4')]\n    alpha_val, alpha_str = rng.choice(alpha_choices)\n    s_val = rng.choice([0.2, 0.25, 0.3, 0.35])\n    lambda_val = rng.choice([0.03, 0.04, 0.05, 0.06])\n    opts = [\n        {'content': 'La sustitución canónica de Bernoulli que linealiza la ecuación diferencial es $z = k^{1-\\\\alpha}$.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'Al derivar la transformación respecto al tiempo, la regla de la cadena da $\\\\frac{dz}{dt} = (1-\\\\alpha)k^{-\\\\alpha}\\\\dot{k}$.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La derivada temporal de la nueva variable se calcula como $\\\\frac{dz}{dt} = k^{-\\\\alpha}\\\\dot{k}$, omitiendo el factor $(1-\\\\alpha)$.', 'is_correct': False, 'distractor_id': 'D-Hab03-01', 'error_rationale': 'Incurre en omisión de la derivada interna: por regla de la potencia y de la cadena, d(k^{1-\\\\alpha})/dt = (1-\\\\alpha) k^{-\\\\alpha} \\\\dot{k}.'},\n        {'content': 'La sustitución adecuada de Bernoulli consiste en definir $z = k^\\\\alpha$.', 'is_correct': False, 'distractor_id': 'D-Hab03-03', 'error_rationale': 'Para linealizar una ecuación de Bernoulli y\\' + Py = Qy^m se debe utilizar z = y^{1-m}; con m = \\\\alpha la sustitución correcta es z = k^{1-\\\\alpha}, no z = k^\\\\alpha.'},\n        {'content': 'La forma estándar de Bernoulli de la ecuación diferencial de Solow es $\\\\dot{k} - \\\\lambda k = s k^\\\\alpha$.', 'is_correct': False, 'distractor_id': 'D-Hab03-06', 'error_rationale': 'Confusión de signos: dado que \\\\dot{k} = s k^\\\\alpha - \\\\lambda k, al transponer el término de dilución sumando se obtiene \\\\dot{k} + \\\\lambda k = s k^\\\\alpha.'}\n    ]\n    rng.shuffle(opts)\n    return {\n        'vars': {'alpha_str': alpha_str, 's_val': s_val, 'lambda_val': lambda_val},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    corrects = [opt for opt in result['options'] if opt['is_correct']]\n    return len(corrects) == 2 and len(result['options']) == 5",
+      "hints": [
+        "Verifique la definición canónica del cambio de variable de Bernoulli $z = y^{1-m}$.",
+        "Asegúrese de aplicar la regla de la cadena completa al derivar $z(t)$ respecto a $t$.",
+        "Recuerde que en la ecuación fundamental de Solow $\\dot{k} = s k^\\alpha - \\lambda k$, el término $\\lambda k$ pasa sumando al miembro izquierdo."
+      ],
+      "solution": "Las afirmaciones correctas corresponden a la definición rigurosa de Bernoulli $z = k^{1-\\alpha}$ y a su diferenciación por regla de la cadena $\\frac{dz}{dt} = (1-\\alpha)k^{-\\alpha}\\dot{k}$. Las demás proposiciones incurren en omisión de la derivada interna, elección errónea de la potencia o inversión del signo del término lineal.",
+      "distractor_ids": [
+        "D-Hab03-01",
+        "D-Hab03-03",
+        "D-Hab03-06"
+      ]
+    },
+    {
+      "id": "T-Hab03-06",
+      "competency_id": "Hab-03",
+      "interaction_type": "multiple_select",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Dada la ecuación de acumulación de Solow $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_str}}$, se aplica la transformación $z = k^{1-\\alpha}$ para derivar la EDO lineal $\\frac{dz}{dt} + a z = b$. Seleccione todas las afirmaciones algebraicas verdaderas sobre los coeficientes y términos de la ecuación obtenida:",
+      "stem_variants": [
+        "Dada la ecuación de acumulación de Solow $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_str}}$, se aplica la transformación $z = k^{1-\\alpha}$ para derivar la EDO lineal $\\frac{dz}{dt} + a z = b$. Seleccione todas las afirmaciones algebraicas verdaderas sobre los coeficientes y términos de la ecuación obtenida:",
+        "Para una economía con participación del capital $\\alpha = {alpha_str}$, tasa de ahorro $s = {s_val}$ y depreciación efectiva $\\lambda = {lambda_val}$, evalúe las siguientes afirmaciones sobre los coeficientes y la estructura de la ecuación linealizada $\\frac{dz}{dt} + a z = b$:",
+        "Considere el procedimiento algebraico de linealización de la ecuación de Bernoulli de Solow con parámetros $\\alpha = {alpha_str}$, $s = {s_val}$ y $\\lambda = {lambda_val}$. ¿Cuáles de las siguientes afirmaciones sobre los términos linealizados son correctas?",
+        "Al multiplicar $\\dot{k} + {lambda_val} k = {s_val} k^{{alpha_str}}$ por $(1-\\alpha)k^{-\\alpha}$ para linealizar, identifique todas las propiedades válidas de los coeficientes $a$ y $b$ de $\\frac{dz}{dt} + a z = b$:"
+      ],
+      "generate_py": "def generate(rng):\n    alpha_choices = [(0.2, '0.2'), (0.25, '0.25'), (0.3, '0.3'), (0.4, '0.4'), (0.5, '0.5')]\n    alpha_val, alpha_str = rng.choice(alpha_choices)\n    s_val = rng.choice([0.2, 0.25, 0.3, 0.35, 0.4])\n    lambda_val = rng.choice([0.03, 0.04, 0.05, 0.06])\n    a_num = round((1.0 - alpha_val) * lambda_val, 5)\n    b_num = round((1.0 - alpha_val) * s_val, 5)\n    a_str = fmt(a_num, 4)\n    b_str = fmt(b_num, 4)\n    opts = [\n        {'content': f'El coeficiente homogéneo lineal constante de la ecuación para $z(t)$ es $a = (1-\\\\alpha)\\\\lambda = {a_str}$.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'El término independiente constante de la ecuación linealizada es $b = (1-\\\\alpha)s = {b_str}$.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'El término independiente constante de la ecuación diferencial linealizada es $b = s = {s_val}$, prescindiendo de multiplicar por $(1-\\\\alpha)$.', 'is_correct': False, 'distractor_id': 'D-Hab03-02', 'error_rationale': 'Omisión de la distribución del factor de escala: al multiplicar toda la ecuación por (1-\\\\alpha)k^{-\\\\alpha}, el miembro derecho se convierte en (1-\\\\alpha)s.'},\n        {'content': 'La función de producción intensiva per cápita de Cobb-Douglas es $\\\\phi(k) = k^{1-\\\\alpha}$.', 'is_correct': False, 'distractor_id': 'D-Hab03-04', 'error_rationale': 'Error de exponente: dividiendo Q = K^\\\\alpha L^{1-\\\\alpha} por L se obtiene Q/L = k^\\\\alpha, no k^{1-\\\\alpha}.'},\n        {'content': f'El coeficiente lineal que acompaña a $z(t)$ en la ecuación es simplemente $a = \\\\lambda = {lambda_val}$, omitiendo el factor $(1-\\\\alpha)$.', 'is_correct': False, 'distractor_id': 'D-Hab03-05', 'error_rationale': 'Identificación errónea del coeficiente lineal: el término homogéneo tras sustituir z es (1-\\\\alpha)\\\\lambda z, de modo que a = (1-\\\\alpha)\\\\lambda.'}\n    ]\n    rng.shuffle(opts)\n    return {\n        'vars': {'alpha_str': alpha_str, 's_val': s_val, 'lambda_val': lambda_val, 'a_str': a_str, 'b_str': b_str},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    corrects = [opt for opt in result['options'] if opt['is_correct']]\n    return len(corrects) == 2 and len(result['options']) == 5",
+      "hints": [
+        "Multiplique la ecuación $\\dot{k} + \\lambda k = s k^\\alpha$ por $(1-\\alpha)k^{-\\alpha}$.",
+        "Observe que el término derecho constante es $(1-\\alpha)s$ y no simplemente $s$.",
+        "Note que el término lineal resultante es $(1-\\alpha)\\lambda k^{1-\\alpha} = (1-\\alpha)\\lambda z$."
+      ],
+      "solution": "Al linealizar la ecuación diferencial de Solow, el factor $(1-\\alpha)$ multiplica tanto al término homogéneo como al término constante de la derecha, dando $a = (1-\\alpha)\\lambda = {a_str}$ y $b = (1-\\alpha)s = {b_str}$. Las opciones incorrectas omiten dicho factor en uno de los términos o confunden el exponente de la función de producción intensiva.",
+      "distractor_ids": [
+        "D-Hab03-02",
+        "D-Hab03-04",
+        "D-Hab03-05"
+      ]
+    }
+  ]
+}

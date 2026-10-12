@@ -1,0 +1,2041 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schema_version": "1.0.0",
+  "course_id": "demo",
+  "course_title": "Curso de Demostracion y Validacion Psicometrica",
+  "description": "Banco de ejercicios canonico y completo para validacion del sistema Top's Academy.",
+  "language": "es",
+  "created_at": "2026-10-11T00:00:00Z",
+  "competencies": [
+    {
+      "id": "Hab-01",
+      "code": "HAB-01",
+      "name": "Analisis Cualitativo de Sistemas Dinamicos Planos",
+      "category": "Skill",
+      "description": "Determinacion de estabilidad asintotica y retratos de fase en sistemas bidimensionales.",
+      "mastery_target": 100
+    }
+  ],
+  "questions": [
+    {
+      "id": "Q-001",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-001",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-001. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxyyyyyyyyyy",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-001.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-001.",
+        "Tercer paso: verificar el discriminante espectral para Q-001."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-001. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-001: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-002",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-002",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-002. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxyyyyyyyyyy",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-002.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-002.",
+        "Tercer paso: verificar el discriminante espectral para Q-002."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-002. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-002: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-003",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-003",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-003. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxyyyyyyyyyy",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-003 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-003.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-003.",
+        "Tercer paso: verificar el discriminante espectral para Q-003."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-003. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-003: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-004",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-004",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-004. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-004 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-004.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-004.",
+        "Tercer paso: verificar el discriminante espectral para Q-004."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-004. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-004: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-005",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-005",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-005. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-005 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-005.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-005.",
+        "Tercer paso: verificar el discriminante espectral para Q-005."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-005. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-005: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-006",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-006",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-006. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-006 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-006.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-006.",
+        "Tercer paso: verificar el discriminante espectral para Q-006."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-006. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-006: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-007",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-007",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-007. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-007 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-007.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-007.",
+        "Tercer paso: verificar el discriminante espectral para Q-007."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-007. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-007: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-008",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-008",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-008. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-008 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-008.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-008.",
+        "Tercer paso: verificar el discriminante espectral para Q-008."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-008. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-008: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-009",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-009",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-009. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-009 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-009.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-009.",
+        "Tercer paso: verificar el discriminante espectral para Q-009."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-009. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-009: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-010",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Analyze",
+      "difficulty": "medium",
+      "interaction_type": "multiple_choice_7_options",
+      "context_application": "Analisis cualitativo del sistema lineal en item Q-010",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-010. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "interface_config": {
+        "allow_calculator": false,
+        "input_placeholder": null,
+        "expected_format": "single_selection",
+        "grading_policy": "single_choice"
+      },
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-010 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-010.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-010.",
+        "Tercer paso: verificar el discriminante espectral para Q-010."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-010. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "common_misconception_warning": "Advertencia sobre misconception comun en Q-010: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-011",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-011",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-011:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-011.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-011.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-011."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-011.",
+      "common_misconception_warning": "Misconception tipica en Q-011."
+    },
+    {
+      "id": "Q-012",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-012",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-012:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-012.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-012.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-012."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-012.",
+      "common_misconception_warning": "Misconception tipica en Q-012."
+    },
+    {
+      "id": "Q-013",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-013",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-013:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-013.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-013.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-013."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-013.",
+      "common_misconception_warning": "Misconception tipica en Q-013."
+    },
+    {
+      "id": "Q-014",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-014",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-014:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-014.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-014.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-014."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-014.",
+      "common_misconception_warning": "Misconception tipica en Q-014."
+    },
+    {
+      "id": "Q-015",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-015",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-015:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-015.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-015.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-015."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-015.",
+      "common_misconception_warning": "Misconception tipica en Q-015."
+    },
+    {
+      "id": "Q-016",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-016",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-016:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-016.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-016.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-016."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-016.",
+      "common_misconception_warning": "Misconception tipica en Q-016."
+    },
+    {
+      "id": "Q-017",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-017",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-017:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-017.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-017.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-017."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-017.",
+      "common_misconception_warning": "Misconception tipica en Q-017."
+    },
+    {
+      "id": "Q-018",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-018",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-018:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-018.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-018.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-018."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-018.",
+      "common_misconception_warning": "Misconception tipica en Q-018."
+    },
+    {
+      "id": "Q-019",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-019",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-019:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-019.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-019.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-019."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-019.",
+      "common_misconception_warning": "Misconception tipica en Q-019."
+    },
+    {
+      "id": "Q-020",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-020",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-020:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-020.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-020.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-020."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-020.",
+      "common_misconception_warning": "Misconception tipica en Q-020."
+    },
+    {
+      "id": "Q-021",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-021",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-021:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-021.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-021.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-021."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-021.",
+      "common_misconception_warning": "Misconception tipica en Q-021."
+    },
+    {
+      "id": "Q-022",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-022",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-022:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-022.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-022.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-022."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-022.",
+      "common_misconception_warning": "Misconception tipica en Q-022."
+    },
+    {
+      "id": "Q-023",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-023",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-023:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-023.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-023.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-023."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-023.",
+      "common_misconception_warning": "Misconception tipica en Q-023."
+    },
+    {
+      "id": "Q-024",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-024",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-024:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-024.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-024.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-024."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-024.",
+      "common_misconception_warning": "Misconception tipica en Q-024."
+    },
+    {
+      "id": "Q-025",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-025",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-025:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-025.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-025.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-025."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-025.",
+      "common_misconception_warning": "Misconception tipica en Q-025."
+    },
+    {
+      "id": "Q-026",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-026",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-026:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-026.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-026.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-026."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-026.",
+      "common_misconception_warning": "Misconception tipica en Q-026."
+    },
+    {
+      "id": "Q-027",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-027",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-027:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-027.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-027.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-027."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-027.",
+      "common_misconception_warning": "Misconception tipica en Q-027."
+    },
+    {
+      "id": "Q-028",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-028",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-028:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-028.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-028.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-028."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-028.",
+      "common_misconception_warning": "Misconception tipica en Q-028."
+    },
+    {
+      "id": "Q-029",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-029",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-029:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-029.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-029.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-029."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-029.",
+      "common_misconception_warning": "Misconception tipica en Q-029."
+    },
+    {
+      "id": "Q-030",
+      "competency_id": "Hab-01",
+      "bloom_taxonomy_level": "Apply",
+      "difficulty": "hard",
+      "interaction_type": "fill_in_the_blank",
+      "context_application": "Calculo simbolico en Q-030",
+      "stem": "Ingrese la expresion simplificada del multiplicador de ajuste para el ejercicio Q-030:",
+      "graph": {
+        "title": "Diagrama de Fase en el Plano",
+        "x_axis": {
+          "label": "$Y$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "y_axis": {
+          "label": "$r$",
+          "min": -10,
+          "max": 10,
+          "step": 2
+        },
+        "curves": [
+          {
+            "id": "is_curve",
+            "fn": "-0.5*x + 4",
+            "label": "Curva IS",
+            "color": "#1f77b4",
+            "style": "solid"
+          }
+        ],
+        "points": [
+          {
+            "x": 2,
+            "y": 3,
+            "style": "closed",
+            "label": "Equilibrio $E^*$",
+            "color": "#2ca02c"
+          }
+        ]
+      },
+      "interface_config": {
+        "allow_calculator": true,
+        "input_placeholder": "1 - (alpha + n)*sigma",
+        "expected_format": "algebraic_expression",
+        "grading_policy": "single_choice"
+      },
+      "options": [],
+      "correct_answer": {
+        "value": "1 - (alpha + n)*sigma",
+        "canonical_algebraic": "1 - (alpha + n)*sigma",
+        "accepted_equivalents": [
+          "1 - alpha*sigma - n*sigma",
+          "1 - sigma*(alpha + n)"
+        ]
+      },
+      "hints": [
+        "Pista 1: Agrupe los terminos proporcionales a $\\sigma$ en Q-030.",
+        "Pista 2: Aplique la propiedad distributiva en el denominador para Q-030.",
+        "Pista 3: La forma canonica factorizada es $1 - (\\alpha + n)\\sigma$ para Q-030."
+      ],
+      "detailed_solution": "Solucion analitica detallada de Q-030.",
+      "common_misconception_warning": "Misconception tipica en Q-030."
+    }
+  ]
+}
