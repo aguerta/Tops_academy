@@ -585,6 +585,109 @@ class TestInvariantChecksAdversarial:
         is_valid, errors = check_instance_invariants(q, "multiple_choice_7_options")
         assert is_valid, f"Unexpected errors on valid KaTeX: {errors}"
 
+    def test_katex_nested_accent_unclosed_rejected(self):
+        """validate_katex_syntax must reject unclosed nested accent/style macros."""
+        unclosed_cases = [
+            r"Estimador $\hat{\boldsymbol{\beta}$ no converge.",
+            r"Matriz $\bar{\mathbf{X}$ = 0 singular.",
+            r"Error $\tilde{\boldsymbol{\epsilon}$ residual.",
+            r"Vector $\hat{\mathbf{y}$ proyectado.",
+        ]
+        for tc in unclosed_cases:
+            errs = validate_katex_syntax(tc, "stem")
+            assert len(errs) > 0, f"Expected error for unclosed nested macro in '{tc}'"
+            assert any("nested" in e.lower() or "unclosed" in e.lower() for e in errs)
+
+        valid_cases = [
+            r"Estimador $\hat{\boldsymbol{\beta}}$ converge.",
+            r"Matriz $\bar{\mathbf{X}}$ simétrica.",
+            r"Error $\tilde{\boldsymbol{\epsilon}}$ normal.",
+            r"Vector $\hat{\mathbf{y}}$ proyectado.",
+        ]
+        for vc in valid_cases:
+            errs = validate_katex_syntax(vc, "stem")
+            assert not any("nested" in e.lower() for e in errs), f"Unexpected error for valid '{vc}': {errs}"
+
+    def test_katex_macro_arity_rejected(self):
+        """validate_katex_syntax must reject 2-argument macros missing arguments."""
+        invalid_cases = [
+            r"Fracción incompleta $\frac{a}$.",
+            r"Fracción sin segundo argumento $\frac{a} + b$.",
+            r"Fracción con denominador no cerrado $\frac{X_i - \bar{X}{\sum (X_i - \bar{X})^2}$.",
+            r"Binomio incompleto $\binom{n}$.",
+            r"Overset incompleto $\overset{def}$.",
+            r"Underset incompleto $\underset{x \to 0}$.",
+        ]
+        for tc in invalid_cases:
+            errs = validate_katex_syntax(tc, "stem")
+            assert len(errs) > 0, f"Expected error for '{tc}'"
+            assert any("macro" in e.lower() or "argument" in e.lower() or "requires 2" in e.lower() or "unclosed" in e.lower() for e in errs)
+
+        valid_cases = [
+            r"Fracción correcta $\frac{a}{b}$.",
+            r"Fracción anidada $\frac{\frac{a}{b}}{c}$.",
+            r"Binomio correcto $\binom{n}{k}$.",
+            r"Overset correcto $\overset{\text{def}}{=}$.",
+            r"Underset correcto $\underset{x \to 0}{\lim}$.",
+        ]
+        for vc in valid_cases:
+            errs = validate_katex_syntax(vc, "stem")
+            assert not any("requires 2" in e.lower() or "missing" in e.lower() for e in errs), f"Unexpected error for valid '{vc}': {errs}"
+
+    def test_katex_in_distractor_error_rationale_rejected(self):
+        """check_instance_invariants must validate KaTeX syntax in distractor error_rationale and misconception warning."""
+        q = self._build_valid_mc7()
+        q["options"][1]["error_rationale"] = r"Confusión con $\frac{a}$ incompleta."
+        is_valid, errors = check_instance_invariants(q, "multiple_choice_7_options")
+        assert not is_valid
+        assert any("error_rationale" in e for e in errors)
+        assert any("frac" in e.lower() or "argument" in e.lower() for e in errors)
+
+        q2 = self._build_valid_mc7()
+        q2["options"][2]["error_rationale"] = r"Error con $\hat{\boldsymbol{\beta}$ mal cerrado."
+        is_valid2, errors2 = check_instance_invariants(q2, "multiple_choice_7_options")
+        assert not is_valid2
+        assert any("error_rationale" in e for e in errors2)
+        assert any("nested" in e.lower() or "unclosed" in e.lower() for e in errors2)
+
+        q3 = self._build_valid_mc7()
+        q3["common_misconception_warning"] = r"Advertencia con $\hat{\boldsymbol{\beta}$ mal cerrado."
+        is_valid3, errors3 = check_instance_invariants(q3, "multiple_choice_7_options")
+        assert not is_valid3
+        assert any("common_misconception_warning" in e for e in errors3)
+
+    def test_katex_unclosed_environments_and_delimiters_rejected(self):
+        """validate_katex_syntax must reject unclosed LaTeX environments and scalable delimiters."""
+        unclosed_envs = [
+            r"Matriz no cerrada $\begin{pmatrix} 1 & 2 \\ 3 & 4$.",
+            r"Entorno discordante $\begin{bmatrix} 1 & 2 \end{pmatrix}$.",
+            r"Casos sin cerrar $\begin{cases} x, & x > 0 \\ 0, & x \le 0$.",
+            r"Aligned sin cerrar $\begin{aligned} a &= b \\ c &= d$.",
+        ]
+        for tc in unclosed_envs:
+            errs = validate_katex_syntax(tc, "stem")
+            assert len(errs) > 0, f"Expected error for '{tc}'"
+            assert any("environment" in e.lower() or "unclosed" in e.lower() or "mismatched" in e.lower() for e in errs)
+
+        unclosed_delims = [
+            r"Paréntesis sin cerrar $\left( \frac{a}{b} )$.",
+            r"Corchete sin cerrar $\left[ \frac{a}{b} ]$.",
+            r"Llave sin cerrar $\left\{ x \}$.",
+        ]
+        for tc in unclosed_delims:
+            errs = validate_katex_syntax(tc, "stem")
+            assert len(errs) > 0, f"Expected error for '{tc}'"
+            assert any("scalable delimiter" in e.lower() for e in errs)
+
+        valid_syntax = [
+            r"Matriz cerrada $\begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix}$.",
+            r"Casos cerrados $\begin{cases} x, & x > 0 \\ 0, & x \le 0 \end{cases}$.",
+            r"Delimitadores cerrados $\left( \frac{a}{b} \right) + \left[ \frac{c}{d} \right] + \left\{ x \right\}$.",
+        ]
+        for vc in valid_syntax:
+            errs = validate_katex_syntax(vc, "stem")
+            assert not any("environment" in e.lower() or "scalable delimiter" in e.lower() for e in errs), f"Unexpected error for valid '{vc}': {errs}"
+
     def test_mc7_missing_error_rationale_rejected(self):
         """MC7 with missing or empty error_rationale on distractors must be rejected."""
         q = self._build_valid_mc7()

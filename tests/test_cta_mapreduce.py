@@ -13,7 +13,7 @@ SKILL_DIR = Path(__file__).parent.parent / ".agents" / "skills" / "content-to-co
 if str(SKILL_DIR) not in sys.path:
     sys.path.insert(0, str(SKILL_DIR))
 
-from check_cta import check_cta_part, validate_cta_rules
+from check_cta import check_cta_katex, check_cta_part, validate_cta_rules
 from cta_merge import (
     apply_harmonize,
     find_duplicate_candidates,
@@ -431,6 +431,63 @@ class TestMarkdownRenderingAndSectionalCheck:
         )
         assert res.returncode == 0
         assert "PASS: cta_part satisfies local schema" in res.stdout
+
+    def test_check_cta_katex_validation(self):
+        """check_cta_katex must detect broken KaTeX across name, descriptions, and distractors."""
+        # 1. Broken in name:
+        bad_cta_name = {
+            "competencies": [{
+                "id": "C-01",
+                "name": r"Competencia con $\frac{a}$ incompleta",
+                "distractors": []
+            }]
+        }
+        errs = check_cta_katex(bad_cta_name)
+        assert len(errs) > 0
+        assert any("name" in e and "frac" in e for e in errs)
+
+        # 2. Broken in description_latex:
+        bad_cta_desc = {
+            "competencies": [{
+                "id": "C-01",
+                "description_latex": r"Descripción con $\hat{\boldsymbol{\beta}$ mal cerrado",
+                "distractors": []
+            }]
+        }
+        errs2 = check_cta_katex(bad_cta_desc)
+        assert len(errs2) > 0
+        assert any("description_latex" in e for e in errs2)
+
+        # 3. Broken in distractor manifestation and remediation_hint:
+        bad_cta_dist = {
+            "competencies": [{
+                "id": "C-01",
+                "distractors": [{
+                    "id": "D-C01-01",
+                    "manifestation": r"Manifestación con $\begin{pmatrix} 1 & 2$",
+                    "remediation_hint": r"Hint con $\left( \frac{1}{2} )$"
+                }]
+            }]
+        }
+        errs3 = check_cta_katex(bad_cta_dist)
+        assert len(errs3) >= 2
+        assert any("manifestation" in e for e in errs3)
+        assert any("remediation_hint" in e for e in errs3)
+
+        # 4. Valid KaTeX passes without errors:
+        valid_cta = {
+            "competencies": [{
+                "id": "C-01",
+                "name": r"Cálculo de $\frac{a}{b}$",
+                "description_latex": r"Modelo $\hat{\boldsymbol{\beta}}$ convergente",
+                "distractors": [{
+                    "id": "D-C01-01",
+                    "manifestation": r"Matriz $\begin{pmatrix} 1 & 2 \end{pmatrix}$",
+                    "remediation_hint": r"Valor $\left( \frac{1}{2} \right)$"
+                }]
+            }]
+        }
+        assert len(check_cta_katex(valid_cta)) == 0
 
     def test_apply_harmonize_rejects_altered_pedagogical_order(self, tmp_path: Path):
         work_dir = tmp_path / "work"

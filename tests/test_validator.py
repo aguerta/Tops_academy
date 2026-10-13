@@ -687,6 +687,50 @@ class TestExtendedQualityRules:
         assert not res.is_valid
         assert any(e.rule_id == "R-20" and "Unreplaced template variable" in e.message for e in res.errors)
 
+    def test_r20_competency_katex_syntax_checked(self, base_valid_course: dict) -> None:
+        """Competency with corrupt KaTeX syntax in description triggers ERR_LATEX_SYNTAX."""
+        course = copy.deepcopy(base_valid_course)
+        course["competencies"][0]["description"] = r"Estimar los coeficientes de \hat{\boldsymbol{\beta} en el modelo."
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        assert any(e.rule_id == "R-20" and e.code == "ERR_LATEX_SYNTAX" for e in res.errors)
+
+    def test_r20_option_error_rationale_katex_checked(self, base_valid_course: dict) -> None:
+        """Option with corrupt KaTeX in error_rationale triggers ERR_LATEX_SYNTAX."""
+        course = copy.deepcopy(base_valid_course)
+        q = course["questions"][0]
+        for opt in q["options"]:
+            if not opt["is_correct"]:
+                opt["error_rationale"] = r"Error al asumir que el estimador es \hat{\boldsymbol{\beta} sin cerrar."
+                break
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        assert any(e.rule_id == "R-20" and e.code == "ERR_LATEX_SYNTAX" for e in res.errors)
+
+    def test_r20_nested_unclosed_macro_rejected(self, base_valid_course: dict) -> None:
+        """Question stem with unclosed nested accent/style macro triggers ERR_LATEX_SYNTAX."""
+        course = copy.deepcopy(base_valid_course)
+        course["questions"][0]["stem"] = r"Calcule el valor esperado del vector \hat{\boldsymbol{\beta} bajo el modelo."
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        assert any(e.rule_id == "R-20" and e.code == "ERR_LATEX_SYNTAX" for e in res.errors)
+
+    def test_r20_macro_arity_frac_rejected(self, base_valid_course: dict) -> None:
+        r"""Question with \frac{a} missing second argument triggers ERR_LATEX_SYNTAX."""
+        course = copy.deepcopy(base_valid_course)
+        course["questions"][0]["stem"] = r"Considere la fracción $\frac{a}$ en la formulación."
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        assert any(e.rule_id == "R-20" and e.code == "ERR_LATEX_SYNTAX" for e in res.errors)
+
+    def test_r20_unclosed_environments_rejected(self, base_valid_course: dict) -> None:
+        r"""Question with \begin{pmatrix} without matching \end{pmatrix} triggers ERR_LATEX_SYNTAX."""
+        course = copy.deepcopy(base_valid_course)
+        course["questions"][0]["stem"] = r"Sea la matriz $A = \begin{pmatrix} 1 & 2 \\ 3 & 4$ sin cerrar."
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        assert any(e.rule_id == "R-20" and e.code == "ERR_LATEX_SYNTAX" for e in res.errors)
+
     # --- Rule R-22 Tests ---
 
     def test_r22_ms_with_all_rationales_passes(self, base_valid_course: dict) -> None:

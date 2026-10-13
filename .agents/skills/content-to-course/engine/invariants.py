@@ -21,8 +21,8 @@ class InvariantViolationError(Exception):
     pass
 
 
-def validate_katex_syntax(text: str, context: str) -> List[str]:
-    """Validate KaTeX delimiter balance, absence of $$$, {{/}}, and unsubstituted {var}."""
+def validate_katex_syntax(text: str, context: str, allow_template_vars: bool = False) -> List[str]:
+    """Validate KaTeX delimiter balance, absence of $$$, {{/}}, macro arity, environments, delimiters, and unsubstituted {var}."""
     errors: List[str] = []
     if not isinstance(text, str):
         return errors
@@ -52,46 +52,174 @@ def validate_katex_syntax(text: str, context: str) -> List[str]:
         if clean_block.count("{") != clean_block.count("}"):
             errors.append(f"Unbalanced curly braces in LaTeX math expression in {context}: '{clean_block[:60]}...'")
 
-    # 5. Unsubstituted template variables: {var}
-    for m in re.finditer(r"\{([a-zA-Z0-9_]+)\}", text):
-        var_name = m.group(1)
-        start = m.start()
+    # 5. Unclosed nested accent/style macros (e.g. \hat{\boldsymbol{\beta}} with missing outer brace)
+    accent_macros = r"(?:hat|bar|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|overline|underline)"
+    style_macros = r"(?:boldsymbol|mathbf|bm|mathit|mathrm|mathcal|text|symbf)"
+    nested_accent_pattern = re.compile(
+        rf"\\({accent_macros})\s*\{{\s*\\({style_macros})\{{([^{{}}]*)\}}(?!\s*\}})"
+    )
+    for m in nested_accent_pattern.finditer(text):
+        accent_name = m.group(1)
+        style_name = m.group(2)
+        inner_content = m.group(3)
+        errors.append(
+            f"Unclosed nested macro brace detected in {context}: '\\{accent_name}{{\\{style_name}{{{inner_content}}}}}' requires closing brace '}}'."
+        )
 
-        # Legitimate LaTeX: preceded by escape '\', subscript '_', or superscript '^'
-        if start > 0 and text[start - 1] in ("\\", "_", "^"):
+    # 6. Macro arity validation (\frac, \binom, \overset, \underset, etc. require 2 arguments)
+    two_arg_macros = re.compile(r"\\(frac|dfrac|tfrac|cfrac|binom|overset|underset)\b")
+    for m in two_arg_macros.finditer(text):
+        macro_name = m.group(1)
+        pos = m.end()
+        # skip whitespace
+        while pos < len(text) and text[pos].isspace():
+            pos += 1
+
+        # Must start with '{'
+        if pos >= len(text) or text[pos] != "{":
+            errors.append(f"LaTeX macro '\\{macro_name}' missing argument brackets '{{...}}' in {context}.")
             continue
 
-        prefix = text[:start].rstrip()
-        # Legitimate LaTeX: argument of a LaTeX command e.g. \frac, \text, \mathbf, \begin, \sqrt[...]
-        if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?\s*$", prefix):
-            continue
-
-        # Legitimate LaTeX: subsequent argument of a multi-arg LaTeX command e.g. \frac{a}{b}, \frac{d\dot{k}}{dk}
-        is_subsequent_latex_arg = False
-        s = prefix
-        while s.endswith("}"):
-            depth = 0
-            idx = len(s) - 1
-            while idx >= 0:
-                if s[idx] == "}":
-                    depth += 1
-                elif s[idx] == "{":
-                    depth -= 1
-                    if depth == 0:
-                        break
-                idx -= 1
-            if depth == 0 and idx >= 0:
-                s = s[:idx].rstrip()
-                if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?$", s):
-                    is_subsequent_latex_arg = True
-                    break
-            else:
+        # Parse first argument
+        depth1 = 1
+        pos += 1
+        while pos < len(text) and depth1 > 0:
+            ch = text[pos]
+            if ch == "$" and not (pos > 0 and text[pos - 1] == "\\"):
                 break
+            if ch == "\\" and pos + 1 < len(text):
+                pos += 2
+                continue
+            if ch == "{":
+                depth1 += 1
+            elif ch == "}":
+                depth1 -= 1
+            pos += 1
 
-        if is_subsequent_latex_arg:
+        if depth1 != 0:
+            errors.append(f"LaTeX macro '\\{macro_name}' has unclosed first argument in {context}.")
             continue
 
-        errors.append(f"Unsubstituted template variable '{{{var_name}}}' detected in {context}.")
+        # Skip whitespace between arguments
+        while pos < len(text) and text[pos].isspace():
+            pos += 1
+
+        # Must start with '{' for second argument
+        if pos >= len(text) or text[pos] != "{":
+            errors.append(f"LaTeX macro '\\{macro_name}' requires 2 arguments, but second argument is missing in {context}.")
+            continue
+
+        # Parse second argument
+        depth2 = 1
+        pos += 1
+        while pos < len(text) and depth2 > 0:
+            ch = text[pos]
+            if ch == "$" and not (pos > 0 and text[pos - 1] == "\\"):
+                break
+            if ch == "\\" and pos + 1 < len(text):
+                pos += 2
+                continue
+            if ch == "{":
+                depth2 += 1
+            elif ch == "}":
+                depth2 -= 1
+            pos += 1
+
+        if depth2 != 0:
+            errors.append(f"LaTeX macro '\\{macro_name}' has unclosed second argument in {context}.")
+            continue
+
+    # 7. Unclosed LaTeX environments (\begin{env} ... \end{env})
+    env_matches = re.finditer(r"\\(begin|end)\{([a-zA-Z*]+)\}", text)
+    env_stack: List[str] = []
+    for em in env_matches:
+        action = em.group(1)
+        env_name = em.group(2)
+        if action == "begin":
+            env_stack.append(env_name)
+        else:
+            if not env_stack:
+                errors.append(f"Unmatched LaTeX environment close '\\end{{{env_name}}}' in {context}.")
+            else:
+                last_env = env_stack.pop()
+                if last_env != env_name:
+                    errors.append(
+                        f"Mismatched LaTeX environment: '\\begin{{{last_env}}}' closed by '\\end{{{env_name}}}' in {context}."
+                    )
+    while env_stack:
+        env_name = env_stack.pop()
+        errors.append(f"Unclosed LaTeX environment '\\begin{{{env_name}}}' in {context}.")
+
+    # 8. Unclosed scalable delimiters (\left( ... \right), \left[ ... \right], \left\{ ... \right\})
+    left_paren = len(re.findall(r"\\left\s*\(", text))
+    right_paren = len(re.findall(r"\\right\s*\)", text))
+    if left_paren > right_paren:
+        errors.append(f"Unclosed scalable delimiter '\\left(' without matching '\\right)' in {context}.")
+    elif right_paren > left_paren:
+        errors.append(f"Unmatched scalable delimiter '\\right)' without matching '\\left(' in {context}.")
+
+    left_bracket = len(re.findall(r"\\left\s*\[", text))
+    right_bracket = len(re.findall(r"\\right\s*\]", text))
+    if left_bracket > right_bracket:
+        errors.append(f"Unclosed scalable delimiter '\\left[' without matching '\\right]' in {context}.")
+    elif right_bracket > left_bracket:
+        errors.append(f"Unmatched scalable delimiter '\\right]' without matching '\\left[' in {context}.")
+
+    left_brace = len(re.findall(r"\\left\s*\\\{", text))
+    right_brace = len(re.findall(r"\\right\s*\\\}", text))
+    if left_brace > right_brace:
+        errors.append(f"Unclosed scalable delimiter '\\left\\{{' without matching '\\right\\}}' in {context}.")
+    elif right_brace > left_brace:
+        errors.append(f"Unmatched scalable delimiter '\\right\\}}' without matching '\\left\\{{' in {context}.")
+
+    total_left = len(re.findall(r"\\left\b", text))
+    total_right = len(re.findall(r"\\right\b", text))
+    if total_left > total_right and left_paren == right_paren and left_bracket == right_bracket and left_brace == right_brace:
+        errors.append(f"Unclosed scalable delimiter '\\left' without matching '\\right' in {context}.")
+    elif total_right > total_left and left_paren == right_paren and left_bracket == right_bracket and left_brace == right_brace:
+        errors.append(f"Unmatched scalable delimiter '\\right' without matching '\\left' in {context}.")
+
+    # 9. Unsubstituted template variables: {var}
+    if not (allow_template_vars or context.startswith("stem_variants")):
+        for m in re.finditer(r"\{([a-zA-Z0-9_]+)\}", text):
+            var_name = m.group(1)
+            start = m.start()
+
+            # Legitimate LaTeX: preceded by escape '\', subscript '_', or superscript '^'
+            if start > 0 and text[start - 1] in ("\\", "_", "^"):
+                continue
+
+            prefix = text[:start].rstrip()
+            # Legitimate LaTeX: argument of a LaTeX command e.g. \frac, \text, \mathbf, \begin, \sqrt[...]
+            if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?\s*$", prefix):
+                continue
+
+            # Legitimate LaTeX: subsequent argument of a multi-arg LaTeX command e.g. \frac{a}{b}, \frac{d\dot{k}}{dk}
+            is_subsequent_latex_arg = False
+            s = prefix
+            while s.endswith("}"):
+                depth = 0
+                idx = len(s) - 1
+                while idx >= 0:
+                    if s[idx] == "}":
+                        depth += 1
+                    elif s[idx] == "{":
+                        depth -= 1
+                        if depth == 0:
+                            break
+                    idx -= 1
+                if depth == 0 and idx >= 0:
+                    s = s[:idx].rstrip()
+                    if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?$", s):
+                        is_subsequent_latex_arg = True
+                        break
+                else:
+                    break
+
+            if is_subsequent_latex_arg:
+                continue
+
+            errors.append(f"Unsubstituted template variable '{{{var_name}}}' detected in {context}.")
 
     return errors
 
