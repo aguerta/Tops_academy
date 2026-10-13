@@ -64,42 +64,51 @@ class CtaDataLineLocator:
         # 1. Exact AST-based line number indexing
         try:
             tree = ast.parse(self.source_text)
+            type_counts: Dict[str, int] = {"H": 0, "C": 0, "Hab": 0}
+            global_c_idx = 0
             for stmt in tree.body:
+                comps_nodes = None
                 if isinstance(stmt, ast.Assign) and any(getattr(t, "id", None) == "COMPETENCIES" for t in stmt.targets):
                     comps_nodes = stmt.value.elts if isinstance(stmt.value, (ast.List, ast.Tuple)) else []
-                    type_counts: Dict[str, int] = {"H": 0, "C": 0, "Hab": 0}
-                    for c_idx, c_node in enumerate(comps_nodes, start=1):
-                        if not isinstance(c_node, (ast.List, ast.Tuple)):
-                            continue
-                        c_line = getattr(c_node, "lineno", 1)
-                        raw_t = "concept"
-                        if len(c_node.elts) > 0 and isinstance(c_node.elts[0], ast.Constant) and isinstance(c_node.elts[0].value, str):
-                            raw_t = c_node.elts[0].value.strip().lower()
-                        prefix = type_prefix_map.get(raw_t, "C")
-                        type_counts[prefix] = type_counts.get(prefix, 0) + 1
+                elif isinstance(stmt, ast.AugAssign) and getattr(stmt.target, "id", None) == "COMPETENCIES":
+                    comps_nodes = stmt.value.elts if isinstance(stmt.value, (ast.List, ast.Tuple)) else []
 
-                        cid = None
-                        if len(c_node.elts) > 1 and isinstance(c_node.elts[1], ast.Constant) and c_node.elts[1].value:
-                            cid = str(c_node.elts[1].value).strip()
-                        if not cid:
-                            cid = f"{prefix}-{type_counts[prefix]:02d}"
+                if comps_nodes is None:
+                    continue
 
-                        self.comp_lines[cid] = c_line
-                        self.comp_lines[cid.replace("-", "")] = c_line
-                        self.comp_tuple_indices[c_idx] = c_line
-                        cid_clean = cid.replace("-", "")
+                for c_node in comps_nodes:
+                    if not isinstance(c_node, (ast.List, ast.Tuple)):
+                        continue
+                    global_c_idx += 1
+                    c_line = getattr(c_node, "lineno", 1)
+                    raw_t = "concept"
+                    if len(c_node.elts) > 0 and isinstance(c_node.elts[0], ast.Constant) and isinstance(c_node.elts[0].value, str):
+                        raw_t = c_node.elts[0].value.strip().lower()
+                    prefix = type_prefix_map.get(raw_t, "C")
+                    type_counts[prefix] = type_counts.get(prefix, 0) + 1
 
-                        if len(c_node.elts) > 8 and isinstance(c_node.elts[8], (ast.List, ast.Tuple)):
-                            for d_idx, d_node in enumerate(c_node.elts[8].elts, start=1):
-                                d_line = getattr(d_node, "lineno", c_line)
-                                did = f"D-{cid_clean}-{d_idx:02d}"
-                                self.distractor_lines[did] = d_line
-                                self.distractor_lines[f"D-{cid}-{d_idx:02d}"] = d_line
-                                if isinstance(d_node, (ast.List, ast.Tuple)) and len(d_node.elts) > 0:
-                                    if isinstance(d_node.elts[0], ast.Constant) and d_node.elts[0].value:
-                                        d_name = str(d_node.elts[0].value).strip()
-                                        if d_name:
-                                            self.distractor_lines[d_name] = d_line
+                    cid = None
+                    if len(c_node.elts) > 1 and isinstance(c_node.elts[1], ast.Constant) and c_node.elts[1].value:
+                        cid = str(c_node.elts[1].value).strip()
+                    if not cid:
+                        cid = f"{prefix}-{type_counts[prefix]:02d}"
+
+                    self.comp_lines[cid] = c_line
+                    self.comp_lines[cid.replace("-", "")] = c_line
+                    self.comp_tuple_indices[global_c_idx] = c_line
+                    cid_clean = cid.replace("-", "")
+
+                    if len(c_node.elts) > 8 and isinstance(c_node.elts[8], (ast.List, ast.Tuple)):
+                        for d_idx, d_node in enumerate(c_node.elts[8].elts, start=1):
+                            d_line = getattr(d_node, "lineno", c_line)
+                            did = f"D-{cid_clean}-{d_idx:02d}"
+                            self.distractor_lines[did] = d_line
+                            self.distractor_lines[f"D-{cid}-{d_idx:02d}"] = d_line
+                            if isinstance(d_node, (ast.List, ast.Tuple)) and len(d_node.elts) > 0:
+                                if isinstance(d_node.elts[0], ast.Constant) and d_node.elts[0].value:
+                                    d_name = str(d_node.elts[0].value).strip()
+                                    if d_name:
+                                        self.distractor_lines[d_name] = d_line
         except Exception:
             pass
 
