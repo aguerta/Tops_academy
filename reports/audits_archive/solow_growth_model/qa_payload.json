@@ -1,0 +1,3758 @@
+{
+  "course_id": "solow_growth_model",
+  "filename": "solow_growth_model.json",
+  "title": "El Modelo de Crecimiento Económico de Solow (1956)",
+  "description": "Comprender, formular y resolver dinámicamente el modelo neoclásico de crecimiento económico de Solow (1956), analizando sus propiedades de estabilidad, implicaciones de precios factoriales, dinámicas de transición y extensiones analíticas.",
+  "total_competencies": 25,
+  "total_questions": 580,
+  "question_types_distribution": {
+    "fill_in_the_blank": 267,
+    "multiple_select": 233,
+    "multiple_choice_7_options": 80
+  },
+  "questions_per_competency": {
+    "H-01": 20,
+    "C-01": 20,
+    "Hab-01": 30,
+    "C-02": 20,
+    "H-02": 20,
+    "Hab-02": 30,
+    "C-03": 20,
+    "H-03": 20,
+    "C-04": 20,
+    "Hab-03": 30,
+    "C-05": 20,
+    "C-06": 20,
+    "C-07": 20,
+    "Hab-04": 30,
+    "Hab-05": 30,
+    "Hab-06": 30,
+    "H-04": 20,
+    "C-08": 20,
+    "Hab-07": 30,
+    "Hab-08": 30,
+    "C-09": 20,
+    "C-10": 20,
+    "H-05": 20,
+    "C-11": 20,
+    "C-12": 20
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (conteo de KaTeX roto, distractores delatores, pistas faltantes, placeholders f-string y distribución de Bloom) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts de prueba exploratorios en Python. Aplica el Adaptive Semantic Loop y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 21.81,
+    "hard_penalties_precalculated": []
+  },
+  "audit_telemetry": {
+    "course_id": "solow_growth_model",
+    "title": "El Modelo de Crecimiento Económico de Solow (1956)",
+    "total_competencies": 25,
+    "total_questions": 580,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 25,
+        "category_distribution": {
+          "Fact": 5,
+          "Concept": 12,
+          "Skill": 8,
+          "Other": 0
+        },
+        "competencies_missing_prerequisites_count": 25,
+        "underpopulated_competencies_count": 0,
+        "underpopulated_competencies": [],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 20,
+        "max_questions_per_comp": 30
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 996,
+        "distractors_with_rationale_count": 996,
+        "rationale_coverage_pct": 100,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 0,
+        "zero_hints_items": [],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 0,
+        "missing_solutions_count": 0
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 58,
+        "unclosed_braces_items": [
+          "Q-Hab07-429",
+          "Q-H04-384",
+          "Q-C02-078",
+          "Q-Hab03-218",
+          "Q-C02-081",
+          "Q-C06-260",
+          "Q-H04-393",
+          "Q-H04-389",
+          "Q-Hab03-216",
+          "Q-C05-240",
+          "Q-Hab03-203",
+          "Q-Hab07-423",
+          "Q-Hab07-424",
+          "Q-Hab07-427",
+          "Q-Hab07-421"
+        ],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 4,
+        "template_variable_residue_items": [
+          "Q-C01-023",
+          "Q-C01-024",
+          "Q-C01-021",
+          "Q-C01-022"
+        ]
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 13,
+        "blind_string_replacement_items": [
+          "Q-Hab03-212",
+          "Q-Hab03-211",
+          "Q-C10-505",
+          "Q-C07-271",
+          "Q-C07-274",
+          "Q-C10-507",
+          "Q-Hab03-215",
+          "Q-C07-272",
+          "Q-Hab03-213",
+          "Q-C10-508",
+          "Q-Hab03-214",
+          "Q-C07-273",
+          "Q-C10-506"
+        ]
+      }
+    },
+    "hard_penalties": [],
+    "risk_score": 21.81,
+    "risk_clusters": {
+      "katex_issues": [
+        "Q-C02-075",
+        "Q-C02-076",
+        "Q-C02-078",
+        "Q-C02-081",
+        "Q-Hab03-201",
+        "Q-Hab03-202",
+        "Q-Hab03-203",
+        "Q-Hab03-204",
+        "Q-Hab03-205",
+        "Q-Hab03-216",
+        "Q-Hab03-217",
+        "Q-Hab03-218",
+        "Q-Hab03-219",
+        "Q-Hab03-220",
+        "Q-Hab03-221",
+        "Q-Hab03-222",
+        "Q-Hab03-223",
+        "Q-Hab03-224",
+        "Q-Hab03-225",
+        "Q-C05-239",
+        "Q-C05-240",
+        "Q-C05-241",
+        "Q-C06-259",
+        "Q-C06-260",
+        "Q-C06-261",
+        "Q-C06-268",
+        "Q-C06-269",
+        "Q-C06-270",
+        "Q-Hab04-306",
+        "Q-Hab04-307",
+        "Q-Hab04-308",
+        "Q-Hab04-309",
+        "Q-Hab04-310",
+        "Q-Hab05-321",
+        "Q-Hab05-322",
+        "Q-Hab05-323",
+        "Q-Hab05-324",
+        "Q-Hab05-325",
+        "Q-H04-381",
+        "Q-H04-382",
+        "Q-H04-383",
+        "Q-H04-384",
+        "Q-H04-389",
+        "Q-H04-390",
+        "Q-H04-391",
+        "Q-H04-392",
+        "Q-H04-393",
+        "Q-H04-394",
+        "Q-Hab07-421",
+        "Q-Hab07-422",
+        "Q-Hab07-423",
+        "Q-Hab07-424",
+        "Q-Hab07-425",
+        "Q-Hab07-426",
+        "Q-Hab07-427",
+        "Q-Hab07-428",
+        "Q-Hab07-429",
+        "Q-Hab07-430"
+      ],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [],
+      "template_residues": [
+        "Q-C01-021",
+        "Q-C01-022",
+        "Q-C01-023",
+        "Q-C01-024"
+      ],
+      "blind_replacements": [
+        "Q-Hab03-211",
+        "Q-Hab03-212",
+        "Q-Hab03-213",
+        "Q-Hab03-214",
+        "Q-Hab03-215",
+        "Q-C07-271",
+        "Q-C07-272",
+        "Q-C07-273",
+        "Q-C07-274",
+        "Q-C10-505",
+        "Q-C10-506",
+        "Q-C10-507",
+        "Q-C10-508"
+      ]
+    },
+    "all_issues": [
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C02-075",
+        "competency_id": "C-02",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "snippet": "\\frac{d\\dot{k}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C02-076",
+        "competency_id": "C-02",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "snippet": "\\frac{d\\dot{k}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C02-078",
+        "competency_id": "C-02",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "snippet": "\\frac{d\\dot{k}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C02-081",
+        "competency_id": "C-02",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "snippet": "\\frac{s\\phi(\\bar{k}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-201",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-201",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-202",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-203",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-204",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-204",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-205",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-216",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-216",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-217",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-218",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-219",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-219",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-220",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-221",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-222",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-223",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-224",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab03-225",
+        "competency_id": "Hab-03",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C05-239",
+        "competency_id": "C-05",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{K}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C05-240",
+        "competency_id": "C-05",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{K}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C05-241",
+        "competency_id": "C-05",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{K}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C06-259",
+        "competency_id": "C-06",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{d\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C06-260",
+        "competency_id": "C-06",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{d\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C06-261",
+        "competency_id": "C-06",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "snippet": "\\frac{d\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C06-261",
+        "competency_id": "C-06",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{d\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C06-268",
+        "competency_id": "C-06",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{d\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C06-269",
+        "competency_id": "C-06",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{d\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-C06-270",
+        "competency_id": "C-06",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{d\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab04-306",
+        "competency_id": "Hab-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab04-306",
+        "competency_id": "Hab-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab04-307",
+        "competency_id": "Hab-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab04-308",
+        "competency_id": "Hab-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab04-309",
+        "competency_id": "Hab-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab04-310",
+        "competency_id": "Hab-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab04-310",
+        "competency_id": "Hab-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{r}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab05-321",
+        "competency_id": "Hab-05",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{K}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab05-322",
+        "competency_id": "Hab-05",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{K}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab05-323",
+        "competency_id": "Hab-05",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{K}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab05-324",
+        "competency_id": "Hab-05",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{K}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab05-325",
+        "competency_id": "Hab-05",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{K}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-H04-381",
+        "competency_id": "H-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{p}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-H04-382",
+        "competency_id": "H-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{p}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-H04-383",
+        "competency_id": "H-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{p}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-H04-384",
+        "competency_id": "H-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{p}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-H04-389",
+        "competency_id": "H-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{p}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-H04-390",
+        "competency_id": "H-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{p}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-H04-391",
+        "competency_id": "H-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{p}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-H04-392",
+        "competency_id": "H-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{p}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-H04-393",
+        "competency_id": "H-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{p}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-H04-394",
+        "competency_id": "H-04",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\dot{p}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-421",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'opt_0_rationale'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-421",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-422",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'opt_6_rationale'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-422",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-423",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'opt_3_rationale'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-423",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-424",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'opt_3_rationale'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-424",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-425",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'opt_2_rationale'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-425",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'solution_text'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-426",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'opt_4_rationale'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-427",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'opt_3_rationale'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-428",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'opt_4_rationale'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-429",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'opt_6_rationale'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "katex_syntax_linter",
+        "dimension": "D5_katex",
+        "severity": "critical",
+        "item_id": "Q-Hab07-430",
+        "competency_id": "Hab-07",
+        "message": "Comando KaTeX anidado con llaves sin cerrar en 'opt_1_rationale'",
+        "snippet": "\\frac{\\partial \\text{Share}"
+      },
+      {
+        "linter": "template_variable_residue_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C01-021",
+        "competency_id": "C-01",
+        "message": "Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'",
+        "snippet": "c_val"
+      },
+      {
+        "linter": "template_variable_residue_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C01-022",
+        "competency_id": "C-01",
+        "message": "Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'",
+        "snippet": "c_val"
+      },
+      {
+        "linter": "template_variable_residue_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C01-023",
+        "competency_id": "C-01",
+        "message": "Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'",
+        "snippet": "c_val"
+      },
+      {
+        "linter": "template_variable_residue_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C01-024",
+        "competency_id": "C-01",
+        "message": "Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'",
+        "snippet": "c_val"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-Hab03-211",
+        "competency_id": "Hab-03",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot200' en 'stem'",
+        "snippet": "\\dot200"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-Hab03-212",
+        "competency_id": "Hab-03",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot100' en 'stem'",
+        "snippet": "\\dot100"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-Hab03-213",
+        "competency_id": "Hab-03",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot100' en 'stem'",
+        "snippet": "\\dot100"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-Hab03-214",
+        "competency_id": "Hab-03",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot100' en 'stem'",
+        "snippet": "\\dot100"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-Hab03-215",
+        "competency_id": "Hab-03",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot200' en 'stem'",
+        "snippet": "\\dot200"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-C07-271",
+        "competency_id": "C-07",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot36' en 'stem'",
+        "snippet": "\\dot36"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-C07-272",
+        "competency_id": "C-07",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot36' en 'stem'",
+        "snippet": "\\dot36"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-C07-273",
+        "competency_id": "C-07",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot25' en 'stem'",
+        "snippet": "\\dot25"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-C07-274",
+        "competency_id": "C-07",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot16' en 'stem'",
+        "snippet": "\\dot16"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-C10-505",
+        "competency_id": "C-10",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot6' en 'stem'",
+        "snippet": "\\dot6"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-C10-506",
+        "competency_id": "C-10",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot7' en 'stem'",
+        "snippet": "\\dot7"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-C10-507",
+        "competency_id": "C-10",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot5' en 'stem'",
+        "snippet": "\\dot5"
+      },
+      {
+        "linter": "blind_string_replacement_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-C10-508",
+        "competency_id": "C-10",
+        "message": "Sustitución ciega de variable bajo operador diferencial '\\dot5' en 'stem'",
+        "snippet": "\\dot5"
+      }
+    ],
+    "issues_by_item": {
+      "Q-C02-075": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'"
+      ],
+      "Q-C02-076": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'"
+      ],
+      "Q-C02-078": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'"
+      ],
+      "Q-C02-081": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'"
+      ],
+      "Q-Hab03-201": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-202": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-203": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-204": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-205": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-216": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-217": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-218": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-219": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-220": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-221": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-222": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-223": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-224": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab03-225": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-C05-239": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-C05-240": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-C05-241": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-C06-259": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-C06-260": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-C06-261": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-C06-268": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-C06-269": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-C06-270": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab04-306": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab04-307": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab04-308": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab04-309": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab04-310": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab05-321": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab05-322": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab05-323": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab05-324": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab05-325": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-H04-381": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-H04-382": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-H04-383": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-H04-384": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-H04-389": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-H04-390": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-H04-391": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-H04-392": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-H04-393": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-H04-394": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab07-421": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'opt_0_rationale'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab07-422": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'opt_6_rationale'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab07-423": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'opt_3_rationale'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab07-424": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'opt_3_rationale'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab07-425": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'opt_2_rationale'",
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+      ],
+      "Q-Hab07-426": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'opt_4_rationale'"
+      ],
+      "Q-Hab07-427": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'opt_3_rationale'"
+      ],
+      "Q-Hab07-428": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'opt_4_rationale'"
+      ],
+      "Q-Hab07-429": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'opt_6_rationale'"
+      ],
+      "Q-Hab07-430": [
+        "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'opt_1_rationale'"
+      ],
+      "Q-C01-021": [
+        "[WARNING] Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'"
+      ],
+      "Q-C01-022": [
+        "[WARNING] Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'"
+      ],
+      "Q-C01-023": [
+        "[WARNING] Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'"
+      ],
+      "Q-C01-024": [
+        "[WARNING] Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'"
+      ],
+      "Q-Hab03-211": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot200' en 'stem'"
+      ],
+      "Q-Hab03-212": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot100' en 'stem'"
+      ],
+      "Q-Hab03-213": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot100' en 'stem'"
+      ],
+      "Q-Hab03-214": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot100' en 'stem'"
+      ],
+      "Q-Hab03-215": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot200' en 'stem'"
+      ],
+      "Q-C07-271": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot36' en 'stem'"
+      ],
+      "Q-C07-272": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot36' en 'stem'"
+      ],
+      "Q-C07-273": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot25' en 'stem'"
+      ],
+      "Q-C07-274": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot16' en 'stem'"
+      ],
+      "Q-C10-505": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot6' en 'stem'"
+      ],
+      "Q-C10-506": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot7' en 'stem'"
+      ],
+      "Q-C10-507": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot5' en 'stem'"
+      ],
+      "Q-C10-508": [
+        "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot5' en 'stem'"
+      ]
+    }
+  },
+  "competencies": [
+    {
+      "id": "H-01",
+      "name": "Definición e Identidad del Ratio Capital-Trabajo Intensivo $k \\equiv K/L$ y Homogeneidad de Grado Uno",
+      "category": "Fact",
+      "description": "Identificar la definición matemática del ratio capital-trabajo $k \\equiv \\frac{K}{L}$ y la propiedad de homogeneidad lineal de la función de producción neoclásica $Q = f(K, L) = L f\\left(\\frac{K}{L}, 1\\right) = L\\phi(k)$, donde $\\phi(k)$ representa el producto medio del trabajo $\\text{APP}_L$.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-01",
+      "name": "Propiedades de Concavidad y Derivadas de la Función de Producción Intensiva $\\phi(k)$",
+      "category": "Concept",
+      "description": "Comprender la relación analítica entre las productividades marginales en niveles ($f_K > 0, f_{KK} < 0$) y las derivadas de la forma intensiva: $\\phi'(k) = f_K > 0$ y $\\phi''(k) = L f_{KK} < 0$, garantizando rendimientos decrecientes del capital por trabajador.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-01",
+      "name": "Deducción Algebraica de la Ecuación Fundamental $\\dot{k} = s\\phi(k) - \\lambda k$",
+      "category": "Skill",
+      "description": "Deducir algebraicamente la ecuación diferencial de primer orden $\\dot{k} = s\\phi(k) - \\lambda k$ a partir de la regla del producto aplicada a la identidad $K = kL$, la condición de inversión $\\dot{K} = sQ = sL\\phi(k)$ y la tasa de crecimiento poblacional $\\dot{L}/L = \\lambda$.",
+      "prerequisites": [],
+      "question_count": 30
+    },
+    {
+      "id": "C-02",
+      "name": "Análisis Cualitativo del Diagrama de Fase y Estabilidad Asintótica del Equilibrio $\\bar{k}$",
+      "category": "Concept",
+      "description": "Interpretar la línea de fase en los paneles (a) y (b) de la Figura 15.5 de Chiang, determinando que en el punto de intersección $s\\phi(\\bar{k}) = \\lambda \\bar{k}$, la pendiente de la línea de fase es estrictamente negativa $\\left.\\frac{d\\dot{k}}{dk}\\right|_{k=\\bar{k}} < 0$, garantizando estabilidad dinámica asintótica global.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "H-02",
+      "name": "Caracterización del Estado Uniforme ('Steady State') vs. Estado Estacionario",
+      "category": "Fact",
+      "description": "Diferenciar conceptualmente el estado uniforme ('steady state'), en el cual las variables agregadas $K, L, Q$ crecen a la tasa constante idéntica $\\lambda$ manteniendo constantes los ratios intensivos ($k = \\bar{k}, q = \\phi(\\bar{k})$), del estado estacionario ('stationary state') donde todas las tasas de crecimiento son cero.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-02",
+      "name": "Resolución de la Ecuación de Bernoulli del Modelo de Solow con Tecnología Cobb-Douglas",
+      "category": "Skill",
+      "description": "Resolver cuantitativamente la ecuación diferencial no lineal $\\dot{k} + \\lambda k = s k^\\alpha$ mediante la sustitución de Bernoulli $z = k^{1-\\alpha}$, obteniendo la ecuación linealizada $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$ y su trayectoria temporal exacta $k(t)^{1-\\alpha} = \\left[k(0)^{1-\\alpha} - \\frac{s}{\\lambda}\\right]e^{-(1-\\alpha)\\lambda t} + \\frac{s}{\\lambda}$.",
+      "prerequisites": [],
+      "question_count": 30
+    },
+    {
+      "id": "C-03",
+      "name": "Estática Comparativa del Capital de Estado Uniforme frente a $s$ y $\\lambda$",
+      "category": "Concept",
+      "description": "Analizar analítica y gráficamente la respuesta del capital de estado uniforme $\\bar{k} = (s/\\lambda)^{1/(1-\\alpha)}$ ante variaciones en la propensión al ahorro $(\\partial \\bar{k}/\\partial s > 0)$ y en la tasa de crecimiento demográfico $(\\partial \\bar{k}/\\partial \\lambda < 0)$.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "H-03",
+      "name": "Comparación Estructural: Proporciones Fijas de Harrod-Domar vs. Sustituibilidad Neoclásica",
+      "category": "Fact",
+      "description": "Identificar la distinción formal planteada por Solow (1956) entre el modelo de Harrod-Domar —donde la tecnología de coeficientes fijos impone una tasa garantizada $s/v$ rígidamente contrapuesta a la tasa natural $n$— y el modelo neoclásico con sustituibilidad suave entre capital y trabajo.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-04",
+      "name": "Hipótesis de Pleno Empleo Continuo y Flexibilidad de Precios Factoriales en Tiempo Continuo",
+      "category": "Concept",
+      "description": "Comprender la articulación del cierre del modelo neoclásico en Solow (1956): oferta inelástica de factores $L(t) = L_0 e^{nt}$ y $K(t)$, y ajuste instantáneo de los precios reales de los factores ($w/p = \\partial F/\\partial L$, $q/p = \\partial F/\\partial K$) que garantiza equilibrio continuo de pleno empleo.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-03",
+      "name": "Formulación y Deducción de la Ecuación Fundamental $\\dot{r} = sF(r, 1) - nr$ a partir de Tasas Relativas",
+      "category": "Skill",
+      "description": "Deducir la ecuación fundamental de acumulación $\\dot{r} = sF(r, 1) - nr$ para la relación capital-trabajo $r = K/L$ aplicando la descomposición de tasas de crecimiento relativas $(\\dot{r}/r) = \\frac{\\dot{K}}{K} - \\frac{\\dot{L}}{L}$ y sustituyendo $\\frac{\\dot{K}}{K} = \\frac{sF(K,L)}{K} = \\frac{sF(r,1)}{r}$.",
+      "prerequisites": [],
+      "question_count": 30
+    },
+    {
+      "id": "C-05",
+      "name": "Convergencia Global y Dinámica de Inversión Efectiva vs. Dilución de Capital (Figura I)",
+      "category": "Concept",
+      "description": "Interpretar el diagrama canónico de Solow (1956, Figura I): interacción entre la curva cóncava de inversión $sF(r, 1)$ y el rayo de dilución $nr$, demostrando que para todo $r(0) > 0$ el sistema converge asintóticamente a un único estado de crecimiento equilibrado $r^*$ con $sF(r^*, 1) = nr^*$.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-06",
+      "name": "Equilibrios Múltiples, Umbral de Despegue Inestable y Trampas de Pobreza (Figura II)",
+      "category": "Concept",
+      "description": "Analizar configuraciones con funciones de producción no monótonamente cóncavas o con intercepto positivo (Figura II de Solow 1956), identificando la existencia de tres equilibrios ($r_1, r_2, r_3$) donde $r_1$ y $r_3$ son localmente estables y $r_2$ actúa como un umbral inestable de despegue ('tipping point').",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-07",
+      "name": "Casos Límite sin Estado Estacionario: Expansión Perpetua vs. Colapso hacia Cero (Figura III)",
+      "category": "Concept",
+      "description": "Evaluar escenarios analíticos donde no existe intersección entre $sF(r, 1)$ y $nr$ (Figura III de Solow 1956): el caso hiperproductivo ($s_1 F^1(r, 1) > nr$ para todo $r$), que genera acumulación indefinida de capital per cápita, y el caso hipoproductivo ($s_2 F^2(r, 1) < nr$), que conduce a una caída asintótica de $r$ hacia cero.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-04",
+      "name": "Análisis por Regímenes de la Tecnología de Proporciones Fijas de Leontief / Harrod-Domar (Figura IV)",
+      "category": "Skill",
+      "description": "Resolver la dinámica por tramos de la ecuación diferencial $\\dot{r} = s \\min\\left(\\frac{r}{a}, \\frac{1}{b}\\right) - nr$ correspondiente a la tecnología de Leontief (Figura IV de Solow 1956), clasificando los tres regímenes según la relación entre la tasa natural $n$ y la tasa garantizada $s/a$.",
+      "prerequisites": [],
+      "question_count": 30
+    },
+    {
+      "id": "Hab-05",
+      "name": "Trayectoria Temporal y Equilibrio del Coeficiente de Capital en Tecnología Cobb-Douglas",
+      "category": "Skill",
+      "description": "Calcular la trayectoria del stock de capital $K(t) = \\left[K_0^b - \\frac{s}{n}L_0^b + \\frac{s}{n}L_0^b e^{nbt}\\right]^{1/b}$ (con $b = 1-a$) y deducir que el coeficiente de capital de equilibrio de Harrod $C^* = K/Y$ converge endógenamente a $s/n$, igualando la tasa natural con la garantizada.",
+      "prerequisites": [],
+      "question_count": 30
+    },
+    {
+      "id": "Hab-06",
+      "name": "Determinación del Umbral Crítico y Dinámica de la Familia de Producción CES con $p = 1/2$ (Figura V)",
+      "category": "Skill",
+      "description": "Resolver la dinámica de la función $Y = (a\\sqrt{K} + \\sqrt{L})^2$ (Ejemplo 3 de Solow 1956), identificando el umbral paramétrico $s a^2 < n$ para la existencia de un estado estacionario estable $r^* = \\left(\\frac{1}{\\sqrt{n/s} - a}\\right)^2$ y la condición $s a^2 > n$ para crecimiento ilimitado.",
+      "prerequisites": [],
+      "question_count": 30
+    },
+    {
+      "id": "H-04",
+      "name": "Condiciones de Arbitraje entre la Tasa de Interés y el Rendimiento del Capital Propio",
+      "category": "Fact",
+      "description": "Identificar la ecuación canónica de arbitraje entre la tasa monetaria de interés $i(t)$, la renta real del capital $q(t)/p(t)$ y la inflación de bienes de capital: $i(t) = \\frac{q(t)}{p(t)} + \\frac{\\dot{p}(t)}{p(t)}$ (Solow 1956, ec. 12).",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-08",
+      "name": "Relación Monótona entre el Ratio Capital-Trabajo $r$ y el Ratio Salario-Renta $w/q$ (Figuras VI y VII)",
+      "category": "Concept",
+      "description": "Interpretar el comportamiento de los precios factoriales a lo largo de las trayectorias de ajuste en el mapa de isocuantas (Figuras VI y VII de Solow 1956): a medida que $r$ aumenta hacia $r^*$, el ratio salario-renta $w/q$ se incrementa de forma monótona y continua debido a rendimientos decrecientes.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-07",
+      "name": "Cálculo de la Distribución del Ingreso y Participación del Trabajo según Formas Funcionales",
+      "category": "Skill",
+      "description": "Calcular la participación factorial del trabajo en el ingreso nacional $\\frac{w L}{p Y}$ bajo tecnologías Cobb-Douglas (constante e igual a $1-a$) y bajo la tecnología CES $p = 1/2$ de Solow (1956), donde la participación del trabajo en equilibrio es dependiente de los parámetros: $1 - a\\sqrt{s/n}$.",
+      "prerequisites": [],
+      "question_count": 30
+    },
+    {
+      "id": "Hab-08",
+      "name": "Incorporación de Progreso Tecnológico Neutral y Dinámica Asintótica del Capital",
+      "category": "Skill",
+      "description": "Resolver la dinámica de acumulación con progreso técnico neutral exponencial $Y = e^{gt} K^a L^{1-a}$, deduciendo que el capital crece a la tasa $n + g/(1-a)$, el producto a la tasa $n + ag/(1-a)$, y la relación capital-trabajo crece perpetuamente a la tasa $g/(1-a)$.",
+      "prerequisites": [],
+      "question_count": 30
+    },
+    {
+      "id": "C-09",
+      "name": "Oferta de Trabajo con Elasticidad Salarial Positiva y Preservación del Estado Estacionario",
+      "category": "Concept",
+      "description": "Comprender la generalización de Solow (1956) para una curva de oferta de mano de obra con elasticidad constante respecto al salario real $L = L_0 e^{nt} (w/p)^h$, analizando la ecuación modificada $\\dot{r} = (sF(r, 1) - nr)(1 + ah)^{-1}$ y demostrando que el ratio capital-trabajo de estado estacionario permanece idéntico.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-10",
+      "name": "Tasa de Ahorro Endógena Dependiente del Rendimiento del Capital y Garantía de Estabilidad (Figura VIII)",
+      "category": "Concept",
+      "description": "Analizar el comportamiento del modelo cuando la propensión al ahorro depende positivamente del rendimiento del capital y negativamente del ratio capital-trabajo $s = s(r)$ (Figura VIII de Solow 1956), eliminando trayectorias explosivas y reforzando la estabilidad asintótica.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "H-05",
+      "name": "Incidencia de la Tributación Proporcional sobre la Tasa Efectiva de Acumulación de Capital",
+      "category": "Fact",
+      "description": "Identificar las fórmulas de la propensión efectiva al ahorro bajo un impuesto sobre la renta a tasa $t$: $s_{eff} = s + t(1-s)$ si la recaudación se invierte íntegramente, $s_{eff} = s(1-t)$ si se consume, y $s_{eff} = s + (v-s)t$ si el sector público invierte una fracción $v$ de sus ingresos.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-11",
+      "name": "Crecimiento Poblacional Endógeno $n(r)$, Trampa Malthusiana y Umbrales Críticos de Inversión (Figura IX)",
+      "category": "Concept",
+      "description": "Interpretar el diagrama de crecimiento poblacional endógeno dependiente del ingreso per cápita $\\dot{r} = sF(r, 1) - n(r)r$ (Figura IX de Solow 1956): existencia de una trampa de estancamiento de bajo ingreso en $r_1$, un umbral crítico inestable en $r_2$, y la necesidad de un gran impulso de inversión ('big push') para alcanzar crecimiento auto-sostenido.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-12",
+      "name": "Salarios Reales Rígidos, Brecha de Empleo y Límites de la Ajustabilidad Neoclásica",
+      "category": "Concept",
+      "description": "Comprender la sección final de Solow (1956): fijar un salario real rígido $\\bar{w}/p$ fija la relación técnica en $\\bar{r}$, determinando un crecimiento del empleo $\\dot{L}/L = (s/\\bar{r})F(\\bar{r}, 1)$; si esta tasa es menor que el crecimiento demográfico $n$, surge desempleo involuntario permanente y creciente.",
+      "prerequisites": [],
+      "question_count": 20
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-H01-001",
+      "competency_id": "H-01",
+      "competency_name": "Definición e Identidad del Ratio Capital-Trabajo Intensivo $k \\equiv K/L$ y Homogeneidad de Grado Uno",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Calcule la dotación de capital por trabajador $k = K/L$ para una economía neoclásica donde el capital total es 192 unidades y el número de obreros es 48:",
+      "options": [],
+      "correct_answer": {
+        "value": "4",
+        "canonical_algebraic": "4",
+        "accepted_equivalents": [
+          "4",
+          "4.0"
+        ],
+        "tolerance": 0.0001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique el capital K y el trabajo L.",
+        "Aplique la definición k = K / L.",
+        "Divida el capital total entre el número de trabajadores."
+      ],
+      "detailed_solution": "Aplicando la definición k = K / L = 192 / 48 = 4."
+    },
+    {
+      "id": "Q-H01-002",
+      "competency_id": "H-01",
+      "competency_name": "Definición e Identidad del Ratio Capital-Trabajo Intensivo $k \\equiv K/L$ y Homogeneidad de Grado Uno",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Para una estructura productiva con acervo de capital $K = 46$ y volumen de empleo $L = 23$, halle la magnitud del ratio intensivo $k = K/L$:",
+      "options": [],
+      "correct_answer": {
+        "value": "2",
+        "canonical_algebraic": "2",
+        "accepted_equivalents": [
+          "2",
+          "2.0"
+        ],
+        "tolerance": 0.0001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique el capital K y el trabajo L.",
+        "Aplique la definición k = K / L.",
+        "Divida el capital total entre el número de trabajadores."
+      ],
+      "detailed_solution": "Aplicando la definición k = K / L = 46 / 23 = 2."
+    },
+    {
+      "id": "Q-C01-021",
+      "competency_id": "C-01",
+      "competency_name": "Propiedades de Concavidad y Derivadas de la Función de Producción Intensiva $\\phi(k)$",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "Considere una economía neoclásica con función de producción intensiva $\\phi(k) = 8 \\sqrt{k}$. Si la dotación de capital por trabajador es $k = 4$, determine el valor numérico del producto marginal del capital $\\phi'(k) = f_K$:",
+      "options": [],
+      "correct_answer": {
+        "value": "2",
+        "canonical_algebraic": "2",
+        "accepted_equivalents": [
+          "2",
+          "2.0"
+        ],
+        "tolerance": 0.0001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Derive phi(k) respecto a k: phi'(k) = d/dk [c sqrt(k)] = c / (2 sqrt(k)).",
+        "Sustituya k = 4 obteniendo sqrt(4).",
+        "Divida c_val entre 2 sqrt(k) para hallar phi'(k)."
+      ],
+      "detailed_solution": "La derivada es phi'(k) = 8 / (2 sqrt(4)). Como sqrt(4) = 8/(2*2), se obtiene phi'(k) = 2."
+    },
+    {
+      "id": "Q-C01-022",
+      "competency_id": "C-01",
+      "competency_name": "Propiedades de Concavidad y Derivadas de la Función de Producción Intensiva $\\phi(k)$",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "Dada la función per cápita $\\phi(k) = 18 \\sqrt{k}$, calcule el valor exacto de la productividad marginal del capital $\\phi'(k)$ cuando el ratio capital-trabajo es $k = 9$:",
+      "options": [],
+      "correct_answer": {
+        "value": "3",
+        "canonical_algebraic": "3",
+        "accepted_equivalents": [
+          "3",
+          "3.0"
+        ],
+        "tolerance": 0.0001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Derive phi(k) respecto a k: phi'(k) = d/dk [c sqrt(k)] = c / (2 sqrt(k)).",
+        "Sustituya k = 9 obteniendo sqrt(9).",
+        "Divida c_val entre 2 sqrt(k) para hallar phi'(k)."
+      ],
+      "detailed_solution": "La derivada es phi'(k) = 18 / (2 sqrt(9)). Como sqrt(9) = 18/(2*3), se obtiene phi'(k) = 3."
+    },
+    {
+      "id": "Q-Hab01-041",
+      "competency_id": "Hab-01",
+      "competency_name": "Deducción Algebraica de la Ecuación Fundamental $\\dot{k} = s\\phi(k) - \\lambda k$",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A partir de la identidad $K = kL$, la condición de inversión agregada $\\dot{K} = sL\\phi(k)$ y la tasa de crecimiento poblacional $\\dot{L}/L = \\lambda$ con parámetros observados $s = 0.3$ y $\\lambda = 0.05$, deduzca la ecuación diferencial fundamental para la tasa de acumulación per cápita $\\dot{k}$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "\\dot{k} = s\\phi(k) + \\lambda k",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} = s\\phi(k) + \\lambda k$.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "\\dot{k} = \\frac{s}{Q}\\phi(k) - \\lambda k",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{K} = s$ o dividir $s$ por $Q$.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "\\dot{k} = s\\phi(k)",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{K} = L\\dot{k}$ y obtener erróneamente $\\dot{k} = s\\phi(k)$ sin el término $-\\lambda k$.",
+          "distractor_id": "D-Hab01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "\\dot{k} = s\\phi(k) - \\frac{\\lambda k}{L}",
+          "is_correct": false,
+          "error_rationale": "$k\\dot{L} = k\\lambda$, conduciendo a $\\dot{k} = s\\phi(k) - \\frac{\\lambda k}{L}$.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "\\dot{k} = s\\phi(k) - \\lambda k",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "\\dot{k} = \\lambda\\phi(k) - s k",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} = \\lambda \\phi(k) - s k$.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "\\dot{k} = s\\phi(k) - \\lambda k L",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} = s\\phi(k) - \\lambda k L$ o mantener dependencias de escala en la ecuación intensiva.",
+          "distractor_id": "D-Hab01-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Aplique la regla del producto a K = kL: dK/dt = dk/dt * L + k * dL/dt.",
+        "Sustituya dL/dt = lambda L y dK/dt = sL phi(k).",
+        "Divida toda la ecuación entre L y despeje dk/dt."
+      ],
+      "detailed_solution": "Diferenciando K = kL obtenemos dK/dt = L dk/dt + k dL/dt = L dk/dt + lambda k L. Igualando a sL phi(k) y cancelando L > 0, despejamos dk/dt = s phi(k) - lambda k."
+    },
+    {
+      "id": "Q-Hab01-042",
+      "competency_id": "Hab-01",
+      "competency_name": "Deducción Algebraica de la Ecuación Fundamental $\\dot{k} = s\\phi(k) - \\lambda k$",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En una economía con parámetros $s = 0.25$ y $\\lambda = 0.02$, aplique la regla del producto a la acumulación de capital físico para derivar la expresión autónoma de $\\dot{k}$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "\\dot{k} = \\lambda\\phi(k) - s k",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} = \\lambda \\phi(k) - s k$.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "\\dot{k} = s\\phi(k) - \\frac{\\lambda k}{L}",
+          "is_correct": false,
+          "error_rationale": "$k\\dot{L} = k\\lambda$, conduciendo a $\\dot{k} = s\\phi(k) - \\frac{\\lambda k}{L}$.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "\\dot{k} = s\\phi(k) + \\lambda k",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} = s\\phi(k) + \\lambda k$.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "\\dot{k} = s\\phi(k) - \\lambda k L",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} = s\\phi(k) - \\lambda k L$ o mantener dependencias de escala en la ecuación intensiva.",
+          "distractor_id": "D-Hab01-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "\\dot{k} = s\\phi(k) - \\lambda k",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "\\dot{k} = \\frac{s}{Q}\\phi(k) - \\lambda k",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{K} = s$ o dividir $s$ por $Q$.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "\\dot{k} = s\\phi(k)",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{K} = L\\dot{k}$ y obtener erróneamente $\\dot{k} = s\\phi(k)$ sin el término $-\\lambda k$.",
+          "distractor_id": "D-Hab01-02"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Aplique la regla del producto a K = kL: dK/dt = dk/dt * L + k * dL/dt.",
+        "Sustituya dL/dt = lambda L y dK/dt = sL phi(k).",
+        "Divida toda la ecuación entre L y despeje dk/dt."
+      ],
+      "detailed_solution": "Diferenciando K = kL obtenemos dK/dt = L dk/dt + k dL/dt = L dk/dt + lambda k L. Igualando a sL phi(k) y cancelando L > 0, despejamos dk/dt = s phi(k) - lambda k."
+    },
+    {
+      "id": "Q-C02-071",
+      "competency_id": "C-02",
+      "competency_name": "Análisis Cualitativo del Diagrama de Fase y Estabilidad Asintótica del Equilibrio $\\bar{k}$",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "En el diagrama de fase del modelo de Solow (Panel a), para un cierto nivel de capital intensivo la curva de inversión per cápita alcanza $s\\phi(k) = 28$ y la recta de dilución demográfica se ubica en $\\lambda k = 5$. Determine el valor numérico de la distancia vertical $\\dot{k} = s\\phi(k) - \\lambda k$ que proyecta la ordenada del Panel (b):",
+      "options": [],
+      "correct_answer": {
+        "value": "23",
+        "canonical_algebraic": "23",
+        "accepted_equivalents": [
+          "23",
+          "23.0"
+        ],
+        "tolerance": 0.0001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique la curva de ahorro s phi(k) y la recta de dilución lambda k.",
+        "Calcule la distancia vertical restando lambda k de s phi(k).",
+        "La distancia vertical es exactamente la derivada temporal dk/dt."
+      ],
+      "detailed_solution": "La distancia vertical en el Panel (a) es dk/dt = s phi(k) - lambda k = 28 - 5 = 23."
+    },
+    {
+      "id": "Q-C02-072",
+      "competency_id": "C-02",
+      "competency_name": "Análisis Cualitativo del Diagrama de Fase y Estabilidad Asintótica del Equilibrio $\\bar{k}$",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "A partir de una curva de ahorro per cápita en 36 y un requerimiento demográfico en 10, calcule la separación vertical neta $\\dot{k}$ entre ambas curvas:",
+      "options": [],
+      "correct_answer": {
+        "value": "26",
+        "canonical_algebraic": "26",
+        "accepted_equivalents": [
+          "26",
+          "26.0"
+        ],
+        "tolerance": 0.0001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique la curva de ahorro s phi(k) y la recta de dilución lambda k.",
+        "Calcule la distancia vertical restando lambda k de s phi(k).",
+        "La distancia vertical es exactamente la derivada temporal dk/dt."
+      ],
+      "detailed_solution": "La distancia vertical en el Panel (a) es dk/dt = s phi(k) - lambda k = 36 - 10 = 26."
+    },
+    {
+      "id": "Q-H02-091",
+      "competency_id": "H-02",
+      "competency_name": "Caracterización del Estado Uniforme ('Steady State') vs. Estado Estacionario",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "A partir de las condiciones de estado uniforme con $L = 23$ y dotación per cápita constante $k = 5$, obtenga el nivel agregado de capital $K = k L$:",
+      "options": [],
+      "correct_answer": {
+        "value": "115",
+        "canonical_algebraic": "115",
+        "accepted_equivalents": [
+          "115",
+          "115.0"
+        ],
+        "tolerance": 0.0001
+      },
+      "hints_count": 3,
+      "hints": [
+        "En estado uniforme se mantiene la identidad agregada K = k * L.",
+        "Multiplique el capital por trabajador k = 5 por el total de trabajadores L = 23.",
+        "El producto directo entrega el capital físico agregado K."
+      ],
+      "detailed_solution": "Por definición de la variable intensiva, K = k * L = 5 * 23 = 115."
+    },
+    {
+      "id": "Q-H02-092",
+      "competency_id": "H-02",
+      "competency_name": "Caracterización del Estado Uniforme ('Steady State') vs. Estado Estacionario",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "En el estado uniforme del modelo de Solow, el empleo alcanza $L = 28$ y el capital intensivo de equilibrio se sitúa en $k = 4$. Determine el stock de capital físico agregado $K = k L$ acumulado en la economía:",
+      "options": [],
+      "correct_answer": {
+        "value": "112",
+        "canonical_algebraic": "112",
+        "accepted_equivalents": [
+          "112",
+          "112.0"
+        ],
+        "tolerance": 0.0001
+      },
+      "hints_count": 3,
+      "hints": [
+        "En estado uniforme se mantiene la identidad agregada K = k * L.",
+        "Multiplique el capital por trabajador k = 4 por el total de trabajadores L = 28.",
+        "El producto directo entrega el capital físico agregado K."
+      ],
+      "detailed_solution": "Por definición de la variable intensiva, K = k * L = 4 * 28 = 112."
+    },
+    {
+      "id": "Q-Hab02-111",
+      "competency_id": "Hab-02",
+      "competency_name": "Resolución de la Ecuación de Bernoulli del Modelo de Solow con Tecnología Cobb-Douglas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "stem": "Dada la ecuación diferencial no lineal de Bernoulli de Solow $\\dot{k} + \\lambda k = s k^\\alpha$ con tecnología Cobb-Douglas con parámetros $s = 0.2$ y $\\alpha = 0.33$, determine la ecuación diferencial linealizada en la variable transformada $z = k^{1-\\alpha}$ y su correspondiente integral particular constante $\\bar{z}$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "\\frac{dz}{dt} + \\lambda z = s, \\quad \\bar{z} = \\frac{s}{\\lambda}",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{z} + \\lambda z = s$ omitiendo el término $(1-\\alpha)$ en los coeficientes.",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "k(t) = \\left[k(0)^{1-\\alpha} - \\frac{s}{\\lambda}\\right]e^{-(1-\\alpha)\\lambda t} + \\frac{s}{\\lambda}",
+          "is_correct": false,
+          "error_rationale": "Declarar $k(t) = [k(0)^{1-\\alpha} - s/\\lambda]e^{-(1-\\alpha)\\lambda t} + s/\\lambda$.",
+          "distractor_id": "D-Hab02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s, \\quad \\bar{z} = \\frac{s}{\\lambda}",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s, \\quad \\text{con convergencia a tasa } e^{-\\lambda t}",
+          "is_correct": false,
+          "error_rationale": "Escribir $e^{-\\lambda t}$ en la solución general de $z(t)$.",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "k(t) = \\left(\\frac{s}{\\lambda}\\right)^{\\frac{1}{1-\\alpha} \\text{ constante para todo } t \\ge 0",
+          "is_correct": false,
+          "error_rationale": "Declarar que $k(t)$ es inmediatamente constante e igual a $(s/\\lambda)^{1/(1-\\alpha)}$ para todo $t$.",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "\\frac{dz}{dt} - (1-\\alpha)\\lambda z = (1-\\alpha)s, \\quad z = k^{\\alpha - 1}",
+          "is_correct": false,
+          "error_rationale": "$z = k^{\\alpha - 1}$ produciendo exponentes invertidos en toda la integración.",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s, \\quad \\bar{z} = \\frac{\\lambda}{s}",
+          "is_correct": false,
+          "error_rationale": "Obtener $z^* = \\lambda/s$ en lugar de $s/\\lambda$.",
+          "distractor_id": "D-Hab02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Defina z = k^(1-alpha) y calcule su derivada temporal dz/dt = (1-alpha) k^(-alpha) dk/dt.",
+        "Multiplique la ecuación de Bernoulli por (1-alpha) k^(-alpha).",
+        "Calcule la solución particular z_bar = b / a = (1-alpha)s / ((1-alpha)lambda) = s / lambda."
+      ],
+      "detailed_solution": "Multiplicando por (1-alpha)k^(-alpha) se obtiene dz/dt + (1-alpha)lambda z = (1-alpha)s, cuya integral particular es z_bar = s/lambda."
+    },
+    {
+      "id": "Q-Hab02-112",
+      "competency_id": "Hab-02",
+      "competency_name": "Resolución de la Ecuación de Bernoulli del Modelo de Solow con Tecnología Cobb-Douglas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "stem": "Para una función de producción Cobb-Douglas sujeta a $s = 0.3$ y $\\alpha = 0.25$, resuelva la transformación canónica de Bernoulli que linealiza la trayectoria de $k(t)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "\\frac{dz}{dt} + \\lambda z = s, \\quad \\bar{z} = \\frac{s}{\\lambda}",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{z} + \\lambda z = s$ omitiendo el término $(1-\\alpha)$ en los coeficientes.",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "\\frac{dz}{dt} - (1-\\alpha)\\lambda z = (1-\\alpha)s, \\quad z = k^{\\alpha - 1}",
+          "is_correct": false,
+          "error_rationale": "$z = k^{\\alpha - 1}$ produciendo exponentes invertidos en toda la integración.",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "k(t) = \\left(\\frac{s}{\\lambda}\\right)^{\\frac{1}{1-\\alpha} \\text{ constante para todo } t \\ge 0",
+          "is_correct": false,
+          "error_rationale": "Declarar que $k(t)$ es inmediatamente constante e igual a $(s/\\lambda)^{1/(1-\\alpha)}$ para todo $t$.",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s, \\quad \\bar{z} = \\frac{\\lambda}{s}",
+          "is_correct": false,
+          "error_rationale": "Obtener $z^* = \\lambda/s$ en lugar de $s/\\lambda$.",
+          "distractor_id": "D-Hab02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s, \\quad \\text{con convergencia a tasa } e^{-\\lambda t}",
+          "is_correct": false,
+          "error_rationale": "Escribir $e^{-\\lambda t}$ en la solución general de $z(t)$.",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s, \\quad \\bar{z} = \\frac{s}{\\lambda}",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "k(t) = \\left[k(0)^{1-\\alpha} - \\frac{s}{\\lambda}\\right]e^{-(1-\\alpha)\\lambda t} + \\frac{s}{\\lambda}",
+          "is_correct": false,
+          "error_rationale": "Declarar $k(t) = [k(0)^{1-\\alpha} - s/\\lambda]e^{-(1-\\alpha)\\lambda t} + s/\\lambda$.",
+          "distractor_id": "D-Hab02-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Defina z = k^(1-alpha) y calcule su derivada temporal dz/dt = (1-alpha) k^(-alpha) dk/dt.",
+        "Multiplique la ecuación de Bernoulli por (1-alpha) k^(-alpha).",
+        "Calcule la solución particular z_bar = b / a = (1-alpha)s / ((1-alpha)lambda) = s / lambda."
+      ],
+      "detailed_solution": "Multiplicando por (1-alpha)k^(-alpha) se obtiene dz/dt + (1-alpha)lambda z = (1-alpha)s, cuya integral particular es z_bar = s/lambda."
+    },
+    {
+      "id": "Q-C03-141",
+      "competency_id": "C-03",
+      "competency_name": "Estática Comparativa del Capital de Estado Uniforme frente a $s$ y $\\lambda$",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "Determine la dotación intensiva de reposo $\\bar{k} = (s / \\lambda)^2$ para un modelo de Solow con $s = 0.15$, $\\lambda = 0.05$ y elasticidad $\\alpha = 0.50$:",
+      "options": [],
+      "correct_answer": {
+        "value": "9",
+        "canonical_algebraic": "9",
+        "accepted_equivalents": [
+          "9",
+          "9.0"
+        ],
+        "tolerance": 0.0001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Plantee la condición de estado uniforme s sqrt(k_bar) = lambda k_bar.",
+        "Divida ambos lados entre sqrt(k_bar) para obtener sqrt(k_bar) = s / lambda.",
+        "Eleve al cuadrado ambos miembros: k_bar = (s / lambda)^2 = (0.15 / 0.05)^2."
+      ],
+      "detailed_solution": "Calculamos s / lambda = 0.15 / 0.05 = 3. Elevando al cuadrado: k_bar = (3)^2 = 9."
+    },
+    {
+      "id": "Q-C03-142",
+      "competency_id": "C-03",
+      "competency_name": "Estática Comparativa del Capital de Estado Uniforme frente a $s$ y $\\lambda$",
+      "type": "fill_in_the_blank",
+      "difficulty": "medium",
+      "stem": "Para una economía descrita por la tecnología intensiva $\\phi(k) = \\sqrt{k}$ (con $\\alpha = 0.50$), propensión al ahorro $s = 0.1$ y tasa demográfica $\\lambda = 0.05$, calcule el capital de estado uniforme $\\bar{k} = (s / \\lambda)^2$:",
+      "options": [],
+      "correct_answer": {
+        "value": "4",
+        "canonical_algebraic": "4",
+        "accepted_equivalents": [
+          "4",
+          "4.0"
+        ],
+        "tolerance": 0.0001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Plantee la condición de estado uniforme s sqrt(k_bar) = lambda k_bar.",
+        "Divida ambos lados entre sqrt(k_bar) para obtener sqrt(k_bar) = s / lambda.",
+        "Eleve al cuadrado ambos miembros: k_bar = (s / lambda)^2 = (0.1 / 0.05)^2."
+      ],
+      "detailed_solution": "Calculamos s / lambda = 0.1 / 0.05 = 2. Elevando al cuadrado: k_bar = (2)^2 = 4."
+    },
+    {
+      "id": "Q-H03-161",
+      "competency_id": "H-03",
+      "competency_name": "Comparación Estructural: Proporciones Fijas de Harrod-Domar vs. Sustituibilidad Neoclásica",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Para una economía con coeficientes rígidos de producción donde $s = 24\\%$ y el coeficiente de capital es $v = 3$, determine el valor de la tasa garantizada $s/v$ (en porcentaje):",
+      "options": [],
+      "correct_answer": {
+        "value": "8",
+        "canonical_algebraic": "8",
+        "accepted_equivalents": [
+          "8",
+          "8.0",
+          "8%"
+        ],
+        "tolerance": 0.01
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique los dos parámetros fundamentales de la ecuación de Harrod-Domar: la propensión al ahorro s y la relación capital-producto fija v.",
+        "Aplique la fórmula de la tasa garantizada de crecimiento económico: g_w = s / v.",
+        "Divida directamente el porcentaje de ahorro entre el coeficiente de capital para obtener la tasa en porcentaje."
+      ],
+      "detailed_solution": "En el modelo de Harrod-Domar, la tasa garantizada de crecimiento corresponde a la tasa de inversión admisible dividida por la intensidad de capital: $g_w = \\frac{s}3 = \\frac{24\\%}{3} = 8\\%$."
+    },
+    {
+      "id": "Q-H03-162",
+      "competency_id": "H-03",
+      "competency_name": "Comparación Estructural: Proporciones Fijas de Harrod-Domar vs. Sustituibilidad Neoclásica",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Bajo la tecnología de Leontief de Harrod-Domar con propensión al ahorro $s = 32\\%$ y relación de capital $v = 4$, halle la tasa garantizada de expansión (en porcentaje):",
+      "options": [],
+      "correct_answer": {
+        "value": "8",
+        "canonical_algebraic": "8",
+        "accepted_equivalents": [
+          "8",
+          "8.0",
+          "8%"
+        ],
+        "tolerance": 0.01
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique los dos parámetros fundamentales de la ecuación de Harrod-Domar: la propensión al ahorro s y la relación capital-producto fija v.",
+        "Aplique la fórmula de la tasa garantizada de crecimiento económico: g_w = s / v.",
+        "Divida directamente el porcentaje de ahorro entre el coeficiente de capital para obtener la tasa en porcentaje."
+      ],
+      "detailed_solution": "En el modelo de Harrod-Domar, la tasa garantizada de crecimiento corresponde a la tasa de inversión admisible dividida por la intensidad de capital: $g_w = \\frac{s}4 = \\frac{32\\%}{4} = 8\\%$."
+    },
+    {
+      "id": "Q-C04-181",
+      "competency_id": "C-04",
+      "competency_name": "Hipótesis de Pleno Empleo Continuo y Flexibilidad de Precios Factoriales en Tiempo Continuo",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Considerando el agotamiento del producto por el teorema de Euler con elasticidad del capital $\\alpha = 43\\%$, determine la cuota distributiva del trabajo $(1 - \\alpha)$ expresada en porcentaje:",
+      "options": [],
+      "correct_answer": {
+        "value": "57",
+        "canonical_algebraic": "57",
+        "accepted_equivalents": [
+          "57",
+          "57.0",
+          "57%"
+        ],
+        "tolerance": 0.01
+      },
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que bajo rendimientos constantes a escala y remuneración por productividad marginal, la suma de las participaciones factoriales es el 100%.",
+        "La participación del trabajo en el producto se obtiene como s_L = 1 - alpha.",
+        "Reste al 100% el porcentaje correspondiente a la elasticidad del capital."
+      ],
+      "detailed_solution": "Por el teorema de Euler bajo competencia perfecta, los factores agotan el producto: $s_L = 1 - \\alpha = 100\\% - 43\\% = 57\\%$."
+    },
+    {
+      "id": "Q-C04-182",
+      "competency_id": "C-04",
+      "competency_name": "Hipótesis de Pleno Empleo Continuo y Flexibilidad de Precios Factoriales en Tiempo Continuo",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "En el modelo neoclásico de Solow con función Cobb-Douglas, si la elasticidad producto del capital es $\\alpha = 35\\%$ y los factores se remuneran según su productividad marginal a pleno empleo, determine la participación del trabajo $(1 - \\alpha)$ en el ingreso nacional (en porcentaje).",
+      "options": [],
+      "correct_answer": {
+        "value": "65",
+        "canonical_algebraic": "65",
+        "accepted_equivalents": [
+          "65",
+          "65.0",
+          "65%"
+        ],
+        "tolerance": 0.01
+      },
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que bajo rendimientos constantes a escala y remuneración por productividad marginal, la suma de las participaciones factoriales es el 100%.",
+        "La participación del trabajo en el producto se obtiene como s_L = 1 - alpha.",
+        "Reste al 100% el porcentaje correspondiente a la elasticidad del capital."
+      ],
+      "detailed_solution": "Por el teorema de Euler bajo competencia perfecta, los factores agotan el producto: $s_L = 1 - \\alpha = 100\\% - 35\\% = 65\\%$."
+    },
+    {
+      "id": "Q-Hab03-201",
+      "competency_id": "Hab-03",
+      "competency_name": "Formulación y Deducción de la Ecuación Fundamental $\\dot{r} = sF(r, 1) - nr$ a partir de Tasas Relativas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A partir de la tasa relativa del capital por trabajador $\\frac{\\dot{r}{r} = \\frac{\\dot{K}{K} - \\frac{\\dot{L}{L}$ con acumulación $\\dot{K} = sF(K, L)$ y crecimiento demográfico $\\dot{L}/L = n$, determine la deducción formal de la ecuación fundamental $\\dot{r}$ para $s = 27\\%$ y $n = 1\\%$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{r} = sF(r, 1) - nr$, interpretando $r$ como la trayectoria temporal de la tasa de interés real del mercado financiero.",
+          "is_correct": false,
+          "error_rationale": "Tratar a $\\dot{r}$ como la dinámica de la tasa de interés bancaria.",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{r} = sF(r, 1)$, omitiendo la detracción demográfica $-nr$ requerida para mantener constante la dotación de capital por operario.",
+          "is_correct": false,
+          "error_rationale": "$\\dot{r} = sF(r, 1)$, ignorando el término de mantenimiento demográfico $-nr$.",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{r} = \\frac{sF(r, 1)}{r} - n$, prescindiendo de multiplicar la tasa relativa de crecimiento por el nivel de la variable $r$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{r} = \\frac{sF(r,1)}{r} - n$ olvidando multiplicar por $r$.",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{r} = nr - sF(r, 1)$, invirtiendo la derivada logarítmica de $r = K/L$ al escribir $\\frac{\\dot{r}{r} = \\frac{\\dot{L}{L} - \\frac{\\dot{K}{K}$.",
+          "is_correct": false,
+          "error_rationale": "$\\dot{r}/r = n - \\dot{K}/K$, invirtiendo los signos de la ecuación dinámica.",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{r} = sC - nr$, considerando que el producto medio $F(r, 1)$ permanece constante ante variaciones en la intensidad factorial.",
+          "is_correct": false,
+          "error_rationale": "Integrar $\\dot{r} = sF(r,1) - nr$ considerando a $F(r,1)$ como una constante independiente de $r$.",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{r} = sF(r, 1) - nr$, sustituyendo $\\frac{F(K,L)}{K} = \\frac{F(r,1)}{r}$ por homogeneidad lineal y multiplicando por $r$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{r} = s\\frac{F(K, L)}{K} - nr$, manteniendo la formulación bivariada sin aplicar la propiedad de homogeneidad lineal a la función.",
+          "is_correct": false,
+          "error_rationale": "Mantener términos mixtos $F(K, L)/K$ sin reducir a la función intensiva univariada $F(r, 1)/r$.",
+          "distractor_id": "D-Hab03-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Comience diferenciando con respecto al tiempo la definición r = K/L para obtener r_punto / r = K_punto / K - L_punto / L.",
+        "Sustituya K_punto / K = s F(K, L) / K y utilice la homogeneidad de grado uno para escribir F(K, L) / K = F(r, 1) / r.",
+        "Multiplique toda la ecuación por r para despejar r_punto en niveles."
+      ],
+      "detailed_solution": "Diferenciando logarítmicamente $r = K/L$ obtenemos $\\frac{\\dot{r}{r} = \\frac{\\dot{K}{K} - \\frac{\\dot{L}{L} = \\frac{sF(K,L)}{K} - n$. Por homogeneidad de grado 1, $F(K,L)/K = F(r,1)/r$. Multiplicando por $r$ se deduce $\\dot{r} = sF(r,1) - nr$."
+    },
+    {
+      "id": "Q-Hab03-202",
+      "competency_id": "Hab-03",
+      "competency_name": "Formulación y Deducción de la Ecuación Fundamental $\\dot{r} = sF(r, 1) - nr$ a partir de Tasas Relativas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Dada la tasa de ahorro constante $s = 17\\%$ y la expansión laboral $n = 5\\%$, establezca la formulación analítica de la velocidad $\\dot{r}$ aplicando diferenciación logarítmica:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{r} = s\\frac{F(K, L)}{K} - nr$, manteniendo la formulación bivariada sin aplicar la propiedad de homogeneidad lineal a la función.",
+          "is_correct": false,
+          "error_rationale": "Mantener términos mixtos $F(K, L)/K$ sin reducir a la función intensiva univariada $F(r, 1)/r$.",
+          "distractor_id": "D-Hab03-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{r} = \\frac{sF(r, 1)}{r} - n$, prescindiendo de multiplicar la tasa relativa de crecimiento por el nivel de la variable $r$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{r} = \\frac{sF(r,1)}{r} - n$ olvidando multiplicar por $r$.",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{r} = nr - sF(r, 1)$, invirtiendo la derivada logarítmica de $r = K/L$ al escribir $\\frac{\\dot{r}{r} = \\frac{\\dot{L}{L} - \\frac{\\dot{K}{K}$.",
+          "is_correct": false,
+          "error_rationale": "$\\dot{r}/r = n - \\dot{K}/K$, invirtiendo los signos de la ecuación dinámica.",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{r} = sF(r, 1)$, omitiendo la detracción demográfica $-nr$ requerida para mantener constante la dotación de capital por operario.",
+          "is_correct": false,
+          "error_rationale": "$\\dot{r} = sF(r, 1)$, ignorando el término de mantenimiento demográfico $-nr$.",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{r} = sF(r, 1) - nr$, interpretando $r$ como la trayectoria temporal de la tasa de interés real del mercado financiero.",
+          "is_correct": false,
+          "error_rationale": "Tratar a $\\dot{r}$ como la dinámica de la tasa de interés bancaria.",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{r} = sC - nr$, considerando que el producto medio $F(r, 1)$ permanece constante ante variaciones en la intensidad factorial.",
+          "is_correct": false,
+          "error_rationale": "Integrar $\\dot{r} = sF(r,1) - nr$ considerando a $F(r,1)$ como una constante independiente de $r$.",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{r} = sF(r, 1) - nr$, sustituyendo $\\frac{F(K,L)}{K} = \\frac{F(r,1)}{r}$ por homogeneidad lineal y multiplicando por $r$.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Comience diferenciando con respecto al tiempo la definición r = K/L para obtener r_punto / r = K_punto / K - L_punto / L.",
+        "Sustituya K_punto / K = s F(K, L) / K y utilice la homogeneidad de grado uno para escribir F(K, L) / K = F(r, 1) / r.",
+        "Multiplique toda la ecuación por r para despejar r_punto en niveles."
+      ],
+      "detailed_solution": "Diferenciando logarítmicamente $r = K/L$ obtenemos $\\frac{\\dot{r}{r} = \\frac{\\dot{K}{K} - \\frac{\\dot{L}{L} = \\frac{sF(K,L)}{K} - n$. Por homogeneidad de grado 1, $F(K,L)/K = F(r,1)/r$. Multiplicando por $r$ se deduce $\\dot{r} = sF(r,1) - nr$."
+    },
+    {
+      "id": "Q-C05-231",
+      "competency_id": "C-05",
+      "competency_name": "Convergencia Global y Dinámica de Inversión Efectiva vs. Dilución de Capital (Figura I)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Bajo la condición de estado estacionario $s\\sqrt{r^*} = nr^*$ con parámetros $s = 16\\%$ y $n = 2\\%$, calcule el valor numérico de la dotación intensiva $r^*$:",
+      "options": [],
+      "correct_answer": {
+        "value": "64",
+        "canonical_algebraic": "64",
+        "accepted_equivalents": [
+          "64",
+          "64.0"
+        ],
+        "tolerance": 0.01
+      },
+      "hints_count": 3,
+      "hints": [
+        "Plantee la condición de estado estacionario igualando inversión y dilución: s * sqrt(r*) = n * r*.",
+        "Divida ambos miembros entre sqrt(r*) para obtener sqrt(r*) = s / n.",
+        "Eleve al cuadrado ambos miembros: r* = (s / n)^2."
+      ],
+      "detailed_solution": "Igualando la curva de ahorro y el rayo de dilución: $s \\sqrt{r^*} = n r^* \\implies \\sqrt{r^*} = \\frac{s}2 = \\frac{16}{2} \\implies r^* = \\left(\\frac{16}{2}\\right)^2 = 64$."
+    },
+    {
+      "id": "Q-C05-232",
+      "competency_id": "C-05",
+      "competency_name": "Convergencia Global y Dinámica de Inversión Efectiva vs. Dilución de Capital (Figura I)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Para una función de producción intensiva $F(r, 1) = \\sqrt{r}$ con propensión al ahorro $s = 20\\%$ y tasa de crecimiento demográfico $n = 5\\%$, determine el valor del ratio capital-trabajo de estado estacionario $r^*$ donde $sF(r^*, 1) = nr^*$.",
+      "options": [],
+      "correct_answer": {
+        "value": "16",
+        "canonical_algebraic": "16",
+        "accepted_equivalents": [
+          "16",
+          "16.0"
+        ],
+        "tolerance": 0.01
+      },
+      "hints_count": 3,
+      "hints": [
+        "Plantee la condición de estado estacionario igualando inversión y dilución: s * sqrt(r*) = n * r*.",
+        "Divida ambos miembros entre sqrt(r*) para obtener sqrt(r*) = s / n.",
+        "Eleve al cuadrado ambos miembros: r* = (s / n)^2."
+      ],
+      "detailed_solution": "Igualando la curva de ahorro y el rayo de dilución: $s \\sqrt{r^*} = n r^* \\implies \\sqrt{r^*} = \\frac{s}5 = \\frac{20}{5} \\implies r^* = \\left(\\frac{20}{5}\\right)^2 = 16$."
+    },
+    {
+      "id": "Q-C06-251",
+      "competency_id": "C-06",
+      "competency_name": "Equilibrios Múltiples, Umbral de Despegue Inestable y Trampas de Pobreza (Figura II)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Al evaluar la separatriz dinámica de la Figura II con datos $r_1 = 4$, $r_3 = 48$ y salto crítico $\\Delta = 14$ hacia el tipping point ($r_2 = r_1 + \\Delta$), calcule $r_2$:",
+      "options": [],
+      "correct_answer": {
+        "value": "18",
+        "canonical_algebraic": "18",
+        "accepted_equivalents": [
+          "18",
+          "18.0"
+        ],
+        "tolerance": 0.01
+      },
+      "hints_count": 3,
+      "hints": [
+        "Sume la distancia de separación Delta al valor de la raíz inferior r1 para obtener el umbral de despegue r2.",
+        "Recuerde que el equilibrio intermedio r2 separa la trampa de pobreza del sendero superior.",
+        "Calcule r2 = r1 + Delta."
+      ],
+      "detailed_solution": "El umbral inestable de despegue se ubica a una distancia $\\Delta = 14$ de la trampa inferior $r_1 = 4$, resultando en $r_2 = r_1 + \\Delta = 4 + 14 = 18$."
+    },
+    {
+      "id": "Q-C06-252",
+      "competency_id": "C-06",
+      "competency_name": "Equilibrios Múltiples, Umbral de Despegue Inestable y Trampas de Pobreza (Figura II)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "En una configuración con equilibrios múltiples de la Figura II, una economía presenta un equilibrio inferior $r_1 = 3$, un nivel avanzado $r_3 = 40$ y una distancia de separación $\\Delta = 11$ entre la trampa de pobreza y el umbral de despegue (con $r_2 = r_1 + \\Delta$). Determine el valor numérico del umbral inestable de despegue $r_2$.",
+      "options": [],
+      "correct_answer": {
+        "value": "14",
+        "canonical_algebraic": "14",
+        "accepted_equivalents": [
+          "14",
+          "14.0"
+        ],
+        "tolerance": 0.01
+      },
+      "hints_count": 3,
+      "hints": [
+        "Sume la distancia de separación Delta al valor de la raíz inferior r1 para obtener el umbral de despegue r2.",
+        "Recuerde que el equilibrio intermedio r2 separa la trampa de pobreza del sendero superior.",
+        "Calcule r2 = r1 + Delta."
+      ],
+      "detailed_solution": "El umbral inestable de despegue se ubica a una distancia $\\Delta = 11$ de la trampa inferior $r_1 = 3$, resultando en $r_2 = r_1 + \\Delta = 3 + 11 = 14$."
+    },
+    {
+      "id": "Q-C07-271",
+      "competency_id": "C-07",
+      "competency_name": "Casos Límite sin Estado Estacionario: Expansión Perpetua vs. Colapso hacia Cero (Figura III)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "En el ejemplo hiperproductivo de Solow (1956, nota 6) con función de inversión $s_1 F^1(r, 1) = nr + 4\\sqrt36$, calcule la velocidad de acumulación de capital por habitante $\\dot36 = 4\\sqrt36$ cuando la dotación actual es $r = 36$.",
+      "options": [],
+      "correct_answer": {
+        "value": "24",
+        "canonical_algebraic": "24",
+        "accepted_equivalents": [
+          "24",
+          "24.0"
+        ],
+        "tolerance": 0.01
+      },
+      "hints_count": 3,
+      "hints": [
+        "La velocidad de acumulación neta del capital por habitante es r_punto = s_1 * F^1(r, 1) - n*r.",
+        "Sustituyendo la función dada, r_punto = a * sqrt(r).",
+        "Obtenga la raíz cuadrada de r y multiplíquela por el coeficiente a."
+      ],
+      "detailed_solution": "En el ejemplo hiperproductivo, la inversión excede permanentemente al rayo demográfico: $\\dot36 = s_1 F^1(r, 1) - nr = 4\\sqrt36 = 4 \\cdot \\sqrt{36} = 24$."
+    },
+    {
+      "id": "Q-C07-272",
+      "competency_id": "C-07",
+      "competency_name": "Casos Límite sin Estado Estacionario: Expansión Perpetua vs. Colapso hacia Cero (Figura III)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Bajo la curva hiperproductiva de la Figura III donde la inversión excede a la dilución por $\\dot36 = 2\\sqrt36$, determine el valor de $\\dot36$ para $r = 36$:",
+      "options": [],
+      "correct_answer": {
+        "value": "12",
+        "canonical_algebraic": "12",
+        "accepted_equivalents": [
+          "12",
+          "12.0"
+        ],
+        "tolerance": 0.01
+      },
+      "hints_count": 3,
+      "hints": [
+        "La velocidad de acumulación neta del capital por habitante es r_punto = s_1 * F^1(r, 1) - n*r.",
+        "Sustituyendo la función dada, r_punto = a * sqrt(r).",
+        "Obtenga la raíz cuadrada de r y multiplíquela por el coeficiente a."
+      ],
+      "detailed_solution": "En el ejemplo hiperproductivo, la inversión excede permanentemente al rayo demográfico: $\\dot36 = s_1 F^1(r, 1) - nr = 2\\sqrt36 = 2 \\cdot \\sqrt{36} = 12$."
+    },
+    {
+      "id": "Q-Hab04-291",
+      "competency_id": "Hab-04",
+      "competency_name": "Análisis por Regímenes de la Tecnología de Proporciones Fijas de Leontief / Harrod-Domar (Figura IV)",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere la ecuación dinámica $\\dot{r} = s \\min(r/6, 1/3) - 0.05 r$ de Solow (1956) con $s = 0.35$, $a = 6$, $b = 3$ y $n = 0.05$, donde $s/a > n$. Determine el ratio de equilibrio $r^*$ y el régimen de utilización de factores:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Ratio $r^* = 2.33 > 2.0$, con pleno empleo del trabajo y exceso de capacidad ociosa en el capital.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Ratio $r^* = 2.0$, con pleno empleo de ambos factores al operar el capital como cuello de botella único.",
+          "is_correct": false,
+          "error_rationale": "Plantear que el producto es $r/a$ cuando $r > a/b$.",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Ratio $r^* = 2.33$, omitiendo conmutar al cruzar $a/b$ e integrando indefinidamente con la primera ley.",
+          "is_correct": false,
+          "error_rationale": "Aplicar la solución asintótica del primer tramo para todo $t > 0$ sin cambiar de ecuación al cruzar $a/b$.",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Ratio no acotado $r(t) = r_0 + (s/a - n)t$, siguiendo una trayectoria puramente lineal sin convergencia.",
+          "is_correct": false,
+          "error_rationale": "Escribir $r(t) = r_0 + (s/a - n)t$.",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Ratio $r^* = 2.33 > 2.0$, con pleno empleo simultáneo y utilización completa de la capacidad del capital.",
+          "is_correct": false,
+          "error_rationale": "Declarar pleno empleo de capital en $r^* = s/(n_3 b)$ sin reconocer el desempleo de máquinas.",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Ratio $r^* = 2.0$, como atractor asintótico estable hacia el cual converge todo valor inicial del capital.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que todo $r(0)$ converge a $a/b$ cuando $n_2 = s/a$.",
+          "distractor_id": "D-Hab04-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Ratio $r^* = 2.33$, generando desempleo estructural de mano de obra debido al exceso de ahorro acumulado.",
+          "is_correct": false,
+          "error_rationale": "Asignar desempleo laboral al régimen $s/a > n$.",
+          "distractor_id": "D-Hab04-04"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Observe que la condición $s/a > n$ corresponde al caso (c) de la Figura IV de Solow (1956).",
+        "El rayo de dilución $nr$ corta a la curva de inversión en el tramo horizontal donde el producto por trabajador es $1/b$.",
+        "En dicho punto de corte, el capital excede la proporción técnica óptima $a/b$, por lo que su productividad marginal es nula y opera con capacidad ociosa."
+      ],
+      "detailed_solution": "Dado que $\\frac{s}6 > n$, la curva de inversión corta al rayo $nr$ en el segundo tramo horizontal: $s/b = n r^* \\implies r^* = \\frac{s}{nb}$. Al ser $r^* > a/b$, la mano de obra está plenamente ocupada pero existe redundancia de capital físico ($PMK = 0$)."
+    },
+    {
+      "id": "Q-Hab04-292",
+      "competency_id": "Hab-04",
+      "competency_name": "Análisis por Regímenes de la Tecnología de Proporciones Fijas de Leontief / Harrod-Domar (Figura IV)",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para una tecnología Leontief con parámetros $s = 0.25$, $a = 3$, $b = 1$ y tasa natural $n = 0.03$ ($s/a > n$), halle el ratio capital-trabajo de estado uniforme $r^*$ y caracterice el empleo de factores:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Ratio $r^* = 8.33 > 3.0$, con pleno empleo simultáneo y utilización completa de la capacidad del capital.",
+          "is_correct": false,
+          "error_rationale": "Declarar pleno empleo de capital en $r^* = s/(n_3 b)$ sin reconocer el desempleo de máquinas.",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Ratio $r^* = 8.33$, omitiendo conmutar al cruzar $a/b$ e integrando indefinidamente con la primera ley.",
+          "is_correct": false,
+          "error_rationale": "Aplicar la solución asintótica del primer tramo para todo $t > 0$ sin cambiar de ecuación al cruzar $a/b$.",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Ratio $r^* = 8.33$, generando desempleo estructural de mano de obra debido al exceso de ahorro acumulado.",
+          "is_correct": false,
+          "error_rationale": "Asignar desempleo laboral al régimen $s/a > n$.",
+          "distractor_id": "D-Hab04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Ratio no acotado $r(t) = r_0 + (s/a - n)t$, siguiendo una trayectoria puramente lineal sin convergencia.",
+          "is_correct": false,
+          "error_rationale": "Escribir $r(t) = r_0 + (s/a - n)t$.",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Ratio $r^* = 8.33 > 3.0$, con pleno empleo del trabajo y exceso de capacidad ociosa en el capital.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Ratio $r^* = 3.0$, con pleno empleo de ambos factores al operar el capital como cuello de botella único.",
+          "is_correct": false,
+          "error_rationale": "Plantear que el producto es $r/a$ cuando $r > a/b$.",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Ratio $r^* = 3.0$, como atractor asintótico estable hacia el cual converge todo valor inicial del capital.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que todo $r(0)$ converge a $a/b$ cuando $n_2 = s/a$.",
+          "distractor_id": "D-Hab04-06"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Observe que la condición $s/a > n$ corresponde al caso (c) de la Figura IV de Solow (1956).",
+        "El rayo de dilución $nr$ corta a la curva de inversión en el tramo horizontal donde el producto por trabajador es $1/b$.",
+        "En dicho punto de corte, el capital excede la proporción técnica óptima $a/b$, por lo que su productividad marginal es nula y opera con capacidad ociosa."
+      ],
+      "detailed_solution": "Dado que $\\frac{s}3 > n$, la curva de inversión corta al rayo $nr$ en el segundo tramo horizontal: $s/b = n r^* \\implies r^* = \\frac{s}{nb}$. Al ser $r^* > a/b$, la mano de obra está plenamente ocupada pero existe redundancia de capital físico ($PMK = 0$)."
+    },
+    {
+      "id": "Q-Hab05-321",
+      "competency_id": "Hab-05",
+      "competency_name": "Trayectoria Temporal y Equilibrio del Coeficiente de Capital en Tecnología Cobb-Douglas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el análisis de largo plazo de la sección IV con elasticidad $a = 0.25$, ahorro $s = 10\\%$ y población $n = 2\\%$, ¿cuál es el valor y naturaleza del coeficiente de Harrod $C^* = K/Y$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Coeficiente $C^* = (5.0)^{1-a_val}$, omitiendo la sustitución de la función intensiva del producto per cápita.",
+          "is_correct": false,
+          "error_rationale": "$y^* = (s/n)^a$, omitiendo la división por $1-a$ en el exponente.",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Coeficiente $C^* = 5.0$, generado por una tasa asintótica del stock de capital igual a $nb$ en lugar de $n$.",
+          "is_correct": false,
+          "error_rationale": "Declarar que la tasa de crecimiento de $K(t)$ es $nb$ en lugar de $n$.",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Coeficiente dependiente de la escala $C^* = 5.0 L_0^{1-a_val}$, variando según el tamaño de la población inicial.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que $C^*$ depende de la escala de la fuerza laboral o de $L_0$.",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Coeficiente $C^* = 20.0$, al confundir la participación del capital con el exponente laboral.",
+          "is_correct": false,
+          "error_rationale": "$b = a$ en lugar de $b = 1 - a$.",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Coeficiente $C^* = 5.0$, considerado una afortunada coincidencia accidental idéntica a la navaja de Harrod.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que el modelo neoclásico requiere una política de sintonía fina para que $n = s/C^*$.",
+          "distractor_id": "D-Hab05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Coeficiente $C^* = 5.0$, resultante del ajuste endógeno de los precios y de la técnica elegida.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Coeficiente $C^* = 0.2$, invirtiendo erróneamente los roles del ahorro y el crecimiento demográfico.",
+          "is_correct": false,
+          "error_rationale": "$C^* = n/s$, invirtiendo los roles de ahorro y crecimiento poblacional.",
+          "distractor_id": "D-Hab05-01"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "En estado estacionario, el capital crece a la tasa demográfica: $\\dot{K}/K = n$.",
+        "Por otra parte, la tasa de acumulación es $\\dot{K}/K = s(Y/K) = s/C$.",
+        "Igualando ambas expresiones se obtiene directamente $C^* = s/n$, lo que iguala la tasa garantizada $s/C^*$ con la natural $n$ de forma endógena."
+      ],
+      "detailed_solution": "En equilibrio uniforme, $\\frac{\\dot{K}{K} = s \\frac{Y}{K} = n \\implies C^* = \\frac{K}{Y} = \\frac{s}{n} = \\frac{10\\%}{2\\%} = 5.0$. Solow destaca que esto no es una coincidencia accidental, sino la consecuencia del ajuste neoclásico de las proporciones factoriales."
+    },
+    {
+      "id": "Q-Hab05-322",
+      "competency_id": "Hab-05",
+      "competency_name": "Trayectoria Temporal y Equilibrio del Coeficiente de Capital en Tecnología Cobb-Douglas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Deduzca el coeficiente de capital de estado uniforme $C^* = K/Y$ y su significado metodológico cuando $a = 0.4$, $s = 40\\%$ y $n = 5\\%$ en tecnología Cobb-Douglas:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Coeficiente dependiente de la escala $C^* = 8.0 L_0^{1-a_val}$, variando según el tamaño de la población inicial.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que $C^*$ depende de la escala de la fuerza laboral o de $L_0$.",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Coeficiente $C^* = 8.0$, resultante del ajuste endógeno de los precios y de la técnica elegida.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Coeficiente $C^* = 0.125$, invirtiendo erróneamente los roles del ahorro y el crecimiento demográfico.",
+          "is_correct": false,
+          "error_rationale": "$C^* = n/s$, invirtiendo los roles de ahorro y crecimiento poblacional.",
+          "distractor_id": "D-Hab05-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Coeficiente $C^* = 8.0$, generado por una tasa asintótica del stock de capital igual a $nb$ en lugar de $n$.",
+          "is_correct": false,
+          "error_rationale": "Declarar que la tasa de crecimiento de $K(t)$ es $nb$ en lugar de $n$.",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Coeficiente $C^* = 20.0$, al confundir la participación del capital con el exponente laboral.",
+          "is_correct": false,
+          "error_rationale": "$b = a$ en lugar de $b = 1 - a$.",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Coeficiente $C^* = (8.0)^{1-a_val}$, omitiendo la sustitución de la función intensiva del producto per cápita.",
+          "is_correct": false,
+          "error_rationale": "$y^* = (s/n)^a$, omitiendo la división por $1-a$ en el exponente.",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Coeficiente $C^* = 8.0$, considerado una afortunada coincidencia accidental idéntica a la navaja de Harrod.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que el modelo neoclásico requiere una política de sintonía fina para que $n = s/C^*$.",
+          "distractor_id": "D-Hab05-04"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "En estado estacionario, el capital crece a la tasa demográfica: $\\dot{K}/K = n$.",
+        "Por otra parte, la tasa de acumulación es $\\dot{K}/K = s(Y/K) = s/C$.",
+        "Igualando ambas expresiones se obtiene directamente $C^* = s/n$, lo que iguala la tasa garantizada $s/C^*$ con la natural $n$ de forma endógena."
+      ],
+      "detailed_solution": "En equilibrio uniforme, $\\frac{\\dot{K}{K} = s \\frac{Y}{K} = n \\implies C^* = \\frac{K}{Y} = \\frac{s}{n} = \\frac{40\\%}{5\\%} = 8.0$. Solow destaca que esto no es una coincidencia accidental, sino la consecuencia del ajuste neoclásico de las proporciones factoriales."
+    },
+    {
+      "id": "Q-Hab06-351",
+      "competency_id": "Hab-06",
+      "competency_name": "Determinación del Umbral Crítico y Dinámica de la Familia de Producción CES con $p = 1/2$ (Figura V)",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para la función de producción CES de Solow (1956, Ejemplo 3) $Y = (a\\sqrt{K} + \\sqrt{L})^2$ con $a = 5.75$, $s = 25\\%$ y $n = 900\\%$, determine la condición paramétrica de viabilidad de un estado estacionario estable y el valor de $r^*$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Condición $s a^2 < n$, con estado estacionario finito estable en $r^* = 16 = [1 / (\\sqrt{n/s} - a)]^2$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Condición $s a^2 > n$, garantizando la existencia de un estado estacionario finito estable en $r^* = 16$.",
+          "is_correct": false,
+          "error_rationale": "Declarar que $s a^2 > n$ garantiza convergencia a un ratio $r^*$ finito.",
+          "distractor_id": "D-Hab06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Condición $s a^2 < n$, estableciendo que el parámetro de elasticidad $p = 1/2$ asigna el $50\\%$ del ingreso al capital.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que el capital recibe el 50% del producto nacional.",
+          "distractor_id": "D-Hab06-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Condición $s a^2 < n$, integrando la ley diferencial como separable directa sin descomponer en factores de raíces conjugadas.",
+          "is_correct": false,
+          "error_rationale": "Tratar la ecuación no lineal como separable directa sin descomponer en factores lineales en $\\sqrt{r}$.",
+          "distractor_id": "D-Hab06-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Condición $s a^2 < n$, exigiendo que la curva de inversión parta del origen $(0,0)$ al asumir esencialidad factorial.",
+          "is_correct": false,
+          "error_rationale": "Hacer que la curva $sF(r, 1)$ parta del origen $(0,0)$ en vez de tener intercepto positivo $s$.",
+          "distractor_id": "D-Hab06-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Condición $s a^2 < n$, con producto per cápita lineal $y^* = 1 / (1 - a\\sqrt{s/n})$ omitiendo elevar al cuadrado.",
+          "is_correct": false,
+          "error_rationale": "Omitir el cuadrado exterior obteniendo un producto per cápita lineal en los parámetros.",
+          "distractor_id": "D-Hab06-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Condición $\\sqrt{n/s} - a < 0$, aceptando denominadores negativos porque el cuadrado exterior restaura el signo.",
+          "is_correct": false,
+          "error_rationale": "Aceptar valores de $r^*$ con denominadores negativos asumiendo que el cuadrado elimina la inconsistencia.",
+          "distractor_id": "D-Hab06-03"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "La pendiente asintótica de la curva de inversión $s (a\\sqrt{r} + 1)^2$ es $s a^2$.",
+        "Para que la curva de inversión corte al rayo $nr$ desde arriba, su pendiente asintótica debe ser menor que la pendiente del rayo: $s a^2 < n$.",
+        "Igualando $s(a\\sqrt{r^*} + 1)^2 = n r^*$ se obtiene $\\sqrt{r^*} = \\frac{1}{\\sqrt{n/s} - a}$, exigiendo $\\sqrt{n/s} > a$."
+      ],
+      "detailed_solution": "La condición para un corte estable con $r^* > 0$ es $s a^2 < n \\iff \\sqrt{n/s} > a$. Despejando: $\\sqrt{s}(a\\sqrt{r^*} + 1) = \\sqrt{n}\\sqrt{r^*} \\implies \\sqrt{r^*} = \\frac{1}{\\sqrt{n/s} - a} \\implies r^* = \\left(\\frac{1}{\\sqrt{n/s} - a}\\right)^2$."
+    },
+    {
+      "id": "Q-Hab06-352",
+      "competency_id": "Hab-06",
+      "competency_name": "Determinación del Umbral Crítico y Dinámica de la Familia de Producción CES con $p = 1/2$ (Figura V)",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el Ejemplo 3 de la Figura V con parámetros $a = 5.67$, ahorro $s = 25\\%$ y crecimiento demográfico $n = 900\\%$, halle el umbral crítico para la existencia de equilibrio finito y la expresión de $r^*$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Condición $s a^2 < n$, estableciendo que el parámetro de elasticidad $p = 1/2$ asigna el $50\\%$ del ingreso al capital.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que el capital recibe el 50% del producto nacional.",
+          "distractor_id": "D-Hab06-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Condición $s a^2 < n$, con estado estacionario finito estable en $r^* = 9 = [1 / (\\sqrt{n/s} - a)]^2$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Condición $\\sqrt{n/s} - a < 0$, aceptando denominadores negativos porque el cuadrado exterior restaura el signo.",
+          "is_correct": false,
+          "error_rationale": "Aceptar valores de $r^*$ con denominadores negativos asumiendo que el cuadrado elimina la inconsistencia.",
+          "distractor_id": "D-Hab06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Condición $s a^2 < n$, exigiendo que la curva de inversión parta del origen $(0,0)$ al asumir esencialidad factorial.",
+          "is_correct": false,
+          "error_rationale": "Hacer que la curva $sF(r, 1)$ parta del origen $(0,0)$ en vez de tener intercepto positivo $s$.",
+          "distractor_id": "D-Hab06-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Condición $s a^2 < n$, con producto per cápita lineal $y^* = 1 / (1 - a\\sqrt{s/n})$ omitiendo elevar al cuadrado.",
+          "is_correct": false,
+          "error_rationale": "Omitir el cuadrado exterior obteniendo un producto per cápita lineal en los parámetros.",
+          "distractor_id": "D-Hab06-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Condición $s a^2 > n$, garantizando la existencia de un estado estacionario finito estable en $r^* = 9$.",
+          "is_correct": false,
+          "error_rationale": "Declarar que $s a^2 > n$ garantiza convergencia a un ratio $r^*$ finito.",
+          "distractor_id": "D-Hab06-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Condición $s a^2 < n$, integrando la ley diferencial como separable directa sin descomponer en factores de raíces conjugadas.",
+          "is_correct": false,
+          "error_rationale": "Tratar la ecuación no lineal como separable directa sin descomponer en factores lineales en $\\sqrt{r}$.",
+          "distractor_id": "D-Hab06-02"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "La pendiente asintótica de la curva de inversión $s (a\\sqrt{r} + 1)^2$ es $s a^2$.",
+        "Para que la curva de inversión corte al rayo $nr$ desde arriba, su pendiente asintótica debe ser menor que la pendiente del rayo: $s a^2 < n$.",
+        "Igualando $s(a\\sqrt{r^*} + 1)^2 = n r^*$ se obtiene $\\sqrt{r^*} = \\frac{1}{\\sqrt{n/s} - a}$, exigiendo $\\sqrt{n/s} > a$."
+      ],
+      "detailed_solution": "La condición para un corte estable con $r^* > 0$ es $s a^2 < n \\iff \\sqrt{n/s} > a$. Despejando: $\\sqrt{s}(a\\sqrt{r^*} + 1) = \\sqrt{n}\\sqrt{r^*} \\implies \\sqrt{r^*} = \\frac{1}{\\sqrt{n/s} - a} \\implies r^* = \\left(\\frac{1}{\\sqrt{n/s} - a}\\right)^2$."
+    },
+    {
+      "id": "Q-H04-381",
+      "competency_id": "H-04",
+      "competency_name": "Condiciones de Arbitraje entre la Tasa de Interés y el Rendimiento del Capital Propio",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Bajo una trayectoria con estabilidad de precios $\\dot{p} = 0$, calcule la tasa de interés de arbitraje $i$ cuando el canon de arriendo asciende a $q = 120$ y el precio del activo es $p = 20$:",
+      "options": [],
+      "correct_answer": {
+        "value": "6",
+        "canonical_algebraic": "6",
+        "accepted_equivalents": [
+          "6",
+          "6.0"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique la condición de arbitraje entre activos monetarios y capital físico formulada por Solow.",
+        "Cuando el nivel de precios es constante, el término de ganancia de capital $\\dot{p}/p$ se anula.",
+        "Divida el canon de alquiler $q$ entre el precio del bien $p$ para obtener la tasa de interés de equilibrio."
+      ],
+      "detailed_solution": "La ecuación canónica de arbitraje establece $i = \\frac{q}{p} + \\frac{\\dot{p}{p}$. Al ser el nivel de precios constante, $\\dot{p} = 0$, resultando $i = \\frac{q}{p} = \\frac{120}{20} = 6$."
+    },
+    {
+      "id": "Q-H04-382",
+      "competency_id": "H-04",
+      "competency_name": "Condiciones de Arbitraje entre la Tasa de Interés y el Rendimiento del Capital Propio",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "A partir de la condición de no arbitraje $i = q/p + \\dot{p}/p$ sin inflación, halle la tasa nominal $i$ correspondiente a $q = 75$ y $p = 5$:",
+      "options": [],
+      "correct_answer": {
+        "value": "15",
+        "canonical_algebraic": "15",
+        "accepted_equivalents": [
+          "15",
+          "15.0"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique la condición de arbitraje entre activos monetarios y capital físico formulada por Solow.",
+        "Cuando el nivel de precios es constante, el término de ganancia de capital $\\dot{p}/p$ se anula.",
+        "Divida el canon de alquiler $q$ entre el precio del bien $p$ para obtener la tasa de interés de equilibrio."
+      ],
+      "detailed_solution": "La ecuación canónica de arbitraje establece $i = \\frac{q}{p} + \\frac{\\dot{p}{p}$. Al ser el nivel de precios constante, $\\dot{p} = 0$, resultando $i = \\frac{q}{p} = \\frac{75}{5} = 15$."
+    },
+    {
+      "id": "Q-C08-401",
+      "competency_id": "C-08",
+      "competency_name": "Relación Monótona entre el Ratio Capital-Trabajo $r$ y el Ratio Salario-Renta $w/q$ (Figuras VI y VII)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Calcule la relación salario-renta $w/q$ asociada a una intensidad de capital $r = 6$ en una economía competitiva donde $w/q = 2r$:",
+      "options": [],
+      "correct_answer": {
+        "value": "12",
+        "canonical_algebraic": "12",
+        "accepted_equivalents": [
+          "12",
+          "12.0"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "En competencia perfecta, los factores se remuneran según sus productividades marginales.",
+        "Para $Y = K^a L^{1-a}$, $w/p = (1-a)r^a$ y $q/p = a r^{a-1}$, de modo que $w/q = \\frac{1-a}{a}r$.",
+        "Multiplique el ratio de capital $r$ por el factor constante $(1 - 1/3)/(1/3) = 2$."
+      ],
+      "detailed_solution": "El cociente de productividades marginales es $\\frac{w}{q} = \\frac{(1-a) r^a}{a r^{a-1} = \\frac{1-a}{a} r = 2 r = 2(6) = 12$."
+    },
+    {
+      "id": "Q-C08-402",
+      "competency_id": "C-08",
+      "competency_name": "Relación Monótona entre el Ratio Capital-Trabajo $r$ y el Ratio Salario-Renta $w/q$ (Figuras VI y VII)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "En una economía neoclásica descrita por la función Cobb-Douglas $Y = K^{1/3} L^{2/3}$, donde la relación salario-renta es $w/q = 2r$, calcule el valor numérico entero de la relación de precios factoriales $w/q$ si el ratio capital-trabajo asciende a $r = 12$:",
+      "options": [],
+      "correct_answer": {
+        "value": "24",
+        "canonical_algebraic": "24",
+        "accepted_equivalents": [
+          "24",
+          "24.0"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "En competencia perfecta, los factores se remuneran según sus productividades marginales.",
+        "Para $Y = K^a L^{1-a}$, $w/p = (1-a)r^a$ y $q/p = a r^{a-1}$, de modo que $w/q = \\frac{1-a}{a}r$.",
+        "Multiplique el ratio de capital $r$ por el factor constante $(1 - 1/3)/(1/3) = 2$."
+      ],
+      "detailed_solution": "El cociente de productividades marginales es $\\frac{w}{q} = \\frac{(1-a) r^a}{a r^{a-1} = \\frac{1-a}{a} r = 2 r = 2(12) = 24$."
+    },
+    {
+      "id": "Q-Hab07-421",
+      "competency_id": "Hab-07",
+      "competency_name": "Cálculo de la Distribución del Ingreso y Participación del Trabajo según Formas Funcionales",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el análisis de la distribución funcional de Solow (página 81) para $Y = (a\\sqrt{K} + \\sqrt{L})^2$ con $a = 0.5$, $s = 10\\%$ y $n = 90\\%$, ¿cuál es la participación salarial de equilibrio y cómo responde ante variaciones en $s$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La cuota laboral es $\\text{Share}_L^* = 1 - a\\sqrt{s/n} = 83.3\\%$, incrementándose ante aumentos en la tasa de ahorro $s$.",
+          "is_correct": false,
+          "error_rationale": "Predecir $\\frac{\\partial \\text{Share}_L}{\\partial s} > 0$ en el Ejemplo 3.",
+          "distractor_id": "D-Hab07-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La cuota laboral es $\\text{Share}_L^* = a\\sqrt{s/n} = 16.7\\%$, asignando la participación del capital a los trabajadores.",
+          "is_correct": false,
+          "error_rationale": "Asignar $a\\sqrt{s/n}$ a los trabajadores.",
+          "distractor_id": "D-Hab07-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La suma de participaciones factoriales difiere de la unidad dejando un beneficio económico puro no remunerado por Euler.",
+          "is_correct": false,
+          "error_rationale": "Plantear que queda un beneficio extraordinario puro no distribuido entre $K$ y $L$.",
+          "distractor_id": "D-Hab07-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La cuota laboral coincide directamente con el nivel salarial real absoluto $w/p$ sin dividir entre el producto medio $Y/L$.",
+          "is_correct": false,
+          "error_rationale": "Confundir la evolución del nivel salarial real $w/p$ con la cuota distributiva del trabajo.",
+          "distractor_id": "D-Hab07-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La cuota laboral queda expresada como función implícita no resuelta de $r$ omitiendo sustituir el valor de equilibrio $r^*$.",
+          "is_correct": false,
+          "error_rationale": "Dejar la participación como una función implícita no resuelta de $r$ en lugar de sustituir $r^* = \\left(\\frac{1}{\\sqrt{n/s}-a}\\right)^2$.",
+          "distractor_id": "D-Hab07-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La cuota laboral es $\\text{Share}_L^* = 1 - a\\sqrt{s/n} = 83.3\\%$, reduciéndose ante aumentos en la tasa de ahorro $s$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La cuota laboral es constante e independiente de la tasa de ahorro $s$ y de $n$, idéntica a la tecnología Cobb-Douglas.",
+          "is_correct": false,
+          "error_rationale": "Declarar que la participación del trabajo en el Ejemplo 3 es constante e independiente de $s$ y $n$.",
+          "distractor_id": "D-Hab07-01"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "En el Ejemplo 3, la productividad marginal del capital es $q/p = a\\sqrt{Y/K}$, de donde la cuota del capital es $qK/(pY) = a\\sqrt{K/Y}$.",
+        "Evaluando en estado estacionario donde $\\sqrt{K/Y} = \\sqrt{s/n}$, se deduce que la participación del capital es $a\\sqrt{s/n}$.",
+        "Por el teorema de Euler, la cuota del trabajo es $1 - a\\sqrt{s/n}$. Al aumentar $s$, este valor disminuye."
+      ],
+      "detailed_solution": "La cuota del capital es $\\text{Share}_K = a\\sqrt{s/n}$ y la del trabajo es $\\text{Share}_L = 1 - a\\sqrt{s/n}$. Diferenciando respecto a $s$: $\\frac{\\partial \\text{Share}_L}{\\partial s} = -\\frac{a}{2\\sqrt{sn} < 0$. Mayor ahorro eleva la intensidad de capital y reduce la cuota relativa del trabajo."
+    },
+    {
+      "id": "Q-Hab07-422",
+      "competency_id": "Hab-07",
+      "competency_name": "Cálculo de la Distribución del Ingreso y Participación del Trabajo según Formas Funcionales",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Deduzca la cuota del trabajo $\\text{Share}_L = 1 - a\\sqrt{s/n}$ y su sensibilidad analítica frente al ahorro en una economía con tecnología CES evaluada en $a = 1.5$, $s = 25\\%$ y $n = 400\\%$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La cuota laboral es $\\text{Share}_L^* = 1 - a\\sqrt{s/n} = 62.5\\%$, reduciéndose ante aumentos en la tasa de ahorro $s$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La cuota laboral queda expresada como función implícita no resuelta de $r$ omitiendo sustituir el valor de equilibrio $r^*$.",
+          "is_correct": false,
+          "error_rationale": "Dejar la participación como una función implícita no resuelta de $r$ en lugar de sustituir $r^* = \\left(\\frac{1}{\\sqrt{n/s}-a}\\right)^2$.",
+          "distractor_id": "D-Hab07-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La cuota laboral es constante e independiente de la tasa de ahorro $s$ y de $n$, idéntica a la tecnología Cobb-Douglas.",
+          "is_correct": false,
+          "error_rationale": "Declarar que la participación del trabajo en el Ejemplo 3 es constante e independiente de $s$ y $n$.",
+          "distractor_id": "D-Hab07-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La suma de participaciones factoriales difiere de la unidad dejando un beneficio económico puro no remunerado por Euler.",
+          "is_correct": false,
+          "error_rationale": "Plantear que queda un beneficio extraordinario puro no distribuido entre $K$ y $L$.",
+          "distractor_id": "D-Hab07-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La cuota laboral es $\\text{Share}_L^* = a\\sqrt{s/n} = 37.5\\%$, asignando la participación del capital a los trabajadores.",
+          "is_correct": false,
+          "error_rationale": "Asignar $a\\sqrt{s/n}$ a los trabajadores.",
+          "distractor_id": "D-Hab07-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La cuota laboral coincide directamente con el nivel salarial real absoluto $w/p$ sin dividir entre el producto medio $Y/L$.",
+          "is_correct": false,
+          "error_rationale": "Confundir la evolución del nivel salarial real $w/p$ con la cuota distributiva del trabajo.",
+          "distractor_id": "D-Hab07-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La cuota laboral es $\\text{Share}_L^* = 1 - a\\sqrt{s/n} = 62.5\\%$, incrementándose ante aumentos en la tasa de ahorro $s$.",
+          "is_correct": false,
+          "error_rationale": "Predecir $\\frac{\\partial \\text{Share}_L}{\\partial s} > 0$ en el Ejemplo 3.",
+          "distractor_id": "D-Hab07-04"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "En el Ejemplo 3, la productividad marginal del capital es $q/p = a\\sqrt{Y/K}$, de donde la cuota del capital es $qK/(pY) = a\\sqrt{K/Y}$.",
+        "Evaluando en estado estacionario donde $\\sqrt{K/Y} = \\sqrt{s/n}$, se deduce que la participación del capital es $a\\sqrt{s/n}$.",
+        "Por el teorema de Euler, la cuota del trabajo es $1 - a\\sqrt{s/n}$. Al aumentar $s$, este valor disminuye."
+      ],
+      "detailed_solution": "La cuota del capital es $\\text{Share}_K = a\\sqrt{s/n}$ y la del trabajo es $\\text{Share}_L = 1 - a\\sqrt{s/n}$. Diferenciando respecto a $s$: $\\frac{\\partial \\text{Share}_L}{\\partial s} = -\\frac{a}{2\\sqrt{sn} < 0$. Mayor ahorro eleva la intensidad de capital y reduce la cuota relativa del trabajo."
+    },
+    {
+      "id": "Q-Hab08-451",
+      "competency_id": "Hab-08",
+      "competency_name": "Incorporación de Progreso Tecnológico Neutral y Dinámica Asintótica del Capital",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para una economía agregada con tecnología Cobb-Douglas de parámetros $a = 0.6$ y avance técnico exógeno $g = 0.02$, identifique el comportamiento de largo plazo de las variables clave:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La integración de Bernoulli utiliza el exponente temporal simple n + g sin considerar la renormalización requerida por la ponderación efectiva laboral 1-a en la dinámica.",
+          "is_correct": false,
+          "error_rationale": "Integrar separadamente $e^{gt}$ y $e^{nt(1-a)}$ generando productos cruzados erróneos.",
+          "distractor_id": "D-Hab08-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La relación capital-trabajo crece perpetuamente a g/(1-a), mientras que el capital total se expande a n + g/(1-a) y la relación capital-producto se incrementa a tasa g.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El progreso tecnológico analizado corresponde al tipo Harrod-neutral aumentando únicamente la dotación efectiva de mano de obra según la formulación formal F(K, e^{gt}L).",
+          "is_correct": false,
+          "error_rationale": "Modelar $Y = F(K, A(t)L)$ en lugar de $Y = A(t)F(K, L)$.",
+          "distractor_id": "D-Hab08-05"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Los salarios reales por trabajador se estancan a largo plazo debido a que el incremento demográfico a tasa n absorbe la totalidad de las ganancias derivadas de la técnica.",
+          "is_correct": false,
+          "error_rationale": "Declarar salario real constante cuando la economía tiene progreso tecnológico exógeno.",
+          "distractor_id": "D-Hab08-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El coeficiente de capital K/Y permanece estrictamente estacionario a largo plazo porque la acumulación de capital y la producción agregada se expanden a la misma tasa.",
+          "is_correct": false,
+          "error_rationale": "Declarar que $K/Y$ permanece constante en el modelo de Solow con progreso técnico Hicks-neutral.",
+          "distractor_id": "D-Hab08-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La relación capital-trabajo alcanza un estado estacionario finito donde r permanece constante y la tasa de crecimiento de largo plazo de r se reduce exactamente a cero.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que $\\dot{r} \\to 0$ con $A(t) = e^{gt}$.",
+          "distractor_id": "D-Hab08-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El producto agregado total se expande asintóticamente a la tasa simple n + g sin incorporar la acumulación adicional inducida por la reinversión del excedente de capital.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{Y}/Y = n + g$.",
+          "distractor_id": "D-Hab08-04"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que con progreso neutral multiplicando a toda la función de producción, $K/L$ nunca se estaciona.",
+        "La tasa de crecimiento de $K/L$ en el largo plazo es $g/(1-a)$.",
+        "La relación capital-producto $K/Y$ crece a la tasa $g$."
+      ],
+      "detailed_solution": "En Solow (1956), la relación capital-trabajo crece a $g/(1-a)$, el capital agregado a $n + g/(1-a)$, el producto a $n + ag/(1-a)$, y $K/Y$ a tasa $g$."
+    },
+    {
+      "id": "Q-Hab08-452",
+      "competency_id": "Hab-08",
+      "competency_name": "Incorporación de Progreso Tecnológico Neutral y Dinámica Asintótica del Capital",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo el marco de Solow con neutralidad en el sentido de Hicks y ecuación de producto $Y = e^{0.02t} K^{0.4} L^{1-0.4}$ con $a = 0.4$ y $g = 0.02$, ¿cuál opción describe con precisión el equilibrio asintótico?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La relación capital-trabajo crece perpetuamente a g/(1-a), mientras que el capital total se expande a n + g/(1-a) y la relación capital-producto se incrementa a tasa g.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El producto agregado total se expande asintóticamente a la tasa simple n + g sin incorporar la acumulación adicional inducida por la reinversión del excedente de capital.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{Y}/Y = n + g$.",
+          "distractor_id": "D-Hab08-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El coeficiente de capital K/Y permanece estrictamente estacionario a largo plazo porque la acumulación de capital y la producción agregada se expanden a la misma tasa.",
+          "is_correct": false,
+          "error_rationale": "Declarar que $K/Y$ permanece constante en el modelo de Solow con progreso técnico Hicks-neutral.",
+          "distractor_id": "D-Hab08-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El progreso tecnológico analizado corresponde al tipo Harrod-neutral aumentando únicamente la dotación efectiva de mano de obra según la formulación formal F(K, e^{gt}L).",
+          "is_correct": false,
+          "error_rationale": "Modelar $Y = F(K, A(t)L)$ en lugar de $Y = A(t)F(K, L)$.",
+          "distractor_id": "D-Hab08-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Los salarios reales por trabajador se estancan a largo plazo debido a que el incremento demográfico a tasa n absorbe la totalidad de las ganancias derivadas de la técnica.",
+          "is_correct": false,
+          "error_rationale": "Declarar salario real constante cuando la economía tiene progreso tecnológico exógeno.",
+          "distractor_id": "D-Hab08-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La relación capital-trabajo alcanza un estado estacionario finito donde r permanece constante y la tasa de crecimiento de largo plazo de r se reduce exactamente a cero.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que $\\dot{r} \\to 0$ con $A(t) = e^{gt}$.",
+          "distractor_id": "D-Hab08-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La integración de Bernoulli utiliza el exponente temporal simple n + g sin considerar la renormalización requerida por la ponderación efectiva laboral 1-a en la dinámica.",
+          "is_correct": false,
+          "error_rationale": "Integrar separadamente $e^{gt}$ y $e^{nt(1-a)}$ generando productos cruzados erróneos.",
+          "distractor_id": "D-Hab08-02"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que con progreso neutral multiplicando a toda la función de producción, $K/L$ nunca se estaciona.",
+        "La tasa de crecimiento de $K/L$ en el largo plazo es $g/(1-a)$.",
+        "La relación capital-producto $K/Y$ crece a la tasa $g$."
+      ],
+      "detailed_solution": "En Solow (1956), la relación capital-trabajo crece a $g/(1-a)$, el capital agregado a $n + g/(1-a)$, el producto a $n + ag/(1-a)$, y $K/Y$ a tasa $g$."
+    },
+    {
+      "id": "Q-C09-481",
+      "competency_id": "C-09",
+      "competency_name": "Oferta de Trabajo con Elasticidad Salarial Positiva y Preservación del Estado Estacionario",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Considere la ecuación de acumulación $\\dot{r} = (s F(r, 1) - nr)(1 + ah)^{-1}$ con parámetros $a = 0.4$ y $h = 1.0$. Evalúe cuantitativamente el término de amortiguamiento $1 + a h$:",
+      "options": [],
+      "correct_answer": {
+        "value": "1.4",
+        "canonical_algebraic": "1.4",
+        "accepted_equivalents": [
+          "1.4",
+          "1.4000",
+          "1.40"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique los valores dados de la participación del capital $a$ y la elasticidad salarial $h$.",
+        "Multiplique el parámetro $a$ por la elasticidad $h$.",
+        "Sume $1$ a dicho producto para obtener el factor del denominador."
+      ],
+      "detailed_solution": "Calculamos directamente el término amortiguador: $1 + ah = 1 + (0.4)(1.0) = 1.4$."
+    },
+    {
+      "id": "Q-C09-482",
+      "competency_id": "C-09",
+      "competency_name": "Oferta de Trabajo con Elasticidad Salarial Positiva y Preservación del Estado Estacionario",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "En el modelo de Solow con oferta de trabajo elástica respecto al salario real, la tasa de cambio de la relación capital-trabajo está dada por $\\dot{r} = [s F(r,1) - n r](1 + a h)^{-1}$. Si la elasticidad salarial es $h = 1.2$ y la participación del capital es $a = 0.25$, calcule el valor numérico del factor amortiguador del denominador $1 + a h$:",
+      "options": [],
+      "correct_answer": {
+        "value": "1.3",
+        "canonical_algebraic": "1.3",
+        "accepted_equivalents": [
+          "1.3",
+          "1.3000",
+          "1.30"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique los valores dados de la participación del capital $a$ y la elasticidad salarial $h$.",
+        "Multiplique el parámetro $a$ por la elasticidad $h$.",
+        "Sume $1$ a dicho producto para obtener el factor del denominador."
+      ],
+      "detailed_solution": "Calculamos directamente el término amortiguador: $1 + ah = 1 + (0.25)(1.2) = 1.3$."
+    },
+    {
+      "id": "Q-C10-501",
+      "competency_id": "C-10",
+      "competency_name": "Tasa de Ahorro Endógena Dependiente del Rendimiento del Capital y Garantía de Estabilidad (Figura VIII)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "En la extensión de Solow (1956) con ahorro dependiente del rendimiento del capital (Figura VIII), considere la regla de ahorro decreciente en capital $s(r) = 0.32 - 0.035 r$. Para un ratio capital-trabajo $r = 3.0$, calcule el valor numérico de la propensión al ahorro $s(r)$:",
+      "options": [],
+      "correct_answer": {
+        "value": "0.215",
+        "canonical_algebraic": "0.215",
+        "accepted_equivalents": [
+          "0.215",
+          "0.2150"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique la propensión base $s_0$ y la sensibilidad $\\beta$.",
+        "Multiplique $\\beta$ por el ratio capital-trabajo $r$.",
+        "Reste dicho producto de $s_0$ para obtener $s(r)$."
+      ],
+      "detailed_solution": "Calculamos directamente: $s(r) = 0.32 - (0.035)(3.0) = 0.215$."
+    },
+    {
+      "id": "Q-C10-502",
+      "competency_id": "C-10",
+      "competency_name": "Tasa de Ahorro Endógena Dependiente del Rendimiento del Capital y Garantía de Estabilidad (Figura VIII)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Para una economía con propensión al ahorro variable $s(r) = 0.3 - 0.02 r$ inducida por la productividad marginal del capital, determine el ahorro medio cuando la intensidad de capital es $r = 3.5$:",
+      "options": [],
+      "correct_answer": {
+        "value": "0.23",
+        "canonical_algebraic": "0.23",
+        "accepted_equivalents": [
+          "0.23",
+          "0.2300"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique la propensión base $s_0$ y la sensibilidad $\\beta$.",
+        "Multiplique $\\beta$ por el ratio capital-trabajo $r$.",
+        "Reste dicho producto de $s_0$ para obtener $s(r)$."
+      ],
+      "detailed_solution": "Calculamos directamente: $s(r) = 0.3 - (0.02)(3.5) = 0.23$."
+    },
+    {
+      "id": "Q-H05-521",
+      "competency_id": "H-05",
+      "competency_name": "Incidencia de la Tributación Proporcional sobre la Tasa Efectiva de Acumulación de Capital",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Para una economía con tasa impositiva de 0.25 y ahorro privado de 0.14 donde el Estado invierte el 100% de la recaudación tributaria, calcule la tasa agregada efectiva de ahorro dada por $s + t(1-s)$:",
+      "options": [],
+      "correct_answer": {
+        "value": "0.355",
+        "canonical_algebraic": "0.355",
+        "accepted_equivalents": [
+          "0.355",
+          "0.3550"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Calcule el ahorro privado remanente: $s(1-t)$.",
+        "Sume la inversión pública financiada por impuestos: $t$.",
+        "Combine los términos: $s(1-t) + t = s + t(1-s)$."
+      ],
+      "detailed_solution": "Aplicando la fórmula: $s_{eff} = 0.14 + 0.25(1 - 0.14) = 0.355$."
+    },
+    {
+      "id": "Q-H05-522",
+      "competency_id": "H-05",
+      "competency_name": "Incidencia de la Tributación Proporcional sobre la Tasa Efectiva de Acumulación de Capital",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Considere la fórmula de ahorro efectivo de Solow (1956) con reinversión pública total $s_{eff} = s + t(1-s)$. Con alícuota fiscal 0.28 y ahorro privado 0.12, halle el valor escalar resultante:",
+      "options": [],
+      "correct_answer": {
+        "value": "0.3664",
+        "canonical_algebraic": "0.3664",
+        "accepted_equivalents": [
+          "0.3664",
+          "0.3664"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Calcule el ahorro privado remanente: $s(1-t)$.",
+        "Sume la inversión pública financiada por impuestos: $t$.",
+        "Combine los términos: $s(1-t) + t = s + t(1-s)$."
+      ],
+      "detailed_solution": "Aplicando la fórmula: $s_{eff} = 0.12 + 0.28(1 - 0.12) = 0.3664$."
+    },
+    {
+      "id": "Q-C11-541",
+      "competency_id": "C-11",
+      "competency_name": "Crecimiento Poblacional Endógeno $n(r)$, Trampa Malthusiana y Umbrales Críticos de Inversión (Figura IX)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Determine el incremento neto de capital por trabajador sabiendo que la curva de inversión genera $sy = 0.18$ y la curva de dilución absorbe $nr = 0.22$:",
+      "options": [],
+      "correct_answer": {
+        "value": "-0.04",
+        "canonical_algebraic": "-0.04",
+        "accepted_equivalents": [
+          "-0.04",
+          "-0.0400"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique el flujo de ahorro disponible por trabajador $sy$.",
+        "Identifique la dilución de capital por trabajador $n(r)r$.",
+        "Reste la dilución de la inversión para obtener $\\dot{r}$."
+      ],
+      "detailed_solution": "Calculamos directamente: $\\dot{r} = sy - n(r)r = 0.18 - 0.22 = -0.04$."
+    },
+    {
+      "id": "Q-C11-542",
+      "competency_id": "C-11",
+      "competency_name": "Crecimiento Poblacional Endógeno $n(r)$, Trampa Malthusiana y Umbrales Críticos de Inversión (Figura IX)",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "En el modelo con crecimiento demográfico endógeno $\\dot{r} = s F(r,1) - n(r)r$ (Figura IX), suponga que para un nivel de capital per cápita el ahorro por trabajador es $s y = 0.28$ y el requerimiento demográfico de inversión es $n(r)r = 0.15$. Calcule la velocidad instantánea de acumulación $\\dot{r}$:",
+      "options": [],
+      "correct_answer": {
+        "value": "0.13",
+        "canonical_algebraic": "0.13",
+        "accepted_equivalents": [
+          "0.13",
+          "0.1300"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique el flujo de ahorro disponible por trabajador $sy$.",
+        "Identifique la dilución de capital por trabajador $n(r)r$.",
+        "Reste la dilución de la inversión para obtener $\\dot{r}$."
+      ],
+      "detailed_solution": "Calculamos directamente: $\\dot{r} = sy - n(r)r = 0.28 - 0.15 = 0.13$."
+    },
+    {
+      "id": "Q-C12-561",
+      "competency_id": "C-12",
+      "competency_name": "Salarios Reales Rígidos, Brecha de Empleo y Límites de la Ajustabilidad Neoclásica",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Para una economía donde la rigidez salarial impone una relación técnica constante $\\bar{r} = 6.0$ con productividad media de 3.0 y ahorro de 0.15, calcule la tasa continua de expansión del empleo $\\dot{L}/L = (s/\\bar{r})f(\\bar{r})$:",
+      "options": [],
+      "correct_answer": {
+        "value": "0.075",
+        "canonical_algebraic": "0.075",
+        "accepted_equivalents": [
+          "0.075",
+          "0.0750"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique la propensión al ahorro $s$.",
+        "Multiplique $s$ por el producto por trabajador $f(\\bar{r})$.",
+        "Divida dicho producto entre la relación técnica rígida $\\bar{r}$."
+      ],
+      "detailed_solution": "La tasa de crecimiento del empleo es $g_L = (s / \\bar{r}) f(\\bar{r}) = (0.15 / 6.0)(3.0) = 0.075$."
+    },
+    {
+      "id": "Q-C12-562",
+      "competency_id": "C-12",
+      "competency_name": "Salarios Reales Rígidos, Brecha de Empleo y Límites de la Ajustabilidad Neoclásica",
+      "type": "fill_in_the_blank",
+      "difficulty": "easy",
+      "stem": "Considere la ecuación de absorción de mano de obra bajo salario rígido en Solow (1956 sección VII). Con $\\bar{r} = 8.0$, $f(\\bar{r}) = 2.0$ y propensión al ahorro de 0.25, halle el valor cuantitativo de $g_L$:",
+      "options": [],
+      "correct_answer": {
+        "value": "0.0625",
+        "canonical_algebraic": "0.0625",
+        "accepted_equivalents": [
+          "0.0625",
+          "0.0625"
+        ],
+        "tolerance": 0.001
+      },
+      "hints_count": 3,
+      "hints": [
+        "Identifique la propensión al ahorro $s$.",
+        "Multiplique $s$ por el producto por trabajador $f(\\bar{r})$.",
+        "Divida dicho producto entre la relación técnica rígida $\\bar{r}$."
+      ],
+      "detailed_solution": "La tasa de crecimiento del empleo es $g_L = (s / \\bar{r}) f(\\bar{r}) = (0.25 / 8.0)(2.0) = 0.0625$."
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [
+      {
+        "id": "Q-C02-075",
+        "competency_id": "C-02",
+        "stem": "Para un régimen estacionario con $s\\phi'(\\bar{k}) = 2$ y tasa de dilución $\\lambda = 17$, obtenga el valor absoluto de la derivada direccional de la línea de fase $|\\frac{d\\dot{k}{dk}|_{k=\\bar{k}$:",
+        "options": [],
+        "hints": [
+          "Derive la ecuación fundamental dk/dt = s phi(k) - lambda k respecto a k.",
+          "Evalúe la derivada en k = k_bar: d(k_dot)/dk = s phi'(k_bar) - lambda.",
+          "Calcule la magnitud absoluta |2 - 17| = 17 - 2."
+        ],
+        "detailed_solution": "La derivada de la línea de fase es d(k_dot)/dk = s phi'(k_bar) - lambda = 2 - 17 = -15. Su valor absoluto es 15.",
+        "detected_issues": [
+          "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-C02-076",
+        "competency_id": "C-02",
+        "stem": "En el estado uniforme $\\bar{k}$, la pendiente de la curva de ahorro es $s\\phi'(\\bar{k}) = 5$ y la pendiente del rayo demográfico es $\\lambda = 24$. Calcule la magnitud absoluta de la pendiente de la línea de fase $|\\frac{d\\dot{k}{dk}| = |s\\phi'(\\bar{k}) - \\lambda|$ que garantiza la estabilidad asintótica:",
+        "options": [],
+        "hints": [
+          "Derive la ecuación fundamental dk/dt = s phi(k) - lambda k respecto a k.",
+          "Evalúe la derivada en k = k_bar: d(k_dot)/dk = s phi'(k_bar) - lambda.",
+          "Calcule la magnitud absoluta |5 - 24| = 24 - 5."
+        ],
+        "detailed_solution": "La derivada de la línea de fase es d(k_dot)/dk = s phi'(k_bar) - lambda = 5 - 24 = -19. Su valor absoluto es 19.",
+        "detected_issues": [
+          "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-C02-078",
+        "competency_id": "C-02",
+        "stem": "Para un régimen estacionario con $s\\phi'(\\bar{k}) = 5$ y tasa de dilución $\\lambda = 23$, obtenga el valor absoluto de la derivada direccional de la línea de fase $|\\frac{d\\dot{k}{dk}|_{k=\\bar{k}$:",
+        "options": [],
+        "hints": [
+          "Derive la ecuación fundamental dk/dt = s phi(k) - lambda k respecto a k.",
+          "Evalúe la derivada en k = k_bar: d(k_dot)/dk = s phi'(k_bar) - lambda.",
+          "Calcule la magnitud absoluta |5 - 23| = 23 - 5."
+        ],
+        "detailed_solution": "La derivada de la línea de fase es d(k_dot)/dk = s phi'(k_bar) - lambda = 5 - 23 = -18. Su valor absoluto es 18.",
+        "detected_issues": [
+          "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-C02-081",
+        "competency_id": "C-02",
+        "stem": "En el punto de corte del diagrama de fase de Solow, la inversión de equilibrio es $s\\phi(\\bar{k}) = 76$ y el coeficiente de dilución demográfica es $\\lambda = 2$. Calcule el capital intensivo de estado uniforme $\\bar{k} = \\frac{s\\phi(\\bar{k})}{\\lambda}$:",
+        "options": [],
+        "hints": [
+          "Plantee la condición de reposo s phi(k_bar) = lambda k_bar.",
+          "Despeje k_bar dividiendo la inversión entre lambda.",
+          "Calcule k_bar = 76 / 2."
+        ],
+        "detailed_solution": "Igualando ahorro y dilución, k_bar = s phi(k_bar) / lambda = 76 / 2 = 38.",
+        "detected_issues": [
+          "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-Hab03-201",
+        "competency_id": "Hab-03",
+        "stem": "A partir de la tasa relativa del capital por trabajador $\\frac{\\dot{r}{r} = \\frac{\\dot{K}{K} - \\frac{\\dot{L}{L}$ con acumulación $\\dot{K} = sF(K, L)$ y crecimiento demográfico $\\dot{L}/L = n$, determine la deducción formal de la ecuación fundamental $\\dot{r}$ para $s = 27\\%$ y $n = 1\\%$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\dot{r} = sF(r, 1) - nr$, interpretando $r$ como la trayectoria temporal de la tasa de interés real del mercado financiero.",
+            "is_correct": false,
+            "error_rationale": "Tratar a $\\dot{r}$ como la dinámica de la tasa de interés bancaria.",
+            "distractor_id": "D-Hab03-04"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\dot{r} = sF(r, 1)$, omitiendo la detracción demográfica $-nr$ requerida para mantener constante la dotación de capital por operario.",
+            "is_correct": false,
+            "error_rationale": "$\\dot{r} = sF(r, 1)$, ignorando el término de mantenimiento demográfico $-nr$.",
+            "distractor_id": "D-Hab03-06"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\dot{r} = \\frac{sF(r, 1)}{r} - n$, prescindiendo de multiplicar la tasa relativa de crecimiento por el nivel de la variable $r$.",
+            "is_correct": false,
+            "error_rationale": "Escribir $\\dot{r} = \\frac{sF(r,1)}{r} - n$ olvidando multiplicar por $r$.",
+            "distractor_id": "D-Hab03-02"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\dot{r} = nr - sF(r, 1)$, invirtiendo la derivada logarítmica de $r = K/L$ al escribir $\\frac{\\dot{r}{r} = \\frac{\\dot{L}{L} - \\frac{\\dot{K}{K}$.",
+            "is_correct": false,
+            "error_rationale": "$\\dot{r}/r = n - \\dot{K}/K$, invirtiendo los signos de la ecuación dinámica.",
+            "distractor_id": "D-Hab03-01"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$\\dot{r} = sC - nr$, considerando que el producto medio $F(r, 1)$ permanece constante ante variaciones en la intensidad factorial.",
+            "is_correct": false,
+            "error_rationale": "Integrar $\\dot{r} = sF(r,1) - nr$ considerando a $F(r,1)$ como una constante independiente de $r$.",
+            "distractor_id": "D-Hab03-05"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$\\dot{r} = sF(r, 1) - nr$, sustituyendo $\\frac{F(K,L)}{K} = \\frac{F(r,1)}{r}$ por homogeneidad lineal y multiplicando por $r$.",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$\\dot{r} = s\\frac{F(K, L)}{K} - nr$, manteniendo la formulación bivariada sin aplicar la propiedad de homogeneidad lineal a la función.",
+            "is_correct": false,
+            "error_rationale": "Mantener términos mixtos $F(K, L)/K$ sin reducir a la función intensiva univariada $F(r, 1)/r$.",
+            "distractor_id": "D-Hab03-03"
+          }
+        ],
+        "hints": [
+          "Comience diferenciando con respecto al tiempo la definición r = K/L para obtener r_punto / r = K_punto / K - L_punto / L.",
+          "Sustituya K_punto / K = s F(K, L) / K y utilice la homogeneidad de grado uno para escribir F(K, L) / K = F(r, 1) / r.",
+          "Multiplique toda la ecuación por r para despejar r_punto en niveles."
+        ],
+        "detailed_solution": "Diferenciando logarítmicamente $r = K/L$ obtenemos $\\frac{\\dot{r}{r} = \\frac{\\dot{K}{K} - \\frac{\\dot{L}{L} = \\frac{sF(K,L)}{K} - n$. Por homogeneidad de grado 1, $F(K,L)/K = F(r,1)/r$. Multiplicando por $r$ se deduce $\\dot{r} = sF(r,1) - nr$.",
+        "detected_issues": [
+          "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'stem'",
+          "[CRITICAL] Comando KaTeX anidado con llaves sin cerrar en 'solution_text'"
+        ]
+      }
+    ],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [],
+    "template_residues": [
+      {
+        "id": "Q-C01-021",
+        "competency_id": "C-01",
+        "stem": "Considere una economía neoclásica con función de producción intensiva $\\phi(k) = 8 \\sqrt{k}$. Si la dotación de capital por trabajador es $k = 4$, determine el valor numérico del producto marginal del capital $\\phi'(k) = f_K$:",
+        "options": [],
+        "hints": [
+          "Derive phi(k) respecto a k: phi'(k) = d/dk [c sqrt(k)] = c / (2 sqrt(k)).",
+          "Sustituya k = 4 obteniendo sqrt(4).",
+          "Divida c_val entre 2 sqrt(k) para hallar phi'(k)."
+        ],
+        "detailed_solution": "La derivada es phi'(k) = 8 / (2 sqrt(4)). Como sqrt(4) = 8/(2*2), se obtiene phi'(k) = 2.",
+        "detected_issues": [
+          "[WARNING] Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'"
+        ]
+      },
+      {
+        "id": "Q-C01-022",
+        "competency_id": "C-01",
+        "stem": "Dada la función per cápita $\\phi(k) = 18 \\sqrt{k}$, calcule el valor exacto de la productividad marginal del capital $\\phi'(k)$ cuando el ratio capital-trabajo es $k = 9$:",
+        "options": [],
+        "hints": [
+          "Derive phi(k) respecto a k: phi'(k) = d/dk [c sqrt(k)] = c / (2 sqrt(k)).",
+          "Sustituya k = 9 obteniendo sqrt(9).",
+          "Divida c_val entre 2 sqrt(k) para hallar phi'(k)."
+        ],
+        "detailed_solution": "La derivada es phi'(k) = 18 / (2 sqrt(9)). Como sqrt(9) = 18/(2*3), se obtiene phi'(k) = 3.",
+        "detected_issues": [
+          "[WARNING] Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'"
+        ]
+      },
+      {
+        "id": "Q-C01-023",
+        "competency_id": "C-01",
+        "stem": "Para una tecnología de Solow con $\\phi(k) = 16 \\sqrt{k}$, halle el producto marginal del capital $f_K = \\phi'(k)$ evaluado en el nivel factorial $k = 16$:",
+        "options": [],
+        "hints": [
+          "Derive phi(k) respecto a k: phi'(k) = d/dk [c sqrt(k)] = c / (2 sqrt(k)).",
+          "Sustituya k = 16 obteniendo sqrt(16).",
+          "Divida c_val entre 2 sqrt(k) para hallar phi'(k)."
+        ],
+        "detailed_solution": "La derivada es phi'(k) = 16 / (2 sqrt(16)). Como sqrt(16) = 16/(2*2), se obtiene phi'(k) = 2.",
+        "detected_issues": [
+          "[WARNING] Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'"
+        ]
+      },
+      {
+        "id": "Q-C01-024",
+        "competency_id": "C-01",
+        "stem": "Considere una economía neoclásica con función de producción intensiva $\\phi(k) = 28 \\sqrt{k}$. Si la dotación de capital por trabajador es $k = 4$, determine el valor numérico del producto marginal del capital $\\phi'(k) = f_K$:",
+        "options": [],
+        "hints": [
+          "Derive phi(k) respecto a k: phi'(k) = d/dk [c sqrt(k)] = c / (2 sqrt(k)).",
+          "Sustituya k = 4 obteniendo sqrt(4).",
+          "Divida c_val entre 2 sqrt(k) para hallar phi'(k)."
+        ],
+        "detailed_solution": "La derivada es phi'(k) = 28 / (2 sqrt(4)). Como sqrt(4) = 28/(2*7), se obtiene phi'(k) = 7.",
+        "detected_issues": [
+          "[WARNING] Variable de código o plantilla sin interpolar 'c_val' en 'hint_2'"
+        ]
+      }
+    ],
+    "blind_replacements": [
+      {
+        "id": "Q-Hab03-211",
+        "competency_id": "Hab-03",
+        "stem": "Para los parámetros $s = 25\\%$, $y = 40$, $n = 4\\%$ y nivel intensivo $r = 200$, determine la velocidad de acumulación de capital por trabajador $\\dot200$:",
+        "options": [],
+        "hints": [
+          "Calcule la inversión por trabajador multiplicando la propensión al ahorro s por el producto per cápita y.",
+          "Calcule el mantenimiento demográfico multiplicando la tasa de crecimiento poblacional n por la dotación de capital r.",
+          "Reste la dilución de la inversión: r_punto = s*y - n*r."
+        ],
+        "detailed_solution": "Aplicando la ecuación fundamental: $\\dot200 = s y - n r = \\frac{25}{100} \\cdot 40 - \\frac{4}{100} \\cdot 200 = 2$.",
+        "detected_issues": [
+          "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot200' en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-Hab03-212",
+        "competency_id": "Hab-03",
+        "stem": "Bajo la ecuación fundamental $\\dot100 = sy - nr$, evalúe el valor numérico de $\\dot100$ para $s = 35\\%$, $y = 100$, $n = 2\\%$ y $r = 100$:",
+        "options": [],
+        "hints": [
+          "Calcule la inversión por trabajador multiplicando la propensión al ahorro s por el producto per cápita y.",
+          "Calcule el mantenimiento demográfico multiplicando la tasa de crecimiento poblacional n por la dotación de capital r.",
+          "Reste la dilución de la inversión: r_punto = s*y - n*r."
+        ],
+        "detailed_solution": "Aplicando la ecuación fundamental: $\\dot100 = s y - n r = \\frac{35}{100} \\cdot 100 - \\frac{2}{100} \\cdot 100 = 33$.",
+        "detected_issues": [
+          "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot100' en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-Hab03-213",
+        "competency_id": "Hab-03",
+        "stem": "Si una economía presenta una propensión al ahorro $s = 20\\%$, un producto por trabajador $y = 40$, una tasa demográfica $n = 3\\%$ y una relación capital-trabajo actual $r = 100$, calcule la tasa de variación instantánea $\\dot100$.",
+        "options": [],
+        "hints": [
+          "Calcule la inversión por trabajador multiplicando la propensión al ahorro s por el producto per cápita y.",
+          "Calcule el mantenimiento demográfico multiplicando la tasa de crecimiento poblacional n por la dotación de capital r.",
+          "Reste la dilución de la inversión: r_punto = s*y - n*r."
+        ],
+        "detailed_solution": "Aplicando la ecuación fundamental: $\\dot100 = s y - n r = \\frac{20}{100} \\cdot 40 - \\frac{3}{100} \\cdot 100 = 5$.",
+        "detected_issues": [
+          "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot100' en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-Hab03-214",
+        "competency_id": "Hab-03",
+        "stem": "Para los parámetros $s = 35\\%$, $y = 100$, $n = 3\\%$ y nivel intensivo $r = 100$, determine la velocidad de acumulación de capital por trabajador $\\dot100$:",
+        "options": [],
+        "hints": [
+          "Calcule la inversión por trabajador multiplicando la propensión al ahorro s por el producto per cápita y.",
+          "Calcule el mantenimiento demográfico multiplicando la tasa de crecimiento poblacional n por la dotación de capital r.",
+          "Reste la dilución de la inversión: r_punto = s*y - n*r."
+        ],
+        "detailed_solution": "Aplicando la ecuación fundamental: $\\dot100 = s y - n r = \\frac{35}{100} \\cdot 100 - \\frac{3}{100} \\cdot 100 = 32$.",
+        "detected_issues": [
+          "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot100' en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-Hab03-215",
+        "competency_id": "Hab-03",
+        "stem": "Bajo la ecuación fundamental $\\dot200 = sy - nr$, evalúe el valor numérico de $\\dot200$ para $s = 30\\%$, $y = 60$, $n = 3\\%$ y $r = 200$:",
+        "options": [],
+        "hints": [
+          "Calcule la inversión por trabajador multiplicando la propensión al ahorro s por el producto per cápita y.",
+          "Calcule el mantenimiento demográfico multiplicando la tasa de crecimiento poblacional n por la dotación de capital r.",
+          "Reste la dilución de la inversión: r_punto = s*y - n*r."
+        ],
+        "detailed_solution": "Aplicando la ecuación fundamental: $\\dot200 = s y - n r = \\frac{30}{100} \\cdot 60 - \\frac{3}{100} \\cdot 200 = 12$.",
+        "detected_issues": [
+          "[CRITICAL] Sustitución ciega de variable bajo operador diferencial '\\dot200' en 'stem'"
+        ]
+      }
+    ]
+  },
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-13 01:00:13",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}

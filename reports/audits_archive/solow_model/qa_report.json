@@ -1,0 +1,63 @@
+{
+  "course_metadata": {
+    "course_id": "solow_model",
+    "unit_title": "El Modelo de Crecimiento Económico de Solow: Teoría, Dinámica y Métodos Cuantitativos",
+    "detected_objective": "Modelar, resolver e interpretar la dinámica de acumulación de capital, transición asintótica y equilibrios de estado uniforme en el modelo neoclásico de crecimiento de Solow, identificando las consecuencias de la sustitución factorial, el progreso técnico y las políticas económicas.",
+    "total_competencies": 22,
+    "total_questions": 530,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 194,
+      "fill_in_the_blank": 168,
+      "multiple_select": 168
+    }
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Excelente arquitectura curricular altamente atómica compuesta por 22 micro-competencias equilibradas entre Hechos (3 Facts), Conceptos (10 Concepts) y Habilidades analítico-cuantitativas (9 Skills). El Grafo Acíclico Dirigido (DAG) de prerrequisitos se encuentra 100% formalizado a partir de la competencia raíz H-01, sin ciclos ni desconexiones, asegurando una ruta secuencial y adaptativa óptima para Mastery Learning. Cada micro-competencia cuenta con entre 20 y 30 reactivos independientes."
+    },
+    "assessment_quality": {
+      "score": 4.8,
+      "max": 5.0,
+      "feedback": "Banco evaluativo robusto y diversificado de 530 reactivos con distribución balanceada (194 MC7, 168 FIB, 168 MS). Los distractores son plausibles y diagnósticos, capturando conceptos erróneos frecuentes de la literatura de crecimiento económico (desajuste de tasas natural vs garantizada en Harrod-Domar, derivadas internas en Bernoulli, bifurcaciones CES, confusiones entre variables per cápita y agregadas). Cobertura del 100% en explicaciones pedagógicas de error (error_rationale presente en los 1,608 distractores evaluados). Cero fugas de respuesta (answer leaks) y cero distractores delatores con metainformación visible de error ('erróneamente', 'falsamente')."
+    },
+    "scaffolding_hints": {
+      "score": 4.8,
+      "max": 5.0,
+      "feedback": "Andamiaje socrático progresivo riguroso en el 100% de los reactivos (530 de 530 cuentan exactamente con 3 pistas escalonadas: Pista 1 Conceptual -> Pista 2 Procedimental -> Pista 3 Operativa/Cálculo paso a paso). Cero reactivos con pistas faltantes o insuficientes. Soluciones analíticas detalladas y exhaustivas presentes en el 100% del banco, sin residuos de placeholders f-string ni variables de plantilla."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Congruencia semántica absoluta entre el objetivo formativo, la formulación teórica de Solow (1956) / Chiang cap. 15 y el instrumental evaluativo. Cobertura matemática integral de las Figuras I, II, III y IX, estabilidad en diagrama de fases, ecuaciones de Bernoulli, regímenes Leontief, familia CES p=1/2, precios factoriales de equilibrio, progreso técnico exógeno neutral y trampas malthusianas. Predominio claro de niveles taxonómicos de Bloom en Aplicación y Análisis, con cero preguntas huérfanas y nula contaminación cruzada inter-dominio."
+    },
+    "technical_ergonomics": {
+      "score": 2.0,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica impecable. Expresiones matemáticas formalmente compilables en KaTeX con delimitadores balanceados ($...$ / $$...$$). Cero llaves desbalanceadas, cero delimitadores triples espurios ($$$) y cero dobles llaves residuales ({{...}}). Notación diferencial estandarizada y preservada íntegramente (\\dot{k}, \\dot{r}, \\dot{K}, \\dot{L}, \\phi'(k), \\phi''(k)). Prosa limpia, rigurosa y fluido renderizado frontend."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 19.6,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "remediation_actions": [
+    "Aprobación técnica e instruccional para producción inmediata en la plataforma interactiva Top's Academy.",
+    "Mantener la suite de linters deterministas estáticos en el pipeline de CI/CD para salvaguardar la invariancia de KaTeX, andamiaje de 3 pistas y cobertura de rationales al 100%.",
+    "Recomendación menor: Estandarizar la notación matemática en opciones de texto plano ('phi(k)/k', 'f_KK < 0') encapsulándolas de forma homogénea entre delimitadores KaTeX '$...$' para uniformidad tipográfica visual."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "plain_math_in_option_text_linter",
+      "severity": "low",
+      "description": "Detecta expresiones matemáticas o derivadas en texto plano ASCII dentro de las opciones de respuesta (ej. 'phi(k)/k', 'f_KK < 0', 's* =') que podrían ser encapsuladas en delimitadores KaTeX '$...$' para lograr máxima consistencia tipográfica.",
+      "regex_pattern": "\\b(?:phi|psi|alpha|beta|lambda|gamma|sigma)\\s*\\([a-zA-Z0-9_]+\\)|\\b[a-zA-Z]_[A-Z]{2}\\s*(?:[<>=]|\\b)",
+      "evidence_items": [
+        "Q-H01-001",
+        "Q-H01-002",
+        "Q-C01-021",
+        "Q-C01-022"
+      ]
+    }
+  ]
+}
