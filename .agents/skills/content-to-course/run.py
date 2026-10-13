@@ -178,8 +178,6 @@ class PipelineRunner:
         elif self.raw_pdf:
             first_path = Path(self.raw_pdf[0] if isinstance(self.raw_pdf, (list, tuple)) else self.raw_pdf)
             self.work_dir = Path("courses") / sanitize_slug(first_path.stem) / "work"
-        elif Path("work").is_dir():
-            self.work_dir = Path("work")
         else:
             self.work_dir = Path("courses") / "custom_course" / "work"
 
@@ -250,6 +248,12 @@ class PipelineRunner:
         manifest_file = self.work_dir / "pages" / "manifest.json"
         if not manifest_file.is_file():
             raise RuntimeError(f"Prepare failed: manifest.json was not created at {manifest_file}")
+
+        # Pre-seed immutable compile_cta.py compiler in canonical work_dir
+        compile_src = skill_dir / "compile_cta.py"
+        if compile_src.is_file():
+            import shutil
+            shutil.copy2(compile_src, self.work_dir / "compile_cta.py")
 
         b = prep_res["budget"]
         print(f"  [+] Manifest generated with {prep_res['manifest'].get('total_items', 0)} items.")
@@ -353,7 +357,7 @@ class PipelineRunner:
                 logger.warning("Could not auto-sanitize cta.json math: %s", e)
 
         # Validate CTA schema and rules CTA-D1, CTA-D2
-        is_valid, errors = validate_cta_rules(cta_data, manifest_data=manifest_data)
+        is_valid, errors = validate_cta_rules(cta_data, manifest_data=manifest_data, file_path=cta_file)
         if not is_valid:
             print("\n[ERROR] cta.json failed validation:", file=sys.stderr)
             for err in errors:

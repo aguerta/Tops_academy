@@ -26,7 +26,16 @@ Trabaja únicamente con los archivos listados para tu tarea asignada.
    - Carefully read the stem, interaction type, and rendered LaTeX equations/parameters.
    - Analytically compute the exact mathematical answer from first principles.
    - For `multiple_choice_7_options`: select the single correct option based purely on mathematical validity.
-   - For `fill_in_the_blank`: provide your computed numeric or symbolic value.
+   - For `fill_in_the_blank`: provide your computed numeric or symbolic value according to the item's explicit `answer_contract`:
+     ```json
+     "answer_contract": {
+       "expected_type": "float",
+       "decimal_places": 2,
+       "tolerance": 0.01,
+       "format_example": "2.80 o 2.8"
+     }
+     ```
+     Emit the number formatted according to `expected_type` and `decimal_places` (or standard float with decimal point). The evaluation system compares values using `math.isclose(cand, target, abs_tol=tolerance)` with default 0.01 tolerance, so minor floating-point representation differences within tolerance are accepted seamlessly.
    - For `multiple_select`: identify all logically true statements.
 3. Output your solutions to `work/judge_responses_<id>.json` matching the required judge schema:
    ```json
