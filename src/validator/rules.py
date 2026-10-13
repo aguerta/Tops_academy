@@ -403,8 +403,31 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                 continue
             start = m.start()
             prefix = text[:start]
-            # Valid LaTeX macro preceding: e.g. \text{, \frac{a}{b}, \begin{cases}
+            # Valid LaTeX macro preceding: e.g. \text{, \frac{a}{b}, \frac{\dot{k}}{k}, \begin{cases}
+            is_latex_arg = False
             if re.search(r"\\[a-zA-Z]+(?:\s*\{[^{}]*\})*\s*$", prefix):
+                is_latex_arg = True
+            elif prefix.rstrip().endswith("}"):
+                s_pref = prefix.rstrip()
+                while s_pref.endswith("}"):
+                    d_depth = 0
+                    d_idx = len(s_pref) - 1
+                    while d_idx >= 0:
+                        if s_pref[d_idx] == "}":
+                            d_depth += 1
+                        elif s_pref[d_idx] == "{":
+                            d_depth -= 1
+                            if d_depth == 0:
+                                break
+                        d_idx -= 1
+                    if d_depth == 0 and d_idx >= 0:
+                        s_pref = s_pref[:d_idx].rstrip()
+                        if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?$", s_pref):
+                            is_latex_arg = True
+                            break
+                    else:
+                        break
+            if is_latex_arg:
                 continue
             # Subscripts and superscripts: _{...}, ^{...}
             if re.search(r"[_^]\s*$", prefix):
