@@ -1,47 +1,68 @@
 {
   "course_metadata": {
     "course_id": "solow_model",
-    "unit_title": "Modelo de Crecimiento de Solow",
-    "detected_objective": "Modelar, resolver y analizar cualitativa y cuantitativamente la dinámica intertemporal, estados estacionarios, estabilidad asintótica, linealización de Bernoulli, regla de oro de acumulación, estática comparativa y extensiones estructurales (tecnología Hicks, coeficientes fijos Leontief, equilibrios múltiples/trampas de pobreza y sector público) del Modelo de Crecimiento de Solow en tiempo continuo.",
-    "total_competencies": 44,
-    "total_questions": 1040
+    "unit_title": "El Modelo de Crecimiento Económico de Solow: Teoría, Dinámica y Métodos Cuantitativos",
+    "detected_objective": "Modelar, resolver e interpretar la dinámica de acumulación de capital, transición asintótica y equilibrios de estado uniforme en el modelo neoclásico de crecimiento de Solow, identificando las consecuencias de la sustitución factorial, el progreso técnico y las políticas económicas.",
+    "total_competencies": 22,
+    "total_questions": 530,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 194,
+      "fill_in_the_blank": 168,
+      "multiple_select": 168
+    },
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-10-12 23:30:29"
   },
   "dimension_scores": {
     "architecture_granularity": {
-      "score": 3.3,
+      "score": 4.0,
       "max": 4.0,
-      "feedback": "Estructuración micro-granular de alto nivel compuesta por 44 micro-competencias atómicas con balance categorial sólido entre Hechos (Facts: 6), Conceptos (Concepts: 22) y Habilidades analítico-operativas (Skills: 16), respaldadas por un volumen masivo de 1,040 reactivos (20 a 30 por competencia, mastery_target = 100). No obstante, la arquitectura es completamente plana: carece de jerarquización en módulos/subunidades temáticas intermedias y adolece de una ausencia total de modelado de dependencias o prerrequisitos formativos (0 de 44 competencias poseen prerrequisitos declarados), lo que imposibilita la navegación adaptativa y la validación secuencial formal exigida por Mastery Learning."
+      "feedback": "Excelente arquitectura curricular altamente atómica compuesta por 22 micro-competencias equilibradas entre Hechos (3 Facts), Conceptos (10 Concepts) y Habilidades analítico-cuantitativas (9 Skills). El Grafo Acíclico Dirigido (DAG) de prerrequisitos se encuentra 100% formalizado a partir de la competencia raíz H-01, sin ciclos ni desconexiones, asegurando una ruta secuencial y adaptativa óptima para Mastery Learning. Cada micro-competencia cuenta con entre 20 y 30 reactivos independientes."
     },
     "assessment_quality": {
-      "score": 3.2,
+      "score": 4.8,
       "max": 5.0,
-      "feedback": "Banco evaluativo diverso y robusto con 3 tipologías equilibradas: selección múltiple (444), fill-in-the-blank (436) y opción múltiple de 7 alternativas (160). Cobertura del 100% en explicaciones diagnósticas de error (error_rationale presente en las 2,071 opciones incorrectas del curso). Cero fugas textuales directas en enunciados. Sin embargo, se penaliza debido a dos fallas psicométricas y conceptuales severas: (1) Corrupción matemática crítica en opciones marcadas como correctas en Q-C04-169, Q-C04-170 y Q-C04-171, donde se afirma textualmente que la concavidad de la función de producción equivale a un producto negativo ('\\phi(k) < 0') en lugar de la segunda derivada negativa ('\\phi''(k) < 0'); (2) Presencia de metainformación delatora (telltale distractor confessions) en 130 opciones de respuesta distribuidas en competencias clave (Hab-01, Hab-04, Hab-11, Hab-13, Hab-14, Hab-16), donde los distractores visibles confiesan su propia falsedad ('tras factorizar erróneamente con signos positivos', 'calculando la derivada errónea...', 'omitiendo elevar a...'), permitiendo su descarte por simple inspección léxica; y (3) Clonación paramétrica mecánica en los reactivos numéricos fill-in-the-blank."
+      "feedback": "Banco evaluativo robusto y diversificado de 530 reactivos con distribución balanceada (194 MC7, 168 FIB, 168 MS). Los distractores son plausibles y diagnósticos, capturando conceptos erróneos frecuentes de la literatura de crecimiento económico (desajuste de tasas natural vs garantizada en Harrod-Domar, derivadas internas en Bernoulli, bifurcaciones CES, confusiones entre variables per cápita y agregadas). Cobertura del 100% en explicaciones pedagógicas de error (error_rationale presente en los 1,608 distractores evaluados). Cero fugas de respuesta (answer leaks) y cero distractores delatores con metainformación visible de error ('erróneamente', 'falsamente')."
     },
     "scaffolding_hints": {
-      "score": 3.7,
+      "score": 4.8,
       "max": 5.0,
-      "feedback": "Cumplimiento normativo estricto en andamiaje cuantitativo: exactamente 3 pistas escalonadas (hints_count = 3) y solución detallada completa (detailed_solution) en el 100% de los reactivos (1,040 de 1,040), siguiendo una progresión socrática funcional (conceptual -> procedimental -> cálculo paso a paso). Sin embargo, se descuenta puntaje por dos limitaciones: (1) Las 436 preguntas de tipo fill-in-the-blank (41.9% del curso) presentan una advertencia de ideas preconcebidas ('misconception_warning') genérica y estática repetida por plantilla ('Verifique cuidadosamente los supuestos y cálculos antes de seleccionar su respuesta'), perdiendo valor formativo frente a las advertencias especializadas de los ítems de opción múltiple; y (2) 127 pistas presentan comandos LaTeX huérfanos sin delimitar ('\\dot{y}') y más de 900 pistas recurren a pseudocódigo o texto plano ('f(y) = a - b*y') sin compilación matemática."
+      "feedback": "Andamiaje socrático progresivo riguroso en el 100% de los reactivos (530 de 530 cuentan exactamente con 3 pistas escalonadas: Pista 1 Conceptual -> Pista 2 Procedimental -> Pista 3 Operativa/Cálculo paso a paso). Cero reactivos con pistas faltantes o insuficientes. Soluciones analíticas detalladas y exhaustivas presentes en el 100% del banco, sin residuos de placeholders f-string ni variables de plantilla."
     },
     "instructional_alignment": {
-      "score": 3.8,
+      "score": 4.0,
       "max": 4.0,
-      "feedback": "Alineación pedagógica sobresaliente entre el marco teórico y el banco de evaluación. Excelente distribución en la taxonomía de Bloom con fuerte predominio de competencias cognitivas superiores: 67.5% de los reactivos se sitúan en niveles de Aplicación (428) y Análisis (274), frente a 26.7% en Comprensión (278) y solo 5.8% en Memoria (60). Cero preguntas huérfanas: el 100% de los 1,040 reactivos mapea de manera coherente con su competencia declarada sin contaminación cruzada inter-dominio. Deducción menor debido a que algunas competencias categorizadas como Hechos (Facts, ej. H-01 y H-04) contienen problemas de cálculo numérico que corresponden propiamente a Habilidades aplicadas."
+      "feedback": "Congruencia semántica absoluta entre el objetivo formativo, la formulación teórica de Solow (1956) / Chiang cap. 15 y el instrumental evaluativo. Cobertura matemática integral de las Figuras I, II, III y IX, estabilidad en diagrama de fases, ecuaciones de Bernoulli, regímenes Leontief, familia CES p=1/2, precios factoriales de equilibrio, progreso técnico exógeno neutral y trampas malthusianas. Predominio claro de niveles taxonómicos de Bloom en Aplicación y Análisis, con cero preguntas huérfanas y nula contaminación cruzada inter-dominio."
     },
     "technical_ergonomics": {
-      "score": 1.3,
+      "score": 2.0,
       "max": 2.0,
-      "feedback": "Estructura global funcional y delimitación general balanceada (0 delimitadores '$' desbalanceados o abiertos en todo el corpus). No obstante, se descuenta puntaje por: (1) Persistencia de 21 dobles llaves espurias '{{...}}' en campos de rationales diagnósticos ('{{y}}', '{{r}}') originadas por artefactos de f-strings en Python; (2) 127 pistas con comandos LaTeX expuestos en texto plano sin delimitar ('\\dot{y}', '\\bar{z}'); y (3) Notación híbrida de variables entre módulos (uso indistinto de 'k' y 'r' para el ratio capital-trabajo) sin notas de unificación formal para el estudiante."
+      "feedback": "Ergonomía técnica impecable. Expresiones matemáticas formalmente compilables en KaTeX con delimitadores balanceados ($...$ / $$...$$). Cero llaves desbalanceadas, cero delimitadores triples espurios ($$$) y cero dobles llaves residuales ({{...}}). Notación diferencial estandarizada y preservada íntegramente (\\dot{k}, \\dot{r}, \\dot{K}, \\dot{L}, \\phi'(k), \\phi''(k)). Prosa limpia, rigurosa y fluido renderizado frontend."
     }
   },
   "penalties_applied": [],
-  "final_score": 15.3,
-  "quality_tier": "ACEPTABLE (14-16)",
+  "final_score": 19.6,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
   "remediation_actions": [
-    "Corregir inmediatamente la corrupción matemática en las opciones correctas de Q-C04-169 (opción C), Q-C04-170 (opción D) y Q-C04-171 (opción C), reemplazando '\\phi(k) < 0' por '\\phi''(k) < 0' para erradicar la afirmación de que los rendimientos decrecientes conllevan un producto por trabajador negativo.",
-    "Eliminar la metainformación delatora en los 130 distractores identificados en Hab-01, Hab-04, Hab-11, Hab-13, Hab-14 y Hab-16, suprimiendo confesiones explícitas de fallo en el texto visible ('erróneamente', 'derivada errónea', 'omitiendo elevar', 'falsamente') y sustituyéndolas por resultados plausibles sin pistas metacognitivas.",
-    "Personalizar las advertencias de ideas preconcebidas ('misconception_warning') en los 436 reactivos fill-in-the-blank, sustituyendo la plantilla genérica ('Verifique cuidadosamente los supuestos y cálculos antes de seleccionar su respuesta') por diagnósticos específicos de fallos algebraicos y de modelado propios de cada ítem.",
-    "Encapsular en delimitadores KaTeX '$...$' los 127 comandos LaTeX huérfanos ('\\dot{y}') y convertir las más de 900 expresiones en pseudocódigo o texto plano dentro de las pistas a formato matemático compilable estandarizado.",
-    "Eliminar las 21 ocurrencias de dobles llaves residuales '{{...}}' en 'error_rationale' (ej. reemplazar '{{y}}' y '{{r}}' por 'y' y 'r').",
-    "Estructurar un árbol curricular jerárquico agrupando las 44 competencias en 5 módulos temáticos progresivos y formalizar el grafo de prerrequisitos ('prerequisites') para habilitar rutas de aprendizaje adaptativo acordes a Mastery Learning."
-  ]
+    "Aprobación técnica e instruccional para producción inmediata en la plataforma interactiva Top's Academy.",
+    "Mantener la suite de linters deterministas estáticos en el pipeline de CI/CD para salvaguardar la invariancia de KaTeX, andamiaje de 3 pistas y cobertura de rationales al 100%.",
+    "Recomendación menor: Estandarizar la notación matemática en opciones de texto plano ('phi(k)/k', 'f_KK < 0') encapsulándolas de forma homogénea entre delimitadores KaTeX '$...$' para uniformidad tipográfica visual."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "plain_math_in_option_text_linter",
+      "severity": "low",
+      "description": "Detecta expresiones matemáticas o derivadas en texto plano ASCII dentro de las opciones de respuesta (ej. 'phi(k)/k', 'f_KK < 0', 's* =') que podrían ser encapsuladas en delimitadores KaTeX '$...$' para lograr máxima consistencia tipográfica.",
+      "regex_pattern": "\\b(?:phi|psi|alpha|beta|lambda|gamma|sigma)\\s*\\([a-zA-Z0-9_]+\\)|\\b[a-zA-Z]_[A-Z]{2}\\s*(?:[<>=]|\\b)",
+      "evidence_items": [
+        "Q-H01-001",
+        "Q-H01-002",
+        "Q-C01-021",
+        "Q-C01-022"
+      ]
+    }
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-12 23:30:29",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

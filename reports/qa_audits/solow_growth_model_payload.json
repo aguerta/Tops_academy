@@ -67,7 +67,7 @@
       "distractor_integrity_linter": {
         "total_distractors_evaluated": 996,
         "distractors_with_rationale_count": 996,
-        "rationale_coverage_pct": 100.0,
+        "rationale_coverage_pct": 100,
         "telltale_distractor_items_count": 0,
         "telltale_distractor_sample_items": [],
         "missing_rationales_count": 0
@@ -3751,5 +3751,8 @@
         ]
       }
     ]
-  }
+  },
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-13 01:00:13",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }
