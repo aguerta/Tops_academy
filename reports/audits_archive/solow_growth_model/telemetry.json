@@ -1,0 +1,2677 @@
+{
+  "meta": {
+    "audit_timestamp": "2026-10-13T03:56:56.126718+00:00",
+    "orchestrator_conversation_id": "e8ab9fd6-efaf-4d74-ba27-e2cbf10784cb",
+    "course_id": "solow_growth_model",
+    "course_title": "El Modelo de Crecimiento Económico de Solow (1956)"
+  },
+  "summary": {
+    "wall_clock_seconds": 3715.0,
+    "wall_clock_minutes": 61.92,
+    "agent_compute_seconds": 9538.0,
+    "agent_compute_minutes": 158.97,
+    "parallel_speedup_factor": 2.57,
+    "total_tokens": 29295587,
+    "total_active_tokens": 3153336,
+    "total_input_tokens": 2482859,
+    "total_output_tokens": 670477,
+    "total_cache_read_tokens": 26142251,
+    "total_turns": 355,
+    "total_subagents_spawned": 6,
+    "tool_calls_total": 341,
+    "tool_errors_total": 61
+  },
+  "workload": {
+    "source_files": [
+      {
+        "name": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+        "size_bytes": 0,
+        "pages": 0,
+        "ext": ".pdf"
+      },
+      {
+        "name": "solow1956.pdf",
+        "size_bytes": 0,
+        "pages": 0,
+        "ext": ".pdf"
+      }
+    ],
+    "total_input_bytes": 0,
+    "total_input_mb": 0.0,
+    "total_pages_or_slides": 36,
+    "pages_needing_vision": 0,
+    "total_handouts": 0,
+    "corpus_chars": 72846,
+    "corpus_words": 12650,
+    "competencies_count": 22,
+    "shards_count": 3,
+    "shards_competencies_map": {
+      "shard_01": {
+        "competency_ids": [
+          "H-01",
+          "C-01",
+          "Hab-01",
+          "C-02",
+          "Hab-02",
+          "C-03",
+          "H-02",
+          "Hab-03"
+        ],
+        "count": 8
+      },
+      "shard_02": {
+        "competency_ids": [
+          "C-04",
+          "C-05",
+          "C-06",
+          "Hab-04",
+          "Hab-05",
+          "Hab-06",
+          "H-03"
+        ],
+        "count": 7
+      },
+      "shard_03": {
+        "competency_ids": [
+          "C-07",
+          "Hab-07",
+          "Hab-08",
+          "C-08",
+          "Hab-09",
+          "C-09",
+          "C-10"
+        ],
+        "count": 7
+      }
+    },
+    "questions_count": 530,
+    "cta_mode": "direct",
+    "course_id": "solow_growth_model",
+    "course_title": "El Modelo de Crecimiento Económico de Solow (1956)",
+    "work_dir": "D:\\Augusto\\personal_portfolio\\Tops_academy\\work"
+  },
+  "unit_economics": {
+    "tokens_per_page": 813766.3,
+    "active_tokens_per_page": 87592.7,
+    "tokens_per_input_kb": 0.0,
+    "tokens_per_competency": 1331617.6,
+    "active_tokens_per_competency": 143333.5,
+    "author_tokens_per_competency": 102550.6,
+    "tokens_per_question": 55274.7,
+    "active_tokens_per_question": 5949.7,
+    "seconds_per_page": 103.19,
+    "seconds_per_question": 7.01,
+    "questions_per_minute": 8.56,
+    "agent_seconds_per_question": 18.0,
+    "output_tokens_per_question": 1265.1
+  },
+  "stage_deep_dives": {
+    "stage_1a_vision": {
+      "agents_count": 0,
+      "agents": [],
+      "individual_durations": [],
+      "max_wall_time_seconds": 0.0,
+      "total_active_tokens": 0,
+      "total_cache_tokens": 0,
+      "critical_path_agent": "N/A"
+    },
+    "stage_1b_cta": {
+      "mappers_count": 0,
+      "mappers": [],
+      "mappers_max_wall_time": 0.0,
+      "harmonizer": {
+        "conversation_id": "364f213b-22ce-44a7-aace-f0a2f4b750fd",
+        "label": "Direct CTA Architect",
+        "start_time": "2026-10-13T02:16:59+00:00",
+        "end_time": "2026-10-13T02:37:48+00:00",
+        "start_iso": "2026-10-13T02:16:59+00:00",
+        "end_iso": "2026-10-13T02:37:48+00:00",
+        "duration_seconds": 1249.0,
+        "duration_minutes": 20.82,
+        "turns_count": 29,
+        "input_tokens": 179219,
+        "output_tokens": 75239,
+        "cache_read_tokens": 2052641,
+        "active_tokens": 254458,
+        "total_tokens": 2307099,
+        "thinking_chars": 9491,
+        "tool_calls_count": 27,
+        "tool_calls_by_name": {
+          "view_file": 11,
+          "run_command": 14,
+          "write_to_file": 1,
+          "send_message": 1
+        },
+        "tool_errors_count": 1,
+        "failed_commands": [],
+        "steps": [
+          {
+            "step_index": 1,
+            "created_at": "2026-10-13T02:16:59Z",
+            "input_tokens": 8775,
+            "output_tokens": 610,
+            "cache_read_tokens": 0,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 3,
+            "created_at": "2026-10-13T02:17:04Z",
+            "input_tokens": 12160,
+            "output_tokens": 292,
+            "cache_read_tokens": 0,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 5,
+            "created_at": "2026-10-13T02:17:09Z",
+            "input_tokens": 23906,
+            "output_tokens": 236,
+            "cache_read_tokens": 0,
+            "tools": [
+              "run_command"
+            ]
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-10-13T02:17:13Z",
+            "input_tokens": 2510,
+            "output_tokens": 176,
+            "cache_read_tokens": 21857,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-10-13T02:17:19Z",
+            "input_tokens": 2373,
+            "output_tokens": 176,
+            "cache_read_tokens": 22318,
+            "tools": [
+              "run_command"
+            ]
+          },
+          {
+            "step_index": 11,
+            "created_at": "2026-10-13T02:17:24Z",
+            "input_tokens": 2646,
+            "output_tokens": 234,
+            "cache_read_tokens": 22644,
+            "tools": [
+              "run_command"
+            ]
+          },
+          {
+            "step_index": 13,
+            "created_at": "2026-10-13T02:17:31Z",
+            "input_tokens": 3078,
+            "output_tokens": 112,
+            "cache_read_tokens": 23246,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 15,
+            "created_at": "2026-10-13T02:17:38Z",
+            "input_tokens": 2117,
+            "output_tokens": 97,
+            "cache_read_tokens": 26325,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 17,
+            "created_at": "2026-10-13T02:17:41Z",
+            "input_tokens": 5744,
+            "output_tokens": 1291,
+            "cache_read_tokens": 28458,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 19,
+            "created_at": "2026-10-13T02:17:53Z",
+            "input_tokens": 6946,
+            "output_tokens": 592,
+            "cache_read_tokens": 31258,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 21,
+            "created_at": "2026-10-13T02:18:08Z",
+            "input_tokens": 25103,
+            "output_tokens": 478,
+            "cache_read_tokens": 30841,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 23,
+            "created_at": "2026-10-13T02:18:34Z",
+            "input_tokens": 2053,
+            "output_tokens": 149,
+            "cache_read_tokens": 54616,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 25,
+            "created_at": "2026-10-13T02:18:55Z",
+            "input_tokens": 4048,
+            "output_tokens": 71,
+            "cache_read_tokens": 57979,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 27,
+            "created_at": "2026-10-13T02:19:16Z",
+            "input_tokens": 1933,
+            "output_tokens": 18303,
+            "cache_read_tokens": 60591,
+            "tools": []
+          },
+          {
+            "step_index": 29,
+            "created_at": "2026-10-13T02:26:55Z",
+            "input_tokens": 1712,
+            "output_tokens": 48607,
+            "cache_read_tokens": 65940,
+            "tools": [
+              "write_to_file"
+            ]
+          }
+        ],
+        "category": "cta_harmonizer",
+        "shard_id": null,
+        "spawn_step": 88,
+        "spawn_time": "2026-10-13T02:16:59Z",
+        "model": "inherit",
+        "competencies": [],
+        "competencies_count": 0,
+        "tokens_per_competency": 0.0
+      },
+      "harmonizer_duration": 1249.0,
+      "total_stage_wall_time": 1249.0,
+      "total_active_tokens": 254458,
+      "critical_mapper": "N/A"
+    },
+    "stage_3_authors": {
+      "shards_count": 3,
+      "shards": [
+        {
+          "conversation_id": "010886c6-47e5-4a09-8ec3-6a79272cdd2b",
+          "label": "Shard Author shard_01",
+          "start_time": "2026-10-13T02:38:14+00:00",
+          "end_time": "2026-10-13T03:06:11+00:00",
+          "start_iso": "2026-10-13T02:38:14+00:00",
+          "end_iso": "2026-10-13T03:06:11+00:00",
+          "duration_seconds": 1677.0,
+          "duration_minutes": 27.95,
+          "turns_count": 104,
+          "input_tokens": 508423,
+          "output_tokens": 209850,
+          "cache_read_tokens": 8020352,
+          "active_tokens": 718273,
+          "total_tokens": 8738625,
+          "thinking_chars": 45617,
+          "tool_calls_count": 103,
+          "tool_calls_by_name": {
+            "view_file": 20,
+            "run_command": 56,
+            "write_to_file": 19,
+            "replace_file_content": 7,
+            "send_message": 1
+          },
+          "tool_errors_count": 21,
+          "failed_commands": [
+            {
+              "step_index": 16,
+              "snippet": "Created At: 2026-10-12T21:39:01-05:00\nCompleted At: 2026-10-12T21:39:02-05:00\n\nThe command exited with code 1.\nOutput:\nTraceback (most recent call last):\r\n  File \"D:\\Augusto\\personal_portfolio\\Tops_ac"
+            },
+            {
+              "step_index": 20,
+              "snippet": "Created At: 2026-10-12T21:39:10-05:00\nCompleted At: 2026-10-12T21:39:11-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+            },
+            {
+              "step_index": 24,
+              "snippet": "Created At: 2026-10-12T21:39:59-05:00\nCompleted At: 2026-10-12T21:40:00-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+            },
+            {
+              "step_index": 30,
+              "snippet": "Created At: 2026-10-12T21:40:17-05:00\nCompleted At: 2026-10-12T21:40:18-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 3 validation errors in templates:\r\n  - Template schema violation at []: {'i"
+            },
+            {
+              "step_index": 32,
+              "snippet": "Created At: 2026-10-12T21:40:22-05:00\nCompleted At: 2026-10-12T21:40:23-05:00\n\nThe command exited with code 1.\nOutput:\nTraceback (most recent call last):\r\n  File \"<string>\", line 1, in <module>\r\nImpor"
+            }
+          ],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-10-13T02:38:14Z",
+              "input_tokens": 8800,
+              "output_tokens": 738,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 3,
+              "created_at": "2026-10-13T02:38:21Z",
+              "input_tokens": 12793,
+              "output_tokens": 142,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 5,
+              "created_at": "2026-10-13T02:38:23Z",
+              "input_tokens": 29012,
+              "output_tokens": 118,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 7,
+              "created_at": "2026-10-13T02:38:26Z",
+              "input_tokens": 10201,
+              "output_tokens": 1791,
+              "cache_read_tokens": 29030,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 9,
+              "created_at": "2026-10-13T02:38:39Z",
+              "input_tokens": 2336,
+              "output_tokens": 132,
+              "cache_read_tokens": 39227,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 11,
+              "created_at": "2026-10-13T02:38:43Z",
+              "input_tokens": 2485,
+              "output_tokens": 185,
+              "cache_read_tokens": 39510,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 13,
+              "created_at": "2026-10-13T02:38:46Z",
+              "input_tokens": 2326,
+              "output_tokens": 1113,
+              "cache_read_tokens": 39942,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 15,
+              "created_at": "2026-10-13T02:38:56Z",
+              "input_tokens": 3324,
+              "output_tokens": 250,
+              "cache_read_tokens": 40219,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 17,
+              "created_at": "2026-10-13T02:39:02Z",
+              "input_tokens": 2686,
+              "output_tokens": 614,
+              "cache_read_tokens": 41492,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 19,
+              "created_at": "2026-10-13T02:39:07Z",
+              "input_tokens": 2826,
+              "output_tokens": 255,
+              "cache_read_tokens": 42128,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 21,
+              "created_at": "2026-10-13T02:39:11Z",
+              "input_tokens": 2890,
+              "output_tokens": 4824,
+              "cache_read_tokens": 42905,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 23,
+              "created_at": "2026-10-13T02:39:42Z",
+              "input_tokens": 4978,
+              "output_tokens": 257,
+              "cache_read_tokens": 45803,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 25,
+              "created_at": "2026-10-13T02:40:00Z",
+              "input_tokens": 2903,
+              "output_tokens": 834,
+              "cache_read_tokens": 48732,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 27,
+              "created_at": "2026-10-13T02:40:08Z",
+              "input_tokens": 2973,
+              "output_tokens": 792,
+              "cache_read_tokens": 49586,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 29,
+              "created_at": "2026-10-13T02:40:14Z",
+              "input_tokens": 3002,
+              "output_tokens": 182,
+              "cache_read_tokens": 50511,
+              "tools": [
+                "run_command"
+              ]
+            }
+          ],
+          "category": "author",
+          "shard_id": "shard_01",
+          "spawn_step": 100,
+          "spawn_time": "2026-10-13T02:38:14Z",
+          "model": "inherit",
+          "competencies": [
+            "H-01",
+            "C-01",
+            "Hab-01",
+            "C-02",
+            "Hab-02",
+            "C-03",
+            "H-02",
+            "Hab-03"
+          ],
+          "competencies_count": 8,
+          "tokens_per_competency": 89784.1,
+          "input_tokens_per_competency": 63552.9,
+          "output_tokens_per_competency": 26231.2
+        },
+        {
+          "conversation_id": "0d76b3db-d2e3-4d8c-af90-025868ef6d94",
+          "label": "Shard Author shard_02",
+          "start_time": "2026-10-13T02:38:15+00:00",
+          "end_time": "2026-10-13T02:57:28+00:00",
+          "start_iso": "2026-10-13T02:38:15+00:00",
+          "end_iso": "2026-10-13T02:57:28+00:00",
+          "duration_seconds": 1153.0,
+          "duration_minutes": 19.22,
+          "turns_count": 66,
+          "input_tokens": 652284,
+          "output_tokens": 142523,
+          "cache_read_tokens": 6336743,
+          "active_tokens": 794807,
+          "total_tokens": 7131550,
+          "thinking_chars": 20828,
+          "tool_calls_count": 65,
+          "tool_calls_by_name": {
+            "view_file": 10,
+            "run_command": 29,
+            "write_to_file": 15,
+            "replace_file_content": 10,
+            "send_message": 1
+          },
+          "tool_errors_count": 18,
+          "failed_commands": [
+            {
+              "step_index": 16,
+              "snippet": "Created At: 2026-10-12T21:38:52-05:00\nCompleted At: 2026-10-12T21:38:52-05:00\n\nThe command exited with code 1.\nOutput:\n[!] Warning: cta_path omitted; competency diversity gate (TPL-VAR), parity checks"
+            },
+            {
+              "step_index": 20,
+              "snippet": "Created At: 2026-10-12T21:39:10-05:00\nCompleted At: 2026-10-12T21:39:11-05:00\n\nThe command exited with code 1.\nOutput:\nTraceback (most recent call last):\r\n  File \"D:\\Augusto\\personal_portfolio\\Tops_ac"
+            },
+            {
+              "step_index": 24,
+              "snippet": "Created At: 2026-10-12T21:39:16-05:00\nCompleted At: 2026-10-12T21:39:17-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+            },
+            {
+              "step_index": 28,
+              "snippet": "Created At: 2026-10-12T21:39:32-05:00\nCompleted At: 2026-10-12T21:39:33-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - TPL-VAR violation in 'T-C04-01': Onl"
+            },
+            {
+              "step_index": 30,
+              "snippet": "Created At: 2026-10-12T21:39:36-05:00\nCompleted At: 2026-10-12T21:39:37-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - [-] TPL-VAR VIOLATION in competency "
+            }
+          ],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-10-13T02:38:15Z",
+              "input_tokens": 8785,
+              "output_tokens": 432,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 3,
+              "created_at": "2026-10-13T02:38:20Z",
+              "input_tokens": 12453,
+              "output_tokens": 142,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 5,
+              "created_at": "2026-10-13T02:38:22Z",
+              "input_tokens": 28776,
+              "output_tokens": 118,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 7,
+              "created_at": "2026-10-13T02:38:26Z",
+              "input_tokens": 2269,
+              "output_tokens": 108,
+              "cache_read_tokens": 26724,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 9,
+              "created_at": "2026-10-13T02:38:29Z",
+              "input_tokens": 7493,
+              "output_tokens": 704,
+              "cache_read_tokens": 29007,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 11,
+              "created_at": "2026-10-13T02:38:38Z",
+              "input_tokens": 3294,
+              "output_tokens": 128,
+              "cache_read_tokens": 34451,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 13,
+              "created_at": "2026-10-13T02:38:41Z",
+              "input_tokens": 2268,
+              "output_tokens": 129,
+              "cache_read_tokens": 35693,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 15,
+              "created_at": "2026-10-13T02:38:44Z",
+              "input_tokens": 2480,
+              "output_tokens": 826,
+              "cache_read_tokens": 35910,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 17,
+              "created_at": "2026-10-13T02:38:52Z",
+              "input_tokens": 3009,
+              "output_tokens": 251,
+              "cache_read_tokens": 36342,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 19,
+              "created_at": "2026-10-13T02:39:08Z",
+              "input_tokens": 2438,
+              "output_tokens": 169,
+              "cache_read_tokens": 37301,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 21,
+              "created_at": "2026-10-13T02:39:11Z",
+              "input_tokens": 2603,
+              "output_tokens": 217,
+              "cache_read_tokens": 37690,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 23,
+              "created_at": "2026-10-13T02:39:14Z",
+              "input_tokens": 2403,
+              "output_tokens": 154,
+              "cache_read_tokens": 38244,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 25,
+              "created_at": "2026-10-13T02:39:17Z",
+              "input_tokens": 2422,
+              "output_tokens": 1389,
+              "cache_read_tokens": 38598,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 27,
+              "created_at": "2026-10-13T02:39:28Z",
+              "input_tokens": 3569,
+              "output_tokens": 136,
+              "cache_read_tokens": 38977,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 29,
+              "created_at": "2026-10-13T02:39:33Z",
+              "input_tokens": 2322,
+              "output_tokens": 215,
+              "cache_read_tokens": 40497,
+              "tools": [
+                "run_command"
+              ]
+            }
+          ],
+          "category": "author",
+          "shard_id": "shard_02",
+          "spawn_step": 100,
+          "spawn_time": "2026-10-13T02:38:14Z",
+          "model": "inherit",
+          "competencies": [
+            "C-04",
+            "C-05",
+            "C-06",
+            "Hab-04",
+            "Hab-05",
+            "Hab-06",
+            "H-03"
+          ],
+          "competencies_count": 7,
+          "tokens_per_competency": 113543.9,
+          "input_tokens_per_competency": 93183.4,
+          "output_tokens_per_competency": 20360.4
+        },
+        {
+          "conversation_id": "08528c10-3324-4ddd-9796-a8ea77f8bada",
+          "label": "Shard Author shard_03",
+          "start_time": "2026-10-13T02:38:15+00:00",
+          "end_time": "2026-10-13T02:58:35+00:00",
+          "start_iso": "2026-10-13T02:38:15+00:00",
+          "end_iso": "2026-10-13T02:58:35+00:00",
+          "duration_seconds": 1220.0,
+          "duration_minutes": 20.33,
+          "turns_count": 56,
+          "input_tokens": 582199,
+          "output_tokens": 160835,
+          "cache_read_tokens": 5523364,
+          "active_tokens": 743034,
+          "total_tokens": 6266398,
+          "thinking_chars": 21650,
+          "tool_calls_count": 55,
+          "tool_calls_by_name": {
+            "view_file": 4,
+            "run_command": 32,
+            "write_to_file": 15,
+            "replace_file_content": 3,
+            "send_message": 1
+          },
+          "tool_errors_count": 13,
+          "failed_commands": [
+            {
+              "step_index": 16,
+              "snippet": "Created At: 2026-10-12T21:39:00-05:00\nCompleted At: 2026-10-12T21:39:01-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - Target path does not exist: courses\\"
+            },
+            {
+              "step_index": 22,
+              "snippet": "Created At: 2026-10-12T21:39:14-05:00\nCompleted At: 2026-10-12T21:39:15-05:00\n\nThe command exited with code 1.\nOutput:\nEn l�nea: 4 Car�cter: 3\r\n+ \" && python .agents/skills/content-to-course/check_tem"
+            },
+            {
+              "step_index": 24,
+              "snippet": "Created At: 2026-10-12T21:39:21-05:00\nCompleted At: 2026-10-12T21:39:22-05:00\n\nThe command exited with code 1.\nOutput:\npython.cmd : ScriptBlock solo se debe especificar como un valor del par�metro Com"
+            },
+            {
+              "step_index": 26,
+              "snippet": "Created At: 2026-10-12T21:39:27-05:00\nCompleted At: 2026-10-12T21:39:27-05:00\n\nThe command exited with code 1.\nOutput:\npython.cmd : ScriptBlock solo se debe especificar como un valor del par�metro Com"
+            },
+            {
+              "step_index": 30,
+              "snippet": "Created At: 2026-10-12T21:42:50-05:00\nCompleted At: 2026-10-12T21:42:50-05:00\n\nThe command exited with code 1.\nOutput:\nTraceback (most recent call last):\r\n  File \"D:\\Augusto\\personal_portfolio\\Tops_ac"
+            }
+          ],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-10-13T02:38:15Z",
+              "input_tokens": 8781,
+              "output_tokens": 614,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 3,
+              "created_at": "2026-10-13T02:38:21Z",
+              "input_tokens": 12631,
+              "output_tokens": 181,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 5,
+              "created_at": "2026-10-13T02:38:24Z",
+              "input_tokens": 28437,
+              "output_tokens": 141,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 7,
+              "created_at": "2026-10-13T02:38:27Z",
+              "input_tokens": 8055,
+              "output_tokens": 1814,
+              "cache_read_tokens": 28451,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 9,
+              "created_at": "2026-10-13T02:38:40Z",
+              "input_tokens": 3951,
+              "output_tokens": 162,
+              "cache_read_tokens": 34458,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 11,
+              "created_at": "2026-10-13T02:38:43Z",
+              "input_tokens": 2514,
+              "output_tokens": 1017,
+              "cache_read_tokens": 36357,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 13,
+              "created_at": "2026-10-13T02:38:52Z",
+              "input_tokens": 3154,
+              "output_tokens": 248,
+              "cache_read_tokens": 36822,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 15,
+              "created_at": "2026-10-13T02:38:58Z",
+              "input_tokens": 2388,
+              "output_tokens": 170,
+              "cache_read_tokens": 37924,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 17,
+              "created_at": "2026-10-13T02:39:01Z",
+              "input_tokens": 2342,
+              "output_tokens": 528,
+              "cache_read_tokens": 38261,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 19,
+              "created_at": "2026-10-13T02:39:07Z",
+              "input_tokens": 2666,
+              "output_tokens": 323,
+              "cache_read_tokens": 38553,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 21,
+              "created_at": "2026-10-13T02:39:11Z",
+              "input_tokens": 2461,
+              "output_tokens": 261,
+              "cache_read_tokens": 39169,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 23,
+              "created_at": "2026-10-13T02:39:15Z",
+              "input_tokens": 2564,
+              "output_tokens": 664,
+              "cache_read_tokens": 39581,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 25,
+              "created_at": "2026-10-13T02:39:22Z",
+              "input_tokens": 2970,
+              "output_tokens": 423,
+              "cache_read_tokens": 40098,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 27,
+              "created_at": "2026-10-13T02:39:27Z",
+              "input_tokens": 2663,
+              "output_tokens": 36385,
+              "cache_read_tokens": 41020,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 29,
+              "created_at": "2026-10-13T02:42:46Z",
+              "input_tokens": 36433,
+              "output_tokens": 240,
+              "cache_read_tokens": 43772,
+              "tools": [
+                "run_command"
+              ]
+            }
+          ],
+          "category": "author",
+          "shard_id": "shard_03",
+          "spawn_step": 100,
+          "spawn_time": "2026-10-13T02:38:14Z",
+          "model": "inherit",
+          "competencies": [
+            "C-07",
+            "Hab-07",
+            "Hab-08",
+            "C-08",
+            "Hab-09",
+            "C-09",
+            "C-10"
+          ],
+          "competencies_count": 7,
+          "tokens_per_competency": 106147.7,
+          "input_tokens_per_competency": 83171.3,
+          "output_tokens_per_competency": 22976.4
+        }
+      ],
+      "min_duration_seconds": 1153.0,
+      "median_duration_seconds": 1220.0,
+      "max_duration_seconds": 1677.0,
+      "straggler_shard": "Shard Author shard_01",
+      "straggler_delay_vs_median": 457.0,
+      "total_author_active_tokens": 2256114,
+      "total_author_cache_tokens": 19880459,
+      "avg_tokens_per_competency": 102550.6
+    },
+    "stage_5_judges": {
+      "judges_count": 2,
+      "judges": [
+        {
+          "conversation_id": "44f9420d-833a-4b50-b43d-161d5a0e4e99",
+          "label": "Blind Judge 01",
+          "start_time": "2026-10-13T03:06:57+00:00",
+          "end_time": "2026-10-13T03:09:07+00:00",
+          "start_iso": "2026-10-13T03:06:57+00:00",
+          "end_iso": "2026-10-13T03:09:07+00:00",
+          "duration_seconds": 130.0,
+          "duration_minutes": 2.17,
+          "turns_count": 8,
+          "input_tokens": 74104,
+          "output_tokens": 19505,
+          "cache_read_tokens": 161193,
+          "active_tokens": 93609,
+          "total_tokens": 254802,
+          "thinking_chars": 4939,
+          "tool_calls_count": 7,
+          "tool_calls_by_name": {
+            "view_file": 5,
+            "write_to_file": 1,
+            "send_message": 1
+          },
+          "tool_errors_count": 1,
+          "failed_commands": [],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-10-13T03:06:57Z",
+              "input_tokens": 8681,
+              "output_tokens": 542,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 3,
+              "created_at": "2026-10-13T03:07:02Z",
+              "input_tokens": 10759,
+              "output_tokens": 325,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 5,
+              "created_at": "2026-10-13T03:07:06Z",
+              "input_tokens": 25636,
+              "output_tokens": 104,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 7,
+              "created_at": "2026-10-13T03:07:10Z",
+              "input_tokens": 2253,
+              "output_tokens": 102,
+              "cache_read_tokens": 23585,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 9,
+              "created_at": "2026-10-13T03:07:13Z",
+              "input_tokens": 3057,
+              "output_tokens": 17971,
+              "cache_read_tokens": 23791,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 11,
+              "created_at": "2026-10-13T03:08:56Z",
+              "input_tokens": 18066,
+              "output_tokens": 79,
+              "cache_read_tokens": 26890,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 13,
+              "created_at": "2026-10-13T03:09:02Z",
+              "input_tokens": 3169,
+              "output_tokens": 324,
+              "cache_read_tokens": 42905,
+              "tools": [
+                "send_message"
+              ]
+            },
+            {
+              "step_index": 15,
+              "created_at": "2026-10-13T03:09:07Z",
+              "input_tokens": 2483,
+              "output_tokens": 58,
+              "cache_read_tokens": 44022,
+              "tools": []
+            }
+          ],
+          "category": "judge",
+          "shard_id": null,
+          "spawn_step": 116,
+          "spawn_time": "2026-10-13T03:06:57Z",
+          "model": "inherit",
+          "competencies": [],
+          "competencies_count": 0,
+          "tokens_per_competency": 0.0
+        },
+        {
+          "conversation_id": "bf52ddc5-ee8b-476b-b797-e5324e51fb46",
+          "label": "Blind Judge 02",
+          "start_time": "2026-10-13T03:06:57+00:00",
+          "end_time": "2026-10-13T03:13:31+00:00",
+          "start_iso": "2026-10-13T03:06:57+00:00",
+          "end_iso": "2026-10-13T03:13:31+00:00",
+          "duration_seconds": 394.0,
+          "duration_minutes": 6.57,
+          "turns_count": 16,
+          "input_tokens": 123182,
+          "output_tokens": 42188,
+          "cache_read_tokens": 536630,
+          "active_tokens": 165370,
+          "total_tokens": 702000,
+          "thinking_chars": 9275,
+          "tool_calls_count": 15,
+          "tool_calls_by_name": {
+            "view_file": 3,
+            "search_web": 9,
+            "read_url_content": 1,
+            "write_to_file": 1,
+            "send_message": 1
+          },
+          "tool_errors_count": 1,
+          "failed_commands": [],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-10-13T03:06:57Z",
+              "input_tokens": 8672,
+              "output_tokens": 411,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 3,
+              "created_at": "2026-10-13T03:07:02Z",
+              "input_tokens": 10619,
+              "output_tokens": 285,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 5,
+              "created_at": "2026-10-13T03:07:05Z",
+              "input_tokens": 14649,
+              "output_tokens": 21759,
+              "cache_read_tokens": 0,
+              "tools": [
+                "search_web"
+              ]
+            },
+            {
+              "step_index": 7,
+              "created_at": "2026-10-13T03:09:27Z",
+              "input_tokens": 38187,
+              "output_tokens": 153,
+              "cache_read_tokens": 0,
+              "tools": [
+                "search_web"
+              ]
+            },
+            {
+              "step_index": 9,
+              "created_at": "2026-10-13T03:09:33Z",
+              "input_tokens": 3069,
+              "output_tokens": 330,
+              "cache_read_tokens": 36136,
+              "tools": [
+                "search_web"
+              ]
+            },
+            {
+              "step_index": 11,
+              "created_at": "2026-10-13T03:09:42Z",
+              "input_tokens": 3127,
+              "output_tokens": 104,
+              "cache_read_tokens": 37155,
+              "tools": [
+                "search_web"
+              ]
+            },
+            {
+              "step_index": 13,
+              "created_at": "2026-10-13T03:09:51Z",
+              "input_tokens": 3681,
+              "output_tokens": 309,
+              "cache_read_tokens": 38234,
+              "tools": [
+                "read_url_content"
+              ]
+            },
+            {
+              "step_index": 15,
+              "created_at": "2026-10-13T03:10:35Z",
+              "input_tokens": 2493,
+              "output_tokens": 110,
+              "cache_read_tokens": 39863,
+              "tools": [
+                "search_web"
+              ]
+            },
+            {
+              "step_index": 17,
+              "created_at": "2026-10-13T03:10:42Z",
+              "input_tokens": 2996,
+              "output_tokens": 137,
+              "cache_read_tokens": 40307,
+              "tools": [
+                "search_web"
+              ]
+            },
+            {
+              "step_index": 19,
+              "created_at": "2026-10-13T03:10:50Z",
+              "input_tokens": 2985,
+              "output_tokens": 153,
+              "cache_read_tokens": 41254,
+              "tools": [
+                "search_web"
+              ]
+            },
+            {
+              "step_index": 21,
+              "created_at": "2026-10-13T03:10:57Z",
+              "input_tokens": 2779,
+              "output_tokens": 100,
+              "cache_read_tokens": 42190,
+              "tools": [
+                "search_web"
+              ]
+            },
+            {
+              "step_index": 23,
+              "created_at": "2026-10-13T03:11:04Z",
+              "input_tokens": 3419,
+              "output_tokens": 122,
+              "cache_read_tokens": 42923,
+              "tools": [
+                "search_web"
+              ]
+            },
+            {
+              "step_index": 26,
+              "created_at": "2026-10-13T03:11:36Z",
+              "input_tokens": 2951,
+              "output_tokens": 17592,
+              "cache_read_tokens": 44286,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 28,
+              "created_at": "2026-10-13T03:13:22Z",
+              "input_tokens": 17680,
+              "output_tokens": 85,
+              "cache_read_tokens": 47286,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 30,
+              "created_at": "2026-10-13T03:13:26Z",
+              "input_tokens": 3213,
+              "output_tokens": 504,
+              "cache_read_tokens": 62917,
+              "tools": [
+                "send_message"
+              ]
+            }
+          ],
+          "category": "judge",
+          "shard_id": null,
+          "spawn_step": 116,
+          "spawn_time": "2026-10-13T03:06:57Z",
+          "model": "inherit",
+          "competencies": [],
+          "competencies_count": 0,
+          "tokens_per_competency": 0.0
+        }
+      ],
+      "max_judge_duration": 394.0,
+      "repairs_count": 0,
+      "repairs": [],
+      "passed_first_attempt": true,
+      "badge": "✅ PASARON PERFECTOS AL PRIMER INTENTO",
+      "batch_items_count": 44,
+      "initial_errors_count": 1,
+      "repair_iterations": 1,
+      "supervisor_interventions_count": 0,
+      "summary_desc": "El lote de evaluación de blind judges y la verificación psicométrica pasaron de forma 100% limpia en su primera pasada, sin registrar discrepancias ni requerir rondas de auto-reparación ni intervención manual.",
+      "actions_taken": [
+        "No se requirieron acciones correctivas. El pipeline avanzó directamente a la etapa de publicación."
+      ]
+    }
+  },
+  "orchestrator_audit": {
+    "metrics": {
+      "conversation_id": "e8ab9fd6-efaf-4d74-ba27-e2cbf10784cb",
+      "label": "Director (Orchestrator)",
+      "start_time": "2026-10-13T02:13:33+00:00",
+      "end_time": "2026-10-13T03:15:28+00:00",
+      "start_iso": "2026-10-13T02:13:33+00:00",
+      "end_iso": "2026-10-13T03:15:28+00:00",
+      "duration_seconds": 3715.0,
+      "duration_minutes": 61.92,
+      "turns_count": 76,
+      "input_tokens": 363448,
+      "output_tokens": 20337,
+      "cache_read_tokens": 3511328,
+      "active_tokens": 383785,
+      "total_tokens": 3895113,
+      "thinking_chars": 7562,
+      "tool_calls_count": 69,
+      "tool_calls_by_name": {
+        "view_file": 17,
+        "run_command": 41,
+        "define_subagent": 7,
+        "invoke_subagent": 3,
+        "send_message": 1
+      },
+      "tool_errors_count": 6,
+      "failed_commands": [
+        {
+          "step_index": 6,
+          "snippet": "Created At: 2026-10-12T21:13:45-05:00\nCompleted At: 2026-10-12T21:13:46-05:00\n\nThe command exited with code 1.\nOutput:\nwarning: The `fitz` API is deprecated and will be removed in future. Use `import "
+        },
+        {
+          "step_index": 8,
+          "snippet": "Created At: 2026-10-12T21:13:57-05:00\nCompleted At: 2026-10-12T21:13:58-05:00\n\nThe command exited with code 1.\nOutput:\nGet-Command : El t�rmino 'py' no se reconoce como nombre de un cmdlet, funci�n, a"
+        },
+        {
+          "step_index": 16,
+          "snippet": "Created At: 2026-10-12T21:14:09-05:00\nCompleted At: 2026-10-12T21:14:09-05:00\n\nThe command exited with code 1.\nOutput:\npip : El t�rmino 'pip' no se reconoce como nombre de un cmdlet, funci�n, archivo "
+        },
+        {
+          "step_index": 86,
+          "snippet": "Created At: 2026-10-12T21:16:52-05:00\nCompleted At: 2026-10-12T21:16:52-05:00\n\nThe command exited with code 1.\nOutput:\nError: file not found at work\\cta.json\r\n\n"
+        },
+        {
+          "step_index": 124,
+          "snippet": "Created At: 2026-10-12T22:13:50-05:00\nCompleted At: 2026-10-12T22:13:51-05:00\n\nThe command exited with code 1.\nOutput:\nwarning: The `fitz` API is deprecated and will be removed in future. Use `import "
+        }
+      ],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T02:13:33Z",
+          "input_tokens": 13879,
+          "output_tokens": 375,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T02:13:37Z",
+          "input_tokens": 20949,
+          "output_tokens": 186,
+          "cache_read_tokens": 0,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T02:13:40Z",
+          "input_tokens": 2458,
+          "output_tokens": 473,
+          "cache_read_tokens": 18902,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T02:13:46Z",
+          "input_tokens": 2750,
+          "output_tokens": 135,
+          "cache_read_tokens": 19315,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T02:13:58Z",
+          "input_tokens": 2626,
+          "output_tokens": 112,
+          "cache_read_tokens": 20020,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T02:14:01Z",
+          "input_tokens": 2246,
+          "output_tokens": 90,
+          "cache_read_tokens": 20600,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T02:14:04Z",
+          "input_tokens": 2240,
+          "output_tokens": 140,
+          "cache_read_tokens": 20801,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T02:14:06Z",
+          "input_tokens": 2297,
+          "output_tokens": 113,
+          "cache_read_tokens": 20997,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 17,
+          "created_at": "2026-10-13T02:14:09Z",
+          "input_tokens": 2369,
+          "output_tokens": 80,
+          "cache_read_tokens": 21251,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-10-13T02:14:26Z",
+          "input_tokens": 2360,
+          "output_tokens": 101,
+          "cache_read_tokens": 21578,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 21,
+          "created_at": "2026-10-13T02:14:34Z",
+          "input_tokens": 2388,
+          "output_tokens": 116,
+          "cache_read_tokens": 21897,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 23,
+          "created_at": "2026-10-13T02:14:37Z",
+          "input_tokens": 3272,
+          "output_tokens": 323,
+          "cache_read_tokens": 22251,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 25,
+          "created_at": "2026-10-13T02:14:41Z",
+          "input_tokens": 3504,
+          "output_tokens": 261,
+          "cache_read_tokens": 23491,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 27,
+          "created_at": "2026-10-13T02:14:44Z",
+          "input_tokens": 2399,
+          "output_tokens": 153,
+          "cache_read_tokens": 24954,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 29,
+          "created_at": "2026-10-13T02:14:49Z",
+          "input_tokens": 2293,
+          "output_tokens": 154,
+          "cache_read_tokens": 25312,
+          "tools": [
+            "define_subagent"
+          ]
+        }
+      ]
+    },
+    "time_decomposition": {
+      "cli_execution_seconds": 222.0,
+      "cli_execution_minutes": 3.7,
+      "supervisor_repair_seconds": 0.0,
+      "supervisor_repair_minutes": 0.0,
+      "barrier_wait_seconds": 22.0,
+      "barrier_wait_minutes": 0.4,
+      "model_thinking_seconds": 57.0,
+      "model_thinking_minutes": 0.9,
+      "total_tracked_seconds": 301.0
+    },
+    "interventions_count": 0,
+    "interventions": []
+  },
+  "bottlenecks": [
+    {
+      "severity": "HIGH",
+      "type": "STRAGGLER_CRITICAL_PATH",
+      "stage": "Stage 3: Question Authoring",
+      "title": "Straggler Crítico en Shards: Shard Author shard_01",
+      "description": "Shard Author shard_01 tardó 1677.0s frente a la mediana de 1220.0s (+457.0s de retraso en la barrera). Determinó el tiempo total de pared de la etapa de autoría."
+    },
+    {
+      "severity": "HIGH",
+      "type": "INTERACTIVE_MICRO_LOOP",
+      "stage": "Shard Author shard_01",
+      "title": "Antipatrón de Micro-Bucle Interactivo (104 turnos en Shard Author shard_01)",
+      "description": "3 subagentes realizaron > 30 turnos individuales (ej. Shard Author shard_01 con 104 turnos). Ocurre cuando los autores escriben plantilla por plantilla en lugar de redactar por lotes atómicos en 1-2 turnos."
+    },
+    {
+      "severity": "MEDIUM",
+      "type": "TOOL_FRICTION",
+      "stage": "Multiple Subagents",
+      "title": "Fricción de Herramientas en 3 subagentes",
+      "description": "Subagentes como Shard Author shard_01 acumularon fallos en consola (21 errores), provocando reintentos e invalidación de caché."
+    }
+  ],
+  "subagents": [
+    {
+      "conversation_id": "364f213b-22ce-44a7-aace-f0a2f4b750fd",
+      "label": "Direct CTA Architect",
+      "start_time": "2026-10-13T02:16:59+00:00",
+      "end_time": "2026-10-13T02:37:48+00:00",
+      "start_iso": "2026-10-13T02:16:59+00:00",
+      "end_iso": "2026-10-13T02:37:48+00:00",
+      "duration_seconds": 1249.0,
+      "duration_minutes": 20.82,
+      "turns_count": 29,
+      "input_tokens": 179219,
+      "output_tokens": 75239,
+      "cache_read_tokens": 2052641,
+      "active_tokens": 254458,
+      "total_tokens": 2307099,
+      "thinking_chars": 9491,
+      "tool_calls_count": 27,
+      "tool_calls_by_name": {
+        "view_file": 11,
+        "run_command": 14,
+        "write_to_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 1,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T02:16:59Z",
+          "input_tokens": 8775,
+          "output_tokens": 610,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T02:17:04Z",
+          "input_tokens": 12160,
+          "output_tokens": 292,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T02:17:09Z",
+          "input_tokens": 23906,
+          "output_tokens": 236,
+          "cache_read_tokens": 0,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T02:17:13Z",
+          "input_tokens": 2510,
+          "output_tokens": 176,
+          "cache_read_tokens": 21857,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T02:17:19Z",
+          "input_tokens": 2373,
+          "output_tokens": 176,
+          "cache_read_tokens": 22318,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T02:17:24Z",
+          "input_tokens": 2646,
+          "output_tokens": 234,
+          "cache_read_tokens": 22644,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T02:17:31Z",
+          "input_tokens": 3078,
+          "output_tokens": 112,
+          "cache_read_tokens": 23246,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T02:17:38Z",
+          "input_tokens": 2117,
+          "output_tokens": 97,
+          "cache_read_tokens": 26325,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 17,
+          "created_at": "2026-10-13T02:17:41Z",
+          "input_tokens": 5744,
+          "output_tokens": 1291,
+          "cache_read_tokens": 28458,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-10-13T02:17:53Z",
+          "input_tokens": 6946,
+          "output_tokens": 592,
+          "cache_read_tokens": 31258,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 21,
+          "created_at": "2026-10-13T02:18:08Z",
+          "input_tokens": 25103,
+          "output_tokens": 478,
+          "cache_read_tokens": 30841,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 23,
+          "created_at": "2026-10-13T02:18:34Z",
+          "input_tokens": 2053,
+          "output_tokens": 149,
+          "cache_read_tokens": 54616,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 25,
+          "created_at": "2026-10-13T02:18:55Z",
+          "input_tokens": 4048,
+          "output_tokens": 71,
+          "cache_read_tokens": 57979,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 27,
+          "created_at": "2026-10-13T02:19:16Z",
+          "input_tokens": 1933,
+          "output_tokens": 18303,
+          "cache_read_tokens": 60591,
+          "tools": []
+        },
+        {
+          "step_index": 29,
+          "created_at": "2026-10-13T02:26:55Z",
+          "input_tokens": 1712,
+          "output_tokens": 48607,
+          "cache_read_tokens": 65940,
+          "tools": [
+            "write_to_file"
+          ]
+        }
+      ],
+      "category": "cta_harmonizer",
+      "shard_id": null,
+      "spawn_step": 88,
+      "spawn_time": "2026-10-13T02:16:59Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "010886c6-47e5-4a09-8ec3-6a79272cdd2b",
+      "label": "Shard Author shard_01",
+      "start_time": "2026-10-13T02:38:14+00:00",
+      "end_time": "2026-10-13T03:06:11+00:00",
+      "start_iso": "2026-10-13T02:38:14+00:00",
+      "end_iso": "2026-10-13T03:06:11+00:00",
+      "duration_seconds": 1677.0,
+      "duration_minutes": 27.95,
+      "turns_count": 104,
+      "input_tokens": 508423,
+      "output_tokens": 209850,
+      "cache_read_tokens": 8020352,
+      "active_tokens": 718273,
+      "total_tokens": 8738625,
+      "thinking_chars": 45617,
+      "tool_calls_count": 103,
+      "tool_calls_by_name": {
+        "view_file": 20,
+        "run_command": 56,
+        "write_to_file": 19,
+        "replace_file_content": 7,
+        "send_message": 1
+      },
+      "tool_errors_count": 21,
+      "failed_commands": [
+        {
+          "step_index": 16,
+          "snippet": "Created At: 2026-10-12T21:39:01-05:00\nCompleted At: 2026-10-12T21:39:02-05:00\n\nThe command exited with code 1.\nOutput:\nTraceback (most recent call last):\r\n  File \"D:\\Augusto\\personal_portfolio\\Tops_ac"
+        },
+        {
+          "step_index": 20,
+          "snippet": "Created At: 2026-10-12T21:39:10-05:00\nCompleted At: 2026-10-12T21:39:11-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+        },
+        {
+          "step_index": 24,
+          "snippet": "Created At: 2026-10-12T21:39:59-05:00\nCompleted At: 2026-10-12T21:40:00-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+        },
+        {
+          "step_index": 30,
+          "snippet": "Created At: 2026-10-12T21:40:17-05:00\nCompleted At: 2026-10-12T21:40:18-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 3 validation errors in templates:\r\n  - Template schema violation at []: {'i"
+        },
+        {
+          "step_index": 32,
+          "snippet": "Created At: 2026-10-12T21:40:22-05:00\nCompleted At: 2026-10-12T21:40:23-05:00\n\nThe command exited with code 1.\nOutput:\nTraceback (most recent call last):\r\n  File \"<string>\", line 1, in <module>\r\nImpor"
+        }
+      ],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T02:38:14Z",
+          "input_tokens": 8800,
+          "output_tokens": 738,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T02:38:21Z",
+          "input_tokens": 12793,
+          "output_tokens": 142,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T02:38:23Z",
+          "input_tokens": 29012,
+          "output_tokens": 118,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T02:38:26Z",
+          "input_tokens": 10201,
+          "output_tokens": 1791,
+          "cache_read_tokens": 29030,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T02:38:39Z",
+          "input_tokens": 2336,
+          "output_tokens": 132,
+          "cache_read_tokens": 39227,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T02:38:43Z",
+          "input_tokens": 2485,
+          "output_tokens": 185,
+          "cache_read_tokens": 39510,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T02:38:46Z",
+          "input_tokens": 2326,
+          "output_tokens": 1113,
+          "cache_read_tokens": 39942,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T02:38:56Z",
+          "input_tokens": 3324,
+          "output_tokens": 250,
+          "cache_read_tokens": 40219,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 17,
+          "created_at": "2026-10-13T02:39:02Z",
+          "input_tokens": 2686,
+          "output_tokens": 614,
+          "cache_read_tokens": 41492,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-10-13T02:39:07Z",
+          "input_tokens": 2826,
+          "output_tokens": 255,
+          "cache_read_tokens": 42128,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 21,
+          "created_at": "2026-10-13T02:39:11Z",
+          "input_tokens": 2890,
+          "output_tokens": 4824,
+          "cache_read_tokens": 42905,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 23,
+          "created_at": "2026-10-13T02:39:42Z",
+          "input_tokens": 4978,
+          "output_tokens": 257,
+          "cache_read_tokens": 45803,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 25,
+          "created_at": "2026-10-13T02:40:00Z",
+          "input_tokens": 2903,
+          "output_tokens": 834,
+          "cache_read_tokens": 48732,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 27,
+          "created_at": "2026-10-13T02:40:08Z",
+          "input_tokens": 2973,
+          "output_tokens": 792,
+          "cache_read_tokens": 49586,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 29,
+          "created_at": "2026-10-13T02:40:14Z",
+          "input_tokens": 3002,
+          "output_tokens": 182,
+          "cache_read_tokens": 50511,
+          "tools": [
+            "run_command"
+          ]
+        }
+      ],
+      "category": "author",
+      "shard_id": "shard_01",
+      "spawn_step": 100,
+      "spawn_time": "2026-10-13T02:38:14Z",
+      "model": "inherit",
+      "competencies": [
+        "H-01",
+        "C-01",
+        "Hab-01",
+        "C-02",
+        "Hab-02",
+        "C-03",
+        "H-02",
+        "Hab-03"
+      ],
+      "competencies_count": 8,
+      "tokens_per_competency": 89784.1,
+      "input_tokens_per_competency": 63552.9,
+      "output_tokens_per_competency": 26231.2
+    },
+    {
+      "conversation_id": "0d76b3db-d2e3-4d8c-af90-025868ef6d94",
+      "label": "Shard Author shard_02",
+      "start_time": "2026-10-13T02:38:15+00:00",
+      "end_time": "2026-10-13T02:57:28+00:00",
+      "start_iso": "2026-10-13T02:38:15+00:00",
+      "end_iso": "2026-10-13T02:57:28+00:00",
+      "duration_seconds": 1153.0,
+      "duration_minutes": 19.22,
+      "turns_count": 66,
+      "input_tokens": 652284,
+      "output_tokens": 142523,
+      "cache_read_tokens": 6336743,
+      "active_tokens": 794807,
+      "total_tokens": 7131550,
+      "thinking_chars": 20828,
+      "tool_calls_count": 65,
+      "tool_calls_by_name": {
+        "view_file": 10,
+        "run_command": 29,
+        "write_to_file": 15,
+        "replace_file_content": 10,
+        "send_message": 1
+      },
+      "tool_errors_count": 18,
+      "failed_commands": [
+        {
+          "step_index": 16,
+          "snippet": "Created At: 2026-10-12T21:38:52-05:00\nCompleted At: 2026-10-12T21:38:52-05:00\n\nThe command exited with code 1.\nOutput:\n[!] Warning: cta_path omitted; competency diversity gate (TPL-VAR), parity checks"
+        },
+        {
+          "step_index": 20,
+          "snippet": "Created At: 2026-10-12T21:39:10-05:00\nCompleted At: 2026-10-12T21:39:11-05:00\n\nThe command exited with code 1.\nOutput:\nTraceback (most recent call last):\r\n  File \"D:\\Augusto\\personal_portfolio\\Tops_ac"
+        },
+        {
+          "step_index": 24,
+          "snippet": "Created At: 2026-10-12T21:39:16-05:00\nCompleted At: 2026-10-12T21:39:17-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+        },
+        {
+          "step_index": 28,
+          "snippet": "Created At: 2026-10-12T21:39:32-05:00\nCompleted At: 2026-10-12T21:39:33-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - TPL-VAR violation in 'T-C04-01': Onl"
+        },
+        {
+          "step_index": 30,
+          "snippet": "Created At: 2026-10-12T21:39:36-05:00\nCompleted At: 2026-10-12T21:39:37-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - [-] TPL-VAR VIOLATION in competency "
+        }
+      ],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T02:38:15Z",
+          "input_tokens": 8785,
+          "output_tokens": 432,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T02:38:20Z",
+          "input_tokens": 12453,
+          "output_tokens": 142,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T02:38:22Z",
+          "input_tokens": 28776,
+          "output_tokens": 118,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T02:38:26Z",
+          "input_tokens": 2269,
+          "output_tokens": 108,
+          "cache_read_tokens": 26724,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T02:38:29Z",
+          "input_tokens": 7493,
+          "output_tokens": 704,
+          "cache_read_tokens": 29007,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T02:38:38Z",
+          "input_tokens": 3294,
+          "output_tokens": 128,
+          "cache_read_tokens": 34451,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T02:38:41Z",
+          "input_tokens": 2268,
+          "output_tokens": 129,
+          "cache_read_tokens": 35693,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T02:38:44Z",
+          "input_tokens": 2480,
+          "output_tokens": 826,
+          "cache_read_tokens": 35910,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 17,
+          "created_at": "2026-10-13T02:38:52Z",
+          "input_tokens": 3009,
+          "output_tokens": 251,
+          "cache_read_tokens": 36342,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-10-13T02:39:08Z",
+          "input_tokens": 2438,
+          "output_tokens": 169,
+          "cache_read_tokens": 37301,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 21,
+          "created_at": "2026-10-13T02:39:11Z",
+          "input_tokens": 2603,
+          "output_tokens": 217,
+          "cache_read_tokens": 37690,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 23,
+          "created_at": "2026-10-13T02:39:14Z",
+          "input_tokens": 2403,
+          "output_tokens": 154,
+          "cache_read_tokens": 38244,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 25,
+          "created_at": "2026-10-13T02:39:17Z",
+          "input_tokens": 2422,
+          "output_tokens": 1389,
+          "cache_read_tokens": 38598,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 27,
+          "created_at": "2026-10-13T02:39:28Z",
+          "input_tokens": 3569,
+          "output_tokens": 136,
+          "cache_read_tokens": 38977,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 29,
+          "created_at": "2026-10-13T02:39:33Z",
+          "input_tokens": 2322,
+          "output_tokens": 215,
+          "cache_read_tokens": 40497,
+          "tools": [
+            "run_command"
+          ]
+        }
+      ],
+      "category": "author",
+      "shard_id": "shard_02",
+      "spawn_step": 100,
+      "spawn_time": "2026-10-13T02:38:14Z",
+      "model": "inherit",
+      "competencies": [
+        "C-04",
+        "C-05",
+        "C-06",
+        "Hab-04",
+        "Hab-05",
+        "Hab-06",
+        "H-03"
+      ],
+      "competencies_count": 7,
+      "tokens_per_competency": 113543.9,
+      "input_tokens_per_competency": 93183.4,
+      "output_tokens_per_competency": 20360.4
+    },
+    {
+      "conversation_id": "08528c10-3324-4ddd-9796-a8ea77f8bada",
+      "label": "Shard Author shard_03",
+      "start_time": "2026-10-13T02:38:15+00:00",
+      "end_time": "2026-10-13T02:58:35+00:00",
+      "start_iso": "2026-10-13T02:38:15+00:00",
+      "end_iso": "2026-10-13T02:58:35+00:00",
+      "duration_seconds": 1220.0,
+      "duration_minutes": 20.33,
+      "turns_count": 56,
+      "input_tokens": 582199,
+      "output_tokens": 160835,
+      "cache_read_tokens": 5523364,
+      "active_tokens": 743034,
+      "total_tokens": 6266398,
+      "thinking_chars": 21650,
+      "tool_calls_count": 55,
+      "tool_calls_by_name": {
+        "view_file": 4,
+        "run_command": 32,
+        "write_to_file": 15,
+        "replace_file_content": 3,
+        "send_message": 1
+      },
+      "tool_errors_count": 13,
+      "failed_commands": [
+        {
+          "step_index": 16,
+          "snippet": "Created At: 2026-10-12T21:39:00-05:00\nCompleted At: 2026-10-12T21:39:01-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - Target path does not exist: courses\\"
+        },
+        {
+          "step_index": 22,
+          "snippet": "Created At: 2026-10-12T21:39:14-05:00\nCompleted At: 2026-10-12T21:39:15-05:00\n\nThe command exited with code 1.\nOutput:\nEn l�nea: 4 Car�cter: 3\r\n+ \" && python .agents/skills/content-to-course/check_tem"
+        },
+        {
+          "step_index": 24,
+          "snippet": "Created At: 2026-10-12T21:39:21-05:00\nCompleted At: 2026-10-12T21:39:22-05:00\n\nThe command exited with code 1.\nOutput:\npython.cmd : ScriptBlock solo se debe especificar como un valor del par�metro Com"
+        },
+        {
+          "step_index": 26,
+          "snippet": "Created At: 2026-10-12T21:39:27-05:00\nCompleted At: 2026-10-12T21:39:27-05:00\n\nThe command exited with code 1.\nOutput:\npython.cmd : ScriptBlock solo se debe especificar como un valor del par�metro Com"
+        },
+        {
+          "step_index": 30,
+          "snippet": "Created At: 2026-10-12T21:42:50-05:00\nCompleted At: 2026-10-12T21:42:50-05:00\n\nThe command exited with code 1.\nOutput:\nTraceback (most recent call last):\r\n  File \"D:\\Augusto\\personal_portfolio\\Tops_ac"
+        }
+      ],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T02:38:15Z",
+          "input_tokens": 8781,
+          "output_tokens": 614,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T02:38:21Z",
+          "input_tokens": 12631,
+          "output_tokens": 181,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T02:38:24Z",
+          "input_tokens": 28437,
+          "output_tokens": 141,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T02:38:27Z",
+          "input_tokens": 8055,
+          "output_tokens": 1814,
+          "cache_read_tokens": 28451,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T02:38:40Z",
+          "input_tokens": 3951,
+          "output_tokens": 162,
+          "cache_read_tokens": 34458,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T02:38:43Z",
+          "input_tokens": 2514,
+          "output_tokens": 1017,
+          "cache_read_tokens": 36357,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T02:38:52Z",
+          "input_tokens": 3154,
+          "output_tokens": 248,
+          "cache_read_tokens": 36822,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T02:38:58Z",
+          "input_tokens": 2388,
+          "output_tokens": 170,
+          "cache_read_tokens": 37924,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 17,
+          "created_at": "2026-10-13T02:39:01Z",
+          "input_tokens": 2342,
+          "output_tokens": 528,
+          "cache_read_tokens": 38261,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-10-13T02:39:07Z",
+          "input_tokens": 2666,
+          "output_tokens": 323,
+          "cache_read_tokens": 38553,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 21,
+          "created_at": "2026-10-13T02:39:11Z",
+          "input_tokens": 2461,
+          "output_tokens": 261,
+          "cache_read_tokens": 39169,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 23,
+          "created_at": "2026-10-13T02:39:15Z",
+          "input_tokens": 2564,
+          "output_tokens": 664,
+          "cache_read_tokens": 39581,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 25,
+          "created_at": "2026-10-13T02:39:22Z",
+          "input_tokens": 2970,
+          "output_tokens": 423,
+          "cache_read_tokens": 40098,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 27,
+          "created_at": "2026-10-13T02:39:27Z",
+          "input_tokens": 2663,
+          "output_tokens": 36385,
+          "cache_read_tokens": 41020,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 29,
+          "created_at": "2026-10-13T02:42:46Z",
+          "input_tokens": 36433,
+          "output_tokens": 240,
+          "cache_read_tokens": 43772,
+          "tools": [
+            "run_command"
+          ]
+        }
+      ],
+      "category": "author",
+      "shard_id": "shard_03",
+      "spawn_step": 100,
+      "spawn_time": "2026-10-13T02:38:14Z",
+      "model": "inherit",
+      "competencies": [
+        "C-07",
+        "Hab-07",
+        "Hab-08",
+        "C-08",
+        "Hab-09",
+        "C-09",
+        "C-10"
+      ],
+      "competencies_count": 7,
+      "tokens_per_competency": 106147.7,
+      "input_tokens_per_competency": 83171.3,
+      "output_tokens_per_competency": 22976.4
+    },
+    {
+      "conversation_id": "44f9420d-833a-4b50-b43d-161d5a0e4e99",
+      "label": "Blind Judge 01",
+      "start_time": "2026-10-13T03:06:57+00:00",
+      "end_time": "2026-10-13T03:09:07+00:00",
+      "start_iso": "2026-10-13T03:06:57+00:00",
+      "end_iso": "2026-10-13T03:09:07+00:00",
+      "duration_seconds": 130.0,
+      "duration_minutes": 2.17,
+      "turns_count": 8,
+      "input_tokens": 74104,
+      "output_tokens": 19505,
+      "cache_read_tokens": 161193,
+      "active_tokens": 93609,
+      "total_tokens": 254802,
+      "thinking_chars": 4939,
+      "tool_calls_count": 7,
+      "tool_calls_by_name": {
+        "view_file": 5,
+        "write_to_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 1,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T03:06:57Z",
+          "input_tokens": 8681,
+          "output_tokens": 542,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T03:07:02Z",
+          "input_tokens": 10759,
+          "output_tokens": 325,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T03:07:06Z",
+          "input_tokens": 25636,
+          "output_tokens": 104,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T03:07:10Z",
+          "input_tokens": 2253,
+          "output_tokens": 102,
+          "cache_read_tokens": 23585,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T03:07:13Z",
+          "input_tokens": 3057,
+          "output_tokens": 17971,
+          "cache_read_tokens": 23791,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T03:08:56Z",
+          "input_tokens": 18066,
+          "output_tokens": 79,
+          "cache_read_tokens": 26890,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T03:09:02Z",
+          "input_tokens": 3169,
+          "output_tokens": 324,
+          "cache_read_tokens": 42905,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T03:09:07Z",
+          "input_tokens": 2483,
+          "output_tokens": 58,
+          "cache_read_tokens": 44022,
+          "tools": []
+        }
+      ],
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 116,
+      "spawn_time": "2026-10-13T03:06:57Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "bf52ddc5-ee8b-476b-b797-e5324e51fb46",
+      "label": "Blind Judge 02",
+      "start_time": "2026-10-13T03:06:57+00:00",
+      "end_time": "2026-10-13T03:13:31+00:00",
+      "start_iso": "2026-10-13T03:06:57+00:00",
+      "end_iso": "2026-10-13T03:13:31+00:00",
+      "duration_seconds": 394.0,
+      "duration_minutes": 6.57,
+      "turns_count": 16,
+      "input_tokens": 123182,
+      "output_tokens": 42188,
+      "cache_read_tokens": 536630,
+      "active_tokens": 165370,
+      "total_tokens": 702000,
+      "thinking_chars": 9275,
+      "tool_calls_count": 15,
+      "tool_calls_by_name": {
+        "view_file": 3,
+        "search_web": 9,
+        "read_url_content": 1,
+        "write_to_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 1,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T03:06:57Z",
+          "input_tokens": 8672,
+          "output_tokens": 411,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T03:07:02Z",
+          "input_tokens": 10619,
+          "output_tokens": 285,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T03:07:05Z",
+          "input_tokens": 14649,
+          "output_tokens": 21759,
+          "cache_read_tokens": 0,
+          "tools": [
+            "search_web"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T03:09:27Z",
+          "input_tokens": 38187,
+          "output_tokens": 153,
+          "cache_read_tokens": 0,
+          "tools": [
+            "search_web"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T03:09:33Z",
+          "input_tokens": 3069,
+          "output_tokens": 330,
+          "cache_read_tokens": 36136,
+          "tools": [
+            "search_web"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T03:09:42Z",
+          "input_tokens": 3127,
+          "output_tokens": 104,
+          "cache_read_tokens": 37155,
+          "tools": [
+            "search_web"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T03:09:51Z",
+          "input_tokens": 3681,
+          "output_tokens": 309,
+          "cache_read_tokens": 38234,
+          "tools": [
+            "read_url_content"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T03:10:35Z",
+          "input_tokens": 2493,
+          "output_tokens": 110,
+          "cache_read_tokens": 39863,
+          "tools": [
+            "search_web"
+          ]
+        },
+        {
+          "step_index": 17,
+          "created_at": "2026-10-13T03:10:42Z",
+          "input_tokens": 2996,
+          "output_tokens": 137,
+          "cache_read_tokens": 40307,
+          "tools": [
+            "search_web"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-10-13T03:10:50Z",
+          "input_tokens": 2985,
+          "output_tokens": 153,
+          "cache_read_tokens": 41254,
+          "tools": [
+            "search_web"
+          ]
+        },
+        {
+          "step_index": 21,
+          "created_at": "2026-10-13T03:10:57Z",
+          "input_tokens": 2779,
+          "output_tokens": 100,
+          "cache_read_tokens": 42190,
+          "tools": [
+            "search_web"
+          ]
+        },
+        {
+          "step_index": 23,
+          "created_at": "2026-10-13T03:11:04Z",
+          "input_tokens": 3419,
+          "output_tokens": 122,
+          "cache_read_tokens": 42923,
+          "tools": [
+            "search_web"
+          ]
+        },
+        {
+          "step_index": 26,
+          "created_at": "2026-10-13T03:11:36Z",
+          "input_tokens": 2951,
+          "output_tokens": 17592,
+          "cache_read_tokens": 44286,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 28,
+          "created_at": "2026-10-13T03:13:22Z",
+          "input_tokens": 17680,
+          "output_tokens": 85,
+          "cache_read_tokens": 47286,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 30,
+          "created_at": "2026-10-13T03:13:26Z",
+          "input_tokens": 3213,
+          "output_tokens": 504,
+          "cache_read_tokens": 62917,
+          "tools": [
+            "send_message"
+          ]
+        }
+      ],
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 116,
+      "spawn_time": "2026-10-13T03:06:57Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    }
+  ]
+}

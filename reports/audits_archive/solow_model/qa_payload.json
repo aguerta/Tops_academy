@@ -1,0 +1,3563 @@
+{
+  "course_id": "solow_model",
+  "filename": "solow_model.json",
+  "title": "El Modelo de Crecimiento Económico de Solow: Teoría, Dinámica y Métodos Cuantitativos",
+  "description": "Modelar, resolver e interpretar la dinámica de acumulación de capital, transición asintótica y equilibrios de estado uniforme en el modelo neoclásico de crecimiento de Solow, identificando las consecuencias de la sustitución factorial, el progreso técnico y las políticas económicas.",
+  "total_competencies": 22,
+  "total_questions": 530,
+  "question_types_distribution": {
+    "multiple_choice_7_options": 194,
+    "fill_in_the_blank": 168,
+    "multiple_select": 168
+  },
+  "questions_per_competency": {
+    "H-01": 20,
+    "C-01": 20,
+    "Hab-01": 30,
+    "C-02": 20,
+    "Hab-02": 30,
+    "C-03": 20,
+    "H-02": 20,
+    "Hab-03": 30,
+    "C-04": 20,
+    "C-05": 20,
+    "C-06": 20,
+    "Hab-04": 30,
+    "Hab-05": 30,
+    "Hab-06": 30,
+    "H-03": 20,
+    "C-07": 20,
+    "Hab-07": 30,
+    "Hab-08": 30,
+    "C-08": 20,
+    "Hab-09": 30,
+    "C-09": 20,
+    "C-10": 20
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (conteo de KaTeX roto, distractores delatores, pistas faltantes, placeholders f-string y distribución de Bloom) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts de prueba exploratorios en Python. Aplica el Adaptive Semantic Loop y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 0.0,
+    "hard_penalties_precalculated": []
+  },
+  "audit_telemetry": {
+    "course_id": "solow_model",
+    "title": "El Modelo de Crecimiento Económico de Solow: Teoría, Dinámica y Métodos Cuantitativos",
+    "total_competencies": 22,
+    "total_questions": 530,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 22,
+        "category_distribution": {
+          "Fact": 3,
+          "Concept": 10,
+          "Skill": 9,
+          "Other": 0
+        },
+        "competencies_missing_prerequisites_count": 1,
+        "underpopulated_competencies_count": 0,
+        "underpopulated_competencies": [],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 20,
+        "max_questions_per_comp": 30
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 1608,
+        "distractors_with_rationale_count": 1608,
+        "rationale_coverage_pct": 100.0,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 0,
+        "zero_hints_items": [],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 0,
+        "missing_solutions_count": 0
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 0,
+        "unclosed_braces_items": [],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 0,
+        "template_variable_residue_items": []
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 0,
+        "blind_string_replacement_items": []
+      }
+    },
+    "hard_penalties": [],
+    "risk_score": 0.0,
+    "risk_clusters": {
+      "katex_issues": [],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [],
+      "template_residues": [],
+      "blind_replacements": []
+    },
+    "all_issues": [],
+    "issues_by_item": {}
+  },
+  "competencies": [
+    {
+      "id": "H-01",
+      "name": "Hipótesis de Proporciones Variables y Rendimientos Constantes a Escala",
+      "category": "Fact",
+      "description": "La función de producción macroeconómica agregada $Q = f(K, L)$ es linealmente homogénea (rendimientos constantes a escala) y admite proporciones variables entre factores con productos marginales positivos $f_K > 0$, $f_L > 0$ y decrecientes $f_{KK} < 0$, $f_{LL} < 0$.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-01",
+      "name": "Forma Intensiva de la Función de Producción y Propiedades de Concavidad",
+      "category": "Concept",
+      "description": "Al definir la relación capital-trabajo $k = K/L$, el producto por trabajador se expresa como $q = \\phi(k) = f(k, 1)$. Las propiedades de productividad marginal positiva y decreciente se traducen en $\\phi'(k) > 0$ y $\\phi''(k) < 0$.",
+      "prerequisites": [
+        "H-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-01",
+      "name": "Derivación de la Ecuación Fundamental de Solow para la Relación Capital-Trabajo",
+      "category": "Skill",
+      "description": "A partir de la identidad de acumulación $\\dot{K} = sQ$, la tasa constante de crecimiento laboral $\\dot{L}/L = \\lambda$ y la definición $K = kL$, aplicar la regla del producto para derivar $\\dot{k} = s\\phi(k) - \\lambda k$.",
+      "prerequisites": [
+        "H-01",
+        "C-01"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-02",
+      "name": "Estabilidad Dinámica Global y Estado Uniforme en el Diagrama de Fase",
+      "category": "Concept",
+      "description": "El estado de equilibrio intertemporal $\\bar{k}$ se alcanza cuando $s\\phi(\\bar{k}) = \\lambda \\bar{k}$ (donde $\\dot{k} = 0$). Dicho equilibrio es dinámicamente estable si la pendiente de la línea de fase en $\\bar{k}$ es negativa, es decir, $\\left.\\frac{d\\dot{k}}{dk}\\right|_{\\bar{k}} = s\\phi'(\\bar{k}) - \\lambda < 0$. En el estado uniforme, $K$, $L$ y $Q$ crecen a la tasa común $\\lambda$.",
+      "prerequisites": [
+        "Hab-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-02",
+      "name": "Linealización de Bernoulli y Solución Explícita del Modelo Cobb-Douglas",
+      "category": "Skill",
+      "description": "Para una función Cobb-Douglas $Q = K^\\alpha L^{1-\\alpha}$ con $\\phi(k) = k^\\alpha$, transformar la ecuación no lineal $\\dot{k} + \\lambda k = s k^\\alpha$ en una ecuación diferencial lineal mediante el cambio de variable $z = k^{1-\\alpha}$, resolviendo la trayectoria temporal $k(t) = \\left[ \\left(k(0)^{1-\\alpha} - \\frac{s}{\\lambda}\\right) e^{-(1-\\alpha)\\lambda t} + \\frac{s}{\\lambda} \\right]^{\\frac{1}{1-\\alpha}}$.",
+      "prerequisites": [
+        "Hab-01",
+        "C-02"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-03",
+      "name": "Crítica al Modelo Harrod-Domar y el Postulado de Rigidez Tecnológica",
+      "category": "Concept",
+      "description": "El modelo de Harrod-Domar concluye que el crecimiento equilibrado ocurre en un 'filo de la navaja' debido al supuesto restrictivo de proporciones fijas en la producción. Solow demuestra que permitir la sustitución continua entre capital y trabajo elimina la inestabilidad inherente.",
+      "prerequisites": [
+        "H-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "H-02",
+      "name": "Supuestos Estructurales del Modelo de Solow: Pleno Empleo y Acumulación Continua",
+      "category": "Fact",
+      "description": "El modelo postula que la producción es un bien compuesto único $Y(t) = F(K, L)$, el ahorro es una fracción constante $\\dot{K} = sY$, la oferta de trabajo crece exponencialmente $L(t) = L_0 e^{nt}$ de forma completamente inelástica, y tanto el capital preexistente como el trabajo disponible se emplean plenamente en todo instante.",
+      "prerequisites": [
+        "H-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-03",
+      "name": "Formulación de la Ecuación Diferencial Fundamental en Términos de la Relación Capital-Trabajo",
+      "category": "Skill",
+      "description": "Definiendo $r = K/L$, sustituir $\\dot{K} = sF(K, L)$ y $L(t) = L_0 e^{nt}$ en la tasa de cambio relativa $\\dot{r}/r = \\dot{K}/K - \\dot{L}/L$ para deducir formalmente la ecuación fundamental de Solow $\\dot{r} = sF(r, 1) - nr$.",
+      "prerequisites": [
+        "H-02"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-04",
+      "name": "Trayectorias Asintóticas de Crecimiento y Convergencia en la Figura I",
+      "category": "Concept",
+      "description": "En el caso canónico con curva de ahorro $sF(r,1)$ cóncava que corta una sola vez al rayo $nr$ en $r^* > 0$, el estado de crecimiento equilibrado es globalmente estable: si $r < r^*$, $sF(r,1) > nr$ y $\\dot{r} > 0$; si $r > r^*$, $nr > sF(r,1)$ y $\\dot{r} < 0$.",
+      "prerequisites": [
+        "Hab-03"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-05",
+      "name": "Equilibrios Múltiples y Estados de Crecimiento Inestable en la Figura II",
+      "category": "Concept",
+      "description": "Si la función de producción no es estrictamente cóncava en todo su dominio, la curva de ahorro $sF(r,1)$ puede intersectar al rayo $nr$ en múltiples puntos ($r_1, r_2, r_3$). Los equilibrios $r_1$ y $r_3$ son localmente estables, mientras que el intermedio $r_2$ es inestable y actúa como umbral crítico de despegue.",
+      "prerequisites": [
+        "C-04"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-06",
+      "name": "Inexistencia de Estado Estacionario y Casos Extremos en la Figura III",
+      "category": "Concept",
+      "description": "Pueden existir configuraciones tecnológicas donde la curva de ahorro se ubica enteramente por encima del rayo $nr$ (acumulación infinita con $r \\to \\infty$) o enteramente por debajo de él (empobrecimiento secular donde $r \\to 0$).",
+      "prerequisites": [
+        "C-04"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-04",
+      "name": "Resolución Dinámica bajo Coeficientes Fijos Tipo Harrod-Domar",
+      "category": "Skill",
+      "description": "Especificar la función con proporciones fijas $Y = \\min(K/a, L/b)$ y resolver la ecuación a tramos $\\dot{r} = s\\min(r/a, 1/b) - nr$, analizando los regímenes de cuello de botella según si la tasa natural supera, iguala o queda por debajo de la tasa garantizada $s/a$.",
+      "prerequisites": [
+        "Hab-03",
+        "C-03"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "Hab-05",
+      "name": "Solución Cuantitativa Exacta para la Función Cobb-Douglas con Trayectoria Temporal Agregada",
+      "category": "Skill",
+      "description": "Para la función $Y = K^a L^{1-a}$, resolver la ecuación diferencial no lineal sobre el acervo agregado de capital $\\dot{K} = s K^a (L_0 e^{nt})^{1-a}$, deduciendo la trayectoria explícita $K(t) = \\left[ K_0^{1-a} - \\frac{s}{n}L_0^{1-a} + \\frac{s}{n}L_0^{1-a}e^{n(1-a)t} \\right]^{\\frac{1}{1-a}}$ y demostrando que la razón capital-producto converge a $C^* = s/n$.",
+      "prerequisites": [
+        "Hab-02",
+        "C-04"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "Hab-06",
+      "name": "Análisis Cualitativo y Condiciones de Bifurcación en la Familia CES ($p=1/2$)",
+      "category": "Skill",
+      "description": "Para la función de producción CES con $p=1/2$, $Y = (a\\sqrt{K} + \\sqrt{L})^2$, deducir la ecuación fundamental $\\dot{r} = s(a\\sqrt{r} + 1)^2 - nr$ y determinar el umbral crítico de bifurcación: si $s a^2 > n$ el capital crece sin cota; si $s a^2 < n$ existe un equilibrio estable en $r^* = \\left(\\frac{1}{\\sqrt{n/s} - a}\\right)^2$.",
+      "prerequisites": [
+        "Hab-03",
+        "C-06"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "H-03",
+      "name": "Ecuación de Arbitraje Financiero y Rendimiento Propio del Capital",
+      "category": "Fact",
+      "description": "Bajo arbitraje perfecto y ausencia de incertidumbre, el rendimiento financiero de un activo monetario $i(t)$ debe igualar el rendimiento propio del capital físico en bienes más la ganancia de capital por apreciación del precio de transferencia: $i(t) = \\frac{q(t)}{p(t)} + \\frac{\\dot{p}(t)}{p(t)}$, donde $p(t) = \\int_t^\\infty q(u) e^{-\\int_t^u i(z) dz} du$.",
+      "prerequisites": [
+        "H-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-07",
+      "name": "Determinación de Precios Factoriales y Distribución del Ingreso en Equilibrio",
+      "category": "Concept",
+      "description": "Bajo competencia perfecta y retornos constantes a escala, los precios reales de los factores equivalen a sus productividades marginales: $w/p = \\partial F/\\partial L = F(r, 1) - r F'(r, 1)$ y $q/p = \\partial F/\\partial K = F'(r, 1)$, dependiendo exclusivamente de la relación capital-trabajo $r$. A medida que $r$ converge a $r^*$, la razón de precios relativos $w/q$ converge a su valor de equilibrio.",
+      "prerequisites": [
+        "H-03",
+        "Hab-03"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-07",
+      "name": "Dinámica del Modelo con Progreso Técnico Neutral Exógeno",
+      "category": "Skill",
+      "description": "Modificar la función de producción introduciendo progreso técnico neutral $Y = A(t)F(K, L)$ con $A(t) = e^{gt}$. Para la especificación Cobb-Douglas con $b = 1 - a$, resolver la trayectoria de capital $\\dot{K} = s e^{gt} K^a (L_0 e^{nt})^{1-a}$ y demostrar que a largo plazo el capital crece a la tasa $n + g/b$ y el producto a la tasa $n + ag/b$, mientras la relación capital-trabajo crece continuamente a tasa $g/b$.",
+      "prerequisites": [
+        "Hab-05"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "Hab-08",
+      "name": "Incorporación de Oferta de Trabajo Elástica al Salario Real",
+      "category": "Skill",
+      "description": "Generalizar la oferta laboral postulando $L = L_0 e^{nt} (w/p)^h$ y deducir la ecuación diferencial modificada $\\dot{r} = (sF(r, 1) - nr)\\left(1 + \\frac{ah}{r}\\right)^{-1}$ para el caso Cobb-Douglas, demostrando que aunque la velocidad de ajuste cambia, la razón capital-trabajo de estado estacionario se mantiene inalterada.",
+      "prerequisites": [
+        "C-07",
+        "Hab-03"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-08",
+      "name": "Tasa de Ahorro Endógena Dependiente del Rendimiento del Capital",
+      "category": "Concept",
+      "description": "Hacer depender la fracción ahorrada del rendimiento del capital $s = s(r)$ mediante la función $\\dot{r} = s(r)F(r, 1) - nr$. Si el ahorro responde positivamente a la rentabilidad del capital (y por ende disminuye con la relación capital-trabajo $s'(r) < 0$), el mecanismo actúa como una fuerza estabilizadora que elimina la posibilidad de acumulación desbocada.",
+      "prerequisites": [
+        "C-07",
+        "Hab-03"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-09",
+      "name": "Evaluación del Impacto de la Política Tributaria sobre la Tasa Efectiva de Ahorro",
+      "category": "Skill",
+      "description": "Modelar un impuesto proporcional sobre la renta a tasa $t$. Si una fracción $v$ de la recaudación tributaria se destina a formación de capital y el resto a consumo, deducir la tasa efectiva de ahorro $s^* = s + (v - s)t$, analizando si el ahorro nacional neto aumenta ($v > s$) o se contrae ($v < s$).",
+      "prerequisites": [
+        "Hab-03"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-09",
+      "name": "Dinámica con Crecimiento Poblacional Endógeno y Trampa Malthusiana",
+      "category": "Concept",
+      "description": "Si la tasa demográfica responde al ingreso per cápita $n = n(r)$, la curva de ensanchamiento demográfico se tuerce convirtiéndose en $n(r)r$. Esto puede generar equilibrios múltiples: una trampa de estancamiento de bajo ingreso en $r_1$ y un umbral crítico de despegue $r_2$, donde un impulso masivo de inversión es necesario para superar la trampa.",
+      "prerequisites": [
+        "C-05",
+        "Hab-03"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-10",
+      "name": "Rigidez Salarial, Preferencia por la Liquidez y Trampas de Desempleo",
+      "category": "Concept",
+      "description": "Si el salario real se fija rígidamente en $\\bar{w}/p$, la relación capital-trabajo queda anclada en $\\bar{r}$, de modo que el empleo crece a la tasa $\\dot{L}/L = (s/\\bar{r})F(\\bar{r}, 1)$. Si esta tasa es menor que el crecimiento demográfico $n$, se engendra desempleo crónico creciente. Asimismo, la preferencia por liquidez y rigideces de tasa de interés impiden el vaciado del mercado de capitales.",
+      "prerequisites": [
+        "C-07",
+        "H-03"
+      ],
+      "question_count": 20
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-H01-001",
+      "competency_id": "H-01",
+      "competency_name": "Hipótesis de Proporciones Variables y Rendimientos Constantes a Escala",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el marco analítico de Solow con función agregada $Q = f(K, L)$ y constante $A = 13$, evalúe las propiedades teóricas de homogeneidad de escala y curvatura de los insumos productivos:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Productividad media del capital phi(k)/k estrictamente creciente sin cota superior a medida que se profundiza la dotación de capital por trabajador.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que $\\phi(k)/k$ crece a medida que se acumula más capital por trabajador.",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Función de producción agregada donde el producto medio por trabajador Q/L depende necesariamente de la escala total del empleo agregado L.",
+          "is_correct": false,
+          "error_rationale": "$Q/L$ depende explícitamente tanto de $k$ como de $L$.",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Proporciones tecnológicas rígidas e invariables donde el producto adopta la función de coeficientes fijos tipo Leontief Q = min(rho K, beta L).",
+          "is_correct": false,
+          "error_rationale": "Especificar $Q = \\min(\\rho K, \\beta L)$ en vez de $Q = f(K, L)$.",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Producto agregado Q interpretado como producto bruto que exige deducir explícitamente el desgaste -delta K de la acumulación en la función de producción.",
+          "is_correct": false,
+          "error_rationale": "Agregar un término explícito de depreciación $-\\delta K$ cuando ya está implícito en el producto neto.",
+          "distractor_id": "D-H01-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Rendimientos constantes a escala con rendimientos marginales propios decrecientes f_KK < 0 y f_LL < 0 bajo proporciones variables continuas.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Complementariedad negativa entre insumos con segundas derivadas cruzadas negativas f_KL < 0, reduciendo el producto marginal del capital ante más L.",
+          "is_correct": false,
+          "error_rationale": "Considerar que un aumento en $L$ reduce el producto marginal del capital.",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Rendimientos constantes a escala con rendimientos marginales propios constantes f_KK = 0 y f_LL = 0 para cada insumo individual en la economía.",
+          "is_correct": false,
+          "error_rationale": "$f_{KK} = 0$ en lugar de $f_{KK} < 0$.",
+          "distractor_id": "D-H01-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que rendimientos constantes a escala significa duplicar todos los factores duplica el producto agregado.",
+        "Tenga presente que variar un solo factor dejando el otro constante genera rendimientos marginales decrecientes.",
+        "Distinga entre la flexibilidad de sustitución neoclásica y los coeficientes fijos tipo Harrod-Domar."
+      ],
+      "detailed_solution": "El modelo de Solow postula rendimientos constantes a escala en la función global agregada junto con rendimientos marginales decrecientes para cada factor individual (f_KK < 0, f_LL < 0) y sustituibilidad continua entre insumos."
+    },
+    {
+      "id": "Q-H01-002",
+      "competency_id": "H-01",
+      "competency_name": "Hipótesis de Proporciones Variables y Rendimientos Constantes a Escala",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo la estructura tecnológica $Q = f(K, L)$ caracterizada por el parámetro de escala $A = 59$, seleccione la proposición que formaliza rigurosamente las condiciones neoclásicas estándar:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Productividad media del capital phi(k)/k estrictamente creciente sin cota superior a medida que se profundiza la dotación de capital por trabajador.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que $\\phi(k)/k$ crece a medida que se acumula más capital por trabajador.",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Proporciones tecnológicas rígidas e invariables donde el producto adopta la función de coeficientes fijos tipo Leontief Q = min(rho K, beta L).",
+          "is_correct": false,
+          "error_rationale": "Especificar $Q = \\min(\\rho K, \\beta L)$ en vez de $Q = f(K, L)$.",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Función de producción agregada donde el producto medio por trabajador Q/L depende necesariamente de la escala total del empleo agregado L.",
+          "is_correct": false,
+          "error_rationale": "$Q/L$ depende explícitamente tanto de $k$ como de $L$.",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Rendimientos constantes a escala con rendimientos marginales propios constantes f_KK = 0 y f_LL = 0 para cada insumo individual en la economía.",
+          "is_correct": false,
+          "error_rationale": "$f_{KK} = 0$ en lugar de $f_{KK} < 0$.",
+          "distractor_id": "D-H01-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Rendimientos constantes a escala con rendimientos marginales propios decrecientes f_KK < 0 y f_LL < 0 bajo proporciones variables continuas.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Complementariedad negativa entre insumos con segundas derivadas cruzadas negativas f_KL < 0, reduciendo el producto marginal del capital ante más L.",
+          "is_correct": false,
+          "error_rationale": "Considerar que un aumento en $L$ reduce el producto marginal del capital.",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Producto agregado Q interpretado como producto bruto que exige deducir explícitamente el desgaste -delta K de la acumulación en la función de producción.",
+          "is_correct": false,
+          "error_rationale": "Agregar un término explícito de depreciación $-\\delta K$ cuando ya está implícito en el producto neto.",
+          "distractor_id": "D-H01-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que rendimientos constantes a escala significa duplicar todos los factores duplica el producto agregado.",
+        "Tenga presente que variar un solo factor dejando el otro constante genera rendimientos marginales decrecientes.",
+        "Distinga entre la flexibilidad de sustitución neoclásica y los coeficientes fijos tipo Harrod-Domar."
+      ],
+      "detailed_solution": "El modelo de Solow postula rendimientos constantes a escala en la función global agregada junto con rendimientos marginales decrecientes para cada factor individual (f_KK < 0, f_LL < 0) y sustituibilidad continua entre insumos."
+    },
+    {
+      "id": "Q-C01-021",
+      "competency_id": "C-01",
+      "competency_name": "Forma Intensiva de la Función de Producción y Propiedades de Concavidad",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo la formulación per cápita $q = \\phi(k)$ parametrizada con nivel tecnológico $A = 2$, seleccione la aseveración que formaliza correctamente la curvatura de la función:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El producto marginal de la mano de obra corresponde a la resta directa no ponderada del producto y su pendiente f_L = phi(k) - phi'(k).",
+          "is_correct": false,
+          "error_rationale": "Omitir el término $k$ al aplicar la regla de la cadena, escribiendo $f_L = \\phi(k) - \\phi'(k)$.",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El acervo de capital es prescindible en la producción agregada permitiendo un producto per cápita positivo con capital nulo phi(0) > 0.",
+          "is_correct": false,
+          "error_rationale": "Establecer una ordenada al origen positiva en el gráfico de inversión y ahorro.",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La función intensiva es estrictamente convexa con segunda derivada positiva phi''(k) > 0 por rendimientos crecientes de escala.",
+          "is_correct": false,
+          "error_rationale": "Dibujar o modelar $\\phi(k)$ con pendiente creciente respecto a $k$.",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La tasa de rendimiento del capital coincide con el producto por trabajador total phi(k) en lugar de su derivada marginal phi'(k).",
+          "is_correct": false,
+          "error_rationale": "Igualar el rendimiento del capital a $\\phi(k)$ en vez de $\\phi'(k)$.",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La segunda derivada intensiva phi''(k) depende de la escala poblacional L variando de forma inversamente proporcional a L.",
+          "is_correct": false,
+          "error_rationale": "Postular que $\\phi''(k)$ varía inversamente con $L$.",
+          "distractor_id": "D-C01-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La función de producción intensiva es estrictamente lineal de la forma phi(k) = a + b k con curvatura nula en todo el dominio.",
+          "is_correct": false,
+          "error_rationale": "Desaparición del punto de equilibrio interior estable y colapso al caso de coeficientes fijos.",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La productividad marginal del capital es estrictamente decreciente con phi''(k) < 0 y el capital es indispensable con phi(0) = 0.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que rendimientos decrecientes del capital implican que la pendiente de la función disminuye con el capital.",
+        "Considere qué ocurre con el producto cuando no hay herramientas de capital.",
+        "Distinga entre la función intensiva del producto y su derivada marginal."
+      ],
+      "detailed_solution": "La función intensiva de producción satisface phi'(k) > 0, phi''(k) < 0 (concavidad estricta y rendimientos decrecientes al capital) y la condición de factor indispensable phi(0) = 0."
+    },
+    {
+      "id": "Q-C01-022",
+      "competency_id": "C-01",
+      "competency_name": "Forma Intensiva de la Función de Producción y Propiedades de Concavidad",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere la función intensiva de producción $q = \\phi(k)$ en el modelo de Solow con parámetro de escala $A = 17$ y participación de factores en el producto. ¿Cuál de las siguientes afirmaciones describe rigurosamente las propiedades de concavidad y derivadas de $\\phi(k)$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La función intensiva es estrictamente convexa con segunda derivada positiva phi''(k) > 0 por rendimientos crecientes de escala.",
+          "is_correct": false,
+          "error_rationale": "Dibujar o modelar $\\phi(k)$ con pendiente creciente respecto a $k$.",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La productividad marginal del capital es estrictamente decreciente con phi''(k) < 0 y el capital es indispensable con phi(0) = 0.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El acervo de capital es prescindible en la producción agregada permitiendo un producto per cápita positivo con capital nulo phi(0) > 0.",
+          "is_correct": false,
+          "error_rationale": "Establecer una ordenada al origen positiva en el gráfico de inversión y ahorro.",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La tasa de rendimiento del capital coincide con el producto por trabajador total phi(k) en lugar de su derivada marginal phi'(k).",
+          "is_correct": false,
+          "error_rationale": "Igualar el rendimiento del capital a $\\phi(k)$ en vez de $\\phi'(k)$.",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La función de producción intensiva es estrictamente lineal de la forma phi(k) = a + b k con curvatura nula en todo el dominio.",
+          "is_correct": false,
+          "error_rationale": "Desaparición del punto de equilibrio interior estable y colapso al caso de coeficientes fijos.",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El producto marginal de la mano de obra corresponde a la resta directa no ponderada del producto y su pendiente f_L = phi(k) - phi'(k).",
+          "is_correct": false,
+          "error_rationale": "Omitir el término $k$ al aplicar la regla de la cadena, escribiendo $f_L = \\phi(k) - \\phi'(k)$.",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La segunda derivada intensiva phi''(k) depende de la escala poblacional L variando de forma inversamente proporcional a L.",
+          "is_correct": false,
+          "error_rationale": "Postular que $\\phi''(k)$ varía inversamente con $L$.",
+          "distractor_id": "D-C01-01"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que rendimientos decrecientes del capital implican que la pendiente de la función disminuye con el capital.",
+        "Considere qué ocurre con el producto cuando no hay herramientas de capital.",
+        "Distinga entre la función intensiva del producto y su derivada marginal."
+      ],
+      "detailed_solution": "La función intensiva de producción satisface phi'(k) > 0, phi''(k) < 0 (concavidad estricta y rendimientos decrecientes al capital) y la condición de factor indispensable phi(0) = 0."
+    },
+    {
+      "id": "Q-Hab01-041",
+      "competency_id": "Hab-01",
+      "competency_name": "Derivación de la Ecuación Fundamental de Solow para la Relación Capital-Trabajo",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo las hipótesis de acumulación neta e incremento de mano de obra con parámetros $s = 0.3$ y $\\lambda = 0.045$, identifique la formulación exacta de la ecuación diferencial fundamental:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La ecuación fundamental adopta la forma con suma de términos \\dot k = s \\phi(k) + \\lambda k, sumando el ensanchamiento demográfico a la inversión.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{k} = s\\phi(k) + \\lambda k$.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La ecuación diferencial sustituye la tasa relativa por el flujo demográfico absoluto resultando en \\dot k = s \\phi(k) - \\dot L k.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{k} = s\\phi(k) - \\dot{L} k$.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La dinámica temporal de la dotación intensiva resulta en \\dot k = s \\phi(k), omitiendo la tasa de variación de la fuerza de trabajo.",
+          "is_correct": false,
+          "error_rationale": "Obtener $\\dot{K} = L\\dot{k}$ y por ende $\\dot{k} = s\\phi(k)$, perdiendo por completo el término $-\\lambda k$.",
+          "distractor_id": "D-Hab01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El ahorro se modela como una cuantía fija independiente del producto, derivando en la ecuación \\dot k = s - \\lambda k para todo k.",
+          "is_correct": false,
+          "error_rationale": "Plantear $\\dot{k} = s - \\lambda k$, asumiendo ahorro independiente del producto.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La ecuación diferencial fundamental es \\dot k = s \\phi(k) - \\lambda k, reflejando la inversión neta y la dilución del capital por trabajador.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La relación de intensidades se invierte postulando k = L/K, lo que altera los signos y transforma la ley de acumulación fundamental.",
+          "is_correct": false,
+          "error_rationale": "Obtener una ecuación diferencial con signo invertido y potencias inversas en la función de producción.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La trayectoria per cápita retiene la escala laboral agregada resultando en \\dot k = s \\phi(k) - \\lambda k L, sin cancelar el factor común.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{k} = s\\phi(k) - \\lambda k L$, manteniendo la variable agregada $L$ en la ecuación diferencial intensiva.",
+          "distractor_id": "D-Hab01-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Aplique la regla del producto a la relación agregada entre capital, trabajo y capital por trabajador.",
+        "Recuerde que el crecimiento de la población laboral requiere destinar inversión para equipar a los nuevos trabajadores.",
+        "Al despejar la derivada temporal del capital por trabajador, el término demográfico pasa restando."
+      ],
+      "detailed_solution": "Diferenciando el acervo de capital respecto al tiempo se obtiene que la inversión neta equilibra la inversión de ensanchamiento demográfico, resultando en la ecuación fundamental gobernada por la resta de la inversión bruta y el término proporcional demográfico."
+    },
+    {
+      "id": "Q-Hab01-042",
+      "competency_id": "Hab-01",
+      "competency_name": "Derivación de la Ecuación Fundamental de Solow para la Relación Capital-Trabajo",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A partir de la identidad de acumulación $\\dot K = sQ$, la tasa de crecimiento demográfico $\\dot L/L = \\lambda$ con parámetro $\\lambda = 0.01$ y propensión al ahorro $s = 0.25$, seleccione la ecuación diferencial fundamental que rige la trayectoria del capital por trabajador $k$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La relación de intensidades se invierte postulando k = L/K, lo que altera los signos y transforma la ley de acumulación fundamental.",
+          "is_correct": false,
+          "error_rationale": "Obtener una ecuación diferencial con signo invertido y potencias inversas en la función de producción.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El ahorro se modela como una cuantía fija independiente del producto, derivando en la ecuación \\dot k = s - \\lambda k para todo k.",
+          "is_correct": false,
+          "error_rationale": "Plantear $\\dot{k} = s - \\lambda k$, asumiendo ahorro independiente del producto.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La ecuación fundamental adopta la forma con suma de términos \\dot k = s \\phi(k) + \\lambda k, sumando el ensanchamiento demográfico a la inversión.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{k} = s\\phi(k) + \\lambda k$.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La trayectoria per cápita retiene la escala laboral agregada resultando en \\dot k = s \\phi(k) - \\lambda k L, sin cancelar el factor común.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{k} = s\\phi(k) - \\lambda k L$, manteniendo la variable agregada $L$ en la ecuación diferencial intensiva.",
+          "distractor_id": "D-Hab01-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La ecuación diferencial fundamental es \\dot k = s \\phi(k) - \\lambda k, reflejando la inversión neta y la dilución del capital por trabajador.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La ecuación diferencial sustituye la tasa relativa por el flujo demográfico absoluto resultando en \\dot k = s \\phi(k) - \\dot L k.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{k} = s\\phi(k) - \\dot{L} k$.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La dinámica temporal de la dotación intensiva resulta en \\dot k = s \\phi(k), omitiendo la tasa de variación de la fuerza de trabajo.",
+          "is_correct": false,
+          "error_rationale": "Obtener $\\dot{K} = L\\dot{k}$ y por ende $\\dot{k} = s\\phi(k)$, perdiendo por completo el término $-\\lambda k$.",
+          "distractor_id": "D-Hab01-02"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Aplique la regla del producto a la relación agregada entre capital, trabajo y capital por trabajador.",
+        "Recuerde que el crecimiento de la población laboral requiere destinar inversión para equipar a los nuevos trabajadores.",
+        "Al despejar la derivada temporal del capital por trabajador, el término demográfico pasa restando."
+      ],
+      "detailed_solution": "Diferenciando el acervo de capital respecto al tiempo se obtiene que la inversión neta equilibra la inversión de ensanchamiento demográfico, resultando en la ecuación fundamental gobernada por la resta de la inversión bruta y el término proporcional demográfico."
+    },
+    {
+      "id": "Q-C02-071",
+      "competency_id": "C-02",
+      "competency_name": "Estabilidad Dinámica Global y Estado Uniforme en el Diagrama de Fase",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para una economía de Solow caracterizada por ahorro $s = 0.18$ y tasa demográfica $\\lambda = 0.035$, determine el criterio formal de estabilidad del equilibrio intensivo y las tasas de crecimiento uniforme:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La convergencia hacia el estado uniforme no ocurre automáticamente y requiere intervención estatal para equilibrar ahorro e inversión.",
+          "is_correct": false,
+          "error_rationale": "Argumentar que el sistema requiere una política de inversión planificada para no caer en el desempleo crónico.",
+          "distractor_id": "D-C02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La estabilidad dinámica exige que la curva de ahorro corte a la recta de ampliación con pendiente positiva s \\phi'(k^*) - \\lambda > 0.",
+          "is_correct": false,
+          "error_rationale": "Exigir $s\\phi'(\\bar{k}) > \\lambda$ para que el equilibrio sea convergente.",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "En el estado uniforme sin progreso técnico, el producto por trabajador Q/L continúa creciendo indefinidamente a la tasa demográfica \\lambda.",
+          "is_correct": false,
+          "error_rationale": "Predecir una tasa de crecimiento de $Q/L$ igual a $\\lambda$.",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Un incremento permanente en la propensión al ahorro s eleva de forma permanente la tasa de crecimiento porcentual del producto agregado.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que la nueva tasa de crecimiento de la economía en el estado uniforme será proporcional a $s$.",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El origen de coordenadas k = 0 constituye un equilibrio absorbente dinámicamente estable para cualquier dotación inicial de capital.",
+          "is_correct": false,
+          "error_rationale": "Catalogar a $k=0$ como un equilibrio absorbente estable para cualquier dotación inicial.",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "En el estado uniforme todas las variables agregadas K, L y Q permanecen estáticas con tasa de crecimiento estrictamente nula.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que en $\\bar{k}$ la inversión neta y el producto agregado dejan de crecer.",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El equilibrio de estado uniforme es localmente estable si s \\phi'(k^*) - \\lambda < 0, y en dicho estado K, L y Q crecen a la tasa constante \\lambda.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Para estabilidad, perturbaciones positivas sobre el capital deben generar una contracción del acervo.",
+        "Esto requiere pendiente negativa de la línea de fase en el punto de corte con el eje horizontal.",
+        "En el estado uniforme, la intensidad de capital es constante, por lo que las variables agregadas crecen a la tasa demográfica."
+      ],
+      "detailed_solution": "La estabilidad de primer orden exige pendiente negativa en la línea de fase evaluada en el estado estacionario. En dicho estado uniforme, las razones per cápita son constantes y las variables agregadas crecen a la tasa común demográfica."
+    },
+    {
+      "id": "Q-C02-072",
+      "competency_id": "C-02",
+      "competency_name": "Estabilidad Dinámica Global y Estado Uniforme en el Diagrama de Fase",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el diagrama de fase con parámetros $s = 0.36$ y $\\lambda = 0.05$, examine la pendiente de la línea de fase en el estado uniforme $\\bar{k}$ y la evolución de las variables agregadas:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El origen de coordenadas k = 0 constituye un equilibrio absorbente dinámicamente estable para cualquier dotación inicial de capital.",
+          "is_correct": false,
+          "error_rationale": "Catalogar a $k=0$ como un equilibrio absorbente estable para cualquier dotación inicial.",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En el estado uniforme todas las variables agregadas K, L y Q permanecen estáticas con tasa de crecimiento estrictamente nula.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que en $\\bar{k}$ la inversión neta y el producto agregado dejan de crecer.",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Un incremento permanente en la propensión al ahorro s eleva de forma permanente la tasa de crecimiento porcentual del producto agregado.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que la nueva tasa de crecimiento de la economía en el estado uniforme será proporcional a $s$.",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La estabilidad dinámica exige que la curva de ahorro corte a la recta de ampliación con pendiente positiva s \\phi'(k^*) - \\lambda > 0.",
+          "is_correct": false,
+          "error_rationale": "Exigir $s\\phi'(\\bar{k}) > \\lambda$ para que el equilibrio sea convergente.",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El equilibrio de estado uniforme es localmente estable si s \\phi'(k^*) - \\lambda < 0, y en dicho estado K, L y Q crecen a la tasa constante \\lambda.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "En el estado uniforme sin progreso técnico, el producto por trabajador Q/L continúa creciendo indefinidamente a la tasa demográfica \\lambda.",
+          "is_correct": false,
+          "error_rationale": "Predecir una tasa de crecimiento de $Q/L$ igual a $\\lambda$.",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La convergencia hacia el estado uniforme no ocurre automáticamente y requiere intervención estatal para equilibrar ahorro e inversión.",
+          "is_correct": false,
+          "error_rationale": "Argumentar que el sistema requiere una política de inversión planificada para no caer en el desempleo crónico.",
+          "distractor_id": "D-C02-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Para estabilidad, perturbaciones positivas sobre el capital deben generar una contracción del acervo.",
+        "Esto requiere pendiente negativa de la línea de fase en el punto de corte con el eje horizontal.",
+        "En el estado uniforme, la intensidad de capital es constante, por lo que las variables agregadas crecen a la tasa demográfica."
+      ],
+      "detailed_solution": "La estabilidad de primer orden exige pendiente negativa en la línea de fase evaluada en el estado estacionario. En dicho estado uniforme, las razones per cápita son constantes y las variables agregadas crecen a la tasa común demográfica."
+    },
+    {
+      "id": "Q-Hab02-091",
+      "competency_id": "Hab-02",
+      "competency_name": "Linealización de Bernoulli y Solución Explícita del Modelo Cobb-Douglas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Dada la ecuación diferencial de acumulación $\\dot k + \\lambda k = s k^\\alpha$ con elasticidad $\\alpha = 1/5$, ahorro $s = 0.18$ y tasa $\\lambda = 0.04$, determine la estructura de la ecuación linealizada tras sustituir $z = k^{1-\\alpha}$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Tras definir z = k^(1-\\alpha), la omisión de la derivada interna conduce a la ecuación simplificada \\dot z + \\lambda z = s.",
+          "is_correct": false,
+          "error_rationale": "Obtener $\\dot{z} + \\lambda z = s$ en lugar de $\\dot{z} + (1-\\alpha)\\lambda z = (1-\\alpha)s$.",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La resolución de la ecuación diferencial produce una trayectoria explosiva con decaimiento invertido e^((1-\\alpha)\\lambda t).",
+          "is_correct": false,
+          "error_rationale": "Escribir $e^{(1-\\alpha)\\lambda t}$ provocando que $z(t) \\to \\infty$ cuando $t \\to \\infty$.",
+          "distractor_id": "D-Hab02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Mediante el cambio de variable z = k^(1-\\alpha), la ecuación diferencial lineal resultante es \\dot z + (1-\\alpha)\\lambda z = (1-\\alpha)s.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Al recuperar el capital per cápita, se aplica la potencia directa k(t) = [z(t)]^(1-\\alpha) en vez del exponente recíproco.",
+          "is_correct": false,
+          "error_rationale": "Elevar $z(t)$ a la potencia $1-\\alpha$ o aplicar la potencia solo al término constante.",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Se utiliza la elasticidad del trabajo en la sustitución de Bernoulli planteando la variable auxiliar z = k^\\alpha en la dinámica.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\phi(k) = k^{1-\\alpha}$ y linealizar con $z = k^\\alpha$.",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Empleando la sustitución errónea z = k^\\alpha, la ecuación diferencial transformada retiene no linealidades de potencias factoriales.",
+          "is_correct": false,
+          "error_rationale": "Definir $z = k^\\alpha$, lo que no elimina el término no lineal tras la diferenciación.",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El valor límite de estado estacionario para el capital por trabajador se identifica erróneamente como la simple razón k^* = s/\\lambda.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que $\\bar{k} = s/\\lambda$ omitiendo la raíz $(1-\\alpha)$-ésima.",
+          "distractor_id": "D-Hab02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "La ecuación diferencial no lineal con potencia del capital requiere la transformación z = k^(1-alpha).",
+        "Aplique la regla de la cadena: dz/dt = (1-alpha) k^(-alpha) dk/dt.",
+        "Multiplique toda la ecuación por (1-alpha) k^(-alpha) para sustituir dz/dt."
+      ],
+      "detailed_solution": "Multiplicando la ecuación por (1-alpha) k^(-alpha) y definiendo z = k^(1-alpha) con dz/dt = (1-alpha) k^(-alpha) dk/dt, se obtiene directamente la ecuación lineal dz/dt + (1-alpha) lambda z = (1-alpha) s."
+    },
+    {
+      "id": "Q-Hab02-092",
+      "competency_id": "Hab-02",
+      "competency_name": "Linealización de Bernoulli y Solución Explícita del Modelo Cobb-Douglas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el modelo de Solow Cobb-Douglas con parámetros distributivos $\\alpha = 1/4$, $s = 0.15$ y $\\lambda = 0.04$, efectúe el cambio de variable canónico de Bernoulli para obtener la ley de movimiento lineal de $z$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Tras definir z = k^(1-\\alpha), la omisión de la derivada interna conduce a la ecuación simplificada \\dot z + \\lambda z = s.",
+          "is_correct": false,
+          "error_rationale": "Obtener $\\dot{z} + \\lambda z = s$ en lugar de $\\dot{z} + (1-\\alpha)\\lambda z = (1-\\alpha)s$.",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Empleando la sustitución errónea z = k^\\alpha, la ecuación diferencial transformada retiene no linealidades de potencias factoriales.",
+          "is_correct": false,
+          "error_rationale": "Definir $z = k^\\alpha$, lo que no elimina el término no lineal tras la diferenciación.",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Se utiliza la elasticidad del trabajo en la sustitución de Bernoulli planteando la variable auxiliar z = k^\\alpha en la dinámica.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\phi(k) = k^{1-\\alpha}$ y linealizar con $z = k^\\alpha$.",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El valor límite de estado estacionario para el capital por trabajador se identifica erróneamente como la simple razón k^* = s/\\lambda.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que $\\bar{k} = s/\\lambda$ omitiendo la raíz $(1-\\alpha)$-ésima.",
+          "distractor_id": "D-Hab02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Al recuperar el capital per cápita, se aplica la potencia directa k(t) = [z(t)]^(1-\\alpha) en vez del exponente recíproco.",
+          "is_correct": false,
+          "error_rationale": "Elevar $z(t)$ a la potencia $1-\\alpha$ o aplicar la potencia solo al término constante.",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Mediante el cambio de variable z = k^(1-\\alpha), la ecuación diferencial lineal resultante es \\dot z + (1-\\alpha)\\lambda z = (1-\\alpha)s.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La resolución de la ecuación diferencial produce una trayectoria explosiva con decaimiento invertido e^((1-\\alpha)\\lambda t).",
+          "is_correct": false,
+          "error_rationale": "Escribir $e^{(1-\\alpha)\\lambda t}$ provocando que $z(t) \\to \\infty$ cuando $t \\to \\infty$.",
+          "distractor_id": "D-Hab02-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "La ecuación diferencial no lineal con potencia del capital requiere la transformación z = k^(1-alpha).",
+        "Aplique la regla de la cadena: dz/dt = (1-alpha) k^(-alpha) dk/dt.",
+        "Multiplique toda la ecuación por (1-alpha) k^(-alpha) para sustituir dz/dt."
+      ],
+      "detailed_solution": "Multiplicando la ecuación por (1-alpha) k^(-alpha) y definiendo z = k^(1-alpha) con dz/dt = (1-alpha) k^(-alpha) dk/dt, se obtiene directamente la ecuación lineal dz/dt + (1-alpha) lambda z = (1-alpha) s."
+    },
+    {
+      "id": "Q-C03-121",
+      "competency_id": "C-03",
+      "competency_name": "Crítica al Modelo Harrod-Domar y el Postulado de Rigidez Tecnológica",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Respecto a la rigidez de proporciones de Harrod-Domar bajo la razón técnica $v = 3$, seleccione la tesis fundamental de Solow (1956) sobre el ajuste macroeconómico:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El filo de la navaja proviene del supuesto de proporciones fijas; permitir la sustitución continua entre factores restablece la estabilidad.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Solow rechaza todas las premisas clásicas de Harrod-Domar, abandonando la tasa de ahorro fija y la tasa demográfica exógena.",
+          "is_correct": false,
+          "error_rationale": "Modelar el ahorro o la población como funciones endógenas en el planteamiento básico de la Sección II.",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Las herramientas keynesianas de rigidez de coeficientes concebidas para el cortísimo plazo son plenamente válidas para el análisis secular.",
+          "is_correct": false,
+          "error_rationale": "Tratar la relación capital-producto como una constante exógena fija también en el análisis neoclásico.",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La tasa garantizada de crecimiento representa la expansión demográfica natural mientras la tasa natural mide el ahorro dividido por la tecnología.",
+          "is_correct": false,
+          "error_rationale": "Intercambiar los roles de $n$ y $s/v$ al evaluar desequilibrios en el mercado laboral.",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Cualquier desviación entre la tasa natural y la garantizada genera fluctuaciones cíclicas regulares amortiguadas alrededor del equilibrio.",
+          "is_correct": false,
+          "error_rationale": "Predecir oscilaciones amortiguadas en lugar de divergencia.",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El pleno empleo en el marco neoclásico requiere una política fiscal permanente de gasto público compensatorio de la demanda agregada.",
+          "is_correct": false,
+          "error_rationale": "Plantear desempleo involuntario permanente en el modelo neoclásico sin rigideces.",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La inestabilidad de Harrod-Domar se origina en las oscilaciones psicológicas erráticas de la tasa de ahorro de las familias.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que estabilizar la propensión al ahorro resuelve el dilema del filo de la navaja sin modificar la tecnología.",
+          "distractor_id": "D-C03-01"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Solow argumentó que la inestabilidad de Harrod-Domar no es inherente al capitalismo sino al supuesto tecnológico.",
+        "Identifique el supuesto crucial que Solow abandonó: proporciones fijas tipo Leontief.",
+        "La sustitución factorial continua permite que la relación capital-producto se adapte automáticamente."
+      ],
+      "detailed_solution": "Solow demostró que la inestabilidad de Harrod-Domar (el filo de la navaja) se debe exclusivamente al postulado restrictivo de proporciones fijas en la producción; permitir la sustitución continua entre capital y trabajo elimina la contradicción entre tasas."
+    },
+    {
+      "id": "Q-C03-122",
+      "competency_id": "C-03",
+      "competency_name": "Crítica al Modelo Harrod-Domar y el Postulado de Rigidez Tecnológica",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En su crítica fundacional de 1956 al modelo de crecimiento de Harrod-Domar con parámetro de capital-producto $v = 2$, ¿cuál fue el argumento central de Robert Solow para desmantelar la conclusión del 'filo de la navaja'?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Cualquier desviación entre la tasa natural y la garantizada genera fluctuaciones cíclicas regulares amortiguadas alrededor del equilibrio.",
+          "is_correct": false,
+          "error_rationale": "Predecir oscilaciones amortiguadas en lugar de divergencia.",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Las herramientas keynesianas de rigidez de coeficientes concebidas para el cortísimo plazo son plenamente válidas para el análisis secular.",
+          "is_correct": false,
+          "error_rationale": "Tratar la relación capital-producto como una constante exógena fija también en el análisis neoclásico.",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La tasa garantizada de crecimiento representa la expansión demográfica natural mientras la tasa natural mide el ahorro dividido por la tecnología.",
+          "is_correct": false,
+          "error_rationale": "Intercambiar los roles de $n$ y $s/v$ al evaluar desequilibrios en el mercado laboral.",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Solow rechaza todas las premisas clásicas de Harrod-Domar, abandonando la tasa de ahorro fija y la tasa demográfica exógena.",
+          "is_correct": false,
+          "error_rationale": "Modelar el ahorro o la población como funciones endógenas en el planteamiento básico de la Sección II.",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La inestabilidad de Harrod-Domar se origina en las oscilaciones psicológicas erráticas de la tasa de ahorro de las familias.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que estabilizar la propensión al ahorro resuelve el dilema del filo de la navaja sin modificar la tecnología.",
+          "distractor_id": "D-C03-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El pleno empleo en el marco neoclásico requiere una política fiscal permanente de gasto público compensatorio de la demanda agregada.",
+          "is_correct": false,
+          "error_rationale": "Plantear desempleo involuntario permanente en el modelo neoclásico sin rigideces.",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El filo de la navaja proviene del supuesto de proporciones fijas; permitir la sustitución continua entre factores restablece la estabilidad.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Solow argumentó que la inestabilidad de Harrod-Domar no es inherente al capitalismo sino al supuesto tecnológico.",
+        "Identifique el supuesto crucial que Solow abandonó: proporciones fijas tipo Leontief.",
+        "La sustitución factorial continua permite que la relación capital-producto se adapte automáticamente."
+      ],
+      "detailed_solution": "Solow demostró que la inestabilidad de Harrod-Domar (el filo de la navaja) se debe exclusivamente al postulado restrictivo de proporciones fijas en la producción; permitir la sustitución continua entre capital y trabajo elimina la contradicción entre tasas."
+    },
+    {
+      "id": "Q-H02-141",
+      "competency_id": "H-02",
+      "competency_name": "Supuestos Estructurales del Modelo de Solow: Pleno Empleo y Acumulación Continua",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere los supuestos estructurales instituidos por Robert Solow (1956) para el modelo macroeconómico base con tasa demográfica $n = 0.035$ y ahorro $s = 0.15$. ¿Cuál de las siguientes afirmaciones describe fielmente el marco institucional y de factores?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La producción agregada depende de recursos naturales fijos no reproducibles como la tierra, generando rendimientos decrecientes a escala.",
+          "is_correct": false,
+          "error_rationale": "Introducir rendimientos decrecientes a escala por presencia de tierra fija.",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Una fracción sustancial del ahorro privado se retiene como atesoramiento de dinero líquido en lugar de convertirse en capital físico.",
+          "is_correct": false,
+          "error_rationale": "Diferenciar entre ahorro deseado e inversión efectiva en el modelo básico.",
+          "distractor_id": "D-H02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El acervo existente de capital acumula capacidad instalada ociosa permanente debido a insuficiencias de demanda agregada efectiva.",
+          "is_correct": false,
+          "error_rationale": "Introducir una tasa de utilización variable del capital $\\mu < 1$ en el régimen básico.",
+          "distractor_id": "D-H02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La economía produce dos bienes físicos diferenciados (consumo e inversión) con un precio relativo que fluctúa en el mercado.",
+          "is_correct": false,
+          "error_rationale": "Introducir una función de producción de bienes de capital distinta a la de bienes de consumo.",
+          "distractor_id": "D-H02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La tasa de natalidad y crecimiento poblacional es una función endógena que responde al nivel acumulado de capital por trabajador.",
+          "is_correct": false,
+          "error_rationale": "Escribir $n = n(k)$ en la derivación de la Sección II.",
+          "distractor_id": "D-H02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La oferta de trabajo es una función elástica con pendiente positiva que responde a las variaciones del salario real de mercado.",
+          "is_correct": false,
+          "error_rationale": "Plantear $L = L(w/p)$ en las ecuaciones básicas de la Sección II.",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Existe un único bien compuesto homogéneo, la oferta laboral es perfectamente inelástica y el capital se emplea plenamente en todo momento.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "El modelo de Solow opera con un único bien compuesto que sirve tanto para consumo como para acumulación de capital.",
+        "La curva de oferta de mano de obra es perfectamente inelástica en cada instante del tiempo.",
+        "Tanto el capital existente como el trabajo disponible se emplean plenamente debido a precios factoriales flexibles."
+      ],
+      "detailed_solution": "El modelo básico de Solow (1956) postula un único bien homogéneo, oferta laboral completamente inelástica que crece a tasa exógena n, y pleno empleo continuo de capital y trabajo garantizado por la flexibilidad de precios factoriales."
+    },
+    {
+      "id": "Q-H02-142",
+      "competency_id": "H-02",
+      "competency_name": "Supuestos Estructurales del Modelo de Solow: Pleno Empleo y Acumulación Continua",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para el modelo macroeconómico neoclásico con parámetros $n = 0.025$ y $s = 0.2$, determine la caracterización formal de mercados de factores y agregación postulada por Solow:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Una fracción sustancial del ahorro privado se retiene como atesoramiento de dinero líquido en lugar de convertirse en capital físico.",
+          "is_correct": false,
+          "error_rationale": "Diferenciar entre ahorro deseado e inversión efectiva en el modelo básico.",
+          "distractor_id": "D-H02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La oferta de trabajo es una función elástica con pendiente positiva que responde a las variaciones del salario real de mercado.",
+          "is_correct": false,
+          "error_rationale": "Plantear $L = L(w/p)$ en las ecuaciones básicas de la Sección II.",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Existe un único bien compuesto homogéneo, la oferta laboral es perfectamente inelástica y el capital se emplea plenamente en todo momento.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La tasa de natalidad y crecimiento poblacional es una función endógena que responde al nivel acumulado de capital por trabajador.",
+          "is_correct": false,
+          "error_rationale": "Escribir $n = n(k)$ en la derivación de la Sección II.",
+          "distractor_id": "D-H02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El acervo existente de capital acumula capacidad instalada ociosa permanente debido a insuficiencias de demanda agregada efectiva.",
+          "is_correct": false,
+          "error_rationale": "Introducir una tasa de utilización variable del capital $\\mu < 1$ en el régimen básico.",
+          "distractor_id": "D-H02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La producción agregada depende de recursos naturales fijos no reproducibles como la tierra, generando rendimientos decrecientes a escala.",
+          "is_correct": false,
+          "error_rationale": "Introducir rendimientos decrecientes a escala por presencia de tierra fija.",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La economía produce dos bienes físicos diferenciados (consumo e inversión) con un precio relativo que fluctúa en el mercado.",
+          "is_correct": false,
+          "error_rationale": "Introducir una función de producción de bienes de capital distinta a la de bienes de consumo.",
+          "distractor_id": "D-H02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "El modelo de Solow opera con un único bien compuesto que sirve tanto para consumo como para acumulación de capital.",
+        "La curva de oferta de mano de obra es perfectamente inelástica en cada instante del tiempo.",
+        "Tanto el capital existente como el trabajo disponible se emplean plenamente debido a precios factoriales flexibles."
+      ],
+      "detailed_solution": "El modelo básico de Solow (1956) postula un único bien homogéneo, oferta laboral completamente inelástica que crece a tasa exógena n, y pleno empleo continuo de capital y trabajo garantizado por la flexibilidad de precios factoriales."
+    },
+    {
+      "id": "Q-Hab03-161",
+      "competency_id": "Hab-03",
+      "competency_name": "Formulación de la Ecuación Diferencial Fundamental en Términos de la Relación Capital-Trabajo",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Deduzca formalmente la ley dinámica de acumulación para la relación capital-trabajo $r$ utilizando las tasas proporcionales bajo parámetros $s = 0.3$ y $n = 0.015$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Los argumentos factoriales se invierten al normalizar la función homogénea, escribiendo la función como F(1, r).",
+          "is_correct": false,
+          "error_rationale": "Usar $F(1, r)$, invirtiendo la asignación entre capital y trabajo por trabajador.",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El término de producto intensivo F(r, 1) se interpreta equívocamente como la productividad media del capital por unidad invertida.",
+          "is_correct": false,
+          "error_rationale": "Multiplicar $sF(r,1)$ por $K$ al reconstruir la inversión agregada.",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Se omite la homogeneidad lineal al simplificar F(K,L)/K, expresando la función en los términos no reducidos F(1, 1/r).",
+          "is_correct": false,
+          "error_rationale": "Dejar $F(K,L)/K$ sin reducir o asumir erróneamente que $F(K,L)/K = F(1, 1/r)$.",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Al diferenciar el cociente se suman las tasas de crecimiento, obteniendo la ecuación errónea dr/dt = s F(r, 1) + n r.",
+          "is_correct": false,
+          "error_rationale": "Plantear $\\dot{r}/r = \\dot{K}/K + \\dot{L}/L$, obteniendo $\\dot{r} = sF(r,1) + nr$.",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La variable de estado r se confunde con la tasa de rendimiento financiero del capital en lugar de la relación capital-trabajo.",
+          "is_correct": false,
+          "error_rationale": "Tratar $\\dot{r}$ como la dinámica de la tasa de rentabilidad financiera.",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La ecuación diferencial fundamental resultante es dr/dt = s F(r, 1) - n r, donde F(r, 1) es el producto por trabajador.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Se omite multiplicar la ecuación por la variable de estado r, manteniendo la tasa porcentual dr/r = s F(r, 1)/r - n.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{r} = \\frac{sF(r,1)}{r} - n$, confundiendo la tasa de variación con la derivada temporal absoluta.",
+          "distractor_id": "D-Hab03-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "La tasa de cambio de un cociente es la resta de las tasas de crecimiento de numerador y denominador.",
+        "Use la homogeneidad de grado 1 para expresar F(K,L)/K como F(r,1)/r.",
+        "Multiplique ambos miembros de la ecuación por la variable r para despejar la derivada temporal dr/dt."
+      ],
+      "detailed_solution": "Sustituyendo la tasa de inversión y la tasa demográfica en la resta de tasas relativas y multiplicando toda la expresión por r se deduce la ecuación dr/dt = s F(r, 1) - n r."
+    },
+    {
+      "id": "Q-Hab03-162",
+      "competency_id": "Hab-03",
+      "competency_name": "Formulación de la Ecuación Diferencial Fundamental en Términos de la Relación Capital-Trabajo",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Siguiendo la notación original de Solow (1956) con relación capital-trabajo $r = K/L$, tasa de ahorro $s = 0.18$ y crecimiento poblacional $n = 0.01$, aplique la tasa relativa de cambio $\\dot r/r = \\dot K/K - \\dot L/L$ para deducir la ecuación diferencial fundamental para $\\dot r$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Se omite multiplicar la ecuación por la variable de estado r, manteniendo la tasa porcentual dr/r = s F(r, 1)/r - n.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{r} = \\frac{sF(r,1)}{r} - n$, confundiendo la tasa de variación con la derivada temporal absoluta.",
+          "distractor_id": "D-Hab03-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Se omite la homogeneidad lineal al simplificar F(K,L)/K, expresando la función en los términos no reducidos F(1, 1/r).",
+          "is_correct": false,
+          "error_rationale": "Dejar $F(K,L)/K$ sin reducir o asumir erróneamente que $F(K,L)/K = F(1, 1/r)$.",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Al diferenciar el cociente se suman las tasas de crecimiento, obteniendo la ecuación errónea dr/dt = s F(r, 1) + n r.",
+          "is_correct": false,
+          "error_rationale": "Plantear $\\dot{r}/r = \\dot{K}/K + \\dot{L}/L$, obteniendo $\\dot{r} = sF(r,1) + nr$.",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El término de producto intensivo F(r, 1) se interpreta equívocamente como la productividad media del capital por unidad invertida.",
+          "is_correct": false,
+          "error_rationale": "Multiplicar $sF(r,1)$ por $K$ al reconstruir la inversión agregada.",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Los argumentos factoriales se invierten al normalizar la función homogénea, escribiendo la función como F(1, r).",
+          "is_correct": false,
+          "error_rationale": "Usar $F(1, r)$, invirtiendo la asignación entre capital y trabajo por trabajador.",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La variable de estado r se confunde con la tasa de rendimiento financiero del capital en lugar de la relación capital-trabajo.",
+          "is_correct": false,
+          "error_rationale": "Tratar $\\dot{r}$ como la dinámica de la tasa de rentabilidad financiera.",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La ecuación diferencial fundamental resultante es dr/dt = s F(r, 1) - n r, donde F(r, 1) es el producto por trabajador.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "La tasa de cambio de un cociente es la resta de las tasas de crecimiento de numerador y denominador.",
+        "Use la homogeneidad de grado 1 para expresar F(K,L)/K como F(r,1)/r.",
+        "Multiplique ambos miembros de la ecuación por la variable r para despejar la derivada temporal dr/dt."
+      ],
+      "detailed_solution": "Sustituyendo la tasa de inversión y la tasa demográfica en la resta de tasas relativas y multiplicando toda la expresión por r se deduce la ecuación dr/dt = s F(r, 1) - n r."
+    },
+    {
+      "id": "Q-C04-191",
+      "competency_id": "C-04",
+      "competency_name": "Trayectorias Asintóticas de Crecimiento y Convergencia en la Figura I",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo la ecuación fundamental $\\dot{r} = 0.25 r^{0.5} - 0.03 r$, evalúe el comportamiento asintótico para dotaciones iniciales de capital por encima del punto de corte $r^*$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Las trayectorias temporales de capital y producto son exactamente exponenciales desde $t=0$ aun cuando $r(0) \\neq r^*$.",
+          "is_correct": false,
+          "error_rationale": "Modelar $K(t) = K_0 e^{nt}$ desde $t = 0$ con $r(0) \\neq r^*$.",
+          "distractor_id": "D-C04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El estado de equilibrio $r^*$ resultante de una propensión fija al ahorro maximiza necesariamente el consumo per cápita.",
+          "is_correct": false,
+          "error_rationale": "Identificar $r^*$ con el nivel óptimo de consumo per cápita de forma incondicional.",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Si la economía comienza con dotación nula de capital ($K=0$), el sistema converge espontáneamente al equilibrio $r^*$.",
+          "is_correct": false,
+          "error_rationale": "Predecir convergencia hacia $r^*$ aun partiendo de un acervo inicial de capital nulo.",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Para $r > r^*$, el rayo demográfico supera a la curva de ahorro ($nr > s f(r)$), provocando $\\dot{r} < 0$ y contracción monótona hacia $r^*$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Para $r > r^*$, el ahorro supera al equipamiento demográfico, provocando $\\dot{r} > 0$ y divergencia hacia el infinito.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que economías con exceso de capital inicial divergen hacia el infinito.",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Durante la transición dinámica con $r < r^*$, el producto agregado crece a una tasa estrictamente menor que la demográfica $n$.",
+          "is_correct": false,
+          "error_rationale": "Sostener que la tasa de crecimiento del producto es siempre constante en todo momento del tiempo.",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Un incremento exógeno en la tasa de crecimiento demográfico $n$ eleva el capital por trabajador de estado estacionario.",
+          "is_correct": false,
+          "error_rationale": "Predecir mayor acumulación de capital por habitante ante aumentos demográficos.",
+          "distractor_id": "D-C04-05"
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "Observe la posición relativa de la curva de ahorro s f(r) frente a la recta demográfica n r para r > r*.",
+        "A la derecha de la intersección r*, el rayo demográfico se sitúa verticalmente por encima de la curva de ahorro cóncava.",
+        "Por consiguiente, la diferencia s f(r) - n r es negativa, haciendo que dr/dt < 0 y convergiendo hacia r*."
+      ],
+      "detailed_solution": "A la derecha del equilibrio $r^*$, el requerimiento de equipamiento demográfico $nr$ supera a la inversión bruta $s f(r)$, de modo que $\\dot{r} = s f(r) - nr < 0$, garantizando la estabilidad global y el retorno monótono hacia $r^*$."
+    },
+    {
+      "id": "Q-C04-192",
+      "competency_id": "C-04",
+      "competency_name": "Trayectorias Asintóticas de Crecimiento y Convergencia en la Figura I",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el marco gráfico de la Figura I con ahorro $s f(r) = 0.3 r^{0.5}$ y depreciación demográfica $n r = 0.04 r$, determine la dinámica del sistema cuando la dotación inicial se sitúa en $r > r^*$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Para $r > r^*$, el ahorro supera al equipamiento demográfico, provocando $\\dot{r} > 0$ y divergencia hacia el infinito.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que economías con exceso de capital inicial divergen hacia el infinito.",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Un incremento exógeno en la tasa de crecimiento demográfico $n$ eleva el capital por trabajador de estado estacionario.",
+          "is_correct": false,
+          "error_rationale": "Predecir mayor acumulación de capital por habitante ante aumentos demográficos.",
+          "distractor_id": "D-C04-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Si la economía comienza con dotación nula de capital ($K=0$), el sistema converge espontáneamente al equilibrio $r^*$.",
+          "is_correct": false,
+          "error_rationale": "Predecir convergencia hacia $r^*$ aun partiendo de un acervo inicial de capital nulo.",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El estado de equilibrio $r^*$ resultante de una propensión fija al ahorro maximiza necesariamente el consumo per cápita.",
+          "is_correct": false,
+          "error_rationale": "Identificar $r^*$ con el nivel óptimo de consumo per cápita de forma incondicional.",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Para $r > r^*$, el rayo demográfico supera a la curva de ahorro ($nr > s f(r)$), provocando $\\dot{r} < 0$ y contracción monótona hacia $r^*$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Durante la transición dinámica con $r < r^*$, el producto agregado crece a una tasa estrictamente menor que la demográfica $n$.",
+          "is_correct": false,
+          "error_rationale": "Sostener que la tasa de crecimiento del producto es siempre constante en todo momento del tiempo.",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Las trayectorias temporales de capital y producto son exactamente exponenciales desde $t=0$ aun cuando $r(0) \\neq r^*$.",
+          "is_correct": false,
+          "error_rationale": "Modelar $K(t) = K_0 e^{nt}$ desde $t = 0$ con $r(0) \\neq r^*$.",
+          "distractor_id": "D-C04-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Observe la posición relativa de la curva de ahorro s f(r) frente a la recta demográfica n r para r > r*.",
+        "A la derecha de la intersección r*, el rayo demográfico se sitúa verticalmente por encima de la curva de ahorro cóncava.",
+        "Por consiguiente, la diferencia s f(r) - n r es negativa, haciendo que dr/dt < 0 y convergiendo hacia r*."
+      ],
+      "detailed_solution": "A la derecha del equilibrio $r^*$, el requerimiento de equipamiento demográfico $nr$ supera a la inversión bruta $s f(r)$, de modo que $\\dot{r} = s f(r) - nr < 0$, garantizando la estabilidad global y el retorno monótono hacia $r^*$."
+    },
+    {
+      "id": "Q-C05-211",
+      "competency_id": "C-05",
+      "competency_name": "Equilibrios Múltiples y Estados de Crecimiento Inestable en la Figura II",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Analice la estabilidad asintótica del corte intermedio $r_2 = 3.8$ situado entre los equilibrios $r_1 = 0.8$ y $r_3 = 7.3$ en el diagrama de Solow de la Figura II:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En el estado estacionario de bajo ingreso $r_1$, la economía agregada crece a una tasa porcentual menor que $n$.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que en $r_1$ la tasa de crecimiento de la economía es menor que $n$.",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Una función de producción estrictamente cóncava globalmente genera habitualmente tres cortes con el rayo demográfico.",
+          "is_correct": false,
+          "error_rationale": "Asumir concavidad estricta global en un modelo con tres puntos de equilibrio.",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Todas las economías convergen al equilibrio superior $r_3$ independientemente de su acervo histórico de capital.",
+          "is_correct": false,
+          "error_rationale": "Afirmar convergencia global universal hacia $r_3$ sin requerir un impulso inicial.",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El punto intermedio $r_2$ actúa como un equilibrio atractor que atrae trayectorias provenientes de ambos costados.",
+          "is_correct": false,
+          "error_rationale": "Clasificar a $r_2$ como un equilibrio estable hacia el que convergen las economías.",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La presencia de equilibrios múltiples exige estrictamente que el producto sea nulo sin capital ($F(0,1) = 0$).",
+          "is_correct": false,
+          "error_rationale": "Forzar $sF(0,1) = 0$ en la configuración con tres intersecciones positivas.",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El equilibrio intermedio $r_2$ es estocásticamente estable y absorbe fluctuaciones aleatorias en su entorno.",
+          "is_correct": false,
+          "error_rationale": "Considerar que una economía real puede sostenerse estáticamente en el equilibrio repulsor $r_2$.",
+          "distractor_id": "D-C05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "En $r_2$, la curva de ahorro corta al rayo desde abajo ($s f'(r_2) > n$), actuando como un repulsor inestable.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Analice la pendiente de la curva de ahorro respecto a la recta demográfica en la intersección r2.",
+        "Cuando la curva corta desde abajo, a la derecha de r2 la inversión supera al equipamiento (dr/dt > 0), alejándose de r2.",
+        "A la izquierda de r2 ocurre lo contrario (dr/dt < 0), lo que define un umbral repulsor inestable."
+      ],
+      "detailed_solution": "En $r_2$, la curva de ahorro corta a la recta demográfica desde abajo ($s f'(r_2) > n$). A su derecha $\\dot{r} > 0$ y a su izquierda $\\dot{r} < 0$, de modo que cualquier perturbación se amplifica, actuando $r_2$ como un umbral inestable (repulsor)."
+    },
+    {
+      "id": "Q-C05-212",
+      "competency_id": "C-05",
+      "competency_name": "Equilibrios Múltiples y Estados de Crecimiento Inestable en la Figura II",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo la configuración de equilibrios múltiples $r_1 = 1.8$, $r_2 = 4.8$ y $r_3 = 8.8$, establezca el carácter atractor o repulsor de $r_2$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El punto intermedio $r_2$ actúa como un equilibrio atractor que atrae trayectorias provenientes de ambos costados.",
+          "is_correct": false,
+          "error_rationale": "Clasificar a $r_2$ como un equilibrio estable hacia el que convergen las economías.",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En el estado estacionario de bajo ingreso $r_1$, la economía agregada crece a una tasa porcentual menor que $n$.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que en $r_1$ la tasa de crecimiento de la economía es menor que $n$.",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "En $r_2$, la curva de ahorro corta al rayo desde abajo ($s f'(r_2) > n$), actuando como un repulsor inestable.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Todas las economías convergen al equilibrio superior $r_3$ independientemente de su acervo histórico de capital.",
+          "is_correct": false,
+          "error_rationale": "Afirmar convergencia global universal hacia $r_3$ sin requerir un impulso inicial.",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La presencia de equilibrios múltiples exige estrictamente que el producto sea nulo sin capital ($F(0,1) = 0$).",
+          "is_correct": false,
+          "error_rationale": "Forzar $sF(0,1) = 0$ en la configuración con tres intersecciones positivas.",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Una función de producción estrictamente cóncava globalmente genera habitualmente tres cortes con el rayo demográfico.",
+          "is_correct": false,
+          "error_rationale": "Asumir concavidad estricta global en un modelo con tres puntos de equilibrio.",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El equilibrio intermedio $r_2$ es estocásticamente estable y absorbe fluctuaciones aleatorias en su entorno.",
+          "is_correct": false,
+          "error_rationale": "Considerar que una economía real puede sostenerse estáticamente en el equilibrio repulsor $r_2$.",
+          "distractor_id": "D-C05-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Analice la pendiente de la curva de ahorro respecto a la recta demográfica en la intersección r2.",
+        "Cuando la curva corta desde abajo, a la derecha de r2 la inversión supera al equipamiento (dr/dt > 0), alejándose de r2.",
+        "A la izquierda de r2 ocurre lo contrario (dr/dt < 0), lo que define un umbral repulsor inestable."
+      ],
+      "detailed_solution": "En $r_2$, la curva de ahorro corta a la recta demográfica desde abajo ($s f'(r_2) > n$). A su derecha $\\dot{r} > 0$ y a su izquierda $\\dot{r} < 0$, de modo que cualquier perturbación se amplifica, actuando $r_2$ como un umbral inestable (repulsor)."
+    },
+    {
+      "id": "Q-C06-231",
+      "competency_id": "C-06",
+      "competency_name": "Inexistencia de Estado Estacionario y Casos Extremos en la Figura III",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el análisis de casos extremos de la Figura III con tasa demográfica $n = 0.04$ y tecnología $s_1 F^1(r,1) = 0.04 r + 0.8 \\sqrt{r}$, determine la trayectoria asintótica del capital por habitante:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La función de ahorro analizada satisface estrictamente las condiciones asintóticas de Inada en ambos extremos del dominio.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que las condiciones de Inada son satisfechas por cualquier función cóncava.",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Cualquier función de producción con rendimientos decrecientes garantiza la existencia de un estado estacionario finito.",
+          "is_correct": false,
+          "error_rationale": "Postular que siempre existe un $r^*$ finito sin verificar las condiciones de frontera o de Inada.",
+          "distractor_id": "D-C06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La ausencia de equilibrio estacionario en la Figura III contradice el teorema de crecimiento equilibrado multisectorial.",
+          "is_correct": false,
+          "error_rationale": "Invalidar el modelo neoclásico por supuesta incompatibilidad teórica.",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La acumulación perpetua se interrumpe de forma endógena debido a saciedad de consumo en los hogares a largo plazo.",
+          "is_correct": false,
+          "error_rationale": "Introducir una tasa de ahorro decreciente de forma espontánea en el modelo de la Figura III.",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La curva de ahorro se ubica enteramente sobre el rayo demográfico, por lo que el capital crece sin cota ($r \\to \\infty$) sin equilibrio finito.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "En trayectorias donde la curva de ahorro cae por debajo del rayo demográfico, el producto nacional agregado total decrece.",
+          "is_correct": false,
+          "error_rationale": "Concluir que el PIB total decrece con el tiempo en la trayectoria inferior de la Figura III.",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La ecuación diferencial $\\dot{r} = \\sqrt{r}$ admite un punto de reposo positivo finito donde la acumulación se detiene.",
+          "is_correct": false,
+          "error_rationale": "Calcular una solución finita resolviendo erróneamente $\\sqrt{r} = 0$ con $r > 0$.",
+          "distractor_id": "D-C06-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Observe la diferencia s1 F1(r,1) - n r.",
+        "Para todo r > 0, la diferencia es coeff * sqrt(r) > 0, de modo que dr/dt es estrictamente positiva.",
+        "Al ser dr/dt > 0 para todo r > 0, la relación capital-trabajo aumenta sin cota hacia el infinito."
+      ],
+      "detailed_solution": "La ecuación dinámica es $\\dot{r} = s_1 F^1 - nr = 0.8 \\sqrt{r} > 0$ para todo $r > 0$. Al no haber intersección positiva entre la curva de ahorro y el rayo demográfico, no existe estado estacionario finito y el capital por trabajador crece sin cota ($r \\to \\infty$)."
+    },
+    {
+      "id": "Q-C06-232",
+      "competency_id": "C-06",
+      "competency_name": "Inexistencia de Estado Estacionario y Casos Extremos en la Figura III",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para una economía con ahorro $s_1 F^1(r,1) = 0.02 r + 1.4 \\sqrt{r}$ y crecimiento de la mano de obra $n = 0.02$, examine la existencia de equilibrio estacionario:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En trayectorias donde la curva de ahorro cae por debajo del rayo demográfico, el producto nacional agregado total decrece.",
+          "is_correct": false,
+          "error_rationale": "Concluir que el PIB total decrece con el tiempo en la trayectoria inferior de la Figura III.",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La función de ahorro analizada satisface estrictamente las condiciones asintóticas de Inada en ambos extremos del dominio.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que las condiciones de Inada son satisfechas por cualquier función cóncava.",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La ausencia de equilibrio estacionario en la Figura III contradice el teorema de crecimiento equilibrado multisectorial.",
+          "is_correct": false,
+          "error_rationale": "Invalidar el modelo neoclásico por supuesta incompatibilidad teórica.",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La acumulación perpetua se interrumpe de forma endógena debido a saciedad de consumo en los hogares a largo plazo.",
+          "is_correct": false,
+          "error_rationale": "Introducir una tasa de ahorro decreciente de forma espontánea en el modelo de la Figura III.",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La curva de ahorro se ubica enteramente sobre el rayo demográfico, por lo que el capital crece sin cota ($r \\to \\infty$) sin equilibrio finito.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La ecuación diferencial $\\dot{r} = \\sqrt{r}$ admite un punto de reposo positivo finito donde la acumulación se detiene.",
+          "is_correct": false,
+          "error_rationale": "Calcular una solución finita resolviendo erróneamente $\\sqrt{r} = 0$ con $r > 0$.",
+          "distractor_id": "D-C06-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Cualquier función de producción con rendimientos decrecientes garantiza la existencia de un estado estacionario finito.",
+          "is_correct": false,
+          "error_rationale": "Postular que siempre existe un $r^*$ finito sin verificar las condiciones de frontera o de Inada.",
+          "distractor_id": "D-C06-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Observe la diferencia s1 F1(r,1) - n r.",
+        "Para todo r > 0, la diferencia es coeff * sqrt(r) > 0, de modo que dr/dt es estrictamente positiva.",
+        "Al ser dr/dt > 0 para todo r > 0, la relación capital-trabajo aumenta sin cota hacia el infinito."
+      ],
+      "detailed_solution": "La ecuación dinámica es $\\dot{r} = s_1 F^1 - nr = 1.4 \\sqrt{r} > 0$ para todo $r > 0$. Al no haber intersección positiva entre la curva de ahorro y el rayo demográfico, no existe estado estacionario finito y el capital por trabajador crece sin cota ($r \\to \\infty$)."
+    },
+    {
+      "id": "Q-Hab04-251",
+      "competency_id": "Hab-04",
+      "competency_name": "Resolución Dinámica bajo Coeficientes Fijos Tipo Harrod-Domar",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En la tecnología con proporciones fijas $Y = \\min(K/5.0, L/2.0)$, con propensión $s = 0.12$ y crecimiento laboral $n = 0.064$ donde $n > s/5.0$, determine la dinámica cuando $r < 5.0/2.0$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El capital es el factor limitante ($K/a < L/b$), rigiendo $\\dot{r} = (s/a - n)r < 0$, por lo que $r(t)$ decae exponencialmente hacia cero.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El factor limitante es la mano de obra, por lo que el producto viene determinado enteramente por la capacidad laboral $Y = L/b$.",
+          "is_correct": false,
+          "error_rationale": "Plantear que el producto es $Y = L/b$ cuando $r < a/b$.",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La solución analítica empalma directamente en el origen sin requerir determinar el instante de transición entre regímenes.",
+          "is_correct": false,
+          "error_rationale": "Aplicar la solución del segundo tramo desde $t = 0$ ignorando el punto de cambio de régimen.",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Cuando la tasa garantizada supera a la natural, el desajuste factorial resultante se traduce en desempleo obrero permanente.",
+          "is_correct": false,
+          "error_rationale": "Predecir desempleo de mano de obra en vez de redundancia de capital físico.",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La solución de la ecuación diferencial en este tramo se expande exponencialmente sin límite debido a que $(s/a - n)$ es positivo, en el contexto del contraste analizado.",
+          "is_correct": false,
+          "error_rationale": "Escribir $r(t) = (a/b) e^{(s/a - n)(t - t_1)}$ y concluir erróneamente que $r$ se expande sin límite.",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "En el caso frontera con $n = s/a$, cualquier dotación inicial menor a $a/b$ converge asintóticamente al umbral de pleno empleo.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que $r$ converge a $a/b$ partiendo desde cualquier $r_0 < a/b$.",
+          "distractor_id": "D-Hab04-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Cuando el capital es el cuello de botella, la mano de obra requerida se calcula simplemente como $L_e = K/a$ sin ponderación.",
+          "is_correct": false,
+          "error_rationale": "Definir el empleo efectivo como simplemente $K/a$, cometiendo un error dimensional de unidades.",
+          "distractor_id": "D-Hab04-04"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Compare los dos argumentos del operador mínimo: r/a frente a 1/b.",
+        "Si r < a/b, r/a < 1/b, por lo que el capital es el factor que restringe el producto.",
+        "La ecuación es dr/dt = (s/a - n)r. Si n > s/a, el coeficiente es negativo y r decae exponencialmente."
+      ],
+      "detailed_solution": "Cuando $r < a/b$, $r/a < 1/b$, por lo que el mínimo es $r/a$ y el capital es el cuello de botella. La ecuación diferencial es $\\dot{r} = (s/a - n)r$. Dado que $n > s/a$, el coeficiente $(s/a - n) < 0$ produce decaimiento exponencial de $r(t)$ hacia cero."
+    },
+    {
+      "id": "Q-Hab04-252",
+      "competency_id": "Hab-04",
+      "competency_name": "Resolución Dinámica bajo Coeficientes Fijos Tipo Harrod-Domar",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para una economía de coeficientes fijos con parámetros $a = 2.5$, $b = 0.5$, $s = 0.1$ y $n = 0.06$ con $n > s/a$, analice el régimen dinámico si $r < a/b$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La solución de la ecuación diferencial en este tramo se expande exponencialmente sin límite debido a que $(s/a - n)$ es positivo, según los supuestos clásicos del modelo.",
+          "is_correct": false,
+          "error_rationale": "Escribir $r(t) = (a/b) e^{(s/a - n)(t - t_1)}$ y concluir erróneamente que $r$ se expande sin límite.",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La solución analítica empalma directamente en el origen sin requerir determinar el instante de transición entre regímenes.",
+          "is_correct": false,
+          "error_rationale": "Aplicar la solución del segundo tramo desde $t = 0$ ignorando el punto de cambio de régimen.",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Cuando el capital es el cuello de botella, la mano de obra requerida se calcula simplemente como $L_e = K/a$ sin ponderación.",
+          "is_correct": false,
+          "error_rationale": "Definir el empleo efectivo como simplemente $K/a$, cometiendo un error dimensional de unidades.",
+          "distractor_id": "D-Hab04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Cuando la tasa garantizada supera a la natural, el desajuste factorial resultante se traduce en desempleo obrero permanente.",
+          "is_correct": false,
+          "error_rationale": "Predecir desempleo de mano de obra en vez de redundancia de capital físico.",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El capital es el factor limitante ($K/a < L/b$), rigiendo $\\dot{r} = (s/a - n)r < 0$, por lo que $r(t)$ decae exponencialmente hacia cero.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El factor limitante es la mano de obra, por lo que el producto viene determinado enteramente por la capacidad laboral $Y = L/b$.",
+          "is_correct": false,
+          "error_rationale": "Plantear que el producto es $Y = L/b$ cuando $r < a/b$.",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "En el caso frontera con $n = s/a$, cualquier dotación inicial menor a $a/b$ converge asintóticamente al umbral de pleno empleo.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que $r$ converge a $a/b$ partiendo desde cualquier $r_0 < a/b$.",
+          "distractor_id": "D-Hab04-06"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Compare los dos argumentos del operador mínimo: r/a frente a 1/b.",
+        "Si r < a/b, r/a < 1/b, por lo que el capital es el factor que restringe el producto.",
+        "La ecuación es dr/dt = (s/a - n)r. Si n > s/a, el coeficiente es negativo y r decae exponencialmente."
+      ],
+      "detailed_solution": "Cuando $r < a/b$, $r/a < 1/b$, por lo que el mínimo es $r/a$ y el capital es el cuello de botella. La ecuación diferencial es $\\dot{r} = (s/a - n)r$. Dado que $n > s/a$, el coeficiente $(s/a - n) < 0$ produce decaimiento exponencial de $r(t)$ hacia cero."
+    },
+    {
+      "id": "Q-Hab05-281",
+      "competency_id": "Hab-05",
+      "competency_name": "Solución Cuantitativa Exacta para la Función Cobb-Douglas con Trayectoria Temporal Agregada",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Integrando la ecuación diferencial de Bernoulli asociada a $Y = K^a L^b$ con $a = 0.3$, $b = 0.7$ y acervo inicial $K_0$, establezca la solución exacta de $K(t)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El producto por trabajador de estado uniforme coincide directamente con el capital por trabajador: $y^* = (s/n)^{1/(1-a)}$.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que el producto por trabajador de estado uniforme es $(s/n)^{1/(1-a)}$, confundiéndolo con el capital por trabajador.",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La integración del término exponencial introduce un factor redundante adicional que desfigura el exponente demográfico a $n t$.",
+          "is_correct": false,
+          "error_rationale": "Arrastrar un factor adicional $(1-a)$ o $1/(1-a)$ en los coeficientes de $s/n$.",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La solución temporal prescinde del término de dotación inicial, reduciéndose a $K(t) = [(s/n) L_0^b e^{nbt}]^{1/b}$ para todo tiempo $t$.",
+          "is_correct": false,
+          "error_rationale": "Omitir los términos $K_0^{1-a} - \\frac{s}{n}L_0^{1-a}$, asumiendo erróneamente que la economía parte directamente del estado uniforme.",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Bajo rendimientos constantes a escala en la tecnología Cobb-Douglas, el parámetro complementario del trabajo es $b = 1 + a$.",
+          "is_correct": false,
+          "error_rationale": "Usar $b = 1+a$, haciendo que las potencias de los factores no sumen la unidad.",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "En el estado de crecimiento equilibrado, la relación capital-producto converge asintóticamente al cociente inverso $C^* = n/s$.",
+          "is_correct": false,
+          "error_rationale": "Plantear $C^* = n/s$, invirtiendo la tasa de ahorro y la tasa demográfica.",
+          "distractor_id": "D-Hab05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Definiendo $b = 1-a$, la integración rinde $K(t) = [K_0^b - (s/n)L_0^b + (s/n)L_0^b e^{nbt}]^{1/b}$, con constante fijada en $K_0$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La integración directa trata a $K^a$ como constante temporal, rindiendo la expresión lineal $K(t) = K_0 + s K^a \\int L(t)^{1-a} dt$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $K(t) = K_0 + s K^a \\int L(t)^{1-a} dt$, generando una solución inválida.",
+          "distractor_id": "D-Hab05-01"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Multiplique la ecuación por K^{-a} para obtener (1/b) d(K^b)/dt = s L_0^b e^{nbt}.",
+        "Integre respecto al tiempo entre 0 y t considerando la condición inicial K(0) = K_0.",
+        "Despeje K(t) elevando ambos lados a la potencia 1/b con b = 1 - a."
+      ],
+      "detailed_solution": "Separando variables: $K^{-a} dK = s L_0^{1-a} e^{n(1-a)t} dt$. Con $b = 1-a$, $\\frac{1}{b} d(K^b) = s L_0^b e^{nbt} dt$. Integrando entre $0$ y $t$: $K(t)^b - K_0^b = \\frac{s}{n} L_0^b (e^{nbt} - 1)$. Despejando: $K(t) = \\left[ K_0^b - \\frac{s}{n}L_0^b + \\frac{s}{n}L_0^b e^{nbt} \\right]^{1/b}$."
+    },
+    {
+      "id": "Q-Hab05-282",
+      "competency_id": "Hab-05",
+      "competency_name": "Solución Cuantitativa Exacta para la Función Cobb-Douglas con Trayectoria Temporal Agregada",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo los parámetros tecnológicos $a = 0.6$ y crecimiento poblacional $n = 0.04$, determine la función temporal explícita del acervo de capital:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La solución temporal prescinde del término de dotación inicial, reduciéndose a $K(t) = [(s/n) L_0^b e^{nbt}]^{1/b}$ para todo tiempo $t$.",
+          "is_correct": false,
+          "error_rationale": "Omitir los términos $K_0^{1-a} - \\frac{s}{n}L_0^{1-a}$, asumiendo erróneamente que la economía parte directamente del estado uniforme.",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Definiendo $b = 1-a$, la integración rinde $K(t) = [K_0^b - (s/n)L_0^b + (s/n)L_0^b e^{nbt}]^{1/b}$, con constante fijada en $K_0$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La integración directa trata a $K^a$ como constante temporal, rindiendo la expresión lineal $K(t) = K_0 + s K^a \\int L(t)^{1-a} dt$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $K(t) = K_0 + s K^a \\int L(t)^{1-a} dt$, generando una solución inválida.",
+          "distractor_id": "D-Hab05-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La integración del término exponencial introduce un factor redundante adicional que desfigura el exponente demográfico a $n t$.",
+          "is_correct": false,
+          "error_rationale": "Arrastrar un factor adicional $(1-a)$ o $1/(1-a)$ en los coeficientes de $s/n$.",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Bajo rendimientos constantes a escala en la tecnología Cobb-Douglas, el parámetro complementario del trabajo es $b = 1 + a$.",
+          "is_correct": false,
+          "error_rationale": "Usar $b = 1+a$, haciendo que las potencias de los factores no sumen la unidad.",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El producto por trabajador de estado uniforme coincide directamente con el capital por trabajador: $y^* = (s/n)^{1/(1-a)}$.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que el producto por trabajador de estado uniforme es $(s/n)^{1/(1-a)}$, confundiéndolo con el capital por trabajador.",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "En el estado de crecimiento equilibrado, la relación capital-producto converge asintóticamente al cociente inverso $C^* = n/s$.",
+          "is_correct": false,
+          "error_rationale": "Plantear $C^* = n/s$, invirtiendo la tasa de ahorro y la tasa demográfica.",
+          "distractor_id": "D-Hab05-04"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Multiplique la ecuación por K^{-a} para obtener (1/b) d(K^b)/dt = s L_0^b e^{nbt}.",
+        "Integre respecto al tiempo entre 0 y t considerando la condición inicial K(0) = K_0.",
+        "Despeje K(t) elevando ambos lados a la potencia 1/b con b = 1 - a."
+      ],
+      "detailed_solution": "Separando variables: $K^{-a} dK = s L_0^{1-a} e^{n(1-a)t} dt$. Con $b = 1-a$, $\\frac{1}{b} d(K^b) = s L_0^b e^{nbt} dt$. Integrando entre $0$ y $t$: $K(t)^b - K_0^b = \\frac{s}{n} L_0^b (e^{nbt} - 1)$. Despejando: $K(t) = \\left[ K_0^b - \\frac{s}{n}L_0^b + \\frac{s}{n}L_0^b e^{nbt} \\right]^{1/b}$."
+    },
+    {
+      "id": "Q-Hab06-311",
+      "competency_id": "Hab-06",
+      "competency_name": "Análisis Cualitativo y Condiciones de Bifurcación en la Familia CES ($p=1/2$)",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para la tecnología CES con $p = 1/2$ descrita por $Y = (a\\sqrt{K} + \\sqrt{L})^2$ con parámetro $a = 1.0$, ahorro $s = 0.2$ y tasa demográfica $n = 0.04$, examine la condición de bifurcación dinámica:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Si $s a^2 < n$, existe un equilibrio estable en $r^* = (1/(\\sqrt{n/s} - a))^2$; si $s a^2 > n$, el capital crece sin cota.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La condición para que exista un estado estacionario finito estable es que la propensión supere a la tasa demográfica: $s a^2 > n$.",
+          "is_correct": false,
+          "error_rationale": "Declarar que $s a^2 > n$ es la condición requerida para que exista un estado de crecimiento equilibrado finito.",
+          "distractor_id": "D-Hab06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El producto por trabajador de estado uniforme es $y^* = 1/(1 - a\\sqrt{s/n})$, omitiendo la potencia cuadrática del modelo.",
+          "is_correct": false,
+          "error_rationale": "Omitir el cuadrado en la expresión del ingreso por trabajador de equilibrio.",
+          "distractor_id": "D-Hab06-05"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Las mismas condiciones dinámicas de equilibrio rigen idénticamente si el parámetro de sustitución es $p > 1$.",
+          "is_correct": false,
+          "error_rationale": "Aplicar las condiciones de equilibrio de Solow a tecnologías con $p > 1$.",
+          "distractor_id": "D-Hab06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La curva de ahorro parte exactamente del origen de coordenadas $(0,0)$ porque la producción es inviable sin capital.",
+          "is_correct": false,
+          "error_rationale": "Dibujar la curva de ahorro partiendo desde el punto $(0,0)$ como si el capital fuera un insumo indispensable.",
+          "distractor_id": "D-Hab06-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El capital por trabajador de estado estacionario viene dado por la expresión lineal $r^* = 1/(\\sqrt{n/s} - a)$ sin elevar al cuadrado.",
+          "is_correct": false,
+          "error_rationale": "Escribir $r^* = \\frac{1}{\\sqrt{n/s} - a}$ omitiendo el exponente cuadrático.",
+          "distractor_id": "D-Hab06-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La factorización cuadrática de la ecuación diferencial exige que la constante de equilibrio sea idéntica a $A = a + \\sqrt{n/s}$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $A = a + \\sqrt{n/s}$ y $B = a - \\sqrt{n/s}$ invirtiendo las raíces asociadas a la solución implícita.",
+          "distractor_id": "D-Hab06-02"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Expanda s (a sqrt(r) + 1)^2: el término dominante en el infinito es s a^2 r.",
+        "Compare la pendiente asintótica s a^2 con la pendiente de la recta demográfica n.",
+        "Si s a^2 < n, la recta demográfica corta a la curva de ahorro, garantizando un equilibrio finito estable."
+      ],
+      "detailed_solution": "El término lineal dominante para $r$ grande es $s a^2 r$. Si $s a^2 < n$, la recta demográfica $nr$ corta a la curva cóncava en $r^* = \\left(\\frac{1}{\\sqrt{n/s} - a}\\right)^2$. Si $s a^2 > n$, la curva de ahorro permanece asintóticamente por encima de $nr$, acumulándose capital sin cota ($r \\to \\infty$)."
+    },
+    {
+      "id": "Q-Hab06-312",
+      "competency_id": "Hab-06",
+      "competency_name": "Análisis Cualitativo y Condiciones de Bifurcación en la Familia CES ($p=1/2$)",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En la familia CES intensiva $\\dot{r} = s(a\\sqrt{r} + 1)^2 - nr$ con $a = 0.8$, $s = 0.2$ y $n = 0.05$, determine el criterio que separa la estabilidad de la acumulación infinita:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El producto por trabajador de estado uniforme es $y^* = 1/(1 - a\\sqrt{s/n})$, omitiendo la potencia cuadrática del modelo.",
+          "is_correct": false,
+          "error_rationale": "Omitir el cuadrado en la expresión del ingreso por trabajador de equilibrio.",
+          "distractor_id": "D-Hab06-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Si $s a^2 < n$, existe un equilibrio estable en $r^* = (1/(\\sqrt{n/s} - a))^2$; si $s a^2 > n$, el capital crece sin cota.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La factorización cuadrática de la ecuación diferencial exige que la constante de equilibrio sea idéntica a $A = a + \\sqrt{n/s}$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $A = a + \\sqrt{n/s}$ y $B = a - \\sqrt{n/s}$ invirtiendo las raíces asociadas a la solución implícita.",
+          "distractor_id": "D-Hab06-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La curva de ahorro parte exactamente del origen de coordenadas $(0,0)$ porque la producción es inviable sin capital.",
+          "is_correct": false,
+          "error_rationale": "Dibujar la curva de ahorro partiendo desde el punto $(0,0)$ como si el capital fuera un insumo indispensable.",
+          "distractor_id": "D-Hab06-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El capital por trabajador de estado estacionario viene dado por la expresión lineal $r^* = 1/(\\sqrt{n/s} - a)$ sin elevar al cuadrado.",
+          "is_correct": false,
+          "error_rationale": "Escribir $r^* = \\frac{1}{\\sqrt{n/s} - a}$ omitiendo el exponente cuadrático.",
+          "distractor_id": "D-Hab06-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La condición para que exista un estado estacionario finito estable es que la propensión supere a la tasa demográfica: $s a^2 > n$.",
+          "is_correct": false,
+          "error_rationale": "Declarar que $s a^2 > n$ es la condición requerida para que exista un estado de crecimiento equilibrado finito.",
+          "distractor_id": "D-Hab06-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Las mismas condiciones dinámicas de equilibrio rigen idénticamente si el parámetro de sustitución es $p > 1$.",
+          "is_correct": false,
+          "error_rationale": "Aplicar las condiciones de equilibrio de Solow a tecnologías con $p > 1$.",
+          "distractor_id": "D-Hab06-06"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Expanda s (a sqrt(r) + 1)^2: el término dominante en el infinito es s a^2 r.",
+        "Compare la pendiente asintótica s a^2 con la pendiente de la recta demográfica n.",
+        "Si s a^2 < n, la recta demográfica corta a la curva de ahorro, garantizando un equilibrio finito estable."
+      ],
+      "detailed_solution": "El término lineal dominante para $r$ grande es $s a^2 r$. Si $s a^2 < n$, la recta demográfica $nr$ corta a la curva cóncava en $r^* = \\left(\\frac{1}{\\sqrt{n/s} - a}\\right)^2$. Si $s a^2 > n$, la curva de ahorro permanece asintóticamente por encima de $nr$, acumulándose capital sin cota ($r \\to \\infty$)."
+    },
+    {
+      "id": "Q-H03-341",
+      "competency_id": "H-03",
+      "competency_name": "Ecuación de Arbitraje Financiero y Rendimiento Propio del Capital",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo las identidades de arbitraje continuo de Solow con precio de transferencia $p(t)$ y alquiler $q(t)$, establezca la fórmula exacta de la tasa de interés $i(t)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La paridad de retornos incorpora obligatoriamente una prima estocástica por riesgo de liquidez que penaliza al activo físico.",
+          "is_correct": false,
+          "error_rationale": "Añadir un diferencial estocástico $\\sigma$ en la condición de indiferencia de arbitraje.",
+          "distractor_id": "D-H03-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El precio de compra del bien de capital coincide idénticamente con la tarifa de alquiler por período: $p(t) = q(t)$ en todo momento.",
+          "is_correct": false,
+          "error_rationale": "Igualar $p(t) = q(t)$ en las identidades contables.",
+          "distractor_id": "D-H03-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La condición de arbitraje deduce las ganancias de capital del alquiler físico según la regla de paridad $i(t) = \\frac{q(t)}{p(t)} - \\frac{\\dot{p}(t)}{p(t)}$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $i(t) = q/p - \\dot{p}/p$.",
+          "distractor_id": "D-H03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La tasa de interés se obtiene agregando directamente el alquiler nominal sin normalizar por el precio: $i(t) = q(t) + \\dot{p}(t)$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $i(t) = q(t) + \\dot{p}(t)$.",
+          "distractor_id": "D-H03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Bajo previsión perfecta, la paridad de arbitraje exige $i(t) = \\frac{q(t)}{p(t)} + \\frac{\\dot{p}(t)}{p(t)}$, sumando el alquiler y la ganancia de capital.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El precio del bien de capital se actualiza con un factor de descuento constante $e^{-i(u-t)}$ aun bajo tipos de interés variables.",
+          "is_correct": false,
+          "error_rationale": "Tratar la tasa de descuento como un escalar fijo dentro de la integral temporal.",
+          "distractor_id": "D-H03-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La tasa monetaria de interés coincide en todo momento con el rendimiento físico $i(t) = \\frac{q(t)}{p(t)}$ aun cuando el precio varíe.",
+          "is_correct": false,
+          "error_rationale": "Igualar $i(t) = q(t)/p(t)$ con precios de producto decrecientes.",
+          "distractor_id": "D-H03-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Considere las dos fuentes de rentabilidad de poseer una unidad de capital físico.",
+        "El propietario obtiene el flujo de alquiler q/p más la variación en el precio del activo p_punto / p.",
+        "Para que los agentes sean indiferentes entre prestar dinero y comprar capital, la tasa de interés i debe igualar la suma de ambos retornos."
+      ],
+      "detailed_solution": "Un tenedor de capital gana tanto el dividendo por alquiler $\\frac{q(t)}{p(t)}$ como la ganancia de capital $\\frac{\\dot{p}(t)}{p(t)}$. Por arbitraje perfecto en ausencia de incertidumbre, prestar un dólar a interés $i(t)$ debe rendir exactamente lo mismo: $i(t) = \\frac{q(t)}{p(t)} + \\frac{\\dot{p}(t)}{p(t)}$."
+    },
+    {
+      "id": "Q-H03-342",
+      "competency_id": "H-03",
+      "competency_name": "Ecuación de Arbitraje Financiero y Rendimiento Propio del Capital",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el análisis de precios de factores de Solow, seleccione la ecuación de equilibrio de cartera entre dinero y capital físico:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El precio de compra del bien de capital coincide idénticamente con la tarifa de alquiler por período: $p(t) = q(t)$ en todo momento.",
+          "is_correct": false,
+          "error_rationale": "Igualar $p(t) = q(t)$ en las identidades contables.",
+          "distractor_id": "D-H03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La paridad de retornos incorpora obligatoriamente una prima estocástica por riesgo de liquidez que penaliza al activo físico.",
+          "is_correct": false,
+          "error_rationale": "Añadir un diferencial estocástico $\\sigma$ en la condición de indiferencia de arbitraje.",
+          "distractor_id": "D-H03-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Bajo previsión perfecta, la paridad de arbitraje exige $i(t) = \\frac{q(t)}{p(t)} + \\frac{\\dot{p}(t)}{p(t)}$, sumando el alquiler y la ganancia de capital.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La tasa de interés se obtiene agregando directamente el alquiler nominal sin normalizar por el precio: $i(t) = q(t) + \\dot{p}(t)$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $i(t) = q(t) + \\dot{p}(t)$.",
+          "distractor_id": "D-H03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La tasa monetaria de interés coincide en todo momento con el rendimiento físico $i(t) = \\frac{q(t)}{p(t)}$ aun cuando el precio varíe.",
+          "is_correct": false,
+          "error_rationale": "Igualar $i(t) = q(t)/p(t)$ con precios de producto decrecientes.",
+          "distractor_id": "D-H03-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El precio del bien de capital se actualiza con un factor de descuento constante $e^{-i(u-t)}$ aun bajo tipos de interés variables.",
+          "is_correct": false,
+          "error_rationale": "Tratar la tasa de descuento como un escalar fijo dentro de la integral temporal.",
+          "distractor_id": "D-H03-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La condición de arbitraje deduce las ganancias de capital del alquiler físico según la regla de paridad $i(t) = \\frac{q(t)}{p(t)} - \\frac{\\dot{p}(t)}{p(t)}$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $i(t) = q/p - \\dot{p}/p$.",
+          "distractor_id": "D-H03-02"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Considere las dos fuentes de rentabilidad de poseer una unidad de capital físico.",
+        "El propietario obtiene el flujo de alquiler q/p más la variación en el precio del activo p_punto / p.",
+        "Para que los agentes sean indiferentes entre prestar dinero y comprar capital, la tasa de interés i debe igualar la suma de ambos retornos."
+      ],
+      "detailed_solution": "Un tenedor de capital gana tanto el dividendo por alquiler $\\frac{q(t)}{p(t)}$ como la ganancia de capital $\\frac{\\dot{p}(t)}{p(t)}$. Por arbitraje perfecto en ausencia de incertidumbre, prestar un dólar a interés $i(t)$ debe rendir exactamente lo mismo: $i(t) = \\frac{q(t)}{p(t)} + \\frac{\\dot{p}(t)}{p(t)}$."
+    },
+    {
+      "id": "Q-C07-361",
+      "competency_id": "C-07",
+      "competency_name": "Determinación de Precios Factoriales y Distribución del Ingreso en Equilibrio",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para un sistema económico con función agregada $Y = K^{\\alpha} L^{1-\\alpha}$ con parámetros $\\alpha = 0.4$, ahorro $s = 0.2$ y tasa de expansión laboral $n = 0.03$, identifique la aseveración correcta sobre la remuneración de equilibrio de los factores productivos:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "A medida que la economía acumula capital y $r$ aumenta, la razón de precios relativos $w/q$ experimenta una disminución monótona.",
+          "is_correct": false,
+          "error_rationale": "Escribir que $\\frac{d(w/q)}{dr} < 0$.",
+          "distractor_id": "D-C07-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La tasa real de interés cae indefinidamente hacia cero conforme transcurre el tiempo sin estabilizarse en un nivel positivo.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que para evitar la recesión la tasa de interés debe caer sin cota hacia el infinito temporal.",
+          "distractor_id": "D-C07-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El alquiler real de equilibrio es $q/p = \\alpha(n/s) = 0.06$, dependiendo exclusivamente de la relación capital-trabajo $r^*$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Cualquier exceso transitorio de mano de obra en el mercado hace colapsar el salario real inmediatamente a cero.",
+          "is_correct": false,
+          "error_rationale": "Predecir salarios nulos ($w=0$) ante cualquier exceso inicial de mano de obra en el modelo de Solow.",
+          "distractor_id": "D-C07-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El alquiler real de equilibrio depende linealmente del acervo absoluto inicial de capital $K_0$ además del cociente $r^*$.",
+          "is_correct": false,
+          "error_rationale": "Plantear que duplicar simultáneamente $K$ y $L$ altera el salario real de equilibrio.",
+          "distractor_id": "D-C07-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La participación del trabajo en el producto es idéntica y constante ante cualquier cambio en $s$ o $n$ en toda función neoclásica CES.",
+          "is_correct": false,
+          "error_rationale": "Asumir que $(w/p)(L/Y)$ es una constante inmutable en la especificación CES de la página 21.",
+          "distractor_id": "D-C07-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El alquiler real del capital en el estado uniforme es $q/p = \\alpha(s/n) = 2.6667$, directamente proporcional a la tasa de ahorro.",
+          "is_correct": false,
+          "error_rationale": "Invertir la fracción escribiendo $q/p = a s / n$.",
+          "distractor_id": "D-C07-06"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "En el estado uniforme de Solow, r* está determinado por la condición de equilibrio dinámico.",
+        "La productividad marginal del capital en la tecnología Cobb-Douglas se evalúa como F'(r*, 1) = alpha * (r*)^(alpha-1).",
+        "Sustituyendo r* = (s/n)^(1/(1-alpha)), obtenemos q/p = alpha * (n/s)."
+      ],
+      "detailed_solution": "En el estado estacionario neoclásico con tecnología Cobb-Douglas, r* = (s/n)^{1/(1-alpha)}. El alquiler real del capital es q/p = F'(r*, 1) = alpha(r*)^{alpha-1} = alpha(n/s) = 0.06. Debido a los retornos constantes a escala, los precios factoriales dependen únicamente de r* y no de la escala absoluta de la economía."
+    },
+    {
+      "id": "Q-C07-362",
+      "competency_id": "C-07",
+      "competency_name": "Determinación de Precios Factoriales y Distribución del Ingreso en Equilibrio",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo una estructura de mercado competitivo con tecnología $Y = K^{0.3} L^{1-0.3}$, propensión media a ahorrar $s = 0.32$ e incremento poblacional $n = 0.05$, examine el valor de equilibrio del precio de los servicios del capital $q/p$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Cualquier exceso transitorio de mano de obra en el mercado hace colapsar el salario real inmediatamente a cero.",
+          "is_correct": false,
+          "error_rationale": "Predecir salarios nulos ($w=0$) ante cualquier exceso inicial de mano de obra en el modelo de Solow.",
+          "distractor_id": "D-C07-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La tasa real de interés cae indefinidamente hacia cero conforme transcurre el tiempo sin estabilizarse en un nivel positivo.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que para evitar la recesión la tasa de interés debe caer sin cota hacia el infinito temporal.",
+          "distractor_id": "D-C07-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El alquiler real del capital en el estado uniforme es $q/p = \\alpha(s/n) = 1.92$, directamente proporcional a la tasa de ahorro.",
+          "is_correct": false,
+          "error_rationale": "Invertir la fracción escribiendo $q/p = a s / n$.",
+          "distractor_id": "D-C07-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El alquiler real de equilibrio es $q/p = \\alpha(n/s) = 0.0469$, dependiendo exclusivamente de la relación capital-trabajo $r^*$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La participación del trabajo en el producto es idéntica y constante ante cualquier cambio en $s$ o $n$ en toda función neoclásica CES.",
+          "is_correct": false,
+          "error_rationale": "Asumir que $(w/p)(L/Y)$ es una constante inmutable en la especificación CES de la página 21.",
+          "distractor_id": "D-C07-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "A medida que la economía acumula capital y $r$ aumenta, la razón de precios relativos $w/q$ experimenta una disminución monótona.",
+          "is_correct": false,
+          "error_rationale": "Escribir que $\\frac{d(w/q)}{dr} < 0$.",
+          "distractor_id": "D-C07-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El alquiler real de equilibrio depende linealmente del acervo absoluto inicial de capital $K_0$ además del cociente $r^*$.",
+          "is_correct": false,
+          "error_rationale": "Plantear que duplicar simultáneamente $K$ y $L$ altera el salario real de equilibrio.",
+          "distractor_id": "D-C07-01"
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "En el estado uniforme de Solow, r* está determinado por la condición de equilibrio dinámico.",
+        "La productividad marginal del capital en la tecnología Cobb-Douglas se evalúa como F'(r*, 1) = alpha * (r*)^(alpha-1).",
+        "Sustituyendo r* = (s/n)^(1/(1-alpha)), obtenemos q/p = alpha * (n/s)."
+      ],
+      "detailed_solution": "En el estado estacionario neoclásico con tecnología Cobb-Douglas, r* = (s/n)^{1/(1-alpha)}. El alquiler real del capital es q/p = F'(r*, 1) = alpha(r*)^{alpha-1} = alpha(n/s) = 0.0469. Debido a los retornos constantes a escala, los precios factoriales dependen únicamente de r* y no de la escala absoluta de la economía."
+    },
+    {
+      "id": "Q-Hab07-381",
+      "competency_id": "Hab-07",
+      "competency_name": "Dinámica del Modelo con Progreso Técnico Neutral Exógeno",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere el sistema dinámico $\\dot{K} = s e^{0.01t} K^{0.5} L^{1-0.5}$ con $L(t) = L_0 e^{0.02t}$ y $a = 0.5$. Calcule analíticamente la tasa de expansión de largo plazo del capital agregado $K(t)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La tasa de acumulación resulta de integrar los componentes temporal y demográfico de manera aditiva independiente en la ecuación.",
+          "is_correct": false,
+          "error_rationale": "Integrar los términos de población y tecnología como sumandos separados en vez de producto de exponenciales.",
+          "distractor_id": "D-Hab07-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La relación capital-trabajo $K/L$ converge a un nivel estacionario finito constante donde la inversión neta cesa por completo.",
+          "is_correct": false,
+          "error_rationale": "Buscar un valor estacionario finito $r^*$ igualando la derivada a cero sin considerar el desplazamiento secular de la curva.",
+          "distractor_id": "D-Hab07-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La especificación $e^{gt}F(K, L)$ corresponde a cambio técnico neutral en el sentido de Harrod aumentador de mano de obra.",
+          "is_correct": false,
+          "error_rationale": "Plantear que el cambio técnico solo afecta la eficiencia de los trabajadores $F(K, A(t)L)$.",
+          "distractor_id": "D-Hab07-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La relación capital-producto $K/Y$ permanece rigurosamente constante en el tiempo con tasa de crecimiento estrictamente nula.",
+          "is_correct": false,
+          "error_rationale": "Establecer que $K/Y$ es constante y por tanto su tasa de crecimiento es cero.",
+          "distractor_id": "D-Hab07-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El salario real se mantiene acotado en el nivel de subsistencia a pesar de la expansión técnica secular de la productividad.",
+          "is_correct": false,
+          "error_rationale": "Concluir que el salario real se mantiene acotado en el nivel de subsistencia.",
+          "distractor_id": "D-Hab07-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El capital agregado crece asintóticamente a la tasa $n + \\frac{g}{1-a} = 0.04$, superando a la suma simple $n + g$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El capital agregado crece a la tasa directa $n + g = 0.03$, sumando linealmente demografía y cambio técnico.",
+          "is_correct": false,
+          "error_rationale": "Predecir que $K(t)$ crece a la tasa $n + g$ omitiendo el multiplicador del capital $1/(1-a)$.",
+          "distractor_id": "D-Hab07-01"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "El progreso técnico eleva el producto, induciendo más ahorro e inversión en cada período.",
+        "La ecuación de Bernoulli para K(t) combina los exponentes de población y tecnología.",
+        "La tasa asintótica de crecimiento del capital agregado es n + g / (1 - a)."
+      ],
+      "detailed_solution": "Al integrar la ecuación diferencial con progreso técnico neutral Hicksiano, el capital agregado se expande a la tasa de largo plazo n + g/(1-a) = 0.04, superando la suma simple n + g debido a la reinversión del producto."
+    },
+    {
+      "id": "Q-Hab07-382",
+      "competency_id": "Hab-07",
+      "competency_name": "Dinámica del Modelo con Progreso Técnico Neutral Exógeno",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo la trayectoria temporal neoclásica con tecnología $Y = e^{0.015t} F(K, L)$, coeficientes $a = 0.5$, $g = 0.015$ e incremento de la mano de obra $n = 0.02$, identifique la tasa secular de crecimiento de $K$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El capital agregado crece asintóticamente a la tasa $n + \\frac{g}{1-a} = 0.05$, superando a la suma simple $n + g$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El salario real se mantiene acotado en el nivel de subsistencia a pesar de la expansión técnica secular de la productividad.",
+          "is_correct": false,
+          "error_rationale": "Concluir que el salario real se mantiene acotado en el nivel de subsistencia.",
+          "distractor_id": "D-Hab07-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El capital agregado crece a la tasa directa $n + g = 0.035$, sumando linealmente demografía y cambio técnico.",
+          "is_correct": false,
+          "error_rationale": "Predecir que $K(t)$ crece a la tasa $n + g$ omitiendo el multiplicador del capital $1/(1-a)$.",
+          "distractor_id": "D-Hab07-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La especificación $e^{gt}F(K, L)$ corresponde a cambio técnico neutral en el sentido de Harrod aumentador de mano de obra.",
+          "is_correct": false,
+          "error_rationale": "Plantear que el cambio técnico solo afecta la eficiencia de los trabajadores $F(K, A(t)L)$.",
+          "distractor_id": "D-Hab07-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La relación capital-trabajo $K/L$ converge a un nivel estacionario finito constante donde la inversión neta cesa por completo.",
+          "is_correct": false,
+          "error_rationale": "Buscar un valor estacionario finito $r^*$ igualando la derivada a cero sin considerar el desplazamiento secular de la curva.",
+          "distractor_id": "D-Hab07-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La relación capital-producto $K/Y$ permanece rigurosamente constante en el tiempo con tasa de crecimiento estrictamente nula.",
+          "is_correct": false,
+          "error_rationale": "Establecer que $K/Y$ es constante y por tanto su tasa de crecimiento es cero.",
+          "distractor_id": "D-Hab07-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La tasa de acumulación resulta de integrar los componentes temporal y demográfico de manera aditiva independiente en la ecuación.",
+          "is_correct": false,
+          "error_rationale": "Integrar los términos de población y tecnología como sumandos separados en vez de producto de exponenciales.",
+          "distractor_id": "D-Hab07-02"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "El progreso técnico eleva el producto, induciendo más ahorro e inversión en cada período.",
+        "La ecuación de Bernoulli para K(t) combina los exponentes de población y tecnología.",
+        "La tasa asintótica de crecimiento del capital agregado es n + g / (1 - a)."
+      ],
+      "detailed_solution": "Al integrar la ecuación diferencial con progreso técnico neutral Hicksiano, el capital agregado se expande a la tasa de largo plazo n + g/(1-a) = 0.05, superando la suma simple n + g debido a la reinversión del producto."
+    },
+    {
+      "id": "Q-Hab08-411",
+      "competency_id": "Hab-08",
+      "competency_name": "Incorporación de Oferta de Trabajo Elástica al Salario Real",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A partir de la formulación con oferta laboral sensible al salario $h = 1.0$ y función de producción con parámetro $a = 0.25$, identifique la ley diferencial de movimiento de la dotación intensiva $r$ y su nivel de convergencia:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La tasa de crecimiento de la oferta laboral se reduce estrictamente a $\\dot{L}/L = n$, omitiendo la tasa de variación salarial.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{L}/L = n$ olvidando por completo el término $h \\dot{w}/w$.",
+          "distractor_id": "D-Hab08-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La ecuación es $\\dot{r} = (sF(r,1) - nr)\\left(1 + \\frac{ah}{r}\\right)^{-1}$ y el estado estacionario $r^*$ no depende de $h$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El factor de desaceleración de la oferta de trabajo en la velocidad de ajuste adopta la forma con signo negativo $\\left(1 - \\frac{ah}{r}\\right)^{-1}$.",
+          "is_correct": false,
+          "error_rationale": "Escribir un signo menos en el denominador provocando potenciales asíntotas verticales.",
+          "distractor_id": "D-Hab08-05"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La formulación de oferta isoelástica $L_0 e^{nt}(w/p)^h$ se mantiene biológicamente válida sin límite para salarios arbitrariamente altos.",
+          "is_correct": false,
+          "error_rationale": "Predecir horas trabajadas infinitas por habitante ante salarios reales astronómicos.",
+          "distractor_id": "D-Hab08-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La tasa de variación salarial se relaciona directamente con la acumulación intensiva mediante $\\dot{w}/w = (1-a)\\dot{r}/r$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{w}/w = (1-a)\\dot{r}/r$ confundiendo la elasticidad del salario con la participación laboral.",
+          "distractor_id": "D-Hab08-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La elasticidad $h$ desplaza el valor del equilibrio de largo plazo $r^*$, reduciendo el capital por trabajador de estado estacionario.",
+          "is_correct": false,
+          "error_rationale": "Calcular un nuevo equilibrio $r^*$ dependiente del parámetro de elasticidad $h$.",
+          "distractor_id": "D-Hab08-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La ecuación resultante queda implícita en $\\dot{r}$ al omitir agrupar los términos de velocidad de ajuste en el miembro izquierdo.",
+          "is_correct": false,
+          "error_rationale": "Dejar el término con $\\dot{r}$ a la derecha de la ecuación, obteniendo una ecuación implícita sin resolver.",
+          "distractor_id": "D-Hab08-04"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Diferencie logarítmicamente L(t) para obtener dot(L)/L = n + h * dot(w)/w.",
+        "Para Cobb-Douglas, dot(w)/w = a * dot(r)/r.",
+        "Sustituya en dot(r) = sF - r(dot(L)/L) y despeje dot(r) agrupando los términos."
+      ],
+      "detailed_solution": "Al sustituir dot(w)/w = a(dot(r)/r) en la ecuación de acumulación intensiva se obtiene dot(r)(1 + ah/r) = sF - nr. Dado que en estado estacionario dot(r) = 0, el equilibrio r* satisface sF(r*,1) = nr* exactamente como en el caso básico."
+    },
+    {
+      "id": "Q-Hab08-412",
+      "competency_id": "Hab-08",
+      "competency_name": "Incorporación de Oferta de Trabajo Elástica al Salario Real",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En una economía con oferta laboral elástica al salario real $L = L_0 e^{0.02t}(w/p)^{2.0}$, elasticidad de oferta $h = 2.0$ y función Cobb-Douglas con parámetro $a = 0.3$, determine la ecuación diferencial que rige la relación capital-trabajo $\\dot{r}$ y la posición del estado estacionario $r^*$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La ecuación es $\\dot{r} = (sF(r,1) - nr)\\left(1 + \\frac{ah}{r}\\right)^{-1}$ y el estado estacionario $r^*$ no depende de $h$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La ecuación resultante queda implícita en $\\dot{r}$ al omitir agrupar los términos de velocidad de ajuste en el miembro izquierdo.",
+          "is_correct": false,
+          "error_rationale": "Dejar el término con $\\dot{r}$ a la derecha de la ecuación, obteniendo una ecuación implícita sin resolver.",
+          "distractor_id": "D-Hab08-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La tasa de variación salarial se relaciona directamente con la acumulación intensiva mediante $\\dot{w}/w = (1-a)\\dot{r}/r$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{w}/w = (1-a)\\dot{r}/r$ confundiendo la elasticidad del salario con la participación laboral.",
+          "distractor_id": "D-Hab08-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El factor de desaceleración de la oferta de trabajo en la velocidad de ajuste adopta la forma con signo negativo $\\left(1 - \\frac{ah}{r}\\right)^{-1}$.",
+          "is_correct": false,
+          "error_rationale": "Escribir un signo menos en el denominador provocando potenciales asíntotas verticales.",
+          "distractor_id": "D-Hab08-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La formulación de oferta isoelástica $L_0 e^{nt}(w/p)^h$ se mantiene biológicamente válida sin límite para salarios arbitrariamente altos.",
+          "is_correct": false,
+          "error_rationale": "Predecir horas trabajadas infinitas por habitante ante salarios reales astronómicos.",
+          "distractor_id": "D-Hab08-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La elasticidad $h$ desplaza el valor del equilibrio de largo plazo $r^*$, reduciendo el capital por trabajador de estado estacionario.",
+          "is_correct": false,
+          "error_rationale": "Calcular un nuevo equilibrio $r^*$ dependiente del parámetro de elasticidad $h$.",
+          "distractor_id": "D-Hab08-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La tasa de crecimiento de la oferta laboral se reduce estrictamente a $\\dot{L}/L = n$, omitiendo la tasa de variación salarial.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{L}/L = n$ olvidando por completo el término $h \\dot{w}/w$.",
+          "distractor_id": "D-Hab08-02"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Diferencie logarítmicamente L(t) para obtener dot(L)/L = n + h * dot(w)/w.",
+        "Para Cobb-Douglas, dot(w)/w = a * dot(r)/r.",
+        "Sustituya en dot(r) = sF - r(dot(L)/L) y despeje dot(r) agrupando los términos."
+      ],
+      "detailed_solution": "Al sustituir dot(w)/w = a(dot(r)/r) en la ecuación de acumulación intensiva se obtiene dot(r)(1 + ah/r) = sF - nr. Dado que en estado estacionario dot(r) = 0, el equilibrio r* satisface sF(r*,1) = nr* exactamente como en el caso básico."
+    },
+    {
+      "id": "Q-C08-441",
+      "competency_id": "C-08",
+      "competency_name": "Tasa de Ahorro Endógena Dependiente del Rendimiento del Capital",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A partir del análisis cualitativo de la función de ahorro dependiente del retorno de los activos con índice poblacional $n = 0.02$, identifique las propiedades de monotonicidad y estabilidad global del sistema:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La introducción de una tasa de ahorro endógena $s(r)$ desestabiliza sistemáticamente los equilibrios previamente convergentes.",
+          "is_correct": false,
+          "error_rationale": "Argumentar que los equilibrios estables se vuelven inestables cuando $s$ es sensible a la tasa de interés.",
+          "distractor_id": "D-C08-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "En el modelo de Solow, la función $s(r)$ representa exclusivamente la propensión marginal al ahorro de la clase capitalista.",
+          "is_correct": false,
+          "error_rationale": "Modelar el ahorro total separando por clases sociales en la ecuación (6c).",
+          "distractor_id": "D-C08-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La curva agregada de ahorro $s(r)F(r,1)$ debe ser estrictamente creciente en todo su dominio independientemente del decaimiento de $s(r)$.",
+          "is_correct": false,
+          "error_rationale": "Trazar la curva de ahorro como siempre creciente aun cuando la propensión al ahorro se anula.",
+          "distractor_id": "D-C08-05"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Si $s(r)$ tiende a cero en el infinito, la última intersección con la recta demográfica $nr$ es necesariamente un equilibrio repulsor inestable.",
+          "is_correct": false,
+          "error_rationale": "Clasificar el equilibrio de mayor capitalización como repulsor inestable.",
+          "distractor_id": "D-C08-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Si el ahorro cae a cero ($s(r)=0$), la economía se detiene en un estado estacionario clásico absoluto con población constante.",
+          "is_correct": false,
+          "error_rationale": "Predecir estabilización total de la economía en el nivel donde $s(r) = 0$.",
+          "distractor_id": "D-C08-02"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Si el ahorro responde positivamente a la rentabilidad, la tasa de ahorro debe ser una función creciente de la dotación factorial con $s'(r) > 0$, bajo las hipótesis del modelo.",
+          "is_correct": false,
+          "error_rationale": "Plantear $s'(r) > 0$, generando inestabilidad dinámica artificial.",
+          "distractor_id": "D-C08-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Dado que la rentabilidad del capital cae con $r$, una respuesta positiva del ahorro al rendimiento implica $s'(r) < 0$, actuando como mecanismo estabilizador.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "El rendimiento del capital q/p = F'(r, 1) decrece con r debido a rendimientos marginales decrecientes.",
+        "Si el ahorro depende positivamente de q/p, entonces ds/dr = (ds/dq) * (dq/dr) < 0.",
+        "Una curva de ahorro con pendiente menor o negativa corta a la recta demográfica nr desde arriba, reforzando la estabilidad."
+      ],
+      "detailed_solution": "Como la productividad marginal del capital disminuye con r, si el ahorro responde positivamente al retorno, s(r) decrece con r (s'(r) < 0). Esto aplana la curva de ahorro y estabiliza el equilibrio dinámico."
+    },
+    {
+      "id": "Q-C08-442",
+      "competency_id": "C-08",
+      "competency_name": "Tasa de Ahorro Endógena Dependiente del Rendimiento del Capital",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En una economía con propensión al ahorro dependiente del rendimiento del capital $s = s(r)$ con tasa demográfica $n = 0.03$, determine el signo de la derivada $s'(r)$ y las consecuencias cualitativas sobre la estabilidad dinámica del equilibrio:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La introducción de una tasa de ahorro endógena $s(r)$ desestabiliza sistemáticamente los equilibrios previamente convergentes.",
+          "is_correct": false,
+          "error_rationale": "Argumentar que los equilibrios estables se vuelven inestables cuando $s$ es sensible a la tasa de interés.",
+          "distractor_id": "D-C08-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Dado que la rentabilidad del capital cae con $r$, una respuesta positiva del ahorro al rendimiento implica $s'(r) < 0$, actuando como mecanismo estabilizador.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Si el ahorro responde positivamente a la rentabilidad, la tasa de ahorro debe ser una función creciente de la dotación factorial con $s'(r) > 0$, para los parámetros bajo análisis.",
+          "is_correct": false,
+          "error_rationale": "Plantear $s'(r) > 0$, generando inestabilidad dinámica artificial.",
+          "distractor_id": "D-C08-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En el modelo de Solow, la función $s(r)$ representa exclusivamente la propensión marginal al ahorro de la clase capitalista.",
+          "is_correct": false,
+          "error_rationale": "Modelar el ahorro total separando por clases sociales en la ecuación (6c).",
+          "distractor_id": "D-C08-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Si $s(r)$ tiende a cero en el infinito, la última intersección con la recta demográfica $nr$ es necesariamente un equilibrio repulsor inestable.",
+          "is_correct": false,
+          "error_rationale": "Clasificar el equilibrio de mayor capitalización como repulsor inestable.",
+          "distractor_id": "D-C08-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La curva agregada de ahorro $s(r)F(r,1)$ debe ser estrictamente creciente en todo su dominio independientemente del decaimiento de $s(r)$.",
+          "is_correct": false,
+          "error_rationale": "Trazar la curva de ahorro como siempre creciente aun cuando la propensión al ahorro se anula.",
+          "distractor_id": "D-C08-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Si el ahorro cae a cero ($s(r)=0$), la economía se detiene en un estado estacionario clásico absoluto con población constante.",
+          "is_correct": false,
+          "error_rationale": "Predecir estabilización total de la economía en el nivel donde $s(r) = 0$.",
+          "distractor_id": "D-C08-02"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "El rendimiento del capital q/p = F'(r, 1) decrece con r debido a rendimientos marginales decrecientes.",
+        "Si el ahorro depende positivamente de q/p, entonces ds/dr = (ds/dq) * (dq/dr) < 0.",
+        "Una curva de ahorro con pendiente menor o negativa corta a la recta demográfica nr desde arriba, reforzando la estabilidad."
+      ],
+      "detailed_solution": "Como la productividad marginal del capital disminuye con r, si el ahorro responde positivamente al retorno, s(r) decrece con r (s'(r) < 0). Esto aplana la curva de ahorro y estabiliza el equilibrio dinámico."
+    },
+    {
+      "id": "Q-Hab09-461",
+      "competency_id": "Hab-09",
+      "competency_name": "Evaluación del Impacto de la Política Tributaria sobre la Tasa Efectiva de Ahorro",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para una economía con política tributaria caracterizada por una alícuota $t = 0.25$, ahorro privado $s = 0.2$ e inversión fiscal $v = 0.6$, examine la formulación algebraica de la tasa efectiva agregada $s^*$ y su impacto sobre la inversión:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La ecuación de acumulación nacional prescinde de deducir los impuestos del ingreso privado, expresándose como $\\dot{K} = (s + vt)Y$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{K} = sY + v t Y$, olvidando que los ciudadanos pagan impuestos antes de ahorrar.",
+          "distractor_id": "D-Hab09-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La tasa efectiva de ahorro se factoriza algebraicamente invirtiendo los términos como $s^* = s + (s - v)t$.",
+          "is_correct": false,
+          "error_rationale": "Obtener $s + (s - v)t$, concluyendo que el ahorro cae cuando el gobierno invierte más que el sector privado.",
+          "distractor_id": "D-Hab09-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La posición de la curva de inversión en el diagrama de fases permanece fija e inalterada tras la reforma impositiva.",
+          "is_correct": false,
+          "error_rationale": "Modificar la tasa impositiva pero mantener inalterada la posición de la curva de inversión en el gráfico.",
+          "distractor_id": "D-Hab09-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Si el Estado consume la totalidad de la recaudación ($v=0$), la tasa efectiva se obtiene restando la alícuota directamente como $s^* = s - t$, bajo las hipótesis del modelo.",
+          "is_correct": false,
+          "error_rationale": "Restar la tasa impositiva directamente de la tasa de ahorro privada: $s^* = s - t$.",
+          "distractor_id": "D-Hab09-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La introducción de impuestos reduce indefectiblemente la tasa efectiva de ahorro nacional independientemente del valor de $v$.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que un impuesto con destino 100% inversor ($v=1$) desincentiva la acumulación de capital.",
+          "distractor_id": "D-Hab09-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Bajo los supuestos de Solow rige neutralidad ricardiana estricta, neutralizando cualquier impacto impositivo sobre el ahorro nacional.",
+          "is_correct": false,
+          "error_rationale": "Plantear que el ahorro nacional permanece invariante ante cualquier elección de $v$ y $t$.",
+          "distractor_id": "D-Hab09-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La tasa efectiva es $s^* = s + (v - s)t = 0.3$, y la acumulación se expande si y solo si la propensión pública a invertir supera a la privada ($v > s$).",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "El ingreso disponible privado es (1 - t)Y, por lo que el ahorro privado es s(1 - t)Y.",
+        "La recaudación pública es tY, de la cual se invierte v(tY).",
+        "Sume ambos componentes: dot(K) = [s(1 - t) + vt]Y = [s + (v - s)t]Y."
+      ],
+      "detailed_solution": "El ahorro total es la suma del ahorro privado s(1-t)Y y la inversión pública vtY: s* = s(1-t) + vt = s + (v-s)t = 0.3. El ahorro nacional aumenta si y solo si v > s."
+    },
+    {
+      "id": "Q-Hab09-462",
+      "competency_id": "Hab-09",
+      "competency_name": "Evaluación del Impacto de la Política Tributaria sobre la Tasa Efectiva de Ahorro",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere la ecuación de acumulación agregada $\\dot{K} = [s(1-t) + vt]Y$ con parámetros $s = 0.18$, $t = 0.25$ y $v = 0.58$. Evalúe el criterio bajo el cual la política fiscal estimula la tasa efectiva de ahorro:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La tasa efectiva es $s^* = s + (v - s)t = 0.28$, y la acumulación se expande si y solo si la propensión pública a invertir supera a la privada ($v > s$).",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La posición de la curva de inversión en el diagrama de fases permanece fija e inalterada tras la reforma impositiva.",
+          "is_correct": false,
+          "error_rationale": "Modificar la tasa impositiva pero mantener inalterada la posición de la curva de inversión en el gráfico.",
+          "distractor_id": "D-Hab09-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La ecuación de acumulación nacional prescinde de deducir los impuestos del ingreso privado, expresándose como $\\dot{K} = (s + vt)Y$.",
+          "is_correct": false,
+          "error_rationale": "Escribir $\\dot{K} = sY + v t Y$, olvidando que los ciudadanos pagan impuestos antes de ahorrar.",
+          "distractor_id": "D-Hab09-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Si el Estado consume la totalidad de la recaudación ($v=0$), la tasa efectiva se obtiene restando la alícuota directamente como $s^* = s - t$, para los parámetros bajo análisis.",
+          "is_correct": false,
+          "error_rationale": "Restar la tasa impositiva directamente de la tasa de ahorro privada: $s^* = s - t$.",
+          "distractor_id": "D-Hab09-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La introducción de impuestos reduce indefectiblemente la tasa efectiva de ahorro nacional independientemente del valor de $v$.",
+          "is_correct": false,
+          "error_rationale": "Afirmar que un impuesto con destino 100% inversor ($v=1$) desincentiva la acumulación de capital.",
+          "distractor_id": "D-Hab09-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La tasa efectiva de ahorro se factoriza algebraicamente invirtiendo los términos como $s^* = s + (s - v)t$.",
+          "is_correct": false,
+          "error_rationale": "Obtener $s + (s - v)t$, concluyendo que el ahorro cae cuando el gobierno invierte más que el sector privado.",
+          "distractor_id": "D-Hab09-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Bajo los supuestos de Solow rige neutralidad ricardiana estricta, neutralizando cualquier impacto impositivo sobre el ahorro nacional.",
+          "is_correct": false,
+          "error_rationale": "Plantear que el ahorro nacional permanece invariante ante cualquier elección de $v$ y $t$.",
+          "distractor_id": "D-Hab09-06"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "El ingreso disponible privado es (1 - t)Y, por lo que el ahorro privado es s(1 - t)Y.",
+        "La recaudación pública es tY, de la cual se invierte v(tY).",
+        "Sume ambos componentes: dot(K) = [s(1 - t) + vt]Y = [s + (v - s)t]Y."
+      ],
+      "detailed_solution": "El ahorro total es la suma del ahorro privado s(1-t)Y y la inversión pública vtY: s* = s(1-t) + vt = s + (v-s)t = 0.28. El ahorro nacional aumenta si y solo si v > s."
+    },
+    {
+      "id": "Q-C09-491",
+      "competency_id": "C-09",
+      "competency_name": "Dinámica con Crecimiento Poblacional Endógeno y Trampa Malthusiana",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para un modelo de Solow donde la demografía responde a la renta per cápita y el ahorro es $s = 0.25$, examine las propiedades de estabilidad de la trampa malthusiana $r_1$ y del umbral de despegue $r_2$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "En la Figura IX, $r_1$ actúa como un equilibrio repulsor inestable mientras que $r_2$ es un atractor asintóticamente estable de convergencia absoluta.",
+          "is_correct": false,
+          "error_rationale": "Predecir que economías atrapadas en $r_1$ escaparán espontáneamente sin un choque externo masivo.",
+          "distractor_id": "D-C09-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La tasa de crecimiento de la población decae monótonamente en todos los niveles de desarrollo satisfaciendo la condición estricta $n'(r) < 0$.",
+          "is_correct": false,
+          "error_rationale": "Modelar $n'(r) < 0$ para todo $r \\ge 0$.",
+          "distractor_id": "D-C09-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La emergencia de equilibrios múltiples y trampas de desarrollo exige obligatoriamente la presencia de rendimientos crecientes a escala en la producción.",
+          "is_correct": false,
+          "error_rationale": "Exigir retornos crecientes a escala como condición obligatoria para la existencia de trampas de desarrollo.",
+          "distractor_id": "D-C09-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Pequeños programas graduales y paulatinos de acumulación marginal bastan para liberar a la economía de la trampa en $r_1$ sin saltos cuantitativos.",
+          "is_correct": false,
+          "error_rationale": "Recomendar políticas de acumulación incremental en lugar de un 'Big Push' de inversión.",
+          "distractor_id": "D-C09-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El punto $r_1$ es un equilibrio trampa localmente estable y $r_2$ es un umbral inestable que exige un gran impulso de inversión (Big Push) para superarlo.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Una vez superado el umbral crítico $r_2$, el crecimiento demográfico se extingue por completo quedando fijado permanentemente en el nivel nulo $n = 0$.",
+          "is_correct": false,
+          "error_rationale": "Fijar $n = 0$ en la fase autosostenida.",
+          "distractor_id": "D-C09-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La curva de ensanchamiento demográfico $n(r)r$ permanece invariable como una recta lineal de pendiente fija y constante emanada desde el origen cartesiano.",
+          "is_correct": false,
+          "error_rationale": "Trazar una línea recta desde el origen para $n(r)r$.",
+          "distractor_id": "D-C09-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "En r_1 la curva de ahorro sF corta a n(r)r desde arriba hacia abajo, confiriendo estabilidad local.",
+        "En r_2 la curva sF corta desde abajo hacia arriba, convirtiéndolo en un umbral inestable.",
+        "Cualquier acumulación que deje r < r_2 hace que n(r)r > sF, devolviendo la economía a r_1."
+      ],
+      "detailed_solution": "En el punto r_1 el sistema es localmente estable (trampa de estancamiento). El punto r_2 es el umbral inestable de despegue. Un choque de inversión masivo ('Big Push') que eleve r > r_2 es indispensable para ingresar a la fase de crecimiento autosostenido."
+    },
+    {
+      "id": "Q-C09-492",
+      "competency_id": "C-09",
+      "competency_name": "Dinámica con Crecimiento Poblacional Endógeno y Trampa Malthusiana",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere la ecuación diferencial $\\dot{r} = sF(r,1) - n(r)r$ con ahorro $s = 0.18$. Evalúe por qué pequeñas inversiones fracasan en liberar a la economía de la trampa de bajo nivel:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La tasa de crecimiento de la población decae monótonamente en todos los niveles de desarrollo satisfaciendo la condición estricta $n'(r) < 0$.",
+          "is_correct": false,
+          "error_rationale": "Modelar $n'(r) < 0$ para todo $r \\ge 0$.",
+          "distractor_id": "D-C09-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La emergencia de equilibrios múltiples y trampas de desarrollo exige obligatoriamente la presencia de rendimientos crecientes a escala en la producción.",
+          "is_correct": false,
+          "error_rationale": "Exigir retornos crecientes a escala como condición obligatoria para la existencia de trampas de desarrollo.",
+          "distractor_id": "D-C09-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La curva de ensanchamiento demográfico $n(r)r$ permanece invariable como una recta lineal de pendiente fija y constante emanada desde el origen cartesiano.",
+          "is_correct": false,
+          "error_rationale": "Trazar una línea recta desde el origen para $n(r)r$.",
+          "distractor_id": "D-C09-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Una vez superado el umbral crítico $r_2$, el crecimiento demográfico se extingue por completo quedando fijado permanentemente en el nivel nulo $n = 0$.",
+          "is_correct": false,
+          "error_rationale": "Fijar $n = 0$ en la fase autosostenida.",
+          "distractor_id": "D-C09-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "En la Figura IX, $r_1$ actúa como un equilibrio repulsor inestable mientras que $r_2$ es un atractor asintóticamente estable de convergencia absoluta.",
+          "is_correct": false,
+          "error_rationale": "Predecir que economías atrapadas en $r_1$ escaparán espontáneamente sin un choque externo masivo.",
+          "distractor_id": "D-C09-02"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Pequeños programas graduales y paulatinos de acumulación marginal bastan para liberar a la economía de la trampa en $r_1$ sin saltos cuantitativos.",
+          "is_correct": false,
+          "error_rationale": "Recomendar políticas de acumulación incremental en lugar de un 'Big Push' de inversión.",
+          "distractor_id": "D-C09-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El punto $r_1$ es un equilibrio trampa localmente estable y $r_2$ es un umbral inestable que exige un gran impulso de inversión (Big Push) para superarlo.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "En r_1 la curva de ahorro sF corta a n(r)r desde arriba hacia abajo, confiriendo estabilidad local.",
+        "En r_2 la curva sF corta desde abajo hacia arriba, convirtiéndolo en un umbral inestable.",
+        "Cualquier acumulación que deje r < r_2 hace que n(r)r > sF, devolviendo la economía a r_1."
+      ],
+      "detailed_solution": "En el punto r_1 el sistema es localmente estable (trampa de estancamiento). El punto r_2 es el umbral inestable de despegue. Un choque de inversión masivo ('Big Push') que eleve r > r_2 es indispensable para ingresar a la fase de crecimiento autosostenido."
+    },
+    {
+      "id": "Q-C10-511",
+      "competency_id": "C-10",
+      "competency_name": "Rigidez Salarial, Preferencia por la Liquidez y Trampas de Desempleo",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En una economía con salario real rígidamente fijado en $\\bar{w}/p$ que ancla la relación capital-trabajo en $\\bar{r} = 9.0$, tasa de ahorro $s = 0.18$ y crecimiento demográfico $n = 0.04$, determine la dinámica del empleo y la condición bajo la cual surge desempleo crónico creciente:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Al fijarse $r = \\bar{r}$, el empleo crece a tasa $\\dot{L}/L = (s/\\bar{r})F(\\bar{r}, 1)$ y surge desempleo crónico creciente si y solo si $(s/\\bar{r})F(\\bar{r}, 1) < n$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Las decisiones de inversión en la práctica económica se guían enteramente por perfecta previsión y arbitraje continuo instantáneo bajo certeza completa.",
+          "is_correct": false,
+          "error_rationale": "Tratar la hipótesis de previsión perfecta como una verdad empírica incuestionable del mundo real.",
+          "distractor_id": "D-C10-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Un piso rígido en la tasa de interés afecta exclusivamente a los trabajadores, garantizando siempre el pleno empleo del acervo total de capital productivo.",
+          "is_correct": false,
+          "error_rationale": "Concluir que el capital siempre se utiliza plenamente sin importar el piso en la tasa de interés.",
+          "distractor_id": "D-C10-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La conclusión del modelo es que las políticas de estabilización fiscal y monetaria son completamente superfluas en las economías reales por autorregulación.",
+          "is_correct": false,
+          "error_rationale": "Defender una postura de 'laissez-faire' absoluto atribuyéndosela erróneamente a Solow.",
+          "distractor_id": "D-C10-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "A pesar de la rigidez salarial, la relación capital-trabajo $r(t)$ continúa evolucionando como la variable dinámica central según $\\dot{r} = sF(r,1) - nr$.",
+          "is_correct": false,
+          "error_rationale": "Plantear que $r$ continúa variando según $\\dot{r} = sF(r,1) - nr$ a pesar de que el salario esté rígido.",
+          "distractor_id": "D-C10-02"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Los problemas de rigidez monetaria y trampa de liquidez keynesiana pueden explicarse exhaustivamente dentro del modelo puramente real de Solow sin dinero.",
+          "is_correct": false,
+          "error_rationale": "Argumentar que el modelo real básico de Solow basta para explicar la trampa de liquidez keynesiana.",
+          "distractor_id": "D-C10-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Se genera desempleo persistente cuando la tasa de absorción de trabajo supera al crecimiento poblacional natural satisfaciendo $(s/\\bar{r})F(\\bar{r}, 1) > n$, para los parámetros bajo análisis.",
+          "is_correct": false,
+          "error_rationale": "Plantear que el desempleo surge si $(s/\\bar{r})F(\\bar{r}, 1) > n$.",
+          "distractor_id": "D-C10-01"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Fijar el salario real fija unívocamente la relación capital-trabajo en r_barra, por lo que r es constante.",
+        "Dado que K = r_barra * L, dot(K) = r_barra * dot(L), lo que implica dot(L)/L = dot(K)/K = sY/K = (s/r_barra)F(r_barra, 1).",
+        "Si la tasa de crecimiento del empleo es menor que el crecimiento de la fuerza de trabajo n, surge desempleo creciente."
+      ],
+      "detailed_solution": "Fijar el salario fija r en r_barra. Por tanto, dot(L)/L = (s/r_barra)F(r_barra, 1). Si la tasa de absorción laboral es inferior a la tasa natural de crecimiento demográfico n, la desocupación se acumula continuamente."
+    },
+    {
+      "id": "Q-C10-512",
+      "competency_id": "C-10",
+      "competency_name": "Rigidez Salarial, Preferencia por la Liquidez y Trampas de Desempleo",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para un modelo de Solow con rigidez a la baja del salario real en un nivel correspondiente a $\\bar{r} = 4.0$, tasa de ahorro $s = 0.2$ y crecimiento de la población $n = 0.05$, examine la tasa de absorción laboral $\\dot{L}/L$ y la acumulación de desocupados:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Se genera desempleo persistente cuando la tasa de absorción de trabajo supera al crecimiento poblacional natural satisfaciendo $(s/\\bar{r})F(\\bar{r}, 1) > n$, en el contexto del contraste analizado.",
+          "is_correct": false,
+          "error_rationale": "Plantear que el desempleo surge si $(s/\\bar{r})F(\\bar{r}, 1) > n$.",
+          "distractor_id": "D-C10-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Un piso rígido en la tasa de interés afecta exclusivamente a los trabajadores, garantizando siempre el pleno empleo del acervo total de capital productivo.",
+          "is_correct": false,
+          "error_rationale": "Concluir que el capital siempre se utiliza plenamente sin importar el piso en la tasa de interés.",
+          "distractor_id": "D-C10-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "A pesar de la rigidez salarial, la relación capital-trabajo $r(t)$ continúa evolucionando como la variable dinámica central según $\\dot{r} = sF(r,1) - nr$.",
+          "is_correct": false,
+          "error_rationale": "Plantear que $r$ continúa variando según $\\dot{r} = sF(r,1) - nr$ a pesar de que el salario esté rígido.",
+          "distractor_id": "D-C10-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La conclusión del modelo es que las políticas de estabilización fiscal y monetaria son completamente superfluas en las economías reales por autorregulación.",
+          "is_correct": false,
+          "error_rationale": "Defender una postura de 'laissez-faire' absoluto atribuyéndosela erróneamente a Solow.",
+          "distractor_id": "D-C10-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Los problemas de rigidez monetaria y trampa de liquidez keynesiana pueden explicarse exhaustivamente dentro del modelo puramente real de Solow sin dinero.",
+          "is_correct": false,
+          "error_rationale": "Argumentar que el modelo real básico de Solow basta para explicar la trampa de liquidez keynesiana.",
+          "distractor_id": "D-C10-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Las decisiones de inversión en la práctica económica se guían enteramente por perfecta previsión y arbitraje continuo instantáneo bajo certeza completa.",
+          "is_correct": false,
+          "error_rationale": "Tratar la hipótesis de previsión perfecta como una verdad empírica incuestionable del mundo real.",
+          "distractor_id": "D-C10-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Al fijarse $r = \\bar{r}$, el empleo crece a tasa $\\dot{L}/L = (s/\\bar{r})F(\\bar{r}, 1)$ y surge desempleo crónico creciente si y solo si $(s/\\bar{r})F(\\bar{r}, 1) < n$.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Fijar el salario real fija unívocamente la relación capital-trabajo en r_barra, por lo que r es constante.",
+        "Dado que K = r_barra * L, dot(K) = r_barra * dot(L), lo que implica dot(L)/L = dot(K)/K = sY/K = (s/r_barra)F(r_barra, 1).",
+        "Si la tasa de crecimiento del empleo es menor que el crecimiento de la fuerza de trabajo n, surge desempleo creciente."
+      ],
+      "detailed_solution": "Fijar el salario fija r en r_barra. Por tanto, dot(L)/L = (s/r_barra)F(r_barra, 1). Si la tasa de absorción laboral es inferior a la tasa natural de crecimiento demográfico n, la desocupación se acumula continuamente."
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [],
+    "template_residues": [],
+    "blind_replacements": []
+  }
+}
