@@ -326,6 +326,78 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
         re.IGNORECASE
     )
 
+    hint_leak_patterns = [
+        re.compile(r"\b(?:descarte|elimine|descartar|eliminar|descarta|elimina)\b.{1,50}\b(?:respuestas|opciones|alternativas|las\s+que|aquellas)\b", re.IGNORECASE),
+        re.compile(r"\b(?:descarte|elimine|descarta|elimina)\s+(?:las|cualquier|todas|los)\b", re.IGNORECASE),
+        re.compile(r"\b(?:descarte|elimine|descarta|elimina)\s+(?:opciones|respuestas)\b", re.IGNORECASE),
+    ]
+
+    antonym_pairs = [
+        ("converge", "diverge"),
+        ("convergencia", "divergencia"),
+        ("equilibrio", "desequilibrio"),
+        ("estabilidad", "inestabilidad"),
+        ("estable", "inestable"),
+        ("crece", "decrece"),
+        ("creciente", "decreciente"),
+        ("aumenta", "disminuye"),
+        ("positivo", "negativo"),
+        ("máximo", "mínimo"),
+    ]
+
+    def check_boilerplate_distractors_local(correct: str | None, dists: list[str]) -> list[str]:
+        errs: list[str] = []
+        if not dists:
+            return errs
+
+        def _skel(s: str) -> str:
+            sl = s.lower()
+            sl = re.sub(r"\b\d+(?:\.\d+)?\b", "<NUM>", sl)
+            sl = re.sub(r"[^\w\s<>+\-*/=^\\{}()]", " ", sl)
+            return re.sub(r"\s+", " ", sl).strip()
+
+        counts: dict[str, list[str]] = {}
+        for d in dists:
+            if re.search(r"\b(?:distractor|dummy|placeholder)\b", d, re.IGNORECASE):
+                continue
+            sk = _skel(d)
+            if len(sk) >= 20:
+                counts.setdefault(sk, []).append(d)
+        for sk, group in counts.items():
+            if len(group) >= 4:
+                errs.append(f"Synthetic boilerplate distractor pattern detected: repetitive trivial template across {len(group)} options ('{group[0][:60]}...')")
+                break
+
+        if correct:
+            c_low = correct.lower()
+            for w1, w2 in antonym_pairs:
+                has_w1 = bool(re.search(rf"\b{w1}\b", c_low))
+                has_w2 = bool(re.search(rf"\b{w2}\b", c_low))
+                if has_w1 and not has_w2:
+                    c_norm = re.sub(rf"\b{w1}\b", "<SYM>", c_low)
+                    c_sk = _skel(c_norm)
+                    for d in dists:
+                        d_low = d.lower()
+                        if re.search(rf"\b{w2}\b", d_low):
+                            d_norm = re.sub(rf"\b{w2}\b", "<SYM>", d_low)
+                            d_sk = _skel(d_norm)
+                            if c_sk == d_sk and len(c_sk) >= 15:
+                                errs.append(f"Synthetic boilerplate distractor pattern detected: symmetric antonym pair ('{w1}' vs '{w2}') in '{d[:60]}...'")
+                                break
+                elif has_w2 and not has_w1:
+                    c_norm = re.sub(rf"\b{w2}\b", "<SYM>", c_low)
+                    c_sk = _skel(c_norm)
+                    for d in dists:
+                        d_low = d.lower()
+                        if re.search(rf"\b{w1}\b", d_low):
+                            d_norm = re.sub(rf"\b{w1}\b", "<SYM>", d_low)
+                            d_sk = _skel(d_norm)
+                            if c_sk == d_sk and len(c_sk) >= 15:
+                                errs.append(f"Synthetic boilerplate distractor pattern detected: symmetric antonym pair ('{w2}' vs '{w1}') in '{d[:60]}...'")
+                                break
+        return errs
+
+
     def check_latex_and_templates(text: str, q_id: str, field_desc: str) -> list[ValidationError]:
         text_errors: list[ValidationError] = []
 
@@ -701,13 +773,27 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
         hints = q.get("hints")
         if isinstance(hints, list):
             for i, h in enumerate(hints):
+                h_str = ""
                 if isinstance(h, str):
+                    h_str = h
                     errors.extend(check_latex_and_templates(h, q_id, f"hints[{i}]"))
                 elif isinstance(h, dict):
+                    h_str = str(h.get("text") or h.get("content") or h.get("hint") or "")
                     for sub_k in ("text", "content", "hint"):
                         sub_val = h.get(sub_k)
                         if isinstance(sub_val, str):
                             errors.extend(check_latex_and_templates(sub_val, q_id, f"hints[{i}].{sub_k}"))
+                if h_str:
+                    for pat in hint_leak_patterns:
+                        m_leak = pat.search(h_str)
+                        if m_leak:
+                            errors.append(ValidationError(
+                                rule_id="R-19",
+                                code="ERR_HINT_ANSWER_LEAK",
+                                message=f"Question '{q_id}' in hints[{i}]: Scaffolding mechanically leaks answer selection: '{m_leak.group(0)}'",
+                                item_id=q_id,
+                            ))
+                            break
 
         sol = q.get("solution")
         if isinstance(sol, str):
@@ -725,6 +811,18 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
 
         # --- Rules R-17, R-18, R-20, R-22 on Options ---
         if isinstance(options, list):
+            if itype in ("multiple_choice_7_options", "multiple_select"):
+                correct_opt = next((opt.get("content") for opt in options if isinstance(opt, dict) and opt.get("is_correct") is True), None)
+                distractor_opts = [str(opt.get("content", "")) for opt in options if isinstance(opt, dict) and opt.get("is_correct") is False]
+                bp_errs = check_boilerplate_distractors_local(correct_opt, distractor_opts)
+                for bpe in bp_errs:
+                    errors.append(ValidationError(
+                        rule_id="R-18",
+                        code="ERR_SYNTHETIC_BOILERPLATE",
+                        message=f"Question '{q_id}': {bpe}",
+                        item_id=q_id,
+                    ))
+
             for i, opt in enumerate(options):
                 if not isinstance(opt, dict):
                     continue
