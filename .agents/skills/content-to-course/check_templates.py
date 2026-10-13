@@ -44,6 +44,7 @@ from engine.sandbox import (
     execute_sandbox_batch,
     validate_code_ast,
     check_latex_escape_corruption,
+    check_latex_escape_corruption_structured,
     warm_up_sandbox,
     SandboxExecutionError,
     SandboxTimeoutError,
@@ -62,18 +63,51 @@ def format_diagnostic_error(
     rule_tag: str,
     competency: str,
     template: str,
-    item_id: str,
+    item_id: Union[str, List[str]],
     field_name: str,
     snippet: str,
     cause: str,
     actions: List[str],
+    lines: Optional[List[int]] = None,
 ) -> str:
     """Format validation error with enriched surgical and prescriptive diagnostics."""
+    if isinstance(item_id, list):
+        if not item_id:
+            items_str = "N/A"
+        elif len(item_id) > 5 and all(str(x).startswith("seed=") for x in item_id):
+            seed_ints = sorted(int(str(x).split("=")[1]) for x in item_id if "=" in str(x))
+            items_str = f"semillas {seed_ints[0]}..{seed_ints[-1]} ({len(item_id)} semillas)"
+        elif len(item_id) > 6:
+            items_str = f"{item_id[0]}, {item_id[1]}, ... {item_id[-1]} ({len(item_id)} reactivos)"
+        elif len(item_id) > 1:
+            items_str = ", ".join(str(x) for x in item_id)
+        elif len(item_id) == 1:
+            items_str = str(item_id[0])
+        else:
+            items_str = str(item_id)
+
+        if len(item_id) > 1 or "semillas" in items_str or "reactivos" in items_str:
+            reactivo_label = "Reactivos"
+        else:
+            reactivo_label = "Reactivo"
+    else:
+        items_str = str(item_id)
+        reactivo_label = "Reactivo"
+
+    if lines:
+        unique_lines = sorted(set(lines))
+        if len(unique_lines) == 1:
+            lines_str = f", Línea: {unique_lines[0]}"
+        else:
+            lines_str = f", Líneas: {', '.join(str(l) for l in unique_lines)} ({len(lines)} ocurrencias)"
+    else:
+        lines_str = ""
+
     actions_formatted = "\n".join(f"      {idx + 1}. {act}" for idx, act in enumerate(actions))
     primary_action = actions[0] if actions else "Corrige el archivo generador."
     return (
         f"[-] [{rule_tag}]\n"
-        f"    UBICACIÓN: Competencia: '{competency}', Plantilla: '{template}', Reactivo: '{item_id}', Campo: '{field_name}'\n"
+        f"    UBICACIÓN: Competencia: '{competency}', Plantilla: '{template}', {reactivo_label}: '{items_str}'{lines_str}, Campo: '{field_name}'\n"
         f"    FRAGMENTO INFRACTOR: {snippet}\n"
         f"    CAUSA: {cause}\n"
         f"    ACTION REQUIRED: {primary_action}\n"
@@ -83,10 +117,40 @@ def format_diagnostic_error(
     )
 
 
+def get_canonical_invariant_key(inv_err: str) -> str:
+    """Derive canonical grouping key for invariant errors to aggregate dynamic values across seeds."""
+    clean = inv_err.strip()
+    if "Distractor identical to correct answer" in clean:
+        return "Distractor identical to correct answer"
+    if "Duplicate option content detected" in clean:
+        return "Duplicate option content detected"
+    if "Length anti-giveaway violation" in clean:
+        if "too short" in clean:
+            return "Length anti-giveaway: correct option too short"
+        return "Length anti-giveaway: correct option too long"
+    if "leaked verbatim in stem text" in clean:
+        return "Correct answer leaked verbatim in stem text"
+    if "leaked verbatim in first hint" in clean:
+        return "Correct answer leaked verbatim in first hint"
+    if "Synthetic boilerplate distractor" in clean:
+        return "Synthetic boilerplate distractor pattern detected"
+    if "Scaffolding answer leak" in clean:
+        return "Scaffolding answer leak detected in hint"
+    m_var = re.search(r"Unsubstituted template variable '\{([^}]+)\}' detected in (.+)", clean)
+    if m_var:
+        return f"Unsubstituted variable '{{{m_var.group(1)}}}' in {m_var.group(2).rstrip('.')}"
+    m_math = re.search(r"(Unbalanced curly braces in LaTeX math expression in [^:]+)", clean)
+    if m_math:
+        return m_math.group(1)
+    norm = re.sub(r"'[^']*'", "'...'", clean)
+    norm = re.sub(r"\b\d+\b", "N", norm)
+    return norm
+
+
 def format_invariant_error_diagnostic(
     cid: str,
     tpl_id: str,
-    q_id: str,
+    q_id: Union[str, List[str]],
     inv_err: str,
     q_obj: Optional[Dict[str, Any]] = None,
 ) -> str:
@@ -257,13 +321,13 @@ def format_invariant_error_diagnostic(
     if "Distractor identical to correct answer" in inv_clean:
         m_d = re.search(r"Distractor identical to correct answer:\s*'(.*)'", inv_clean)
         snippet = m_d.group(1) if m_d else inv_clean
-        cause = f"Un distractor generado en generate_py es idéntico a la respuesta correcta ('{snippet}')."
+        cause = f"TPL-D4 violation in '{tpl_id}': distractor matches correct answer '{snippet}' (invariant violation). Un distractor generado en generate_py es idéntico a la respuesta correcta."
         actions = [
             "Verificar en generate_py que los distractores nunca tomen el valor de la clave correcta.",
             "Añadir una guarda en generate_py que desplace o regenere el distractor si colisiona con 'correct'.",
             "Comprobar casos particulares donde parámetros aleatorios anulen la diferencia.",
         ]
-        return format_diagnostic_error("TPL-D4: DISTRACTOR IDÉNTICO A RESPUESTA CORRECTA", cid, tpl_id, q_id, "options", snippet, cause, actions)
+        return format_diagnostic_error("TPL-D4: TPL-D4 violation: DISTRACTOR IDÉNTICO A RESPUESTA CORRECTA", cid, tpl_id, q_id, "options", snippet, cause, actions)
 
     # Case H: Length anti-giveaway violation (R-15)
     if "Length anti-giveaway violation" in inv_clean:
@@ -312,6 +376,30 @@ def format_invariant_error_diagnostic(
         ]
         return format_diagnostic_error("TPL-D4: OPCIONES DUPLICADAS", cid, tpl_id, q_id, "options", snippet, cause, actions)
 
+    # Case L: Synthetic boilerplate distractor pattern
+    if "Synthetic boilerplate distractor" in inv_clean:
+        m_s = re.search(r"pattern detected:\s*(.*)", inv_clean)
+        snippet = m_s.group(1) if m_s else inv_clean
+        cause = "Opciones distractoras generadas mediante plantilla sintética repetitiva o inversión simétrica trivial ('converge' vs 'diverge')."
+        actions = [
+            "Reemplazar distractores boilerplate por modelos de error y confusiones conceptuales reales.",
+            "Diversificar la redacción y argumentos analíticos de cada opción distractora.",
+            "Evitar variaciones triviales donde solo se cambie un término opuesto o un parámetro numérico.",
+        ]
+        return format_diagnostic_error("R-18: DISTRACTORES BOILERPLATE SINTÉTICOS", cid, tpl_id, q_id, "options", snippet, cause, actions)
+
+    # Case M: Scaffolding answer leak in hints
+    if "Scaffolding answer leak" in inv_clean:
+        m_s = re.search(r"hint\s+\d+:\s*(.*)", inv_clean)
+        snippet = m_s.group(1) if m_s else inv_clean
+        cause = "La pista (scaffolding) proporciona una regla mecánica de descarte que delata directamente la respuesta correcta."
+        actions = [
+            "Reescribir la pista para proporcionar guía pedagógica sin dar instrucciones explícitas de descarte mecánico.",
+            "Fomentar la deducción del estudiante a partir de ecuaciones y principios teóricos.",
+            "Eliminar frases como 'Descarte las respuestas...' o 'Elimine opciones...' del texto de hints.",
+        ]
+        return format_diagnostic_error("R-19: FUGA DE RESPUESTA EN ANDAMIAJE", cid, tpl_id, q_id, "hints", snippet, cause, actions)
+
     # Fallback Invariant
     return format_diagnostic_error(
         rule_tag="INVARIANT: invariant violation",
@@ -333,12 +421,19 @@ def format_parity_error(
     cid: str,
     err: Any,
     questions_by_id: Dict[str, Dict[str, Any]],
+    item_ids: Optional[Union[str, List[str]]] = None,
 ) -> str:
     """Formats a ValidationError from production parity check with prescriptive diagnosis."""
     rule_id = getattr(err, "rule_id", "PARITY")
     msg = getattr(err, "message", str(err))
-    item_id = getattr(err, "item_id", None) or "UNKNOWN"
-    q = questions_by_id.get(item_id, {})
+    if item_ids is not None:
+        item_id = item_ids
+        rep_id = item_ids[0] if isinstance(item_ids, list) and item_ids else (item_ids if isinstance(item_ids, str) else "UNKNOWN")
+    else:
+        item_id = getattr(err, "item_id", None) or "UNKNOWN"
+        rep_id = item_id
+
+    q = questions_by_id.get(rep_id, {})
     tpl_id = q.get("template_id") or "UNKNOWN"
 
     # Rule R-20
@@ -568,6 +663,24 @@ def format_parity_error(
         ]
     )
 
+def synthetic_boilerplate_distractor_rule(assembled_q: Dict[str, Any]) -> List[str]:
+    """Evaluates question instance options against synthetic boilerplate patterns."""
+    from engine.invariants import check_synthetic_boilerplate_distractors
+    correct_content = None
+    distractor_contents = []
+    for opt in assembled_q.get("options", []):
+        if opt.get("is_correct") is True:
+            correct_content = opt.get("content")
+        else:
+            distractor_contents.append(str(opt.get("content", "")))
+    return check_synthetic_boilerplate_distractors(correct_content, distractor_contents)
+
+
+def scaffolding_answer_leak_rule(hints: List[Any]) -> List[str]:
+    """Evaluates question hints against mechanical scaffolding answer leaks."""
+    from engine.invariants import check_scaffolding_answer_leaks
+    return check_scaffolding_answer_leaks(hints)
+
 
 def check_production_parity_for_competency(
     cid: str,
@@ -622,11 +735,28 @@ def check_production_parity_for_competency(
 
     if not v_res.is_valid:
         questions_by_id = {q.get("id", ""): q for q in questions if isinstance(q, dict)}
+        grouped_parity_errors: Dict[Tuple[str, str], Tuple[Any, List[str]]] = {}
         for err in v_res.errors:
             # Skip course-level checks inapplicable to single competency mini-course
             if err.rule_id in ("R-05", "R-06", "R-07", "R-08", "R-09", "R-16"):
                 continue
-            errors.append(format_parity_error(cid, err, questions_by_id))
+
+            q_id = getattr(err, "item_id", None) or "UNKNOWN"
+            msg = getattr(err, "message", str(err))
+            clean_msg = re.sub(r"\bQ-[A-Za-z0-9_-]+\b", "Q-XXX", msg)
+            if q_id and q_id != "UNKNOWN":
+                clean_msg = clean_msg.replace(q_id, "Q-XXX")
+            clean_msg = re.sub(r"\s+at line \d+(?:, col \d+)?", "", clean_msg)
+            clean_msg = re.sub(r"\s*\(line \d+(?:, col \d+)?\)", "", clean_msg)
+            sig = (err.rule_id, clean_msg)
+            if sig not in grouped_parity_errors:
+                grouped_parity_errors[sig] = (err, [q_id])
+            else:
+                grouped_parity_errors[sig][1].append(q_id)
+
+        for sig, (rep_err, q_id_list) in grouped_parity_errors.items():
+            unique_q_ids = list(dict.fromkeys(q_id_list))
+            errors.append(format_parity_error(cid, rep_err, questions_by_id, item_ids=unique_q_ids))
 
     return errors
 
@@ -686,16 +816,24 @@ def check_single_template(
             ]
         ))
 
-    for ec in check_latex_escape_corruption(generate_py):
-        errors.append(format_diagnostic_error(
-            "AST: CORRUPCIÓN DE ESCAPE LATEX", competency_id, tpl_id, tpl_id, "generate_py",
-            str(ec), f"Posible corrupción de escape de LaTeX en generate_py: {ec}",
-            [
-                "Usar raw strings r'...' para literales que contengan barras invertidas '\\'.",
-                "Evitar cadenas con escapes inválidos como '\\d', '\\b', '\\c' sin 'r' prefix.",
-                "Verificar la generación de fórmulas KaTeX.",
-            ]
-        ))
+    corrupt_items = check_latex_escape_corruption_structured(generate_py)
+    if corrupt_items:
+        by_cmd: Dict[str, List[Dict[str, Any]]] = {}
+        for ci in corrupt_items:
+            by_cmd.setdefault(ci["cmd"], []).append(ci)
+        for cmd, occurrences in by_cmd.items():
+            lines_list = [o["line"] for o in occurrences if o.get("line") is not None]
+            errors.append(format_diagnostic_error(
+                "AST: CORRUPCIÓN DE ESCAPE LATEX", competency_id, tpl_id, tpl_id, "generate_py",
+                f"'{cmd}'",
+                f"Posible corrupción de escape de LaTeX en generate_py: comando '{cmd}' interpretado como carácter de control ({len(occurrences)} ocurrencias).",
+                [
+                    "Usar raw strings r'...' para literales que contengan barras invertidas '\\'.",
+                    f"Evitar cadenas con escapes inválidos; escapar como '\\\\{cmd[1:]}'.",
+                    "Verificar la generación de fórmulas KaTeX.",
+                ],
+                lines=lines_list,
+            ))
 
     if cross_check_py:
         try:
@@ -710,30 +848,50 @@ def check_single_template(
                     "Revisar la sintaxis de Python en cross_check_py.",
                 ]
             ))
-        for ec in check_latex_escape_corruption(cross_check_py):
-            errors.append(format_diagnostic_error(
-                "AST: CORRUPCIÓN DE ESCAPE LATEX", competency_id, tpl_id, tpl_id, "cross_check_py",
-                str(ec), f"Posible corrupción de escape de LaTeX en cross_check_py: {ec}",
-                [
-                    "Usar raw strings r'...' para literales que contengan barras invertidas '\\'.",
-                    "Evitar cadenas con escapes inválidos.",
-                    "Verificar la generación de fórmulas KaTeX.",
-                ]
-            ))
+        cc_corrupt_items = check_latex_escape_corruption_structured(cross_check_py)
+        if cc_corrupt_items:
+            by_cmd_cc: Dict[str, List[Dict[str, Any]]] = {}
+            for ci in cc_corrupt_items:
+                by_cmd_cc.setdefault(ci["cmd"], []).append(ci)
+            for cmd, occurrences in by_cmd_cc.items():
+                lines_list = [o["line"] for o in occurrences if o.get("line") is not None]
+                errors.append(format_diagnostic_error(
+                    "AST: CORRUPCIÓN DE ESCAPE LATEX", competency_id, tpl_id, tpl_id, "cross_check_py",
+                    f"'{cmd}'",
+                    f"Posible corrupción de escape de LaTeX en cross_check_py: comando '{cmd}' interpretado como carácter de control ({len(occurrences)} ocurrencias).",
+                    [
+                        "Usar raw strings r'...' para literales que contengan barras invertidas '\\'.",
+                        "Evitar cadenas con escapes inválidos.",
+                        "Verificar la generación de fórmulas KaTeX.",
+                    ],
+                    lines=lines_list,
+                ))
 
     # 2. Rule TPL-D1: All referenced distractor_ids exist in competency CTA
-    for did in distractor_ids:
-        if did not in declared_distractor_ids:
-            errors.append(format_diagnostic_error(
-                "TPL-D1: DISTRACTOR NO DECLARADO EN CTA", competency_id, tpl_id, tpl_id, "distractor_ids",
-                f"'{did}'",
-                f"El distractor_id '{did}' referenciado en la plantilla no existe en la lista de distractores de '{competency_id}' en cta.json.",
-                [
-                    f"Verificar los distractores declarados para '{competency_id}' en cta.json y usar los IDs exactos.",
-                    f"O declarar el distractor '{did}' en la competencia '{competency_id}' dentro de cta.json.",
-                    "Corregir cualquier error tipográfico en el ID del distractor dentro del JSON de la plantilla.",
-                ]
-            ))
+    missing_dids = [did for did in distractor_ids if did not in declared_distractor_ids]
+    if len(missing_dids) > 1:
+        errors.append(format_diagnostic_error(
+            "TPL-D1: DISTRACTOR NO DECLARADO EN CTA", competency_id, tpl_id, tpl_id, "distractor_ids",
+            f"{', '.join(missing_dids)} ({len(missing_dids)} distractores)",
+            f"Los distractor_ids '{', '.join(missing_dids)}' referenciados en la plantilla no existen en la lista de distractores de '{competency_id}' en cta.json.",
+            [
+                f"Verificar los distractores declarados para '{competency_id}' en cta.json y usar los IDs exactos.",
+                f"O declarar los distractores en la competencia '{competency_id}' dentro de cta.json.",
+                "Corregir cualquier error tipográfico en el ID del distractor dentro del JSON de la plantilla.",
+            ]
+        ))
+    elif len(missing_dids) == 1:
+        did = missing_dids[0]
+        errors.append(format_diagnostic_error(
+            "TPL-D1: DISTRACTOR NO DECLARADO EN CTA", competency_id, tpl_id, tpl_id, "distractor_ids",
+            f"'{did}'",
+            f"El distractor_id '{did}' referenciado en la plantilla no existe en la lista de distractores de '{competency_id}' en cta.json.",
+            [
+                f"Verificar los distractores declarados para '{competency_id}' en cta.json y usar los IDs exactos.",
+                f"O declarar el distractor '{did}' en la competencia '{competency_id}' dentro de cta.json.",
+                "Corregir cualquier error tipográfico en el ID del distractor dentro del JSON de la plantilla.",
+            ]
+        ))
 
     # 3. Rule TPL-D2: MC7 must reference/use at least 6 distinct distractor_ids
     if interaction_type == "multiple_choice_7_options":
@@ -752,15 +910,23 @@ def check_single_template(
     # 4. Static validation of ALL stem_variants syntax with validate_katex_syntax
     stem_variants_list = template.get("stem_variants", [])
     if isinstance(stem_variants_list, list):
+        variant_katex_errs: Dict[str, Tuple[str, List[str]]] = {}
         for idx, variant in enumerate(stem_variants_list):
             if isinstance(variant, str):
                 for kv_err in validate_katex_syntax(variant, f"stem_variants[{idx}]"):
-                    errors.append(format_invariant_error_diagnostic(
-                        cid=competency_id,
-                        tpl_id=tpl_id,
-                        q_id=f"stem_variants[{idx}]",
-                        inv_err=kv_err,
-                    ))
+                    sig = get_canonical_invariant_key(kv_err)
+                    if sig not in variant_katex_errs:
+                        variant_katex_errs[sig] = (kv_err, [f"stem_variants[{idx}]"])
+                    else:
+                        variant_katex_errs[sig][1].append(f"stem_variants[{idx}]")
+
+        for sig, (rep_err, var_items) in variant_katex_errs.items():
+            errors.append(format_invariant_error_diagnostic(
+                cid=competency_id,
+                tpl_id=tpl_id,
+                q_id=var_items,
+                inv_err=rep_err,
+            ))
 
     # 5. Dry-run 50 seeds and invariant evaluation
     seeds = list(range(100, 100 + num_dry_run_seeds))
@@ -786,9 +952,9 @@ def check_single_template(
     failed_seeds = [r for r in batch_results if not r.get("success")]
     if failed_seeds:
         first_err = failed_seeds[0].get("error", "Unknown error")
-        example_seeds = [str(r.get("seed")) for r in failed_seeds[:5]]
+        seed_items = [f"seed={r.get('seed')}" for r in failed_seeds]
         errors.append(format_diagnostic_error(
-            "TPL-DRY: FALLO EN EJECUCIÓN DRY-RUN", competency_id, tpl_id, f"seeds={', '.join(example_seeds)}", "generate_py / cross_check_py",
+            "TPL-DRY: FALLO EN EJECUCIÓN DRY-RUN", competency_id, tpl_id, seed_items, "generate_py / cross_check_py",
             f"Error en seed {failed_seeds[0].get('seed')}: {first_err}",
             f"La ejecución en sandbox falló en {len(failed_seeds)}/{num_dry_run_seeds} semillas evaluadas.",
             [
@@ -801,7 +967,10 @@ def check_single_template(
             # Full failure of all seeds: no instances can be evaluated further
             return errors
 
-    # Check invariants and TPL-D4 on all generated instances (Full Sweep: NO premature break)
+    # Check invariants on all generated instances (Full Sweep: NO premature break)
+    raw_asm_failures: Dict[str, List[str]] = {}
+    raw_inv_failures: Dict[str, Tuple[str, List[str]]] = {}
+
     for idx, item in enumerate(batch_results):
         if not item.get("success"):
             continue
@@ -818,47 +987,48 @@ def check_single_template(
                 seed=seed_val,
             )
         except Exception as e:
-            errors.append(format_diagnostic_error(
-                "TPL-ASM: FALLO EN ENSAMBLAJE DE REACTIVO", competency_id, tpl_id, f"seed={seed_val}", "assemble_question",
-                str(e), f"No se pudo ensamblar el reactivo con la salida de generate_py para la semilla {seed_val}: {e}",
-                [
-                    "Verificar que generate_py retorne los campos obligatorios ('correct', 'distractors', 'vars').",
-                    "Asegurar que 'distractors' contenga al menos 6 elementos para preguntas MC7.",
-                    "Verificar que no haya discrepancia de formato entre template y generate_py.",
-                ]
-            ))
+            raw_asm_failures.setdefault(str(e), []).append(f"seed={seed_val}")
             continue
 
         # Invariant check (Accumulate all failures: NO break)
         is_valid, inv_errors = check_instance_invariants(assembled_q, interaction_type)
         if not is_valid:
+            has_collision = any("Distractor identical to correct answer" in e for e in inv_errors)
             for inv_err in inv_errors:
-                errors.append(format_invariant_error_diagnostic(
-                    cid=competency_id,
-                    tpl_id=tpl_id,
-                    q_id=f"seed={seed_val}",
-                    inv_err=inv_err,
-                    q_obj=assembled_q,
-                ))
+                if has_collision and "Duplicate option content detected" in inv_err:
+                    continue
+                canon_key = get_canonical_invariant_key(inv_err)
+                if canon_key not in raw_inv_failures:
+                    raw_inv_failures[canon_key] = (inv_err, [f"seed={seed_val}"])
+                else:
+                    raw_inv_failures[canon_key][1].append(f"seed={seed_val}")
 
-        # Rule TPL-D4: Distractors != correct answer (Evaluate all distractors: NO break)
-        if interaction_type == "multiple_choice_7_options":
-            options = assembled_q.get("options", [])
-            correct_opt = next((o for o in options if o.get("is_correct")), None)
-            if correct_opt:
-                c_content = str(correct_opt.get("content", "")).strip()
-                for opt_idx, opt in enumerate(options):
-                    if not opt.get("is_correct") and str(opt.get("content", "")).strip() == c_content:
-                        errors.append(format_diagnostic_error(
-                            "TPL-D4: TPL-D4 violation: DISTRACTOR IDÉNTICO A RESPUESTA CORRECTA", competency_id, tpl_id, f"seed={seed_val}", f"option {opt_idx + 1}",
-                            f"'{c_content}'",
-                            f"TPL-D4 violation in '{tpl_id}' (seed={seed_val}): distractor matches correct answer '{c_content}'",
-                            [
-                                "Asegurar en generate_py que la perturbación aplicada al distractor nunca dé el mismo valor que 'correct'.",
-                                "Agregar una verificación en generate_py que modifique el distractor si colisiona con la clave.",
-                                "Revisar los casos degenerados de los parámetros que puedan anular la diferencia.",
-                            ]
-                        ))
+    # Consolidate assembly failures
+    for asm_err, seed_list in raw_asm_failures.items():
+        errors.append(format_diagnostic_error(
+            "TPL-ASM: FALLO EN ENSAMBLAJE DE REACTIVO",
+            competency_id,
+            tpl_id,
+            seed_list,
+            "assemble_question",
+            asm_err,
+            f"No se pudo ensamblar el reactivo con la salida de generate_py para {len(seed_list)} semillas: {asm_err}",
+            [
+                "Verificar que generate_py retorne los campos obligatorios ('correct', 'distractors', 'vars').",
+                "Asegurar que 'distractors' contenga al menos 6 elementos para preguntas MC7.",
+                "Verificar que no haya discrepancia de formato entre template y generate_py.",
+            ]
+        ))
+
+    # Consolidate invariant failures (including TPL-D4 collisions and duplicates across seeds)
+    for canon_key, (rep_inv_err, seed_list) in raw_inv_failures.items():
+        errors.append(format_invariant_error_diagnostic(
+            cid=competency_id,
+            tpl_id=tpl_id,
+            q_id=seed_list,
+            inv_err=rep_inv_err,
+            q_obj=None,
+        ))
 
     # 5. Rule TPL-VAR: Early variability and parametric capacity validation
     # a) Verify vars dictionary is not empty across generated results
@@ -1021,20 +1191,33 @@ def check_competency_diversity(
             q["template_id"] = qid_to_tpl.get(q.get("id", ""), "UNKNOWN")
 
     # Validate invariants on all instantiated questions (Full Sweep: NO premature break)
+    comp_inv_failures: Dict[Tuple[str, str], Tuple[str, List[str]]] = {}
     for q in questions:
         q_type = q.get("interaction_type") or q.get("type", "")
         q_id = q.get("id", "UNKNOWN")
         t_id = q.get("template_id", "UNKNOWN")
         is_valid, inv_errors = check_instance_invariants(q, q_type)
         if not is_valid:
+            has_collision = any("Distractor identical to correct answer" in e for e in inv_errors)
             for inv_err in inv_errors:
-                errors.append(format_invariant_error_diagnostic(
-                    cid=cid,
-                    tpl_id=t_id,
-                    q_id=q_id,
-                    inv_err=inv_err,
-                    q_obj=q,
-                ))
+                if has_collision and "Duplicate option content detected" in inv_err:
+                    continue
+                canon_key = get_canonical_invariant_key(inv_err)
+                sig = (t_id, canon_key)
+                if sig not in comp_inv_failures:
+                    comp_inv_failures[sig] = (inv_err, [q_id])
+                else:
+                    comp_inv_failures[sig][1].append(q_id)
+
+    for (t_id, canon_key), (rep_err, q_ids) in comp_inv_failures.items():
+        unique_q_ids = list(dict.fromkeys(q_ids))
+        errors.append(format_invariant_error_diagnostic(
+            cid=cid,
+            tpl_id=t_id,
+            q_id=unique_q_ids,
+            inv_err=rep_err,
+            q_obj=None,
+        ))
 
     div_stats = comp_res.get("diversity_stats", {})
     div_ratio = div_stats.get("diversity_ratio", 0.0)
