@@ -985,12 +985,20 @@ class PipelineRunner:
         print("\n" + "=" * 70)
         print("[AUX STAGE: DEFINE-TYPES] Subagent Type Definitions for Orchestrator")
         print("=" * 70)
+        print("[!] DIRECTIVA OBLIGATORIA PARA EL DIRECTOR (GOOGLE ANTIGRAVITY):")
+        print("    Invoca la tool 'define_subagent' para los 7 tipos SIMULTÁNEAMENTE en un")
+        print("    ÚNICO turno mediante Parallel Tool Calling (referencia /antigravity-guide).")
+        print("    Queda TERMINANTEMENTE PROHIBIDO registrar subagentes secuencialmente uno")
+        print("    por uno consumiendo turnos separados. Posteriormente, para abrir y")
+        print("    ejecutar subagentes en paralelo, usa la tool específica 'invoke_subagent'.")
+        print("=" * 70)
         for t in types_list:
             print(f"  * {t['name']}: {t['description']} (write={t['enable_write_tools']})")
         print("\n" + "-" * 70)
         print(types_json)
         print("-" * 70 + "\n")
         print("  [+] Subagent type contracts defined, saved to subagent_types.json, and verified.")
+        print("  [+] ACCIÓN INMEDIATA: Emite las 7 llamadas a 'define_subagent' en paralelo AHORA en este turno.")
         return {"types": types_list}
 
     def run_stage_judge_compare(self) -> Dict[str, Any]:
