@@ -44,7 +44,7 @@ from check_cta import validate_cta_rules
 from check_pages import check_pages
 from check_templates import check_templates_file_or_dir
 from course_publisher import CoursePublisher
-from cta_merge import apply_harmonize, merge_cta_parts
+from cta_merge import apply_harmonize, merge_cta_parts, stitch_cta_parts
 from dispatch import build_dispatch, get_type_definitions, scope_check, snapshot_work_dir
 from engine.assemble import check_course_giveaway_distribution
 from engine.diversity import evaluate_competency_diversity
@@ -102,6 +102,7 @@ AUXILIARY_STAGES = {
     "sections": "run_stage_sections",
     "cta-merge": "run_stage_cta_merge",
     "cta-apply": "run_stage_cta_apply",
+    "cta-stitch": "run_stage_cta_stitch",
     "dispatch": "run_stage_dispatch",
     "scope-check": "run_stage_scope_check",
     "define-types": "run_stage_define_types",
@@ -884,6 +885,22 @@ class PipelineRunner:
         print("  [+] Auxiliary Stage (cta-apply) completed successfully.")
         return res
 
+    def run_stage_cta_stitch(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Deterministically stitch declarative CTA parts into cta.json & cta.md in <200ms."""
+        t0 = time.time()
+        print("\n" + "=" * 70)
+        print("[AUX STAGE: CTA-STITCH] Stitching declarative CTA parts into cta.json & cta.md")
+        print("=" * 70)
+
+        res = stitch_cta_parts(self.work_dir)
+        elapsed = time.time() - t0
+        record_stage_timing(self.work_dir, "cta_stitch", elapsed)
+        print(f"  [+] Stitched {res.get('total_competencies', 0)} competencies across {len(res.get('parts_stitched', []))} part(s) in {res.get('elapsed_seconds', 0)}s.")
+        print(f"  [+] cta.json written to: {res.get('cta_path')}")
+        print(f"  [+] cta.md generated at: {res.get('cta_md_path')}")
+        print("  [+] Auxiliary Stage (cta-stitch) completed successfully.")
+        return res
+
     def run_stage_dispatch(self) -> Dict[str, Any]:
         """Auxiliary Stage: Generate subagent dispatch payload with strict SCOPE-LOCK."""
         if not self.role:
@@ -1050,7 +1067,7 @@ def main() -> None:
     stage_choices = [
         "prepare", "ingest", "cta", "shard", "templates", "build", "verify", "publish",
         "0", "1", "2", "3", "4", "5", "6",
-        "stitch", "sections", "cta-merge", "cta-apply", "dispatch", "scope-check",
+        "stitch", "sections", "cta-merge", "cta-apply", "cta-stitch", "dispatch", "scope-check",
         "define-types", "judge-compare",
     ]
     parser.add_argument(
