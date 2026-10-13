@@ -335,6 +335,20 @@ class PipelineRunner:
 
         cta_data = json.loads(cta_file.read_text(encoding="utf-8"))
 
+        # Deterministic sanitization of orphan LaTeX math in all competencies and distractors
+        comps = cta_data.get("competencies", [])
+        if comps:
+            try:
+                from cta_merge import sanitize_competency_math
+                cta_raw_before = json.dumps(cta_data, sort_keys=True)
+                for comp in comps:
+                    sanitize_competency_math(comp)
+                if json.dumps(cta_data, sort_keys=True) != cta_raw_before:
+                    cta_file.write_text(json.dumps(cta_data, indent=2, ensure_ascii=False), encoding="utf-8")
+                    print("  [+] Auto-sanitized and normalized orphan LaTeX math expressions in cta.json.")
+            except Exception as e:
+                logger.warning("Could not auto-sanitize cta.json math: %s", e)
+
         # Validate CTA schema and rules CTA-D1, CTA-D2
         is_valid, errors = validate_cta_rules(cta_data, manifest_data=manifest_data)
         if not is_valid:
@@ -439,6 +453,11 @@ class PipelineRunner:
             print("\n[ERROR] Templates validation failed:", file=sys.stderr)
             for err in errors[:10]:
                 print(f"  - {err}", file=sys.stderr)
+            if any("CIRCUIT BREAKER" in err for err in errors):
+                raise RuntimeError(
+                    f"Circuit Breaker tripped in {templates_dir}: 3 consecutive identical validation failures. "
+                    "Halting pipeline execution to prevent further token waste."
+                )
             raise ValueError(f"Templates in {templates_dir} contain {len(errors)} errors.")
 
         template_files = list(templates_dir.glob("*.json"))
@@ -879,8 +898,8 @@ class PipelineRunner:
 
         # Inform role-specific contracts
         if self.role == "author":
-            print("  [*] Enforcing contract: Autoría atómica modular en 1 script, validación de todo el lote a la vez.")
-            print("  [*] Forbidden paths: check_templates.py, src/validator/*, rules.py, engine/*, SKILL.md")
+            print("  [*] Enforcing contract: Autoría modular por competencia (work/templates/<comp_id>.json), prohibidos scripts monolíticos de 2,000 líneas.")
+            print("  [*] Forbidden paths: check_templates.py, src/validator/*, rules.py, engine/*, SKILL.md, work/build_<shard_id>.py")
         elif self.role == "judge":
             print("  [*] Enforcing contract: Cero búsquedas web, resolver por primeros principios, BLOCKED si falta contexto.")
             print("  [*] Forbidden tools/paths: search_web, read_url_content, navegación web, templates/*, ground truth")

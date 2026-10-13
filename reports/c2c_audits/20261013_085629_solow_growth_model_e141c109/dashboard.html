@@ -44,36 +44,36 @@
   <div class="header">
     <div>
       <h1>C2C Architectural Forensic Telemetry</h1>
-      <div class="meta">El Modelo de Crecimiento Económico de Solow (1956) (<code>solow_growth_model</code>) | Conv: <code>c4802280-6f2...</code></div>
+      <div class="meta">El Modelo de Crecimiento Económico de Solow (1956) (<code>solow_growth_model</code>) | Conv: <code>e141c109-7f7...</code></div>
     </div>
-    <div class="meta">Audit Date: 2026-10-13T05:22:34 UTC</div>
+    <div class="meta">Audit Date: 2026-10-13T13:56:29 UTC</div>
   </div>
 
   <div class="grid-kpi">
     <div class="kpi-card">
       <div class="label">Wall-Clock Time</div>
-      <div class="val">13.87 min</div>
-      <div class="sub">832.0s elapsed</div>
+      <div class="val">17.3 min</div>
+      <div class="sub">1038.0s elapsed</div>
     </div>
     <div class="kpi-card">
       <div class="label">Parallel Speedup</div>
-      <div class="val">11.18x</div>
-      <div class="sub">154.98m compute time</div>
+      <div class="val">6.69x</div>
+      <div class="sub">115.8m compute time</div>
     </div>
     <div class="kpi-card">
       <div class="label">Total Tokens</div>
-      <div class="val">60,073,119</div>
-      <div class="sub">Active: 4,031,420 | Cache: 56,041,699</div>
+      <div class="val">42,298,536</div>
+      <div class="sub">Active: 2,577,435 | Cache: 39,721,101</div>
     </div>
     <div class="kpi-card">
       <div class="label">Tokens / Question</div>
-      <div class="val">113,345.5</div>
-      <div class="sub">530 questions generated</div>
+      <div class="val">0.0</div>
+      <div class="sub">0 questions generated</div>
     </div>
     <div class="kpi-card">
       <div class="label">Seconds / Question</div>
-      <div class="val">1.57s</div>
-      <div class="sub">38.22 questions/min</div>
+      <div class="val">0.0s</div>
+      <div class="sub">0.0 questions/min</div>
     </div>
     <div class="kpi-card">
       <div class="label">Supervisor Interventions</div>
@@ -85,8 +85,8 @@
   <div class="section">
     <h2>Stage 3: Shard Question Authoring & Competency Metrics</h2>
     <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
-      Critical Straggler: <strong>Shard Author shard_01</strong> (1962.0s | +0.0s vs median) |
-      Avg Tokens / Competency: <strong>125,878.7</strong>
+      Critical Straggler: <strong>Shard Author shard_02</strong> (1713.0s | +7.0s vs median) |
+      Avg Tokens / Competency: <strong>115,517.4</strong>
     </div>
     <table>
       <thead>
@@ -106,43 +106,33 @@
         <tr>
           <td><strong>Shard Author shard_01</strong></td>
           <td><code>H-01, C-01, Hab-01...</code></td>
-          <td>8</td>
-          <td>621,941</td>
-          <td>250,500</td>
-          <td><strong>872,441</strong></td>
-          <td><strong>109,055.1</strong></td>
-          <td>124</td>
-          <td><strong>1962.0s</strong></td>
+          <td>7</td>
+          <td>525,529</td>
+          <td>213,111</td>
+          <td><strong>738,640</strong></td>
+          <td><strong>105,520.0</strong></td>
+          <td>87</td>
+          <td><strong>1705.0s</strong></td>
         </tr><tr>
           <td><strong>Shard Author shard_02</strong></td>
-          <td><code>Hab-03, H-03, C-05...</code></td>
-          <td>7</td>
-          <td>637,700</td>
-          <td>286,005</td>
-          <td><strong>923,705</strong></td>
-          <td><strong>131,957.9</strong></td>
-          <td>86</td>
-          <td><strong>1897.0s</strong></td>
+          <td><code>H-03, C-04, Hab-03...</code></td>
+          <td>6</td>
+          <td>451,276</td>
+          <td>148,508</td>
+          <td><strong>599,784</strong></td>
+          <td><strong>99,964.0</strong></td>
+          <td>98</td>
+          <td><strong>1713.0s</strong></td>
         </tr><tr>
           <td><strong>Shard Author shard_03</strong></td>
-          <td><code>C-07, Hab-06, H-05...</code></td>
-          <td>7</td>
-          <td>596,851</td>
-          <td>281,259</td>
-          <td><strong>878,110</strong></td>
-          <td><strong>125,444.3</strong></td>
-          <td>112</td>
-          <td><strong>1960.0s</strong></td>
-        </tr><tr>
-          <td><strong>Shard Author shard_04</strong></td>
-          <td><code>Hab-08, C-10, C-11...</code></td>
-          <td>7</td>
-          <td>750,587</td>
-          <td>225,639</td>
-          <td><strong>976,226</strong></td>
-          <td><strong>139,460.9</strong></td>
-          <td>146</td>
-          <td><strong>1962.0s</strong></td>
+          <td><code>Hab-04, Hab-05, Hab-06...</code></td>
+          <td>6</td>
+          <td>662,441</td>
+          <td>193,965</td>
+          <td><strong>856,406</strong></td>
+          <td><strong>142,734.3</strong></td>
+          <td>114</td>
+          <td><strong>1706.0s</strong></td>
         </tr>
       </tbody>
     </table>

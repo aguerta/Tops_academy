@@ -1,40 +1,53 @@
 # Project: Top's Academy
 
 ## Architecture
-The system delivers a complete, local, self-contained educational ecosystem composed of four primary interconnected subsystems:
+The system delivers a complete, local, self-contained educational ecosystem composed of five primary interconnected subsystems and a specialized multi-agent skill suite:
+
 1. **Core Data Specification & Validator (`src/validator/`)**:
-   - Python-based reference validator and CLI (`validate-course`).
-   - Two-pass validation: (Pass 1) Lexical scanner detecting raw LaTeX syntax corruptions and silent control escapes (`\b`, `\t`, `\f`, `\n`, `\r`, `\0`, `\v`) before JSON decoding; (Pass 2) Schema validation (Draft-07), structural rules, referential integrity, minimum counts, and psychometric anti-giveaway length distributions.
+   - Python-based reference validator and CLI (`validate-course` / `python -m src.validator.cli`).
+   - Multi-pass validation:
+     - **Pass 1 (Lexical Scanner)**: Detects raw LaTeX syntax corruptions, unescaped control escapes (`\b`, `\t`, `\f`, `\n`, `\r`, `\0`, `\v`), and silent control character collisions (`\text`, `\frac`, `\nu`, `\tau`, `\rho`, `\beta`, `\theta`) before JSON decoding.
+     - **Pass 2 (Schema & Semantic Rules)**: JSON Schema Draft-07 conformity, structural referential integrity, duplicate ID detection, and volume quotas ($\ge 30$ per Skill, $\ge 20$ per Fact/Concept).
+     - **Pass 3 (Extended Quality & Psychometrics)**: 21 formal rules (R-01..R-16, R-17..R-20, R-22) plus 3 Strict Pedagogical Rules (S-01..S-03), enforcing item-level distractor length ratios ($[0.8\cdot\min(D), 1.2\cdot\max(D)]$), course-level distribution limits ($\le 25\%$ longest/shortest), formative diagnostic error rationales without placeholders (R-17), meta-giveaway confinement (R-18), fill-in-the-blank answer leak prevention (R-19), strict KaTeX syntax with macro arity, nested macros, and environment checks (R-20), and mandatory error rationales in multiple-select options (R-22).
+
 2. **Interactive Practice Platform (`platform/`)**:
-   - Modern, lightweight web platform built with React, Vite, TypeScript, and Tailwind CSS.
-   - Runs with a single documented command (`npm.cmd run dev` or `python run_platform.py`).
-   - Backend discovery endpoint dynamically serves valid courses from `courses/` and isolates invalid course files with explicit error diagnostics.
+   - Modern web platform built with React 18, Vite, TypeScript, and Tailwind CSS.
+   - Runs with a single command (`python run_platform.py` or `npm.cmd run dev` inside `platform/`).
+   - Dynamic course discovery endpoint serves valid courses from `courses/` and isolates invalid files with explicit diagnostics.
+   - **Static Bundle Generation**: Built to `platform/dist/` with static JSON course bundles (`dist/api/courses.json`, `dist/courses/*.json`) ready for offline serving or GitHub Pages deployment.
    - Frontend features:
-     - Sidebar navigation and Course Overview with mastery grid, badges, quiz/test markers, and overall course mastery percentage.
-     - "Ready to practice?" launcher modal with question count and mascot artwork.
-     - Practice session runner with real-time progress indicator, randomized question ordering, and independent option shuffling.
-     - KaTeX LaTeX renderer ($...$ and $$...$$).
+     - Sidebar navigation and Course Overview with mastery grid, badges, quiz/test markers, and overall mastery percentage.
+     - "Ready to practice?" launcher modal with question count and estimated time.
+     - Practice session runner with real-time progress indicator, randomized question presentation, and independent option shuffling.
+     - KaTeX LaTeX typesetting with inline ($...$) and display ($$...$$) math.
      - Native SVG `<CoordinatePlane />` vector graphing component rendering axes, grids, curves, and open/closed points.
-     - Math equivalence engine (`mathjs` AST normalizer + Monte Carlo sampler) accepting equivalent expressions (e.g., `1-(alpha+n)*sigma` for `1 - \alpha\sigma - n\sigma`, `0.5` for `1/2`).
-     - Progressive hint reveal (3 to 5 hints), instant green/red feedback toast with downward speech bubble, step-by-step solution expansion.
-     - "Exercise complete!" celebration screen with `canvas-confetti` particles and mastery score update.
-     - Quiz, Unit Test, and Course Challenge (~30 questions across units).
-     - LocalStorage persistence for unit and course mastery levels.
+     - Client-side Math Equivalence Engine (`mathjs` AST normalizer + Monte Carlo sampler) supporting Spanish decimal comma (`0,8333` $\equiv$ `0.8333`), fraction/decimal equivalence (`5/6` $\equiv$ `0,8333`), algebraic expansion/factoring, negative powers, Greek letters, and tolerance bounds (81 verified adversarial cases).
+     - Progressive hint reveal (3 to 5 hints), instant feedback toast with downward speech bubble pointer, and step-by-step solution expansion.
+     - **3-Strikes Solution Reveal Safeguard**: Tracks consecutive incorrect attempts per item; on the 3rd failed attempt, locks inputs ("Maximum attempts reached 3/3"), auto-expands the step-by-step solution and misconception warning, awards 0 credit, and enables advancing.
+     - Fast Redo on mistakes across Practice, Quiz, Unit Test, and Course Challenge modes.
+     - "Exercise complete!" celebration screen with `canvas-confetti` particles and LocalStorage mastery persistence.
+
 3. **Content-to-Course Antigravity Skill (`.agents/skills/content-to-course/`)**:
-   - Workspace skill discoverable under `.agents/skills/content-to-course/SKILL.md`.
-   - Pipeline stages:
-     1. Text and formula extraction from PDF using `fitz` (PyMuPDF).
-     2. Cognitive Task Analysis (CTA) extracting Facts [H], Concepts [C], Skills [Hab], expert blind spots, and automation seeds.
-     3. Chunked batch question generator (6-8 questions per prompt) producing >=30 questions per Skill and >=20 per Fact/Concept across all 3 interaction types with graphs and zero giveaways.
-     4. Two-tier independent verification: SymPy programmatic checking and blind LLM solver.
-     5. Automated R2 validation and 3-step auto-repair loop.
-     6. Publication to `courses/` directory.
-4. **End-to-End Verification & Audit Subsystems**:
-   - Automated Headless Browser test suite (Playwright) running all platform acceptance tests.
-   - Automated Validator test suite with 28 positive/negative fixtures.
-   - Visual Fidelity Reviewer agent comparing platform screenshots against 6 reference screenshots.
-   - Question Sample Auditor verifying >=40 questions against PDF with >=95% accuracy.
-   - Blind-Guess Distractor Tester verifying <=30% accuracy on bare options without stem.
+   - High-throughput v3 educational authoring pipeline:
+     1. **Stage 0 (Ingestion & Corpus Slicing)**: PyMuPDF extraction, vision tiling fallback, direct PDF viewing, and curricular session partitioning.
+     2. **Stage 1 (CTA Map-Reduce)**: Concurrent *Sectional CTA Analyzers* generating partial JSONs in parallel, unified by the *CTA Harmonizer & DAG Integrator* with inter-session prerequisite DAGs.
+     3. **Stage 2 (Shard Planning)**: Partitioning into self-contained shard payloads (`work/shards/shard_XX.json`) with embedded DSL references and dynamic shard caps up to $K=8$.
+     4. **Stage 3 (Shard Authoring with Shift-Left Self-Audit)**: Subagents authoring parametric templates in sandboxed Python, strictly gating on `check_templates.py` with mandatory `stem_variants >= 3` and simulated diversity ratio $\ge 0.50$ (Rule `TPL-VAR`).
+     5. **Stage 4 (Sandboxed Assembly & Instantiation)**: In-process multi-seed generation executing 500+ items in $<6.5$ seconds with invariant checking (`engine/invariants.py`).
+     6. **Stage 5 (Stratified Blind Judges)**: Stratified 2-item/competency sampling evaluated under epistemic closure with normalized keys to verify accuracy.
+     7. **Stage 6 (Validation & Publishing)**: Strict verification via `validator.cli --strict` and atomic publication to `courses/`.
+
+4. **Multi-Agent Evaluation & Auditing Ecosystem**:
+   - **`course-qa-evaluator`**: Fast deterministic pass (<300ms) + adaptive semantic check evaluating courses under Quality Matters, OSCQR, and Mastery Learning standards across 5 dimensions (Architecture, Items, Hints, Alignment, KaTeX/Ergonomics).
+   - **`c2c-run-auditor`**: Granular telemetry auditing extracting token decomposition (input, output, cache read, thinking), latencies, wall-time speedups (achieving up to 6.69x speedup, 1.96s/question), and historical benchmark registry (`reports/c2c_audits/`).
+   - **`c2c-unified-auditor`**: Consolidated multi-agent orchestrator dispatching Run Auditor and Course QA Evaluator concurrently, generating merged reports.
+   - **`delete-course`**: Safe course deletion tool (<300ms) removing JSON and markdown files while stamping audit reports and preserving immutable content.
+
+5. **Consolidated Test & Verification Matrix**:
+   - 367 Python test items (363 passed, 4 skipped in 18.05s) across 13 dedicated test suites.
+   - 81-case Node.js Math Adversarial Suite (100% pass rate).
+   - Node.js keyboard navigation and unit isolation test suites (100% pass rate).
+   - Headless browser E2E test suite (Playwright) covering AC-01 through AC-12 and VF-01 visual fidelity captures.
 
 ---
 
@@ -80,6 +93,17 @@ The system delivers a complete, local, self-contained educational ecosystem comp
 | F37 | Question Accuracy Sample Audit | Independent reviewer agent audits >=40 questions against PDF with >=95% accuracy | M4 | Survey / AC |
 | F38 | Blind-Guess Distractor Test | Independent agent guesses correct option on >=40 bare MC items with <=30% accuracy | M4 | Survey / AC |
 | F39 | Comprehensive Documentation & README | Root README.md documenting platform startup, test execution, validator CLI, and skill usage | M4 | Survey / R4 |
+| F40 | Extended Quality Rules (R-17..R-22) | Implement R-17 (error rationales without placeholders), R-18 (meta-giveaway ban), R-19 (FIB leak prevention), R-22 (mandatory MS error rationale) | M5 | QA / Audit |
+| F41 | KaTeX Macro Arity & Environment Linters (R-20) | Pre-publication linter detecting unclosed delimiters, triple dollars, residual double braces, macro arities (`\frac{}{}`), nested macros, unclosed environments | M5 | QA / Audit |
+| F42 | CTA Map-Reduce Architecture | Slicing corpus into session partitions (`cta-map`), parallel sectional analysis, and DAG integration with inter-session prerequisites (`cta-reduce`) | M5 | Pipeline v3 |
+| F43 | Shift-Left Shard Author Self-Audit | Enforce `TPL-VAR` gate in `check_templates.py` with $\ge 3$ `stem_variants` and diversity ratio $\ge 0.50$ | M5 | Pipeline v3 |
+| F44 | Stratified Blind Judge Arbitration | Sampling exactly 2 items/competency for blind evaluation under epistemic closure with normalized keys | M5 | Pipeline v3 |
+| F45 | 3-Strikes Solution Reveal Safeguard | Enforce 3-attempts limit in `PracticeSession.tsx` and `FeedbackToast.tsx`, locking inputs and revealing step-by-step solution with 0 credit | M5 | Platform UI |
+| F46 | C2C Run Telemetry Auditor | Granular token extraction (input, output, cache, thinking), latencies, bottlenecks, throughput, and historical registry | M6 | Skills Suite |
+| F47 | Course QA Evaluator under QM/OSCQR | Hybrid deterministic pass (<300ms) + adaptive semantic check under Quality Matters, OSCQR, and Mastery Learning | M6 | Skills Suite |
+| F48 | Unified Auditor & Safe Course Deletion | Merged reporting orchestrator and fast safe course deletion tool (<300ms) preserving audit reports | M6 | Skills Suite |
+| F49 | Spanish Decimal Comma & Advanced Math Equivalence | Math equivalence engine supporting Spanish decimal comma (`0,8333`), fraction-to-decimal, tolerances, Greek letters (81 cases) | M5 | Platform Math |
+| F50 | Static Course Bundling & Web Deployment | Vite base path configuration, static JSON course generation, and GitHub Pages deploy workflow | M5 | Platform Build |
 
 ---
 
@@ -87,17 +111,32 @@ The system delivers a complete, local, self-contained educational ecosystem comp
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
 | E2E | E2E Testing Track | Design `TEST_INFRA.md`, build automated headless browser test suite (Playwright) and validator test runner; publish `TEST_READY.md` | None | DONE |
-| M1 | Exercise Bank Format & Validator (R2) | Implement Python validator (`src/validator/`), CLI `validate-course`, 28 test fixtures, unit tests, 249 passing tests (F01–F08) | None | DONE |
+| M1 | Exercise Bank Format & Validator (R2) | Implement Python validator (`src/validator/`), CLI `validate-course`, 28 test fixtures, unit tests (F01–F08) | None | DONE |
 | M2 | Practice Platform Web App (R1) | Implement React+Vite+Tailwind platform, course loader, mathjs grader, SVG graphs, KaTeX, mastery persistence (F10–F23) | M1 (Schema) | DONE |
 | M3 | Content-to-Course Antigravity Skill (R3) | Implement `.agents/skills/content-to-course/`, PDF extractor, CTA generator, batch generator, SymPy verifier, auto-repair loop (F26–F33) | M1 (Validator) | DONE |
-| M4 | End-to-End Demo, Audits & Handoff (R4) | Convert demo course (F35), generate PDE course (F34), run visual fidelity audit (F36), run question audit (F37), run blind-guess test (F38), run 100% E2E tests, README (F39) | M2, M3, E2E | DONE |
+| M4 | End-to-End Demo, Audits & Handoff (R4) | Convert demo course (F35), generate PDE course (F34), run visual fidelity audit (F36), run question audit (F37), run blind-guess test (F38), run E2E tests, README (F39) | M2, M3, E2E | DONE |
+| M5 | Pipeline v3 High-Throughput & Platform Safeguards | CTA Map-Reduce, Shift-Left Shard Authoring, stem variants $\ge 0.50$, 3-strikes UI safeguard, 81-case math equivalence, static bundling (F40–F45, F49, F50) | M1, M2, M3 | DONE |
+| M6 | Forensic Telemetry & Multi-Agent Auditing | Implement `c2c-run-auditor`, `course-qa-evaluator`, `c2c-unified-auditor`, `delete-course`, and historical registry (F46–F48) | M4, M5 | DONE |
+| M7 | KaTeX Saneamiento & Validator Hardening | Implement strict KaTeX macro arity, nested macro linters, environment checks (R-20), and repair courses (`bf7e634`, `75ba68d`) | M1, M5 | DONE |
+
+---
+
+## Active & Certified Production Courses
+- **Active Production Course**: `courses/estadistica3_regresion_v3.json`
+  - Title: *Estadística III: Econometría y Modelo de Regresión Lineal*
+  - Competencies: 16 (8 Habilidades, 4 Conceptos, 4 Hechos)
+  - Questions: 390
+  - Validation Status: **100% VALID** in strict pedagogical mode (`python -m src.validator.cli courses/estadistica3_regresion_v3.json --strict` -> EXIT 0).
+  - QA Score: **19.4 / 20.0 (EXCELENTE)**.
+- **Archived Courses**: `archive_rejected_courses/` preserves previous generation courses (`pde_course.json`, `sistemas_edos.json`, `estadistica3_regresion_legacy.json`, `solow_model_old.json`) for historical auditing purposes.
+- **Canonical Test Fixtures**: `courses/fixtures/` contains 28 positive and negative test fixtures covering all validator invariants.
 
 ---
 
 ## Interface Contracts
 
-### 1. Course Bank JSON Format (M1 ↔ M2, M3, M4)
-Standard Course Schema:
+### 1. Course Bank JSON Format
+Standard Course Schema conforming to JSON Schema Draft-07:
 ```json
 {
   "$schema": "https://json-schema.org/draft-07/schema#",
@@ -113,7 +152,8 @@ Standard Course Schema:
       "name": "string",
       "category": "Skill" | "Concept" | "Fact",
       "description": "string",
-      "mastery_target": 100
+      "mastery_target": 100,
+      "prerequisites": ["COMP-000"]
     }
   ],
   "questions": [
@@ -123,6 +163,7 @@ Standard Course Schema:
       "type": "multiple_choice_7_options" | "multiple_select" | "fill_in_the_blank",
       "difficulty": "easy" | "medium" | "hard",
       "stem": "string (with $LaTeX$)",
+      "stem_variants": ["string variant 1", "string variant 2", "string variant 3"],
       "graph": {
         "x_range": [-7, 7],
         "y_range": [-7, 7],
@@ -130,13 +171,14 @@ Standard Course Schema:
         "points": [{ "x": 3, "y": -4, "type": "open" | "closed", "label": "string" }]
       },
       "options": [
-        { "id": "opt_a", "content": "string (with $LaTeX$)" }
+        { "id": "opt_a", "content": "string", "is_correct": true },
+        { "id": "opt_b", "content": "string", "is_correct": false, "error_rationale": "Diagnóstico de error pedagógico" }
       ],
-      "correct_answer": "opt_a" | ["opt_a", "opt_c"] | { "expression": "string", "tolerance": 0.001 },
+      "correct_answer": "opt_a" | ["opt_a", "opt_c"] | { "expression": "string", "canonical_algebraic": "0.8333", "tolerance": 0.001 },
       "hints": [
-        "string (hint 1)",
-        "string (hint 2)",
-        "string (hint 3)"
+        "string (hint 1: conceptual)",
+        "string (hint 2: procedural)",
+        "string (hint 3: operational)"
       ],
       "solution": "string (step-by-step)",
       "misconception_warning": "string"
@@ -145,95 +187,104 @@ Standard Course Schema:
 }
 ```
 
-### 2. Validator CLI (M1 ↔ M3, E2E-Track)
+### 2. Validator CLI
 Command:
 ```bash
-python -m src.validator.cli <path_to_course_json> [--strict]
+python -m src.validator.cli <path_to_course_json> [--strict] [--json]
 ```
 Exit Codes:
-- `0`: Valid course (meets all schema, LaTeX escape, question count, and anti-giveaway rules).
-- `1`: Validation error (specific violation printed with code and file location).
+- `0`: Valid course (satisfies all 21 rules, plus 3 strict rules if `--strict`).
+- `1`: Validation error (explicit violation code and diagnostic location).
 - `2`: Internal CLI or I/O error.
 
-### 3. Platform Dynamic Course API (M1, M3 ↔ M2)
+### 3. Platform Dynamic & Static Course API
 - Courses directory: `courses/*.json` relative to project root.
 - Server endpoint: `GET /api/courses` returns:
-  `{ "courses": [ { "id": "...", "title": "...", "status": "valid" | "error", "error_message": "..." } ] }`
-- Course detail endpoint: `GET /api/courses/:id` returns course JSON payload.
+  `{ "courses": [ { "id": "...", "title": "...", "status": "valid" | "error", "competency_count": 16, "question_count": 390 } ] }`
+- Course detail endpoint: `GET /api/courses/:id` returns complete course JSON.
+- Static bundle output: `platform/dist/api/courses.json` and `platform/dist/courses/<id>.json`.
 
-### 4. Skill Invocation Protocol (M3 ↔ M4, Antigravity)
-- Skill entrypoint: `.agents/skills/content-to-course/run_pipeline.py`
+### 4. Skill Invocation Protocol
+- Pipeline entrypoint: `.agents/skills/content-to-course/run.py`
 - Command:
   ```bash
-  python .agents/skills/content-to-course/run_pipeline.py --pdf <path_to_pdf> --out-dir courses/
+  python .agents/skills/content-to-course/run.py \
+    --course-id <course_id> \
+    --title "<Human Title>" \
+    --pdf <path_to_document> \
+    --output-dir courses \
+    --strict
   ```
-- Deliverables produced:
-  - Competence analysis markdown: `courses/<course_id>_competences.md`
-  - Validated course JSON: `courses/<course_id>.json`
 
 ---
 
 ## Code Layout
 ```
-g:\Mi unidad\Competence_analyser\
-├── .agents/
-│   ├── skills/
-│   │   └── content-to-course/
-│   │       ├── SKILL.md
-│   │       ├── run_pipeline.py
-│   │       ├── extractor.py
-│   │       ├── cta_engine.py
-│   │       ├── batch_generator.py
-│   │       ├── verifier.py
-│   │       └── repair_loop.py
-│   └── teamwork/
-├── courses/
-│   ├── pde_course.json
-│   ├── demo_course.json
-│   └── fixtures/
-├── platform/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tsconfig.json
-│   ├── tailwind.config.js
-│   ├── src/
-│   │   ├── main.tsx
-│   │   ├── App.tsx
-│   │   ├── components/
-│   │   │   ├── Sidebar.tsx
-│   │   │   ├── CourseOverview.tsx
-│   │   │   ├── MasteryGrid.tsx
-│   │   │   ├── PreExerciseModal.tsx
-│   │   │   ├── PracticeSession.tsx
-│   │   │   ├── QuestionCard.tsx
-│   │   │   ├── CoordinatePlane.tsx
-│   │   │   ├── MathText.tsx
-│   │   │   ├── FeedbackToast.tsx
-│   │   │   ├── CompletionScreen.tsx
-│   │   │   └── CourseChallenge.tsx
-│   │   ├── utils/
-│   │   │   ├── mathEquivalence.ts
-│   │   │   ├── masteryStorage.ts
-│   │   │   └── sessionShuffler.ts
-│   │   └── server/
-│   │       └── courseServer.js
-├── src/
-│   └── validator/
-│       ├── __init__.py
-│       ├── cli.py
-│       ├── lexical_scanner.py
-│       ├── schema_validator.py
-│       ├── psychometric_checker.py
-│       └── rules.py
-├── tests/
-│   ├── validator/
-│   │   ├── test_validator.py
-│   │   └── fixtures/
-│   └── e2e/
-│       ├── playwright.config.ts
-│       ├── platform.spec.ts
-│       └── visual_fidelity.spec.ts
-├── run_platform.py
-└── README.md
+Tops_academy/
+├── README.md                                # Authoritative documentation
+├── PROJECT.md                               # Project architecture, inventory, and interfaces
+├── FUTURE_MILESTONES.md                     # Roadmap for Mobile PWA and High-Speed Daemon
+├── TEST_INFRA.md                            # Comprehensive test infrastructure specification
+├── TEST_READY.md                            # Test suite verification checklist
+├── pyproject.toml                           # Python project configuration
+├── run_platform.py                          # Unified launcher and API server
+├── courses/                                 # Published courses & fixtures
+│   ├── estadistica3_regresion_v3.json       # Active certified course (390 items, 16 comps)
+│   ├── competence_analysis_estadistica3_regresion_v3.md # CTA analysis document
+│   └── fixtures/                            # 28 canonical test course fixtures
+├── archive_rejected_courses/                # Historical legacy courses archive
+├── content/                                 # Academic source documents (zero-bloat gitignored)
+│   ├── README.md                            # Ingestion guidelines
+│   └── Solow_model/                         # Source PDFs
+├── docs/                                    # Research and architecture proposals
+│   └── proposals_cta_mapreduce_and_shard_autocheck.md # CTA Map-Reduce & Shard Auto-Check
+├── reports/                                 # Forensic telemetry & QA audit reports
+│   ├── qa_audits/                           # Quality Matters / OSCQR audit reports
+│   │   ├── SUITE_QA_AUDIT_REPORT.md         # Master suite QA audit report
+│   │   ├── COURSE_CREATION_IMPROVEMENTS.md  # Architectural recommendations
+│   │   └── estadistica3_regresion_v3_qa_report.md # Individual course report
+│   └── c2c_audits/                          # Execution telemetry & unit economics
+│       ├── historical_benchmark.md          # Multi-run benchmark evolution
+│       └── audit_registry.json              # Machine-readable telemetry registry
+├── platform/                                # Top's Academy Practice Platform Frontend
+│   ├── package.json                         # Node dependencies (React 18, Vite, KaTeX)
+│   ├── vite.config.ts                       # Vite bundler configuration
+│   ├── src/                                 # Application source code
+│   │   ├── components/                      # UI Views: PracticeSession, FeedbackToast, etc.
+│   │   ├── utils/                           # mathEquivalence.ts, sessionShuffler.ts, etc.
+│   │   └── App.tsx                          # Mastery state router and course loader
+│   └── dist/                                # Compiled production web bundle
+├── src/validator/                           # Subsystem 1: Format & Psychometric Validator
+│   ├── cli.py                               # CLI entrypoint
+│   ├── lexical_scanner.py                   # Pass 1: raw syntax & control character scanner
+│   ├── schema_validator.py                  # Pass 2: Draft-07 schema validator
+│   ├── rules.py                             # Pass 2 & 3: Structural, pedagogical, and KaTeX rules
+│   └── psychometric_checker.py              # Pass 3: Anti-giveaway ratio checkers
+├── .agents/skills/                          # Specialized Multi-Agent Skills Ecosystem
+│   ├── content-to-course/                   # v3 universal course creation pipeline
+│   ├── course-qa-evaluator/                 # Automated pedagogical quality evaluator
+│   ├── c2c-run-auditor/                     # Granular multi-agent execution telemetry auditor
+│   ├── c2c-unified-auditor/                 # Unified orchestration auditor
+│   └── delete-course/                       # Fast safe course deletion tool
+├── system_prompts/                          # Formal prompts for specialized subagents
+└── tests/                                   # Consolidated Automated Test Suites
+    ├── test_validator.py                    # Consolidated validator test suite (144 tests)
+    ├── test_engine_invariants_adversarial.py# Invariants & sandboxed assembly (51 tests)
+    ├── test_sandbox_adversarial.py          # AST sandbox security (49 tests)
+    ├── test_skill.py                        # Pipeline ingestion & publishing (33 tests)
+    ├── test_platform.py                     # Platform server & API (19 tests)
+    ├── test_cta_mapreduce.py                # CTA Map-Reduce & DAG merging (16 tests)
+    ├── test_c2c_validator_prescriptive.py   # Prescriptive validator rules (12 tests)
+    ├── test_dispatch_scope.py               # Subagent role isolation (10 tests)
+    ├── test_delete_course.py                # Safe course deletion (8 tests)
+    ├── test_handouts.py                     # Vision handout fallback (8 tests)
+    ├── test_pipeline_optimizations.py       # Pipeline optimizations (6 tests)
+    ├── test_skill_v3.py                     # v3 pipeline execution (6 tests)
+    ├── test_template_variability.py         # Stem variants & diversity (5 tests)
+    ├── test_math_adversarial_suite.mjs      # Math equivalence 81-case suite (100% pass)
+    ├── test_question_grading.mjs            # Question evaluation & normalization suite (1048 items, 100% pass)
+    ├── test_keyboard_navigation.mjs         # Keyboard accessibility suite
+    ├── test_unit_isolation.mjs              # Unit isolation & shuffle suite
+    ├── test_blind_guess_empirical.py        # Adversarial blind-guess distractor test harness
+    └── e2e/                                 # Playwright headless browser E2E test suite
 ```

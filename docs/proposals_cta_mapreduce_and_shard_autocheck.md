@@ -166,10 +166,30 @@ Tiempo Proyectado: [Visión: 16m] ─── [CTA: 5.5m]  ─── [Autores R1: 
 
 | Archivo | Responsabilidad de Cambio |
 |---|---|
-| [`check_templates.py`](file:///g:/Mi%20unidad/Competence_analyser/.agents/skills/content-to-course/check_templates.py) | Endurecer regla `TPL-VAR` exigiendo `stem_variants` $\ge 3$ y ratio de diversidad simulada $\ge 0.50$ con salida de error bloqueante. |
-| [`prompt_shard_author.md`](file:///g:/Mi%20unidad/Competence_analyser/.agents/skills/content-to-course/system_prompts/prompt_shard_author.md) | Incluir la regla mandatoria `TPL-VAR-MANDATORY` de redacción de variantes en la primera pasada. |
-| [`plan_shards.py`](file:///g:/Mi%20unidad/Competence_analyser/.agents/skills/content-to-course/plan_shards.py) | Inyectar `stem_variants` en todos los ejemplos canónicos del bloque `dsl_reference`. |
-| [`ingest.py`](file:///g:/Mi%20unidad/Competence_analyser/.agents/skills/content-to-course/ingest.py) | Agregar particionador de corpus por sesiones (`generate_session_slices(work_dir)`). |
-| [`run.py`](file:///g:/Mi%20unidad/Competence_analyser/.agents/skills/content-to-course/run.py) | Soportar sub-etapas `cta-map` y `cta-reduce` para orquestar los agentes seccionales y el armonizador. |
-| [`prompt_cta_sectional.md`](file:///g:/Mi%20unidad/Competence_analyser/.agents/skills/content-to-course/system_prompts/) *(Nuevo)* | Prompt especializado para los subagentes seccionales de la fase Map. |
-| [`prompt_cta_harmonizer.md`](file:///g:/Mi%20unidad/Competence_analyser/.agents/skills/content-to-course/system_prompts/) *(Nuevo)* | Prompt especializado para el agente consolidador y constructor del DAG en la fase Reduce. |
+| [`check_templates.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/check_templates.py) | Endurecer regla `TPL-VAR` exigiendo `stem_variants` $\ge 3$ y ratio de diversidad simulada $\ge 0.50$ con salida de error bloqueante. |
+| [`prompt_shard_author.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/system_prompts/prompt_shard_author.md) | Incluir la regla mandatoria `TPL-VAR-MANDATORY` de redacción de variantes en la primera pasada. |
+| [`plan_shards.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/plan_shards.py) | Inyectar `stem_variants` en todos los ejemplos canónicos del bloque `dsl_reference`. |
+| [`ingest.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/ingest.py) | Agregar particionador de corpus por sesiones (`generate_session_slices(work_dir)`). |
+| [`run.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/run.py) | Soportar sub-etapas `cta-map` y `cta-reduce` para orquestar los agentes seccionales y el armonizador. |
+| [`prompt_cta_sectional.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/system_prompts/prompt_cta_sectional.md) *(Nuevo)* | Prompt especializado para los subagentes seccionales de la fase Map. |
+| [`prompt_cta_harmonizer.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/system_prompts/prompt_cta_harmonizer.md) *(Nuevo)* | Prompt especializado para el agente consolidador y constructor del DAG en la fase Reduce. |
+
+---
+
+## 6. Estado de Implementación y Certificación Operativa
+
+> [!NOTE]
+> **ESTADO: 100% IMPLEMENTADO, VERIFICADO Y OPERATIVO EN V3**  
+> Fecha de Verificación: **13 de Octubre de 2026**
+
+Ambas propuestas han sido completamente implementadas en la base de código y verificadas mediante pruebas automatizadas y corridas de producción:
+
+1. **CTA Map-Reduce Operativo:**
+   - Implementado en `run.py` (etapas `--stage cta-map` y `--stage cta-reduce`), `cta_merge.py`, `system_prompts/prompt_cta_sectional.md`, `system_prompts/prompt_cta_harmonizer.md`.
+   - Cobertura de pruebas completa en `tests/test_cta_mapreduce.py` (**16/16 pruebas pasando**), validando partición curricular, merging sin pérdida de competencias, unificación canónica de identificadores, enlace acíclico del DAG de prerrequisitos inter-sesión y deduplicación de distractores.
+2. **Auto-Auditoría Temprana de `stem_variants` (Regla `TPL-VAR`):**
+   - Implementado en `check_templates.py` con bloqueo en caliente si `len(stem_variants) < 3` o si el ratio de diversidad es $< 0.50$.
+   - Integrado en `system_prompts/prompt_shard_author.md` e inyectado en `plan_shards.py`.
+   - Cobertura de pruebas completa en `tests/test_template_variability.py` (**5/5 pruebas pasando**) y `tests/test_pipeline_optimizations.py`.
+3. **Impacto Empírico Certificado:**
+   - En la corrida registrada en `reports/c2c_audits/historical_benchmark.md`, el pipeline alcanzó una **aceleración paralela de 6.69x** con **1.96 s/pregunta**, eliminando re-despachos de autores (0 intervenciones del orquestador) y logrando arbitraje limpio al primer intento con jueces ciegos.

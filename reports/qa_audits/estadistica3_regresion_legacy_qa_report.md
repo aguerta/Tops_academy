@@ -1,11 +1,11 @@
 # Informe de Auditoría Técnica Pedagógica y Calidad Instruccional
 
-**Estado en Plataforma:** Activo (Vigente)  
-**Fecha de Eliminación:** Nulo  
+**Estado en Plataforma:** Archivado (Histórico)  
+**Fecha de Eliminación:** —  
 **Curso Auditado:** Estadística III: Modelo de Regresión Lineal (Versión Legacy)  
 **ID del Curso:** `estadistica3_regresion_legacy` (`estadistica3_regresion`)  
-**Archivo Evaluado:** [`courses/estadistica3_regresion_legacy.json`](file:///g:/Mi%20unidad/Competence_analyser/courses/estadistica3_regresion_legacy.json)  
-**Payload Analizado:** [`reports/qa_audits/estadistica3_regresion_legacy_payload.json`](file:///g:/Mi%20unidad/Competence_analyser/reports/qa_audits/estadistica3_regresion_legacy_payload.json)  
+**Archivo Evaluado:** [`archive_rejected_courses/estadistica3_regresion_legacy.json`](file:///d:/Augusto/personal_portfolio/Tops_academy/archive_rejected_courses/estadistica3_regresion_legacy.json)  
+**Payload Analizado:** [`reports/qa_audits/estadistica3_regresion_legacy_payload.json`](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/estadistica3_regresion_legacy_payload.json)  
 **Fecha de Auditoría:** 12 de Octubre de 2026  
 **Auditor:** In-House Course QA Agent (Mastery Learning / QM / OSCQR Framework)
 

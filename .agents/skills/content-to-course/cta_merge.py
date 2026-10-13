@@ -67,6 +67,67 @@ def extract_evidence_keys(evidence_list: Optional[List[Dict[str, Any]]]) -> Set[
     return keys
 
 
+def normalize_orphan_math(text: str) -> str:
+    """Normalizes orphaned/unescaped LaTeX expressions like dot{w} -> $\\dot{w}$, bar{k} -> $\\bar{k}$ outside $...$."""
+    if not isinstance(text, str) or not text:
+        return text
+
+    # Split text into outside-math and inside-math segments using $ / $$ blocks
+    parts = re.split(r"(\$\$.*?\$\$|\$.*?\$)", text, flags=re.DOTALL)
+    for i in range(0, len(parts), 2):
+        chunk = parts[i]
+        if not chunk:
+            continue
+        # 1. dot{w} or \dot{w} -> $\dot{w}$, bar{k} or \bar{k} -> $\bar{k}$, etc.
+        chunk = re.sub(
+            r"(?:\\|(?<!\\)\b)(dot|ddot|bar|hat|tilde|vec)\{([^{}]+)\}",
+            r"$\\\1{\2}$",
+            chunk,
+        )
+        # 2. frac{a}{b} or \frac{a}{b} -> $\frac{a}{b}$ (including dfrac, tfrac, cfrac)
+        chunk = re.sub(
+            r"(?:\\|(?<!\\)\b)(frac|dfrac|tfrac|cfrac)\{([^{}]+)\}\{([^{}]+)\}",
+            r"$\\\1{\2}{\3}$",
+            chunk,
+        )
+        # 3. sqrt{x} or \sqrt{x} -> $\sqrt{x}$
+        chunk = re.sub(
+            r"(?:\\|(?<!\\)\b)sqrt\{([^{}]+)\}",
+            r"$\\sqrt{\1}$",
+            chunk,
+        )
+        # 4. Greek letters with backslash: \alpha -> $\alpha$, \delta -> $\delta$, etc.
+        chunk = re.sub(
+            r"\\(alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega)\b",
+            r"$\\\1$",
+            chunk,
+        )
+        # 5. Raw subscript or superscript with braces: k_{t+1} -> $k_{t+1}$
+        chunk = re.sub(
+            r"(?<!\$)\b([a-zA-Z0-9\\]+[_^]\{[^{}]+\})(?!\$)",
+            r"$\1$",
+            chunk,
+        )
+        parts[i] = chunk
+
+    return "".join(parts)
+
+
+def sanitize_competency_math(comp: Dict[str, Any]) -> None:
+    """Recursively normalizes orphan math expressions in competency fields and distractors."""
+    for field in ("name", "description_latex", "description"):
+        val = comp.get(field)
+        if isinstance(val, str):
+            comp[field] = normalize_orphan_math(val)
+
+    for d in comp.get("distractors", []):
+        if isinstance(d, dict):
+            for d_field in ("name", "manifestation", "remediation_hint", "wrong_belief", "omitted_step"):
+                d_val = d.get(d_field)
+                if isinstance(d_val, str):
+                    d[d_field] = normalize_orphan_math(d_val)
+
+
 def find_duplicate_candidates(competencies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Deterministic candidate detector for duplicate competencies.
 
@@ -197,6 +258,10 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
 
     if not combined_competencies:
         raise ValueError(f"Zero competencies found across all parts in {parts_dir.resolve()}")
+
+    # Sanitize and normalize orphan LaTeX math in all competencies and distractors
+    for comp in combined_competencies:
+        sanitize_competency_math(comp)
 
     # Renumber canonical sequential IDs per category
     fact_count = 0
@@ -629,6 +694,10 @@ def apply_harmonize(
         )
 
     # 7. Validate full CTA schema and psychometric rules
+    # Sanitize and normalize orphan LaTeX math in all competencies and distractors
+    for comp in competencies:
+        sanitize_competency_math(comp)
+
     cta_draft["competencies"] = competencies
 
     manifest_data = None

@@ -148,3 +148,42 @@ Simulates realistic student learning sessions:
   - Failure screenshots are automatically captured in `tests/e2e/reports/failures/`.
   - DOM snapshots on failure are saved alongside screenshots.
   - Verbatim browser console messages are captured and printed in the test traceback.
+
+---
+
+## 6. Comprehensive Automated Test Matrix (Python + Node.js)
+
+In addition to the Playwright browser suite, the repository includes a multi-tiered automated test matrix covering the validator engine, pipeline optimizations, sandboxed runtime, and client-side mathematical evaluation:
+
+### 6.1 Python Automated Test Suites (367 items / 363 passed, 4 skipped in 18.05s)
+
+```powershell
+.venv\Scripts\python.exe -m pytest -v
+```
+
+| Test Suite File | Items | Focus / Coverage |
+| :--- | :---: | :--- |
+| `tests/test_validator.py` | 144 | Scanner léxico, RFC 8259, R-01..R-16, R-17..R-20, R-22, S-01..S-03, KaTeX arity, entornos, llaves residuales |
+| `tests/test_engine_invariants_adversarial.py` | 51 | Invariantes psicométricos, verificación de ensamblaje en sandbox, anti-giveaway |
+| `tests/test_sandbox_adversarial.py` | 49 | Seguridad del AST sandbox, bloqueo de imports prohibidos, memoria y timeouts |
+| `tests/test_skill.py` | 33 | Extracción de contenido, taxonomía CTA, batch generator, SymPy Tier 1, Blind solver Tier 2 |
+| `tests/test_platform.py` | 19 | Endpoints HTTP del servidor, enrutamiento SPA estático, flags CLI (`--scan`, `--help`) |
+| `tests/test_cta_mapreduce.py` | 16 | Partición seccional de corpus, `cta_merge.py`, DAG de prerrequisitos, deduplicación |
+| `tests/test_c2c_validator_prescriptive.py` | 12 | Sugerencias prescriptivas del validador y conformidad de esquema |
+| `tests/test_dispatch_scope.py` | 10 | Segregación de roles de subagentes y contratos de prompts |
+| `tests/test_delete_course.py` | 8 | Eliminación segura de cursos (<300ms), preservación de auditorías históricas, inmutabilidad de `content/` |
+| `tests/test_handouts.py` | 8 | Procesamiento y fallback de handouts visuales |
+| `tests/test_pipeline_optimizations.py` | 6 | Validaciones de rendimiento, optimizaciones de pipeline y multi-core `ProcessPoolExecutor` |
+| `tests/test_skill_v3.py` | 6 | Runner de pipeline de alta velocidad v3 y gates de etapa |
+| `tests/test_template_variability.py` | 5 | Regla `TPL-VAR`, validación de `stem_variants >= 3` y ratio de diversidad $\ge 0.50$ |
+
+### 6.2 Client-Side & Standalone Verification Suites
+
+| Suite File | Items / Tests | Status | Focus |
+| :--- | :---: | :---: | :--- |
+| `tests/test_math_adversarial_suite.mjs` | 81 cases | **100% PASS** | Equivalencia algebraica y numérica con coma española (`0,8333`), fracciones, letras griegas, tolerancias |
+| `tests/test_question_grading.mjs` | 1,048 assertions | **100% PASS** | Evaluación y normalización de opciones MC y MS en cursos activos e históricos |
+| `tests/test_keyboard_navigation.mjs` | All assertions | **100% PASS** | Accesibilidad de teclado (1-7 para opciones, Enter para Check/Next) |
+| `tests/test_unit_isolation.mjs` | All assertions | **100% PASS** | Aislamiento de unidades y límites de shuffling independiente |
+| `tests/test_blind_guess_empirical.py` | 50 sample / 250 pop | **100% PASS** | Prueba adversarial empírica de distractores a ciegas (4.0% éxito muestral, 8.0% poblacional vs $\le 30\%$) |
+

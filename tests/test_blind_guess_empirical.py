@@ -21,6 +21,11 @@ from typing import Any
 
 
 def load_course(course_path: str = "courses/pde_course.json") -> dict[str, Any]:
+    p = Path(course_path)
+    if not p.exists():
+        fallback = Path("archive_rejected_courses") / p.name
+        if fallback.exists():
+            course_path = str(fallback)
     with open(course_path, "r", encoding="utf-8") as f:
         return json.load(f)
 

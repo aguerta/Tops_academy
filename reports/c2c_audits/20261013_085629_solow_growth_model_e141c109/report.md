@@ -1,8 +1,8 @@
 # Informe de Auditoría Arquitectónica Forense: Rendimiento, Shards y Telemetría Multi-Agente
 ## Curso: El Modelo de Crecimiento Económico de Solow (1956) (`solow_growth_model`)
 
-**Fecha de Auditoría:** `2026-10-13 05:22:34 UTC`  
-**Conversación Orquestadora:** [`c4802280-6f23-430d-ab64-4713e4670ce5`](conversation://c4802280-6f23-430d-ab64-4713e4670ce5)  
+**Fecha de Auditoría:** `2026-10-13 13:56:29 UTC`  
+**Conversación Orquestadora:** [`e141c109-7f7a-4b7c-a225-faffff8919b1`](conversation://e141c109-7f7a-4b7c-a225-faffff8919b1)  
 **Enfoque:** Telemetría de API, Comportamiento de Subagentes, Shards, Latencias Críticas y Síndrome del Orquestador Reparador.
 
 ---
@@ -11,18 +11,18 @@
 
 | Dimensión / Métrica | Valor Registrado | Observaciones de Ingeniería |
 | :--- | :--- | :--- |
-| **Material de Entrada** | `2 archivos` (36 págs / 0.0 MB) | 05_15_07_El_modelo_de_crecimiento_de_Solow.pdf, solow1956.pdf |
+| **Material de Entrada** | `2 archivos` (36 págs / 3.25 MB) | 05_15_07_El_modelo_de_crecimiento_de_Solow.pdf, solow1956.pdf |
 | **Requerimiento de Visión** | `0 páginas` (0 handouts) | Cuadrículas generadas para diagramas/fórmulas |
-| **Corpus Sintetizado** | `72,846 caracteres` (12,650 palabras) | Texto consolidado tras ingesta y visión |
+| **Corpus Sintetizado** | `0 caracteres` (0 palabras) | Texto consolidado tras ingesta y visión |
 | **Competencias Extraídas** | **`22 competencias`** | Desglose pedagógico (Hechos, Conceptos, Habilidades) |
-| **Shards Particionados** | **`4 shards`** | Unidades de trabajo concurrentes |
-| **Subagentes Desplegados** | **`5 subagentes`** | Visión (0), CTA (1), Autores (4) |
-| **Reactivos Finales Validadas** | **`530 preguntas`** | 100% conformes con invariantes de sandbox |
-| **Tokens Entrada (Subagentes)** | **`2,793,610` tokens** | Contexto acumulativo enviado a subagentes |
-| **Tokens Salida (Subagentes)** | **`1,130,054` tokens** | Código de plantillas y JSON generado |
-| **Tokens Caché (Leídos)** | **`56,041,699` tokens** | Caché de contexto reutilizado por la API |
-| **Gran Total Tokens Activos** | **`4,031,420` tokens** | Entrada + Salida neto (sin contar caché) |
-| **Gran Total Tokens (con Caché)** | **`60,073,119` tokens** | Consumo total de cuota facturable |
+| **Shards Particionados** | **`3 shards`** | Unidades de trabajo concurrentes |
+| **Subagentes Desplegados** | **`4 subagentes`** | Visión (0), CTA (1), Autores (3) |
+| **Reactivos Finales Validadas** | **`0 preguntas`** | 100% conformes con invariantes de sandbox |
+| **Tokens Entrada (Subagentes)** | **`1,791,937` tokens** | Contexto acumulativo enviado a subagentes |
+| **Tokens Salida (Subagentes)** | **`606,269` tokens** | Código de plantillas y JSON generado |
+| **Tokens Caché (Leídos)** | **`39,721,101` tokens** | Caché de contexto reutilizado por la API |
+| **Gran Total Tokens Activos** | **`2,577,435` tokens** | Entrada + Salida neto (sin contar caché) |
+| **Gran Total Tokens (con Caché)** | **`42,298,536` tokens** | Consumo total de cuota facturable |
 
 ---
 
@@ -32,14 +32,14 @@ Métricas normalizadas para comparación *apples-to-apples* frente a cursos de d
 
 | Métrica Unitaria | Valor Obtenido | Interpretación de Eficiencia |
 | :--- | :--- | :--- |
-| **Tokens Totales por Pregunta** | **`113,345.5 tokens/preg`** | Esfuerzo de API por cada reactivo jugable |
-| **Tokens Activos por Pregunta** | **`7,606.5 tokens/preg`** | Tokens netos de razonamiento y código por reactivo |
-| **Tokens por Competencia (Global)** | **`2,730,596.3 tokens/comp`** | Densidad de diseño instruccional del curso |
-| **Tokens de Autor por Competencia** | **`165,931.0 tokens/comp`** | Costo puro de la etapa de autoría por competencia |
-| **Tokens Totales por Página / Slide** | **`1,668,697.8 tokens/pág`** | Esfuerzo cognitivo por diapositiva original |
-| **Segundos de Pared por Pregunta** | **`1.57 s/preg`** | Ritmo de entrega percibido |
-| **Rendimiento de Generación (QPM)** | **`38.22 preg/min`** | Velocidad de producción del pipeline |
-| **Factor de Aceleración Paralela** | **`11.18x`** | Relación tiempo cómputo vs tiempo de pared |
+| **Tokens Totales por Pregunta** | **`0.0 tokens/preg`** | Esfuerzo de API por cada reactivo jugable |
+| **Tokens Activos por Pregunta** | **`0.0 tokens/preg`** | Tokens netos de razonamiento y código por reactivo |
+| **Tokens por Competencia (Global)** | **`1,922,660.7 tokens/comp`** | Densidad de diseño instruccional del curso |
+| **Tokens de Autor por Competencia** | **`99,765.0 tokens/comp`** | Costo puro de la etapa de autoría por competencia |
+| **Tokens Totales por Página / Slide** | **`1,174,959.3 tokens/pág`** | Esfuerzo cognitivo por diapositiva original |
+| **Segundos de Pared por Pregunta** | **`0.0 s/preg`** | Ritmo de entrega percibido |
+| **Rendimiento de Generación (QPM)** | **`0.0 preg/min`** | Velocidad de producción del pipeline |
+| **Factor de Aceleración Paralela** | **`6.69x`** | Relación tiempo cómputo vs tiempo de pared |
 
 ---
 
@@ -58,28 +58,27 @@ Métricas normalizadas para comparación *apples-to-apples* frente a cursos de d
 ### 3.2. Stage 1B: Análisis Cognitivo de Competencias (CTA)
 - **Arquitectura:** `DIRECT (1 Direct CTA Architect)`
 - **Tiempo de Pared Fase Mappers (Máximo):** **`0.0s`** (determinado por `N/A`)
-- **Tiempo Fase Harmonizer (Barrera Síncrona):** **`686.0s`**
-- **Tiempo de Pared Total de Etapa 1B:** **`686.0s`** (`11.4 min`)
+- **Tiempo Fase Harmonizer (Barrera Síncrona):** **`786.0s`**
+- **Tiempo de Pared Total de Etapa 1B:** **`786.0s`** (`13.1 min`)
 
 | Subagente CTA | Rol / Sección | Turnos | Tokens In | Tokens Out | Cache Leído | Errores | Duración |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Direct CTA Architect** | Harmonizer | 25 | 186,531 | 86,651 | 1,166,297 | 1 | **686.0s** |
+| **Direct CTA Architect** | Harmonizer | 26 | 152,691 | 50,685 | 1,339,427 | 1 | **786.0s** |
 
 ---
 
 ### 3.3. Stage 3: Autoría de Reactivos por Shard y Análisis por Competencia
-- **Total de Shards Auditados:** `4 shards concurrentes`
-- **Duración Mínima de Shard:** `1897.0s` | **Mediana:** `1962.0s`
-- **Tiempo de Pared Máximo (Straggler Crítico):** **`1962.0s`** (`32.7 min`) por `Shard Author shard_01`
-- **Retraso de Sincronización Impuesto por el Straggler:** **`+0.0s`** frente a la mediana
-- **Tokens Promedio por Competencia en Autores:** **`125,878.7 tokens/competencia`**
+- **Total de Shards Auditados:** `3 shards concurrentes`
+- **Duración Mínima de Shard:** `1705.0s` | **Mediana:** `1706.0s`
+- **Tiempo de Pared Máximo (Straggler Crítico):** **`1713.0s`** (`28.6 min`) por `Shard Author shard_02`
+- **Retraso de Sincronización Impuesto por el Straggler:** **`+7.0s`** frente a la mediana
+- **Tokens Promedio por Competencia en Autores:** **`115,517.4 tokens/competencia`**
 
 | Shard ID | Competencias Asignadas | Comps | Tokens In | Tokens Out | Cache Leído | Total Activo | Tokens / Comp | Turnos | Errores | Duración |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Shard Author shard_01 🛑** | `H-01, C-01, Hab-01, H-02 (+4)` | 8 | 621,941 | 250,500 | 15,639,391 | 872,441 | **109,055.1** | 124 | 24 | **1962.0s** |
-| **Shard Author shard_02** | `Hab-03, H-03, C-05, Hab-04 (+3)` | 7 | 637,700 | 286,005 | 9,565,087 | 923,705 | **131,957.9** | 86 | 12 | **1897.0s** |
-| **Shard Author shard_03** | `C-07, Hab-06, H-05, C-08 (+3)` | 7 | 596,851 | 281,259 | 11,219,804 | 878,110 | **125,444.3** | 112 | 14 | **1960.0s** |
-| **Shard Author shard_04 🛑** | `Hab-08, C-10, C-11, Hab-09 (+3)` | 7 | 750,587 | 225,639 | 17,784,238 | 976,226 | **139,460.9** | 146 | 35 | **1962.0s** |
+| **Shard Author shard_01** | `H-01, C-01, Hab-01, C-02 (+3)` | 7 | 525,529 | 213,111 | 8,816,404 | 738,640 | **105,520.0** | 87 | 24 | **1705.0s** |
+| **Shard Author shard_02 🛑** | `H-03, C-04, Hab-03, C-05 (+2)` | 6 | 451,276 | 148,508 | 16,150,803 | 599,784 | **99,964.0** | 98 | 16 | **1713.0s** |
+| **Shard Author shard_03** | `Hab-04, Hab-05, Hab-06, H-04 (+2)` | 6 | 662,441 | 193,965 | 12,821,570 | 856,406 | **142,734.3** | 114 | 27 | **1706.0s** |
 
 #### 💡 El Principio de Amortización de Shards Demostrado Empíricamente:
 Al analizar la tabla anterior, se verifica la relación inversa entre competencias por shard y costo unitario:
@@ -110,10 +109,10 @@ Al analizar la tabla anterior, se verifica la relación inversa entre competenci
 ## 4. Auditoría Forense del Orquestador y Catálogo de Intervenciones Manuales
 
 ### 4.1. Descomposición del Tiempo Total del Orquestador
-- ⏱️ **Tiempo Total de Pared del Orquestador:** `13.87 min` (`832.0s`)
-- 💻 **Tiempo Activo Ejecutando Comandos CLI (`run.py`):** `1.3 min` (`76.0s`)
+- ⏱️ **Tiempo Total de Pared del Orquestador:** `17.3 min` (`1038.0s`)
+- 💻 **Tiempo Activo Ejecutando Comandos CLI (`run.py`):** `1.3 min` (`80.0s`)
 - 🛠️ **Tiempo Gastado en Intervenciones Manuales (Supervisor Repair):** **`0.0 min`** (`0.0s`)
-- ⏳ **Tiempo Ocioso en Barreras de Sincronización (Esperando Subagentes):** `0.3 min` (`17.0s`)
+- ⏳ **Tiempo Ocioso en Barreras de Sincronización (Esperando Subagentes):** `0.4 min` (`26.0s`)
 - 🧠 **Tiempo de Inferencia y Razonamiento del Modelo:** `0.3 min` (`16.0s`)
 
 ### 4.2. Catálogo Cronológico de Reparaciones Manuales del Orquestador
@@ -126,11 +125,11 @@ El orquestador ejecutó **`0 operaciones directas de edición de código`**, cay
 
 ## 5. Diagnóstico de Cuellos de Botella y Antipatrones del SDK
 
-### 🛑 [HIGH] Antipatrón de Micro-Bucle Interactivo (146 turnos en Shard Author shard_04)
-- **Ámbito:** `Shard Author shard_04`
-- **Diagnóstico:** 4 subagentes realizaron > 30 turnos individuales (ej. Shard Author shard_04 con 146 turnos). Ocurre cuando los autores escriben plantilla por plantilla en lugar de redactar por lotes atómicos en 1-2 turnos.
+### 🛑 [HIGH] Antipatrón de Micro-Bucle Interactivo (114 turnos en Shard Author shard_03)
+- **Ámbito:** `Shard Author shard_03`
+- **Diagnóstico:** 3 subagentes realizaron > 30 turnos individuales (ej. Shard Author shard_03 con 114 turnos). Ocurre cuando los autores escriben plantilla por plantilla en lugar de redactar por lotes atómicos en 1-2 turnos.
 
-### ⚠️ [MEDIUM] Fricción de Herramientas en 4 subagentes
+### ⚠️ [MEDIUM] Fricción de Herramientas en 3 subagentes
 - **Ámbito:** `Multiple Subagents`
 - **Diagnóstico:** Subagentes como Shard Author shard_01 acumularon fallos en consola (24 errores), provocando reintentos e invalidación de caché.
 

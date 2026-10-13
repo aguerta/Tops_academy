@@ -128,17 +128,44 @@ def _check_evidence_in_manifest(
     return None
 
 
+def validate_distractor_math(d: Dict[str, Any], did: str) -> List[str]:
+    """Audit all distractor text fields unconditionally for raw/orphaned LaTeX and KaTeX errors."""
+    errors: List[str] = []
+    latex_patterns = [
+        r"\b(?:dot|ddot|bar|hat|tilde|vec|frac|dfrac|tfrac|cfrac|sqrt)\s*\{",
+        r"\\(?:dot|ddot|bar|hat|tilde|vec|frac|dfrac|tfrac|cfrac|sqrt|alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega)\b",
+        r"(?<!\\)[_^]\{",
+    ]
+    for field in ["manifestation", "remediation_hint", "wrong_belief", "omitted_step"]:
+        val = d.get(field)
+        if isinstance(val, str) and val.strip():
+            # Check for raw LaTeX outside $...$ or $$...$$
+            text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", val, flags=re.DOTALL)
+            has_raw_latex = any(re.search(p, text_outside_math) for p in latex_patterns)
+            if has_raw_latex:
+                errors.append(f"Distractor '{did}' en '{field}' contiene comandos LaTeX sin delimitar por '$...$': {val}")
+
+            clean_dollars = val.replace(r"\$", "")
+            if "$" in clean_dollars:
+                errors.extend(validate_katex_syntax(val, f"distractor '{did}' {field}"))
+    return errors
+
+
 def check_cta_katex(cta_data: Dict[str, Any]) -> List[str]:
     """Inspect KaTeX math in competencies and distractors using validate_katex_syntax.
 
     Inspects:
     - competencies[].name
     - competencies[].description_latex and competencies[].description
-    - distractors[].manifestation
-    - distractors[].remediation_hint
-    using validate_katex_syntax when '$' or '$$' are present.
+    - distractors[].manifestation, remediation_hint, wrong_belief, omitted_step
+    unconditionally auditing for raw LaTeX outside '$...$' and validating KaTeX syntax.
     """
     errors: List[str] = []
+    latex_patterns = [
+        r"\b(?:dot|ddot|bar|hat|tilde|vec|frac|dfrac|tfrac|cfrac|sqrt)\s*\{",
+        r"\\(?:dot|ddot|bar|hat|tilde|vec|frac|dfrac|tfrac|cfrac|sqrt|alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega)\b",
+        r"(?<!\\)[_^]\{",
+    ]
     if isinstance(cta_data, list):
         competencies = cta_data
     elif isinstance(cta_data, dict):
@@ -153,28 +180,29 @@ def check_cta_katex(cta_data: Dict[str, Any]) -> List[str]:
 
         # competencies[].name
         c_name = comp.get("name")
-        if isinstance(c_name, str) and ("$" in c_name.replace(r"\$", "")):
-            errors.extend(validate_katex_syntax(c_name, f"competency '{cid}' name"))
+        if isinstance(c_name, str) and c_name.strip():
+            text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", c_name, flags=re.DOTALL)
+            if any(re.search(p, text_outside_math) for p in latex_patterns):
+                errors.append(f"Competency '{cid}' name contiene comandos LaTeX sin delimitar por '$...$': {c_name}")
+            if "$" in c_name.replace(r"\$", ""):
+                errors.extend(validate_katex_syntax(c_name, f"competency '{cid}' name"))
 
         # competencies[].description_latex and competencies[].description
         for desc_key in ("description_latex", "description"):
             c_desc = comp.get(desc_key)
-            if isinstance(c_desc, str) and ("$" in c_desc.replace(r"\$", "")):
-                errors.extend(validate_katex_syntax(c_desc, f"competency '{cid}' {desc_key}"))
+            if isinstance(c_desc, str) and c_desc.strip():
+                text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", c_desc, flags=re.DOTALL)
+                if any(re.search(p, text_outside_math) for p in latex_patterns):
+                    errors.append(f"Competency '{cid}' {desc_key} contiene comandos LaTeX sin delimitar por '$...$': {c_desc}")
+                if "$" in c_desc.replace(r"\$", ""):
+                    errors.extend(validate_katex_syntax(c_desc, f"competency '{cid}' {desc_key}"))
 
-        # distractors[].manifestation and distractors[].remediation_hint
+        # distractors[] math validation
         for d in comp.get("distractors", []):
             if not isinstance(d, dict):
                 continue
             did = d.get("id", "UNKNOWN")
-
-            manif = d.get("manifestation")
-            if isinstance(manif, str) and ("$" in manif.replace(r"\$", "")):
-                errors.extend(validate_katex_syntax(manif, f"distractor '{did}' manifestation"))
-
-            rh = d.get("remediation_hint")
-            if isinstance(rh, str) and ("$" in rh.replace(r"\$", "")):
-                errors.extend(validate_katex_syntax(rh, f"distractor '{did}' remediation_hint"))
+            errors.extend(validate_distractor_math(d, did))
 
     return errors
 
