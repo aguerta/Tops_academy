@@ -53,6 +53,34 @@ DSL_REFERENCE: Dict[str, Any] = {
             "(directa/conceptual, contextualizada, analítica/simbólica) con {placeholders} en cada plantilla "
             "para garantizar diversidad estructural de enunciados (ratio >= 0.50)."
         ),
+        "anti_double_braces": (
+            "REGLA DE ORO DE LLAVES: PROHIBIDO usar dobles llaves '{{' o '}}' en stem, hints o solution en JSON. "
+            "En KaTeX las llaves son simples: 'u_{xx}', 'x^{-1}', '\\bar{r}', '\\dot{r}'."
+        ),
+        "vars_contract": (
+            "REGLA DE ORO DE VARIABLES: Toda variable usada como {nombre} en stem, hints o solution DEBE declararse "
+            "en el diccionario 'vars' retornado por generate_py. Especialmente, si usas '{correct}' en solution, "
+            "incluye obligatoriamente 'correct': ... dentro de 'vars'."
+        ),
+        "error_rationale_math": (
+            "REGLA DE NOTACIÓN EN RATIONALE: Toda expresión matemática en 'error_rationale' DEBE ir entre signos de "
+            "dólar '$...$' (ej. '$\\dot{r}$', nunca texto plano 'dot{r}')."
+        ),
+        "tpl_var_minimum_domain": (
+            "REGLA DE DOMINIO Y DIVERSIDAD (TPL-VAR): Todo rng.choice DEBE tener un dominio de al menos 8 a 12 valores "
+            "distintos, o usar rng.randint / rng.uniform, para satisfacer TPL-VAR (mínimo 4 variantes únicas generadas)."
+        ),
+        "native_graph_schema": (
+            "SOPORTE NATIVO DE GRÁFICOS: Para diagramas de fase o curvas analíticas, Top's Academy soporta "
+            "el esquema JSON nativo 'graph': {'title': str, 'x_axis': {'label': str, 'min': float, 'max': float}, "
+            "'y_axis': {'label': str, 'min': float, 'max': float}, 'curves': [{'name': str, 'fn': str, 'style': 'solid'}], "
+            "'points': [{'name': str, 'x': float, 'y': float, 'label': str}]}. NO simular gráficos en puro texto KaTeX."
+        ),
+        "shard_isolated_script": (
+            "SCRIPT INDEPENDIENTE: Cada shard escribe exclusivamente su propio script work/build_<shard_id>.py. "
+            "Valida únicamente tu shard asignado: python .agents/skills/content-to-course/check_templates.py "
+            "work/shards/<shard_id>.json --cta work/cta.json --strict"
+        ),
     },
     "canonical_examples": {
         "multiple_choice_7_options": {
@@ -61,17 +89,17 @@ DSL_REFERENCE: Dict[str, Any] = {
             "interaction_type": "multiple_choice_7_options",
             "difficulty": "medium",
             "bloom": "Understand",
-            "stem": "Considere la ecuación $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$. Calcule su discriminante $\\Delta = B^2 - 4AC$ y determine su clasificación:",
+            "stem": "Considere la ecuación ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$. Calcule su discriminante $\\Delta = B^2 - 4AC$ y determine su clasificación:",
             "stem_variants": [
-                "Considere la ecuación $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$. Calcule su discriminante $\\Delta = B^2 - 4AC$ y determine su clasificación:",
-                "Dada la ecuación de segundo orden $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$, evalúe el discriminante $\\Delta = B^2 - 4AC$ para establecer el tipo de ecuación:",
-                "Para el modelo formal plano $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$, clasifique su naturaleza analítica a partir del signo de $\\Delta = B^2 - 4AC$:",
+                "Considere la ecuación ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$. Calcule su discriminante $\\Delta = B^2 - 4AC$ y determine su clasificación:",
+                "Dada la ecuación de segundo orden ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, evalúe el discriminante $\\Delta = B^2 - 4AC$ para establecer el tipo de ecuación:",
+                "Para el modelo formal plano ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, clasifique su naturaleza analítica a partir del signo de $\\Delta = B^2 - 4AC$:",
             ],
             "generate_py": (
                 "def generate(rng):\n"
-                "    A = rng.randint(2, 4)\n"
-                "    C = rng.randint(2, 4)\n"
-                "    B = rng.choice([0, 1, 2])\n"
+                "    A = rng.randint(2, 5)\n"
+                "    C = rng.randint(2, 5)\n"
+                "    B = rng.choice([0, 1, 2, 3, 4, 5, 6, 7])\n"
                 "    delta = B**2 - 4 * A * C\n"
                 "    correct_str = f'Discriminante $\\\\Delta = {delta} < 0$, de modo que la ecuación es elíptica en el plano.'\n"
                 "    d1 = f'Discriminante $\\\\Delta = {delta} < 0$, de modo que la ecuación es hiperbólica en el plano.'\n"
@@ -112,11 +140,11 @@ DSL_REFERENCE: Dict[str, Any] = {
             "interaction_type": "fill_in_the_blank",
             "difficulty": "easy",
             "bloom": "Apply",
-            "stem": "Determine el valor numérico del discriminante $\\Delta = B^2 - 4AC$ para la ecuación $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$.",
+            "stem": "Determine el valor numérico del discriminante $\\Delta = B^2 - 4AC$ para la ecuación ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$.",
             "stem_variants": [
-                "Determine el valor numérico del discriminante $\\Delta = B^2 - 4AC$ para la ecuación $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$.",
-                "Calcule el valor escalar de $\\Delta = B^2 - 4AC$ correspondiente a la ecuación $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$.",
-                "Para la formulación de segundo orden $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$, halle el discriminante numérico $\\Delta = B^2 - 4AC$.",
+                "Determine el valor numérico del discriminante $\\Delta = B^2 - 4AC$ para la ecuación ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$.",
+                "Calcule el valor escalar de $\\Delta = B^2 - 4AC$ correspondiente a la ecuación ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$.",
+                "Para la formulación de segundo orden ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, halle el discriminante numérico $\\Delta = B^2 - 4AC$.",
             ],
             "generate_py": (
                 "def generate(rng):\n"
@@ -125,7 +153,7 @@ DSL_REFERENCE: Dict[str, Any] = {
                 "    C = rng.randint(1, 5)\n"
                 "    delta = B**2 - 4 * A * C\n"
                 "    return {\n"
-                "        'vars': {'A': A, 'B': B, 'C': C},\n"
+                "        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta},\n"
                 "        'correct': delta,\n"
                 "        'value': str(delta),\n"
                 "        'canonical_algebraic': str(delta),\n"
@@ -155,23 +183,23 @@ DSL_REFERENCE: Dict[str, Any] = {
             "interaction_type": "multiple_select",
             "difficulty": "hard",
             "bloom": "Analyze",
-            "stem": "Para la ecuación diferencial $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$, seleccione todas las afirmaciones teóricas que son matemáticamente verdaderas:",
+            "stem": "Para la ecuación diferencial ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, seleccione todas las afirmaciones teóricas que son matemáticamente verdaderas:",
             "stem_variants": [
-                "Para la ecuación diferencial $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$, seleccione todas las afirmaciones teóricas que son matemáticamente verdaderas:",
-                "Considere el modelo de segundo orden $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$. ¿Cuáles de las siguientes propiedades sobre su clasificación y discriminante son válidas?",
-                "Respecto a la formulación $${A} u_{{xx}} + {B} u_{{xy}} + {C} u_{{yy}} = 0$$, identifique todas las proposiciones ciertas sobre sus curvas características y discriminante:",
+                "Para la ecuación diferencial ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, seleccione todas las afirmaciones teóricas que son matemáticamente verdaderas:",
+                "Considere el modelo de segundo orden ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$. ¿Cuáles de las siguientes propiedades sobre su clasificación y discriminante son válidas?",
+                "Respecto a la formulación ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, identifique todas las proposiciones ciertas sobre sus curvas características y discriminante:",
             ],
             "generate_py": (
                 "def generate(rng):\n"
                 "    A = 1\n"
                 "    C = 1\n"
-                "    B = rng.randint(4, 12)\n"
+                "    B = rng.choice([4, 5, 6, 7, 8, 9, 10, 11, 12])\n"
                 "    delta = B**2 - 4 * A * C\n"
                 "    opts = [\n"
                 "        {'content': 'El discriminante Delta es estrictamente positivo en todo el dominio.', 'is_correct': True, 'distractor_id': None},\n"
                 "        {'content': 'La ecuación admite dos familias reales y distintas de curvas características.', 'is_correct': True, 'distractor_id': None},\n"
-                "        {'content': 'La ecuación es de tipo elíptico en todo el plano euclídeo.', 'is_correct': False, 'distractor_id': 'D-01'},\n"
-                "        {'content': 'El discriminante se calcula como Delta = B^2 - AC sin el factor cuatro.', 'is_correct': False, 'distractor_id': 'D-02'},\n"
+                "        {'content': 'La ecuación es de tipo elíptico en todo el plano euclídeo.', 'is_correct': False, 'distractor_id': 'D-01', 'error_rationale': 'El discriminante es estrictamente positivo, por lo que la ecuación es hiperbólica.'},\n"
+                "        {'content': 'El discriminante se calcula como Delta = B^2 - AC sin el factor cuatro.', 'is_correct': False, 'distractor_id': 'D-02', 'error_rationale': 'La fórmula del discriminante exige el factor cuatro: $4AC$.'},\n"
                 "    ]\n"
                 "    return {\n"
                 "        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta},\n"

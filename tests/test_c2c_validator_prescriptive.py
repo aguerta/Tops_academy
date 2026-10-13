@@ -130,6 +130,50 @@ class TestPrescriptiveDiagnosticsAndAccumulation:
         # All errors are formatted prescriptively
         assert all("NOTA PARA EL AGENTE:" in e for e in errors)
 
+    def test_check_single_template_validates_all_stem_variants_syntax(self):
+        """Static check_single_template must catch broken KaTeX syntax across all stem_variants."""
+        template = {
+            "id": "TPL-VARIANTS-KATEX-ERR",
+            "interaction_type": "fill_in_the_blank",
+            "stem": "Determine el valor de {x}.",
+            "stem_variants": [
+                "Variante 0 válida con valor ${x}$.",
+                "Variante 1 válida con parámetro ${x}$.",
+                "Variante 2 rota con $\\frac{a}$ y ${x}$.",
+                "Variante 3 rota con $\\hat{\\boldsymbol{\\beta}$ y ${x}$.",
+            ],
+            "hints": ["Hint 1", "Hint 2", "Hint 3"],
+            "detailed_solution": "Solución {x}",
+            "distractor_ids": [],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    x = rng.randint(10, 50)\n"
+                "    return {'vars': {'x': x}, 'correct': str(x), 'distractors': []}\n"
+            ),
+        }
+        errors = check_single_template(
+            template=template,
+            competency_id="Hab-01",
+            declared_distractor_ids=set(),
+            num_dry_run_seeds=5,
+        )
+        assert len(errors) >= 2
+        error_blob = "\n".join(errors)
+        assert "stem_variants[2]" in error_blob
+        assert "stem_variants[3]" in error_blob
+        assert any("R-20" in e for e in errors)
+
+    def test_validate_katex_syntax_detects_nested_unclosed_macro(self):
+        """validate_katex_syntax must detect unclosed nested accent/style macros."""
+        bad_text = r"El estimador puntual es $\hat{\boldsymbol{\beta}$ en el modelo."
+        errors = validate_katex_syntax(bad_text, "test_field")
+        assert len(errors) > 0
+        assert any("nested" in e.lower() or "unclosed" in e.lower() for e in errors)
+
+        good_text = r"El estimador puntual es $\hat{\boldsymbol{\beta}}$ en el modelo."
+        good_errors = validate_katex_syntax(good_text, "test_field")
+        assert not any("nested" in e.lower() for e in good_errors)
+
 
 class TestHermeticPublisherAndRuntime:
     """Tests for virtualenv resolution and fallback in CoursePublisher."""

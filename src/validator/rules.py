@@ -294,10 +294,6 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
     """
     errors: list[ValidationError] = []
 
-    questions = data.get("questions")
-    if not isinstance(questions, list):
-        return errors
-
     generic_placeholders = {
         "placeholder", "distractor", "error", "n/a", "na", "none", "null",
         "ninguno", "ninguna", "comodin", "comodín", "generic", "generico",
@@ -438,7 +434,226 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                 item_id=q_id
             ))
 
+        # 7. Unclosed nested accent/style macros (\hat{\boldsymbol{, \hat{\mathbf{, \bar{\mathbf{, \tilde{\boldsymbol{)
+        nested_macro_pattern = re.compile(
+            r"\\(hat|bar|tilde|vec|dot|ddot|check|acute|grave|mathring|widecheck|widehat|widetilde)"
+            r"\s*\{\s*"
+            r"\\(boldsymbol|mathbf|bm|mathit|mathrm|mathbb|mathcal|text|textbf)"
+            r"\s*\{"
+        )
+        for m in nested_macro_pattern.finditer(text):
+            start_pos = m.end()
+            depth = 2
+            idx = start_pos
+            is_unclosed = False
+            while idx < len(text):
+                ch = text[idx]
+                if ch == "\\":
+                    idx += 2
+                    continue
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 1:
+                        rest = text[idx + 1:].lstrip()
+                        if not rest or not rest.startswith("}"):
+                            is_unclosed = True
+                            break
+                    elif depth == 0:
+                        break
+                elif ch == "$" and depth > 0:
+                    is_unclosed = True
+                    break
+                idx += 1
+            else:
+                if depth > 0:
+                    is_unclosed = True
+
+            if is_unclosed:
+                snippet = text[m.start():min(len(text), m.start() + 40)]
+                text_errors.append(ValidationError(
+                    rule_id="R-20",
+                    code="ERR_LATEX_SYNTAX",
+                    message=f"Question '{q_id}' in {field_desc}: Unclosed nested accent/style macro detected: '{snippet}'",
+                    item_id=q_id
+                ))
+
+        # 8. Macro arity validation (\frac, \binom, \overset, \underset, etc.)
+        for m in re.finditer(r"\\(frac|dfrac|cfrac|binom|dbinom|tbinom|overset|underset)\b", text):
+            macro_name = m.group(1)
+            # Find and parse argument 1
+            curr = m.end()
+            while curr < len(text) and text[curr].isspace():
+                curr += 1
+            arg1_valid = False
+            if curr < len(text) and text[curr] == "{":
+                depth = 1
+                curr += 1
+                while curr < len(text):
+                    if text[curr] == "\\":
+                        curr += 2
+                        continue
+                    if text[curr] == "{":
+                        depth += 1
+                    elif text[curr] == "}":
+                        depth -= 1
+                        if depth == 0:
+                            arg1_valid = True
+                            curr += 1
+                            break
+                    elif text[curr] == "$":
+                        break
+                    curr += 1
+
+            arg2_valid = False
+            if arg1_valid:
+                while curr < len(text) and text[curr].isspace():
+                    curr += 1
+                if curr < len(text) and text[curr] == "{":
+                    depth = 1
+                    curr += 1
+                    while curr < len(text):
+                        if text[curr] == "\\":
+                            curr += 2
+                            continue
+                        if text[curr] == "{":
+                            depth += 1
+                        elif text[curr] == "}":
+                            depth -= 1
+                            if depth == 0:
+                                arg2_valid = True
+                                break
+                        elif text[curr] == "$":
+                            break
+                        curr += 1
+
+            if not arg1_valid or not arg2_valid:
+                snippet = text[m.start():min(len(text), m.start() + 40)]
+                text_errors.append(ValidationError(
+                    rule_id="R-20",
+                    code="ERR_LATEX_SYNTAX",
+                    message=f"Question '{q_id}' in {field_desc}: Macro '\\{macro_name}' requires 2 braced arguments, but was incomplete or malformed: '{snippet}'",
+                    item_id=q_id
+                ))
+
+        # 9. Unclosed LaTeX environments (\begin{env} ... \end{env})
+        env_stack: list[str] = []
+        for m in re.finditer(r"\\(begin|end)\s*\{([a-zA-Z*]+)\}", text):
+            action, env = m.group(1), m.group(2)
+            if action == "begin":
+                env_stack.append(env)
+            else:
+                if not env_stack:
+                    text_errors.append(ValidationError(
+                        rule_id="R-20",
+                        code="ERR_LATEX_SYNTAX",
+                        message=f"Question '{q_id}' in {field_desc}: Unexpected LaTeX environment closure '\\end{{{env}}}' with no matching '\\begin'",
+                        item_id=q_id
+                    ))
+                elif env_stack[-1] != env:
+                    expected = env_stack.pop()
+                    text_errors.append(ValidationError(
+                        rule_id="R-20",
+                        code="ERR_LATEX_SYNTAX",
+                        message=f"Question '{q_id}' in {field_desc}: Mismatched LaTeX environment closure '\\end{{{env}}}', expected '\\end{{{expected}}}'",
+                        item_id=q_id
+                    ))
+                else:
+                    env_stack.pop()
+
+        for unclosed_env in env_stack:
+            text_errors.append(ValidationError(
+                rule_id="R-20",
+                code="ERR_LATEX_SYNTAX",
+                message=f"Question '{q_id}' in {field_desc}: Unclosed LaTeX environment '\\begin{{{unclosed_env}}}' detected (missing '\\end{{{unclosed_env}}}')",
+                item_id=q_id
+            ))
+
+        # 10. Unclosed scalable delimiters (\left( \right), \left[ \right], \left\{ \right\})
+        matching_delims = {
+            "(": ")",
+            "[": "]",
+            r"\{": r"\}",
+        }
+        delim_stack: list[str] = []
+
+        def report_unclosed_delims(stack: list[str]) -> None:
+            for unclosed_delim in stack:
+                exp_r = matching_delims.get(unclosed_delim, "")
+                right_desc = f"'\\right{exp_r}'" if exp_r else "'\\right'"
+                text_errors.append(ValidationError(
+                    rule_id="R-20",
+                    code="ERR_LATEX_SYNTAX",
+                    message=f"Question '{q_id}' in {field_desc}: Unclosed scalable delimiter '\\left{unclosed_delim}' detected (missing matching {right_desc})",
+                    item_id=q_id
+                ))
+
+        token_pattern = re.compile(
+            r"\$\$|(?<!\\)\$|\\(left|right)\s*(\(|\)|\[|\]|\\\{|\\\}|\||\.)"
+        )
+        for tm in token_pattern.finditer(text):
+            tok = tm.group(0)
+            if tok in ("$$", "$"):
+                if delim_stack:
+                    report_unclosed_delims(delim_stack)
+                    delim_stack.clear()
+            else:
+                direction, delim = tm.group(1), tm.group(2)
+                if direction == "left":
+                    delim_stack.append(delim)
+                else:
+                    if not delim_stack:
+                        text_errors.append(ValidationError(
+                            rule_id="R-20",
+                            code="ERR_LATEX_SYNTAX",
+                            message=f"Question '{q_id}' in {field_desc}: Unexpected scalable delimiter closure '\\right{delim}' with no matching '\\left'",
+                            item_id=q_id
+                        ))
+                    else:
+                        open_delim = delim_stack.pop()
+                        expected_close = matching_delims.get(open_delim)
+                        if expected_close and delim != expected_close and delim != ".":
+                            text_errors.append(ValidationError(
+                                rule_id="R-20",
+                                code="ERR_LATEX_SYNTAX",
+                                message=f"Question '{q_id}' in {field_desc}: Mismatched scalable delimiter '\\right{delim}', expected '\\right{expected_close}' for '\\left{open_delim}'",
+                                item_id=q_id
+                            ))
+
+        if delim_stack:
+            report_unclosed_delims(delim_stack)
+            delim_stack.clear()
+
         return text_errors
+
+    # --- Rule R-20: Root Course Metadata ---
+    course_id = str(data.get("course_id", "course"))
+    course_title = data.get("course_title")
+    if isinstance(course_title, str):
+        errors.extend(check_latex_and_templates(course_title, course_id, "course_title"))
+
+    course_desc = data.get("description")
+    if isinstance(course_desc, str):
+        errors.extend(check_latex_and_templates(course_desc, course_id, "description"))
+
+    # --- Rule R-20: Course Competencies ---
+    competencies = data.get("competencies")
+    if isinstance(competencies, list):
+        for comp in competencies:
+            if not isinstance(comp, dict):
+                continue
+            comp_id = str(comp.get("id", "competency"))
+            comp_name = comp.get("name")
+            if isinstance(comp_name, str):
+                errors.extend(check_latex_and_templates(comp_name, comp_id, "competency.name"))
+            comp_desc = comp.get("description")
+            if isinstance(comp_desc, str):
+                errors.extend(check_latex_and_templates(comp_desc, comp_id, "competency.description"))
+
+    questions = data.get("questions")
+    if not isinstance(questions, list):
+        return errors
 
     for q in questions:
         if not isinstance(q, dict):
@@ -489,14 +704,19 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                 if isinstance(opt_content, str):
                     errors.extend(check_latex_and_templates(opt_content, q_id, f"options[{opt_id}].content"))
 
-                    # R-18: Meta-information giveaway in visible option content
-                    if meta_giveaway_regex.search(opt_content):
-                        errors.append(ValidationError(
-                            rule_id="R-18",
-                            code="ERR_META_GIVEAWAY",
-                            message=f"Question '{q_id}': Option '{opt_id}' contains psychometric meta-information error giveaway in visible content: '{opt_content[:60]}...'",
-                            item_id=q_id
-                        ))
+                # R-20 on option error_rationale
+                err_rationale = opt.get("error_rationale")
+                if isinstance(err_rationale, str):
+                    errors.extend(check_latex_and_templates(err_rationale, q_id, f"options[{opt_id}].error_rationale"))
+
+                # R-18: Meta-information giveaway in visible option content
+                if isinstance(opt_content, str) and meta_giveaway_regex.search(opt_content):
+                    errors.append(ValidationError(
+                        rule_id="R-18",
+                        code="ERR_META_GIVEAWAY",
+                        message=f"Question '{q_id}': Option '{opt_id}' contains psychometric meta-information error giveaway in visible content: '{opt_content[:60]}...'",
+                        item_id=q_id
+                    ))
 
                 # R-17 & R-22: Error rationales on distractors (is_correct is False)
                 if is_correct is False:

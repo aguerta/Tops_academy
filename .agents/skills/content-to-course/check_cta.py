@@ -16,6 +16,13 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import jsonschema
 
+# Add skills root to sys.path
+_skills_root = Path(__file__).parent.resolve()
+if str(_skills_root) not in sys.path:
+    sys.path.insert(0, str(_skills_root))
+
+from engine.invariants import validate_katex_syntax
+
 
 def load_schema(schema_name: str = "cta.schema.json") -> Dict[str, Any]:
     """Load JSON Schema from schemas directory."""
@@ -121,6 +128,57 @@ def _check_evidence_in_manifest(
     return None
 
 
+def check_cta_katex(cta_data: Dict[str, Any]) -> List[str]:
+    """Inspect KaTeX math in competencies and distractors using validate_katex_syntax.
+
+    Inspects:
+    - competencies[].name
+    - competencies[].description_latex and competencies[].description
+    - distractors[].manifestation
+    - distractors[].remediation_hint
+    using validate_katex_syntax when '$' or '$$' are present.
+    """
+    errors: List[str] = []
+    if isinstance(cta_data, list):
+        competencies = cta_data
+    elif isinstance(cta_data, dict):
+        competencies = cta_data.get("competencies", [])
+    else:
+        return errors
+
+    for idx, comp in enumerate(competencies):
+        if not isinstance(comp, dict):
+            continue
+        cid = comp.get("id", f"comp_at_index_{idx}")
+
+        # competencies[].name
+        c_name = comp.get("name")
+        if isinstance(c_name, str) and ("$" in c_name.replace(r"\$", "")):
+            errors.extend(validate_katex_syntax(c_name, f"competency '{cid}' name"))
+
+        # competencies[].description_latex and competencies[].description
+        for desc_key in ("description_latex", "description"):
+            c_desc = comp.get(desc_key)
+            if isinstance(c_desc, str) and ("$" in c_desc.replace(r"\$", "")):
+                errors.extend(validate_katex_syntax(c_desc, f"competency '{cid}' {desc_key}"))
+
+        # distractors[].manifestation and distractors[].remediation_hint
+        for d in comp.get("distractors", []):
+            if not isinstance(d, dict):
+                continue
+            did = d.get("id", "UNKNOWN")
+
+            manif = d.get("manifestation")
+            if isinstance(manif, str) and ("$" in manif.replace(r"\$", "")):
+                errors.extend(validate_katex_syntax(manif, f"distractor '{did}' manifestation"))
+
+            rh = d.get("remediation_hint")
+            if isinstance(rh, str) and ("$" in rh.replace(r"\$", "")):
+                errors.extend(validate_katex_syntax(rh, f"distractor '{did}' remediation_hint"))
+
+    return errors
+
+
 def check_cta_part(
     data: Any,
     manifest_data: Optional[Dict[str, Any]] = None,
@@ -220,6 +278,10 @@ def check_cta_part(
                 if ev_err:
                     errors.append(ev_err)
 
+    # KaTeX syntax validation
+    katex_errors = check_cta_katex(data if isinstance(data, dict) else {"competencies": data})
+    errors.extend(katex_errors)
+
     return len(errors) == 0, errors
 
 
@@ -282,29 +344,12 @@ def validate_cta_rules(
                     f"CTA-D2 violation in distractor '{did}': both wrong_belief and omitted_step are null/empty."
                 )
 
-            # Check KaTeX math delimiters in distractor remediation_hint
-            rh = d.get("remediation_hint", "")
-            if rh:
-                stripped_rh = str(rh).replace(r"\$", "")
-                d_count = len(re.findall(r"(?<!\\)\$", stripped_rh))
-                if d_count % 2 != 0:
-                    errors.append(f"R-20 KaTeX error in distractor '{did}' remediation_hint: unbalanced '$' delimiters in '{str(rh)[:80]}...'")
-                if "$$$" in str(rh):
-                    errors.append(f"R-20 KaTeX error in distractor '{did}' remediation_hint: illegal '$$$' delimiter found.")
-
             # Check evidence in manifest if manifest provided
             ev_err = _check_evidence_in_manifest(
                 d.get("evidence"), manifest_pages_set, f"Distractor '{did}'"
             )
             if ev_err:
                 errors.append(ev_err)
-
-        # Check competency KaTeX in description
-        c_desc = comp.get("description_latex") or comp.get("description", "")
-        if c_desc:
-            stripped_desc = str(c_desc).replace(r"\$", "")
-            if len(re.findall(r"(?<!\\)\$", stripped_desc)) % 2 != 0:
-                errors.append(f"R-20 KaTeX error in competency '{cid}' description: unbalanced '$' delimiters.")
 
         # Check competency evidence in manifest
         if comp.get("evidence"):
@@ -318,6 +363,10 @@ def validate_cta_rules(
     # 3. Prerequisites DAG check
     dag_errors = check_prerequisites_dag(competencies)
     errors.extend(dag_errors)
+
+    # 4. KaTeX syntax validation
+    katex_errors = check_cta_katex(cta_data)
+    errors.extend(katex_errors)
 
     return len(errors) == 0, errors
 

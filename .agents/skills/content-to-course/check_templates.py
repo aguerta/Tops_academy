@@ -36,7 +36,7 @@ if str(_project_root) not in sys.path:
 
 from engine.assemble import assemble_question, format_template_string
 from engine.diversity import evaluate_competency_diversity, mask_stem_numbers
-from engine.invariants import check_instance_invariants
+from engine.invariants import check_instance_invariants, validate_katex_syntax
 from engine.instantiate import instantiate_competency, competency_seed_base
 from engine.sandbox import (
     execute_sandbox_batch,
@@ -169,6 +169,62 @@ def format_invariant_error_diagnostic(
             "Revisar macros de LaTeX con múltiples argumentos como \\frac{a}{b} donde falte una llave de cierre.",
         ]
         return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
+
+    # Case F2: Unclosed nested LaTeX macro or accent
+    if "Unclosed nested macro brace detected" in inv_clean or "nested macro" in inv_clean:
+        m_ctx = re.search(r"in ([^:]+):", inv_clean)
+        field_name = m_ctx.group(1).strip() if m_ctx else "math expression"
+        return format_diagnostic_error(
+            "R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, inv_clean,
+            f"Acento o macro anidado de LaTeX sin cerrar correctamente en '{field_name}'.",
+            [
+                "Asegurar que macros anidados como \\hat{\\boldsymbol{\\beta}} tengan ambas llaves de cierre '}}'.",
+                "Revisar expresiones matemáticas con acentos combinados con estilos vectoriales o matriciales.",
+                "Balancear todas las llaves en la fórmula.",
+            ],
+        )
+
+    # Case F3: Macro arity / unclosed argument
+    if "requires 2 arguments" in inv_clean or "unclosed first argument" in inv_clean or "unclosed second argument" in inv_clean or "missing argument brackets" in inv_clean:
+        m_ctx = re.search(r"in ([^.]+)", inv_clean)
+        field_name = m_ctx.group(1).strip() if m_ctx else "math expression"
+        return format_diagnostic_error(
+            "R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, inv_clean,
+            f"Macro de LaTeX (como \\frac, \\binom, \\overset) con aridad incorrecta o argumento incompleto en '{field_name}'.",
+            [
+                "Comprobar que \\frac posea tanto numerador como denominador: \\frac{num}{den}.",
+                "Cerrar adecuadamente cada bloque de llaves '{...}'.",
+                "Evitar macros con argumentos incompletos antes del cierre del delimitador '$'.",
+            ],
+        )
+
+    # Case F4: Unclosed or mismatched LaTeX environment
+    if "LaTeX environment" in inv_clean:
+        m_ctx = re.search(r"in ([^.]+)", inv_clean)
+        field_name = m_ctx.group(1).strip() if m_ctx else "math expression"
+        return format_diagnostic_error(
+            "R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, inv_clean,
+            f"Entorno LaTeX sin cerrar o con cierre discordante en '{field_name}'.",
+            [
+                "Asegurar que cada \\begin{env} tenga su correspondiente \\end{env}.",
+                "Verificar entornos matriciales o de casos como pmatrix, bmatrix, cases, aligned.",
+                "Comprobar que no haya errores tipográficos en el nombre del entorno.",
+            ],
+        )
+
+    # Case F5: Unclosed or unmatched scalable delimiter
+    if "scalable delimiter" in inv_clean:
+        m_ctx = re.search(r"in ([^.]+)", inv_clean)
+        field_name = m_ctx.group(1).strip() if m_ctx else "math expression"
+        return format_diagnostic_error(
+            "R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, inv_clean,
+            f"Delimitador escalable \\left o \\right sin emparejar en '{field_name}'.",
+            [
+                "Emparejar cada \\left( con \\right), \\left[ con \\right], \\left\\{ con \\right\\}.",
+                "Si se requiere un delimitador invisible, usar \\left. o \\right..",
+                "Verificar la simetría de paréntesis y corchetes en las fórmulas matemáticas.",
+            ],
+        )
 
     # Case G: Distractor identical to correct answer (TPL-D4)
     if "Distractor identical to correct answer" in inv_clean:
@@ -653,7 +709,20 @@ def check_single_template(
                 ]
             ))
 
-    # 4. Dry-run 50 seeds and invariant evaluation
+    # 4. Static validation of ALL stem_variants syntax with validate_katex_syntax
+    stem_variants_list = template.get("stem_variants", [])
+    if isinstance(stem_variants_list, list):
+        for idx, variant in enumerate(stem_variants_list):
+            if isinstance(variant, str):
+                for kv_err in validate_katex_syntax(variant, f"stem_variants[{idx}]"):
+                    errors.append(format_invariant_error_diagnostic(
+                        cid=competency_id,
+                        tpl_id=tpl_id,
+                        q_id=f"stem_variants[{idx}]",
+                        inv_err=kv_err,
+                    ))
+
+    # 5. Dry-run 50 seeds and invariant evaluation
     seeds = list(range(100, 100 + num_dry_run_seeds))
     try:
         batch_results = execute_sandbox_batch(
