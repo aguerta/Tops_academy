@@ -1,97 +1,88 @@
 {
-  "conversation_id": "e8ab9fd6-efaf-4d74-ba27-e2cbf10784cb",
+  "conversation_id": "b1a6a9dc-4a57-46d0-b26a-65b9f4d9ce02",
   "global_timings": {
-    "wall_clock_seconds": 3715.0,
-    "wall_clock_minutes": 61.92,
-    "total_turns": 355,
-    "total_errors": 62,
+    "wall_clock_seconds": 8595.0,
+    "wall_clock_minutes": 143.25,
+    "total_turns": 440,
+    "total_errors": 48,
     "avg_inference_pct": 95.8,
     "avg_tool_pct": 4.2
   },
   "cta_architect": {
     "timings": {
-      "wall_time_seconds": 1249.0,
-      "wall_time_minutes": 20.82,
-      "inference_seconds": 1245.0,
-      "tool_seconds": 4.0,
-      "inference_pct": 99.7,
-      "tool_pct": 0.3,
-      "turns_count": 29,
-      "input_tokens": 179219,
-      "output_tokens": 75239,
-      "cache_tokens": 2052641,
-      "active_tokens": 254458
+      "wall_time_seconds": 1051.0,
+      "wall_time_minutes": 17.52,
+      "inference_seconds": 1015.0,
+      "tool_seconds": 36.0,
+      "inference_pct": 96.6,
+      "tool_pct": 3.4,
+      "turns_count": 25,
+      "input_tokens": 218078,
+      "output_tokens": 81242,
+      "cache_tokens": 1929735,
+      "active_tokens": 299320
     },
-    "cutoff_detected": true,
-    "cutoff_step": 27,
-    "pivot_step": 29,
-    "pivot_script": "generate_cta.py\""
+    "cutoff_detected": false,
+    "cutoff_step": null,
+    "pivot_step": null,
+    "pivot_script": ""
   },
   "shards": {
     "Shard Author shard_01": {
       "shard_name": "Shard Author shard_01",
       "timings": {
-        "wall_time_seconds": 1677.0,
-        "wall_time_minutes": 27.95,
-        "inference_seconds": 1598.0,
-        "tool_seconds": 51.0,
-        "inference_pct": 95.3,
-        "tool_pct": 3.0,
-        "turns_count": 104,
-        "input_tokens": 508423,
-        "output_tokens": 209850,
-        "cache_tokens": 8020352,
-        "active_tokens": 718273
+        "wall_time_seconds": 671.0,
+        "wall_time_minutes": 11.18,
+        "inference_seconds": 200.0,
+        "tool_seconds": 18.0,
+        "inference_pct": 29.8,
+        "tool_pct": 2.7,
+        "turns_count": 28,
+        "input_tokens": 145543,
+        "output_tokens": 20932,
+        "cache_tokens": 1016100,
+        "active_tokens": 166475
       },
-      "writes_count": 19,
-      "edits_count": 7,
-      "unique_scripts_written": [
-        "build_shard_01.py\"",
-        "generate_all.py\"",
-        "part1_h01_c01.py\"",
-        "part2_hab01_c02.py\"",
-        "part3_hab02_c03.py\"",
-        "part4_h02_hab03.py\"",
-        "test.json\""
-      ],
-      "check_runs_total": 26,
-      "check_runs_failed": 17,
-      "check_runs_passed": 9,
-      "reverse_eng_reads_count": 7,
-      "has_reverse_eng_loop": true,
-      "has_micro_loop": true
+      "writes_count": 0,
+      "edits_count": 2,
+      "unique_scripts_written": [],
+      "check_runs_total": 11,
+      "check_runs_failed": 4,
+      "check_runs_passed": 7,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": false
     },
     "Shard Author shard_02": {
       "shard_name": "Shard Author shard_02",
       "timings": {
-        "wall_time_seconds": 1153.0,
-        "wall_time_minutes": 19.22,
-        "inference_seconds": 1113.0,
-        "tool_seconds": 40.0,
-        "inference_pct": 96.5,
-        "tool_pct": 3.5,
-        "turns_count": 66,
-        "input_tokens": 652284,
-        "output_tokens": 142523,
-        "cache_tokens": 6336743,
-        "active_tokens": 794807
+        "wall_time_seconds": 1214.0,
+        "wall_time_minutes": 20.23,
+        "inference_seconds": 1159.0,
+        "tool_seconds": 55.0,
+        "inference_pct": 95.5,
+        "tool_pct": 4.5,
+        "turns_count": 51,
+        "input_tokens": 300214,
+        "output_tokens": 147776,
+        "cache_tokens": 6311058,
+        "active_tokens": 447990
       },
-      "writes_count": 15,
-      "edits_count": 10,
+      "writes_count": 13,
+      "edits_count": 3,
       "unique_scripts_written": [
         "C-04.json\"",
-        "generate_c04.py\"",
-        "generate_c05.py\"",
-        "generate_c06.py\"",
-        "generate_h03.py\"",
-        "generate_hab04.py\"",
-        "generate_hab05.py\"",
-        "generate_hab06.py\"",
-        "test.py\""
+        "gen_c04.py\"",
+        "gen_c05.py\"",
+        "gen_c06.py\"",
+        "gen_h03.py\"",
+        "gen_hab03.py\"",
+        "gen_hab04.py\"",
+        "test_c04.py\""
       ],
-      "check_runs_total": 26,
-      "check_runs_failed": 15,
-      "check_runs_passed": 11,
+      "check_runs_total": 13,
+      "check_runs_failed": 6,
+      "check_runs_passed": 7,
       "reverse_eng_reads_count": 0,
       "has_reverse_eng_loop": false,
       "has_micro_loop": true
@@ -99,32 +90,65 @@
     "Shard Author shard_03": {
       "shard_name": "Shard Author shard_03",
       "timings": {
-        "wall_time_seconds": 1220.0,
-        "wall_time_minutes": 20.33,
-        "inference_seconds": 1134.0,
-        "tool_seconds": 37.0,
-        "inference_pct": 93.0,
-        "tool_pct": 3.0,
-        "turns_count": 56,
-        "input_tokens": 582199,
-        "output_tokens": 160835,
-        "cache_tokens": 5523364,
-        "active_tokens": 743034
+        "wall_time_seconds": 1265.0,
+        "wall_time_minutes": 21.08,
+        "inference_seconds": 1205.0,
+        "tool_seconds": 60.0,
+        "inference_pct": 95.3,
+        "tool_pct": 4.7,
+        "turns_count": 40,
+        "input_tokens": 261863,
+        "output_tokens": 162720,
+        "cache_tokens": 4756972,
+        "active_tokens": 424583
       },
-      "writes_count": 15,
-      "edits_count": 3,
+      "writes_count": 14,
+      "edits_count": 0,
       "unique_scripts_written": [
-        "C-07.json\"",
-        "C-08.json\"",
-        "C-09.json\"",
-        "C-10.json\"",
-        "Hab-07.json\"",
-        "Hab-08.json\"",
-        "Hab-09.json\""
+        "gen_C07.py\"",
+        "gen_C08.py\"",
+        "gen_H04.py\"",
+        "gen_H05.py\"",
+        "gen_Hab05.py\"",
+        "gen_Hab06.py\""
       ],
-      "check_runs_total": 29,
-      "check_runs_failed": 11,
-      "check_runs_passed": 18,
+      "check_runs_total": 17,
+      "check_runs_failed": 9,
+      "check_runs_passed": 8,
+      "reverse_eng_reads_count": 0,
+      "has_reverse_eng_loop": false,
+      "has_micro_loop": true
+    },
+    "Shard Author shard_04": {
+      "shard_name": "Shard Author shard_04",
+      "timings": {
+        "wall_time_seconds": 1097.0,
+        "wall_time_minutes": 18.28,
+        "inference_seconds": 1032.0,
+        "tool_seconds": 65.0,
+        "inference_pct": 94.1,
+        "tool_pct": 5.9,
+        "turns_count": 54,
+        "input_tokens": 303067,
+        "output_tokens": 155464,
+        "cache_tokens": 6836781,
+        "active_tokens": 458531
+      },
+      "writes_count": 16,
+      "edits_count": 0,
+      "unique_scripts_written": [
+        "gen_C-09.py\"",
+        "gen_C-10.py\"",
+        "gen_C-11.py\"",
+        "gen_C-12.py\"",
+        "gen_Hab-07.py\"",
+        "gen_Hab-08.py\"",
+        "test_lens.py\"",
+        "test_lens2.py\""
+      ],
+      "check_runs_total": 15,
+      "check_runs_failed": 8,
+      "check_runs_passed": 7,
       "reverse_eng_reads_count": 0,
       "has_reverse_eng_loop": false,
       "has_micro_loop": true
@@ -133,17 +157,17 @@
   "judges": {
     "Blind Judge 01": {
       "timings": {
-        "wall_time_seconds": 130.0,
-        "wall_time_minutes": 2.17,
-        "inference_seconds": 129.0,
+        "wall_time_seconds": 128.0,
+        "wall_time_minutes": 2.13,
+        "inference_seconds": 127.0,
         "tool_seconds": 1.0,
         "inference_pct": 99.2,
         "tool_pct": 0.8,
-        "turns_count": 8,
-        "input_tokens": 74104,
-        "output_tokens": 19505,
-        "cache_tokens": 161193,
-        "active_tokens": 93609
+        "turns_count": 7,
+        "input_tokens": 71856,
+        "output_tokens": 19049,
+        "cache_tokens": 142446,
+        "active_tokens": 90905
       },
       "web_queries_count": 0,
       "web_queries": [],
@@ -152,365 +176,273 @@
     },
     "Blind Judge 02": {
       "timings": {
-        "wall_time_seconds": 394.0,
-        "wall_time_minutes": 6.57,
-        "inference_seconds": 317.0,
-        "tool_seconds": 73.0,
-        "inference_pct": 80.5,
-        "tool_pct": 18.5,
-        "turns_count": 16,
-        "input_tokens": 123182,
-        "output_tokens": 42188,
-        "cache_tokens": 536630,
-        "active_tokens": 165370
+        "wall_time_seconds": 343.0,
+        "wall_time_minutes": 5.72,
+        "inference_seconds": 343.0,
+        "tool_seconds": 0.0,
+        "inference_pct": 100.0,
+        "tool_pct": 0.0,
+        "turns_count": 8,
+        "input_tokens": 108496,
+        "output_tokens": 49604,
+        "cache_tokens": 224134,
+        "active_tokens": 158100
       },
-      "web_queries_count": 9,
-      "web_queries": [
-        "\"\\\"Solow\\\" \\\"1956\\\" \\\"CES\\\" \\\"\\\\sqrt{n/s}\\\" OR \\\"n/s\\\" \\\"r^*\\\"\"",
-        "\"\\\"Solow\\\" \\\"1956\\\" \\\"A Contribution to the Theory of Economic Growth\\\" \\\"Example\\\" OR \\\"Examples\\\"\"",
-        "\"\\\"Solow\\\" \\\"1956\\\" \\\"A Contribution to the Theory of Economic Growth\\\" \\\"Example 1\\\" OR \\\"Example 2\\\" OR \\\"Example 3\\\"\"",
-        "\"\\\"Example 2\\\" \\\"Example 3\\\" \\\"Solow\\\" \\\"1956\\\" \\\"Cobb-Douglas\\\"\"",
-        "\"\\\"Solow\\\" \\\"1956\\\" \\\"Example 3\\\" \\\"r^*\\\" OR \\\"n/s\\\" OR \\\"equilibrium\\\"\"",
-        "\"\\\"Solow\\\" \\\"1956\\\" \\\"Example 3\\\" formula\"",
-        "\"\\\"Solow\\\" \\\"1956\\\" \\\"r^*\\\" \\\"\\\\sqrt{n/s} > a\\\" OR \\\"\\\\sqrt{n/s} - a\\\" OR \\\"( \\\\sqrt{n/s} - a )\\\" OR \\\"( \\\\sqrt{s/n} - a )\\\"\"",
-        "\"\\\"Solow\\\" \\\"1956\\\" \\\"Example 3\\\" \\\"elasticity of substitution\\\" OR \\\"constant elasticity\\\"\"",
-        "\"\\\"Example 3\\\" \\\"Solow\\\" \\\"1956\\\" \\\"Quarterly Journal of Economics\\\" \\\"F(K, L)\\\" OR \\\"F(K,L)\\\" OR \\\"Y =\\\"\""
-      ],
-      "url_reads_count": 1,
-      "used_web": true
+      "web_queries_count": 0,
+      "web_queries": [],
+      "url_reads_count": 0,
+      "used_web": false
     }
   },
   "error_taxonomy": {
-    "Python Environment / Virtualenv Discrepancy": [
-      {
-        "agent": "Orchestrator",
-        "step_index": 6,
-        "snippet": "Created At: 2026-10-12T21:13:45-05:00\nCompleted At: 2026-10-12T21:13:46-05:00\n\nThe command exited with code 1.\nOutput:\nw"
-      },
-      {
-        "agent": "Orchestrator",
-        "step_index": 124,
-        "snippet": "Created At: 2026-10-12T22:13:50-05:00\nCompleted At: 2026-10-12T22:13:51-05:00\n\nThe command exited with code 1.\nOutput:\nw"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 46,
-        "snippet": "Created At: 2026-10-12T21:41:24-05:00\nCompleted At: 2026-10-12T21:41:25-05:00\n\nThe command exited with code 1.\nOutput:\nT"
-      }
-    ],
-    "PowerShell Command / Path Not Found": [
-      {
-        "agent": "Orchestrator",
-        "step_index": 8,
-        "snippet": "Created At: 2026-10-12T21:13:57-05:00\nCompleted At: 2026-10-12T21:13:58-05:00\n\nThe command exited with code 1.\nOutput:\nG"
-      },
-      {
-        "agent": "Orchestrator",
-        "step_index": 16,
-        "snippet": "Created At: 2026-10-12T21:14:09-05:00\nCompleted At: 2026-10-12T21:14:09-05:00\n\nThe command exited with code 1.\nOutput:\np"
-      }
-    ],
     "Other Console / Tool Failures": [
       {
         "agent": "Orchestrator",
-        "step_index": 86,
-        "snippet": "Created At: 2026-10-12T21:16:52-05:00\nCompleted At: 2026-10-12T21:16:52-05:00\n\nThe command exited with code 1.\nOutput:\nE"
+        "step_index": 50,
+        "snippet": "Created At: 2026-10-13T13:02:49-05:00\nCompleted At: 2026-10-13T13:02:49-05:00\nFile Path: `file:///C:/Users/augus/.gemini"
       },
       {
         "agent": "Orchestrator",
-        "step_index": 136,
-        "snippet": "Created At: 2026-10-12T22:14:47-05:00\nCompleted At: 2026-10-12T22:14:47-05:00\n\nThe command exited with code 1.\nOutput:\nG"
+        "step_index": 12,
+        "snippet": "Created At: 2026-10-13T13:45:07-05:00\nCompleted At: 2026-10-13T13:45:07-05:00\n\nThe command exited with code 1.\nOutput:\nE"
       },
       {
-        "agent": "Direct CTA Architect",
-        "step_index": 8,
-        "snippet": "Created At: 2026-10-12T21:17:19-05:00\nCompleted At: 2026-10-12T21:17:19-05:00\nEncountered error in step execution: decla"
+        "agent": "Orchestrator",
+        "step_index": 34,
+        "snippet": "Created At: 2026-10-13T13:45:45-05:00\nCompleted At: 2026-10-13T13:45:45-05:00\nEncountered error in step execution: agent"
       },
       {
-        "agent": "Shard Author shard_01",
-        "step_index": 16,
-        "snippet": "Created At: 2026-10-12T21:39:01-05:00\nCompleted At: 2026-10-12T21:39:02-05:00\n\nThe command exited with code 1.\nOutput:\nT"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 32,
-        "snippet": "Created At: 2026-10-12T21:40:22-05:00\nCompleted At: 2026-10-12T21:40:23-05:00\n\nThe command exited with code 1.\nOutput:\nT"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 163,
-        "snippet": "Created At: 2026-10-12T22:03:52-05:00\nCompleted At: 2026-10-12T22:03:53-05:00\nEncountered error in step execution: .agen"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 6,
-        "snippet": "Created At: 2026-10-12T21:38:26-05:00\nCompleted At: 2026-10-12T21:38:26-05:00\nEncountered error in step execution: Conte"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 20,
-        "snippet": "Created At: 2026-10-12T21:39:10-05:00\nCompleted At: 2026-10-12T21:39:11-05:00\n\nThe command exited with code 1.\nOutput:\nT"
-      },
-      {
-        "agent": "Shard Author shard_03",
-        "step_index": 16,
-        "snippet": "Created At: 2026-10-12T21:39:00-05:00\nCompleted At: 2026-10-12T21:39:01-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_03",
-        "step_index": 22,
-        "snippet": "Created At: 2026-10-12T21:39:14-05:00\nCompleted At: 2026-10-12T21:39:15-05:00\n\nThe command exited with code 1.\nOutput:\nE"
-      },
-      {
-        "agent": "Shard Author shard_03",
-        "step_index": 24,
-        "snippet": "Created At: 2026-10-12T21:39:21-05:00\nCompleted At: 2026-10-12T21:39:22-05:00\n\nThe command exited with code 1.\nOutput:\np"
-      },
-      {
-        "agent": "Shard Author shard_03",
-        "step_index": 26,
-        "snippet": "Created At: 2026-10-12T21:39:27-05:00\nCompleted At: 2026-10-12T21:39:27-05:00\n\nThe command exited with code 1.\nOutput:\np"
-      },
-      {
-        "agent": "Shard Author shard_03",
-        "step_index": 30,
-        "snippet": "Created At: 2026-10-12T21:42:50-05:00\nCompleted At: 2026-10-12T21:42:50-05:00\n\nThe command exited with code 1.\nOutput:\nT"
-      },
-      {
-        "agent": "Shard Author shard_03",
-        "step_index": 46,
-        "snippet": "Created At: 2026-10-12T21:43:36-05:00\nCompleted At: 2026-10-12T21:43:36-05:00\n\nThe command exited with code 1.\nOutput:\nT"
-      },
-      {
-        "agent": "Shard Author shard_03",
-        "step_index": 50,
-        "snippet": "Created At: 2026-10-12T21:43:52-05:00\nCompleted At: 2026-10-12T21:43:53-05:00\n\nThe command exited with code 1.\nOutput:\nT"
-      },
-      {
-        "agent": "Blind Judge 01",
-        "step_index": 6,
-        "snippet": "Created At: 2026-10-12T22:07:10-05:00\nCompleted At: 2026-10-12T22:07:10-05:00\nEncountered error in step execution: Conte"
-      },
-      {
-        "agent": "Blind Judge 02",
-        "step_index": 14,
-        "snippet": "Created At: 2026-10-12T22:09:55-05:00\nCompleted At: 2026-10-12T22:10:35-05:00\nEncountered error in step execution: permi"
-      }
-    ],
-    "Token Limit Cutoff (Model Truncation)": [
-      {
-        "agent": "Direct CTA Architect",
-        "step_index": 28,
-        "snippet": "Error: Your previous response was cut off because it exceeded the output token limit\nPlease continue from where you left"
-      }
-    ],
-    "Parameter Diversity Violation (TPL-VAR)": [
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 20,
-        "snippet": "Created At: 2026-10-12T21:39:10-05:00\nCompleted At: 2026-10-12T21:39:11-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 24,
-        "snippet": "Created At: 2026-10-12T21:39:59-05:00\nCompleted At: 2026-10-12T21:40:00-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 44,
-        "snippet": "Created At: 2026-10-12T21:41:15-05:00\nCompleted At: 2026-10-12T21:41:16-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 50,
-        "snippet": "Created At: 2026-10-12T21:41:33-05:00\nCompleted At: 2026-10-12T21:41:34-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 54,
-        "snippet": "Created At: 2026-10-12T21:41:53-05:00\nCompleted At: 2026-10-12T21:41:53-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 56,
-        "snippet": "Created At: 2026-10-12T21:41:57-05:00\nCompleted At: 2026-10-12T21:41:58-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 84,
-        "snippet": "Created At: 2026-10-12T21:52:33-05:00\nCompleted At: 2026-10-12T21:52:34-05:00\n\nThe command exited with code 1.\nOutput:\nC"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 96,
-        "snippet": "Created At: 2026-10-12T21:56:01-05:00\nCompleted At: 2026-10-12T21:56:03-05:00\n\nThe command exited with code 1.\nOutput:\nS"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 16,
-        "snippet": "Created At: 2026-10-12T21:38:52-05:00\nCompleted At: 2026-10-12T21:38:52-05:00\n\nThe command exited with code 1.\nOutput:\n["
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 28,
-        "snippet": "Created At: 2026-10-12T21:39:32-05:00\nCompleted At: 2026-10-12T21:39:33-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 30,
-        "snippet": "Created At: 2026-10-12T21:39:36-05:00\nCompleted At: 2026-10-12T21:39:37-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_02",
+        "agent": "Orchestrator",
         "step_index": 36,
-        "snippet": "Created At: 2026-10-12T21:39:57-05:00\nCompleted At: 2026-10-12T21:39:58-05:00\n\nThe command exited with code 1.\nOutput:\nF"
+        "snippet": "Created At: 2026-10-13T13:45:49-05:00\nCompleted At: 2026-10-13T13:45:49-05:00\nEncountered error in step execution: agent"
+      },
+      {
+        "agent": "Orchestrator",
+        "step_index": 78,
+        "snippet": "Created At: 2026-10-13T13:47:35-05:00\nCompleted At: 2026-10-13T13:47:35-05:00\n\nThe command exited with code 1.\nOutput:\nw"
+      },
+      {
+        "agent": "Orchestrator",
+        "step_index": 134,
+        "snippet": "Created At: 2026-10-13T14:13:18-05:00\nCompleted At: 2026-10-13T14:13:19-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Orchestrator",
+        "step_index": 138,
+        "snippet": "Created At: 2026-10-13T14:13:31-05:00\nCompleted At: 2026-10-13T14:13:31-05:00\n\nThe command exited with code 1.\nOutput:\nT"
+      },
+      {
+        "agent": "Orchestrator",
+        "step_index": 160,
+        "snippet": "Created At: 2026-10-13T14:14:40-05:00\nCompleted At: 2026-10-13T14:14:40-05:00\n\nThe command exited with code 1.\nOutput:\nT"
+      },
+      {
+        "agent": "Orchestrator",
+        "step_index": 162,
+        "snippet": "Created At: 2026-10-13T14:14:45-05:00\nCompleted At: 2026-10-13T14:14:46-05:00\n\nThe command exited with code 1.\nOutput:\nT"
+      },
+      {
+        "agent": "Orchestrator",
+        "step_index": 168,
+        "snippet": "Created At: 2026-10-13T14:15:03-05:00\nCompleted At: 2026-10-13T14:15:04-05:00\n\nThe command exited with code 1.\nOutput:\nT"
+      },
+      {
+        "agent": "Orchestrator",
+        "step_index": 172,
+        "snippet": "Created At: 2026-10-13T14:15:15-05:00\nCompleted At: 2026-10-13T14:15:15-05:00\n\nThe command exited with code 1.\nOutput:\nT"
+      },
+      {
+        "agent": "Orchestrator",
+        "step_index": 176,
+        "snippet": "Created At: 2026-10-13T14:15:27-05:00\nCompleted At: 2026-10-13T14:15:28-05:00\n\nThe command exited with code 1.\nOutput:\nT"
+      },
+      {
+        "agent": "Orchestrator",
+        "step_index": 206,
+        "snippet": "Created At: 2026-10-13T14:16:58-05:00\nCompleted At: 2026-10-13T14:16:59-05:00\n\nThe command exited with code 1.\nOutput:\nT"
+      },
+      {
+        "agent": "Orchestrator",
+        "step_index": 234,
+        "snippet": "Created At: 2026-10-13T14:18:24-05:00\nCompleted At: 2026-10-13T14:18:25-05:00\n\nThe command exited with code 1.\nOutput:\nT"
+      },
+      {
+        "agent": "Orchestrator",
+        "step_index": 278,
+        "snippet": "Created At: 2026-10-13T14:31:31-05:00\nCompleted At: 2026-10-13T14:31:38-05:00\n\nThe command exited with code 1.\nOutput:\nw"
+      },
+      {
+        "agent": "Direct CTA Architect",
+        "step_index": 12,
+        "snippet": "Created At: 2026-10-13T13:51:49-05:00\nCompleted At: 2026-10-13T13:51:49-05:00\nEncountered error in step execution: decla"
+      },
+      {
+        "agent": "Direct CTA Architect",
+        "step_index": 16,
+        "snippet": "Created At: 2026-10-13T13:54:06-05:00\nCompleted At: 2026-10-13T13:54:06-05:00\nEncountered error in step execution: Conte"
+      },
+      {
+        "agent": "Direct CTA Architect",
+        "step_index": 36,
+        "snippet": "Created At: 2026-10-13T14:04:09-05:00\nCompleted At: 2026-10-13T14:04:10-05:00\n\nThe command exited with code 1.\nOutput:\nw"
+      },
+      {
+        "agent": "Shard Author shard_01",
+        "step_index": 2,
+        "snippet": "Created At: 2026-10-13T14:09:55-05:00\nCompleted At: 2026-10-13T14:09:59-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_01",
+        "step_index": 12,
+        "snippet": "Created At: 2026-10-13T14:10:17-05:00\nCompleted At: 2026-10-13T14:10:18-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_01",
+        "step_index": 34,
+        "snippet": "Created At: 2026-10-13T14:12:05-05:00\nCompleted At: 2026-10-13T14:12:06-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_01",
+        "step_index": 46,
+        "snippet": "Created At: 2026-10-13T14:13:00-05:00\nCompleted At: 2026-10-13T14:13:00-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_02",
+        "step_index": 14,
+        "snippet": "Created At: 2026-10-13T14:15:45-05:00\nCompleted At: 2026-10-13T14:15:48-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_02",
+        "step_index": 16,
+        "snippet": "Created At: 2026-10-13T14:16:05-05:00\nCompleted At: 2026-10-13T14:16:06-05:00\n\nThe command exited with code 1.\nOutput:"
+      },
+      {
+        "agent": "Shard Author shard_02",
+        "step_index": 24,
+        "snippet": "Created At: 2026-10-13T14:16:35-05:00\nCompleted At: 2026-10-13T14:16:36-05:00\n\nThe command exited with code 1.\nOutput:\ns"
+      },
+      {
+        "agent": "Shard Author shard_02",
+        "step_index": 34,
+        "snippet": "Created At: 2026-10-13T14:18:02-05:00\nCompleted At: 2026-10-13T14:18:05-05:00\n\nThe command exited with code 1.\nOutput:\n<"
       },
       {
         "agent": "Shard Author shard_03",
-        "step_index": 100,
-        "snippet": "Created At: 2026-10-12T21:57:32-05:00\nCompleted At: 2026-10-12T21:57:36-05:00\n\nThe command exited with code 1.\nOutput:\nF"
+        "step_index": 16,
+        "snippet": "Created At: 2026-10-13T14:14:06-05:00\nCompleted At: 2026-10-13T14:14:07-05:00\n\nThe command exited with code 1.\nOutput:\nE"
       },
       {
         "agent": "Shard Author shard_03",
-        "step_index": 104,
-        "snippet": "Created At: 2026-10-12T21:57:57-05:00\nCompleted At: 2026-10-12T21:58:01-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      }
-    ],
-    "Unbalanced Math Delimiters ($)": [
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 30,
-        "snippet": "Created At: 2026-10-12T21:40:17-05:00\nCompleted At: 2026-10-12T21:40:18-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 64,
-        "snippet": "Created At: 2026-10-12T21:45:35-05:00\nCompleted At: 2026-10-12T21:45:37-05:00\n\nThe command exited with code 1.\nOutput:\nC"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 118,
-        "snippet": "Created At: 2026-10-12T21:55:35-05:00\nCompleted At: 2026-10-12T21:55:36-05:00\n\nThe command exited with code 1.\nOutput:\nH"
+        "step_index": 18,
+        "snippet": "Created At: 2026-10-13T14:14:11-05:00\nCompleted At: 2026-10-13T14:14:12-05:00\n\nThe command exited with code 1.\nOutput:\n<"
       },
       {
         "agent": "Shard Author shard_03",
-        "step_index": 66,
-        "snippet": "Created At: 2026-10-12T21:46:53-05:00\nCompleted At: 2026-10-12T21:46:54-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      }
-    ],
-    "Unsubstituted Template Variables ({var})": [
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 68,
-        "snippet": "Created At: 2026-10-12T21:46:44-05:00\nCompleted At: 2026-10-12T21:46:45-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 80,
-        "snippet": "Created At: 2026-10-12T21:51:08-05:00\nCompleted At: 2026-10-12T21:51:10-05:00\n\nThe command exited with code 1.\nOutput:\nC"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 92,
-        "snippet": "Created At: 2026-10-12T21:55:40-05:00\nCompleted At: 2026-10-12T21:55:42-05:00\n\nThe command exited with code 1.\nOutput:\nS"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 112,
-        "snippet": "Created At: 2026-10-12T21:58:58-05:00\nCompleted At: 2026-10-12T21:59:00-05:00\n\nThe command exited with code 1.\nOutput:\nS"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 125,
-        "snippet": "Created At: 2026-10-12T22:01:58-05:00\nCompleted At: 2026-10-12T22:02:01-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 171,
-        "snippet": "Created At: 2026-10-12T22:04:12-05:00\nCompleted At: 2026-10-12T22:04:13-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 40,
-        "snippet": "Created At: 2026-10-12T21:40:38-05:00\nCompleted At: 2026-10-12T21:40:39-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 76,
-        "snippet": "Created At: 2026-10-12T21:48:03-05:00\nCompleted At: 2026-10-12T21:48:05-05:00\n\nThe command exited with code 1.\nOutput:\nC"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 114,
-        "snippet": "Created At: 2026-10-12T21:54:23-05:00\nCompleted At: 2026-10-12T21:54:25-05:00\n\nThe command exited with code 1.\nOutput:\nH"
-      },
-      {
-        "agent": "Shard Author shard_03",
-        "step_index": 56,
-        "snippet": "Created At: 2026-10-12T21:44:41-05:00\nCompleted At: 2026-10-12T21:44:42-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      },
-      {
-        "agent": "Shard Author shard_03",
-        "step_index": 84,
-        "snippet": "Created At: 2026-10-12T21:52:29-05:00\nCompleted At: 2026-10-12T21:52:33-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      }
-    ],
-    "Anti-Giveaway & Parity Violations (R-18/R-19)": [
-      {
-        "agent": "Shard Author shard_01",
-        "step_index": 72,
-        "snippet": "Created At: 2026-10-12T21:48:02-05:00\nCompleted At: 2026-10-12T21:48:03-05:00\n\nThe command exited with code 1.\nOutput:\nS"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 68,
-        "snippet": "Created At: 2026-10-12T21:46:33-05:00\nCompleted At: 2026-10-12T21:46:34-05:00\n\nThe command exited with code 1.\nOutput:\nC"
+        "step_index": 38,
+        "snippet": "Created At: 2026-10-13T14:18:54-05:00\nCompleted At: 2026-10-13T14:18:55-05:00\n\nThe command exited with code 1.\nOutput:\n<"
       },
       {
         "agent": "Shard Author shard_03",
         "step_index": 62,
-        "snippet": "Created At: 2026-10-12T21:45:52-05:00\nCompleted At: 2026-10-12T21:45:53-05:00\n\nThe command exited with code 1.\nOutput:\nF"
+        "snippet": "Created At: 2026-10-13T14:25:39-05:00\nCompleted At: 2026-10-13T14:25:40-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_04",
+        "step_index": 54,
+        "snippet": "Created At: 2026-10-13T14:19:46-05:00\nCompleted At: 2026-10-13T14:19:49-05:00\n\nThe command exited with code 1.\nOutput:\n<"
       }
     ],
-    "replace_file_content Mismatch": [
+    "Anti-Giveaway & Parity Violations (R-18/R-19)": [
       {
-        "agent": "Shard Author shard_01",
+        "agent": "Shard Author shard_02",
+        "step_index": 44,
+        "snippet": "Created At: 2026-10-13T14:18:40-05:00\nCompleted At: 2026-10-13T14:18:42-05:00\n\nThe command exited with code 1.\nOutput:\nF"
+      },
+      {
+        "agent": "Shard Author shard_02",
+        "step_index": 80,
+        "snippet": "Created At: 2026-10-13T14:26:52-05:00\nCompleted At: 2026-10-13T14:26:55-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_03",
+        "step_index": 30,
+        "snippet": "Created At: 2026-10-13T14:16:29-05:00\nCompleted At: 2026-10-13T14:16:31-05:00\n\nThe command exited with code 1.\nOutput:\nW"
+      },
+      {
+        "agent": "Shard Author shard_03",
+        "step_index": 46,
+        "snippet": "Created At: 2026-10-13T14:21:03-05:00\nCompleted At: 2026-10-13T14:21:04-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_04",
+        "step_index": 18,
+        "snippet": "Created At: 2026-10-13T14:13:15-05:00\nCompleted At: 2026-10-13T14:13:18-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_04",
+        "step_index": 48,
+        "snippet": "Created At: 2026-10-13T14:18:44-05:00\nCompleted At: 2026-10-13T14:18:47-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_04",
+        "step_index": 72,
+        "snippet": "Created At: 2026-10-13T14:22:44-05:00\nCompleted At: 2026-10-13T14:22:47-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_04",
+        "step_index": 84,
+        "snippet": "Created At: 2026-10-13T14:24:47-05:00\nCompleted At: 2026-10-13T14:24:50-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_04",
         "step_index": 98,
-        "snippet": "Created At: 2026-10-12T21:56:12-05:00\nCompleted At: 2026-10-12T21:56:12-05:00\nEncountered error in step execution: Could"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 42,
-        "snippet": "Created At: 2026-10-12T21:40:43-05:00\nCompleted At: 2026-10-12T21:40:43-05:00\nEncountered error in step execution: Could"
-      },
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 78,
-        "snippet": "Created At: 2026-10-12T21:48:15-05:00\nCompleted At: 2026-10-12T21:48:15-05:00\nEncountered error in step execution: Could"
+        "snippet": "Created At: 2026-10-13T14:26:15-05:00\nCompleted At: 2026-10-13T14:26:18-05:00\n\nThe command exited with code 1.\nOutput:\n<"
       }
     ],
-    "Template Schema Violation": [
-      {
-        "agent": "Shard Author shard_02",
-        "step_index": 24,
-        "snippet": "Created At: 2026-10-12T21:39:16-05:00\nCompleted At: 2026-10-12T21:39:17-05:00\n\nThe command exited with code 1.\nOutput:\nF"
-      }
-    ],
-    "KaTeX Double Curly Braces ({{ / }})": [
+    "Unbalanced Math Delimiters ($)": [
       {
         "agent": "Shard Author shard_02",
         "step_index": 56,
-        "snippet": "Created At: 2026-10-12T21:43:45-05:00\nCompleted At: 2026-10-12T21:43:46-05:00\n\nThe command exited with code 1.\nOutput:\nF"
+        "snippet": "Created At: 2026-10-13T14:20:54-05:00\nCompleted At: 2026-10-13T14:20:57-05:00\n\nThe command exited with code 1.\nOutput:\n<"
       },
       {
-        "agent": "Shard Author shard_02",
-        "step_index": 92,
-        "snippet": "Created At: 2026-10-12T21:50:38-05:00\nCompleted At: 2026-10-12T21:50:39-05:00\n\nThe command exited with code 1.\nOutput:\nH"
-      },
+        "agent": "Shard Author shard_03",
+        "step_index": 70,
+        "snippet": "Created At: 2026-10-13T14:29:30-05:00\nCompleted At: 2026-10-13T14:29:31-05:00\n\nThe command exited with code 1.\nOutput:\nW"
+      }
+    ],
+    "Parameter Diversity Violation (TPL-VAR)": [
       {
         "agent": "Shard Author shard_02",
-        "step_index": 106,
-        "snippet": "Created At: 2026-10-12T21:52:23-05:00\nCompleted At: 2026-10-12T21:52:24-05:00\n\nThe command exited with code 1.\nOutput:\nH"
+        "step_index": 86,
+        "snippet": "Created At: 2026-10-13T14:27:54-05:00\nCompleted At: 2026-10-13T14:27:58-05:00\n\nThe command exited with code 1.\nOutput:\nF"
+      },
+      {
+        "agent": "Shard Author shard_03",
+        "step_index": 22,
+        "snippet": "Created At: 2026-10-13T14:15:08-05:00\nCompleted At: 2026-10-13T14:15:09-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_03",
+        "step_index": 66,
+        "snippet": "Created At: 2026-10-13T14:26:42-05:00\nCompleted At: 2026-10-13T14:26:43-05:00\n\nThe command exited with code 1.\nOutput:\nW"
+      },
+      {
+        "agent": "Shard Author shard_04",
+        "step_index": 30,
+        "snippet": "Created At: 2026-10-13T14:15:25-05:00\nCompleted At: 2026-10-13T14:15:28-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      },
+      {
+        "agent": "Shard Author shard_04",
+        "step_index": 60,
+        "snippet": "Created At: 2026-10-13T14:20:42-05:00\nCompleted At: 2026-10-13T14:20:45-05:00\n\nThe command exited with code 1.\nOutput:\n<"
+      }
+    ],
+    "Python Environment / Virtualenv Discrepancy": [
+      {
+        "agent": "Blind Judge 02",
+        "step_index": 6,
+        "snippet": "Created At: 2026-10-13T14:38:22-05:00\nCompleted At: 2026-10-13T14:38:22-05:00\n\nThe command exited with code 1.\nOutput:\nT"
       }
     ]
   }

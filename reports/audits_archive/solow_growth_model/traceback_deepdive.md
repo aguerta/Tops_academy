@@ -1,8 +1,8 @@
 # Auditoría Forense Ultra-Detallada del Traceback de Ejecución
-## Pipeline Content-to-Course (C2C) — Conversación [`e8ab9fd6-efaf-4d74-ba27-e2cbf10784cb`](conversation://e8ab9fd6-efaf-4d74-ba27-e2cbf10784cb)
+## Pipeline Content-to-Course (C2C) — Conversación [`b1a6a9dc-4a57-46d0-b26a-65b9f4d9ce02`](conversation://b1a6a9dc-4a57-46d0-b26a-65b9f4d9ce02)
 
-**Fecha de Auditoría:** `2026-10-13 03:56:56 UTC`  
-**Conversación Orquestadora:** [`e8ab9fd6-efaf-4d74-ba27-e2cbf10784cb`](conversation://e8ab9fd6-efaf-4d74-ba27-e2cbf10784cb)  
+**Fecha de Auditoría:** `2026-10-13 19:45:58 UTC`  
+**Conversación Orquestadora:** [`b1a6a9dc-4a57-46d0-b26a-65b9f4d9ce02`](conversation://b1a6a9dc-4a57-46d0-b26a-65b9f4d9ce02)  
 **Motor Forense:** C2C Traceback Deep-Dive Analyzer (Antigravity SDK)  
 
 ---
@@ -11,9 +11,9 @@
 
 | Métrica Forense | Valor Registrado | Observación Técnica |
 | :--- | :--- | :--- |
-| **Tiempo de Pared Total** | **`61.92 min`** (3715.0 s) | Tiempo transcurrido de extremo a extremo |
-| **Total de Turnos Analizados** | **`355 turnos`** | Suma de orquestador y subagentes |
-| **Total de Errores Catalogados** | **`62 errores`** | Fallos en consola, validadores y truncamientos |
+| **Tiempo de Pared Total** | **`143.25 min`** (8595.0 s) | Tiempo transcurrido de extremo a extremo |
+| **Total de Turnos Analizados** | **`440 turnos`** | Suma de orquestador y subagentes |
+| **Total de Errores Catalogados** | **`48 errores`** | Fallos en consola, validadores y truncamientos |
 | **Inferencia LLM Promedio** | **`95.8%`** | Porcentaje de tiempo dedicado a generación/thinking |
 | **Ejecución Local de Tools** | **`4.2%`** | Porcentaje de tiempo consumido en I/O y terminal |
 
@@ -22,22 +22,21 @@
 ========================================================================================
 DISTRIBUCIÓN DEL TIEMPO DE PARED POR SUBAGENTE (INFERENCIA LLM vs TOOLS)
 ========================================================================================
-Direct CTA Architect   :   1245s (99.7%) LLM |    4s Tools
-Shard Author shard_01  :   1598s (95.3%) LLM |   51s Tools
-Shard Author shard_02  :   1113s (96.5%) LLM |   40s Tools
-Shard Author shard_03  :   1134s (93.0%) LLM |   37s Tools
-Blind Judge 01         :    129s (99.2%) LLM |    1s Tools
-Blind Judge 02         :    317s (80.5%) LLM |   73s Tools
+Direct CTA Architect   :   1015s (96.6%) LLM |   36s Tools
+Shard Author shard_01  :    200s (29.8%) LLM |   18s Tools
+Shard Author shard_02  :   1159s (95.5%) LLM |   55s Tools
+Shard Author shard_03  :   1205s (95.3%) LLM |   60s Tools
+Shard Author shard_04  :   1032s (94.1%) LLM |   65s Tools
+Blind Judge 01         :    127s (99.2%) LLM |    1s Tools
+Blind Judge 02         :    343s (100.0%) LLM |    0s Tools
 ========================================================================================
 ```
 
 ---
 
 ## 2. Análisis Forense: Direct CTA Architect (Stage 1B)
-- **Duración Total:** **`20.82 min`** (1249.0 s) en **`29 turnos`**.
-- **Tokens:** 179,219 In | 75,239 Out | 2,052,641 Cache.
-- 🛑 **Incidente Crítico Detectado:** Truncamiento por límite de tokens (`Output token limit exceeded`) en el **Paso 27**.
-- 💡 **Pivote Adaptativo:** En el **Paso 29**, el arquitecto pasó a generar el script `generate_cta.py"` para consolidar el CTA sin saturar el contexto.
+- **Duración Total:** **`17.52 min`** (1051.0 s) en **`25 turnos`**.
+- **Tokens:** 218,078 In | 81,242 Out | 1,929,735 Cache.
 
 ---
 
@@ -45,9 +44,10 @@ Blind Judge 02         :    317s (80.5%) LLM |   73s Tools
 
 | Shard ID | Duración (min) | Turnos | Writes | Edits | Check Runs (Fail/Pass) | Loop de Ingeniería Inversa | Micro-Bucle |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Shard Author shard_01** | 27.95 | 104 | 19 | 7 | 26 (17/9) | 🛑 SÍ (30+ turnos) | ⚠️ SÍ (Secuencial) |
-| **Shard Author shard_02** | 19.22 | 66 | 15 | 10 | 26 (15/11) | NO | ⚠️ SÍ (Secuencial) |
-| **Shard Author shard_03** | 20.33 | 56 | 15 | 3 | 29 (11/18) | NO | ⚠️ SÍ (Secuencial) |
+| **Shard Author shard_01** | 11.18 | 28 | 0 | 2 | 11 (4/7) | NO | NO |
+| **Shard Author shard_02** | 20.23 | 51 | 13 | 3 | 13 (6/7) | NO | ⚠️ SÍ (Secuencial) |
+| **Shard Author shard_03** | 21.08 | 40 | 14 | 0 | 17 (9/8) | NO | ⚠️ SÍ (Secuencial) |
+| **Shard Author shard_04** | 18.28 | 54 | 16 | 0 | 15 (8/7) | NO | ⚠️ SÍ (Secuencial) |
 
 ---
 
@@ -55,36 +55,25 @@ Blind Judge 02         :    317s (80.5%) LLM |   73s Tools
 
 | Blind Judge | Duración (min) | Turnos | Consultas `search_web` | Peticiones HTTP | Estado de Aislamiento |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Blind Judge 01** | 2.17 | 8 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
-| **Blind Judge 02** | 6.57 | 16 | 9 | 1 | ⚠️ Fuga Externa (Navegación Web) |
+| **Blind Judge 01** | 2.13 | 7 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
+| **Blind Judge 02** | 5.72 | 8 | 0 | 0 | ✅ Aislamiento Estricto (Razonamiento Puro) |
 
 ---
 
-## 5. Taxonomía Consolidada de Errores (62 Registrados)
+## 5. Taxonomía Consolidada de Errores (48 Registrados)
 
 | Categoría de Error | Ocurrencias | Ejemplo de Incidencia |
 | :--- | :---: | :--- |
-| **Other Console / Tool Failures** | **17** | `Orchestrator` (Paso 86): Created At: 2026-10-12T21:16:52-05:00
-Completed At: 2026-10-12T21:16:5... |
-| **Parameter Diversity Violation (TPL-VAR)** | **14** | `Shard Author shard_01` (Paso 20): Created At: 2026-10-12T21:39:10-05:00
-Completed At: 2026-10-12T21:39:1... |
-| **Unsubstituted Template Variables ({var})** | **11** | `Shard Author shard_01` (Paso 68): Created At: 2026-10-12T21:46:44-05:00
-Completed At: 2026-10-12T21:46:4... |
-| **Unbalanced Math Delimiters ($)** | **4** | `Shard Author shard_01` (Paso 30): Created At: 2026-10-12T21:40:17-05:00
-Completed At: 2026-10-12T21:40:1... |
-| **Python Environment / Virtualenv Discrepancy** | **3** | `Orchestrator` (Paso 6): Created At: 2026-10-12T21:13:45-05:00
-Completed At: 2026-10-12T21:13:4... |
-| **Anti-Giveaway & Parity Violations (R-18/R-19)** | **3** | `Shard Author shard_01` (Paso 72): Created At: 2026-10-12T21:48:02-05:00
-Completed At: 2026-10-12T21:48:0... |
-| **replace_file_content Mismatch** | **3** | `Shard Author shard_01` (Paso 98): Created At: 2026-10-12T21:56:12-05:00
-Completed At: 2026-10-12T21:56:1... |
-| **KaTeX Double Curly Braces ({{ / }})** | **3** | `Shard Author shard_02` (Paso 56): Created At: 2026-10-12T21:43:45-05:00
-Completed At: 2026-10-12T21:43:4... |
-| **PowerShell Command / Path Not Found** | **2** | `Orchestrator` (Paso 8): Created At: 2026-10-12T21:13:57-05:00
-Completed At: 2026-10-12T21:13:5... |
-| **Token Limit Cutoff (Model Truncation)** | **1** | `Direct CTA Architect` (Paso 28): Error: Your previous response was cut off because it exceeded the outp... |
-| **Template Schema Violation** | **1** | `Shard Author shard_02` (Paso 24): Created At: 2026-10-12T21:39:16-05:00
-Completed At: 2026-10-12T21:39:1... |
+| **Other Console / Tool Failures** | **31** | `Orchestrator` (Paso 50): Created At: 2026-10-13T13:02:49-05:00
+Completed At: 2026-10-13T13:02:4... |
+| **Anti-Giveaway & Parity Violations (R-18/R-19)** | **9** | `Shard Author shard_02` (Paso 44): Created At: 2026-10-13T14:18:40-05:00
+Completed At: 2026-10-13T14:18:4... |
+| **Parameter Diversity Violation (TPL-VAR)** | **5** | `Shard Author shard_02` (Paso 86): Created At: 2026-10-13T14:27:54-05:00
+Completed At: 2026-10-13T14:27:5... |
+| **Unbalanced Math Delimiters ($)** | **2** | `Shard Author shard_02` (Paso 56): Created At: 2026-10-13T14:20:54-05:00
+Completed At: 2026-10-13T14:20:5... |
+| **Python Environment / Virtualenv Discrepancy** | **1** | `Blind Judge 02` (Paso 6): Created At: 2026-10-13T14:38:22-05:00
+Completed At: 2026-10-13T14:38:2... |
 
 ---
 *Informe generado automáticamente por `traceback_analyzer.py`.*

@@ -6,11 +6,11 @@
 
 **Fecha de Consolidación:** 13 de Octubre de 2026  
 **Identificador del Curso:** `solow_growth_model`  
-**Conversación Orquestadora Auditada:** [`e8ab9fd6-efaf-4d74-ba27-e2cbf10784cb`](conversation://e8ab9fd6-efaf-4d74-ba27-e2cbf10784cb)  
+**Conversación Orquestadora Auditada:** [`b1a6a9dc-4a57-46d0-b26a-65b9f4d9ce02`](conversation://b1a6a9dc-4a57-46d0-b26a-65b9f4d9ce02)  
 **Auditores:** Course QA Auditor & C2C Traceback Auditor (Top's Academy / Google Antigravity SDK)  
 **Marco Normativo de Evaluación:** Quality Matters (QM), OSCQR, Mastery Learning y Telemetría Isomórfica Antigravity  
 **Veredicto Final de Calidad:** **19.3 / 20.0 pts (EXCELENTE (17.0 - 20.0 pts)) — APROBADO PARA PRODUCCIÓN INMEDIATA**  
-**Tiempo de Pared Global:** **61.92 minutos** | **Cómputo Total de Agentes:** **158.97 minutos** | **Speedup:** **2.57x**  
+**Tiempo de Pared Global:** **143.25 minutos** | **Cómputo Total de Agentes:** **249.63 minutos** | **Speedup:** **1.74x**  
 
 ---
 
@@ -172,23 +172,23 @@ Durante la inspección semántica detallada se identificaron las siguientes regl
 | **Requerimiento de Visión** | `0 páginas` (0 handouts) | Handouts de visión generados |
 | **Corpus Sintetizado** | `72,846 caracteres` (12,650 palabras) | Texto consolidado tras ingesta |
 | **Competencias Extraídas** | **`25 competencias`** | Desglose pedagógico formalizado |
-| **Shards Particionados** | **`3 shards`** | Distribución concurrente de autoría |
-| **Subagentes Desplegados** | **`6 subagentes`** | Fan-out coordinado por orquestador |
+| **Shards Particionados** | **`4 shards`** | Distribución concurrente de autoría |
+| **Subagentes Desplegados** | **`8 subagentes`** | Fan-out coordinado por orquestador |
 | **Reactivos Finales Validados** | **`580 preguntas`** | 100% conformes con invariantes de sandbox y paridad |
-| **Tokens Entrada (Subagentes)** | **`2,482,859 tokens`** | Contexto acumulativo enviado a subagentes |
-| **Tokens Salida (Subagentes)** | **`670,477 tokens`** | Código de plantillas y JSON generado |
-| **Tokens Caché (Leídos)** | **`26,142,251 tokens`** | Caché de contexto reutilizado por la API |
-| **Gran Total Tokens Activos** | **`3,153,336 tokens`** | Entrada + Salida neto (sin contar caché) |
-| **Gran Total Tokens (con Caché)** | **`29,295,587 tokens`** | Consumo total de cuota facturable |
-| **Tiempo de Pared Total** | **`3715.0 s` (61.92 min)** | Tiempo transcurrido de principio a fin |
-| **Tiempo Cómputo Acumulado** | **`9538.0 s` (158.97 min)** | Suma escalar de tiempos de todos los agentes |
-| **Factor de Aceleración Paralela** | **`2.57x`** | Relación tiempo cómputo vs tiempo de pared |
-| **Tokens Totales por Pregunta** | **`55,274.7 tokens/preg`** | Esfuerzo de API por cada reactivo jugable |
-| **Tokens Activos por Pregunta** | **`5,949.7 tokens/preg`** | Tokens netos de razonamiento y código por reactivo |
-| **Tokens por Competencia (Global)** | **`1,331,617.6 tokens/comp`** | Densidad de diseño instruccional del curso |
-| **Tokens de Autor por Competencia** | **`102,550.6 tokens/comp`** | Costo puro de la etapa de autoría |
-| **Segundos de Pared por Pregunta** | **`7.01 s/preg`** | Ritmo de entrega percibido |
-| **Rendimiento de Generación (QPM)** | **`8.56 preg/min`** | Velocidad de producción del pipeline |
+| **Tokens Entrada (Subagentes)** | **`2,346,071 tokens`** | Contexto acumulativo enviado a subagentes |
+| **Tokens Salida (Subagentes)** | **`776,389 tokens`** | Código de plantillas y JSON generado |
+| **Tokens Caché (Leídos)** | **`45,544,902 tokens`** | Caché de contexto reutilizado por la API |
+| **Gran Total Tokens Activos** | **`3,122,460 tokens`** | Entrada + Salida neto (sin contar caché) |
+| **Gran Total Tokens (con Caché)** | **`48,667,362 tokens`** | Consumo total de cuota facturable |
+| **Tiempo de Pared Total** | **`8595.0 s` (143.25 min)** | Tiempo transcurrido de principio a fin |
+| **Tiempo Cómputo Acumulado** | **`14978.0 s` (249.63 min)** | Suma escalar de tiempos de todos los agentes |
+| **Factor de Aceleración Paralela** | **`1.74x`** | Relación tiempo cómputo vs tiempo de pared |
+| **Tokens Totales por Pregunta** | **`83,909.2 tokens/preg`** | Esfuerzo de API por cada reactivo jugable |
+| **Tokens Activos por Pregunta** | **`5,383.6 tokens/preg`** | Tokens netos de razonamiento y código por reactivo |
+| **Tokens por Competencia (Global)** | **`2,212,152.8 tokens/comp`** | Densidad de diseño instruccional del curso |
+| **Tokens de Autor por Competencia** | **`68,071.8 tokens/comp`** | Costo puro de la etapa de autoría |
+| **Segundos de Pared por Pregunta** | **`14.82 s/preg`** | Ritmo de entrega percibido |
+| **Rendimiento de Generación (QPM)** | **`4.05 preg/min`** | Velocidad de producción del pipeline |
 
 ---
 
@@ -201,12 +201,13 @@ El análisis empírico confirma de manera concluyente que el tiempo consumido en
 ========================================================================================
 DISTRIBUCIÓN DEL TIEMPO DE PARED POR SUBAGENTE (INFERENCIA LLM vs TOOLS)
 ========================================================================================
-Direct CTA Architect   : [███████████████████████████████████████░] 1245s (99.7%) LLM | 4s Tools
-Shard Author shard_01  : [██████████████████████████████████████░░] 1598s (95.3%) LLM | 51s Tools
-Shard Author shard_02  : [██████████████████████████████████████░░] 1113s (96.5%) LLM | 40s Tools
-Shard Author shard_03  : [█████████████████████████████████████░░░] 1134s (93.0%) LLM | 37s Tools
-Blind Judge 01         : [███████████████████████████████████████░] 129s (99.2%) LLM | 1s Tools
-Blind Judge 02         : [████████████████████████████████░░░░░░░░] 317s (80.5%) LLM | 73s Tools
+Direct CTA Architect   : [██████████████████████████████████████░░] 1015s (96.6%) LLM | 36s Tools
+Shard Author shard_01  : [███████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 200s (29.8%) LLM | 18s Tools
+Shard Author shard_02  : [██████████████████████████████████████░░] 1159s (95.5%) LLM | 55s Tools
+Shard Author shard_03  : [██████████████████████████████████████░░] 1205s (95.3%) LLM | 60s Tools
+Shard Author shard_04  : [█████████████████████████████████████░░░] 1032s (94.1%) LLM | 65s Tools
+Blind Judge 01         : [███████████████████████████████████████░] 127s (99.2%) LLM | 1s Tools
+Blind Judge 02         : [████████████████████████████████████████] 343s (100.0%) LLM | 0s Tools
 ========================================================================================
 ```
 
@@ -241,22 +242,16 @@ Blind Judge 02         : [██████████████████
 
 | Categoría de Error | Ocurrencias | Agentes Afectados | Causa Raíz Técnica y Ejemplo |
 | :--- | :---: | :--- | :--- |
-| **Other Console / Tool Failures** | **17** | Blind Judge 01, Blind Judge 02, Direct CTA Architect | Created At: 2026-10-12T21:16:52-05:00 Completed At: 2026-10-12T21:16:52-05:00  The command |
-| **Parameter Diversity Violation (TPL-VAR)** | **14** | Shard Author shard_01, Shard Author shard_02, Shard Author shard_03 | Created At: 2026-10-12T21:39:10-05:00 Completed At: 2026-10-12T21:39:11-05:00  The command |
-| **Unsubstituted Template Variables ({var})** | **11** | Shard Author shard_01, Shard Author shard_02, Shard Author shard_03 | Created At: 2026-10-12T21:46:44-05:00 Completed At: 2026-10-12T21:46:45-05:00  The command |
-| **Unbalanced Math Delimiters ($)** | **4** | Shard Author shard_01, Shard Author shard_02, Shard Author shard_03 | Created At: 2026-10-12T21:40:17-05:00 Completed At: 2026-10-12T21:40:18-05:00  The command |
-| **Python Environment / Virtualenv Discrepancy** | **3** | Orchestrator, Shard Author shard_01 | Created At: 2026-10-12T21:13:45-05:00 Completed At: 2026-10-12T21:13:46-05:00  The command |
-| **Anti-Giveaway & Parity Violations (R-18/R-19)** | **3** | Shard Author shard_01, Shard Author shard_02, Shard Author shard_03 | Created At: 2026-10-12T21:48:02-05:00 Completed At: 2026-10-12T21:48:03-05:00  The command |
-| **replace_file_content Mismatch** | **3** | Shard Author shard_01, Shard Author shard_02 | Created At: 2026-10-12T21:56:12-05:00 Completed At: 2026-10-12T21:56:12-05:00 Encountered  |
-| **KaTeX Double Curly Braces ({{ / }})** | **3** | Shard Author shard_02 | Created At: 2026-10-12T21:43:45-05:00 Completed At: 2026-10-12T21:43:46-05:00  The command |
-| **PowerShell Command / Path Not Found** | **2** | Orchestrator | Created At: 2026-10-12T21:13:57-05:00 Completed At: 2026-10-12T21:13:58-05:00  The command |
-| **Token Limit Cutoff (Model Truncation)** | **1** | Direct CTA Architect | Error: Your previous response was cut off because it exceeded the output token limit Pleas |
-| **Template Schema Violation** | **1** | Shard Author shard_02 | Created At: 2026-10-12T21:39:16-05:00 Completed At: 2026-10-12T21:39:17-05:00  The command |
+| **Other Console / Tool Failures** | **31** | Direct CTA Architect, Orchestrator, Shard Author shard_01 | Created At: 2026-10-13T13:02:49-05:00 Completed At: 2026-10-13T13:02:49-05:00 File Path: ` |
+| **Anti-Giveaway & Parity Violations (R-18/R-19)** | **9** | Shard Author shard_02, Shard Author shard_03, Shard Author shard_04 | Created At: 2026-10-13T14:18:40-05:00 Completed At: 2026-10-13T14:18:42-05:00  The command |
+| **Parameter Diversity Violation (TPL-VAR)** | **5** | Shard Author shard_02, Shard Author shard_03, Shard Author shard_04 | Created At: 2026-10-13T14:27:54-05:00 Completed At: 2026-10-13T14:27:58-05:00  The command |
+| **Unbalanced Math Delimiters ($)** | **2** | Shard Author shard_02, Shard Author shard_03 | Created At: 2026-10-13T14:20:54-05:00 Completed At: 2026-10-13T14:20:57-05:00  The command |
+| **Python Environment / Virtualenv Discrepancy** | **1** | Blind Judge 02 | Created At: 2026-10-13T14:38:22-05:00 Completed At: 2026-10-13T14:38:22-05:00  The command |
 
 ---
 
 ## 10. Conclusión y Síntesis Global
 
 1. **Garantía Psicométrica y Calidad Certificada:** El curso `solow_growth_model` certifica una puntuación de **19.3 / 20.0 pts (EXCELENTE (17.0 - 20.0 pts))** bajo la norma QM-OSCQR/Mastery Learning, con 0 penalizaciones automáticas, 100% de andamiaje socrático y 100% de rationales de error explicativos.
-2. **Optimización Forense de Rendimiento:** La aceleración paralela alcanzó **2.57x**, demostrando que el agrupamiento modular atómico y la contención de turnos LLM son los factores determinantes para reducir la latencia de producción.
+2. **Optimización Forense de Rendimiento:** La aceleración paralela alcanzó **1.74x**, demostrando que el agrupamiento modular atómico y la contención de turnos LLM son los factores determinantes para reducir la latencia de producción.
 3. **Persistencia e Integridad del Repositorio:** Todos los artefactos individuales y datasets de control quedan archivados permanentemente en `reports/audits_archive/solow_growth_model/` y `reports/c2c_audits/`.
