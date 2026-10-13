@@ -127,7 +127,7 @@ const MIME_TYPES = {
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
-  if (url.pathname === '/api/courses' && req.method === 'GET') {
+  if ((url.pathname === '/api/courses' || url.pathname === '/api/courses.json') && req.method === 'GET') {
     const courses = getCourseList();
     res.writeHead(200, {
       'Content-Type': 'application/json',
@@ -138,7 +138,10 @@ const server = http.createServer((req, res) => {
   }
 
   if (url.pathname.startsWith('/api/courses/') && req.method === 'GET') {
-    const requestedId = decodeURIComponent(url.pathname.replace('/api/courses/', ''));
+    let requestedId = decodeURIComponent(url.pathname.replace('/api/courses/', ''));
+    if (requestedId.endsWith('.json')) {
+      requestedId = requestedId.slice(0, -5);
+    }
     const courses = getCourseList();
     const found = courses.find((c) => c.id === requestedId || c.filename === requestedId || c.filename === `${requestedId}.json`);
 

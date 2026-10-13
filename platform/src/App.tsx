@@ -43,14 +43,38 @@ export const App: React.FC = () => {
   const [sessionTotal, setSessionTotal] = useState(0);
   const [sessionKey, setSessionKey] = useState(0);
 
-  // Fetch courses from server API
+  // Fetch courses from server API or static bundle
   const fetchCourses = useCallback(async () => {
     try {
       setLoadingCourses(true);
-      const res = await fetch('/api/courses');
-      if (res.ok) {
-        const data = await res.json();
-        setCourses(data.courses || []);
+      const rawBase = import.meta.env.BASE_URL || './';
+      const base = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+      const candidates = [
+        `${base}/api/courses.json`,
+        `${base}/api/courses`,
+        '/api/courses.json',
+        '/api/courses',
+      ];
+
+      let loaded = false;
+      for (const url of candidates) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.courses)) {
+              setCourses(data.courses);
+              loaded = true;
+              break;
+            }
+          }
+        } catch {
+          // Continue to next candidate
+        }
+      }
+
+      if (!loaded) {
+        setCourses([]);
       }
     } catch (err) {
       console.error('Failed to fetch courses', err);
@@ -69,13 +93,26 @@ export const App: React.FC = () => {
     let fullCourse: Course | null = summary.data || null;
 
     if (!fullCourse) {
-      try {
-        const res = await fetch(`/api/courses/${encodeURIComponent(summary.id)}`);
-        if (res.ok) {
-          fullCourse = await res.json();
+      const rawBase = import.meta.env.BASE_URL || './';
+      const base = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+      const encodedId = encodeURIComponent(summary.id);
+      const candidates = [
+        `${base}/api/courses/${encodedId}.json`,
+        `${base}/api/courses/${encodedId}`,
+        `/api/courses/${encodedId}.json`,
+        `/api/courses/${encodedId}`,
+      ];
+
+      for (const url of candidates) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            fullCourse = await res.json();
+            break;
+          }
+        } catch {
+          // Continue to next candidate
         }
-      } catch (err) {
-        console.error('Failed to load course details', err);
       }
     }
 
