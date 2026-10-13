@@ -4,7 +4,12 @@
   "description": "Schema for parametric exercise templates in content-to-course v2",
   "oneOf": [
     { "$ref": "#/definitions/competency_templates_file" },
-    { "$ref": "#/definitions/template_item" }
+    { "$ref": "#/definitions/template_item" },
+    {
+      "type": "array",
+      "items": { "$ref": "#/definitions/template_item" },
+      "minItems": 1
+    }
   ],
   "definitions": {
     "template_item": {

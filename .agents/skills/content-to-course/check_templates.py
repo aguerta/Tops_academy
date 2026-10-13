@@ -985,12 +985,19 @@ def _validate_single_template_file(
     schema_errs = validate_template_schema(t_content)
     file_errors.extend(schema_errs)
 
-    comp_id = t_content.get("competency_id")
-    templates_list = t_content.get("templates", [])
-    if not templates_list and "interaction_type" in t_content:
-        # Single template file
-        templates_list = [t_content]
-        comp_id = t_content.get("competency_id", comp_id)
+    if isinstance(t_content, list):
+        templates_list = t_content
+        comp_id = t_content[0].get("competency_id") if t_content and isinstance(t_content[0], dict) else None
+    elif isinstance(t_content, dict):
+        comp_id = t_content.get("competency_id")
+        templates_list = t_content.get("templates", [])
+        if not templates_list and "interaction_type" in t_content:
+            # Single template file
+            templates_list = [t_content]
+            comp_id = t_content.get("competency_id", comp_id)
+    else:
+        file_errors.append(f"File {tf.name} content must be a JSON object or list.")
+        return file_errors, None, set(), []
 
     if cta_distractors_by_comp and (not comp_id or comp_id not in cta_distractors_by_comp):
         file_errors.append(f"File {tf.name} declares unknown or missing competency_id '{comp_id}'.")

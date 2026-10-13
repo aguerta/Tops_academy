@@ -61,13 +61,34 @@ def validate_katex_syntax(text: str, context: str) -> List[str]:
         if start > 0 and text[start - 1] in ("\\", "_", "^"):
             continue
 
-        prefix = text[:start]
+        prefix = text[:start].rstrip()
         # Legitimate LaTeX: argument of a LaTeX command e.g. \frac, \text, \mathbf, \begin, \sqrt[...]
         if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?\s*$", prefix):
             continue
 
-        # Legitimate LaTeX: second argument of a multi-arg LaTeX command e.g. \frac{a}{b}, \begin{array}{cc}
-        if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?\{[^}]*\}\s*$", prefix):
+        # Legitimate LaTeX: subsequent argument of a multi-arg LaTeX command e.g. \frac{a}{b}, \frac{d\dot{k}}{dk}
+        is_subsequent_latex_arg = False
+        s = prefix
+        while s.endswith("}"):
+            depth = 0
+            idx = len(s) - 1
+            while idx >= 0:
+                if s[idx] == "}":
+                    depth += 1
+                elif s[idx] == "{":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                idx -= 1
+            if depth == 0 and idx >= 0:
+                s = s[:idx].rstrip()
+                if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?$", s):
+                    is_subsequent_latex_arg = True
+                    break
+            else:
+                break
+
+        if is_subsequent_latex_arg:
             continue
 
         errors.append(f"Unsubstituted template variable '{{{var_name}}}' detected in {context}.")
