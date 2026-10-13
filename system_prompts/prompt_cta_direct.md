@@ -188,49 +188,49 @@ COMPETENCIES = [
         [
             (
                 "Confundir invariante con condición de parada",
-                r"\text{El invariante solo debe cumplirse al terminar el bucle completo}",
-                r"\text{El invariante debe cumplirse en tres fases: inicialización, mantenimiento y terminación}",
-                r"A[1 \dots j-1] \text{ desordenado durante iteraciones intermedias}",
+                r"$\text{El invariante solo debe cumplirse al terminar el bucle completo}$",
+                r"$\text{El invariante debe cumplirse en tres fases: inicialización, mantenimiento y terminación}$",
+                r"$A[1 \dots j-1] \text{ desordenado durante iteraciones intermedias}$",
                 "Un invariante de bucle es análogo a la inducción matemática: debe ser válido antes de entrar y tras cada paso.",
                 None
             ),
             (
                 "Extender el invariante a la posición activa j",
-                r"A[1 \dots j] \text{ ya se encuentra ordenado al inicio del bucle}",
-                r"A[1 \dots j-1] \text{ está ordenado; el elemento } A[j] \text{ aún debe insertarse}",
-                r"\text{Suposición de que } A[j] \text{ ya no requiere comparaciones}",
+                r"$A[1 \dots j] \text{ ya se encuentra ordenado al inicio del bucle}$",
+                r"$A[1 \dots j-1] \text{ está ordenado; el elemento } A[j] \text{ aún debe insertarse}$",
+                r"$\text{Suposición de que } A[j] \text{ ya no requiere comparaciones}$",
                 "El elemento actual en la posición j es la clave que debe compararse hacia atrás para hallar su posición adecuada.",
                 None
             ),
             (
                 "Asumir que los elementos en el sub-arreglo son los menores globales",
-                r"A[1 \dots j-1] \le A[j \dots n] \text{ en toda iteración}",
-                r"A[1 \dots j-1] \text{ contiene los elementos originales de esas posiciones ordenados entre sí}",
-                r"\text{Confusión con invariante de ordenamiento por selección}",
+                r"$A[1 \dots j-1] \le A[j \dots n] \text{ en toda iteración}$",
+                r"$A[1 \dots j-1] \text{ contiene los elementos originales de esas posiciones ordenados entre sí}$",
+                r"$\text{Confusión con invariante de ordenamiento por selección}$",
                 "En ordenamiento por inserción, el sub-arreglo contiene los elementos iniciales reordenados, no necesariamente los k menores del arreglo global.",
                 None
             ),
             (
                 "Omisión de la comprobación del caso base j=2",
-                r"\text{La inducción comienza con el sub-arreglo } A[1 \dots 2]",
-                r"\text{Para } j=2, A[1 \dots 1] \text{ consta de un solo elemento y está trivialmente ordenado}",
-                r"\text{Fallo al probar la inicialización}",
+                r"$\text{La inducción comienza con el sub-arreglo } A[1 \dots 2]$",
+                r"$\text{Para } j=2, A[1 \dots 1] \text{ consta de un solo elemento y está trivialmente ordenado}$",
+                r"$\text{Fallo al probar la inicialización}$",
                 "Para la inicialización, se debe evaluar j = p = 2, verificando que un arreglo unitario está ordenado por definición.",
                 None
             ),
             (
                 "Confundir permutación con copia idempotente",
-                r"A[1 \dots j-1] \text{ puede contener duplicados sobreescritos del elemento clave}",
-                r"A[1 \dots j-1] \text{ mantiene exactamente la misma multiconjunto de elementos originales}",
-                r"\text{Pérdida de conservación de elementos}",
+                r"$A[1 \dots j-1] \text{ puede contener duplicados sobreescritos del elemento clave}$",
+                r"$A[1 \dots j-1] \text{ mantiene exactamente la misma multiconjunto de elementos originales}$",
+                r"$\text{Pérdida de conservación de elementos}$",
                 "El invariante garantiza tanto el ordenamiento como la conservación formal del multiconjunto original.",
                 None
             ),
             (
                 "Violar la condición de terminación cuando j=n+1",
-                r"\text{Al terminar, el bucle deja } j=n \text{ con } A[1 \dots n-1] \text{ ordenado}",
-                r"\text{El bucle termina cuando } j = n+1, \text{ garantizando } A[1 \dots n] \text{ completamente ordenado}",
-                r"\text{Último elemento } A[n] \text{ sin procesar}",
+                r"$\text{Al terminar, el bucle deja } j=n \text{ con } A[1 \dots n-1] \text{ ordenado}$",
+                r"$\text{El bucle termina cuando } j = n+1, \text{ garantizando } A[1 \dots n] \text{ completamente ordenado}$",
+                r"$\text{Último elemento } A[n] \text{ sin procesar}$",
                 "Al finalizar por falla en la condición j <= A.length, j ha alcanzado n+1, con lo que el sub-arreglo ordenado es A[1..n].",
                 None
             )
@@ -257,49 +257,49 @@ COMPETENCIES += [
         [
             (
                 "Uso de temperaturas en escala Celsius en lugar de Kelvin",
-                r"\eta = 1 - \frac{t_C [^\circ\text{C}]}{t_H [^\circ\text{C}]}",
-                r"\eta = 1 - \frac{T_C [\text{K}]}{T_H [\text{K}]}",
-                r"\eta < 0 \text{ o } \eta > 1",
+                r"$\eta = 1 - \frac{t_C}{t_H}$",
+                r"$\eta = 1 - \frac{T_C}{T_H}$",
+                r"$\eta < 0 \text{ o } \eta > 1$",
                 "Las relaciones termodinámicas fundamentales provienen de la definición absoluta de entropía y exigen escala Kelvin.",
-                "Omitir convertir las temperaturas dadas en Celsius a la escala absoluta Kelvin ($T = t + 273.15$)"  # omitted_step obligatorio 1
+                r"Omitir convertir las temperaturas dadas en Celsius a la escala absoluta Kelvin ($T = t + 273.15$)"  # omitted_step obligatorio 1
             ),
             (
                 "Inversión de reservorios en el cociente térmico",
-                r"\frac{T_H}{T_C}",
-                r"\frac{T_C}{T_H}",
-                r"\eta < 0",
+                r"$\eta = 1 - \frac{T_H}{T_C}$",
+                r"$\eta = 1 - \frac{T_C}{T_H}$",
+                r"$\eta < 0$",
                 "Por la Segunda Ley, la eficiencia térmica debe ser menor a la unidad y $T_C < T_H$.",
                 None
             ),
             (
                 "Omisión del trabajo de compresión adiabática en el balance neto",
-                r"W_{\text{neto}} = W_{\text{exp,iso}} + W_{\text{exp,ad}}",
-                r"W_{\text{neto}} = (W_{\text{exp,iso}} - W_{\text{comp,iso}}) + (W_{\text{exp,ad}} - W_{\text{comp,ad}})",
-                r"W_{\text{neto}} \text{ sobreestimado}",
+                r"$W_{\text{neto}} = W_{\text{exp,iso}} + W_{\text{exp,ad}}$",
+                r"$W_{\text{neto}} = (W_{\text{exp,iso}} - W_{\text{comp,iso}}) + (W_{\text{exp,ad}} - W_{\text{comp,ad}})$",
+                r"$W_{\text{neto}} \text{ sobreestimado}$",
                 "Un ciclo cerrado requiere retornar al estado inicial consumiendo trabajo en la rama de compresión.",
                 "Omitir restar el trabajo consumido durante las carreras de compresión isotérmica y adiabática"  # omitted_step obligatorio 2
             ),
             (
                 "Confusión entre calor absorbido y trabajo neto",
-                r"\eta = \frac{Q_C}{Q_H}",
-                r"\eta = \frac{Q_H - Q_C}{Q_H} = 1 - \frac{Q_C}{Q_H}",
-                r"\eta_{\text{calculada}} = 1 - \eta_{\text{real}}",
+                r"$\eta = \frac{Q_C}{Q_H}$",
+                r"$\eta = \frac{Q_H - Q_C}{Q_H} = 1 - \frac{Q_C}{Q_H}$",
+                r"$\eta_{\text{calculada}} = 1 - \eta_{\text{real}}$",
                 "La eficiencia mide la fracción de calor absorbido $Q_H$ convertida en trabajo útil neto, no el calor residual disipado.",
                 None
             ),
             (
                 "Asunción de que la eficiencia depende de la sustancia de trabajo",
-                r"\eta = f(c_p, c_v, \gamma)",
-                r"\eta = 1 - \frac{T_C}{T_H} \text{ independiente del fluido}",
-                r"\text{Cálculo dependiente de constantes del gas ideal}",
+                r"$\eta = f(c_p, c_v, \gamma)$",
+                r"$\eta = 1 - \frac{T_C}{T_H} \text{ independiente del fluido de trabajo}$",
+                r"$\text{Cálculo dependiente de constantes del gas ideal}$",
                 "El teorema de Carnot demuestra que todas las máquinas reversibles entre los mismos reservorios tienen idéntica eficiencia.",
                 None
             ),
             (
                 "Cálculo lineal de calor cedido sin considerar irreversibilidad",
-                r"Q_C = Q_H \cdot \frac{T_C}{T_H} \text{ aplicado a ciclos reales}",
-                r"Q_{C,\text{real}} > Q_{C,\text{rev}} \implies \eta_{\text{real}} < \eta_{\text{Carnot}}",
-                r"\eta_{\text{real}} = \eta_{\text{Carnot}} \text{ violando Clausius}",
+                r"$Q_C = Q_H \cdot \frac{T_C}{T_H} \text{ aplicado a ciclos reales}$",
+                r"$Q_{C,\text{real}} > Q_{C,\text{rev}} \implies \eta_{\text{real}} < \eta_{\text{Carnot}}$",
+                r"$\eta_{\text{real}} = \eta_{\text{Carnot}} \text{ violando Clausius}$",
                 "La eficiencia de Carnot es una cota superior asintótica válida solo para procesos cuasiestáticos sin fricción.",
                 None
             )

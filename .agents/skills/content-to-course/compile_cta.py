@@ -29,10 +29,20 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-# Ensure skill directory is in sys.path
+# Ensure skill directory is in sys.path whether running from skill or work/
 _current_dir = Path(__file__).parent.resolve()
-if str(_current_dir) not in sys.path:
-    sys.path.insert(0, str(_current_dir))
+_skill_candidates = [
+    _current_dir,
+    Path.cwd() / ".agents" / "skills" / "content-to-course",
+    _current_dir.parent / ".agents" / "skills" / "content-to-course",
+] + ([_current_dir.parents[i] / ".agents" / "skills" / "content-to-course" for i in range(len(_current_dir.parents))] if _current_dir.parents else [])
+
+for _cand in _skill_candidates:
+    if _cand and (_cand / "check_cta.py").is_file():
+        _cand_resolved = str(_cand.resolve())
+        if _cand_resolved not in sys.path:
+            sys.path.insert(0, _cand_resolved)
+        break
 
 from check_cta import JsonLineLocator, validate_cta_rules
 from cta_merge import render_cta_md, sanitize_competency_math
