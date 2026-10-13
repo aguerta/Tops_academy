@@ -158,14 +158,16 @@ class PlatformRequestHandler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
 
-        # Endpoint: GET /api/courses
-        if path == "/api/courses":
+        # Endpoint: GET /api/courses or /api/courses.json
+        if path in ("/api/courses", "/api/courses.json"):
             self.handle_api_courses()
             return
 
         # Endpoint: GET /api/courses/<id>
         if path.startswith("/api/courses/"):
             requested_id = path[len("/api/courses/"):]
+            if requested_id.endswith(".json"):
+                requested_id = requested_id[:-5]
             self.handle_api_course_detail(requested_id)
             return
 

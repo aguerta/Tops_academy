@@ -14,6 +14,8 @@ build/
 tests/dist/
 
 # 3. Cachés y Artefactos de Python
+.venv/
+venv/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -39,6 +41,7 @@ tests/e2e/screenshots/
 
 # 7. Scratch y Archivos Temporales de Desarrollo
 scratch/
+report_*.json
 *.tmp
 *.temp
 
