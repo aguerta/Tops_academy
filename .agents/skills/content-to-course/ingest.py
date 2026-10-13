@@ -22,7 +22,10 @@ import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-import fitz  # PyMuPDF
+try:
+    import pymupdf
+except ImportError:
+    import fitz as pymupdf
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -69,7 +72,7 @@ def normalize_corrupt_diacritics(text: str) -> str:
     return text
 
 
-def clean_beamer_text(page: fitz.Page) -> str:
+def clean_beamer_text(page: pymupdf.Page) -> str:
     """Extract and clean text from Beamer slide, stripping repetitive navigation/footers."""
     page_rect = page.rect
     height = page_rect.height if page_rect.height > 0 else 1.0
@@ -103,7 +106,7 @@ def clean_beamer_text(page: fitz.Page) -> str:
 
 
 def analyze_page_density(
-    page: fitz.Page,
+    page: pymupdf.Page,
     page_num: int,
     doc_name: str,
 ) -> Dict[str, Any]:
@@ -761,7 +764,7 @@ def create_handouts(
     - Filters manifest items with needs_vision == True.
     - For kind == 'beamer_text': groups 4 consecutive pages within same doc, 2x2 layout.
     - For kind == 'ink_pdf' or image: groups 2 consecutive pages, 1x2 layout.
-    - Renders with PyMuPDF (fitz) and scales with PIL preserving aspect ratio so long side <= HANDOUT_MAX_SIDE.
+    - Renders with PyMuPDF (pymupdf) and scales with PIL preserving aspect ratio so long side <= HANDOUT_MAX_SIDE.
     - Draws indelible banner on each quadrant: '[DOC: {doc} | PAGE: {n}]'.
     - Saves work/handouts/handout_{idx:03d}.png and work/handouts/handout_{idx:03d}_text.md.
     - Writes work/handouts/handouts_manifest.json.
@@ -865,10 +868,10 @@ def create_handouts(
 
                 if cand_pdf and cand_pdf.is_file():
                     try:
-                        fdoc = fitz.open(cand_pdf)
+                        fdoc = pymupdf.open(cand_pdf)
                         fpage = fdoc[p_num - 1] if 0 <= p_num - 1 < len(fdoc) else fdoc[0]
                         zoom = dpi / 72.0
-                        pix = fpage.get_pixmap(matrix=fitz.Matrix(zoom, zoom))
+                        pix = fpage.get_pixmap(matrix=pymupdf.Matrix(zoom, zoom))
                         page_img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                         page_txt = clean_beamer_text(fpage)
                         fdoc.close()
@@ -1512,7 +1515,7 @@ def prepare_corpus(
         out_doc_dir.mkdir(parents=True, exist_ok=True)
 
         if ext in PDF_EXTENSIONS:
-            doc = fitz.open(fpath)
+            doc = pymupdf.open(fpath)
             total_pages = len(doc)
 
             for p_idx in range(total_pages):
@@ -1536,7 +1539,7 @@ def prepare_corpus(
 
                 if render_img:
                     zoom = target_dpi / 72.0
-                    matrix = fitz.Matrix(zoom, zoom)
+                    matrix = pymupdf.Matrix(zoom, zoom)
                     pix = page.get_pixmap(matrix=matrix)
                     img_filename = f"page_{page_num:03d}.png"
                     img_filepath = out_doc_dir / img_filename

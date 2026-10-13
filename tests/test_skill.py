@@ -166,8 +166,11 @@ class TestIngestionAndVisionFallback:
         in_dir = tmp_path / "in"
         in_dir.mkdir()
         pdf_file = in_dir / "sample.pdf"
-        import fitz
-        doc = fitz.open()
+        try:
+            import pymupdf
+        except ImportError:
+            import fitz as pymupdf
+        doc = pymupdf.open()
         doc.new_page()
         doc.save(str(pdf_file))
         doc.close()
