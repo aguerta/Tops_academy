@@ -69,7 +69,6 @@ class KaTeXSyntaxLinter(BaseLinter):
         re.compile(r"\\hat\{\\mathbf\{[a-zA-Z0-9_\\]+(?!\})"),
         re.compile(r"\\hat\{\\(?:boldsymbol|mathbf)\{[a-zA-Z]+(?=[)=+\s\',])"),
         re.compile(r"\\frac\{\\text\{[a-zA-Z0-9_\s]+\}\{\\text\{[a-zA-Z0-9_\s]+(?!\})"),
-        re.compile(r"\\frac\{[^{}\n]+\{[^{}\n]+\}"),
         re.compile(r"\\sqrt\{c_\{[a-zA-Z0-9]+\}(?!\})"),
         re.compile(r"\^\{[^}]*\\frac\{[^}]*\}\{[^}]*\}\s*\\text"),
     ]
@@ -120,7 +119,7 @@ class KaTeXSyntaxLinter(BaseLinter):
                 # 1. Unclosed nested braces
                 for pat in self.UNCLOSED_BRACE_PATTERNS:
                     m = pat.search(text)
-                    if m:
+                    if m and text.count('{') != text.count('}'):
                         unclosed_braces.append(qid)
                         q_has_katex_issue = True
                         issues.append(LintIssue(
