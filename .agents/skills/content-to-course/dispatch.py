@@ -1650,26 +1650,25 @@ def build_dispatch(
         if compile_src.is_file():
             shutil.copy2(compile_src, work / "compile_cta.py")
 
-        # Pre-seed starter scaffolds on disk for backwards compatibility with modular parts
-        doc_name_first = source_files[0] if source_files else "material_fuente.pdf"
-        preseed_cta_scaffolds(work_dir=work, num_parts=3, doc_name=doc_name_first)
+        # Ensure cta_parts directory exists for backward compatibility without bait files
+        (work / "cta_parts").mkdir(parents=True, exist_ok=True)
 
-        read_paths = ["work/compile_cta.py"] + read_paths
         if (work / "patches").is_dir():
             read_paths.append("work/patches/*.md")
         if (work / "handout_patches").is_dir():
             read_paths.append("work/handout_patches/*.md")
 
-        write_paths = ["work/cta_data.py", "work/cta.json", "work/cta.md", "work/cta_parts/part_*.json", "work/cta_parts/*.json"]
+        write_paths = ["work/cta_data.py", "work/cta.json", "work/cta.md"]
 
         extra_cta_context = ""
+        first_source_doc = source_files[0] if source_files else "material_fuente.pdf"
         if source_files:
             file_list_str = "\n".join(f"- `{f}`" for f in source_files)
             extra_cta_context = (
                 f"### MATERIALES FUENTE ASIGNADOS ({source_rel_str}):\n"
                 f"{file_list_str}\n\n"
                 "Usa estos nombres exactos de archivo en el campo de evidencia (`evidence: doc, pag`). "
-                "Comienza inmediatamente inspeccionando estos archivos asignados con `view_file`."
+                f"Comienza INMEDIATAMENTE en el Turno 1 abriendo `{source_rel_str}/{first_source_doc}` con `view_file`."
             )
 
         bundle_file = generate_cta_direct_bundle(
@@ -1700,6 +1699,8 @@ def build_dispatch(
         prompt_lines.append("- **WRITE permitido:**")
         prompt_lines.append("  * `work/cta_data.py` (emisión de datos tabulares puros con write_to_file)")
         prompt_lines.append("  * `work/cta.json` y `work/cta.md` (generados automáticamente por `python work/compile_cta.py`)")
+        prompt_lines.append("- **EJECUTABLE CLI permitido:**")
+        prompt_lines.append("  * `python work/compile_cta.py` (compilador determinista pre-sembrado en work/)")
         prompt_lines.append("- **PROHIBIDO:**")
         for f in forbidden_cta:
             prompt_lines.append(f"  * {f}")
@@ -1713,9 +1714,10 @@ def build_dispatch(
         prompt_lines.extend([
             "",
             "## INICIO INMEDIATO Y TERMINACIÓN OBLIGATORIA (ARQUITECTURA DE 2 ARCHIVOS)",
-            "- NO necesitas leer ningún archivo bundle en Turno 1. Todas tus instrucciones y directivas están provistas aquí.",
+            f"- **TURNO 1 MANDATORIO:** Abre INMEDIATAMENTE `{source_rel_str}/{first_source_doc}` con `view_file`.",
+            "- Queda TERMINANTEMENTE PROHIBIDO gastar Turno 1 leyendo `compile_cta.py`, explorando directorios o buscando archivos auxiliares.",
+            "- El contrato completo de tuplas para `COMPETENCIES` está especificado al 100% en las directivas superiores.",
             "- El compilador `work/compile_cta.py` ya está pre-sembrado en disco y es INMUTABLE. No lo edites ni lo modifiques.",
-            "- Inicia DIRECTAMENTE en Turno 1 analizando los materiales fuente asignados con `view_file` en estricto orden cronológico (página por página).",
             "- Emite las competencias en formato de tuplas tabulares compactas en `work/cta_data.py` usando `write_to_file`.",
             "- Para cursos extensos, emite en 2 o más bloques continuos usando `write_to_file` con `Append: true` para bloques subsecuentes.",
             "- Tras emitir los datos, ejecuta: `python work/compile_cta.py` para compilar y validar automáticamente.",
