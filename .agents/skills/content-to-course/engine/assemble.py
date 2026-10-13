@@ -46,7 +46,10 @@ def sanitize_katex_syntax(text: str) -> str:
 
     # Normalize residual paired double curly braces from f-strings {{var}} -> {var}
     # NEVER do a blind text.replace("}}", "}") as that destroys nested LaTeX groups!
-    text = re.sub(r"\{\{([a-zA-Z0-9_]+)\}\}", r"{\1}", text)
+    prev = None
+    while prev != text:
+        prev = text
+        text = re.sub(r"\{\{([^{}]+)\}\}", r"{\1}", text)
 
     return text
 
