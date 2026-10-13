@@ -219,6 +219,16 @@ def validate_katex_syntax(text: str, context: str, allow_template_vars: bool = F
             if is_subsequent_latex_arg:
                 continue
 
+            # Check if this looks like an unescaped LaTeX math command (e.g. dot{w}, bar{k}, frac{a}{b})
+            m_accent = re.search(r"\b(dot|ddot|bar|hat|tilde|vec|frac|sqrt)\s*$", prefix)
+            if m_accent:
+                cmd_name = m_accent.group(1)
+                errors.append(
+                    f"Unescaped LaTeX math command '{cmd_name}{{{var_name}}}' detected in {context}. "
+                    f"Must be prefixed with '\\' and enclosed in '$...$' (e.g. '$\\{cmd_name}{{{var_name}}}$')."
+                )
+                continue
+
             errors.append(f"Unsubstituted template variable '{{{var_name}}}' detected in {context}.")
 
     return errors

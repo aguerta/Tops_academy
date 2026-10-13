@@ -288,7 +288,8 @@ class WorkloadExtractor:
             "questions_count": 0,
             "cta_mode": "unknown",
             "course_id": "unknown",
-            "course_title": "unknown"
+            "course_title": "unknown",
+            "run_status": "COMPLETED",
         }
 
         if not workspace_root:
@@ -438,20 +439,6 @@ class WorkloadExtractor:
                 except Exception:
                     pass
 
-        # Check published courses in courses/
-        courses_dir = workspace_root / "courses"
-        if courses_dir.exists():
-            for cjson in courses_dir.glob("*.json"):
-                if cjson.is_file():
-                    try:
-                        c_obj = json.loads(cjson.read_text(encoding="utf-8"))
-                        if workload["course_id"] != "unknown" and c_obj.get("course_id") == workload["course_id"]:
-                            workload["course_title"] = c_obj.get("title", workload["course_title"])
-                            if workload["questions_count"] == 0:
-                                workload["questions_count"] = len(c_obj.get("questions", []))
-                    except Exception:
-                        pass
-
         # Fallbacks from transcript records
         transcript_full_text = ""
         if records:
@@ -464,6 +451,37 @@ class WorkloadExtractor:
                         if m_cid:
                             workload["course_id"] = next(g for g in m_cid.groups() if g)
 
+        # Determine whether the audited run completed Stage 4 (build) or Stage 5/6 (verify/publish)
+        completion_patterns = r"Stage 4 \(build\) completed|Stage 5 \(verify\) completed|Stage 6 \(publish\) completed|Successfully built course bank|run_stage_build.*completed|run_stage_publish.*completed|run_stage_verify.*completed"
+        transcript_shows_completed = bool(re.search(completion_patterns, transcript_full_text, re.IGNORECASE)) if transcript_full_text else False
+
+        if records:
+            # When full execution transcript is present, it is authoritative
+            completed_stage_4_or_5 = transcript_shows_completed
+        else:
+            # Fallback for static audits without transcript logs
+            completed_stage_4_or_5 = False
+            if found_work and ((found_work / "course.json").exists() or (found_work / "course_verified.json").exists()):
+                completed_stage_4_or_5 = True
+
+        workload["run_status"] = "COMPLETED" if completed_stage_4_or_5 else "ABORTED_INCOMPLETE"
+        if not completed_stage_4_or_5:
+            workload["questions_count"] = 0
+
+        # Check published courses in courses/
+        courses_dir = workspace_root / "courses"
+        if courses_dir.exists():
+            for cjson in courses_dir.glob("*.json"):
+                if cjson.is_file():
+                    try:
+                        c_obj = json.loads(cjson.read_text(encoding="utf-8"))
+                        if workload["course_id"] != "unknown" and c_obj.get("course_id") == workload["course_id"]:
+                            workload["course_title"] = c_obj.get("title", workload["course_title"])
+                            if completed_stage_4_or_5 and workload["questions_count"] == 0:
+                                workload["questions_count"] = len(c_obj.get("questions", []))
+                    except Exception:
+                        pass
+
         # Fallback from reports/qa_audits
         qa_dir = workspace_root / "reports" / "qa_audits"
         if qa_dir.exists():
@@ -474,14 +492,16 @@ class WorkloadExtractor:
                     if workload["course_id"] not in ("unknown", "course_generic"):
                         if cand_cid.lower() in workload["course_id"].lower() or workload["course_id"].lower() in cand_cid.lower():
                             workload["course_title"] = qa_data.get("title", workload["course_title"])
-                            workload["questions_count"] = qa_data.get("total_questions", 0)
                             workload["competencies_count"] = qa_data.get("total_competencies", len(qa_data.get("competencies", [])))
+                            if completed_stage_4_or_5 and workload["questions_count"] == 0:
+                                workload["questions_count"] = qa_data.get("total_questions", 0)
                             break
                     elif cand_cid and (cand_cid in transcript_full_text.lower()):
                         workload["course_id"] = cand_cid
                         workload["course_title"] = qa_data.get("title", cand_cid)
-                        workload["questions_count"] = qa_data.get("total_questions", 0)
                         workload["competencies_count"] = qa_data.get("total_competencies", len(qa_data.get("competencies", [])))
+                        if completed_stage_4_or_5 and workload["questions_count"] == 0:
+                            workload["questions_count"] = qa_data.get("total_questions", 0)
                 except Exception:
                     pass
 
@@ -536,10 +556,13 @@ class WorkloadExtractor:
                 try:
                     c_obj = json.loads(c_cand.read_text(encoding="utf-8"))
                     workload["course_title"] = c_obj.get("title") or c_obj.get("course_title") or workload["course_title"]
-                    if workload["questions_count"] == 0:
+                    if completed_stage_4_or_5 and workload["questions_count"] == 0:
                         workload["questions_count"] = len(c_obj.get("questions", []))
                 except Exception:
                     pass
+
+        if not completed_stage_4_or_5:
+            workload["questions_count"] = 0
 
         if workload["total_handouts"] == 0 or workload["pages_needing_vision"] == 0:
             m_h = re.search(r'"total_handouts":\s*(\d+)', transcript_full_text)

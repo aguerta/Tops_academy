@@ -151,12 +151,12 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "read": [
             "work/shards/shard_XX.json",
             "work/shards/shard_*.json",
+            "work/cta.json",
             "content/**/*.pdf",
         ],
         "write": [
             "work/templates/<comp_id>.json",
             "work/templates/*.json",
-            "work/build_*.py",
             "scratch/**",
         ],
         "forbidden": [
@@ -167,8 +167,9 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "check_templates.py",
             "src/validator/*",
             "rules.py",
+            "work/build_<shard_id>.py (scripts monolíticos prohibidos; generar directamente templates modulares por competencia)",
         ],
-        "turn_budget": 25,
+        "turn_budget": 50,
     },
     "judge": {
         "type_name": "c2c-judge",
@@ -324,25 +325,36 @@ def generate_author_bundle(
     read_paths: List[str],
     write_paths: List[str],
     forbidden_items: Optional[List[str]] = None,
-    turn_budget: int = 25,
+    turn_budget: int = 50,
     extra_context: str = "",
 ) -> Path:
-    """Generates task bundle for shard exercise author with reinforced atomic instructions.
+    """Generates task bundle for shard exercise author with reinforced modular instructions.
 
     Directivas reforzadas:
-    - Autoría atómica modular en 1 script.
-    - Validación de todo el lote a la vez.
+    - Autoría modular por competencia (work/templates/<comp_id>.json). Prohibidos scripts monolíticos de 2,000 líneas.
+    - Prohibición de comandos complejos de PowerShell inline con variables '$'.
+    - Validación de todo el lote a la vez con check_templates.py.
     - Cero introspección del validador (prohibido check_templates.py, src/validator/*, rules.py).
+    - Presupuesto máximo de 50 turnos y Circuit Breaker tras 3 fallos consecutivos idénticos.
     """
     forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["author"]["forbidden"])
     directives = (
-        "### DIRECTIVAS CRÍTICAS DE AUTORÍA (OBLIGATORIO):\n"
-        "1. **Autoría atómica modular en 1 script:** Diseña e implementa la generación de todas las plantillas del shard "
-        "en un único script Python ejecutable (ej. en `scratch/` o script local) que genere y persista todos los archivos de salida.\n"
-        "2. **Validación de todo el lote a la vez:** Ejecuta la validación de todas las plantillas del lote de forma "
-        "agrupada en una sola llamada (batch) una vez generado el script, sin validar archivo por archivo individualmente.\n"
-        "3. **Cero introspección del validador:** Queda estrictamente prohibido examinar, leer o inspeccionar `check_templates.py`, "
-        "`src/validator/*` o `rules.py`. Las plantillas deben satisfacer el contrato y la calidad psicométrica por primeros principios."
+        "### DIRECTIVAS CRÍTICAS DE AUTORÍA MODULAR (OBLIGATORIO):\n"
+        "1. **Salida modular por competencia (work/templates/<comp_id>.json):** Escribe directamente cada archivo "
+        "JSON de competencia asignada (`work/templates/<comp_id>.json`) con sus >=6 plantillas paramétricas usando `write_to_file`. "
+        "Queda terminantemente PROHIBIDO escribir un único script monolítico de 2,000 líneas (`build_<shard_id>.py`). "
+        "Si requieres scripts auxiliares en `scratch/`, deben ser modulares y atómicos por competencia (ej. `scratch/gen_<comp_id>.py`).\n"
+        "2. **Prohibidos comandos de PowerShell inline con '$':** NO ejecutes comandos inline de PowerShell (`powershell -Command ...`) "
+        "que contengan variables o expresiones con signo `$`, ya que PowerShell expande `$variable` como cadenas vacías y corrompe los archivos. "
+        "Utiliza siempre las herramientas nativas de Antigravity (`write_to_file`, `replace_file_content`, `view_file`).\n"
+        "3. **Validación de todo el lote a la vez:** Ejecuta la validación de todas las plantillas generadas de tu shard "
+        "en un solo comando agrupado en terminal:\n"
+        "   `python .agents/skills/content-to-course/check_templates.py work/templates/<comp_id1>.json work/templates/<comp_id2>.json ... --cta work/cta.json --strict`\n"
+        "4. **Cero introspección del validador:** Queda estrictamente prohibido examinar, leer o inspeccionar `check_templates.py`, "
+        "`src/validator/*` o `rules.py`. La salida de la terminal detalla explícitamente el nombre de la regla y el campo infractor.\n"
+        "5. **Circuit Breaker y presupuesto de 50 turnos:** Tu presupuesto máximo es de 50 turnos. "
+        "Si obtienes 3 fallos consecutivos idénticos en `check_templates.py` sin progreso, o si alcanzas el límite de turnos, "
+        "debes detenerte inmediatamente y responder: `BLOCKED: CONTRACT_ERROR`."
     )
     combined = f"{directives}\n\n{extra_context}".strip() if extra_context else directives
     return _create_task_bundle(
@@ -477,7 +489,7 @@ def _format_prompt(
         f"- PROHIBIDO:\n{forbid_str}\n\n"
         f"Lee tu bundle en Turno 1 con view_file, ejecuta las directivas en tu scope y finaliza estrictamente con:\n"
         f"DONE: <archivos escritos> (o BLOCKED: <motivo>).\n"
-        f"Presupuesto sugerido: {turn_budget} turnos."
+        f"Presupuesto sugerido: {'máximo ' + str(turn_budget) + ' turnos (límite estricto). Si alcanzas ' + str(turn_budget) + ' turnos o 3 fallos consecutivos idénticos, finaliza con BLOCKED: CONTRACT_ERROR.' if role_name == 'author' else str(turn_budget) + ' turnos.'}"
     )
     return prompt
 
@@ -767,7 +779,7 @@ def build_dispatch(
             if not c_ids and "competencies" in s:
                 c_ids = [c.get("id") for c in s["competencies"] if "id" in c]
 
-            read_paths = [f"work/shards/{s_id}.json"]
+            read_paths = [f"work/shards/{s_id}.json", "work/cta.json"]
             write_paths = [f"work/templates/{cid}.json" for cid in c_ids]
 
             bundle_file = generate_author_bundle(

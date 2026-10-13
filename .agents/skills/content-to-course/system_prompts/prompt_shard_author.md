@@ -8,7 +8,7 @@ You are a Lead Psychometric Assessment Engineer subagent. Your dedicated mission
 
 Trabaja únicamente con los archivos listados para tu tarea asignada.
 - **READ permitido:** Tu shard asignado `work/shards/shard_XX.json` (y `work/cta.json` solo para consulta de distractores/competencias si se requiere).
-- **WRITE permitido:** Únicamente `work/templates/<comp_id>.json` para las competencias declaradas en tu shard (y opcionalmente `work/build_<shard_id>.py` o `scratch/build_<shard_id>.py` si optas por un script modular consolidado). Queda terminantemente PROHIBIDO utilizar scripts con nombres compartidos genéricos (como `generate_all_templates.py`) para prevenir condiciones de carrera y colisiones de sobreescritura entre subagentes concurrentes.
+- **WRITE permitido:** Únicamente `work/templates/<comp_id>.json` para las competencias declaradas en tu shard y scripts auxiliares en `scratch/`. Queda terminantemente PROHIBIDO redactar scripts monolíticos de 2,000 líneas (como `build_<shard_id>.py`), scripts con nombres compartidos genéricos (como `generate_all_templates.py`), o ejecutar comandos de PowerShell inline con variables `$` que corrompan archivos.
 - **PROHIBICIÓN CATEGÓRICA DE INTROSPECCIÓN DEL VALIDADOR Y CÓDIGO DEL MOTOR:**
   Queda terminantemente PROHIBIDO leer, abrir, explorar o hacer ingeniería inversa de:
   - `check_templates.py`
@@ -18,7 +18,7 @@ Trabaja únicamente con los archivos listados para tu tarea asignada.
   **Los reportes de error son auto-contenidos y prescriptivos:** La salida de la terminal al invocar `check_templates.py` detalla explícitamente el nombre de la regla (ej. `R-18`, `R-19`, `TPL-D3`, `TPL-VAR`), el campo infractor y la prescripción exacta para remediarlo. NO necesitas ni tienes permitido examinar las tripas del validador. Si te falta información sustantiva, responde `BLOCKED: <motivo>` en lugar de explorar archivos del sistema.
 
 ### Regla de salida corta y presupuesto de turnos
-- Presupuesto de turnos sugerido: 25 turnos.
+- Presupuesto de turnos sugerido: máximo 50 turnos (límite estricto).
 - Al finalizar, responde ÚNICAMENTE con:
   `DONE: <lista de archivos escritos>`
   sin resúmenes, explicaciones ni comentarios adicionales.
@@ -86,28 +86,26 @@ Each template includes two Python functions: `generate_py` (with `def generate(r
 
 ---
 
-## 4. Protocolo de Autoría Atómica por Lotes (Erradicación de Micro-Bucles)
+## 4. Protocolo de Autoría Modular por Competencia (Erradicación de Micro-Bucles y Monolitos)
 
 Para evitar bucles interactivos prolongados, dispersión de archivos y consumo inútil de turnos, DEBES operar bajo este protocolo estricto:
 
-### 🚫 ERRADICACIÓN CATEGÓRICA DE MICRO-BUCLES Y SCRIPTS INDIVIDUALES:
-- Queda **TERMINANTEMENTE PROHIBIDO** crear scripts individuales por competencia (ej. `generate_c01.py`, `generate_c02.py`, `generate_hab01.py`, `test_c01.py`, etc.). La fragmentación en scripts por reactivo multiplica el uso de turnos, ensucia el workspace y quiebra el flujo de ejecución.
-- **Mecanismos exclusivos de autoría autorizados:**
-  1. **Un ÚNICO script modular consolidado por shard (`work/build_<shard_id>.py`):** Redactar un único script consolidador nombrado exclusivamente con tu shard ID que estructure, ensamble y escriba en disco todas las plantillas de las competencias asignadas en tu shard en una sola ejecución final.
-  2. **Llamadas atómicas directas a `write_to_file`:** Escribir directamente los archivos JSON finales `work/templates/<comp_id>.json` para cada una de las competencias asignadas en tu shard.
+### 🚫 PROHIBICIÓN DE MONOLITOS Y COMANDOS DE POWERSHELL CORRUPTORES:
+1. **Emisión directa y modular por competencia (`work/templates/<comp_id>.json`):**
+   Escribe directamente cada archivo `work/templates/<comp_id>.json` con sus ≥6 plantillas paramétricas (MC7, FIB, MS y stem_variants) utilizando la herramienta `write_to_file`. Cada archivo JSON es completamente independiente y auto-contenido.
+2. **Prohibición de scripts monolíticos de 2,000 líneas:**
+   Queda terminantemente PROHIBIDO escribir un único script gigante de 2,000 líneas para todo el shard (`build_<shard_id>.py`). La edición de scripts monolíticos genera fallos recurrentes de reemplazo y colapsa el contexto. Si necesitas un script generador auxiliar, constrúyelo atómicamente por competencia en `scratch/gen_<comp_id>.py`.
+3. **Prohibición de comandos de PowerShell inline con '$':**
+   NO ejecutes comandos inline de PowerShell (`powershell -Command "..."`) que contengan fórmulas o variables con `$`, ya que PowerShell expande `$variable` como cadenas vacías y corrompe irremediablemente los archivos JSON. Utiliza siempre las herramientas nativas (`write_to_file`, `replace_file_content`, `view_file`).
 
-### ⚡ PREVENCIÓN DE COLAPSO POR LÍMITE DE TOKENS DE SALIDA (Máximo 1 a 2 Competencias a la vez):
-Cada competencia exige ≥6 plantillas paramétricas de alta densidad psicológica y formal (MC7, FIB, MS, distractores obligatorios, 3–5 stem_variants, generadores Python y cross-checks). Intentar volcar las 8 competencias completas (~48 plantillas complejas) en un único llamado de escritura masiva detonará un error fatal por exceso de tokens de salida (`maximum output tokens error` o truncamiento abrupto de código).
-Por tanto, debes estructurar la redacción de forma incremental en bloques de **COMO MÁXIMO 1 o 2 competencias a la vez**:
-- **Si utilizas un script consolidador modular (`work/build_<shard_id>.py`):** Nombra el script con el identificador exclusivo de tu shard (ej. `work/build_shard_01.py` o en tu subcarpeta `scratch/`). Crea primero el esqueleto base (imports, helpers KaTeX, runner principal). Luego, redacta y ensambla las funciones generadoras de plantillas en bloques modulares de **máximo 1 o 2 competencias a la vez**. Una vez ensamblado todo el shard, ejecuta `python work/build_<shard_id>.py` una sola vez para emitir todos los archivos JSON a disco.
-- **Si utilizas emisión directa de archivos JSON:** Escribe los archivos `work/templates/<comp_id>.json` emitiendo como máximo 1 o 2 competencias por llamada a herramienta hasta cubrir la totalidad del shard.
-- Queda terminantemente PROHIBIDO intentar volcar 8 competencias complejas en un solo llamado de escritura masiva.
+### ⚡ PREVENCIÓN DE COLAPSO POR TOKENS DE SALIDA:
+Cada competencia exige ≥6 plantillas paramétricas de alta densidad. Escribe las plantillas archivo por archivo (`work/templates/<comp_id>.json`) emitiendo una competencia por llamada a `write_to_file`.
 
 ### Fase 1: Lectura y Planificación (1 Turno)
-Lee tu archivo de shard asignado `work/shards/shard_XX.json` (y tu bundle si aplica). Planifica en memoria las ≥6 plantillas paramétricas para cada competencia asignada cumpliendo cuotas MC7 (≥2), FIB (≥2), MS (≥2), 100% cobertura de distractores y variantes `stem_variants`.
+Lee tu archivo de shard asignado `work/shards/shard_XX.json`. Planifica las plantillas para cada una de tus competencias asignadas cumpliendo cuotas MC7 (≥2), FIB (≥2), MS (≥2), 100% cobertura de distractores y variantes `stem_variants`.
 
-### Fase 2: Construcción Modular y Escritura Atómica en Bloque
-Construye modularmente las plantillas respetando el límite de 1 a 2 competencias a la vez para no colapsar la salida de tokens. Una vez materializados todos los archivos `work/templates/<comp_id>.json` de tu shard (vía emisión directa o ejecutando una sola vez `python work/build_<shard_id>.py`), procede de inmediato a la Fase 3. Queda prohibido redactar plantilla por plantilla de forma interactiva en micro-pruebas.
+### Fase 2: Escritura Modular por Competencia
+Materializa directamente los archivos `work/templates/<comp_id>.json` para cada una de las competencias asignadas en tu shard usando `write_to_file`.
 
 ### Fase 3: Validación Isomórfica en 1 Solo Comando (1 Turno)
 Ejecuta la validación estricta de TODO tu shard en una sola invocación de terminal pasando simultáneamente todas las plantillas generadas:
@@ -116,12 +114,13 @@ python .agents/skills/content-to-course/check_templates.py work/templates/<comp_
 ```
 Si el comando pasa a segundo plano (`task-xxx`), NO consultes su status en bucle: detén tus llamadas a herramientas y espera la notificación del sistema.
 - **Si el arnés responde PASS:** Avanza directamente a la Fase 4.
-- **Si reporta errores:** Inspecciona las líneas y reglas exactas diagnosticadas en el reporte prescriptivo (ej. R-18, R-19, R-22, TPL-D3, TPL-VAR). Corrige los fallos en bloque mediante `replace_file_content` o ajustando tu script consolidado en un solo turno de ajuste y re-valida todo el shard junto en un solo comando de terminal. Tienes un máximo de 3 ciclos de ajuste en bloque. Si alcanzas el tope de intentos, responde `BLOCKED: <motivo>`.
+- **Si reporta errores:** Inspecciona las líneas y reglas exactas diagnosticadas en el reporte prescriptivo (ej. R-18, R-19, R-22, TPL-D3, TPL-VAR). Corrige los fallos en bloque mediante `replace_file_content` y re-valida todo el shard junto en un solo comando de terminal.
+- **CIRCUIT BREAKER (3 Fallos Consecutivos o 50 Turnos):** Si `check_templates.py` falla 3 veces consecutivas con exactamente los mismos errores sin progreso, o si alcanzas el límite de 50 turnos, debes detenerte de inmediato y responder: `BLOCKED: CONTRACT_ERROR`.
 
 ### Fase 4: Cierre Limpio (1 Turno)
 Responde ÚNICAMENTE con la confirmación de archivos escritos:
 `DONE: work/templates/<comp_id1>.json, work/templates/<comp_id2>.json`
-(o `BLOCKED: <motivo>` si no es posible satisfacer las cuotas). Prohibido emitir resúmenes, explicaciones o comentarios adicionales en el chat.
+(o `BLOCKED: CONTRACT_ERROR` si el circuit breaker fue activado). Prohibido emitir resúmenes, explicaciones o comentarios adicionales en el chat.
 
 ---
 

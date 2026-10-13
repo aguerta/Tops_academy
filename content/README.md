@@ -22,6 +22,14 @@ El generador de cursos (`.agents/skills/content-to-course/run.py`) toma los arch
 python .agents/skills/content-to-course/run.py \
   --course-id <id_del_curso> \
   --title "<Título del Curso>" \
-  --pdf content/<materia_slug>/archivo1.pdf content/<materia_slug>/archivo2.pdf
+  --pdf content/<materia_slug>/archivo1.pdf content/<materia_slug>/archivo2.pdf \
+  --cta-mode auto \
+  --strict
 ```
 También es posible pasar rutas directas a archivos alojados externamente en Google Drive u otra unidad sin copiarlos aquí.
+
+## Cursos Disponibles en Ingesta
+- **`content/Solow_model/`**:
+  - `05_15_07_El_modelo_de_crecimiento_de_Solow.pdf` (Diapositivas y notas de teoría de crecimiento)
+  - `solow1956.pdf` (Artículo fundacional de Robert Solow, 1956)
+

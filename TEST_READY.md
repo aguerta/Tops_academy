@@ -56,6 +56,8 @@ npm.cmd run test:e2e
 | **AC-08** | **Comprehensive Assessments**<br>Quiz, unit test, and course challenge (~30 questions drawn across units) can be started and completed. | `test_platform_assessments.py::test_quiz_and_unit_test_flow`<br>`test_platform_assessments.py::test_course_challenge_flow` | ✅ Ready |
 | **AC-09** | **SVG Coordinate Plane Graph Rendering**<br>Question with graph renders Cartesian coordinate plane (verified via DOM/SVG elements: axes, curves, open/closed points). | `test_platform_graphs.py::test_coordinate_plane_svg_rendering` | ✅ Ready |
 | **AC-10** | **Clean Console & Error Resilience**<br>No console errors during test run; all tests pass. | Monitored across all 14 tests in `conftest.py` page fixture. | ✅ Ready |
+| **AC-11** | **3-Strikes Solution Reveal Safeguard**<br>Tracking consecutive wrong attempts; after 3 failures, locks inputs ("Maximum attempts reached 3/3"), reveals correct answer and step-by-step solution, and scores 0 credit. | `platform/src/components/PracticeSession.tsx`<br>`tests/test_platform.py` | ✅ Ready |
+| **AC-12** | **Extended Math Equivalence & Comma Notation**<br>Accepts Spanish comma decimal notation (`0,8333` $\equiv$ `0.8333`), fraction conversions (`5/6` $\equiv$ `0,8333`), negative powers, and Greek variables. | `tests/test_math_adversarial_suite.mjs` (81 cases) | ✅ Ready |
 | **VF-01** | **Visual Fidelity 6-State Capture**<br>Automated capture of all 6 platform states corresponding to reference screenshots for visual reviewer audit. | `test_visual_fidelity_capture.py::test_capture_six_canonical_states` | ✅ Ready |
 
 ---

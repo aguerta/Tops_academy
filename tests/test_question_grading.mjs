@@ -147,7 +147,10 @@ function assert(condition, message) {
 }
 
 // Test 1: Screenshot Questions from sistemas_edos.json
-const sistemasEdosPath = path.join(ROOT_DIR, 'courses', 'sistemas_edos.json');
+let sistemasEdosPath = path.join(ROOT_DIR, 'courses', 'sistemas_edos.json');
+if (!fs.existsSync(sistemasEdosPath)) {
+  sistemasEdosPath = path.join(ROOT_DIR, 'archive_rejected_courses', 'sistemas_edos.json');
+}
 assert(fs.existsSync(sistemasEdosPath), 'sistemas_edos.json must exist');
 
 const sistemasEdos = JSON.parse(fs.readFileSync(sistemasEdosPath, 'utf-8'));
@@ -229,9 +232,12 @@ if (fs.existsSync(calculusPath)) {
   }
 }
 
-// Test 3: Sweep across ALL MC & MS questions in sistemas_edos.json and pde_course.json
-for (const cFile of ['sistemas_edos.json', 'pde_course.json']) {
-  const cPath = path.join(ROOT_DIR, 'courses', cFile);
+// Test 3: Sweep across ALL MC & MS questions in available courses
+for (const cFile of ['estadistica3_regresion_v3.json', 'sistemas_edos.json', 'pde_course.json']) {
+  let cPath = path.join(ROOT_DIR, 'courses', cFile);
+  if (!fs.existsSync(cPath)) {
+    cPath = path.join(ROOT_DIR, 'archive_rejected_courses', cFile);
+  }
   if (!fs.existsSync(cPath)) continue;
   const cData = JSON.parse(fs.readFileSync(cPath, 'utf-8'));
   let mcTested = 0;

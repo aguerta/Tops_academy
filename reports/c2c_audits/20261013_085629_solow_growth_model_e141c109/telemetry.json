@@ -1,0 +1,2049 @@
+{
+  "meta": {
+    "audit_timestamp": "2026-10-13T13:56:29.202010+00:00",
+    "orchestrator_conversation_id": "e141c109-7f7a-4b7c-a225-faffff8919b1",
+    "course_id": "solow_growth_model",
+    "course_title": "El Modelo de Crecimiento Económico de Solow (1956)"
+  },
+  "summary": {
+    "wall_clock_seconds": 1038.0,
+    "wall_clock_minutes": 17.3,
+    "agent_compute_seconds": 6948.0,
+    "agent_compute_minutes": 115.8,
+    "parallel_speedup_factor": 6.69,
+    "total_tokens": 42298536,
+    "total_active_tokens": 2577435,
+    "total_input_tokens": 1961920,
+    "total_output_tokens": 615515,
+    "total_cache_read_tokens": 39721101,
+    "total_turns": 352,
+    "total_subagents_spawned": 4,
+    "tool_calls_total": 348,
+    "tool_errors_total": 69
+  },
+  "workload": {
+    "source_files": [
+      {
+        "name": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+        "size_bytes": 981980,
+        "pages": 5,
+        "ext": ".pdf"
+      },
+      {
+        "name": "solow1956.pdf",
+        "size_bytes": 2424163,
+        "pages": 31,
+        "ext": ".pdf"
+      }
+    ],
+    "total_input_bytes": 3406143,
+    "total_input_mb": 3.25,
+    "total_pages_or_slides": 36,
+    "pages_needing_vision": 0,
+    "total_handouts": 0,
+    "corpus_chars": 0,
+    "corpus_words": 0,
+    "competencies_count": 22,
+    "shards_count": 3,
+    "shards_competencies_map": {
+      "shard_01": {
+        "competency_ids": [
+          "H-01",
+          "C-01",
+          "Hab-01",
+          "C-02",
+          "H-02",
+          "Hab-02",
+          "C-03"
+        ],
+        "count": 7
+      },
+      "shard_02": {
+        "competency_ids": [
+          "H-03",
+          "C-04",
+          "Hab-03",
+          "C-05",
+          "C-06",
+          "C-07"
+        ],
+        "count": 6
+      },
+      "shard_03": {
+        "competency_ids": [
+          "Hab-04",
+          "Hab-05",
+          "Hab-06",
+          "H-04",
+          "C-08",
+          "Hab-07"
+        ],
+        "count": 6
+      },
+      "shard_04": {
+        "competency_ids": [
+          "Hab-08",
+          "C-09",
+          "C-10",
+          "H-05",
+          "C-11",
+          "C-12"
+        ],
+        "count": 6
+      }
+    },
+    "questions_count": 0,
+    "cta_mode": "unknown",
+    "course_id": "solow_growth_model",
+    "course_title": "El Modelo de Crecimiento Económico de Solow (1956)",
+    "run_status": "ABORTED_INCOMPLETE"
+  },
+  "unit_economics": {
+    "tokens_per_page": 1174959.3,
+    "active_tokens_per_page": 71595.4,
+    "tokens_per_input_kb": 12716.3,
+    "tokens_per_competency": 1922660.7,
+    "active_tokens_per_competency": 117156.1,
+    "author_tokens_per_competency": 99765.0,
+    "tokens_per_question": 0.0,
+    "active_tokens_per_question": 0.0,
+    "seconds_per_page": 28.83,
+    "seconds_per_question": 0.0,
+    "questions_per_minute": 0.0,
+    "agent_seconds_per_question": 0.0,
+    "output_tokens_per_question": 0.0
+  },
+  "stage_deep_dives": {
+    "stage_1a_vision": {
+      "agents_count": 0,
+      "agents": [],
+      "individual_durations": [],
+      "max_wall_time_seconds": 0.0,
+      "total_active_tokens": 0,
+      "total_cache_tokens": 0,
+      "critical_path_agent": "N/A"
+    },
+    "stage_1b_cta": {
+      "mappers_count": 0,
+      "mappers": [],
+      "mappers_max_wall_time": 0.0,
+      "harmonizer": {
+        "conversation_id": "092fab81-12ac-49bb-babc-c49a90f51fe0",
+        "label": "Direct CTA Architect",
+        "start_time": "2026-10-13T07:10:16+00:00",
+        "end_time": "2026-10-13T07:23:22+00:00",
+        "start_iso": "2026-10-13T07:10:16+00:00",
+        "end_iso": "2026-10-13T07:23:22+00:00",
+        "duration_seconds": 786.0,
+        "duration_minutes": 13.1,
+        "turns_count": 26,
+        "input_tokens": 152691,
+        "output_tokens": 50685,
+        "cache_read_tokens": 1339427,
+        "active_tokens": 203376,
+        "total_tokens": 1542803,
+        "thinking_chars": 9091,
+        "tool_calls_count": 25,
+        "tool_calls_by_name": {
+          "view_file": 13,
+          "run_command": 10,
+          "write_to_file": 1,
+          "send_message": 1
+        },
+        "tool_errors_count": 1,
+        "failed_commands": [],
+        "steps": [
+          {
+            "step_index": 1,
+            "created_at": "2026-10-13T07:10:16Z",
+            "input_tokens": 8821,
+            "output_tokens": 660,
+            "cache_read_tokens": 0,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 3,
+            "created_at": "2026-10-13T07:10:21Z",
+            "input_tokens": 12988,
+            "output_tokens": 172,
+            "cache_read_tokens": 0,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 5,
+            "created_at": "2026-10-13T07:10:25Z",
+            "input_tokens": 24614,
+            "output_tokens": 540,
+            "cache_read_tokens": 0,
+            "tools": [
+              "run_command"
+            ]
+          },
+          {
+            "step_index": 7,
+            "created_at": "2026-10-13T07:10:31Z",
+            "input_tokens": 2792,
+            "output_tokens": 240,
+            "cache_read_tokens": 22566,
+            "tools": [
+              "run_command"
+            ]
+          },
+          {
+            "step_index": 9,
+            "created_at": "2026-10-13T07:10:36Z",
+            "input_tokens": 2514,
+            "output_tokens": 584,
+            "cache_read_tokens": 23309,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 11,
+            "created_at": "2026-10-13T07:11:08Z",
+            "input_tokens": 6138,
+            "output_tokens": 305,
+            "cache_read_tokens": 22980,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 13,
+            "created_at": "2026-10-13T07:11:18Z",
+            "input_tokens": 23644,
+            "output_tokens": 2488,
+            "cache_read_tokens": 22927,
+            "tools": [
+              "run_command"
+            ]
+          },
+          {
+            "step_index": 15,
+            "created_at": "2026-10-13T07:11:58Z",
+            "input_tokens": 1848,
+            "output_tokens": 219,
+            "cache_read_tokens": 47320,
+            "tools": [
+              "run_command"
+            ]
+          },
+          {
+            "step_index": 17,
+            "created_at": "2026-10-13T07:12:20Z",
+            "input_tokens": 1798,
+            "output_tokens": 421,
+            "cache_read_tokens": 47839,
+            "tools": [
+              "run_command"
+            ]
+          },
+          {
+            "step_index": 19,
+            "created_at": "2026-10-13T07:12:43Z",
+            "input_tokens": 1859,
+            "output_tokens": 477,
+            "cache_read_tokens": 48325,
+            "tools": [
+              "run_command"
+            ]
+          },
+          {
+            "step_index": 21,
+            "created_at": "2026-10-13T07:13:07Z",
+            "input_tokens": 2090,
+            "output_tokens": 225,
+            "cache_read_tokens": 48952,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 23,
+            "created_at": "2026-10-13T07:13:35Z",
+            "input_tokens": 2148,
+            "output_tokens": 152,
+            "cache_read_tokens": 49817,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 25,
+            "created_at": "2026-10-13T07:13:55Z",
+            "input_tokens": 2080,
+            "output_tokens": 684,
+            "cache_read_tokens": 50702,
+            "tools": [
+              "run_command"
+            ]
+          },
+          {
+            "step_index": 27,
+            "created_at": "2026-10-13T07:14:22Z",
+            "input_tokens": 2071,
+            "output_tokens": 158,
+            "cache_read_tokens": 51505,
+            "tools": [
+              "view_file"
+            ]
+          },
+          {
+            "step_index": 29,
+            "created_at": "2026-10-13T07:14:42Z",
+            "input_tokens": 2323,
+            "output_tokens": 128,
+            "cache_read_tokens": 52376,
+            "tools": [
+              "view_file"
+            ]
+          }
+        ],
+        "category": "cta_harmonizer",
+        "shard_id": null,
+        "spawn_step": 34,
+        "spawn_time": "2026-10-13T07:10:16Z",
+        "model": "inherit",
+        "competencies": [],
+        "competencies_count": 0,
+        "tokens_per_competency": 0.0
+      },
+      "harmonizer_duration": 786.0,
+      "total_stage_wall_time": 786.0,
+      "total_active_tokens": 203376,
+      "critical_mapper": "N/A"
+    },
+    "stage_3_authors": {
+      "shards_count": 3,
+      "shards": [
+        {
+          "conversation_id": "9dbcf587-5b22-4d92-ba91-12c21e3558a5",
+          "label": "Shard Author shard_01",
+          "start_time": "2026-10-13T07:24:23+00:00",
+          "end_time": "2026-10-13T07:52:48+00:00",
+          "start_iso": "2026-10-13T07:24:23+00:00",
+          "end_iso": "2026-10-13T07:52:48+00:00",
+          "duration_seconds": 1705.0,
+          "duration_minutes": 28.42,
+          "turns_count": 87,
+          "input_tokens": 525529,
+          "output_tokens": 213111,
+          "cache_read_tokens": 8816404,
+          "active_tokens": 738640,
+          "total_tokens": 9555044,
+          "thinking_chars": 53849,
+          "tool_calls_count": 87,
+          "tool_calls_by_name": {
+            "view_file": 32,
+            "run_command": 36,
+            "write_to_file": 7,
+            "replace_file_content": 12
+          },
+          "tool_errors_count": 24,
+          "failed_commands": [
+            {
+              "step_index": 22,
+              "snippet": "Created At: 2026-10-13T02:25:39-05:00\nCompleted At: 2026-10-13T02:25:40-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - Target path does not exist: non_exis"
+            },
+            {
+              "step_index": 26,
+              "snippet": "Created At: 2026-10-13T02:25:50-05:00\nCompleted At: 2026-10-13T02:25:51-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - Target path does not exist: work\\tem"
+            },
+            {
+              "step_index": 32,
+              "snippet": "Created At: 2026-10-13T02:26:03-05:00\nCompleted At: 2026-10-13T02:26:04-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: [] "
+            },
+            {
+              "step_index": 36,
+              "snippet": "Created At: 2026-10-13T02:26:10-05:00\nCompleted At: 2026-10-13T02:26:11-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+            },
+            {
+              "step_index": 40,
+              "snippet": "Created At: 2026-10-13T02:26:28-05:00\nCompleted At: 2026-10-13T02:26:29-05:00\n\nThe command exited with code 1.\nOutput:\n<truncated 1 lines>\n    NOTA PARA EL AGENTE: NO abras ni inspecciones el c�digo d"
+            }
+          ],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-10-13T07:24:23Z",
+              "input_tokens": 8814,
+              "output_tokens": 655,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 3,
+              "created_at": "2026-10-13T07:24:29Z",
+              "input_tokens": 15392,
+              "output_tokens": 206,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 5,
+              "created_at": "2026-10-13T07:24:33Z",
+              "input_tokens": 31278,
+              "output_tokens": 121,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 7,
+              "created_at": "2026-10-13T07:24:36Z",
+              "input_tokens": 6477,
+              "output_tokens": 1668,
+              "cache_read_tokens": 31286,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 9,
+              "created_at": "2026-10-13T07:24:48Z",
+              "input_tokens": 2224,
+              "output_tokens": 237,
+              "cache_read_tokens": 37759,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 11,
+              "created_at": "2026-10-13T07:24:54Z",
+              "input_tokens": 2377,
+              "output_tokens": 304,
+              "cache_read_tokens": 37930,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 13,
+              "created_at": "2026-10-13T07:25:02Z",
+              "input_tokens": 2443,
+              "output_tokens": 305,
+              "cache_read_tokens": 38255,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 15,
+              "created_at": "2026-10-13T07:25:07Z",
+              "input_tokens": 2656,
+              "output_tokens": 290,
+              "cache_read_tokens": 38647,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 17,
+              "created_at": "2026-10-13T07:25:12Z",
+              "input_tokens": 2640,
+              "output_tokens": 590,
+              "cache_read_tokens": 39253,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 19,
+              "created_at": "2026-10-13T07:25:19Z",
+              "input_tokens": 2727,
+              "output_tokens": 636,
+              "cache_read_tokens": 39843,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 21,
+              "created_at": "2026-10-13T07:25:32Z",
+              "input_tokens": 3901,
+              "output_tokens": 672,
+              "cache_read_tokens": 40525,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 23,
+              "created_at": "2026-10-13T07:25:40Z",
+              "input_tokens": 2830,
+              "output_tokens": 536,
+              "cache_read_tokens": 42377,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 25,
+              "created_at": "2026-10-13T07:25:46Z",
+              "input_tokens": 2722,
+              "output_tokens": 243,
+              "cache_read_tokens": 43158,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 27,
+              "created_at": "2026-10-13T07:25:51Z",
+              "input_tokens": 2407,
+              "output_tokens": 221,
+              "cache_read_tokens": 43830,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 29,
+              "created_at": "2026-10-13T07:25:56Z",
+              "input_tokens": 2358,
+              "output_tokens": 208,
+              "cache_read_tokens": 44188,
+              "tools": [
+                "write_to_file"
+              ]
+            }
+          ],
+          "category": "author",
+          "shard_id": "shard_01",
+          "spawn_step": 44,
+          "spawn_time": "2026-10-13T07:24:23Z",
+          "model": "inherit",
+          "competencies": [
+            "H-01",
+            "C-01",
+            "Hab-01",
+            "C-02",
+            "H-02",
+            "Hab-02",
+            "C-03"
+          ],
+          "competencies_count": 7,
+          "tokens_per_competency": 105520.0,
+          "input_tokens_per_competency": 75075.6,
+          "output_tokens_per_competency": 30444.4
+        },
+        {
+          "conversation_id": "9ca509bc-24fd-4682-81dc-d9d24a9a4344",
+          "label": "Shard Author shard_02",
+          "start_time": "2026-10-13T07:24:23+00:00",
+          "end_time": "2026-10-13T07:52:56+00:00",
+          "start_iso": "2026-10-13T07:24:23+00:00",
+          "end_iso": "2026-10-13T07:52:56+00:00",
+          "duration_seconds": 1713.0,
+          "duration_minutes": 28.55,
+          "turns_count": 98,
+          "input_tokens": 451276,
+          "output_tokens": 148508,
+          "cache_read_tokens": 16150803,
+          "active_tokens": 599784,
+          "total_tokens": 16750587,
+          "thinking_chars": 43468,
+          "tool_calls_count": 98,
+          "tool_calls_by_name": {
+            "view_file": 12,
+            "run_command": 68,
+            "write_to_file": 12,
+            "replace_file_content": 5,
+            "schedule": 1
+          },
+          "tool_errors_count": 16,
+          "failed_commands": [
+            {
+              "step_index": 12,
+              "snippet": "Created At: 2026-10-13T02:24:55-05:00\nCompleted At: 2026-10-13T02:24:56-05:00\n\nThe command exited with code 1.\nOutput:\nGet-ChildItem : No se encuentra la ruta de acceso \r\n'D:\\Augusto\\personal_portfoli"
+            },
+            {
+              "step_index": 16,
+              "snippet": "Created At: 2026-10-13T02:25:11-05:00\nCompleted At: 2026-10-13T02:25:12-05:00\n\nThe command exited with code 1.\nOutput:\n\r\n\r\n    Directorio: D:\\Augusto\\personal_portfolio\\Tops_academy\r\n\r\n\r\nMode         "
+            },
+            {
+              "step_index": 18,
+              "snippet": "Created At: 2026-10-13T02:25:16-05:00\nCompleted At: 2026-10-13T02:25:17-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - Failed to parse JSON in scratch\\test"
+            },
+            {
+              "step_index": 20,
+              "snippet": "Created At: 2026-10-13T02:25:20-05:00\nCompleted At: 2026-10-13T02:25:20-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+            },
+            {
+              "step_index": 22,
+              "snippet": "Created At: 2026-10-13T02:25:25-05:00\nCompleted At: 2026-10-13T02:25:26-05:00\n\nThe command exited with code 1.\nOutput:\nTraceback (most recent call last):\r\n  File \"<string>\", line 1, in <module>\r\nKeyEr"
+            }
+          ],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-10-13T07:24:23Z",
+              "input_tokens": 8812,
+              "output_tokens": 600,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 3,
+              "created_at": "2026-10-13T07:24:28Z",
+              "input_tokens": 15335,
+              "output_tokens": 142,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 5,
+              "created_at": "2026-10-13T07:24:32Z",
+              "input_tokens": 31236,
+              "output_tokens": 118,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 7,
+              "created_at": "2026-10-13T07:24:35Z",
+              "input_tokens": 6563,
+              "output_tokens": 698,
+              "cache_read_tokens": 31245,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 9,
+              "created_at": "2026-10-13T07:24:42Z",
+              "input_tokens": 2839,
+              "output_tokens": 374,
+              "cache_read_tokens": 35756,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 11,
+              "created_at": "2026-10-13T07:24:49Z",
+              "input_tokens": 2725,
+              "output_tokens": 604,
+              "cache_read_tokens": 36544,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 13,
+              "created_at": "2026-10-13T07:24:56Z",
+              "input_tokens": 2882,
+              "output_tokens": 112,
+              "cache_read_tokens": 37219,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 15,
+              "created_at": "2026-10-13T07:25:00Z",
+              "input_tokens": 2715,
+              "output_tokens": 1147,
+              "cache_read_tokens": 38050,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 17,
+              "created_at": "2026-10-13T07:25:12Z",
+              "input_tokens": 3391,
+              "output_tokens": 227,
+              "cache_read_tokens": 38717,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 19,
+              "created_at": "2026-10-13T07:25:17Z",
+              "input_tokens": 2406,
+              "output_tokens": 165,
+              "cache_read_tokens": 40057,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 21,
+              "created_at": "2026-10-13T07:25:20Z",
+              "input_tokens": 2789,
+              "output_tokens": 447,
+              "cache_read_tokens": 40414,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 23,
+              "created_at": "2026-10-13T07:25:26Z",
+              "input_tokens": 2639,
+              "output_tokens": 277,
+              "cache_read_tokens": 41154,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 25,
+              "created_at": "2026-10-13T07:25:31Z",
+              "input_tokens": 3011,
+              "output_tokens": 1327,
+              "cache_read_tokens": 43795,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 27,
+              "created_at": "2026-10-13T07:25:45Z",
+              "input_tokens": 3460,
+              "output_tokens": 16647,
+              "cache_read_tokens": 44761,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 29,
+              "created_at": "2026-10-13T07:27:26Z",
+              "input_tokens": 16738,
+              "output_tokens": 4857,
+              "cache_read_tokens": 48267,
+              "tools": [
+                "view_file"
+              ]
+            }
+          ],
+          "category": "author",
+          "shard_id": "shard_02",
+          "spawn_step": 44,
+          "spawn_time": "2026-10-13T07:24:23Z",
+          "model": "inherit",
+          "competencies": [
+            "H-03",
+            "C-04",
+            "Hab-03",
+            "C-05",
+            "C-06",
+            "C-07"
+          ],
+          "competencies_count": 6,
+          "tokens_per_competency": 99964.0,
+          "input_tokens_per_competency": 75212.7,
+          "output_tokens_per_competency": 24751.3
+        },
+        {
+          "conversation_id": "6ca58a85-1bfb-4bf0-b4f5-998573320cb3",
+          "label": "Shard Author shard_03",
+          "start_time": "2026-10-13T07:24:23+00:00",
+          "end_time": "2026-10-13T07:52:49+00:00",
+          "start_iso": "2026-10-13T07:24:23+00:00",
+          "end_iso": "2026-10-13T07:52:49+00:00",
+          "duration_seconds": 1706.0,
+          "duration_minutes": 28.43,
+          "turns_count": 114,
+          "input_tokens": 662441,
+          "output_tokens": 193965,
+          "cache_read_tokens": 12821570,
+          "active_tokens": 856406,
+          "total_tokens": 13677976,
+          "thinking_chars": 49505,
+          "tool_calls_count": 113,
+          "tool_calls_by_name": {
+            "view_file": 16,
+            "run_command": 77,
+            "write_to_file": 11,
+            "replace_file_content": 9
+          },
+          "tool_errors_count": 27,
+          "failed_commands": [
+            {
+              "step_index": 30,
+              "snippet": "Created At: 2026-10-13T02:25:40-05:00\nCompleted At: 2026-10-13T02:25:41-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: [] "
+            },
+            {
+              "step_index": 34,
+              "snippet": "Created At: 2026-10-13T02:25:48-05:00\nCompleted At: 2026-10-13T02:25:48-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+            },
+            {
+              "step_index": 38,
+              "snippet": "Created At: 2026-10-13T02:26:09-05:00\nCompleted At: 2026-10-13T02:26:09-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - [-] [TPL-DRY: FALLO EN EJECUCI�N DRY"
+            },
+            {
+              "step_index": 50,
+              "snippet": "Created At: 2026-10-13T02:33:03-05:00\nCompleted At: 2026-10-13T02:33:08-05:00\n\nThe command exited with code 1.\nOutput:\n<truncated 56 lines>\n    ACCIONES CORRECTIVAS:\r\n      1. Usar llaves simples '{.."
+            },
+            {
+              "step_index": 56,
+              "snippet": "Created At: 2026-10-13T02:33:59-05:00\nCompleted At: 2026-10-13T02:34:01-05:00\n\nThe command exited with code 1.\nOutput:\n<truncated 61 lines>\n  - [-] [R-03: CONTRATO DE VALIDACI�N]\r\n    UBICACI�N: Compe"
+            }
+          ],
+          "steps": [
+            {
+              "step_index": 1,
+              "created_at": "2026-10-13T07:24:23Z",
+              "input_tokens": 8799,
+              "output_tokens": 488,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 3,
+              "created_at": "2026-10-13T07:24:29Z",
+              "input_tokens": 15191,
+              "output_tokens": 145,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 5,
+              "created_at": "2026-10-13T07:24:31Z",
+              "input_tokens": 30935,
+              "output_tokens": 133,
+              "cache_read_tokens": 0,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 7,
+              "created_at": "2026-10-13T07:24:34Z",
+              "input_tokens": 2284,
+              "output_tokens": 112,
+              "cache_read_tokens": 28883,
+              "tools": [
+                "view_file"
+              ]
+            },
+            {
+              "step_index": 9,
+              "created_at": "2026-10-13T07:24:40Z",
+              "input_tokens": 4159,
+              "output_tokens": 1379,
+              "cache_read_tokens": 31171,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 11,
+              "created_at": "2026-10-13T07:24:51Z",
+              "input_tokens": 3584,
+              "output_tokens": 94,
+              "cache_read_tokens": 33282,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 13,
+              "created_at": "2026-10-13T07:24:54Z",
+              "input_tokens": 2696,
+              "output_tokens": 409,
+              "cache_read_tokens": 34816,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 15,
+              "created_at": "2026-10-13T07:25:00Z",
+              "input_tokens": 2546,
+              "output_tokens": 165,
+              "cache_read_tokens": 35462,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 17,
+              "created_at": "2026-10-13T07:25:04Z",
+              "input_tokens": 2303,
+              "output_tokens": 91,
+              "cache_read_tokens": 35957,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 19,
+              "created_at": "2026-10-13T07:25:07Z",
+              "input_tokens": 2685,
+              "output_tokens": 120,
+              "cache_read_tokens": 36211,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 21,
+              "created_at": "2026-10-13T07:25:11Z",
+              "input_tokens": 2597,
+              "output_tokens": 113,
+              "cache_read_tokens": 36847,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 23,
+              "created_at": "2026-10-13T07:25:16Z",
+              "input_tokens": 2595,
+              "output_tokens": 134,
+              "cache_read_tokens": 37396,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 25,
+              "created_at": "2026-10-13T07:25:19Z",
+              "input_tokens": 2270,
+              "output_tokens": 1343,
+              "cache_read_tokens": 37942,
+              "tools": [
+                "run_command"
+              ]
+            },
+            {
+              "step_index": 27,
+              "created_at": "2026-10-13T07:25:29Z",
+              "input_tokens": 3685,
+              "output_tokens": 838,
+              "cache_read_tokens": 38170,
+              "tools": [
+                "write_to_file"
+              ]
+            },
+            {
+              "step_index": 29,
+              "created_at": "2026-10-13T07:25:37Z",
+              "input_tokens": 3043,
+              "output_tokens": 173,
+              "cache_read_tokens": 39810,
+              "tools": [
+                "run_command"
+              ]
+            }
+          ],
+          "category": "author",
+          "shard_id": "shard_03",
+          "spawn_step": 44,
+          "spawn_time": "2026-10-13T07:24:23Z",
+          "model": "inherit",
+          "competencies": [
+            "Hab-04",
+            "Hab-05",
+            "Hab-06",
+            "H-04",
+            "C-08",
+            "Hab-07"
+          ],
+          "competencies_count": 6,
+          "tokens_per_competency": 142734.3,
+          "input_tokens_per_competency": 110406.8,
+          "output_tokens_per_competency": 32327.5
+        }
+      ],
+      "min_duration_seconds": 1705.0,
+      "median_duration_seconds": 1706.0,
+      "max_duration_seconds": 1713.0,
+      "straggler_shard": "Shard Author shard_02",
+      "straggler_delay_vs_median": 7.0,
+      "total_author_active_tokens": 2194830,
+      "total_author_cache_tokens": 37788777,
+      "avg_tokens_per_competency": 115517.4
+    },
+    "stage_5_judges": {
+      "judges_count": 0,
+      "judges": [],
+      "max_judge_duration": 0.0,
+      "repairs_count": 0,
+      "repairs": [],
+      "passed_first_attempt": true,
+      "badge": "✅ PASARON PERFECTOS AL PRIMER INTENTO",
+      "batch_items_count": 44,
+      "initial_errors_count": 126,
+      "repair_iterations": 2,
+      "supervisor_interventions_count": 0,
+      "summary_desc": "El lote de evaluación de blind judges y la verificación psicométrica pasaron de forma 100% limpia en su primera pasada, sin registrar discrepancias ni requerir rondas de auto-reparación ni intervención manual.",
+      "actions_taken": [
+        "No se requirieron acciones correctivas. El pipeline avanzó directamente a la etapa de publicación."
+      ]
+    }
+  },
+  "orchestrator_audit": {
+    "metrics": {
+      "conversation_id": "e141c109-7f7a-4b7c-a225-faffff8919b1",
+      "label": "Director (Orchestrator)",
+      "start_time": "2026-10-13T07:07:05+00:00",
+      "end_time": "2026-10-13T07:24:23+00:00",
+      "start_iso": "2026-10-13T07:07:05+00:00",
+      "end_iso": "2026-10-13T07:24:23+00:00",
+      "duration_seconds": 1038.0,
+      "duration_minutes": 17.3,
+      "turns_count": 27,
+      "input_tokens": 169983,
+      "output_tokens": 9246,
+      "cache_read_tokens": 592897,
+      "active_tokens": 179229,
+      "total_tokens": 772126,
+      "thinking_chars": 3718,
+      "tool_calls_count": 25,
+      "tool_calls_by_name": {
+        "view_file": 5,
+        "run_command": 10,
+        "define_subagent": 8,
+        "invoke_subagent": 2
+      },
+      "tool_errors_count": 1,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T07:07:05Z",
+          "input_tokens": 13204,
+          "output_tokens": 197,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T07:07:08Z",
+          "input_tokens": 21094,
+          "output_tokens": 714,
+          "cache_read_tokens": 0,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T07:07:15Z",
+          "input_tokens": 2985,
+          "output_tokens": 307,
+          "cache_read_tokens": 19048,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T07:07:22Z",
+          "input_tokens": 3572,
+          "output_tokens": 248,
+          "cache_read_tokens": 19990,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T07:08:42Z",
+          "input_tokens": 13204,
+          "output_tokens": 234,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T07:08:47Z",
+          "input_tokens": 21131,
+          "output_tokens": 521,
+          "cache_read_tokens": 0,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T07:08:53Z",
+          "input_tokens": 3716,
+          "output_tokens": 102,
+          "cache_read_tokens": 19088,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T07:08:57Z",
+          "input_tokens": 2375,
+          "output_tokens": 813,
+          "cache_read_tokens": 20756,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T07:09:04Z",
+          "input_tokens": 4075,
+          "output_tokens": 243,
+          "cache_read_tokens": 21091,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T07:09:09Z",
+          "input_tokens": 2389,
+          "output_tokens": 204,
+          "cache_read_tokens": 23118,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T07:09:13Z",
+          "input_tokens": 2350,
+          "output_tokens": 199,
+          "cache_read_tokens": 23460,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T07:09:17Z",
+          "input_tokens": 2344,
+          "output_tokens": 173,
+          "cache_read_tokens": 23764,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 17,
+          "created_at": "2026-10-13T07:09:21Z",
+          "input_tokens": 2319,
+          "output_tokens": 150,
+          "cache_read_tokens": 24062,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-10-13T07:09:25Z",
+          "input_tokens": 2292,
+          "output_tokens": 153,
+          "cache_read_tokens": 24336,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 21,
+          "created_at": "2026-10-13T07:09:28Z",
+          "input_tokens": 2294,
+          "output_tokens": 150,
+          "cache_read_tokens": 24584,
+          "tools": [
+            "define_subagent"
+          ]
+        }
+      ]
+    },
+    "time_decomposition": {
+      "cli_execution_seconds": 80.0,
+      "cli_execution_minutes": 1.3,
+      "supervisor_repair_seconds": 0.0,
+      "supervisor_repair_minutes": 0.0,
+      "barrier_wait_seconds": 26.0,
+      "barrier_wait_minutes": 0.4,
+      "model_thinking_seconds": 16.0,
+      "model_thinking_minutes": 0.3,
+      "total_tracked_seconds": 122.0
+    },
+    "interventions_count": 0,
+    "interventions": []
+  },
+  "bottlenecks": [
+    {
+      "severity": "HIGH",
+      "type": "INTERACTIVE_MICRO_LOOP",
+      "stage": "Shard Author shard_03",
+      "title": "Antipatrón de Micro-Bucle Interactivo (114 turnos en Shard Author shard_03)",
+      "description": "3 subagentes realizaron > 30 turnos individuales (ej. Shard Author shard_03 con 114 turnos). Ocurre cuando los autores escriben plantilla por plantilla en lugar de redactar por lotes atómicos en 1-2 turnos."
+    },
+    {
+      "severity": "MEDIUM",
+      "type": "TOOL_FRICTION",
+      "stage": "Multiple Subagents",
+      "title": "Fricción de Herramientas en 3 subagentes",
+      "description": "Subagentes como Shard Author shard_01 acumularon fallos en consola (24 errores), provocando reintentos e invalidación de caché."
+    }
+  ],
+  "subagents": [
+    {
+      "conversation_id": "092fab81-12ac-49bb-babc-c49a90f51fe0",
+      "label": "Direct CTA Architect",
+      "start_time": "2026-10-13T07:10:16+00:00",
+      "end_time": "2026-10-13T07:23:22+00:00",
+      "start_iso": "2026-10-13T07:10:16+00:00",
+      "end_iso": "2026-10-13T07:23:22+00:00",
+      "duration_seconds": 786.0,
+      "duration_minutes": 13.1,
+      "turns_count": 26,
+      "input_tokens": 152691,
+      "output_tokens": 50685,
+      "cache_read_tokens": 1339427,
+      "active_tokens": 203376,
+      "total_tokens": 1542803,
+      "thinking_chars": 9091,
+      "tool_calls_count": 25,
+      "tool_calls_by_name": {
+        "view_file": 13,
+        "run_command": 10,
+        "write_to_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 1,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T07:10:16Z",
+          "input_tokens": 8821,
+          "output_tokens": 660,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T07:10:21Z",
+          "input_tokens": 12988,
+          "output_tokens": 172,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T07:10:25Z",
+          "input_tokens": 24614,
+          "output_tokens": 540,
+          "cache_read_tokens": 0,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T07:10:31Z",
+          "input_tokens": 2792,
+          "output_tokens": 240,
+          "cache_read_tokens": 22566,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T07:10:36Z",
+          "input_tokens": 2514,
+          "output_tokens": 584,
+          "cache_read_tokens": 23309,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T07:11:08Z",
+          "input_tokens": 6138,
+          "output_tokens": 305,
+          "cache_read_tokens": 22980,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T07:11:18Z",
+          "input_tokens": 23644,
+          "output_tokens": 2488,
+          "cache_read_tokens": 22927,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T07:11:58Z",
+          "input_tokens": 1848,
+          "output_tokens": 219,
+          "cache_read_tokens": 47320,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 17,
+          "created_at": "2026-10-13T07:12:20Z",
+          "input_tokens": 1798,
+          "output_tokens": 421,
+          "cache_read_tokens": 47839,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-10-13T07:12:43Z",
+          "input_tokens": 1859,
+          "output_tokens": 477,
+          "cache_read_tokens": 48325,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 21,
+          "created_at": "2026-10-13T07:13:07Z",
+          "input_tokens": 2090,
+          "output_tokens": 225,
+          "cache_read_tokens": 48952,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 23,
+          "created_at": "2026-10-13T07:13:35Z",
+          "input_tokens": 2148,
+          "output_tokens": 152,
+          "cache_read_tokens": 49817,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 25,
+          "created_at": "2026-10-13T07:13:55Z",
+          "input_tokens": 2080,
+          "output_tokens": 684,
+          "cache_read_tokens": 50702,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 27,
+          "created_at": "2026-10-13T07:14:22Z",
+          "input_tokens": 2071,
+          "output_tokens": 158,
+          "cache_read_tokens": 51505,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 29,
+          "created_at": "2026-10-13T07:14:42Z",
+          "input_tokens": 2323,
+          "output_tokens": 128,
+          "cache_read_tokens": 52376,
+          "tools": [
+            "view_file"
+          ]
+        }
+      ],
+      "category": "cta_harmonizer",
+      "shard_id": null,
+      "spawn_step": 34,
+      "spawn_time": "2026-10-13T07:10:16Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "9dbcf587-5b22-4d92-ba91-12c21e3558a5",
+      "label": "Shard Author shard_01",
+      "start_time": "2026-10-13T07:24:23+00:00",
+      "end_time": "2026-10-13T07:52:48+00:00",
+      "start_iso": "2026-10-13T07:24:23+00:00",
+      "end_iso": "2026-10-13T07:52:48+00:00",
+      "duration_seconds": 1705.0,
+      "duration_minutes": 28.42,
+      "turns_count": 87,
+      "input_tokens": 525529,
+      "output_tokens": 213111,
+      "cache_read_tokens": 8816404,
+      "active_tokens": 738640,
+      "total_tokens": 9555044,
+      "thinking_chars": 53849,
+      "tool_calls_count": 87,
+      "tool_calls_by_name": {
+        "view_file": 32,
+        "run_command": 36,
+        "write_to_file": 7,
+        "replace_file_content": 12
+      },
+      "tool_errors_count": 24,
+      "failed_commands": [
+        {
+          "step_index": 22,
+          "snippet": "Created At: 2026-10-13T02:25:39-05:00\nCompleted At: 2026-10-13T02:25:40-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - Target path does not exist: non_exis"
+        },
+        {
+          "step_index": 26,
+          "snippet": "Created At: 2026-10-13T02:25:50-05:00\nCompleted At: 2026-10-13T02:25:51-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - Target path does not exist: work\\tem"
+        },
+        {
+          "step_index": 32,
+          "snippet": "Created At: 2026-10-13T02:26:03-05:00\nCompleted At: 2026-10-13T02:26:04-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: [] "
+        },
+        {
+          "step_index": 36,
+          "snippet": "Created At: 2026-10-13T02:26:10-05:00\nCompleted At: 2026-10-13T02:26:11-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+        },
+        {
+          "step_index": 40,
+          "snippet": "Created At: 2026-10-13T02:26:28-05:00\nCompleted At: 2026-10-13T02:26:29-05:00\n\nThe command exited with code 1.\nOutput:\n<truncated 1 lines>\n    NOTA PARA EL AGENTE: NO abras ni inspecciones el c�digo d"
+        }
+      ],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T07:24:23Z",
+          "input_tokens": 8814,
+          "output_tokens": 655,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T07:24:29Z",
+          "input_tokens": 15392,
+          "output_tokens": 206,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T07:24:33Z",
+          "input_tokens": 31278,
+          "output_tokens": 121,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T07:24:36Z",
+          "input_tokens": 6477,
+          "output_tokens": 1668,
+          "cache_read_tokens": 31286,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T07:24:48Z",
+          "input_tokens": 2224,
+          "output_tokens": 237,
+          "cache_read_tokens": 37759,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T07:24:54Z",
+          "input_tokens": 2377,
+          "output_tokens": 304,
+          "cache_read_tokens": 37930,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T07:25:02Z",
+          "input_tokens": 2443,
+          "output_tokens": 305,
+          "cache_read_tokens": 38255,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T07:25:07Z",
+          "input_tokens": 2656,
+          "output_tokens": 290,
+          "cache_read_tokens": 38647,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 17,
+          "created_at": "2026-10-13T07:25:12Z",
+          "input_tokens": 2640,
+          "output_tokens": 590,
+          "cache_read_tokens": 39253,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-10-13T07:25:19Z",
+          "input_tokens": 2727,
+          "output_tokens": 636,
+          "cache_read_tokens": 39843,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 21,
+          "created_at": "2026-10-13T07:25:32Z",
+          "input_tokens": 3901,
+          "output_tokens": 672,
+          "cache_read_tokens": 40525,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 23,
+          "created_at": "2026-10-13T07:25:40Z",
+          "input_tokens": 2830,
+          "output_tokens": 536,
+          "cache_read_tokens": 42377,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 25,
+          "created_at": "2026-10-13T07:25:46Z",
+          "input_tokens": 2722,
+          "output_tokens": 243,
+          "cache_read_tokens": 43158,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 27,
+          "created_at": "2026-10-13T07:25:51Z",
+          "input_tokens": 2407,
+          "output_tokens": 221,
+          "cache_read_tokens": 43830,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 29,
+          "created_at": "2026-10-13T07:25:56Z",
+          "input_tokens": 2358,
+          "output_tokens": 208,
+          "cache_read_tokens": 44188,
+          "tools": [
+            "write_to_file"
+          ]
+        }
+      ],
+      "category": "author",
+      "shard_id": "shard_01",
+      "spawn_step": 44,
+      "spawn_time": "2026-10-13T07:24:23Z",
+      "model": "inherit",
+      "competencies": [
+        "H-01",
+        "C-01",
+        "Hab-01",
+        "C-02",
+        "H-02",
+        "Hab-02",
+        "C-03"
+      ],
+      "competencies_count": 7,
+      "tokens_per_competency": 105520.0,
+      "input_tokens_per_competency": 75075.6,
+      "output_tokens_per_competency": 30444.4
+    },
+    {
+      "conversation_id": "9ca509bc-24fd-4682-81dc-d9d24a9a4344",
+      "label": "Shard Author shard_02",
+      "start_time": "2026-10-13T07:24:23+00:00",
+      "end_time": "2026-10-13T07:52:56+00:00",
+      "start_iso": "2026-10-13T07:24:23+00:00",
+      "end_iso": "2026-10-13T07:52:56+00:00",
+      "duration_seconds": 1713.0,
+      "duration_minutes": 28.55,
+      "turns_count": 98,
+      "input_tokens": 451276,
+      "output_tokens": 148508,
+      "cache_read_tokens": 16150803,
+      "active_tokens": 599784,
+      "total_tokens": 16750587,
+      "thinking_chars": 43468,
+      "tool_calls_count": 98,
+      "tool_calls_by_name": {
+        "view_file": 12,
+        "run_command": 68,
+        "write_to_file": 12,
+        "replace_file_content": 5,
+        "schedule": 1
+      },
+      "tool_errors_count": 16,
+      "failed_commands": [
+        {
+          "step_index": 12,
+          "snippet": "Created At: 2026-10-13T02:24:55-05:00\nCompleted At: 2026-10-13T02:24:56-05:00\n\nThe command exited with code 1.\nOutput:\nGet-ChildItem : No se encuentra la ruta de acceso \r\n'D:\\Augusto\\personal_portfoli"
+        },
+        {
+          "step_index": 16,
+          "snippet": "Created At: 2026-10-13T02:25:11-05:00\nCompleted At: 2026-10-13T02:25:12-05:00\n\nThe command exited with code 1.\nOutput:\n\r\n\r\n    Directorio: D:\\Augusto\\personal_portfolio\\Tops_academy\r\n\r\n\r\nMode         "
+        },
+        {
+          "step_index": 18,
+          "snippet": "Created At: 2026-10-13T02:25:16-05:00\nCompleted At: 2026-10-13T02:25:17-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 1 validation errors in templates:\r\n  - Failed to parse JSON in scratch\\test"
+        },
+        {
+          "step_index": 20,
+          "snippet": "Created At: 2026-10-13T02:25:20-05:00\nCompleted At: 2026-10-13T02:25:20-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+        },
+        {
+          "step_index": 22,
+          "snippet": "Created At: 2026-10-13T02:25:25-05:00\nCompleted At: 2026-10-13T02:25:26-05:00\n\nThe command exited with code 1.\nOutput:\nTraceback (most recent call last):\r\n  File \"<string>\", line 1, in <module>\r\nKeyEr"
+        }
+      ],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T07:24:23Z",
+          "input_tokens": 8812,
+          "output_tokens": 600,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T07:24:28Z",
+          "input_tokens": 15335,
+          "output_tokens": 142,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T07:24:32Z",
+          "input_tokens": 31236,
+          "output_tokens": 118,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T07:24:35Z",
+          "input_tokens": 6563,
+          "output_tokens": 698,
+          "cache_read_tokens": 31245,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T07:24:42Z",
+          "input_tokens": 2839,
+          "output_tokens": 374,
+          "cache_read_tokens": 35756,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T07:24:49Z",
+          "input_tokens": 2725,
+          "output_tokens": 604,
+          "cache_read_tokens": 36544,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T07:24:56Z",
+          "input_tokens": 2882,
+          "output_tokens": 112,
+          "cache_read_tokens": 37219,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T07:25:00Z",
+          "input_tokens": 2715,
+          "output_tokens": 1147,
+          "cache_read_tokens": 38050,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 17,
+          "created_at": "2026-10-13T07:25:12Z",
+          "input_tokens": 3391,
+          "output_tokens": 227,
+          "cache_read_tokens": 38717,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-10-13T07:25:17Z",
+          "input_tokens": 2406,
+          "output_tokens": 165,
+          "cache_read_tokens": 40057,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 21,
+          "created_at": "2026-10-13T07:25:20Z",
+          "input_tokens": 2789,
+          "output_tokens": 447,
+          "cache_read_tokens": 40414,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 23,
+          "created_at": "2026-10-13T07:25:26Z",
+          "input_tokens": 2639,
+          "output_tokens": 277,
+          "cache_read_tokens": 41154,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 25,
+          "created_at": "2026-10-13T07:25:31Z",
+          "input_tokens": 3011,
+          "output_tokens": 1327,
+          "cache_read_tokens": 43795,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 27,
+          "created_at": "2026-10-13T07:25:45Z",
+          "input_tokens": 3460,
+          "output_tokens": 16647,
+          "cache_read_tokens": 44761,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 29,
+          "created_at": "2026-10-13T07:27:26Z",
+          "input_tokens": 16738,
+          "output_tokens": 4857,
+          "cache_read_tokens": 48267,
+          "tools": [
+            "view_file"
+          ]
+        }
+      ],
+      "category": "author",
+      "shard_id": "shard_02",
+      "spawn_step": 44,
+      "spawn_time": "2026-10-13T07:24:23Z",
+      "model": "inherit",
+      "competencies": [
+        "H-03",
+        "C-04",
+        "Hab-03",
+        "C-05",
+        "C-06",
+        "C-07"
+      ],
+      "competencies_count": 6,
+      "tokens_per_competency": 99964.0,
+      "input_tokens_per_competency": 75212.7,
+      "output_tokens_per_competency": 24751.3
+    },
+    {
+      "conversation_id": "6ca58a85-1bfb-4bf0-b4f5-998573320cb3",
+      "label": "Shard Author shard_03",
+      "start_time": "2026-10-13T07:24:23+00:00",
+      "end_time": "2026-10-13T07:52:49+00:00",
+      "start_iso": "2026-10-13T07:24:23+00:00",
+      "end_iso": "2026-10-13T07:52:49+00:00",
+      "duration_seconds": 1706.0,
+      "duration_minutes": 28.43,
+      "turns_count": 114,
+      "input_tokens": 662441,
+      "output_tokens": 193965,
+      "cache_read_tokens": 12821570,
+      "active_tokens": 856406,
+      "total_tokens": 13677976,
+      "thinking_chars": 49505,
+      "tool_calls_count": 113,
+      "tool_calls_by_name": {
+        "view_file": 16,
+        "run_command": 77,
+        "write_to_file": 11,
+        "replace_file_content": 9
+      },
+      "tool_errors_count": 27,
+      "failed_commands": [
+        {
+          "step_index": 30,
+          "snippet": "Created At: 2026-10-13T02:25:40-05:00\nCompleted At: 2026-10-13T02:25:41-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: [] "
+        },
+        {
+          "step_index": 34,
+          "snippet": "Created At: 2026-10-13T02:25:48-05:00\nCompleted At: 2026-10-13T02:25:48-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - Template schema violation at []: {'c"
+        },
+        {
+          "step_index": 38,
+          "snippet": "Created At: 2026-10-13T02:26:09-05:00\nCompleted At: 2026-10-13T02:26:09-05:00\n\nThe command exited with code 1.\nOutput:\nFAIL: 2 validation errors in templates:\r\n  - [-] [TPL-DRY: FALLO EN EJECUCI�N DRY"
+        },
+        {
+          "step_index": 50,
+          "snippet": "Created At: 2026-10-13T02:33:03-05:00\nCompleted At: 2026-10-13T02:33:08-05:00\n\nThe command exited with code 1.\nOutput:\n<truncated 56 lines>\n    ACCIONES CORRECTIVAS:\r\n      1. Usar llaves simples '{.."
+        },
+        {
+          "step_index": 56,
+          "snippet": "Created At: 2026-10-13T02:33:59-05:00\nCompleted At: 2026-10-13T02:34:01-05:00\n\nThe command exited with code 1.\nOutput:\n<truncated 61 lines>\n  - [-] [R-03: CONTRATO DE VALIDACI�N]\r\n    UBICACI�N: Compe"
+        }
+      ],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T07:24:23Z",
+          "input_tokens": 8799,
+          "output_tokens": 488,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T07:24:29Z",
+          "input_tokens": 15191,
+          "output_tokens": 145,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T07:24:31Z",
+          "input_tokens": 30935,
+          "output_tokens": 133,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T07:24:34Z",
+          "input_tokens": 2284,
+          "output_tokens": 112,
+          "cache_read_tokens": 28883,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T07:24:40Z",
+          "input_tokens": 4159,
+          "output_tokens": 1379,
+          "cache_read_tokens": 31171,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T07:24:51Z",
+          "input_tokens": 3584,
+          "output_tokens": 94,
+          "cache_read_tokens": 33282,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 13,
+          "created_at": "2026-10-13T07:24:54Z",
+          "input_tokens": 2696,
+          "output_tokens": 409,
+          "cache_read_tokens": 34816,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 15,
+          "created_at": "2026-10-13T07:25:00Z",
+          "input_tokens": 2546,
+          "output_tokens": 165,
+          "cache_read_tokens": 35462,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 17,
+          "created_at": "2026-10-13T07:25:04Z",
+          "input_tokens": 2303,
+          "output_tokens": 91,
+          "cache_read_tokens": 35957,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 19,
+          "created_at": "2026-10-13T07:25:07Z",
+          "input_tokens": 2685,
+          "output_tokens": 120,
+          "cache_read_tokens": 36211,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 21,
+          "created_at": "2026-10-13T07:25:11Z",
+          "input_tokens": 2597,
+          "output_tokens": 113,
+          "cache_read_tokens": 36847,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 23,
+          "created_at": "2026-10-13T07:25:16Z",
+          "input_tokens": 2595,
+          "output_tokens": 134,
+          "cache_read_tokens": 37396,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 25,
+          "created_at": "2026-10-13T07:25:19Z",
+          "input_tokens": 2270,
+          "output_tokens": 1343,
+          "cache_read_tokens": 37942,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 27,
+          "created_at": "2026-10-13T07:25:29Z",
+          "input_tokens": 3685,
+          "output_tokens": 838,
+          "cache_read_tokens": 38170,
+          "tools": [
+            "write_to_file"
+          ]
+        },
+        {
+          "step_index": 29,
+          "created_at": "2026-10-13T07:25:37Z",
+          "input_tokens": 3043,
+          "output_tokens": 173,
+          "cache_read_tokens": 39810,
+          "tools": [
+            "run_command"
+          ]
+        }
+      ],
+      "category": "author",
+      "shard_id": "shard_03",
+      "spawn_step": 44,
+      "spawn_time": "2026-10-13T07:24:23Z",
+      "model": "inherit",
+      "competencies": [
+        "Hab-04",
+        "Hab-05",
+        "Hab-06",
+        "H-04",
+        "C-08",
+        "Hab-07"
+      ],
+      "competencies_count": 6,
+      "tokens_per_competency": 142734.3,
+      "input_tokens_per_competency": 110406.8,
+      "output_tokens_per_competency": 32327.5
+    }
+  ]
+}

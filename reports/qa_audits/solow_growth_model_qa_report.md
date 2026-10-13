@@ -7,7 +7,7 @@
 **Identificador del Curso:** `solow_growth_model`  
 **Fecha de Evaluación:** 12 de Octubre de 2026  
 **Estado en Plataforma:** ELIMINADO  
-**Fecha de Eliminación:** 2026-10-13 01:00:13  
+**Fecha de Eliminación:** 2026-10-13 02:08:08  
 **Auditor Técnico Pedagógico:** Agente Auditor Top's Academy  
 **Marco de Referencia:** Quality Matters (QM), OSCQR y Mastery Learning  
 

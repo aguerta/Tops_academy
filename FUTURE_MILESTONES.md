@@ -3,7 +3,7 @@
 > **Documento de Planificación y Análisis de Arquitectura**  
 > **Fecha:** Octubre 2026  
 > **Áreas:** Top's Academy Platform (`React 18 + Vite`) y Pipeline de Cursos (`content-to-course` / Agentes)  
-> **Estado:** Milestone móvil planificado; optimización Tier 1 completada; Daemon y Scratch pendientes.
+> **Estado:** Milestone móvil planificado; optimizaciones Tier 1 + CTA Map-Reduce + Shard Shift-Left completadas y verificadas; Fase 2 Daemon y Scratch SSD en hoja de ruta.
 
 ---
 
@@ -144,7 +144,7 @@ Tras la implementación de las optimizaciones de **Tier 1 (In-Process Fast-Path 
 * **`run.py --stage build` (500+ preguntas):** Reducido de **48.19 s a 6.10 s** (~8x más rápido).
 * **`run.py --stage templates` (todas las plantillas):** Reducido de **62.14 s a 18.00 s** (~3.5x más rápido).
 * **Validación de autor individual (`check_templates.py`):** Reducido de **3.60 s a 0.83 s** (~4.3x más rápido tras eliminar el warmup ciego).
-* **Suite de pruebas combinada (268 tests):** Reducido a **17.90 s** con 100% de éxito.
+* **Suite de pruebas combinada (367 tests / 363 passed, 4 skipped):** Reducido a **18.05 s** con 100% de éxito en todas las suites unitarias y de integración.
 
 Este Milestone 4 aborda la **Fase 2**, orientada a erradicar el arranque frío del intérprete y la latencia del disco virtual de Google Drive (`G:\Mi unidad`).
 
@@ -168,7 +168,7 @@ flowchart TD
     subgraph Scratch["Bypass de Disco (SSD Local %TEMP%)"]
         S1["C:/Users/.../AppData/Local/Temp/c2c_work"]
         S1 -->|Cero latencia de red/locks| D1
-        S1 -->|Sync atómico al finalizar| GDrive["G:/Mi unidad/Competence_analyser/courses/"]
+        S1 -->|Sync atómico al finalizar| RepoCourses["courses/ del repositorio"]
     end
 ```
 
@@ -184,14 +184,14 @@ flowchart TD
 * **Ganancia Comprobada Empíricamente:** Validación completa de un archivo de competencias en **0.39 segundos (399 ms)** (frente a los 3.60 s originales).
 
 #### Componente B: Directorio de Trabajo Temporal en SSD Local (`--scratch-dir` en `%TEMP%`)
-* **Concepto:** Redirigir los artefactos intermedios de trabajo (`work/`) a la unidad de almacenamiento SSD local (`C:\Users\augus\AppData\Local\Temp\c2c_work`) durante la ejecución, copiando únicamente el producto terminado (`courses/<id>.json` y `cta.json`) a Google Drive (`G:\Mi unidad`).
+* **Concepto:** Redirigir los artefactos intermedios de trabajo (`work/`) a la unidad de almacenamiento SSD local (`C:\Users\augus\AppData\Local\Temp\c2c_work`) durante la ejecución, copiando únicamente el producto terminado (`courses/<id>.json` y `cta.json`) a la carpeta definitiva `courses/`.
 * **Tiempo Estimado de Implementación:** **1 hora**.
 * **Desglose Técnico de la 1 Hora:**
-  1. **Gestión de Unidades Cruzadas Windows (20 min):** Resolver la incompatibilidad de `os.rename()` entre discos distintos (`G:` y `C:`) mediante streaming atómico con `shutil.copytree()` y sincronización transaccional al publicar.
+  1. **Gestión de Unidades Cruzadas Windows (20 min):** Resolver la incompatibilidad de `os.rename()` entre particiones o unidades distintas mediante streaming atómico con `shutil.copytree()` y sincronización transaccional al publicar.
   2. **Ciclo de Vida y Limpieza Automática (15 min):** Context manager con bloque `try ... finally` para limpiar temporales en caso de interrupción o fallo, evitando acumulación de basura en disco local.
   3. **Parametrización en Runner CLI (15 min):** Flag opcional `--scratch-dir` en `run.py` con fallback por defecto al directorio actual para no romper workflows existentes.
-  4. **Pruebas de Verificación de Integridad (10 min):** Confirmar que los cursos generados se sincronicen intactos a `courses/` en Google Drive.
-* **Ganancia:** Elimina la latencia de I/O de red y bloqueos del sistema de archivos virtual de Google Drive en Windows, reduciendo las lecturas de JSON de 80 ms a <1 ms.
+  4. **Pruebas de Verificación de Integridad (10 min):** Confirmar que los cursos generados se sincronicen intactos a `courses/`.
+* **Ganancia:** Elimina la latencia de I/O de red y bloqueos del sistema de archivos, reduciendo las lecturas de JSON de 80 ms a <1 ms.
 
 ---
 
@@ -239,4 +239,4 @@ Para un curso estándar de **22 competencias y más de 500 preguntas interactiva
   * [ ] Agregar limpieza de temporales con context manager.
 * [ ] **Sub-tarea 4.4: Pruebas de Estrés y Verificación**
   * [ ] Simular ráfaga de 22 solicitudes concurrentes al demonio.
-  * [ ] Confirmar que las 268 pruebas unitarias y de regresión pasen con 100% de éxito.
+  * [ ] Confirmar que las 367 pruebas de la suite (363 passing, 4 skipped) y los 81 casos matemáticos adversariales pasen con 100% de éxito.

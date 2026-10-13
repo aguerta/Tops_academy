@@ -11,11 +11,13 @@ Validates parametric exercise templates against template.schema.json and enforce
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import sys
 import zlib
+from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -91,18 +93,43 @@ def format_invariant_error_diagnostic(
     """Formats an error from check_instance_invariants into the enriched diagnostic structure."""
     inv_clean = inv_err.strip()
 
+    # Case A0: Unescaped LaTeX math command
+    if "Unescaped LaTeX math command" in inv_clean:
+        m_cmd = re.search(r"Unescaped LaTeX math command '([^']+)' detected in (.+?)\.", inv_clean)
+        snippet = m_cmd.group(1) if m_cmd else "cmd{var}"
+        field_name = m_cmd.group(2).rstrip(".") if m_cmd else "text"
+        cause = f"Comando matemático LaTeX '{snippet}' sin barra invertida '\\' o sin delimitadores '$...$' detectado en '{field_name}'."
+        actions = [
+            f"Reemplazar por notación KaTeX válida delimitada por '$' (ej. '$\\{snippet}$').",
+            "PROHIBIDO declarar variables matemáticas en el diccionario 'vars' retornado por generate_py.",
+            "Asegurar que todas las expresiones matemáticas estén estrictamente delimitadas por '$...$'.",
+        ]
+        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
+
     # Case A: Unsubstituted template variable '{var}'
     m_var = re.search(r"Unsubstituted template variable '\{([^}]+)\}' detected in (.+)", inv_clean)
     if m_var:
         var_name = m_var.group(1)
         field_name = m_var.group(2).rstrip(".")
         snippet = f"{{{var_name}}}"
-        cause = f"Llaves '{{{var_name}}}' no declaradas en el diccionario 'vars' generado en generate_py o no sustituidas en el campo '{field_name}'."
-        actions = [
-            f"Usar '${var_name}$' si se trata de notación matemática en LaTeX.",
-            "Quitar las llaves '{}' si es texto plano literal no paramétrico.",
-            f"Declarar '{var_name}' en el diccionario 'vars' retornado por generate_py.",
-        ]
+        is_distractor_context = "option" in field_name.lower() or "rationale" in field_name.lower()
+        if is_distractor_context:
+            cause = (
+                f"Subcadena '{{{var_name}}}' detectada dentro del texto del distractor/opción en '{field_name}'. "
+                f"NO corresponde a un parámetro dinámico de generate_py, sino a sintaxis matemática o texto de distractor."
+            )
+            actions = [
+                f"Si '{{{var_name}}}' es parte de notación matemática, delimítela en '$...$' (ej. '$\\dot{{{var_name}}}$' o '$\\bar{{{var_name}}}$') en el template.",
+                f"PROHIBIDO declarar '{var_name}' en el diccionario 'vars' retornado por generate_py (provoca aberraciones sintácticas en cascada).",
+                f"Quitar las llaves '{{}}' si es texto plano literal no paramétrico.",
+            ]
+        else:
+            cause = f"Llaves '{{{var_name}}}' no declaradas en el diccionario 'vars' generado en generate_py o no sustituidas en el campo '{field_name}'."
+            actions = [
+                f"Usar '${var_name}$' si se trata de notación matemática en LaTeX.",
+                "Quitar las llaves '{}' si es texto plano literal no paramétrico.",
+                f"Declarar '{var_name}' en el diccionario 'vars' retornado por generate_py (SOLO si es un parámetro dinámico del stem o hints, NUNCA para distractores).",
+            ]
         return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
 
     # Case B: Triple dollar delimiter '$$$'
@@ -322,12 +349,25 @@ def format_parity_error(
         if "Unreplaced template variable" in msg:
             m_s = re.search(r"Unreplaced template variable\(s\) found:\s*(.*)", msg)
             snippet = m_s.group(1) if m_s else "{var}"
-            cause = f"Llaves '{snippet}' no declaradas en el diccionario 'vars' retornado por generate_py o no reemplazadas en '{field_name}'."
-            actions = [
-                f"Usar '${snippet.replace('{','').replace('}','')}$' si se trata de notación matemática en LaTeX.",
-                "Quitar las llaves '{}' si es texto plano literal no paramétrico.",
-                f"Agregar la clave sin llaves al diccionario 'vars' retornado por generate_py.",
-            ]
+            is_distractor_context = "option" in field_name.lower() or "rationale" in field_name.lower()
+            clean_var = snippet.replace('{','').replace('}','')
+            if is_distractor_context:
+                cause = (
+                    f"Subcadena '{snippet}' detectada dentro del texto del distractor/opción en '{field_name}'. "
+                    f"NO corresponde a un parámetro dinámico de generate_py."
+                )
+                actions = [
+                    f"Si '{snippet}' es notación matemática, delimítela en '$...$' (ej. '$\\dot{{{clean_var}}}$' o '$\\bar{{{clean_var}}}$') en el template.",
+                    f"PROHIBIDO declarar '{clean_var}' en el diccionario 'vars' retornado por generate_py (provoca aberraciones sintácticas en cascada).",
+                    "Quitar las llaves '{}' si es texto plano literal no paramétrico.",
+                ]
+            else:
+                cause = f"Llaves '{snippet}' no declaradas en el diccionario 'vars' retornado por generate_py o no reemplazadas en '{field_name}'."
+                actions = [
+                    f"Usar '${clean_var}$' si se trata de notación matemática en LaTeX.",
+                    "Quitar las llaves '{}' si es texto plano literal no paramétrico.",
+                    f"Agregar la clave sin llaves al diccionario 'vars' retornado por generate_py (SOLO si es parámetro dinámico del stem/hints, NUNCA para distractores).",
+                ]
             return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, snippet, cause, actions)
 
         if "Unbalanced display math delimiters '$$'" in msg:
@@ -1290,11 +1330,81 @@ def check_templates_file_or_dir(
 
     is_clean = (len(errors) == 0)
 
-    # Auto-repair attempt tracking if attempts_dir is supplied
-    if attempts_dir is not None:
+    # Resolve attempts_dir automatically if not supplied
+    effective_attempts_dir = attempts_dir
+    if effective_attempts_dir is None:
+        if cta_p is not None:
+            effective_attempts_dir = cta_p.parent / ".check_attempts"
+        elif template_files:
+            effective_attempts_dir = template_files[0].parent / ".check_attempts"
+        else:
+            effective_attempts_dir = Path("work/.check_attempts")
+
+    # Circuit breaker and attempt tracking
+    if effective_attempts_dir is not None:
         try:
-            att_path = Path(attempts_dir)
+            att_path = Path(effective_attempts_dir)
             att_path.mkdir(parents=True, exist_ok=True)
+            # Derive deterministic scope key for circuit breaker isolation across concurrent shards
+            if processed_comp_ids:
+                scope_raw = "_".join(sorted(processed_comp_ids))
+            elif targets:
+                scope_raw = "_".join(sorted(str(t) for t in targets))
+            else:
+                scope_raw = "global"
+
+            if len(scope_raw) > 32:
+                scope_key = hashlib.sha256(scope_raw.encode("utf-8")).hexdigest()[:12]
+            else:
+                scope_key = re.sub(r"[^a-zA-Z0-9_-]", "_", scope_raw)
+
+            cb_file = att_path / f"circuit_breaker_{scope_key}.json"
+            legacy_cb_file = att_path / "circuit_breaker.json"
+
+            if not is_clean:
+                # Compute deterministic error fingerprint
+                normalized_errs = sorted([re.sub(r"at 0x[0-9a-fA-F]+", "", e.strip()) for e in errors])
+                err_hash = hashlib.sha256("\n".join(normalized_errs).encode("utf-8")).hexdigest()
+
+                cb_data = {"consecutive_count": 1, "last_hash": err_hash, "history": []}
+                target_file = cb_file if cb_file.is_file() else (legacy_cb_file if legacy_cb_file.is_file() else None)
+                if target_file and target_file.is_file():
+                    try:
+                        loaded = json.loads(target_file.read_text(encoding="utf-8"))
+                        if loaded.get("last_hash") == err_hash:
+                            cb_data["consecutive_count"] = loaded.get("consecutive_count", 1) + 1
+                        else:
+                            cb_data["consecutive_count"] = 1
+                        cb_data["history"] = loaded.get("history", [])
+                    except Exception:
+                        pass
+
+                cb_data["history"].append({
+                    "hash": err_hash,
+                    "error_count": len(errors),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                })
+                cb_data["history"] = cb_data["history"][-10:]
+                cb_file.write_text(json.dumps(cb_data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+                if cb_data["consecutive_count"] >= 3:
+                    cb_msg = (
+                        f"[-] [CIRCUIT BREAKER: FALLOS CONSECUTIVOS IDÉNTICOS]\n"
+                        f"    UBICACIÓN: Subagente de autoría de plantillas\n"
+                        f"    CAUSA: Se han detectado 3 ejecuciones consecutivas de check_templates.py con exactamente el mismo número ({len(errors)}) y tipo de errores sin ningún progreso.\n"
+                        f"    ACTION REQUIRED: Detener de inmediato las llamadas a herramientas y responder:\n"
+                        f"    BLOCKED: CONTRACT_ERROR - Circuit breaker activado tras 3 fallos consecutivos idénticos.\n"
+                        f"    PROHIBIDO reintentar modificaciones a ciegas sin consultar al orquestador."
+                    )
+                    errors.append(cb_msg)
+            else:
+                # Clear circuit breaker on clean pass
+                if cb_file.is_file():
+                    cb_file.unlink()
+                if legacy_cb_file.is_file():
+                    legacy_cb_file.unlink()
+
+            # Per-competency budget halt tracking
             for cid in processed_comp_ids:
                 f_att = att_path / f"{cid}.json"
                 cur_att = 0
@@ -1312,12 +1422,12 @@ def check_templates_file_or_dir(
                             f"Action required: Cease iteration and report: BLOCKED: {cid} - validation failure limit reached."
                         )
                 else:
-                    # Clear on success
                     if f_att.is_file():
                         f_att.unlink()
         except Exception:
             pass
 
+    is_clean = (len(errors) == 0)
     return is_clean, errors
 
 
@@ -1357,12 +1467,16 @@ def main():
             print(f"[!] Warning: Could not write json report: {ex}", file=sys.stderr)
 
     if not valid:
-        print(f"FAIL: {len(errors)} validation errors in templates:")
+        has_cb = any("CIRCUIT BREAKER" in e for e in errors)
+        if has_cb:
+            print(f"FAIL: CIRCUIT BREAKER TRIPPED ({len(errors)} validation errors):")
+        else:
+            print(f"FAIL: {len(errors)} validation errors in templates:")
         for e in errors[:15]:
             print(f"  - {e}")
         if len(errors) > 15:
             print(f"  ... and {len(errors) - 15} more errors.")
-        sys.exit(1)
+        sys.exit(2 if has_cb else 1)
 
     print(f"PASS: All templates satisfy schema, AST security, {args.seeds} seeds dry run, invariants, TPL-D1..D4 rules, and Production Parity.")
     sys.exit(0)
