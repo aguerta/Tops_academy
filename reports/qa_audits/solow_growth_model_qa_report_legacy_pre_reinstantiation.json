@@ -1,0 +1,75 @@
+{
+  "course_metadata": {
+    "course_id": "solow_growth_model",
+    "unit_title": "El Modelo de Crecimiento Económico de Solow (1956)",
+    "detected_objective": "Comprender, formular y resolver dinámicamente el modelo neoclásico de crecimiento económico de Solow (1956), analizando sus propiedades de estabilidad, implicaciones de precios factoriales, dinámicas de transición y extensiones analíticas.",
+    "total_competencies": 25,
+    "total_questions": 580,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-10-13 01:00:13"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4,
+      "max": 4,
+      "feedback": "Excelente granularidad y atomización conceptual con 25 competencias bien balanceadas (5 Hechos, 12 Conceptos y 8 Habilidades) que cubren exhaustivamente la dinámica de Solow (1956) y Chiang cap. 15. El grafo de dependencias (DAG) está 100% conectado, acíclico y validado formalmente, modelando con rigor todas las relaciones de precedencia pedagógica para Mastery Learning."
+    },
+    "assessment_quality": {
+      "score": 4.8,
+      "max": 5,
+      "feedback": "Banco extenso de 580 reactivos con balance tipológico óptimo (267 FIB, 233 MS, 80 MC7) y 100% de cobertura en rationales diagnósticos de distractores (996/996). Cero fugas de respuestas (answer leaks erradicadas en su totalidad, notación diferencial restaurada como \\dot{r} en Q-C07-271/272 y Q-Hab03-211..215). Cero identificadores crudos de código en opciones visibles."
+    },
+    "scaffolding_hints": {
+      "score": 4.6,
+      "max": 5,
+      "feedback": "Cumplimiento del 100% en andamiaje socrático progresivo (exactamente 3 pistas por reactivo, 0 ítems huérfanos). Residuos de variables de plantilla ('c_val') completamente purgados en Q-C01-021/022. Soluciones detalladas analíticas disponibles en el 100% de los reactivos con sintaxis KaTeX rigurosa y advertencias diagnósticas integradas."
+    },
+    "instructional_alignment": {
+      "score": 3.9,
+      "max": 4,
+      "feedback": "Alineación instruccional sobresaliente entre el objetivo declarado, la teoría macroeconómica neoclásica y los reactivos de prueba. Cobertura matemática exhaustiva de las Figuras I a IX de Solow (1956) y Chiang cap. 15, con cero preguntas huérfanas y predominio de niveles taxonómicos de Aplicación y Análisis."
+    },
+    "technical_ergonomics": {
+      "score": 2,
+      "max": 2,
+      "feedback": "Ergonomía técnica impecable: 0 errores de sintaxis KaTeX (58/58 fórmulas reparadas con balance perfecto de llaves y delimitadores). Notación de derivadas temporales (\\dot{r}, \\dot{k}, \\dot{K}, \\dot{L}) y parciales preservada al 100%. Expresiones matemáticas completamente renderizables en frontend sin colapsos."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 19.3,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "remediation_actions": [
+    "Saneamiento integral ejecutado y verificado con éxito: 100% de errores KaTeX eliminados.",
+    "Grafo DAG formalmente interconectado entre las 25 competencias.",
+    "Linters de prevención integrados en el motor (R-20 y rules.py) para blindar futuras ejecuciones."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "template_variable_residue_linter",
+      "severity": "high",
+      "description": "Detecta nombres de variables crudos de código o plantillas (ej. '*_val', '*_param', '*_var') que no fueron sustituidos durante la renderización y quedan visibles al estudiante en stems, distractores, pistas o soluciones.",
+      "regex_pattern": "\\b[a-zA-Z0-9_]+_(?:val|param|var|arg)\\b",
+      "evidence_items": [
+        "Q-C01-021",
+        "Q-C01-022",
+        "Q-Hab05-321",
+        "Q-Hab05-322"
+      ]
+    },
+    {
+      "rule_id": "blind_string_replacement_linter",
+      "severity": "critical",
+      "description": "Detecta sustituciones ciegas de texto donde un escalar numérico reemplaza el símbolo de una variable bajo un operador diferencial (ej. '\\dot{36}', '\\dot36'), o donde el enunciado revela la respuesta exacta en su formulación matemática.",
+      "regex_pattern": "\\\\(?:dot|ddot)\\{?\\d+\\}?",
+      "evidence_items": [
+        "Q-C07-271",
+        "Q-C07-272",
+        "Q-Hab03-211",
+        "Q-Hab03-215"
+      ]
+    }
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-13 01:00:13",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}

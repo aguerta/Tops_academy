@@ -13,10 +13,10 @@ Se ha completado la auditoría exhaustiva y concurrente sobre la totalidad de lo
 
 ### Matriz Comparativa Consolidada
 
-| Curso | Preguntas | Comp. | D1: Arq. (4 pts) | D2: React. (5 pts) | D3: Pistas (5 pts) | D4: Alin. (4 pts) | D5: KaTeX (2 pts) | Pen. | Nota Final | Quality Tier | Estado  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---:  :---:  :---:  :---:  :---:  :---:  :---: |
-| **Estadística III: Econometría** (`estadistica3_regresion_v3`) | 390 | 16 | **3.8** | **4.8** | **4.8** | **4.0** | **1.0** | 0.0 | **18.4 / 20.0** | **EXCELENTE** | Aprobado (Requiere parche KaTeX) | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo |
-| **Modelo de Crecimiento de Solow** (`solow_model`) | 1,040 | 44 | **3.3** | **3.2** | **3.7** | **3.8** | **1.3** | 0.0 | **15.3 / 20.0** | **ACEPTABLE** | Aprobado c/ observaciones (Marcado para retiro) | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo |
+| Curso | Preguntas | Comp. | D1: Arq. (4 pts) | D2: React. (5 pts) | D3: Pistas (5 pts) | D4: Alin. (4 pts) | D5: KaTeX (2 pts) | Pen. | Nota Final | Quality Tier | Estado  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---: |
+| **Estadística III: Econometría** (`estadistica3_regresion_v3`) | 390 | 16 | **3.8** | **4.8** | **4.8** | **4.0** | **1.0** | 0.0 | **18.4 / 20.0** | **EXCELENTE** | Aprobado (Requiere parche KaTeX) | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo |
+| **Modelo de Crecimiento de Solow** (`solow_model`) | 1,040 | 44 | **3.3** | **3.2** | **3.7** | **3.8** | **1.3** | 0.0 | **15.3 / 20.0** | **ACEPTABLE** | Eliminado de la Plataforma | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | 2026-10-12 23:30:29 |
 | **Promedio Global de la Suite** | **1,430** | **60** | **3.55** | **4.00** | **4.25** | **3.90** | **1.15** | **0.0** | **16.85 / 20.0** | **ACEPTABLE+** | Producción Condicionada |
 
 ---
