@@ -21,11 +21,12 @@ OPTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G"]
 
 
 def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
-    """Safely format string with template variables without corrupting KaTeX curly braces."""
+    """Safely format string with template variables without corrupting KaTeX curly braces or macros."""
     result = template_str
     for k, v in variables.items():
-        placeholder = f"{{{k}}}"
-        result = result.replace(placeholder, str(v))
+        # Avoid replacing {k} when preceded by a backslash command like \dot{k}, \sqrt{k}, etc.
+        pattern = re.compile(rf"(\\[a-zA-Z]+)?\{{{re.escape(k)}\}}")
+        result = pattern.sub(lambda m, val=str(v): m.group(0) if m.group(1) else val, result)
     return result
 
 
@@ -33,8 +34,8 @@ def sanitize_katex_syntax(text: str) -> str:
     """Sanitize KaTeX syntax by fixing f-string artifacts and delimiter issues.
     
     - Replaces '$$$' with '$$'
-    - Normalizes residual double curly braces from f-strings '{{x}}' -> '{x}'
-      without altering legitimate KaTeX syntax.
+    - Normalizes residual paired double curly braces from f-strings '{{x}}' -> '{x}'
+      without altering legitimate nested KaTeX syntax like \\frac{\\dot{r}}{r} or k^{\\frac{1}{3}}.
     """
     if not isinstance(text, str):
         return text
@@ -43,11 +44,9 @@ def sanitize_katex_syntax(text: str) -> str:
     while "$$$" in text:
         text = text.replace("$$$", "$$")
 
-    # Normalize residual double curly braces from f-strings {{ -> {, }} -> }
-    while "{{" in text:
-        text = text.replace("{{", "{")
-    while "}}" in text:
-        text = text.replace("}}", "}")
+    # Normalize residual paired double curly braces from f-strings {{var}} -> {var}
+    # NEVER do a blind text.replace("}}", "}") as that destroys nested LaTeX groups!
+    text = re.sub(r"\{\{([a-zA-Z0-9_]+)\}\}", r"{\1}", text)
 
     return text
 

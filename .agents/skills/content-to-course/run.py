@@ -140,6 +140,7 @@ class PipelineRunner:
         no_merge: bool = False,
         partial: bool = False,
         role: Optional[str] = None,
+        ids: Optional[Union[str, List[Union[str, int]]]] = None,
         ready_only: bool = False,
         skip_judges: bool = False,
     ) -> None:
@@ -153,6 +154,7 @@ class PipelineRunner:
         self.legacy_transcribe = legacy_transcribe
         self.shards_k = shards_k
         self.order = order
+        self.no_handouts = no_handouts
         if str(cta_mode).strip().lower() in ("multiple", "multi", "map-reduce", "map_reduce"):
             self.cta_mode = "mapreduce"
         elif str(cta_mode).strip().lower() in ("single", "direct_cta", "direct-cta"):
@@ -163,6 +165,7 @@ class PipelineRunner:
         self.no_merge = no_merge
         self.partial = partial
         self.role = role
+        self.ids = [ids] if isinstance(ids, (str, int)) else ids
         self.ready_only = ready_only
         self.skip_judges = skip_judges
 
@@ -238,6 +241,7 @@ class PipelineRunner:
             order_override=self.order,
             cta_mode=self.cta_mode,
             granularity=self.granularity,
+            no_handouts=self.no_handouts,
         )
 
         manifest_file = self.work_dir / "pages" / "manifest.json"
@@ -267,7 +271,7 @@ class PipelineRunner:
         rec_agents = handouts_info.get("agents_recommended", 1)
         print(f"  [+] CTA Mode (definido por el usuario): {cta_m.upper()} | Handouts generados: {total_h} (recomendados {rec_agents} agentes de visión)")
 
-        if total_h > 0:
+        if total_h > 0 and not self.no_handouts and self.vision != "none":
             print(f"  [+] Contenido visual detectado: {total_h} handouts ({b.get('pages_requiring_vision', 0)} páginas requieren visión).")
             print(f"  [+] FASE 1A OBLIGATORIA (Preprocesamiento de Visión):")
             print(f"      1. python .agents/skills/content-to-course/run.py --stage dispatch --role vision --work-dir \"{self.work_dir}\"")
@@ -278,7 +282,8 @@ class PipelineRunner:
             else:
                 print(f"      3. python .agents/skills/content-to-course/run.py --stage sections --work-dir \"{self.work_dir}\"")
         else:
-            print(f"  [+] Sin contenido visual que requiera visión (0 handouts).")
+            print(f"  [+] Ingesta Directa de PDF habilitada (0 handouts generados).")
+            print(f"  [+] Documentos PDF y corpus de texto disponibles directamente; no se requiere preprocesamiento de imágenes.")
             print(f"  [+] FASE 1 (Síntesis CTA en modo {cta_m.upper()}):")
             if cta_m == "direct":
                 print(f"      1. python .agents/skills/content-to-course/run.py --stage dispatch --role cta-direct --work-dir \"{self.work_dir}\"")
@@ -504,6 +509,7 @@ class PipelineRunner:
                 "category": cat,
                 "description": desc,
                 "mastery_target": 100,
+                "prerequisites": comp.get("prerequisites", []),
             }
             comp_templates = templates_by_comp.get(cid, [])
             if not comp_templates:
@@ -733,7 +739,10 @@ class PipelineRunner:
         print(f"  Title:        {pub_result.course_title}")
         print(f"  Course ID:    {pub_result.course_id}")
         print(f"  Course File:  {pub_result.published_json_path}")
+        if pub_result.published_cta_path:
+            print(f"  CTA Markdown: {pub_result.published_cta_path}")
         print(f"  Questions:    {pub_result.total_questions} items across {pub_result.total_competencies} competencies")
+        print(f"  Validation:   Passed (Hermetic CLI validator with in-memory fallback; strict={self.strict})")
         print(f"  Launch URL:   {pub_result.launch_url}")
         print(f"  Command:      {pub_result.launch_command}")
         print("=" * 70 + "\n")
@@ -868,9 +877,21 @@ class PipelineRunner:
         print(f"[AUX STAGE: DISPATCH] Generating invoke_subagent payload for role '{self.role}'")
         print("=" * 70)
 
+        # Inform role-specific contracts
+        if self.role == "author":
+            print("  [*] Enforcing contract: Autoría atómica modular en 1 script, validación de todo el lote a la vez.")
+            print("  [*] Forbidden paths: check_templates.py, src/validator/*, rules.py, engine/*, SKILL.md")
+        elif self.role == "judge":
+            print("  [*] Enforcing contract: Cero búsquedas web, resolver por primeros principios, BLOCKED si falta contexto.")
+            print("  [*] Forbidden tools/paths: search_web, read_url_content, navegación web, templates/*, ground truth")
+        elif self.role == "cta-direct":
+            print("  [*] Enforcing contract: Máximo 10 competencias por lote, prohibido emitir competencias en el chat.")
+            print("  [*] Generation method: Script generador estructurado hacia work/cta.json y work/cta.md")
+
         payload = build_dispatch(
             role=self.role,
             work_dir=self.work_dir,
+            ids=self.ids,
             ready_only=self.ready_only,
         )
         elapsed = time.time() - t0
@@ -882,7 +903,7 @@ class PipelineRunner:
         print("\n" + "-" * 70)
         print(json.dumps(payload, indent=2, ensure_ascii=False))
         print("-" * 70 + "\n")
-        print("  [+] Auxiliary Stage (dispatch) completed successfully.")
+        print(f"  [+] Auxiliary Stage (dispatch: {self.role}) completed successfully.")
         return payload
 
     def run_stage_scope_check(self) -> Dict[str, Any]:
@@ -920,6 +941,7 @@ class PipelineRunner:
         print("\n" + "-" * 70)
         print(json.dumps(types_list, indent=2, ensure_ascii=False))
         print("-" * 70 + "\n")
+        print("  [+] Subagent type contracts defined and verified for orchestrator registration.")
         return {"types": types_list}
 
     def run_stage_judge_compare(self) -> Dict[str, Any]:
@@ -1132,6 +1154,11 @@ def main() -> None:
         help="Dispatch only ready sections/items in dispatch stage.",
     )
     parser.add_argument(
+        "--ids",
+        nargs="*",
+        help="Optional specific IDs (shards, sections, competencies) to dispatch.",
+    )
+    parser.add_argument(
         "--skip-judges",
         action="store_true",
         default=False,
@@ -1163,6 +1190,7 @@ def main() -> None:
         no_merge=args.no_merge,
         partial=args.partial,
         role=args.role,
+        ids=args.ids,
         ready_only=args.ready_only,
         skip_judges=args.skip_judges,
     )

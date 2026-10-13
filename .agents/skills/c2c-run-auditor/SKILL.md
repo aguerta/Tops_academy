@@ -93,9 +93,17 @@ flowchart TD
 Cuando el usuario solicita auditar una corrida, el agente debe seguir estos pasos deterministas:
 
 ### Paso 1: Resolver y Ejecutar Directamente
-- Si el usuario suministra un UUID, enlace o nombre de curso:
+- Para auditoría ejecutiva de telemetría, unit economics y dashboard:
   ```bash
   python .agents/skills/c2c-run-auditor/scripts/audit_engine.py --conversation <ID_O_ENLACE>
+  ```
+- Para auditoría integral completa con **Traceback Deep-Dive** (turnos de subagentes, bottlenecks de CTA/shards, fugas web de jueces y taxonomía de errores):
+  ```bash
+  python .agents/skills/c2c-run-auditor/scripts/audit_engine.py --conversation <ID_O_ENLACE> --traceback
+  ```
+- Para análisis forense granular directo de traceback exclusivamente:
+  ```bash
+  python .agents/skills/c2c-run-auditor/scripts/traceback_analyzer.py --conversation <ID_O_ENLACE>
   ```
 - Si el usuario no especificó ID o solicita ver las corridas recientes:
   ```bash
@@ -141,12 +149,14 @@ Para comparar justamente corridas de diferente tamaño y complejidad pedagógica
 
 ---
 
-## 4. Opciones del CLI (`audit_engine.py`)
+## 4. Opciones de los CLIs del Sistema
 
+### 4.1. CLI Global: `audit_engine.py`
 ```text
 Uso: audit_engine.py [-h] [--conversation CONVERSATION] [--output-dir OUTPUT_DIR]
                      [--work-dir WORK_DIR] [--format {all,md,json,html}]
                      [--recent] [--history] [--compare [RUN_A] [RUN_B]]
+                     [--traceback]
 
 Opciones:
   -c, --conversation   UUID, chat link o ruta al transcript del orquestador.
@@ -155,5 +165,17 @@ Opciones:
   --recent             Muestra las ejecuciones recientes de C2C en el brain.
   --history            Muestra el histórico comparativo y matriz longitudinal.
   --compare            Genera la comparativa forense entre dos corridas (o versus baseline).
+  --traceback          Ejecuta además el análisis forense profundo de traceback en la misma corrida.
   --format             Formatos a emitir: all, md, json, html.
 ```
+
+### 4.2. CLI de Traceback Granular: `traceback_analyzer.py`
+```text
+Uso: traceback_analyzer.py [-h] [-c CONVERSATION] [-o OUTPUT_DIR] [--recent]
+
+Opciones:
+  -c, --conversation   UUID, chat link o ruta al transcript del orquestador.
+  -o, --output-dir     Directorio raíz para los reportes (default: reports/c2c_audits).
+  --recent             Muestra las conversaciones recientes encontradas en el brain.
+```
+

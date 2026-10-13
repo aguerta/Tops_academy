@@ -50,17 +50,427 @@ from engine.sandbox import (
 from validator.core import validate_course_content
 
 
-RULE_ACTIONS: Dict[str, str] = {
-    "R-17": "El error_rationale no puede ser genérico o un placeholder.",
-    "R-18": "Reescribe la opción como afirmación objetiva; prohibido usar prefijos como 'erróneamente', 'confundiendo', 'asumiendo equivocadamente'.",
-    "R-19": "Elimina el valor de la clave de respuesta del stem de la pregunta FIB (fuga de respuesta).",
-    "R-20": "Corrige sintaxis LaTeX ($ desbalanceados, $$$ redundantes, llaves dobles {{}} o variables {var} sin reemplazar).",
-    "R-22": "Agrega 'error_rationale' en todas las opciones incorrectas del reactivo multiple_select.",
-    "S-01": "Incluye 'solution' detallada paso a paso.",
-    "S-02": "Incluye 'misconception' o asocia distractor_id válido.",
-    "S-03": "Declara dificultad explícita válida (easy, medium, hard).",
-    "R-15": "Equilibra la longitud de las opciones MC: la correcta no puede exceder significativamente el rango de los distractores (0.80x - 1.20x).",
-}
+AGENT_WARNING_NOTE = (
+    "NOTA PARA EL AGENTE: NO abras ni inspecciones el código de check_templates.py ni rules.py. "
+    "Corrige directamente el texto en tu script generador."
+)
+
+
+def format_diagnostic_error(
+    rule_tag: str,
+    competency: str,
+    template: str,
+    item_id: str,
+    field_name: str,
+    snippet: str,
+    cause: str,
+    actions: List[str],
+) -> str:
+    """Format validation error with enriched surgical and prescriptive diagnostics."""
+    actions_formatted = "\n".join(f"      {idx + 1}. {act}" for idx, act in enumerate(actions))
+    primary_action = actions[0] if actions else "Corrige el archivo generador."
+    return (
+        f"[-] [{rule_tag}]\n"
+        f"    UBICACIÓN: Competencia: '{competency}', Plantilla: '{template}', Reactivo: '{item_id}', Campo: '{field_name}'\n"
+        f"    FRAGMENTO INFRACTOR: {snippet}\n"
+        f"    CAUSA: {cause}\n"
+        f"    ACTION REQUIRED: {primary_action}\n"
+        f"    ACCIONES CORRECTIVAS:\n"
+        f"{actions_formatted}\n"
+        f"    {AGENT_WARNING_NOTE}"
+    )
+
+
+def format_invariant_error_diagnostic(
+    cid: str,
+    tpl_id: str,
+    q_id: str,
+    inv_err: str,
+    q_obj: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Formats an error from check_instance_invariants into the enriched diagnostic structure."""
+    inv_clean = inv_err.strip()
+
+    # Case A: Unsubstituted template variable '{var}'
+    m_var = re.search(r"Unsubstituted template variable '\{([^}]+)\}' detected in (.+)", inv_clean)
+    if m_var:
+        var_name = m_var.group(1)
+        field_name = m_var.group(2).rstrip(".")
+        snippet = f"{{{var_name}}}"
+        cause = f"Llaves '{{{var_name}}}' no declaradas en el diccionario 'vars' generado en generate_py o no sustituidas en el campo '{field_name}'."
+        actions = [
+            f"Usar '${var_name}$' si se trata de notación matemática en LaTeX.",
+            "Quitar las llaves '{}' si es texto plano literal no paramétrico.",
+            f"Declarar '{var_name}' en el diccionario 'vars' retornado por generate_py.",
+        ]
+        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
+
+    # Case B: Triple dollar delimiter '$$$'
+    if "$$$" in inv_clean:
+        m_ctx = re.search(r"detected in (.+)", inv_clean)
+        field_name = m_ctx.group(1).rstrip(".") if m_ctx else "stem / hint / text"
+        snippet = "$$$"
+        cause = f"Delimitador matemático triple '$$$' inválido detectado en '{field_name}'."
+        actions = [
+            "Reemplazar '$$$' por '$$' si se trata de un bloque matemático en display mode.",
+            "Reemplazar '$$$' por '$' si es matemática inline.",
+            "Asegurar que los delimitadores de apertura y cierre coincidan sin signos de dólar redundantes.",
+        ]
+        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
+
+    # Case C: Unbalanced display math delimiter '$$'
+    if "Unbalanced display math delimiter '$$'" in inv_clean:
+        m_ctx = re.search(r"in (.+)", inv_clean)
+        field_name = m_ctx.group(1).rstrip(".") if m_ctx else "stem / hint / text"
+        snippet = "$$"
+        cause = f"Delimitadores '$$' de display math no balanceados en '{field_name}' (número impar de '$$')."
+        actions = [
+            "Asegurarse de que cada '$$' de apertura tenga un '$$' de cierre.",
+            "No mezclar '$$' con '$' en la misma expresión matemática.",
+            "Escapar cualquier símbolo de dólar literal como '\\$'.",
+        ]
+        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
+
+    # Case D: Unbalanced inline math delimiter '$'
+    if "Unbalanced inline math delimiter '$'" in inv_clean:
+        m_ctx = re.search(r"in (.+)", inv_clean)
+        field_name = m_ctx.group(1).rstrip(".") if m_ctx else "stem / hint / text"
+        snippet = "$"
+        cause = f"Delimitadores '$' de matemática inline no balanceados en '{field_name}' (número impar de '$')."
+        actions = [
+            "Verificar que cada '$' de apertura cuente con su correspondiente '$' de cierre.",
+            "Escapar cualquier símbolo de dólar literal o de moneda como '\\$'.",
+            "Evitar saltos de línea o texto no matemático dentro del bloque '$...$'.",
+        ]
+        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
+
+    # Case E: Residual double curly braces '{{' or '}}'
+    if "Residual double curly braces" in inv_clean:
+        m_ctx = re.search(r"detected in (.+)", inv_clean)
+        field_name = m_ctx.group(1).rstrip(".") if m_ctx else "stem / hint / text"
+        snippet = "{{ o }}"
+        cause = f"Llaves dobles residuales '{{' o '}}' provenientes de formato o f-string de Python en '{field_name}'."
+        actions = [
+            "Usar llaves simples '{...}' para grupos en LaTeX en lugar de llaves dobles '{{...}}'.",
+            "Revisar el escape de llaves en f-strings dentro de generate_py.",
+            "Utilizar raw strings r'...' para expresiones KaTeX.",
+        ]
+        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
+
+    # Case F: Unbalanced curly braces in LaTeX math expression
+    if "Unbalanced curly braces in LaTeX math expression" in inv_clean:
+        m_ctx = re.search(r"in ([^:]+):\s*'(.*)'", inv_clean)
+        field_name = m_ctx.group(1).strip() if m_ctx else "math expression"
+        snippet = m_ctx.group(2) if m_ctx else "{ o }"
+        cause = f"Llaves curvas '{{' y '}}' desbalanceadas dentro de la fórmula LaTeX en '{field_name}': '{snippet}'."
+        actions = [
+            "Contar y balancear las llaves '{' y '}' en la expresión LaTeX.",
+            "Si se usaron llaves literales escapadas '\\{', asegurar que la barra invertida esté presente.",
+            "Revisar macros de LaTeX con múltiples argumentos como \\frac{a}{b} donde falte una llave de cierre.",
+        ]
+        return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
+
+    # Case G: Distractor identical to correct answer (TPL-D4)
+    if "Distractor identical to correct answer" in inv_clean:
+        m_d = re.search(r"Distractor identical to correct answer:\s*'(.*)'", inv_clean)
+        snippet = m_d.group(1) if m_d else inv_clean
+        cause = f"Un distractor generado en generate_py es idéntico a la respuesta correcta ('{snippet}')."
+        actions = [
+            "Verificar en generate_py que los distractores nunca tomen el valor de la clave correcta.",
+            "Añadir una guarda en generate_py que desplace o regenere el distractor si colisiona con 'correct'.",
+            "Comprobar casos particulares donde parámetros aleatorios anulen la diferencia.",
+        ]
+        return format_diagnostic_error("TPL-D4: DISTRACTOR IDÉNTICO A RESPUESTA CORRECTA", cid, tpl_id, q_id, "options", snippet, cause, actions)
+
+    # Case H: Length anti-giveaway violation (R-15)
+    if "Length anti-giveaway violation" in inv_clean:
+        cause = "La longitud de la respuesta correcta difiere significativamente del rango de los distractores (fuera de 0.80x - 1.20x)."
+        actions = [
+            "Calibrar la longitud de la respuesta correcta o de los distractores para que tengan una extensión homogénea.",
+            "Homogeneizar el nivel de detalle y formato matemático entre todas las opciones.",
+            "Asegurar que 0.80 * min(len(D)) <= len(correct) <= 1.20 * max(len(D)).",
+        ]
+        return format_diagnostic_error("R-15: EQUILIBRIO DE LONGITUD", cid, tpl_id, q_id, "options", inv_clean, cause, actions)
+
+    # Case I: Answer leak (R-19)
+    if "leaked verbatim in" in inv_clean:
+        cause = "El valor o texto de la respuesta correcta aparece textualmente en el stem o en la primera pista, revelando la clave."
+        actions = [
+            "Remover la mención textual de la respuesta del enunciado de la pregunta o de la primera pista.",
+            "Reformular la primera pista para que oriente sobre el método conceptual sin dar el resultado numérico/algebraico.",
+            "Verificar que la consigna plantee el problema requiriendo el cálculo en lugar de enunciar la solución.",
+        ]
+        return format_diagnostic_error("R-19: FUGA DE RESPUESTA", cid, tpl_id, q_id, "stem / hints[0]", inv_clean, cause, actions)
+
+    # Case J: Missing error_rationale
+    if "must possess a non-empty 'error_rationale'" in inv_clean:
+        is_ms = "MS option" in inv_clean
+        rule_tag = "R-22: RATIONALE EN MULTIPLE_SELECT" if is_ms else "R-17: RATIONALE FALTANTE EN DISTRACTOR"
+        m_opt = re.search(r"option\s+(\d+)", inv_clean, re.IGNORECASE)
+        opt_idx = m_opt.group(1) if m_opt else "X"
+        field_name = f"options[{opt_idx}].error_rationale"
+        cause = f"La opción distractora {opt_idx} con is_correct=False carece de un 'error_rationale' explicativo."
+        actions = [
+            "Agregar una explicación diagnóstica en 'error_rationale' para cada opción con is_correct=False.",
+            "Describir la falacia conceptual o error procedimental que lleva a seleccionar dicha opción.",
+            "Asegurar que el texto de rationale no sea una cadena vacía ni un placeholder genérico.",
+        ]
+        return format_diagnostic_error(rule_tag, cid, tpl_id, q_id, field_name, "(vacío o ausente)", cause, actions)
+
+    # Case K: Duplicate options
+    if "Duplicate option content detected" in inv_clean:
+        m_opt = re.search(r"detected(?:\s+in\s+MS)?:\s*'(.*)'", inv_clean)
+        snippet = m_opt.group(1) if m_opt else inv_clean
+        cause = f"Dos o más opciones tienen contenido idéntico ('{snippet}')."
+        actions = [
+            "Garantizar que todos los distractores generados en generate_py sean disjuntos y únicos.",
+            "Agregar una comprobación en generate_py que descarte o regenere opciones repetidas.",
+            "Variar las fórmulas de perturbación para producir valores distintos.",
+        ]
+        return format_diagnostic_error("TPL-D4: OPCIONES DUPLICADAS", cid, tpl_id, q_id, "options", snippet, cause, actions)
+
+    # Fallback Invariant
+    return format_diagnostic_error(
+        rule_tag="INVARIANT: invariant violation",
+        competency=cid,
+        template=tpl_id,
+        item_id=q_id,
+        field_name="instance",
+        snippet=inv_clean,
+        cause=f"Template '{tpl_id}' invariant violation ({q_id}): {inv_clean}",
+        actions=[
+            "Revisar la salida de generate_py para cumplir con los requerimientos estructurales del reactivo.",
+            "Asegurar que todos los campos requeridos estén presentes y sean del tipo esperado.",
+            "Verificar que el reactivo cumpla con la especificación de interaction_type.",
+        ],
+    )
+
+
+def format_parity_error(
+    cid: str,
+    err: Any,
+    questions_by_id: Dict[str, Dict[str, Any]],
+) -> str:
+    """Formats a ValidationError from production parity check with prescriptive diagnosis."""
+    rule_id = getattr(err, "rule_id", "PARITY")
+    msg = getattr(err, "message", str(err))
+    item_id = getattr(err, "item_id", None) or "UNKNOWN"
+    q = questions_by_id.get(item_id, {})
+    tpl_id = q.get("template_id") or "UNKNOWN"
+
+    # Rule R-20
+    if rule_id == "R-20":
+        m_field = re.search(r"in\s+([a-zA-Z0-9_.\[\]]+):", msg)
+        field_name = m_field.group(1) if m_field else "stem / options / text"
+
+        if "Unreplaced template variable" in msg:
+            m_s = re.search(r"Unreplaced template variable\(s\) found:\s*(.*)", msg)
+            snippet = m_s.group(1) if m_s else "{var}"
+            cause = f"Llaves '{snippet}' no declaradas en el diccionario 'vars' retornado por generate_py o no reemplazadas en '{field_name}'."
+            actions = [
+                f"Usar '${snippet.replace('{','').replace('}','')}$' si se trata de notación matemática en LaTeX.",
+                "Quitar las llaves '{}' si es texto plano literal no paramétrico.",
+                f"Agregar la clave sin llaves al diccionario 'vars' retornado por generate_py.",
+            ]
+            return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, snippet, cause, actions)
+
+        if "Unbalanced display math delimiters '$$'" in msg:
+            return format_diagnostic_error(
+                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, "$$",
+                f"Delimitadores '$$' de display math no balanceados en '{field_name}' (número impar de '$$').",
+                [
+                    "Asegurarse de que cada '$$' de apertura tenga un '$$' de cierre.",
+                    "No mezclar '$$' con '$' en la misma expresión.",
+                    "Escapar cualquier símbolo de dólar literal como '\\$'.",
+                ]
+            )
+
+        if "Unbalanced inline math delimiters '$'" in msg:
+            return format_diagnostic_error(
+                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, "$",
+                f"Delimitadores '$' de matemática en línea no balanceados en '{field_name}' (número impar de '$').",
+                [
+                    "Verificar que cada '$' de apertura cuente con su correspondiente '$' de cierre.",
+                    "Escapar cualquier símbolo de dólar literal como '\\$'.",
+                    "Comprobar que no haya saltos de línea dentro del bloque '$...$'.",
+                ]
+            )
+
+        if "Forbidden triple math delimiter '$$$'" in msg:
+            return format_diagnostic_error(
+                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, "$$$",
+                f"Delimitador matemático triple '$$$' inválido detectado en '{field_name}'.",
+                [
+                    "Reemplazar '$$$' por '$$' si es bloque matemático en display mode.",
+                    "Reemplazar '$$$' por '$' si es matemática inline.",
+                    "Asegurar que los delimitadores de apertura y cierre coincidan.",
+                ]
+            )
+
+        if "Residual double braces" in msg:
+            return format_diagnostic_error(
+                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, "{{ o }}",
+                f"Llaves dobles residuales '{{' o '}}' provenientes de f-strings en Python dentro de '{field_name}'.",
+                [
+                    "Usar llaves simples '{...}' para grupos en LaTeX en lugar de llaves dobles '{{...}}'.",
+                    "Revisar el escape de llaves en f-strings dentro de generate_py.",
+                    "Utilizar raw strings r'...' para expresiones KaTeX.",
+                ]
+            )
+
+        if "Unbalanced curly braces in LaTeX math block" in msg:
+            m_s = re.search(r"LaTeX math block:\s*'(.*)'", msg)
+            snippet = m_s.group(1) if m_s else "{ o }"
+            return format_diagnostic_error(
+                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, snippet,
+                f"Llaves curvas '{{' y '}}' desbalanceadas dentro de la fórmula LaTeX en '{field_name}': '{snippet}'.",
+                [
+                    "Contar y balancear las llaves '{' y '}' en la expresión LaTeX.",
+                    "Asegurar que llaves literales estén escapadas como '\\{'.",
+                    "Revisar macros de LaTeX como \\frac{a}{b} donde falte una llave de cierre.",
+                ]
+            )
+
+        if "Leaked raw code variable identifier" in msg:
+            m_s = re.search(r"identifier\(s\) found:\s*(.*)", msg)
+            snippet = m_s.group(1) if m_s else "identificador de código"
+            return format_diagnostic_error(
+                "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, snippet,
+                f"Identificador interno de código filtrado al texto del reactivo ({snippet}).",
+                [
+                    "Eliminar o formatear las variables internas de código antes de insertarlas en el texto.",
+                    "Reemplazar identificadores crudos (_val, _num, _str) por su valor formateado o símbolo matemático.",
+                    "Verificar que el texto dirigido al estudiante sea completamente natural y pedagógico.",
+                ]
+            )
+
+        return format_diagnostic_error(
+            "R-20: SINTAXIS / LLAVES", cid, tpl_id, item_id, field_name, msg,
+            f"Error de sintaxis KaTeX o delimitadores en '{field_name}'.",
+            [
+                "Revisar la sintaxis de KaTeX y los delimitadores '$' y '$$'.",
+                "Asegurar que todas las llaves '{' y '}' estén balanceadas.",
+                "Verificar que no queden placeholders sin sustituir.",
+            ]
+        )
+
+    # Rule R-18
+    if rule_id == "R-18":
+        m_field = re.search(r"Option '([^']+)'", msg)
+        opt_id = m_field.group(1) if m_field else "option"
+        field_name = f"options[{opt_id}].content"
+        m_s = re.search(r"visible content:\s*'(.*)'", msg)
+        snippet = m_s.group(1) if m_s else msg
+        cause = "Uso de términos metalingüísticos o autocríticos ('confundiendo', 'asumiendo erróneamente', etc.) en el texto visible de la opción que revelan al estudiante que es un distractor."
+        actions = [
+            "Reescribir el contenido de la opción como una afirmación objetiva o resultado alternativo plausible sin juzgar su veracidad en el texto visible.",
+            "Mover la justificación del error ('confundiendo...', 'asumiendo erróneamente...') exclusivamente al campo 'error_rationale'.",
+            "Asegurar que todas las opciones mantengan una apariencia neutra y verosímil sin dar pistas psicométricas.",
+        ]
+        return format_diagnostic_error("R-18: META-INFORMACIÓN / GIVEAWAY", cid, tpl_id, item_id, field_name, snippet, cause, actions)
+
+    # Rule R-19
+    if rule_id == "R-19":
+        field_name = "stem"
+        m_s = re.search(r"answer '([^']+)' leaked", msg)
+        snippet = m_s.group(1) if m_s else msg
+        cause = "El valor o clave de la respuesta correcta aparece textualmente dentro del stem del reactivo (fuga de respuesta), o hay sustitución que corrompió un operador (ej. \\dot<número>)."
+        actions = [
+            "Remover el valor o expresión de respuesta del enunciado (stem) reemplazándolo por una consigna neutra o línea de completación.",
+            "Asegurar que las variables de LaTeX no sustituyan números directamente dentro de macros sin llaves.",
+            "Verificar que la consigna plantee el problema requiriendo el cálculo en lugar de mostrar la solución.",
+        ]
+        return format_diagnostic_error("R-19: FUGA DE RESPUESTA / SINTAXIS", cid, tpl_id, item_id, field_name, snippet, cause, actions)
+
+    # Rule R-22
+    if rule_id == "R-22":
+        m_field = re.search(r"Option '([^']+)'", msg)
+        opt_id = m_field.group(1) if m_field else "option"
+        field_name = f"options[{opt_id}].error_rationale"
+        cause = "Opción incorrecta (is_correct=False) en ítem de selección múltiple (multiple_select) carece de 'error_rationale' diagnóstico formativo."
+        actions = [
+            "Agregar una explicación diagnóstica en 'error_rationale' para cada opción con is_correct=False.",
+            "Explicar la falacia conceptual o el cálculo incorrecto que conduce a seleccionar dicha opción.",
+            "Asegurarse de que el texto de rationale no esté vacío ni sea un placeholder genérico.",
+        ]
+        return format_diagnostic_error("R-22: RATIONALE EN MULTIPLE_SELECT", cid, tpl_id, item_id, field_name, "(vacío o ausente)", cause, actions)
+
+    # Rule R-17
+    if rule_id == "R-17":
+        m_field = re.search(r"Option '([^']+)'", msg)
+        opt_id = m_field.group(1) if m_field else "option"
+        field_name = f"options[{opt_id}].error_rationale"
+        m_s = re.search(r"error_rationale':\s*'(.*)'", msg)
+        snippet = m_s.group(1) if m_s else "(vacío o placeholder)"
+        cause = "El campo 'error_rationale' contiene un placeholder genérico prohibido (ej. 'placeholder', 'distractor', 'error') o está vacío."
+        actions = [
+            "Redactar una explicación pedagógica formativa sobre el error que comete el estudiante al elegir la opción.",
+            "Eliminar palabras prohibidas como 'placeholder', 'distractor', 'error', 'n/a' o 'ninguno'.",
+            "Describir la confusión conceptual o error algebraico/aritmético subyacente.",
+        ]
+        return format_diagnostic_error("R-17: RATIONALE GENÉRICO / PLACEHOLDER", cid, tpl_id, item_id, field_name, snippet, cause, actions)
+
+    # Rule R-15
+    if rule_id == "R-15":
+        cause = "La longitud de la respuesta correcta difiere significativamente del rango de los distractores (fuera de 0.80x - 1.20x), constituyendo una pista visual."
+        actions = [
+            "Calibrar la longitud de la respuesta correcta o de los distractores para que tengan una extensión homogénea.",
+            "Homogeneizar el nivel de detalle y formato matemático entre todas las opciones.",
+            "Asegurar que 0.80 * min(len(D)) <= len(correct) <= 1.20 * max(len(D)).",
+        ]
+        return format_diagnostic_error("R-15: EQUILIBRIO DE LONGITUD", cid, tpl_id, item_id, "options", msg, cause, actions)
+
+    # Rule S-01
+    if rule_id == "S-01":
+        return format_diagnostic_error(
+            "S-01: SOLUCIÓN PASO A PASO OBLIGATORIA", cid, tpl_id, item_id, "solution / detailed_solution",
+            "(vacío o ausente)",
+            "El reactivo carece de una solución explicativa paso a paso requerida en modo strict.",
+            [
+                "Agregar el campo 'detailed_solution' o 'solution' en la plantilla con la resolución paso a paso.",
+                "Describir el procedimiento matemático o conceptual completo para llegar a la respuesta correcta.",
+                "Asegurar que la solución esté redactada con KaTeX válido.",
+            ]
+        )
+
+    # Rule S-02
+    if rule_id == "S-02":
+        return format_diagnostic_error(
+            "S-02: MISCONCEPTION WARNING OBLIGATORIO", cid, tpl_id, item_id, "misconception_warning",
+            "(vacío o ausente)",
+            "El reactivo carece de una advertencia de error común ('misconception_warning') requerida en modo strict.",
+            [
+                "Agregar el campo 'misconception_warning' o 'common_misconception_warning' en la plantilla.",
+                "O asociar distractor_ids que tengan 'remediation_hint' definido en cta.json.",
+                "Explicar brevemente el error más común que deben evitar los estudiantes.",
+            ]
+        )
+
+    # Rule S-03
+    if rule_id == "S-03":
+        return format_diagnostic_error(
+            "S-03: DIFICULTAD EXPLÍCITA", cid, tpl_id, item_id, "difficulty",
+            "(inválido o ausente)",
+            "El reactivo no especifica un nivel de dificultad válido ('easy', 'medium', 'hard') en modo strict.",
+            [
+                "Declarar 'difficulty': 'easy', 'medium' o 'hard' en la plantilla.",
+                "Alinear la dificultad con el nivel de Bloom y la complejidad del problema.",
+                "No dejar el campo vacío ni con valores no reconocidos.",
+            ]
+        )
+
+    # Generic Fallback
+    action_fallback = "Revisa la regla y ajusta el generador o las variantes."
+    return format_diagnostic_error(
+        f"{rule_id}: CONTRATO DE VALIDACIÓN", cid, tpl_id, item_id, "question",
+        msg,
+        f"Violación de la regla {rule_id}: {msg}",
+        [
+            action_fallback,
+            "Verificar la estructura y tipos de datos de los reactivos producidos.",
+            "Corregir directamente en el script generador o archivo de plantillas.",
+        ]
+    )
 
 
 def check_production_parity_for_competency(
@@ -115,16 +525,12 @@ def check_production_parity_for_competency(
         return errors
 
     if not v_res.is_valid:
+        questions_by_id = {q.get("id", ""): q for q in questions if isinstance(q, dict)}
         for err in v_res.errors:
             # Skip course-level checks inapplicable to single competency mini-course
             if err.rule_id in ("R-05", "R-06", "R-07", "R-08", "R-09", "R-16"):
                 continue
-            action = RULE_ACTIONS.get(err.rule_id, "Revisa la regla y ajusta el generador o las variantes.")
-            q_info = f" (en {err.field})" if getattr(err, "field", None) else ""
-            errors.append(
-                f"[-] [{err.rule_id}] PARITY FAILURE in '{cid}'{q_info}: {err.message}\n"
-                f"    ACTION REQUIRED: {action}"
-            )
+            errors.append(format_parity_error(cid, err, questions_by_id))
 
     return errors
 
@@ -174,34 +580,78 @@ def check_single_template(
     try:
         validate_code_ast(generate_py)
     except Exception as e:
-        errors.append(f"Template '{tpl_id}' generate_py failed AST security check: {e}")
+        errors.append(format_diagnostic_error(
+            "AST: SEGURIDAD DEL GENERADOR", competency_id, tpl_id, tpl_id, "generate_py",
+            str(e), f"El código de generate_py violó las reglas de seguridad del AST: {e}",
+            [
+                "Eliminar llamadas a funciones prohibidas o imports inseguros en generate_py.",
+                "Usar únicamente módulos permitidos (math, random, fractions, sympy, etc.).",
+                "Revisar la sintaxis de Python en generate_py.",
+            ]
+        ))
 
     for ec in check_latex_escape_corruption(generate_py):
-        errors.append(f"Template '{tpl_id}' generate_py: {ec}")
+        errors.append(format_diagnostic_error(
+            "AST: CORRUPCIÓN DE ESCAPE LATEX", competency_id, tpl_id, tpl_id, "generate_py",
+            str(ec), f"Posible corrupción de escape de LaTeX en generate_py: {ec}",
+            [
+                "Usar raw strings r'...' para literales que contengan barras invertidas '\\'.",
+                "Evitar cadenas con escapes inválidos como '\\d', '\\b', '\\c' sin 'r' prefix.",
+                "Verificar la generación de fórmulas KaTeX.",
+            ]
+        ))
 
     if cross_check_py:
         try:
             validate_code_ast(cross_check_py)
         except Exception as e:
-            errors.append(f"Template '{tpl_id}' cross_check_py failed AST security check: {e}")
+            errors.append(format_diagnostic_error(
+                "AST: SEGURIDAD DEL CROSS-CHECK", competency_id, tpl_id, tpl_id, "cross_check_py",
+                str(e), f"El código de cross_check_py violó las reglas de seguridad del AST: {e}",
+                [
+                    "Eliminar llamadas a funciones prohibidas o imports inseguros en cross_check_py.",
+                    "Usar únicamente módulos permitidos del sandbox.",
+                    "Revisar la sintaxis de Python en cross_check_py.",
+                ]
+            ))
         for ec in check_latex_escape_corruption(cross_check_py):
-            errors.append(f"Template '{tpl_id}' cross_check_py: {ec}")
+            errors.append(format_diagnostic_error(
+                "AST: CORRUPCIÓN DE ESCAPE LATEX", competency_id, tpl_id, tpl_id, "cross_check_py",
+                str(ec), f"Posible corrupción de escape de LaTeX en cross_check_py: {ec}",
+                [
+                    "Usar raw strings r'...' para literales que contengan barras invertidas '\\'.",
+                    "Evitar cadenas con escapes inválidos.",
+                    "Verificar la generación de fórmulas KaTeX.",
+                ]
+            ))
 
     # 2. Rule TPL-D1: All referenced distractor_ids exist in competency CTA
     for did in distractor_ids:
         if did not in declared_distractor_ids:
-            errors.append(
-                f"TPL-D1 violation in '{tpl_id}': referenced distractor_id '{did}' "
-                f"not found in competency '{competency_id}' CTA distractors."
-            )
+            errors.append(format_diagnostic_error(
+                "TPL-D1: DISTRACTOR NO DECLARADO EN CTA", competency_id, tpl_id, tpl_id, "distractor_ids",
+                f"'{did}'",
+                f"El distractor_id '{did}' referenciado en la plantilla no existe en la lista de distractores de '{competency_id}' en cta.json.",
+                [
+                    f"Verificar los distractores declarados para '{competency_id}' en cta.json y usar los IDs exactos.",
+                    f"O declarar el distractor '{did}' en la competencia '{competency_id}' dentro de cta.json.",
+                    "Corregir cualquier error tipográfico en el ID del distractor dentro del JSON de la plantilla.",
+                ]
+            ))
 
     # 3. Rule TPL-D2: MC7 must reference/use at least 6 distinct distractor_ids
     if interaction_type == "multiple_choice_7_options":
         if len(set(distractor_ids)) < 6:
-            errors.append(
-                f"TPL-D2 violation in '{tpl_id}': MC7 template declares {len(set(distractor_ids))} "
-                f"distinct distractor_ids (exactly 6 required)."
-            )
+            errors.append(format_diagnostic_error(
+                "TPL-D2: REQUISITO DE 6 DISTRACTORES EN MC7", competency_id, tpl_id, tpl_id, "distractor_ids",
+                f"{len(set(distractor_ids))} distractor_ids declarados: {distractor_ids}",
+                "Las plantillas MC7 requieren exactamente 6 distractor_ids distintos para cubrir los 6 distractores psicométricos.",
+                [
+                    "Declarar al menos 6 distractor_ids únicos en el arreglo 'distractor_ids' de la plantilla.",
+                    "Vincular cada uno de los 6 distractores generados en generate_py a un distractor_id declarado.",
+                    "Revisar cta.json para seleccionar 6 distractores relevantes de la competencia.",
+                ]
+            ))
 
     # 4. Dry-run 50 seeds and invariant evaluation
     seeds = list(range(100, 100 + num_dry_run_seeds))
@@ -213,20 +663,39 @@ def check_single_template(
             timeout_per_item=2.0,
         )
     except Exception as e:
-        errors.append(f"Template '{tpl_id}' failed dry-run batch execution: {e}")
+        errors.append(format_diagnostic_error(
+            "TPL-DRY: FALLO EN EJECUCIÓN DRY-RUN", competency_id, tpl_id, "batch_execution", "generate_py / cross_check_py",
+            str(e), f"La ejecución por lotes en el sandbox falló completamente: {e}",
+            [
+                "Revisar la sintaxis y excepciones en generate_py o cross_check_py.",
+                "Asegurar que el código sea determinista y termine dentro del tiempo límite de 2.0s.",
+                "Verificar que no haya dependencias externas no disponibles.",
+            ]
+        ))
         return errors
 
     failed_seeds = [r for r in batch_results if not r.get("success")]
     if failed_seeds:
         first_err = failed_seeds[0].get("error", "Unknown error")
-        errors.append(
-            f"Template '{tpl_id}' dry-run failed on {len(failed_seeds)}/{num_dry_run_seeds} seeds. "
-            f"Example error (seed={failed_seeds[0]['seed']}): {first_err}"
-        )
-        return errors
+        example_seeds = [str(r.get("seed")) for r in failed_seeds[:5]]
+        errors.append(format_diagnostic_error(
+            "TPL-DRY: FALLO EN EJECUCIÓN DRY-RUN", competency_id, tpl_id, f"seeds={', '.join(example_seeds)}", "generate_py / cross_check_py",
+            f"Error en seed {failed_seeds[0].get('seed')}: {first_err}",
+            f"La ejecución en sandbox falló en {len(failed_seeds)}/{num_dry_run_seeds} semillas evaluadas.",
+            [
+                "Revisar la excepción en generate_py (división por cero, clave faltante, error de tipos, etc.).",
+                "Probar localmente la función generate_py con la semilla que causó el fallo.",
+                "Agregar validaciones o restricciones a los parámetros aleatorios para evitar estados matemáticos inválidos.",
+            ]
+        ))
+        if len(failed_seeds) == len(batch_results):
+            # Full failure of all seeds: no instances can be evaluated further
+            return errors
 
-    # Check invariants and TPL-D4 on all generated instances
+    # Check invariants and TPL-D4 on all generated instances (Full Sweep: NO premature break)
     for idx, item in enumerate(batch_results):
+        if not item.get("success"):
+            continue
         gen_res = item.get("result", {})
         seed_val = item.get("seed", idx)
 
@@ -240,31 +709,47 @@ def check_single_template(
                 seed=seed_val,
             )
         except Exception as e:
-            errors.append(f"Template '{tpl_id}' failed question assembly (seed={seed_val}): {e}")
-            break
+            errors.append(format_diagnostic_error(
+                "TPL-ASM: FALLO EN ENSAMBLAJE DE REACTIVO", competency_id, tpl_id, f"seed={seed_val}", "assemble_question",
+                str(e), f"No se pudo ensamblar el reactivo con la salida de generate_py para la semilla {seed_val}: {e}",
+                [
+                    "Verificar que generate_py retorne los campos obligatorios ('correct', 'distractors', 'vars').",
+                    "Asegurar que 'distractors' contenga al menos 6 elementos para preguntas MC7.",
+                    "Verificar que no haya discrepancia de formato entre template y generate_py.",
+                ]
+            ))
+            continue
 
-        # Invariant check
+        # Invariant check (Accumulate all failures: NO break)
         is_valid, inv_errors = check_instance_invariants(assembled_q, interaction_type)
         if not is_valid:
-            errors.append(
-                f"Template '{tpl_id}' invariant violation (seed={seed_val}): {'; '.join(inv_errors[:3])}\n"
-                f"    ACTION REQUIRED: Check KaTeX math delimiters ($), remove residual '{{' or '}}', "
-                f"ensure all placeholders are replaced, and verify 'error_rationale' in incorrect options."
-            )
-            break
+            for inv_err in inv_errors:
+                errors.append(format_invariant_error_diagnostic(
+                    cid=competency_id,
+                    tpl_id=tpl_id,
+                    q_id=f"seed={seed_val}",
+                    inv_err=inv_err,
+                    q_obj=assembled_q,
+                ))
 
-        # Rule TPL-D4: Distractors != correct answer
+        # Rule TPL-D4: Distractors != correct answer (Evaluate all distractors: NO break)
         if interaction_type == "multiple_choice_7_options":
             options = assembled_q.get("options", [])
             correct_opt = next((o for o in options if o.get("is_correct")), None)
             if correct_opt:
                 c_content = str(correct_opt.get("content", "")).strip()
-                for opt in options:
+                for opt_idx, opt in enumerate(options):
                     if not opt.get("is_correct") and str(opt.get("content", "")).strip() == c_content:
-                        errors.append(
-                            f"TPL-D4 violation in '{tpl_id}' (seed={seed_val}): distractor matches correct answer '{c_content}'"
-                        )
-                        break
+                        errors.append(format_diagnostic_error(
+                            "TPL-D4: TPL-D4 violation: DISTRACTOR IDÉNTICO A RESPUESTA CORRECTA", competency_id, tpl_id, f"seed={seed_val}", f"option {opt_idx + 1}",
+                            f"'{c_content}'",
+                            f"TPL-D4 violation in '{tpl_id}' (seed={seed_val}): distractor matches correct answer '{c_content}'",
+                            [
+                                "Asegurar en generate_py que la perturbación aplicada al distractor nunca dé el mismo valor que 'correct'.",
+                                "Agregar una verificación en generate_py que modifique el distractor si colisiona con la clave.",
+                                "Revisar los casos degenerados de los parámetros que puedan anular la diferencia.",
+                            ]
+                        ))
 
     # 5. Rule TPL-VAR: Early variability and parametric capacity validation
     # a) Verify vars dictionary is not empty across generated results
@@ -272,9 +757,16 @@ def check_single_template(
         len(r.get("result", {}).get("vars", {})) == 0 for r in batch_results if r.get("success")
     )
     if has_empty_vars:
-        errors.append(
-            f"TPL-VAR violation in '{tpl_id}': 'vars' dictionary is empty. Templates must generate dynamic variables."
-        )
+        errors.append(format_diagnostic_error(
+            "TPL-VAR: DIVERSIDAD DE REACTIVOS", competency_id, tpl_id, "generate_py", "vars",
+            "vars: {}",
+            f"TPL-VAR violation in '{tpl_id}': 'vars' dictionary is empty. Templates must generate dynamic variables.",
+            [
+                "Generar variables aleatorias en generate_py (ej. a = random.randint(1, 9)) y retornarlas en vars={'a': a}.",
+                "Asegurar que generate_py defina y retorne variables para todos los placeholders del enunciado.",
+                "No utilizar constantes estáticas sin parametrizar en generate_py.",
+            ]
+        ))
 
     # b) Verify stem contains at least one placeholder {var} or stem_variants is present
     stem = template.get("stem", "")
@@ -282,9 +774,16 @@ def check_single_template(
     has_placeholder = bool(re.search(r"\{[A-Za-z0-9_]+\}", stem))
     has_variants = bool(stem_variants and len(stem_variants) > 0)
     if not (has_placeholder or has_variants):
-        errors.append(
-            f"TPL-VAR violation in '{tpl_id}': stem must contain at least one placeholder '{{var}}' or 'stem_variants' must be present."
-        )
+        errors.append(format_diagnostic_error(
+            "TPL-VAR: DIVERSIDAD DE REACTIVOS", competency_id, tpl_id, "template", "stem / stem_variants",
+            f"stem: '{stem[:60]}...'",
+            f"TPL-VAR violation in '{tpl_id}': stem must contain at least one placeholder '{{var}}' or 'stem_variants' must be present.",
+            [
+                "Insertar al menos un placeholder dinámico como '{a}' o '{x}' en el campo 'stem'.",
+                "O proveer una lista de 3 a 5 formulaciones alternativas en 'stem_variants'.",
+                "Verificar que las variables coincidan con las claves generadas en generate_py.",
+            ]
+        ))
 
     # c) Unique capacity simulation across dry-run seeds
     seen_params = set()
@@ -313,9 +812,16 @@ def check_single_template(
 
     unique_count = min(len(unique_instances), sim_unique)
     if unique_count < 4:
-        errors.append(
-            f"TPL-VAR violation in '{tpl_id}': Only {unique_count}/4 unique instances generated across {num_dry_run_seeds} seeds. Parameter domain is too narrow or missing stem variations."
-        )
+        errors.append(format_diagnostic_error(
+            "TPL-VAR: DIVERSIDAD DE REACTIVOS", competency_id, tpl_id, "dry-run", "generate_py / vars",
+            f"Únicamente {unique_count}/4 instancias únicas generadas a través de {num_dry_run_seeds} semillas.",
+            f"TPL-VAR violation in '{tpl_id}': Only {unique_count}/4 unique instances generated across {num_dry_run_seeds} seeds. Parameter domain is too narrow or missing stem variations.",
+            [
+                "Ampliar los rangos numéricos aleatorios generados en generate_py (ej. random.choice o random.randint).",
+                "Agregar 3 a 5 variantes sintácticas en 'stem_variants' para enriquecer la variabilidad textual.",
+                "Evitar restringir los parámetros a un conjunto menor de 4 combinaciones posibles.",
+            ]
+        ))
 
     return errors
 
@@ -336,7 +842,16 @@ def check_competency_diversity(
     errors: List[str] = []
     if not templates:
         cid = competency.get("id", "UNKNOWN") if isinstance(competency, dict) else str(getattr(competency, "id", "UNKNOWN"))
-        errors.append(f"[-] TPL-VAR VIOLATION in competency '{cid}': No templates provided.")
+        errors.append(format_diagnostic_error(
+            "TPL-VAR: DIVERSIDAD DE REACTIVOS", cid, "N/A", "N/A", "templates",
+            "No templates provided.",
+            f"No se proporcionaron plantillas para la competencia '{cid}'.",
+            [
+                f"Crear y registrar archivos de plantillas para la competencia '{cid}'.",
+                "Asegurar que cada competencia cuente con al menos una plantilla válida.",
+                "Verificar la ruta de las plantillas en el sistema.",
+            ]
+        ))
         return (errors, []) if return_questions else errors
 
     if isinstance(competency, dict):
@@ -364,27 +879,53 @@ def check_competency_diversity(
             quota=target_quota,
         )
     except Exception as e:
-        errors.append(
-            f"[-] TPL-VAR VIOLATION in competency '{cid}': Failed to instantiate diversity quota ({target_quota} items): {e}.\n"
-            f"    ACTION REQUIRED: broaden variable ranges in generate_py or add 3-5 distinct 'stem_variants' to narrow templates."
-        )
+        errors.append(format_diagnostic_error(
+            "TPL-VAR: DIVERSIDAD DE REACTIVOS", cid, "ALL", "instantiate_competency", "generate_py / vars",
+            f"Fallo al instanciar cuota de diversidad ({target_quota} ítems): {e}",
+            f"[-] TPL-VAR VIOLATION in competency '{cid}': Failed to instantiate diversity quota ({target_quota} items): {e}. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos.",
+            [
+                "Ampliar los rangos de las variables aleatorias en generate_py.",
+                "Agregar 3 a 5 'stem_variants' distintas con placeholders en las plantillas más estrechas.",
+                "Comprobar que generate_py no lance excepciones con ciertas combinaciones de semillas.",
+            ]
+        ))
         return (errors, []) if return_questions else errors
 
     questions = comp_res.get("questions", [])
 
-    # Validate invariants on all instantiated questions
+    # Annotate template_id on each question
+    from engine.instantiate import allocate_template_quotas
+    quotas = allocate_template_quotas(templates, target_quota)
+    qid_to_tpl: Dict[str, str] = {}
+    curr_idx = 1
+    clean_comp = re.sub(r"[^A-Za-z0-9]", "", cid)
+    for tpl in templates:
+        tid = tpl.get("id", "UNKNOWN")
+        cnt = quotas.get(tid, 0)
+        for _ in range(cnt):
+            qid = f"Q-{clean_comp}-{curr_idx:03d}"
+            qid_to_tpl[qid] = tid
+            curr_idx += 1
+
+    for q in questions:
+        if isinstance(q, dict) and "template_id" not in q:
+            q["template_id"] = qid_to_tpl.get(q.get("id", ""), "UNKNOWN")
+
+    # Validate invariants on all instantiated questions (Full Sweep: NO premature break)
     for q in questions:
         q_type = q.get("interaction_type") or q.get("type", "")
         q_id = q.get("id", "UNKNOWN")
+        t_id = q.get("template_id", "UNKNOWN")
         is_valid, inv_errors = check_instance_invariants(q, q_type)
         if not is_valid:
-            errors.append(
-                f"[-] INVARIANT VIOLATION in competency '{cid}' (question '{q_id}'):\n"
-                f"    {'; '.join(inv_errors)}\n"
-                f"    ACTION REQUIRED: Verify KaTeX syntax (balanced $, no $$$, no {{}}), "
-                f"ensure all placeholders are replaced, and provide 'error_rationale' for all incorrect options."
-            )
-            break
+            for inv_err in inv_errors:
+                errors.append(format_invariant_error_diagnostic(
+                    cid=cid,
+                    tpl_id=t_id,
+                    q_id=q_id,
+                    inv_err=inv_err,
+                    q_obj=q,
+                ))
 
     div_stats = comp_res.get("diversity_stats", {})
     div_ratio = div_stats.get("diversity_ratio", 0.0)
@@ -405,12 +946,21 @@ def check_competency_diversity(
 
         narrowest_items = pattern_counts[:min(3, len(pattern_counts))]
         narrowest_str = ", ".join(f"{tid} ({cnt} pattern{'s' if cnt != 1 else ''})" for tid, cnt in narrowest_items)
+        narrowest_tids = ", ".join(tid for tid, _ in narrowest_items)
 
-        err_msg = (
-            f"[-] TPL-VAR VIOLATION in competency '{cid}': stem diversity {div_ratio:.2f} < 0.50 "
-            f"({unique_c}/{total_c} unique masked stems).\n"
-            f"    Narrowest templates: {narrowest_str}\n"
-            f"    ACTION REQUIRED: add 3-5 distinct 'stem_variants' (using {{placeholders}}) to those templates."
+        err_msg = format_diagnostic_error(
+            rule_tag="TPL-VAR: DIVERSIDAD DE REACTIVOS",
+            competency=cid,
+            template=narrowest_tids,
+            item_id="N/A (banco de preguntas de la competencia)",
+            field_name="stem / stem_variants",
+            snippet=f"stem diversity {div_ratio:.2f} < 0.50 ({unique_c}/{total_c} unique masked stems). Plantillas con menor variación: {narrowest_str}",
+            cause=f"[-] TPL-VAR VIOLATION in competency '{cid}': stem diversity {div_ratio:.2f} < 0.50 ({unique_c}/{total_c} unique masked stems). Narrowest templates: {narrowest_str}. El ratio de diversidad léxico-estructural de los enunciados es menor al 50% requerido por el contrato psicométrico.",
+            actions=[
+                f"Agregar entre 3 y 5 'stem_variants' estructuralmente distintas en las plantillas críticas ({narrowest_tids}) usando {{placeholders}}.",
+                "Ampliar los rangos numéricos y opciones aleatorias en 'vars' dentro de generate_py para evitar enunciados idénticos.",
+                "Variar los verbos y formulaciones de la consigna (ej. 'Determine el valor...', 'Calcule la expresión...', 'Halle la solución...').",
+            ],
         )
         errors.append(err_msg)
 
@@ -505,9 +1055,47 @@ def check_templates_file_or_dir(
 
     raw_targets = target_path if isinstance(target_path, (list, tuple)) else [target_path]
     for item in raw_targets:
+        str_item = str(item)
+        if "*" in str_item or "?" in str_item:
+            p_obj = Path(str_item)
+            parent = p_obj.parent if str(p_obj.parent) != "" else Path(".")
+            pattern = p_obj.name
+            matched = list(parent.glob(pattern))
+            for m in matched:
+                if m.is_file() and m.suffix.lower() == ".json" and m not in template_files:
+                    template_files.append(m)
+            continue
+
         p = Path(item)
         if p.is_file() and p.suffix.lower() == ".json":
-            if p not in template_files:
+            # Check if this file is a shard file (e.g. shard_XX.json)
+            is_shard = False
+            try:
+                content = json.loads(p.read_text(encoding="utf-8"))
+                if isinstance(content, dict) and ("shard_id" in content or "competency_ids" in content):
+                    is_shard = True
+                    c_ids = content.get("competency_ids", [])
+                    for cid in c_ids:
+                        candidate_paths = [
+                            p.parent.parent / "templates" / f"{cid}.json",
+                            p.parent / "templates" / f"{cid}.json",
+                            Path("work/templates") / f"{cid}.json",
+                            Path("templates") / f"{cid}.json",
+                        ]
+                        found_tpl = None
+                        for cand in candidate_paths:
+                            if cand.is_file():
+                                found_tpl = cand
+                                break
+                        if found_tpl:
+                            if found_tpl not in template_files:
+                                template_files.append(found_tpl)
+                        else:
+                            errors.append(f"Shard '{p.name}' references competency '{cid}', but template file was not found at work/templates/{cid}.json")
+            except Exception:
+                is_shard = False
+
+            if not is_shard and p not in template_files:
                 template_files.append(p)
         elif p.is_dir():
             is_full_dir = True
@@ -517,7 +1105,7 @@ def check_templates_file_or_dir(
         elif not p.exists():
             return False, [f"Target path does not exist: {p}"]
 
-    if not template_files:
+    if not template_files and not errors:
         return False, [f"No template JSON files found in: {target_path}"]
 
     referenced_distractors_by_comp: Dict[str, Set[str]] = {cid: set() for cid in cta_distractors_by_comp}
@@ -568,10 +1156,20 @@ def check_templates_file_or_dir(
             referenced_set = referenced_distractors_by_comp.get(cid, set())
             uncovered = declared_set - referenced_set
             if uncovered:
-                errors.append(
-                    f"TPL-D3 violation in competency '{cid}': {len(uncovered)}/{len(declared_set)} distractors "
-                    f"are never referenced in any template: {sorted(uncovered)}"
-                )
+                errors.append(format_diagnostic_error(
+                    rule_tag="TPL-D3: COBERTURA COMPLETA DE DISTRACTORES",
+                    competency=cid,
+                    template="[Todas las plantillas de la competencia]",
+                    item_id="N/A",
+                    field_name="distractor_ids",
+                    snippet=f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})",
+                    cause="Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando.",
+                    actions=[
+                        f"Asignar los distractores sin cubrir ({sorted(uncovered)}) en las plantillas existentes de '{cid}'.",
+                        "O crear plantillas adicionales que ejerciten los conceptos erróneos representados por estos distractores.",
+                        "Asegurar que el 100% de los distractores de cta.json tengan al menos una plantilla que los emplee.",
+                    ],
+                ))
 
     # Rule TPL-VAR (Competency Diversity Gate) & Isomorphic Contract Parity Check
     if cta_data and "competencies" in cta_data:

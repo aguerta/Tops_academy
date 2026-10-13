@@ -44,49 +44,49 @@
   <div class="header">
     <div>
       <h1>C2C Architectural Forensic Telemetry</h1>
-      <div class="meta">El Modelo de Crecimiento Económico de Solow (1956) (<code>solow_growth_model</code>) | Conv: <code>7e0a1c51-e72...</code></div>
+      <div class="meta">El Modelo de Crecimiento Económico de Solow (1956) (<code>solow_growth_model</code>) | Conv: <code>e8ab9fd6-efa...</code></div>
     </div>
-    <div class="meta">Audit Date: 2026-10-12T23:15:53 UTC</div>
+    <div class="meta">Audit Date: 2026-10-13T03:56:56 UTC</div>
   </div>
 
   <div class="grid-kpi">
     <div class="kpi-card">
       <div class="label">Wall-Clock Time</div>
-      <div class="val">89.03 min</div>
-      <div class="sub">5342.0s elapsed</div>
+      <div class="val">61.92 min</div>
+      <div class="sub">3715.0s elapsed</div>
     </div>
     <div class="kpi-card">
       <div class="label">Parallel Speedup</div>
-      <div class="val">2.97x</div>
-      <div class="sub">264.32m compute time</div>
+      <div class="val">2.57x</div>
+      <div class="sub">158.97m compute time</div>
     </div>
     <div class="kpi-card">
       <div class="label">Total Tokens</div>
-      <div class="val">82,434,282</div>
-      <div class="sub">Active: 5,912,836 | Cache: 76,521,446</div>
+      <div class="val">29,295,587</div>
+      <div class="sub">Active: 3,153,336 | Cache: 26,142,251</div>
     </div>
     <div class="kpi-card">
       <div class="label">Tokens / Question</div>
-      <div class="val">142,128.1</div>
-      <div class="sub">580 questions generated</div>
+      <div class="val">55,274.7</div>
+      <div class="sub">530 questions generated</div>
     </div>
     <div class="kpi-card">
       <div class="label">Seconds / Question</div>
-      <div class="val">9.21s</div>
-      <div class="sub">6.51 questions/min</div>
+      <div class="val">7.01s</div>
+      <div class="sub">8.56 questions/min</div>
     </div>
     <div class="kpi-card">
       <div class="label">Supervisor Interventions</div>
-      <div class="val">3</div>
-      <div class="sub">0.5m spent repairing</div>
+      <div class="val">0</div>
+      <div class="sub">0.0m spent repairing</div>
     </div>
   </div>
 
   <div class="section">
     <h2>Stage 3: Shard Question Authoring & Competency Metrics</h2>
     <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
-      Critical Straggler: <strong>Shard Author shard_03</strong> (2154.0s | +125.0s vs median) |
-      Avg Tokens / Competency: <strong>152,161.0</strong>
+      Critical Straggler: <strong>Shard Author shard_01</strong> (1677.0s | +457.0s vs median) |
+      Avg Tokens / Competency: <strong>102,550.6</strong>
     </div>
     <table>
       <thead>
@@ -106,43 +106,33 @@
         <tr>
           <td><strong>Shard Author shard_01</strong></td>
           <td><code>H-01, C-01, Hab-01...</code></td>
-          <td>7</td>
-          <td>615,852</td>
-          <td>168,372</td>
-          <td><strong>784,224</strong></td>
-          <td><strong>112,032.0</strong></td>
-          <td>125</td>
-          <td><strong>2029.0s</strong></td>
+          <td>8</td>
+          <td>508,423</td>
+          <td>209,850</td>
+          <td><strong>718,273</strong></td>
+          <td><strong>89,784.1</strong></td>
+          <td>104</td>
+          <td><strong>1677.0s</strong></td>
         </tr><tr>
           <td><strong>Shard Author shard_02</strong></td>
-          <td><code>H-03, C-04, Hab-03...</code></td>
-          <td>6</td>
-          <td>1,069,131</td>
-          <td>175,460</td>
-          <td><strong>1,244,591</strong></td>
-          <td><strong>207,431.8</strong></td>
-          <td>117</td>
-          <td><strong>1808.0s</strong></td>
+          <td><code>C-04, C-05, C-06...</code></td>
+          <td>7</td>
+          <td>652,284</td>
+          <td>142,523</td>
+          <td><strong>794,807</strong></td>
+          <td><strong>113,543.9</strong></td>
+          <td>66</td>
+          <td><strong>1153.0s</strong></td>
         </tr><tr>
           <td><strong>Shard Author shard_03</strong></td>
-          <td><code>Hab-04, Hab-05, Hab-06...</code></td>
-          <td>6</td>
-          <td>647,429</td>
-          <td>208,031</td>
-          <td><strong>855,460</strong></td>
-          <td><strong>142,576.7</strong></td>
-          <td>88</td>
-          <td><strong>2154.0s</strong></td>
-        </tr><tr>
-          <td><strong>Shard Author shard_04</strong></td>
-          <td><code>Hab-08, C-09, C-10...</code></td>
-          <td>6</td>
-          <td>798,254</td>
-          <td>121,497</td>
-          <td><strong>919,751</strong></td>
-          <td><strong>153,291.8</strong></td>
-          <td>108</td>
-          <td><strong>1745.0s</strong></td>
+          <td><code>C-07, Hab-07, Hab-08...</code></td>
+          <td>7</td>
+          <td>582,199</td>
+          <td>160,835</td>
+          <td><strong>743,034</strong></td>
+          <td><strong>106,147.7</strong></td>
+          <td>56</td>
+          <td><strong>1220.0s</strong></td>
         </tr>
       </tbody>
     </table>
@@ -151,10 +141,10 @@
   <div class="section">
     <h2>Blind Judges & Psychometric Verification</h2>
     <div style="margin-bottom: 12px; font-size: 0.9rem;">
-      <span class="badge badge-high">❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)</span>
+      <span class="badge badge-ok">✅ PASARON PERFECTOS AL PRIMER INTENTO</span>
     </div>
     <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-      Los blind judges y la verificación psicométrica NO pasaron limpios al primer intento. En la corrida inicial de verificación (Task-271), la validación previa colapsó con 126 errores y violaciones psicométricas bloqueantes (regla R-18 de meta-información en opciones y regla R-19 de fugas de respuesta en reactivos FIB). El bucle de auto-reparación no pudo resolver los fallos de forma autónoma, requiriendo intervención directa del supervisor.
+      El lote de evaluación de blind judges y la verificación psicométrica pasaron de forma 100% limpia en su primera pasada, sin registrar discrepancias ni requerir rondas de auto-reparación ni intervención manual.
     </div>
     <table>
       <thead>
@@ -168,10 +158,10 @@
       </thead>
       <tbody>
         <tr>
-          <td><strong>50 reactivos</strong></td>
-          <td><span class="badge badge-high">FAILED</span></td>
-          <td>2 iteraciones</td>
-          <td><strong>3 fixes</strong></td>
+          <td><strong>44 reactivos</strong></td>
+          <td><span class="badge badge-ok">PASSED</span></td>
+          <td>1 iteraciones</td>
+          <td><strong>0 fixes</strong></td>
           <td><span class="badge badge-ok">CERTIFICADO</span></td>
         </tr>
       </tbody>
@@ -179,7 +169,7 @@
     <div style="margin-top: 14px; font-size: 0.85rem;">
       <strong>Acciones Correctivas Tomadas:</strong>
       <ul style="margin-left: 20px; margin-top: 6px; color: var(--text-muted);">
-        <li>1. **Bucle de Auto-Reparación Autónomo**: El motor ejecutó RepairLoop con 127 errores iniciales, pero colapsó al persistir fugas en `Q-C02-089`, `Q-H02-152` y `Q-Hab03-186..188`.</li><li>2. **Intervención Manual del Supervisor (3 operaciones)**: El orquestador intervino directamente en caliente sobre los archivos `Hab-03.json`, `C-02.json`, `H-02.json` y `Hab-05.json` mediante `replace_file_content`.</li><li>3. **Desarrollo de Scripts Ad-Hoc**: Se crearon y ejecutaron scripts de parcheo masivo regex (`fix_hab03.py`, `check_leaks.py`, `fix_all_templates.py`, `fix_cta_math.py`) para purgar pistas y fugas residuales.</li><li>4. **Re-Ejecución y Certificación Final**: Se relanzó la etapa de verificación (`task-602`), completando con éxito la validación tras 2 iteraciones de auto-reparación sobre el lote de 50 reactivos.</li>
+        <li>No se requirieron acciones correctivas. El pipeline avanzó directamente a la etapa de publicación.</li>
       </ul>
     </div>
   </div>
@@ -197,25 +187,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td><strong>399</strong></td>
-          <td><code>assemble.py</code></td>
-          <td>Refactorización Core</td>
-          <td>Colisión de IDs locales en fusión de partes (Ciclo en DAG)</td>
-          <td><code>replace_file_content</code></td>
-        </tr><tr>
-          <td><strong>427</strong></td>
-          <td><code>assemble.py</code></td>
-          <td>Refactorización Core</td>
-          <td>Colisión de IDs locales en fusión de partes (Ciclo en DAG)</td>
-          <td><code>replace_file_content</code></td>
-        </tr><tr>
-          <td><strong>457</strong></td>
-          <td><code>assemble.py</code></td>
-          <td>Refactorización Core</td>
-          <td>Colisión de IDs locales en fusión de partes (Ciclo en DAG)</td>
-          <td><code>replace_file_content</code></td>
-        </tr>
+        
       </tbody>
     </table>
   </div>
