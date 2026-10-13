@@ -54,8 +54,8 @@ TYPE_DEFINITIONS: List[Dict[str, Any]] = [
     },
     {
         "name": "c2c-author",
-        "description": "Psychometric Exercise Author for parametric templates",
-        "system_prompt": "You are a Lead Psychometric Assessment Author for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and author parametric templates following the 4-phase atomic protocol. Terminate strictly with DONE: <files>.",
+        "description": "Psychometric Exercise Author for parametric templates (refinamiento quirúrgico con replace_file_content sobre scaffolds pre-sembrados; prohibido leer bundles en turno 1; prohibido chat emissions)",
+        "system_prompt": "You are a Lead Psychometric Assessment Author for Content-to-Course. Directly refine parametric templates in work/templates/<comp_id>.json on pre-seeded scaffolds using replace_file_content. Strictly forbidden to waste turns reading task bundles or system prompts in Turn 1, forbidden to inspect engine or validator code, forbidden to create monolithic scripts, and forbidden to output template JSON in chat text. Terminate strictly with DONE: <files>.",
         "enable_write_tools": True,
         "enable_subagent_tools": False,
         "enable_mcp_tools": False,
@@ -70,8 +70,8 @@ TYPE_DEFINITIONS: List[Dict[str, Any]] = [
     },
     {
         "name": "c2c-cta-direct",
-        "description": "Direct CTA Architect for concise courses (máximo 10 competencias por lote; prohibido emitir competencias en el chat)",
-        "system_prompt": "You are a Direct CTA Architect for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and produce cta.json in batches of max 10 competencies using a generator script. Do not output competencies in chat text. Terminate strictly with DONE: <files>.",
+        "description": "Direct CTA Architect for concise courses (máximo 10 competencias por lote; prohibido emitir competencias en el chat; prohibido scripts Python; edición con replace_file_content)",
+        "system_prompt": "You are a Direct CTA Architect for Content-to-Course. Directly synthesize competencies into pure declarative JSON parts (work/cta_parts/part_XX.json) in batches of max 10 competencies using replace_file_content on pre-seeded scaffold files. Strictly forbidden to use write_to_file, create or run Python scripts, read system_prompts/*, or execute pre-flight CLI checks. Do not output competencies in chat text. Terminate strictly with DONE: <files>.",
         "enable_write_tools": True,
         "enable_subagent_tools": False,
         "enable_mcp_tools": False,
@@ -148,7 +148,18 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "type_name": "c2c-author",
         "model": "flash",
         "system_prompt": "system_prompts/prompt_shard_author.md",
+        "description": "Shard Exercise Author: refinar quirúrgicamente plantillas paramétricas modulares (work/templates/<comp_id>.json) sobre scaffolds pre-sembrados utilizando prioritariamente replace_file_content.",
+        "directives": [
+            "Refinar quirúrgicamente los scaffolds pre-sembrados en work/templates/<comp_id>.json usando prioritariamente replace_file_content.",
+            "Prohibido gastar Turno 1 leyendo bundles o system prompts: toda la asignación y comando de validación ya están incluidos en tu prompt.",
+            "Prohibido escribir scripts monolíticos gigantes de 2,000 líneas (como build_<shard_id>.py) o scripts en el directorio scratch raíz compartido.",
+            "Prohibido ejecutar comandos exploratorios o inspeccionar código del validador (check_templates.py, src/validator/*, engine/*).",
+            "Do not output template JSON in chat text. Terminate strictly with DONE: <files>.",
+            "Validar todas las plantillas del shard en un único comando oficial provisto en el prompt.",
+        ],
         "read": [
+            "work/templates/<comp_id>.json",
+            "work/templates/*.json",
             "work/shards/shard_XX.json",
             "work/shards/shard_*.json",
             "work/cta.json",
@@ -168,6 +179,9 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "check_templates.py",
             "src/validator/*",
             "rules.py",
+            "system_prompts/* (todas las directivas están incluidas directamente en este prompt)",
+            "work/dispatch/bundles/* (prohibido meta-leer bundles en Turno 1)",
+            "emitir plantillas en el texto del chat (Do not output template JSON in chat text)",
             "work/build_<shard_id>.py (scripts monolíticos prohibidos; generar directamente templates modulares por competencia)",
             "scratch/* (prohibido scratch compartido global; usar exclusivamente work/shards/<shard_id>/scratch/)",
         ],
@@ -199,28 +213,34 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "type_name": "c2c-cta-direct",
         "model": "flash",
         "system_prompt": "system_prompts/prompt_cta_direct.md",
-        "description": "Direct CTA Architect para cursos concisos: generar competencias en fragmentos JSON declarativos puros (work/cta_parts/part_XX.json), máximo 10 competencias por parte, editando por líneas con replace_file_content en lugar de reescribir todo el archivo.",
+        "description": "Direct CTA Architect para cursos concisos: generar competencias en fragmentos JSON declarativos puros (work/cta_parts/part_XX.json), máximo 10 competencias por parte, editando exclusivamente con replace_file_content sobre scaffolds pre-sembrados.",
         "directives": [
-            "Emitir competencias en fragmentos JSON declarativos puros en work/cta_parts/ (part_01.json, part_02.json), con un máximo de 10 competencias por archivo.",
-            "Prohibido emitir competencias en el texto del chat conversacional.",
-            "Usar replace_file_content para correcciones y ediciones por líneas en lugar de reescribir archivos enteros con write_to_file.",
-            "Ejecutar 'run.py --stage cta-stitch' para ensamblar deterministamente partes, auto-normalizar KaTeX, validar y generar cta.md en <200ms.",
+            "Completar y refinar competencias en fragmentos JSON declarativos puros en work/cta_parts/ (part_01.json, part_02.json), con un máximo de 10 competencias por archivo usando estrictamente replace_file_content sobre los scaffolds pre-sembrados.",
+            "Prohibido usar write_to_file para escribir archivos completos de competencias (evita desbordamientos de max_output_tokens y truncamientos).",
+            "Prohibido escribir o ejecutar scripts auxiliares de Python (modificar directamente los JSONs pre-creados).",
+            "Prohibido ejecutar comandos exploratorios o pre-chequeos en CLI (único comando permitido: 'run.py --stage cta-stitch' una sola vez al final).",
+            "Do not output competencies in chat text. Terminate strictly with DONE: <files>.",
+            "Usar exclusivamente replace_file_content para ediciones quirúrgicas a nivel de línea.",
+            "Ejecutar 'run.py --stage cta-stitch' una sola vez al final para ensamblar deterministamente partes, auto-normalizar KaTeX, validar y generar cta.md en <200ms.",
         ],
         "read": [
-            "<source_dir>/* (todos los archivos y documentos de la carpeta asignada: PDF, TeX, imágenes, docs, etc.)",
-            "work/pages/manifest.json",
+            "Materiales fuente específicos asignados en las directivas (ej. archivos PDF o TeX del curso)",
         ],
         "write": [
             "work/cta_parts/part_*.json",
             "work/cta_parts/*.json",
         ],
         "forbidden": [
-            "work/corpus*.md (debe inspeccionar directamente los archivos originales del curso con view_file)",
-            "carpetas de otros cursos en content/",
+            "write_to_file para escribir archivos completos de competencias (usar exclusivamente replace_file_content sobre los scaffolds pre-sembrados)",
+            "work/corpus*.md (el análisis cognitivo debe realizarse directamente sobre los materiales fuente asignados con view_file)",
+            "carpetas o archivos de otros cursos en content/",
             "engine/*",
             "SKILL.md",
-            "emitir competencias en el texto del chat (usar exclusivamente llamadas a herramientas de archivo hacia work/cta_parts/)",
-            "reescribir archivos JSON completos de miles de tokens con write_to_file para correcciones menores (usar replace_file_content)",
+            "system_prompts/* (todas las directivas están incluidas directamente en este prompt)",
+            "work/pages/manifest.json (prohibido consultar o depender de manifest.json; citar directamente los archivos fuente asignados)",
+            "scripts Python auxiliares (.py) en scratch/ o work/ (prohibido crear o ejecutar generadores en Python)",
+            "ejecutar comandos exploratorios o pruebas previas en terminal CLI (el único comando permitido es 'run.py --stage cta-stitch' en el turno final tras completar todas las partes)",
+            "emitir competencias en el texto del chat (Do not output competencies in chat text)",
         ],
         "turn_budget": 20,
     },
@@ -638,22 +658,23 @@ def generate_author_bundle(
     forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["author"]["forbidden"])
     directives = (
         "### DIRECTIVAS CRÍTICAS DE AUTORÍA MODULAR (OBLIGATORIO):\n"
-        "1. **Salida modular por competencia (work/templates/<comp_id>.json):** Cada competencia cuenta con un scaffold "
+        "1. **Refinamiento modular sobre scaffolds pre-sembrados (work/templates/<comp_id>.json):** Cada competencia cuenta con un scaffold "
         "inicial pre-sembrado en `work/templates/<comp_id>.json` con sus metadatos y distractores mapeados desde `cta.json`. "
-        "Edítalo y refínalo directamente usando `replace_file_content` o `write_to_file`. "
+        "Edítalo y refínalo directamente usando prioritariamente `replace_file_content` (o `write_to_file` como fallback opcional para reescrituras completas). "
         "Queda terminantemente PROHIBIDO escribir un único script monolítico de 2,000 líneas (`build_<shard_id>.py`). "
         "Si requieres scripts o archivos auxiliares temporales, deben ubicarse EXCLUSIVAMENTE en tu carpeta de scratch aislada: "
         "`work/shards/<shard_id>/scratch/` (o `work/scratch/<shard_id>/`). Queda terminantemente prohibido utilizar el directorio compartido `scratch/` "
         "raíz para evitar colisiones entre shards concurrentes.\n"
-        "2. **Prohibidos comandos de PowerShell inline con '$':** NO ejecutes comandos inline de PowerShell (`powershell -Command ...`) "
+        "2. **Prohibición de emitir plantillas en el chat:** Do not output template JSON in chat text. Termina estrictamente con `DONE: <archivos>`.\n"
+        "3. **Prohibidos comandos de PowerShell inline con '$':** NO ejecutes comandos inline de PowerShell (`powershell -Command ...`) "
         "que contengan variables o expresiones con signo `$`, ya que PowerShell expande `$variable` como cadenas vacías y corrompe los archivos. "
-        "Utiliza siempre las herramientas nativas de Antigravity (`write_to_file`, `replace_file_content`, `view_file`).\n"
-        "3. **Validación de todo el lote a la vez:** Ejecuta la validación de todas las plantillas generadas de tu shard "
+        "Utiliza siempre las herramientas nativas de Antigravity (`replace_file_content`, `write_to_file`, `view_file`).\n"
+        "4. **Validación de todo el lote a la vez:** Ejecuta la validación de todas las plantillas generadas de tu shard "
         "en un solo comando agrupado en terminal:\n"
         "   `python .agents/skills/content-to-course/check_templates.py work/templates/<comp_id1>.json work/templates/<comp_id2>.json ... --cta work/cta.json --strict`\n"
-        "4. **Cero introspección del validador:** Queda estrictamente prohibido examinar, leer o inspeccionar `check_templates.py`, "
-        "`src/validator/*` o `rules.py`. La salida de la terminal detalla explícitamente el nombre de la regla y el campo infractor.\n"
-        "5. **Circuit Breaker y presupuesto de 50 turnos:** Tu límite máximo es de 50 turnos (objetivo: 10 viajes gracias a los scaffolds pre-sembrados). "
+        "5. **Cero introspección del validador y motor:** Queda estrictamente prohibido examinar, leer o inspeccionar `check_templates.py`, "
+        "`src/validator/*`, `rules.py` o `engine/*`. La salida de la terminal detalla explícitamente el nombre de la regla y el campo infractor.\n"
+        "6. **Circuit Breaker y presupuesto de 50 turnos:** Tu límite máximo es de 50 turnos (objetivo: 10 viajes gracias a los scaffolds pre-sembrados). "
         "Si obtienes 3 fallos consecutivos idénticos en `check_templates.py` sin progreso, o si alcanzas el límite de turnos, "
         "debes detenerte inmediatamente y responder: `BLOCKED: CONTRACT_ERROR`."
     )
@@ -714,6 +735,154 @@ def generate_judge_bundle(
     )
 
 
+def preseed_cta_scaffolds(work_dir: Path, num_parts: int = 3, doc_name: str = "") -> List[Path]:
+    """Pre-seeds starter scaffold files in work/cta_parts/ (part_01.json, part_02.json, ...).
+    
+    Guarantees that target CTA part files exist on disk before the subagent starts,
+    enabling the subagent to work strictly via surgical replace_file_content calls and
+    completely avoiding write_to_file token-overflow risks.
+    """
+    parts_dir = work_dir / "cta_parts"
+    parts_dir.mkdir(parents=True, exist_ok=True)
+    created: List[Path] = []
+    doc_ref = doc_name or "documento_fuente.pdf"
+
+    p1 = parts_dir / "part_01.json"
+    if not p1.is_file() or p1.stat().st_size == 0:
+        scaffold_comp = [
+            {
+                "id": "COMP-01",
+                "type": "concept",
+                "name": "Título de la Competencia",
+                "description_latex": "Definición formal y matemática de la competencia con KaTeX.",
+                "bloom": "Understand",
+                "session": "Sesión 1",
+                "unit_index": 1,
+                "prerequisites": [],
+                "evidence": [
+                    {
+                        "doc": doc_ref,
+                        "page": 1
+                    }
+                ],
+                "distractors": [
+                    {
+                        "id": "D-COMP01-01",
+                        "name": "Error conceptual principal",
+                        "wrong_belief": "Concepción errónea o trampa común del estudiante",
+                        "correct_belief": "Regla matemática o verdad teórica exacta",
+                        "omitted_step": None,
+                        "trigger": "Activador contextual de la pregunta",
+                        "manifestation": "$manifestacion_formal$",
+                        "error_type": "conceptual_swap",
+                        "severity": "high",
+                        "origin": "source",
+                        "evidence": {
+                            "doc": doc_ref,
+                            "page": 1
+                        },
+                        "remediation_hint": "Pista formativa de recuperación para este error."
+                    },
+                    {
+                        "id": "D-COMP01-02",
+                        "name": "Error de generalización excesiva",
+                        "wrong_belief": "Extrapolación indebida de un resultado particular",
+                        "correct_belief": "Condiciones de validez limitadas al caso analizado",
+                        "omitted_step": None,
+                        "trigger": "Variación paramétrica",
+                        "manifestation": "$manifestacion_2$",
+                        "error_type": "overgeneralization",
+                        "severity": "medium",
+                        "origin": "source",
+                        "evidence": {
+                            "doc": doc_ref,
+                            "page": 1
+                        },
+                        "remediation_hint": "Verifica los supuestos de aplicabilidad del teorema."
+                    },
+                    {
+                        "id": "D-COMP01-03",
+                        "name": "Paso implícito omitido",
+                        "wrong_belief": None,
+                        "correct_belief": "Paso procedimental algebraico requerido",
+                        "omitted_step": "Omitir la diferenciación implícita antes de despejar",
+                        "trigger": "Despeje directo sin derivación",
+                        "manifestation": "$manifestacion_3$",
+                        "error_type": "skipped_step",
+                        "severity": "high",
+                        "origin": "inferred",
+                        "evidence": {
+                            "doc": doc_ref,
+                            "page": 1
+                        },
+                        "remediation_hint": "Aplica primero la regla de la cadena antes de despejar."
+                    },
+                    {
+                        "id": "D-COMP01-04",
+                        "name": "Error de signo algebraico",
+                        "wrong_belief": "Confusión en el signo de la tasa neta",
+                        "correct_belief": "El signo negativo refleja la depreciación efectiva",
+                        "omitted_step": None,
+                        "trigger": "Ecuación dinámica",
+                        "manifestation": "$+ \\delta$",
+                        "error_type": "sign_error",
+                        "severity": "medium",
+                        "origin": "inferred",
+                        "evidence": {
+                            "doc": doc_ref,
+                            "page": 1
+                        },
+                        "remediation_hint": "Revisa los signos en la ecuación diferencial."
+                    },
+                    {
+                        "id": "D-COMP01-05",
+                        "name": "Error de escala o notación",
+                        "wrong_belief": "Confusión entre variables agregadas y per cápita",
+                        "correct_belief": "Las magnitudes intensivas se normalizan por el trabajo efectivo",
+                        "omitted_step": None,
+                        "trigger": "Definición intensiva",
+                        "manifestation": "$Y$ en lugar de $y$",
+                        "error_type": "unit_or_scale",
+                        "severity": "medium",
+                        "origin": "inferred",
+                        "evidence": {
+                            "doc": doc_ref,
+                            "page": 1
+                        },
+                        "remediation_hint": "Usa variables en minúscula para términos per cápita."
+                    },
+                    {
+                        "id": "D-COMP01-06",
+                        "name": "Caso frontera no verificado",
+                        "wrong_belief": "Asumir validez en el límite extremo del parámetro",
+                        "correct_belief": "Los supuestos descartan valores frontera degenerados",
+                        "omitted_step": None,
+                        "trigger": "Evaluación en el límite",
+                        "manifestation": "$s = 1$",
+                        "error_type": "boundary_case",
+                        "severity": "low",
+                        "origin": "inferred",
+                        "evidence": {
+                            "doc": doc_ref,
+                            "page": 1
+                        },
+                        "remediation_hint": "Recuerda que los parámetros satisfacen estrictamente las desigualdades abiertas."
+                    }
+                ]
+            }
+        ]
+        p1.write_text(json.dumps(scaffold_comp, indent=2, ensure_ascii=False), encoding="utf-8")
+        created.append(p1)
+
+    for i in range(2, num_parts + 1):
+        pi = parts_dir / f"part_{i:02d}.json"
+        if not pi.is_file() or pi.stat().st_size == 0:
+            pi.write_text("[]", encoding="utf-8")
+            created.append(pi)
+
+    return created
+
+
 def generate_cta_direct_bundle(
     work_dir: Path,
     read_paths: List[str],
@@ -725,22 +894,26 @@ def generate_cta_direct_bundle(
     """Generates task bundle for Direct CTA Architect with batch limit & chat suppression directives.
 
     Directivas reforzadas:
-    - No emitir competencias en el texto del chat.
-    - Generar como máximo 10 competencias por lote.
-    - Emplear script generador estructurado para escribir directamente en disco.
+    - Do not output competencies in chat text. Terminate strictly with DONE: <files>.
+    - Generar como máximo 10 competencias por parte en fragmentos JSON declarativos puros.
+    - Edición quirúrgica exclusivamente mediante replace_file_content sobre scaffolds pre-sembrados.
+    - Prohibido write_to_file y prohibido scripts auxiliares en Python.
+    - Prohibido pre-chequeos o comandos exploratorios en terminal CLI.
     """
     forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["cta-direct"]["forbidden"])
     directives = (
         "### DIRECTIVAS CRÍTICAS DE DIRECT CTA ARCHITECT (OBLIGATORIO):\n"
-        "1. **Fragmentos JSON Declarativos Puros (work/cta_parts/part_XX.json):** Emite las competencias en fragmentos JSON "
-        "declarativos puros dentro de `work/cta_parts/` (ej. `work/cta_parts/part_01.json`, `part_02.json`). Cada archivo debe "
-        "contener una lista o bloque de como máximo 10 competencias declarativas puras.\n"
-        "2. **Edición por Líneas con replace_file_content:** Para corregir cualquier error o ajustar distractores o campos, utiliza "
-        "estrictamente la herramienta `replace_file_content` para realizar reemplazos específicos a nivel de línea. "
-        "Queda terminantemente prohibido reescribir archivos enteros de miles de tokens con `write_to_file` para evitar "
-        "truncamientos catastróficos, agotamiento de turnos y errores de sintaxis.\n"
-        "3. **Zero-Chat Output:** Queda terminantemente prohibido volcar competencias o JSON en los mensajes del chat conversacional.\n"
-        "4. **Coser con cta-stitch:** Una vez generados los fragmentos en `work/cta_parts/`, ejecuta "
+        "1. **Scaffolds Pre-sembrados y Modificación con replace_file_content:** Los archivos de partes modulares "
+        "en `work/cta_parts/` (part_01.json, part_02.json, part_03.json) ya existen pre-creados en disco con esquemas válidos. "
+        "Utiliza ESTRICTAMENTE `replace_file_content` para completar, refinar y agregar las competencias a nivel de línea.\n"
+        "2. **Prohibición Categórica de write_to_file:** Queda TERMINANTEMENTE PROHIBIDO usar `write_to_file` para emitir archivos "
+        "completos de competencias, eliminando el riesgo de truncamientos catastróficos o fallos de `max_output_tokens exceeded`.\n"
+        "3. **Prohibición Estricta de Scripts Python:** Queda terminantemente prohibido escribir o ejecutar scripts Python auxiliares "
+        "(.py) en scratch/ o work/ para generar las partes.\n"
+        "4. **Zero-CLI Pre-flight:** Queda terminantemente prohibido ejecutar comandos de consola preliminares para explorar, listar "
+        "directorios conocidos o probar `cta-stitch`. Comienza inmediatamente en el Turno 1 analizando los materiales asignados con `view_file`.\n"
+        "5. **Zero-Chat Output:** Do not output competencies in chat text. Terminate strictly with DONE: <files>.\n"
+        "6. **Coser con cta-stitch al final:** Una vez completados y refinados TODOS los fragmentos en `work/cta_parts/`, ejecuta una sola vez en el turno final "
         "`python .agents/skills/content-to-course/run.py --stage cta-stitch` para ensamblar deterministamente `work/cta.json`, "
         "auto-normalizar KaTeX, verificar esquemas y generar `work/cta.md` en <200ms."
     )
@@ -1082,6 +1255,14 @@ def build_dispatch(
         # Pre-seed starter scaffolds with metadata & distractors for assigned competencies
         preseed_author_scaffolds(work_dir=work, shard_items=shard_items)
 
+        sys_text = ""
+        sys_file = SKILL_DIR / sys_prompt
+        if sys_file.is_file():
+            try:
+                sys_text = sys_file.read_text(encoding="utf-8")
+            except Exception:
+                pass
+
         for s in shard_items:
             s_id = s.get("shard_id", "shard_01")
             c_ids = s.get("competency_ids", [])
@@ -1092,7 +1273,10 @@ def build_dispatch(
             (work / "shards" / str(s_id) / "scratch").mkdir(parents=True, exist_ok=True)
             (work / "scratch" / str(s_id)).mkdir(parents=True, exist_ok=True)
 
-            read_paths = [f"work/shards/{s_id}.json", "work/cta.json"]
+            read_paths = [
+                f"work/shards/{s_id}.json",
+                "work/cta.json",
+            ] + [f"work/templates/{cid}.json" for cid in c_ids]
             write_paths = [f"work/templates/{cid}.json" for cid in c_ids] + [
                 f"work/shards/{s_id}/scratch/**",
                 f"work/scratch/{s_id}/**",
@@ -1107,16 +1291,61 @@ def build_dispatch(
                 turn_budget=turn_budget,
             )
 
-            prompt_text = _format_prompt(
-                role_name=role,
-                role_title=f"Shard Author {s_id}",
-                bundle_path=_bundle_display_path(bundle_file),
-                turn_budget=turn_budget,
-                read_paths=read_paths,
-                write_paths=write_paths,
-                forbidden_items=forbidden,
-                system_prompt_rel=sys_prompt,
+            # Build exact validation command pre-baked with all template files for this shard
+            tpl_args = " ".join(f"work/templates/{cid}.json" for cid in c_ids)
+            validation_cmd = (
+                f"python .agents/skills/content-to-course/check_templates.py {tpl_args} --cta work/cta.json --strict"
             )
+
+            tpl_list_str = "\n".join(f"- `work/templates/{cid}.json`" for cid in c_ids)
+            extra_author_context = (
+                f"### ASIGNACIÓN DEL SHARD `{s_id}`:\n"
+                f"- Competencias asignadas: {', '.join(f'`{cid}`' for cid in c_ids)}\n"
+                f"- Scaffolds pre-sembrados listos para refinamiento en disco:\n{tpl_list_str}\n\n"
+                f"### COMANDO DE VALIDACIÓN OFICIAL PRE-CONFIGURADO:\n"
+                f"```bash\n{validation_cmd}\n```"
+            )
+
+            prompt_lines = [
+                f"# Asignación de Tarea para Shard Author {s_id}",
+                f"Tu paquete de trabajo y directivas están archivados en: {_bundle_display_path(bundle_file)}",
+                f"System Prompt: {sys_prompt}",
+                "",
+                "## SCOPE-LOCK (OBLIGATORIO)",
+                "- **READ permitido:**",
+            ]
+            for r in read_paths:
+                prompt_lines.append(f"  * `{r}`")
+            prompt_lines.append("- **WRITE permitido:**")
+            prompt_lines.append(
+                "  * Refinamiento quirúrgico mediante replace_file_content (prioritario) o write_to_file (fallback opcional para reescritura completa) sobre:"
+            )
+            for cid in c_ids:
+                prompt_lines.append(f"    - `work/templates/{cid}.json`")
+            prompt_lines.append(f"  * `work/shards/{s_id}/scratch/**` (carpeta aislada para scripts auxiliares)")
+            prompt_lines.append("- **PROHIBIDO:**")
+            for f in forbidden:
+                prompt_lines.append(f"  * {f}")
+
+            prompt_lines.extend(["", extra_author_context])
+
+            if sys_text:
+                prompt_lines.extend(["", "## INSTRUCCIONES OPERATIVAS Y DIRECTIVAS", sys_text])
+
+            prompt_lines.extend([
+                "",
+                "## INICIO INMEDIATO Y TERMINACIÓN OBLIGATORIA",
+                "- NO gastes Turno 1 leyendo bundles (`work/dispatch/bundles/*`) ni archivos de system prompts: toda tu asignación, directivas, y comando CLI están provistos aquí.",
+                "- Cada una de tus competencias asignadas YA TIENE un scaffold válido pre-sembrado en `work/templates/<comp_id>.json` con 6 plantillas base y 100% de distractores mapeados.",
+                "- Entra DIRECTAMENTE en Turno 1 a refinar los scaffolds con `replace_file_content` para personalizar `generate_py`, `stem_variants`, `vars`, `hints` y `solution`.",
+                "- Una vez refinadas, ejecuta en terminal el comando de validación oficial provisto arriba en un solo paso.",
+                "- Do not output template JSON in chat text.",
+                f"- Termina estrictamente con: `DONE: {', '.join(f'work/templates/{cid}.json' for cid in c_ids)}`",
+                f"Presupuesto sugerido: máximo {turn_budget} turnos (límite estricto). Si alcanzas {turn_budget} turnos o 3 fallos consecutivos idénticos, finaliza con BLOCKED: CONTRACT_ERROR.",
+                "- Prohibido redactar resúmenes, explicaciones o saludos adicionales en el chat.",
+            ])
+
+            prompt_text = "\n".join(prompt_lines)
 
             subagents.append({
                 "TypeName": spec["type_name"],
@@ -1312,6 +1541,8 @@ def build_dispatch(
 
         source_rel_str = None
         manifest_file = work / "pages" / "manifest.json"
+        if not manifest_file.is_file():
+            manifest_file = work / "manifest.json"
         if manifest_file.is_file():
             try:
                 m_data = json.loads(manifest_file.read_text(encoding="utf-8"))
@@ -1325,44 +1556,101 @@ def build_dispatch(
             except Exception:
                 pass
 
+        source_files: List[str] = []
         if source_rel_str:
-            read_paths = [
-                f"{source_rel_str}/*",
-                f"{source_rel_str}/**/*",
-                "work/pages/manifest.json",
-            ]
+            s_dir = Path(source_rel_str)
+            if s_dir.is_dir():
+                source_files = sorted(f.name for f in s_dir.iterdir() if f.is_file())
+            read_paths = [f"{source_rel_str}/{f}" for f in source_files] if source_files else [f"{source_rel_str}/*"]
             forbidden_cta = list(forbidden) + [
-                "work/corpus*.md (el análisis cognitivo debe realizarse directamente sobre los contenidos fuente del curso)",
-                f"carpetas de otros cursos en content/ (distintas de {source_rel_str})",
-                "content/* (excepto archivos de la carpeta asignada en tu bundle)",
+                "write_to_file para escribir archivos completos de competencias (usar exclusivamente replace_file_content sobre los scaffolds pre-sembrados)",
+                "work/corpus*.md (el análisis cognitivo debe realizarse directamente sobre los materiales fuente asignados con view_file)",
+                f"carpetas o archivos de otros cursos en content/ (distintas de {source_rel_str})",
+                "content/* (excepto los materiales fuente asignados)",
+                "work/pages/manifest.json (prohibido consultar o depender de manifest.json; citar directamente los archivos fuente asignados)",
+                "scripts Python auxiliares (.py) en scratch/ o work/ (prohibido crear o ejecutar generadores en Python)",
+                "ejecutar comandos exploratorios o pruebas previas en terminal CLI (el único comando permitido es 'run.py --stage cta-stitch' en el turno final tras completar todas las partes)",
+                "emitir competencias en el texto del chat (Do not output competencies in chat text)",
             ]
         else:
-            read_paths = ["work/pages/manifest.json"]
-            forbidden_cta = list(forbidden) + ["work/corpus*.md (inspección directa de contenidos requerida)"]
+            read_paths = ["content/*"]
+            forbidden_cta = list(forbidden) + [
+                "write_to_file para escribir archivos completos de competencias (usar exclusivamente replace_file_content sobre los scaffolds pre-sembrados)",
+                "work/corpus*.md (inspección directa de contenidos requerida)",
+                "work/pages/manifest.json (prohibido consultar o depender de manifest.json)",
+                "emitir competencias en el texto del chat (Do not output competencies in chat text)",
+            ]
 
         if (work / "patches").is_dir():
             read_paths.append("work/patches/*.md")
         if (work / "handout_patches").is_dir():
             read_paths.append("work/handout_patches/*.md")
-        (work / "cta_parts").mkdir(parents=True, exist_ok=True)
+
+        # Pre-seed starter scaffolds on disk so subagent never uses write_to_file
+        doc_name_first = source_files[0] if source_files else "material_fuente.pdf"
+        preseed_cta_scaffolds(work_dir=work, num_parts=3, doc_name=doc_name_first)
         write_paths = ["work/cta_parts/part_*.json", "work/cta_parts/*.json"]
+
+        extra_cta_context = ""
+        if source_files:
+            file_list_str = "\n".join(f"- `{f}`" for f in source_files)
+            extra_cta_context = (
+                f"### MATERIALES FUENTE ASIGNADOS ({source_rel_str}):\n"
+                f"{file_list_str}\n\n"
+                "Usa estos nombres exactos de archivo en el campo `evidence: {\"doc\": \"<nombre>\", \"page\": <int>}`. "
+                "Comienza inmediatamente inspeccionando estos archivos asignados con `view_file`."
+            )
+
         bundle_file = generate_cta_direct_bundle(
             work_dir=work,
             read_paths=read_paths,
             write_paths=write_paths,
             forbidden_items=forbidden_cta,
             turn_budget=turn_budget,
+            extra_context=extra_cta_context,
         )
-        prompt_text = _format_prompt(
-            role_name=role,
-            role_title="Direct CTA Architect",
-            bundle_path=_bundle_display_path(bundle_file),
-            turn_budget=turn_budget,
-            read_paths=read_paths,
-            write_paths=write_paths,
-            forbidden_items=forbidden_cta,
-            system_prompt_rel=sys_prompt,
-        )
+
+        sys_text = ""
+        sys_file = SKILL_DIR / sys_prompt
+        if sys_file.is_file():
+            try:
+                sys_text = sys_file.read_text(encoding="utf-8")
+            except Exception:
+                pass
+
+        prompt_lines = [
+            "# Asignación de Tarea para Direct CTA Architect",
+            "",
+            "## SCOPE-LOCK (OBLIGATORIO)",
+            "- **READ permitido:**",
+        ]
+        for r in read_paths:
+            prompt_lines.append(f"  * `{r}`")
+        prompt_lines.append("- **WRITE permitido:**")
+        prompt_lines.append("  * Modificación quirúrgica mediante replace_file_content sobre work/cta_parts/part_*.json")
+        prompt_lines.append("- **PROHIBIDO:**")
+        for f in forbidden_cta:
+            prompt_lines.append(f"  * {f}")
+
+        if extra_cta_context:
+            prompt_lines.extend(["", extra_cta_context])
+
+        if sys_text:
+            prompt_lines.extend(["", "## INSTRUCCIONES OPERATIVAS Y DIRECTIVAS", sys_text])
+
+        prompt_lines.extend([
+            "",
+            "## INICIO INMEDIATO Y TERMINACIÓN OBLIGATORIA",
+            "- NO necesitas leer ningún archivo bundle ni system prompt en Turno 1. Todas tus instrucciones, directivas e insumos están provistos aquí.",
+            "- Los archivos modulares (work/cta_parts/part_01.json, part_02.json, part_03.json) ya han sido pre-sembrados con scaffolds válidos en disco.",
+            "- Inicia DIRECTAMENTE en Turno 1 analizando los materiales fuente asignados con `view_file` y editando quirúrgicamente el scaffold en `work/cta_parts/part_01.json` con `replace_file_content`.",
+            "- Queda TERMINANTEMENTE PROHIBIDO usar `write_to_file` para escribir o reescribir archivos de competencias.",
+            f"- Presupuesto de turnos sugerido: {turn_budget} turnos.",
+            "- Do not output competencies in chat text. Terminate strictly with:",
+            "`DONE: <archivos de partes modificados>` (o BLOCKED: <motivo>).",
+            "PROHIBIDO emitir resúmenes, explicaciones o saludos adicionales en el chat.",
+        ])
+        prompt_text = "\n".join(prompt_lines)
         subagents.append({
             "TypeName": spec["type_name"],
             "Role": "Direct CTA Architect",
@@ -1503,6 +1791,25 @@ def _is_allowed_path(rel_path: str, role: str) -> bool:
 
 def get_type_definitions() -> List[Dict[str, Any]]:
     """Returns type definitions for define_subagent registration."""
+    cta_sys_file = SKILL_DIR / "system_prompts" / "prompt_cta_direct.md"
+    if cta_sys_file.is_file():
+        try:
+            full_prompt = cta_sys_file.read_text(encoding="utf-8")
+            for t in TYPE_DEFINITIONS:
+                if t["name"] == "c2c-cta-direct":
+                    t["system_prompt"] = full_prompt
+        except Exception as e:
+            logger.warning("Could not load full system prompt for c2c-cta-direct: %s", e)
+
+    author_sys_file = SKILL_DIR / "system_prompts" / "prompt_shard_author.md"
+    if author_sys_file.is_file():
+        try:
+            full_author_prompt = author_sys_file.read_text(encoding="utf-8")
+            for t in TYPE_DEFINITIONS:
+                if t["name"] == "c2c-author":
+                    t["system_prompt"] = full_author_prompt
+        except Exception as e:
+            logger.warning("Could not load full system prompt for c2c-author: %s", e)
     return TYPE_DEFINITIONS
 
 

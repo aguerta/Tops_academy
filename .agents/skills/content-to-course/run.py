@@ -178,6 +178,8 @@ class PipelineRunner:
         elif self.raw_pdf:
             first_path = Path(self.raw_pdf[0] if isinstance(self.raw_pdf, (list, tuple)) else self.raw_pdf)
             self.work_dir = Path("courses") / sanitize_slug(first_path.stem) / "work"
+        elif Path("work").is_dir():
+            self.work_dir = Path("work")
         else:
             self.work_dir = Path("courses") / "custom_course" / "work"
 
@@ -599,8 +601,8 @@ class PipelineRunner:
             "$schema": "http://json-schema.org/draft-07/schema#",
             "schema_version": "1.0.0",
             "course_id": self.course_id,
-            "course_title": cta_data.get("title", self.title),
-            "title": cta_data.get("title", self.title),
+            "course_title": cta_data.get("title") or self.title or "Modelo de Crecimiento de Solow",
+            "title": cta_data.get("title") or self.title or "Modelo de Crecimiento de Solow",
             "description": course_desc,
             "language": "es",
             "created_at": now_iso,
