@@ -156,7 +156,7 @@ import warnings
 
 # Suspicious substrings resulting from unescaped LaTeX backslashes in standard Python strings
 _CORRUPTED_LATEX_PATTERNS = [
-    ("\x0c", "frac", r"\frac"),
+    ("\x0c", "rac", r"\frac"),
     ("\x08", "eta", r"\beta"),
     ("\x08", "matrix", r"\bmatrix"),
     ("\x08", "egin", r"\begin"),
@@ -176,32 +176,57 @@ _CORRUPTED_LATEX_PATTERNS = [
 ]
 
 
+def check_latex_escape_corruption_structured(code_str: str) -> List[Dict[str, Any]]:
+    """Detects strings where LaTeX escape sequences were corrupted into control characters.
+
+    Returns structured dicts:
+    [
+        {
+            "line": int or None,
+            "cmd": str (e.g. r"\frac"),
+            "tail": str (e.g. "rac"),
+            "ctrl_char": str,
+            "message": str
+        }, ...
+    ]
+    """
+    results: List[Dict[str, Any]] = []
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", SyntaxWarning)
+            tree = ast.parse(code_str, filename="<template>")
+    except Exception:
+        return results
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            val = node.value
+            lineno = getattr(node, "lineno", None)
+            for ctrl_char, tail, latex_cmd in _CORRUPTED_LATEX_PATTERNS:
+                if ctrl_char + tail in val:
+                    line_info = f"line {lineno}: " if lineno is not None else ""
+                    msg = (
+                        f"Corrupted LaTeX escape sequence at {line_info}"
+                        f"'{latex_cmd}' was parsed as control character + '{tail}'. "
+                        f"Use raw string r\"...\" or escape backslash '\\\\{latex_cmd[1:]}'."
+                    )
+                    results.append({
+                        "line": lineno,
+                        "cmd": latex_cmd,
+                        "tail": tail,
+                        "ctrl_char": ctrl_char,
+                        "message": msg,
+                    })
+    return results
+
+
 def check_latex_escape_corruption(code_str: str) -> List[str]:
     """Detects strings where LaTeX escape sequences were corrupted into control characters.
 
     For example, '\\frac' in a regular string becomes '\\x0c rac' (formfeed),
     '\\beta' becomes '\\x08 eta' (backspace), etc.
     """
-    errors: List[str] = []
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", SyntaxWarning)
-            tree = ast.parse(code_str, filename="<template>")
-    except Exception:
-        return errors
-
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            val = node.value
-            for ctrl_char, tail, latex_cmd in _CORRUPTED_LATEX_PATTERNS:
-                if ctrl_char + tail in val:
-                    line_info = f"line {node.lineno}: " if hasattr(node, "lineno") else ""
-                    errors.append(
-                        f"Corrupted LaTeX escape sequence at {line_info}"
-                        f"'{latex_cmd}' was parsed as control character + '{tail}'. "
-                        f"Use raw string r\"...\" or escape backslash '\\\\{latex_cmd[1:]}'."
-                    )
-    return errors
+    return [item["message"] for item in check_latex_escape_corruption_structured(code_str)]
 
 
 def validate_code_ast(code_str: str) -> bool:

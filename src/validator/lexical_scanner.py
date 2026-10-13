@@ -113,7 +113,41 @@ def get_line_col(text: str, pos: int) -> tuple[int, int]:
     return line, col
 
 
-def scan_lexical(raw_text: str) -> list[ValidationError]:
+def consolidate_lexical_errors(errors: list[ValidationError]) -> list[ValidationError]:
+    """Consolidates identical lexical errors (e.g. repeated \\frac or \\Delta) across lines."""
+    if not errors:
+        return []
+    grouped: dict[tuple[str, str, str], list[ValidationError]] = {}
+    for err in errors:
+        canonical_msg = re.sub(r"\s+at line \d+(?:, col \d+)?", "", err.message)
+        canonical_msg = re.sub(r"\s*:\s*$", "", canonical_msg.strip())
+        key = (err.rule_id, err.code, canonical_msg)
+        grouped.setdefault(key, []).append(err)
+
+    consolidated: list[ValidationError] = []
+    for (rule_id, code, canonical_msg), err_list in grouped.items():
+        if len(err_list) == 1:
+            consolidated.append(err_list[0])
+        else:
+            collected_lines: list[int] = []
+            for e in err_list:
+                if e.lines:
+                    collected_lines.extend(e.lines)
+                elif e.line is not None:
+                    collected_lines.append(e.line)
+            consolidated.append(ValidationError(
+                rule_id=rule_id,
+                code=code,
+                message=canonical_msg,
+                line=collected_lines[0] if collected_lines else None,
+                lines=sorted(set(collected_lines)),
+                item_id=err_list[0].item_id,
+                details={"consolidated_count": len(err_list)},
+            ))
+    return consolidated
+
+
+def scan_lexical(raw_text: str, consolidate: bool = False) -> list[ValidationError]:
     """Scans raw file text before JSON parsing and returns all detected lexical errors."""
     errors: list[ValidationError] = []
     n = len(raw_text)
@@ -319,4 +353,6 @@ def scan_lexical(raw_text: str) -> list[ValidationError]:
             col=col
         ))
 
+    if consolidate and len(errors) > 1:
+        return consolidate_lexical_errors(errors)
     return errors

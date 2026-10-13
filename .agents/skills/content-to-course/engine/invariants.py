@@ -21,6 +21,117 @@ class InvariantViolationError(Exception):
     pass
 
 
+ANTONYM_PAIRS: List[Tuple[str, str]] = [
+    ("converge", "diverge"),
+    ("convergencia", "divergencia"),
+    ("equilibrio", "desequilibrio"),
+    ("estabilidad", "inestabilidad"),
+    ("estable", "inestable"),
+    ("crece", "decrece"),
+    ("creciente", "decreciente"),
+    ("aumenta", "disminuye"),
+    ("positivo", "negativo"),
+    ("máximo", "mínimo"),
+]
+
+
+def check_synthetic_boilerplate_distractors(
+    correct_content: Optional[str],
+    distractor_contents: List[str],
+) -> List[str]:
+    """Detects trivial synthetic boilerplate distractor options (R-18).
+    
+    Catches:
+    1. Symmetric antonym inversion ('converge con X' vs 'diverge con Y').
+    2. Repetitive skeleton boilerplate (>=4 distractors with identical phrase structure).
+    """
+    errors: List[str] = []
+    if not distractor_contents:
+        return errors
+
+    def _skeleton(s: str) -> str:
+        s_low = s.lower()
+        s_low = re.sub(r"\b\d+(?:\.\d+)?\b", "<NUM>", s_low)
+        s_low = re.sub(r"[^\w\s<>+\-*/=^\\{}()]", " ", s_low)
+        return re.sub(r"\s+", " ", s_low).strip()
+
+    # 1. Repetitive skeleton across distractors (>= 4 share same skeleton of >= 20 chars)
+    # Ignore test dummy fixtures that explicitly contain 'distractor', 'dummy', 'placeholder'
+    skel_counts: Dict[str, List[str]] = {}
+    for d in distractor_contents:
+        if re.search(r"\b(?:distractor|dummy|placeholder)\b", d, re.IGNORECASE):
+            continue
+        sk = _skeleton(d)
+        if len(sk) >= 20:
+            skel_counts.setdefault(sk, []).append(d)
+    for sk, group in skel_counts.items():
+        if len(group) >= 4:
+            errors.append(
+                f"Synthetic boilerplate distractor pattern detected: repetitive trivial template across {len(group)} options ('{group[0][:60]}...')."
+            )
+            break
+
+    # 2. Symmetric antonym pairing with correct answer
+    if correct_content:
+        c_low = correct_content.lower()
+        for w1, w2 in ANTONYM_PAIRS:
+            has_w1 = bool(re.search(rf"\b{w1}\b", c_low))
+            has_w2 = bool(re.search(rf"\b{w2}\b", c_low))
+            if has_w1 and not has_w2:
+                c_norm = re.sub(rf"\b{w1}\b", "<SYM>", c_low)
+                c_sk = _skeleton(c_norm)
+                for d in distractor_contents:
+                    d_low = d.lower()
+                    if re.search(rf"\b{w2}\b", d_low):
+                        d_norm = re.sub(rf"\b{w2}\b", "<SYM>", d_low)
+                        d_sk = _skeleton(d_norm)
+                        if c_sk == d_sk and len(c_sk) >= 15:
+                            errors.append(
+                                f"Synthetic boilerplate distractor pattern detected: symmetric antonym pair ('{w1}' vs '{w2}') in '{d[:60]}...'."
+                            )
+                            break
+            elif has_w2 and not has_w1:
+                c_norm = re.sub(rf"\b{w2}\b", "<SYM>", c_low)
+                c_sk = _skeleton(c_norm)
+                for d in distractor_contents:
+                    d_low = d.lower()
+                    if re.search(rf"\b{w1}\b", d_low):
+                        d_norm = re.sub(rf"\b{w1}\b", "<SYM>", d_low)
+                        d_sk = _skeleton(d_norm)
+                        if c_sk == d_sk and len(c_sk) >= 15:
+                            errors.append(
+                                f"Synthetic boilerplate distractor pattern detected: symmetric antonym pair ('{w2}' vs '{w1}') in '{d[:60]}...'."
+                            )
+                            break
+    return errors
+
+
+def check_scaffolding_answer_leaks(hints: List[Any]) -> List[str]:
+    """Detects mechanical answer leaks in scaffolding hints (R-19)."""
+    errors: List[str] = []
+    if not hints or not isinstance(hints, list):
+        return errors
+
+    elimination_patterns = [
+        re.compile(r"\b(?:descarte|elimine|descartar|eliminar|descarta|elimina)\b.{1,50}\b(?:respuestas|opciones|alternativas|las\s+que|aquellas)\b", re.IGNORECASE),
+        re.compile(r"\b(?:descarte|elimine|descarta|elimina)\s+(?:las|cualquier|todas|los)\b", re.IGNORECASE),
+        re.compile(r"\b(?:descarte|elimine|descarta|elimina)\s+(?:opciones|respuestas)\b", re.IGNORECASE),
+    ]
+
+    for idx, h in enumerate(hints):
+        text = h.get("text", "") if isinstance(h, dict) else str(h)
+        for pat in elimination_patterns:
+            m = pat.search(text)
+            if m:
+                snippet = m.group(0)
+                errors.append(
+                    f"Scaffolding answer leak detected in hint {idx + 1}: mechanical elimination rule ('{snippet}') leaks answer selection."
+                )
+                break
+    return errors
+
+
+
 def validate_katex_syntax(text: str, context: str, allow_template_vars: bool = False) -> List[str]:
     """Validate KaTeX delimiter balance, absence of $$$, {{/}}, macro arity, environments, delimiters, and unsubstituted {var}."""
     errors: List[str] = []
@@ -374,6 +485,10 @@ def check_instance_invariants(
                 if hints and len(hints) >= 1 and isinstance(hints[0], str) and correct_content in hints[0]:
                     errors.append(f"Correct answer '{correct_content}' leaked verbatim in first hint.")
 
+            # Check synthetic boilerplate distractor pattern
+            bp_errors = check_synthetic_boilerplate_distractors(correct_content, distractor_contents)
+            errors.extend(bp_errors)
+
     # 2. Fill in the blank
     elif interaction_type == "fill_in_the_blank":
         ans = instance.get("correct_answer")
@@ -431,4 +546,17 @@ def check_instance_invariants(
                     f"MS correct count must be between 1 and {len(options) - 1} (found {correct_count} correct out of {len(options)} options)."
                 )
 
+            ms_distractors = [
+                str(opt.get("content", "")) for opt in options if opt.get("is_correct") is False
+            ]
+            bp_errors = check_synthetic_boilerplate_distractors(None, ms_distractors)
+            errors.extend(bp_errors)
+
+    # Scaffolding progressive hint answer leak check across all interaction types
+    raw_hints = instance.get("hints", [])
+    if isinstance(raw_hints, list) and raw_hints:
+        leak_errors = check_scaffolding_answer_leaks(raw_hints)
+        errors.extend(leak_errors)
+
     return (len(errors) == 0, errors)
+

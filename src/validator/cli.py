@@ -13,12 +13,55 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Sequence
 
 from .core import validate_course
-from .models import ValidationResult
+from .models import ValidationError, ValidationResult
+
+
+def consolidate_validation_errors(errors: list[ValidationError]) -> list[ValidationError]:
+    """Consolidates identical or repeated errors sharing (rule_id, code, canonical_message) into single errors with lines."""
+    if not errors:
+        return []
+
+    grouped: dict[tuple[str, str, str], list[ValidationError]] = {}
+    for err in errors:
+        canonical_msg = re.sub(r"\s+at line \d+(?:, col \d+)?", "", err.message)
+        canonical_msg = re.sub(r"\s*\(line \d+(?:, col \d+)?\)", "", canonical_msg)
+        canonical_msg = re.sub(r"\s*:\s*$", "", canonical_msg.strip())
+        key = (err.rule_id, err.code, canonical_msg)
+        grouped.setdefault(key, []).append(err)
+
+    consolidated: list[ValidationError] = []
+    for (rule_id, code, canonical_msg), err_list in grouped.items():
+        if len(err_list) == 1:
+            consolidated.append(err_list[0])
+        else:
+            collected_lines: list[int] = []
+            for e in err_list:
+                if e.lines:
+                    collected_lines.extend(e.lines)
+                elif e.line is not None:
+                    collected_lines.append(e.line)
+                else:
+                    m_l = re.search(r"\bline\s+(\d+)\b", e.message)
+                    if m_l:
+                        collected_lines.append(int(m_l.group(1)))
+            rep_msg = canonical_msg if canonical_msg else err_list[0].message
+            consolidated.append(ValidationError(
+                rule_id=rule_id,
+                code=code,
+                message=rep_msg,
+                line=collected_lines[0] if collected_lines else None,
+                lines=sorted(set(collected_lines)),
+                item_id=err_list[0].item_id,
+                details={"consolidated_count": len(err_list)},
+            ))
+
+    return consolidated
 
 
 def format_cli_output(result: ValidationResult, strict: bool = False) -> str:
@@ -32,7 +75,8 @@ def format_cli_output(result: ValidationResult, strict: bool = False) -> str:
         lines.append(f"VALID: Course '{course_name}' passed all 16 validation rules{mode_suffix}.")
     else:
         lines.append(f"[VALIDATION FAILURE] {file_name}")
-        for err in result.errors:
+        consolidated = consolidate_validation_errors(result.errors)
+        for err in consolidated:
             lines.append(f"  {err.formatted()}")
         err_count = len(result.errors)
         lines.append(f"FAILED: {err_count} {'error' if err_count == 1 else 'errors'} detected.")

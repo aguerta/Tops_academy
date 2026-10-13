@@ -14,6 +14,7 @@ class ValidationError:
     line: Optional[int] = None
     col: Optional[int] = None
     item_id: Optional[str] = None
+    lines: list[int] = field(default_factory=list)
     details: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -24,7 +25,10 @@ class ValidationError:
     def formatted(self) -> str:
         """Formatted string for CLI output."""
         location = ""
-        if self.line is not None and self.col is not None:
+        if self.lines:
+            lines_str = ", ".join(str(l) for l in sorted(set(self.lines)))
+            location = f" (líneas: {lines_str} - {len(self.lines)} ocurrencias)"
+        elif self.line is not None and self.col is not None:
             location = f" (line {self.line}, col {self.col})"
         elif self.line is not None:
             location = f" (line {self.line})"
@@ -38,6 +42,7 @@ class ValidationError:
             "message": self.message,
             "line": self.line,
             "col": self.col,
+            "lines": self.lines,
             "item_id": self.item_id,
             "details": self.details,
             "diagnostic": self.diagnostic,
