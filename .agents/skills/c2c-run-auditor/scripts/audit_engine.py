@@ -29,10 +29,15 @@ except Exception:
     pass
 
 try:
-    import fitz  # PyMuPDF
-    HAS_FITZ = True
+    import pymupdf
+    HAS_PYMUPDF = True
 except ImportError:
-    HAS_FITZ = False
+    try:
+        import fitz as pymupdf
+        HAS_PYMUPDF = True
+    except ImportError:
+        HAS_PYMUPDF = False
+HAS_FITZ = HAS_PYMUPDF
 
 
 # ---------------------------------------------------------------------------
@@ -348,9 +353,9 @@ class WorkloadExtractor:
                             size = fpath.stat().st_size
                             f_info["size_bytes"] = size
                             workload["total_input_bytes"] += size
-                            if HAS_FITZ and f_info["ext"] == ".pdf":
+                            if HAS_PYMUPDF and f_info["ext"] == ".pdf":
                                 try:
-                                    doc = fitz.open(fpath)
+                                    doc = pymupdf.open(fpath)
                                     f_info["pages"] = doc.page_count
                                     doc.close()
                                 except Exception:
@@ -519,9 +524,9 @@ class WorkloadExtractor:
                         if fpath.is_file() and fpath.suffix.lower() in (".pdf", ".md", ".txt", ".png", ".jpg"):
                             f_info = {"name": fpath.name, "size_bytes": fpath.stat().st_size, "pages": 0, "ext": fpath.suffix.lower()}
                             workload["total_input_bytes"] += fpath.stat().st_size
-                            if HAS_FITZ and fpath.suffix.lower() == ".pdf":
+                            if HAS_PYMUPDF and fpath.suffix.lower() == ".pdf":
                                 try:
-                                    doc = fitz.open(fpath)
+                                    doc = pymupdf.open(fpath)
                                     f_info["pages"] = doc.page_count
                                     doc.close()
                                 except Exception:

@@ -5,7 +5,10 @@ import math
 import sys
 from pathlib import Path
 
-import fitz  # PyMuPDF
+try:
+    import pymupdf
+except ImportError:
+    import fitz as pymupdf
 from PIL import Image
 import pytest
 
@@ -34,10 +37,10 @@ def create_synthetic_pdf(
     prefix: str = "Slide",
 ) -> Path:
     """Helper to create synthetic test PDFs with PyMuPDF."""
-    doc = fitz.open()
+    doc = pymupdf.open()
     for i in range(num_pages):
         page = doc.new_page(width=width, height=height)
-        page.insert_text(fitz.Point(80, 120), f"{prefix} - Page {i + 1}", fontsize=28)
+        page.insert_text(pymupdf.Point(80, 120), f"{prefix} - Page {i + 1}", fontsize=28)
     doc.save(str(filepath))
     doc.close()
     return filepath
