@@ -81,13 +81,13 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 > La conversación principal actúa **exclusivamente como Directora de Proyecto / Orquestadora General**. Su responsabilidad es coordinar el flujo de trabajo, invocar las etapas del runner CLI (`run.py`), inspeccionar los presupuestos y artefactos de control, y **delegar todas las tareas intensivas a subagentes especializados en paralelo mediante `invoke_subagent`**.
 >
 > ### 🚫 REGLAS ESTRICTAS DE CONDUCTA DEL DIRECTOR:
-> 1. **PASO 0B OBLIGATORIO (Registro en Lote de Subagentes - <20s):** Al inicio de la sesión, el Director ejecuta `python .agents/skills/content-to-course/run.py --stage define-types` (o consulta `subagent_types.json`) y registra en paralelo los 7 tipos especializados (`c2c-vision`, `c2c-cta-mapper`, `c2c-cta-harmonizer`, `c2c-author`, `c2c-judge`, `c2c-cta-direct`, `c2c-repair`). Queda TERMINANTEMENTE PROHIBIDO inspeccionar o leer código fuente interno (`run.py`, `dispatch.py`, etc.) durante la instanciación.
+> 1. **PASO 0B OBLIGATORIO (Registro en Lote de Subagentes - <20s) EN PARALELO CON `define_subagent`:** Al inicio de la sesión, el Director ejecuta `python .agents/skills/content-to-course/run.py --stage define-types` (o consulta `subagent_types.json`) y registra **SIMULTÁNEAMENTE** los 7 tipos especializados (`c2c-vision`, `c2c-cta-mapper`, `c2c-cta-harmonizer`, `c2c-author`, `c2c-judge`, `c2c-cta-direct`, `c2c-repair`) utilizando la capacidad nativa de Google Antigravity de **Parallel Tool Calling** (múltiples llamadas a la tool `define_subagent` emitidas en un ÚNICO turno / mensaje de respuesta del modelo, según `/antigravity-guide`). Queda TERMINANTEMENTE PROHIBIDO registrar los tipos de forma secuencial consumiendo turnos separados (uno por uno). Asimismo, queda PROHIBIDO inspeccionar o leer código fuente interno (`run.py`, `dispatch.py`, etc.) durante la instanciación.
 > 2. **PROHIBIDO redactar prompts a mano.** El Director **NUNCA** redacta a mano el `Prompt` de un subagente. Debe generar el payload ejecutando `python run.py --stage dispatch --role <vision|cta-map|cta-reduce|author|judge|repair>` y copiar fielmente los subagentes generados en `invoke_subagent`.
 > 3. **MODELO ESTÁNDAR PARA SUBAGENTES:** Todos los subagentes especializados y jueces ciegos operan con el modelo rápido `flash` (`"Model": "flash"`).
 > 4. **PROHIBIDO redactar plantillas de ejercicios (`work/templates/*.json`) en el hilo principal.** La autoría de plantillas **DEBE** ser delegada a subagentes autores en paralelo (`invoke_subagent`).
 > 5. **PROHIBIDO el análisis imagen por imagen cuando existan documentos PDF.** En Antigravity, la herramienta `view_file` lee archivos PDF (`.pdf`) directamente. Se debe utilizar **Ingesta Directa de PDF** (`--no-handouts --vision none`), aprovechando la extracción de texto en `work/corpus.md` y la lectura directa del PDF. La visión con Handouts queda reservada únicamente para notas manuscritas escaneadas o colecciones de imágenes puras.
 > 6. **PROHIBIDO resolver manualmente lotes de evaluación a ciegas.** La resolución ciega se delega a subagentes jueces en paralelo.
-> 7. **FAN-OUT EN UN SOLO LLAMADO:** Al delegar trabajo en paralelo, el Director **DEBE** invocar a todos los subagentes simultáneamente dentro del array `Subagents` de un **único llamado a `invoke_subagent`**, y luego finalizar su turno (no invocar más herramientas) para esperar el despertar reactivo del sistema.
+> 7. **FAN-OUT EN UN SOLO LLAMADO (`invoke_subagent`):** Para abrir y ejecutar subagentes en paralelo, Google Antigravity dispone de la tool específica `invoke_subagent` (referencia `/antigravity-guide`). Al delegar trabajo en paralelo, el Director **DEBE** invocar a todos los subagentes concurrentes dentro del array `Subagents` de un **único llamado a `invoke_subagent`**, y luego finalizar su turno (no invocar más herramientas) para esperar el despertar reactivo del sistema. Queda terminantemente PROHIBIDO abrir subagentes uno por uno en llamadas o turnos separados.
 > 8. **BLINDAJE OPERATIVO DE DIRECT CTA (ARQUITECTURA DE 2 ARCHIVOS):** El subagente `c2c-cta-direct` opera bajo la arquitectura de 2 archivos: emite tuplas pedagógicas compactas en `work/cta_data.py` en estricto orden cronológico (reduciendo tokens en >70%), y compila/certifica en <5ms mediante el compilador inmutable pre-sembrado `python work/compile_cta.py`. PROHIBIDO terminantemente volcar competencias o estructuras JSON en el chat.
 > 9. **BLINDAJE OPERATIVO DE AUTORES DE SHARDS (TRÍADA DE CALIDAD):** Los autores `c2c-author` operan bajo la Tríada de Calidad: (1) Catálogo de antipatrones cognitivos (raw strings `r"..."`, dobles llaves `rf"k^{{{alpha}}}"`, prohibición de adjetivos delatores R-18 y fugas de respuesta en hints R-19); (2) Scaffold canónico de referencia pre-sembrado en `work/shards/<shard_id>/scratch/template_generator_canonical.py`; (3) Linter determinista en `check_templates.py` (`synthetic_boilerplate_distractor_rule` y `scaffolding_answer_leak_rule`). Refinan scaffolds modulares con `replace_file_content` o `write_to_file`.
 > 10. **BLINDAJE OPERATIVO DE JUECES CIEGOS (CONTRATO TIPADO):** Los jueces `c2c-judge` resuelven lotes ciegos `work/judge_batch.json` enriquecidos con `answer_contract` explícito para preguntas numéricas (`expected_type`, `decimal_places`, `tolerance`), evaluadas deterministamente con `math.isclose` (tolerancia 0.01) para eliminar discrepancias de punto flotante. Clausura epistémica absoluta (prohibida navegación web).
@@ -198,13 +198,14 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
    - Modo CTA seleccionado (`mapreduce` o `direct`) y granularidad registrada en `budget.json`.
    - Total de Handouts generados (cuadrículas 2x2 para Beamer, 1x2 para notas/imágenes con banners indelebles).
 
-### Paso 0b: Registro de Tipos Especializados de Subagentes (<20s)
+### Paso 0b: Registro de Tipos Especializados de Subagentes en Paralelo (<20s)
 1. El Director ejecuta:
    ```bash
    python .agents/skills/content-to-course/run.py --stage define-types
    ```
    *(Este comando emite el JSON limpio sin truncamiento y persiste `subagent_types.json`).*
-2. El Director invoca `define_subagent` en paralelo para los 7 roles antes de despachar:
+2. **REGISTRO EN PARALELO EN UN ÚNICO TURNO CON `define_subagent` (PARALLEL TOOL CALLING):**
+   De acuerdo con la arquitectura de Google Antigravity (referencia `/antigravity-guide`), el modelo dispone nativamente de la capacidad de **Parallel Tool Calling** para emitir múltiples llamadas a herramientas en una misma respuesta. El Director **DEBE** invocar la tool específica `define_subagent` para los 7 roles **SIMULTÁNEAMENTE en un ÚNICO turno** (emitiendo un único mensaje con las 7 llamadas a `define_subagent` en paralelo sin esperar turnos intermedios):
    - `c2c-vision`: Handout Vision Analyzer (`enable_write_tools: true`)
    - `c2c-cta-mapper`: Sectional CTA Mapper (`enable_write_tools: true`)
    - `c2c-cta-harmonizer`: Curriculum Harmonization (`enable_write_tools: true`)
@@ -212,7 +213,9 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
    - `c2c-judge`: Blind Psychometric Evaluation Judge (`enable_write_tools: true`)
    - `c2c-cta-direct`: Direct CTA Architect (`enable_write_tools: true`)
    - `c2c-repair`: Targeted Repair subagent (`enable_write_tools: true`)
-   *Nota: Queda estrictamente prohibido perder turnos explorando o leyendo archivos de código de la skill (`run.py`, `dispatch.py`, etc.).*
+
+   > [!CAUTION]
+   > **PROHIBICIÓN ESTRICTA DE SERIALIZACIÓN:** Queda TERMINANTEMENTE PROHIBIDO invocar `define_subagent` de forma secuencial gastando 7 turnos separados (uno por subagente). Deben registrarse los 7 en el mismo turno. Posteriormente, para abrir y ejecutar subagentes en paralelo durante el pipeline, Google Antigravity cuenta con la tool específica `invoke_subagent`, la cual debe recibir todo el lote en su array `Subagents` en una única llamada. Queda estrictamente prohibido perder turnos explorando o leyendo archivos internos de la skill (`run.py`, `dispatch.py`, etc.).
 
 ---
 
