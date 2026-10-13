@@ -975,15 +975,22 @@ class PipelineRunner:
     def run_stage_define_types(self) -> Dict[str, Any]:
         """Auxiliary Stage: Generate define_subagent payloads for all specialized c2c subagent types."""
         types_list = get_type_definitions()
+        # Persist definitions to disk for guaranteed non-truncated access
+        types_json = json.dumps(types_list, indent=2, ensure_ascii=False)
+        if hasattr(self, "work_dir") and self.work_dir:
+            self.work_dir.mkdir(parents=True, exist_ok=True)
+            (self.work_dir / "subagent_types.json").write_text(types_json, encoding="utf-8")
+        (skill_dir / "subagent_types.json").write_text(types_json, encoding="utf-8")
+
         print("\n" + "=" * 70)
         print("[AUX STAGE: DEFINE-TYPES] Subagent Type Definitions for Orchestrator")
         print("=" * 70)
         for t in types_list:
             print(f"  * {t['name']}: {t['description']} (write={t['enable_write_tools']})")
         print("\n" + "-" * 70)
-        print(json.dumps(types_list, indent=2, ensure_ascii=False))
+        print(types_json)
         print("-" * 70 + "\n")
-        print("  [+] Subagent type contracts defined and verified for orchestrator registration.")
+        print("  [+] Subagent type contracts defined, saved to subagent_types.json, and verified.")
         return {"types": types_list}
 
     def run_stage_judge_compare(self) -> Dict[str, Any]:

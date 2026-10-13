@@ -81,7 +81,7 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 > La conversación principal actúa **exclusivamente como Directora de Proyecto / Orquestadora General**. Su responsabilidad es coordinar el flujo de trabajo, invocar las etapas del runner CLI (`run.py`), inspeccionar los presupuestos y artefactos de control, y **delegar todas las tareas intensivas a subagentes especializados en paralelo mediante `invoke_subagent`**.
 >
 > ### 🚫 REGLAS ESTRICTAS DE CONDUCTA DEL DIRECTOR:
-> 1. **PASO 0B OBLIGATORIO (Registro en Lote de Subagentes - <20s):** Al inicio de la sesión, el Director ejecuta `python .agents/skills/content-to-course/run.py --stage define-types` y registra en un solo paso los 7 tipos especializados (`c2c-vision`, `c2c-cta-mapper`, `c2c-cta-harmonizer`, `c2c-author`, `c2c-judge`, `c2c-cta-direct`, `c2c-repair`).
+> 1. **PASO 0B OBLIGATORIO (Registro en Lote de Subagentes - <20s):** Al inicio de la sesión, el Director ejecuta `python .agents/skills/content-to-course/run.py --stage define-types` (o consulta `subagent_types.json`) y registra en paralelo los 7 tipos especializados (`c2c-vision`, `c2c-cta-mapper`, `c2c-cta-harmonizer`, `c2c-author`, `c2c-judge`, `c2c-cta-direct`, `c2c-repair`). Queda TERMINANTEMENTE PROHIBIDO inspeccionar o leer código fuente interno (`run.py`, `dispatch.py`, etc.) durante la instanciación.
 > 2. **PROHIBIDO redactar prompts a mano.** El Director **NUNCA** redacta a mano el `Prompt` de un subagente. Debe generar el payload ejecutando `python run.py --stage dispatch --role <vision|cta-map|cta-reduce|author|judge|repair>` y copiar fielmente los subagentes generados en `invoke_subagent`.
 > 3. **MODELO ESTÁNDAR PARA SUBAGENTES:** Todos los subagentes especializados y jueces ciegos operan con el modelo rápido `flash` (`"Model": "flash"`).
 > 4. **PROHIBIDO redactar plantillas de ejercicios (`work/templates/*.json`) en el hilo principal.** La autoría de plantillas **DEBE** ser delegada a subagentes autores en paralelo (`invoke_subagent`).
@@ -198,12 +198,21 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
    - Modo CTA seleccionado (`mapreduce` o `direct`) y granularidad registrada en `budget.json`.
    - Total de Handouts generados (cuadrículas 2x2 para Beamer, 1x2 para notas/imágenes con banners indelebles).
 
-### Paso 0b: Registro de Tipos Especializados de Subagentes
+### Paso 0b: Registro de Tipos Especializados de Subagentes (<20s)
 1. El Director ejecuta:
    ```bash
    python .agents/skills/content-to-course/run.py --stage define-types
    ```
-2. El Director invoca `define_subagent` para los 7 roles antes de despachar subagentes (`c2c-vision`, `c2c-cta-mapper`, `c2c-cta-harmonizer`, `c2c-author`, `c2c-judge`, `c2c-cta-direct`, `c2c-repair`).
+   *(Este comando emite el JSON limpio sin truncamiento y persiste `subagent_types.json`).*
+2. El Director invoca `define_subagent` en paralelo para los 7 roles antes de despachar:
+   - `c2c-vision`: Handout Vision Analyzer (`enable_write_tools: true`)
+   - `c2c-cta-mapper`: Sectional CTA Mapper (`enable_write_tools: true`)
+   - `c2c-cta-harmonizer`: Curriculum Harmonization (`enable_write_tools: true`)
+   - `c2c-author`: Psychometric Exercise Author (`enable_write_tools: true`)
+   - `c2c-judge`: Blind Psychometric Evaluation Judge (`enable_write_tools: true`)
+   - `c2c-cta-direct`: Direct CTA Architect (`enable_write_tools: true`)
+   - `c2c-repair`: Targeted Repair subagent (`enable_write_tools: true`)
+   *Nota: Queda estrictamente prohibido perder turnos explorando o leyendo archivos de código de la skill (`run.py`, `dispatch.py`, etc.).*
 
 ---
 
