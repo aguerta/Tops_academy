@@ -59,13 +59,15 @@ The test suite can be run directly with a single command from the repository roo
 
 ```powershell
 # Run full E2E test suite in headless mode
-python -m pytest tests/e2e/ -v
+.\.venv\Scripts\python.exe -m pytest tests/e2e/ -v
+# Or using the auto-resolving test runner:
+python run_tests.py tests/e2e/ -v
 
 # Run specific tier or test file
-python -m pytest tests/e2e/test_platform_practice_session.py -v
+.\.venv\Scripts\python.exe -m pytest tests/e2e/test_platform_practice_session.py -v
 
 # Run visual fidelity screenshot generation
-python -m pytest tests/e2e/test_visual_fidelity_capture.py -v
+.\.venv\Scripts\python.exe -m pytest tests/e2e/test_visual_fidelity_capture.py -v
 ```
 
 Additionally, an npm wrapper is defined in `package.json`:

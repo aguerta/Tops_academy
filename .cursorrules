@@ -9,3 +9,18 @@ All file operations (creation, opening, reading, writing, and editing) must stri
 - The project strictly works with Spanish text, which requires full support for accented characters (á, é, í, ó, ú), ñ, diéresis (ü), and inverted punctuation (¿, ¡).
 - When writing Python code or scripts, always explicitly specify `encoding='utf-8'` when reading or writing files (e.g., `open(file, 'r', encoding='utf-8')`).
 - Shell and command-line operations must preserve and emit UTF-8 encoding.
+
+# Python Environment & Testing (Windows / PowerShell)
+
+- DO NOT invoke bare `pytest` in PowerShell/CMD (it is not in the system PATH and causes CommandNotFoundException).
+- DO NOT invoke bare `python -m pytest` directly (the Windows global Python lacks pytest and workspace dependencies).
+- ALWAYS use one of the following canonical commands to execute tests:
+  1. Virtual environment runner directly:
+     `.\.venv\Scripts\python.exe -m pytest <args>`
+  2. Workspace test runner (auto-resolves venv):
+     `python run_tests.py <args>`
+  3. Direct venv pytest binary:
+     `.\.venv\Scripts\pytest.exe <args>`
+- For individual scripts or modules, always invoke using the virtual environment:
+  `.\.venv\Scripts\python.exe -m src.validator.cli <args>`
+

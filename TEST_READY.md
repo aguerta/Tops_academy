@@ -13,13 +13,15 @@ The automated E2E headless browser test suite can be run directly with a single 
 ### Primary Python Runner (pytest + Playwright):
 ```powershell
 # Run all 14 headless E2E acceptance tests
-python -m pytest tests/e2e -v
+.\.venv\Scripts\python.exe -m pytest tests/e2e -v
+# Or using the auto-resolving test runner:
+python run_tests.py tests/e2e -v
 
 # Run visual fidelity screenshot capture (generates the 6 platform states)
-python -m pytest tests/e2e/test_visual_fidelity_capture.py -v
+.\.venv\Scripts\python.exe -m pytest tests/e2e/test_visual_fidelity_capture.py -v
 
 # Run specific functional test module
-python -m pytest tests/e2e/test_platform_practice_session.py -v
+.\.venv\Scripts\python.exe -m pytest tests/e2e/test_platform_practice_session.py -v
 ```
 
 ### TypeScript / Node Runner (Playwright Test):
@@ -79,7 +81,7 @@ npm.cmd run test:e2e
 
 ## 5. Visual Fidelity Artifact Output
 
-Running `python -m pytest tests/e2e/test_visual_fidelity_capture.py` outputs the following screenshots to `tests/e2e/screenshots/`:
+Running `.\.venv\Scripts\python.exe -m pytest tests/e2e/test_visual_fidelity_capture.py` (or `python run_tests.py tests/e2e/test_visual_fidelity_capture.py`) outputs the following screenshots to `tests/e2e/screenshots/`:
 - `01_course_overview.png` (matches `Courser_overview.png`)
 - `02_pre_exercise.png` (matches `pre_exercise.png`)
 - `03_question_with_graph.png` (matches `multiple_answer_question.png`)
