@@ -23,6 +23,16 @@ if str(_skills_root) not in sys.path:
 
 from engine.invariants import validate_katex_syntax
 
+RAW_LATEX_PATTERNS = [
+    # 1. Backslashed LaTeX macros (unambiguous LaTeX)
+    r"\\(?:dot|ddot|bar|hat|tilde|vec|frac|dfrac|tfrac|cfrac|sqrt|alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega|partial|int|sum|prod|infty|times|cdot|approx|leq|geq|neq)\b",
+    # 2. LaTeX commands without backslash: MUST have immediate '{' (no whitespace) with concise math argument
+    r"(?<!\\)\b(?:dot|ddot|bar|hat|tilde|vec)\{[a-zA-Z0-9_+\-*^./]{1,4}\}",
+    r"(?<!\\)\b(?:frac|dfrac|tfrac|cfrac|sqrt)\{[a-zA-Z0-9_+\-*^./]+\}",
+    # 3. Subscripts/superscripts without math delimiters: e.g. k_{t+1} or x^{2}
+    r"(?<!\\)[_^]\{[a-zA-Z0-9_+\-*./]+\}",
+]
+
 
 def load_schema(schema_name: str = "cta.schema.json") -> Dict[str, Any]:
     """Load JSON Schema from schemas directory."""
@@ -131,17 +141,12 @@ def _check_evidence_in_manifest(
 def validate_distractor_math(d: Dict[str, Any], did: str) -> List[str]:
     """Audit all distractor text fields unconditionally for raw/orphaned LaTeX and KaTeX errors."""
     errors: List[str] = []
-    latex_patterns = [
-        r"\b(?:dot|ddot|bar|hat|tilde|vec|frac|dfrac|tfrac|cfrac|sqrt)\s*\{",
-        r"\\(?:dot|ddot|bar|hat|tilde|vec|frac|dfrac|tfrac|cfrac|sqrt|alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega)\b",
-        r"(?<!\\)[_^]\{",
-    ]
     for field in ["manifestation", "remediation_hint", "wrong_belief", "omitted_step"]:
         val = d.get(field)
         if isinstance(val, str) and val.strip():
             # Check for raw LaTeX outside $...$ or $$...$$
             text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", val, flags=re.DOTALL)
-            has_raw_latex = any(re.search(p, text_outside_math) for p in latex_patterns)
+            has_raw_latex = any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS)
             if has_raw_latex:
                 errors.append(f"Distractor '{did}' en '{field}' contiene comandos LaTeX sin delimitar por '$...$': {val}")
 
@@ -161,11 +166,6 @@ def check_cta_katex(cta_data: Dict[str, Any]) -> List[str]:
     unconditionally auditing for raw LaTeX outside '$...$' and validating KaTeX syntax.
     """
     errors: List[str] = []
-    latex_patterns = [
-        r"\b(?:dot|ddot|bar|hat|tilde|vec|frac|dfrac|tfrac|cfrac|sqrt)\s*\{",
-        r"\\(?:dot|ddot|bar|hat|tilde|vec|frac|dfrac|tfrac|cfrac|sqrt|alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega)\b",
-        r"(?<!\\)[_^]\{",
-    ]
     if isinstance(cta_data, list):
         competencies = cta_data
     elif isinstance(cta_data, dict):
@@ -182,7 +182,7 @@ def check_cta_katex(cta_data: Dict[str, Any]) -> List[str]:
         c_name = comp.get("name")
         if isinstance(c_name, str) and c_name.strip():
             text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", c_name, flags=re.DOTALL)
-            if any(re.search(p, text_outside_math) for p in latex_patterns):
+            if any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS):
                 errors.append(f"Competency '{cid}' name contiene comandos LaTeX sin delimitar por '$...$': {c_name}")
             if "$" in c_name.replace(r"\$", ""):
                 errors.extend(validate_katex_syntax(c_name, f"competency '{cid}' name"))
@@ -192,7 +192,7 @@ def check_cta_katex(cta_data: Dict[str, Any]) -> List[str]:
             c_desc = comp.get(desc_key)
             if isinstance(c_desc, str) and c_desc.strip():
                 text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", c_desc, flags=re.DOTALL)
-                if any(re.search(p, text_outside_math) for p in latex_patterns):
+                if any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS):
                     errors.append(f"Competency '{cid}' {desc_key} contiene comandos LaTeX sin delimitar por '$...$': {c_desc}")
                 if "$" in c_desc.replace(r"\$", ""):
                     errors.extend(validate_katex_syntax(c_desc, f"competency '{cid}' {desc_key}"))

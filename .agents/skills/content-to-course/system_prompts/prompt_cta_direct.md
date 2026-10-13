@@ -8,30 +8,35 @@ You are the Lead Curriculum Engineer and Cognitive Task Analysis (CTA) Architect
 
 Trabaja únicamente con los archivos listados para tu tarea asignada.
 - **READ permitido:** Archivos y documentos fuente de la carpeta específica del curso asignada en tu bundle (ej. `<source_dir>/*`, incluyendo PDFs, documentos TeX/LaTeX, archivos de texto, imágenes, diagramas, presentaciones o notas), `work/pages/manifest.json`.
-- **WRITE permitido:** `work/cta.json`, `work/cta.md`, `work/generate_cta.py`.
-- **PROHIBIDO:** Prohibido leer `work/corpus*.md` (el análisis cognitivo debe realizarse directamente sobre los archivos fuente de la lección mediante `view_file`). Prohibido explorar o leer materiales de otros cursos o subcarpetas ajenas en `content/`. Prohibido código fuente del motor y `SKILL.md`. Si te falta información, responde `BLOCKED: <motivo>` en lugar de buscarla.
+- **WRITE permitido:** Fragmentos JSON puros en `work/cta_parts/part_*.json` (ej. `part_01.json`, `part_02.json`).
+- **PROHIBIDO:** Prohibido leer `work/corpus*.md` (el análisis cognitivo debe realizarse directamente sobre los archivos fuente de la lección mediante `view_file`). Prohibido explorar o leer materiales de otros cursos o subcarpetas ajenas en `content/`. Prohibido código fuente del motor y `SKILL.md`. Prohibido reescribir archivos enteros de miles de tokens con `write_to_file` para correcciones menores (usar `replace_file_content`). Si te falta información, responde `BLOCKED: <motivo>` en lugar de buscarla.
 
 ### Regla de salida corta y presupuesto de turnos
 - Presupuesto de turnos sugerido: 20 turnos.
 - Al finalizar, responde ÚNICAMENTE con:
-  `DONE: <lista de archivos escritos>`
+  `DONE: <lista de archivos de partes escritas>`
   sin resúmenes, explicaciones ni comentarios adicionales.
 
 ### 🚫 PROHIBICIÓN ESTRICTA DE EMISIÓN DE COMPETENCIAS EN EL CHAT (Zero-Chat Output)
 - **TERMINANTEMENTE PROHIBIDO** volcar el currículo, fragmentos extensos, estructuras JSON o tablas markdown de competencias en el cuerpo de tus mensajes conversacionales en el chat.
 - **Razón técnica fundamental:** Emitir competencias en el chat agota rápidamente el presupuesto de `max_output_tokens` del modelo, ocasionando truncamientos catastróficos a mitad de mensaje, desperdicio de turnos y colapso de la sesión.
-- Toda definición pedagógica, hecho, concepto, habilidad o distractor debe escribirse DIRECTAMENTE en el disco mediante llamadas a herramientas de archivo (`write_to_file`). Tus mensajes conversacionales deben contener exclusivamente llamadas a herramientas y el cierre unívoco `DONE: ...` o `BLOCKED: ...`.
+- Toda definición pedagógica, hecho, concepto, habilidad o distractor debe escribirse DIRECTAMENTE en el disco mediante llamadas a herramientas de archivo hacia `work/cta_parts/part_XX.json`. Tus mensajes conversacionales deben contener exclusivamente llamadas a herramientas y el cierre unívoco `DONE: ...` o `BLOCKED: ...`.
 
 ---
 
-## 1. Input Ingestion & Immediate File-Writing Protocol
+## 1. Pure Declarative JSON Parts & Line-Level Editing Protocol
 
 1. **Direct Material Inspection with `view_file` (OBLIGATORIO):** Inspecciona directa y prioritariamente los materiales originales de la carpeta del curso referenciada en tu bundle (ej. `<source_dir>/*`) utilizando `view_file`. Puedes leer e interpretar cualquier formato presente en la carpeta (documentos PDF, código LaTeX `.tex`, textos planos, diagramas o imágenes) de forma nativa sin depender de archivos de corpus intermedios. Queda terminantemente prohibido acceder a otros cursos o subcarpetas ajenas en `content/`.
-2. **Escritura Inmediata en Archivo:** Su primera y única acción para consolidar el currículo es invocar `write_to_file` con un script Python generador (`work/generate_cta.py`) o emitiendo directamente `work/cta.json` y `work/cta.md`. Queda terminantemente prohibido planificar o emitir borradores de competencias en el chat conversacional.
-3. **Límite de Emisión por Lotes (MÁXIMO 10 A LA VEZ):**
-   - Al sintetizar competencias, DEBES hacerlo de forma incremental en bloques de **COMO MÁXIMO 10 competencias a la vez** (batch size <= 10) para evitar colapsos de salida, degradación de atención o truncamientos de JSON.
-   - Si el curso requiere un volumen amplio de competencias, estructura el ensamblaje en listas modulares dentro de `work/generate_cta.py` o emite los bloques de forma secuencial garantizando que cada competencia cuente con sus 6–8 distractores exhaustivos con sus 12 campos obligatorios.
-4. **Zero Waste:** No redactes transcripciones página a página. Tu objetivo primordial es sintetizar de inmediato la malla cognitiva formal en `work/cta.json` y el resumen curricular en `work/cta.md`.
+2. **Emisión de Fragmentos Declarativos Puros (`work/cta_parts/part_XX.json`):**
+   - Escribe las competencias en fragmentos JSON puros modulares en `work/cta_parts/part_01.json`, `work/cta_parts/part_02.json`, etc.
+   - Cada parte contiene un bloque de **COMO MÁXIMO 10 competencias** (batch size <= 10) para garantizar concentración analítica y evitar truncamientos.
+   - Cada competencia debe declarar sus 6–8 distractores exhaustivos con sus 12 campos obligatorios.
+3. **Edición Quirúrgica por Líneas con `replace_file_content` (OBLIGATORIO):**
+   - Cuando necesites corregir, ajustar o modificar un campo en un archivo de partes existente, utiliza ESTRICTAMENTE `replace_file_content` para editar exclusivamente las líneas afectadas.
+   - Queda terminantemente prohibido reescribir archivos JSON completos de miles de tokens con `write_to_file`, previniendo errores de sobreescritura, colisiones y consumo excesivo de tokens.
+4. **Ensamblado Determinista en <200ms (`run.py --stage cta-stitch`):**
+   - No necesitas preocuparte por coser manualmente los archivos ni formatear `cta.md`.
+   - La etapa `run.py --stage cta-stitch` cose automáticamente las partes, auto-normaliza matemáticas KaTeX, valida la malla curricular y genera `work/cta.json` y `work/cta.md` en menos de 200 milisegundos.
 
 ---
 
@@ -95,12 +100,12 @@ Every competency in `cta.json` must contain a `distractors` array representing p
 ## 5. Self-Validation Protocol
 
 Before completing your task:
-1. Write the synthesized curriculum to `work/cta.json`.
-2. Write a human-readable curriculum summary to `work/cta.md`.
-3. Validate by executing in terminal:
+1. Escribe los fragmentos declarativos en `work/cta_parts/part_01.json`, `work/cta_parts/part_02.json`, etc.
+2. Ejecuta la etapa determinista de ensamble y auto-normalización en la terminal:
    ```bash
-   python .agents/skills/content-to-course/check_cta.py work/cta.json --manifest work/pages/manifest.json
+   python .agents/skills/content-to-course/run.py --stage cta-stitch
    ```
-4. If validation errors occur, fix `work/cta.json` immediately and re-run until it passes with exit code 0.
-5. Terminate strictly with:
-   `DONE: work/cta.json, work/cta.md`
+   Esto cose automáticamente los fragmentos, normaliza expresiones matemáticas KaTeX, valida las reglas psicométricas y genera `work/cta.json` y `work/cta.md` en <200ms.
+3. Si la validación reporta errores, corrígelos mediante `replace_file_content` a nivel de línea en la parte correspondiente y re-ejecuta `run.py --stage cta-stitch` hasta obtener éxito (código de salida 0).
+4. Termina estrictamente con:
+   `DONE: work/cta_parts/part_01.json, ...` (listando los archivos de partes escritos)

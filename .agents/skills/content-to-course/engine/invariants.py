@@ -180,9 +180,16 @@ def validate_katex_syntax(text: str, context: str, allow_template_vars: bool = F
         errors.append(f"Unmatched scalable delimiter '\\right' without matching '\\left' in {context}.")
 
     # 9. Unsubstituted template variables: {var}
+    # Explicitly permit uppercase set/tuple notation (e.g. {K}, {Y}, {K, L}) in text
     if not (allow_template_vars or context.startswith("stem_variants")):
-        for m in re.finditer(r"\{([a-zA-Z0-9_]+)\}", text):
-            var_name = m.group(1)
+        for m in re.finditer(r"\{([a-zA-Z0-9_,\s]+)\}", text):
+            inner = m.group(1).strip()
+            letters = re.findall(r"[a-zA-Z]", inner)
+            if letters and all(c.isupper() for c in letters):
+                continue
+            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", inner):
+                continue
+            var_name = inner
             start = m.start()
 
             # Legitimate LaTeX: preceded by escape '\', subscript '_', or superscript '^'

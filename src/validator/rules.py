@@ -390,8 +390,17 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
             ))
 
         # 4. Prohibición de variables de plantilla no sustituidas (patrón '{variable_name}' no reemplazado)
+        # Permite explícitamente notación matemática de conjuntos/tuplas mayúsculas (ej. {K}, {Y}, {K, L})
         unreplaced: list[str] = []
-        for m in re.finditer(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}", text):
+        for m in re.finditer(r"\{([a-zA-Z0-9_,\s]+)\}", text):
+            inner = m.group(1).strip()
+            # Si contiene letras y todas son mayúsculas (ej. {K}, {Y}, {K, L}, {A, B}), es notación matemática/económica
+            letters = re.findall(r"[a-zA-Z]", inner)
+            if letters and all(c.isupper() for c in letters):
+                continue
+            # Solo evaluar como variable de plantilla si coincide con identificador típico (ej. {k_val}, {slope})
+            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", inner):
+                continue
             start = m.start()
             prefix = text[:start]
             # Valid LaTeX macro preceding: e.g. \text{, \frac{a}{b}, \begin{cases}

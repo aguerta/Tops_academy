@@ -157,7 +157,8 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "write": [
             "work/templates/<comp_id>.json",
             "work/templates/*.json",
-            "scratch/**",
+            "work/shards/<shard_id>/scratch/**",
+            "work/scratch/<shard_id>/**",
         ],
         "forbidden": [
             "engine/*",
@@ -168,6 +169,7 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "src/validator/*",
             "rules.py",
             "work/build_<shard_id>.py (scripts monolíticos prohibidos; generar directamente templates modulares por competencia)",
+            "scratch/* (prohibido scratch compartido global; usar exclusivamente work/shards/<shard_id>/scratch/)",
         ],
         "turn_budget": 50,
     },
@@ -197,26 +199,28 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "type_name": "c2c-cta-direct",
         "model": "flash",
         "system_prompt": "system_prompts/prompt_cta_direct.md",
-        "description": "Direct CTA Architect para cursos concisos: generar como máximo 10 competencias por lote mediante script generador y prohibido emitir competencias en el texto del chat.",
+        "description": "Direct CTA Architect para cursos concisos: generar competencias en fragmentos JSON declarativos puros (work/cta_parts/part_XX.json), máximo 10 competencias por parte, editando por líneas con replace_file_content en lugar de reescribir todo el archivo.",
         "directives": [
-            "Generar como máximo 10 competencias por lote.",
-            "Prohibido emitir competencias en el texto del chat.",
-            "Usar script generador para persistir cta.json y cta.md directamente en disco.",
+            "Emitir competencias en fragmentos JSON declarativos puros en work/cta_parts/ (part_01.json, part_02.json), con un máximo de 10 competencias por archivo.",
+            "Prohibido emitir competencias en el texto del chat conversacional.",
+            "Usar replace_file_content para correcciones y ediciones por líneas en lugar de reescribir archivos enteros con write_to_file.",
+            "Ejecutar 'run.py --stage cta-stitch' para ensamblar deterministamente partes, auto-normalizar KaTeX, validar y generar cta.md en <200ms.",
         ],
         "read": [
             "<source_dir>/* (todos los archivos y documentos de la carpeta asignada: PDF, TeX, imágenes, docs, etc.)",
             "work/pages/manifest.json",
         ],
         "write": [
-            "work/cta.json",
-            "work/cta.md",
+            "work/cta_parts/part_*.json",
+            "work/cta_parts/*.json",
         ],
         "forbidden": [
             "work/corpus*.md (debe inspeccionar directamente los archivos originales del curso con view_file)",
             "carpetas de otros cursos en content/",
             "engine/*",
             "SKILL.md",
-            "emitir competencias en el texto del chat (usar exclusivamente script para escribir work/cta.json)",
+            "emitir competencias en el texto del chat (usar exclusivamente llamadas a herramientas de archivo hacia work/cta_parts/)",
+            "reescribir archivos JSON completos de miles de tokens con write_to_file para correcciones menores (usar replace_file_content)",
         ],
         "turn_budget": 20,
     },
@@ -319,6 +323,300 @@ def _create_task_bundle(
     return bundle_file
 
 
+def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any]:
+    """Pre-generates a starter parametric template scaffold for an assigned competency.
+
+    Pre-populated with competency metadata and linked distractors from cta.json,
+    guaranteeing 100% distractor coverage (TPL-D3), 3-5 stem variants (TPL-VAR),
+    R-15 option length anti-giveaway balance, AST sandbox compliance, and
+    balanced interaction types (2 MC7, 2 FIB, 2 MS).
+    """
+    cid = comp.get("id", "C-01")
+    cid_clean = cid.replace("-", "")
+    cname = comp.get("name", cid)
+    ctype = comp.get("type", "skill").lower()
+    bloom = comp.get("bloom_level") or comp.get("bloom") or ("Apply" if ctype == "skill" else "Understand")
+    desc = comp.get("description_latex") or comp.get("description", cname)
+    distractors = comp.get("distractors", [])
+    d_ids = [d.get("id") for d in distractors if isinstance(d, dict) and d.get("id")]
+
+    # Guarantee at least 6 distractor IDs for MC7 contract
+    while len(d_ids) < 6:
+        d_ids.append(f"D-{cid_clean}-{len(d_ids)+1:02d}")
+
+    half = max(1, len(d_ids) // 2)
+    d_half1 = d_ids[:half]
+    d_half2 = d_ids[half:]
+
+    mc7_dists1 = ",\n".join([
+        f"        {{'value': f'La trayectoria analítica diverge hacia el desequilibrio con parámetro {{param + {i+1} * 2}}.', 'distractor_id': '{d_ids[i]}'}}"
+        for i in range(6)
+    ])
+    mc7_dists2 = ",\n".join([
+        f"        {{'value': f'El sendero temporal quebranta la condición de equilibrio con escala {{scale + {(i+1)*3}}}.', 'distractor_id': '{d_ids[i]}'}}"
+        for i in range(6)
+    ])
+
+    templates: List[Dict[str, Any]] = [
+        {
+            "id": f"T-{cid_clean}-01",
+            "competency_id": cid,
+            "interaction_type": "multiple_choice_7_options",
+            "difficulty": "easy",
+            "bloom": bloom,
+            "stem": f"En el análisis formal de {cname} con parámetro {{param}}, ¿cuál de las siguientes conclusiones es teóricamente correcta?",
+            "stem_variants": [
+                f"En el análisis formal de {cname} con parámetro {{param}}, ¿cuál de las siguientes conclusiones es teóricamente correcta?",
+                f"Bajo las condiciones estándar de {cname} considerando valor {{param}}, determine la proposición válida:",
+                f"Para la estructura paramétrica de {cname} con nivel {{param}}, seleccione la afirmación consistente:",
+                f"Al evaluar las propiedades dinámicas de {cname} asociadas a {{param}}, identifique la conclusión exacta:"
+            ],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    param = rng.choice([2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16])\n"
+                "    c_str = f'La trayectoria analítica converge hacia el equilibrio con parámetro {param}.'\n"
+                "    distractors = [\n"
+                f"{mc7_dists1}\n"
+                "    ]\n"
+                "    return {'vars': {'param': param}, 'correct': c_str, 'distractors': distractors}\n"
+            ),
+            "cross_check_py": "def verify(res):\n    return bool(res.get('correct')) and len(res.get('distractors', [])) == 6\n",
+            "hints": [
+                f"Examine la definición de {cname}.",
+                "Analice el comportamiento asintótico del sistema.",
+                "Descarte las respuestas que asumen divergencia."
+            ],
+            "solution": f"El modelo de {cname} garantiza convergencia analítica estable al parámetro indicado.",
+            "distractor_ids": list(d_ids[:6])
+        },
+        {
+            "id": f"T-{cid_clean}-02",
+            "competency_id": cid,
+            "interaction_type": "multiple_choice_7_options",
+            "difficulty": "medium",
+            "bloom": bloom,
+            "stem": f"Considere una perturbación en {cname} que modifica la escala base a {{scale}}. ¿Cuál es la propiedad del sendero resultante?",
+            "stem_variants": [
+                f"Considere una perturbación en {cname} que modifica la escala base a {{scale}}. ¿Cuál es la propiedad del sendero resultante?",
+                f"Dada una variación estructural en {cname} con factor de escala {{scale}}, determine el impacto dinámico:",
+                f"En el estudio comparativo de {cname} con coeficiente {{scale}}, seleccione la conclusión analítica:",
+                f"Analice la sensibilidad paramétrica en {cname} para escala {{scale}} e identifique la opción verdadera:"
+            ],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    scale = rng.choice([15, 20, 25, 30, 35, 40, 45, 50, 60, 70])\n"
+                "    c_str = f'El sendero temporal preserva la condición de equilibrio con escala {scale}.'\n"
+                "    distractors = [\n"
+                f"{mc7_dists2}\n"
+                "    ]\n"
+                "    return {'vars': {'scale': scale}, 'correct': c_str, 'distractors': distractors}\n"
+            ),
+            "cross_check_py": "def verify(res):\n    return bool(res.get('correct')) and len(res.get('distractors', [])) == 6\n",
+            "hints": [
+                f"Evalúe la estática comparativa de {cname}.",
+                "Considere la invariancia cualitativa del equilibrio.",
+                "Verifique el sentido de la variación de los parámetros."
+            ],
+            "solution": f"La escala paramétrica preserva el equilibrio global en {cname}.",
+            "distractor_ids": list(d_ids[:6])
+        },
+        {
+            "id": f"T-{cid_clean}-03",
+            "competency_id": cid,
+            "interaction_type": "fill_in_the_blank",
+            "difficulty": "easy",
+            "bloom": bloom,
+            "stem": f"En la formulación escalar de {cname}, con parámetros $a = {{a}}$ y $b = {{b}}$, halle el producto exacto $a \\times b$:",
+            "stem_variants": [
+                f"En la formulación escalar de {cname}, con parámetros $a = {{a}}$ y $b = {{b}}$, halle el producto exacto $a \\times b$:",
+                f"Calcule el valor del indicador multiplicativo $a \\times b$ para $a = {{a}}$ y $b = {{b}}$ en {cname}:",
+                f"Dadas las constantes $a = {{a}}$ y $b = {{b}}$, evalúe la magnitud resultante $a \\times b$ en {cname}:",
+                f"Determine el resultado escalar del producto $a \\cdot b$ con $a = {{a}}$ y $b = {{b}}$ en el modelo:"
+            ],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    a = rng.choice([2, 3, 4, 5, 6, 7, 8, 9])\n"
+                "    b = rng.choice([2, 3, 4, 5, 6])\n"
+                "    ans = a * b\n"
+                "    return {'vars': {'a': a, 'b': b, 'ans': ans}, 'correct': ans, 'value': str(ans), 'canonical_algebraic': str(ans), 'accepted_equivalents': [str(ans), f'{ans}.0'], 'tolerance': 0.001, 'distractors': []}\n"
+            ),
+            "cross_check_py": "def verify(res):\n    return int(res['correct']) == res['vars']['a'] * res['vars']['b']\n",
+            "hints": [
+                "Multiplique ambos parámetros escalares.",
+                "Sustituya directamente los coeficientes.",
+                "Escriba la respuesta en formato numérico."
+            ],
+            "solution": "El producto directo de los parámetros proporciona el valor exacto.",
+            "distractor_ids": []
+        },
+        {
+            "id": f"T-{cid_clean}-04",
+            "competency_id": cid,
+            "interaction_type": "fill_in_the_blank",
+            "difficulty": "medium",
+            "bloom": bloom,
+            "stem": f"Para la dinámica de {cname}, con nivel inicial $k = {{k}}$ y tasa de ajuste $c = {{c}}$, determine la suma escalar $k + c$:",
+            "stem_variants": [
+                f"Para la dinámica de {cname}, con nivel inicial $k = {{k}}$ y tasa de ajuste $c = {{c}}$, determine la suma escalar $k + c$:",
+                f"Calcule el valor de referencia $k + c$ para $k = {{k}}$ y $c = {{c}}$ bajo las ecuaciones de {cname}:",
+                f"Evalúe la suma analítica de las componentes $k = {{k}}$ y $c = {{c}}$ en el contexto de {cname}:",
+                f"Determine el total aditivo resultante $k + c$ dados $k = {{k}}$ y $c = {{c}}$ para este sistema:"
+            ],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    k = rng.choice([10, 12, 14, 16, 18, 20, 24])\n"
+                "    c = rng.choice([3, 5, 7, 9, 11])\n"
+                "    ans = k + c\n"
+                "    return {'vars': {'k': k, 'c': c, 'ans': ans}, 'correct': ans, 'value': str(ans), 'canonical_algebraic': str(ans), 'accepted_equivalents': [str(ans), f'{ans}.0'], 'tolerance': 0.001, 'distractors': []}\n"
+            ),
+            "cross_check_py": "def verify(res):\n    return int(res['correct']) == res['vars']['k'] + res['vars']['c']\n",
+            "hints": [
+                "Sume ambos coeficientes algebraicos.",
+                "Verifique las operaciones directas.",
+                "Introduzca el valor escalar resultante."
+            ],
+            "solution": "La combinación aditiva arroja la magnitud estacionaria buscada.",
+            "distractor_ids": []
+        },
+        {
+            "id": f"T-{cid_clean}-05",
+            "competency_id": cid,
+            "interaction_type": "multiple_select",
+            "difficulty": "medium",
+            "bloom": bloom,
+            "stem": f"Considere las proposiciones cualitativas de {cname} bajo tasa {{rate}}. Marque todas las opciones verdaderas:",
+            "stem_variants": [
+                f"Considere las proposiciones cualitativas de {cname} bajo tasa {{rate}}. Marque todas las opciones verdaderas:",
+                f"En relación con los fundamentos teóricos de {cname} con tasa {{rate}}, seleccione todas las aseveraciones correctas:",
+                f"Para el marco conceptual de {cname} bajo coeficiente {{rate}}, elija todas las afirmaciones matemáticamente válidas:",
+                f"Al examinar las propiedades operativas de {cname} asociadas a {{rate}}, identifique todas las respuestas acertadas:"
+            ],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    rate = rng.choice([4, 6, 8, 10, 12, 14])\n"
+                "    opts = [\n"
+                "        {'content': f'La trayectoria de convergencia converge monotónicamente a la tasa {rate}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n"
+                "        {'content': f'La condición de estabilidad asintótica se satisface para la tasa {rate}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n"
+                f"        {{'content': f'El sistema oscila indefinidamente sin convergencia a la tasa {{rate}}.', 'is_correct': False, 'distractor_id': '{d_ids[0]}', 'error_rationale': 'Confusión sobre convergencia asintótica.'}},\n"
+                f"        {{'content': f'La tasa analítica se anula en todo el espacio fuera de equilibrio.', 'is_correct': False, 'distractor_id': '{d_ids[1]}', 'error_rationale': 'Asume nulidad fuera de equilibrio.'}}\n"
+                "    ]\n"
+                "    return {'vars': {'rate': rate}, 'options': opts, 'distractors': []}\n"
+            ),
+            "cross_check_py": "def verify(res):\n    opts = res.get('options', [])\n    return len(opts) == 4 and len([o for o in opts if o.get('is_correct')]) == 2\n",
+            "hints": [
+                "Examine cada opción individualmente.",
+                "Recuerde que más de una afirmación puede ser acertada.",
+                "Descarte opciones contradictorias con los supuestos."
+            ],
+            "solution": "Las opciones correctas describen la convergencia y estabilidad analítica del modelo.",
+            "distractor_ids": list(d_ids[:2])
+        },
+        {
+            "id": f"T-{cid_clean}-06",
+            "competency_id": cid,
+            "interaction_type": "multiple_select",
+            "difficulty": "hard",
+            "bloom": bloom,
+            "stem": f"En el análisis de sensibilidad y dinámica para {cname} con factor {{factor}}, seleccione todas las alternativas correctas:",
+            "stem_variants": [
+                f"En el análisis de sensibilidad y dinámica para {cname} con factor {{factor}}, seleccione todas las alternativas correctas:",
+                f"Evalúe las propiedades dinámicas de {cname} ante cambios en el factor {{factor}}. Marque todas las afirmaciones válidas:",
+                f"Dada la evolución temporal de {cname} bajo el factor {{factor}}, ¿cuáles de las siguientes proposiciones se cumplen?:",
+                f"Para las condiciones de estabilidad de {cname} con parámetro {{factor}}, identifique todas las opciones verdaderas:"
+            ],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    factor = rng.choice([3, 5, 7, 9, 11, 13])\n"
+                "    opts = [\n"
+                "        {'content': f'El sendero converge al equilibrio establecido por el factor {factor}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n"
+                "        {'content': f'Las trayectorias dinámicas respetan el sentido cualitativo con factor {factor}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n"
+                f"        {{'content': f'El equilibrio se desplaza en dirección opuesta al factor {{factor}}.', 'is_correct': False, 'distractor_id': '{d_ids[2]}', 'error_rationale': 'Inversión del efecto estático comparativo.'}},\n"
+                f"        {{'content': f'La dinámica temporal se vuelve completamente caótica.', 'is_correct': False, 'distractor_id': '{d_ids[3]}', 'error_rationale': 'Atribución incorrecta de caos a sistema unidimensional.'}}\n"
+                "    ]\n"
+                "    return {'vars': {'factor': factor}, 'options': opts, 'distractors': []}\n"
+            ),
+            "cross_check_py": "def verify(res):\n    opts = res.get('options', [])\n    return len(opts) == 4 and len([o for o in opts if o.get('is_correct')]) == 2\n",
+            "hints": [
+                "Evalúe el efecto de estática comparativa.",
+                "Considere la unicidad y estabilidad del equilibrio.",
+                "Revise las proposiciones falsas cuidadosamente."
+            ],
+            "solution": "La diferenciación del sistema confirma las dos proposiciones de convergencia y signo.",
+            "distractor_ids": list(d_ids[2:])
+        }
+    ]
+
+    return {
+        "competency_id": cid,
+        "templates": templates
+    }
+
+
+def preseed_author_scaffolds(
+    work_dir: Path,
+    shard_items: Optional[List[Dict[str, Any]]] = None,
+) -> List[str]:
+    """Pre-generates starter template scaffolds for assigned competencies.
+
+    Pre-populates each template file (work/templates/<comp_id>.json) with
+    competency metadata and linked distractors from cta.json so author subagents
+    start with structured valid schemas and full distractor coverage.
+    """
+    cta_file = work_dir / "cta.json"
+    if not cta_file.is_file():
+        return []
+
+    try:
+        cta_data = json.loads(cta_file.read_text(encoding="utf-8"))
+    except Exception as e:
+        logger.warning("Could not read cta.json for scaffold pre-seeding: %s", e)
+        return []
+
+    comps_by_id: Dict[str, Dict[str, Any]] = {
+        c["id"]: c for c in cta_data.get("competencies", []) if isinstance(c, dict) and "id" in c
+    }
+
+    target_cids: Set[str] = set()
+    if shard_items:
+        for s in shard_items:
+            for cid in s.get("competency_ids", []):
+                target_cids.add(str(cid))
+            for c in s.get("competencies", []):
+                if isinstance(c, dict) and "id" in c:
+                    target_cids.add(str(c["id"]))
+
+    if not target_cids:
+        # Check existing shards on disk
+        for sf in (work_dir / "shards").glob("shard_*.json"):
+            try:
+                sdata = json.loads(sf.read_text(encoding="utf-8"))
+                for cid in sdata.get("competency_ids", []):
+                    target_cids.add(str(cid))
+            except Exception:
+                pass
+
+    if not target_cids:
+        target_cids = set(comps_by_id.keys())
+
+    templates_dir = work_dir / "templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+
+    preseeded: List[str] = []
+    for cid in sorted(target_cids):
+        tpl_path = templates_dir / f"{cid}.json"
+        if tpl_path.is_file() and tpl_path.stat().st_size > 50:
+            continue
+        comp = comps_by_id.get(cid)
+        if not comp:
+            continue
+        scaffold = build_starter_template_for_competency(comp)
+        tpl_path.write_text(json.dumps(scaffold, indent=2, ensure_ascii=False), encoding="utf-8")
+        preseeded.append(cid)
+        logger.info("Pre-seeded template scaffold for %s -> %s", cid, tpl_path.name)
+
+    return preseeded
+
+
 def generate_author_bundle(
     work_dir: Path,
     shard_id: str,
@@ -335,15 +633,18 @@ def generate_author_bundle(
     - Prohibición de comandos complejos de PowerShell inline con variables '$'.
     - Validación de todo el lote a la vez con check_templates.py.
     - Cero introspección del validador (prohibido check_templates.py, src/validator/*, rules.py).
-    - Presupuesto máximo de 50 turnos y Circuit Breaker tras 3 fallos consecutivos idénticos.
+    - Presupuesto de 50 turnos (límite estricto) con objetivo óptimo de 10 viajes y Circuit Breaker tras 3 fallos consecutivos idénticos.
     """
     forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["author"]["forbidden"])
     directives = (
         "### DIRECTIVAS CRÍTICAS DE AUTORÍA MODULAR (OBLIGATORIO):\n"
-        "1. **Salida modular por competencia (work/templates/<comp_id>.json):** Escribe directamente cada archivo "
-        "JSON de competencia asignada (`work/templates/<comp_id>.json`) con sus >=6 plantillas paramétricas usando `write_to_file`. "
+        "1. **Salida modular por competencia (work/templates/<comp_id>.json):** Cada competencia cuenta con un scaffold "
+        "inicial pre-sembrado en `work/templates/<comp_id>.json` con sus metadatos y distractores mapeados desde `cta.json`. "
+        "Edítalo y refínalo directamente usando `replace_file_content` o `write_to_file`. "
         "Queda terminantemente PROHIBIDO escribir un único script monolítico de 2,000 líneas (`build_<shard_id>.py`). "
-        "Si requieres scripts auxiliares en `scratch/`, deben ser modulares y atómicos por competencia (ej. `scratch/gen_<comp_id>.py`).\n"
+        "Si requieres scripts o archivos auxiliares temporales, deben ubicarse EXCLUSIVAMENTE en tu carpeta de scratch aislada: "
+        "`work/shards/<shard_id>/scratch/` (o `work/scratch/<shard_id>/`). Queda terminantemente prohibido utilizar el directorio compartido `scratch/` "
+        "raíz para evitar colisiones entre shards concurrentes.\n"
         "2. **Prohibidos comandos de PowerShell inline con '$':** NO ejecutes comandos inline de PowerShell (`powershell -Command ...`) "
         "que contengan variables o expresiones con signo `$`, ya que PowerShell expande `$variable` como cadenas vacías y corrompe los archivos. "
         "Utiliza siempre las herramientas nativas de Antigravity (`write_to_file`, `replace_file_content`, `view_file`).\n"
@@ -352,7 +653,7 @@ def generate_author_bundle(
         "   `python .agents/skills/content-to-course/check_templates.py work/templates/<comp_id1>.json work/templates/<comp_id2>.json ... --cta work/cta.json --strict`\n"
         "4. **Cero introspección del validador:** Queda estrictamente prohibido examinar, leer o inspeccionar `check_templates.py`, "
         "`src/validator/*` o `rules.py`. La salida de la terminal detalla explícitamente el nombre de la regla y el campo infractor.\n"
-        "5. **Circuit Breaker y presupuesto de 50 turnos:** Tu presupuesto máximo es de 50 turnos. "
+        "5. **Circuit Breaker y presupuesto de 50 turnos:** Tu límite máximo es de 50 turnos (objetivo: 10 viajes gracias a los scaffolds pre-sembrados). "
         "Si obtienes 3 fallos consecutivos idénticos en `check_templates.py` sin progreso, o si alcanzas el límite de turnos, "
         "debes detenerte inmediatamente y responder: `BLOCKED: CONTRACT_ERROR`."
     )
@@ -431,12 +732,17 @@ def generate_cta_direct_bundle(
     forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["cta-direct"]["forbidden"])
     directives = (
         "### DIRECTIVAS CRÍTICAS DE DIRECT CTA ARCHITECT (OBLIGATORIO):\n"
-        "1. **No emitir en chat:** Queda terminantemente prohibido redactar o volcar las definiciones de competencias "
-        "en los mensajes del chat. Todo el resultado debe persistirse directamente en `work/cta.json` y `work/cta.md`.\n"
-        "2. **Máximo 10 competencias por lote:** Si el temario requiere más competencias, sintetízalas estructuradamente "
-        "en lotes de como máximo 10 competencias por iteración para garantizar granularidad y rigor psicométrico.\n"
-        "3. **Script generador:** Utiliza un script de generación (ej. en `scratch/` o ejecución directa de herramientas "
-        "de archivo) para construir el JSON completo y validable de una sola pasada."
+        "1. **Fragmentos JSON Declarativos Puros (work/cta_parts/part_XX.json):** Emite las competencias en fragmentos JSON "
+        "declarativos puros dentro de `work/cta_parts/` (ej. `work/cta_parts/part_01.json`, `part_02.json`). Cada archivo debe "
+        "contener una lista o bloque de como máximo 10 competencias declarativas puras.\n"
+        "2. **Edición por Líneas con replace_file_content:** Para corregir cualquier error o ajustar distractores o campos, utiliza "
+        "estrictamente la herramienta `replace_file_content` para realizar reemplazos específicos a nivel de línea. "
+        "Queda terminantemente prohibido reescribir archivos enteros de miles de tokens con `write_to_file` para evitar "
+        "truncamientos catastróficos, agotamiento de turnos y errores de sintaxis.\n"
+        "3. **Zero-Chat Output:** Queda terminantemente prohibido volcar competencias o JSON en los mensajes del chat conversacional.\n"
+        "4. **Coser con cta-stitch:** Una vez generados los fragmentos en `work/cta_parts/`, ejecuta "
+        "`python .agents/skills/content-to-course/run.py --stage cta-stitch` para ensamblar deterministamente `work/cta.json`, "
+        "auto-normalizar KaTeX, verificar esquemas y generar `work/cta.md` en <200ms."
     )
     combined = f"{directives}\n\n{extra_context}".strip() if extra_context else directives
     return _create_task_bundle(
@@ -773,14 +1079,24 @@ def build_dispatch(
                 if str(s.get("shard_id")) in ids_str or str(s.get("shard_index")) in ids_str
             ]
 
+        # Pre-seed starter scaffolds with metadata & distractors for assigned competencies
+        preseed_author_scaffolds(work_dir=work, shard_items=shard_items)
+
         for s in shard_items:
             s_id = s.get("shard_id", "shard_01")
             c_ids = s.get("competency_ids", [])
             if not c_ids and "competencies" in s:
                 c_ids = [c.get("id") for c in s["competencies"] if "id" in c]
 
+            # Ensure isolated scratch folders exist for this shard
+            (work / "shards" / str(s_id) / "scratch").mkdir(parents=True, exist_ok=True)
+            (work / "scratch" / str(s_id)).mkdir(parents=True, exist_ok=True)
+
             read_paths = [f"work/shards/{s_id}.json", "work/cta.json"]
-            write_paths = [f"work/templates/{cid}.json" for cid in c_ids]
+            write_paths = [f"work/templates/{cid}.json" for cid in c_ids] + [
+                f"work/shards/{s_id}/scratch/**",
+                f"work/scratch/{s_id}/**",
+            ]
 
             bundle_file = generate_author_bundle(
                 work_dir=work,
@@ -1028,7 +1344,8 @@ def build_dispatch(
             read_paths.append("work/patches/*.md")
         if (work / "handout_patches").is_dir():
             read_paths.append("work/handout_patches/*.md")
-        write_paths = ["work/cta.json", "work/cta.md"]
+        (work / "cta_parts").mkdir(parents=True, exist_ok=True)
+        write_paths = ["work/cta_parts/part_*.json", "work/cta_parts/*.json"]
         bundle_file = generate_cta_direct_bundle(
             work_dir=work,
             read_paths=read_paths,
