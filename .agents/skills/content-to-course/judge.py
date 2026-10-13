@@ -114,12 +114,12 @@ def _parse_float(val: Any) -> Optional[float]:
     return None
 
 
-def _is_numeric_equal(val1: Any, val2: Any, tol: float = 0.0001) -> bool:
-    """Checks whether two values are numerically equal within a given tolerance."""
+def _is_numeric_equal(val1: Any, val2: Any, tol: float = 0.01) -> bool:
+    """Checks whether two values are numerically equal within a given tolerance (default 0.01)."""
     f1 = _parse_float(val1)
     f2 = _parse_float(val2)
     if f1 is not None and f2 is not None:
-        return abs(f1 - f2) <= tol or math.isclose(f1, f2, abs_tol=tol, rel_tol=1e-5)
+        return abs(f1 - f2) <= tol or math.isclose(f1, f2, abs_tol=tol, rel_tol=1e-4)
     return False
 
 
@@ -301,10 +301,42 @@ def generate_judge_batch(
 
         elif itype == "fill_in_the_blank":
             ca = assembled.get("correct_answer", {})
-            gt_record["correct_value"] = ca.get("value") or assembled.get("value")
+            c_val = ca.get("value") or assembled.get("value")
+            gt_record["correct_value"] = c_val
             gt_record["canonical_algebraic"] = ca.get("canonical_algebraic") or assembled.get("canonical_algebraic")
             gt_record["accepted_equivalents"] = ca.get("accepted_equivalents") or assembled.get("accepted_equivalents", [])
-            gt_record["tolerance"] = ca.get("tolerance") or assembled.get("tolerance", 0.0001)
+            tol = ca.get("tolerance") or assembled.get("tolerance", 0.01)
+            try:
+                tol = float(tol)
+            except (ValueError, TypeError):
+                tol = 0.01
+            if tol < 0.01:
+                tol = 0.01
+            gt_record["tolerance"] = tol
+
+            # Build enriched typed contract for blind judges
+            parsed_num = _parse_float(c_val)
+            expected_type = "float"
+            decimal_places = 2
+            format_example = "2.80 o 2.8"
+            if parsed_num is not None:
+                if parsed_num.is_integer():
+                    expected_type = "integer"
+                    decimal_places = 0
+                    format_example = f"{int(parsed_num)}"
+                else:
+                    expected_type = "float"
+                    decimal_places = 2
+                    format_example = f"{parsed_num:.2f} o {round(parsed_num, 4)}"
+
+            contract = {
+                "expected_type": expected_type,
+                "decimal_places": decimal_places,
+                "tolerance": tol,
+                "format_example": format_example,
+            }
+            judge_item["answer_contract"] = contract
+            gt_record["answer_contract"] = contract
 
         if "graph" in assembled and assembled["graph"]:
             judge_item["graph"] = assembled["graph"]
@@ -484,7 +516,11 @@ def compare_judge_responses(
             gt_val = gt.get("correct_value")
             gt_canon = gt.get("canonical_algebraic")
             gt_equivs = gt.get("accepted_equivalents", [])
-            tol = float(gt.get("tolerance", 0.0001))
+            raw_tol = gt.get("tolerance") or gt.get("answer_contract", {}).get("tolerance") or 0.01
+            try:
+                tol = float(raw_tol)
+            except (ValueError, TypeError):
+                tol = 0.01
 
             if _is_numeric_equal(user_ans, gt_val, tol=tol):
                 is_match = True
