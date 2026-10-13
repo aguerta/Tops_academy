@@ -23,6 +23,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+if sys.platform == "win32":
+    try:
+        if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8")
+        if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 logger = logging.getLogger("dispatch")
 
 # Directory of the skill
@@ -1617,33 +1626,41 @@ def build_dispatch(
                 source_files = sorted(f.name for f in s_dir.iterdir() if f.is_file())
             read_paths = [f"{source_rel_str}/{f}" for f in source_files] if source_files else [f"{source_rel_str}/*"]
             forbidden_cta = list(forbidden) + [
-                "write_to_file para escribir archivos completos de competencias (usar exclusivamente replace_file_content sobre los scaffolds pre-sembrados)",
+                "modificar o editar work/compile_cta.py (el compilador es inmutable; solo consulta su contrato con view_file si lo requieres)",
                 "work/corpus*.md (el análisis cognitivo debe realizarse directamente sobre los materiales fuente asignados con view_file)",
                 f"carpetas o archivos de otros cursos en content/ (distintas de {source_rel_str})",
                 "content/* (excepto los materiales fuente asignados)",
                 "work/pages/manifest.json (prohibido consultar o depender de manifest.json; citar directamente los archivos fuente asignados)",
-                "scripts Python auxiliares (.py) en scratch/ o work/ (prohibido crear o ejecutar generadores en Python)",
-                "ejecutar comandos exploratorios o pruebas previas en terminal CLI (el único comando permitido es 'run.py --stage cta-stitch' en el turno final tras completar todas las partes)",
+                "scripts Python auxiliares (.py) en scratch/ o work/ (prohibido crear generadores en Python; usar exclusivamente cta_data.py y compile_cta.py)",
+                "ejecutar comandos exploratorios o pruebas previas en terminal CLI (único comando permitido: 'python work/compile_cta.py')",
                 "emitir competencias en el texto del chat (Do not output competencies in chat text)",
             ]
         else:
             read_paths = ["content/*"]
             forbidden_cta = list(forbidden) + [
-                "write_to_file para escribir archivos completos de competencias (usar exclusivamente replace_file_content sobre los scaffolds pre-sembrados)",
+                "modificar o editar work/compile_cta.py (el compilador es inmutable; solo consulta su contrato con view_file si lo requieres)",
                 "work/corpus*.md (inspección directa de contenidos requerida)",
                 "work/pages/manifest.json (prohibido consultar o depender de manifest.json)",
+                "scripts Python auxiliares (.py) en scratch/ o work/ (usar exclusivamente cta_data.py y compile_cta.py)",
                 "emitir competencias en el texto del chat (Do not output competencies in chat text)",
             ]
 
+        # Ensure immutable compile_cta.py is copied to work directory
+        compile_src = SKILL_DIR / "compile_cta.py"
+        if compile_src.is_file():
+            shutil.copy2(compile_src, work / "compile_cta.py")
+
+        # Pre-seed starter scaffolds on disk for backwards compatibility with modular parts
+        doc_name_first = source_files[0] if source_files else "material_fuente.pdf"
+        preseed_cta_scaffolds(work_dir=work, num_parts=3, doc_name=doc_name_first)
+
+        read_paths = ["work/compile_cta.py"] + read_paths
         if (work / "patches").is_dir():
             read_paths.append("work/patches/*.md")
         if (work / "handout_patches").is_dir():
             read_paths.append("work/handout_patches/*.md")
 
-        # Pre-seed starter scaffolds on disk so subagent never uses write_to_file
-        doc_name_first = source_files[0] if source_files else "material_fuente.pdf"
-        preseed_cta_scaffolds(work_dir=work, num_parts=3, doc_name=doc_name_first)
-        write_paths = ["work/cta_parts/part_*.json", "work/cta_parts/*.json"]
+        write_paths = ["work/cta_data.py", "work/cta.json", "work/cta.md", "work/cta_parts/part_*.json", "work/cta_parts/*.json"]
 
         extra_cta_context = ""
         if source_files:
@@ -1651,7 +1668,7 @@ def build_dispatch(
             extra_cta_context = (
                 f"### MATERIALES FUENTE ASIGNADOS ({source_rel_str}):\n"
                 f"{file_list_str}\n\n"
-                "Usa estos nombres exactos de archivo en el campo `evidence: {\"doc\": \"<nombre>\", \"page\": <int>}`. "
+                "Usa estos nombres exactos de archivo en el campo de evidencia (`evidence: doc, pag`). "
                 "Comienza inmediatamente inspeccionando estos archivos asignados con `view_file`."
             )
 
@@ -1681,7 +1698,8 @@ def build_dispatch(
         for r in read_paths:
             prompt_lines.append(f"  * `{r}`")
         prompt_lines.append("- **WRITE permitido:**")
-        prompt_lines.append("  * Modificación quirúrgica mediante replace_file_content sobre work/cta_parts/part_*.json")
+        prompt_lines.append("  * `work/cta_data.py` (emisión de datos tabulares puros con write_to_file)")
+        prompt_lines.append("  * `work/cta.json` y `work/cta.md` (generados automáticamente por `python work/compile_cta.py`)")
         prompt_lines.append("- **PROHIBIDO:**")
         for f in forbidden_cta:
             prompt_lines.append(f"  * {f}")
@@ -1694,14 +1712,18 @@ def build_dispatch(
 
         prompt_lines.extend([
             "",
-            "## INICIO INMEDIATO Y TERMINACIÓN OBLIGATORIA",
-            "- NO necesitas leer ningún archivo bundle ni system prompt en Turno 1. Todas tus instrucciones, directivas e insumos están provistos aquí.",
-            "- Los archivos modulares (work/cta_parts/part_01.json, part_02.json, part_03.json) ya han sido pre-sembrados con scaffolds válidos en disco.",
-            "- Inicia DIRECTAMENTE en Turno 1 analizando los materiales fuente asignados con `view_file` y editando quirúrgicamente el scaffold en `work/cta_parts/part_01.json` con `replace_file_content`.",
-            "- Queda TERMINANTEMENTE PROHIBIDO usar `write_to_file` para escribir o reescribir archivos de competencias.",
+            "## INICIO INMEDIATO Y TERMINACIÓN OBLIGATORIA (ARQUITECTURA DE 2 ARCHIVOS)",
+            "- NO necesitas leer ningún archivo bundle en Turno 1. Todas tus instrucciones y directivas están provistas aquí.",
+            "- El compilador `work/compile_cta.py` ya está pre-sembrado en disco y es INMUTABLE. No lo edites ni lo modifiques.",
+            "- Inicia DIRECTAMENTE en Turno 1 analizando los materiales fuente asignados con `view_file` en estricto orden cronológico (página por página).",
+            "- Emite las competencias en formato de tuplas tabulares compactas en `work/cta_data.py` usando `write_to_file`.",
+            "- Para cursos extensos, emite en 2 o más bloques continuos usando `write_to_file` con `Append: true` para bloques subsecuentes.",
+            "- Tras emitir los datos, ejecuta: `python work/compile_cta.py` para compilar y validar automáticamente.",
+            "- Si el compilador o `check_cta.py` reportan errores (con tupla y número de línea exacto en `cta_data.py`), corrígelos quirúrgicamente con `replace_file_content` o reescribe con `write_to_file(Overwrite=True)`.",
+            "- Re-ejecuta `python work/compile_cta.py` hasta obtener certificación limpia (`PASS`).",
             f"- Presupuesto de turnos sugerido: {turn_budget} turnos.",
             "- Do not output competencies in chat text. Terminate strictly with:",
-            "`DONE: <archivos de partes modificados>` (o BLOCKED: <motivo>).",
+            "`DONE: work/cta.json` (o BLOCKED: <motivo>).",
             "PROHIBIDO emitir resúmenes, explicaciones o saludos adicionales en el chat.",
         ])
         prompt_text = "\n".join(prompt_lines)
@@ -1844,27 +1866,8 @@ def _is_allowed_path(rel_path: str, role: str) -> bool:
 
 
 def get_type_definitions() -> List[Dict[str, Any]]:
-    """Returns type definitions for define_subagent registration."""
-    cta_sys_file = SKILL_DIR / "system_prompts" / "prompt_cta_direct.md"
-    if cta_sys_file.is_file():
-        try:
-            full_prompt = cta_sys_file.read_text(encoding="utf-8")
-            for t in TYPE_DEFINITIONS:
-                if t["name"] == "c2c-cta-direct":
-                    t["system_prompt"] = full_prompt
-        except Exception as e:
-            logger.warning("Could not load full system prompt for c2c-cta-direct: %s", e)
-
-    author_sys_file = SKILL_DIR / "system_prompts" / "prompt_shard_author.md"
-    if author_sys_file.is_file():
-        try:
-            full_author_prompt = author_sys_file.read_text(encoding="utf-8")
-            for t in TYPE_DEFINITIONS:
-                if t["name"] == "c2c-author":
-                    t["system_prompt"] = full_author_prompt
-        except Exception as e:
-            logger.warning("Could not load full system prompt for c2c-author: %s", e)
-    return TYPE_DEFINITIONS
+    """Returns concise type definitions for define_subagent registration."""
+    return [dict(t) for t in TYPE_DEFINITIONS]
 
 
 def scope_check(
