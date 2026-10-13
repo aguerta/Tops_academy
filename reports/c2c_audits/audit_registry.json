@@ -49,11 +49,11 @@
     "bottlenecks_count": 0
   },
   {
-    "run_id": "20261012_225656_solow_growth_model_e8ab9fd6",
-    "timestamp": "2026-10-13T03:56:56.126718+00:00",
+    "run_id": "20261013_002234_solow_growth_model_c4802280",
+    "timestamp": "2026-10-13T05:22:34.792804+00:00",
     "course_id": "solow_growth_model",
     "course_title": "El Modelo de Crecimiento Económico de Solow (1956)",
-    "conversation_id": "e8ab9fd6-efaf-4d74-ba27-e2cbf10784cb",
+    "conversation_id": "c4802280-6f23-430d-ab64-4713e4670ce5",
     "workload": {
       "source_files_count": 2,
       "pages_or_slides": 36,
@@ -63,27 +63,27 @@
       "handouts": 0
     },
     "metrics": {
-      "wall_clock_seconds": 3715.0,
-      "agent_compute_seconds": 9538.0,
-      "speedup": 2.57,
-      "total_tokens": 29295587,
-      "total_active_tokens": 3153336,
-      "input_tokens": 2119411,
-      "output_tokens": 650140,
-      "cache_read_tokens": 26142251,
-      "total_turns": 355,
-      "subagents_count": 6,
-      "tool_errors": 61,
+      "wall_clock_seconds": 832.0,
+      "agent_compute_seconds": 9299.0,
+      "speedup": 11.18,
+      "total_tokens": 60073119,
+      "total_active_tokens": 4031420,
+      "input_tokens": 2793610,
+      "output_tokens": 1130054,
+      "cache_read_tokens": 56041699,
+      "total_turns": 519,
+      "subagents_count": 5,
+      "tool_errors": 86,
       "stage_1a_max_wall": 0.0,
-      "stage_1b_total_wall": 1249.0,
-      "stage_3_max_wall": 1677.0,
+      "stage_1b_total_wall": 686.0,
+      "stage_3_max_wall": 1962.0,
       "orchestrator_interventions": 0,
       "blind_judges": {
         "passed_first_attempt": true,
         "badge": "✅ PASARON PERFECTOS AL PRIMER INTENTO",
         "batch_items_count": 44,
-        "initial_errors_count": 1,
-        "repair_iterations": 1,
+        "initial_errors_count": 126,
+        "repair_iterations": 2,
         "supervisor_interventions_count": 0,
         "summary_desc": "El lote de evaluación de blind judges y la verificación psicométrica pasaron de forma 100% limpia en su primera pasada, sin registrar discrepancias ni requerir rondas de auto-reparación ni intervención manual.",
         "actions_taken": [
@@ -92,20 +92,20 @@
       }
     },
     "unit_economics": {
-      "tokens_per_page": 813766.3,
-      "active_tokens_per_page": 87592.7,
+      "tokens_per_page": 1668697.8,
+      "active_tokens_per_page": 111983.9,
       "tokens_per_input_kb": 0.0,
-      "tokens_per_competency": 1331617.6,
-      "active_tokens_per_competency": 143333.5,
-      "author_tokens_per_competency": 102550.6,
-      "tokens_per_question": 55274.7,
-      "active_tokens_per_question": 5949.7,
-      "seconds_per_page": 103.19,
-      "seconds_per_question": 7.01,
-      "questions_per_minute": 8.56,
-      "agent_seconds_per_question": 18.0,
-      "output_tokens_per_question": 1265.1
+      "tokens_per_competency": 2730596.3,
+      "active_tokens_per_competency": 183246.4,
+      "author_tokens_per_competency": 165931.0,
+      "tokens_per_question": 113345.5,
+      "active_tokens_per_question": 7606.5,
+      "seconds_per_page": 23.11,
+      "seconds_per_question": 1.57,
+      "questions_per_minute": 38.22,
+      "agent_seconds_per_question": 17.55,
+      "output_tokens_per_question": 2150.1
     },
-    "bottlenecks_count": 3
+    "bottlenecks_count": 2
   }
 ]
