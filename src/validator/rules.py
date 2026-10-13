@@ -363,14 +363,27 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
         # 3. Prohibición de llaves dobles residuales '{{' o '}}' dentro de expresiones matemáticas
         math_matches = re.findall(r"\$\$(.*?)\$\$|\$(.*?)\$", text, flags=re.DOTALL)
         has_double_brace_in_math = False
+        has_unbalanced_braces_in_math = False
+        unbalanced_sample = ""
         for mb in math_matches:
             block = mb[0] if mb[0] else mb[1]
-            if "{{" in block or "}}" in block:
+            if "{{" in block and not re.search(r"\\[a-zA-Z]+\s*\{\{", block):
                 has_double_brace_in_math = True
+            if re.search(r"\{\{\s*[a-zA-Z0-9_]+\s*\}\}", block):
+                has_double_brace_in_math = True
+            clean_block = block.replace(r"\{", "").replace(r"\}", "")
+            if clean_block.count("{") != clean_block.count("}"):
+                has_unbalanced_braces_in_math = True
+                unbalanced_sample = clean_block[:60]
                 break
-        if not has_double_brace_in_math:
-            if re.search(r"\\[a-zA-Z]+\s*\{\{|\{\{\s*\\[a-zA-Z]+|[\^_]\{\{", text):
-                has_double_brace_in_math = True
+
+        if has_unbalanced_braces_in_math:
+            text_errors.append(ValidationError(
+                rule_id="R-20",
+                code="ERR_LATEX_SYNTAX",
+                message=f"Question '{q_id}' in {field_desc}: Unbalanced curly braces in LaTeX math block: '{unbalanced_sample}'",
+                item_id=q_id
+            ))
 
         if has_double_brace_in_math:
             text_errors.append(ValidationError(
@@ -402,6 +415,26 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                 rule_id="R-20",
                 code="ERR_LATEX_SYNTAX",
                 message=f"Question '{q_id}' in {field_desc}: Unreplaced template variable(s) found: {preview}",
+                item_id=q_id
+            ))
+
+        # 5. Linter de residuos de variables de código en texto estudiantil (_val, _num, _str)
+        var_residues = re.findall(r"\b([a-zA-Z0-9]+_(?:val|num|str|res))\b", text)
+        if var_residues:
+            res_preview = ", ".join(sorted(set(var_residues))[:3])
+            text_errors.append(ValidationError(
+                rule_id="R-20",
+                code="ERR_VARIABLE_RESIDUE",
+                message=f"Question '{q_id}' in {field_desc}: Leaked raw code variable identifier(s) found: {res_preview}",
+                item_id=q_id
+            ))
+
+        # 6. Linter de sustitución ciega que corrompe operadores diferenciales (\dot36 en lugar de \dot{r})
+        if re.search(r"\\dot\d+", text) or re.search(r"\\dot\{\d+\}", text):
+            text_errors.append(ValidationError(
+                rule_id="R-19",
+                code="ERR_ANSWER_LEAK_SYNTAX",
+                message=f"Question '{q_id}' in {field_desc}: Corrupted differential operator or answer leak detected (e.g. \\dot<number>)",
                 item_id=q_id
             ))
 
