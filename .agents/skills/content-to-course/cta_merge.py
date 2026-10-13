@@ -21,9 +21,9 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 # Import validators from check_cta
 try:
-    from .check_cta import check_cta_katex, check_prerequisites_dag, validate_cta_rules
+    from .check_cta import JsonLineLocator, check_cta_katex, check_prerequisites_dag, validate_cta_rules
 except ImportError:
-    from check_cta import check_cta_katex, check_prerequisites_dag, validate_cta_rules
+    from check_cta import JsonLineLocator, check_cta_katex, check_prerequisites_dag, validate_cta_rules
 
 
 logger = logging.getLogger("cta_merge")
@@ -976,10 +976,6 @@ def stitch_cta_parts(
     if dag_err:
         logger.warning("Prerequisite DAG warning in stitched CTA: %s", dag_err)
 
-    katex_errs = check_cta_katex(all_competencies)
-    if katex_errs:
-        logger.warning("KaTeX issues in stitched CTA: %s", katex_errs[:3])
-
     # 3. Construct canonical CTA structure
     cta_data = {
         "course_id": course_id,
@@ -994,6 +990,12 @@ def stitch_cta_parts(
     final_cta_json.write_text(
         json.dumps(cta_data, indent=2, ensure_ascii=False), encoding="utf-8"
     )
+
+    # 4b. Line-indexed KaTeX verification on written cta.json
+    locator = JsonLineLocator(final_cta_json)
+    katex_errs = check_cta_katex(cta_data, locator=locator)
+    if katex_errs:
+        logger.warning("KaTeX issues in stitched CTA: %s", katex_errs[:3])
 
     # 5. Deterministically render and write work/cta.md
     final_cta_md = work_path / "cta.md"

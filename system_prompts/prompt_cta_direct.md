@@ -32,19 +32,29 @@ Trabaja únicamente con los archivos y directivas listados para tu tarea asignad
 
 ---
 
-## 1. Pure Declarative JSON Parts & Line-Level Editing Protocol
+## 1. Direct CTA 2-File Architecture (Immutable Compiler + Tabular Tuples)
 
-1. **Inspección Directa de Materiales Asignados con `view_file` (Turno 1 - Inmediato):**
-   - Comienza INMEDIATAMENTE en el Turno 1 analizando los materiales fuente asignados utilizando `view_file`.
-   - Cero exploración redundante: No listes directorios ni ejecutes comandos de consola para verificar archivos; los materiales asignados ya están declarados explícitamente en tu asignación.
-2. **Scaffolds Pre-sembrados y Modificación Quirúrgica con `replace_file_content` (OBLIGATORIO):**
-   - Los archivos modulares `work/cta_parts/part_01.json`, `part_02.json`, `part_03.json` ya existen en disco con scaffolds y esquemas JSON válidos.
-   - Utiliza ESTRICTAMENTE `replace_file_content` a nivel de línea para completar, refinar y añadir competencias y distractores.
-   - Cada parte contiene un bloque de **COMO MÁXIMO 10 competencias** (batch size <= 10) para garantizar concentración analítica y evitar truncamientos.
-   - Queda terminantemente prohibido usar `write_to_file`.
-3. **Ensamblado Determinista en <200ms (`run.py --stage cta-stitch`):**
-   - La etapa `run.py --stage cta-stitch` cose automáticamente las partes, auto-normaliza matemáticas KaTeX, valida la malla curricular y genera `work/cta.json` y `work/cta.md` en menos de 200 milisegundos.
-   - NO intentes coser manualmente los fragmentos ni generar `cta.json` a mano.
+Para maximizar la eficiencia y erradicar colisiones de formato o desbordamientos de tokens, el pipeline utiliza prioritariamente la **Arquitectura de 2 Archivos**:
+
+1. **Archivo 1 (`work/compile_cta.py` - Pre-sembrado Inmutable por el Orquestador):**
+   - El LLM **NUNCA lo modifica ni escribe en él**. Solo puede consultarlo con `view_file` si requiere revisar la lógica de compilación.
+   - Importa `cta_data.py`, sintetiza los objetos JSON completos, asigna IDs canónicos (`H-01`, `C-01`, `Hab-01`, `D-H01-01`), auto-normaliza KaTeX, valida contra `schemas/cta.schema.json` y certifica con `check_cta.py` en <5 milisegundos.
+   - En caso de error, mapea exactamente el ID o campo infractor a la tupla y línea en `cta_data.py`.
+
+2. **Archivo 2 (`work/cta_data.py` - Emitido por el CTA Architect):**
+   - El arquitecto **solo emite datos pedagógicos puros en tuplas compactas**.
+   - Reduce el tamaño en más de un 70% por competencia y permite procesar cursos completos en 1 o 2 emisiones sin riesgo de truncamiento.
+   - **Estrategia de emisión cronológica continua:**
+     - Procesa el documento página por página en estricto orden cronológico.
+     - Emite las tuplas en `work/cta_data.py` usando `write_to_file`.
+     - Si el curso es extenso, emite las primeras 10-12 competencias con `write_to_file` y las siguientes con `write_to_file(Append=True)`.
+   - **Protocolo de Auto-Evaluación:**
+     - Ejecuta `python work/compile_cta.py`.
+     - Si hay errores, utiliza `replace_file_content` para corregir quirúrgicamente la tupla reportada (o reescribe el archivo con `write_to_file`).
+     - Al certificar `PASS`, finaliza con `DONE: work/cta.json`.
+
+3. **Compatibilidad con Partes Modulares (`work/cta_parts/part_XX.json`):**
+   - Si el pipeline opera con partes JSON modulares (máximo 10 competencias por parte), utiliza exclusivamente `replace_file_content` sobre los scaffolds pre-sembrados y ejecuta una sola vez al final `python .agents/skills/content-to-course/run.py --stage cta-stitch`.
 
 ---
 
@@ -105,7 +115,42 @@ Every competency in `cta.json` must contain a `distractors` array representing p
 - **`evidence`:** Toda competencia y distractor debe declarar `{"doc": "<nombre_archivo_fuente>", "page": <page_num>}` referenciando el nombre de archivo y página inspeccionada de los materiales fuente asignados. Queda prohibido depender de `manifest.json`.
 - **`prerequisites`:** Array de IDs de competencias que deben ser aprendidas previamente. Estrictamente acíclico (DAG sin dependencias circulares).
 
-### Canonical Skeleton of `work/cta_parts/part_XX.json`:
+### Primary: Tabular Tuple Structure for `work/cta_data.py`:
+```python
+# ==============================================================================
+# GUÍA DE ESTRUCTURA DE TUPLAS PARA cta_data.py (TUPLE CONTRACT)
+# ==============================================================================
+# 1. Tupla de Competencia (posiciones 0 a 8):
+#    (tipo, id, nombre, descripcion_latex, bloom, doc, pag, prerequisitos, distractores)
+# 2. Tupla de Distractor (posiciones 0 a 5):
+#    (nombre, wrong_belief, correct_belief, manifestation, hint, omitted_step)
+# ==============================================================================
+COMPETENCIES = [
+    (
+        "concept", "C-01", "Invariante de Bucle en Ordenamiento",
+        r"La propiedad $A[0 \dots i-1]$ ordenada se preserva en cada iteración.",
+        "Understand", "clrs_algorithms.pdf", 18, [],
+        [
+            ("Confundir inicialización con terminación", r"Invariante solo vale al final", r"Debe probarse en inicio, mantenimiento y fin", r"P(n) sin base", "Verificar caso base i=0."),
+            ("Desfase de índice por uno (Off-by-one)", r"A[0 \dots i]", r"A[0 \dots i-1]", r"i \text{ elementos}", "El subarray procesado excluye el elemento actual de pivote."),
+            ("Presuponer estabilidad no demostrada", r"Todo sort es estable", r"La estabilidad depende del criterio de partición", r"\text{Swap inestable}", "Revisar si los elementos iguales preservan su orden relativo.")
+        ]
+    ),
+    (
+        "skill", "Hab-01", "Cálculo de Eficiencia de Ciclo Carnot",
+        r"Calcular el rendimiento térmico $\eta = 1 - \frac{T_C}{T_H}$ a partir de isotermas y adiabáticas reversibles.",
+        "Apply", "termo_callen.pdf", 45, ["C-01"],
+        [
+            ("Uso de temperaturas en Celsius", r"\eta = 1 - T_C/T_H \text{ en } ^\circ\text{C}", r"\text{Temperaturas absolutas en Kelvin}", r"\eta < 0", "Convertir siempre a escala absoluta Kelvin."),
+            ("Inversión de focos térmicos caliente y frío", r"\eta = 1 - T_H/T_C", r"\eta = 1 - T_C/T_H", r"\eta < 0", "El foco frío T_C va en el numerador."),
+            ("Omisión de conversión de unidades de calor", None, r"\eta = W/Q_H", r"\eta > 1", "Verificar coherencia de unidades antes del cociente.", "Omitir conversión de Joules a Calorías"),
+            ("Asumir irreversibilidad en ciclo ideal", r"S_{gen} > 0", r"\Delta S_{universo} = 0", r"\eta < \eta_{Carnot}", "El ciclo de Carnot es estrictamente reversible.")
+        ]
+    )
+]
+```
+
+### Compatibility Skeleton for `work/cta_parts/part_XX.json`:
 Cada archivo `part_XX.json` es una lista JSON pura `[...]` con hasta 10 objetos con la siguiente estructura exacta:
 ```json
 [
@@ -152,17 +197,19 @@ Cada archivo `part_XX.json` es una lista JSON pura `[...]` con hasta 10 objetos 
 ## 5. Self-Validation Protocol
 
 Before completing your task:
-1. **Edita quirúrgicamente los fragmentos declarativos mediante `replace_file_content`:**
-   Completa y refina las competencias exclusivamente con `replace_file_content` sobre los scaffolds pre-sembrados en `work/cta_parts/part_01.json`, `part_02.json`, etc.
-   *(PROHIBIDO usar `write_to_file`. PROHIBIDO ejecutar comandos de terminal o pruebas intermedias antes de terminar de completar todas las partes).*
-2. **Ejecuta la etapa determinista de ensamble (ÚNICAMENTE en el turno final):**
+1. **Compilación y Auto-Evaluación:**
+   Tras emitir las tuplas en `work/cta_data.py`, ejecuta:
    ```bash
-   python .agents/skills/content-to-course/run.py --stage cta-stitch
+   python work/compile_cta.py
    ```
-   Esto cose automáticamente los fragmentos, normaliza expresiones matemáticas KaTeX, valida las reglas psicométricas y genera `work/cta.json` y `work/cta.md` en <200ms.
-3. **Correcciones si hay error:**
-   Si la validación reporta errores, corrígelos mediante `replace_file_content` a nivel de línea en la parte correspondiente y re-ejecuta `run.py --stage cta-stitch` hasta obtener código de salida 0.
-4. **Cierre obligatorio:**
+   El compilador pre-sembrado sintetiza `work/cta.json` en <5ms, normaliza KaTeX y ejecuta `check_cta.py` automáticamente.
+   *(En modo modular de partes, ejecuta: `python .agents/skills/content-to-course/run.py --stage cta-stitch` tras editar `part_XX.json` con `replace_file_content`).*
+2. **Correcciones si hay error:**
+   Si la auto-evaluación reporta errores con tupla y línea exacta:
+   - Utiliza `replace_file_content` para corregir quirúrgicamente la tupla en `work/cta_data.py`.
+   - O reescribe limpiamente `cta_data.py` con `write_to_file`.
+   - Re-ejecuta `python work/compile_cta.py` hasta certificar `PASS`.
+3. **Cierre obligatorio:**
    Do not output competencies in chat text. Terminate strictly with:
-   `DONE: work/cta_parts/part_01.json, ...` (listando los archivos de partes modificados)
+   `DONE: work/cta.json`
    sin resúmenes ni explicaciones adicionales.
