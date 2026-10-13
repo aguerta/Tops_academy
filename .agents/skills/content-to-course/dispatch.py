@@ -156,6 +156,8 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "write": [
             "work/templates/<comp_id>.json",
             "work/templates/*.json",
+            "work/build_*.py",
+            "scratch/**",
         ],
         "forbidden": [
             "engine/*",
