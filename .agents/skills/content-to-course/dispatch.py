@@ -223,28 +223,26 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "type_name": "c2c-cta-direct",
         "model": "flash",
         "system_prompt": "system_prompts/prompt_cta_direct.md",
-        "description": "Direct CTA Architect para cursos concisos: generar competencias en tuplas tabulares puras en work/cta_data.py y compilar con work/compile_cta.py (arquitectura de 2 archivos, lotes de máximo 10 competencias).",
+        "description": "Direct CTA Architect: sintetizar competencias en tuplas tabulares puras en work/cta_data.py (lote inicial con write_to_file, bloques continuos con Append: true) y compilar con work/compile_cta.py (reparación quirúrgica con replace_file_content).",
         "directives": [
-            "Emitir las micro-competencias analizadas como tuplas tabulares puras en work/cta_data.py siguiendo el orden cronológico del material (arquitectura de 2 archivos).",
-            "Utilizar el compilador inmutable pre-sembrado en work/compile_cta.py; compilar y certificar ejecutando 'python work/compile_cta.py' (<5ms de compilación).",
-            "Si hay errores reportados con tupla y línea exacta, corregir quirúrgicamente con replace_file_content o reescribir cta_data.py con write_to_file.",
-            "Compatibilidad: si se usan partes modulares en work/cta_parts/ (part_XX.json), editar con replace_file_content y coser con 'run.py --stage cta-stitch'.",
+            "Turno 1 MANDATORIO: Abrir inmediatamente el primer material fuente asignado con view_file. Prohibido leer compile_cta.py en Turno 1.",
+            "Emitir las micro-competencias analizadas como tuplas tabulares puras en work/cta_data.py siguiendo el orden cronológico del material (creación inicial con write_to_file, continuación con Append: true).",
+            "Compilar y certificar ejecutando 'python work/compile_cta.py' (<5ms de compilación).",
+            "Si el compilador o validador reportan errores mapeados a línea exacta [cta_data.py:Línea XX], corregir quirúrgicamente con replace_file_content.",
             "Prohibido modificar work/compile_cta.py, crear scripts auxiliares, o emitir competencias en el chat.",
             "Do not output competencies in chat text. Terminate strictly with DONE: work/cta.json.",
         ],
         "read": [
-            "work/compile_cta.py",
             "Materiales fuente específicos asignados en las directivas (ej. archivos PDF o TeX del curso)",
         ],
         "write": [
             "work/cta_data.py",
             "work/cta.json",
             "work/cta.md",
-            "work/cta_parts/part_*.json",
-            "work/cta_parts/*.json",
         ],
         "forbidden": [
-            "work/compile_cta.py (READ-ONLY; compilador inmutable pre-sembrado)",
+            "leer work/compile_cta.py en Turno 1 (Turno 1 debe abrir el material fuente asignado con view_file)",
+            "modificar o editar work/compile_cta.py (el compilador es inmutable pre-sembrado)",
             "work/corpus*.md (el análisis cognitivo debe realizarse directamente sobre los materiales fuente asignados con view_file)",
             "carpetas o archivos de otros cursos en content/",
             "engine/*",
@@ -958,13 +956,13 @@ def generate_cta_direct_bundle(
     turn_budget: int = 20,
     extra_context: str = "",
 ) -> Path:
-    """Generates task bundle for Direct CTA Architect with 2-file architecture and modular compatibility.
+    """Generates task bundle for Direct CTA Architect with 2-file architecture (cta_data.py + compile_cta.py).
 
     Directivas reforzadas:
-    - Do not output competencies in chat text. Terminate strictly with DONE: <files>.
+    - Zero-Chat Output: Do not output competencies in chat text. Terminate strictly with DONE: work/cta.json.
     - Arquitectura de 2 archivos: emitir tuplas tabulares en work/cta_data.py y compilar con work/compile_cta.py.
-    - Edición quirúrgica a nivel de línea con replace_file_content (o reescritura de cta_data.py).
-    - Compatibilidad con fragmentos en work/cta_parts/part_XX.json y comando cta-stitch.
+    - Construcción en dos etapas: write_to_file para el bloque inicial (primeras 10-12 competencias), write_to_file con Append: true para bloques continuos.
+    - Edición quirúrgica a nivel de línea con replace_file_content para resolver errores reportados por el compilador.
     - Prohibido scripts auxiliares en Python y comandos exploratorios en CLI.
     """
     forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["cta-direct"]["forbidden"])
@@ -972,13 +970,14 @@ def generate_cta_direct_bundle(
         "### DIRECTIVAS CRÍTICAS DE DIRECT CTA ARCHITECT (OBLIGATORIO):\n"
         "1. **Arquitectura de 2 Archivos (compile_cta.py + cta_data.py):**\n"
         "   - **Compilador Inmutable:** El archivo `work/compile_cta.py` ya está pre-sembrado en el workspace y es INMUTABLE. NO lo modifiques ni intentes recrearlo.\n"
-        "   - **Tuplas Tabulares:** Emite las competencias en `work/cta_data.py` como tuplas compactas en estricto orden cronológico del material usando `write_to_file` (o `replace_file_content` para ediciones quirúrgicas a nivel de línea).\n"
-        "   - **Compilación y Auto-Evaluación:** Tras emitir `cta_data.py`, ejecuta `python work/compile_cta.py`. El compilador sintetiza `work/cta.json` en <5ms, auto-normaliza KaTeX y ejecuta la certificación de `check_cta.py` reportando tupla y línea exacta en caso de error.\n"
-        "   - **Compatibilidad con Partes Modulares:** Si se utilizan partes en `work/cta_parts/part_XX.json` (part_01.json, part_02.json), utiliza `replace_file_content` sobre los scaffolds pre-sembrados y ejecuta `run.py --stage cta-stitch` al final.\n"
+        "   - **Emisión Tabular en Dos Etapas:** Emite las competencias en `work/cta_data.py` como tuplas compactas en estricto orden cronológico del material usando `write_to_file` para el primer bloque de 10-12 competencias, y `write_to_file` con `Append: true` para bloques continuos subsiguientes.\n"
+        "   - **Compilación y Certificación:** Tras emitir `cta_data.py`, ejecuta `python work/compile_cta.py`. El compilador sintetiza `work/cta.json` en <5ms, auto-normaliza KaTeX y ejecuta la certificación de `check_cta.py` reportando tupla y número de línea exacto en caso de error.\n"
+        "   - **Reparación Quirúrgica por Línea:** Si el compilador o validador reportan errores [cta_data.py:Línea XX], utiliza quirúrgicamente `replace_file_content` sobre esas líneas específicas para corregir la tupla o distractor sin reescribir todo el archivo.\n"
+        "   - **Compatibilidad con Partes Modulares:** Si se utilizan partes en `work/cta_parts/part_XX.json` (part_01.json, part_02.json), utiliza `replace_file_content` sobre los scaffolds y ejecuta `run.py --stage cta-stitch` al final.\n"
         "2. **Prohibición Categórica de Scripts Python:** Queda terminantemente prohibido escribir o ejecutar scripts Python auxiliares (.py) en scratch/ o work/.\n"
-        "3. **Zero-CLI Pre-flight:** Queda terminantemente prohibido ejecutar comandos de consola preliminares para explorar o listar directorios. Comienza inmediatamente en el Turno 1 analizando los materiales asignados con `view_file`.\n"
+        "3. **Zero-CLI Pre-flight:** Queda terminantemente prohibido ejecutar comandos de consola preliminares para explorar o listar directorios. Comienza INMEDIATAMENTE en el Turno 1 analizando los materiales asignados con `view_file`.\n"
         "4. **Zero-Chat Output:** Do not output competencies in chat text. Terminate strictly with DONE: work/cta.json.\n"
-        "5. **Coser con cta-stitch o compilar con compile_cta.py:** Al finalizar, ejecuta `python work/compile_cta.py` (o `python .agents/skills/content-to-course/run.py --stage cta-stitch`) para certificar `work/cta.json` y generar `work/cta.md`."
+        "5. **Certificación Final:** Re-ejecuta `python work/compile_cta.py` hasta certificar `PASS` y emite unívocamente `DONE: work/cta.json`."
     )
     combined = f"{directives}\n\n{extra_context}".strip() if extra_context else directives
     return _create_task_bundle(
@@ -1619,11 +1618,28 @@ def build_dispatch(
             except Exception:
                 pass
 
-        source_files: List[str] = []
-        if source_rel_str:
+        if source_rel_str is None:
+            course_name = work.parent.name if work.name == "work" else work.name
+            repo_root = SKILL_DIR.parents[2] if len(SKILL_DIR.parents) >= 3 else Path.cwd()
+            candidate_content = repo_root / "content" / course_name
+            if candidate_content.is_dir():
+                source_rel_str = f"content/{course_name}"
+                s_dir = candidate_content
+            else:
+                s_dir = Path(source_rel_str) if source_rel_str else None
+        else:
             s_dir = Path(source_rel_str)
-            if s_dir.is_dir():
-                source_files = sorted(f.name for f in s_dir.iterdir() if f.is_file())
+            if not s_dir.is_dir():
+                repo_root = SKILL_DIR.parents[2] if len(SKILL_DIR.parents) >= 3 else Path.cwd()
+                alt_dir = repo_root / source_rel_str
+                if alt_dir.is_dir():
+                    s_dir = alt_dir
+
+        source_files: List[str] = []
+        if s_dir and s_dir.is_dir():
+            source_files = sorted(f.name for f in s_dir.iterdir() if f.is_file())
+
+        if source_rel_str:
             read_paths = [f"{source_rel_str}/{f}" for f in source_files] if source_files else [f"{source_rel_str}/*"]
             forbidden_cta = list(forbidden) + [
                 "modificar o editar work/compile_cta.py (el compilador es inmutable; solo consulta su contrato con view_file si lo requieres)",
@@ -1667,8 +1683,8 @@ def build_dispatch(
             extra_cta_context = (
                 f"### MATERIALES FUENTE ASIGNADOS ({source_rel_str}):\n"
                 f"{file_list_str}\n\n"
-                "Usa estos nombres exactos de archivo en el campo de evidencia (`evidence: doc, pag`). "
-                f"Comienza INMEDIATAMENTE en el Turno 1 abriendo `{source_rel_str}/{first_source_doc}` con `view_file`."
+                "**REGLA DE EVIDENCIA DINÁMICA:** En el campo `doc` (posición 5) de todas tus tuplas de competencia y distractor, debes usar ÚNICAMENTE los nombres literales exactos de los archivos listados arriba (NO uses nombres de ejemplos ni de otros cursos).\n"
+                f"**TURNO 1 MANDATORIO:** Comienza INMEDIATAMENTE en el Turno 1 abriendo `{source_rel_str}/{first_source_doc}` con `view_file`."
             )
 
         bundle_file = generate_cta_direct_bundle(
@@ -1697,7 +1713,7 @@ def build_dispatch(
         for r in read_paths:
             prompt_lines.append(f"  * `{r}`")
         prompt_lines.append("- **WRITE permitido:**")
-        prompt_lines.append("  * `work/cta_data.py` (emisión de datos tabulares puros con write_to_file)")
+        prompt_lines.append("  * `work/cta_data.py` (creación inicial con write_to_file, continuación con Append: true, corrección quirúrgica con replace_file_content)")
         prompt_lines.append("  * `work/cta.json` y `work/cta.md` (generados automáticamente por `python work/compile_cta.py`)")
         prompt_lines.append("- **EJECUTABLE CLI permitido:**")
         prompt_lines.append("  * `python work/compile_cta.py` (compilador determinista pre-sembrado en work/)")
@@ -1718,10 +1734,10 @@ def build_dispatch(
             "- Queda TERMINANTEMENTE PROHIBIDO gastar Turno 1 leyendo `compile_cta.py`, explorando directorios o buscando archivos auxiliares.",
             "- El contrato completo de tuplas para `COMPETENCIES` está especificado al 100% en las directivas superiores.",
             "- El compilador `work/compile_cta.py` ya está pre-sembrado en disco y es INMUTABLE. No lo edites ni lo modifiques.",
-            "- Emite las competencias en formato de tuplas tabulares compactas en `work/cta_data.py` usando `write_to_file`.",
-            "- Para cursos extensos, emite en 2 o más bloques continuos usando `write_to_file` con `Append: true` para bloques subsecuentes.",
-            "- Tras emitir los datos, ejecuta: `python work/compile_cta.py` para compilar y validar automáticamente.",
-            "- Si el compilador o `check_cta.py` reportan errores (con tupla y número de línea exacto en `cta_data.py`), corrígelos quirúrgicamente con `replace_file_content` o reescribe con `write_to_file(Overwrite=True)`.",
+            "- Emite las competencias en formato de tuplas tabulares compactas en `work/cta_data.py` usando `write_to_file` (primer bloque de 10-12 competencias).",
+            "- Para cursos extensos o con más páginas, emite los bloques continuos subsiguientes usando `write_to_file` con `Append: true` (`COMPETENCIES += [...]`).",
+            "- Tras emitir los datos, ejecuta: `python work/compile_cta.py` para compilar y validar automáticamente (<5ms).",
+            "- Si el compilador o `check_cta.py` reportan errores (con tupla y número de línea exacto en `cta_data.py`), corrígelos quirúrgicamente con `replace_file_content` sobre esas líneas específicas.",
             "- Re-ejecuta `python work/compile_cta.py` hasta obtener certificación limpia (`PASS`).",
             f"- Presupuesto de turnos sugerido: {turn_budget} turnos.",
             "- Do not output competencies in chat text. Terminate strictly with:",
