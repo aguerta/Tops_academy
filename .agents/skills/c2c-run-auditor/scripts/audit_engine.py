@@ -1967,6 +1967,7 @@ def main():
     parser.add_argument("--recent", action="store_true", help="List recent C2C runs found in Antigravity brain")
     parser.add_argument("--history", action="store_true", help="Print or regenerate the historical benchmark comparison table")
     parser.add_argument("--compare", nargs="*", help="Compare two runs (e.g. --compare run_a run_b, or --compare to compare latest against previous/baseline)")
+    parser.add_argument("--traceback", action="store_true", help="Also execute granular turn-by-turn traceback deep-dive and emit traceback_deepdive.md/json")
     args = parser.parse_args()
 
     output_base = Path(args.output_dir)
@@ -2079,6 +2080,17 @@ def main():
 
     # 6. Register into Longitudinal Benchmark Registry
     registry_mgr.register_run(audit_result, run_dir_name)
+
+    if args.traceback:
+        try:
+            _scripts_dir = Path(__file__).parent.resolve()
+            if str(_scripts_dir) not in sys.path:
+                sys.path.insert(0, str(_scripts_dir))
+            from traceback_analyzer import run_traceback_audit
+            print("\n[*] Running integrated Traceback Deep-Dive...")
+            run_traceback_audit(conv_id, run_dir)
+        except Exception as ex:
+            print(f"[!] Warning: Traceback Deep-Dive failed: {ex}")
 
     print(f"\n[+] Deep Forensic Audit Complete!")
     print(f"    - Wall-Clock Time: {audit_result['summary']['wall_clock_minutes']} min (Speedup: {audit_result['summary']['parallel_speedup_factor']}x)")

@@ -17,6 +17,10 @@ Trabaja únicamente con los archivos listados para tu tarea asignada.
   `DONE: <lista de archivos escritos>`
   sin resúmenes, explicaciones ni comentarios adicionales.
 
+### 🚫 PROHIBICIÓN ESTRICTA DE EMISIÓN DE COMPETENCIAS EN EL CHAT (Zero-Chat Output)
+- Queda **TERMINANTEMENTE PROHIBIDO** volcar el JSON o markdown de competencias en el cuerpo de tus mensajes conversacionales en el chat. Hacerlo agota `max_output_tokens` y quiebra la sesión.
+- Tu primera y única acción para consolidar las competencias de la sección es emitir directamente a `work/cta_parts/cta_part_XX.json` usando `write_to_file`.
+
 ---
 
 ## 1. Operating Instructions

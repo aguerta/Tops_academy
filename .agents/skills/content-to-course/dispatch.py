@@ -70,8 +70,8 @@ TYPE_DEFINITIONS: List[Dict[str, Any]] = [
     },
     {
         "name": "c2c-cta-direct",
-        "description": "Direct CTA Architect for concise courses",
-        "system_prompt": "You are a Direct CTA Architect for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and produce cta.json. Terminate strictly with DONE: <files>.",
+        "description": "Direct CTA Architect for concise courses (máximo 10 competencias por lote; prohibido emitir competencias en el chat)",
+        "system_prompt": "You are a Direct CTA Architect for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and produce cta.json in batches of max 10 competencies using a generator script. Do not output competencies in chat text. Terminate strictly with DONE: <files>.",
         "enable_write_tools": True,
         "enable_subagent_tools": False,
         "enable_mcp_tools": False,
@@ -151,6 +151,7 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "read": [
             "work/shards/shard_XX.json",
             "work/shards/shard_*.json",
+            "content/**/*.pdf",
         ],
         "write": [
             "work/templates/<comp_id>.json",
@@ -160,6 +161,10 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "engine/*",
             "SKILL.md",
             "otras plantillas fuera de su shard",
+            "work/cta.json (READ-ONLY; strictly forbidden to edit, modify, or overwrite)",
+            "check_templates.py",
+            "src/validator/*",
+            "rules.py",
         ],
         "turn_budget": 25,
     },
@@ -179,6 +184,9 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "judge_ground_truth.json",
             "templates/*",
             "respuestas ajenas",
+            "search_web",
+            "read_url_content",
+            "navegación por internet",
         ],
         "turn_budget": 15,
     },
@@ -186,9 +194,14 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "type_name": "c2c-cta-direct",
         "model": "flash",
         "system_prompt": "system_prompts/prompt_cta_direct.md",
+        "description": "Direct CTA Architect para cursos concisos: generar como máximo 10 competencias por lote mediante script generador y prohibido emitir competencias en el texto del chat.",
+        "directives": [
+            "Generar como máximo 10 competencias por lote.",
+            "Prohibido emitir competencias en el texto del chat.",
+            "Usar script generador para persistir cta.json y cta.md directamente en disco.",
+        ],
         "read": [
-            "work/corpus.md",
-            "work/patches/*.md",
+            "<source_dir>/* (todos los archivos y documentos de la carpeta asignada: PDF, TeX, imágenes, docs, etc.)",
             "work/pages/manifest.json",
         ],
         "write": [
@@ -196,8 +209,11 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/cta.md",
         ],
         "forbidden": [
+            "work/corpus*.md (debe inspeccionar directamente los archivos originales del curso con view_file)",
+            "carpetas de otros cursos en content/",
             "engine/*",
             "SKILL.md",
+            "emitir competencias en el texto del chat (usar exclusivamente script para escribir work/cta.json)",
         ],
         "turn_budget": 20,
     },
@@ -298,6 +314,129 @@ def _create_task_bundle(
 
     bundle_file.write_text("\n".join(lines), encoding="utf-8")
     return bundle_file
+
+
+def generate_author_bundle(
+    work_dir: Path,
+    shard_id: str,
+    read_paths: List[str],
+    write_paths: List[str],
+    forbidden_items: Optional[List[str]] = None,
+    turn_budget: int = 25,
+    extra_context: str = "",
+) -> Path:
+    """Generates task bundle for shard exercise author with reinforced atomic instructions.
+
+    Directivas reforzadas:
+    - Autoría atómica modular en 1 script.
+    - Validación de todo el lote a la vez.
+    - Cero introspección del validador (prohibido check_templates.py, src/validator/*, rules.py).
+    """
+    forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["author"]["forbidden"])
+    directives = (
+        "### DIRECTIVAS CRÍTICAS DE AUTORÍA (OBLIGATORIO):\n"
+        "1. **Autoría atómica modular en 1 script:** Diseña e implementa la generación de todas las plantillas del shard "
+        "en un único script Python ejecutable (ej. en `scratch/` o script local) que genere y persista todos los archivos de salida.\n"
+        "2. **Validación de todo el lote a la vez:** Ejecuta la validación de todas las plantillas del lote de forma "
+        "agrupada en una sola llamada (batch) una vez generado el script, sin validar archivo por archivo individualmente.\n"
+        "3. **Cero introspección del validador:** Queda estrictamente prohibido examinar, leer o inspeccionar `check_templates.py`, "
+        "`src/validator/*` o `rules.py`. Las plantillas deben satisfacer el contrato y la calidad psicométrica por primeros principios."
+    )
+    combined = f"{directives}\n\n{extra_context}".strip() if extra_context else directives
+    return _create_task_bundle(
+        work_dir=work_dir,
+        bundle_name=f"author_{shard_id}",
+        role_name="author",
+        role_title=f"Shard Author {shard_id}",
+        system_prompt_rel=ROLE_SPECS["author"]["system_prompt"],
+        read_paths=read_paths,
+        write_paths=write_paths,
+        forbidden_items=forbidden,
+        turn_budget=turn_budget,
+        extra_context=combined,
+    )
+
+
+def generate_judge_bundle(
+    work_dir: Path,
+    judge_id: str,
+    read_paths: List[str],
+    write_paths: List[str],
+    forbidden_items: Optional[List[str]] = None,
+    turn_budget: int = 15,
+    extra_context: str = "",
+) -> Path:
+    """Generates task bundle for blind evaluation judge with reinforced first-principles directives.
+
+    Directivas reforzadas:
+    - Cero búsquedas web (prohibido search_web, read_url_content, navegación web).
+    - Resolver por primeros principios y razonamiento analítico puro sin claves.
+    - Responder BLOCKED si falta contexto indispensable o hay ambigüedad insalvable.
+    """
+    forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["judge"]["forbidden"])
+    directives = (
+        "### DIRECTIVAS CRÍTICAS DE EVALUACIÓN A CIEGAS (OBLIGATORIO):\n"
+        "1. **Cero búsquedas web:** Queda estrictamente prohibido invocar `search_web`, `read_url_content` o realizar "
+        "cualquier tipo de navegación por internet. Toda la resolución debe ser puramente analítica y autónoma.\n"
+        "2. **Resolver por primeros principios:** Resuelve cada pregunta analíticamente desde primeros principios matemáticos y lógicos, "
+        "basándote exclusivamente en la formulación de la pregunta y el contexto proporcionado en el lote.\n"
+        "3. **Responder BLOCKED si falta contexto:** Si una pregunta presenta ambigüedad insalvable, falta de datos esenciales "
+        "o inconsistencia matemática que imposibilite una respuesta unívoca, responde `BLOCKED: <motivo específico>` "
+        "en lugar de especular o adivinar."
+    )
+    combined = f"{directives}\n\n{extra_context}".strip() if extra_context else directives
+    return _create_task_bundle(
+        work_dir=work_dir,
+        bundle_name=f"judge_{judge_id}",
+        role_name="judge",
+        role_title=f"Blind Judge {judge_id}",
+        system_prompt_rel=ROLE_SPECS["judge"]["system_prompt"],
+        read_paths=read_paths,
+        write_paths=write_paths,
+        forbidden_items=forbidden,
+        turn_budget=turn_budget,
+        extra_context=combined,
+    )
+
+
+def generate_cta_direct_bundle(
+    work_dir: Path,
+    read_paths: List[str],
+    write_paths: List[str],
+    forbidden_items: Optional[List[str]] = None,
+    turn_budget: int = 20,
+    extra_context: str = "",
+) -> Path:
+    """Generates task bundle for Direct CTA Architect with batch limit & chat suppression directives.
+
+    Directivas reforzadas:
+    - No emitir competencias en el texto del chat.
+    - Generar como máximo 10 competencias por lote.
+    - Emplear script generador estructurado para escribir directamente en disco.
+    """
+    forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["cta-direct"]["forbidden"])
+    directives = (
+        "### DIRECTIVAS CRÍTICAS DE DIRECT CTA ARCHITECT (OBLIGATORIO):\n"
+        "1. **No emitir en chat:** Queda terminantemente prohibido redactar o volcar las definiciones de competencias "
+        "en los mensajes del chat. Todo el resultado debe persistirse directamente en `work/cta.json` y `work/cta.md`.\n"
+        "2. **Máximo 10 competencias por lote:** Si el temario requiere más competencias, sintetízalas estructuradamente "
+        "en lotes de como máximo 10 competencias por iteración para garantizar granularidad y rigor psicométrico.\n"
+        "3. **Script generador:** Utiliza un script de generación (ej. en `scratch/` o ejecución directa de herramientas "
+        "de archivo) para construir el JSON completo y validable de una sola pasada."
+    )
+    combined = f"{directives}\n\n{extra_context}".strip() if extra_context else directives
+    return _create_task_bundle(
+        work_dir=work_dir,
+        bundle_name="cta_direct",
+        role_name="cta-direct",
+        role_title="Direct CTA Architect",
+        system_prompt_rel=ROLE_SPECS["cta-direct"]["system_prompt"],
+        read_paths=read_paths,
+        write_paths=write_paths,
+        forbidden_items=forbidden,
+        turn_budget=turn_budget,
+        extra_context=combined,
+    )
 
 
 def _bundle_display_path(bundle_file: Path) -> str:
@@ -629,12 +768,9 @@ def build_dispatch(
             read_paths = [f"work/shards/{s_id}.json"]
             write_paths = [f"work/templates/{cid}.json" for cid in c_ids]
 
-            bundle_file = _create_task_bundle(
+            bundle_file = generate_author_bundle(
                 work_dir=work,
-                bundle_name=f"author_{s_id}",
-                role_name=role,
-                role_title=f"Shard Author {s_id}",
-                system_prompt_rel=sys_prompt,
+                shard_id=str(s_id),
                 read_paths=read_paths,
                 write_paths=write_paths,
                 forbidden_items=forbidden,
@@ -697,12 +833,9 @@ def build_dispatch(
             # ABSOLUTE RULE: judge prompt must NEVER include ground_truth in READ!
             assert not any("ground_truth" in r.lower() for r in read_paths), "FATAL: judge cannot have ground truth in READ!"
 
-            bundle_file = _create_task_bundle(
+            bundle_file = generate_judge_bundle(
                 work_dir=work,
-                bundle_name=f"judge_{j_id}",
-                role_name=role,
-                role_title=f"Blind Judge {j_id}",
-                system_prompt_rel=sys_prompt,
+                judge_id=j_id,
                 read_paths=read_paths,
                 write_paths=write_paths,
                 forbidden_items=forbidden,
@@ -847,21 +980,46 @@ def build_dispatch(
             except Exception:
                 pass
 
-        read_paths = ["work/corpus.md", "work/pages/manifest.json"]
+        source_rel_str = None
+        manifest_file = work / "pages" / "manifest.json"
+        if manifest_file.is_file():
+            try:
+                m_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+                sp = m_data.get("source_path")
+                if sp:
+                    p = Path(sp)
+                    try:
+                        source_rel_str = p.resolve().relative_to(Path.cwd().resolve()).as_posix()
+                    except ValueError:
+                        source_rel_str = p.as_posix()
+            except Exception:
+                pass
+
+        if source_rel_str:
+            read_paths = [
+                f"{source_rel_str}/*",
+                f"{source_rel_str}/**/*",
+                "work/pages/manifest.json",
+            ]
+            forbidden_cta = list(forbidden) + [
+                "work/corpus*.md (el análisis cognitivo debe realizarse directamente sobre los contenidos fuente del curso)",
+                f"carpetas de otros cursos en content/ (distintas de {source_rel_str})",
+                "content/* (excepto archivos de la carpeta asignada en tu bundle)",
+            ]
+        else:
+            read_paths = ["work/pages/manifest.json"]
+            forbidden_cta = list(forbidden) + ["work/corpus*.md (inspección directa de contenidos requerida)"]
+
         if (work / "patches").is_dir():
             read_paths.append("work/patches/*.md")
         if (work / "handout_patches").is_dir():
             read_paths.append("work/handout_patches/*.md")
         write_paths = ["work/cta.json", "work/cta.md"]
-        bundle_file = _create_task_bundle(
+        bundle_file = generate_cta_direct_bundle(
             work_dir=work,
-            bundle_name="cta_direct",
-            role_name=role,
-            role_title="Direct CTA Architect",
-            system_prompt_rel=sys_prompt,
             read_paths=read_paths,
             write_paths=write_paths,
-            forbidden_items=forbidden,
+            forbidden_items=forbidden_cta,
             turn_budget=turn_budget,
         )
         prompt_text = _format_prompt(
@@ -871,7 +1029,7 @@ def build_dispatch(
             turn_budget=turn_budget,
             read_paths=read_paths,
             write_paths=write_paths,
-            forbidden_items=forbidden,
+            forbidden_items=forbidden_cta,
             system_prompt_rel=sys_prompt,
         )
         subagents.append({

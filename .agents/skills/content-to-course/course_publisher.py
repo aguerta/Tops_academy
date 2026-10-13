@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import subprocess
 import sys
 from dataclasses import asdict, dataclass, field
@@ -45,8 +46,23 @@ class PublicationResult:
 class CoursePublisher:
     """Manages validation, disk persistence, and platform registration."""
 
-    def __init__(self, courses_dir: str | Path = "courses") -> None:
+    def __init__(
+        self,
+        courses_dir: str | Path = "courses",
+        project_root: Optional[str | Path] = None,
+    ) -> None:
         self.courses_dir = Path(courses_dir)
+        if project_root:
+            self.project_root = Path(project_root).resolve()
+        else:
+            # Hermetic resolution: find project root containing .venv or src
+            curr = Path(__file__).resolve().parent
+            root = curr
+            for parent in [curr] + list(curr.parents):
+                if (parent / ".venv").is_dir() or (parent / "src").is_dir():
+                    root = parent
+                    break
+            self.project_root = root
 
     def publish(
         self,
@@ -220,23 +236,85 @@ class CoursePublisher:
             launch_url=launch_url
         )
 
+    def _resolve_python_executable(self) -> str:
+        """Resolves hermetic Python interpreter path in .venv or falls back to sys.executable."""
+        venv_python_win = self.project_root / ".venv" / "Scripts" / "python.exe"
+        venv_python_posix = self.project_root / ".venv" / "bin" / "python"
+
+        if sys.platform == "win32" and venv_python_win.is_file():
+            return str(venv_python_win.resolve())
+        elif venv_python_posix.is_file():
+            return str(venv_python_posix.resolve())
+        elif venv_python_win.is_file():
+            return str(venv_python_win.resolve())
+        return sys.executable
+
     def _run_cli_validator(self, file_path: Path, strict: bool = True) -> bool:
-        """Invokes Python validator CLI on published course file."""
-        cmd = [sys.executable, "-m", "validator.cli", str(file_path)]
+        """Invokes Python validator CLI on published course file with hermetic resolution and fallback."""
+        python_bin = self._resolve_python_executable()
+
+        # Inject absolute path of src into PYTHONPATH for hermetic execution
+        env = dict(os.environ)
+        src_dir = (self.project_root / "src").resolve()
+        if src_dir.is_dir():
+            existing_pp = env.get("PYTHONPATH", "")
+            if existing_pp:
+                env["PYTHONPATH"] = f"{src_dir}{os.pathsep}{existing_pp}"
+            else:
+                env["PYTHONPATH"] = str(src_dir)
+
+        cmd = [python_bin, "-m", "validator.cli", str(file_path)]
         if strict:
             cmd.append("--strict")
 
         try:
-            res = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            res = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                check=False,
+                env=env,
+                cwd=str(self.project_root),
+            )
             if res.returncode == 0:
                 return True
-            logger.warning("CLI validator returned %d: %s", res.returncode, res.stdout + res.stderr)
+
+            output_str = (res.stdout or "") + (res.stderr or "")
+            # Detect environment / module resolution issues to trigger in-memory fallback
+            is_env_error = (
+                res.returncode in (9009, 127, 2)
+                or any(
+                    err_term in output_str
+                    for err_term in (
+                        "ModuleNotFoundError",
+                        "ImportError",
+                        "No module named",
+                        "not recognized as an internal or external command",
+                        "No such file or directory",
+                    )
+                )
+            )
+
+            if is_env_error:
+                logger.warning(
+                    "CLI validator failed due to environment/module issue (code %d): %s. "
+                    "Falling back immediately to in-memory validator.",
+                    res.returncode,
+                    output_str.strip(),
+                )
+                v = validate_course_content(file_path.read_text(encoding="utf-8"), strict=strict)
+                return v.is_valid
+
+            logger.warning("CLI validator returned %d: %s", res.returncode, output_str.strip())
             return False
         except Exception as ex:
-            logger.warning("Failed executing CLI validator: %s", ex)
-            # Fall back to programmatic verification
-            v = validate_course_content(file_path.read_text(encoding="utf-8"), strict=strict)
-            return v.is_valid
+            logger.warning("Failed executing CLI validator (%s). Falling back immediately to in-memory validator.", ex)
+            try:
+                v = validate_course_content(file_path.read_text(encoding="utf-8"), strict=strict)
+                return v.is_valid
+            except Exception as in_mem_ex:
+                logger.error("In-memory validation fallback failed: %s", in_mem_ex)
+                return False
 
 
 def main() -> None:

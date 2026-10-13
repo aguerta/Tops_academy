@@ -31,9 +31,9 @@ def validate_katex_syntax(text: str, context: str) -> List[str]:
     if "$$$" in text:
         errors.append(f"Triple dollar delimiter '$$$' detected in {context}.")
 
-    # 2. Residual double curly braces
-    if "{{" in text or "}}" in text:
-        errors.append(f"Residual double curly braces ('{{' or '}}') detected in {context}.")
+    # 2. Residual double curly braces (paired template placeholders like {{var}})
+    if re.search(r"\{\{\s*[a-zA-Z0-9_]+\s*\}\}", text) or re.search(r"(?<!\\)\{\{", text):
+        errors.append(f"Residual double curly braces ('{{{{' or '}}}}') detected in {context}.")
 
     # 3. Balanced '$' delimiters
     clean_text = text.replace(r"\$", "")
@@ -44,7 +44,15 @@ def validate_katex_syntax(text: str, context: str) -> List[str]:
         if inline_text.count("$") % 2 != 0:
             errors.append(f"Unbalanced inline math delimiter '$' in {context}.")
 
-    # 4. Unsubstituted template variables: {var}
+    # 4. Balanced curly braces inside LaTeX math blocks
+    math_matches = re.findall(r"\$\$(.*?)\$\$|\$(.*?)\$", text, flags=re.DOTALL)
+    for mb in math_matches:
+        block = mb[0] if mb[0] else mb[1]
+        clean_block = block.replace(r"\{", "").replace(r"\}", "")
+        if clean_block.count("{") != clean_block.count("}"):
+            errors.append(f"Unbalanced curly braces in LaTeX math expression in {context}: '{clean_block[:60]}...'")
+
+    # 5. Unsubstituted template variables: {var}
     for m in re.finditer(r"\{([a-zA-Z0-9_]+)\}", text):
         var_name = m.group(1)
         start = m.start()
@@ -87,22 +95,30 @@ def check_instance_invariants(
     stem = instance.get("stem", "")
     if not stem or not isinstance(stem, str) or len(stem.strip()) < 5:
         errors.append("Stem must be a non-empty string with at least 5 characters.")
-    else:
+    if isinstance(stem, str) and stem:
         errors.extend(validate_katex_syntax(stem, "stem"))
 
     hints = instance.get("hints", [])
-    if not isinstance(hints, list) or not (3 <= len(hints) <= 5):
-        errors.append(f"Instance must have between 3 and 5 hints (found {len(hints) if isinstance(hints, list) else 'invalid'}).")
+    if not isinstance(hints, list):
+        errors.append(f"Instance hints must be a list (found {type(hints).__name__}).")
     else:
+        if not (3 <= len(hints) <= 5):
+            errors.append(f"Instance must have between 3 and 5 hints (found {len(hints)}).")
         for idx, hint in enumerate(hints):
             if not isinstance(hint, str) or not hint.strip():
                 errors.append(f"Hint {idx + 1} must be a non-empty string.")
             else:
                 errors.extend(validate_katex_syntax(hint, f"hint {idx + 1}"))
 
-    solution = instance.get("detailed_solution") or instance.get("solution")
-    if isinstance(solution, str) and solution:
-        errors.extend(validate_katex_syntax(solution, "detailed_solution"))
+    for sol_key in ("detailed_solution", "solution"):
+        solution = instance.get(sol_key)
+        if isinstance(solution, str) and solution:
+            errors.extend(validate_katex_syntax(solution, sol_key))
+
+    for misc_key in ("misconception_warning", "common_misconception_warning"):
+        misc = instance.get(misc_key)
+        if isinstance(misc, str) and misc:
+            errors.extend(validate_katex_syntax(misc, misc_key))
 
     options_raw = instance.get("options")
     if isinstance(options_raw, list):
@@ -111,13 +127,19 @@ def check_instance_invariants(
                 c = opt.get("content")
                 if isinstance(c, str):
                     errors.extend(validate_katex_syntax(c, f"option {idx + 1} content"))
+                r = opt.get("error_rationale")
+                if isinstance(r, str) and r:
+                    errors.extend(validate_katex_syntax(r, f"option {idx + 1} error_rationale"))
 
     # 1. Multiple Choice 7 options
     if interaction_type == "multiple_choice_7_options":
         options = instance.get("options", [])
-        if not isinstance(options, list) or len(options) != 7:
-            errors.append(f"MC7 requires exactly 7 options (found {len(options) if isinstance(options, list) else 'invalid'}).")
+        if not isinstance(options, list):
+            errors.append(f"MC7 requires a list of options (found {type(options).__name__}).")
         else:
+            if len(options) != 7:
+                errors.append(f"MC7 requires exactly 7 options (found {len(options)}).")
+
             correct_count = 0
             correct_content = None
             distractor_contents = []
@@ -125,12 +147,12 @@ def check_instance_invariants(
             seen_contents = set()
             for idx, opt in enumerate(options):
                 if not isinstance(opt, dict):
-                    errors.append(f"Option {idx} is not a valid dictionary.")
+                    errors.append(f"Option {idx + 1} is not a valid dictionary.")
                     continue
                 
                 content = str(opt.get("content", "")).strip()
                 if not content:
-                    errors.append(f"Option {idx} has empty content.")
+                    errors.append(f"Option {idx + 1} has empty content.")
                 
                 # Check option text uniqueness
                 norm_content = re.sub(r"\s+", " ", content)
@@ -160,7 +182,7 @@ def check_instance_invariants(
 
             # Check length anti-giveaway bounds:
             # 0.80 * min(len(D)) <= len(correct) <= 1.20 * max(len(D))
-            if strict_length_bounds and correct_content and len(distractor_contents) == 6:
+            if strict_length_bounds and correct_content and distractor_contents:
                 d_lens = [len(d) for d in distractor_contents]
                 min_d = min(d_lens)
                 max_d = max(d_lens)
@@ -181,9 +203,9 @@ def check_instance_invariants(
             # Check answer leak in stem or early hints
             if correct_content and len(correct_content) >= 5 and not correct_content.isdigit():
                 # Avoid trivial matches like single numbers
-                if correct_content in stem:
+                if isinstance(stem, str) and correct_content in stem:
                     errors.append(f"Correct answer '{correct_content}' leaked verbatim in stem text.")
-                if hints and len(hints) >= 1 and correct_content in hints[0]:
+                if hints and len(hints) >= 1 and isinstance(hints[0], str) and correct_content in hints[0]:
                     errors.append(f"Correct answer '{correct_content}' leaked verbatim in first hint.")
 
     # 2. Fill in the blank
@@ -208,18 +230,21 @@ def check_instance_invariants(
     # 3. Multiple select
     elif interaction_type == "multiple_select":
         options = instance.get("options", [])
-        if not isinstance(options, list) or not (4 <= len(options) <= 6):
-            errors.append(f"MS requires 4 to 6 options (found {len(options) if isinstance(options, list) else 'invalid'}).")
+        if not isinstance(options, list):
+            errors.append(f"MS requires a list of options (found {type(options).__name__}).")
         else:
+            if not (4 <= len(options) <= 6):
+                errors.append(f"MS requires 4 to 6 options (found {len(options)}).")
+
             correct_count = 0
             seen_contents = set()
             for idx, opt in enumerate(options):
                 if not isinstance(opt, dict):
-                    errors.append(f"Option {idx} is not a valid dictionary.")
+                    errors.append(f"Option {idx + 1} is not a valid dictionary.")
                     continue
                 content = str(opt.get("content", "")).strip()
                 if not content:
-                    errors.append(f"Option {idx} has empty content.")
+                    errors.append(f"Option {idx + 1} has empty content.")
                 norm_content = re.sub(r"\s+", " ", content)
                 if norm_content in seen_contents:
                     errors.append(f"Duplicate option content detected in MS: '{content}'")
@@ -235,7 +260,7 @@ def check_instance_invariants(
                         )
 
             # Invariant: 1 <= correct_count <= len(options) - 1
-            if not (1 <= correct_count <= len(options) - 1):
+            if len(options) > 0 and not (1 <= correct_count <= len(options) - 1):
                 errors.append(
                     f"MS correct count must be between 1 and {len(options) - 1} (found {correct_count} correct out of {len(options)} options)."
                 )

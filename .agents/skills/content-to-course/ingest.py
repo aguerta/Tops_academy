@@ -1472,6 +1472,7 @@ def prepare_corpus(
     order_override: Optional[Union[str, Path, List[Union[str, Path]]]] = None,
     cta_mode: str = "auto",
     granularity: str = "standard",
+    no_handouts: bool = False,
 ) -> Dict[str, Any]:
     """Single-pass ingestion & pre-processing engine.
     
@@ -1522,10 +1523,12 @@ def prepare_corpus(
                 # Determine if image should be rendered
                 if vision == "all":
                     render_img = True
-                elif vision == "none":
+                elif vision == "none" or no_handouts:
                     render_img = False
                 else:  # auto
                     render_img = density_info["needs_vision"]
+
+                page_needs_vision = False if (vision == "none" or no_handouts) else density_info["needs_vision"]
 
                 img_path_str = None
                 img_hash = None
@@ -1566,7 +1569,7 @@ def prepare_corpus(
                     "image_path": img_path_str,
                     "text_layer_path": str(txt_filepath.as_posix()),
                     "transcription_path": str((out_doc_dir / f"page_{page_num:03d}.md").as_posix()),
-                    "needs_vision": density_info["needs_vision"],
+                    "needs_vision": page_needs_vision,
                 }
                 all_manifest_items.append(item_meta)
 
@@ -1577,13 +1580,13 @@ def prepare_corpus(
                     "chars": density_info["chars"],
                     "images": density_info["n_images"],
                     "drawings": density_info["n_drawings"],
-                    "needs_vision": density_info["needs_vision"],
+                    "needs_vision": page_needs_vision,
                     "reasons": density_info["reasons"],
                     "rendered_image": img_path_str,
                 })
 
                 # Append to corpus.md
-                vision_flag = "YES" if render_img else "NO"
+                vision_flag = "YES" if (render_img and page_needs_vision) else "NO"
                 corpus_sections.append(
                     f"--- \n"
                     f"## <<DOC: {doc_name} | PAGE: {page_num} | NEEDS_VISION: {vision_flag}>>\n\n"
@@ -1655,22 +1658,28 @@ def prepare_corpus(
     manifest_file.write_text(json.dumps(manifest_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
     # Generate handouts (Component 1)
-    handouts_res = create_handouts(work_dir, manifest_data)
-    total_handouts = handouts_res.get("total_handouts", 0)
-
-    if total_handouts > 0:
-        strategy = "handouts_vision"
-        rec_agents = handouts_res.get("agents_recommended", 1)
-        rec_msg = (
-            f"{needs_vision_count} páginas con contenido visual ({total_handouts} handouts). "
-            f"Despachar {rec_agents} subagente(s) de visión en paralelo y coser parches (stitch) obligatoriamente antes de CTA."
-        )
-    elif needs_vision_count > 0:
-        strategy = "pages_vision"
-        rec_msg = f"{needs_vision_count} páginas requieren visión. Despachar visión antes de proceder al análisis de CTA."
+    if no_handouts or vision == "none":
+        handouts_res = {"total_handouts": 0, "handouts": [], "agents_recommended": 0}
+        total_handouts = 0
+        strategy = "direct_pdf"
+        rec_msg = "Ingesta directa de PDF activada. El corpus de texto y los documentos PDF originales en content/ se leen directamente con view_file. No se requiere preprocesamiento de imágenes."
     else:
-        strategy = "none"
-        rec_msg = "Sin contenido visual que requiera visión."
+        handouts_res = create_handouts(work_dir, manifest_data)
+        total_handouts = handouts_res.get("total_handouts", 0)
+
+        if total_handouts > 0:
+            strategy = "handouts_vision"
+            rec_agents = handouts_res.get("agents_recommended", 1)
+            rec_msg = (
+                f"{needs_vision_count} páginas con contenido visual ({total_handouts} handouts). "
+                f"Despachar {rec_agents} subagente(s) de visión en paralelo y coser parches (stitch) obligatoriamente antes de CTA."
+            )
+        elif needs_vision_count > 0:
+            strategy = "pages_vision"
+            rec_msg = f"{needs_vision_count} páginas requieren visión. Despachar visión antes de proceder al análisis de CTA."
+        else:
+            strategy = "none"
+            rec_msg = "Sin contenido visual que requiera visión."
 
     budget_data = {
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -1747,6 +1756,7 @@ def main():
     parser.add_argument("--partial", action="store_true", help="Allow partial stitching of available patches")
     parser.add_argument("--sections", action="store_true", help="Generate section slices")
     parser.add_argument("--handouts", action="store_true", help="Create handouts from manifest")
+    parser.add_argument("--no-handouts", action="store_true", help="Disable handout generation and force direct PDF ingestion")
     args = parser.parse_args()
 
     work_p = Path(args.output_dir)
@@ -1785,6 +1795,7 @@ def main():
         order_override=args.order,
         cta_mode=args.cta_mode,
         granularity=args.granularity,
+        no_handouts=args.no_handouts,
     )
     if args.consolidate_patches and not res.get("consolidated_patches"):
         consolidate_document_patches(work_p)
