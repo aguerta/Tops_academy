@@ -1050,7 +1050,7 @@ def check_single_template(
     # b) Verify stem contains at least one placeholder {var} or stem_variants is present
     stem = template.get("stem", "")
     stem_variants = template.get("stem_variants")
-    has_placeholder = bool(re.search(r"\{[A-Za-z0-9_]+\}", stem))
+    has_placeholder = bool(re.search(r"\{[A-Za-z0-9_]+(?::[^{}]+)?\}", stem))
     has_variants = bool(stem_variants and len(stem_variants) > 0)
     if not (has_placeholder or has_variants):
         errors.append(format_diagnostic_error(

@@ -761,6 +761,56 @@ class TestInvariantChecksAdversarial:
         is_valid, errors = check_instance_invariants(q, "multiple_choice_7_options")
         assert is_valid, f"Sanitized question should pass invariants: {errors}"
 
+    def test_format_template_string_supports_format_specs_and_preserves_latex_braces(self):
+        r"""format_template_string supports {var:.Nf}, preserves LaTeX braces on single-braced macros/scripts, and protects \dot{k}."""
+        # 1. Single-braced vs double-braced fractions and exponents produce identical valid KaTeX
+        assert format_template_string(r"$\frac{a}{b}$", {"a": 2, "b": 3}) == r"$\frac{2}{3}$"
+        assert format_template_string(r"$\frac{{a}}{{b}}$", {"a": 2, "b": 3}) == r"$\frac{2}{3}$"
+        assert format_template_string(r"$x^{b} / y^{a}$", {"a": 2, "b": -12}) == r"$x^{-12} / y^{2}$"
+        assert format_template_string(r"$x^{{b}} / y^{{a}}$", {"a": 2, "b": -12}) == r"$x^{-12} / y^{2}$"
+        assert format_template_string(r"$\sqrt{a} + \sqrt[3]{b}$", {"a": 16, "b": 27}) == r"$\sqrt{16} + \sqrt[3]{27}$"
+
+        # 2. Python float format specs {var:.4f}
+        assert format_template_string(r"$R^2 = {r2_val:.4f}$", {"r2_val": 240.0 / 380.0}) == r"$R^2 = 0.6316$"
+
+        # 3. Symbol macro protection (\dot{k}, \frac{\dot{K}}{K})
+        assert format_template_string(r"$\dot{k} = {k}$", {"k": 5}) == r"$\dot{k} = 5$"
+        assert format_template_string(r"$\frac{\dot{K}}{K} = {g_val:.2f}$", {"K": 100, "g_val": 0.05}) == r"$\frac{\dot{K}}{K} = 0.05$"
+
+        # 4. Bare code variable fallback (_val, _num, _str, _res)
+        assert format_template_string(r"Coeficiente $C^* = (5.0)^{1-a_val}$", {"a_val": 0.4}) == r"Coeficiente $C^* = (5.0)^{1-0.4}$"
+
+    def test_assemble_mc7_interpolates_raw_strings_and_auto_repairs_nested_katex(self):
+        """assemble_question interpolates {var} and {var:.4f} in MC7 options and auto-repairs unclosed nested KaTeX macros."""
+        tpl = {
+            "id": "TPL-ERGONOMIC-MC7",
+            "interaction_type": "multiple_choice_7_options",
+            "stem": r"Para el estimador $\hat{\boldsymbol{\beta} = (\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}'\mathbf{y}$ con $\frac{\text{SRC}{\text{STC} = {ratio_val:.4f}$, determine $\frac{\dot{r}{r}$:",
+            "hints": [
+                r"Evalúe $\hat{\boldsymbol{\beta}$ y el cociente $\frac{s}{a}$ con $s = {s_val}$ y $a = {a_val}$.",
+                r"Observe que $s / \sqrt{\bar{r}$ converge cuando $\left.\frac{d\dot{k}{dk}\right|_{k=\bar{k} < 0$.",
+                r"Calcule el valor final usando $R^2 = {ratio_val:.2f}$.",
+            ],
+            "detailed_solution": r"Como $\frac{s}{a} = \frac{{s_val}}{{a_val}}$ y $R^2 = {ratio_val:.4f}$, el estimador $\hat{\boldsymbol{\beta}$ es consistente.",
+            "distractor_ids": ["D1", "D2", "D3", "D4", "D5", "D6"],
+        }
+        gen_res = {
+            "vars": {"s_val": 24, "a_val": 3, "ratio_val": 240.0 / 380.0},
+            "correct": r"El estimador $\hat{\boldsymbol{\beta}$ alcanza $\frac{s_val}{a_val} = 8\%$ con ajuste ${ratio_val:.4f}$.",
+            "distractors": [
+                {"value": rf"El estimador $\hat{{\boldsymbol{{\beta}}$ alcanza $\frac{{s_val}}{{{i + 3}}} = {24 // (i + 1)}\%$ con ajuste ${{ratio_val:.4f}}$.", "distractor_id": f"D{i}"}
+                for i in range(1, 7)
+            ],
+        }
+        q = assemble_question(tpl, gen_res, "Hab-01", 1, seed=42)
+        assert r"\hat{\boldsymbol{\beta}}" in q["stem"]
+        assert r"\frac{\text{SRC}}{\text{STC}} = 0.6316" in q["stem"]
+        assert r"\frac{\dot{r}}{r}" in q["stem"]
+        assert any("0.6316" in opt["content"] and r"\frac{24}{3}" in opt["content"] for opt in q["options"] if opt["is_correct"])
+
+        is_valid, errors = check_instance_invariants(q, "multiple_choice_7_options")
+        assert is_valid, f"Ergonomic MC7 question should pass all invariants: {errors}" 
+
     def test_assemble_ms_auto_assigns_distractor_rationales(self):
         """assemble_question automatically assigns default or CTA rationales to MS distractors."""
         tpl = {
