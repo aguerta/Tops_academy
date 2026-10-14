@@ -13,6 +13,7 @@ from __future__ import annotations
 import copy
 import json
 import math
+import os
 import shutil
 import subprocess
 import sys
@@ -249,11 +250,15 @@ print("IMPORT_OK")
     def test_cli_entrypoint_execution(self) -> None:
         """Verifies that validate-course console script or module executes fixture 28."""
         fixture_path = FIXTURES_DIR / "28_valid_complete_course.json"
+        env = os.environ.copy()
+        existing_pp = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = str(SRC_DIR) + (os.pathsep + existing_pp if existing_pp else "")
         proc_module = subprocess.run(
             [sys.executable, "-m", "validator.cli", str(fixture_path)],
             capture_output=True,
             text=True,
-            cwd=str(REPO_ROOT)
+            cwd=str(REPO_ROOT),
+            env=env,
         )
         assert proc_module.returncode == 0
         assert "VALID" in proc_module.stdout

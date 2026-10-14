@@ -780,7 +780,7 @@ class TestInvariantChecksAdversarial:
         # 4. Bare code variable fallback (_val, _num, _str, _res)
         assert format_template_string(r"Coeficiente $C^* = (5.0)^{1-a_val}$", {"a_val": 0.4}) == r"Coeficiente $C^* = (5.0)^{1-0.4}$"
 
-    def test_assemble_mc7_interpolates_raw_strings_and_auto_repairs_nested_katex(self):
+    def test_assemble_ergonomic_mc7_interpolates_raw_strings_and_auto_repairs_nested_katex(self):
         """assemble_question interpolates {var} and {var:.4f} in MC7 options and auto-repairs unclosed nested KaTeX macros."""
         tpl = {
             "id": "TPL-ERGONOMIC-MC7",
@@ -798,8 +798,12 @@ class TestInvariantChecksAdversarial:
             "vars": {"s_val": 24, "a_val": 3, "ratio_val": 240.0 / 380.0},
             "correct": r"El estimador $\hat{\boldsymbol{\beta}$ alcanza $\frac{s_val}{a_val} = 8\%$ con ajuste ${ratio_val:.4f}$.",
             "distractors": [
-                {"value": rf"El estimador $\hat{{\boldsymbol{{\beta}}$ alcanza $\frac{{s_val}}{{{i + 3}}} = {24 // (i + 1)}\%$ con ajuste ${{ratio_val:.4f}}$.", "distractor_id": f"D{i}"}
-                for i in range(1, 7)
+                {"value": r"El estimador $\hat{\boldsymbol{\beta}$ presenta sesgo $\frac{s_val}{4} = 6\%$ con bondad ${ratio_val:.4f}$.", "distractor_id": "D1"},
+                {"value": r"La varianza de $\hat{\boldsymbol{\beta}$ equivale a $\frac{s_val}{5} = 4\%$ bajo $R^2 = {ratio_val:.4f}$.", "distractor_id": "D2"},
+                {"value": r"El vector $\hat{\boldsymbol{\beta}$ registra cociente $\frac{s_val}{6} = 4\%$ y métrica ${ratio_val:.4f}$.", "distractor_id": "D3"},
+                {"value": r"La cota de $\hat{\boldsymbol{\beta}$ se reduce a $\frac{s_val}{7} = 3\%$ cuando $R^2 = {ratio_val:.4f}$.", "distractor_id": "D4"},
+                {"value": r"El parámetro $\hat{\boldsymbol{\beta}$ implica razón $\frac{s_val}{8} = 3\%$ con índice ${ratio_val:.4f}$.", "distractor_id": "D5"},
+                {"value": r"La pendiente $\hat{\boldsymbol{\beta}$ arroja $\frac{s_val}{9} = 2\%$ con coeficiente ${ratio_val:.4f}$.", "distractor_id": "D6"},
             ],
         }
         q = assemble_question(tpl, gen_res, "Hab-01", 1, seed=42)

@@ -461,49 +461,50 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                 item_id=q_id
             ))
 
-        # 4. Prohibición de variables de plantilla no sustituidas (patrón '{variable_name}' no reemplazado)
+        # 4. Prohibición de variables de plantilla no sustituidas (patrón '{variable_name}' o '{variable_name:.4f}' no reemplazado)
         # Permite explícitamente notación matemática de conjuntos/tuplas mayúsculas (ej. {K}, {Y}, {K, L})
         unreplaced: list[str] = []
-        for m in re.finditer(r"\{([a-zA-Z0-9_,\s]+)\}", text):
+        for m in re.finditer(r"\{([a-zA-Z0-9_,\s:.+\-%]+)\}", text):
             inner = m.group(1).strip()
-            # Si contiene letras y todas son mayúsculas (ej. {K}, {Y}, {K, L}, {A, B}), es notación matemática/económica
+            # Si contiene letras y todas son mayúsculas (ej. {K}, {Y}, {K, L}, {A, B}) sin especificador de formato, es notación matemática/económica
             letters = re.findall(r"[a-zA-Z]", inner)
-            if letters and all(c.isupper() for c in letters):
+            if ":" not in inner and letters and all(c.isupper() for c in letters):
                 continue
-            # Solo evaluar como variable de plantilla si coincide con identificador típico (ej. {k_val}, {slope})
-            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", inner):
+            # Solo evaluar como variable de plantilla si coincide con identificador típico (ej. {k_val}, {slope}, {r2_val:.4f})
+            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*(?::[^{}\s]+)?$", inner):
                 continue
             start = m.start()
             prefix = text[:start]
-            # Valid LaTeX macro preceding: e.g. \text{, \frac{a}{b}, \frac{\dot{k}}{k}, \begin{cases}
-            is_latex_arg = False
-            if re.search(r"\\[a-zA-Z]+(?:\s*\{[^{}]*\})*\s*$", prefix):
-                is_latex_arg = True
-            elif prefix.rstrip().endswith("}"):
-                s_pref = prefix.rstrip()
-                while s_pref.endswith("}"):
-                    d_depth = 0
-                    d_idx = len(s_pref) - 1
-                    while d_idx >= 0:
-                        if s_pref[d_idx] == "}":
-                            d_depth += 1
-                        elif s_pref[d_idx] == "{":
-                            d_depth -= 1
-                            if d_depth == 0:
+            if ":" not in inner:
+                # Valid LaTeX macro preceding: e.g. \text{, \frac{a}{b}, \frac{\dot{k}}{k}, \begin{cases}
+                is_latex_arg = False
+                if re.search(r"\\[a-zA-Z]+(?:\s*\{[^{}]*\})*\s*$", prefix):
+                    is_latex_arg = True
+                elif prefix.rstrip().endswith("}"):
+                    s_pref = prefix.rstrip()
+                    while s_pref.endswith("}"):
+                        d_depth = 0
+                        d_idx = len(s_pref) - 1
+                        while d_idx >= 0:
+                            if s_pref[d_idx] == "}":
+                                d_depth += 1
+                            elif s_pref[d_idx] == "{":
+                                d_depth -= 1
+                                if d_depth == 0:
+                                    break
+                            d_idx -= 1
+                        if d_depth == 0 and d_idx >= 0:
+                            s_pref = s_pref[:d_idx].rstrip()
+                            if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?$", s_pref):
+                                is_latex_arg = True
                                 break
-                        d_idx -= 1
-                    if d_depth == 0 and d_idx >= 0:
-                        s_pref = s_pref[:d_idx].rstrip()
-                        if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?$", s_pref):
-                            is_latex_arg = True
+                        else:
                             break
-                    else:
-                        break
-            if is_latex_arg:
-                continue
-            # Subscripts and superscripts: _{...}, ^{...}
-            if re.search(r"[_^]\s*$", prefix):
-                continue
+                if is_latex_arg:
+                    continue
+                # Subscripts and superscripts: _{...}, ^{...}
+                if re.search(r"[_^]\s*$", prefix):
+                    continue
             # Escaped brace \{
             if re.search(r"\\\{\s*$", prefix):
                 continue

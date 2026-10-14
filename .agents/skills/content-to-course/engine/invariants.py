@@ -290,62 +290,65 @@ def validate_katex_syntax(text: str, context: str, allow_template_vars: bool = F
     elif total_right > total_left and left_paren == right_paren and left_bracket == right_bracket and left_brace == right_brace:
         errors.append(f"Unmatched scalable delimiter '\\right' without matching '\\left' in {context}.")
 
-    # 9. Unsubstituted template variables: {var}
+    # 9. Unsubstituted template variables: {var} or {var:.4f}
     # Explicitly permit uppercase set/tuple notation (e.g. {K}, {Y}, {K, L}) in text
     if not (allow_template_vars or context.startswith("stem_variants")):
-        for m in re.finditer(r"\{([a-zA-Z0-9_,\s]+)\}", text):
+        for m in re.finditer(r"\{([a-zA-Z0-9_,\s:.+\-%]+)\}", text):
             inner = m.group(1).strip()
             letters = re.findall(r"[a-zA-Z]", inner)
-            if letters and all(c.isupper() for c in letters):
+            if ":" not in inner and letters and all(c.isupper() for c in letters):
                 continue
-            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", inner):
+            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*(?::[^{}\s]+)?$", inner):
                 continue
             var_name = inner
             start = m.start()
 
             # Legitimate LaTeX: preceded by escape '\', subscript '_', or superscript '^'
-            if start > 0 and text[start - 1] in ("\\", "_", "^"):
+            if start > 0 and text[start - 1] == "\\":
+                continue
+            if ":" not in inner and start > 0 and text[start - 1] in ("_", "^"):
                 continue
 
             prefix = text[:start].rstrip()
-            # Legitimate LaTeX: argument of a LaTeX command e.g. \frac, \text, \mathbf, \begin, \sqrt[...]
-            if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?\s*$", prefix):
-                continue
+            if ":" not in inner:
+                # Legitimate LaTeX: argument of a LaTeX command e.g. \frac, \text, \mathbf, \begin, \sqrt[...]
+                if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?\s*$", prefix):
+                    continue
 
-            # Legitimate LaTeX: subsequent argument of a multi-arg LaTeX command e.g. \frac{a}{b}, \frac{d\dot{k}}{dk}
-            is_subsequent_latex_arg = False
-            s = prefix
-            while s.endswith("}"):
-                depth = 0
-                idx = len(s) - 1
-                while idx >= 0:
-                    if s[idx] == "}":
-                        depth += 1
-                    elif s[idx] == "{":
-                        depth -= 1
-                        if depth == 0:
+                # Legitimate LaTeX: subsequent argument of a multi-arg LaTeX command e.g. \frac{a}{b}, \frac{d\dot{k}}{dk}
+                is_subsequent_latex_arg = False
+                s = prefix
+                while s.endswith("}"):
+                    depth = 0
+                    idx = len(s) - 1
+                    while idx >= 0:
+                        if s[idx] == "}":
+                            depth += 1
+                        elif s[idx] == "{":
+                            depth -= 1
+                            if depth == 0:
+                                break
+                        idx -= 1
+                    if depth == 0 and idx >= 0:
+                        s = s[:idx].rstrip()
+                        if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?$", s):
+                            is_subsequent_latex_arg = True
                             break
-                    idx -= 1
-                if depth == 0 and idx >= 0:
-                    s = s[:idx].rstrip()
-                    if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?$", s):
-                        is_subsequent_latex_arg = True
+                    else:
                         break
-                else:
-                    break
 
-            if is_subsequent_latex_arg:
-                continue
+                if is_subsequent_latex_arg:
+                    continue
 
-            # Check if this looks like an unescaped LaTeX math command (e.g. dot{w}, bar{k}, frac{a}{b})
-            m_accent = re.search(r"\b(dot|ddot|bar|hat|tilde|vec|frac|sqrt)\s*$", prefix)
-            if m_accent:
-                cmd_name = m_accent.group(1)
-                errors.append(
-                    f"Unescaped LaTeX math command '{cmd_name}{{{var_name}}}' detected in {context}. "
-                    f"Must be prefixed with '\\' and enclosed in '$...$' (e.g. '$\\{cmd_name}{{{var_name}}}$')."
-                )
-                continue
+                # Check if this looks like an unescaped LaTeX math command (e.g. dot{w}, bar{k}, frac{a}{b})
+                m_accent = re.search(r"\b(dot|ddot|bar|hat|tilde|vec|frac|sqrt)\s*$", prefix)
+                if m_accent:
+                    cmd_name = m_accent.group(1)
+                    errors.append(
+                        f"Unescaped LaTeX math command '{cmd_name}{{{var_name}}}' detected in {context}. "
+                        f"Must be prefixed with '\\' and enclosed in '$...$' (e.g. '$\\{cmd_name}{{{var_name}}}$')."
+                    )
+                    continue
 
             errors.append(f"Unsubstituted template variable '{{{var_name}}}' detected in {context}.")
 
