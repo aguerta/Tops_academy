@@ -719,7 +719,7 @@ class TestFewShotRegressionEDP_EDO:
 
         py_files = [
             p for p in SKILL_DIR.rglob("*.py")
-            if "examples" not in p.parts and "__pycache__" not in p.parts and "courses" not in p.parts and "work" not in p.parts
+            if not any(part in ("examples", "__pycache__", "courses", "work") for part in p.relative_to(SKILL_DIR).parts)
         ]
         assert len(py_files) >= 15, f"Expected >= 15 skill python files, found {len(py_files)}"
 
