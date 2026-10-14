@@ -674,10 +674,19 @@ class TestExtendedQualityRules:
         assert not res.is_valid
         assert any(e.rule_id == "R-20" and "double braces" in e.message for e in res.errors)
 
+    def test_r20_nested_fraction_numerator_not_flagged_as_unreplaced_var(self, base_valid_course: dict) -> None:
+        r"""Nested braces in \\frac numerator (e.g. \\frac{\\dot{K}}{K}) must not flag denominator {K} as unreplaced var."""
+        course = copy.deepcopy(base_valid_course)
+        q = course["questions"][0]
+        q["stem"] = r"Evalúe $\\frac{\\dot{K}}{K} - \\frac{\\dot{L}}{L}$ y $\\left.\\frac{d\\dot{k}}{dk}\\right|_{k=\\bar{k}} < 0$."
+        res = validate_course_content(json.dumps(course))
+        assert res.is_valid, f"Nested fraction numerator should pass R-20, got: {res.errors}"
+
     @pytest.mark.parametrize("unreplaced_text", [
         "Considere la ecuación con constante {k_val}.",
         "Sea la pendiente {slope} de la recta.",
         "Calcule $f(x) = {coeff} x + {const}$.",
+        "El ajuste del modelo es $R^2 = {r2_val:.4f}$.",
     ])
     def test_r20_unreplaced_template_vars_rejected(self, base_valid_course: dict, unreplaced_text: str) -> None:
         """Unreplaced template variables {var} trigger ERR_LATEX_SYNTAX."""
