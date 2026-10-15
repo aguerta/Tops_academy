@@ -300,6 +300,7 @@ def assemble_question(
         "context_application": f"Evaluación conceptual y procedimental para {competency_id}",
         "stem": stem,
         "hints": hints,
+        "solution": detailed_solution,
         "detailed_solution": detailed_solution,
         "common_misconception_warning": common_misconception_warning,
         "misconception_warning": common_misconception_warning,

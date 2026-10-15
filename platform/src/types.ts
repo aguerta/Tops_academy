@@ -12,6 +12,7 @@ export interface Competency {
   category: CompetencyCategory;
   description: string;
   mastery_target: number;
+  prerequisites?: string[];
 }
 
 export interface CurveSpec {
@@ -74,7 +75,9 @@ export interface Question {
   correct_answer: CorrectAnswer;
   hints: string[];
   solution: string;
+  detailed_solution?: string;
   misconception_warning?: string;
+  common_misconception_warning?: string;
 }
 
 export interface Course {
