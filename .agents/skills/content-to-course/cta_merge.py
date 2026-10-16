@@ -70,7 +70,8 @@ def extract_evidence_keys(evidence_list: Optional[List[Dict[str, Any]]]) -> Set[
 
 def auto_balance_math_delimiters(text: str) -> str:
     """Deterministically repairs triple dollars '$$$' and odd unescaped '$' delimiters
-    ONLY when curly braces '{' and '}' are balanced (preserving intentional syntax error detection).
+    ONLY when curly braces '{' and '}' are balanced AND \\left / \\right sizing environments are balanced
+    (preserving intentional syntax error detection). Handles compound trailing punctuation and brackets.
     """
     if not isinstance(text, str) or not text:
         return text
@@ -83,15 +84,41 @@ def auto_balance_math_delimiters(text: str) -> str:
     masked = re.sub(r"(?<!\\)\$\$", "__DISPLAY_MATH__", text)
     unescaped_dollars = [m.start() for m in re.finditer(r"(?<!\\)\$", masked)]
     if len(unescaped_dollars) % 2 == 1:
-        # Only auto-close if curly braces are balanced so genuine broken macros like \frac{a}{b$ still trigger error
+        # Only auto-close if curly braces and \left / \right sizing delimiters are balanced
         open_braces = len(re.findall(r"(?<!\\)\{", text))
         close_braces = len(re.findall(r"(?<!\\)\}", text))
-        if open_braces == close_braces:
+        left_count = len(re.findall(r"\\left(?![a-zA-Z])", text))
+        right_count = len(re.findall(r"\\right(?![a-zA-Z])", text))
+        if open_braces == close_braces and left_count == right_count:
+            last_dollar = unescaped_dollars[-1]
+            prefix = text[:last_dollar]
+
+            unmatched_open_parens = 0
+            for ch in prefix:
+                if ch == "(":
+                    unmatched_open_parens += 1
+                elif ch == ")" and unmatched_open_parens > 0:
+                    unmatched_open_parens -= 1
+
+            unmatched_open_brackets = 0
+            for ch in prefix:
+                if ch == "[":
+                    unmatched_open_brackets += 1
+                elif ch == "]" and unmatched_open_brackets > 0:
+                    unmatched_open_brackets -= 1
+
             stripped = text.rstrip()
-            if stripped.endswith((".", ",", ";", ":")):
-                text = stripped[:-1] + "$" + stripped[-1]
+            trailing_whitespace = text[len(stripped):]
+
+            compound_suffixes = (").", "),", ");", "):", ")?", '?"', '!"')
+            single_suffixes = (".", ",", ";", ":")
+
+            if stripped.endswith(compound_suffixes):
+                text = stripped[:-2].rstrip() + "$" + stripped[-2:] + trailing_whitespace
+            elif stripped.endswith(single_suffixes):
+                text = stripped[:-1].rstrip() + "$" + stripped[-1] + trailing_whitespace
             else:
-                text = stripped + "$"
+                text = stripped + "$" + trailing_whitespace
 
     return text
 

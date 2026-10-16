@@ -485,13 +485,19 @@ class WorkloadExtractor:
             for cjson in course_files:
                 try:
                     c_obj = json.loads(cjson.read_text(encoding="utf-8"))
-                    if workload["course_id"] not in ("unknown", "Tops_academy", "work") and c_obj.get("course_id") == workload["course_id"]:
+                    cand_cid = str(c_obj.get("course_id") or "").strip()
+                    cand_title = str(c_obj.get("title") or "").strip()
+                    if (
+                        workload["course_id"] not in ("unknown", "Tops_academy", "work")
+                        and cand_cid
+                        and cand_cid == workload["course_id"]
+                    ):
                         matched_course_obj = c_obj
                         break
                     if (
-                        cjson.stem in transcript_full_text
-                        or str(c_obj.get("course_id", "")) in transcript_full_text
-                        or (c_obj.get("title") and str(c_obj.get("title")) in transcript_full_text)
+                        (cjson.stem and cjson.stem in transcript_full_text)
+                        or (cand_cid and cand_cid in transcript_full_text)
+                        or (cand_title and cand_title in transcript_full_text)
                     ):
                         matched_course_obj = c_obj
                         break
@@ -508,6 +514,10 @@ class WorkloadExtractor:
                 workload["course_title"] = matched_course_obj.get("title", workload["course_title"])
                 if completed_stage_4_or_5 and workload["questions_count"] == 0:
                     workload["questions_count"] = len(matched_course_obj.get("questions", []))
+                if workload.get("competencies_count", 0) == 0:
+                    matched_comps = matched_course_obj.get("competencies", [])
+                    if matched_comps:
+                        workload["competencies_count"] = len(matched_comps)
 
         # Fallback from reports/qa_audits
         qa_dir = workspace_root / "reports" / "qa_audits"
@@ -516,7 +526,7 @@ class WorkloadExtractor:
                 try:
                     qa_data = json.loads(qa_f.read_text(encoding="utf-8"))
                     cand_cid = qa_data.get("course_id", "")
-                    if workload["course_id"] not in ("unknown", "course_generic"):
+                    if cand_cid and workload["course_id"] not in ("unknown", "course_generic"):
                         if cand_cid.lower() in workload["course_id"].lower() or workload["course_id"].lower() in cand_cid.lower():
                             workload["course_title"] = qa_data.get("title", workload["course_title"])
                             workload["competencies_count"] = qa_data.get("total_competencies", len(qa_data.get("competencies", [])))

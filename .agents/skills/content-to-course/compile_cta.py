@@ -188,6 +188,113 @@ def load_cta_data_module(cta_data_path: Path) -> Any:
     return module
 
 
+def _normalize_distractors_list(
+    raw_distractors: List[Any],
+    cid_clean: str,
+    comp_name: str,
+    norm_type: str,
+    doc: str = "material_fuente.pdf",
+    page: int = 1,
+) -> List[Dict[str, Any]]:
+    """Normalizes distractors from either dict or tuple representation, guaranteeing
+    canonical id, error_type, evidence, and CTA-D2 compliance for skill competencies."""
+    compiled_distractors: List[Dict[str, Any]] = []
+
+    for d_idx, d in enumerate(raw_distractors, start=1):
+        if isinstance(d, dict):
+            d_dict = dict(d)
+            d_id = str(d_dict.get("id") or "").strip() or f"D-{cid_clean}-{d_idx:02d}"
+            d_dict["id"] = d_id
+            d_name = str(d_dict.get("name") or "").strip() or f"Distractor {d_idx}"
+            d_dict["name"] = d_name
+
+            wrong_belief = d_dict.get("wrong_belief")
+            if wrong_belief is not None:
+                wrong_belief = str(wrong_belief).strip() or None
+            correct_belief = d_dict.get("correct_belief")
+            if correct_belief is not None:
+                correct_belief = str(correct_belief).strip() or f"Verdad teórica de {comp_name}."
+            else:
+                correct_belief = f"Verdad teórica de {comp_name}."
+            manifestation = str(d_dict.get("manifestation") or "$0$").strip()
+            hint = str(d_dict.get("remediation_hint") or f"Revisar la definición de {comp_name}.").strip()
+            omitted_step = d_dict.get("omitted_step")
+            if omitted_step is not None:
+                omitted_step = str(omitted_step).strip() or None
+
+            # Fallback if both wrong_belief and omitted_step are None (schema requires at least one)
+            if not wrong_belief and not omitted_step:
+                wrong_belief = f"Asume resultado incorrecto en {comp_name}"
+
+            error_type = d_dict.get("error_type")
+            if not error_type:
+                error_type = "skipped_step" if omitted_step else "conceptual_swap"
+
+            d_dict["wrong_belief"] = wrong_belief
+            d_dict["correct_belief"] = correct_belief
+            d_dict["manifestation"] = manifestation
+            d_dict["remediation_hint"] = hint
+            d_dict["omitted_step"] = omitted_step
+            d_dict["error_type"] = error_type
+            d_dict.setdefault("severity", "high")
+            d_dict.setdefault("origin", "inferred")
+            d_dict.setdefault("trigger", f"Evaluación formal de {comp_name}")
+            if "evidence" not in d_dict or not d_dict["evidence"]:
+                d_dict["evidence"] = {"doc": doc, "page": page}
+
+            compiled_distractors.append(d_dict)
+            continue
+
+        if not isinstance(d, (list, tuple)):
+            continue
+
+        d_name = str(d[0]).strip() if len(d) > 0 else f"Distractor {d_idx}"
+        wrong_belief = str(d[1]).strip() if len(d) > 1 and d[1] is not None and str(d[1]).strip() else None
+        correct_belief = str(d[2]).strip() if len(d) > 2 and d[2] is not None and str(d[2]).strip() else f"Verdad teórica de {comp_name}."
+        manifestation = str(d[3]).strip() if len(d) > 3 and d[3] is not None and str(d[3]).strip() else "$0$"
+        hint = str(d[4]).strip() if len(d) > 4 and d[4] is not None and str(d[4]).strip() else f"Revisar la definición de {comp_name}."
+        omitted_step = str(d[5]).strip() if len(d) > 5 and d[5] is not None and str(d[5]).strip() else None
+
+        # Fallback if both wrong_belief and omitted_step are None (schema requires at least one)
+        if not wrong_belief and not omitted_step:
+            wrong_belief = f"Asume resultado incorrecto en {comp_name}"
+
+        d_id = f"D-{cid_clean}-{d_idx:02d}"
+        error_type = "skipped_step" if omitted_step else "conceptual_swap"
+
+        d_dict = {
+            "id": d_id,
+            "name": d_name,
+            "wrong_belief": wrong_belief,
+            "correct_belief": correct_belief,
+            "omitted_step": omitted_step,
+            "trigger": f"Evaluación formal de {comp_name}",
+            "manifestation": manifestation,
+            "error_type": error_type,
+            "severity": "high",
+            "origin": "inferred",
+            "evidence": {
+                "doc": doc,
+                "page": page,
+            },
+            "remediation_hint": hint,
+        }
+        compiled_distractors.append(d_dict)
+
+    # Auto-satisfy CTA-D2 (at least 2 omitted_step distractors required for 'skill' competencies)
+    if norm_type == "skill" and len(compiled_distractors) >= 2:
+        omitted_count = sum(1 for cd in compiled_distractors if isinstance(cd, dict) and cd.get("omitted_step"))
+        for cd in compiled_distractors:
+            if omitted_count >= 2:
+                break
+            if isinstance(cd, dict) and not cd.get("omitted_step"):
+                cd["omitted_step"] = cd.get("wrong_belief") or f"Omitir paso algebraico en {cd.get('name', comp_name)}"
+                cd["error_type"] = "skipped_step"
+                omitted_count += 1
+
+    return compiled_distractors
+
+
 def compile_tuples_to_cta_dict(
     competencies_tuples: List[Any],
     course_id: str = "custom_course",
@@ -213,8 +320,45 @@ def compile_tuples_to_cta_dict(
 
     for comp_idx, item in enumerate(competencies_tuples, start=1):
         if isinstance(item, dict):
-            # Already a dictionary; pass through with auto-fixes
             comp_obj = dict(item)
+            c_type = str(comp_obj.get("type", "concept")).strip().lower()
+            norm_type, default_prefix = type_map.get(c_type, ("concept", "C"))
+            comp_obj["type"] = norm_type
+
+            raw_id = str(comp_obj.get("id") or "").strip()
+            if not raw_id:
+                counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+                raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+                comp_obj["id"] = raw_id
+            else:
+                m_pref = re.match(r"^([A-Za-z]+)-(\d+)$", raw_id)
+                if m_pref:
+                    pfx, num = m_pref.group(1), int(m_pref.group(2))
+                    if pfx in counts_by_prefix:
+                        counts_by_prefix[pfx] = max(counts_by_prefix[pfx], num)
+
+            cid_clean = raw_id.replace("-", "")
+            comp_name = str(comp_obj.get("name") or f"Competencia {raw_id}").strip()
+            comp_obj["name"] = comp_name
+
+            raw_dists = comp_obj.get("distractors", [])
+            doc = "material_fuente.pdf"
+            page = 1
+            if comp_obj.get("evidence") and isinstance(comp_obj["evidence"], list) and len(comp_obj["evidence"]) > 0:
+                first_ev = comp_obj["evidence"][0]
+                if isinstance(first_ev, dict):
+                    doc = str(first_ev.get("doc") or first_ev.get("pdf") or doc).strip()
+                    page = int(first_ev.get("page", page)) if str(first_ev.get("page", "")).isdigit() else page
+
+            comp_obj["distractors"] = _normalize_distractors_list(
+                raw_distractors=raw_dists,
+                cid_clean=cid_clean,
+                comp_name=comp_name,
+                norm_type=norm_type,
+                doc=doc,
+                page=page,
+            )
+            sanitize_competency_math(comp_obj)
             compiled_comps.append(comp_obj)
             continue
 
@@ -239,58 +383,14 @@ def compile_tuples_to_cta_dict(
         raw_distractors = item[8] if len(item) > 8 and isinstance(item[8], (list, tuple)) else []
 
         cid_clean = raw_id.replace("-", "")
-        compiled_distractors: List[Dict[str, Any]] = []
-
-        for d_idx, d in enumerate(raw_distractors, start=1):
-            if isinstance(d, dict):
-                compiled_distractors.append(dict(d))
-                continue
-            if not isinstance(d, (list, tuple)):
-                continue
-
-            d_name = str(d[0]).strip() if len(d) > 0 else f"Distractor {d_idx}"
-            wrong_belief = str(d[1]).strip() if len(d) > 1 and d[1] is not None and str(d[1]).strip() else None
-            correct_belief = str(d[2]).strip() if len(d) > 2 and d[2] is not None and str(d[2]).strip() else f"Verdad teórica de {name}."
-            manifestation = str(d[3]).strip() if len(d) > 3 and d[3] is not None and str(d[3]).strip() else "$0$"
-            hint = str(d[4]).strip() if len(d) > 4 and d[4] is not None and str(d[4]).strip() else f"Revisar la definición de {name}."
-            omitted_step = str(d[5]).strip() if len(d) > 5 and d[5] is not None and str(d[5]).strip() else None
-
-            # Fallback if both wrong_belief and omitted_step are None (schema requires at least one)
-            if not wrong_belief and not omitted_step:
-                wrong_belief = f"Asume resultado incorrecto en {name}"
-
-            d_id = f"D-{cid_clean}-{d_idx:02d}"
-            error_type = "skipped_step" if omitted_step else "conceptual_swap"
-
-            d_dict = {
-                "id": d_id,
-                "name": d_name,
-                "wrong_belief": wrong_belief,
-                "correct_belief": correct_belief,
-                "omitted_step": omitted_step,
-                "trigger": f"Evaluación formal de {name}",
-                "manifestation": manifestation,
-                "error_type": error_type,
-                "severity": "high",
-                "origin": "inferred",
-                "evidence": {
-                    "doc": doc,
-                    "page": page,
-                },
-                "remediation_hint": hint,
-            }
-            compiled_distractors.append(d_dict)
-
-        # Auto-satisfy CTA-D2 (at least 2 omitted_step distractors required for 'skill' competencies)
-        if norm_type == "skill" and len(compiled_distractors) >= 2:
-            omitted_count = sum(1 for cd in compiled_distractors if cd.get("omitted_step"))
-            for cd in compiled_distractors:
-                if omitted_count >= 2:
-                    break
-                if not cd.get("omitted_step"):
-                    cd["omitted_step"] = cd.get("wrong_belief") or f"Omitir paso algebraico en {cd.get('name', name)}"
-                    cd["error_type"] = "skipped_step"
-                    omitted_count += 1
+        compiled_distractors = _normalize_distractors_list(
+            raw_distractors=raw_distractors,
+            cid_clean=cid_clean,
+            comp_name=name,
+            norm_type=norm_type,
+            doc=doc,
+            page=page,
+        )
 
         comp_dict = {
             "id": raw_id,
@@ -336,8 +436,10 @@ def compile_cta(
 
     work_dir = Path(output_dir).resolve() if output_dir else data_file.parent
     work_dir.mkdir(parents=True, exist_ok=True)
+    bak_file = work_dir / ".cta_data.py.bak"
 
     source_text = data_file.read_text(encoding="utf-8")
+    source_lines = source_text.splitlines()
     locator = CtaDataLineLocator(source_text)
 
     # 1. Dynamically load module
@@ -345,7 +447,29 @@ def compile_cta(
         mod = load_cta_data_module(data_file)
     except Exception as e:
         elapsed = (time.perf_counter() - t0) * 1000.0
-        return False, {}, [f"Syntax / Execution error in {data_file.name}: {e}"], elapsed
+        line_num = getattr(e, "lineno", None)
+        if not line_num:
+            import traceback
+            tb = sys.exc_info()[2]
+            if tb:
+                for frame in traceback.extract_tb(tb):
+                    if Path(frame.filename).name == data_file.name:
+                        line_num = frame.lineno
+                        break
+
+        line_str = f" [{data_file.name}:Línea {line_num}]" if line_num else ""
+        bak_hint = f" (NOTA: Backup de seguridad disponible en {bak_file.name})" if bak_file.is_file() else ""
+        err_msg = f"Syntax / Execution error in {data_file.name}:{line_str} {e}{bak_hint}"
+
+        if line_num and source_lines:
+            start_l, end_l, snip = get_source_line_snippet(source_lines, line_num, radius=1)
+            err_msg += (
+                f"\nCONTEXTO EXACTO PARA replace_file_content (NO uses view_file ni write_to_file Overwrite):\n"
+                f"  --- {data_file.name} (StartLine={start_l}, EndLine={end_l}) ---\n"
+                f"{snip}"
+            )
+
+        return False, {}, [err_msg], elapsed
 
     competencies = getattr(mod, "COMPETENCIES", None)
     if competencies is None:
@@ -353,7 +477,6 @@ def compile_cta(
         return False, {}, [f"{data_file.name} does not define 'COMPETENCIES = [...]' list of tuples."], elapsed
 
     # Anti-Overwrite Guard: protect against accidental write_to_file(Overwrite=True) shrinking >=10 comps to <6
-    bak_file = work_dir / ".cta_data.py.bak"
     if len(competencies) >= 10:
         try:
             bak_file.write_text(source_text, encoding="utf-8")
@@ -466,6 +589,15 @@ def compile_cta(
 
 def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
     """Categorize raw CTA error into (rule_tag, short_rule, cause, action)."""
+    # 0. Python Syntax / Execution errors
+    if any(k in err for k in ["Syntax / Execution error", "SyntaxError", "IndentationError"]):
+        rule_tag = "CTA-PYTHON-SYNTAX: ERROR DE SINTAXIS PYTHON"
+        short_rule = "CTA-SYNTAX"
+        first_line = err.splitlines()[0]
+        cause = first_line[:120]
+        action = "Corregir sintaxis de Python (comilla, paréntesis o delimitador sin cerrar)"
+        return rule_tag, short_rule, cause, action
+
     # 1. KaTeX errors
     if any(k in err for k in ["Unbalanced inline math", "Unbalanced display math", "Triple dollar", "Residual double curly", "sin delimitar por '$...$'"]):
         short_rule = "CTA-KATEX"
@@ -526,7 +658,7 @@ def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
 
 
 def get_source_line_snippet(lines: List[str], line_num: int, radius: int = 1) -> Tuple[int, int, str]:
-    """Devuelve (start_line, end_line, formatted_snippet) alrededor de line_num (1-indexed)."""
+    """Devuelve (start_line, end_line, formatted_snippet) en torno a line_num (1-indexed)."""
     start_l = max(1, line_num - radius)
     end_l = min(len(lines), line_num + radius)
     snip_lines = [f"  L{idx}: {lines[idx - 1]}" for idx in range(start_l, end_l + 1)]
@@ -541,6 +673,19 @@ def render_compact_cta_errors(
     """Renders single-line aggregated errors grouped by rule for compile_cta.py, with exact line snippets."""
     if not errors:
         return ""
+
+    if source_lines is None:
+        cand_p = Path(data_filename)
+        if cand_p.is_file():
+            try:
+                source_lines = cand_p.read_text(encoding="utf-8").splitlines()
+            except Exception:
+                pass
+        elif (Path("work") / data_filename).is_file():
+            try:
+                source_lines = (Path("work") / data_filename).read_text(encoding="utf-8").splitlines()
+            except Exception:
+                pass
 
     grouped: Dict[str, Dict[Tuple[str, str, str], List[int]]] = defaultdict(lambda: defaultdict(list))
 
@@ -593,7 +738,16 @@ def render_compact_cta_errors(
     out_lines.append(
         f"  2. PROHIBIDO usar 'write_to_file' con Overwrite=True sobre {data_filename} (destruiría las competencias ya escritas)."
     )
-    out_lines.append("  3. Re-ejecuta: python compile_cta.py")
+    has_backup = any(".cta_data.py.bak" in err for err in errors) or (
+        Path(data_filename).parent / ".cta_data.py.bak"
+    ).is_file()
+    if has_backup:
+        out_lines.append(
+            f"  3. Existe un backup '.cta_data.py.bak'. Si {data_filename} quedó corrupto o truncado, puedes restaurarlo."
+        )
+        out_lines.append(f"  4. Re-ejecuta: python compile_cta.py")
+    else:
+        out_lines.append(f"  3. Re-ejecuta: python compile_cta.py")
 
     return "\n".join(out_lines).strip()
 

@@ -192,6 +192,37 @@ def find_lines_in_file(fpath: Path, pattern: str) -> List[int]:
         return []
 
 
+def find_template_field_line(fpath: Path, tpl_id: str, field_name: Optional[str] = None) -> List[int]:
+    """Scan file lines to locate template ID block and optionally field_name within that block."""
+    if not fpath.is_file() or not tpl_id:
+        return []
+    try:
+        lines = fpath.read_text(encoding="utf-8", errors="replace").splitlines()
+        tpl_idx = -1
+        # Find template id line
+        for idx, l in enumerate(lines, start=1):
+            if f'"{tpl_id}"' in l or f"'{tpl_id}'" in l:
+                tpl_idx = idx
+                break
+        if tpl_idx == -1:
+            return []
+        if not field_name:
+            return [tpl_idx]
+        # Search forward for field_name until next template id or end of object
+        field_target = f'"{field_name}"'
+        field_target_alt = f"'{field_name}'"
+        for idx in range(tpl_idx, min(tpl_idx + 150, len(lines) + 1)):
+            line_str = lines[idx - 1]
+            if field_target in line_str or field_target_alt in line_str:
+                return [idx]
+            # Stop if we hit the next template
+            if idx > tpl_idx and ('"id":' in line_str or "'id':" in line_str):
+                break
+        return [tpl_idx]
+    except Exception:
+        return []
+
+
 def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, Any]:
     """Extract canonical diagnostic metadata from DiagnosticError or traditional formatted string."""
     if isinstance(err, DiagnosticError) and getattr(err, "rule_tag", None):
@@ -241,12 +272,108 @@ def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, A
     }
 
 
-_CONTROL_CHAR_LATEX_MAP = {
-    "\x0c": r"\\f",   # \frac, \forall
-    "\x08": r"\\b",   # \beta, \bar, \binom, \begin
-    "\x07": r"\\a",   # \alpha, \approx
-    "\x0b": r"\\v",   # \vec, \varepsilon
+_CONTROL_CHAR_TEXT_MAP = {
+    "\x0c": r"\f",   # \frac, \forall -> 1 backslash in text (len 2: '\', 'f')
+    "\x08": r"\b",   # \beta, \bar, \binom, \begin -> 1 backslash in text (len 2: '\', 'b')
+    "\x07": r"\a",   # \alpha, \approx -> 1 backslash in text (len 2: '\', 'a')
+    "\x0b": r"\v",   # \vec, \varepsilon -> 1 backslash in text (len 2: '\', 'v')
 }
+
+_CONTROL_CHAR_CODE_MAP = {
+    "\x0c": r"\\f",   # In standard Python string literal, \\f escapes backslash for compiler
+    "\x08": r"\\b",
+    "\x07": r"\\a",
+    "\x0b": r"\\v",
+}
+
+_CONTROL_CHAR_LATEX_MAP = _CONTROL_CHAR_TEXT_MAP
+
+
+def _heal_code_control_chars(code_str: str) -> str:
+    """Restores corrupted ASCII control characters in Python code strings.
+    Distinguishes raw string literals (r'...') where single backslash is needed
+    from standard string literals ('...') where double backslash is needed for AST.
+    """
+    if not any(c in code_str for c in _CONTROL_CHAR_TEXT_MAP):
+        return code_str
+
+    try:
+        import io, tokenize
+        tokens = list(tokenize.tokenize(io.BytesIO(code_str.encode("utf-8")).readline))
+        new_tokens = []
+        token_modified = False
+        for tok in tokens:
+            if tok.type == tokenize.STRING:
+                val = tok.string
+                if any(c in val for c in _CONTROL_CHAR_TEXT_MAP):
+                    is_raw = val.startswith(("r", "R", "fr", "rf", "FR", "RF", "br", "rb", "BR", "RB"))
+                    mapping = _CONTROL_CHAR_TEXT_MAP if is_raw else _CONTROL_CHAR_CODE_MAP
+                    new_val = val
+                    for ctrl, repl in mapping.items():
+                        new_val = new_val.replace(ctrl, repl)
+                    new_tokens.append(tokenize.TokenInfo(tok.type, new_val, tok.start, tok.end, tok.line))
+                    token_modified = True
+                    continue
+            new_tokens.append(tok)
+        if token_modified:
+            res = tokenize.untokenize(new_tokens).decode("utf-8")
+            ast.parse(res)
+            return res
+    except Exception:
+        pass
+
+    # Fallback to standard code mapping
+    new_code = code_str
+    for ctrl, repl in _CONTROL_CHAR_CODE_MAP.items():
+        new_code = new_code.replace(ctrl, repl)
+    try:
+        ast.parse(new_code)
+        return new_code
+    except Exception:
+        return code_str
+
+
+def _extract_template_placeholders(text: str) -> Set[str]:
+    """Extract template variable placeholders {var} or {var:spec} excluding LaTeX macro arguments like \\text{x}, \\begin{env}, \\dot{k}."""
+    placeholders: Set[str] = set()
+    for m in re.finditer(r"(?<!\{)\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}(?!\})", text):
+        var_name = m.group(1)
+        fmt_spec = m.group(2)
+        start = m.start()
+        prefix = text[:start].rstrip()
+
+        # If it has a format spec like {x:.2f}, it is unconditionally a Python template placeholder
+        if fmt_spec:
+            placeholders.add(var_name)
+            continue
+
+        # Check if preceded by a LaTeX command e.g. \text{var}, \sqrt{var}, \dot{var}, \begin{var}
+        if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?\s*$", prefix):
+            continue
+
+        # Check if preceded by second argument of 2-arg macro e.g. \frac{a}{b}
+        if prefix.endswith("}"):
+            depth = 0
+            idx = len(prefix) - 1
+            while idx >= 0:
+                if prefix[idx] == "}":
+                    depth += 1
+                elif prefix[idx] == "{":
+                    depth -= 1
+                    if depth == 0:
+                        break
+                idx -= 1
+            if depth == 0 and idx >= 0:
+                before_first_arg = prefix[:idx].rstrip()
+                if re.search(r"\\(frac|dfrac|tfrac|cfrac|binom|dbinom|tbinom|overset|underset|stackrel)\s*$", before_first_arg):
+                    continue
+
+        # Check if subscript or superscript single letter without format spec: e.g. x_{i} or x^{k}
+        if (prefix.endswith("_") or prefix.endswith("^")) and len(var_name) <= 2:
+            continue
+
+        placeholders.add(var_name)
+    return placeholders
 
 
 def auto_heal_template_data(
@@ -254,8 +381,8 @@ def auto_heal_template_data(
     cta_comp: Optional[Dict[str, Any]] = None,
 ) -> Tuple[bool, List[str]]:
     """Applies strictly mechanical, non-semantic auto-healing to a loaded template dict:
-    1. Restores corrupted ASCII control chars (\\x0c -> \\\\f, \\x08 -> \\\\b, \\x07 -> \\\\a, \\x0b -> \\\\v) in strings.
-    2. Auto-exports local variables computed in generate(rng) into the returned 'vars' dict
+    1. Restores corrupted ASCII control chars in text (single backslash) and code (AST safe).
+    2. Auto-exports local variables computed in generate(rng) into 'vars' dict
        when referenced as {var_name} in stem, stem_variants, hints, or solution.
     3. Populates missing error_rationale in multiple_select incorrect options from cta_comp distractors.
     """
@@ -301,18 +428,28 @@ def auto_heal_template_data(
             continue
         tid = tpl.get("id", "T-XX")
 
-        # 1. Heal control characters in stem, solution, generate_py, detailed_solution
-        for s_field in ("stem", "solution", "generate_py", "detailed_solution"):
+        # 1. Heal control characters in stem, solution, detailed_solution
+        for s_field in ("stem", "solution", "detailed_solution"):
             val = tpl.get(s_field)
             if isinstance(val, str):
                 new_val = val
-                for ctrl, repl in _CONTROL_CHAR_LATEX_MAP.items():
+                for ctrl, repl in _CONTROL_CHAR_TEXT_MAP.items():
                     if ctrl in new_val:
                         new_val = new_val.replace(ctrl, repl)
                 if new_val != val:
                     tpl[s_field] = new_val
                     modified = True
                     fixes.append(f"{tid}.{s_field}: restored ASCII control char to LaTeX backslash")
+
+        # Heal control characters in Python code fields
+        for c_field in ("generate_py", "cross_check_py"):
+            c_val = tpl.get(c_field)
+            if isinstance(c_val, str) and any(ctrl in c_val for ctrl in _CONTROL_CHAR_TEXT_MAP):
+                new_c_val = _heal_code_control_chars(c_val)
+                if new_c_val != c_val:
+                    tpl[c_field] = new_c_val
+                    modified = True
+                    fixes.append(f"{tid}.{c_field}: restored ASCII control char to LaTeX backslash in Python code")
 
         # Heal control characters in list fields: stem_variants, hints
         for list_field in ("stem_variants", "hints"):
@@ -321,7 +458,7 @@ def auto_heal_template_data(
                 for i, item in enumerate(items):
                     if isinstance(item, str):
                         new_item = item
-                        for ctrl, repl in _CONTROL_CHAR_LATEX_MAP.items():
+                        for ctrl, repl in _CONTROL_CHAR_TEXT_MAP.items():
                             if ctrl in new_item:
                                 new_item = new_item.replace(ctrl, repl)
                         if new_item != item:
@@ -337,8 +474,7 @@ def auto_heal_template_data(
                 + [str(x) for x in tpl.get("stem_variants", [])]
                 + [str(x) for x in tpl.get("hints", [])]
             )
-            # Find {identifier} placeholders that are simple Python variable names
-            referenced_vars = set(re.findall(r"(?<!\{)\{([a-zA-Z_][a-zA-Z0-9_]*)(?::[^}]*)?\}(?!\})", text_blob))
+            referenced_vars = _extract_template_placeholders(text_blob)
             if referenced_vars:
                 try:
                     tree = ast.parse(gen_py)
@@ -356,28 +492,70 @@ def auto_heal_template_data(
                             if isinstance(node.target, ast.Name):
                                 assigned_locals.add(node.target.id)
 
-                    # Check if 'vars': { ... } is returned as a dict literal
-                    m_vars_dict = re.search(r"(['\"]vars['\"]\s*:\s*\{)([^}]*)(\})", gen_py)
-                    if m_vars_dict:
-                        vars_body = m_vars_dict.group(2)
-                        existing_keys = set(re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", vars_body))
-                        missing_export = sorted((referenced_vars & assigned_locals) - existing_keys - {"rng"})
-                        if missing_export:
-                            add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
-                            if vars_body.strip():
-                                sep = " " if vars_body.rstrip().endswith(",") else ", "
+                    missing_vars = (referenced_vars & assigned_locals) - {"rng"}
+                    if missing_vars:
+                        # Case 2A: 'vars': { ... } is returned as a dict literal in return statement
+                        m_vars_dict = re.search(r"(['\"]vars['\"]\s*:\s*\{)([^}]*)(\})", gen_py)
+                        if m_vars_dict:
+                            vars_body = m_vars_dict.group(2)
+                            existing_keys = set(re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", vars_body))
+                            missing_export = sorted(missing_vars - existing_keys)
+                            if missing_export:
+                                add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
+                                if vars_body.strip():
+                                    sep = " " if vars_body.rstrip().endswith(",") else ", "
+                                else:
+                                    sep = ""
+                                new_vars_segment = f"{m_vars_dict.group(1)}{vars_body}{sep}{add_pairs}{m_vars_dict.group(3)}"
+                                new_gp = gen_py[:m_vars_dict.start()] + new_vars_segment + gen_py[m_vars_dict.end():]
+                                try:
+                                    ast.parse(new_gp)
+                                    tpl["generate_py"] = new_gp
+                                    gen_py = new_gp
+                                    modified = True
+                                    fixes.append(f"{tid}.generate_py: auto-exported {missing_export} into 'vars'")
+                                except Exception:
+                                    pass
+                        else:
+                            # Case 2B: 'vars': var_name where var_name is an assigned dict (e.g. vars_dict = {...})
+                            m_vars_var = re.search(r"['\"]vars['\"]\s*:\s*([a-zA-Z_][a-zA-Z0-9_]*)", gen_py)
+                            if m_vars_var:
+                                vname = m_vars_var.group(1)
+                                m_assign = re.search(rf"(\b{re.escape(vname)}\s*=\s*\{{)([^}}]*)(\}})", gen_py)
+                                if m_assign:
+                                    vbody = m_assign.group(2)
+                                    existing_keys = set(re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", vbody))
+                                    missing_export = sorted(missing_vars - existing_keys)
+                                    if missing_export:
+                                        add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
+                                        sep = " " if vbody.rstrip().endswith(",") else (", " if vbody.strip() else "")
+                                        new_vseg = f"{m_assign.group(1)}{vbody}{sep}{add_pairs}{m_assign.group(3)}"
+                                        new_gp = gen_py[:m_assign.start()] + new_vseg + gen_py[m_assign.end():]
+                                        try:
+                                            ast.parse(new_gp)
+                                            tpl["generate_py"] = new_gp
+                                            gen_py = new_gp
+                                            modified = True
+                                            fixes.append(f"{tid}.generate_py: auto-exported {missing_export} into '{vname}'")
+                                        except Exception:
+                                            pass
                             else:
-                                sep = ""
-                            new_vars_segment = f"{m_vars_dict.group(1)}{vars_body}{sep}{add_pairs}{m_vars_dict.group(3)}"
-                            new_gp = gen_py[:m_vars_dict.start()] + new_vars_segment + gen_py[m_vars_dict.end():]
-                            try:
-                                ast.parse(new_gp)
-                                tpl["generate_py"] = new_gp
-                                gen_py = new_gp
-                                modified = True
-                                fixes.append(f"{tid}.generate_py: auto-exported {missing_export} into 'vars'")
-                            except Exception:
-                                pass
+                                # Case 2C: 'vars' key is completely missing from return { ... }
+                                m_ret = re.search(r"(\breturn\s*\{)(.*)", gen_py, re.DOTALL)
+                                if m_ret:
+                                    missing_export = sorted(missing_vars)
+                                    if missing_export:
+                                        add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
+                                        inject_str = f"\n        'vars': {{{add_pairs}}},"
+                                        new_gp = gen_py[:m_ret.start(1) + len(m_ret.group(1))] + inject_str + gen_py[m_ret.start(1) + len(m_ret.group(1)):]
+                                        try:
+                                            ast.parse(new_gp)
+                                            tpl["generate_py"] = new_gp
+                                            gen_py = new_gp
+                                            modified = True
+                                            fixes.append(f"{tid}.generate_py: injected missing 'vars' dict with {missing_export}")
+                                        except Exception:
+                                            pass
                 except Exception:
                     pass
 
@@ -504,6 +682,8 @@ def render_compact_aggregated_errors(
                 search_term = rec["snippet"] or rec["template"]
                 if search_term and len(search_term) >= 3:
                     rec["lines"] = find_lines_in_file(p, search_term)
+                if not rec["lines"] and rec.get("template"):
+                    rec["lines"] = find_template_field_line(p, rec["template"], rec.get("field_name"))
 
         records.append(rec)
 
@@ -1851,12 +2031,12 @@ def check_templates_file_or_dir(
                 elif isinstance(tf_content, list) and tf_content and isinstance(tf_content[0], dict):
                     cid = tf_content[0].get("competency_id") or tf.stem
                 comp_obj = comp_by_id.get(cid) if cid else None
-                was_mod, fixes = auto_heal_template_data(
-                    tf_content,
-                    cta_comp=comp_obj if comp_obj is not None else cta_distractors_map,
+                was_mod, fixes = auto_heal_template_file(
+                    tf,
+                    cta_comp=comp_obj,
+                    cta_distractors_map=cta_distractors_map,
                 )
                 if was_mod:
-                    tf.write_text(json.dumps(tf_content, indent=2, ensure_ascii=False), encoding="utf-8")
                     for fix_desc in fixes:
                         print(f"[AUTO-HEAL] {tf.name}: {fix_desc}")
             except Exception:

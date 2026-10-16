@@ -389,10 +389,20 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
             "remediation_hint": f"Examine rigurosamente las condiciones analíticas de {cname}"
         })
 
+    def _esc_fstr(s: str) -> str:
+        t = str(s).replace("\\", "\\\\").replace("'", "\\'").replace("{", "{{").replace("}", "}}")
+        return t.replace("\r", " ").replace("\n", " ")
+
+    def _esc_str(s: str) -> str:
+        t = str(s).replace("\\", "\\\\").replace("'", "\\'")
+        return t.replace("\r", " ").replace("\n", " ")
+
     d_ids = [d["id"] for d in d_objs]
-    m = [d["manifestation"].replace("'", "\\'") for d in d_objs]
-    wb = [d["wrong_belief"].replace("'", "\\'") for d in d_objs]
-    rh = [d["remediation_hint"].replace("'", "\\'") for d in d_objs]
+    cname_fstr = _esc_fstr(cname)
+    m = [_esc_fstr(d["manifestation"]) for d in d_objs]
+    wb_fstr = [_esc_fstr(d["wrong_belief"]) for d in d_objs]
+    wb_std = [_esc_str(d["wrong_belief"]) for d in d_objs]
+    rh = [d["remediation_hint"] for d in d_objs]
 
     d_vals1 = [
         f"f'La trayectoria converge al nivel con amortiguamiento reducido {{param - 1}} ({m[0]}).'",
@@ -408,12 +418,12 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
     ])
 
     d_vals2 = [
-        f"f'La escala efectiva introduce una traslación rígida al nivel {{scale + 5}} ({wb[1]}).'",
-        f"f'El equilibrio colapsa hacia un atractor periódico de periodo {{scale // 2}} asumiendo {wb[2]}.'",
-        f"f'La velocidad de convergencia se reduce cuadráticamente en {{scale * 2}} por {wb[3]}.'",
-        f"f'Se invierte la concavidad del sendero temporal para todo valor {{scale - 3}} reflejando {wb[4]}.'",
-        f"f'El estado estacionario queda indeterminado al anularse en {{scale + 10}} bajo {wb[5]}.'",
-        f"f'Aparece histéresis estructural dependiente de la condición inicial {{scale * 3}} debido a {wb[0]}.'"
+        f"f'La escala efectiva introduce una traslación rígida al nivel {{scale + 5}} ({wb_fstr[1]}).'",
+        f"f'El equilibrio colapsa hacia un atractor periódico de periodo {{scale // 2}} asumiendo {wb_fstr[2]}.'",
+        f"f'La velocidad de convergencia se reduce cuadráticamente en {{scale * 2}} por {wb_fstr[3]}.'",
+        f"f'Se invierte la concavidad del sendero temporal para todo valor {{scale - 3}} reflejando {wb_fstr[4]}.'",
+        f"f'El estado estacionario queda indeterminado al anularse en {{scale + 10}} bajo {wb_fstr[5]}.'",
+        f"f'Aparece histéresis estructural dependiente de la condición inicial {{scale * 3}} debido a {wb_fstr[0]}.'"
     ]
     mc7_dists2 = ",\n".join([
         f"        {{'value': {d_vals2[i]}, 'distractor_id': '{d_ids[(i+1)%6]}'}}"
@@ -437,7 +447,7 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
             "generate_py": (
                 "def generate(rng):\n"
                 "    param = rng.choice([2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16])\n"
-                f"    c_str = f'La trayectoria analítica converge hacia el equilibrio con parámetro {{param}} en el análisis formal de {cname}.'\n"
+                f"    c_str = f'La trayectoria analítica converge hacia el equilibrio con parámetro {{param}} en el análisis formal de {cname_fstr}.'\n"
                 "    distractors = [\n"
                 f"{mc7_dists1}\n"
                 "    ]\n"
@@ -473,7 +483,7 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
             "generate_py": (
                 "def generate(rng):\n"
                 "    scale = rng.choice([15, 20, 25, 30, 35, 40, 45, 50, 60, 70])\n"
-                f"    c_str = f'El sendero temporal preserva la condición de equilibrio con escala {{scale}} en {cname}.'\n"
+                f"    c_str = f'El sendero temporal preserva la condición de equilibrio con escala {{scale}} en {cname_fstr}.'\n"
                 "    distractors = [\n"
                 f"{mc7_dists2}\n"
                 "    ]\n"
@@ -570,8 +580,8 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
                 "    opts = [\n"
                 f"        {{'content': f'La trayectoria de convergencia converge monotónicamente a la tasa {{rate}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
                 f"        {{'content': f'La condición de estabilidad asintótica se satisface para la tasa {{rate}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
-                f"        {{'content': f'El sistema oscila indefinidamente sin convergencia a la tasa {{rate}} ({m[0]}).', 'is_correct': False, 'distractor_id': '{d_ids[0]}', 'error_rationale': '{wb[0]}'}},\n"
-                f"        {{'content': f'La tasa analítica se anula en todo el espacio fuera de equilibrio ({m[1]}).', 'is_correct': False, 'distractor_id': '{d_ids[1]}', 'error_rationale': '{wb[1]}'}}\n"
+                f"        {{'content': f'El sistema oscila indefinidamente sin convergencia a la tasa {{rate}} ({m[0]}).', 'is_correct': False, 'distractor_id': '{d_ids[0]}', 'error_rationale': '{wb_std[0]}'}},\n"
+                f"        {{'content': f'La tasa analítica se anula en todo el espacio fuera de equilibrio ({m[1]}).', 'is_correct': False, 'distractor_id': '{d_ids[1]}', 'error_rationale': '{wb_std[1]}'}}\n"
                 "    ]\n"
                 "    return {'vars': {'rate': rate}, 'options': opts, 'distractors': []}\n"
             ),
@@ -603,8 +613,8 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
                 "    opts = [\n"
                 f"        {{'content': f'El sendero converge al equilibrio establecido por el factor {{factor}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
                 f"        {{'content': f'Las trayectorias dinámicas respetan el sentido cualitativo con factor {{factor}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
-                f"        {{'content': f'El equilibrio se desplaza en dirección opuesta al factor {{factor}} ({m[2]}).', 'is_correct': False, 'distractor_id': '{d_ids[2]}', 'error_rationale': '{wb[2]}'}},\n"
-                f"        {{'content': f'La dinámica temporal se vuelve completamente caótica ({m[3]}).', 'is_correct': False, 'distractor_id': '{d_ids[3]}', 'error_rationale': '{wb[3]}'}}\n"
+                f"        {{'content': f'El equilibrio se desplaza en dirección opuesta al factor {{factor}} ({m[2]}).', 'is_correct': False, 'distractor_id': '{d_ids[2]}', 'error_rationale': '{wb_std[2]}'}},\n"
+                f"        {{'content': f'La dinámica temporal se vuelve completamente caótica ({m[3]}).', 'is_correct': False, 'distractor_id': '{d_ids[3]}', 'error_rationale': '{wb_std[3]}'}}\n"
                 "    ]\n"
                 "    return {'vars': {'factor': factor}, 'options': opts, 'distractors': []}\n"
             ),
@@ -736,14 +746,15 @@ def generate_author_bundle(
     - Presupuesto de 50 turnos (límite estricto) con objetivo óptimo de 10 viajes y Circuit Breaker tras 3 fallos consecutivos idénticos.
     """
     forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["author"]["forbidden"])
+    work_rel = get_work_rel(work_dir)
     directives = (
         "### DIRECTIVAS CRÍTICAS DE AUTORÍA MODULAR (OBLIGATORIO):\n"
-        "1. **Refinamiento modular sobre scaffolds pre-sembrados (work/templates/<comp_id>.json):** Cada competencia cuenta con un scaffold "
-        "inicial pre-sembrado en `work/templates/<comp_id>.json` con sus metadatos y distractores mapeados desde `cta.json`. "
+        f"1. **Refinamiento modular sobre scaffolds pre-sembrados ({work_rel}/templates/<comp_id>.json):** Cada competencia cuenta con un scaffold "
+        f"inicial pre-sembrado en `{work_rel}/templates/<comp_id>.json` con sus metadatos y distractores mapeados desde `{work_rel}/cta.json`. "
         "Edítalo y refínalo directamente usando prioritariamente `replace_file_content` (o `write_to_file` como fallback opcional para reescrituras completas). "
-        "Queda terminantemente PROHIBIDO escribir un único script monolítico de 2,000 líneas (`build_<shard_id>.py`). "
+        f"Queda terminantemente PROHIBIDO escribir un único script monolítico de 2,000 líneas (`build_<shard_id>.py`). "
         "Si requieres scripts o archivos auxiliares temporales, deben ubicarse EXCLUSIVAMENTE en tu carpeta de scratch aislada: "
-        "`work/shards/<shard_id>/scratch/` (o `work/scratch/<shard_id>/`). Queda terminantemente prohibido utilizar el directorio compartido `scratch/` "
+        f"`{work_rel}/shards/<shard_id>/scratch/` (o `{work_rel}/scratch/<shard_id>/`). Queda terminantemente prohibido utilizar el directorio compartido `scratch/` "
         "raíz para evitar colisiones entre shards concurrentes.\n"
         "2. **Prohibición de emitir plantillas en el chat:** Do not output template JSON in chat text. Termina estrictamente con `DONE: <archivos>`.\n"
         "3. **Prohibidos comandos de PowerShell inline con '$':** NO ejecutes comandos inline de PowerShell (`powershell -Command ...`) "
@@ -751,7 +762,7 @@ def generate_author_bundle(
         "Utiliza siempre las herramientas nativas de Antigravity (`replace_file_content`, `write_to_file`, `view_file`).\n"
         "4. **Validación de todo el lote a la vez:** Ejecuta la validación de todas las plantillas generadas de tu shard "
         "en un solo comando agrupado en terminal:\n"
-        "   `python .agents/skills/content-to-course/check_templates.py work/templates/<comp_id1>.json work/templates/<comp_id2>.json ... --cta work/cta.json --strict`\n"
+        f"   `python .agents/skills/content-to-course/check_templates.py {work_rel}/templates/<comp_id1>.json {work_rel}/templates/<comp_id2>.json ... --cta {work_rel}/cta.json --strict`\n"
         "5. **Cero introspección del validador y motor:** Queda estrictamente prohibido examinar, leer o inspeccionar `check_templates.py`, "
         "`src/validator/*`, `rules.py` o `engine/*`. La salida de la terminal detalla explícitamente el nombre de la regla y el campo infractor.\n"
         "6. **Circuit Breaker y presupuesto de 50 turnos:** Tu límite máximo es de 50 turnos (objetivo: 10 viajes gracias a los scaffolds pre-sembrados). "
@@ -991,18 +1002,19 @@ def generate_cta_direct_bundle(
     - Prohibido scripts auxiliares en Python y comandos exploratorios en CLI.
     """
     forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["cta-direct"]["forbidden"])
+    work_rel = get_work_rel(work_dir)
     directives = (
         "### DIRECTIVAS CRÍTICAS DE DIRECT CTA ARCHITECT (OBLIGATORIO):\n"
         "1. **Arquitectura de 2 Archivos (compile_cta.py + cta_data.py):**\n"
-        "   - **Compilador Inmutable:** El archivo `work/compile_cta.py` ya está pre-sembrado en el workspace y es INMUTABLE. NO lo modifiques ni intentes recrearlo.\n"
-        "   - **Emisión Tabular en Dos Etapas:** Emite las competencias en `work/cta_data.py` como tuplas compactas en estricto orden cronológico del material usando `write_to_file` para el primer bloque de 10-12 competencias, y `write_to_file` con `Append: true` para bloques continuos subsiguientes.\n"
-        "   - **Compilación y Certificación:** Tras emitir `cta_data.py`, ejecuta `python work/compile_cta.py`. El compilador sintetiza `work/cta.json` en <5ms, auto-normaliza KaTeX y ejecuta la certificación de `check_cta.py` reportando tupla y número de línea exacto en caso de error.\n"
+        f"   - **Compilador Inmutable:** El archivo `{work_rel}/compile_cta.py` ya está pre-sembrado en el workspace y es INMUTABLE. NO lo modifiques ni intentes recrearlo.\n"
+        f"   - **Emisión Tabular en Dos Etapas:** Emite las competencias en `{work_rel}/cta_data.py` como tuplas compactas en estricto orden cronológico del material usando `write_to_file` para el primer bloque de 10-12 competencias, y `write_to_file` con `Append: true` para bloques continuos subsiguientes.\n"
+        f"   - **Compilación y Certificación:** Tras emitir `cta_data.py`, ejecuta `python {work_rel}/compile_cta.py`. El compilador sintetiza `{work_rel}/cta.json` en <5ms, auto-normaliza KaTeX y ejecuta la certificación de `check_cta.py` reportando tupla y número de línea exacto en caso de error.\n"
         "   - **Reparación Quirúrgica por Línea:** Si el compilador o validador reportan errores [cta_data.py:Línea XX], utiliza quirúrgicamente `replace_file_content` sobre esas líneas específicas para corregir la tupla o distractor sin reescribir todo el archivo.\n"
-        "   - **Compatibilidad con Partes Modulares:** Si se utilizan partes en `work/cta_parts/part_XX.json` (part_01.json, part_02.json), utiliza `replace_file_content` sobre los scaffolds y ejecuta `run.py --stage cta-stitch` al final.\n"
-        "2. **Prohibición Categórica de Scripts Python:** Queda terminantemente prohibido escribir o ejecutar scripts Python auxiliares (.py) en scratch/ o work/.\n"
+        f"   - **Compatibilidad con Partes Modulares:** Si se utilizan partes en `{work_rel}/cta_parts/part_XX.json` (part_01.json, part_02.json), utiliza `replace_file_content` sobre los scaffolds y ejecuta `run.py --stage cta-stitch` al final.\n"
+        f"2. **Prohibición Categórica de Scripts Python:** Queda terminantemente prohibido escribir o ejecutar scripts Python auxiliares (.py) en scratch/ o {work_rel}/.\n"
         "3. **Zero-CLI Pre-flight:** Queda terminantemente prohibido ejecutar comandos de consola preliminares para explorar o listar directorios. Comienza INMEDIATAMENTE en el Turno 1 analizando los materiales asignados con `view_file`.\n"
-        "4. **Zero-Chat Output:** Do not output competencies in chat text. Terminate strictly with DONE: work/cta.json.\n"
-        "5. **Certificación Final:** Re-ejecuta `python work/compile_cta.py` hasta certificar `PASS` y emite unívocamente `DONE: work/cta.json`."
+        f"4. **Zero-Chat Output:** Do not output competencies in chat text. Terminate strictly with DONE: {work_rel}/cta.json.\n"
+        f"5. **Certificación Final:** Re-ejecuta `python {work_rel}/compile_cta.py` hasta certificar `PASS` y emite unívocamente `DONE: {work_rel}/cta.json`."
     )
     combined = f"{directives}\n\n{extra_context}".strip() if extra_context else directives
     return _create_task_bundle(
@@ -1050,23 +1062,73 @@ def get_work_rel(work_dir: Union[str, Path]) -> str:
 
 
 def index_scaffold_template_lines(tpl_path: Path) -> List[str]:
-    """Indexes template IDs and line ranges in a pre-seeded scaffold for replace_file_content."""
+    """Indexes template IDs, exact line ranges, and key section anchors in a scaffold for replace_file_content."""
     if not tpl_path.is_file():
         return []
     entries: List[str] = []
     try:
         lines = tpl_path.read_text(encoding="utf-8").splitlines()
         current_tid = ""
-        start_line = 1
+        tpl_start = 1
+        tpl_indent = 4
+        stem_line = None
+        gen_line = None
+        hints_line = None
+        sol_line = None
+
         for idx, line in enumerate(lines, start=1):
             stripped = line.strip()
             if stripped.startswith('"id": "T-'):
-                if current_tid:
-                    entries.append(f"  * `{current_tid}`: L{start_line}..L{idx-1}")
                 current_tid = stripped.split('"id": "')[1].split('"')[0]
-                start_line = idx
+                if idx > 1 and lines[idx - 2].strip() == "{":
+                    tpl_start = idx - 1
+                    tpl_indent = len(lines[idx - 2]) - len(lines[idx - 2].lstrip())
+                else:
+                    tpl_start = idx
+                    tpl_indent = len(line) - len(line.lstrip())
+                stem_line = None
+                gen_line = None
+                hints_line = None
+                sol_line = None
+                continue
+
+            if current_tid:
+                if stripped.startswith('"stem":') and stem_line is None:
+                    stem_line = idx
+                elif stripped.startswith('"generate_py":') and gen_line is None:
+                    gen_line = idx
+                elif stripped.startswith('"hints":') and hints_line is None:
+                    hints_line = idx
+                elif stripped.startswith('"solution":') and sol_line is None:
+                    sol_line = idx
+                elif stripped in ("},", "}") and (len(line) - len(line.lstrip())) == tpl_indent:
+                    tpl_end = idx
+                    sub_parts = []
+                    if stem_line:
+                        sub_parts.append(f"stem: L{stem_line}")
+                    if gen_line:
+                        sub_parts.append(f"gen: L{gen_line}")
+                    if hints_line:
+                        sub_parts.append(f"hints: L{hints_line}")
+                    if sol_line:
+                        sub_parts.append(f"sol: L{sol_line}")
+                    details = f" ({', '.join(sub_parts)})" if sub_parts else ""
+                    entries.append(f"  * `{current_tid}`: L{tpl_start}..L{tpl_end}{details}")
+                    current_tid = ""
+
         if current_tid:
-            entries.append(f"  * `{current_tid}`: L{start_line}..L{len(lines)}")
+            tpl_end = len(lines)
+            sub_parts = []
+            if stem_line:
+                sub_parts.append(f"stem: L{stem_line}")
+            if gen_line:
+                sub_parts.append(f"gen: L{gen_line}")
+            if hints_line:
+                sub_parts.append(f"hints: L{hints_line}")
+            if sol_line:
+                sub_parts.append(f"sol: L{sol_line}")
+            details = f" ({', '.join(sub_parts)})" if sub_parts else ""
+            entries.append(f"  * `{current_tid}`: L{tpl_start}..L{tpl_end}{details}")
     except Exception as e:
         logger.debug("Could not index scaffold lines for %s: %s", tpl_path, e)
     return entries
@@ -1652,15 +1714,15 @@ def build_dispatch(
         for cid, diag in failing_targets.items():
             shard_id = shard_map.get(cid, "shard_01")
             read_paths = [
-                f"work/shards/{shard_id}.json",
-                f"work/templates/{cid}.json",
+                f"{work_rel}/shards/{shard_id}.json",
+                f"{work_rel}/templates/{cid}.json",
             ]
             if templates_report_file.is_file():
-                read_paths.append("work/reports/templates_report.json")
+                read_paths.append(f"{work_rel}/reports/templates_report.json")
             if judge_report_file.is_file():
-                read_paths.append("work/judge_report.json")
+                read_paths.append(f"{work_rel}/judge_report.json")
 
-            write_paths = [f"work/templates/{cid}.json"]
+            write_paths = [f"{work_rel}/templates/{cid}.json"]
             extra_lines = [f"### Reparación Específica para Competencia: `{cid}` (Shard `{shard_id}`)"]
             if "template_errors" in diag:
                 extra_lines.append("**Errores de validación de plantilla detectados:**")
@@ -1756,27 +1818,37 @@ def build_dispatch(
         if s_dir and s_dir.is_dir():
             source_files = sorted(f.name for f in s_dir.iterdir() if f.is_file())
 
+        has_corpus = (work / "corpus.md").is_file()
+
         if source_rel_str:
             read_paths = [f"{source_rel_str}/{f}" for f in source_files] if source_files else [f"{source_rel_str}/*"]
             forbidden_cta = list(forbidden) + [
-                "modificar o editar work/compile_cta.py (el compilador es inmutable; solo consulta su contrato con view_file si lo requieres)",
-                "work/corpus*.md (el análisis cognitivo debe realizarse directamente sobre los materiales fuente asignados con view_file)",
+                f"modificar o editar {work_rel}/compile_cta.py (el compilador es inmutable; solo consulta su contrato con view_file si lo requieres)",
                 f"carpetas o archivos de otros cursos en content/ (distintas de {source_rel_str})",
                 "content/* (excepto los materiales fuente asignados)",
-                "work/pages/manifest.json (prohibido consultar o depender de manifest.json; citar directamente los archivos fuente asignados)",
-                "scripts Python auxiliares (.py) en scratch/ o work/ (prohibido crear generadores en Python; usar exclusivamente cta_data.py y compile_cta.py)",
-                "ejecutar comandos exploratorios o pruebas previas en terminal CLI (único comando permitido: 'python work/compile_cta.py')",
+                f"{work_rel}/pages/manifest.json (prohibido consultar o depender de manifest.json; citar directamente los archivos fuente asignados)",
+                f"scripts Python auxiliares (.py) en scratch/ o {work_rel}/ (prohibido crear generadores en Python; usar exclusivamente cta_data.py y compile_cta.py)",
+                f"ejecutar comandos exploratorios o pruebas previas en terminal CLI (único comando permitido: 'python {work_rel}/compile_cta.py')",
                 "emitir competencias en el texto del chat (Do not output competencies in chat text)",
             ]
+            if not has_corpus:
+                forbidden_cta.append(f"{work_rel}/corpus*.md (el análisis cognitivo debe realizarse directamente sobre los materiales fuente asignados con view_file)")
         else:
             read_paths = ["content/*"]
             forbidden_cta = list(forbidden) + [
-                "modificar o editar work/compile_cta.py (el compilador es inmutable; solo consulta su contrato con view_file si lo requieres)",
-                "work/corpus*.md (inspección directa de contenidos requerida)",
-                "work/pages/manifest.json (prohibido consultar o depender de manifest.json)",
-                "scripts Python auxiliares (.py) en scratch/ o work/ (usar exclusivamente cta_data.py y compile_cta.py)",
+                f"modificar o editar {work_rel}/compile_cta.py (el compilador es inmutable; solo consulta su contrato con view_file si lo requieres)",
+                f"{work_rel}/pages/manifest.json (prohibido consultar o depender de manifest.json)",
+                f"scripts Python auxiliares (.py) en scratch/ o {work_rel}/ (usar exclusivamente cta_data.py y compile_cta.py)",
                 "emitir competencias en el texto del chat (Do not output competencies in chat text)",
             ]
+            if not has_corpus:
+                forbidden_cta.append(f"{work_rel}/corpus*.md (inspección directa de contenidos requerida)")
+
+        if has_corpus:
+            read_paths.append(f"{work_rel}/corpus.md")
+            forbidden_cta = [f.replace("work/", f"{work_rel}/") for f in forbidden_cta if "corpus" not in f.lower()]
+        else:
+            forbidden_cta = [f.replace("work/", f"{work_rel}/") for f in forbidden_cta]
 
         # Ensure immutable compile_cta.py is copied to work directory
         compile_src = SKILL_DIR / "compile_cta.py"
@@ -1787,11 +1859,11 @@ def build_dispatch(
         (work / "cta_parts").mkdir(parents=True, exist_ok=True)
 
         if (work / "patches").is_dir():
-            read_paths.append("work/patches/*.md")
+            read_paths.append(f"{work_rel}/patches/*.md")
         if (work / "handout_patches").is_dir():
-            read_paths.append("work/handout_patches/*.md")
+            read_paths.append(f"{work_rel}/handout_patches/*.md")
 
-        write_paths = ["work/cta_data.py", "work/cta.json", "work/cta.md"]
+        write_paths = [f"{work_rel}/cta_data.py", f"{work_rel}/cta.json", f"{work_rel}/cta.md"]
 
         extra_cta_context = ""
         first_source_doc = source_files[0] if source_files else "material_fuente.pdf"
@@ -1830,10 +1902,10 @@ def build_dispatch(
         for r in read_paths:
             prompt_lines.append(f"  * `{r}`")
         prompt_lines.append("- **WRITE permitido:**")
-        prompt_lines.append("  * `work/cta_data.py` (creación inicial con write_to_file, continuación con Append: true, corrección quirúrgica con replace_file_content)")
-        prompt_lines.append("  * `work/cta.json` y `work/cta.md` (generados automáticamente por `python work/compile_cta.py`)")
+        prompt_lines.append(f"  * `{work_rel}/cta_data.py` (creación inicial con write_to_file, continuación con Append: true, corrección quirúrgica con replace_file_content)")
+        prompt_lines.append(f"  * `{work_rel}/cta.json` y `{work_rel}/cta.md` (generados automáticamente por `python {work_rel}/compile_cta.py`)")
         prompt_lines.append("- **EJECUTABLE CLI permitido:**")
-        prompt_lines.append("  * `python work/compile_cta.py` (compilador determinista pre-sembrado en work/)")
+        prompt_lines.append(f"  * `python {work_rel}/compile_cta.py` (compilador determinista pre-sembrado en {work_rel}/)")
         prompt_lines.append("- **PROHIBIDO:**")
         for f in forbidden_cta:
             prompt_lines.append(f"  * {f}")
@@ -1850,15 +1922,15 @@ def build_dispatch(
             f"- **TURNO 1 MANDATORIO:** Abre INMEDIATAMENTE `{source_rel_str}/{first_source_doc}` con `view_file`.",
             "- Queda TERMINANTEMENTE PROHIBIDO gastar Turno 1 leyendo `compile_cta.py`, explorando directorios o buscando archivos auxiliares.",
             "- El contrato completo de tuplas para `COMPETENCIES` está especificado al 100% en las directivas superiores.",
-            "- El compilador `work/compile_cta.py` ya está pre-sembrado en disco y es INMUTABLE. No lo edites ni lo modifiques.",
-            "- Emite las competencias en formato de tuplas tabulares compactas en `work/cta_data.py` usando `write_to_file` (primer bloque de 10-12 competencias).",
+            f"- El compilador `{work_rel}/compile_cta.py` ya está pre-sembrado en disco y es INMUTABLE. No lo edites ni lo modifiques.",
+            f"- Emite las competencias en formato de tuplas tabulares compactas en `{work_rel}/cta_data.py` usando `write_to_file` (primer bloque de 10-12 competencias).",
             "- Para cursos extensos o con más páginas, emite los bloques continuos subsiguientes usando `write_to_file` con `Append: true` (`COMPETENCIES += [...]`).",
-            "- Tras emitir los datos, ejecuta: `python work/compile_cta.py` para compilar y validar automáticamente (<5ms).",
-            "- Si el compilador o `check_cta.py` reportan errores (con tupla y número de línea exacto en `cta_data.py`), corrígelos quirúrgicamente con `replace_file_content` sobre esas líneas específicas.",
-            "- Re-ejecuta `python work/compile_cta.py` hasta obtener certificación limpia (`PASS`).",
+            f"- Tras emitir los datos, ejecuta: `python {work_rel}/compile_cta.py` para compilar y validar automáticamente (<5ms).",
+            f"- Si el compilador o `check_cta.py` reportan errores (con tupla y número de línea exacto en `cta_data.py`), corrígelos quirúrgicamente con `replace_file_content` sobre esas líneas específicas.",
+            f"- Re-ejecuta `python {work_rel}/compile_cta.py` hasta obtener certificación limpia (`PASS`).",
             f"- Presupuesto de turnos sugerido: {turn_budget} turnos.",
             "- Do not output competencies in chat text. Terminate strictly with:",
-            "`DONE: work/cta.json` (o BLOCKED: <motivo>).",
+            f"`DONE: {work_rel}/cta.json` (o BLOCKED: <motivo>).",
             "PROHIBIDO emitir resúmenes, explicaciones o saludos adicionales en el chat.",
         ])
         prompt_text = "\n".join(prompt_lines)
@@ -1871,8 +1943,8 @@ def build_dispatch(
         dispatched_ids.append("direct")
 
     elif role == "vision-legacy":
-        read_paths = ["work/pages/*", "work/vision_pages.json"]
-        write_paths = ["work/patches/*.md"]
+        read_paths = [f"{work_rel}/pages/*", f"{work_rel}/vision_pages.json"]
+        write_paths = [f"{work_rel}/patches/*.md"]
         bundle_file = _create_task_bundle(
             work_dir=work,
             bundle_name="vision_legacy",

@@ -194,6 +194,100 @@ class TestC2Cv31AdversarialPlan(unittest.TestCase):
         self.assertEqual(omitted_steps[1]["omitted_step"], "Despejar k con exponente invertido")
         self.assertEqual(omitted_steps[1]["error_type"], "skipped_step")
 
+    def test_pilar1_auto_balance_math_complex_delimiters_and_punctuation(self) -> None:
+        """Verifies auto_balance_math_delimiters handles compound punctuation, display blocks, and orphan delimiters."""
+        from cta_merge import auto_balance_math_delimiters
+
+        # 1. Multiple inline math blocks followed by an orphan delimiter and period
+        self.assertEqual(auto_balance_math_delimiters("Si $a = 1$, halle $b = 2."), "Si $a = 1$, halle $b = 2$.")
+
+        # 2. Orphan delimiter with question mark (not in stripped punctuation tuple -> appended at end)
+        self.assertEqual(
+            auto_balance_math_delimiters("¿Dada la tasa $s = 0.2$, se cumple que $n = 0.05?"),
+            "¿Dada la tasa $s = 0.2$, se cumple que $n = 0.05?$",
+        )
+
+        # 3. Comma, colon, and semicolon punctuation
+        self.assertEqual(auto_balance_math_delimiters("Dado $x = 1$ y $y = 2,"), "Dado $x = 1$ y $y = 2$,")
+        self.assertEqual(auto_balance_math_delimiters("Considere $a = 1$ y la relación $b = 2:"), "Considere $a = 1$ y la relación $b = 2$:")
+        self.assertEqual(auto_balance_math_delimiters("Propiedad $\\lim_{k \\to 0} f'(k) = \\infty;"), "Propiedad $\\lim_{k \\to 0} f'(k) = \\infty$;")
+
+        # 4. Display math blocks '$$' mixed with orphan inline '$' (with and without punctuation)
+        display_mixed = "Sea $$y = f(k)$$ la función de producción y $\\delta la depreciación."
+        self.assertEqual(
+            auto_balance_math_delimiters(display_mixed),
+            "Sea $$y = f(k)$$ la función de producción y $\\delta la depreciación$.",
+        )
+        display_no_punct = "Sea $$y = f(k)$$ con parámetro $\\alpha"
+        self.assertEqual(
+            auto_balance_math_delimiters(display_no_punct),
+            "Sea $$y = f(k)$$ con parámetro $\\alpha$",
+        )
+
+        # 5. Already balanced expressions must remain strictly untouched
+        balanced_text = "El valor óptimo es $k^* = 5$ y el producto es $y^* = 2$."
+        self.assertEqual(auto_balance_math_delimiters(balanced_text), balanced_text)
+
+        # 6. Escaped dollars \\$ must NOT be counted as math delimiters
+        escaped_dollar = r"El costo unitario es \$100 y la elasticidad es $\alpha"
+        self.assertEqual(
+            auto_balance_math_delimiters(escaped_dollar),
+            r"El costo unitario es \$100 y la elasticidad es $\alpha$",
+        )
+
+        # 7. Broken macros with unbalanced braces must NOT be auto-closed even with trailing punctuation
+        broken_with_dot = r"\frac{a}{b$."
+        self.assertEqual(auto_balance_math_delimiters(broken_with_dot), broken_with_dot)
+
+    def test_pilar1_compile_cta_anti_overwrite_backup(self) -> None:
+        """Verifies compile_cta creates .cta_data.py.bak when >= 10 competencies and detects destructive shrink."""
+        import compile_cta
+
+        cta_data_file = self.work_dir / "cta_data.py"
+
+        # Case 1: Initial compilation with < 10 competencies should NOT create .bak
+        small_tuples = [
+            ("concept", f"C-{i:02d}", f"Concepto {i}", f"Desc $k_{i}$", "Understand", "doc.pdf", 1, [], [
+                (f"D{j}", f"W{j}", f"C{j}", f"${j}$", f"H{j}") for j in range(1, 7)
+            ])
+            for i in range(1, 6)
+        ]
+        cta_data_file.write_text(
+            f"COURSE_ID = 'macro_small'\nTITLE = 'Macro Small'\nCOMPETENCIES = {repr(small_tuples)}\n",
+            encoding="utf-8",
+        )
+        ok1, _, _, _ = compile_cta.compile_cta(cta_data_file, output_dir=self.work_dir)
+        bak_file = self.work_dir / ".cta_data.py.bak"
+        self.assertFalse(bak_file.is_file(), ".cta_data.py.bak should not be created for < 10 competencies")
+
+        # Case 2: Compilation with >= 10 competencies MUST create .cta_data.py.bak
+        ten_tuples = [
+            ("concept", f"C-{i:02d}", f"Concepto {i}", f"Desc $k_{i}$", "Understand", "doc.pdf", 1, [], [
+                (f"D{j}", f"W{j}", f"C{j}", f"${j}$", f"H{j}") for j in range(1, 7)
+            ])
+            for i in range(1, 11)
+        ]
+        ten_source = f"COURSE_ID = 'macro_ten'\nTITLE = 'Macro 10'\nCOMPETENCIES = {repr(ten_tuples)}\n"
+        cta_data_file.write_text(ten_source, encoding="utf-8")
+
+        ok2, cta_dict2, errs2, _ = compile_cta.compile_cta(cta_data_file, output_dir=self.work_dir)
+        self.assertTrue(bak_file.is_file(), ".cta_data.py.bak MUST be created when len(COMPETENCIES) >= 10")
+        bak_content = bak_file.read_text(encoding="utf-8")
+        self.assertEqual(bak_content, ten_source, "Backup content must exactly match cta_data.py source")
+        self.assertIn("C-10", bak_content)
+
+        # Case 3: Destructive overwrite (accidental shrink to 2 competencies)
+        # compile_cta detects shrink, and backup file remains safely preserved with all 10 competencies
+        two_tuples = ten_tuples[:2]
+        cta_data_file.write_text(
+            f"COURSE_ID = 'macro_ten'\nTITLE = 'Macro 10'\nCOMPETENCIES = {repr(two_tuples)}\n",
+            encoding="utf-8",
+        )
+        ok3, _, _, _ = compile_cta.compile_cta(cta_data_file, output_dir=self.work_dir)
+        self.assertTrue(bak_file.is_file(), "Backup file must NOT be destroyed upon destructive shrink")
+        preserved_bak = bak_file.read_text(encoding="utf-8")
+        self.assertIn("C-10", preserved_bak, "Backup must retain all 10 original competencies")
+
     # =========================================================================
     # PILAR 2: Zero-Friction Orchestration & Author Dispatch < 45KB
     # =========================================================================
@@ -219,10 +313,11 @@ class TestC2Cv31AdversarialPlan(unittest.TestCase):
         self.assertEqual(dispatch.get_work_rel("work"), "work")
 
     def test_pilar2_author_dispatch_under_45kb_view_file_limit(self) -> None:
-        """Simulates 5 shards with 33 competencies and certifies author.json < 45,000 bytes.
+        """Simulates 5 shards with 33 competencies using real preseeded scaffolds and certifies author.json < 45,000 bytes.
 
+        - Uses preseed_author_scaffolds() to generate real starter templates for all 33 competencies.
         - Ensures author.json does not exceed the Antigravity view_file limit of 46,080 bytes.
-        - Ensures ### MAPA DE LÍNEAS PRE-INDEXADO is present in each shard prompt.
+        - Ensures ### MAPA DE LÍNEAS PRE-INDEXADO is present in each shard prompt with real template lines.
         """
         import dispatch
 
@@ -246,45 +341,36 @@ class TestC2Cv31AdversarialPlan(unittest.TestCase):
                 all_comp_ids.append(cid)
                 c_counter += 1
 
-                # Write a standard 6-template JSON file for each competency
-                tpls = []
-                for t_idx in range(1, 7):
-                    itype = "multiple_choice_7_options" if t_idx <= 2 else ("fill_in_the_blank" if t_idx <= 4 else "multiple_select")
-                    tpls.append({
-                        "id": f"T-{cid}-0{t_idx}",
-                        "competency_id": cid,
-                        "interaction_type": itype,
-                        "difficulty": "medium",
-                        "bloom": "Apply",
-                        "stem": f"Pregunta modelo para {cid} plantilla {t_idx} con math $y = k^\\alpha$.",
-                        "stem_variants": [f"Variante alternativa para {cid}."],
-                        "generate_py": (
-                            "def generate(rng):\n"
-                            "    k = round(rng.uniform(1.0, 5.0), 2)\n"
-                            "    return {\n"
-                            "        'vars': {'k': k},\n"
-                            "        'options': [{'content': 'A', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}],\n"
-                            "    }\n"
-                        ),
-                        "cross_check_py": "def cross_check(inst):\n    return True, []\n",
-                        "hints": ["Pista 1", "Pista 2", "Pista 3"],
-                        "solution": "Solución formal detallada.",
-                        "distractor_ids": [f"D-{cid}-01", f"D-{cid}-02"],
-                    })
-
-                tpl_content = json.dumps({"competency_id": cid, "templates": tpls}, indent=2, ensure_ascii=False)
-                (templates_dir / f"{cid}.json").write_text(tpl_content, encoding="utf-8")
-
             (shards_dir / f"{s_id}.json").write_text(
                 json.dumps({"shard_id": s_id, "competency_ids": s_cids}, indent=2),
                 encoding="utf-8",
             )
             shards_info.append({"shard_id": s_id, "competency_ids": s_cids})
 
-        # Write cta.json and shards_plan.json
-        cta_comps = [{"id": cid, "name": f"Competencia {cid}", "distractors": []} for cid in all_comp_ids]
+        # Write realistic cta.json with 6 distractors per competency
+        cta_comps = []
+        for cid in all_comp_ids:
+            clean_id = cid.replace("-", "")
+            cta_comps.append({
+                "id": cid,
+                "name": f"Dinámica y Acumulación {cid}",
+                "type": "skill",
+                "bloom": "Apply",
+                "description_latex": f"Análisis dinámico de {cid} en Solow $\\dot{{k}} = s f(k) - (n+g+\\delta)k$.",
+                "distractors": [
+                    {
+                        "id": f"D-{clean_id}-0{d_idx}",
+                        "name": f"Error Conceptual {d_idx} en {cid}",
+                        "manifestation": f"Omitir parámetro estructural {d_idx}",
+                        "wrong_belief": f"El parámetro {d_idx} no influye en la convergencia",
+                        "remediation_hint": f"Verificar la ley de acumulación para {cid}",
+                    }
+                    for d_idx in range(1, 7)
+                ]
+            })
+
         (self.work_dir / "cta.json").write_text(
-            json.dumps({"course_id": "solow_33", "competencies": cta_comps}, indent=2),
+            json.dumps({"course_id": "solow_33", "competencies": cta_comps}, indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
         (self.work_dir / "shards_plan.json").write_text(
@@ -292,7 +378,7 @@ class TestC2Cv31AdversarialPlan(unittest.TestCase):
             encoding="utf-8",
         )
 
-        # Generate dispatch for role='author'
+        # Generate dispatch for role='author' (automatically invokes preseed_author_scaffolds)
         dispatch_payload = dispatch.build_dispatch(role="author", work_dir=self.work_dir)
 
         author_json_path = self.work_dir / "dispatch" / "author.json"
@@ -304,6 +390,12 @@ class TestC2Cv31AdversarialPlan(unittest.TestCase):
             45000,
             f"author.json ({author_bytes} bytes) exceeds strict 45,000 bytes limit (view_file buffer limit: 46,080 bytes)!",
         )
+
+        # Verify all 33 template files were automatically generated by preseed_author_scaffolds
+        for cid in all_comp_ids:
+            tpl_path = templates_dir / f"{cid}.json"
+            self.assertTrue(tpl_path.is_file(), f"Preseeded template for {cid} was not created!")
+            self.assertGreater(tpl_path.stat().st_size, 100)
 
         # Verify each subagent prompt contains pre-indexed line map
         subagents = dispatch_payload.get("Subagents", [])
@@ -317,6 +409,208 @@ class TestC2Cv31AdversarialPlan(unittest.TestCase):
                 f"Subagent {sa.get('TypeName')} prompt missing pre-indexed line map!",
             )
             self.assertIn("replace_file_content", prompt)
+
+    def test_pilar2_preseed_author_scaffolds_end_to_end_zero_errors(self) -> None:
+        """Certifies end-to-end that preseed_author_scaffolds generates a template satisfying 100% of rules.
+
+        Enforces: TPL-D1..D4, TPL-VAR >= 0.50, R-15, R-18, R-19, R-20, R-22 with strict=True and 50 seeds dry run.
+        """
+        import check_templates
+        import dispatch
+
+        comp: Dict[str, Any] = {
+            "id": "C-01",
+            "name": "Dinámica de Transición hacia el Estado Estacionario",
+            "type": "skill",
+            "bloom": "Apply",
+            "description_latex": r"Ecuación fundamental de Solow $\dot{k} = s f(k) - (n + g + \delta) k$.",
+            "distractors": [
+                {
+                    "id": "D-C01-01",
+                    "name": "Omisión de Depreciación",
+                    "manifestation": "Omitir la tasa de depreciación delta",
+                    "wrong_belief": "La tasa efectiva de reemplazo es solo n + g",
+                    "remediation_hint": "Incluir depreciación de capital delta en la tasa efectiva",
+                },
+                {
+                    "id": "D-C01-02",
+                    "name": "Confusión entre Flujo y Stock",
+                    "manifestation": "Inversión bruta como stock",
+                    "wrong_belief": "El stock de capital equivale a la inversión de flujo",
+                    "remediation_hint": "Diferenciar claramente magnitudes de flujo y de acervo",
+                },
+                {
+                    "id": "D-C01-03",
+                    "name": "Exponente Invertido en Steady State",
+                    "manifestation": "Exponente 1 - alpha en lugar de 1 / (1 - alpha)",
+                    "wrong_belief": "El despeje produce k* con exponente invertido",
+                    "remediation_hint": "Invertir correctamente el exponente al despejar",
+                },
+                {
+                    "id": "D-C01-04",
+                    "name": "Error de Signo en Amortiguamiento",
+                    "manifestation": "Signo positivo en la tasa de ensanchamiento",
+                    "wrong_belief": "El ensanchamiento del capital incrementa la acumulación neta",
+                    "remediation_hint": "El ensanchamiento detrae capital per cápita, su signo es negativo",
+                },
+                {
+                    "id": "D-C01-05",
+                    "name": "Error de Escala Intensiva",
+                    "manifestation": "Producto total Y en lugar de producto per cápita y",
+                    "wrong_belief": "El producto agregado coincide numéricamente con el per cápita",
+                    "remediation_hint": "Normalizar las variables por el trabajo efectivo",
+                },
+                {
+                    "id": "D-C01-06",
+                    "name": "Caso Frontera Extremo",
+                    "manifestation": "Tasa de ahorro extrema s = 1",
+                    "wrong_belief": "Una economía puede ahorrar el 100% de la producción de forma permanente",
+                    "remediation_hint": "La tasa de ahorro satisface estrictamente 0 < s < 1",
+                },
+            ]
+        }
+
+        cta_file = self.work_dir / "cta.json"
+        cta_file.write_text(
+            json.dumps({"course_id": "macro_transition", "competencies": [comp]}, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+        preseeded = dispatch.preseed_author_scaffolds(work_dir=self.work_dir)
+        self.assertIn("C-01", preseeded)
+
+        tpl_file = self.work_dir / "templates" / "C-01.json"
+        self.assertTrue(tpl_file.is_file(), "Starter template C-01.json must exist")
+
+        tpl_data = json.loads(tpl_file.read_text(encoding="utf-8"))
+        templates = tpl_data.get("templates", [])
+        self.assertEqual(len(templates), 6, "Starter template must provide exactly 6 templates (2 MC7, 2 FIB, 2 MS)")
+
+        # Verify interaction types: 2 MC7, 2 FIB, 2 MS
+        itypes = [t["interaction_type"] for t in templates]
+        self.assertEqual(itypes.count("multiple_choice_7_options"), 2)
+        self.assertEqual(itypes.count("fill_in_the_blank"), 2)
+        self.assertEqual(itypes.count("multiple_select"), 2)
+
+        # Validate with strict production isomorphic parity and 50 seeds dry run
+        is_clean, errors = check_templates.check_templates_file_or_dir(
+            target_path=[tpl_file],
+            cta_path=cta_file,
+            num_dry_run_seeds=50,
+            strict=True,
+        )
+
+        self.assertTrue(
+            is_clean,
+            f"Preseeded scaffold failed check_templates validation with {len(errors)} errors:\n" + "\n".join(errors[:5]),
+        )
+        self.assertEqual(len(errors), 0)
+
+    def test_pilar2_starter_template_special_characters_and_single_quotes(self) -> None:
+        """Verifies build_starter_template_for_competency handles single quotes in distractors without breaking AST."""
+        import ast
+        import check_templates
+        import dispatch
+
+        comp: Dict[str, Any] = {
+            "id": "C-02",
+            "name": "Regla de Hopital y Teorema de Euler",
+            "type": "skill",
+            "bloom": "Apply",
+            "description_latex": r"Cálculo de límites indeterminados $\lim_{x \to 0} \frac{f(x)}{g(x)}$.",
+            "distractors": [
+                {
+                    "id": "D-C02-01",
+                    "name": "Hopital mal aplicado",
+                    "manifestation": "Aplicar cuando no es 0/0 (L'Hopital)",
+                    "wrong_belief": "L'Hopital sirve siempre para cualquier cociente",
+                    "remediation_hint": "Verificar 0/0 o inf/inf antes de aplicar L'Hopital",
+                },
+                {
+                    "id": "D-C02-02",
+                    "name": "Euler constant swap",
+                    "manifestation": "Confundir base e con Euler's gamma",
+                    "wrong_belief": "Son la misma constante de Euler's",
+                    "remediation_hint": "Diferenciar la base del logaritmo de la constante de Euler's",
+                },
+                {
+                    "id": "D-C02-03",
+                    "name": "Alembert swap",
+                    "manifestation": "Invertir fuerzas en D'Alembert",
+                    "wrong_belief": "Las fuerzas inerciales de D'Alembert tienen signo contrario",
+                    "remediation_hint": "Revisar la ley dinámica de D'Alembert",
+                },
+                {
+                    "id": "D-C02-04",
+                    "name": "Fisher hypothesis",
+                    "manifestation": "Tasa nominal sin inflacion esperada",
+                    "wrong_belief": "La hipotesis de Fisher's establece igualdad estricta",
+                    "remediation_hint": "Anadir inflacion esperada segun Fisher's equation",
+                },
+                {
+                    "id": "D-C02-05",
+                    "name": "Cauchy mean value",
+                    "manifestation": "Omitir diferenciabilidad en Cauchy's theorem",
+                    "wrong_belief": "El teorema de Cauchy's no requiere continuidad en el intervalo",
+                    "remediation_hint": "Comprobar hipótesis de Cauchy's mean value",
+                },
+                {
+                    "id": "D-C02-06",
+                    "name": "Taylor remainder",
+                    "manifestation": "Truncar sin residuo de Lagrange's",
+                    "wrong_belief": "El residuo de Lagrange's es despreciable en todo el dominio",
+                    "remediation_hint": "Acotar residuo de Lagrange's",
+                },
+            ]
+        }
+
+        scaffold = dispatch.build_starter_template_for_competency(comp)
+        self.assertEqual(scaffold["competency_id"], "C-02")
+        self.assertEqual(len(scaffold["templates"]), 6)
+
+        # 1. Certify AST parsing of generate_py and cross_check_py for all 6 templates
+        for idx, t in enumerate(scaffold["templates"], start=1):
+            gen_py = t["generate_py"]
+            try:
+                ast.parse(gen_py)
+            except SyntaxError as e:
+                self.fail(f"Template {t['id']} generate_py failed AST parse due to unescaped single quote: {e}\n{gen_py}")
+
+            cc_py = t["cross_check_py"]
+            try:
+                ast.parse(cc_py)
+            except SyntaxError as e:
+                self.fail(f"Template {t['id']} cross_check_py failed AST parse: {e}")
+
+        # Verify that single quotes in distractors were escaped with \' in generate_py
+        all_gen_py = " ".join(t["generate_py"] for t in scaffold["templates"])
+        self.assertIn(r"\'", all_gen_py, "Single quotes in distractors must be escaped with \\' in generate_py")
+
+        # 2. Write to disk and certify with check_templates
+        cta_file = self.work_dir / "cta.json"
+        cta_file.write_text(
+            json.dumps({"course_id": "special_chars", "competencies": [comp]}, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        tpl_dir = self.work_dir / "templates"
+        tpl_dir.mkdir(parents=True, exist_ok=True)
+        tpl_file = tpl_dir / "C-02.json"
+        tpl_file.write_text(json.dumps(scaffold, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        is_clean, errors = check_templates.check_templates_file_or_dir(
+            target_path=[tpl_file],
+            cta_path=cta_file,
+            strict=True,
+        )
+        self.assertTrue(is_clean, f"Special characters template failed validation: {errors}")
+        self.assertEqual(len(errors), 0)
+
+        # 3. Verify that even if comp['name'] contains single quotes (e.g. "Regla de L'Hôpital"),
+        # build_starter_template_for_competency escapes cname_fstr cleanly so AST parse succeeds.
+        quoted_name_comp = dict(comp, name="Regla de L'Hôpital")
+        quoted_name_scaffold = dispatch.build_starter_template_for_competency(quoted_name_comp)
+        for t in quoted_name_scaffold["templates"]:
+            ast.parse(t["generate_py"])
 
     # =========================================================================
     # PILAR 3: Mechanical Non-Semantic Auto-Healer
@@ -424,6 +718,124 @@ class TestC2Cv31AdversarialPlan(unittest.TestCase):
         t2_gen_py = corrupted_template_data["templates"][1]["generate_py"]
         self.assertIn("Confundir la inversión de flujo con el stock de capital acumulado", t2_gen_py)
         self.assertIn("Ignorar la tasa de depreciación delta en el equilibrio", t2_gen_py)
+
+    def test_pilar3_check_templates_auto_heal_persistence_and_no_auto_fix(self) -> None:
+        """Verifies check_templates_file_or_dir persists healed templates to disk with auto_fix=True, and preserves disk with auto_fix=False."""
+        import check_templates
+
+        templates_dir = self.work_dir / "templates"
+        templates_dir.mkdir(parents=True, exist_ok=True)
+        tpl_path = templates_dir / "C-01.json"
+        cta_path = self.work_dir / "cta.json"
+
+        cta_comp = {
+            "id": "C-01",
+            "name": "Acumulación y Convergencia",
+            "type": "concept",
+            "bloom": "Understand",
+            "description_latex": "Dinámica de Solow.",
+            "distractors": [
+                {
+                    "id": "D-C01-01",
+                    "name": "Error de Flujo vs Stock",
+                    "wrong_belief": "Confundir la inversión de flujo con el stock de capital acumulado",
+                    "remediation_hint": "Revisar la ley fundamental de acumulación",
+                },
+                {
+                    "id": "D-C01-02",
+                    "name": "Omisión de Depreciación",
+                    "wrong_belief": "Ignorar la tasa de depreciación delta en el equilibrio",
+                    "remediation_hint": "Verificar la inversión de reposición",
+                }
+            ]
+        }
+        cta_path.write_text(json.dumps({"course_id": "auto_heal_test", "competencies": [cta_comp]}, indent=2), encoding="utf-8")
+
+        corrupted_raw = {
+            "competency_id": "C-01",
+            "templates": [
+                {
+                    "id": "T-C01-01",
+                    "interaction_type": "multiple_choice_7_options",
+                    "difficulty": "medium",
+                    "bloom": "Understand",
+                    "stem": "Calcular la tasa \x0crac{s}{n} con parámetro \x08eta y valor {y_star}.",
+                    "stem_variants": ["Variante con \x0crac{Y}{L} y \x08ar{k}."],
+                    "generate_py": (
+                        "def generate(rng):\n"
+                        "    alpha = round(rng.uniform(0.2, 0.4), 2)\n"
+                        "    s = round(rng.uniform(0.1, 0.3), 2)\n"
+                        "    y_star = round(alpha * s, 2)\n"
+                        "    return {\n"
+                        "        'vars': {'alpha': alpha, 's': s},\n"
+                        "        'correct': 'A',\n"
+                        "        'distractors': [{'value': f'D{i}', 'distractor_id': f'D-C01-0{i}'} for i in range(1, 7)],\n"
+                        "    }\n"
+                    ),
+                    "cross_check_py": "def verify(res):\n    return True\n",
+                    "hints": ["Pista con \x0crac{1}{2}."],
+                    "solution": "Solución con \x08eta.",
+                    "distractor_ids": ["D-C01-01", "D-C01-02"],
+                },
+                {
+                    "id": "T-C01-02",
+                    "interaction_type": "multiple_select",
+                    "difficulty": "medium",
+                    "bloom": "Understand",
+                    "stem": "Seleccione las afirmaciones correctas para C-01:",
+                    "stem_variants": ["Variante de selección múltiple para C-01:"],
+                    "generate_py": (
+                        "def generate(rng):\n"
+                        "    return {\n"
+                        "        'vars': {},\n"
+                        "        'options': [\n"
+                        "            {'content': 'Opt A', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n"
+                        "            {'content': 'Opt B', 'is_correct': False, 'distractor_id': 'D-C01-01', 'error_rationale': None},\n"
+                        "        ],\n"
+                        "    }\n"
+                    ),
+                    "cross_check_py": "def verify(res):\n    return True\n",
+                    "hints": ["Pista MS"],
+                    "solution": "Solución MS",
+                    "distractor_ids": ["D-C01-01"],
+                }
+            ]
+        }
+
+        # Step 1: Write corrupted template to disk
+        corrupted_text = json.dumps(corrupted_raw, indent=2, ensure_ascii=False)
+        tpl_path.write_text(corrupted_text, encoding="utf-8")
+        data_step1 = json.loads(tpl_path.read_text(encoding="utf-8"))
+        self.assertIn("\x0c", data_step1["templates"][0]["stem"])
+        self.assertIn("\x08", data_step1["templates"][0]["stem"])
+
+        # Step 2: Validate with auto_fix=False -> Disk MUST NOT be mutated
+        check_templates.check_templates_file_or_dir(
+            target_path=[tpl_path],
+            cta_path=cta_path,
+            auto_fix=False,
+            num_dry_run_seeds=5,
+        )
+        data_after_no_fix = json.loads(tpl_path.read_text(encoding="utf-8"))
+        self.assertIn("\x0c", data_after_no_fix["templates"][0]["stem"], "Disk content MUST NOT be mutated when auto_fix=False!")
+        self.assertIn("\x08", data_after_no_fix["templates"][0]["stem"], "Disk content MUST NOT be mutated when auto_fix=False!")
+        self.assertNotIn("'y_star': y_star", data_after_no_fix["templates"][0]["generate_py"])
+
+        # Step 3: Validate with auto_fix=True -> Disk MUST be mechanically healed
+        check_templates.check_templates_file_or_dir(
+            target_path=[tpl_path],
+            cta_path=cta_path,
+            auto_fix=True,
+            num_dry_run_seeds=5,
+        )
+        data_after_fix = json.loads(tpl_path.read_text(encoding="utf-8"))
+        self.assertNotIn("\x0c", data_after_fix["templates"][0]["stem"], "Control char \\x0c must be eliminated from disk!")
+        self.assertNotIn("\x08", data_after_fix["templates"][0]["stem"], "Control char \\x08 must be eliminated from disk!")
+        self.assertIn(r"\frac", data_after_fix["templates"][0]["stem"], "\\frac must be restored on disk!")
+        self.assertIn(r"\beta", data_after_fix["templates"][0]["stem"], "\\beta must be restored on disk!")
+        self.assertIn("'y_star': y_star", data_after_fix["templates"][0]["generate_py"], "Unexported variable y_star must be persisted to 'vars' on disk!")
+        self.assertIn("Confundir la inversión de flujo con el stock de capital acumulado", data_after_fix["templates"][1]["generate_py"],
+                      "Multiple_select error_rationale must be auto-populated and saved to disk!")
 
     # =========================================================================
     # PILAR 4: Blind Judges Zero-Warmup & Scope Security
