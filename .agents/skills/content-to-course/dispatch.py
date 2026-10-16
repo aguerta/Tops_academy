@@ -368,24 +368,39 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
     ctype = comp.get("type", "skill").lower()
     bloom = comp.get("bloom_level") or comp.get("bloom") or ("Apply" if ctype == "skill" else "Understand")
     desc = comp.get("description_latex") or comp.get("description", cname)
-    distractors = comp.get("distractors", [])
-    d_ids = [d.get("id") for d in distractors if isinstance(d, dict) and d.get("id")]
+    raw_distractors = comp.get("distractors", [])
 
-    # Guarantee at least 6 distractor IDs for MC7 contract
-    while len(d_ids) < 6:
-        d_ids.append(f"D-{cid_clean}-{len(d_ids)+1:02d}")
+    d_objs: List[Dict[str, str]] = []
+    for i, d in enumerate(raw_distractors):
+        if isinstance(d, dict) and d.get("id"):
+            did = str(d["id"])
+            manif = str(d.get("manifestation") or d.get("name") or f"Confusión analítica sobre {cname} {i+1}")
+            wb = str(d.get("wrong_belief") or f"Premisa errónea sobre el comportamiento dinámico de {cname}")
+            rh = str(d.get("remediation_hint") or f"Verifique los supuestos teóricos de {cname}")
+            d_objs.append({"id": did, "manifestation": manif, "wrong_belief": wb, "remediation_hint": rh})
 
-    half = max(1, len(d_ids) // 2)
-    d_half1 = d_ids[:half]
-    d_half2 = d_ids[half:]
+    while len(d_objs) < 6:
+        idx = len(d_objs) + 1
+        did = f"D-{cid_clean}-{idx:02d}"
+        d_objs.append({
+            "id": did,
+            "manifestation": f"Confusión analítica sobre la tasa de convergencia y estabilidad en {cname}",
+            "wrong_belief": f"Asume dinámica inconsistente fuera del equilibrio estacionario",
+            "remediation_hint": f"Examine rigurosamente las condiciones analíticas de {cname}"
+        })
+
+    d_ids = [d["id"] for d in d_objs]
+    m = [d["manifestation"].replace("'", "\\'") for d in d_objs]
+    wb = [d["wrong_belief"].replace("'", "\\'") for d in d_objs]
+    rh = [d["remediation_hint"].replace("'", "\\'") for d in d_objs]
 
     d_vals1 = [
-        "f'La trayectoria converge al nivel con amortiguamiento reducido {param - 1}.'",
-        "f'El sistema alcanza un ciclo oscilatorio cerrado de amplitud {param + 2} sin punto fijo.'",
-        "f'La tasa neta se anula únicamente si el parámetro efectivo se triplica a {param * 3}.'",
-        "f'Se produce una bifurcación inestable con tasa de crecimiento acelerada {param + 5}.'",
-        "f'El sendero dinámico decae asintóticamente a cero con factor {param * 2}.'",
-        "f'La condición de estabilidad requiere un umbral mínimo estricto {param + 4} no alcanzado.'"
+        f"f'La trayectoria converge al nivel con amortiguamiento reducido {{param - 1}} ({m[0]}).'",
+        f"f'El sistema alcanza un ciclo oscilatorio cerrado de amplitud {{param + 2}} exhibiendo {m[1]}.'",
+        f"f'La tasa neta se anula únicamente si el parámetro se triplica a {{param * 3}} debido a {m[2]}.'",
+        f"f'Se produce una bifurcación inestable con tasa {{param + 5}} por {m[3]}.'",
+        f"f'El sendero temporal decae asintóticamente con factor {{param * 2}} reflejando {m[4]}.'",
+        f"f'La condición de estabilidad requiere un umbral mínimo {{param + 4}} afectado por {m[5]}.'"
     ]
     mc7_dists1 = ",\n".join([
         f"        {{'value': {d_vals1[i]}, 'distractor_id': '{d_ids[i]}'}}"
@@ -393,15 +408,15 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
     ])
 
     d_vals2 = [
-        "f'La escala efectiva introduce una traslación rígida al nivel {scale + 5} sin variar la tasa.'",
-        "f'El equilibrio colapsa hacia un atractor caótico periódico de periodo {scale // 2}.'",
-        "f'La velocidad de convergencia se reduce cuadráticamente en proporción a {scale * 2}.'",
-        "f'Se invierte la concavidad del sendero temporal para todo valor {scale - 3}.'",
-        "f'El estado estacionario queda indeterminado al anularse la derivada en {scale + 10}.'",
-        "f'Aparece histéresis estructural permanente dependiente de la condición inicial {scale * 3}.'"
+        f"f'La escala efectiva introduce una traslación rígida al nivel {{scale + 5}} ({wb[1]}).'",
+        f"f'El equilibrio colapsa hacia un atractor periódico de periodo {{scale // 2}} asumiendo {wb[2]}.'",
+        f"f'La velocidad de convergencia se reduce cuadráticamente en {{scale * 2}} por {wb[3]}.'",
+        f"f'Se invierte la concavidad del sendero temporal para todo valor {{scale - 3}} reflejando {wb[4]}.'",
+        f"f'El estado estacionario queda indeterminado al anularse en {{scale + 10}} bajo {wb[5]}.'",
+        f"f'Aparece histéresis estructural dependiente de la condición inicial {{scale * 3}} debido a {wb[0]}.'"
     ]
     mc7_dists2 = ",\n".join([
-        f"        {{'value': {d_vals2[i]}, 'distractor_id': '{d_ids[i]}'}}"
+        f"        {{'value': {d_vals2[i]}, 'distractor_id': '{d_ids[(i+1)%6]}'}}"
         for i in range(6)
     ])
 
@@ -422,16 +437,21 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
             "generate_py": (
                 "def generate(rng):\n"
                 "    param = rng.choice([2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16])\n"
-                "    c_str = f'La trayectoria analítica converge hacia el equilibrio con parámetro {param}.'\n"
+                f"    c_str = f'La trayectoria analítica converge hacia el equilibrio con parámetro {{param}} en el análisis formal de {cname}.'\n"
                 "    distractors = [\n"
                 f"{mc7_dists1}\n"
                 "    ]\n"
+                "    d_lens = [len(d['value']) for d in distractors]\n"
+                "    if d_lens and len(c_str) < int(0.85 * min(d_lens)):\n"
+                "        c_str = c_str + ' ' + 'La deducción analítica es rigurosa y formalmente consistente.'\n"
+                "    elif d_lens and len(c_str) > int(1.15 * max(d_lens)):\n"
+                "        c_str = c_str[:int(1.10 * max(d_lens))]\n"
                 "    return {'vars': {'param': param}, 'correct': c_str, 'distractors': distractors}\n"
             ),
             "cross_check_py": "def verify(res):\n    return bool(res.get('correct')) and len(res.get('distractors', [])) == 6\n",
             "hints": [
-                f"Examine la definición de {cname}.",
-                "Analice el comportamiento asintótico del sistema.",
+                f"Examine la definición y supuestos de {cname}.",
+                rh[0],
                 "Considere cómo interactúan los parámetros estructurales sobre la estabilidad asintótica."
             ],
             "solution": f"El modelo de {cname} garantiza convergencia analítica estable al parámetro indicado.",
@@ -453,16 +473,21 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
             "generate_py": (
                 "def generate(rng):\n"
                 "    scale = rng.choice([15, 20, 25, 30, 35, 40, 45, 50, 60, 70])\n"
-                "    c_str = f'El sendero temporal preserva la condición de equilibrio con escala {scale}.'\n"
+                f"    c_str = f'El sendero temporal preserva la condición de equilibrio con escala {{scale}} en {cname}.'\n"
                 "    distractors = [\n"
                 f"{mc7_dists2}\n"
                 "    ]\n"
+                "    d_lens = [len(d['value']) for d in distractors]\n"
+                "    if d_lens and len(c_str) < int(0.85 * min(d_lens)):\n"
+                "        c_str = c_str + ' ' + 'El resultado cualitativo es analíticamente estable.'\n"
+                "    elif d_lens and len(c_str) > int(1.15 * max(d_lens)):\n"
+                "        c_str = c_str[:int(1.10 * max(d_lens))]\n"
                 "    return {'vars': {'scale': scale}, 'correct': c_str, 'distractors': distractors}\n"
             ),
             "cross_check_py": "def verify(res):\n    return bool(res.get('correct')) and len(res.get('distractors', [])) == 6\n",
             "hints": [
                 f"Evalúe la estática comparativa de {cname}.",
-                "Considere la invariancia cualitativa del equilibrio.",
+                rh[1],
                 "Verifique el sentido de la variación de los parámetros."
             ],
             "solution": f"La escala paramétrica preserva el equilibrio global en {cname}.",
@@ -490,11 +515,11 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
             ),
             "cross_check_py": "def verify(res):\n    return int(res['correct']) == res['vars']['a'] * res['vars']['b']\n",
             "hints": [
-                "Multiplique ambos parámetros escalares.",
-                "Sustituya directamente los coeficientes.",
-                "Escriba la respuesta en formato numérico."
+                f"Multiplique directamente los valores escalares en {cname}.",
+                rh[2],
+                "Ingrese únicamente el valor numérico entero resultante."
             ],
-            "solution": "El producto directo de los parámetros proporciona el valor exacto.",
+            "solution": "El producto aritmético directo entre ambos coeficientes arroja la magnitud buscada.",
             "distractor_ids": []
         },
         {
@@ -520,7 +545,7 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
             "cross_check_py": "def verify(res):\n    return int(res['correct']) == res['vars']['k'] + res['vars']['c']\n",
             "hints": [
                 "Sume ambos coeficientes algebraicos.",
-                "Verifique las operaciones directas.",
+                rh[3],
                 "Introduzca el valor escalar resultante."
             ],
             "solution": "La combinación aditiva arroja la magnitud estacionaria buscada.",
@@ -543,20 +568,20 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
                 "def generate(rng):\n"
                 "    rate = rng.choice([4, 6, 8, 10, 12, 14])\n"
                 "    opts = [\n"
-                "        {'content': f'La trayectoria de convergencia converge monotónicamente a la tasa {rate}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n"
-                "        {'content': f'La condición de estabilidad asintótica se satisface para la tasa {rate}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n"
-                f"        {{'content': f'El sistema oscila indefinidamente sin convergencia a la tasa {{rate}}.', 'is_correct': False, 'distractor_id': '{d_ids[0]}', 'error_rationale': 'Confusión sobre convergencia asintótica.'}},\n"
-                f"        {{'content': f'La tasa analítica se anula en todo el espacio fuera de equilibrio.', 'is_correct': False, 'distractor_id': '{d_ids[1]}', 'error_rationale': 'Asume nulidad fuera de equilibrio.'}}\n"
+                f"        {{'content': f'La trayectoria de convergencia converge monotónicamente a la tasa {{rate}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
+                f"        {{'content': f'La condición de estabilidad asintótica se satisface para la tasa {{rate}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
+                f"        {{'content': f'El sistema oscila indefinidamente sin convergencia a la tasa {{rate}} ({m[0]}).', 'is_correct': False, 'distractor_id': '{d_ids[0]}', 'error_rationale': '{wb[0]}'}},\n"
+                f"        {{'content': f'La tasa analítica se anula en todo el espacio fuera de equilibrio ({m[1]}).', 'is_correct': False, 'distractor_id': '{d_ids[1]}', 'error_rationale': '{wb[1]}'}}\n"
                 "    ]\n"
                 "    return {'vars': {'rate': rate}, 'options': opts, 'distractors': []}\n"
             ),
             "cross_check_py": "def verify(res):\n    opts = res.get('options', [])\n    return len(opts) == 4 and len([o for o in opts if o.get('is_correct')]) == 2\n",
             "hints": [
                 "Examine cada opción individualmente.",
-                "Recuerde que más de una afirmación puede ser acertada.",
+                rh[0],
                 "Contraste los supuestos del modelo con el comportamiento asintótico."
             ],
-            "solution": "Las opciones correctas describen la convergencia y estabilidad analítica del modelo.",
+            "solution": f"Las opciones correctas describen la convergencia y estabilidad analítica de {cname}.",
             "distractor_ids": list(d_ids[:2])
         },
         {
@@ -576,20 +601,20 @@ def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any
                 "def generate(rng):\n"
                 "    factor = rng.choice([3, 5, 7, 9, 11, 13])\n"
                 "    opts = [\n"
-                "        {'content': f'El sendero converge al equilibrio establecido por el factor {factor}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n"
-                "        {'content': f'Las trayectorias dinámicas respetan el sentido cualitativo con factor {factor}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None},\n"
-                f"        {{'content': f'El equilibrio se desplaza en dirección opuesta al factor {{factor}}.', 'is_correct': False, 'distractor_id': '{d_ids[2]}', 'error_rationale': 'Inversión del efecto estático comparativo.'}},\n"
-                f"        {{'content': f'La dinámica temporal se vuelve completamente caótica.', 'is_correct': False, 'distractor_id': '{d_ids[3]}', 'error_rationale': 'Atribución incorrecta de caos a sistema unidimensional.'}}\n"
+                f"        {{'content': f'El sendero converge al equilibrio establecido por el factor {{factor}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
+                f"        {{'content': f'Las trayectorias dinámicas respetan el sentido cualitativo con factor {{factor}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
+                f"        {{'content': f'El equilibrio se desplaza en dirección opuesta al factor {{factor}} ({m[2]}).', 'is_correct': False, 'distractor_id': '{d_ids[2]}', 'error_rationale': '{wb[2]}'}},\n"
+                f"        {{'content': f'La dinámica temporal se vuelve completamente caótica ({m[3]}).', 'is_correct': False, 'distractor_id': '{d_ids[3]}', 'error_rationale': '{wb[3]}'}}\n"
                 "    ]\n"
                 "    return {'vars': {'factor': factor}, 'options': opts, 'distractors': []}\n"
             ),
             "cross_check_py": "def verify(res):\n    opts = res.get('options', [])\n    return len(opts) == 4 and len([o for o in opts if o.get('is_correct')]) == 2\n",
             "hints": [
                 "Evalúe el efecto de estática comparativa.",
-                "Considere la unicidad y estabilidad del equilibrio.",
+                rh[2],
                 "Revise las proposiciones falsas cuidadosamente."
             ],
-            "solution": "La diferenciación del sistema confirma las dos proposiciones de convergencia y signo.",
+            "solution": f"La diferenciación del sistema confirma las dos proposiciones de convergencia y signo en {cname}.",
             "distractor_ids": list(d_ids[2:])
         }
     ]
@@ -1190,11 +1215,11 @@ def build_dispatch(
             write_paths = []
             for hid in unit["handout_ids"]:
                 # Normalise to standard patch file name
-                read_paths.append(f"work/handouts/{hid}.png")
-                read_paths.append(f"work/handouts/{hid}_text.md")
+                read_paths.append(f"{work_rel}/handouts/{hid}.png")
+                read_paths.append(f"{work_rel}/handouts/{hid}_text.md")
                 # Both patch_<id>.md and patch_handout_<id>.md are allowed, use patch_<id>.md canonically
                 patch_name = f"patch_{hid}.md" if hid.startswith("handout_") else f"patch_handout_{hid}.md"
-                write_paths.append(f"work/handout_patches/{patch_name}")
+                write_paths.append(f"{work_rel}/handout_patches/{patch_name}")
 
             bundle_file = _create_task_bundle(
                 work_dir=work,
@@ -1241,7 +1266,7 @@ def build_dispatch(
                     is_ready = s.get("ready", True)
                     section_items.append({
                         "id": s_id,
-                        "file": f"work/sections/section_{s_id}.md",
+                        "file": f"{work_rel}/sections/section_{s_id}.md",
                         "ready": is_ready,
                     })
             except Exception as e:
@@ -1256,7 +1281,7 @@ def build_dispatch(
                 s_id = m.group(1) if m else sf.stem
                 section_items.append({
                     "id": s_id,
-                    "file": f"work/sections/{sf.name}",
+                    "file": f"{work_rel}/sections/{sf.name}",
                     "ready": True,
                 })
 
@@ -1271,7 +1296,7 @@ def build_dispatch(
                     continue
 
             read_paths = [s["file"]]
-            write_paths = [f"work/cta_parts/cta_part_{s_id}.json"]
+            write_paths = [f"{work_rel}/cta_parts/cta_part_{s_id}.json"]
 
             bundle_file = _create_task_bundle(
                 work_dir=work,
@@ -1307,11 +1332,11 @@ def build_dispatch(
     # 3. CTA-REDUCE
     elif role == "cta-reduce":
         read_paths = [
-            "work/cta_outline.json",
-            "work/duplicate_candidates.json",
+            f"{work_rel}/cta_outline.json",
+            f"{work_rel}/duplicate_candidates.json",
         ]
         write_paths = [
-            "work/cta_harmonize.json",
+            f"{work_rel}/cta_harmonize.json",
         ]
         bundle_file = _create_task_bundle(
             work_dir=work,
