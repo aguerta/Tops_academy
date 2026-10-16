@@ -1002,6 +1002,62 @@ def _bundle_display_path(bundle_file: Path) -> str:
         return bundle_file.resolve().as_posix()
 
 
+def get_work_rel(work_dir: Union[str, Path]) -> str:
+    """Returns normalized relative POSIX path for work_dir within cwd, falling back to 'work'.
+
+    Ensures seamless compatibility with dynamic workspace paths (e.g. courses/solow_model/work)
+    as well as external testing directories (e.g. pytest tmp_path) by falling back to 'work'.
+    """
+    p = Path(work_dir)
+    if not p.is_absolute():
+        p_str = p.as_posix()
+        if p_str == "work" or p_str.startswith("courses/"):
+            return p_str
+        resolved = (Path.cwd() / p).resolve()
+    else:
+        resolved = p.resolve()
+
+    try:
+        rel = resolved.relative_to(Path.cwd().resolve())
+        return rel.as_posix()
+    except ValueError:
+        return "work"
+
+
+def index_scaffold_template_lines(tpl_path: Path) -> List[str]:
+    """Indexes template IDs and line ranges in a pre-seeded scaffold for replace_file_content."""
+    if not tpl_path.is_file():
+        return []
+    entries: List[str] = []
+    try:
+        lines = tpl_path.read_text(encoding="utf-8").splitlines()
+        current_tid = ""
+        start_line = 1
+        for idx, line in enumerate(lines, start=1):
+            stripped = line.strip()
+            if stripped.startswith('"id": "T-'):
+                if current_tid:
+                    entries.append(f"  * `{current_tid}`: L{start_line}..L{idx-1}")
+                current_tid = stripped.split('"id": "')[1].split('"')[0]
+                start_line = idx
+        if current_tid:
+            entries.append(f"  * `{current_tid}`: L{start_line}..L{len(lines)}")
+    except Exception as e:
+        logger.debug("Could not index scaffold lines for %s: %s", tpl_path, e)
+    return entries
+
+
+COMPACT_AUTHOR_DIGEST = (
+    "### DIRECTIVAS OPERATIVAS COMPACTAS (VER BUNDLE PARA DETALLE COMPLETO):\n"
+    "- **TPL-D3 & TPL-VAR >= 0.50:** 6 plantillas por competencia (2 MC7, 2 FIB, 2 MS). Cobertura 100% de distractores de cta.json. 3-5 stem_variants con {placeholders}.\n"
+    "- **R-18 (Anti-Giveaways):** Cero metainformación psicométrica o boilerplate sintético repetitivo en opciones.\n"
+    "- **R-19 (Cero Fuga en FIB):** El stem de fill_in_the_blank no debe contener la respuesta o valor numérico.\n"
+    "- **R-20 (LaTeX Limpio):** Cero {{ o }} en JSON; toda variable {var} debe existir en 'vars' de generate_py. Fracciones \\frac{a}{b} válidas.\n"
+    "- **R-22 (Rationales en MS):** 100% de opciones con is_correct=False en multiple_select deben tener 'error_rationale' no vacío.\n"
+    "- **Protocolo Parallel Tool Calling:** Turno 1 emite llamadas paralelas a replace_file_content usando el Mapa de Líneas Pre-Indexado. Turno 2 refina restantes. Turno 3 ejecuta validación CLI oficial.\n"
+)
+
+
 def _format_prompt(
     role_name: str,
     role_title: str,
@@ -1057,6 +1113,7 @@ def build_dispatch(
         raise ValueError(f"Unknown role: '{role}'. Available roles: {list(ROLE_SPECS.keys())}")
 
     work = Path(work_dir).resolve()
+    work_rel = get_work_rel(work_dir)
     spec = ROLE_SPECS[role]
     sys_prompt = spec["system_prompt"]
     turn_budget = spec["turn_budget"]
@@ -1336,12 +1393,12 @@ def build_dispatch(
             (work / "scratch" / str(s_id)).mkdir(parents=True, exist_ok=True)
 
             read_paths = [
-                f"work/shards/{s_id}.json",
-                "work/cta.json",
-            ] + [f"work/templates/{cid}.json" for cid in c_ids]
-            write_paths = [f"work/templates/{cid}.json" for cid in c_ids] + [
-                f"work/shards/{s_id}/scratch/**",
-                f"work/scratch/{s_id}/**",
+                f"{work_rel}/shards/{s_id}.json",
+                f"{work_rel}/cta.json",
+            ] + [f"{work_rel}/templates/{cid}.json" for cid in c_ids]
+            write_paths = [f"{work_rel}/templates/{cid}.json" for cid in c_ids] + [
+                f"{work_rel}/shards/{s_id}/scratch/**",
+                f"{work_rel}/scratch/{s_id}/**",
             ]
 
             bundle_file = generate_author_bundle(
@@ -1354,18 +1411,31 @@ def build_dispatch(
             )
 
             # Build exact validation command pre-baked with all template files for this shard
-            tpl_args = " ".join(f"work/templates/{cid}.json" for cid in c_ids)
+            tpl_args = " ".join(f"{work_rel}/templates/{cid}.json" for cid in c_ids)
             validation_cmd = (
-                f"python .agents/skills/content-to-course/check_templates.py {tpl_args} --cta work/cta.json --strict"
+                f"python .agents/skills/content-to-course/check_templates.py {tpl_args} --cta {work_rel}/cta.json --strict"
             )
 
-            tpl_list_str = "\n".join(f"- `work/templates/{cid}.json`" for cid in c_ids)
+            tpl_list_str = "\n".join(f"- `{work_rel}/templates/{cid}.json`" for cid in c_ids)
+
+            scaffold_maps: List[str] = []
+            for cid in c_ids:
+                tpl_file = work / "templates" / f"{cid}.json"
+                idx_lines = index_scaffold_template_lines(tpl_file)
+                if idx_lines:
+                    scaffold_maps.append(f"- `{work_rel}/templates/{cid}.json`:\n" + "\n".join(idx_lines))
+                else:
+                    scaffold_maps.append(f"- `{work_rel}/templates/{cid}.json` (scaffold pre-sembrado para refinar con replace_file_content)")
+            scaffold_map_text = "\n".join(scaffold_maps)
+
             extra_author_context = (
                 f"### ASIGNACIÓN DEL SHARD `{s_id}`:\n"
                 f"- Competencias asignadas: {', '.join(f'`{cid}`' for cid in c_ids)}\n"
                 f"- Scaffolds pre-sembrados listos para refinamiento en disco:\n{tpl_list_str}\n\n"
                 f"### COMANDO DE VALIDACIÓN OFICIAL PRE-CONFIGURADO:\n"
-                f"```bash\n{validation_cmd}\n```"
+                f"```bash\n{validation_cmd}\n```\n\n"
+                f"### MAPA DE LÍNEAS PRE-INDEXADO (PARA REFINAMIENTO CON replace_file_content):\n"
+                f"{scaffold_map_text}"
             )
 
             prompt_lines = [
@@ -1383,26 +1453,34 @@ def build_dispatch(
                 "  * Refinamiento quirúrgico mediante replace_file_content (prioritario) o write_to_file (fallback opcional para reescritura completa) sobre:"
             )
             for cid in c_ids:
-                prompt_lines.append(f"    - `work/templates/{cid}.json`")
-            prompt_lines.append(f"  * `work/shards/{s_id}/scratch/**` (carpeta aislada para scripts auxiliares)")
+                prompt_lines.append(f"    - `{work_rel}/templates/{cid}.json`")
+            prompt_lines.append(f"  * `{work_rel}/shards/{s_id}/scratch/**` (carpeta aislada para scripts auxiliares)")
             prompt_lines.append("- **PROHIBIDO:**")
             for f in forbidden:
                 prompt_lines.append(f"  * {f}")
 
             prompt_lines.extend(["", extra_author_context])
 
-            if sys_text:
-                prompt_lines.extend(["", "## INSTRUCCIONES OPERATIVAS Y DIRECTIVAS", sys_text])
+            if len(shard_items) > 1:
+                shard_sys_text = (
+                    f"{COMPACT_AUTHOR_DIGEST}\n"
+                    f"- Directivas completas archivadas en bundle: {_bundle_display_path(bundle_file)}"
+                )
+            else:
+                shard_sys_text = sys_text
+
+            if shard_sys_text:
+                prompt_lines.extend(["", "## INSTRUCCIONES OPERATIVAS Y DIRECTIVAS", shard_sys_text])
 
             prompt_lines.extend([
                 "",
                 "## INICIO INMEDIATO Y TERMINACIÓN OBLIGATORIA",
-                "- NO gastes Turno 1 leyendo bundles (`work/dispatch/bundles/*`) ni archivos de system prompts: toda tu asignación, directivas, y comando CLI están provistos aquí.",
-                "- Cada una de tus competencias asignadas YA TIENE un scaffold válido pre-sembrado en `work/templates/<comp_id>.json` con 6 plantillas base y 100% de distractores mapeados.",
+                f"- NO gastes Turno 1 leyendo bundles (`{work_rel}/dispatch/bundles/*`) ni archivos de system prompts: toda tu asignación, directivas, y comando CLI están provistos aquí.",
+                f"- Cada una de tus competencias asignadas YA TIENE un scaffold válido pre-sembrado en `{work_rel}/templates/<comp_id>.json` con 6 plantillas base y 100% de distractores mapeados.",
                 "- Entra DIRECTAMENTE en Turno 1 a refinar los scaffolds con `replace_file_content` para personalizar `generate_py`, `stem_variants`, `vars`, `hints` y `solution`.",
                 "- Una vez refinadas, ejecuta en terminal el comando de validación oficial provisto arriba en un solo paso.",
                 "- Do not output template JSON in chat text.",
-                f"- Termina estrictamente con: `DONE: {', '.join(f'work/templates/{cid}.json' for cid in c_ids)}`",
+                f"- Termina estrictamente con: `DONE: {', '.join(f'{work_rel}/templates/{cid}.json' for cid in c_ids)}`",
                 f"Presupuesto sugerido: máximo {turn_budget} turnos (límite estricto). Si alcanzas {turn_budget} turnos o 3 fallos consecutivos idénticos, finaliza con BLOCKED: CONTRACT_ERROR.",
                 "- Prohibido redactar resúmenes, explicaciones o saludos adicionales en el chat.",
             ])
@@ -1439,7 +1517,7 @@ def build_dispatch(
             j_id = m.group(1) if m else "01"
             batch_items.append({
                 "id": j_id,
-                "file": f"work/{jf.name}",
+                "file": f"{work_rel}/{jf.name}",
             })
 
         if ids is not None:
@@ -1449,7 +1527,7 @@ def build_dispatch(
         for b in batch_items:
             j_id = str(b["id"])
             read_paths = [b["file"]]
-            write_paths = [f"work/judge_responses_{j_id}.json"]
+            write_paths = [f"{work_rel}/judge_responses_{j_id}.json"]
 
             # ABSOLUTE RULE: judge prompt must NEVER include ground_truth in READ!
             assert not any("ground_truth" in r.lower() for r in read_paths), "FATAL: judge cannot have ground truth in READ!"
@@ -1473,6 +1551,20 @@ def build_dispatch(
                 forbidden_items=forbidden,
                 system_prompt_rel=sys_prompt,
             )
+
+            # Zero-Warmup injection: inject batch items directly if under 12 KB
+            batch_file_path = work / Path(b["file"]).name
+            if batch_file_path.is_file() and batch_file_path.stat().st_size < 12000:
+                try:
+                    b_data = json.loads(batch_file_path.read_text(encoding="utf-8"))
+                    items_list = b_data.get("items", []) if isinstance(b_data, dict) else (b_data if isinstance(b_data, list) else [])
+                    if items_list:
+                        prompt_text += (
+                            f"\n\n## ITEMS A EVALUAR (ZERO-WARMUP):\n"
+                            f"```json\n{json.dumps(items_list, indent=2, ensure_ascii=False)}\n```\n"
+                        )
+                except Exception as e:
+                    logger.warning("Could not inject batch items into judge prompt: %s", e)
 
             subagents.append({
                 "TypeName": spec["type_name"],
