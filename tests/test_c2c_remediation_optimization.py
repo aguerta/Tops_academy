@@ -175,6 +175,135 @@ COMPETENCIES = [
         has_mapped_line = any("Línea 8" in e or "Linea 8" in e for e in errs)
         self.assertTrue(has_mapped_line, f"Errors missing exact distractor line mapping: {errs}")
 
+    def test_component_1_auto_balance_math_delimiters(self):
+        """auto_balance_math_delimiters collapses $$$ and balances unescaped $ when braces are balanced."""
+        from cta_merge import auto_balance_math_delimiters, normalize_orphan_math
+
+        # Triple dollars collapse
+        self.assertEqual(auto_balance_math_delimiters("$$$x$$$"), "$$x$$")
+        self.assertEqual(auto_balance_math_delimiters("Ecuación: $$$E = mc^2$$$"), "Ecuación: $$E = mc^2$$")
+
+        # Odd unescaped $ with balanced braces -> closed with $
+        self.assertEqual(auto_balance_math_delimiters("Calcular $x"), "Calcular $x$")
+        self.assertEqual(auto_balance_math_delimiters("Calcular $x."), "Calcular $x$.")
+        self.assertEqual(auto_balance_math_delimiters("Calcular $x,"), "Calcular $x$,")
+        self.assertEqual(auto_balance_math_delimiters("Calcular $x;"), "Calcular $x$;")
+
+        # Odd unescaped $ with UNBALANCED braces -> left alone so syntax validator flags it
+        self.assertEqual(auto_balance_math_delimiters(r"\frac{a}{b$"), r"\frac{a}{b$")
+        self.assertEqual(auto_balance_math_delimiters(r"\sqrt{x$"), r"\sqrt{x$")
+
+        # normalize_orphan_math uses auto_balance_math_delimiters
+        res = normalize_orphan_math("Valor $x")
+        self.assertEqual(res, "Valor $x$")
+
+    def test_component_1_sanitize_competency_math_includes_correct_belief(self):
+        """sanitize_competency_math sanitizes correct_belief and trigger in distractors."""
+        from cta_merge import sanitize_competency_math
+
+        comp = {
+            "name": "Test Comp",
+            "description": "Desc",
+            "distractors": [
+                {
+                    "name": "D1",
+                    "manifestation": "$0$",
+                    "wrong_belief": "wb",
+                    "correct_belief": r"El valor es \alpha",
+                    "trigger": r"Cuando se usa \beta",
+                }
+            ],
+        }
+        sanitize_competency_math(comp)
+        d = comp["distractors"][0]
+        self.assertIn(r"$\alpha$", d["correct_belief"])
+        self.assertIn(r"$\beta$", d["trigger"])
+
+    def test_component_1_skill_omitted_step_auto_promotion(self):
+        """compile_tuples_to_cta_dict auto-promotes wrong_belief to omitted_step if < 2 for skill."""
+        import compile_cta
+
+        skill_tuples = [
+            (
+                "skill", "Hab-01", "Habilidad de Prueba",
+                r"Descripcion de la habilidad $\phi(k)$.",
+                "Apply", "doc.pdf", 1, [],
+                [
+                    ("D1", "Error de calculo 1", "Correcto 1", "$1$", "Hint 1"),
+                    ("D2", "Error de calculo 2", "Correcto 2", "$2$", "Hint 2"),
+                    ("D3", "Error de calculo 3", "Correcto 3", "$3$", "Hint 3"),
+                ]
+            )
+        ]
+        cta_dict = compile_cta.compile_tuples_to_cta_dict(
+            competencies_tuples=skill_tuples,
+            course_id="test_course",
+            title="Test Title",
+        )
+        comp = cta_dict["competencies"][0]
+        omitted = [d for d in comp["distractors"] if d.get("omitted_step")]
+        self.assertGreaterEqual(len(omitted), 2)
+        self.assertEqual(omitted[0]["omitted_step"], "Error de calculo 1")
+        self.assertEqual(omitted[0]["error_type"], "skipped_step")
+        self.assertEqual(omitted[1]["omitted_step"], "Error de calculo 2")
+        self.assertEqual(omitted[1]["error_type"], "skipped_step")
+
+    def test_component_1_anti_overwrite_backup_and_course_id_resolution(self):
+        """compile_cta writes .cta_data.py.bak when >= 10 comps, and resolves course_id properly."""
+        import compile_cta
+
+        # Build >= 10 competencies
+        comps = []
+        for i in range(1, 11):
+            comps.append(
+                f'    ("concept", "C-{i:02d}", "Concepto {i}", "Desc {i}", "Remember", "doc.pdf", {i}, [], '
+                f'[("D1", "wb1", "cb1", "$1$", "h1"), ("D2", "wb2", "cb2", "$2$", "h2"), ("D3", "wb3", "cb3", "$3$", "h3")])'
+            )
+        data_text = "COMPETENCIES = [\n" + ",\n".join(comps) + "\n]\n"
+        data_file = self.work_dir / "cta_data.py"
+        data_file.write_text(data_text, encoding="utf-8")
+
+        success, res, errs, _ = compile_cta.compile_cta(
+            cta_data_path=data_file,
+            output_dir=self.work_dir,
+        )
+        self.assertTrue(success, f"Failed to compile: {errs}")
+        bak_file = self.work_dir / ".cta_data.py.bak"
+        self.assertTrue(bak_file.is_file(), "Backup .cta_data.py.bak was not written for >= 10 comps")
+        self.assertIn("Concepto 10", bak_file.read_text(encoding="utf-8"))
+
+        # Verify manifest.json resolution when COURSE_ID is Tops_academy
+        manifest_file = self.work_dir / "manifest.json"
+        manifest_file.write_text(json.dumps({"course_id": "macroeconomia_avanzada"}), encoding="utf-8")
+        data_text_with_bad_id = 'COURSE_ID = "Tops_academy"\n' + data_text
+        data_file.write_text(data_text_with_bad_id, encoding="utf-8")
+        success, res, _, _ = compile_cta.compile_cta(
+            cta_data_path=data_file,
+            output_dir=self.work_dir,
+        )
+        self.assertTrue(success)
+        self.assertEqual(res["course_id"], "macroeconomia_avanzada")
+
+    def test_component_1_render_compact_cta_errors_with_source_lines(self):
+        """render_compact_cta_errors shows exact 3-line snippets and anti-overwrite warning."""
+        import compile_cta
+
+        errors = ["[CTA-D1] [cta_data.py:Línea 5] Distractor 'D-C01-01' error de prueba"]
+        source_lines = [
+            "# line 1",
+            "# line 2",
+            "# line 3",
+            "# line 4",
+            '("Distractor 1", "wrong", "correct", "$0$", "hint"),  # line 5',
+            "# line 6",
+            "# line 7",
+        ]
+        msg = compile_cta.render_compact_cta_errors(errors, "cta_data.py", source_lines=source_lines)
+        self.assertIn("CONTEXTO EXACTO PARA replace_file_content (NO uses view_file ni write_to_file Overwrite):", msg)
+        self.assertIn("StartLine=4, EndLine=6", msg)
+        self.assertIn("L5: (\"Distractor 1\", \"wrong\", \"correct\", \"$0$\", \"hint\"),  # line 5", msg)
+        self.assertIn("PROHIBIDO usar 'write_to_file' con Overwrite=True", msg)
+
     # =========================================================================
     # COMPONENT 2: Quality Triad for Shard Authors
     # =========================================================================

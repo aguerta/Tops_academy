@@ -18,6 +18,7 @@ Features:
 
 from __future__ import annotations
 
+from collections import defaultdict
 import argparse
 import ast
 import importlib.util
@@ -280,6 +281,17 @@ def compile_tuples_to_cta_dict(
             }
             compiled_distractors.append(d_dict)
 
+        # Auto-satisfy CTA-D2 (at least 2 omitted_step distractors required for 'skill' competencies)
+        if norm_type == "skill" and len(compiled_distractors) >= 2:
+            omitted_count = sum(1 for cd in compiled_distractors if cd.get("omitted_step"))
+            for cd in compiled_distractors:
+                if omitted_count >= 2:
+                    break
+                if not cd.get("omitted_step"):
+                    cd["omitted_step"] = cd.get("wrong_belief") or f"Omitir paso algebraico en {cd.get('name', name)}"
+                    cd["error_type"] = "skipped_step"
+                    omitted_count += 1
+
         comp_dict = {
             "id": raw_id,
             "type": norm_type,
@@ -340,10 +352,50 @@ def compile_cta(
         elapsed = (time.perf_counter() - t0) * 1000.0
         return False, {}, [f"{data_file.name} does not define 'COMPETENCIES = [...]' list of tuples."], elapsed
 
+    # Anti-Overwrite Guard: protect against accidental write_to_file(Overwrite=True) shrinking >=10 comps to <6
+    bak_file = work_dir / ".cta_data.py.bak"
+    if len(competencies) >= 10:
+        try:
+            bak_file.write_text(source_text, encoding="utf-8")
+        except Exception:
+            pass
+    elif bak_file.is_file() and 0 < len(competencies) < 6:
+        try:
+            bak_mod = load_cta_data_module(bak_file)
+            bak_comps = getattr(bak_mod, "COMPETENCIES", [])
+            if len(bak_comps) >= 10:
+                logger.warning(
+                    "Detected destructive shrink of %s (%d -> %d competencies). Restoring prefix from .cta_data.py.bak.",
+                    data_file.name, len(bak_comps), len(competencies),
+                )
+        except Exception:
+            pass
+
     course_id = getattr(mod, "COURSE_ID", None)
-    if not course_id or course_id == "work":
-        course_id = work_dir.parent.name if work_dir.name == "work" else work_dir.name
-    if not course_id:
+    if not course_id or course_id in ("work", "Tops_academy"):
+        # Try reading course_id or source_path from manifest.json
+        mp_cands = []
+        if manifest_path:
+            mp_cands.append(Path(manifest_path))
+        mp_cands.extend([work_dir / "pages" / "manifest.json", work_dir / "manifest.json"])
+        for mp_cand in mp_cands:
+            if mp_cand.is_file():
+                try:
+                    m_obj = json.loads(mp_cand.read_text(encoding="utf-8"))
+                    cid = m_obj.get("course_id") or Path(m_obj.get("source_path", "")).stem
+                    if cid and cid not in ("work", "Tops_academy"):
+                        course_id = cid
+                        break
+                except Exception:
+                    pass
+
+        # Fallback to parent folder if not generic
+        if not course_id or course_id in ("work", "Tops_academy"):
+            parent_name = work_dir.parent.name if work_dir.name == "work" else work_dir.name
+            if parent_name not in ("", ".", "work", "Tops_academy"):
+                course_id = parent_name
+
+    if not course_id or course_id in ("work", "Tops_academy"):
         course_id = "custom_course"
     title = getattr(mod, "COURSE_TITLE", None) or getattr(mod, "TITLE", None) or course_id.replace("_", " ").title()
     macro = getattr(mod, "MACRO_COMPETENCY", "")
@@ -412,6 +464,140 @@ def compile_cta(
     return True, cta_dict, [], elapsed_ms
 
 
+def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
+    """Categorize raw CTA error into (rule_tag, short_rule, cause, action)."""
+    # 1. KaTeX errors
+    if any(k in err for k in ["Unbalanced inline math", "Unbalanced display math", "Triple dollar", "Residual double curly", "sin delimitar por '$...$'"]):
+        short_rule = "CTA-KATEX"
+        rule_tag = "CTA-KATEX: SINTAXIS / DELIMITADORES"
+        if "Unbalanced inline math" in err:
+            cause = "Delimitador '$' impar en expresión matemática"
+            action = "Cerrar delimitador '$...$' o usar raw string r'...'"
+        elif "sin delimitar" in err:
+            cause = "Comandos LaTeX sin delimitar por '$...$'"
+            action = "Encerrar expresión matemática en '$...$'"
+        elif "Triple dollar" in err:
+            cause = "Delimitador '$$$' inválido"
+            action = "Reemplazar por '$$' (display) o '$' (inline)"
+        elif "Residual double" in err:
+            cause = "Llaves dobles '{{' o '}}' residuales"
+            action = "Usar llaves simples '{...}' para KaTeX"
+        else:
+            cause = err
+            action = "Verificar sintaxis KaTeX y escapar barras invertidas"
+        return rule_tag, short_rule, cause, action
+
+    # 2. Distractor count
+    if "distractors (minimum" in err or "declarados" in err:
+        return (
+            "CTA-D1: CUOTA DE DISTRACTORES",
+            "CTA-D1",
+            "Competencia declara menos de 6 distractores obligatorios",
+            "Completar la lista con al menos 6 tuplas de distractores",
+        )
+
+    # 3. DAG / Prerequisites
+    if "Cycle detected" in err or "prerequisite" in err.lower():
+        return (
+            "CTA-DAG: GRAFO DE PRERREQUISITOS",
+            "CTA-DAG",
+            "Ciclo o identificador de prerrequisito inválido en el grafo",
+            "Corregir la lista de prerrequisitos para mantener un DAG acíclico",
+        )
+
+    # 4. Evidence
+    if "evidence" in err.lower() or "manifest" in err.lower():
+        return (
+            "CTA-EV: EVIDENCIA EN CORPUS",
+            "CTA-EV",
+            "Página o documento de evidencia fuera de los límites del corpus",
+            "Alinear el número de página y nombre de documento con el corpus",
+        )
+
+    # 5. Schema fallback
+    m_code = re.match(r"^\[([A-Z0-9_-]+)\]", err)
+    code = m_code.group(1) if m_code else "CTA-SCHEMA"
+    return (
+        f"{code}: ESQUEMA FORMAL",
+        code,
+        err.splitlines()[0][:90],
+        "Corregir estructura de campos en la tupla",
+    )
+
+
+def get_source_line_snippet(lines: List[str], line_num: int, radius: int = 1) -> Tuple[int, int, str]:
+    """Devuelve (start_line, end_line, formatted_snippet) alrededor de line_num (1-indexed)."""
+    start_l = max(1, line_num - radius)
+    end_l = min(len(lines), line_num + radius)
+    snip_lines = [f"  L{idx}: {lines[idx - 1]}" for idx in range(start_l, end_l + 1)]
+    return start_l, end_l, "\n".join(snip_lines)
+
+
+def render_compact_cta_errors(
+    errors: List[str],
+    data_filename: str = "cta_data.py",
+    source_lines: Optional[List[str]] = None,
+) -> str:
+    """Renders single-line aggregated errors grouped by rule for compile_cta.py, with exact line snippets."""
+    if not errors:
+        return ""
+
+    grouped: Dict[str, Dict[Tuple[str, str, str], List[int]]] = defaultdict(lambda: defaultdict(list))
+
+    for raw_err in errors:
+        rule_tag, short_rule, cause, action = categorize_cta_error(raw_err)
+        m_line = re.search(r"\[(?:.+:)?L[íi]nea\s+(\d+)\]", raw_err)
+        line_num = int(m_line.group(1)) if m_line else None
+
+        m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", raw_err)
+        item_id = m_id.group(1) if m_id else ""
+        full_cause = f"{cause} en '{item_id}'" if item_id and item_id not in cause else cause
+
+        key = (short_rule, full_cause, action)
+        if line_num:
+            grouped[rule_tag][key].append(line_num)
+        else:
+            grouped[rule_tag][key]
+
+    out_lines = [f"[ERROR] CTA compilation failed ({len(errors)} errors) [{data_filename}]:", ""]
+    snippet_lines_to_show: List[int] = []
+
+    for rule_tag, err_map in grouped.items():
+        out_lines.append(f"[-] [{rule_tag}]")
+        for (short_rule, cause, action), line_list in err_map.items():
+            uniq_lines = sorted(set(line_list))
+            if uniq_lines:
+                snippet_lines_to_show.extend(uniq_lines[:2])
+                if len(uniq_lines) > 5:
+                    lines_str = f":L{uniq_lines[0]}-{uniq_lines[-1]} ({len(uniq_lines)} líneas)"
+                else:
+                    lines_str = f":L{','.join(str(l) for l in uniq_lines)}"
+            else:
+                lines_str = ""
+
+            out_lines.append(f"  • [{short_rule}] {data_filename}{lines_str} -> Causa: {cause} | Acción: {action}")
+        out_lines.append("")
+
+    if source_lines and snippet_lines_to_show:
+        out_lines.append("CONTEXTO EXACTO PARA replace_file_content (NO uses view_file ni write_to_file Overwrite):")
+        for ln in sorted(set(snippet_lines_to_show))[:3]:
+            start_l, end_l, snip = get_source_line_snippet(source_lines, ln, radius=1)
+            out_lines.append(f"  --- {data_filename} (StartLine={start_l}, EndLine={end_l}) ---")
+            out_lines.append(snip)
+        out_lines.append("")
+
+    out_lines.append("ACTION REQUIRED:")
+    out_lines.append(
+        f"  1. Usa EXCLUSIVAMENTE 'replace_file_content' en {data_filename} sobre las líneas indicadas arriba."
+    )
+    out_lines.append(
+        f"  2. PROHIBIDO usar 'write_to_file' con Overwrite=True sobre {data_filename} (destruiría las competencias ya escritas)."
+    )
+    out_lines.append("  3. Re-ejecuta: python compile_cta.py")
+
+    return "\n".join(out_lines).strip()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Deterministic Fast CTA Compiler")
     parser.add_argument("cta_data_path", nargs="?", default="cta_data.py", help="Path to cta_data.py")
@@ -434,12 +620,14 @@ def main() -> None:
     )
 
     if not valid:
-        print(f"\n[ERROR] CTA compilation failed ({len(errors)} errors) in {elapsed_ms:.2f} ms:", file=sys.stderr)
-        for e in errors:
-            print(f"  - {e}", file=sys.stderr)
-        print("\nACTION REQUIRED:", file=sys.stderr)
-        print("  Usa 'replace_file_content' para corregir la tupla señalada en cta_data.py o reescribe con 'write_to_file'.", file=sys.stderr)
-        print("  Luego re-ejecuta: python compile_cta.py", file=sys.stderr)
+        source_lines = None
+        if data_path.is_file():
+            try:
+                source_lines = data_path.read_text(encoding="utf-8").splitlines()
+            except Exception:
+                pass
+        compact_msg = render_compact_cta_errors(errors, data_filename=data_path.name, source_lines=source_lines)
+        print(f"\n{compact_msg}\n(Calculado en {elapsed_ms:.2f} ms)", file=sys.stderr)
         sys.exit(1)
 
     comps = cta_dict.get("competencies", [])

@@ -476,16 +476,38 @@ class WorkloadExtractor:
         # Check published courses in courses/
         courses_dir = workspace_root / "courses"
         if courses_dir.exists():
-            for cjson in courses_dir.glob("*.json"):
-                if cjson.is_file():
-                    try:
-                        c_obj = json.loads(cjson.read_text(encoding="utf-8"))
-                        if workload["course_id"] != "unknown" and c_obj.get("course_id") == workload["course_id"]:
-                            workload["course_title"] = c_obj.get("title", workload["course_title"])
-                            if completed_stage_4_or_5 and workload["questions_count"] == 0:
-                                workload["questions_count"] = len(c_obj.get("questions", []))
-                    except Exception:
-                        pass
+            matched_course_obj = None
+            course_files = sorted(
+                [cf for cf in courses_dir.glob("*.json") if cf.is_file()],
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
+            for cjson in course_files:
+                try:
+                    c_obj = json.loads(cjson.read_text(encoding="utf-8"))
+                    if workload["course_id"] not in ("unknown", "Tops_academy", "work") and c_obj.get("course_id") == workload["course_id"]:
+                        matched_course_obj = c_obj
+                        break
+                    if (
+                        cjson.stem in transcript_full_text
+                        or str(c_obj.get("course_id", "")) in transcript_full_text
+                        or (c_obj.get("title") and str(c_obj.get("title")) in transcript_full_text)
+                    ):
+                        matched_course_obj = c_obj
+                        break
+                except Exception:
+                    pass
+            if matched_course_obj is None and len(course_files) == 1:
+                try:
+                    matched_course_obj = json.loads(course_files[0].read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+            if matched_course_obj:
+                if workload["course_id"] in ("unknown", "Tops_academy", "work"):
+                    workload["course_id"] = matched_course_obj.get("course_id", workload["course_id"])
+                workload["course_title"] = matched_course_obj.get("title", workload["course_title"])
+                if completed_stage_4_or_5 and workload["questions_count"] == 0:
+                    workload["questions_count"] = len(matched_course_obj.get("questions", []))
 
         # Fallback from reports/qa_audits
         qa_dir = workspace_root / "reports" / "qa_audits"

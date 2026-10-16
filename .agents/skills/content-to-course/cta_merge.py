@@ -68,10 +68,40 @@ def extract_evidence_keys(evidence_list: Optional[List[Dict[str, Any]]]) -> Set[
     return keys
 
 
+def auto_balance_math_delimiters(text: str) -> str:
+    """Deterministically repairs triple dollars '$$$' and odd unescaped '$' delimiters
+    ONLY when curly braces '{' and '}' are balanced (preserving intentional syntax error detection).
+    """
+    if not isinstance(text, str) or not text:
+        return text
+
+    # 1. Collapse accidental triple dollars $$$ -> $$
+    if "$$$" in text:
+        text = re.sub(r"\${3,}", "$$", text)
+
+    # 2. Check unescaped inline '$' count after masking '$$' display blocks
+    masked = re.sub(r"(?<!\\)\$\$", "__DISPLAY_MATH__", text)
+    unescaped_dollars = [m.start() for m in re.finditer(r"(?<!\\)\$", masked)]
+    if len(unescaped_dollars) % 2 == 1:
+        # Only auto-close if curly braces are balanced so genuine broken macros like \frac{a}{b$ still trigger error
+        open_braces = len(re.findall(r"(?<!\\)\{", text))
+        close_braces = len(re.findall(r"(?<!\\)\}", text))
+        if open_braces == close_braces:
+            stripped = text.rstrip()
+            if stripped.endswith((".", ",", ";", ":")):
+                text = stripped[:-1] + "$" + stripped[-1]
+            else:
+                text = stripped + "$"
+
+    return text
+
+
 def normalize_orphan_math(text: str) -> str:
     """Normalizes orphaned/unescaped LaTeX expressions like dot{w} -> $\\dot{w}$, bar{k} -> $\\bar{k}$ outside $...$."""
     if not isinstance(text, str) or not text:
         return text
+
+    text = auto_balance_math_delimiters(text)
 
     # Split text into outside-math and inside-math segments using $ / $$ blocks
     parts = re.split(r"(\$\$.*?\$\$|\$.*?\$)", text, flags=re.DOTALL)
@@ -129,7 +159,7 @@ def normalize_orphan_math(text: str) -> str:
         )
         parts[i] = chunk
 
-    return "".join(parts)
+    return auto_balance_math_delimiters("".join(parts))
 
 
 def sanitize_competency_math(comp: Dict[str, Any]) -> None:
@@ -141,7 +171,15 @@ def sanitize_competency_math(comp: Dict[str, Any]) -> None:
 
     for d in comp.get("distractors", []):
         if isinstance(d, dict):
-            for d_field in ("name", "manifestation", "remediation_hint", "wrong_belief", "omitted_step"):
+            for d_field in (
+                "name",
+                "manifestation",
+                "remediation_hint",
+                "wrong_belief",
+                "correct_belief",
+                "omitted_step",
+                "trigger",
+            ):
                 d_val = d.get(d_field)
                 if isinstance(d_val, str):
                     d[d_field] = normalize_orphan_math(d_val)
