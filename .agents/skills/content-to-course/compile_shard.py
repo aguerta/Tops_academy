@@ -949,9 +949,13 @@ def compile_shard_file(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Deterministic Python Tuple Compiler for Content-to-Course v3.2 Shards")
+    parser = argparse.ArgumentParser(description="Deterministic Python Tuple Compiler for Content-to-Course v3.21 Shards")
     parser.add_argument("shard_data_path", nargs="?", default=None, help="Optional positional path to shard_XX_data.py")
-    parser.add_argument("--work", default="work", help="Path to work directory (default: work)")
+    parser.add_argument("--input", "-i", dest="input_path", default=None, help="Optional path to shard_XX_data.py")
+    parser.add_argument("--output", "-o", dest="output_path", default=None, help="Optional output path or directory")
+    parser.add_argument("--cta", default=None, help="Optional path to cta.json")
+    parser.add_argument("--manifest", default=None, help="Optional path to manifest")
+    parser.add_argument("--work", "--work-dir", dest="work", default="work", help="Path to work directory (default: work)")
     parser.add_argument("--shard", default=None, help="Shard ID to compile (e.g. shard_01)")
     parser.add_argument("--output-dir", default=None, help="Output directory for templates (e.g. work/templates)")
     parser.add_argument("--strict", action="store_true", default=True, help="Enforce strict validation (default: True)")
@@ -959,15 +963,18 @@ def main():
     parser.add_argument("--seeds", type=int, default=50, help="Number of dry-run seeds (default: 50)")
     args = parser.parse_args()
 
-    work_or_path = args.shard_data_path or args.work
+    work_or_path = args.input_path or args.shard_data_path or args.work
     s_id = args.shard
+    eff_out_dir = args.output_dir
+    if not eff_out_dir and args.output_path and not str(args.output_path).lower().endswith(".json"):
+        eff_out_dir = args.output_path
 
     success, _ = compile_shard(
         work_dir_or_path=work_or_path,
         shard_id=s_id,
         strict=args.strict,
         seeds=args.seeds,
-        output_dir=args.output_dir,
+        output_dir=eff_out_dir,
     )
     sys.exit(0 if success else 1)
 

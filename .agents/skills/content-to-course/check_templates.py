@@ -2376,8 +2376,14 @@ def check_templates_file_or_dir(
     if effective_attempts_dir is None:
         if cta_p is not None:
             effective_attempts_dir = cta_p.parent / ".check_attempts"
+        elif shard_py is not None:
+            sp = Path(shard_py).resolve()
+            w_root = sp.parent.parent if sp.parent.name == "shards" else sp.parent
+            effective_attempts_dir = w_root / ".check_attempts"
         elif template_files:
-            effective_attempts_dir = template_files[0].parent / ".check_attempts"
+            tp = template_files[0].resolve()
+            w_root = tp.parent.parent if tp.parent.name == "templates" else tp.parent
+            effective_attempts_dir = w_root / ".check_attempts"
         else:
             effective_attempts_dir = Path("work/.check_attempts")
 

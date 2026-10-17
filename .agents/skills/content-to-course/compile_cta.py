@@ -1196,26 +1196,57 @@ def render_compact_cta_errors(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Deterministic Fast CTA Compiler")
     parser.add_argument("cta_data_path", nargs="?", default=None, help="Optional direct path to cta_data.py")
-    parser.add_argument("--work", "--work-dir", dest="work", default="work", help="Working directory containing pre_cta_manifest.json")
+    parser.add_argument("--input", "-i", dest="input_path", default=None, help="Optional path to input cta_data.py")
+    parser.add_argument("--output", "-o", dest="output_path", default=None, help="Optional path to output cta.json")
+    parser.add_argument("--work", "--work-dir", dest="work", default=None, help="Working directory containing pre_cta_manifest.json")
     parser.add_argument("--part", default=None, help="Optional subpart id (e.g. part_01) to compile work/cta_parts/<part_id>_data.py -> work/cta_parts/<part_id>.json")
-    parser.add_argument("--manifest", default=None, help="Optional path to pre_cta_manifest.json")
+    parser.add_argument("--manifest", default=None, help="Optional path to pre_cta_manifest.json or ingestion_manifest.json")
     args = parser.parse_args()
 
-    work_dir = Path(args.work).resolve()
-    manifest_p = Path(args.manifest).resolve() if args.manifest else work_dir / "pre_cta_manifest.json"
+    eff_input = args.input_path or args.cta_data_path
+    if args.work:
+        work_dir = Path(args.work).resolve()
+    elif eff_input:
+        in_p = Path(eff_input).resolve()
+        work_dir = in_p.parent.parent if in_p.parent.name in ("cta_parts", "cta") else in_p.parent
+    elif args.manifest:
+        work_dir = Path(args.manifest).resolve().parent
+    else:
+        work_dir = Path("work").resolve()
+
+    if args.manifest:
+        manifest_p = Path(args.manifest).resolve()
+        if not manifest_p.is_file() and (work_dir / "pre_cta_manifest.json").is_file():
+            manifest_p = work_dir / "pre_cta_manifest.json"
+    else:
+        manifest_p = work_dir / "pre_cta_manifest.json"
+        if not manifest_p.is_file() and (work_dir / "ingestion_manifest.json").is_file():
+            manifest_p = work_dir / "ingestion_manifest.json"
 
     if not manifest_p.is_file():
         print("BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
         sys.exit(2)
 
-    if args.part:
+    if eff_input:
+        data_path = Path(eff_input).resolve()
+        if args.output_path:
+            out_p = Path(args.output_path).resolve()
+            if out_p.suffix.lower() == ".json":
+                output_dir = out_p.parent
+                target_json_name = out_p.name
+            else:
+                output_dir = out_p
+                target_json_name = f"{args.part}.json" if args.part else "cta.json"
+        elif args.part:
+            output_dir = data_path.parent
+            target_json_name = f"{args.part}.json"
+        else:
+            output_dir = work_dir
+            target_json_name = "cta.json"
+    elif args.part:
         data_path = work_dir / "cta_parts" / f"{args.part}_data.py"
         output_dir = work_dir / "cta_parts"
         target_json_name = f"{args.part}.json"
-    elif args.cta_data_path:
-        data_path = Path(args.cta_data_path).resolve()
-        output_dir = work_dir
-        target_json_name = "cta.json"
     else:
         data_path = work_dir / "cta_data.py"
         output_dir = work_dir
