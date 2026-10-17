@@ -239,11 +239,12 @@ def test_shard_max_two():
     assert shards1[0]["competency_ids"] == ["C-01"]
 
 
-def test_shard_default_amortized_eight():
-    """Verify that determine_shard_count defaults to 8 competencies per shard for optimal amortized sharding."""
+def test_shard_default_amortized_v32():
+    """Verify that determine_shard_count caps at 5-6 competencies per shard in v3.2."""
     comps16 = [{"id": f"C-{i:02d}", "name": f"Comp {i}", "type": "concept"} for i in range(1, 17)]
     k16 = determine_shard_count(comps16)
-    assert k16 == 2, f"Expected 2 shards for 16 competencies under default 8 comps/shard, got {k16}"
+    assert k16 == 3, f"Expected 3 shards for 16 competencies under v3.2 (max 6 comps/shard), got {k16}"
     shards16 = partition_competencies_into_shards(comps16, k16)
-    assert len(shards16) == 2
-    assert all(len(s["competency_ids"]) == 8 for s in shards16)
+    assert len(shards16) == 3
+    assert all(len(s["competency_ids"]) <= 6 for s in shards16)
+

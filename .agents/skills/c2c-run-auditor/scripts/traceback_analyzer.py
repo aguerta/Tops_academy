@@ -140,15 +140,74 @@ class TranscriptReader:
         if not transcript_path.exists():
             return steps
 
-        with open(transcript_path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    steps.append(json.loads(line))
-                except Exception:
-                    pass
+        truncated_steps: Dict[int, int] = {}
+        truncated_lines: Dict[int, int] = {}
+
+        try:
+            with open(transcript_path, "r", encoding="utf-8", errors="replace") as f:
+                for line_idx, line in enumerate(f):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        rec = json.loads(line)
+                        rec_idx = len(steps)
+                        steps.append(rec)
+                        if rec.get("truncated_fields"):
+                            s_idx = rec.get("step_index")
+                            if s_idx is not None:
+                                truncated_steps[s_idx] = rec_idx
+                            truncated_lines[line_idx] = rec_idx
+                    except Exception:
+                        pass
+        except Exception:
+            return steps
+
+        if not truncated_steps and not truncated_lines:
+            return steps
+
+        full_path = transcript_path.parent / "transcript_full.jsonl"
+        if not full_path.is_file():
+            return steps
+
+        needed_steps = set(truncated_steps.keys())
+        needed_lines = set(truncated_lines.keys())
+        _step_re = re.compile(r'\{"step_index":\s*(\d+)')
+
+        try:
+            with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
+                for line_idx, line in enumerate(f):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    m = _step_re.match(line[:50])
+                    matched_step = int(m.group(1)) if m else None
+
+                    is_needed = False
+                    rec_idx = None
+
+                    if matched_step is not None and matched_step in needed_steps:
+                        is_needed = True
+                        rec_idx = truncated_steps[matched_step]
+                    elif line_idx in needed_lines:
+                        is_needed = True
+                        rec_idx = truncated_lines[line_idx]
+
+                    if is_needed and rec_idx is not None:
+                        try:
+                            full_rec = json.loads(line)
+                            steps[rec_idx] = full_rec
+                        except Exception:
+                            pass
+                        if matched_step is not None and matched_step in needed_steps:
+                            needed_steps.remove(matched_step)
+                        if line_idx in needed_lines:
+                            needed_lines.remove(line_idx)
+                        if not needed_steps and not needed_lines:
+                            break
+        except Exception:
+            pass
+
         return steps
 
     @staticmethod
@@ -262,33 +321,39 @@ class SubagentTreeResolver:
                 except Exception:
                     pass
 
-        # 4. Infer roles from individual subagent transcripts if role is still unknown
+        # 4. Infer roles from individual subagent transcripts if role is still generic/unknown
         brain_dir = get_brain_dir()
         for cid, info in list(subagents.items()):
             t_path = brain_dir / cid / ".system_generated" / "logs" / "transcript.jsonl"
             if not t_path.exists():
                 continue
-            first_steps = TranscriptReader.read_steps(t_path)[:5]
+            first_steps = TranscriptReader.read_steps(t_path)[:6]
+            r_str = f"{info.get('role', '')} {info.get('type', '')}"
             for s in first_steps:
-                c = s.get("content", "")
-                if "Direct CTA" in c or "cta-direct" in c or "prompt_cta" in c or "Director de Análisis Cognitivo" in c:
+                c = f"{r_str} {s.get('content', '')}"
+                m_part = re.search(r"(?:part_|cta_|CTA Architect\s*\(?part_|CTA Architect\s+)(\d+)", c, re.IGNORECASE)
+                m_shard = re.search(r"(?:shard_|Shard Author shard_|Author Shard\s+|Shard\s+)(\d+)", c, re.IGNORECASE)
+                m_judge = re.search(r"(?:Judge\s+|judge_batch_|judge_responses_|judge_)(\d+)", c, re.IGNORECASE)
+
+                if m_part:
+                    part_num = int(m_part.group(1))
+                    info["role"] = f"CTA Architect (part_{part_num:02d})"
+                    info["stage"] = "1b_cta"
+                    break
+                elif any(k in c.lower() for k in ("direct cta", "cta-direct", "prompt_cta", "director de análisis cognitivo", "cta architect", "c2c_cta_architect")):
                     info["role"] = "Direct CTA Architect"
                     info["stage"] = "1b_cta"
-                elif "shard_01" in c or "Shard Author shard_01" in c:
-                    info["role"] = "Shard Author shard_01"
+                    break
+                elif m_shard:
+                    shard_num = int(m_shard.group(1))
+                    info["role"] = f"Author Shard {shard_num:02d}"
                     info["stage"] = "3_authoring"
-                elif "shard_02" in c or "Shard Author shard_02" in c:
-                    info["role"] = "Shard Author shard_02"
-                    info["stage"] = "3_authoring"
-                elif "shard_03" in c or "Shard Author shard_03" in c:
-                    info["role"] = "Shard Author shard_03"
-                    info["stage"] = "3_authoring"
-                elif "Judge 01" in c or "judge_batch_01" in c:
-                    info["role"] = "Blind Judge 01"
+                    break
+                elif m_judge:
+                    judge_num = int(m_judge.group(1))
+                    info["role"] = f"Judge {judge_num:02d}"
                     info["stage"] = "5_judges"
-                elif "Judge 02" in c or "judge_batch_02" in c:
-                    info["role"] = "Blind Judge 02"
-                    info["stage"] = "5_judges"
+                    break
 
         return subagents
 
@@ -489,63 +554,52 @@ class ForensicsEngine:
         categories: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
         for agent_name, steps in all_steps.items():
+            last_thinking = ""
             for s in steps:
                 stype = s.get("type")
                 status = s.get("status")
                 content = s.get("content", "")
                 s_idx = s.get("step_index", 0)
 
+                if stype == "PLANNER_RESPONSE":
+                    last_thinking = s.get("thinking", "") or ""
+
                 if stype == "ERROR_MESSAGE":
                     categories["Token Limit Cutoff (Model Truncation)"].append({
                         "agent": agent_name,
                         "step_index": s_idx,
                         "snippet": content[:120].strip(),
+                        "thinking": last_thinking[:180].strip(),
                     })
                 elif stype in ("GENERIC", "TOOL_RESPONSE") and (status == "ERROR" or "exited with code 1" in content):
+                    error_entry = {
+                        "agent": agent_name,
+                        "step_index": s_idx,
+                        "snippet": content[:120].strip(),
+                        "thinking": last_thinking[:180].strip(),
+                    }
                     if "Unsubstituted template variable" in content or "Unreplaced template variable" in content:
-                        categories["Unsubstituted Template Variables ({var})"].append({
-                            "agent": agent_name, "step_index": s_idx, "snippet": content[:120].strip()
-                        })
+                        categories["Unsubstituted Template Variables ({var})"].append(error_entry)
                     elif "Residual double curly braces" in content or "double curly" in content.lower():
-                        categories["KaTeX Double Curly Braces ({{ / }})"].append({
-                            "agent": agent_name, "step_index": s_idx, "snippet": content[:120].strip()
-                        })
+                        categories["KaTeX Double Curly Braces ({{ / }})"].append(error_entry)
                     elif "math delimiter" in content.lower() or "katex" in content.lower():
-                        categories["Unbalanced Math Delimiters ($)"].append({
-                            "agent": agent_name, "step_index": s_idx, "snippet": content[:120].strip()
-                        })
+                        categories["Unbalanced Math Delimiters ($)"].append(error_entry)
                     elif "TPL-VAR" in content or "diversity quota" in content.lower():
-                        categories["Parameter Diversity Violation (TPL-VAR)"].append({
-                            "agent": agent_name, "step_index": s_idx, "snippet": content[:120].strip()
-                        })
+                        categories["Parameter Diversity Violation (TPL-VAR)"].append(error_entry)
                     elif "cross_check verification returned False" in content or "cross_check" in content.lower():
-                        categories["Cross-check Verification False"].append({
-                            "agent": agent_name, "step_index": s_idx, "snippet": content[:120].strip()
-                        })
+                        categories["Cross-check Verification False"].append(error_entry)
                     elif "Could not successfully apply any edits" in content:
-                        categories["replace_file_content Mismatch"].append({
-                            "agent": agent_name, "step_index": s_idx, "snippet": content[:120].strip()
-                        })
+                        categories["replace_file_content Mismatch"].append(error_entry)
                     elif "El término" in content or "CommandNotFoundException" in content:
-                        categories["PowerShell Command / Path Not Found"].append({
-                            "agent": agent_name, "step_index": s_idx, "snippet": content[:120].strip()
-                        })
+                        categories["PowerShell Command / Path Not Found"].append(error_entry)
                     elif "ModuleNotFoundError" in content:
-                        categories["Python Environment / Virtualenv Discrepancy"].append({
-                            "agent": agent_name, "step_index": s_idx, "snippet": content[:120].strip()
-                        })
+                        categories["Python Environment / Virtualenv Discrepancy"].append(error_entry)
                     elif "Length anti-giveaway" in content or "leaks the correct answer" in content:
-                        categories["Anti-Giveaway & Parity Violations (R-18/R-19)"].append({
-                            "agent": agent_name, "step_index": s_idx, "snippet": content[:120].strip()
-                        })
+                        categories["Anti-Giveaway & Parity Violations (R-18/R-19)"].append(error_entry)
                     elif "Template schema violation" in content:
-                        categories["Template Schema Violation"].append({
-                            "agent": agent_name, "step_index": s_idx, "snippet": content[:120].strip()
-                        })
+                        categories["Template Schema Violation"].append(error_entry)
                     else:
-                        categories["Other Console / Tool Failures"].append({
-                            "agent": agent_name, "step_index": s_idx, "snippet": content[:120].strip()
-                        })
+                        categories["Other Console / Tool Failures"].append(error_entry)
 
         return dict(categories)
 
@@ -565,6 +619,7 @@ class DeepDiveReportBuilder:
         judges_data: Dict[str, Any],
         error_taxonomy: Dict[str, List[Dict[str, Any]]],
         global_timings: Dict[str, Any],
+        thinking_traces_summary: Optional[Dict[str, Any]] = None,
     ) -> str:
         lines: List[str] = []
 
@@ -593,8 +648,13 @@ class DeepDiveReportBuilder:
         lines.append(f"DISTRIBUCIÓN DEL TIEMPO DE PARED POR SUBAGENTE (INFERENCIA LLM vs TOOLS)")
         lines.append(f"========================================================================================")
         if cta_data:
-            t = cta_data.get("timings", {})
-            lines.append(f"Direct CTA Architect   : {t.get('inference_seconds', 0.0):6.0f}s ({t.get('inference_pct', 0.0)}%) LLM | {t.get('tool_seconds', 0.0):4.0f}s Tools")
+            if "timings" in cta_data:
+                t = cta_data.get("timings", {})
+                lines.append(f"Direct CTA Architect   : {t.get('inference_seconds', 0.0):6.0f}s ({t.get('inference_pct', 0.0)}%) LLM | {t.get('tool_seconds', 0.0):4.0f}s Tools")
+            else:
+                for cname, cinfo in cta_data.items():
+                    t = cinfo.get("timings", {})
+                    lines.append(f"{cname:23s}: {t.get('inference_seconds', 0.0):6.0f}s ({t.get('inference_pct', 0.0)}%) LLM | {t.get('tool_seconds', 0.0):4.0f}s Tools")
         for sname, sinfo in shards_data.items():
             t = sinfo.get("timings", {})
             lines.append(f"{sname:23s}: {t.get('inference_seconds', 0.0):6.0f}s ({t.get('inference_pct', 0.0)}%) LLM | {t.get('tool_seconds', 0.0):4.0f}s Tools")
@@ -606,14 +666,17 @@ class DeepDiveReportBuilder:
         lines.append(f"")
         lines.append(f"---")
         lines.append(f"")
-        lines.append(f"## 2. Análisis Forense: Direct CTA Architect (Stage 1B)")
+        lines.append(f"## 2. Análisis Forense: CTA Architects (Stage 1)")
         if cta_data:
-            t = cta_data.get("timings", {})
-            lines.append(f"- **Duración Total:** **`{t.get('wall_time_minutes', 0.0)} min`** ({t.get('wall_time_seconds', 0.0)} s) en **`{t.get('turns_count', 0)} turnos`**.")
-            lines.append(f"- **Tokens:** {t.get('input_tokens', 0):,} In | {t.get('output_tokens', 0):,} Out | {t.get('cache_tokens', 0):,} Cache.")
-            if cta_data.get("cutoff_detected"):
-                lines.append(f"- 🛑 **Incidente Crítico Detectado:** Truncamiento por límite de tokens (`Output token limit exceeded`) en el **Paso {cta_data.get('cutoff_step')}**.")
-                lines.append(f"- 💡 **Pivote Adaptativo:** En el **Paso {cta_data.get('pivot_step')}**, el arquitecto pasó a generar el script `{cta_data.get('pivot_script')}` para consolidar el CTA sin saturar el contexto.")
+            cta_items = [("Direct CTA Architect", cta_data)] if "timings" in cta_data else list(cta_data.items())
+            for idx, (cname, cinfo) in enumerate(cta_items, 1):
+                t = cinfo.get("timings", {})
+                lines.append(f"### 2.{idx}. {cname}")
+                lines.append(f"- **Duración Total:** **`{t.get('wall_time_minutes', 0.0)} min`** ({t.get('wall_time_seconds', 0.0)} s) en **`{t.get('turns_count', 0)} turnos`**.")
+                lines.append(f"- **Tokens:** {t.get('input_tokens', 0):,} In | {t.get('output_tokens', 0):,} Out | {t.get('cache_tokens', 0):,} Cache.")
+                if cinfo.get("cutoff_detected"):
+                    lines.append(f"- 🛑 **Incidente Crítico Detectado:** Truncamiento por límite de tokens (`Output token limit exceeded`) en el **Paso {cinfo.get('cutoff_step')}**.")
+                    lines.append(f"- 💡 **Pivote Adaptativo:** En el **Paso {cinfo.get('pivot_step')}**, el arquitecto pasó a generar el script `{cinfo.get('pivot_script')}` para consolidar el CTA sin saturar el contexto.")
         lines.append(f"")
         lines.append(f"---")
         lines.append(f"")
@@ -642,12 +705,28 @@ class DeepDiveReportBuilder:
         lines.append(f"")
         lines.append(f"## 5. Taxonomía Consolidada de Errores ({global_timings.get('total_errors', 0)} Registrados)")
         lines.append(f"")
-        lines.append(f"| Categoría de Error | Ocurrencias | Ejemplo de Incidencia |")
-        lines.append(f"| :--- | :---: | :--- |")
+        lines.append(f"| Categoría de Error | Ocurrencias | Ejemplo de Incidencia | Razonamiento Previo (Thinking) |")
+        lines.append(f"| :--- | :---: | :--- | :--- |")
         for cat, items in sorted(error_taxonomy.items(), key=lambda x: len(x[1]), reverse=True):
             ex = items[0]
-            lines.append(f"| **{cat}** | **{len(items)}** | `{ex.get('agent')}` (Paso {ex.get('step_index')}): {ex.get('snippet')[:70]}... |")
+            th_snippet = f"`{ex.get('thinking', '')[:80]}...`" if ex.get("thinking") else "*Sin thinking capturado*"
+            lines.append(f"| **{cat}** | **{len(items)}** | `{ex.get('agent')}` (Paso {ex.get('step_index')}): {ex.get('snippet')[:70]}... | {th_snippet} |")
         lines.append(f"")
+
+        if thinking_traces_summary and thinking_traces_summary.get("agents"):
+            lines.append(f"---")
+            lines.append(f"")
+            lines.append(f"## 6. Telemetría de Razonamiento Cognitivo (Thinking Traces)")
+            lines.append(f"- **Total de Turnos con Razonamiento:** `{thinking_traces_summary.get('total_thinking_turns', 0)} turnos`")
+            lines.append(f"- **Volumen Total de Razonamiento:** `{thinking_traces_summary.get('total_thinking_chars', 0):,} caracteres`")
+            lines.append(f"")
+            lines.append(f"| Agente | Turnos con Thinking | Volumen (Caracteres) | Muestra de Razonamiento Previo |")
+            lines.append(f"| :--- | :---: | :---: | :--- |")
+            for ag_name, ag_info in sorted(thinking_traces_summary.get("agents", {}).items()):
+                sample_tr = ag_info.get("traces", [{}])[0].get("thinking_snippet", "")
+                lines.append(f"| **{ag_name}** | {ag_info.get('thinking_turns_count', 0)} | {ag_info.get('total_thinking_chars', 0):,} | `{sample_tr[:80]}...` |")
+            lines.append(f"")
+
         lines.append(f"---")
         lines.append(f"*Informe generado automáticamente por `traceback_analyzer.py`.*")
 
@@ -678,7 +757,7 @@ def run_traceback_audit(conversation_id_or_link: str, output_dir: Optional[Path]
     all_agent_steps: Dict[str, List[Dict[str, Any]]] = {"Orchestrator": root_steps}
     all_agent_turns: Dict[str, List[Dict[str, Any]]] = {"Orchestrator": root_turns}
 
-    cta_agent_id = None
+    cta_map: Dict[str, Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]] = {}
     shards_map: Dict[str, Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]] = {}
     judges_map: Dict[str, Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]] = {}
 
@@ -692,31 +771,60 @@ def run_traceback_audit(conversation_id_or_link: str, output_dir: Optional[Path]
         all_agent_steps[role] = s_steps
         all_agent_turns[role] = s_turns
 
-        if "CTA" in role:
-            cta_agent_id = cid
-        elif "Shard" in role:
+        role_l = role.lower()
+        if "cta" in role_l or "part_" in role_l or "architect" in role_l or "harmonizer" in role_l:
+            cta_map[role] = (s_steps, s_turns)
+        elif "shard" in role_l or "author" in role_l:
             shards_map[role] = (s_steps, s_turns)
-        elif "Judge" in role:
+        elif "judge" in role_l:
             judges_map[role] = (s_steps, s_turns)
 
-    # 3. Analyze CTA Architect
+    # 3. Analyze CTA Architects (dynamic M instances)
     cta_data = {}
-    if cta_agent_id:
-        c_steps = all_agent_steps.get("Direct CTA Architect", [])
-        c_turns = all_agent_turns.get("Direct CTA Architect", [])
+    if len(cta_map) == 1:
+        c_role, (c_steps, c_turns) = next(iter(cta_map.items()))
         cta_data = ForensicsEngine.audit_cta_architect(c_steps, c_turns)
+    elif len(cta_map) > 1:
+        for c_role, (c_steps, c_turns) in sorted(cta_map.items()):
+            cta_data[c_role] = ForensicsEngine.audit_cta_architect(c_steps, c_turns)
 
-    # 4. Analyze Shard Authors
+    # 4. Analyze Shard Authors (dynamic N instances)
     shards_data = {}
     for sname, (s_steps, s_turns) in sorted(shards_map.items()):
         shards_data[sname] = ForensicsEngine.audit_shard_author(sname, s_steps, s_turns)
 
-    # 5. Analyze Blind Judges
+    # 5. Analyze Blind Judges (dynamic K instances)
     judges_data = ForensicsEngine.audit_blind_judges(judges_map)
 
     # 6. Global Error Taxonomy
     taxonomy = ForensicsEngine.classify_error_taxonomy(all_agent_steps)
     total_errors = sum(len(items) for items in taxonomy.values())
+
+    # 6b. Extract Thinking Traces across all agents
+    thinking_traces_summary: Dict[str, Any] = {
+        "total_thinking_turns": 0,
+        "total_thinking_chars": 0,
+        "agents": {},
+    }
+    for agent_name, turns in all_agent_turns.items():
+        agent_traces = []
+        for t in turns:
+            th = t.get("thinking", "")
+            if th:
+                agent_traces.append({
+                    "step_index": t.get("step_index"),
+                    "created_at": t.get("created_at"),
+                    "thinking_chars": len(th),
+                    "thinking_snippet": th[:240].strip(),
+                })
+        if agent_traces:
+            thinking_traces_summary["agents"][agent_name] = {
+                "thinking_turns_count": len(agent_traces),
+                "total_thinking_chars": sum(tr["thinking_chars"] for tr in agent_traces),
+                "traces": agent_traces[:15],
+            }
+            thinking_traces_summary["total_thinking_turns"] += len(agent_traces)
+            thinking_traces_summary["total_thinking_chars"] += sum(tr["thinking_chars"] for tr in agent_traces)
 
     # 7. Global Timings
     orch_timings = ForensicsEngine.compute_agent_timings(root_steps, root_turns)
@@ -741,6 +849,7 @@ def run_traceback_audit(conversation_id_or_link: str, output_dir: Optional[Path]
         judges_data=judges_data,
         error_taxonomy=taxonomy,
         global_timings=global_timings,
+        thinking_traces_summary=thinking_traces_summary,
     )
 
     out_file = output_dir / f"traceback_deepdive_{conv_id[:8]}.md"
@@ -750,6 +859,7 @@ def run_traceback_audit(conversation_id_or_link: str, output_dir: Optional[Path]
     dataset = {
         "conversation_id": conv_id,
         "global_timings": global_timings,
+        "thinking_traces": thinking_traces_summary,
         "cta_architect": cta_data,
         "shards": shards_data,
         "judges": judges_data,

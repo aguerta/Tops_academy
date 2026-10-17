@@ -147,6 +147,26 @@ class TestCTAMergeMapReduce:
         }
         (parts_dir / "cta_part_02.json").write_text(json.dumps(part2, indent=2), encoding="utf-8")
 
+        # 1. Verify strict BLOCKER when pre_cta_manifest.json is missing
+        with pytest.raises(FileNotFoundError, match="BLOCKER:: No existe pre_cta_manifest.json"):
+            merge_cta_parts(work_dir)
+
+        # 2. Seed authoritative pre_cta_manifest.json
+        manifest_payload = {
+            "course_id": "stats_101",
+            "cta_mode": "mapreduce",
+            "total_files": 1,
+            "total_pages": 12,
+            "files": [
+                {"file_index": 0, "doc": "lec01.pdf", "doc_slug": "lec01", "type": "pdf", "total_pages": 12, "valid_page_range": [1, 12]},
+            ],
+            "subparts": [
+                {"subpart_id": "part_01", "subpart_index": 0, "doc": "lec01.pdf", "file_index": 0},
+                {"subpart_id": "part_02", "subpart_index": 1, "doc": "lec01.pdf", "file_index": 0},
+            ],
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest_payload, indent=2), encoding="utf-8")
+
         # Run merge
         draft = merge_cta_parts(work_dir)
 
@@ -249,6 +269,25 @@ class TestCTAHarmonizer:
         (work_dir / "cta_draft.json").write_text(json.dumps(draft_data, indent=2), encoding="utf-8")
         (work_dir / "cta_order.json").write_text(json.dumps(order_data, indent=2), encoding="utf-8")
         (work_dir / "duplicate_candidates.json").write_text(json.dumps(candidates_data, indent=2), encoding="utf-8")
+        (work_dir / "pre_cta_manifest.json").write_text(
+            json.dumps(
+                {
+                    "course_id": "test_course",
+                    "cta_mode": "mapreduce",
+                    "files": [
+                        {
+                            "file_index": 0,
+                            "doc": "lec01.pdf",
+                            "total_pages": 10,
+                            "valid_page_range": [1, 10],
+                        }
+                    ],
+                    "subparts": [],
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
 
         return work_dir
 
@@ -424,8 +463,29 @@ class TestMarkdownRenderingAndSectionalCheck:
         part_file.write_text(json.dumps(part_data, indent=2), encoding="utf-8")
 
         check_script = Path(__file__).parent.parent / ".agents" / "skills" / "content-to-course" / "check_cta.py"
-        res = subprocess.run(
+
+        # 3.1 Without manifest: must exit with code 2 and BLOCKER message
+        res_no_manifest = subprocess.run(
             [sys.executable, str(check_script), str(part_file), "--part"],
+            capture_output=True,
+            text=True,
+        )
+        assert res_no_manifest.returncode == 2
+        assert "BLOCKER:: No existe pre_cta_manifest.json" in res_no_manifest.stderr
+
+        # 3.2 With pre_cta_manifest: must pass
+        manifest_payload = {
+            "course_id": "test_cli",
+            "cta_mode": "mapreduce",
+            "total_files": 1,
+            "total_pages": 10,
+            "files": [{"file_index": 0, "doc": "lec01.pdf", "doc_slug": "lec01", "type": "pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+            "subparts": [{"subpart_id": "part_01", "subpart_index": 0, "doc": "lec01.pdf", "file_index": 0}],
+        }
+        (tmp_path / "pre_cta_manifest.json").write_text(json.dumps(manifest_payload, indent=2), encoding="utf-8")
+
+        res = subprocess.run(
+            [sys.executable, str(check_script), str(part_file), "--part", "--manifest", str(tmp_path / "pre_cta_manifest.json")],
             capture_output=True,
             text=True,
         )
@@ -561,7 +621,27 @@ class TestMarkdownRenderingAndSectionalCheck:
 
         merge_script = Path(__file__).parent.parent / ".agents" / "skills" / "content-to-course" / "cta_merge.py"
 
-        # 1. Run merge CLI
+        # 1.1 Without manifest: must exit with code 2 and BLOCKER message
+        res_merge_no_manifest = subprocess.run(
+            [sys.executable, str(merge_script), "merge", "--work-dir", str(work_dir)],
+            capture_output=True,
+            text=True,
+        )
+        assert res_merge_no_manifest.returncode == 2
+        assert "BLOCKER:: No existe pre_cta_manifest.json" in res_merge_no_manifest.stderr
+
+        # 1.2 Seed pre_cta_manifest.json
+        manifest_payload = {
+            "course_id": "cli_course",
+            "cta_mode": "mapreduce",
+            "total_files": 1,
+            "total_pages": 10,
+            "files": [{"file_index": 0, "doc": "lec01.pdf", "doc_slug": "lec01", "type": "pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+            "subparts": [{"subpart_id": "part_01", "subpart_index": 0, "doc": "lec01.pdf", "file_index": 0}],
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest_payload, indent=2), encoding="utf-8")
+
+        # 1.3 Run merge CLI
         res_merge = subprocess.run(
             [sys.executable, str(merge_script), "merge", "--work-dir", str(work_dir)],
             capture_output=True,
@@ -584,3 +664,22 @@ class TestMarkdownRenderingAndSectionalCheck:
         assert "SUCCESS: Harmonization applied" in res_apply.stdout
         assert (work_dir / "cta.json").exists()
         assert (work_dir / "cta.md").exists()
+
+    def test_compile_cta_rejects_dict_in_competencies_and_distractors(self):
+        """compile_cta must raise TypeError if a dict is passed in COMPETENCIES or in distractors."""
+        import compile_cta
+
+        # Case 1: dict in COMPETENCIES
+        dict_comp = [{"id": "C-01", "name": "Concept"}]
+        with pytest.raises(TypeError, match="diccionario"):
+            compile_cta.compile_tuples_to_cta_dict(dict_comp)
+
+        # Case 2: dict in distractors of a valid competency tuple
+        comp_with_dict_distractor = [
+            (
+                "concept", "C-01", "Concept Name", "Desc", "Understand", "doc.pdf", 1, [],
+                [{"id": "D-01", "name": "Distractor Dict"}]
+            )
+        ]
+        with pytest.raises(TypeError, match="diccionario"):
+            compile_cta.compile_tuples_to_cta_dict(comp_with_dict_distractor)

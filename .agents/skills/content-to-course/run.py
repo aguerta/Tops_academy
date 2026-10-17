@@ -40,28 +40,32 @@ skill_dir = Path(__file__).parent.resolve()
 if str(skill_dir) not in sys.path:
     sys.path.insert(0, str(skill_dir))
 
-from check_cta import validate_cta_rules
-from check_pages import check_pages
+try:
+    from check_cta import check_cta_file, validate_cta_rules
+except ImportError:
+    from check_cta import validate_cta_rules
+    check_cta_file = validate_cta_rules
+
+try:
+    from compile_cta import compile_cta_file
+except ImportError:
+    try:
+        from compile_cta import compile_cta as compile_cta_file
+    except ImportError:
+        compile_cta_file = None
 from check_templates import check_templates_file_or_dir
 from course_publisher import CoursePublisher
-from cta_merge import apply_harmonize, merge_cta_parts, stitch_cta_parts
+from cta_merge import apply_harmonize, merge_cta_parts
 from dispatch import build_dispatch, get_type_definitions, scope_check, snapshot_work_dir
 from engine.assemble import check_course_giveaway_distribution
 from engine.diversity import evaluate_competency_diversity
 from engine.instantiate import instantiate_competency
 from engine.invariants import check_instance_invariants
-from ingest import (
-    choose_cta_mode,
-    generate_section_slices,
-    partition_handouts,
-    prepare_corpus,
-    resolve_document_order,
-    run_ingest,
-    stitch_patches_to_corpus,
-)
+from ingest import ingest_course
 from judge import compare_judge_responses, generate_judge_batch
 from plan_shards import plan_shards
 from repair_loop import RepairLoop
+from telemetry_collector import record_stage_telemetry
 from validator.core import validate_course_content
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -98,11 +102,8 @@ STAGE_MAP = {
     "6": 6, "publish": 6,
 }
 AUXILIARY_STAGES = {
-    "stitch": "run_stage_stitch",
-    "sections": "run_stage_sections",
     "cta-merge": "run_stage_cta_merge",
     "cta-apply": "run_stage_cta_apply",
-    "cta-stitch": "run_stage_cta_stitch",
     "dispatch": "run_stage_dispatch",
     "scope-check": "run_stage_scope_check",
     "define-types": "run_stage_define_types",
@@ -234,20 +235,19 @@ class PipelineRunner:
             sources.append(p)
 
         input_target = sources[0] if len(sources) == 1 else sources[0].parent
-        prep_res = prepare_corpus(
+        prep_res = ingest_course(
             input_target,
             self.work_dir,
-            vision=self.vision,
-            legacy_transcribe=self.legacy_transcribe,
-            order_override=self.order,
+            course_id=self.course_id,
             cta_mode=self.cta_mode,
-            granularity=self.granularity,
-            no_handouts=self.no_handouts,
+            order_override=self.order,
         )
 
-        manifest_file = self.work_dir / "pages" / "manifest.json"
-        if not manifest_file.is_file():
-            raise RuntimeError(f"Prepare failed: manifest.json was not created at {manifest_file}")
+        # Ensure work/pre_cta_manifest.json exists (zero fallbacks)
+        pre_cta_file = self.work_dir / "pre_cta_manifest.json"
+        if not pre_cta_file.is_file():
+            print("[BLOCKER] BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
+            sys.exit(2)
 
         # Pre-seed immutable compile_cta.py compiler in canonical work_dir
         compile_src = skill_dir / "compile_cta.py"
@@ -255,11 +255,10 @@ class PipelineRunner:
             import shutil
             shutil.copy2(compile_src, self.work_dir / "compile_cta.py")
 
-        b = prep_res["budget"]
-        print(f"  [+] Manifest generated with {prep_res['manifest'].get('total_items', 0)} items.")
-        print(f"  [+] Document types: {prep_res['manifest'].get('by_kind', {})}")
-        print(f"  [+] Corpus file: {prep_res['corpus_path']}")
-        print(f"  [+] Estimated tokens: {b['total_estimated_tokens']} | Needs vision: {b['pages_requiring_vision']} ({b['vision_strategy']})")
+        total_items = prep_res.get("total_pages", prep_res.get("manifest", {}).get("total_items", prep_res.get("total_files", 0)))
+        print(f"  [+] Ingest completed with {total_items} items.")
+        print(f"  [+] Manifest generated at: {pre_cta_file.resolve()}")
+        print(f"  [+] Corpus file: {prep_res.get('corpus_path', self.work_dir / 'corpus.md')}")
 
         # Display resolved document order if order.json exists
         order_file = self.work_dir / "order.json"
@@ -271,34 +270,14 @@ class PipelineRunner:
             except Exception:
                 pass
 
-        # Handouts & CTA mode summary
-        cta_m = prep_res.get("cta_mode", "direct")
-        handouts_info = prep_res.get("handouts", {})
-        total_h = handouts_info.get("total_handouts", 0)
-        rec_agents = handouts_info.get("agents_recommended", 1)
-        print(f"  [+] CTA Mode (definido por el usuario): {cta_m.upper()} | Handouts generados: {total_h} (recomendados {rec_agents} agentes de visión)")
-
-        if total_h > 0 and not self.no_handouts and self.vision != "none":
-            print(f"  [+] Contenido visual detectado: {total_h} handouts ({b.get('pages_requiring_vision', 0)} páginas requieren visión).")
-            print(f"  [+] FASE 1A OBLIGATORIA (Preprocesamiento de Visión):")
-            print(f"      1. python .agents/skills/content-to-course/run.py --stage dispatch --role vision --work-dir \"{self.work_dir}\"")
-            print(f"      2. (Al recibir DONE) python .agents/skills/content-to-course/run.py --stage stitch --work-dir \"{self.work_dir}\"")
-            print(f"  [+] FASE 1B POSTERIOR (Síntesis CTA en modo {cta_m.upper()}):")
-            if cta_m == "direct":
-                print(f"      3. python .agents/skills/content-to-course/run.py --stage dispatch --role cta-direct --work-dir \"{self.work_dir}\"")
-            else:
-                print(f"      3. python .agents/skills/content-to-course/run.py --stage sections --work-dir \"{self.work_dir}\"")
-        else:
-            print(f"  [+] Ingesta Directa de PDF habilitada (0 handouts generados).")
-            print(f"  [+] Documentos PDF y corpus de texto disponibles directamente; no se requiere preprocesamiento de imágenes.")
-            print(f"  [+] FASE 1 (Síntesis CTA en modo {cta_m.upper()}):")
-            if cta_m == "direct":
-                print(f"      1. python .agents/skills/content-to-course/run.py --stage dispatch --role cta-direct --work-dir \"{self.work_dir}\"")
-            else:
-                print(f"      1. python .agents/skills/content-to-course/run.py --stage sections --work-dir \"{self.work_dir}\"")
+        cta_m = prep_res.get("cta_mode", self.cta_mode)
+        print(f"  [+] CTA Mode: {str(cta_m).upper()}")
+        print(f"  [+] FASE 1 (Síntesis CTA en modo {str(cta_m).upper()}):")
+        print(f"      python .agents/skills/content-to-course/run.py --stage dispatch --role cta-direct --work-dir \"{self.work_dir}\"")
 
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "prepare", elapsed)
+        record_stage_telemetry(self.work_dir, "00", "prepare", status="completed", metadata={"duration_seconds": elapsed})
         print("  [+] Stage 0 (prepare) completed successfully.")
         return prep_res
 
@@ -314,6 +293,12 @@ class PipelineRunner:
         print("[STAGE 1: CTA] Cognitive Task Analysis validation (cta.json)")
         print("=" * 70)
 
+        # 1. Verifica primero que exista work/pre_cta_manifest.json
+        pre_cta_file = self.work_dir / "pre_cta_manifest.json"
+        if not pre_cta_file.is_file():
+            print("[BLOCKER] BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
+            sys.exit(2)
+
         # Advisory scope check on CTA subagent
         try:
             role = "cta-map" if (self.work_dir / "sections").is_dir() else "cta-direct"
@@ -323,7 +308,72 @@ class PipelineRunner:
         except Exception:
             pass
 
+        # 2. Si existe work/cta_data.py y cta.json no existe o cta_data.py es más reciente, compilar
+        cta_data_file = self.work_dir / "cta_data.py"
         cta_file = self.work_dir / "cta.json"
+        if cta_data_file.is_file():
+            needs_compile = not cta_file.is_file() or (cta_data_file.stat().st_mtime > cta_file.stat().st_mtime)
+            if needs_compile:
+                if compile_cta_file:
+                    print(f"  [*] Compiling cta_data.py -> cta.json using compile_cta...")
+                    ok, _, errs, _ = compile_cta_file(cta_data_file, output_dir=self.work_dir)
+                    if not ok:
+                        print("\n[ERROR] cta_data.py compilation failed:", file=sys.stderr)
+                        for err in errs:
+                            print(f"  - {err}", file=sys.stderr)
+                        raise ValueError("cta_data.py compilation failed.")
+                else:
+                    compile_script = self.work_dir / "compile_cta.py"
+                    if not compile_script.is_file():
+                        compile_script = skill_dir / "compile_cta.py"
+                    if compile_script.is_file():
+                        import subprocess
+                        subprocess.run([sys.executable, str(compile_script), str(cta_data_file)], check=False)
+
+        # 2b. Compilar partes en modo mapreduce si existen archivos part_XX_data.py pendientes
+        cta_parts_dir = self.work_dir / "cta_parts"
+        if cta_parts_dir.is_dir():
+            compile_script = self.work_dir / "compile_cta.py"
+            if not compile_script.is_file():
+                compile_script = skill_dir / "compile_cta.py"
+            for part_data_p in sorted(cta_parts_dir.glob("part_*_data.py")):
+                part_stem = re.sub(r"_data$", "", part_data_p.stem)
+                part_json_p = cta_parts_dir / f"{part_stem}.json"
+                needs_compile = not part_json_p.is_file() or (part_data_p.stat().st_mtime > part_json_p.stat().st_mtime)
+                if needs_compile:
+                    print(f"  [*] Compiling {part_data_p.name} -> {part_json_p.name} using compile_cta.py --work {self.work_dir} --part {part_stem}...")
+                    if compile_script.is_file():
+                        import subprocess
+                        res = subprocess.run(
+                            [sys.executable, str(compile_script), "--work", str(self.work_dir), "--part", part_stem],
+                            capture_output=True,
+                            text=True,
+                        )
+                        if res.returncode != 0:
+                            print(f"\n[ERROR] {part_data_p.name} compilation failed:\n{res.stderr or res.stdout}", file=sys.stderr)
+                            raise ValueError(f"{part_data_p.name} compilation failed with exit code {res.returncode}.")
+                        else:
+                            print(f"  [+] {part_data_p.name} compiled successfully.")
+                    elif compile_cta_file:
+                        ok, _, errs, _ = compile_cta_file(
+                            cta_data_path=part_data_p,
+                            output_dir=cta_parts_dir,
+                            manifest_path=pre_cta_file,
+                            output_json_name=f"{part_stem}.json",
+                        )
+                        if not ok:
+                            print(f"\n[ERROR] {part_data_p.name} compilation failed:", file=sys.stderr)
+                            for err in errs:
+                                print(f"  - {err}", file=sys.stderr)
+                            raise ValueError(f"{part_data_p.name} compilation failed.")
+
+            compiled_parts = sorted(cta_parts_dir.glob("part_*.json"))
+            if compiled_parts:
+                latest_part_mtime = max(p.stat().st_mtime for p in compiled_parts)
+                if not cta_file.is_file() or latest_part_mtime > cta_file.stat().st_mtime:
+                    print("  [*] Merging compiled CTA parts into cta.json...")
+                    merge_cta_parts(self.work_dir)
+
         if not cta_file.is_file():
             raise FileNotFoundError(
                 f"Missing required artifact: {cta_file.resolve()}\n"
@@ -332,13 +382,7 @@ class PipelineRunner:
                 f"No silent fallback to hardcoded templates is permitted."
             )
 
-        manifest_file = self.work_dir / "pages" / "manifest.json"
-        manifest_data = None
-        if manifest_file.is_file():
-            try:
-                manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-            except Exception:
-                pass
+        manifest_data = json.loads(pre_cta_file.read_text(encoding="utf-8"))
 
         cta_data = json.loads(cta_file.read_text(encoding="utf-8"))
 
@@ -357,7 +401,7 @@ class PipelineRunner:
                 logger.warning("Could not auto-sanitize cta.json math: %s", e)
 
         # Validate CTA schema and rules CTA-D1, CTA-D2
-        is_valid, errors = validate_cta_rules(cta_data, manifest_data=manifest_data, file_path=cta_file)
+        is_valid, errors = check_cta_file(cta_data, manifest_data=manifest_data, file_path=cta_file) if check_cta_file else validate_cta_rules(cta_data, manifest_data=manifest_data, file_path=cta_file)
         if not is_valid:
             print("\n[ERROR] cta.json failed validation:", file=sys.stderr)
             for err in errors:
@@ -377,6 +421,7 @@ class PipelineRunner:
 
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "cta", elapsed)
+        record_stage_telemetry(self.work_dir, "01", "cta", status="completed", metadata={"duration_seconds": elapsed, "competencies": len(comps)})
 
         if self.review_cta:
             print("\n" + "*" * 70)
@@ -399,11 +444,17 @@ class PipelineRunner:
     # STAGE 2: Shard
     # -------------------------------------------------------------------------
     def run_stage_shard(self) -> Dict[str, Any]:
-        """Stage 2: Shard CTA competencies across author batches (max 2 per shard)."""
+        """Stage 2: Shard CTA competencies across author batches (max 5-6 per shard)."""
         t0 = time.time()
         print("\n" + "=" * 70)
         print("[STAGE 2: SHARD] Partitioning CTA competencies for parallel authoring")
         print("=" * 70)
+
+        # 1. Verifica work/pre_cta_manifest.json (si no existe, BLOCKER:: No existe pre_cta_manifest.json)
+        pre_cta_file = self.work_dir / "pre_cta_manifest.json"
+        if not pre_cta_file.is_file():
+            print("[BLOCKER] BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
+            sys.exit(2)
 
         cta_file = self.work_dir / "cta.json"
         if not cta_file.is_file():
@@ -413,13 +464,21 @@ class PipelineRunner:
             )
 
         shards_dir = self.work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
         res = plan_shards(cta_file, shards_dir, k=self.shards_k)
+
+        # Verificar que exista work/shards/pre_shard_manifest.json (cero fallbacks)
+        pre_shard_file = shards_dir / "pre_shard_manifest.json"
+        if not pre_shard_file.is_file():
+            print("[BLOCKER] BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
+            sys.exit(2)
 
         print(f"  [+] Partitioned {res['total_competencies']} competencies into {res['total_shards']} shards:")
         for s in res["shards"]:
             print(f"      * [{s['shard_id']}] {s['competency_count']} competencies (weight={s['weight']}): {', '.join(s['competency_ids'])}")
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "shard", elapsed)
+        record_stage_telemetry(self.work_dir, "02", "shard", status="completed", metadata={"duration_seconds": elapsed, "shards": res.get("total_shards")})
         print("  [+] Stage 2 (shard) completed successfully.")
         return res
 
@@ -432,6 +491,12 @@ class PipelineRunner:
         print("\n" + "=" * 70)
         print("[STAGE 3: TEMPLATES] Parametric templates sandbox validation")
         print("=" * 70)
+
+        # 1. Verifica primero que exista work/shards/pre_shard_manifest.json
+        pre_shard_file = self.work_dir / "shards" / "pre_shard_manifest.json"
+        if not pre_shard_file.is_file():
+            print("[BLOCKER] BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
+            sys.exit(2)
 
         # Advisory scope check on author subagents
         try:
@@ -449,6 +514,34 @@ class PipelineRunner:
             )
 
         templates_dir = self.work_dir / "templates"
+        templates_dir.mkdir(parents=True, exist_ok=True)
+
+        # 2. Si existen work/shards/shard_XX_data.py y compile_shard.py está disponible, compilar shards pendientes
+        shards_dir = self.work_dir / "shards"
+        shard_data_files = sorted(list(shards_dir.glob("shard_*_data.py")))
+        compile_shard_mod = None
+        try:
+            import compile_shard as cs_mod
+            compile_shard_mod = cs_mod
+        except ImportError:
+            pass
+
+        compile_shard_script = shards_dir / "compile_shard.py"
+        if not compile_shard_script.is_file():
+            compile_shard_script = skill_dir / "compile_shard.py"
+
+        if shard_data_files and (compile_shard_mod or compile_shard_script.is_file()):
+            print(f"  [*] Compiling {len(shard_data_files)} pending shard data files...")
+            for s_data_p in shard_data_files:
+                shard_id = re.sub(r"_data$", "", s_data_p.stem)
+                if compile_shard_mod and hasattr(compile_shard_mod, "compile_shard"):
+                    ok, errs = compile_shard_mod.compile_shard(self.work_dir, shard_id=shard_id, strict=True)
+                    if not ok:
+                        logger.warning("Compilation for %s reported issues: %s", shard_id, errs[:3] if errs else "unknown")
+                elif compile_shard_script.is_file():
+                    import subprocess
+                    subprocess.run([sys.executable, str(compile_shard_script), "--work", str(self.work_dir), "--shard", shard_id, "--strict"], check=False)
+
         if not templates_dir.is_dir() or not list(templates_dir.glob("*.json")):
             raise FileNotFoundError(
                 f"Missing required templates: No .json files found in {templates_dir.resolve()}\n"
@@ -472,6 +565,7 @@ class PipelineRunner:
         print("  [+] AST whitelist, 50-seed dry-run, invariants, and TPL-D1..D4 passed.")
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "templates", elapsed)
+        record_stage_telemetry(self.work_dir, "03", "templates", status="completed", metadata={"duration_seconds": elapsed, "count": len(template_files)})
         print("  [+] Stage 3 (templates) completed successfully.")
         return {"templates_dir": str(templates_dir.resolve()), "count": len(template_files)}
 
@@ -624,6 +718,7 @@ class PipelineRunner:
         course_file.write_text(json.dumps(course_data, indent=2, ensure_ascii=False), encoding="utf-8")
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "build", elapsed)
+        record_stage_telemetry(self.work_dir, "04", "build", status="completed", metadata={"duration_seconds": elapsed, "total_questions": len(all_questions)})
         print(f"  [+] Successfully built course bank with {len(all_questions)} questions: {course_file}")
         print("  [+] Stage 4 (build) completed successfully.")
         return {"course_file": str(course_file.resolve()), "total_questions": len(all_questions)}
@@ -688,6 +783,7 @@ class PipelineRunner:
         verified_file.write_text(json.dumps(course_data, indent=2, ensure_ascii=False), encoding="utf-8")
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "verify", elapsed)
+        record_stage_telemetry(self.work_dir, "05", "verify", status="completed", metadata={"duration_seconds": elapsed, "verified_course_path": str(verified_file.resolve())})
         print(f"  [+] Verified course written to: {verified_file}")
         print("  [+] Stage 5 (verify) completed successfully.")
         return {"verified_course_path": str(verified_file.resolve())}
@@ -759,6 +855,7 @@ class PipelineRunner:
 
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "publish", elapsed)
+        record_stage_telemetry(self.work_dir, "06", "publish", status="completed", metadata={"duration_seconds": elapsed, "published_json": str(pub_result.published_json_path)})
 
         print("\n" + "=" * 70)
         print("[SUCCESS] COURSE PUBLISHED TO PLATFORM!")
@@ -775,69 +872,8 @@ class PipelineRunner:
         return pub_result.to_dict()
 
     # -------------------------------------------------------------------------
-    # AUXILIARY STAGES: Stitch, Sections, CTA Map-Reduce, Dispatch, Scope Check
+    # AUXILIARY STAGES: CTA Map-Reduce, Dispatch, Scope Check, Define Types, Judge Compare
     # -------------------------------------------------------------------------
-    def run_stage_stitch(self) -> Dict[str, Any]:
-        """Auxiliary Stage: Stitch Vision Analyzer handout patches back into corpus.md."""
-        t0 = time.time()
-        print("\n" + "=" * 70)
-        print("[AUX STAGE: STITCH] Stitching handout patches into corpus.md")
-        print("=" * 70)
-
-        # Advisory scope check on vision subagents
-        try:
-            is_clean, violations = scope_check(self.work_dir, "vision", {})
-            if not is_clean:
-                logger.warning("Advisory scope-check for 'vision': %d non-standard files found: %s", len(violations), violations[:5])
-        except Exception:
-            pass
-
-        res = stitch_patches_to_corpus(self.work_dir, partial=self.partial)
-        elapsed = time.time() - t0
-        record_stage_timing(self.work_dir, "stitch", elapsed)
-        print(f"  [+] Patches stitched: {res.get('stitched_patches_count', 0)} / {res.get('total_expected_patches', 0)}")
-        print(f"  [+] Pages updated: {res.get('pages_updated_count', 0)}")
-        print(f"  [+] Corpus file: {res.get('corpus_path')}")
-        pending = res.get("pending_handouts", [])
-        if pending:
-            print(f"  [!] Pending handouts remaining ({len(pending)}): {pending[:5]}")
-        else:
-            cta_m = "direct"
-            budget_file = self.work_dir / "budget.json"
-            if budget_file.is_file():
-                try:
-                    b_data = json.loads(budget_file.read_text(encoding="utf-8"))
-                    cta_m = b_data.get("cta_mode", "direct")
-                except Exception:
-                    pass
-            print(f"  [+] Todos los handouts fueron cosidos exitosamente. Proceder a FASE 1B (Modo CTA: {cta_m.upper()}):")
-            if cta_m == "direct":
-                print(f"      python .agents/skills/content-to-course/run.py --stage dispatch --role cta-direct --work-dir \"{self.work_dir}\"")
-            else:
-                print(f"      python .agents/skills/content-to-course/run.py --stage sections --work-dir \"{self.work_dir}\"")
-        print("  [+] Auxiliary Stage (stitch) completed successfully.")
-        return res
-
-    def run_stage_sections(self) -> Dict[str, Any]:
-        """Auxiliary Stage: Split corpus into M <= 4 balanced sectional slices for CTA Map."""
-        t0 = time.time()
-        print("\n" + "=" * 70)
-        print("[AUX STAGE: SECTIONS] Generating sectional corpus slices for CTA Map")
-        print("=" * 70)
-
-        res = generate_section_slices(self.work_dir, max_sections=4)
-        elapsed = time.time() - t0
-        record_stage_timing(self.work_dir, "sections", elapsed)
-        sections = res.get("sections", [])
-        print(f"  [+] Generated {len(sections)} sections (manifest: {res.get('manifest_path')}):")
-        for s in sections:
-            status = "READY" if s.get("ready") else "PENDING VISION"
-            print(f"      * [{s.get('section_id')}] ({status}) tokens={s.get('estimated_tokens', 0)} | docs={s.get('docs', [])}")
-        ready_count = sum(1 for s in sections if s.get("ready"))
-        print(f"  [+] Ready sections for CTA dispatch: {ready_count}/{len(sections)}")
-        print("  [+] Auxiliary Stage (sections) completed successfully.")
-        return res
-
     def run_stage_cta_merge(self) -> Dict[str, Any]:
         """Auxiliary Stage: Merge sectional CTA parts into draft, outline and candidates."""
         t0 = time.time()
@@ -891,28 +927,12 @@ class PipelineRunner:
         print("  [+] Auxiliary Stage (cta-apply) completed successfully.")
         return res
 
-    def run_stage_cta_stitch(self) -> Dict[str, Any]:
-        """Auxiliary Stage: Deterministically stitch declarative CTA parts into cta.json & cta.md in <200ms."""
-        t0 = time.time()
-        print("\n" + "=" * 70)
-        print("[AUX STAGE: CTA-STITCH] Stitching declarative CTA parts into cta.json & cta.md")
-        print("=" * 70)
-
-        res = stitch_cta_parts(self.work_dir)
-        elapsed = time.time() - t0
-        record_stage_timing(self.work_dir, "cta_stitch", elapsed)
-        print(f"  [+] Stitched {res.get('total_competencies', 0)} competencies across {len(res.get('parts_stitched', []))} part(s) in {res.get('elapsed_seconds', 0)}s.")
-        print(f"  [+] cta.json written to: {res.get('cta_path')}")
-        print(f"  [+] cta.md generated at: {res.get('cta_md_path')}")
-        print("  [+] Auxiliary Stage (cta-stitch) completed successfully.")
-        return res
-
     def run_stage_dispatch(self) -> Dict[str, Any]:
         """Auxiliary Stage: Generate subagent dispatch payload with strict SCOPE-LOCK."""
         if not self.role:
             raise ValueError(
                 "Missing required argument '--role' for stage dispatch. "
-                "Choose from: vision, cta-map, cta-reduce, author, judge, repair, cta-direct, vision-legacy."
+                "Choose from: cta, cta-direct, cta-map, cta-reduce, author, judge, repair."
             )
         t0 = time.time()
         print("\n" + "=" * 70)
@@ -942,6 +962,17 @@ class PipelineRunner:
         print(f"  [+] Generated dispatch payload with {len(subagents)} subagent(s).")
         audit_file = self.work_dir / "dispatch" / f"{self.role}.json"
         print(f"  [+] Audit payload written to: {audit_file.resolve()}")
+
+        # Guardar y listar rutas individuales en work/dispatch/items/<role>_<idx:02d>.json
+        items_dir = self.work_dir / "dispatch" / "items"
+        items_dir.mkdir(parents=True, exist_ok=True)
+        if subagents:
+            print("  [+] Rutas individuales para subagentes (lectura paralela con view_file en 1 turno sin truncamiento):")
+            for idx, sa in enumerate(subagents, 1):
+                item_file = items_dir / f"{self.role}_{idx:02d}.json"
+                item_file.write_text(json.dumps(sa, indent=2, ensure_ascii=False), encoding="utf-8")
+                print(f"      * [{idx:02d}] {item_file.resolve()} -> {sa.get('Role')}")
+
         print("\n" + "-" * 70)
         print(json.dumps(payload, indent=2, ensure_ascii=False))
         print("-" * 70 + "\n")
@@ -953,7 +984,7 @@ class PipelineRunner:
         if not self.role:
             raise ValueError(
                 "Missing required argument '--role' for stage scope-check. "
-                "Choose from: vision, cta-map, cta-reduce, author, judge, repair, cta-direct, vision-legacy."
+                "Choose from: cta, cta-direct, cta-map, cta-reduce, author, judge, repair."
             )
         t0 = time.time()
         print("\n" + "=" * 70)
@@ -982,15 +1013,23 @@ class PipelineRunner:
             (self.work_dir / "subagent_types.json").write_text(types_json, encoding="utf-8")
         (skill_dir / "subagent_types.json").write_text(types_json, encoding="utf-8")
 
+        # Guardar y listar rutas individuales en work/dispatch/types/<type_name>.json
+        types_dir = self.work_dir / "dispatch" / "types"
+        types_dir.mkdir(parents=True, exist_ok=True)
         print("\n" + "=" * 70)
         print("[AUX STAGE: DEFINE-TYPES] Subagent Type Definitions for Orchestrator")
         print("=" * 70)
         print("[!] DIRECTIVA OBLIGATORIA PARA EL DIRECTOR (GOOGLE ANTIGRAVITY):")
-        print("    Invoca la tool 'define_subagent' para los 7 tipos SIMULTÁNEAMENTE en un")
+        print("    Invoca la tool 'define_subagent' para los tipos SIMULTÁNEAMENTE en un")
         print("    ÚNICO turno mediante Parallel Tool Calling (referencia /antigravity-guide).")
         print("    Queda TERMINANTEMENTE PROHIBIDO registrar subagentes secuencialmente uno")
         print("    por uno consumiendo turnos separados. Posteriormente, para abrir y")
         print("    ejecutar subagentes en paralelo, usa la tool específica 'invoke_subagent'.")
+        print("    Rutas individuales (lectura paralela con view_file en 1 turno sin truncamiento):")
+        for t in types_list:
+            t_file = types_dir / f"{t['name']}.json"
+            t_file.write_text(json.dumps(t, indent=2, ensure_ascii=False), encoding="utf-8")
+            print(f"      * {t_file.resolve()} (write={t['enable_write_tools']})")
         print("=" * 70)
         for t in types_list:
             print(f"  * {t['name']}: {t['description']} (write={t['enable_write_tools']})")
@@ -998,7 +1037,7 @@ class PipelineRunner:
         print(types_json)
         print("-" * 70 + "\n")
         print("  [+] Subagent type contracts defined, saved to subagent_types.json, and verified.")
-        print("  [+] ACCIÓN INMEDIATA: Emite las 7 llamadas a 'define_subagent' en paralelo AHORA en este turno.")
+        print("  [+] ACCIÓN INMEDIATA: Emite las llamadas a 'define_subagent' en paralelo AHORA en este turno.")
         return {"types": types_list}
 
     def run_stage_judge_compare(self) -> Dict[str, Any]:
@@ -1010,6 +1049,7 @@ class PipelineRunner:
         res = compare_judge_responses(work_dir=self.work_dir)
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "judge_compare", elapsed)
+        record_stage_telemetry(self.work_dir, "05b", "judge_compare", status="completed", metadata={"duration_seconds": elapsed, "passed": res.get("passed", False)})
         passed = res.get("passed", False)
         print(f"  [+] Judge comparison finished with status: {'PASSED' if passed else 'DISCORDANCES'}")
         print(f"  [+] Agreement rate: {res.get('agreement_rate', 0.0) * 100:.1f}% ({res.get('agreed_items', 0)}/{res.get('total_items', 0)})")
@@ -1088,7 +1128,7 @@ def main() -> None:
     stage_choices = [
         "prepare", "ingest", "cta", "shard", "templates", "build", "verify", "publish",
         "0", "1", "2", "3", "4", "5", "6",
-        "stitch", "sections", "cta-merge", "cta-apply", "cta-stitch", "dispatch", "scope-check",
+        "cta-merge", "cta-apply", "dispatch", "scope-check",
         "define-types", "judge-compare",
     ]
     parser.add_argument(
@@ -1147,18 +1187,6 @@ def main() -> None:
         help="Base random seed for reproducible question generation.",
     )
     parser.add_argument(
-        "--vision",
-        choices=["auto", "all", "none"],
-        default="auto",
-        help="Vision rendering policy (auto renders only pages needing visual review).",
-    )
-    parser.add_argument(
-        "--legacy-transcribe",
-        action="store_true",
-        default=False,
-        help="Generate legacy vision batches for page-by-page transcription.",
-    )
-    parser.add_argument(
         "--shards",
         type=int,
         default=None,
@@ -1168,12 +1196,6 @@ def main() -> None:
         "--order",
         nargs="*",
         help="Custom document processing order (list of filenames or path to order.json).",
-    )
-    parser.add_argument(
-        "--no-handouts",
-        action="store_true",
-        default=False,
-        help="Disable 2x2/1x2 handout generation in prepare stage.",
     )
     parser.add_argument(
         "--cta-mode",
@@ -1194,14 +1216,8 @@ def main() -> None:
         help="Disable duplicate competency merging in cta-apply stage.",
     )
     parser.add_argument(
-        "--partial",
-        action="store_true",
-        default=False,
-        help="Allow partial stitching of available handout patches without failing on missing ones.",
-    )
-    parser.add_argument(
         "--role",
-        choices=["vision", "cta-map", "cta-reduce", "author", "judge", "repair", "cta-direct", "vision-legacy"],
+        choices=["cta", "cta-direct", "cta-map", "cta-reduce", "author", "judge", "repair"],
         help="Subagent role for dispatch and scope-check stages.",
     )
     parser.add_argument(
@@ -1237,15 +1253,11 @@ def main() -> None:
         strict=args.strict,
         append=args.append,
         random_seed=args.seed,
-        vision=args.vision,
-        legacy_transcribe=args.legacy_transcribe,
         shards_k=args.shards,
         order=order_arg,
-        no_handouts=args.no_handouts,
         cta_mode=args.cta_mode,
         granularity=args.granularity,
         no_merge=args.no_merge,
-        partial=args.partial,
         role=args.role,
         ids=args.ids,
         ready_only=args.ready_only,

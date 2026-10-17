@@ -1,18 +1,17 @@
-"""AST Sandbox and isolated execution environment for parametric exercise templates.
+"""AST Sandbox and in-process execution environment for parametric exercise templates.
 
 Features:
 - Strict AST whitelist validation (bans os, sys, subprocess, open, eval, exec, dunder, etc.)
 - Allowed modules: math, fractions, statistics, sympy, numpy, scipy, scipy.stats, random, decimal, engine.render
-- Subprocess execution with hard timeout
-- Deterministic RNG injection and global RNG seeding
+- 100% In-process execution with deterministic RNG injection and trace-based hard timeout
 - Batch execution support for fast multi-seed sweeps
 """
 
 import ast
 import json
 import os
-import subprocess
 import sys
+import time
 import traceback
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -401,8 +400,9 @@ def run_code_in_env(
     args: tuple = (),
     kwargs: Optional[dict] = None,
     seed: Optional[int] = None,
+    timeout: Optional[float] = None,
 ) -> Any:
-    """Execute code in a local restricted environment."""
+    """Execute code in a local restricted in-process environment with optional deadline timeout."""
     validate_code_ast(code_str)
     env = build_sandbox_globals()
 
@@ -423,74 +423,77 @@ def run_code_in_env(
         raise SandboxExecutionError(f"Function '{func_name}' was not defined in template code.")
 
     func = env[func_name]
-    kwargs = kwargs or {}
+    if kwargs is None:
+        kwargs = {}
 
-    # If func expects rng as first arg, supply it if not present
-    if "rng" not in kwargs and len(args) == 0:
-        return func(rng, **kwargs)
-    return func(*args, **kwargs)
+    prev_trace = sys.gettrace()
+    use_tracer = timeout is not None and timeout > 0
+    if use_tracer:
+        deadline = time.perf_counter() + float(timeout)
+        step_counter = [0]
+
+        def _timeout_tracer(frame, event, arg):
+            step_counter[0] += 1
+            if (step_counter[0] & 63) == 0 and time.perf_counter() > deadline:
+                raise SandboxTimeoutError(
+                    f"Template execution timed out after {timeout}s (seed={seed})"
+                )
+            if prev_trace is not None:
+                prev_trace(frame, event, arg)
+            return _timeout_tracer
+
+        sys.settrace(_timeout_tracer)
+
+    try:
+        if "rng" not in kwargs and len(args) == 0:
+            return func(rng, **kwargs)
+        return func(*args, **kwargs)
+    except (SecurityViolationError, SandboxTimeoutError, SandboxExecutionError):
+        raise
+    except Exception as e:
+        raise SandboxExecutionError(f"{type(e).__name__}: {e}") from e
+    finally:
+        if use_tracer:
+            sys.settrace(prev_trace)
 
 
-def execute_sandbox_instance(
+def execute_template_code(
     generate_py: str,
-    seed: int,
+    seed: int = 42,
     cross_check_py: Optional[str] = None,
     timeout: float = 5.0,
+    use_subprocess: bool = False,
 ) -> Dict[str, Any]:
-    """Execute a single template generation (and optional cross check) via isolated worker.
-    
-    Returns the serialized result dictionary.
-    Raises:
-        SecurityViolationError: If code contains prohibited AST constructs.
-        SandboxTimeoutError: If execution exceeds the timeout limit.
-        SandboxExecutionError: If execution raises an exception.
-    """
+    """Execute template code strictly in-process (use_subprocess parameter is deprecated and ignored)."""
     validate_code_ast(generate_py)
     if cross_check_py:
         validate_code_ast(cross_check_py)
 
-    payload = {
-        "action": "single",
-        "generate_py": generate_py,
-        "cross_check_py": cross_check_py,
-        "seed": seed,
-    }
-    input_bytes = json.dumps(payload).encode("utf-8")
+    gen_res = run_code_in_env(generate_py, "generate", seed=seed, timeout=timeout)
+    if cross_check_py:
+        cc_res = run_code_in_env(cross_check_py, "verify", args=(gen_res,), seed=seed, timeout=timeout)
+        if cc_res is False:
+            raise SandboxExecutionError("cross_check verification returned False")
+    return serialize_for_json(gen_res)
 
-    # Run via isolated subprocess
-    cmd = [sys.executable, "-W", "ignore::SyntaxWarning", os.path.abspath(__file__)]
-    skill_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "skills", "content-to-course"))
-    if not os.path.isdir(skill_root):
-        skill_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    try:
-        proc = subprocess.run(
-            cmd,
-            input=input_bytes,
-            capture_output=True,
-            timeout=timeout,
-            cwd=skill_root,
-        )
-    except subprocess.TimeoutExpired as e:
-        raise SandboxTimeoutError(f"Template execution timed out after {timeout}s (seed={seed})") from e
 
-    if proc.returncode != 0:
-        err_msg = proc.stderr.decode("utf-8", errors="replace")
-        raise SandboxExecutionError(f"Sandbox worker process failed: {err_msg}")
+def execute_verifier_code(
+    verifier_py: str,
+    generated_result: Dict[str, Any],
+    seed: int = 42,
+    timeout: float = 5.0,
+    use_subprocess: bool = False,
+) -> bool:
+    """Execute verifier/cross-check code strictly in-process."""
+    validate_code_ast(verifier_py)
+    res = run_code_in_env(verifier_py, "verify", args=(generated_result,), seed=seed, timeout=timeout)
+    return bool(res)
 
-    try:
-        res = json.loads(proc.stdout.decode("utf-8"))
-    except json.JSONDecodeError as e:
-        out_msg = proc.stdout.decode("utf-8", errors="replace")
-        raise SandboxExecutionError(f"Failed to decode sandbox output: {out_msg}") from e
 
-    if not res.get("success"):
-        error_type = res.get("error_type", "SandboxExecutionError")
-        msg = res.get("error_message", "Unknown sandbox error")
-        if error_type == "SecurityViolationError":
-            raise SecurityViolationError(msg)
-        raise SandboxExecutionError(msg)
-
-    return res["result"]
+# Backward compatibility aliases (100% in-process)
+execute_template_in_sandbox = execute_template_code
+execute_verifier_in_sandbox = execute_verifier_code
+execute_sandbox_instance = execute_template_code
 
 
 def execute_sandbox_batch(
@@ -499,94 +502,45 @@ def execute_sandbox_batch(
     cross_check_py: Optional[str] = None,
     timeout_per_item: float = 2.0,
     isolated: bool = False,
+    use_subprocess: bool = False,
 ) -> List[Dict[str, Any]]:
-    """Execute a batch of seeds in high-throughput fast-path or isolated process run.
-    
-    Returns a list of dicts: {"seed": int, "success": bool, "result": dict, "error": str}
-    """
+    """Execute a batch of seeds strictly in-process via the fast-path."""
     validate_code_ast(generate_py)
     if cross_check_py:
         validate_code_ast(cross_check_py)
 
-    force_isolated = os.environ.get("C2C_SANDBOX_ISOLATED", "").lower() in ("1", "true")
-    if not (isolated or force_isolated):
-        results = []
-        for s in seeds:
-            try:
-                gen_res = run_code_in_env(generate_py, "generate", seed=s)
-                if cross_check_py:
-                    cc_res = run_code_in_env(cross_check_py, "verify", args=(gen_res,), seed=s)
-                    if cc_res is False:
-                        results.append({
-                            "seed": s,
-                            "success": False,
-                            "error": "cross_check verification returned False",
-                        })
-                        continue
-                results.append({
-                    "seed": s,
-                    "success": True,
-                    "result": serialize_for_json(gen_res),
-                })
-            except Exception as e:
-                results.append({
-                    "seed": s,
-                    "success": False,
-                    "error": f"{type(e).__name__}: {str(e)}",
-                })
-        return results
-
-    total_timeout = max(5.0, len(seeds) * timeout_per_item)
-    payload = {
-        "action": "batch",
-        "generate_py": generate_py,
-        "cross_check_py": cross_check_py,
-        "seeds": seeds,
-    }
-    input_bytes = json.dumps(payload).encode("utf-8")
-
-    cmd = [sys.executable, "-W", "ignore::SyntaxWarning", os.path.abspath(__file__)]
-    skill_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "skills", "content-to-course"))
-    if not os.path.isdir(skill_root):
-        skill_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    try:
-        proc = subprocess.run(
-            cmd,
-            input=input_bytes,
-            capture_output=True,
-            timeout=total_timeout,
-            cwd=skill_root,
-        )
-    except subprocess.TimeoutExpired as e:
-        raise SandboxTimeoutError(
-            f"Batch template execution timed out after {total_timeout}s for {len(seeds)} seeds"
-        ) from e
-
-    if proc.returncode != 0:
-        err_msg = proc.stderr.decode("utf-8", errors="replace")
-        raise SandboxExecutionError(f"Sandbox batch worker process failed: {err_msg}")
-
-    try:
-        res = json.loads(proc.stdout.decode("utf-8"))
-    except json.JSONDecodeError as e:
-        out_msg = proc.stdout.decode("utf-8", errors="replace")
-        raise SandboxExecutionError(f"Failed to decode batch sandbox output: {out_msg}") from e
-
-    if not res.get("success"):
-        raise SandboxExecutionError(res.get("error_message", "Unknown batch error"))
-
-    return res["results"]
+    results = []
+    for s in seeds:
+        try:
+            gen_res = run_code_in_env(generate_py, "generate", seed=s, timeout=timeout_per_item)
+            if cross_check_py:
+                cc_res = run_code_in_env(cross_check_py, "verify", args=(gen_res,), seed=s, timeout=timeout_per_item)
+                if cc_res is False:
+                    results.append({
+                        "seed": s,
+                        "success": False,
+                        "error": "cross_check verification returned False",
+                    })
+                    continue
+            results.append({
+                "seed": s,
+                "success": True,
+                "result": serialize_for_json(gen_res),
+            })
+        except Exception as e:
+            results.append({
+                "seed": s,
+                "success": False,
+                "error": f"{type(e).__name__}: {str(e)}",
+            })
+    return results
 
 
 _SANDBOX_WARMED_UP = False
 
 
 def warm_up_sandbox(timeout: float = 60.0) -> bool:
-    """Pre-warm sandbox worker and DLL/bytecode caches for sympy, numpy, scipy.stats.
-    
-    Executes a minimal sandbox instance to ensure OS DLLs and python bytecode
-    are loaded into filesystem/process caches.
-    """
+    """Pre-warm in-process sandbox caches for sympy, numpy, scipy.stats."""
     global _SANDBOX_WARMED_UP
     if _SANDBOX_WARMED_UP:
         return True
@@ -598,97 +552,11 @@ def warm_up_sandbox(timeout: float = 60.0) -> bool:
         "    import scipy.stats as stats\n"
         "    return {'vars': {'warmed': True}, 'correct': '1', 'distractors': []}\n"
     )
-    force_isolated = os.environ.get("C2C_SANDBOX_ISOLATED", "").lower() in ("1", "true")
-    if force_isolated:
-        res = execute_sandbox_instance(code, seed=42, timeout=timeout)
-        warmed = bool(res and res.get("vars", {}).get("warmed"))
-    else:
-        batch_res = execute_sandbox_batch(code, [42])
-        warmed = bool(batch_res and batch_res[0].get("success") and batch_res[0].get("result", {}).get("vars", {}).get("warmed"))
+    batch_res = execute_sandbox_batch(code, [42], timeout_per_item=timeout)
+    warmed = bool(
+        batch_res
+        and batch_res[0].get("success")
+        and batch_res[0].get("result", {}).get("vars", {}).get("warmed")
+    )
     _SANDBOX_WARMED_UP = True
     return warmed
-
-
-# =========================================================================
-# Subprocess Entrypoint (when invoked as `python path/to/sandbox.py`)
-# =========================================================================
-
-def _worker_entrypoint():
-    try:
-        raw_input = sys.stdin.read()
-        if not raw_input.strip():
-            sys.exit(0)
-
-        data = json.loads(raw_input)
-        action = data.get("action", "single")
-        generate_py = data["generate_py"]
-        cross_check_py = data.get("cross_check_py")
-
-        validate_code_ast(generate_py)
-        if cross_check_py:
-            validate_code_ast(cross_check_py)
-
-        if action == "single":
-            seed = data.get("seed", 42)
-            gen_res = run_code_in_env(generate_py, "generate", seed=seed)
-            if cross_check_py:
-                cc_res = run_code_in_env(cross_check_py, "verify", args=(gen_res,), seed=seed)
-                if cc_res is False:
-                    raise SandboxExecutionError("cross_check verification returned False")
-            
-            output = {
-                "success": True,
-                "result": serialize_for_json(gen_res),
-            }
-            print(json.dumps(output))
-
-        elif action == "batch":
-            seeds = data.get("seeds", [])
-            results = []
-            for s in seeds:
-                try:
-                    gen_res = run_code_in_env(generate_py, "generate", seed=s)
-                    if cross_check_py:
-                        cc_res = run_code_in_env(cross_check_py, "verify", args=(gen_res,), seed=s)
-                        if cc_res is False:
-                            results.append({
-                                "seed": s,
-                                "success": False,
-                                "error": "cross_check verification returned False",
-                            })
-                            continue
-                    results.append({
-                        "seed": s,
-                        "success": True,
-                        "result": serialize_for_json(gen_res),
-                    })
-                except Exception as e:
-                    results.append({
-                        "seed": s,
-                        "success": False,
-                        "error": f"{type(e).__name__}: {str(e)}",
-                    })
-            print(json.dumps({"success": True, "results": results}))
-
-    except SecurityViolationError as e:
-        print(json.dumps({
-            "success": False,
-            "error_type": "SecurityViolationError",
-            "error_message": str(e),
-        }))
-    except Exception as e:
-        print(json.dumps({
-            "success": False,
-            "error_type": type(e).__name__,
-            "error_message": f"{str(e)}\n{traceback.format_exc()}",
-        }))
-
-
-if __name__ == "__main__":
-    _this_dir = os.path.dirname(os.path.abspath(__file__))
-    _skill_candidate = os.path.abspath(os.path.join(_this_dir, "..", "..", "skills", "content-to-course"))
-    _parent = os.path.dirname(_this_dir)
-    for p in [_skill_candidate, _parent, _this_dir]:
-        if os.path.isdir(p) and p not in sys.path:
-            sys.path.insert(0, p)
-    _worker_entrypoint()

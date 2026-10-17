@@ -33,16 +33,13 @@ from check_templates import (
     synthetic_boilerplate_distractor_rule,
     scaffolding_answer_leak_rule,
 )
+from compile_shard import compile_shard
 from dispatch import (
-    TYPE_DEFINITIONS,
     ROLE_SPECS,
     build_dispatch,
-    build_starter_template_for_competency,
-    generate_author_bundle,
-    generate_cta_direct_bundle,
+    dispatch_authors,
+    dispatch_cta,
     get_type_definitions,
-    preseed_author_scaffolds,
-    preseed_cta_scaffolds,
 )
 from judge import (
     _is_numeric_equal,
@@ -61,6 +58,14 @@ class TestC2CRemediationOptimization(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp(prefix="c2c_remed_opt_")
         self.work_dir = Path(self.test_dir) / "courses" / "test_course" / "work"
         self.work_dir.mkdir(parents=True, exist_ok=True)
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "files": [
+                {"doc": "algoritmos.pdf", "path": "content/algoritmos.pdf", "total_pages": 50, "valid_page_range": [1, 50]},
+                {"doc": "termo.pdf", "path": "content/termo.pdf", "total_pages": 50, "valid_page_range": [1, 50]},
+                {"doc": "doc.pdf", "path": "content/doc.pdf", "total_pages": 50, "valid_page_range": [1, 50]},
+                {"doc": "solow.pdf", "path": "content/solow.pdf", "total_pages": 50, "valid_page_range": [1, 50]},
+            ]
+        }), encoding="utf-8")
 
     def tearDown(self):
         shutil.rmtree(self.test_dir, ignore_errors=True)
@@ -99,6 +104,13 @@ COMPETENCIES = [
     )
 ]
 '''
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "files": [
+                {"doc": "algoritmos.pdf", "path": "content/algoritmos.pdf", "total_pages": 50, "valid_page_range": [1, 50]},
+                {"doc": "termo.pdf", "path": "content/termo.pdf", "total_pages": 50, "valid_page_range": [1, 50]}
+            ]
+        }), encoding="utf-8")
+
         data_file = self.work_dir / "cta_data.py"
         data_file.write_text(data_content, encoding="utf-8")
 
@@ -125,24 +137,27 @@ COMPETENCIES = [
         self.assertGreaterEqual(len(omitted_dists), 2)
 
     def test_component_1_preseed_cta_scaffolds_includes_compiler(self):
-        """preseed_cta_scaffolds copies immutable compile_cta.py into work_dir."""
-        created = preseed_cta_scaffolds(self.work_dir)
-        compiler_path = self.work_dir / "compile_cta.py"
-        self.assertTrue(compiler_path.is_file())
-        self.assertTrue(compiler_path.stat().st_size > 500)
+        """dispatch_cta specifies official compile_cta.py command in prompt."""
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "files": [{"doc": "doc.pdf", "path": "content/doc.pdf", "total_pages": 10, "valid_page_range": [1, 10]}]
+        }), encoding="utf-8")
+        res = dispatch_cta(work_dir=self.work_dir, mode="direct")
+        self.assertEqual(len(res["Subagents"]), 1)
+        prompt = res["Subagents"][0]["Prompt"]
+        self.assertIn("compile_cta.py", prompt)
+        self.assertIn("cta_data.py", prompt)
 
     def test_component_1_dispatch_bundle_directives(self):
-        """generate_cta_direct_bundle injects 2-file architecture and modular compatibility."""
-        bundle_file = generate_cta_direct_bundle(
-            work_dir=self.work_dir,
-            read_paths=["doc.pdf"],
-            write_paths=["work/cta_data.py", "work/cta.json"],
-        )
-        text = bundle_file.read_text(encoding="utf-8")
+        """dispatch_cta injects 2-file architecture and modular compatibility."""
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "files": [{"doc": "doc.pdf", "path": "content/doc.pdf", "total_pages": 10, "valid_page_range": [1, 10]}]
+        }), encoding="utf-8")
+        dispatch_res = dispatch_cta(work_dir=self.work_dir, mode="direct")
+        item_file = Path(dispatch_res["item_files"][0])
+        text = json.loads(item_file.read_text(encoding="utf-8"))["Prompt"]
         self.assertIn("compile_cta.py", text)
         self.assertIn("cta_data.py", text)
         self.assertIn("replace_file_content", text)
-        self.assertIn("cta-stitch", text)
 
     def test_component_1_compile_cta_distractor_line_error_mapping(self):
         """compile_cta maps distractor errors back to exact lines in cta_data.py."""
@@ -164,6 +179,9 @@ COMPETENCIES = [
 '''
         data_file = self.work_dir / "cta_data_err.py"
         data_file.write_text(data_content, encoding="utf-8")
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "files": [{"doc": "algoritmos.pdf", "path": "content/algoritmos.pdf", "total_pages": 50}]
+        }), encoding="utf-8")
 
         success, res, errs, elapsed_ms = compile_cta.compile_cta(
             cta_data_path=data_file,
@@ -262,6 +280,9 @@ COMPETENCIES = [
         data_text = "COMPETENCIES = [\n" + ",\n".join(comps) + "\n]\n"
         data_file = self.work_dir / "cta_data.py"
         data_file.write_text(data_text, encoding="utf-8")
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "files": [{"doc": "doc.pdf", "path": "content/doc.pdf", "total_pages": 50}]
+        }), encoding="utf-8")
 
         success, res, errs, _ = compile_cta.compile_cta(
             cta_data_path=data_file,
@@ -272,9 +293,12 @@ COMPETENCIES = [
         self.assertTrue(bak_file.is_file(), "Backup .cta_data.py.bak was not written for >= 10 comps")
         self.assertIn("Concepto 10", bak_file.read_text(encoding="utf-8"))
 
-        # Verify manifest.json resolution when COURSE_ID is Tops_academy
-        manifest_file = self.work_dir / "manifest.json"
-        manifest_file.write_text(json.dumps({"course_id": "macroeconomia_avanzada"}), encoding="utf-8")
+        # Verify pre_cta_manifest.json resolution when COURSE_ID is Tops_academy
+        manifest_file = self.work_dir / "pre_cta_manifest.json"
+        manifest_file.write_text(json.dumps({
+            "course_id": "macroeconomia_avanzada",
+            "files": [{"doc": "doc.pdf", "path": "content/doc.pdf", "total_pages": 50}]
+        }), encoding="utf-8")
         data_text_with_bad_id = 'COURSE_ID = "Tops_academy"\n' + data_text
         data_file.write_text(data_text_with_bad_id, encoding="utf-8")
         success, res, _, _ = compile_cta.compile_cta(
@@ -308,37 +332,97 @@ COMPETENCIES = [
     # COMPONENT 2: Quality Triad for Shard Authors
     # =========================================================================
     def test_component_2_canonical_template_generator_validates_cleanly(self):
-        """template_generator_canonical.py executes and passes invariants with 0 errors."""
-        import random
-        import template_generator_canonical
+        """Author tuples compiled via compile_shard execute and pass invariants with 0 errors."""
+        shards_dir = self.work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "documents": [{"name": "solow.pdf", "path": "content/solow.pdf", "total_pages": 10}]
+        }), encoding="utf-8")
+        (self.work_dir / "cta.json").write_text(json.dumps({
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "name": "Carnot",
+                    "type": "concept",
+                    "bloom": "Understand",
+                    "distractors": [{"id": f"D-C01-{i:02d}"} for i in range(1, 7)]
+                }
+            ]
+        }), encoding="utf-8")
+        (shards_dir / "pre_shard_manifest.json").write_text(
+            json.dumps({"shards": [{"shard_id": "shard_01", "competency_ids": ["C-01"]}]}), encoding="utf-8"
+        )
+        shard_code = '''
+def gen_c01(rng):
+    tc = rng.randint(250, 350)
+    delta = rng.randint(150, 450)
+    th = tc + delta
+    ans_val = round(1.0 - (tc / th), 3)
 
-        rng = random.Random(42)
-        inst = template_generator_canonical.generate(rng)
-        self.assertIn("vars", inst)
-        self.assertIn("correct", inst)
-        self.assertIn("distractors", inst)
-        self.assertEqual(len(inst["distractors"]), 6)
+    distractors = [
+        {"value": rf"$\\eta = {round(ans_val + 0.10, 3)}$", "distractor_id": "D-C01-01", "error_rationale": "Inversión TH/TC"},
+        {"value": rf"$\\eta = {round(ans_val + 0.20, 3)}$", "distractor_id": "D-C01-02", "error_rationale": "Calor residual"},
+        {"value": rf"$\\eta = {round(ans_val + 0.30, 3)}$", "distractor_id": "D-C01-03", "error_rationale": "Desplazamiento"},
+        {"value": rf"$\\eta = {round(ans_val + 0.40, 3)}$", "distractor_id": "D-C01-04", "error_rationale": "Factor espurio"},
+        {"value": rf"$\\eta = {round(ans_val - 0.10, 3)}$", "distractor_id": "D-C01-05", "error_rationale": "Suma"},
+        {"value": rf"$\\eta = {round(ans_val - 0.20, 3)}$", "distractor_id": "D-C01-06", "error_rationale": "Semidiferencia"},
+    ]
+    return {
+        "vars": {"th": th, "tc": tc, "ans": ans_val},
+        "correct": rf"$\\eta = {ans_val}$",
+        "distractors": distractors
+    }
 
-        # Distractor options must not trigger boilerplate or leak rules
-        assembled = {
-            "stem": "Stem",
-            "options": [{"content": inst["correct"], "is_correct": True}] + [
-                {"content": d["value"], "is_correct": False, "distractor_id": d["distractor_id"]}
-                for d in inst["distractors"]
-            ],
-            "hints": ["Hint 1", "Hint 2", "Hint 3 conceptual sin descarte"],
-        }
-        b_errs = synthetic_boilerplate_distractor_rule(assembled)
-        self.assertEqual(len(b_errs), 0, f"Canonical scaffold triggered boilerplate rule: {b_errs}")
+def ver_c01(res):
+    v = res.get("vars", {})
+    expected = round(1.0 - (v["tc"] / v["th"]), 3)
+    return v.get("ans") == expected
 
-        l_errs = scaffolding_answer_leak_rule(assembled["hints"])
-        self.assertEqual(len(l_errs), 0, f"Canonical scaffold triggered hint leak rule: {l_errs}")
+TEMPLATES = [
+    (
+        "C-01",
+        "multiple_choice",
+        r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$. Determine el rendimiento térmico:",
+        gen_c01,
+        ver_c01,
+        r"Por el teorema de Carnot, el rendimiento es $\\eta = 1 - \\frac{T_C}{T_H} = {ans}$.",
+        "Eficiencia de Carnot",
+        ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"],
+        ("solow.pdf", 1, "Cita")
+    )
+]
+'''
+        (shards_dir / "shard_01_data.py").write_text(shard_code, encoding="utf-8")
+        ok, errs = compile_shard(self.work_dir, "shard_01")
+        self.assertTrue(ok, f"Compilation failed: {errs}")
+        tpl_file = self.work_dir / "templates" / "C-01.json"
+        self.assertTrue(tpl_file.is_file())
+        is_valid, errs = check_templates_file_or_dir(tpl_file, cta_path=self.work_dir / "cta.json")
+        self.assertTrue(is_valid, f"Template validation failed: {errs}")
+        self.assertEqual(len(errs), 0)
 
     def test_component_2_canonical_template_generator_ast_and_sandbox(self):
-        """template_generator_canonical.py satisfies AST sandbox security and executes cleanly in sandbox batch."""
-        canonical_path = c2c_dir / "template_generator_canonical.py"
-        code = canonical_path.read_text(encoding="utf-8")
-
+        """Author generator function satisfies AST sandbox security and executes cleanly in sandbox batch."""
+        code = '''
+def generate(rng):
+    tc = rng.randint(250, 350)
+    delta = rng.randint(150, 450)
+    th = tc + delta
+    ans_val = round(1.0 - (tc / th), 3)
+    distractors = [
+        {"value": rf"$\\eta = {round(ans_val + 0.10, 3)}$", "distractor_id": "D-C01-01", "error_rationale": "Inversión TH/TC"},
+        {"value": rf"$\\eta = {round(ans_val + 0.20, 3)}$", "distractor_id": "D-C01-02", "error_rationale": "Calor residual"},
+        {"value": rf"$\\eta = {round(ans_val + 0.30, 3)}$", "distractor_id": "D-C01-03", "error_rationale": "Desplazamiento"},
+        {"value": rf"$\\eta = {round(ans_val + 0.40, 3)}$", "distractor_id": "D-C01-04", "error_rationale": "Factor espurio"},
+        {"value": rf"$\\eta = {round(ans_val - 0.10, 3)}$", "distractor_id": "D-C01-05", "error_rationale": "Suma"},
+        {"value": rf"$\\eta = {round(ans_val - 0.20, 3)}$", "distractor_id": "D-C01-06", "error_rationale": "Semidiferencia"},
+    ]
+    return {
+        "vars": {"th": th, "tc": tc, "ans": ans_val},
+        "correct": rf"$\\eta = {ans_val}$",
+        "distractors": distractors
+    }
+'''
         # Must pass AST security whitelist without any SecurityViolationError
         self.assertTrue(validate_code_ast(code))
 
@@ -389,9 +473,13 @@ COMPETENCIES = [
         self.assertIn("R-19: FUGA DE RESPUESTA EN ANDAMIAJE", diag2)
 
     def test_component_2_preseed_author_scaffolds_copies_canonical_template(self):
-        """preseed_author_scaffolds copies template_generator_canonical.py to shard scratch."""
-        cta = {
-            "course_id": "test_course",
+        """dispatch_authors creates item files with compile_shard directives."""
+        shards_dir = self.work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "documents": [{"name": "solow.pdf", "path": "content/solow.pdf", "total_pages": 10}]
+        }), encoding="utf-8")
+        (self.work_dir / "cta.json").write_text(json.dumps({
             "competencies": [
                 {
                     "id": "C-01",
@@ -401,21 +489,17 @@ COMPETENCIES = [
                     "distractors": [{"id": f"D-C01-{i:02d}"} for i in range(1, 7)]
                 }
             ]
-        }
-        (self.work_dir / "cta.json").write_text(json.dumps(cta), encoding="utf-8")
-        shards = [{"shard_id": "shard_01", "competency_ids": ["C-01"]}]
+        }), encoding="utf-8")
+        (shards_dir / "pre_shard_manifest.json").write_text(
+            json.dumps({"shards": [{"shard_id": "shard_01", "competency_ids": ["C-01"]}]}), encoding="utf-8"
+        )
 
-        preseed_author_scaffolds(self.work_dir, shards)
-
-        scratch_file = self.work_dir / "shards" / "shard_01" / "scratch" / "template_generator_canonical.py"
-        self.assertTrue(scratch_file.is_file())
-        self.assertTrue(scratch_file.stat().st_size > 500)
-
-        # Also verify that starter template generated by build_starter_template_for_competency passes validation
-        tpl_file = self.work_dir / "templates" / "C-01.json"
-        self.assertTrue(tpl_file.is_file())
-        is_valid, errs = check_templates_file_or_dir(tpl_file, cta_path=self.work_dir / "cta.json")
-        self.assertTrue(is_valid, f"Starter scaffold failed validation: {errs}")
+        res = dispatch_authors(self.work_dir)
+        self.assertEqual(len(res["Subagents"]), 1)
+        item_file = Path(res["item_files"][0])
+        content = item_file.read_text(encoding="utf-8")
+        self.assertIn("compile_shard.py", content)
+        self.assertIn("shard_01_data.py", content)
 
     # =========================================================================
     # COMPONENT 3: Canonical Workspace Isolation
@@ -435,18 +519,15 @@ COMPETENCIES = [
     # COMPONENT 4: Batch Subagent Registration
     # =========================================================================
     def test_component_4_batch_subagent_registration(self):
-        """Pipeline define-types auxiliary stage provides all 7 specialized subagents in 1 step."""
+        """Pipeline define-types auxiliary stage provides all 4 specialized subagents in 1 step."""
         types = get_type_definitions()
-        self.assertEqual(len(types), 7)
+        self.assertEqual(len(types), 4)
         type_names = {t["name"] for t in types}
         expected_names = {
-            "c2c-vision",
-            "c2c-cta-mapper",
-            "c2c-cta-harmonizer",
-            "c2c-author",
-            "c2c-judge",
-            "c2c-cta-direct",
-            "c2c-repair",
+            "c2c_cta_architect",
+            "c2c_shard_author",
+            "c2c_judge",
+            "c2c_repair",
         }
         self.assertEqual(type_names, expected_names)
 
@@ -454,7 +535,7 @@ COMPETENCIES = [
         runner = PipelineRunner(work_dir=str(self.work_dir))
         res = runner.execute(target_stage="define-types")
         self.assertIn("define-types", res)
-        self.assertEqual(len(res["define-types"]["types"]), 7)
+        self.assertEqual(len(res["define-types"]["types"]), 4)
         self.assertLess(res["elapsed_seconds"], 1.0)
 
     # =========================================================================

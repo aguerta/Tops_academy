@@ -33,7 +33,6 @@ for p in [str(SKILL_DIR), str(SRC_DIR), str(REPO_ROOT)]:
         sys.path.insert(0, p)
 
 from check_cta import validate_cta_rules, validate_cta_schema
-from check_pages import check_pages
 from check_templates import check_single_template, check_templates_file_or_dir, validate_template_schema
 from course_publisher import CoursePublisher
 from engine.assemble import assemble_question, check_course_giveaway_distribution
@@ -47,7 +46,7 @@ from engine.sandbox import (
     SandboxTimeoutError,
     SecurityViolationError,
 )
-from ingest import normalize_corrupt_diacritics, process_image_file, run_ingest
+from ingest import ingest_course, ingest_image_file, normalize_corrupt_diacritics
 from run import PipelineRunner
 from validator.core import validate_course_content
 
@@ -180,46 +179,42 @@ class TestIngestionAndVisionFallback:
         img.save(str(img_file))
 
         out_pages = tmp_path / "work_pages"
-        summary = run_ingest(in_dir, out_pages)
+        manifest = ingest_course(in_dir, out_pages)
 
-        assert summary["total_items"] >= 2
-        kinds = [it["kind"] for it in summary["items"]]
-        assert any("text" in k or "pdf" in k for k in kinds)
-        assert any("image" in k for k in kinds)
+        assert manifest["total_files"] >= 2
+        types = [f["type"] for f in manifest["files"]]
+        assert "pdf" in types
+        assert "image" in types
 
     def test_ingest_image_tiling_large_dimensions(self, tmp_path):
-        """Splits images exceeding 2500px into 3x2 grid with 10% overlap plus overview."""
+        """Splits images exceeding 3072px into 3x2 grid with 10% overlap plus overview."""
         large_img_path = tmp_path / "board_large.png"
-        img = Image.new("RGB", (3000, 2600), color="white")
+        img = Image.new("RGB", (3500, 3200), color="white")
         img.save(str(large_img_path))
 
         out_dir = tmp_path / "tiled_output"
-        items = process_image_file(large_img_path, out_dir)
+        num_tiles = ingest_image_file(large_img_path, out_dir)
 
-        # 3x2 grid = 6 tiles + 1 overview thumbnail = 7 items
-        assert len(items) == 7
-        tile_kinds = [it["kind"] for it in items]
-        assert tile_kinds.count("image_tile") == 6
-        assert tile_kinds.count("image_overview") == 1
-
-        # Check that files exist on disk
-        for item in items:
-            assert Path(item["image_path"]).is_file()
+        # 3x2 grid = 6 tiles + 1 overview thumbnail
+        assert num_tiles == 6
+        assert (out_dir / "overview.png").is_file()
+        assert len(list(out_dir.glob("tile_r*_c*.png"))) == 6
 
     def test_ingest_image_small_dimensions(self, tmp_path):
-        """Keeps images <= 2500px as single whole page without tiling."""
+        """Keeps images <= 3072px as single whole page without tiling."""
         small_img_path = tmp_path / "small.jpg"
         img = Image.new("RGB", (800, 600), color="green")
         img.save(str(small_img_path))
 
         out_dir = tmp_path / "small_output"
-        items = process_image_file(small_img_path, out_dir)
+        num_pages = ingest_image_file(small_img_path, out_dir)
 
-        assert len(items) == 1
-        assert items[0]["kind"] in ("image_single", "image_page")
+        assert num_pages == 1
+        assert (out_dir / "page_001.png").is_file()
+        assert not (out_dir / "overview.png").exists()
 
     def test_ingest_sha256_manifest_caching(self, tmp_path):
-        """Asserts re-running ingestion retains cached SHA-256 and avoids duplication."""
+        """Asserts re-running ingestion retains cached files and avoids duplication."""
         in_dir = tmp_path / "in_cache"
         in_dir.mkdir()
         img_file = in_dir / "diagram.png"
@@ -227,14 +222,14 @@ class TestIngestionAndVisionFallback:
         img.save(str(img_file))
 
         out_pages = tmp_path / "pages_cache"
-        res1 = run_ingest(in_dir, out_pages)
-        manifest1 = json.loads((out_pages / "pages" / "manifest.json").read_text(encoding="utf-8"))
+        res1 = ingest_course(in_dir, out_pages)
+        manifest1 = json.loads((out_pages / "pre_cta_manifest.json").read_text(encoding="utf-8"))
 
-        res2 = run_ingest(in_dir, out_pages)
-        manifest2 = json.loads((out_pages / "pages" / "manifest.json").read_text(encoding="utf-8"))
+        res2 = ingest_course(in_dir, out_pages)
+        manifest2 = json.loads((out_pages / "pre_cta_manifest.json").read_text(encoding="utf-8"))
 
-        assert len(manifest1["items"]) == len(manifest2["items"])
-        assert manifest1["items"][0]["sha256"] == manifest2["items"][0]["sha256"]
+        assert len(manifest1["files"]) == len(manifest2["files"])
+        assert manifest1["files"][0]["doc"] == manifest2["files"][0]["doc"]
 
     def test_text_layer_normalization(self):
         """Normalizes corrupt diacritics from Beamer exports into valid accented characters."""
@@ -245,28 +240,26 @@ class TestIngestionAndVisionFallback:
         assert "matemática" in normalized
         assert "función" in normalized
 
-    def test_check_pages_flags_missing_transcriptions(self, tmp_path):
-        """check_pages flags error when manifest item has no matching transcription markdown."""
-        manifest_p = tmp_path / "manifest.json"
-        manifest_data = {
-            "total_items": 1,
-            "items": [
-                {
-                    "doc": "sample.pdf",
-                    "page": 1,
-                    "kind": "beamer_text",
-                    "sha256": "abcdef",
-                    "has_text_layer": False,
-                    "image_path": "sample/page_001.png",
-                    "transcription_path": str(tmp_path / "non_existent.md"),
-                }
-            ],
-        }
-        manifest_p.write_text(json.dumps(manifest_data), encoding="utf-8")
+    def test_stage0_pre_cta_manifest_structure(self, tmp_path):
+        """Asserts pre_cta_manifest contains files, subparts, cta_mode, and no legacy artifacts."""
+        in_dir = tmp_path / "in_stg0"
+        in_dir.mkdir()
+        img_file = in_dir / "pic.png"
+        img = Image.new("RGB", (200, 200), color="red")
+        img.save(str(img_file))
 
-        is_valid, report = check_pages(manifest_p)
-        assert not is_valid
-        assert report["missing_count"] > 0
+        out_dir = tmp_path / "work_stg0"
+        res = ingest_course(in_dir, out_dir)
+
+        manifest_file = out_dir / "pre_cta_manifest.json"
+        assert manifest_file.is_file()
+        m_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+        assert "files" in m_data
+        assert "subparts" in m_data
+        assert "cta_mode" in m_data
+        assert "next_milestones_notes" not in m_data
+        assert not (out_dir / "corpus.md").exists()
+        assert not (out_dir / "density.json").exists()
 
 
 # =============================================================================
@@ -495,14 +488,13 @@ class TestCTAContractAndValidation:
             ],
         }
         manifest_data = {
-            "items": [
-                {"doc": "lecture.pdf", "page": 1},
-                {"doc": "lecture.pdf", "page": 2},
+            "files": [
+                {"doc": "lecture.pdf", "valid_page_range": [1, 2], "total_pages": 2}
             ]
         }
         is_valid, errs = validate_cta_rules(cta_data, manifest_data=manifest_data)
         assert not is_valid
-        assert any("not found in manifest" in e for e in errs)
+        assert any("CTA-EV" in e or "fuera del rango" in e for e in errs)
 
 
 # =============================================================================
@@ -739,8 +731,20 @@ class TestPipelineRunnerCLI:
 
     def test_run_fails_without_cta_json(self, tmp_path):
         """Asserts PipelineRunner strictly terminates with non-zero error when cta.json is missing."""
+        work_d = tmp_path / "empty_work"
+        work_d.mkdir(parents=True, exist_ok=True)
+        pre_cta = {
+            "course_id": "test_fail",
+            "cta_mode": "direct",
+            "total_files": 1,
+            "total_pages": 5,
+            "files": [{"doc": "doc.pdf", "file_index": 0, "type": "pdf", "total_pages": 5}],
+            "subparts": [],
+        }
+        (work_d / "pre_cta_manifest.json").write_text(json.dumps(pre_cta), encoding="utf-8")
+
         runner = PipelineRunner(
-            work_dir=tmp_path / "empty_work",
+            work_dir=work_d,
             course_id="test_fail",
         )
         with pytest.raises(FileNotFoundError) as exc_info:
@@ -753,6 +757,15 @@ class TestPipelineRunnerCLI:
         # Create a valid cta.json in work dir
         work_d = tmp_path / "work"
         work_d.mkdir(parents=True, exist_ok=True)
+        pre_cta = {
+            "course_id": "test_stg",
+            "cta_mode": "direct",
+            "total_files": 1,
+            "total_pages": 5,
+            "files": [{"doc": "d.pdf", "file_index": 0, "type": "pdf", "total_pages": 5}],
+            "subparts": [],
+        }
+        (work_d / "pre_cta_manifest.json").write_text(json.dumps(pre_cta), encoding="utf-8")
         cta_data = {
             "course_id": "test_stg",
             "title": "Stage Test",

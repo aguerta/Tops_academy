@@ -34,7 +34,7 @@ from check_cta import validate_distractor_math, check_cta_katex
 from cta_merge import normalize_orphan_math, sanitize_competency_math
 from engine.invariants import validate_katex_syntax
 from check_templates import format_invariant_error_diagnostic, format_parity_error, check_templates_file_or_dir
-from dispatch import ROLE_SPECS, generate_author_bundle, build_dispatch
+from dispatch import ROLE_SPECS, build_dispatch, dispatch_authors
 
 
 class TestStage1BUpstreamValidation(unittest.TestCase):
@@ -321,56 +321,67 @@ class TestHardCircuitBreaker(unittest.TestCase):
 
 
 class TestAuthorDispatchAndProtocol(unittest.TestCase):
-    """Test Component 3: Shard Author 50 turns and modular per-competency authoring."""
+    """Test Component 3: Shard Author v3.2 modular authoring and dispatch."""
 
     def test_role_specs_author_50_turns(self):
         spec = ROLE_SPECS["author"]
-        self.assertEqual(spec["turn_budget"], 50, "Author turn_budget must be 50 turns")
-        # Ensure monolithic build_*.py is removed from write and placed in forbidden
-        self.assertNotIn("work/build_*.py", spec["write"])
-        self.assertTrue(any("build_<shard_id>.py" in f for f in spec["forbidden"]))
-        # Ensure work/cta.json is explicitly in read
+        self.assertEqual(spec["turn_budget"], 30, "Author turn_budget is 30 in v3.2")
+        self.assertIn("scratch/**", spec["forbidden"])
         self.assertIn("work/cta.json", spec["read"])
+        self.assertIn(".agents/skills/content-to-course/compile_shard.py", spec["read"])
 
     def test_generate_author_bundle_has_50_turns_and_modular_directives(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmppath = Path(tmpdir)
-            bundle = generate_author_bundle(
-                work_dir=tmppath,
-                shard_id="shard_01",
-                read_paths=["work/shards/shard_01.json", "work/cta.json"],
-                write_paths=["work/templates/C-01.json", "work/templates/C-02.json"],
-            )
-            content = bundle.read_text(encoding="utf-8")
-            self.assertIn("50 turnos", content)
-            self.assertIn("work/templates/<comp_id>.json", content)
-            self.assertIn("PROHIBIDO escribir un único script monolítico de 2,000 líneas", content)
-            self.assertIn("Prohibidos comandos de PowerShell inline con '$'", content)
-            self.assertIn("Circuit Breaker y presupuesto de 50 turnos", content)
+            (tmppath / "pre_cta_manifest.json").write_text(json.dumps({
+                "documents": [{"name": "doc1.pdf", "path": "content/doc1.pdf", "total_pages": 10}]
+            }), encoding="utf-8")
+            (tmppath / "cta.json").write_text(json.dumps({
+                "competencies": [{"id": "C-01", "name": "Comp 1"}]
+            }), encoding="utf-8")
+            shards_dir = tmppath / "shards"
+            shards_dir.mkdir(parents=True)
+            (shards_dir / "pre_shard_manifest.json").write_text(json.dumps({
+                "shards": [{"shard_id": "shard_01", "competency_ids": ["C-01"]}]
+            }), encoding="utf-8")
+
+            res = dispatch_authors(work_dir=tmppath)
+            self.assertEqual(len(res["Subagents"]), 1)
+            item_file = tmppath / "dispatch" / "items" / "author_01.json"
+            self.assertTrue(item_file.exists())
+            content = item_file.read_text(encoding="utf-8")
+            self.assertIn("compile_shard.py", content)
+            self.assertIn("shard_01_data.py", content)
+            self.assertIn("pre_shard_manifest.json", content)
 
     def test_prompt_shard_author_file(self):
         prompt_file = c2c_dir / "system_prompts" / "prompt_shard_author.md"
         content = prompt_file.read_text(encoding="utf-8")
-        self.assertIn("máximo 50 turnos", content)
-        self.assertIn("work/templates/<comp_id>.json", content)
-        self.assertIn("PROHIBICIÓN DE MONOLITOS", content)
-        self.assertIn("CIRCUIT BREAKER (3 Fallos Consecutivos o 50 Turnos)", content)
+        self.assertIn("compile_shard.py", content)
+        self.assertIn("TEMPLATES = [", content)
+        self.assertIn("BLOCKER:: No existe pre_shard_manifest.json", content)
+        self.assertIn("replace_file_content", content)
 
     def test_build_dispatch_author_includes_cta_json_and_hard_50_turns(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmppath = Path(tmpdir)
+            (tmppath / "pre_cta_manifest.json").write_text(json.dumps({
+                "documents": [{"name": "doc1.pdf", "path": "content/doc1.pdf", "total_pages": 10}]
+            }), encoding="utf-8")
+            (tmppath / "cta.json").write_text(json.dumps({
+                "competencies": [{"id": "C-01", "name": "Comp 1"}]
+            }), encoding="utf-8")
             shards_dir = tmppath / "shards"
             shards_dir.mkdir(parents=True)
-            (shards_dir / "shard_01.json").write_text(json.dumps({
-                "shard_id": "shard_01",
-                "competency_ids": ["C-01"],
+            (shards_dir / "pre_shard_manifest.json").write_text(json.dumps({
+                "shards": [{"shard_id": "shard_01", "competency_ids": ["C-01"]}]
             }), encoding="utf-8")
 
             payload = build_dispatch(role="author", work_dir=tmppath)
             self.assertEqual(len(payload["Subagents"]), 1)
             prompt = payload["Subagents"][0]["Prompt"]
-            self.assertIn("work/cta.json", prompt)
-            self.assertIn("máximo 50 turnos (límite estricto)", prompt)
+            self.assertIn("compile_shard.py", prompt)
+            self.assertIn("shard_01_data.py", prompt)
 
 
 class TestExpandedMathNormalization(unittest.TestCase):

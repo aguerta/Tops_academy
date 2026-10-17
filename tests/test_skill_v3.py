@@ -24,58 +24,75 @@ if str(SKILL_DIR) not in sys.path:
 
 from engine.instantiate import instantiate_competency
 from engine.sandbox import execute_sandbox_instance
-from ingest import prepare_corpus
+from ingest import ingest_course
 from plan_shards import determine_shard_count, plan_shards
 
 
-def test_prepare_corpus_outputs_and_density(tmp_path):
-    """Test that prepare_corpus generates corpus.md, density.json, budget.json, and manifest.json."""
+def test_stage0_ingest_pre_cta_manifest_and_no_corpus(tmp_path):
+    """Test Stage 0 ingest generates pre_cta_manifest.json without corpus.md or density.json."""
     sample_pdf = Path("content/estadistica3_Cano/EST3_LEC01_26_2.pdf")
     if not sample_pdf.exists():
         pytest.skip("Sample PDF not found.")
 
-    res = prepare_corpus(
+    res = ingest_course(
         input_path=sample_pdf,
         output_dir=tmp_path,
-        vision="auto",
     )
 
-    manifest_file = tmp_path / "pages" / "manifest.json"
+    manifest_file = tmp_path / "pre_cta_manifest.json"
     corpus_file = tmp_path / "corpus.md"
     density_file = tmp_path / "density.json"
-    budget_file = tmp_path / "budget.json"
 
-    assert manifest_file.exists(), "manifest.json was not created"
-    assert corpus_file.exists(), "corpus.md was not created"
-    assert density_file.exists(), "density.json was not created"
-    assert budget_file.exists(), "budget.json was not created"
+    assert manifest_file.exists(), "pre_cta_manifest.json was not created"
+    assert not corpus_file.exists(), "corpus.md should not exist in C2C v3.2"
+    assert not density_file.exists(), "density.json should not exist in C2C v3.2"
 
-    density_data = json.loads(density_file.read_text(encoding="utf-8"))
-    assert len(density_data) > 0
-
-    budget_data = json.loads(budget_file.read_text(encoding="utf-8"))
-    assert "total_estimated_tokens" in budget_data
-    assert "pages_requiring_vision" in budget_data
-    assert budget_data["vision_strategy"] in ("direct_cta", "parallel_patchers")
+    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+    assert "files" in manifest_data
+    assert "subparts" in manifest_data
+    assert "cta_mode" in manifest_data
+    assert "next_milestones_notes" not in manifest_data
 
 
-def test_plan_shards_partitioning(tmp_path):
-    """Test that plan_shards partitions competencies deterministically into K shards."""
+def test_plan_shards_blocker_without_pre_cta_manifest(tmp_path):
+    """Test that plan_shards strictly halts with BLOCKER if pre_cta_manifest.json is missing."""
     cta_source = SKILL_DIR / "examples" / "edo" / "cta.json"
     if not cta_source.exists():
         cta_source = SKILL_DIR / "examples" / "edp" / "cta.json"
+
+    # With no pre_cta_manifest.json in tmp_path, it must raise FileNotFoundError
+    with pytest.raises(FileNotFoundError, match="BLOCKER:: No existe pre_cta_manifest.json"):
+        plan_shards(cta_path=cta_source, output_dir=tmp_path / "shards")
+
+
+def test_plan_shards_partitioning(tmp_path):
+    """Test that plan_shards partitions competencies deterministically into K shards with pre_shard_manifest.json."""
+    cta_source = SKILL_DIR / "examples" / "edo" / "cta.json"
+    if not cta_source.exists():
+        cta_source = SKILL_DIR / "examples" / "edp" / "cta.json"
+
+    # Seed pre_cta_manifest.json in work dir (parent of shards)
+    pre_cta = {
+        "course_id": "test_course",
+        "cta_mode": "direct",
+        "total_files": 1,
+        "total_pages": 10,
+        "files": [{"doc": "doc.pdf", "file_index": 0, "type": "pdf", "total_pages": 10}],
+        "subparts": [],
+    }
+    (tmp_path / "pre_cta_manifest.json").write_text(json.dumps(pre_cta), encoding="utf-8")
 
     res = plan_shards(cta_path=cta_source, output_dir=tmp_path / "shards")
     assert res["total_shards"] >= 1
     assert res["total_competencies"] >= 1
 
-    manifest_file = tmp_path / "shards" / "manifest.json"
-    assert manifest_file.exists()
+    pre_shard_file = tmp_path / "shards" / "pre_shard_manifest.json"
+    assert pre_shard_file.exists(), "pre_shard_manifest.json was not created"
 
     all_sharded_ids = []
     for s in res["shards"]:
         all_sharded_ids.extend(s["competency_ids"])
-        s_file = Path(s["shard_file"])
+        s_file = tmp_path / "shards" / f"{s['shard_id']}.json"
         assert s_file.exists()
         s_content = json.loads(s_file.read_text(encoding="utf-8"))
         assert "competencies" in s_content

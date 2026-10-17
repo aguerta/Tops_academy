@@ -140,15 +140,75 @@ class TranscriptParser:
         records = []
         if not path.exists():
             return records
-        with open(path, "r", encoding="utf-8", errors="ignore") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    records.append(json.loads(line))
-                except Exception:
-                    continue
+
+        truncated_steps: Dict[int, int] = {}
+        truncated_lines: Dict[int, int] = {}
+
+        try:
+            with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                for line_idx, line in enumerate(f):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        rec = json.loads(line)
+                        rec_idx = len(records)
+                        records.append(rec)
+                        if rec.get("truncated_fields"):
+                            s_idx = rec.get("step_index")
+                            if s_idx is not None:
+                                truncated_steps[s_idx] = rec_idx
+                            truncated_lines[line_idx] = rec_idx
+                    except Exception:
+                        pass
+        except Exception:
+            return records
+
+        if not truncated_steps and not truncated_lines:
+            return records
+
+        full_path = path.parent / "transcript_full.jsonl"
+        if not full_path.is_file():
+            return records
+
+        needed_steps = set(truncated_steps.keys())
+        needed_lines = set(truncated_lines.keys())
+        _step_re = re.compile(r'\{"step_index":\s*(\d+)')
+
+        try:
+            with open(full_path, "r", encoding="utf-8", errors="ignore") as f:
+                for line_idx, line in enumerate(f):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    m = _step_re.match(line[:50])
+                    matched_step = int(m.group(1)) if m else None
+
+                    is_needed = False
+                    rec_idx = None
+
+                    if matched_step is not None and matched_step in needed_steps:
+                        is_needed = True
+                        rec_idx = truncated_steps[matched_step]
+                    elif line_idx in needed_lines:
+                        is_needed = True
+                        rec_idx = truncated_lines[line_idx]
+
+                    if is_needed and rec_idx is not None:
+                        try:
+                            full_rec = json.loads(line)
+                            records[rec_idx] = full_rec
+                        except Exception:
+                            pass
+                        if matched_step is not None and matched_step in needed_steps:
+                            needed_steps.remove(matched_step)
+                        if line_idx in needed_lines:
+                            needed_lines.remove(line_idx)
+                        if not needed_steps and not needed_lines:
+                            break
+        except Exception:
+            pass
+
         return records
 
     @staticmethod
@@ -237,9 +297,19 @@ class TranscriptParser:
                     type_lower = type_name.lower()
                     if "vision" in role_lower or "handout" in role_lower or "vision" in type_lower:
                         category = "vision"
-                    elif "mapper" in role_lower or "cta section" in role_lower or "map" in type_lower:
+                    elif (
+                        "mapper" in role_lower
+                        or "cta section" in role_lower
+                        or "map" in type_lower
+                        or "part_" in role_lower
+                        or "part_" in prompt_preview.lower()
+                        or "subpart" in role_lower
+                        or "subpart" in prompt_preview.lower()
+                    ):
                         category = "cta_mapper"
-                    elif "harmonizer" in role_lower or "cta reduce" in role_lower or "direct cta" in role_lower or "cta architect" in role_lower or "cta-direct" in type_lower:
+                    elif "harmonizer" in role_lower or "cta reduce" in role_lower or "cta-reduce" in type_lower:
+                        category = "cta_harmonizer"
+                    elif "direct cta" in role_lower or "cta architect" in role_lower or "cta-direct" in type_lower or "cta" in type_lower:
                         category = "cta_harmonizer"
                     elif "author" in role_lower or "shard" in role_lower or "author" in type_lower:
                         category = "author"
@@ -303,25 +373,75 @@ class WorkloadExtractor:
         candidate_dirs = []
         if work_dir and work_dir.exists():
             candidate_dirs.append(work_dir)
-        candidate_dirs.extend([
-            workspace_root / "work",
-            workspace_root / "courses" / "solow_model" / "work",
-            workspace_root / "work_test_v3"
-        ])
+        candidate_dirs.append(workspace_root / "work")
+        courses_dir = workspace_root / "courses"
+        if courses_dir.exists():
+            for c_sub in courses_dir.iterdir():
+                if c_sub.is_dir() and (c_sub / "work").exists():
+                    candidate_dirs.append(c_sub / "work")
+        candidate_dirs.append(workspace_root / "work_test_v3")
 
         found_work: Optional[Path] = None
         for cd in candidate_dirs:
-            if cd.exists() and (cd / "budget.json").exists() and (cd / "order.json").exists():
+            if cd.exists() and (
+                (cd / "budget.json").exists()
+                or (cd / "pre_cta_manifest.json").exists()
+                or (cd / "state.json").exists()
+                or (cd / "order.json").exists()
+                or (cd / "cta.json").exists()
+            ):
                 found_work = cd
                 break
-        if not found_work:
-            for cd in candidate_dirs:
-                if cd.exists() and ((cd / "order.json").exists() or (cd / "cta.json").exists()):
-                    found_work = cd
-                    break
 
         if found_work:
             workload["work_dir"] = str(found_work)
+
+            # 0. Pipeline State & Telemetry Snapshots (C2C v3.2)
+            state_file = found_work / "state.json"
+            if not state_file.exists():
+                state_file = workspace_root / "work" / "state.json"
+            if state_file.exists():
+                try:
+                    sdata = json.loads(state_file.read_text(encoding="utf-8"))
+                    workload["pipeline_state"] = sdata
+                    if sdata.get("course_id") and workload["course_id"] in ("unknown", "course_generic"):
+                        workload["course_id"] = sdata.get("course_id")
+                    if sdata.get("course_title") and workload["course_title"] in ("unknown", "course_generic"):
+                        workload["course_title"] = sdata.get("course_title")
+                    if sdata.get("status"):
+                        workload["pipeline_status"] = sdata.get("status")
+                except Exception:
+                    pass
+
+            pre_cta_file = found_work / "pre_cta_manifest.json"
+            if not pre_cta_file.exists():
+                pre_cta_file = workspace_root / "work" / "pre_cta_manifest.json"
+            if pre_cta_file.exists():
+                try:
+                    pc_data = json.loads(pre_cta_file.read_text(encoding="utf-8"))
+                    if pc_data.get("course_id") and workload["course_id"] in ("unknown", "course_generic"):
+                        workload["course_id"] = pc_data.get("course_id")
+                    if pc_data.get("course_title") and workload["course_title"] in ("unknown", "course_generic"):
+                        workload["course_title"] = pc_data.get("course_title")
+                    if pc_data.get("cta_mode"):
+                        workload["cta_mode"] = pc_data.get("cta_mode")
+                    if pc_data.get("total_items") and workload["total_pages_or_slides"] == 0:
+                        workload["total_pages_or_slides"] = pc_data.get("total_items")
+                except Exception:
+                    pass
+
+            telem_dir = found_work / "telemetry"
+            if not telem_dir.exists():
+                telem_dir = workspace_root / "work" / "telemetry"
+            if telem_dir.exists() and telem_dir.is_dir():
+                telem_files = sorted(list(telem_dir.glob("*.json")))
+                telemetry_snapshots = []
+                for tf in telem_files:
+                    try:
+                        telemetry_snapshots.append(json.loads(tf.read_text(encoding="utf-8")))
+                    except Exception:
+                        pass
+                workload["telemetry_snapshots"] = telemetry_snapshots
 
             # 1. Budget & Vision
             budget_file = found_work / "budget.json"
@@ -392,12 +512,39 @@ class WorkloadExtractor:
                     pass
 
             # 5. Shards & Competencies mapping
+            pre_shard_file = found_work / "pre_shard_manifest.json"
+            if not pre_shard_file.exists():
+                pre_shard_file = workspace_root / "work" / "pre_shard_manifest.json"
+            if pre_shard_file.exists():
+                try:
+                    ps_data = json.loads(pre_shard_file.read_text(encoding="utf-8"))
+                    if ps_data.get("course_id") and (workload["course_id"] in ("unknown", "course_generic") or workload["course_id"].startswith("tmp")):
+                        workload["course_id"] = ps_data.get("course_id")
+                    if ps_data.get("course_title") and (workload["course_title"] in ("unknown", "course_generic") or workload["course_title"].startswith("tmp")):
+                        workload["course_title"] = ps_data.get("course_title")
+                    if ps_data.get("total_shards"):
+                        workload["shards_count"] = ps_data.get("total_shards")
+                    if ps_data.get("total_competencies"):
+                        workload["competencies_count"] = ps_data.get("total_competencies")
+                    for s_info in ps_data.get("shards", []):
+                        s_id = s_info.get("shard_id")
+                        if s_id:
+                            c_ids = s_info.get("competency_ids") or [c.get("id") if isinstance(c, dict) else c for c in s_info.get("competencies", [])]
+                            workload["shards_competencies_map"][s_id] = {
+                                "competency_ids": c_ids,
+                                "count": len(c_ids)
+                            }
+                except Exception:
+                    pass
+
             shards_dir = found_work / "shards"
             if not shards_dir.exists():
                 shards_dir = workspace_root / "work" / "shards"
             if shards_dir.exists():
                 manifest_file = shards_dir / "manifest.json"
-                if manifest_file.exists():
+                if not manifest_file.exists():
+                    manifest_file = shards_dir / "pre_shard_manifest.json"
+                if manifest_file.exists() and not workload["shards_competencies_map"]:
                     try:
                         m_data = json.loads(manifest_file.read_text(encoding="utf-8"))
                         workload["shards_count"] = m_data.get("total_shards", 0)
@@ -406,9 +553,10 @@ class WorkloadExtractor:
                         for s_info in m_data.get("shards", []):
                             s_id = s_info.get("shard_id")
                             if s_id:
+                                c_ids = s_info.get("competency_ids") or [c.get("id") if isinstance(c, dict) else c for c in s_info.get("competencies", [])]
                                 workload["shards_competencies_map"][s_id] = {
-                                    "competency_ids": s_info.get("competency_ids", []),
-                                    "count": s_info.get("competency_count", 0)
+                                    "competency_ids": c_ids,
+                                    "count": len(c_ids)
                                 }
                     except Exception:
                         pass
@@ -419,9 +567,10 @@ class WorkloadExtractor:
                         try:
                             s_data = json.loads(sf.read_text(encoding="utf-8"))
                             s_id = sf.stem # shard_01
+                            c_ids = s_data.get("competency_ids") or [c.get("id") if isinstance(c, dict) else c for c in s_data.get("competencies", [])]
                             workload["shards_competencies_map"][s_id] = {
-                                "competency_ids": s_data.get("competency_ids", []),
-                                "count": len(s_data.get("competency_ids", []))
+                                "competency_ids": c_ids,
+                                "count": len(c_ids)
                             }
                         except Exception:
                             pass
@@ -451,8 +600,8 @@ class WorkloadExtractor:
                 content = rec.get("content", "")
                 if content:
                     transcript_full_text += content + "\n"
-                    if workload["course_id"] in ("unknown", "course_generic"):
-                        m_cid = re.search(r"'(solow[a-zA-Z0-9_]*)'|'([a-zA-Z0-9_]+_model)'|courses/([a-zA-Z0-9_]+)\.json", content)
+                    if workload["course_id"] in ("unknown", "course_generic", "COURSE_ID", "course_id"):
+                        m_cid = re.search(r"courses/([a-zA-Z0-9_-]+)\.json|course_id\s*[:=]\s*['\"]([a-zA-Z0-9_-]+)['\"]|'([a-zA-Z0-9_]+_model)'", content)
                         if m_cid:
                             workload["course_id"] = next(g for g in m_cid.groups() if g)
 
@@ -547,8 +696,8 @@ class WorkloadExtractor:
         if content_dir.exists():
             clean_cid = workload["course_id"].lower().replace("_", "")
             matching_dirs = [d for d in content_dir.iterdir() if d.is_dir() and clean_cid in d.name.lower().replace("_", "")]
-            if not matching_dirs and "solow" in transcript_full_text.lower():
-                matching_dirs = [d for d in content_dir.iterdir() if d.is_dir() and "solow" in d.name.lower()]
+            if not matching_dirs and transcript_full_text:
+                matching_dirs = [d for d in content_dir.iterdir() if d.is_dir() and d.name.lower() in transcript_full_text.lower()]
             if matching_dirs:
                 c_sub = matching_dirs[0]
                 if not workload["source_files"]:
@@ -568,22 +717,36 @@ class WorkloadExtractor:
                     workload["total_pages_or_slides"] = sum(f["pages"] for f in workload["source_files"])
 
         if workload["course_id"] in ("unknown", "course_generic", "COURSE_ID", "course_id") and found_work:
-            s01 = found_work / "shards" / "shard_01.json"
-            if not s01.exists():
-                s01 = workspace_root / "work" / "shards" / "shard_01.json"
-            if s01.exists():
+            s_files = sorted(list((found_work / "shards").glob("shard_*.json"))) if (found_work / "shards").exists() else []
+            if not s_files and (workspace_root / "work" / "shards").exists():
+                s_files = sorted(list((workspace_root / "work" / "shards").glob("shard_*.json")))
+            for sf in s_files:
                 try:
-                    s01_d = json.loads(s01.read_text(encoding="utf-8"))
-                    if s01_d.get("course_id"):
-                        workload["course_id"] = s01_d.get("course_id")
-                    if s01_d.get("course_title"):
-                        workload["course_title"] = s01_d.get("course_title")
+                    sf_d = json.loads(sf.read_text(encoding="utf-8"))
+                    if sf_d.get("course_id"):
+                        workload["course_id"] = sf_d.get("course_id")
+                    if sf_d.get("course_title"):
+                        workload["course_title"] = sf_d.get("course_title")
+                    if workload["course_id"] not in ("unknown", "course_generic", "COURSE_ID", "course_id"):
+                        break
                 except Exception:
                     pass
 
-        if workload["course_id"] in ("unknown", "course_generic", "COURSE_ID", "course_id", "solow_model") and ("solow" in str(found_work or "").lower() or "solow" in transcript_full_text.lower()):
-            workload["course_id"] = "solow_growth_model"
-            workload["course_title"] = "El Modelo de Crecimiento Económico de Solow (1956)"
+        # If course_id is still unknown, infer from work_dir path or recent courses/*.json
+        if workload["course_id"] in ("unknown", "course_generic", "COURSE_ID", "course_id"):
+            if found_work and found_work.parent.name == "courses":
+                workload["course_id"] = found_work.name
+            elif found_work and found_work.parent.parent.name == "courses":
+                workload["course_id"] = found_work.parent.name
+            elif courses_dir.exists():
+                c_jsons = sorted(list(courses_dir.glob("*.json")), key=lambda p: p.stat().st_mtime, reverse=True)
+                if c_jsons:
+                    try:
+                        cj_obj = json.loads(c_jsons[0].read_text(encoding="utf-8"))
+                        workload["course_id"] = cj_obj.get("course_id", c_jsons[0].stem)
+                        workload["course_title"] = cj_obj.get("title") or cj_obj.get("course_title", workload["course_title"])
+                    except Exception:
+                        pass
 
         # Re-check published courses in courses/ once course_id is identified
         courses_dir = workspace_root / "courses"
@@ -644,22 +807,53 @@ class ExecutionAuditor:
         # 3. Discover ALL subagents across transcript
         discovered_subs = TranscriptParser.discover_all_subagents(self.root_records, self.brain_dir)
 
-        # Populate shard mapping if work directory was cleaned up post-publication
+        # Populate shard mapping dynamically if work directory was cleaned up post-publication
         if not workload.get("shards_competencies_map"):
             author_subs_meta = [s for s in discovered_subs if s.get("category") == "author"]
             if author_subs_meta:
                 workload["shards_count"] = len(author_subs_meta)
-                canonical_shards = {
-                    "shard_01": ["H-01", "C-01", "Hab-01", "C-02", "H-02", "Hab-02", "C-03"],
-                    "shard_02": ["H-03", "C-04", "Hab-03", "C-05", "C-06", "C-07"],
-                    "shard_03": ["Hab-04", "Hab-05", "Hab-06", "H-04", "C-08", "Hab-07"],
-                    "shard_04": ["Hab-08", "C-09", "C-10", "H-05", "C-11", "C-12"]
-                }
-                for sid, c_ids in canonical_shards.items():
-                    workload["shards_competencies_map"][sid] = {
-                        "competency_ids": c_ids,
-                        "count": len(c_ids)
-                    }
+                # Check if shards manifest exists in any workspace location
+                found_manifest = False
+                for m_cand in [
+                    Path.cwd() / "work" / "pre_shard_manifest.json",
+                    Path.cwd() / "work" / "shards" / "manifest.json",
+                ]:
+                    if m_cand.exists():
+                        try:
+                            m_d = json.loads(m_cand.read_text(encoding="utf-8"))
+                            for s_info in m_d.get("shards", []):
+                                sid = s_info.get("shard_id")
+                                if sid:
+                                    c_ids = s_info.get("competency_ids") or [c.get("id") if isinstance(c, dict) else c for c in s_info.get("competencies", [])]
+                                    workload["shards_competencies_map"][sid] = {
+                                        "competency_ids": c_ids,
+                                        "count": len(c_ids)
+                                    }
+                            if workload["shards_competencies_map"]:
+                                found_manifest = True
+                                break
+                        except Exception:
+                            pass
+                if not found_manifest:
+                    # Dynamically derive from author subagent prompts/transcripts for ANY N shards
+                    for a_sub in author_subs_meta:
+                        sid = a_sub.get("shard_id") or f"shard_{str(len(workload['shards_competencies_map']) + 1).zfill(2)}"
+                        sub_cid = a_sub.get("conversation_id", "")
+                        sub_path = self.brain_dir / sub_cid / ".system_generated" / "logs" / "transcript.jsonl"
+                        extracted_cids = []
+                        if sub_path.exists():
+                            try:
+                                with open(sub_path, "r", encoding="utf-8", errors="ignore") as f:
+                                    first_line = f.readline()
+                                    if first_line:
+                                        found_ids = re.findall(r"\b([A-Za-z0-9]+-\d{2,3})\b", first_line)
+                                        extracted_cids = list(dict.fromkeys(found_ids))
+                            except Exception:
+                                pass
+                        workload["shards_competencies_map"][sid] = {
+                            "competency_ids": extracted_cids,
+                            "count": len(extracted_cids)
+                        }
 
         # 4. Deep audit of each subagent
         subagent_nodes = []
@@ -721,6 +915,18 @@ class ExecutionAuditor:
         # 8. Bottleneck Diagnoses
         bottlenecks = self._detect_bottlenecks(subagent_nodes, stage_deep_dives, interventions)
 
+        total_thinking_chars = root_metrics.get("thinking_chars", 0) + sum(s.get("thinking_chars", 0) for s in subagent_nodes)
+        total_thinking_turns = root_metrics.get("thinking_turns_count", 0) + sum(s.get("thinking_turns_count", 0) for s in subagent_nodes)
+        thinking_traces_summary = {
+            "total_thinking_turns": total_thinking_turns,
+            "total_thinking_chars": total_thinking_chars,
+            "orchestrator_thinking_turns": root_metrics.get("thinking_turns_count", 0),
+            "orchestrator_thinking_chars": root_metrics.get("thinking_chars", 0),
+            "subagents_thinking_turns": sum(s.get("thinking_turns_count", 0) for s in subagent_nodes),
+            "subagents_thinking_chars": sum(s.get("thinking_chars", 0) for s in subagent_nodes),
+            "stage_snapshots": workload.get("pipeline_state", {}).get("thinking_traces_summary", {})
+        }
+
         return {
             "meta": {
                 "audit_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
@@ -739,6 +945,8 @@ class ExecutionAuditor:
                 "total_input_tokens": total_input_tokens,
                 "total_output_tokens": total_output_tokens,
                 "total_cache_read_tokens": total_cache_tokens,
+                "total_thinking_turns": total_thinking_turns,
+                "total_thinking_chars": total_thinking_chars,
                 "total_turns": root_metrics["turns_count"] + sum(s["turns_count"] for s in subagent_nodes),
                 "total_subagents_spawned": len(subagent_nodes),
                 "tool_calls_total": root_metrics["tool_calls_count"] + sum(s["tool_calls_count"] for s in subagent_nodes),
@@ -754,7 +962,10 @@ class ExecutionAuditor:
                 "interventions": interventions
             },
             "bottlenecks": bottlenecks,
-            "subagents": subagent_nodes
+            "subagents": subagent_nodes,
+            "pipeline_state": workload.get("pipeline_state"),
+            "telemetry_snapshots": workload.get("telemetry_snapshots", []),
+            "thinking_traces_summary": thinking_traces_summary
         }
 
     def _analyze_conversation(self, records: List[Dict[str, Any]], conv_id: str, label: str) -> Dict[str, Any]:
@@ -763,6 +974,9 @@ class ExecutionAuditor:
         output_tokens = 0
         cache_read_tokens = 0
         thinking_chars = 0
+        thinking_turns_count = 0
+        last_thinking = ""
+        error_thinking_traces = []
         turns_count = 0
         tool_calls_by_name: Dict[str, int] = {}
         tool_errors_count = 0
@@ -785,6 +999,12 @@ class ExecutionAuditor:
 
             if status == "ERROR":
                 tool_errors_count += 1
+                if last_thinking:
+                    error_thinking_traces.append({
+                        "step_index": rec.get("step_index"),
+                        "created_at": ts_str,
+                        "thinking_snippet": last_thinking[-300:].strip()
+                    })
 
             if rec_type == "PLANNER_RESPONSE":
                 turns_count += 1
@@ -798,6 +1018,8 @@ class ExecutionAuditor:
                 th = rec.get("thinking", "")
                 if th:
                     thinking_chars += len(th)
+                    thinking_turns_count += 1
+                    last_thinking = th
 
                 tools_in_step = []
                 for tc in rec.get("tool_calls", []):
@@ -824,6 +1046,12 @@ class ExecutionAuditor:
                             "step_index": rec.get("step_index"),
                             "snippet": content[:200]
                         })
+                        if last_thinking:
+                            error_thinking_traces.append({
+                                "step_index": rec.get("step_index"),
+                                "created_at": ts_str,
+                                "thinking_snippet": last_thinking[-300:].strip()
+                            })
 
         start_time = min(timestamps) if timestamps else None
         end_time = max(timestamps) if timestamps else None
@@ -847,6 +1075,8 @@ class ExecutionAuditor:
             "active_tokens": input_tokens + output_tokens,
             "total_tokens": input_tokens + output_tokens + cache_read_tokens,
             "thinking_chars": thinking_chars,
+            "thinking_turns_count": thinking_turns_count,
+            "error_thinking_traces": error_thinking_traces[:5],
             "tool_calls_count": sum(tool_calls_by_name.values()),
             "tool_calls_by_name": tool_calls_by_name,
             "tool_errors_count": tool_errors_count,
@@ -978,19 +1208,37 @@ class ExecutionAuditor:
             "critical_path_agent": next((s["label"] for s in vision_subs if s["duration_seconds"] == max(v_durations)), "N/A") if v_durations else "N/A"
         }
 
-        # 2. Stage 1B: CTA
+        # 2. Stage 1B: CTA (Supports M CTA Architects in map-reduce and Direct mode)
         cta_mappers = [s for s in subagents if s.get("category") == "cta_mapper"]
-        cta_harm = next((s for s in subagents if s.get("category") == "cta_harmonizer"), None)
+        cta_harmonizers = [s for s in subagents if s.get("category") == "cta_harmonizer"]
+        cta_harm = cta_harmonizers[0] if cta_harmonizers else None
         mapper_durs = [s["duration_seconds"] for s in cta_mappers]
+        harm_durs = [s["duration_seconds"] for s in cta_harmonizers]
+
+        max_mapper = max(mapper_durs) if mapper_durs else 0.0
+        max_harm = max(harm_durs) if harm_durs else (cta_harm["duration_seconds"] if cta_harm else 0.0)
+        total_cta_wall = round(max_mapper + max_harm, 1)
+
+        all_cta_subs = cta_mappers + cta_harmonizers
+        total_cta_active_tokens = sum(s["active_tokens"] for s in all_cta_subs)
+
+        crit_agent = "N/A"
+        if mapper_durs and (max_mapper >= max_harm or not cta_harm):
+            crit_agent = next((s["label"] for s in cta_mappers if s["duration_seconds"] == max_mapper), "N/A")
+        elif cta_harm:
+            crit_agent = cta_harm["label"]
+
         stage_1b = {
+            "agents_count": len(all_cta_subs),
             "mappers_count": len(cta_mappers),
             "mappers": cta_mappers,
-            "mappers_max_wall_time": max(mapper_durs) if mapper_durs else 0.0,
+            "mappers_max_wall_time": max_mapper,
             "harmonizer": cta_harm,
-            "harmonizer_duration": cta_harm["duration_seconds"] if cta_harm else 0.0,
-            "total_stage_wall_time": round((max(mapper_durs) if mapper_durs else 0.0) + (cta_harm["duration_seconds"] if cta_harm else 0.0), 1),
-            "total_active_tokens": sum(s["active_tokens"] for s in cta_mappers) + (cta_harm["active_tokens"] if cta_harm else 0),
-            "critical_mapper": next((s["label"] for s in cta_mappers if s["duration_seconds"] == max(mapper_durs)), "N/A") if mapper_durs else "N/A"
+            "harmonizers": cta_harmonizers,
+            "harmonizer_duration": max_harm,
+            "total_stage_wall_time": total_cta_wall,
+            "total_active_tokens": total_cta_active_tokens,
+            "critical_mapper": crit_agent
         }
 
         # 3. Stage 3: Shard Authors
@@ -1054,17 +1302,17 @@ class ExecutionAuditor:
         else:
             passed_first_attempt = False
             badge = "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)"
+            interv_files = sorted(list(set(it.get("file", "") for it in verify_interventions if it.get("file"))))
+            interv_files_str = ", ".join(f"`{f}`" for f in interv_files[:5]) if interv_files else "archivos de reactivos"
+            err_str = f"con {initial_errors} errores iniciales" if initial_errors > 0 else "con discrepancias detectadas"
             summary_desc = (
-                f"Los blind judges y la verificación psicométrica NO pasaron limpios al primer intento. "
-                f"En la corrida inicial de verificación (Task-271), la validación previa colapsó con {initial_errors or 126} errores y violaciones "
-                f"psicométricas bloqueantes (regla R-18 de meta-información en opciones y regla R-19 de fugas de respuesta en reactivos FIB). "
-                f"El bucle de auto-reparación no pudo resolver los fallos de forma autónoma, requiriendo intervención directa del supervisor."
+                f"Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. "
+                f"La validación previa operó {err_str}, requiriendo rondas de auto-reparación o intervención técnica."
             )
             actions_taken = [
-                f"1. **Bucle de Auto-Reparación Autónomo**: El motor ejecutó RepairLoop con {initial_errors or 127} errores iniciales, pero colapsó al persistir fugas en `Q-C02-089`, `Q-H02-152` y `Q-Hab03-186..188`.",
-                f"2. **Intervención Manual del Supervisor ({len(verify_interventions)} operaciones)**: El orquestador intervino directamente en caliente sobre los archivos `Hab-03.json`, `C-02.json`, `H-02.json` y `Hab-05.json` mediante `replace_file_content`.",
-                "3. **Desarrollo de Scripts Ad-Hoc**: Se crearon y ejecutaron scripts de parcheo masivo regex (`fix_hab03.py`, `check_leaks.py`, `fix_all_templates.py`, `fix_cta_math.py`) para purgar pistas y fugas residuales.",
-                f"4. **Re-Ejecución y Certificación Final**: Se relanzó la etapa de verificación (`task-602`), completando con éxito la validación tras {repair_iters or 2} iteraciones de auto-reparación sobre el lote de {batch_items} reactivos."
+                f"1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+                f"2. **Intervenciones de Supervisor ({len(verify_interventions)} operaciones)**: Operaciones sobre {interv_files_str}.",
+                f"3. **Certificación y Verificación Final**: Se concluyó la validación tras {repair_iters or 1} iteraciones sobre el lote de {batch_items} reactivos."
             ]
 
         stage_5 = {
@@ -1076,8 +1324,8 @@ class ExecutionAuditor:
             "passed_first_attempt": passed_first_attempt,
             "badge": badge,
             "batch_items_count": batch_items,
-            "initial_errors_count": initial_errors or 126,
-            "repair_iterations": repair_iters or 2,
+            "initial_errors_count": initial_errors,
+            "repair_iterations": repair_iters,
             "supervisor_interventions_count": len(verify_interventions),
             "summary_desc": summary_desc,
             "actions_taken": actions_taken
@@ -1497,7 +1745,7 @@ class ReportGenerator:
             f"| **Corpus Sintetizado** | `{w['corpus_chars']:,} caracteres` ({w['corpus_words']:,} palabras) | Texto consolidado tras ingesta y visión |",
             f"| **Competencias Extraídas** | **`{w['competencies_count']} competencias`** | Desglose pedagógico (Hechos, Conceptos, Habilidades) |",
             f"| **Shards Particionados** | **`{w['shards_count']} shards`** | Unidades de trabajo concurrentes |",
-            f"| **Subagentes Desplegados** | **`{summary['total_subagents_spawned']} subagentes`** | Visión ({stg['stage_1a_vision']['agents_count']}), CTA ({stg['stage_1b_cta']['mappers_count']+1}), Autores ({stg['stage_3_authors']['shards_count']}) |",
+            f"| **Subagentes Desplegados** | **`{summary['total_subagents_spawned']} subagentes`** | Visión ({stg['stage_1a_vision']['agents_count']}), CTA ({stg['stage_1b_cta'].get('agents_count', stg['stage_1b_cta']['mappers_count'] + (1 if stg['stage_1b_cta']['harmonizer'] else 0))}), Autores ({stg['stage_3_authors']['shards_count']}) |",
             f"| **Reactivos Finales Validadas** | **`{w['questions_count']} preguntas`** | 100% conformes con invariantes de sandbox |",
             f"| **Tokens Entrada (Subagentes)** | **`{sum(s['input_tokens'] for s in subs):,}` tokens** | Contexto acumulativo enviado a subagentes |",
             f"| **Tokens Salida (Subagentes)** | **`{sum(s['output_tokens'] for s in subs):,}` tokens** | Código de plantillas y JSON generado |",
@@ -1541,7 +1789,13 @@ class ReportGenerator:
                 f"{va['cache_read_tokens']:,} | {va['active_tokens']:,} | **{va['duration_seconds']}s** |"
             )
 
-        cta_arch_desc = "DIRECT (1 Direct CTA Architect)" if stg['stage_1b_cta']['mappers_count'] == 0 else f"{w.get('cta_mode', 'mapreduce').upper()} ({stg['stage_1b_cta']['mappers_count']} Mappers + 1 Harmonizer)"
+        cta_subs_total = stg['stage_1b_cta'].get('agents_count', stg['stage_1b_cta']['mappers_count'] + (1 if stg['stage_1b_cta']['harmonizer'] else 0))
+        if stg['stage_1b_cta']['mappers_count'] == 0:
+            cta_arch_desc = f"DIRECT ({cta_subs_total} Direct CTA Architect)"
+        else:
+            cta_mode_name = w.get('cta_mode', 'mapreduce').upper()
+            harm_part = " + 1 Harmonizer" if stg['stage_1b_cta']['harmonizer'] else ""
+            cta_arch_desc = f"{cta_mode_name} ({stg['stage_1b_cta']['mappers_count']} Mappers{harm_part})"
         md.extend([
             "",
             "---",
@@ -1561,10 +1815,11 @@ class ReportGenerator:
                 f"| **{ca['label']}** | Mapper | {ca['turns_count']} | {ca['input_tokens']:,} | {ca['output_tokens']:,} | "
                 f"{ca['cache_read_tokens']:,} | {ca['tool_errors_count']} | **{ca['duration_seconds']}s** |"
             )
-        if stg["stage_1b_cta"]["harmonizer"]:
-            ha = stg["stage_1b_cta"]["harmonizer"]
+        harm_list = stg["stage_1b_cta"].get("harmonizers") or ([stg["stage_1b_cta"]["harmonizer"]] if stg["stage_1b_cta"]["harmonizer"] else [])
+        for ha in harm_list:
+            role_desc = "Direct Architect" if stg['stage_1b_cta']['mappers_count'] == 0 else "Harmonizer"
             md.append(
-                f"| **{ha['label']}** | Harmonizer | {ha['turns_count']} | {ha['input_tokens']:,} | {ha['output_tokens']:,} | "
+                f"| **{ha['label']}** | {role_desc} | {ha['turns_count']} | {ha['input_tokens']:,} | {ha['output_tokens']:,} | "
                 f"{ha['cache_read_tokens']:,} | {ha['tool_errors_count']} | **{ha['duration_seconds']}s** |"
             )
 
@@ -1679,10 +1934,33 @@ class ReportGenerator:
                     ""
                 ])
 
+        tt_summary = audit.get("thinking_traces_summary", {})
+        if tt_summary:
+            md.extend([
+                "---",
+                "",
+                "## 6. Telemetría de Razonamiento Cognitivo (Thinking Traces)",
+                "",
+                f"- **Total de Turnos con Razonamiento:** `{tt_summary.get('total_thinking_turns', 0)} turnos`",
+                f"- **Volumen Total de Razonamiento:** `{tt_summary.get('total_thinking_chars', 0):,} caracteres`",
+                f"- **Razonamiento del Orquestador:** `{tt_summary.get('orchestrator_thinking_turns', 0)} turnos` ({tt_summary.get('orchestrator_thinking_chars', 0):,} chars)",
+                f"- **Razonamiento de Subagentes:** `{tt_summary.get('subagents_thinking_turns', 0)} turnos` ({tt_summary.get('subagents_thinking_chars', 0):,} chars)",
+                "",
+                "| Agente / Subagente | Turnos de Thinking | Caracteres de Thinking | Trazas de Error Capturadas |",
+                "| :--- | :---: | :---: | :---: |"
+            ])
+            for s in subs:
+                err_traces_count = len(s.get("error_thinking_traces", []))
+                err_badge = f"⚠️ {err_traces_count}" if err_traces_count > 0 else "0"
+                md.append(
+                    f"| **{s['label']}** | {s.get('thinking_turns_count', 0)} | {s.get('thinking_chars', 0):,} | {err_badge} |"
+                )
+            md.append("")
+
         md.extend([
             "---",
             "",
-            "## 6. Recomendaciones de Arquitectura y Contratos Isomórficos",
+            "## 7. Recomendaciones de Arquitectura y Contratos Isomórficos",
             "",
             "1. **Erradicación del Supervisor Reparador mediante Shift-Left:** Integrar las reglas psicométricas (R-18 meta-giveaways, R-19 fugas FIB, R-20 KaTeX) dentro de `check_templates.py --strict` para que los autores corrijan su propio código en su hilo, eliminando las 17 intervenciones manuales del orquestador.",
             "2. **Adopción de Sharding Amortizado (7-8 Competencias/Shard):** Balancear las competencias asignadas por shard para evitar shards enanos de 2 competencias, reduciendo el consumo de tokens en un 55-70%.",
@@ -2155,8 +2433,8 @@ def main():
     print(f"\n[+] Deep Forensic Audit Complete!")
     print(f"    - Wall-Clock Time: {audit_result['summary']['wall_clock_minutes']} min (Speedup: {audit_result['summary']['parallel_speedup_factor']}x)")
     print(f"    - Total Tokens:    {audit_result['summary']['total_tokens']:,} (Active: {audit_result['summary']['total_active_tokens']:,})")
-    print(f"    - Unit Economics:  {audit_result['unit_economics']['tokens_per_question']:,} tokens/question | {audit_result['unit_economics']['seconds_per_question']}s/question")
-    print(f"    - Subagents Run:   {audit_result['summary']['total_subagents_spawned']} (Vision: {audit_result['stage_deep_dives']['stage_1a_vision']['agents_count']}, CTA: {audit_result['stage_deep_dives']['stage_1b_cta']['mappers_count']+1}, Authors: {audit_result['stage_deep_dives']['stage_3_authors']['shards_count']})")
+    cta_subs_total = audit_result['stage_deep_dives']['stage_1b_cta'].get('agents_count', audit_result['stage_deep_dives']['stage_1b_cta']['mappers_count'] + (1 if audit_result['stage_deep_dives']['stage_1b_cta']['harmonizer'] else 0))
+    print(f"    - Subagents Run:   {audit_result['summary']['total_subagents_spawned']} (Vision: {audit_result['stage_deep_dives']['stage_1a_vision']['agents_count']}, CTA: {cta_subs_total}, Authors: {audit_result['stage_deep_dives']['stage_3_authors']['shards_count']})")
     print(f"    - Shards Straggler:{audit_result['stage_deep_dives']['stage_3_authors']['straggler_shard']} ({audit_result['stage_deep_dives']['stage_3_authors']['max_duration_seconds']}s)")
     print(f"    - Supervisor Fixes:{audit_result['orchestrator_audit']['interventions_count']} manual interventions detected")
     print(f"    - Run Directory:   {run_dir}")

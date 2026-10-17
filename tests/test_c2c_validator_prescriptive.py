@@ -22,7 +22,7 @@ if str(_skills_root) not in sys.path:
 from check_templates import check_single_template, format_diagnostic_error
 from engine.invariants import check_instance_invariants, validate_katex_syntax
 from course_publisher import CoursePublisher
-from dispatch import ROLE_SPECS, TYPE_DEFINITIONS, generate_author_bundle, generate_judge_bundle, generate_cta_direct_bundle
+from dispatch import ROLE_SPECS, get_type_definitions, dispatch_authors, dispatch_judges, dispatch_cta
 
 
 class TestPrescriptiveDiagnosticsAndAccumulation:
@@ -219,60 +219,78 @@ class TestDispatchContractsAndEpistemicClosure:
     """Tests that dispatch role specs enforce contracts and forbidden lists."""
 
     def test_author_forbidden_list_includes_validator(self):
-        """c2c-author must have check_templates.py and validator rules in forbidden list."""
+        """c2c_shard_author must have scratch and engine in forbidden list."""
         author_spec = ROLE_SPECS["author"]
         forbidden = [f.lower() for f in author_spec["forbidden"]]
 
-        assert any("check_templates.py" in f for f in forbidden)
-        assert any("rules.py" in f or "validator" in f for f in forbidden)
+        assert any("engine" in f for f in forbidden)
+        assert any("scratch" in f for f in forbidden)
 
     def test_judge_forbidden_list_includes_web_tools(self):
-        """c2c-judge must have search_web and read_url_content in forbidden list."""
+        """c2c_judge must have search_web and read_url_content in forbidden list."""
         judge_spec = ROLE_SPECS["judge"]
         forbidden = [f.lower() for f in judge_spec["forbidden"]]
 
         assert any("search_web" in f for f in forbidden)
         assert any("read_url_content" in f for f in forbidden)
 
-    def test_cta_direct_spec_declares_batch_limit(self):
-        """c2c-cta-direct type description must declare max 10 competencies batch limit."""
-        cta_type = next(t for t in TYPE_DEFINITIONS if t["name"] == "c2c-cta-direct")
+    def test_cta_spec_declares_architect_contract(self):
+        """c2c_cta_architect type description must declare positional tuples."""
+        cta_type = next(t for t in get_type_definitions() if t["name"] == "c2c_cta_architect")
         desc = cta_type["description"]
 
-        assert "10 competencias" in desc or "max 10" in desc.lower() or "máximo 10" in desc.lower()
+        assert "c2c v3.2" in desc.lower() or "tuples" in desc.lower() or "cta_data.py" in desc.lower()
 
-    def test_generate_bundles_inject_repaired_contracts(self, tmp_path):
-        """Bundle generators must write strict atomic contracts to bundle markdown."""
+    def test_dispatch_generators_inject_repaired_contracts(self, tmp_path):
+        """Zero-bundle dispatch generators must write item files with strict atomic contracts."""
         work_dir = tmp_path / "work"
         work_dir.mkdir(parents=True)
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "files": [{"doc": "doc1.pdf", "path": "content/doc1.pdf", "total_pages": 10, "valid_page_range": [1, 10]}]
+        }), encoding="utf-8")
+        (work_dir / "cta.json").write_text(json.dumps({
+            "competencies": [{"id": "C-01", "name": "Comp 1"}]
+        }), encoding="utf-8")
+        shards_dir = work_dir / "shards"
+        shards_dir.mkdir(parents=True)
+        (shards_dir / "pre_shard_manifest.json").write_text(json.dumps({
+            "shards": [{"shard_id": "shard_01", "competency_ids": ["C-01"]}]
+        }), encoding="utf-8")
 
-        author_bundle_path = generate_author_bundle(
-            work_dir=work_dir,
-            shard_id="01",
-            read_paths=["work/shards/shard_01.json"],
-            write_paths=["work/templates/C-01.json"],
-        )
-        assert author_bundle_path.exists()
-        bundle_text = author_bundle_path.read_text(encoding="utf-8")
-        assert "PROHIBICIÓN ESTRICTA DE INTROSPECCIÓN" in bundle_text or "Cero introspección" in bundle_text
-        assert "check_templates.py" in bundle_text
+        res_author = dispatch_authors(work_dir=work_dir)
+        assert len(res_author["Subagents"]) >= 1
+        item_author = Path(res_author["item_files"][0])
+        assert item_author.exists()
+        prompt_author = json.loads(item_author.read_text(encoding="utf-8"))["Prompt"]
+        assert "compile_shard.py" in prompt_author
+        assert "shard_01_data.py" in prompt_author
 
-        judge_bundle_path = generate_judge_bundle(
-            work_dir=work_dir,
-            judge_id="01",
-            read_paths=["work/judge_batch_01.json"],
-            write_paths=["work/judge_responses_01.json"],
-        )
-        assert judge_bundle_path.exists()
-        judge_text = judge_bundle_path.read_text(encoding="utf-8")
-        assert "Cero búsquedas web" in judge_text or "search_web" in judge_text
-        assert "BLOCKED:" in judge_text
+        # Seed items for judge
+        verif_dir = work_dir / "verification"
+        verif_dir.mkdir(parents=True)
+        (verif_dir / "judge_batch_01.json").write_text(json.dumps({
+            "items": [
+                {
+                    "item_id": "item_1",
+                    "competency_id": "C-01",
+                    "stem": "¿Cuánto es 2+2?",
+                    "options": [
+                        {"content": "4", "is_correct": True},
+                        {"content": "3", "is_correct": False, "distractor_id": "D-01"}
+                    ]
+                }
+            ]
+        }), encoding="utf-8")
+        res_judge = dispatch_judges(work_dir=work_dir)
+        assert len(res_judge["Subagents"]) >= 1
+        item_judge = Path(res_judge["item_files"][0])
+        assert item_judge.exists()
+        prompt_judge = json.loads(item_judge.read_text(encoding="utf-8"))["Prompt"]
+        assert "search_web" in prompt_judge or "read_url_content" in prompt_judge
 
-        cta_bundle_path = generate_cta_direct_bundle(
-            work_dir=work_dir,
-            read_paths=["content/test/*"],
-            write_paths=["work/cta.json", "work/cta.md"],
-        )
-        assert cta_bundle_path.exists()
-        cta_text = cta_bundle_path.read_text(encoding="utf-8")
-        assert "10 competencias" in cta_text or "máximo 10" in cta_text
+        res_cta = dispatch_cta(work_dir=work_dir)
+        assert len(res_cta["Subagents"]) >= 1
+        item_cta = Path(res_cta["item_files"][0])
+        assert item_cta.exists()
+        prompt_cta = json.loads(item_cta.read_text(encoding="utf-8"))["Prompt"]
+        assert "compile_cta.py" in prompt_cta or "cta_data.py" in prompt_cta

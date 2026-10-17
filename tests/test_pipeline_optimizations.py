@@ -19,7 +19,7 @@ SKILL_DIR = Path(__file__).parent.parent / ".agents" / "skills" / "content-to-co
 if str(SKILL_DIR) not in sys.path:
     sys.path.insert(0, str(SKILL_DIR))
 
-from ingest import consolidate_document_patches
+from ingest import ingest_course
 from plan_shards import plan_shards
 from engine.assemble import assemble_question
 from engine.diversity import evaluate_competency_diversity
@@ -31,44 +31,28 @@ from judge import compare_judge_responses, generate_judge_batch
 # 1. INGEST & CTA SEQUENTIAL ORDER TESTS
 # ==============================================================================
 
-def test_consolidate_document_patches_ordering(tmp_path):
-    """Verify that consolidate_document_patches merges pages per document preserving sequence."""
-    patches_dir = tmp_path / "patches"
-    patches_dir.mkdir(parents=True)
+def test_ingest_course_document_ordering(tmp_path):
+    """Verify that ingest_course discovers and orders files naturally into pre_cta_manifest.json."""
+    try:
+        import pymupdf
+    except ImportError:
+        import fitz as pymupdf
 
-    # Document A pages
-    (patches_dir / "lecture01_page001.md").write_text("# Solow Intro\nPage 1 content", encoding="utf-8")
-    (patches_dir / "lecture01_page002.md").write_text("# Production Function\nPage 2 content", encoding="utf-8")
-    (patches_dir / "lecture01_page010.md").write_text("# Steady State\nPage 10 content", encoding="utf-8")
+    in_dir = tmp_path / "inputs"
+    in_dir.mkdir(parents=True)
+    for fname in ["lecture10.pdf", "lecture2.pdf", "lecture1.pdf"]:
+        doc = pymupdf.open()
+        doc.new_page()
+        doc.save(str(in_dir / fname))
+        doc.close()
 
-    # Document B pages (separate document)
-    (patches_dir / "stats_doc_p01.md").write_text("# Image 1\nBoard work 1", encoding="utf-8")
-    (patches_dir / "stats_doc_p02.md").write_text("# Image 2\nBoard work 2", encoding="utf-8")
-
-    consolidated = consolidate_document_patches(tmp_path)
-    assert len(consolidated) == 2
-
-    # Verify lecture01.md
-    doc_a_file = patches_dir / "lecture01.md"
-    assert doc_a_file.exists()
-    content_a = doc_a_file.read_text(encoding="utf-8")
-    assert "Page 1 content" in content_a
-    assert "Page 2 content" in content_a
-    assert "Page 10 content" in content_a
-
-    # Verify order: page 1 appears before page 2, which appears before page 10
-    pos1 = content_a.find("Page 1 content")
-    pos2 = content_a.find("Page 2 content")
-    pos10 = content_a.find("Page 10 content")
-    assert pos1 < pos2 < pos10, "Page order was not preserved sequentially in merged file"
-
-    # Verify stats_doc.md
-    doc_b_file = patches_dir / "stats_doc.md"
-    assert doc_b_file.exists()
-    content_b = doc_b_file.read_text(encoding="utf-8")
-    pos_b1 = content_b.find("Board work 1")
-    pos_b2 = content_b.find("Board work 2")
-    assert pos_b1 < pos_b2
+    work_dir = tmp_path / "work"
+    manifest = ingest_course(in_dir, work_dir, course_id="test_order")
+    assert manifest["total_files"] == 3
+    docs = [f["doc"] for f in manifest["files"]]
+    assert docs == ["lecture1.pdf", "lecture2.pdf", "lecture10.pdf"]
+    subpart_docs = [s["doc"] for s in manifest["subparts"]]
+    assert subpart_docs == ["lecture1.pdf", "lecture2.pdf", "lecture10.pdf"]
 
 
 def test_cta_schema_supports_session_and_unit_index():

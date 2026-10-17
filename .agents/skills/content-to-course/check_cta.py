@@ -205,10 +205,27 @@ def check_prerequisites_dag(competencies: List[Dict[str, Any]]) -> List[str]:
 
 
 def _build_manifest_pages_set(manifest_data: Optional[Dict[str, Any]]) -> Optional[Set[Tuple[str, Any]]]:
-    """Index valid pages from manifest.json for rapid evidence matching."""
+    """Index valid pages from pre_cta_manifest.json or legacy manifest for rapid evidence matching."""
     if not manifest_data:
         return None
     manifest_pages_set: Set[Tuple[str, Any]] = set()
+
+    manifest_file_entries = manifest_data.get("files") or manifest_data.get("documents") or []
+    for f in manifest_file_entries:
+        doc = str(f.get("doc") or f.get("name") or "").strip().lower()
+        doc_stem = Path(doc).stem.lower()
+        doc_slug = str(f.get("doc_slug", "")).strip().lower()
+        v_range = f.get("valid_page_range", [1, f.get("total_pages", 1)])
+        start_p = int(v_range[0]) if len(v_range) > 0 else 1
+        end_p = int(v_range[1]) if len(v_range) > 1 else int(f.get("total_pages", 1))
+
+        for p in range(start_p, end_p + 1):
+            for k in (doc, doc_stem, doc_slug):
+                if k:
+                    manifest_pages_set.add((k, p))
+                    manifest_pages_set.add((k, str(p)))
+
+    # 2. Legacy items or pages format
     for item in manifest_data.get("items", manifest_data.get("pages", [])):
         doc = str(item.get("doc", "")).lower()
         doc_stem = Path(doc).stem.lower()
@@ -222,34 +239,68 @@ def _build_manifest_pages_set(manifest_data: Optional[Dict[str, Any]]) -> Option
         p_str = str(p_val).strip()
         manifest_pages_set.add((doc, p_str))
         manifest_pages_set.add((doc_stem, p_str))
+
     return manifest_pages_set
 
 
-def _check_evidence_in_manifest(
+def _check_evidence_detailed(
     evidence: Optional[Dict[str, Any]],
+    manifest_data: Optional[Dict[str, Any]],
     manifest_pages_set: Optional[Set[Tuple[str, Any]]],
-    item_label: str,
+    item_type: str,
+    item_id: str,
+    locator: Optional[JsonLineLocator] = None,
 ) -> Optional[str]:
-    """Verify an evidence citation exists in manifest pages set."""
-    if not manifest_pages_set or not evidence:
+    """Verify evidence citation against pre_cta_manifest.json with exact CTA-EV and CTA-DOCS messages."""
+    if not manifest_data or not evidence:
         return None
-    ev_doc = str(evidence.get("doc") or evidence.get("pdf") or "").lower()
+
+    raw_doc = str(evidence.get("doc") or evidence.get("pdf") or "").strip()
+    ev_doc = raw_doc.lower()
+    ev_doc_stem = Path(ev_doc).stem.lower()
     ev_page = evidence.get("page")
-    if ev_doc and ev_page is not None:
-        ev_doc_stem = Path(ev_doc).stem.lower()
-        ev_str = str(ev_page).strip()
-        ev_matches = (
-            (ev_doc, ev_str) in manifest_pages_set
-            or (ev_doc_stem, ev_str) in manifest_pages_set
-        )
-        try:
-            ev_int = int(ev_page)
-            if (ev_doc, ev_int) in manifest_pages_set or (ev_doc_stem, ev_int) in manifest_pages_set:
-                ev_matches = True
-        except (ValueError, TypeError):
-            pass
-        if not ev_matches:
-            return f"{item_label} cites evidence ({ev_doc}, page {ev_page}) not found in manifest."
+
+    if not ev_doc or ev_page is None:
+        return None
+
+    # Check if doc exists in manifest
+    known_docs: Dict[str, Tuple[int, int]] = {}
+    files_list = manifest_data.get("files") or manifest_data.get("documents") or []
+    for f in files_list:
+        d_name = str(f.get("doc") or f.get("name") or f.get("doc_name") or "").strip()
+        d_stem = Path(d_name).stem
+        d_slug = str(f.get("doc_slug", "")).strip()
+        v_range = f.get("valid_page_range", [1, f.get("total_pages", 1)])
+        r_tuple = (int(v_range[0]) if len(v_range) > 0 else 1, int(v_range[1]) if len(v_range) > 1 else int(f.get("total_pages", 1)))
+        if d_name:
+            known_docs[d_name.lower()] = r_tuple
+            known_docs[d_stem.lower()] = r_tuple
+        if d_slug:
+            known_docs[d_slug.lower()] = r_tuple
+
+    # Legacy items/pages fallback if files not present
+    if not known_docs:
+        for it in manifest_data.get("items", manifest_data.get("pages", [])):
+            d = str(it.get("doc", "")).strip()
+            if d:
+                known_docs[d.lower()] = (1, 999999)
+                known_docs[Path(d).stem.lower()] = (1, 999999)
+
+    line_no = locator.get_line(item_id) if locator else None
+    line_tag = f"[Línea {line_no}] " if line_no else ""
+
+    if ev_doc not in known_docs and ev_doc_stem not in known_docs:
+        avail_docs = ", ".join(sorted(set(str(f.get("doc") or f.get("name") or "") for f in files_list if (f.get("doc") or f.get("name"))))) if files_list else "ninguno"
+        return f"[CTA-DOCS] {line_tag}{item_type} '{item_id}': doc='{raw_doc}' no existe en pre_cta_manifest.json. Documentos disponibles: {avail_docs}."
+
+    start_p, end_p = known_docs.get(ev_doc) or known_docs.get(ev_doc_stem, (1, 1))
+    try:
+        page_int = int(ev_page)
+        if not (start_p <= page_int <= end_p):
+            return f"[CTA-EV] {line_tag}{item_type} '{item_id}': doc='{raw_doc}' cita page={ev_page} fuera del rango de páginas PDF válidas {start_p}..{end_p} en pre_cta_manifest.json. Usa el número de página del PDF ({start_p}..{end_p}), NO la numeración impresa del libro."
+    except (ValueError, TypeError):
+        return f"[CTA-EV] {line_tag}{item_type} '{item_id}': doc='{raw_doc}' cita page='{ev_page}' que no es un entero válido."
+
     return None
 
 
@@ -440,17 +491,17 @@ def _validate_competencies_rules(
 
             # Check distractor evidence
             ev = d.get("evidence")
-            if manifest_pages_set and ev:
-                ev_err = _check_evidence_in_manifest(ev, manifest_pages_set, f"Distractor '{did}'")
+            if manifest_data and ev:
+                ev_err = _check_evidence_detailed(ev, manifest_data, manifest_pages_set, "Distractor", did, locator=locator)
                 if ev_err:
-                    missing_evidence.append((f"Distractor '{did}'", str(ev.get("doc") or ev.get("pdf") or ""), ev.get("page"), did))
+                    errors.append(ev_err)
 
         # Check competency evidence
-        if manifest_pages_set and comp.get("evidence"):
+        if manifest_data and comp.get("evidence"):
             for ev in comp.get("evidence", []):
-                ev_err = _check_evidence_in_manifest(ev, manifest_pages_set, f"Competency '{cid}'")
+                ev_err = _check_evidence_detailed(ev, manifest_data, manifest_pages_set, "Competencia", cid, locator=locator)
                 if ev_err:
-                    missing_evidence.append((f"Competency '{cid}'", str(ev.get("doc") or ev.get("pdf") or ""), ev.get("page"), cid))
+                    errors.append(ev_err)
 
     # Format schema errors
     for (loc, msg), cids in comp_schema_errs.items():
@@ -519,15 +570,6 @@ def _validate_competencies_rules(
         did = d2_empty_wb_os[0]
         line_info = f" (línea {locator.get_line(did)})" if locator and locator.get_line(did) else ""
         errors.append(f"CTA-D2 violation in distractor '{did}'{line_info}: both wrong_belief and omitted_step are null/empty.")
-
-    # Format Evidence errors
-    if len(missing_evidence) > 1:
-        loc_items = [f"{lbl}" + (f" (línea {locator.get_line(iid)})" if locator and locator.get_line(iid) else "") + f" ({doc}, pág {pg})" for lbl, doc, pg, iid in missing_evidence]
-        errors.append(f"Evidencia citada no encontrada en manifest (not found in manifest) para {len(missing_evidence)} elementos: {', '.join(loc_items)}.")
-    elif len(missing_evidence) == 1:
-        lbl, doc, pg, iid = missing_evidence[0]
-        line_info = f" (línea {locator.get_line(iid)})" if locator and locator.get_line(iid) else ""
-        errors.append(f"{lbl}{line_info} cites evidence ({doc}, page {pg}) not found in manifest.")
 
     return errors
 
@@ -624,7 +666,8 @@ def validate_cta_rules(
 def main():
     parser = argparse.ArgumentParser(description="Validate cta.json taxonomy and distractors")
     parser.add_argument("cta_path", help="Path to cta.json or cta_part_XX.json")
-    parser.add_argument("--manifest", help="Optional path to manifest.json for evidence verification")
+    parser.add_argument("--work", "--work-dir", dest="work", default=None, help="Working directory containing pre_cta_manifest.json")
+    parser.add_argument("--manifest", help="Optional path to pre_cta_manifest.json for evidence verification")
     parser.add_argument(
         "--part",
         action="store_true",
@@ -632,36 +675,43 @@ def main():
     )
     args = parser.parse_args()
 
-    cta_file = Path(args.cta_path)
+    cta_file = Path(args.cta_path).resolve()
     if not cta_file.exists():
-        print(f"Error: file not found at {cta_file}")
+        print(f"Error: file not found at {cta_file}", file=sys.stderr)
         sys.exit(1)
+
+    work_dir = Path(args.work).resolve() if args.work else cta_file.parent
+    if work_dir.name == "cta_parts":
+        work_dir = work_dir.parent
+
+    manifest_p = Path(args.manifest).resolve() if args.manifest else work_dir / "pre_cta_manifest.json"
+    if not manifest_p.is_file():
+        print("BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
+        sys.exit(2)
+
+    with open(manifest_p, "r", encoding="utf-8") as f:
+        manifest_data = json.load(f)
 
     with open(cta_file, "r", encoding="utf-8") as f:
         cta_data = json.load(f)
 
-    manifest_data = None
-    if args.manifest:
-        m_file = Path(args.manifest)
-        if m_file.exists():
-            with open(m_file, "r", encoding="utf-8") as f:
-                manifest_data = json.load(f)
+    locator = JsonLineLocator(cta_file)
 
     if args.part:
-        valid, errors = check_cta_part(cta_data, manifest_data, file_path=cta_file)
+        valid, errors = check_cta_part(cta_data, manifest_data, file_path=cta_file, locator=locator)
         if not valid:
-            print(f"FAIL: {len(errors)} validation errors in cta_part:")
+            print(f"FAIL: {len(errors)} validation errors in cta_part:", file=sys.stderr)
             for e in errors:
-                print(f"  - {e}")
+                print(f"  - {e}", file=sys.stderr)
             sys.exit(1)
         print("PASS: cta_part satisfies local schema, CTA-D1, CTA-D2, and evidence constraints.")
         sys.exit(0)
 
-    valid, errors = validate_cta_rules(cta_data, manifest_data, file_path=cta_file)
+    valid, errors = validate_cta_rules(cta_data, manifest_data, file_path=cta_file, locator=locator)
     if not valid:
-        print(f"FAIL: {len(errors)} validation errors in cta.json:")
+        print(f"FAIL: {len(errors)} validation errors in cta.json:", file=sys.stderr)
         for e in errors:
-            print(f"  - {e}")
+            print(f"  - {e}", file=sys.stderr)
         sys.exit(1)
 
     print("PASS: cta.json satisfies all schema, CTA-D1, CTA-D2, and evidence constraints.")

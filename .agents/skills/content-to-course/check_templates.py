@@ -17,6 +17,7 @@ import json
 import os
 import re
 import sys
+import uuid
 import zlib
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -53,6 +54,14 @@ from engine.sandbox import (
     SecurityViolationError,
 )
 from validator.core import validate_course_content
+
+try:
+    from compile_shard import ShardDataLineLocator
+except ImportError:
+    try:
+        from .compile_shard import ShardDataLineLocator
+    except Exception:
+        ShardDataLineLocator = None
 
 
 AGENT_WARNING_NOTE = (
@@ -272,6 +281,7 @@ def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, A
     }
 
 
+# Auto-curación de caracteres de control ASCII: previene escapes corruptos de LaTeX (\frac, \beta, \alpha, \vec) cuando alguien edita JSON directo
 _CONTROL_CHAR_TEXT_MAP = {
     "\x0c": r"\f",   # \frac, \forall -> 1 backslash in text (len 2: '\', 'f')
     "\x08": r"\b",   # \beta, \bar, \binom, \begin -> 1 backslash in text (len 2: '\', 'b')
@@ -428,8 +438,8 @@ def auto_heal_template_data(
             continue
         tid = tpl.get("id", "T-XX")
 
-        # 1. Heal control characters in stem, solution, detailed_solution
-        for s_field in ("stem", "solution", "detailed_solution"):
+        # 1. Heal control characters in stem, stem_es, solution, explanation_es, detailed_solution
+        for s_field in ("stem", "stem_es", "solution", "explanation_es", "detailed_solution"):
             val = tpl.get(s_field)
             if isinstance(val, str):
                 new_val = val
@@ -442,7 +452,7 @@ def auto_heal_template_data(
                     fixes.append(f"{tid}.{s_field}: restored ASCII control char to LaTeX backslash")
 
         # Heal control characters in Python code fields
-        for c_field in ("generate_py", "cross_check_py"):
+        for c_field in ("generate_py", "cross_check_py", "generator_code", "verifier_code"):
             c_val = tpl.get(c_field)
             if isinstance(c_val, str) and any(ctrl in c_val for ctrl in _CONTROL_CHAR_TEXT_MAP):
                 new_c_val = _heal_code_control_chars(c_val)
@@ -637,6 +647,7 @@ def render_compact_aggregated_errors(
     errors: List[Union[str, DiagnosticError]],
     targets: Optional[List[Path]] = None,
     max_output_lines: int = 35,
+    shard_py: Optional[Union[str, Path]] = None,
 ) -> str:
     """Render canonical LLM-optimized single-line aggregated error output grouped by rule."""
     if not errors:
@@ -648,6 +659,40 @@ def render_compact_aggregated_errors(
         if has_cb
         else f"FAIL: {len(errors)} validaciones fallidas en templates:"
     )
+
+    # Build or lookup ShardDataLineLocator
+    locators_by_path: Dict[str, Any] = {}
+    default_locator = None
+    if shard_py and Path(shard_py).is_file() and ShardDataLineLocator:
+        default_locator = ShardDataLineLocator(shard_py)
+        locators_by_path[str(Path(shard_py).resolve())] = default_locator
+
+    cid_to_shard_path: Dict[str, Path] = {}
+    manifest_candidates = [
+        Path("work/shards/pre_shard_manifest.json"),
+        Path("shards/pre_shard_manifest.json"),
+        Path("work/pre_shard_manifest.json"),
+    ]
+    if targets and targets[0].parent:
+        manifest_candidates.insert(0, targets[0].parent.parent / "shards" / "pre_shard_manifest.json")
+        manifest_candidates.insert(1, targets[0].parent / "pre_shard_manifest.json")
+
+    for mc in manifest_candidates:
+        if mc.is_file():
+            try:
+                m_data = json.loads(mc.read_text(encoding="utf-8"))
+                for s in m_data.get("shards", []):
+                    sp = s.get("shard_data_path")
+                    if sp and Path(sp).is_file():
+                        sp_obj = Path(sp).resolve()
+                        for cid_item in s.get("competency_ids", []):
+                            cid_to_shard_path[str(cid_item)] = sp_obj
+                        for c_item in s.get("competencies", []):
+                            if isinstance(c_item, dict) and "id" in c_item:
+                                cid_to_shard_path[str(c_item["id"])] = sp_obj
+                break
+            except Exception:
+                pass
 
     records = []
     for err in errors:
@@ -685,16 +730,36 @@ def render_compact_aggregated_errors(
                 if not rec["lines"] and rec.get("template"):
                     rec["lines"] = find_template_field_line(p, rec["template"], rec.get("field_name"))
 
+        # Map to shard_XX_data.py line range
+        cid_val = rec["competency"]
+        shard_ref = ""
+        target_locator = default_locator
+        if not target_locator and cid_val and cid_val in cid_to_shard_path and ShardDataLineLocator:
+            sp_obj = cid_to_shard_path[cid_val]
+            sp_key = str(sp_obj)
+            if sp_key not in locators_by_path:
+                locators_by_path[sp_key] = ShardDataLineLocator(sp_obj)
+            target_locator = locators_by_path[sp_key]
+
+        if target_locator and cid_val:
+            t_info = target_locator.get_tuple_info(cid_val)
+            if t_info:
+                s_l = t_info["start_line"]
+                e_l = t_info["end_line"]
+                shard_ref = f" [Tupla en {target_locator.file_path.name}: Líneas {s_l}..{e_l}]"
+
+        rec["shard_ref"] = shard_ref
         records.append(rec)
 
-    # Group by rule_tag -> file_path -> (cause, action) -> lines
-    grouped: Dict[str, Dict[str, Dict[Tuple[str, str], List[int]]]] = defaultdict(
+    # Group by rule_tag -> (file_path, shard_ref) -> (cause, action) -> lines
+    grouped: Dict[str, Dict[Tuple[str, str], Dict[Tuple[str, str], List[int]]]] = defaultdict(
         lambda: defaultdict(lambda: defaultdict(list))
     )
 
     for r in records:
         rtag = r["rule_tag"]
         fp = r["file_path"]
+        s_ref = r.get("shard_ref", "")
         scause = r["cause"]
         if len(scause) > 95:
             scause = scause[:92] + "..."
@@ -702,7 +767,7 @@ def render_compact_aggregated_errors(
         if len(sact) > 85:
             sact = sact[:82] + "..."
 
-        grouped[rtag][fp][(scause, sact)].extend(r["lines"])
+        grouped[rtag][(fp, s_ref)][(scause, sact)].extend(r["lines"])
 
     out_lines = [header, ""]
 
@@ -711,7 +776,7 @@ def render_compact_aggregated_errors(
         short_rid = m_rid.group(1) if m_rid else rtag
         out_lines.append(f"[-] [{rtag}]")
 
-        for fp, err_map in file_map.items():
+        for (fp, s_ref), err_map in file_map.items():
             for (cause, act), l_list in err_map.items():
                 uniq_lines = sorted(set(l_list))
                 if uniq_lines:
@@ -722,8 +787,8 @@ def render_compact_aggregated_errors(
                 else:
                     lines_str = ""
 
-                # Canonical single-line output containing: RULE, FILE, LINES, CAUSE, ACTION
-                out_lines.append(f"  • [{short_rid}] {fp}{lines_str} -> Causa: {cause} | Acción: {act}")
+                # Canonical single-line output containing: RULE, FILE, LINES, SHARD_TUPLE_REF, CAUSE, ACTION
+                out_lines.append(f"  • [{short_rid}] {fp}{lines_str}{s_ref} -> Causa: {cause} | Acción: {act}")
         out_lines.append("")
 
     return "\n".join(out_lines).strip()
@@ -1756,6 +1821,8 @@ def check_competency_diversity(
         target_quota = num_seeds
     else:
         target_quota = 30 if ctype in ("skill", "hab", "habilidad") else 20
+        if len(templates) < 3:
+            target_quota = min(target_quota, max(len(templates) * 5, 10))
 
     seed_base = competency_seed_base(cid, 42)
 
@@ -1934,10 +2001,18 @@ def check_templates_file_or_dir(
     strict: bool = True,
     attempts_dir: Optional[Path] = None,
     auto_fix: bool = True,
+    shard_py: Optional[Union[str, Path]] = None,
+    shard_id: Optional[str] = None,
 ) -> Tuple[bool, List[str]]:
     """Validate all templates in file(s) or directory against CTA with production contract parity."""
     # warm_up_sandbox()  # Omit blind warmup: in-process execution is already instant
     errors = []
+
+    # Infer shard_id if omitted
+    if not shard_id and shard_py:
+        py_stem = Path(shard_py).stem
+        if "shard_" in py_stem:
+            shard_id = py_stem.replace("_data", "")
 
     cta_data: Dict[str, Any] = {}
     cta_distractors_by_comp: Dict[str, Set[str]] = {}
@@ -1986,6 +2061,19 @@ def check_templates_file_or_dir(
                 content = json.loads(p.read_text(encoding="utf-8"))
                 if isinstance(content, dict) and ("shard_id" in content or "competency_ids" in content):
                     is_shard = True
+                    # Strict verification of pre_shard_manifest.json (ZERO Fallbacks)
+                    manifest_candidates = [
+                        p.parent / "pre_shard_manifest.json",
+                        p.parent.parent / "shards" / "pre_shard_manifest.json",
+                        p.parent.parent / "pre_shard_manifest.json",
+                        Path("work/shards/pre_shard_manifest.json").resolve(),
+                        Path("work/pre_shard_manifest.json").resolve(),
+                    ]
+                    found_pre_shard_manifest = any(c.is_file() for c in manifest_candidates)
+                    if not found_pre_shard_manifest:
+                        print("BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
+                        return False, ["BLOCKER:: No existe pre_shard_manifest.json"]
+
                     c_ids = content.get("competency_ids", [])
                     for cid in c_ids:
                         candidate_paths = [
@@ -2115,7 +2203,10 @@ def check_templates_file_or_dir(
             comp_tpls = templates_by_comp.get(cid, [])
             if not (comp_obj and comp_tpls):
                 return c_errors
-            sim_seeds = num_dry_run_seeds if num_dry_run_seeds < 20 else None
+            if shard_id or shard_py or len(comp_tpls) < 3 or num_dry_run_seeds <= 20:
+                sim_seeds = num_dry_run_seeds
+            else:
+                sim_seeds = None
             div_errors, comp_questions = check_competency_diversity(
                 templates=comp_tpls,
                 competency=comp_obj,
@@ -2163,13 +2254,33 @@ def check_templates_file_or_dir(
         try:
             att_path = Path(effective_attempts_dir)
             att_path.mkdir(parents=True, exist_ok=True)
+
+            def _safe_write_text(f_path: Path, text: str) -> None:
+                tmp_p = f_path.with_name(f".{f_path.name}.tmp.{os.getpid()}_{uuid.uuid4().hex[:8]}")
+                tmp_p.write_text(text, encoding="utf-8")
+                try:
+                    os.replace(tmp_p, f_path)
+                except Exception:
+                    try:
+                        if f_path.is_file():
+                            f_path.unlink()
+                        os.replace(tmp_p, f_path)
+                    except Exception:
+                        f_path.write_text(text, encoding="utf-8")
+                        if tmp_p.is_file():
+                            try:
+                                tmp_p.unlink()
+                            except Exception:
+                                pass
+
             # Derive deterministic scope key for circuit breaker isolation across concurrent shards
+            shard_tag = f"{shard_id}_" if shard_id else ""
             if processed_comp_ids:
-                scope_raw = "_".join(sorted(processed_comp_ids))
-            elif targets:
-                scope_raw = "_".join(sorted(str(t) for t in targets))
+                scope_raw = f"{shard_tag}" + "_".join(sorted(processed_comp_ids))
+            elif raw_targets:
+                scope_raw = f"{shard_tag}" + "_".join(sorted(str(t) for t in raw_targets))
             else:
-                scope_raw = "global"
+                scope_raw = f"{shard_tag}global"
 
             if len(scope_raw) > 32:
                 scope_key = hashlib.sha256(scope_raw.encode("utf-8")).hexdigest()[:12]
@@ -2203,7 +2314,7 @@ def check_templates_file_or_dir(
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 })
                 cb_data["history"] = cb_data["history"][-10:]
-                cb_file.write_text(json.dumps(cb_data, indent=2, ensure_ascii=False), encoding="utf-8")
+                _safe_write_text(cb_file, json.dumps(cb_data, indent=2, ensure_ascii=False))
 
                 if cb_data["consecutive_count"] >= 3:
                     cb_msg = (
@@ -2218,13 +2329,20 @@ def check_templates_file_or_dir(
             else:
                 # Clear circuit breaker on clean pass
                 if cb_file.is_file():
-                    cb_file.unlink()
+                    try:
+                        cb_file.unlink()
+                    except Exception:
+                        pass
                 if legacy_cb_file.is_file():
-                    legacy_cb_file.unlink()
+                    try:
+                        legacy_cb_file.unlink()
+                    except Exception:
+                        pass
 
-            # Per-competency budget halt tracking
+            # Per-competency budget halt tracking with shard isolation
             for cid in processed_comp_ids:
-                f_att = att_path / f"{cid}.json"
+                att_fname = f"{shard_id}_{cid}.json" if shard_id else f"{cid}.json"
+                f_att = att_path / att_fname
                 cur_att = 0
                 if f_att.is_file():
                     try:
@@ -2233,7 +2351,7 @@ def check_templates_file_or_dir(
                         pass
                 if not is_clean:
                     cur_att += 1
-                    f_att.write_text(json.dumps({"attempts": cur_att}), encoding="utf-8")
+                    _safe_write_text(f_att, json.dumps({"attempts": cur_att}))
                     if cur_att >= 4:
                         errors.append(
                             f"[!] BUDGET HALT on competency '{cid}': Exceeded {cur_att} validation cycles. "
@@ -2241,7 +2359,10 @@ def check_templates_file_or_dir(
                         )
                 else:
                     if f_att.is_file():
-                        f_att.unlink()
+                        try:
+                            f_att.unlink()
+                        except Exception:
+                            pass
         except Exception:
             pass
 
@@ -2251,7 +2372,9 @@ def check_templates_file_or_dir(
 
 def main():
     parser = argparse.ArgumentParser(description="Validate parametric exercise templates with Isomorphic Contract Parity")
-    parser.add_argument("target", nargs="+", help="Path(s) to template.json file(s) or templates/ directory")
+    parser.add_argument("target", nargs="*", default=[], help="Path(s) to template.json file(s) or templates/ directory")
+    parser.add_argument("--shard", default=None, help="Shard ID to validate (requires work/shards/pre_shard_manifest.json)")
+    parser.add_argument("--shard-py", default=None, help="Path to shard_XX_data.py for source line mapping in diagnostics")
     parser.add_argument("--cta", default=None, help="Path to cta.json file")
     parser.add_argument("--seeds", type=int, default=50, help="Number of dry-run seeds (default 50)")
     parser.add_argument("--strict", action="store_true", default=True, help="Enforce production contract parity (default: true)")
@@ -2262,8 +2385,54 @@ def main():
     parser.add_argument("--json-report", default=None, help="Optional output path for structured JSON diagnostic report")
     args = parser.parse_args()
 
-    cta_p = Path(args.cta) if args.cta else None
     targets = [Path(t) for t in args.target]
+
+    if args.shard:
+        # Strictly verify pre_shard_manifest.json (ZERO Fallbacks)
+        manifest_candidates = [
+            Path("work/shards/pre_shard_manifest.json"),
+            Path("shards/pre_shard_manifest.json"),
+            Path("work/pre_shard_manifest.json"),
+        ]
+        manifest_file = None
+        for c in manifest_candidates:
+            if c.is_file():
+                manifest_file = c
+                break
+        if not manifest_file:
+            print("BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
+            sys.exit(2)
+
+        try:
+            m_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+            s_target = str(args.shard).lower().strip()
+            shard_entry = None
+            for s in m_data.get("shards", []):
+                s_id = str(s.get("shard_id", "")).lower().strip()
+                if s_id == s_target or s_id.replace("shard_", "") == s_target.replace("shard_", ""):
+                    shard_entry = s
+                    break
+            if not shard_entry:
+                print(f"ERROR: Shard '{args.shard}' no encontrado en {manifest_file}", file=sys.stderr)
+                sys.exit(1)
+
+            t_dir = Path(shard_entry.get("templates_dir", "work/templates"))
+            c_ids = shard_entry.get("competency_ids", [])
+            for cid in c_ids:
+                tpl_p = t_dir / f"{cid}.json"
+                if tpl_p not in targets:
+                    targets.append(tpl_p)
+
+            if not args.shard_py and shard_entry.get("shard_data_path"):
+                args.shard_py = shard_entry.get("shard_data_path")
+        except Exception as e:
+            print(f"ERROR al leer pre_shard_manifest.json: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    if not targets:
+        parser.error("At least one target file/directory or --shard must be specified.")
+
+    cta_p = Path(args.cta) if args.cta else None
     valid, errors = check_templates_file_or_dir(
         targets,
         cta_p,
@@ -2271,6 +2440,8 @@ def main():
         strict=args.strict,
         attempts_dir=Path(args.attempts_dir) if args.attempts_dir else None,
         auto_fix=args.auto_fix,
+        shard_py=args.shard_py,
+        shard_id=args.shard,
     )
 
     if args.json_report:
@@ -2289,7 +2460,7 @@ def main():
 
     if not valid:
         has_cb = any("CIRCUIT BREAKER" in str(e) for e in errors)
-        compact_output = render_compact_aggregated_errors(errors, targets=targets)
+        compact_output = render_compact_aggregated_errors(errors, targets=targets, shard_py=args.shard_py)
         print(compact_output)
         sys.exit(2 if has_cb else 1)
 

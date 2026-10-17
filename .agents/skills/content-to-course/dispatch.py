@@ -1,12 +1,10 @@
-"""Scope Isolation, Subagent Dispatch Payload Generator, and Scope Check.
+"""Scope Isolation, Subagent Dispatch Payload Generator, and Scope Check (C2C v3.2).
 
-Provides strict scope isolation contracts for all pipeline subagents:
-- vision: Handout Vision Analyzers
-- cta-map: Sectional CTA Mappers
-- cta-reduce: CTA Harmonizer
-- author: Shard Exercise Authors
-- judge: Blind Evaluation Judges
-- cta-direct / vision-legacy: Fallback legacy flows
+Provides zero-bundle dispatch and non-truncating payloads for C2C pipeline subagents:
+- c2c_cta_architect: Cognitive Task Analysis Curriculum Architect
+- c2c_shard_author: Shard Exercise Authors (pure Python tuples & compile_shard.py)
+- c2c_judge: Independent Blind Evaluation Judges (Zero-Warmup In-Prompt resolution)
+- c2c_repair: Targeted Repair subagents
 """
 
 from __future__ import annotations
@@ -21,7 +19,7 @@ import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Set
 
 if sys.platform == "win32":
     try:
@@ -37,256 +35,215 @@ logger = logging.getLogger("dispatch")
 # Directory of the skill
 SKILL_DIR = Path(__file__).parent.resolve()
 
-TYPE_DEFINITIONS: List[Dict[str, Any]] = [
-    {
-        "name": "c2c-vision",
-        "description": "Handout Vision Analyzer for mathematical transcriptions",
-        "system_prompt": "You are a specialized Handout Vision Analyzer for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and produce transcription patches. Terminate strictly with DONE: <files>.",
-        "enable_write_tools": True,
-        "enable_subagent_tools": False,
-        "enable_mcp_tools": False,
-    },
-    {
-        "name": "c2c-cta-mapper",
-        "description": "Sectional Cognitive Task Analysis Mapper",
-        "system_prompt": "You are a Sectional Curriculum Analyst for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and produce cta_part JSON. Terminate strictly with DONE: <files>.",
-        "enable_write_tools": True,
-        "enable_subagent_tools": False,
-        "enable_mcp_tools": False,
-    },
-    {
-        "name": "c2c-cta-harmonizer",
-        "description": "Curriculum Harmonization subagent",
-        "system_prompt": "You are a Curriculum Harmonization specialist for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and resolve duplicate competencies. Terminate strictly with DONE: <files>.",
-        "enable_write_tools": True,
-        "enable_subagent_tools": False,
-        "enable_mcp_tools": False,
-    },
-    {
-        "name": "c2c-author",
-        "description": "Psychometric Exercise Author for parametric templates (refinamiento quirúrgico con replace_file_content sobre scaffolds pre-sembrados; prohibido leer bundles en turno 1; prohibido chat emissions)",
-        "system_prompt": "You are a Lead Psychometric Assessment Author for Content-to-Course. Directly refine parametric templates in work/templates/<comp_id>.json on pre-seeded scaffolds using replace_file_content. Strictly forbidden to waste turns reading task bundles or system prompts in Turn 1, forbidden to inspect engine or validator code, forbidden to create monolithic scripts, and forbidden to output template JSON in chat text. Terminate strictly with DONE: <files>.",
-        "enable_write_tools": True,
-        "enable_subagent_tools": False,
-        "enable_mcp_tools": False,
-    },
-    {
-        "name": "c2c-judge",
-        "description": "Blind Psychometric Evaluation Judge",
-        "system_prompt": "You are an Independent Blind Evaluation Judge for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and analytically solve questions with zero access to answer keys. Terminate strictly with DONE: <files>.",
-        "enable_write_tools": True,
-        "enable_subagent_tools": False,
-        "enable_mcp_tools": False,
-    },
-    {
-        "name": "c2c-cta-direct",
-        "description": "Direct CTA Architect for concise courses (arquitectura de 2 archivos: cta_data.py tabular y compile_cta.py; lotes de máximo 10 competencias; prohibido chat emissions)",
-        "system_prompt": "You are a Direct CTA Architect for Content-to-Course. Directly synthesize competencies into pure tabular tuples in work/cta_data.py using the 2-file architecture, then compile and certify with 'python work/compile_cta.py'. Batches of max 10 competencias per chunk. Strictly forbidden to modify compile_cta.py, create auxiliary scripts, or output competencies in chat text. Terminate strictly with DONE: work/cta.json.",
-        "enable_write_tools": True,
-        "enable_subagent_tools": False,
-        "enable_mcp_tools": False,
-    },
-    {
-        "name": "c2c-repair",
-        "description": "Targeted Repair subagent for fixing failing templates or discordances",
-        "system_prompt": "You are a Targeted Quality Repair Engineer for Content-to-Course. Read your assigned task bundle in work/dispatch/bundles/ and resolve only diagnosed errors on failing templates. Terminate strictly with DONE: <files>.",
-        "enable_write_tools": True,
-        "enable_subagent_tools": False,
-        "enable_mcp_tools": False,
-    },
-]
+
+def load_system_prompt(name_or_path: Union[str, Path]) -> str:
+    """Loads the 100% full, uncompressed content of a system prompt markdown file.
+    
+    PROHIBIDO truncar, resumir o comprimir los system_prompts/*.md.
+    """
+    p = Path(name_or_path)
+    if not p.is_absolute():
+        candidates = [
+            SKILL_DIR / "system_prompts" / p.name,
+            SKILL_DIR / p,
+            Path.cwd() / p,
+        ]
+        for c in candidates:
+            if c.is_file():
+                return c.read_text(encoding="utf-8")
+        raise FileNotFoundError(f"System prompt file not found: {name_or_path}")
+    if not p.is_file():
+        raise FileNotFoundError(f"System prompt file not found: {p}")
+    return p.read_text(encoding="utf-8")
+
+
+def get_type_definitions() -> List[Dict[str, Any]]:
+    """Returns subagent type definitions for define_subagent registration with 100% full system prompts."""
+    return [
+        {
+            "name": "c2c_cta_architect",
+            "description": "Cognitive Task Analysis Curriculum Architect for C2C v3.2 (pure positional tuples in cta_data.py)",
+            "system_prompt": load_system_prompt("prompt_cta_architect.md"),
+            "enable_write_tools": True,
+            "enable_subagent_tools": False,
+            "enable_mcp_tools": False,
+        },
+        {
+            "name": "c2c_shard_author",
+            "description": "Shard Exercise Author for native Python parametric templates and compile_shard.py",
+            "system_prompt": load_system_prompt("prompt_shard_author.md"),
+            "enable_write_tools": True,
+            "enable_subagent_tools": False,
+            "enable_mcp_tools": False,
+        },
+        {
+            "name": "c2c_judge",
+            "description": "Independent Blind Psychometric Evaluation Judge with Zero-Warmup in-prompt resolution",
+            "system_prompt": load_system_prompt("prompt_blind_judge.md"),
+            "enable_write_tools": True,
+            "enable_subagent_tools": False,
+            "enable_mcp_tools": False,
+        },
+        {
+            "name": "c2c_repair",
+            "description": "Targeted Quality Repair Engineer for fixing failing templates or discordances",
+            "system_prompt": load_system_prompt("prompt_shard_author.md"),
+            "enable_write_tools": True,
+            "enable_subagent_tools": False,
+            "enable_mcp_tools": False,
+        },
+    ]
+
 
 ROLE_SPECS: Dict[str, Dict[str, Any]] = {
-    "vision": {
-        "type_name": "c2c-vision",
+    "cta": {
+        "type_name": "c2c_cta_architect",
         "model": "flash",
-        "system_prompt": "system_prompts/prompt_handout_transcriber.md",
+        "system_prompt": "system_prompts/prompt_cta_architect.md",
         "read": [
-            "work/handouts/handout_<id>.png",
-            "work/handouts/handout_<id>_text.md",
+            "work/pre_cta_manifest.json",
+            "work/cta_data.py",
+            "work/cta_parts/**",
+            "work/cta.json",
+            "content/**",
         ],
         "write": [
-            "work/handout_patches/patch_<id>.md",
-            "work/handout_patches/patch_handout_<id>.md",
+            "work/cta_data.py",
+            "work/cta.json",
+            "work/cta.md",
+            "work/cta_parts/**",
         ],
         "forbidden": [
-            "código fuente",
-            "corpus*.md",
-            "otros handouts no asignados",
+            "engine/*",
             "SKILL.md",
+            "scripts Python auxiliares en scratch/",
         ],
-        "turn_budget": 10,
+        "turn_budget": 20,
     },
-    "cta-map": {
-        "type_name": "c2c-cta-mapper",
+    "cta-direct": {
+        "type_name": "c2c_cta_architect",
         "model": "flash",
-        "system_prompt": "system_prompts/prompt_cta_sectional.md",
+        "system_prompt": "system_prompts/prompt_cta_architect.md",
         "read": [
-            "work/sections/section_XX.md",
-            "work/sections/section_*.md",
+            "work/pre_cta_manifest.json",
+            "work/cta_data.py",
+            "work/cta_parts/**",
+            "work/cta.json",
+            "content/**",
         ],
         "write": [
-            "work/cta_parts/cta_part_XX.json",
+            "work/cta_data.py",
+            "work/cta.json",
+            "work/cta.md",
+            "work/cta_parts/**",
+        ],
+        "forbidden": [
+            "engine/*",
+            "SKILL.md",
+            "scripts Python auxiliares en scratch/",
+        ],
+        "turn_budget": 20,
+    },
+    "author": {
+        "type_name": "c2c_shard_author",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_shard_author.md",
+        "read": [
+            "content/**",
+            "work/pre_cta_manifest.json",
+            "work/shards/pre_shard_manifest.json",
+            "work/shards/*_data.py",
+            "work/templates/*.json",
+            ".agents/skills/content-to-course/compile_shard.py",
+            "work/cta.json",
+        ],
+        "write": [
+            "work/shards/*_data.py",
+            "work/templates/*.json",
+        ],
+        "forbidden": [
+            "scratch/**",
+            "work/scratch/**",
+            "engine/*",
+            "SKILL.md",
+            ".check_attempts/**",
+        ],
+        "turn_budget": 30,
+    },
+    "judge": {
+        "type_name": "c2c_judge",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_blind_judge.md",
+        "read": [
+            "work/verification/judge_batch_*.json",
+            "work/judge_batch_*.json",
+        ],
+        "write": [
+            "work/verification/judge_responses_*.json",
+            "work/judge_responses_*.json",
+        ],
+        "forbidden": [
+            "judge_ground_truth.json",
+            "work/templates/*",
+            "templates/*",
+            "search_web",
+            "read_url_content",
+            "navegación por internet",
+        ],
+        "turn_budget": 5,
+    },
+    "repair": {
+        "type_name": "c2c_repair",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_shard_author.md",
+        "read": [
+            "work/shards/*",
+            "work/reports/templates_report.json",
+            "work/judge_report.json",
+            "work/templates/*.json",
+        ],
+        "write": [
+            "work/shards/*_data.py",
+            "work/templates/*.json",
+        ],
+        "forbidden": [
+            "engine/*",
+            "SKILL.md",
+        ],
+        "turn_budget": 15,
+    },
+    "cta-map": {
+        "type_name": "c2c_cta_architect",
+        "model": "flash",
+        "system_prompt": "system_prompts/prompt_cta_architect.md",
+        "read": [
+            "work/sections/section_*.md",
+            "work/pre_cta_manifest.json",
+        ],
+        "write": [
+            "work/cta_parts/part_*.py",
             "work/cta_parts/cta_part_*.json",
         ],
         "forbidden": [
-            "otras secciones",
-            "handouts",
             "código fuente",
+            "SKILL.md",
         ],
         "turn_budget": 15,
     },
     "cta-reduce": {
-        "type_name": "c2c-cta-harmonizer",
+        "type_name": "c2c_cta_architect",
         "model": "flash",
-        "system_prompt": "system_prompts/prompt_cta_harmonizer.md",
+        "system_prompt": "system_prompts/prompt_cta_architect.md",
         "read": [
             "work/cta_outline.json",
             "work/duplicate_candidates.json",
         ],
         "write": [
             "work/cta_harmonize.json",
-        ],
-        "forbidden": [
-            "corpus*.md",
-            "secciones",
-            "código fuente",
-        ],
-        "turn_budget": 10,
-    },
-    "author": {
-        "type_name": "c2c-author",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_shard_author.md",
-        "description": "Shard Exercise Author: refinar quirúrgicamente plantillas paramétricas modulares (work/templates/<comp_id>.json) sobre scaffolds pre-sembrados utilizando prioritariamente replace_file_content.",
-        "directives": [
-            "Refinar quirúrgicamente los scaffolds pre-sembrados en work/templates/<comp_id>.json usando prioritariamente replace_file_content.",
-            "Prohibido gastar Turno 1 leyendo bundles o system prompts: toda la asignación y comando de validación ya están incluidos en tu prompt.",
-            "Prohibido escribir scripts monolíticos gigantes de 2,000 líneas (como build_<shard_id>.py) o scripts en el directorio scratch raíz compartido.",
-            "Prohibido ejecutar comandos exploratorios o inspeccionar código del validador (check_templates.py, src/validator/*, engine/*).",
-            "Do not output template JSON in chat text. Terminate strictly with DONE: <files>.",
-            "Validar todas las plantillas del shard en un único comando oficial provisto en el prompt.",
-        ],
-        "read": [
-            "work/templates/<comp_id>.json",
-            "work/templates/*.json",
-            "work/shards/shard_XX.json",
-            "work/shards/shard_*.json",
             "work/cta.json",
-            "content/**/*.pdf",
-        ],
-        "write": [
-            "work/templates/<comp_id>.json",
-            "work/templates/*.json",
-            "work/shards/<shard_id>/scratch/**",
-            "work/scratch/<shard_id>/**",
-        ],
-        "forbidden": [
-            "engine/*",
-            "SKILL.md",
-            "otras plantillas fuera de su shard",
-            "work/cta.json (READ-ONLY; strictly forbidden to edit, modify, or overwrite)",
-            "check_templates.py",
-            "src/validator/*",
-            "rules.py",
-            "system_prompts/* (todas las directivas están incluidas directamente en este prompt)",
-            "work/dispatch/bundles/* (prohibido meta-leer bundles en Turno 1)",
-            "emitir plantillas en el texto del chat (Do not output template JSON in chat text)",
-            "work/build_<shard_id>.py (scripts monolíticos prohibidos; generar directamente templates modulares por competencia)",
-            "scratch/* (prohibido scratch compartido global; usar exclusivamente work/shards/<shard_id>/scratch/)",
-        ],
-        "turn_budget": 50,
-    },
-    "judge": {
-        "type_name": "c2c-judge",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_blind_judge.md",
-        "read": [
-            "work/judge_batch_XX.json",
-            "work/judge_batch_*.json",
-        ],
-        "write": [
-            "work/judge_responses_XX.json",
-            "work/judge_responses_*.json",
-        ],
-        "forbidden": [
-            "judge_ground_truth.json",
-            "templates/*",
-            "respuestas ajenas",
-            "search_web",
-            "read_url_content",
-            "navegación por internet",
-        ],
-        "turn_budget": 15,
-    },
-    "cta-direct": {
-        "type_name": "c2c-cta-direct",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_cta_direct.md",
-        "description": "Direct CTA Architect: sintetizar competencias en tuplas tabulares puras en work/cta_data.py (lote inicial con write_to_file, bloques continuos con Append: true) y compilar con work/compile_cta.py (reparación quirúrgica con replace_file_content).",
-        "directives": [
-            "Turno 1 MANDATORIO: Abrir inmediatamente el primer material fuente asignado con view_file. Prohibido leer compile_cta.py en Turno 1.",
-            "Emitir las micro-competencias analizadas como tuplas tabulares puras en work/cta_data.py siguiendo el orden cronológico del material (creación inicial con write_to_file, continuación con Append: true).",
-            "Compilar y certificar ejecutando 'python work/compile_cta.py' (<5ms de compilación).",
-            "Si el compilador o validador reportan errores mapeados a línea exacta [cta_data.py:Línea XX], corregir quirúrgicamente con replace_file_content.",
-            "Prohibido modificar work/compile_cta.py, crear scripts auxiliares, o emitir competencias en el chat.",
-            "Do not output competencies in chat text. Terminate strictly with DONE: work/cta.json.",
-        ],
-        "read": [
-            "Materiales fuente específicos asignados en las directivas (ej. archivos PDF o TeX del curso)",
-        ],
-        "write": [
-            "work/cta_data.py",
-            "work/cta.json",
-            "work/cta.md",
-        ],
-        "forbidden": [
-            "leer work/compile_cta.py en Turno 1 (Turno 1 debe abrir el material fuente asignado con view_file)",
-            "modificar o editar work/compile_cta.py (el compilador es inmutable pre-sembrado)",
-            "work/corpus*.md (el análisis cognitivo debe realizarse directamente sobre los materiales fuente asignados con view_file)",
-            "carpetas o archivos de otros cursos en content/",
-            "engine/*",
-            "SKILL.md",
-            "system_prompts/* (todas las directivas están incluidas directamente en este prompt)",
-            "work/pages/manifest.json (prohibido consultar o depender de manifest.json; citar directamente los archivos fuente asignados)",
-            "scripts Python auxiliares (.py) en scratch/ o work/ (usar exclusivamente cta_data.py y compile_cta.py)",
-            "ejecutar comandos exploratorios o pruebas previas en terminal CLI (único comando permitido: 'python work/compile_cta.py' o 'run.py --stage cta-stitch')",
-            "emitir competencias en el texto del chat (Do not output competencies in chat text)",
-        ],
-        "turn_budget": 20,
-    },
-    "repair": {
-        "type_name": "c2c-repair",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_shard_author.md",
-        "read": [
-            "work/shards/shard_*.json",
-            "work/reports/templates_report.json",
-            "work/judge_report.json",
-        ],
-        "write": [
-            "work/templates/*.json",
-        ],
-        "forbidden": [
-            "engine/*",
-            "SKILL.md",
-        ],
-        "turn_budget": 15,
-    },
-    "vision-legacy": {
-        "type_name": "c2c-vision",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_page_patcher.md",
-        "read": [
-            "work/pages/*",
-            "work/vision_pages.json",
-        ],
-        "write": [
-            "work/patches/*.md",
         ],
         "forbidden": [
             "código fuente",
-            "corpus*.md",
             "SKILL.md",
         ],
         "turn_budget": 10,
@@ -294,757 +251,8 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
 }
 
 
-def _create_task_bundle(
-    work_dir: Path,
-    bundle_name: str,
-    role_name: str,
-    role_title: str,
-    system_prompt_rel: str,
-    read_paths: List[str],
-    write_paths: List[str],
-    forbidden_items: List[str],
-    turn_budget: int,
-    extra_context: str = "",
-) -> Path:
-    """Writes a self-contained task bundle markdown file to work/dispatch/bundles/."""
-    bundles_dir = work_dir / "dispatch" / "bundles"
-    bundles_dir.mkdir(parents=True, exist_ok=True)
-    bundle_file = bundles_dir / f"{bundle_name}.md"
-
-    sys_text = ""
-    sys_file = SKILL_DIR / system_prompt_rel
-    if sys_file.is_file():
-        try:
-            sys_text = sys_file.read_text(encoding="utf-8")
-        except Exception as e:
-            logger.warning("Could not load system prompt file %s: %s", sys_file, e)
-
-    lines = [
-        f"# TASK BUNDLE: {role_title}",
-        f"**Role:** `{role_name}` | **Presupuesto:** {turn_budget} turnos",
-        "",
-        "## 1. SCOPE-LOCK OBLIGATORIO",
-        "- **READ permitido:**",
-    ]
-    for r in read_paths:
-        lines.append(f"  * `{r}`")
-    lines.append("- **WRITE permitido:**")
-    for w in write_paths:
-        lines.append(f"  * `{w}`")
-    lines.append("- **PROHIBIDO:**")
-    for f in forbidden_items:
-        lines.append(f"  * {f}")
-
-    if extra_context:
-        lines.extend(["", "## 2. CONTEXTO Y DIAGNÓSTICO ESPECÍFICO", extra_context])
-
-    lines.extend([
-        "",
-        "## 3. INSTRUCCIONES OPERATIVAS Y DIRECTIVAS",
-        sys_text,
-        "",
-        "## 4. TERMINACIÓN OBLIGATORIA",
-        "Al finalizar el trabajo responde ÚNICAMENTE con:",
-        "`DONE: <archivos escritos>`",
-        "o si encuentras un bloqueo insalvable: `BLOCKED: <motivo>`.",
-        "PROHIBIDO redactar resúmenes, explicaciones o saludos adicionales.",
-    ])
-
-    bundle_file.write_text("\n".join(lines), encoding="utf-8")
-    return bundle_file
-
-
-def build_starter_template_for_competency(comp: Dict[str, Any]) -> Dict[str, Any]:
-    """Pre-generates a starter parametric template scaffold for an assigned competency.
-
-    Pre-populated with competency metadata and linked distractors from cta.json,
-    guaranteeing 100% distractor coverage (TPL-D3), 3-5 stem variants (TPL-VAR),
-    R-15 option length anti-giveaway balance, AST sandbox compliance, and
-    balanced interaction types (2 MC7, 2 FIB, 2 MS).
-    """
-    cid = comp.get("id", "C-01")
-    cid_clean = cid.replace("-", "")
-    cname = comp.get("name", cid)
-    ctype = comp.get("type", "skill").lower()
-    bloom = comp.get("bloom_level") or comp.get("bloom") or ("Apply" if ctype == "skill" else "Understand")
-    desc = comp.get("description_latex") or comp.get("description", cname)
-    raw_distractors = comp.get("distractors", [])
-
-    d_objs: List[Dict[str, str]] = []
-    for i, d in enumerate(raw_distractors):
-        if isinstance(d, dict) and d.get("id"):
-            did = str(d["id"])
-            manif = str(d.get("manifestation") or d.get("name") or f"Confusión analítica sobre {cname} {i+1}")
-            wb = str(d.get("wrong_belief") or f"Premisa errónea sobre el comportamiento dinámico de {cname}")
-            rh = str(d.get("remediation_hint") or f"Verifique los supuestos teóricos de {cname}")
-            d_objs.append({"id": did, "manifestation": manif, "wrong_belief": wb, "remediation_hint": rh})
-
-    while len(d_objs) < 6:
-        idx = len(d_objs) + 1
-        did = f"D-{cid_clean}-{idx:02d}"
-        d_objs.append({
-            "id": did,
-            "manifestation": f"Confusión analítica sobre la tasa de convergencia y estabilidad en {cname}",
-            "wrong_belief": f"Asume dinámica inconsistente fuera del equilibrio estacionario",
-            "remediation_hint": f"Examine rigurosamente las condiciones analíticas de {cname}"
-        })
-
-    def _esc_fstr(s: str) -> str:
-        t = str(s).replace("\\", "\\\\").replace("'", "\\'").replace("{", "{{").replace("}", "}}")
-        return t.replace("\r", " ").replace("\n", " ")
-
-    def _esc_str(s: str) -> str:
-        t = str(s).replace("\\", "\\\\").replace("'", "\\'")
-        return t.replace("\r", " ").replace("\n", " ")
-
-    d_ids = [d["id"] for d in d_objs]
-    cname_fstr = _esc_fstr(cname)
-    m = [_esc_fstr(d["manifestation"]) for d in d_objs]
-    wb_fstr = [_esc_fstr(d["wrong_belief"]) for d in d_objs]
-    wb_std = [_esc_str(d["wrong_belief"]) for d in d_objs]
-    rh = [d["remediation_hint"] for d in d_objs]
-
-    d_vals1 = [
-        f"f'La trayectoria converge al nivel con amortiguamiento reducido {{param - 1}} ({m[0]}).'",
-        f"f'El sistema alcanza un ciclo oscilatorio cerrado de amplitud {{param + 2}} exhibiendo {m[1]}.'",
-        f"f'La tasa neta se anula únicamente si el parámetro se triplica a {{param * 3}} debido a {m[2]}.'",
-        f"f'Se produce una bifurcación inestable con tasa {{param + 5}} por {m[3]}.'",
-        f"f'El sendero temporal decae asintóticamente con factor {{param * 2}} reflejando {m[4]}.'",
-        f"f'La condición de estabilidad requiere un umbral mínimo {{param + 4}} afectado por {m[5]}.'"
-    ]
-    mc7_dists1 = ",\n".join([
-        f"        {{'value': {d_vals1[i]}, 'distractor_id': '{d_ids[i]}'}}"
-        for i in range(6)
-    ])
-
-    d_vals2 = [
-        f"f'La escala efectiva introduce una traslación rígida al nivel {{scale + 5}} ({wb_fstr[1]}).'",
-        f"f'El equilibrio colapsa hacia un atractor periódico de periodo {{scale // 2}} asumiendo {wb_fstr[2]}.'",
-        f"f'La velocidad de convergencia se reduce cuadráticamente en {{scale * 2}} por {wb_fstr[3]}.'",
-        f"f'Se invierte la concavidad del sendero temporal para todo valor {{scale - 3}} reflejando {wb_fstr[4]}.'",
-        f"f'El estado estacionario queda indeterminado al anularse en {{scale + 10}} bajo {wb_fstr[5]}.'",
-        f"f'Aparece histéresis estructural dependiente de la condición inicial {{scale * 3}} debido a {wb_fstr[0]}.'"
-    ]
-    mc7_dists2 = ",\n".join([
-        f"        {{'value': {d_vals2[i]}, 'distractor_id': '{d_ids[(i+1)%6]}'}}"
-        for i in range(6)
-    ])
-
-    templates: List[Dict[str, Any]] = [
-        {
-            "id": f"T-{cid_clean}-01",
-            "competency_id": cid,
-            "interaction_type": "multiple_choice_7_options",
-            "difficulty": "easy",
-            "bloom": bloom,
-            "stem": f"En el análisis formal de {cname} con parámetro {{param}}, ¿cuál de las siguientes conclusiones es teóricamente correcta?",
-            "stem_variants": [
-                f"En el análisis formal de {cname} con parámetro {{param}}, ¿cuál de las siguientes conclusiones es teóricamente correcta?",
-                f"Bajo las condiciones estándar de {cname} considerando valor {{param}}, determine la proposición válida:",
-                f"Para la estructura paramétrica de {cname} con nivel {{param}}, seleccione la afirmación consistente:",
-                f"Al evaluar las propiedades dinámicas de {cname} asociadas a {{param}}, identifique la conclusión exacta:"
-            ],
-            "generate_py": (
-                "def generate(rng):\n"
-                "    param = rng.choice([2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16])\n"
-                f"    c_str = f'La trayectoria analítica converge hacia el equilibrio con parámetro {{param}} en el análisis formal de {cname_fstr}.'\n"
-                "    distractors = [\n"
-                f"{mc7_dists1}\n"
-                "    ]\n"
-                "    d_lens = [len(d['value']) for d in distractors]\n"
-                "    if d_lens and len(c_str) < int(0.85 * min(d_lens)):\n"
-                "        c_str = c_str + ' ' + 'La deducción analítica es rigurosa y formalmente consistente.'\n"
-                "    elif d_lens and len(c_str) > int(1.15 * max(d_lens)):\n"
-                "        c_str = c_str[:int(1.10 * max(d_lens))]\n"
-                "    return {'vars': {'param': param}, 'correct': c_str, 'distractors': distractors}\n"
-            ),
-            "cross_check_py": "def verify(res):\n    return bool(res.get('correct')) and len(res.get('distractors', [])) == 6\n",
-            "hints": [
-                f"Examine la definición y supuestos de {cname}.",
-                rh[0],
-                "Considere cómo interactúan los parámetros estructurales sobre la estabilidad asintótica."
-            ],
-            "solution": f"El modelo de {cname} garantiza convergencia analítica estable al parámetro indicado.",
-            "distractor_ids": list(d_ids[:6])
-        },
-        {
-            "id": f"T-{cid_clean}-02",
-            "competency_id": cid,
-            "interaction_type": "multiple_choice_7_options",
-            "difficulty": "medium",
-            "bloom": bloom,
-            "stem": f"Considere una perturbación en {cname} que modifica la escala base a {{scale}}. ¿Cuál es la propiedad del sendero resultante?",
-            "stem_variants": [
-                f"Considere una perturbación en {cname} que modifica la escala base a {{scale}}. ¿Cuál es la propiedad del sendero resultante?",
-                f"Dada una variación estructural en {cname} con factor de escala {{scale}}, determine el impacto dinámico:",
-                f"En el estudio comparativo de {cname} con coeficiente {{scale}}, seleccione la conclusión analítica:",
-                f"Analice la sensibilidad paramétrica en {cname} para escala {{scale}} e identifique la opción verdadera:"
-            ],
-            "generate_py": (
-                "def generate(rng):\n"
-                "    scale = rng.choice([15, 20, 25, 30, 35, 40, 45, 50, 60, 70])\n"
-                f"    c_str = f'El sendero temporal preserva la condición de equilibrio con escala {{scale}} en {cname_fstr}.'\n"
-                "    distractors = [\n"
-                f"{mc7_dists2}\n"
-                "    ]\n"
-                "    d_lens = [len(d['value']) for d in distractors]\n"
-                "    if d_lens and len(c_str) < int(0.85 * min(d_lens)):\n"
-                "        c_str = c_str + ' ' + 'El resultado cualitativo es analíticamente estable.'\n"
-                "    elif d_lens and len(c_str) > int(1.15 * max(d_lens)):\n"
-                "        c_str = c_str[:int(1.10 * max(d_lens))]\n"
-                "    return {'vars': {'scale': scale}, 'correct': c_str, 'distractors': distractors}\n"
-            ),
-            "cross_check_py": "def verify(res):\n    return bool(res.get('correct')) and len(res.get('distractors', [])) == 6\n",
-            "hints": [
-                f"Evalúe la estática comparativa de {cname}.",
-                rh[1],
-                "Verifique el sentido de la variación de los parámetros."
-            ],
-            "solution": f"La escala paramétrica preserva el equilibrio global en {cname}.",
-            "distractor_ids": list(d_ids[:6])
-        },
-        {
-            "id": f"T-{cid_clean}-03",
-            "competency_id": cid,
-            "interaction_type": "fill_in_the_blank",
-            "difficulty": "easy",
-            "bloom": bloom,
-            "stem": f"En la formulación escalar de {cname}, con parámetros $a = {{a}}$ y $b = {{b}}$, halle el producto exacto $a \\times b$:",
-            "stem_variants": [
-                f"En la formulación escalar de {cname}, con parámetros $a = {{a}}$ y $b = {{b}}$, halle el producto exacto $a \\times b$:",
-                f"Calcule el valor del indicador multiplicativo $a \\times b$ para $a = {{a}}$ y $b = {{b}}$ en {cname}:",
-                f"Dadas las constantes $a = {{a}}$ y $b = {{b}}$, evalúe la magnitud resultante $a \\times b$ en {cname}:",
-                f"Determine el resultado escalar del producto $a \\cdot b$ con $a = {{a}}$ y $b = {{b}}$ en el modelo:"
-            ],
-            "generate_py": (
-                "def generate(rng):\n"
-                "    a = rng.choice([2, 3, 4, 5, 6, 7, 8, 9])\n"
-                "    b = rng.choice([2, 3, 4, 5, 6])\n"
-                "    ans = a * b\n"
-                "    return {'vars': {'a': a, 'b': b, 'ans': ans}, 'correct': ans, 'value': str(ans), 'canonical_algebraic': str(ans), 'accepted_equivalents': [str(ans), f'{ans}.0'], 'tolerance': 0.001, 'distractors': []}\n"
-            ),
-            "cross_check_py": "def verify(res):\n    return int(res['correct']) == res['vars']['a'] * res['vars']['b']\n",
-            "hints": [
-                f"Multiplique directamente los valores escalares en {cname}.",
-                rh[2],
-                "Ingrese únicamente el valor numérico entero resultante."
-            ],
-            "solution": "El producto aritmético directo entre ambos coeficientes arroja la magnitud buscada.",
-            "distractor_ids": []
-        },
-        {
-            "id": f"T-{cid_clean}-04",
-            "competency_id": cid,
-            "interaction_type": "fill_in_the_blank",
-            "difficulty": "medium",
-            "bloom": bloom,
-            "stem": f"Para la dinámica de {cname}, con nivel inicial $k = {{k}}$ y tasa de ajuste $c = {{c}}$, determine la suma escalar $k + c$:",
-            "stem_variants": [
-                f"Para la dinámica de {cname}, con nivel inicial $k = {{k}}$ y tasa de ajuste $c = {{c}}$, determine la suma escalar $k + c$:",
-                f"Calcule el valor de referencia $k + c$ para $k = {{k}}$ y $c = {{c}}$ bajo las ecuaciones de {cname}:",
-                f"Evalúe la suma analítica de las componentes $k = {{k}}$ y $c = {{c}}$ en el contexto de {cname}:",
-                f"Determine el total aditivo resultante $k + c$ dados $k = {{k}}$ y $c = {{c}}$ para este sistema:"
-            ],
-            "generate_py": (
-                "def generate(rng):\n"
-                "    k = rng.choice([10, 12, 14, 16, 18, 20, 24])\n"
-                "    c = rng.choice([3, 5, 7, 9, 11])\n"
-                "    ans = k + c\n"
-                "    return {'vars': {'k': k, 'c': c, 'ans': ans}, 'correct': ans, 'value': str(ans), 'canonical_algebraic': str(ans), 'accepted_equivalents': [str(ans), f'{ans}.0'], 'tolerance': 0.001, 'distractors': []}\n"
-            ),
-            "cross_check_py": "def verify(res):\n    return int(res['correct']) == res['vars']['k'] + res['vars']['c']\n",
-            "hints": [
-                "Sume ambos coeficientes algebraicos.",
-                rh[3],
-                "Introduzca el valor escalar resultante."
-            ],
-            "solution": "La combinación aditiva arroja la magnitud estacionaria buscada.",
-            "distractor_ids": []
-        },
-        {
-            "id": f"T-{cid_clean}-05",
-            "competency_id": cid,
-            "interaction_type": "multiple_select",
-            "difficulty": "medium",
-            "bloom": bloom,
-            "stem": f"Considere las proposiciones cualitativas de {cname} bajo tasa {{rate}}. Marque todas las opciones verdaderas:",
-            "stem_variants": [
-                f"Considere las proposiciones cualitativas de {cname} bajo tasa {{rate}}. Marque todas las opciones verdaderas:",
-                f"En relación con los fundamentos teóricos de {cname} con tasa {{rate}}, seleccione todas las aseveraciones correctas:",
-                f"Para el marco conceptual de {cname} bajo coeficiente {{rate}}, elija todas las afirmaciones matemáticamente válidas:",
-                f"Al examinar las propiedades operativas de {cname} asociadas a {{rate}}, identifique todas las respuestas acertadas:"
-            ],
-            "generate_py": (
-                "def generate(rng):\n"
-                "    rate = rng.choice([4, 6, 8, 10, 12, 14])\n"
-                "    opts = [\n"
-                f"        {{'content': f'La trayectoria de convergencia converge monotónicamente a la tasa {{rate}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
-                f"        {{'content': f'La condición de estabilidad asintótica se satisface para la tasa {{rate}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
-                f"        {{'content': f'El sistema oscila indefinidamente sin convergencia a la tasa {{rate}} ({m[0]}).', 'is_correct': False, 'distractor_id': '{d_ids[0]}', 'error_rationale': '{wb_std[0]}'}},\n"
-                f"        {{'content': f'La tasa analítica se anula en todo el espacio fuera de equilibrio ({m[1]}).', 'is_correct': False, 'distractor_id': '{d_ids[1]}', 'error_rationale': '{wb_std[1]}'}}\n"
-                "    ]\n"
-                "    return {'vars': {'rate': rate}, 'options': opts, 'distractors': []}\n"
-            ),
-            "cross_check_py": "def verify(res):\n    opts = res.get('options', [])\n    return len(opts) == 4 and len([o for o in opts if o.get('is_correct')]) == 2\n",
-            "hints": [
-                "Examine cada opción individualmente.",
-                rh[0],
-                "Contraste los supuestos del modelo con el comportamiento asintótico."
-            ],
-            "solution": f"Las opciones correctas describen la convergencia y estabilidad analítica de {cname}.",
-            "distractor_ids": list(d_ids[:2])
-        },
-        {
-            "id": f"T-{cid_clean}-06",
-            "competency_id": cid,
-            "interaction_type": "multiple_select",
-            "difficulty": "hard",
-            "bloom": bloom,
-            "stem": f"En el análisis de sensibilidad y dinámica para {cname} con factor {{factor}}, seleccione todas las alternativas correctas:",
-            "stem_variants": [
-                f"En el análisis de sensibilidad y dinámica para {cname} con factor {{factor}}, seleccione todas las alternativas correctas:",
-                f"Evalúe las propiedades dinámicas de {cname} ante cambios en el factor {{factor}}. Marque todas las afirmaciones válidas:",
-                f"Dada la evolución temporal de {cname} bajo el factor {{factor}}, ¿cuáles de las siguientes proposiciones se cumplen?:",
-                f"Para las condiciones de estabilidad de {cname} con parámetro {{factor}}, identifique todas las opciones verdaderas:"
-            ],
-            "generate_py": (
-                "def generate(rng):\n"
-                "    factor = rng.choice([3, 5, 7, 9, 11, 13])\n"
-                "    opts = [\n"
-                f"        {{'content': f'El sendero converge al equilibrio establecido por el factor {{factor}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
-                f"        {{'content': f'Las trayectorias dinámicas respetan el sentido cualitativo con factor {{factor}}.', 'is_correct': True, 'distractor_id': None, 'error_rationale': None}},\n"
-                f"        {{'content': f'El equilibrio se desplaza en dirección opuesta al factor {{factor}} ({m[2]}).', 'is_correct': False, 'distractor_id': '{d_ids[2]}', 'error_rationale': '{wb_std[2]}'}},\n"
-                f"        {{'content': f'La dinámica temporal se vuelve completamente caótica ({m[3]}).', 'is_correct': False, 'distractor_id': '{d_ids[3]}', 'error_rationale': '{wb_std[3]}'}}\n"
-                "    ]\n"
-                "    return {'vars': {'factor': factor}, 'options': opts, 'distractors': []}\n"
-            ),
-            "cross_check_py": "def verify(res):\n    opts = res.get('options', [])\n    return len(opts) == 4 and len([o for o in opts if o.get('is_correct')]) == 2\n",
-            "hints": [
-                "Evalúe el efecto de estática comparativa.",
-                rh[2],
-                "Revise las proposiciones falsas cuidadosamente."
-            ],
-            "solution": f"La diferenciación del sistema confirma las dos proposiciones de convergencia y signo en {cname}.",
-            "distractor_ids": list(d_ids[2:])
-        }
-    ]
-
-    return {
-        "competency_id": cid,
-        "templates": templates
-    }
-
-
-def preseed_author_scaffolds(
-    work_dir: Path,
-    shard_items: Optional[List[Dict[str, Any]]] = None,
-) -> List[str]:
-    """Pre-generates starter template scaffolds for assigned competencies.
-
-    Pre-populates each template file (work/templates/<comp_id>.json) with
-    competency metadata and linked distractors from cta.json so author subagents
-    start with structured valid schemas and full distractor coverage.
-    """
-    cta_file = work_dir / "cta.json"
-    if not cta_file.is_file():
-        return []
-
-    try:
-        cta_data = json.loads(cta_file.read_text(encoding="utf-8"))
-    except Exception as e:
-        logger.warning("Could not read cta.json for scaffold pre-seeding: %s", e)
-        return []
-
-    comps_by_id: Dict[str, Dict[str, Any]] = {
-        c["id"]: c for c in cta_data.get("competencies", []) if isinstance(c, dict) and "id" in c
-    }
-
-    target_cids: Set[str] = set()
-    if shard_items:
-        for s in shard_items:
-            for cid in s.get("competency_ids", []):
-                target_cids.add(str(cid))
-            for c in s.get("competencies", []):
-                if isinstance(c, dict) and "id" in c:
-                    target_cids.add(str(c["id"]))
-
-    if not target_cids:
-        # Check existing shards on disk
-        for sf in (work_dir / "shards").glob("shard_*.json"):
-            try:
-                sdata = json.loads(sf.read_text(encoding="utf-8"))
-                for cid in sdata.get("competency_ids", []):
-                    target_cids.add(str(cid))
-            except Exception:
-                pass
-
-    if not target_cids:
-        target_cids = set(comps_by_id.keys())
-
-    templates_dir = work_dir / "templates"
-    templates_dir.mkdir(parents=True, exist_ok=True)
-
-    preseeded: List[str] = []
-    for cid in sorted(target_cids):
-        tpl_path = templates_dir / f"{cid}.json"
-        if tpl_path.is_file() and tpl_path.stat().st_size > 50:
-            continue
-        comp = comps_by_id.get(cid)
-        if not comp:
-            continue
-        scaffold = build_starter_template_for_competency(comp)
-        tpl_path.write_text(json.dumps(scaffold, indent=2, ensure_ascii=False), encoding="utf-8")
-        preseeded.append(cid)
-        logger.info("Pre-seeded template scaffold for %s -> %s", cid, tpl_path.name)
-
-    # Pre-seed canonical template generator scaffold into each shard scratch folder
-    canonical_src = SKILL_DIR / "template_generator_canonical.py"
-    if canonical_src.is_file():
-        shard_ids: Set[str] = set()
-        if shard_items:
-            for s in shard_items:
-                sid = s.get("shard_id")
-                if sid:
-                    shard_ids.add(str(sid))
-        for sf in (work_dir / "shards").glob("shard_*.json"):
-            shard_ids.add(sf.stem)
-        for sid in shard_ids:
-            shard_scratch = work_dir / "shards" / sid / "scratch"
-            shard_scratch.mkdir(parents=True, exist_ok=True)
-            dst = shard_scratch / "template_generator_canonical.py"
-            try:
-                shutil.copy2(canonical_src, dst)
-            except Exception as e:
-                logger.warning("Could not copy canonical template to %s: %s", dst, e)
-            shard_scratch_alt = work_dir / "scratch" / sid
-            shard_scratch_alt.mkdir(parents=True, exist_ok=True)
-            dst_alt = shard_scratch_alt / "template_generator_canonical.py"
-            try:
-                shutil.copy2(canonical_src, dst_alt)
-            except Exception:
-                pass
-
-    return preseeded
-
-
-def generate_author_bundle(
-    work_dir: Path,
-    shard_id: str,
-    read_paths: List[str],
-    write_paths: List[str],
-    forbidden_items: Optional[List[str]] = None,
-    turn_budget: int = 50,
-    extra_context: str = "",
-) -> Path:
-    """Generates task bundle for shard exercise author with reinforced modular instructions.
-
-    Directivas reforzadas:
-    - Autoría modular por competencia (work/templates/<comp_id>.json). Prohibidos scripts monolíticos de 2,000 líneas.
-    - Prohibición de comandos complejos de PowerShell inline con variables '$'.
-    - Validación de todo el lote a la vez con check_templates.py.
-    - Cero introspección del validador (prohibido check_templates.py, src/validator/*, rules.py).
-    - Presupuesto de 50 turnos (límite estricto) con objetivo óptimo de 10 viajes y Circuit Breaker tras 3 fallos consecutivos idénticos.
-    """
-    forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["author"]["forbidden"])
-    work_rel = get_work_rel(work_dir)
-    directives = (
-        "### DIRECTIVAS CRÍTICAS DE AUTORÍA MODULAR (OBLIGATORIO):\n"
-        f"1. **Refinamiento modular sobre scaffolds pre-sembrados ({work_rel}/templates/<comp_id>.json):** Cada competencia cuenta con un scaffold "
-        f"inicial pre-sembrado en `{work_rel}/templates/<comp_id>.json` con sus metadatos y distractores mapeados desde `{work_rel}/cta.json`. "
-        "Edítalo y refínalo directamente usando prioritariamente `replace_file_content` (o `write_to_file` como fallback opcional para reescrituras completas). "
-        f"Queda terminantemente PROHIBIDO escribir un único script monolítico de 2,000 líneas (`build_<shard_id>.py`). "
-        "Si requieres scripts o archivos auxiliares temporales, deben ubicarse EXCLUSIVAMENTE en tu carpeta de scratch aislada: "
-        f"`{work_rel}/shards/<shard_id>/scratch/` (o `{work_rel}/scratch/<shard_id>/`). Queda terminantemente prohibido utilizar el directorio compartido `scratch/` "
-        "raíz para evitar colisiones entre shards concurrentes.\n"
-        "2. **Prohibición de emitir plantillas en el chat:** Do not output template JSON in chat text. Termina estrictamente con `DONE: <archivos>`.\n"
-        "3. **Prohibidos comandos de PowerShell inline con '$':** NO ejecutes comandos inline de PowerShell (`powershell -Command ...`) "
-        "que contengan variables o expresiones con signo `$`, ya que PowerShell expande `$variable` como cadenas vacías y corrompe los archivos. "
-        "Utiliza siempre las herramientas nativas de Antigravity (`replace_file_content`, `write_to_file`, `view_file`).\n"
-        "4. **Validación de todo el lote a la vez:** Ejecuta la validación de todas las plantillas generadas de tu shard "
-        "en un solo comando agrupado en terminal:\n"
-        f"   `python .agents/skills/content-to-course/check_templates.py {work_rel}/templates/<comp_id1>.json {work_rel}/templates/<comp_id2>.json ... --cta {work_rel}/cta.json --strict`\n"
-        "5. **Cero introspección del validador y motor:** Queda estrictamente prohibido examinar, leer o inspeccionar `check_templates.py`, "
-        "`src/validator/*`, `rules.py` o `engine/*`. La salida de la terminal detalla explícitamente el nombre de la regla y el campo infractor.\n"
-        "6. **Circuit Breaker y presupuesto de 50 turnos:** Tu límite máximo es de 50 turnos (objetivo: 10 viajes gracias a los scaffolds pre-sembrados). "
-        "Si obtienes 3 fallos consecutivos idénticos en `check_templates.py` sin progreso, o si alcanzas el límite de turnos, "
-        "debes detenerte inmediatamente y responder: `BLOCKED: CONTRACT_ERROR`."
-    )
-    combined = f"{directives}\n\n{extra_context}".strip() if extra_context else directives
-    return _create_task_bundle(
-        work_dir=work_dir,
-        bundle_name=f"author_{shard_id}",
-        role_name="author",
-        role_title=f"Shard Author {shard_id}",
-        system_prompt_rel=ROLE_SPECS["author"]["system_prompt"],
-        read_paths=read_paths,
-        write_paths=write_paths,
-        forbidden_items=forbidden,
-        turn_budget=turn_budget,
-        extra_context=combined,
-    )
-
-
-def generate_judge_bundle(
-    work_dir: Path,
-    judge_id: str,
-    read_paths: List[str],
-    write_paths: List[str],
-    forbidden_items: Optional[List[str]] = None,
-    turn_budget: int = 15,
-    extra_context: str = "",
-) -> Path:
-    """Generates task bundle for blind evaluation judge with reinforced first-principles directives.
-
-    Directivas reforzadas:
-    - Cero búsquedas web (prohibido search_web, read_url_content, navegación web).
-    - Resolver por primeros principios y razonamiento analítico puro sin claves.
-    - Responder BLOCKED si falta contexto indispensable o hay ambigüedad insalvable.
-    """
-    forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["judge"]["forbidden"])
-    directives = (
-        "### DIRECTIVAS CRÍTICAS DE EVALUACIÓN A CIEGAS (OBLIGATORIO):\n"
-        "1. **Cero búsquedas web:** Queda estrictamente prohibido invocar `search_web`, `read_url_content` o realizar "
-        "cualquier tipo de navegación por internet. Toda la resolución debe ser puramente analítica y autónoma.\n"
-        "2. **Resolver por primeros principios:** Resuelve cada pregunta analíticamente desde primeros principios matemáticos y lógicos, "
-        "basándote exclusivamente en la formulación de la pregunta y el contexto proporcionado en el lote.\n"
-        "3. **Responder BLOCKED si falta contexto:** Si una pregunta presenta ambigüedad insalvable, falta de datos esenciales "
-        "o inconsistencia matemática que imposibilite una respuesta unívoca, responde `BLOCKED: <motivo específico>` "
-        "en lugar de especular o adivinar."
-    )
-    combined = f"{directives}\n\n{extra_context}".strip() if extra_context else directives
-    return _create_task_bundle(
-        work_dir=work_dir,
-        bundle_name=f"judge_{judge_id}",
-        role_name="judge",
-        role_title=f"Blind Judge {judge_id}",
-        system_prompt_rel=ROLE_SPECS["judge"]["system_prompt"],
-        read_paths=read_paths,
-        write_paths=write_paths,
-        forbidden_items=forbidden,
-        turn_budget=turn_budget,
-        extra_context=combined,
-    )
-
-
-def preseed_cta_scaffolds(work_dir: Path, num_parts: int = 3, doc_name: str = "") -> List[Path]:
-    """Pre-seeds starter scaffold files in work/cta_parts/ (part_01.json, part_02.json, ...).
-    
-    Guarantees that target CTA part files exist on disk before the subagent starts,
-    enabling the subagent to work strictly via surgical replace_file_content calls and
-    completely avoiding write_to_file token-overflow risks.
-    """
-    parts_dir = work_dir / "cta_parts"
-    parts_dir.mkdir(parents=True, exist_ok=True)
-    created: List[Path] = []
-    doc_ref = doc_name or "documento_fuente.pdf"
-
-    p1 = parts_dir / "part_01.json"
-    if not p1.is_file() or p1.stat().st_size == 0:
-        scaffold_comp = [
-            {
-                "id": "COMP-01",
-                "type": "concept",
-                "name": "Título de la Competencia",
-                "description_latex": "Definición formal y matemática de la competencia con KaTeX.",
-                "bloom": "Understand",
-                "session": "Sesión 1",
-                "unit_index": 1,
-                "prerequisites": [],
-                "evidence": [
-                    {
-                        "doc": doc_ref,
-                        "page": 1
-                    }
-                ],
-                "distractors": [
-                    {
-                        "id": "D-COMP01-01",
-                        "name": "Error conceptual principal",
-                        "wrong_belief": "Concepción errónea o trampa común del estudiante",
-                        "correct_belief": "Regla matemática o verdad teórica exacta",
-                        "omitted_step": None,
-                        "trigger": "Activador contextual de la pregunta",
-                        "manifestation": "$manifestacion_formal$",
-                        "error_type": "conceptual_swap",
-                        "severity": "high",
-                        "origin": "source",
-                        "evidence": {
-                            "doc": doc_ref,
-                            "page": 1
-                        },
-                        "remediation_hint": "Pista formativa de recuperación para este error."
-                    },
-                    {
-                        "id": "D-COMP01-02",
-                        "name": "Error de generalización excesiva",
-                        "wrong_belief": "Extrapolación indebida de un resultado particular",
-                        "correct_belief": "Condiciones de validez limitadas al caso analizado",
-                        "omitted_step": None,
-                        "trigger": "Variación paramétrica",
-                        "manifestation": "$manifestacion_2$",
-                        "error_type": "overgeneralization",
-                        "severity": "medium",
-                        "origin": "source",
-                        "evidence": {
-                            "doc": doc_ref,
-                            "page": 1
-                        },
-                        "remediation_hint": "Verifica los supuestos de aplicabilidad del teorema."
-                    },
-                    {
-                        "id": "D-COMP01-03",
-                        "name": "Paso implícito omitido",
-                        "wrong_belief": None,
-                        "correct_belief": "Paso procedimental algebraico requerido",
-                        "omitted_step": "Omitir la diferenciación implícita antes de despejar",
-                        "trigger": "Despeje directo sin derivación",
-                        "manifestation": "$manifestacion_3$",
-                        "error_type": "skipped_step",
-                        "severity": "high",
-                        "origin": "inferred",
-                        "evidence": {
-                            "doc": doc_ref,
-                            "page": 1
-                        },
-                        "remediation_hint": "Aplica primero la regla de la cadena antes de despejar."
-                    },
-                    {
-                        "id": "D-COMP01-04",
-                        "name": "Error de signo algebraico",
-                        "wrong_belief": "Confusión en el signo de la tasa neta",
-                        "correct_belief": "El signo negativo refleja la depreciación efectiva",
-                        "omitted_step": None,
-                        "trigger": "Ecuación dinámica",
-                        "manifestation": "$+ \\delta$",
-                        "error_type": "sign_error",
-                        "severity": "medium",
-                        "origin": "inferred",
-                        "evidence": {
-                            "doc": doc_ref,
-                            "page": 1
-                        },
-                        "remediation_hint": "Revisa los signos en la ecuación diferencial."
-                    },
-                    {
-                        "id": "D-COMP01-05",
-                        "name": "Error de escala o notación",
-                        "wrong_belief": "Confusión entre variables agregadas y per cápita",
-                        "correct_belief": "Las magnitudes intensivas se normalizan por el trabajo efectivo",
-                        "omitted_step": None,
-                        "trigger": "Definición intensiva",
-                        "manifestation": "$Y$ en lugar de $y$",
-                        "error_type": "unit_or_scale",
-                        "severity": "medium",
-                        "origin": "inferred",
-                        "evidence": {
-                            "doc": doc_ref,
-                            "page": 1
-                        },
-                        "remediation_hint": "Usa variables en minúscula para términos per cápita."
-                    },
-                    {
-                        "id": "D-COMP01-06",
-                        "name": "Caso frontera no verificado",
-                        "wrong_belief": "Asumir validez en el límite extremo del parámetro",
-                        "correct_belief": "Los supuestos descartan valores frontera degenerados",
-                        "omitted_step": None,
-                        "trigger": "Evaluación en el límite",
-                        "manifestation": "$s = 1$",
-                        "error_type": "boundary_case",
-                        "severity": "low",
-                        "origin": "inferred",
-                        "evidence": {
-                            "doc": doc_ref,
-                            "page": 1
-                        },
-                        "remediation_hint": "Recuerda que los parámetros satisfacen estrictamente las desigualdades abiertas."
-                    }
-                ]
-            }
-        ]
-        p1.write_text(json.dumps(scaffold_comp, indent=2, ensure_ascii=False), encoding="utf-8")
-        created.append(p1)
-
-    for i in range(2, num_parts + 1):
-        pi = parts_dir / f"part_{i:02d}.json"
-        if not pi.is_file() or pi.stat().st_size == 0:
-            pi.write_text("[]", encoding="utf-8")
-            created.append(pi)
-
-    # Pre-seed compile_cta.py compiler in work_dir
-    compile_src = SKILL_DIR / "compile_cta.py"
-    if compile_src.is_file():
-        compile_dst = work_dir / "compile_cta.py"
-        try:
-            shutil.copy2(compile_src, compile_dst)
-            created.append(compile_dst)
-        except Exception as e:
-            logger.warning("Could not copy compile_cta.py to %s: %s", compile_dst, e)
-
-    return created
-
-
-def generate_cta_direct_bundle(
-    work_dir: Path,
-    read_paths: List[str],
-    write_paths: List[str],
-    forbidden_items: Optional[List[str]] = None,
-    turn_budget: int = 20,
-    extra_context: str = "",
-) -> Path:
-    """Generates task bundle for Direct CTA Architect with 2-file architecture (cta_data.py + compile_cta.py).
-
-    Directivas reforzadas:
-    - Zero-Chat Output: Do not output competencies in chat text. Terminate strictly with DONE: work/cta.json.
-    - Arquitectura de 2 archivos: emitir tuplas tabulares en work/cta_data.py y compilar con work/compile_cta.py.
-    - Construcción en dos etapas: write_to_file para el bloque inicial (primeras 10-12 competencias), write_to_file con Append: true para bloques continuos.
-    - Edición quirúrgica a nivel de línea con replace_file_content para resolver errores reportados por el compilador.
-    - Prohibido scripts auxiliares en Python y comandos exploratorios en CLI.
-    """
-    forbidden = list(forbidden_items if forbidden_items is not None else ROLE_SPECS["cta-direct"]["forbidden"])
-    work_rel = get_work_rel(work_dir)
-    directives = (
-        "### DIRECTIVAS CRÍTICAS DE DIRECT CTA ARCHITECT (OBLIGATORIO):\n"
-        "1. **Arquitectura de 2 Archivos (compile_cta.py + cta_data.py):**\n"
-        f"   - **Compilador Inmutable:** El archivo `{work_rel}/compile_cta.py` ya está pre-sembrado en el workspace y es INMUTABLE. NO lo modifiques ni intentes recrearlo.\n"
-        f"   - **Emisión Tabular en Dos Etapas:** Emite las competencias en `{work_rel}/cta_data.py` como tuplas compactas en estricto orden cronológico del material usando `write_to_file` para el primer bloque de 10-12 competencias, y `write_to_file` con `Append: true` para bloques continuos subsiguientes.\n"
-        f"   - **Compilación y Certificación:** Tras emitir `cta_data.py`, ejecuta `python {work_rel}/compile_cta.py`. El compilador sintetiza `{work_rel}/cta.json` en <5ms, auto-normaliza KaTeX y ejecuta la certificación de `check_cta.py` reportando tupla y número de línea exacto en caso de error.\n"
-        "   - **Reparación Quirúrgica por Línea:** Si el compilador o validador reportan errores [cta_data.py:Línea XX], utiliza quirúrgicamente `replace_file_content` sobre esas líneas específicas para corregir la tupla o distractor sin reescribir todo el archivo.\n"
-        f"   - **Compatibilidad con Partes Modulares:** Si se utilizan partes en `{work_rel}/cta_parts/part_XX.json` (part_01.json, part_02.json), utiliza `replace_file_content` sobre los scaffolds y ejecuta `run.py --stage cta-stitch` al final.\n"
-        f"2. **Prohibición Categórica de Scripts Python:** Queda terminantemente prohibido escribir o ejecutar scripts Python auxiliares (.py) en scratch/ o {work_rel}/.\n"
-        "3. **Zero-CLI Pre-flight:** Queda terminantemente prohibido ejecutar comandos de consola preliminares para explorar o listar directorios. Comienza INMEDIATAMENTE en el Turno 1 analizando los materiales asignados con `view_file`.\n"
-        f"4. **Zero-Chat Output:** Do not output competencies in chat text. Terminate strictly with DONE: {work_rel}/cta.json.\n"
-        f"5. **Certificación Final:** Re-ejecuta `python {work_rel}/compile_cta.py` hasta certificar `PASS` y emite unívocamente `DONE: {work_rel}/cta.json`."
-    )
-    combined = f"{directives}\n\n{extra_context}".strip() if extra_context else directives
-    return _create_task_bundle(
-        work_dir=work_dir,
-        bundle_name="cta_direct",
-        role_name="cta-direct",
-        role_title="Direct CTA Architect",
-        system_prompt_rel=ROLE_SPECS["cta-direct"]["system_prompt"],
-        read_paths=read_paths,
-        write_paths=write_paths,
-        forbidden_items=forbidden,
-        turn_budget=turn_budget,
-        extra_context=combined,
-    )
-
-
-def _bundle_display_path(bundle_file: Path) -> str:
-    """Returns bundle path relative to current working directory or absolute."""
-    try:
-        return bundle_file.relative_to(Path.cwd()).as_posix()
-    except ValueError:
-        return bundle_file.resolve().as_posix()
-
-
 def get_work_rel(work_dir: Union[str, Path]) -> str:
-    """Returns normalized relative POSIX path for work_dir within cwd, falling back to 'work'.
-
-    Ensures seamless compatibility with dynamic workspace paths (e.g. courses/solow_model/work)
-    as well as external testing directories (e.g. pytest tmp_path) by falling back to 'work'.
-    """
+    """Returns normalized relative POSIX path for work_dir within cwd, falling back to 'work'."""
     p = Path(work_dir)
     if not p.is_absolute():
         p_str = p.as_posix()
@@ -1061,121 +269,544 @@ def get_work_rel(work_dir: Union[str, Path]) -> str:
         return "work"
 
 
-def index_scaffold_template_lines(tpl_path: Path) -> List[str]:
-    """Indexes template IDs, exact line ranges, and key section anchors in a scaffold for replace_file_content."""
-    if not tpl_path.is_file():
-        return []
-    entries: List[str] = []
-    try:
-        lines = tpl_path.read_text(encoding="utf-8").splitlines()
-        current_tid = ""
-        tpl_start = 1
-        tpl_indent = 4
-        stem_line = None
-        gen_line = None
-        hints_line = None
-        sol_line = None
+def generate_define_subagent_specs(work_dir: Union[str, Path]) -> Dict[str, Any]:
+    """Writes individual subagent type spec files in work/dispatch/types/<type_name>.json
+    and the consolidated index in work/dispatch/subagent_types.json.
+    
+    Each individual file is < 20 KB and contains the 100% full system prompt,
+    enabling parallel view_file calls without truncation.
+    """
+    work = Path(work_dir).resolve()
+    types_dir = work / "dispatch" / "types"
+    types_dir.mkdir(parents=True, exist_ok=True)
 
-        for idx, line in enumerate(lines, start=1):
-            stripped = line.strip()
-            if stripped.startswith('"id": "T-'):
-                current_tid = stripped.split('"id": "')[1].split('"')[0]
-                if idx > 1 and lines[idx - 2].strip() == "{":
-                    tpl_start = idx - 1
-                    tpl_indent = len(lines[idx - 2]) - len(lines[idx - 2].lstrip())
-                else:
-                    tpl_start = idx
-                    tpl_indent = len(line) - len(line.lstrip())
-                stem_line = None
-                gen_line = None
-                hints_line = None
-                sol_line = None
-                continue
+    types_list = get_type_definitions()
+    type_files: List[str] = []
 
-            if current_tid:
-                if stripped.startswith('"stem":') and stem_line is None:
-                    stem_line = idx
-                elif stripped.startswith('"generate_py":') and gen_line is None:
-                    gen_line = idx
-                elif stripped.startswith('"hints":') and hints_line is None:
-                    hints_line = idx
-                elif stripped.startswith('"solution":') and sol_line is None:
-                    sol_line = idx
-                elif stripped in ("},", "}") and (len(line) - len(line.lstrip())) == tpl_indent:
-                    tpl_end = idx
-                    sub_parts = []
-                    if stem_line:
-                        sub_parts.append(f"stem: L{stem_line}")
-                    if gen_line:
-                        sub_parts.append(f"gen: L{gen_line}")
-                    if hints_line:
-                        sub_parts.append(f"hints: L{hints_line}")
-                    if sol_line:
-                        sub_parts.append(f"sol: L{sol_line}")
-                    details = f" ({', '.join(sub_parts)})" if sub_parts else ""
-                    entries.append(f"  * `{current_tid}`: L{tpl_start}..L{tpl_end}{details}")
-                    current_tid = ""
+    for t_spec in types_list:
+        t_name = t_spec["name"]
+        clean_name = t_name.replace("-", "_")
+        t_file = types_dir / f"{clean_name}.json"
+        t_file.write_text(json.dumps(t_spec, indent=2, ensure_ascii=False), encoding="utf-8")
+        type_files.append(t_file.resolve().as_posix())
 
-        if current_tid:
-            tpl_end = len(lines)
-            sub_parts = []
-            if stem_line:
-                sub_parts.append(f"stem: L{stem_line}")
-            if gen_line:
-                sub_parts.append(f"gen: L{gen_line}")
-            if hints_line:
-                sub_parts.append(f"hints: L{hints_line}")
-            if sol_line:
-                sub_parts.append(f"sol: L{sol_line}")
-            details = f" ({', '.join(sub_parts)})" if sub_parts else ""
-            entries.append(f"  * `{current_tid}`: L{tpl_start}..L{tpl_end}{details}")
-    except Exception as e:
-        logger.debug("Could not index scaffold lines for %s: %s", tpl_path, e)
-    return entries
+    summary_payload = {
+        "types": types_list,
+        "type_files": type_files,
+    }
+
+    subagent_types_file = work / "dispatch" / "subagent_types.json"
+    subagent_types_file.parent.mkdir(parents=True, exist_ok=True)
+    subagent_types_file.write_text(json.dumps(summary_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    return summary_payload
 
 
-COMPACT_AUTHOR_DIGEST = (
-    "### DIRECTIVAS OPERATIVAS COMPACTAS (VER BUNDLE PARA DETALLE COMPLETO):\n"
-    "- **TPL-D3 & TPL-VAR >= 0.50:** 6 plantillas por competencia (2 MC7, 2 FIB, 2 MS). Cobertura 100% de distractores de cta.json. 3-5 stem_variants con {placeholders}.\n"
-    "- **R-18 (Anti-Giveaways):** Cero metainformación psicométrica o boilerplate sintético repetitivo en opciones.\n"
-    "- **R-19 (Cero Fuga en FIB):** El stem de fill_in_the_blank no debe contener la respuesta o valor numérico.\n"
-    "- **R-20 (LaTeX Limpio):** Cero {{ o }} en JSON; toda variable {var} debe existir en 'vars' de generate_py. Fracciones \\frac{a}{b} válidas.\n"
-    "- **R-22 (Rationales en MS):** 100% de opciones con is_correct=False en multiple_select deben tener 'error_rationale' no vacío.\n"
-    "- **Protocolo Parallel Tool Calling:** Turno 1 emite llamadas paralelas a replace_file_content usando el Mapa de Líneas Pre-Indexado. Turno 2 refina restantes. Turno 3 ejecuta validación CLI oficial.\n"
-)
+def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict[str, Any]:
+    """Generates dispatch payload and individual item files for CTA Architect.
+    
+    Exige work/pre_cta_manifest.json (cero fallbacks; si no existe, lanza/retorna BLOCKER:: No existe pre_cta_manifest.json).
+    - En modo direct: genera work/dispatch/items/cta_01.json (< 46,080 bytes) formateando de forma compacta
+      si hay > 50 documentos para garantizar que view_file nunca trunque ni se pierda un solo byte del system prompt.
+    - En modo mapreduce: genera un ítem por subpart en work/dispatch/items/cta_01.json, cta_02.json, ..., cta_MM.json,
+      pasando a cada subagente únicamente el documento/rango de páginas de su subpart y el comando
+      compile_cta.py --work "<work_dir>" --part <subpart_id>.
+    """
+    work = Path(work_dir).resolve()
+    work_rel = get_work_rel(work)
+    manifest_path = work / "pre_cta_manifest.json"
+    if not manifest_path.is_file():
+        err_msg = "BLOCKER:: No existe pre_cta_manifest.json"
+        logger.error(err_msg)
+        raise FileNotFoundError(err_msg)
+
+    manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    cta_mode = mode or manifest_data.get("cta_mode") or "direct"
+
+    sys_prompt_full = load_system_prompt("prompt_cta_architect.md")
+    items_dir = work / "dispatch" / "items"
+    items_dir.mkdir(parents=True, exist_ok=True)
+
+    subagents: List[Dict[str, Any]] = []
+    item_files: List[str] = []
+
+    if cta_mode == "mapreduce":
+        subparts = manifest_data.get("subparts") or []
+        if not subparts:
+            # Fallback derivation from files
+            files_list = manifest_data.get("files") or manifest_data.get("documents") or []
+            subparts = [
+                {
+                    "subpart_id": f"part_{i+1:02d}",
+                    "subpart_index": i,
+                    "doc": f.get("doc") or f.get("doc_name") or f.get("name") or "document.pdf",
+                    "path": f.get("path") or f.get("file") or f.get("doc") or "document.pdf",
+                    "page_range": f.get("valid_page_range") or f.get("page_range") or [1, f.get("total_pages", 1)],
+                    "total_pages": f.get("total_pages", 1),
+                }
+                for i, f in enumerate(files_list)
+            ]
+        if not subparts:
+            subparts = [
+                {
+                    "subpart_id": "part_01",
+                    "subpart_index": 0,
+                    "doc": "material_fuente.pdf",
+                    "path": "material_fuente.pdf",
+                    "page_range": [1, 1],
+                    "total_pages": 1,
+                }
+            ]
+
+        for idx, sp in enumerate(subparts, start=1):
+            subpart_id = sp.get("subpart_id") or f"part_{idx:02d}"
+            doc_name = sp.get("doc") or sp.get("doc_name") or sp.get("name") or "document.pdf"
+            doc_path = sp.get("path") or sp.get("file") or doc_name
+            v_range = sp.get("page_range") or sp.get("valid_page_range") or [1, sp.get("total_pages", 1)]
+            total_p = sp.get("total_pages") or (v_range[1] if len(v_range) > 1 else 1)
+            out_target = f"{work_rel}/cta_parts/{subpart_id}_data.py"
+
+            subpart_table = "\n".join([
+                "| Documento Subpart | Ruta Fuente | Rango de Páginas Válidas (1-indexed) | Total Páginas |",
+                "|---|---|---|---|",
+                f"| `{doc_name}` | `{doc_path}` | **`{v_range[0]}..{v_range[1]}`** | {total_p} |",
+            ])
+
+            compile_cmd = f"python .agents/skills/content-to-course/compile_cta.py --work \"{work.resolve().as_posix()}\" --part {subpart_id}"
+
+            prompt_lines = [
+                f"# Asignación de Tarea para Cognitive Task Analysis Architect ({subpart_id} - MapReduce C2C v3.2)",
+                "",
+                "## 1. SCOPE-LOCK Y CONTEXTO DE EJECUCIÓN",
+                f"- **Manifiesto de Entrada OBLIGATORIO:** `{manifest_path.resolve().as_posix()}` (o `{work_rel}/pre_cta_manifest.json`)",
+                f"- **Modo CTA:** `mapreduce` (Subpart: `{subpart_id}`)",
+                f"- **Ruta de Salida Obligatoria:** `{out_target}`",
+                "",
+                "## 2. DOCUMENTO ASIGNADO A ESTA SUBPARTE Y RANGO DE PÁGINAS (1..N)",
+                subpart_table,
+                "",
+                "> [!CRITICAL]",
+                "> **REGLA MANDATORIA DE PAGINACIÓN `evidence.page`:**",
+                f"> SIEMPRE usa el índice de página 1-indexed del archivo PDF (`{v_range[0]}..{v_range[1]}` según la tabla anterior), NUNCA la numeración impresa del libro o capítulo.",
+                "",
+                "## 3. DIRECTIVAS DE OPERACIÓN",
+                f"- Turno 1 MANDATORIO: Abre el material fuente asignado con `view_file`: `{doc_path}`.",
+                f"- Escribe las competencias en tuplas tabulares puras de 9 elementos en `{out_target}` (`COMPETENCIES = [...]`).",
+                "- Prohibido crear scripts auxiliares en Python o emitir competencias en el chat conversacional.",
+                f"- Compila con determinismo ejecutando el compilador oficial:",
+                f"  ```bash",
+                f"  {compile_cmd}",
+                f"  ```",
+                f"- Si el compilador reporta errores, corrígelos con `replace_file_content` sobre `{out_target}`.",
+                f"- Al certificar PASS, termina estrictamente con: `DONE: {out_target}`.",
+                "",
+                "---",
+                "",
+                sys_prompt_full,
+            ]
+            prompt_full = "\n".join(prompt_lines)
+
+            item_file = items_dir / f"cta_{idx:02d}.json"
+            item_data = {
+                "TypeName": "c2c_cta_architect",
+                "Role": f"Cognitive Task Analysis Architect {subpart_id}",
+                "Model": "flash",
+                "Workspace": "inherit",
+                "Prompt": prompt_full,
+            }
+            item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
+            subagents.append(item_data)
+            item_files.append(item_file.resolve().as_posix())
+
+    else:
+        # direct mode
+        out_target = f"{work_rel}/cta_data.py"
+
+        # Build document rows
+        docs = manifest_data.get("documents") or manifest_data.get("files") or []
+        doc_rows: List[Tuple[str, str, str, Any]] = []
+        if isinstance(docs, list):
+            for d in docs:
+                if isinstance(d, dict):
+                    d_name = d.get("doc_name") or d.get("name") or d.get("doc") or "document.pdf"
+                    d_path = d.get("path") or d.get("file") or d_name
+                    v_range = d.get("valid_page_range") or d.get("page_range") or [1, d.get("total_pages", 1)]
+                    total_p = d.get("total_pages") or (v_range[1] if len(v_range) > 1 else 1)
+                    doc_rows.append((d_name, d_path, f"{v_range[0]}..{v_range[1]}", total_p))
+                elif isinstance(d, str):
+                    doc_rows.append((d, d, "1..N", "desconocido"))
+        elif isinstance(docs, dict):
+            for d_name, d_info in docs.items():
+                if isinstance(d_info, dict):
+                    v_range = d_info.get("valid_page_range") or d_info.get("page_range") or [1, d_info.get("total_pages", 1)]
+                    total_p = d_info.get("total_pages") or (v_range[1] if len(v_range) > 1 else 1)
+                    d_path = d_info.get("path") or d_name
+                    doc_rows.append((d_name, d_path, f"{v_range[0]}..{v_range[1]}", total_p))
+
+        # Compact formatting if > 50 documents to keep payload strictly < 46,080 bytes
+        if len(doc_rows) > 50:
+            table_lines = [
+                "| # | Documento | Rango Válido (1-indexed) | Total Páginas |",
+                "|---|---|---|---|",
+            ]
+            for i, r in enumerate(doc_rows, 1):
+                table_lines.append(f"| {i} | `{r[0]}` | **`{r[2]}`** | {r[3]} |")
+            doc_table_str = (
+                f"- **Total de documentos asignados:** {len(doc_rows)} archivos (ver rutas completas en `pre_cta_manifest.json`).\n\n"
+                + "\n".join(table_lines)
+            )
+        else:
+            table_lines = [
+                "| Documento | Ruta Fuente | Rango de Páginas Válidas (1-indexed) | Total Páginas |",
+                "|---|---|---|---|",
+            ]
+            for r in doc_rows:
+                table_lines.append(f"| `{r[0]}` | `{r[1]}` | **`{r[2]}`** | {r[3]} |")
+            doc_table_str = "\n".join(table_lines)
+
+        compile_cmd = f"python .agents/skills/content-to-course/compile_cta.py --work \"{work.resolve().as_posix()}\""
+
+        prompt_lines = [
+            "# Asignación de Tarea para Cognitive Task Analysis Architect (C2C v3.2)",
+            "",
+            "## 1. SCOPE-LOCK Y CONTEXTO DE EJECUCIÓN",
+            f"- **Manifiesto de Entrada OBLIGATORIO:** `{manifest_path.resolve().as_posix()}` (o `{work_rel}/pre_cta_manifest.json`)",
+            f"- **Modo CTA:** `{cta_mode}`",
+            f"- **Ruta de Salida Obligatoria:** `{out_target}`",
+            "",
+            "## 2. TABLA DE DOCUMENTOS Y RANGOS DE PÁGINAS VÁLIDAS (1..N)",
+            doc_table_str,
+            "",
+            "> [!CRITICAL]",
+            "> **REGLA MANDATORIA DE PAGINACIÓN `evidence.page`:**",
+            "> SIEMPRE usa el índice de página 1-indexed del archivo PDF (`1..N` según `valid_page_range` en la tabla anterior), NUNCA la numeración impresa del libro o capítulo.",
+            "> (Ejemplo: si un PDF tiene 20 páginas impresas del 241 al 260, debes citar páginas entre `1` y `20`).",
+            "",
+            "## 3. DIRECTIVAS DE OPERACIÓN",
+            f"- Turno 1 MANDATORIO: Abre el primer material fuente asignado con `view_file`.",
+            f"- Escribe las competencias en tuplas tabulares puras de 9 elementos en `{out_target}`.",
+            f"- Prohibido crear scripts auxiliares en Python o emitir competencias en el chat conversacional.",
+            f"- Compila con determinismo ejecutando el compilador oficial:",
+            f"  ```bash",
+            f"  {compile_cmd}",
+            f"  ```",
+            f"- Si el compilador reporta errores, corrígelos quirúrgicamente con `replace_file_content` sobre `{out_target}`.",
+            f"- Termina estrictamente con `DONE: {work_rel}/cta.json`.",
+            "",
+            "---",
+            "",
+            sys_prompt_full,
+        ]
+        prompt_full = "\n".join(prompt_lines)
+
+        item_file = items_dir / "cta_01.json"
+        item_data = {
+            "TypeName": "c2c_cta_architect",
+            "Role": "Cognitive Task Analysis Architect",
+            "Model": "flash",
+            "Workspace": "inherit",
+            "Prompt": prompt_full,
+        }
+        item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        subagents = [item_data]
+        item_files = [item_file.resolve().as_posix()]
+
+    dispatch_dir = work / "dispatch"
+    dispatch_dir.mkdir(parents=True, exist_ok=True)
+    cta_audit_file = dispatch_dir / "cta.json"
+    cta_audit = {
+        "stage": "cta",
+        "cta_mode": cta_mode,
+        "dispatched_at": datetime.now(timezone.utc).isoformat(),
+        "subagents_count": len(subagents),
+        "item_files": item_files,
+        "Subagents": subagents,
+    }
+    cta_audit_file.write_text(json.dumps(cta_audit, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    return {"Subagents": subagents, "item_files": item_files}
 
 
-def _format_prompt(
-    role_name: str,
-    role_title: str,
-    bundle_path: str,
-    turn_budget: int,
-    read_paths: Optional[List[str]] = None,
-    write_paths: Optional[List[str]] = None,
-    forbidden_items: Optional[List[str]] = None,
-    system_prompt_rel: Optional[str] = None,
-) -> str:
-    """Formats an assignment prompt including bundle reference and explicit SCOPE-LOCK block."""
-    read_str = "\n".join(f"  * {r}" for r in (read_paths or []))
-    write_str = "\n".join(f"  * {w}" for w in (write_paths or []))
-    forbid_str = "\n".join(f"  * {f}" for f in (forbidden_items or []))
+def dispatch_authors(work_dir: Union[str, Path]) -> Dict[str, Any]:
+    """Generates dispatch payload and individual item files for Shard Authors.
+    
+    Exige work/shards/pre_shard_manifest.json y work/pre_cta_manifest.json
+    (cero fallbacks; si falta alguno, lanza/retorna BLOCKER:: No existe ...).
+    NO pre-siembra JSON en work/templates/ ni bundles en work/shards/bundles/.
+    Inyecta: 100% de prompt_shard_author.md, competencias asignadas, rutas a PDFs/imágenes,
+    e instrucción de escribir tuplas en work/shards/shard_XX_data.py y compilar con compile_shard.py.
+    """
+    work = Path(work_dir).resolve()
+    work_rel = get_work_rel(work)
 
-    prompt = (
-        f"# Asignación de Tarea para {role_title}\n"
-        f"Tu paquete de trabajo y directivas están en: {bundle_path}\n"
-    )
-    if system_prompt_rel:
-        prompt += f"System Prompt: {system_prompt_rel}\n"
-    prompt += (
-        f"\n## SCOPE-LOCK (OBLIGATORIO)\n"
-        f"- READ permitido:\n{read_str}\n"
-        f"- WRITE permitido:\n{write_str}\n"
-        f"- PROHIBIDO:\n{forbid_str}\n\n"
-        f"Lee tu bundle en Turno 1 con view_file, ejecuta las directivas en tu scope y finaliza estrictamente con:\n"
-        f"DONE: <archivos escritos> (o BLOCKED: <motivo>).\n"
-        f"Presupuesto sugerido: {'máximo ' + str(turn_budget) + ' turnos (límite estricto). Si alcanzas ' + str(turn_budget) + ' turnos o 3 fallos consecutivos idénticos, finaliza con BLOCKED: CONTRACT_ERROR.' if role_name == 'author' else str(turn_budget) + ' turnos.'}"
-    )
-    return prompt
+    shard_manifest_path = work / "shards" / "pre_shard_manifest.json"
+    if not shard_manifest_path.is_file():
+        err_msg = "BLOCKER:: No existe pre_shard_manifest.json"
+        logger.error(err_msg)
+        raise FileNotFoundError(err_msg)
+
+    cta_manifest_path = work / "pre_cta_manifest.json"
+    if not cta_manifest_path.is_file():
+        err_msg = "BLOCKER:: No existe pre_cta_manifest.json"
+        logger.error(err_msg)
+        raise FileNotFoundError(err_msg)
+
+    cta_file = work / "cta.json"
+    cta_comps_by_id: Dict[str, Dict[str, Any]] = {}
+    if cta_file.is_file():
+        try:
+            cta_data = json.loads(cta_file.read_text(encoding="utf-8"))
+            for c in cta_data.get("competencies", []):
+                if isinstance(c, dict) and "id" in c:
+                    cta_comps_by_id[c["id"]] = c
+        except Exception as e:
+            logger.warning("Could not read cta.json: %s", e)
+
+    # Document map from pre_cta_manifest
+    cta_manifest_data = json.loads(cta_manifest_path.read_text(encoding="utf-8"))
+    doc_paths_by_name: Dict[str, str] = {}
+    docs = cta_manifest_data.get("documents", [])
+    if isinstance(docs, list):
+        for d in docs:
+            if isinstance(d, dict):
+                dn = d.get("doc_name") or d.get("name") or d.get("doc")
+                dp = d.get("path") or d.get("file") or dn
+                if dn:
+                    doc_paths_by_name[dn] = dp
+    elif isinstance(docs, dict):
+        for dn, dinfo in docs.items():
+            if isinstance(dinfo, dict):
+                doc_paths_by_name[dn] = dinfo.get("path") or dn
+
+    shard_manifest_data = json.loads(shard_manifest_path.read_text(encoding="utf-8"))
+    shards_raw = shard_manifest_data.get("shards", [])
+    if isinstance(shards_raw, dict):
+        shard_list = [{"shard_id": k, "competency_ids": v} for k, v in shards_raw.items()]
+    elif isinstance(shards_raw, list):
+        shard_list = shards_raw
+    else:
+        shard_list = []
+
+    sys_prompt_full = load_system_prompt("prompt_shard_author.md")
+
+    items_dir = work / "dispatch" / "items"
+    items_dir.mkdir(parents=True, exist_ok=True)
+
+    subagents: List[Dict[str, Any]] = []
+    item_files: List[str] = []
+
+    for idx, s in enumerate(shard_list, start=1):
+        s_id = s.get("shard_id") or f"shard_{idx:02d}"
+        c_ids = s.get("competency_ids") or []
+        if not c_ids and "competencies" in s:
+            c_ids = [c.get("id") for c in s["competencies"] if "id" in c]
+
+        # Detailed competency breakdown
+        comp_details = []
+        source_doc_set: Set[str] = set()
+        for cid in c_ids:
+            c_obj = cta_comps_by_id.get(cid, {})
+            c_name = c_obj.get("name", cid)
+            c_type = c_obj.get("type", "concept")
+            evidence = c_obj.get("evidence", [])
+            ev_list = []
+            if isinstance(evidence, list):
+                for ev in evidence:
+                    if isinstance(ev, dict):
+                        doc = ev.get("doc", "")
+                        page = ev.get("page", 1)
+                        resolved_path = doc_paths_by_name.get(doc, doc)
+                        ev_list.append(f"`{resolved_path}` (pág. {page})")
+                        if resolved_path:
+                            source_doc_set.add(resolved_path)
+            ev_str = ", ".join(ev_list) if ev_list else "Ver materiales del curso"
+            comp_details.append(f"- **`{cid}`** ({c_type}): {c_name} | Evidencia: {ev_str}")
+
+        source_doc_lines = "\n".join(f"- `{p}`" for p in sorted(source_doc_set)) if source_doc_set else "- Consultar archivos en `content/`"
+        comp_details_str = "\n".join(comp_details)
+
+        prompt_lines = [
+            f"# Asignación de Tarea para Shard Exercise Author: `{s_id}`",
+            "",
+            "## 1. SCOPE-LOCK Y CONTRATO DE AUTORÍA NATIVA EN PYTHON (C2C v3.2)",
+            f"- **Shard Asignado:** `{s_id}`",
+            f"- **Archivo Python de Salida OBLIGATORIO:** `{work_rel}/shards/{s_id}_data.py`",
+            f"- **Manifiesto de Shards:** `{shard_manifest_path.resolve().as_posix()}`",
+            f"- **Manifiesto de Documentos:** `{cta_manifest_path.resolve().as_posix()}`",
+            f"- **Compilador Oficial:** `.agents/skills/content-to-course/compile_shard.py`",
+            "",
+            "## 2. COMPETENCIAS ASIGNADAS AL SHARD",
+            comp_details_str,
+            "",
+            "## 3. DOCUMENTOS FUENTE ASIGNADOS",
+            source_doc_lines,
+            "",
+            "## 4. INSTRUCCIONES DE EJECUCIÓN OBLIGATORIAS",
+            f"1. Escribe ÚNICAMENTE las funciones generadoras/verificadoras y la lista de tuplas en `{work_rel}/shards/{s_id}_data.py` (`TEMPLATES = [...]`).",
+            f"2. Ejecuta la compilación y certificación estricta en un solo comando CLI:",
+            f"   ```bash",
+            f"   python .agents/skills/content-to-course/compile_shard.py --work \"{work.resolve().as_posix()}\" --shard {s_id} --strict",
+            f"   ```",
+            f"3. Si el compilador reporta errores mapeados a línea, corrígelos quirúrgicamente con `replace_file_content` sobre `{work_rel}/shards/{s_id}_data.py`.",
+            f"4. Prohibido crear archivos en `scratch/**` o usar `.format()` con LaTeX.",
+            f"5. Al certificar PASS, finaliza estrictamente con:",
+            f"   `DONE: {work_rel}/shards/{s_id}_data.py`",
+            "",
+            "---",
+            "",
+            sys_prompt_full,
+        ]
+        prompt_full = "\n".join(prompt_lines)
+
+        item_file = items_dir / f"author_{idx:02d}.json"
+        item_data = {
+            "TypeName": "c2c_shard_author",
+            "Role": f"Shard Author {s_id}",
+            "Model": "flash",
+            "Workspace": "inherit",
+            "Prompt": prompt_full,
+        }
+        item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        subagents.append(item_data)
+        item_files.append(item_file.resolve().as_posix())
+
+    dispatch_dir = work / "dispatch"
+    dispatch_dir.mkdir(parents=True, exist_ok=True)
+    authors_audit_file = dispatch_dir / "authors.json"
+    authors_audit = {
+        "stage": "authors",
+        "dispatched_at": datetime.now(timezone.utc).isoformat(),
+        "subagents_count": len(subagents),
+        "item_files": item_files,
+        "Subagents": subagents,
+    }
+    authors_audit_file.write_text(json.dumps(authors_audit, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    # Also write author.json for backward compatibility with run.py
+    author_compat_file = dispatch_dir / "author.json"
+    author_compat_file.write_text(json.dumps(authors_audit, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    return {"Subagents": subagents, "item_files": item_files}
+
+
+def dispatch_judges(work_dir: Union[str, Path]) -> Dict[str, Any]:
+    """Generates dispatch payload and individual item files for Blind Judges.
+    
+    Zero-Warmup In-Prompt payload: inyecta los ítems del batch (question_id, question_type, stem_es, options)
+    directamente dentro del Prompt junto con el 100% de prompt_blind_judge.md.
+    El juez NO usa view_file para leer judge_batch_XX.json y resuelve en 1 solo turno.
+    """
+    work = Path(work_dir).resolve()
+    work_rel = get_work_rel(work)
+
+    # Search for judge batches
+    batch_files = sorted(work.glob("verification/judge_batch_*.json"))
+    if not batch_files:
+        batch_files = sorted(work.glob("judge_batch_*.json"))
+    split_batches = [bf for bf in batch_files if bf.name != "judge_batch.json"]
+
+    if not split_batches:
+        unsplit = work / "verification" / "judge_batch.json"
+        if not unsplit.is_file():
+            unsplit = work / "judge_batch.json"
+        if unsplit.is_file():
+            split_batches = [unsplit]
+
+    sys_prompt_full = load_system_prompt("prompt_blind_judge.md")
+
+    items_dir = work / "dispatch" / "items"
+    items_dir.mkdir(parents=True, exist_ok=True)
+
+    subagents: List[Dict[str, Any]] = []
+    item_files: List[str] = []
+
+    for idx, bf in enumerate(split_batches, start=1):
+        m = re.search(r"judge_batch_(\d+)", bf.name)
+        j_id = m.group(1) if m else f"{idx:02d}"
+
+        # Extract items for in-prompt payload
+        items_payload: List[Dict[str, Any]] = []
+        try:
+            b_data = json.loads(bf.read_text(encoding="utf-8"))
+            raw_items = b_data.get("items", []) if isinstance(b_data, dict) else (b_data if isinstance(b_data, list) else [])
+            for item in raw_items:
+                if isinstance(item, dict):
+                    q_id = item.get("question_id") or item.get("item_id") or item.get("id")
+                    cleaned_item = {
+                        "question_id": q_id,
+                        "item_id": item.get("item_id") or q_id,
+                        "question_type": item.get("question_type") or item.get("interaction_type") or "multiple_choice",
+                        "stem_es": item.get("stem_es") or item.get("stem") or "",
+                        "options": item.get("options") or item.get("choices") or [],
+                    }
+                    if "answer_contract" in item:
+                        cleaned_item["answer_contract"] = item["answer_contract"]
+                    items_payload.append(cleaned_item)
+        except Exception as e:
+            logger.warning("Could not read judge batch %s: %s", bf, e)
+
+        items_json_str = json.dumps(items_payload, indent=2, ensure_ascii=False)
+
+        prompt_lines = [
+            f"# Asignación de Evaluación a Ciegas para Blind Judge: `{j_id}`",
+            "",
+            "## 1. PROTOCOLO ZERO-WARMUP EN 1 SOLO TURNO (OBLIGATORIO)",
+            f"- **Lote Asignado:** `{bf.name}`",
+            f"- **Archivo de Respuestas de Salida:** `{work_rel}/verification/judge_responses_{j_id}.json`",
+            "- READ permitido:",
+            "  - Items inyectados en este prompt",
+            f"- WRITE permitido:",
+            f"  - {work_rel}/verification/judge_responses_{j_id}.json",
+            "- PROHIBIDO:",
+            "  - judge_ground_truth.json",
+            "  - templates/*",
+            "  - engine/*",
+            "  - search_web",
+            "  - read_url_content",
+            "- **NO EJECUTES `view_file` para leer el archivo de lote:** Todos los reactivos ya están inyectados abajo.",
+            "- **NO EJECUTES `run_command`:** Resuelve analíticamente desde primeros principios.",
+            "- **Completa tu tarea en 1 SOLO TURNO** escribiendo directamente el archivo de respuestas con `write_to_file`.",
+            f"- Cierra estrictamente con: `DONE: {work_rel}/verification/judge_responses_{j_id}.json`.",
+            "",
+            "## 2. ÍTEMS A EVALUAR (ZERO-WARMUP IN-PROMPT PAYLOAD)",
+            "```json",
+            items_json_str,
+            "```",
+            "",
+            "---",
+            "",
+            sys_prompt_full,
+        ]
+        prompt_full = "\n".join(prompt_lines)
+
+        item_file = items_dir / f"judge_{idx:02d}.json"
+        item_data = {
+            "TypeName": "c2c_judge",
+            "Role": f"Blind Judge {j_id}",
+            "Model": "flash",
+            "Workspace": "inherit",
+            "Prompt": prompt_full,
+        }
+        item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        subagents.append(item_data)
+        item_files.append(item_file.resolve().as_posix())
+
+    dispatch_dir = work / "dispatch"
+    dispatch_dir.mkdir(parents=True, exist_ok=True)
+    judges_audit_file = dispatch_dir / "judges.json"
+    judges_audit = {
+        "stage": "judges",
+        "dispatched_at": datetime.now(timezone.utc).isoformat(),
+        "subagents_count": len(subagents),
+        "item_files": item_files,
+        "Subagents": subagents,
+    }
+    judges_audit_file.write_text(json.dumps(judges_audit, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    judge_compat_file = dispatch_dir / "judge.json"
+    judge_compat_file.write_text(json.dumps(judges_audit, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    return {"Subagents": subagents, "item_files": item_files}
 
 
 def build_dispatch(
@@ -1184,18 +815,20 @@ def build_dispatch(
     ids: Optional[List[Union[str, int]]] = None,
     ready_only: bool = False,
 ) -> Dict[str, Any]:
-    """Generates invoke_subagent payload with strict SCOPE-LOCK for the given role.
-    
-    Args:
-        role: Subagent role ('vision', 'cta-map', 'cta-reduce', 'author', 'judge', etc.)
-        work_dir: Path to course working directory.
-        ids: Optional list of specific item IDs to dispatch.
-        ready_only: For pipelined roles (e.g. cta-map), dispatch only items that are ready
-                    and have not yet been dispatched.
+    """Generates invoke_subagent payload with strict SCOPE-LOCK for the given role."""
+    if role in ("vision", "vision-legacy"):
+        raise ValueError(f"Stages 'vision' and 'vision-legacy' have been removed in C2C v3.2. Use Direct PDF Ingestion instead.")
 
-    Returns:
-        Dictionary conforming to invoke_subagent format: `{"Subagents": [...]}`.
-    """
+    if role in ("cta", "cta-direct", "cta-map", "c2c_cta_architect"):
+        mode = "mapreduce" if role == "cta-map" else None
+        return dispatch_cta(work_dir, mode=mode)
+
+    if role in ("author", "authors", "c2c_shard_author"):
+        return dispatch_authors(work_dir)
+
+    if role in ("judge", "judges", "c2c_judge"):
+        return dispatch_judges(work_dir)
+
     if role not in ROLE_SPECS:
         raise ValueError(f"Unknown role: '{role}'. Available roles: {list(ROLE_SPECS.keys())}")
 
@@ -1210,7 +843,6 @@ def build_dispatch(
     dispatch_dir.mkdir(parents=True, exist_ok=True)
     state_file = dispatch_dir / "state.json"
 
-    # Load dispatch state if exists
     state: Dict[str, Any] = {"dispatched": {}}
     if state_file.is_file():
         try:
@@ -1219,207 +851,18 @@ def build_dispatch(
             logger.warning("Could not read dispatch state: %s", e)
 
     dispatched_ids: List[str] = state.get("dispatched", {}).get(role, [])
-
     subagents: List[Dict[str, Any]] = []
 
-    # 1. VISION
-    if role == "vision":
-        manifest_file = work / "handouts" / "handouts_manifest.json"
-        assigned_units: List[Dict[str, Any]] = []
-
-        if manifest_file.is_file():
-            try:
-                mdata = json.loads(manifest_file.read_text(encoding="utf-8"))
-                shards = mdata.get("shards", [])
-                if shards:
-                    for s in shards:
-                        s_id = str(s.get("shard_id", ""))
-                        h_ids = s.get("handout_ids", [])
-                        assigned_units.append({
-                            "id": s_id,
-                            "role_title": f"Handout Vision Analyzer Shard {s_id}",
-                            "handout_ids": h_ids,
-                        })
-                else:
-                    handouts = mdata.get("handouts", [])
-                    for h in handouts:
-                        h_id = h.get("handout_id", "")
-                        assigned_units.append({
-                            "id": h_id,
-                            "role_title": f"Handout Vision Analyzer {h_id}",
-                            "handout_ids": [h_id],
-                        })
-            except Exception as e:
-                logger.warning("Error reading handouts_manifest.json: %s", e)
-
-        if not assigned_units:
-            # Fallback: glob images in work/handouts
-            handout_imgs = sorted((work / "handouts").glob("handout_*.png"))
-            for img in handout_imgs:
-                h_id = img.stem
-                assigned_units.append({
-                    "id": h_id,
-                    "role_title": f"Handout Vision Analyzer {h_id}",
-                    "handout_ids": [h_id],
-                })
-
-        # Filter by ids if provided
-        if ids is not None:
-            ids_str = {str(i) for i in ids}
-            assigned_units = [u for u in assigned_units if str(u["id"]) in ids_str or any(str(hid) in ids_str for hid in u["handout_ids"])]
-
-        for unit in assigned_units:
-            u_id = str(unit["id"])
-            if ready_only and u_id in dispatched_ids:
-                continue
-
-            read_paths = []
-            write_paths = []
-            for hid in unit["handout_ids"]:
-                # Normalise to standard patch file name
-                read_paths.append(f"{work_rel}/handouts/{hid}.png")
-                read_paths.append(f"{work_rel}/handouts/{hid}_text.md")
-                # Both patch_<id>.md and patch_handout_<id>.md are allowed, use patch_<id>.md canonically
-                patch_name = f"patch_{hid}.md" if hid.startswith("handout_") else f"patch_handout_{hid}.md"
-                write_paths.append(f"{work_rel}/handout_patches/{patch_name}")
-
-            bundle_file = _create_task_bundle(
-                work_dir=work,
-                bundle_name=f"vision_{u_id}",
-                role_name=role,
-                role_title=unit["role_title"],
-                system_prompt_rel=sys_prompt,
-                read_paths=read_paths,
-                write_paths=write_paths,
-                forbidden_items=forbidden,
-                turn_budget=turn_budget,
-            )
-
-            prompt_text = _format_prompt(
-                role_name=role,
-                role_title=unit["role_title"],
-                bundle_path=_bundle_display_path(bundle_file),
-                turn_budget=turn_budget,
-                read_paths=read_paths,
-                write_paths=write_paths,
-                forbidden_items=forbidden,
-                system_prompt_rel=sys_prompt,
-            )
-
-            subagents.append({
-                "TypeName": spec["type_name"],
-                "Role": unit["role_title"],
-                "Model": spec["model"],
-                "Prompt": prompt_text,
-            })
-            dispatched_ids.append(u_id)
-
-    # 2. CTA-MAP
-    elif role == "cta-map":
-        sections_manifest = work / "sections" / "sections_manifest.json"
-        section_items: List[Dict[str, Any]] = []
-
-        if sections_manifest.is_file():
-            try:
-                sm = json.loads(sections_manifest.read_text(encoding="utf-8"))
-                for s in sm.get("sections", []):
-                    s_idx = s.get("section_index", 1)
-                    s_id = f"{s_idx:02d}"
-                    is_ready = s.get("ready", True)
-                    section_items.append({
-                        "id": s_id,
-                        "file": f"{work_rel}/sections/section_{s_id}.md",
-                        "ready": is_ready,
-                    })
-            except Exception as e:
-                logger.warning("Error reading sections_manifest.json: %s", e)
-
-        if not section_items:
-            # Glob sections directory
-            sec_files = sorted((work / "sections").glob("section_*.md"))
-            for sf in sec_files:
-                # Extract number if possible
-                m = re.search(r"section_(\d+)", sf.name)
-                s_id = m.group(1) if m else sf.stem
-                section_items.append({
-                    "id": s_id,
-                    "file": f"{work_rel}/sections/{sf.name}",
-                    "ready": True,
-                })
-
-        if ids is not None:
-            ids_str = {str(i) for i in ids}
-            section_items = [s for s in section_items if str(s["id"]) in ids_str or str(int(s["id"])) in ids_str]
-
-        for s in section_items:
-            s_id = str(s["id"])
-            if ready_only:
-                if not s.get("ready", False) or s_id in dispatched_ids:
-                    continue
-
-            read_paths = [s["file"]]
-            write_paths = [f"{work_rel}/cta_parts/cta_part_{s_id}.json"]
-
-            bundle_file = _create_task_bundle(
-                work_dir=work,
-                bundle_name=f"cta_map_{s_id}",
-                role_name=role,
-                role_title=f"CTA Section Mapper {s_id}",
-                system_prompt_rel=sys_prompt,
-                read_paths=read_paths,
-                write_paths=write_paths,
-                forbidden_items=forbidden,
-                turn_budget=turn_budget,
-            )
-
-            prompt_text = _format_prompt(
-                role_name=role,
-                role_title=f"CTA Section Mapper {s_id}",
-                bundle_path=_bundle_display_path(bundle_file),
-                turn_budget=turn_budget,
-                read_paths=read_paths,
-                write_paths=write_paths,
-                forbidden_items=forbidden,
-                system_prompt_rel=sys_prompt,
-            )
-
-            subagents.append({
-                "TypeName": spec["type_name"],
-                "Role": f"CTA Section Mapper {s_id}",
-                "Model": spec["model"],
-                "Prompt": prompt_text,
-            })
-            dispatched_ids.append(s_id)
-
-    # 3. CTA-REDUCE
-    elif role == "cta-reduce":
-        read_paths = [
-            f"{work_rel}/cta_outline.json",
-            f"{work_rel}/duplicate_candidates.json",
-        ]
-        write_paths = [
-            f"{work_rel}/cta_harmonize.json",
-        ]
-        bundle_file = _create_task_bundle(
-            work_dir=work,
-            bundle_name="cta_harmonize",
-            role_name=role,
-            role_title="CTA Harmonizer",
-            system_prompt_rel=sys_prompt,
-            read_paths=read_paths,
-            write_paths=write_paths,
-            forbidden_items=forbidden,
-            turn_budget=turn_budget,
-        )
-        prompt_text = _format_prompt(
-            role_name=role,
-            role_title="CTA Harmonizer",
-            bundle_path=_bundle_display_path(bundle_file),
-            turn_budget=turn_budget,
-            read_paths=read_paths,
-            write_paths=write_paths,
-            forbidden_items=forbidden,
-            system_prompt_rel=sys_prompt,
+    # CTA-REDUCE
+    if role == "cta-reduce":
+        sys_text = load_system_prompt(sys_prompt)
+        prompt_text = (
+            f"# Asignación de Tarea para CTA Harmonizer\n\n"
+            f"## SCOPE-LOCK (OBLIGATORIO)\n"
+            f"- READ: `{work_rel}/cta_outline.json`, `{work_rel}/duplicate_candidates.json`\n"
+            f"- WRITE: `{work_rel}/cta_harmonize.json`\n\n"
+            f"{sys_text}\n\n"
+            f"Termina estrictamente con: DONE: {work_rel}/cta_harmonize.json"
         )
         subagents.append({
             "TypeName": spec["type_name"],
@@ -1429,243 +872,10 @@ def build_dispatch(
         })
         dispatched_ids.append("harmonizer")
 
-    # 4. AUTHOR
-    elif role == "author":
-        shards_manifest = work / "shards" / "manifest.json"
-        shard_items: List[Dict[str, Any]] = []
-
-        if shards_manifest.is_file():
-            try:
-                sm = json.loads(shards_manifest.read_text(encoding="utf-8"))
-                for s in sm.get("shards", []):
-                    shard_items.append(s)
-            except Exception as e:
-                logger.warning("Error reading shards manifest: %s", e)
-
-        if not shard_items:
-            shard_files = sorted((work / "shards").glob("shard_*.json"))
-            for sf in shard_files:
-                try:
-                    sdata = json.loads(sf.read_text(encoding="utf-8"))
-                    shard_items.append(sdata)
-                except Exception as e:
-                    logger.warning("Error reading shard file %s: %s", sf, e)
-
-        if ids is not None:
-            ids_str = {str(i) for i in ids}
-            shard_items = [
-                s for s in shard_items
-                if str(s.get("shard_id")) in ids_str or str(s.get("shard_index")) in ids_str
-            ]
-
-        # Pre-seed starter scaffolds with metadata & distractors for assigned competencies
-        preseed_author_scaffolds(work_dir=work, shard_items=shard_items)
-
-        sys_text = ""
-        sys_file = SKILL_DIR / sys_prompt
-        if sys_file.is_file():
-            try:
-                sys_text = sys_file.read_text(encoding="utf-8")
-            except Exception:
-                pass
-
-        for s in shard_items:
-            s_id = s.get("shard_id", "shard_01")
-            c_ids = s.get("competency_ids", [])
-            if not c_ids and "competencies" in s:
-                c_ids = [c.get("id") for c in s["competencies"] if "id" in c]
-
-            # Ensure isolated scratch folders exist for this shard
-            (work / "shards" / str(s_id) / "scratch").mkdir(parents=True, exist_ok=True)
-            (work / "scratch" / str(s_id)).mkdir(parents=True, exist_ok=True)
-
-            read_paths = [
-                f"{work_rel}/shards/{s_id}.json",
-                f"{work_rel}/cta.json",
-            ] + [f"{work_rel}/templates/{cid}.json" for cid in c_ids]
-            write_paths = [f"{work_rel}/templates/{cid}.json" for cid in c_ids] + [
-                f"{work_rel}/shards/{s_id}/scratch/**",
-                f"{work_rel}/scratch/{s_id}/**",
-            ]
-
-            bundle_file = generate_author_bundle(
-                work_dir=work,
-                shard_id=str(s_id),
-                read_paths=read_paths,
-                write_paths=write_paths,
-                forbidden_items=forbidden,
-                turn_budget=turn_budget,
-            )
-
-            # Build exact validation command pre-baked with all template files for this shard
-            tpl_args = " ".join(f"{work_rel}/templates/{cid}.json" for cid in c_ids)
-            validation_cmd = (
-                f"python .agents/skills/content-to-course/check_templates.py {tpl_args} --cta {work_rel}/cta.json --strict"
-            )
-
-            tpl_list_str = "\n".join(f"- `{work_rel}/templates/{cid}.json`" for cid in c_ids)
-
-            scaffold_maps: List[str] = []
-            for cid in c_ids:
-                tpl_file = work / "templates" / f"{cid}.json"
-                idx_lines = index_scaffold_template_lines(tpl_file)
-                if idx_lines:
-                    scaffold_maps.append(f"- `{work_rel}/templates/{cid}.json`:\n" + "\n".join(idx_lines))
-                else:
-                    scaffold_maps.append(f"- `{work_rel}/templates/{cid}.json` (scaffold pre-sembrado para refinar con replace_file_content)")
-            scaffold_map_text = "\n".join(scaffold_maps)
-
-            extra_author_context = (
-                f"### ASIGNACIÓN DEL SHARD `{s_id}`:\n"
-                f"- Competencias asignadas: {', '.join(f'`{cid}`' for cid in c_ids)}\n"
-                f"- Scaffolds pre-sembrados listos para refinamiento en disco:\n{tpl_list_str}\n\n"
-                f"### COMANDO DE VALIDACIÓN OFICIAL PRE-CONFIGURADO:\n"
-                f"```bash\n{validation_cmd}\n```\n\n"
-                f"### MAPA DE LÍNEAS PRE-INDEXADO (PARA REFINAMIENTO CON replace_file_content):\n"
-                f"{scaffold_map_text}"
-            )
-
-            prompt_lines = [
-                f"# Asignación de Tarea para Shard Author {s_id}",
-                f"Tu paquete de trabajo y directivas están archivados en: {_bundle_display_path(bundle_file)}",
-                f"System Prompt: {sys_prompt}",
-                "",
-                "## SCOPE-LOCK (OBLIGATORIO)",
-                "- **READ permitido:**",
-            ]
-            for r in read_paths:
-                prompt_lines.append(f"  * `{r}`")
-            prompt_lines.append("- **WRITE permitido:**")
-            prompt_lines.append(
-                "  * Refinamiento quirúrgico mediante replace_file_content (prioritario) o write_to_file (fallback opcional para reescritura completa) sobre:"
-            )
-            for cid in c_ids:
-                prompt_lines.append(f"    - `{work_rel}/templates/{cid}.json`")
-            prompt_lines.append(f"  * `{work_rel}/shards/{s_id}/scratch/**` (carpeta aislada para scripts auxiliares)")
-            prompt_lines.append("- **PROHIBIDO:**")
-            for f in forbidden:
-                prompt_lines.append(f"  * {f}")
-
-            prompt_lines.extend(["", extra_author_context])
-
-            if len(shard_items) > 1:
-                shard_sys_text = (
-                    f"{COMPACT_AUTHOR_DIGEST}\n"
-                    f"- Directivas completas archivadas en bundle: {_bundle_display_path(bundle_file)}"
-                )
-            else:
-                shard_sys_text = sys_text
-
-            if shard_sys_text:
-                prompt_lines.extend(["", "## INSTRUCCIONES OPERATIVAS Y DIRECTIVAS", shard_sys_text])
-
-            prompt_lines.extend([
-                "",
-                "## INICIO INMEDIATO Y TERMINACIÓN OBLIGATORIA",
-                f"- NO gastes Turno 1 leyendo bundles (`{work_rel}/dispatch/bundles/*`) ni archivos de system prompts: toda tu asignación, directivas, y comando CLI están provistos aquí.",
-                f"- Cada una de tus competencias asignadas YA TIENE un scaffold válido pre-sembrado en `{work_rel}/templates/<comp_id>.json` con 6 plantillas base y 100% de distractores mapeados.",
-                "- Entra DIRECTAMENTE en Turno 1 a refinar los scaffolds con `replace_file_content` para personalizar `generate_py`, `stem_variants`, `vars`, `hints` y `solution`.",
-                "- Una vez refinadas, ejecuta en terminal el comando de validación oficial provisto arriba en un solo paso.",
-                "- Do not output template JSON in chat text.",
-                f"- Termina estrictamente con: `DONE: {', '.join(f'{work_rel}/templates/{cid}.json' for cid in c_ids)}`",
-                f"Presupuesto sugerido: máximo {turn_budget} turnos (límite estricto). Si alcanzas {turn_budget} turnos o 3 fallos consecutivos idénticos, finaliza con BLOCKED: CONTRACT_ERROR.",
-                "- Prohibido redactar resúmenes, explicaciones o saludos adicionales en el chat.",
-            ])
-
-            prompt_text = "\n".join(prompt_lines)
-
-            subagents.append({
-                "TypeName": spec["type_name"],
-                "Role": f"Shard Author {s_id}",
-                "Model": spec["model"],
-                "Prompt": prompt_text,
-            })
-            dispatched_ids.append(str(s_id))
-
-    # 5. JUDGE
-    elif role == "judge":
-        # Look for split batches work/judge_batch_*.json
-        judge_files = sorted(work.glob("judge_batch_*.json"))
-        # Exclude un-split judge_batch.json if split batches exist
-        split_batches = [jf for jf in judge_files if jf.name != "judge_batch.json"]
-
-        if not split_batches and (work / "judge_batch.json").is_file():
-            # Auto-split if split_judge_batch is available
-            try:
-                from judge import split_judge_batch
-                split_batches = split_judge_batch(work)
-            except Exception as e:
-                logger.warning("Could not auto-split judge batch: %s", e)
-                split_batches = [work / "judge_batch.json"]
-
-        batch_items: List[Dict[str, Any]] = []
-        for jf in split_batches:
-            m = re.search(r"judge_batch_(\d+)", jf.name)
-            j_id = m.group(1) if m else "01"
-            batch_items.append({
-                "id": j_id,
-                "file": f"{work_rel}/{jf.name}",
-            })
-
-        if ids is not None:
-            ids_str = {str(i) for i in ids}
-            batch_items = [b for b in batch_items if str(b["id"]) in ids_str or str(int(b["id"])) in ids_str]
-
-        for b in batch_items:
-            j_id = str(b["id"])
-            read_paths = [b["file"]]
-            write_paths = [f"{work_rel}/judge_responses_{j_id}.json"]
-
-            # ABSOLUTE RULE: judge prompt must NEVER include ground_truth in READ!
-            assert not any("ground_truth" in r.lower() for r in read_paths), "FATAL: judge cannot have ground truth in READ!"
-
-            bundle_file = generate_judge_bundle(
-                work_dir=work,
-                judge_id=j_id,
-                read_paths=read_paths,
-                write_paths=write_paths,
-                forbidden_items=forbidden,
-                turn_budget=turn_budget,
-            )
-
-            prompt_text = _format_prompt(
-                role_name=role,
-                role_title=f"Blind Judge {j_id}",
-                bundle_path=_bundle_display_path(bundle_file),
-                turn_budget=turn_budget,
-                read_paths=read_paths,
-                write_paths=write_paths,
-                forbidden_items=forbidden,
-                system_prompt_rel=sys_prompt,
-            )
-
-            # Zero-Warmup injection: inject batch items directly if under 12 KB
-            batch_file_path = work / Path(b["file"]).name
-            if batch_file_path.is_file() and batch_file_path.stat().st_size < 12000:
-                try:
-                    b_data = json.loads(batch_file_path.read_text(encoding="utf-8"))
-                    items_list = b_data.get("items", []) if isinstance(b_data, dict) else (b_data if isinstance(b_data, list) else [])
-                    if items_list:
-                        prompt_text += (
-                            f"\n\n## ITEMS A EVALUAR (ZERO-WARMUP):\n"
-                            f"```json\n{json.dumps(items_list, indent=2, ensure_ascii=False)}\n```\n"
-                        )
-                except Exception as e:
-                    logger.warning("Could not inject batch items into judge prompt: %s", e)
-
-            subagents.append({
-                "TypeName": spec["type_name"],
-                "Role": f"Blind Judge {j_id}",
-                "Model": spec["model"],
-                "Prompt": prompt_text,
-            })
-            dispatched_ids.append(j_id)
-
-    # 6. REPAIR
+    # REPAIR
     elif role == "repair":
         templates_report_file = work / "reports" / "templates_report.json"
         judge_report_file = work / "judge_report.json"
-
         failing_targets: Dict[str, Dict[str, Any]] = {}
 
         if templates_report_file.is_file():
@@ -1689,7 +899,6 @@ def build_dispatch(
             except Exception as e:
                 logger.warning("Error reading judge_report.json: %s", e)
 
-        # Map competencies to shards
         shard_map: Dict[str, str] = {}
         for sf in sorted((work / "shards").glob("shard_*.json")):
             try:
@@ -1697,9 +906,6 @@ def build_dispatch(
                 s_id = sdata.get("shard_id", sf.stem)
                 for cid in sdata.get("competency_ids", []):
                     shard_map[cid] = s_id
-                for comp in sdata.get("competencies", []):
-                    if "id" in comp:
-                        shard_map[comp["id"]] = s_id
             except Exception:
                 pass
 
@@ -1711,50 +917,20 @@ def build_dispatch(
             for cid in ids:
                 failing_targets[str(cid)] = {"manual_request": True}
 
+        sys_text = load_system_prompt(sys_prompt)
         for cid, diag in failing_targets.items():
             shard_id = shard_map.get(cid, "shard_01")
-            read_paths = [
-                f"{work_rel}/shards/{shard_id}.json",
-                f"{work_rel}/templates/{cid}.json",
-            ]
-            if templates_report_file.is_file():
-                read_paths.append(f"{work_rel}/reports/templates_report.json")
-            if judge_report_file.is_file():
-                read_paths.append(f"{work_rel}/judge_report.json")
-
-            write_paths = [f"{work_rel}/templates/{cid}.json"]
-            extra_lines = [f"### Reparación Específica para Competencia: `{cid}` (Shard `{shard_id}`)"]
-            if "template_errors" in diag:
-                extra_lines.append("**Errores de validación de plantilla detectados:**")
-                for err in diag["template_errors"]:
-                    extra_lines.append(f"- {err}")
-            if "judge_disagreement" in diag:
-                extra_lines.append(f"**Desacuerdo con Juez Ciego:**\n```json\n{json.dumps(diag['judge_disagreement'], indent=2, ensure_ascii=False)}\n```")
-
-            bundle_file = _create_task_bundle(
-                work_dir=work,
-                bundle_name=f"repair_{cid}",
-                role_name=role,
-                role_title=f"Repair Engineer {cid}",
-                system_prompt_rel=sys_prompt,
-                read_paths=read_paths,
-                write_paths=write_paths,
-                forbidden_items=forbidden,
-                turn_budget=turn_budget,
-                extra_context="\n".join(extra_lines),
+            prompt_text = (
+                f"# Asignación de Tarea para Targeted Repair Engineer: `{cid}`\n\n"
+                f"## SCOPE-LOCK\n"
+                f"- READ: `{work_rel}/shards/{shard_id}_data.py`, `{work_rel}/templates/{cid}.json`\n"
+                f"- WRITE: `{work_rel}/shards/{shard_id}_data.py`\n\n"
+                f"### Diagnóstico del Fallo:\n"
+                f"```json\n{json.dumps(diag, indent=2, ensure_ascii=False)}\n```\n\n"
+                f"{sys_text}\n\n"
+                f"Corrige la tupla en `{work_rel}/shards/{shard_id}_data.py` con `replace_file_content` y ejecuta compile_shard.py.\n"
+                f"Termina estrictamente con: DONE: {work_rel}/shards/{shard_id}_data.py"
             )
-
-            prompt_text = _format_prompt(
-                role_name=role,
-                role_title=f"Repair Engineer {cid}",
-                bundle_path=_bundle_display_path(bundle_file),
-                turn_budget=turn_budget,
-                read_paths=read_paths,
-                write_paths=write_paths,
-                forbidden_items=forbidden,
-                system_prompt_rel=sys_prompt,
-            )
-
             subagents.append({
                 "TypeName": spec["type_name"],
                 "Role": f"Repair Engineer {cid}",
@@ -1763,226 +939,13 @@ def build_dispatch(
             })
             dispatched_ids.append(cid)
 
-    # 7. Fallback legacy / direct roles
-    elif role == "cta-direct":
-        # Diagnostic check: verify if handouts exist and vision/stitching was executed
-        handouts_manifest_file = work / "handouts" / "handouts_manifest.json"
-        if handouts_manifest_file.is_file():
-            try:
-                h_data = json.loads(handouts_manifest_file.read_text(encoding="utf-8"))
-                total_h = h_data.get("total_handouts", len(h_data.get("handouts", [])))
-                if total_h > 0 and not (work / "patches").is_dir() and not (work / "handout_patches").is_dir():
-                    logger.warning(
-                        "Advertencia: Existen %d handouts en work/handouts pero no se detectaron parches cosidos. "
-                        "Asegúrate de ejecutar los subagentes de visión y 'run.py --stage stitch' antes de sintetizar cta-direct.",
-                        total_h,
-                    )
-            except Exception:
-                pass
-
-        source_rel_str = None
-        manifest_file = work / "pages" / "manifest.json"
-        if not manifest_file.is_file():
-            manifest_file = work / "manifest.json"
-        if manifest_file.is_file():
-            try:
-                m_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-                sp = m_data.get("source_path")
-                if sp:
-                    p = Path(sp)
-                    try:
-                        source_rel_str = p.resolve().relative_to(Path.cwd().resolve()).as_posix()
-                    except ValueError:
-                        source_rel_str = p.as_posix()
-            except Exception:
-                pass
-
-        if source_rel_str is None:
-            course_name = work.parent.name if work.name == "work" else work.name
-            repo_root = SKILL_DIR.parents[2] if len(SKILL_DIR.parents) >= 3 else Path.cwd()
-            candidate_content = repo_root / "content" / course_name
-            if candidate_content.is_dir():
-                source_rel_str = f"content/{course_name}"
-                s_dir = candidate_content
-            else:
-                s_dir = Path(source_rel_str) if source_rel_str else None
-        else:
-            s_dir = Path(source_rel_str)
-            if not s_dir.is_dir():
-                repo_root = SKILL_DIR.parents[2] if len(SKILL_DIR.parents) >= 3 else Path.cwd()
-                alt_dir = repo_root / source_rel_str
-                if alt_dir.is_dir():
-                    s_dir = alt_dir
-
-        source_files: List[str] = []
-        if s_dir and s_dir.is_dir():
-            source_files = sorted(f.name for f in s_dir.iterdir() if f.is_file())
-
-        has_corpus = (work / "corpus.md").is_file()
-
-        if source_rel_str:
-            read_paths = [f"{source_rel_str}/{f}" for f in source_files] if source_files else [f"{source_rel_str}/*"]
-            forbidden_cta = list(forbidden) + [
-                f"modificar o editar {work_rel}/compile_cta.py (el compilador es inmutable; solo consulta su contrato con view_file si lo requieres)",
-                f"carpetas o archivos de otros cursos en content/ (distintas de {source_rel_str})",
-                "content/* (excepto los materiales fuente asignados)",
-                f"{work_rel}/pages/manifest.json (prohibido consultar o depender de manifest.json; citar directamente los archivos fuente asignados)",
-                f"scripts Python auxiliares (.py) en scratch/ o {work_rel}/ (prohibido crear generadores en Python; usar exclusivamente cta_data.py y compile_cta.py)",
-                f"ejecutar comandos exploratorios o pruebas previas en terminal CLI (único comando permitido: 'python {work_rel}/compile_cta.py')",
-                "emitir competencias en el texto del chat (Do not output competencies in chat text)",
-            ]
-            if not has_corpus:
-                forbidden_cta.append(f"{work_rel}/corpus*.md (el análisis cognitivo debe realizarse directamente sobre los materiales fuente asignados con view_file)")
-        else:
-            read_paths = ["content/*"]
-            forbidden_cta = list(forbidden) + [
-                f"modificar o editar {work_rel}/compile_cta.py (el compilador es inmutable; solo consulta su contrato con view_file si lo requieres)",
-                f"{work_rel}/pages/manifest.json (prohibido consultar o depender de manifest.json)",
-                f"scripts Python auxiliares (.py) en scratch/ o {work_rel}/ (usar exclusivamente cta_data.py y compile_cta.py)",
-                "emitir competencias en el texto del chat (Do not output competencies in chat text)",
-            ]
-            if not has_corpus:
-                forbidden_cta.append(f"{work_rel}/corpus*.md (inspección directa de contenidos requerida)")
-
-        if has_corpus:
-            read_paths.append(f"{work_rel}/corpus.md")
-            forbidden_cta = [f.replace("work/", f"{work_rel}/") for f in forbidden_cta if "corpus" not in f.lower()]
-        else:
-            forbidden_cta = [f.replace("work/", f"{work_rel}/") for f in forbidden_cta]
-
-        # Ensure immutable compile_cta.py is copied to work directory
-        compile_src = SKILL_DIR / "compile_cta.py"
-        if compile_src.is_file():
-            shutil.copy2(compile_src, work / "compile_cta.py")
-
-        # Ensure cta_parts directory exists for backward compatibility without bait files
-        (work / "cta_parts").mkdir(parents=True, exist_ok=True)
-
-        if (work / "patches").is_dir():
-            read_paths.append(f"{work_rel}/patches/*.md")
-        if (work / "handout_patches").is_dir():
-            read_paths.append(f"{work_rel}/handout_patches/*.md")
-
-        write_paths = [f"{work_rel}/cta_data.py", f"{work_rel}/cta.json", f"{work_rel}/cta.md"]
-
-        extra_cta_context = ""
-        first_source_doc = source_files[0] if source_files else "material_fuente.pdf"
-        if source_files:
-            file_list_str = "\n".join(f"- `{f}`" for f in source_files)
-            extra_cta_context = (
-                f"### MATERIALES FUENTE ASIGNADOS ({source_rel_str}):\n"
-                f"{file_list_str}\n\n"
-                "**REGLA DE EVIDENCIA DINÁMICA:** En el campo `doc` (posición 5) de todas tus tuplas de competencia y distractor, debes usar ÚNICAMENTE los nombres literales exactos de los archivos listados arriba (NO uses nombres de ejemplos ni de otros cursos).\n"
-                f"**TURNO 1 MANDATORIO:** Comienza INMEDIATAMENTE en el Turno 1 abriendo `{source_rel_str}/{first_source_doc}` con `view_file`."
-            )
-
-        bundle_file = generate_cta_direct_bundle(
-            work_dir=work,
-            read_paths=read_paths,
-            write_paths=write_paths,
-            forbidden_items=forbidden_cta,
-            turn_budget=turn_budget,
-            extra_context=extra_cta_context,
-        )
-
-        sys_text = ""
-        sys_file = SKILL_DIR / sys_prompt
-        if sys_file.is_file():
-            try:
-                sys_text = sys_file.read_text(encoding="utf-8")
-            except Exception:
-                pass
-
-        prompt_lines = [
-            "# Asignación de Tarea para Direct CTA Architect",
-            "",
-            "## SCOPE-LOCK (OBLIGATORIO)",
-            "- **READ permitido:**",
-        ]
-        for r in read_paths:
-            prompt_lines.append(f"  * `{r}`")
-        prompt_lines.append("- **WRITE permitido:**")
-        prompt_lines.append(f"  * `{work_rel}/cta_data.py` (creación inicial con write_to_file, continuación con Append: true, corrección quirúrgica con replace_file_content)")
-        prompt_lines.append(f"  * `{work_rel}/cta.json` y `{work_rel}/cta.md` (generados automáticamente por `python {work_rel}/compile_cta.py`)")
-        prompt_lines.append("- **EJECUTABLE CLI permitido:**")
-        prompt_lines.append(f"  * `python {work_rel}/compile_cta.py` (compilador determinista pre-sembrado en {work_rel}/)")
-        prompt_lines.append("- **PROHIBIDO:**")
-        for f in forbidden_cta:
-            prompt_lines.append(f"  * {f}")
-
-        if extra_cta_context:
-            prompt_lines.extend(["", extra_cta_context])
-
-        if sys_text:
-            prompt_lines.extend(["", "## INSTRUCCIONES OPERATIVAS Y DIRECTIVAS", sys_text])
-
-        prompt_lines.extend([
-            "",
-            "## INICIO INMEDIATO Y TERMINACIÓN OBLIGATORIA (ARQUITECTURA DE 2 ARCHIVOS)",
-            f"- **TURNO 1 MANDATORIO:** Abre INMEDIATAMENTE `{source_rel_str}/{first_source_doc}` con `view_file`.",
-            "- Queda TERMINANTEMENTE PROHIBIDO gastar Turno 1 leyendo `compile_cta.py`, explorando directorios o buscando archivos auxiliares.",
-            "- El contrato completo de tuplas para `COMPETENCIES` está especificado al 100% en las directivas superiores.",
-            f"- El compilador `{work_rel}/compile_cta.py` ya está pre-sembrado en disco y es INMUTABLE. No lo edites ni lo modifiques.",
-            f"- Emite las competencias en formato de tuplas tabulares compactas en `{work_rel}/cta_data.py` usando `write_to_file` (primer bloque de 10-12 competencias).",
-            "- Para cursos extensos o con más páginas, emite los bloques continuos subsiguientes usando `write_to_file` con `Append: true` (`COMPETENCIES += [...]`).",
-            f"- Tras emitir los datos, ejecuta: `python {work_rel}/compile_cta.py` para compilar y validar automáticamente (<5ms).",
-            f"- Si el compilador o `check_cta.py` reportan errores (con tupla y número de línea exacto en `cta_data.py`), corrígelos quirúrgicamente con `replace_file_content` sobre esas líneas específicas.",
-            f"- Re-ejecuta `python {work_rel}/compile_cta.py` hasta obtener certificación limpia (`PASS`).",
-            f"- Presupuesto de turnos sugerido: {turn_budget} turnos.",
-            "- Do not output competencies in chat text. Terminate strictly with:",
-            f"`DONE: {work_rel}/cta.json` (o BLOCKED: <motivo>).",
-            "PROHIBIDO emitir resúmenes, explicaciones o saludos adicionales en el chat.",
-        ])
-        prompt_text = "\n".join(prompt_lines)
-        subagents.append({
-            "TypeName": spec["type_name"],
-            "Role": "Direct CTA Architect",
-            "Model": spec["model"],
-            "Prompt": prompt_text,
-        })
-        dispatched_ids.append("direct")
-
-    elif role == "vision-legacy":
-        read_paths = [f"{work_rel}/pages/*", f"{work_rel}/vision_pages.json"]
-        write_paths = [f"{work_rel}/patches/*.md"]
-        bundle_file = _create_task_bundle(
-            work_dir=work,
-            bundle_name="vision_legacy",
-            role_name=role,
-            role_title="Legacy Page Patcher",
-            system_prompt_rel=sys_prompt,
-            read_paths=read_paths,
-            write_paths=write_paths,
-            forbidden_items=forbidden,
-            turn_budget=turn_budget,
-        )
-        prompt_text = _format_prompt(
-            role_name=role,
-            role_title="Legacy Page Patcher",
-            bundle_path=_bundle_display_path(bundle_file),
-            turn_budget=turn_budget,
-            read_paths=read_paths,
-            write_paths=write_paths,
-            forbidden_items=forbidden,
-            system_prompt_rel=sys_prompt,
-        )
-        subagents.append({
-            "TypeName": spec["type_name"],
-            "Role": "Legacy Page Patcher",
-            "Model": spec["model"],
-            "Prompt": prompt_text,
-        })
-        dispatched_ids.append("legacy")
-
     payload = {"Subagents": subagents}
 
-    # Snapshot pre-dispatch for automated scope verification
     snap = snapshot_work_dir(work)
     snap_file = dispatch_dir / f"{role}_snapshot.json"
     snap_payload = {k: list(v) for k, v in snap.items()}
     snap_file.write_text(json.dumps(snap_payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    # Write audit log to work/dispatch/{role}.json
     audit_file = dispatch_dir / f"{role}.json"
     audit_payload = {
         "role": role,
@@ -1992,7 +955,6 @@ def build_dispatch(
     }
     audit_file.write_text(json.dumps(audit_payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    # Update state.json
     state.setdefault("dispatched", {})[role] = list(sorted(set(dispatched_ids)))
     state_file.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
 
@@ -2000,11 +962,7 @@ def build_dispatch(
 
 
 def snapshot_work_dir(work_dir: Union[str, Path]) -> Dict[str, Tuple[int, float]]:
-    """Takes a snapshot of all files and their sizes/mtimes in work_dir.
-    
-    Returns:
-        Dict mapping POSIX relative paths to (size_bytes, mtime_timestamp).
-    """
+    """Takes a snapshot of all files and their sizes/mtimes in work_dir."""
     work = Path(work_dir).resolve()
     snapshot: Dict[str, Tuple[int, float]] = {}
     if not work.is_dir():
@@ -2027,7 +985,6 @@ def _is_allowed_path(rel_path: str, role: str) -> bool:
     """Checks whether rel_path is an allowed write destination for the specified role."""
     norm = rel_path.replace("\\", "/").lstrip("/")
 
-    # Internal pipeline / audit files that are always permitted
     if (
         norm.startswith("dispatch/")
         or norm.startswith("work/dispatch/")
@@ -2059,10 +1016,8 @@ def _is_allowed_path(rel_path: str, role: str) -> bool:
 
         for cand in candidates:
             for pat in pat_candidates:
-                # Direct glob match
                 if fnmatch.fnmatch(cand, pat):
                     return True
-                # Match parameterized templates like <comp_id> or <id> or _XX
                 wildcard_pat = re.sub(r"<[^>]+>", "*", pat)
                 wildcard_pat = re.sub(r"_XX\b", "_*", wildcard_pat)
                 wildcard_pat = re.sub(r"XX\b", "*", wildcard_pat)
@@ -2072,27 +1027,12 @@ def _is_allowed_path(rel_path: str, role: str) -> bool:
     return False
 
 
-def get_type_definitions() -> List[Dict[str, Any]]:
-    """Returns concise type definitions for define_subagent registration."""
-    return [dict(t) for t in TYPE_DEFINITIONS]
-
-
 def scope_check(
     work_dir: Union[str, Path],
     role: str,
     snapshot: Optional[Dict[str, Tuple[int, float]]] = None,
 ) -> Tuple[bool, List[str]]:
-    """Detects files created or modified outside the permitted write paths for role.
-    
-    Args:
-        work_dir: Course working directory.
-        role: Subagent role that just executed.
-        snapshot: Snapshot dictionary from snapshot_work_dir prior to execution.
-                 If None or empty, attempts to load work/dispatch/{role}_snapshot.json.
-
-    Returns:
-        Tuple of (is_clean, violations_list).
-    """
+    """Detects files created or modified outside the permitted write paths for role."""
     work = Path(work_dir).resolve()
     if not snapshot:
         snap_file = work / "dispatch" / f"{role}_snapshot.json"
@@ -2110,11 +1050,9 @@ def scope_check(
 
     for rel_path, (size, mtime) in current_snapshot.items():
         if rel_path not in snapshot:
-            # File newly created
             if not _is_allowed_path(rel_path, role):
                 violations.append(rel_path)
         else:
-            # File modified
             old_size, old_mtime = snapshot[rel_path]
             if (size, mtime) != (old_size, old_mtime):
                 if not _is_allowed_path(rel_path, role):
@@ -2127,7 +1065,7 @@ def scope_check(
 
 def main() -> None:
     """CLI utility for subagent dispatch and scope checking."""
-    parser = argparse.ArgumentParser(description="Subagent Scope-Lock & Dispatch Generator")
+    parser = argparse.ArgumentParser(description="Subagent Scope-Lock & Dispatch Generator (C2C v3.2)")
     subparsers = parser.add_subparsers(dest="action", required=True)
 
     # dispatch subcommand
@@ -2143,12 +1081,40 @@ def main() -> None:
     chk.add_argument("--work-dir", required=True, help="Course working directory")
 
     # define-types subcommand
-    subparsers.add_parser("define-types", help="Print define_subagent payloads for all c2c types")
+    dt = subparsers.add_parser("define-types", help="Print and persist define_subagent payloads for all c2c types")
+    dt.add_argument("--work-dir", default=None, help="Optional course working directory to persist type files")
+
+    # dispatch-cta subcommand
+    dc = subparsers.add_parser("dispatch-cta", help="Dispatch CTA Architect using pre_cta_manifest.json")
+    dc.add_argument("--work-dir", required=True, help="Course working directory")
+    dc.add_argument("--mode", default=None, help="CTA mode: direct or mapreduce")
+
+    # dispatch-authors subcommand
+    da = subparsers.add_parser("dispatch-authors", help="Dispatch Shard Authors using pre_shard_manifest.json")
+    da.add_argument("--work-dir", required=True, help="Course working directory")
+
+    # dispatch-judges subcommand
+    dj = subparsers.add_parser("dispatch-judges", help="Dispatch Blind Judges with Zero-Warmup in-prompt payload")
+    dj.add_argument("--work-dir", required=True, help="Course working directory")
 
     args = parser.parse_args()
 
     if args.action == "define-types":
-        print(json.dumps(get_type_definitions(), indent=2, ensure_ascii=False))
+        target_work = args.work_dir or Path.cwd() / "work"
+        res = generate_define_subagent_specs(target_work)
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+
+    elif args.action == "dispatch-cta":
+        res = dispatch_cta(args.work_dir, mode=args.mode)
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+
+    elif args.action == "dispatch-authors":
+        res = dispatch_authors(args.work_dir)
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+
+    elif args.action == "dispatch-judges":
+        res = dispatch_judges(args.work_dir)
+        print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "build":
         payload = build_dispatch(
@@ -2160,7 +1126,6 @@ def main() -> None:
         print(json.dumps(payload, indent=2, ensure_ascii=False))
 
     elif args.action == "check":
-        # Check against persisted pre-dispatch snapshot or empty if not present
         is_clean, violations = scope_check(args.work_dir, args.role, None)
         if is_clean:
             print(f"[+] Scope-check PASSED for role '{args.role}'.")

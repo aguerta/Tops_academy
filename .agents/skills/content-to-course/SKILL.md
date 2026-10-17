@@ -69,7 +69,7 @@ outputs:
     description: Absolute path to the Cognitive Task Analysis document
 ---
 
-# Content-to-Course Antigravity Skill (v3 High-Throughput Orchestration Architecture)
+# Content-to-Course Antigravity Skill (v3.2 High-Throughput Orchestration Architecture)
 
 A universal, subject-agnostic educational engineering pipeline that converts raw academic materials (Beamer presentations, handwritten OneNote notes, statistical software exports, and high-resolution chalkboard images) into fully playable, interactive Top's Academy courses.
 
@@ -81,85 +81,63 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 > La conversación principal actúa **exclusivamente como Directora de Proyecto / Orquestadora General**. Su responsabilidad es coordinar el flujo de trabajo, invocar las etapas del runner CLI (`run.py`), inspeccionar los presupuestos y artefactos de control, y **delegar todas las tareas intensivas a subagentes especializados en paralelo mediante `invoke_subagent`**.
 >
 > ### 🚫 REGLAS ESTRICTAS DE CONDUCTA DEL DIRECTOR:
-> 1. **PASO 0B OBLIGATORIO (Registro en Lote de Subagentes - <20s) EN PARALELO CON `define_subagent`:** Al inicio de la sesión, el Director ejecuta `python .agents/skills/content-to-course/run.py --stage define-types` (o consulta `subagent_types.json`) y registra **SIMULTÁNEAMENTE** los 7 tipos especializados (`c2c-vision`, `c2c-cta-mapper`, `c2c-cta-harmonizer`, `c2c-author`, `c2c-judge`, `c2c-cta-direct`, `c2c-repair`) utilizando la capacidad nativa de Google Antigravity de **Parallel Tool Calling** (múltiples llamadas a la tool `define_subagent` emitidas en un ÚNICO turno / mensaje de respuesta del modelo, según `/antigravity-guide`). Queda TERMINANTEMENTE PROHIBIDO registrar los tipos de forma secuencial consumiendo turnos separados (uno por uno). Asimismo, queda PROHIBIDO inspeccionar o leer código fuente interno (`run.py`, `dispatch.py`, etc.) durante la instanciación.
-> 2. **PROHIBIDO redactar prompts a mano.** El Director **NUNCA** redacta a mano el `Prompt` de un subagente. Debe generar el payload ejecutando `python run.py --stage dispatch --role <vision|cta-map|cta-reduce|author|judge|repair>` y copiar fielmente los subagentes generados en `invoke_subagent`.
+> 1. **PASO 0B OBLIGATORIO (Registro de Subagentes sin Truncamiento) EN PARALELO CON `define_subagent`:** Al inicio de la sesión, el Director ejecuta `python .agents/skills/content-to-course/run.py --stage define-types` (o `dispatch.py define-types --work-dir <work_dir>`). Este comando genera archivos individuales por tipo en `work/dispatch/types/<type_name>.json` (`c2c_cta_architect.json`, `c2c_shard_author.json`, `c2c_judge.json`, `c2c_repair.json`), cada uno pesando `< 20 KB` (muy por debajo del límite de 46,080 bytes de `view_file`), y consolida el índice en `work/dispatch/subagent_types.json`. El Director lee en paralelo los archivos individuales en un único turno con `view_file` y registra simultáneamente los tipos con `define_subagent` (Parallel Tool Calling).
+> 2. **DESPACHO ZERO-BUNDLE Y PAYLOADS NO TRUNCADOS (`work/dispatch/items/`):** Al despachar subagentes (`cta`, `authors`, `judges`), el runner genera un archivo individual por subagente en `work/dispatch/items/<stage>_<idx:02d>.json` (cada uno `< 28 KB`). El Director ejecuta llamadas paralelas a `view_file` en un solo turno sobre los archivos de ítems asignados para obtener el 100% íntegro de los prompts sin truncamiento alguno, y los pasa directamente a `invoke_subagent`.
 > 3. **MODELO ESTÁNDAR PARA SUBAGENTES:** Todos los subagentes especializados y jueces ciegos operan con el modelo rápido `flash` (`"Model": "flash"`).
-> 4. **PROHIBIDO redactar plantillas de ejercicios (`work/templates/*.json`) en el hilo principal.** La autoría de plantillas **DEBE** ser delegada a subagentes autores en paralelo (`invoke_subagent`).
-> 5. **PROHIBIDO el análisis imagen por imagen cuando existan documentos PDF.** En Antigravity, la herramienta `view_file` lee archivos PDF (`.pdf`) directamente. Se debe utilizar **Ingesta Directa de PDF** (`--no-handouts --vision none`), aprovechando la extracción de texto en `work/corpus.md` y la lectura directa del PDF. La visión con Handouts queda reservada únicamente para notas manuscritas escaneadas o colecciones de imágenes puras.
-> 6. **PROHIBIDO resolver manualmente lotes de evaluación a ciegas.** La resolución ciega se delega a subagentes jueces en paralelo.
-> 7. **FAN-OUT EN UN SOLO LLAMADO (`invoke_subagent`):** Para abrir y ejecutar subagentes en paralelo, Google Antigravity dispone de la tool específica `invoke_subagent` (referencia `/antigravity-guide`). Al delegar trabajo en paralelo, el Director **DEBE** invocar a todos los subagentes concurrentes dentro del array `Subagents` de un **único llamado a `invoke_subagent`**, y luego finalizar su turno (no invocar más herramientas) para esperar el despertar reactivo del sistema. Queda terminantemente PROHIBIDO abrir subagentes uno por uno en llamadas o turnos separados.
-> 8. **BLINDAJE OPERATIVO DE DIRECT CTA (ARQUITECTURA DE 2 ARCHIVOS):** El subagente `c2c-cta-direct` opera bajo la arquitectura de 2 archivos: emite tuplas pedagógicas compactas en `work/cta_data.py` en estricto orden cronológico (reduciendo tokens en >70%), y compila/certifica en <5ms mediante el compilador inmutable pre-sembrado `python work/compile_cta.py`. PROHIBIDO terminantemente volcar competencias o estructuras JSON en el chat.
-> 9. **BLINDAJE OPERATIVO DE AUTORES DE SHARDS (TRÍADA DE CALIDAD):** Los autores `c2c-author` operan bajo la Tríada de Calidad: (1) Catálogo de antipatrones cognitivos (raw strings `r"..."`, dobles llaves `rf"k^{{{alpha}}}"`, prohibición de adjetivos delatores R-18 y fugas de respuesta en hints R-19); (2) Scaffold canónico de referencia pre-sembrado en `work/shards/<shard_id>/scratch/template_generator_canonical.py`; (3) Linter determinista en `check_templates.py` (`synthetic_boilerplate_distractor_rule` y `scaffolding_answer_leak_rule`). Refinan scaffolds modulares con `replace_file_content` o `write_to_file`.
-> 10. **BLINDAJE OPERATIVO DE JUECES CIEGOS (CONTRATO TIPADO):** Los jueces `c2c-judge` resuelven lotes ciegos `work/judge_batch.json` enriquecidos con `answer_contract` explícito para preguntas numéricas (`expected_type`, `decimal_places`, `tolerance`), evaluadas deterministamente con `math.isclose` (tolerancia 0.01) para eliminar discrepancias de punto flotante. Clausura epistémica absoluta (prohibida navegación web).
-> 11. **AISLAMIENTO CANÓNICO DE ESPACIO DE TRABAJO:** Todo artefacto reside estrictamente en `courses/<course_id>/work` con propagación dinámica de `--work-dir`, eliminando rutas relativas a la raíz y enlaces simbólicos.
+> 4. **PROHIBIDO redactar plantillas de ejercicios (`work/templates/*.json`) en el hilo principal:** La autoría de plantillas **DEBE** ser delegada a subagentes autores en paralelo (`invoke_subagent`).
+> 5. **INGESTA DIRECTA DE PDF POR DEFECTO:** En Antigravity, la herramienta `view_file` lee archivos PDF (`.pdf`) directamente. Se debe utilizar **Ingesta Directa de PDF** (`--no-handouts --vision none`), aprovechando la extracción de texto en `work/corpus.md` y la lectura directa del PDF.
+> 6. **PROHIBIDO resolver manualmente lotes de evaluación a ciegas:** La resolución ciega se delega a subagentes jueces en paralelo con Zero-Warmup in-prompt payload.
+> 7. **FAN-OUT EN UN SOLO LLAMADO (`invoke_subagent`):** Al delegar trabajo en paralelo, el Director **DEBE** invocar a todos los subagentes concurrentes dentro del array `Subagents` de un **único llamado a `invoke_subagent`**, y luego finalizar su turno (no invocar más herramientas) para esperar el despertar reactivo del sistema.
+> 8. **BLINDAJE OPERATIVO DE DIRECT CTA (TUPLAS POSICIONALES EN `cta_data.py`):** El subagente `c2c_cta_architect` emite tuplas pedagógicas compactas en `work/cta_data.py` (o `work/cta_parts/part_XX_data.py`) en estricto orden cronológico. Cero diccionarios y cero chat emissions.
+> 9. **BLINDAJE OPERATIVO DE AUTORES DE SHARDS (TUPLAS PYTHON NATIVAS & `compile_shard.py`):** Los autores `c2c_shard_author` escriben funciones Python nativas y tuplas de 9 elementos en `work/shards/shard_XX_data.py` y compilan deterministamente con `compile_shard.py`. Cero scaffolds pre-sembrados en `work/templates/` y cero carpetas `scratch/`.
+> 10. **BLINDAJE OPERATIVO DE JUECES CIEGOS (ZERO-WARMUP EN 1 SOLO TURNO):** Los jueces `c2c_judge` reciben el lote completo de preguntas inyectado directamente en su prompt, resuelven por primeros principios sin llamar a `view_file` ni `run_command`, y escriben `work/verification/judge_responses_XX.json` en **1 solo turno**.
+> 11. **RECOLECCIÓN INCREMENTAL DE TELEMETRÍA ETAPA POR ETAPA:** El estado y la telemetría de cada etapa se recolectan y persisten de forma incremental en `work/state.json` y `work/telemetry/` (`telemetry_<stage>.json`), registrando tokens (input, output, thinking, cache), latencias por turno y estado de cumplimiento.
 
 ---
 
-## Arquitectura del Pipeline y Contratos de Etapa (v3 High-Throughput)
+## Arquitectura del Pipeline y Contratos de Etapa (v3.2 High-Throughput)
 
 ```
-[ Documentos del Curso: PDFs Beamer, Notas OneNote/Ink, Imágenes ]
+[ Documentos del Curso: PDFs Beamer, Papers, Libros ]
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ Stage 0: Prepare, Orden y Handouts (run.py --stage prepare)     │
-│ - Orden natural de documentos resuelto (work/order.json)        │
-│ - PyMuPDF block extraction con cropping Beamer / densidad       │
-│ - Generación de Handouts 2x2 (Beamer) y 1x2 (Ink/Imágenes)      │
-│ - Outputs: work/corpus.md, work/handouts/handouts_manifest.json │
+│ Stage 0: Prepare & Manifiesto Pre-CTA (run.py --stage prepare)  │
+│ - Extrae capa de texto/matemáticas (work/corpus.md)             │
+│ - Genera manifiesto de fuentes: work/pre_cta_manifest.json      │
+│   (documentos, rutas y rangos de páginas válidas 1..N)          │
+│ - Si falta pre_cta_manifest.json: BLOCKER inmediato             │
 └────────────────────────────────┬────────────────────────────────┘
                                  │
-             ┌───────────────────┴───────────────────┐
-             ▼ (si total_handouts > 0)               ▼ (si total_handouts == 0)
-┌──────────────────────────────────────────┐         │
-│ Fase 1A: Preprocesamiento de Visión      │         │
-│ 1. Fan-out Vision Handouts               │         │
-│    dispatch --role vision                │         │
-│ 2. Stitching progresivo a corpus.md      │         │
-│    run.py --stage stitch [--partial]     │         │
-└────────────────────┬─────────────────────┘         │
-                     └───────────────────┬───────────┘
-                                         │
-             ┌───────────────────────────┴───────────────────────────┐
-             ▼ (si el usuario pide direct CTA)                       ▼ (si el usuario pide multiple/mapreduce CTA)
-┌───────────────────────────────────────────┐           ┌──────────────────────────────────────────┐
-│ Fase 1B: Direct CTA                       │           │ Fase 1B: Multiple / Map-Reduce CTA       │
-│ dispatch --role cta-direct                │           │ 1. Secciones: run.py --stage sections    │
-│ 1 subagente sintetiza cta.json            │           │ 2. Fan-out CTA Map: dispatch --role cta-map
-│ sobre corpus enriquecido con visión       │           │ 3. CTA Merge: run.py --stage cta-merge   │
-│                                           │           │ 4. CTA Harmonize: dispatch --role cta-reduce
-│                                           │           │ 5. CTA Apply: run.py --stage cta-apply   │
-└─────────────────────┬─────────────────────┘           └────────────────────┬─────────────────────┘
-                      └──────────────────────────┬───────────────────────────┘
-                                                 ▼
+                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ Stage 1 Gate: Verificación CTA (run.py --stage cta)             │
-│ - Valida cuotas de distractores fusionados (>=3 Fact/Concept, >=6 Skill)
-│ - Valida evidencias y ontología [H], [C], [Hab]                 │
-│ - Checkpoint opcional: --review-cta                             │
+│ Stage 1: Síntesis de Competencias CTA (dispatch-cta)             │
+│ - Exige work/pre_cta_manifest.json (cero fallbacks)             │
+│ - Director lee work/dispatch/items/cta_01.json (<28KB)          │
+│ - Subagente c2c_cta_architect escribe tuplas en cta_data.py     │
+│ - Compilación y certificación determinista a work/cta.json      │
 └────────────────────────────────┬────────────────────────────────┘
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ Stage 2: Sharding de Competencias (run.py --stage shard)        │
-│ - Particiona en shards balanceados contiguos (8 comp. default)  │
-│ - Detección adaptativa de grafos densos de distractores (4 comp)│
-│ - Outputs: work/shards/shard_01.json ... shard_0K.json          │
+│ - Particiona en shards balanceados contiguos (4 a 8 comp.)      │
+│ - Genera manifiesto de shards: work/shards/pre_shard_manifest.json
 └────────────────────────────────┬────────────────────────────────┘
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ Stage 3: Fan-Out de Autores Atómicos (dispatch --role author)    │
-│ - Director genera payload de autores con SCOPE-LOCK y bundle    │
-│ - K subagentes autores en paralelo en 1 solo invoke_subagent    │
-│ - Protocolo Atómico en 4 Fases (Lectura -> Escritura masiva     │
-│   -> Validación isomórfica en 1 comando -> DONE)                │
-│ - Director verifica gate: run.py --stage templates              │
+│ Stage 3: Fan-Out de Autores Atómicos (dispatch-authors)         │
+│ - Exige pre_shard_manifest.json y pre_cta_manifest.json         │
+│ - Director lee work/dispatch/items/author_XX.json (<28KB) c/u   │
+│ - K subagentes c2c_shard_author escriben shard_XX_data.py       │
+│ - Compilación estricta con compile_shard.py                     │
+│ - Gate de plantillas: run.py --stage templates                  │
 └────────────────────────────────┬────────────────────────────────┘
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ Stage 4: Instanciación en Sandbox (run.py --stage build)        │
+│ Stage 4: Instanciación Masiva en Sandbox (run.py --stage build) │
 │ - Sweeps deterministas CRC32 cumpliendo cuotas (30/20)          │
 │ - Verificación de invariantes y diversidad de stems >= 0.5      │
 │ - Outputs: work/course.json                                     │
@@ -167,18 +145,19 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ Stage 5: Verificación y Jueces Ciegos (run.py --stage verify)   │
-│ - Genera lote de evaluación estratificado sin soluciones        │
-│ - dispatch --role judge divide en lotes para jueces flash       │
+│ Stage 5: Verificación y Jueces Ciegos (dispatch-judges)         │
+│ - Genera lotes ciegos en work/verification/judge_batch_XX.json   │
+│ - Director lee work/dispatch/items/judge_XX.json (<28KB) c/u    │
+│ - Zero-Warmup: Ítems inyectados directamente en prompt de juez  │
+│ - Jueces resuelven y escriben en 1 solo turno                   │
 │ - run.py --stage judge-compare evalúa acuerdo contra claves     │
-│ - Circuito de reparación: dispatch --role repair ante discordias│
-│ - Outputs: work/judge_report.json, work/course_verified.json    │
+│ - Circuito de reparación focalizado ante discordancias          │
 └────────────────────────────────┬────────────────────────────────┘
                                  │
                                  ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ Stage 6: Publicación en Plataforma (run.py --stage publish)     │
-│ - Verificación obligatoria de arbitraje ciego aprobado          │
+│ - Valida arbitraje ciego aprobado                               │
 │ - Publica a courses/<course_id>.json y registra en plataforma   │
 │ - Plataforma interactiva lista en http://localhost:3000         │
 └─────────────────────────────────────────────────────────────────┘
@@ -188,134 +167,103 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 
 ## Protocolo de Orquestación del Director (Paso a Paso)
 
-### Paso 0a: Preparación, Orden y Handouts
+### Paso 0a: Preparación y Manifiesto Pre-CTA
 1. Ejecutar en terminal:
    ```bash
    python .agents/skills/content-to-course/run.py --stage prepare --pdf <pdf_path> --course-id <course_id> --work-dir <work_dir> [--granularity standard] [--cta-mode auto]
    ```
-2. La salida del comando informa:
-   - Orden resuelto de documentos (`work/order.json`). Si el usuario especificó un orden particular, se usó `--order`.
-   - Modo CTA seleccionado (`mapreduce` o `direct`) y granularidad registrada en `budget.json`.
-   - Total de Handouts generados (cuadrículas 2x2 para Beamer, 1x2 para notas/imágenes con banners indelebles).
+2. La salida del comando genera:
+   - Capa de texto enriquecida: `work/corpus.md`.
+   - **Manifiesto de documentos pre-CTA (`work/pre_cta_manifest.json`)**: lista exhaustiva de documentos fuente, rutas de acceso y rango de páginas PDF válidas `1..N`.
+   - Si no existe `work/pre_cta_manifest.json`, el pipeline se detiene inmediatamente con:
+     `BLOCKER:: No existe pre_cta_manifest.json`
+
+---
 
 ### Paso 0b: Registro de Tipos Especializados de Subagentes en Paralelo (<20s)
 1. El Director ejecuta:
    ```bash
-   python .agents/skills/content-to-course/run.py --stage define-types
+   python .agents/skills/content-to-course/run.py --stage define-types --work-dir <work_dir>
    ```
-   *(Este comando emite el JSON limpio sin truncamiento y persiste `subagent_types.json`).*
-2. **REGISTRO EN PARALELO EN UN ÚNICO TURNO CON `define_subagent` (PARALLEL TOOL CALLING):**
-   De acuerdo con la arquitectura de Google Antigravity (referencia `/antigravity-guide`), el modelo dispone nativamente de la capacidad de **Parallel Tool Calling** para emitir múltiples llamadas a herramientas en una misma respuesta. El Director **DEBE** invocar la tool específica `define_subagent` para los 7 roles **SIMULTÁNEAMENTE en un ÚNICO turno** (emitiendo un único mensaje con las 7 llamadas a `define_subagent` en paralelo sin esperar turnos intermedios):
-   - `c2c-vision`: Handout Vision Analyzer (`enable_write_tools: true`)
-   - `c2c-cta-mapper`: Sectional CTA Mapper (`enable_write_tools: true`)
-   - `c2c-cta-harmonizer`: Curriculum Harmonization (`enable_write_tools: true`)
-   - `c2c-author`: Psychometric Exercise Author (`enable_write_tools: true`)
-   - `c2c-judge`: Blind Psychometric Evaluation Judge (`enable_write_tools: true`)
-   - `c2c-cta-direct`: Direct CTA Architect (`enable_write_tools: true`)
-   - `c2c-repair`: Targeted Repair subagent (`enable_write_tools: true`)
+   *(Este comando genera los archivos individuales en `work/dispatch/types/<type_name>.json` y el índice en `work/dispatch/subagent_types.json`).*
 
-   > [!CAUTION]
-   > **PROHIBICIÓN ESTRICTA DE SERIALIZACIÓN:** Queda TERMINANTEMENTE PROHIBIDO invocar `define_subagent` de forma secuencial gastando 7 turnos separados (uno por subagente). Deben registrarse los 7 en el mismo turno. Posteriormente, para abrir y ejecutar subagentes en paralelo durante el pipeline, Google Antigravity cuenta con la tool específica `invoke_subagent`, la cual debe recibir todo el lote en su array `Subagents` en una única llamada. Queda estrictamente prohibido perder turnos explorando o leyendo archivos internos de la skill (`run.py`, `dispatch.py`, etc.).
+2. **Lectura Paralela de Tipos sin Truncamiento y Registro con `define_subagent`:**
+   El Director lee en paralelo los archivos individuales (`< 20 KB` cada uno):
+   - `work/dispatch/types/c2c_cta_architect.json`
+   - `work/dispatch/types/c2c_shard_author.json`
+   - `work/dispatch/types/c2c_judge.json`
+   - `work/dispatch/types/c2c_repair.json`
+
+   Y emite simultáneamente en un **ÚNICO turno** las llamadas a `define_subagent` (Parallel Tool Calling), registrando:
+   - `c2c_cta_architect`: Cognitive Task Analysis Architect (`enable_write_tools: true`)
+   - `c2c_shard_author`: Shard Exercise Author (`enable_write_tools: true`)
+   - `c2c_judge`: Blind Evaluation Judge (`enable_write_tools: true`)
+   - `c2c_repair`: Targeted Repair Engineer (`enable_write_tools: true`)
 
 ---
 
-### Paso 1: Ingesta Directa de PDF y Análisis Cognitivo (CTA)
+### Paso 1: Síntesis Cognitiva de Competencias (CTA)
 
-> [!IMPORTANT]
-> **Ingesta Directa de PDF vs Preprocesamiento de Visión:**
-> En Antigravity SDK, la herramienta `view_file` soporta nativamente la lectura de documentos PDF completos (`.pdf`). Además, `run.py --stage prepare` extrae automáticamente la capa completa de texto y matemáticas en `work/corpus.md`.
-> - **Cursos basados en PDFs (Beamer, Papers, Libros):** Se ejecutan con **Ingesta Directa de PDF** (`--no-handouts --vision none`). Se omite por completo la generación de imágenes y cuadrículas de handouts. **NO se hace análisis imagen por imagen.** Los subagentes arquitectos y autores leen directamente `work/corpus.md` y pueden consultar los PDFs fuente en `content/**/*.pdf` directamente con `view_file`. Se avanza **DIRECTAMENTE a la Fase 1B (Síntesis CTA)**.
-> - **Materiales Manuscritos o Imágenes Puras:** Si el contenido proviene de notas manuscritas escaneadas o carpetas de imágenes sin texto (`total_handouts > 0`), se ejecuta la Fase 1A de visión.
-
-#### Fase 1A: Preprocesamiento de Visión (RESERVADO EXCLUSIVAMENTE para imágenes puras o notas manuscritas con `total_handouts > 0`)
-1. **Despachar Vision Analyzers en Paralelo:**
-   Generar payload de subagentes de visión:
+1. **Generar Despacho CTA:**
    ```bash
-   python .agents/skills/content-to-course/run.py --stage dispatch --role vision --work-dir <work_dir>
+   python .agents/skills/content-to-course/dispatch.py dispatch-cta --work-dir <work_dir> [--mode direct]
    ```
-   El Director copia el JSON resultante y llama a `invoke_subagent` con todos los Vision Analyzers en un solo llamado. Finaliza el turno para esperar.
-2. **Coser Parches a `corpus.md` (Stitch):**
-   A medida que los analizadores de visión notifican `DONE`:
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage stitch --work-dir <work_dir>
-   ```
+   - El script verifica estrictamente que exista `work/pre_cta_manifest.json`. Si no existe, detiene con:
+     `BLOCKER:: No existe pre_cta_manifest.json`.
+   - Genera el archivo de subagente individual en `work/dispatch/items/cta_01.json` (`< 28 KB`) y el log en `work/dispatch/cta.json`.
 
-*(En Ingesta Directa de PDF y cuando `total_handouts == 0`, se avanza DIRECTAMENTE a la Fase 1B).*
+2. **Lectura e Invocación:**
+   El Director lee `work/dispatch/items/cta_01.json` con `view_file` (100% del prompt íntegro, sin truncamiento) e invoca a `c2c_cta_architect` mediante `invoke_subagent`.
 
----
+3. **Contrato de Operación del Arquitecto:**
+   - **Paginación 1-indexed:** Cita exclusivamente páginas `1..N` del archivo PDF según la tabla de `pre_cta_manifest.json`. NUNCA usa la numeración impresa del libro o capítulo.
+   - **Tuplas Puras:** Emite tuplas de 9 elementos en `work/cta_data.py` (o `work/cta_parts/part_XX_data.py`). Cero diccionarios y cero chat output.
+   - **Compilación Determinista:** Compila con `python .agents/skills/content-to-course/compile_cta.py --work "<work_dir>"` (o `--part <subpart_id>`) y corrige errores línea a línea con `replace_file_content`.
 
-#### Fase 1B: Síntesis de Competencias (CTA)
-En Ingesta Directa de PDF, esta etapa se ejecuta de inmediato tras el Paso 0 (Prepare).
-Sigue estrictamente la modalidad pedida por el usuario (`direct` o `multiple/mapreduce`):
+> [!NOTE]
+> **Modos CTA (`direct` vs `mapreduce`):**
+> - **Modo `direct` (por defecto):** Despacha un único arquitecto con `work/dispatch/items/cta_01.json` (`< 46,080 bytes` incluso con `> 50` documentos gracias al formateo compacto) para emitir el currículo completo en `work/cta_data.py`.
+> - **Modo `mapreduce`:** Despacha un subagente arquitecto por cada subparte declarada en `pre_cta_manifest.json` (`work/dispatch/items/cta_01.json`, `cta_02.json`, ..., `cta_MM.json`), pasando a cada uno exclusivamente el documento/rango de páginas de su subparte y el comando `compile_cta.py --work "<work_dir>" --part <subpart_id>`. *(Nota: Cuando `cta_mode == "mapreduce"`, aún no están definidas las reglas explícitas determinísticas o para el LLM para subdividir un archivo extenso en múltiples subpartes; queda como pendiente para otra iteración del pipeline, aplicándose actualmente 1 archivo = 1 subparte).*
 
-##### Vía 1: Direct CTA (si el usuario pidió Direct CTA o `--cta-mode direct`)
-Aplica cuando el usuario desea síntesis directa en un solo subagente arquitecto que inspecciona directamente los archivos originales en `content/` (vía `view_file` sobre los PDFs) y complementa con `work/corpus.md`:
-1. **Despachar Direct CTA Architect:**
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage dispatch --role cta-direct --work-dir <work_dir>
-   ```
-   El Director copia el JSON resultante, llama a `invoke_subagent` con el Direct CTA Architect y finaliza el turno.
-   - **Contrato Operativo de Emisión a Archivo:** El subagente `c2c-cta-direct` tiene **PROHIBICIÓN ESTRICTA** de volcar competencias o fragmentos JSON en el chat conversacional (evita agotar `max_output_tokens`). Su primera y única acción es emitir directamente a disco (`work/generate_cta.py` o `work/cta.json` / `work/cta.md`).
-   - **Límite por Lotes:** Estructura las competencias de forma incremental en bloques de **COMO MÁXIMO 10 competencias a la vez** para prevenir colapsos de salida y garantizar la profundidad de los distractores.
-2. **Validar gate de CTA:**
+4. **Validar Gate de CTA:**
    Al despertar tras `DONE`:
    ```bash
    python .agents/skills/content-to-course/run.py --stage cta --work-dir <work_dir>
    ```
 
-##### Vía 2: Multiple / Map-Reduce CTA (si el usuario pidió Multiple CTA o `--cta-mode mapreduce`)
-Aplica cuando el usuario solicita partición seccional map-reduce:
-1. **Generar Secciones:**
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage sections --work-dir <work_dir>
-   ```
-2. **Despachar CTA Mappers:**
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage dispatch --role cta-map --ready-only --work-dir <work_dir>
-   ```
-   Llama a `invoke_subagent` con las secciones listas y finaliza el turno.
-3. **Consolidar Partes (Map -> Merge):**
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage cta-merge --work-dir <work_dir>
-   ```
-4. **Despachar Harmonizer (Reduce):**
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage dispatch --role cta-reduce --work-dir <work_dir>
-   ```
-   Llama a `invoke_subagent` con el CTA Harmonizer y finaliza el turno.
-5. **Aplicar y Validar Gate de CTA:**
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage cta-apply --work-dir <work_dir>
-   ```
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage cta --work-dir <work_dir>
-   ```
-
 ---
 
-### Paso 2: Partición en Shards Amortizados (8 competencias por Shard)
+### Paso 2: Partición en Shards Amortizados
+
 1. El Director ejecuta el particionador:
    ```bash
    python .agents/skills/content-to-course/run.py --stage shard --work-dir <work_dir>
    ```
-   Garantiza shards contiguos equilibrados (diferencia de tamaño ≤ 1, 8 competencias por defecto).
+   - Genera `work/shards/pre_shard_manifest.json` con la distribución de competencias por shard.
 
 ---
 
-### Paso 3: Fan-Out Paralelo de Autores con Protocolo Atómico
-1. El Director genera el payload de autores:
+### Paso 3: Fan-Out Paralelo de Autores con Tuplas Python Nativas
+
+1. **Generar Despacho de Autores:**
    ```bash
-   python .agents/skills/content-to-course/run.py --stage dispatch --role author --work-dir <work_dir>
+   python .agents/skills/content-to-course/dispatch.py dispatch-authors --work-dir <work_dir>
    ```
-2. El Director llama a `invoke_subagent` con todos los autores en un único llamado concurrente.
-   Cada autor sigue el **Protocolo de Autoría Atómica Consolidada**:
-   - **Erradicación de Micro-Bucles y Aislamiento:** Queda terminantemente PROHIBIDO crear scripts individuales por competencia (`generate_c01.py`, `generate_c02.py`, etc.) o usar nombres compartidos entre shards como `generate_all_templates.py`. Se utiliza un script modular consolidado exclusivo por shard (`work/build_<shard_id>.py` o en `scratch/`) o llamadas atómicas directas a `write_to_file`.
-   - **Prevención de Colapso de Tokens:** Para no desbordar `max_output_tokens`, el script consolidado o los JSONs se construyen de forma incremental en bloques de **COMO MÁXIMO 1 o 2 competencias a la vez**. Queda prohibido volcar 8 competencias complejas en un solo llamado de escritura masiva.
-   - **Cero Introspección del Validador:** Los autores tienen estrictamente prohibido abrir o hacer ingeniería inversa de `check_templates.py`, `src/validator/*` (incluyendo `rules.py`) o `engine/*`. Los diagnósticos del validador son auto-contenidos y prescriptivos.
-   - **Validación Isomórfica en 1 Solo Comando:** Todo el shard se valida simultáneamente en una sola invocación de terminal (`check_templates.py work/templates/*.json --cta work/cta.json --strict`). Las correcciones se aplican en bloque (máx. 3 ciclos).
-   - **Cierre Limpio:** Termina respondiendo estrictamente `DONE: <archivos>`.
-   *El Director detiene sus llamadas a herramientas y espera el retorno reactivo.*
-3. Al despertar, el Director verifica el gate de plantillas:
+   - Exige `work/shards/pre_shard_manifest.json` y `work/pre_cta_manifest.json`. Si falta alguno, emite:
+     `BLOCKER:: No existe pre_shard_manifest.json` o `BLOCKER:: No existe pre_cta_manifest.json`.
+   - Escribe archivos individuales por autor en `work/dispatch/items/author_01.json`, `author_02.json`, ... (cada uno `< 28 KB`).
+
+2. **Lectura Paralela e Invocación Masiva:**
+   El Director lee en paralelo los archivos de ítems con `view_file` en un solo turno y llama a `invoke_subagent` con todo el array `Subagents` en una única invocación concurrente.
+
+3. **Contrato de Autoría Nativa de Shards:**
+   - Cada autor escribe funciones Python y tuplas de 9 elementos en `work/shards/shard_XX_data.py` (`TEMPLATES = [...]`).
+   - Cero pre-siembra de JSONs en `work/templates/` ni bundles en `work/shards/bundles/`.
+   - Ejecuta la compilación estricta con:
+     `python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard shard_XX --strict`
+   - Si se reportan errores mapeados a línea, los corrige con `replace_file_content` sobre `shard_XX_data.py` y finaliza con `DONE: work/shards/shard_XX_data.py`.
+
+4. **Validar Gate de Plantillas:**
    ```bash
    python .agents/skills/content-to-course/run.py --stage templates --work-dir <work_dir>
    ```
@@ -323,48 +271,51 @@ Aplica cuando el usuario solicita partición seccional map-reduce:
 ---
 
 ### Paso 4: Instanciación Masiva en Sandbox
-1. El Director ejecuta la instanciación de preguntas:
+
+1. El Director ejecuta:
    ```bash
    python .agents/skills/content-to-course/run.py --stage build --work-dir <work_dir>
    ```
-   *Verifica cuotas (≥30 por habilidad, ≥20 por hecho/concepto), invariantes y diversidad de stems (≥0.5).*
+   - Valida sweeps deterministas CRC32, cuotas (≥30 por habilidad, ≥20 por hecho/concepto), invariantes y diversidad de stems (≥0.5).
 
 ---
 
 ### Paso 5: Verificación Independiente y Circuito Cerrado de Jueces Ciegos
-1. El Director genera el lote ciego:
+
+1. Generar lote de evaluación ciego:
    ```bash
    python .agents/skills/content-to-course/run.py --stage verify --work-dir <work_dir>
    ```
-2. Despachar evaluadores ciegos (modelo `flash`):
+
+2. **Despachar Jueces con Zero-Warmup:**
    ```bash
-   python .agents/skills/content-to-course/run.py --stage dispatch --role judge --work-dir <work_dir>
+   python .agents/skills/content-to-course/dispatch.py dispatch-judges --work-dir <work_dir>
    ```
-   Invoca `invoke_subagent` con los Blind Judges y espera retorno.
-   - **Clausura Epistémica Absoluta:** Los evaluadores tienen terminantemente PROHIBIDO el uso de herramientas de búsqueda web (`search_web`, `read_url_content`) o acceso a internet. La deducción debe ser 100% analítica desde primeros principios a partir del lote recibido.
-   - **Fallback de Bloqueo por Falta de Contexto:** Si un reactivo carece de variables o contexto matemático autosuficiente (ej. placeholders no sustituidos), el juez responde en el JSON:
-     `"answer": "BLOCKED: Reactivo <id> carece de contexto matemático autosuficiente"`
-     para que el pipeline lo derive al circuito de reparación (`c2c-repair`) en lugar de inventar o adivinar.
-3. Evaluar respuestas contra ground truth:
+   - Escribe archivos de ítems en `work/dispatch/items/judge_01.json`, `judge_02.json`, ... (`< 28 KB` c/u).
+   - Inyecta los ítems del batch (`question_id`, `question_type`, `stem_es`, `options`) directamente dentro del `Prompt`.
+   - Los jueces ciegos **NO leen archivos con `view_file` ni ejecutan `run_command`**: resuelven analíticamente desde primeros principios y escriben `work/verification/judge_responses_XX.json` en **1 solo turno**.
+
+3. **Evaluar Respuestas contra Claves:**
    ```bash
    python .agents/skills/content-to-course/run.py --stage judge-compare --work-dir <work_dir>
    ```
-4. **Circuito de Reparación Focalizada (si hay desacuerdos o reactivos bloqueados):**
+
+4. **Circuito de Reparación Focalizada:**
    Si se reportan discordancias en `work/judge_report.json`:
    ```bash
    python .agents/skills/content-to-course/run.py --stage dispatch --role repair --work-dir <work_dir>
    ```
-   El subagente `c2c-repair` recibe el diagnóstico exacto de la discordancia en su bundle, corrige la plantilla y valida localmente con `check_templates.py`. Re-ejecutar `judge-compare`.
+   El subagente `c2c_repair` corrige quirúrgicamente las tuplas en `work/shards/shard_XX_data.py` y re-compila con `compile_shard.py`.
 
 ---
 
 ### Paso 6: Publicación y Registro del Curso
+
 1. El Director publica el curso:
    ```bash
    python .agents/skills/content-to-course/run.py --stage publish --work-dir <work_dir> --output-dir courses
    ```
-   *(Valida automáticamente que `judge_report.json` esté en estado `passed`; puede omitirse con `--skip-judges`).*
-2. El Director presenta el resumen ejecutivo al usuario:
+2. Presenta el resumen ejecutivo al usuario:
    - Título y Course ID.
    - Ruta del archivo publicado (`courses/<course_id>.json`).
    - Conteo de preguntas y competencias validadas (100% de reglas psicométricas).

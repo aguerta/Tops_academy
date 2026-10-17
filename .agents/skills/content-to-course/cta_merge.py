@@ -16,6 +16,7 @@ import json
 import logging
 import re
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
@@ -281,67 +282,114 @@ def find_duplicate_candidates(competencies: List[Dict[str, Any]]) -> List[Dict[s
 
 
 def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
-    """Deterministically merges sectional CTA parts into a canonical CTA draft.
+    """Deterministically merges sectional CTA parts into a canonical CTA draft and final cta.json.
 
-    1. Reads all 'work/cta_parts/cta_part_*.json' in section order.
-    2. Preserves strict sequential order of competencies per session and page.
-    3. Renumbers canonical sequential IDs: H-01.., C-01.., Hab-01...
-    4. Maps and rewrites distractor IDs (D-H01-01..) and prerequisites using 'id_map.json'.
-    5. Detects duplicate candidates via find_duplicate_candidates and writes 'work/duplicate_candidates.json'.
-    6. Writes 'work/cta_draft.json', 'work/cta_outline.json', and 'work/cta_order.json'.
+    1. Requires 'work/pre_cta_manifest.json' (raises blocker error if missing).
+    2. Reads parts in work/cta_parts/ (part_*.json, cta_part_*.json).
+    3. Orders competencies deterministically by (subpart_index, file_index, page, orig_idx)
+       using the order of subparts and files defined in pre_cta_manifest.json.
+    4. Deduplicates and sequentially renumbers canonical IDs: H-01.., C-01.., Hab-01...
+    5. Maps and rewrites distractor IDs and prerequisites using id_map.
+    6. Writes work/id_map.json, work/duplicate_candidates.json, work/cta_draft.json,
+       work/cta_outline.json, work/cta_order.json, and canonical work/cta.json / work/cta.md.
     """
-    work_path = Path(work_dir)
-    parts_dir = work_path / "cta_parts"
+    work_path = Path(work_dir).resolve()
+    manifest_file = work_path / "pre_cta_manifest.json"
+    if not manifest_file.is_file():
+        print("BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
+        raise FileNotFoundError("BLOCKER:: No existe pre_cta_manifest.json")
 
+    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+    files_list = manifest_data.get("files", [])
+    subparts_list = manifest_data.get("subparts", [])
+
+    # Index files: doc_name / doc_slug / doc_stem -> file_index
+    doc_to_file_idx: Dict[str, int] = {}
+    for f in files_list:
+        f_idx = f.get("file_index", 0)
+        d_name = str(f.get("doc", "")).strip().lower()
+        d_slug = str(f.get("doc_slug", "")).strip().lower()
+        if d_name:
+            doc_to_file_idx[d_name] = f_idx
+            doc_to_file_idx[Path(d_name).stem.lower()] = f_idx
+        if d_slug:
+            doc_to_file_idx[d_slug] = f_idx
+
+    # Index subparts: subpart_id -> (subpart_index, file_index, doc, cta_out_path)
+    subpart_meta: Dict[str, Dict[str, Any]] = {}
+    for sp in subparts_list:
+        sp_id = str(sp.get("subpart_id", "")).strip().lower()
+        subpart_meta[sp_id] = sp
+        subpart_meta[f"part_{sp.get('subpart_index', 0)+1:02d}"] = sp
+
+    parts_dir = work_path / "cta_parts"
     if not parts_dir.exists() or not parts_dir.is_dir():
         raise FileNotFoundError(f"CTA parts directory not found at: {parts_dir.resolve()}")
 
-    # Collect and sort all part files in natural / numeric section order
-    part_files = list(parts_dir.glob("cta_part_*.json"))
+    part_files: List[Path] = []
+    seen_stems: Set[str] = set()
+    for pattern in ("part_*.json", "cta_part_*.json", "*.json"):
+        for p in sorted(parts_dir.glob(pattern)):
+            if p.is_file() and p.stem not in seen_stems and not p.name.endswith("_data.py"):
+                seen_stems.add(p.stem)
+                part_files.append(p)
+
     if not part_files:
         raise FileNotFoundError(f"No sectional CTA parts found in {parts_dir.resolve()}")
 
-    def extract_section_key(p: Path) -> Tuple[int, str]:
-        match = re.search(r"cta_part_(\d+)", p.name)
-        if match:
-            return (int(match.group(1)), p.name)
-        return (999999, p.name)
-
-    part_files.sort(key=extract_section_key)
-
     combined_competencies: List[Dict[str, Any]] = []
-    course_id = "course_generic"
-    course_title = "Course Curriculum"
-    macro_competency = "Mastery of course competencies"
+    course_id = manifest_data.get("course_id") or "course_generic"
+    course_title = course_id.replace("_", " ").title()
+    macro_competency = f"Mastery of {course_title}"
 
-    part_id_maps: Dict[int, Dict[str, str]] = {}
-    part_dist_maps: Dict[int, Dict[str, str]] = {}
+    for p_file in part_files:
+        stem = p_file.stem.lower()
+        sp_info = subpart_meta.get(stem)
+        if not sp_info:
+            nums = re.findall(r"\d+", stem)
+            if nums:
+                sp_info = subpart_meta.get(f"part_{int(nums[0]):02d}")
 
-    for p_idx, part_file in enumerate(part_files, start=1):
+        sp_idx = sp_info.get("subpart_index", 0) if sp_info else 0
+        def_file_idx = sp_info.get("file_index", 0) if sp_info else 0
+
         try:
-            content = json.loads(part_file.read_text(encoding="utf-8"))
+            content = json.loads(p_file.read_text(encoding="utf-8"))
         except Exception as e:
-            raise ValueError(f"Failed to parse JSON in {part_file}: {e}") from e
+            raise ValueError(f"Failed to parse JSON in {p_file}: {e}") from e
 
         if isinstance(content, list):
             comps = content
         elif isinstance(content, dict):
             comps = content.get("competencies", [])
-            if "course_id" in content and course_id == "course_generic":
-                course_id = content["course_id"]
-            if "title" in content and course_title == "Course Curriculum":
-                course_title = content["title"]
-            if "macro_competency" in content:
-                macro_competency = content["macro_competency"]
+            course_id = content.get("course_id", course_id)
+            course_title = content.get("title", course_title)
+            macro_competency = content.get("macro_competency", macro_competency)
         else:
             comps = []
 
-        for c in comps:
-            c["_part_index"] = p_idx
-        combined_competencies.extend(comps)
+        for orig_idx, c in enumerate(comps):
+            ev_list = c.get("evidence", [])
+            ev_doc = str(ev_list[0].get("doc", "")).strip().lower() if ev_list else ""
+            f_idx = doc_to_file_idx.get(ev_doc, doc_to_file_idx.get(Path(ev_doc).stem.lower(), def_file_idx))
+
+            p_val = ev_list[0].get("page", 0) if ev_list else c.get("unit_index", 0)
+            try:
+                page_int = int(p_val)
+            except (ValueError, TypeError):
+                m = re.search(r"\d+", str(p_val))
+                page_int = int(m.group(0)) if m else 0
+
+            c["_sort_key"] = (sp_idx, f_idx, page_int, orig_idx)
+            combined_competencies.append(c)
 
     if not combined_competencies:
         raise ValueError(f"Zero competencies found across all parts in {parts_dir.resolve()}")
+
+    # Deterministic sort by (subpart_index, file_index, page, orig_idx)
+    combined_competencies.sort(key=lambda c: c["_sort_key"])
+    for c in combined_competencies:
+        c.pop("_sort_key", None)
 
     # Sanitize and normalize orphan LaTeX math in all competencies and distractors
     for comp in combined_competencies:
@@ -356,11 +404,6 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
     dist_id_map: Dict[str, str] = {}
 
     for comp in combined_competencies:
-        p_idx = comp.get("_part_index", 1)
-        if p_idx not in part_id_maps:
-            part_id_maps[p_idx] = {}
-            part_dist_maps[p_idx] = {}
-
         old_cid = comp.get("id", "")
         ctype = comp.get("type", "").lower()
 
@@ -377,33 +420,28 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
             new_cid = f"Hab-{skill_count:02d}"
             prefix = f"Hab{skill_count:02d}"
         else:
-            # Fallback default to fact
             fact_count += 1
             new_cid = f"H-{fact_count:02d}"
             prefix = f"H{fact_count:02d}"
 
         if old_cid:
             comp_id_map[old_cid] = new_cid
-            part_id_maps[p_idx][old_cid] = new_cid
         comp["id"] = new_cid
 
-        # Renumber distractors sequentially under the new canonical prefix
         distractors = comp.get("distractors", [])
         for d_idx, dist in enumerate(distractors, start=1):
             old_did = dist.get("id", "")
             new_did = f"D-{prefix}-{d_idx:02d}"
             if old_did:
                 dist_id_map[old_did] = new_did
-                part_dist_maps[p_idx][old_did] = new_did
             dist["id"] = new_did
 
-    # Rewrite prerequisites using the scoped competency ID map
+    # Rewrite prerequisites across all competencies
     for comp in combined_competencies:
-        p_idx = comp.pop("_part_index", 1)
         prereqs = comp.get("prerequisites", [])
         new_prereqs: List[str] = []
         for p in prereqs:
-            mapped = part_id_maps.get(p_idx, {}).get(p, comp_id_map.get(p, p))
+            mapped = comp_id_map.get(p, p)
             if mapped not in new_prereqs and mapped != comp["id"]:
                 new_prereqs.append(mapped)
         comp["prerequisites"] = new_prereqs
@@ -451,8 +489,6 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         "order_hash": order_hash,
     }
 
-    # Write artifacts to work directory
-    work_path.mkdir(parents=True, exist_ok=True)
     (work_path / "id_map.json").write_text(
         json.dumps(id_map_payload, indent=2, ensure_ascii=False), encoding="utf-8"
     )
@@ -469,6 +505,15 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         json.dumps(order_payload, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
+    # Write canonical cta.json and cta.md
+    final_cta_json = work_path / "cta.json"
+    final_cta_json.write_text(
+        json.dumps(draft_payload, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    final_cta_md = work_path / "cta.md"
+    rendered_md = render_cta_md(draft_payload)
+    final_cta_md.write_text(rendered_md, encoding="utf-8")
+
     logger.info(
         "Successfully merged %d parts into %d competencies. Detected %d duplicate candidates.",
         len(part_files),
@@ -476,7 +521,15 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         len(duplicate_candidates),
     )
 
-    return draft_payload
+    ret = dict(draft_payload)
+    ret["status"] = "success"
+    ret["total_competencies"] = len(combined_competencies)
+    ret["draft_path"] = str((work_path / "cta_draft.json").resolve())
+    ret["outline_path"] = str((work_path / "cta_outline.json").resolve())
+    ret["candidates_path"] = str((work_path / "duplicate_candidates.json").resolve())
+    ret["duplicate_candidates"] = duplicate_candidates
+    ret["parts"] = [p.name for p in part_files]
+    return ret
 
 
 def apply_harmonize(
@@ -784,16 +837,11 @@ def apply_harmonize(
 
     cta_draft["competencies"] = competencies
 
-    manifest_data = None
-    if manifest_path:
-        m_file = Path(manifest_path)
-        if m_file.exists():
-            manifest_data = json.loads(m_file.read_text(encoding="utf-8"))
-    else:
-        # Check default manifest path
-        default_manifest = work_path / "pages" / "manifest.json"
-        if default_manifest.exists():
-            manifest_data = json.loads(default_manifest.read_text(encoding="utf-8"))
+    manifest_file = Path(manifest_path).resolve() if manifest_path else work_path / "pre_cta_manifest.json"
+    if not manifest_file.is_file():
+        print("BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
+        raise FileNotFoundError("BLOCKER:: No existe pre_cta_manifest.json")
+    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
 
     valid, rule_errors = validate_cta_rules(cta_draft, manifest_data)
     if not valid:
@@ -925,183 +973,17 @@ def render_cta_md(cta_data: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def stitch_cta_parts(
-    work_dir: Union[str, Path],
-    manifest_path: Optional[Union[str, Path]] = None,
-) -> Dict[str, Any]:
-    """Deterministically stitches pure declarative JSON parts into canonical cta.json and cta.md in <200ms.
-
-    1. Discovers all 'part_*.json' and 'cta_part_*.json' in work/cta_parts/.
-    2. Loads competencies, normalizes IDs and metadata.
-    3. Auto-normalizes math (KaTeX) using sanitize_competency_math.
-    4. Validates schema, DAG acyclicity, and distractor quotas.
-    5. Writes work/cta.json and work/cta.md in < 200ms.
-    """
-    import time
-    t0 = time.time()
-    work_path = Path(work_dir)
-    parts_dir = work_path / "cta_parts"
-
-    part_files: List[Path] = []
-    if parts_dir.is_dir():
-        seen_stems: Set[str] = set()
-        for pattern in ("part_*.json", "cta_part_*.json", "*.json"):
-            for p in sorted(parts_dir.glob(pattern)):
-                if p.is_file() and p.stem not in seen_stems:
-                    seen_stems.add(p.stem)
-                    part_files.append(p)
-
-    def extract_part_sort_key(p: Path) -> Tuple[int, str]:
-        nums = re.findall(r"\d+", p.stem)
-        return (int(nums[0]) if nums else 9999, p.stem)
-
-    part_files.sort(key=extract_part_sort_key)
-
-    all_competencies: List[Dict[str, Any]] = []
-    course_id: Optional[str] = None
-    title: Optional[str] = None
-    macro_competency: str = ""
-
-    # Check manifest for metadata
-    manifest_file = Path(manifest_path) if manifest_path else (work_path / "pages" / "manifest.json")
-    if not manifest_file.is_file():
-        manifest_file = work_path / "manifest.json"
-    if manifest_file.is_file():
-        try:
-            m_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-            course_id = m_data.get("course_id")
-            title = m_data.get("title")
-        except Exception:
-            pass
-
-    if not part_files:
-        # Fallback: if cta.json already exists in work_dir, read it directly
-        existing_cta = work_path / "cta.json"
-        if existing_cta.is_file():
-            try:
-                data = json.loads(existing_cta.read_text(encoding="utf-8"))
-                if isinstance(data, dict):
-                    all_competencies = list(data.get("competencies", []))
-                    course_id = course_id or data.get("course_id")
-                    title = title or data.get("title")
-                    macro_competency = data.get("macro_competency", "")
-            except Exception as e:
-                raise ValueError(f"Failed to read existing cta.json: {e}")
-        else:
-            raise FileNotFoundError(
-                f"No CTA part files found in '{parts_dir.resolve()}'. "
-                "Expected declarative parts such as work/cta_parts/part_01.json, part_02.json"
-            )
-    else:
-        for pf in part_files:
-            try:
-                content = json.loads(pf.read_text(encoding="utf-8"))
-            except Exception as e:
-                raise ValueError(f"Malformed JSON in CTA part file '{pf.name}': {e}")
-
-            if isinstance(content, list):
-                part_comps = content
-            elif isinstance(content, dict):
-                part_comps = content.get("competencies", [])
-                course_id = course_id or content.get("course_id")
-                title = title or content.get("title")
-                macro_competency = macro_competency or content.get("macro_competency", "")
-            else:
-                raise ValueError(f"Invalid format in '{pf.name}': expected array or object with 'competencies'")
-
-            all_competencies.extend(part_comps)
-
-    # Deduplicate competencies by ID (keeping latest definition if duplicate)
-    seen_comp_ids: Set[str] = set()
-    deduped_comps: List[Dict[str, Any]] = []
-    for comp in all_competencies:
-        if isinstance(comp, dict) and "id" in comp:
-            cid = comp["id"]
-            if cid in seen_comp_ids:
-                logger.warning("Duplicate competency ID '%s' found across parts; updating with latest definition.", cid)
-                deduped_comps = [c for c in deduped_comps if c.get("id") != cid]
-            seen_comp_ids.add(cid)
-            deduped_comps.append(comp)
-        else:
-            deduped_comps.append(comp)
-    all_competencies = deduped_comps
-
-    if not course_id:
-        course_id = work_path.parent.name if work_path.name == "work" else work_path.name
-    if not title:
-        title = course_id.replace("_", " ").title()
-
-    # 1. Deterministic math sanitization
-    for comp in all_competencies:
-        if isinstance(comp, dict):
-            sanitize_competency_math(comp)
-
-    # 2. Check DAG acyclicity and KaTeX
-    dag_err = check_prerequisites_dag(all_competencies)
-    if dag_err:
-        logger.warning("Prerequisite DAG warning in stitched CTA: %s", dag_err)
-
-    # 3. Construct canonical CTA structure
-    cta_data = {
-        "course_id": course_id,
-        "title": title,
-        "macro_competency": macro_competency,
-        "competencies": all_competencies,
-    }
-
-    # 4. Write work/cta.json
-    final_cta_json = work_path / "cta.json"
-    final_cta_json.parent.mkdir(parents=True, exist_ok=True)
-    final_cta_json.write_text(
-        json.dumps(cta_data, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
-
-    # 4b. Line-indexed KaTeX verification on written cta.json
-    locator = JsonLineLocator(final_cta_json)
-    katex_errs = check_cta_katex(cta_data, locator=locator)
-    if katex_errs:
-        logger.warning("KaTeX issues in stitched CTA: %s", katex_errs[:3])
-
-    # 5. Deterministically render and write work/cta.md
-    final_cta_md = work_path / "cta.md"
-    rendered_md = render_cta_md(cta_data)
-    final_cta_md.write_text(rendered_md, encoding="utf-8")
-
-    elapsed = time.time() - t0
-    logger.info(
-        "Successfully stitched %d competencies across %d part(s) in %.3fs -> %s, %s",
-        len(all_competencies),
-        len(part_files),
-        elapsed,
-        final_cta_json,
-        final_cta_md,
-    )
-
-    return {
-        "status": "success",
-        "total_competencies": len(all_competencies),
-        "parts_stitched": [p.name for p in part_files],
-        "cta_path": str(final_cta_json.resolve()),
-        "cta_md_path": str(final_cta_md.resolve()),
-        "elapsed_seconds": round(elapsed, 4),
-    }
-
-
 def main():
     parser = argparse.ArgumentParser(description="CTA Map-Reduce and Harmonization Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     merge_parser = subparsers.add_parser("merge", help="Merge sectional CTA parts into cta_draft.json")
-    merge_parser.add_argument("--work-dir", default="work", help="Path to working directory")
-
-    stitch_parser = subparsers.add_parser("stitch", help="Deterministically stitch declarative CTA parts into cta.json and cta.md")
-    stitch_parser.add_argument("--work-dir", default="work", help="Path to working directory")
-    stitch_parser.add_argument("--manifest", help="Optional path to manifest.json for metadata")
+    merge_parser.add_argument("--work", "--work-dir", dest="work_dir", default="work", help="Path to working directory containing pre_cta_manifest.json")
 
     apply_parser = subparsers.add_parser("apply", help="Apply cta_harmonize.json to cta_draft.json")
-    apply_parser.add_argument("--work-dir", default="work", help="Path to working directory")
+    apply_parser.add_argument("--work", "--work-dir", dest="work_dir", default="work", help="Path to working directory")
     apply_parser.add_argument("--no-merge", action="store_true", help="Disable duplicate merging")
-    apply_parser.add_argument("--manifest", help="Optional path to manifest.json for evidence checks")
+    apply_parser.add_argument("--manifest", help="Optional path to pre_cta_manifest.json for evidence checks")
 
     args = parser.parse_args()
 
@@ -1110,17 +992,13 @@ def main():
             merge_cta_parts(args.work_dir)
             print(f"SUCCESS: Sectional parts merged in {args.work_dir}")
             sys.exit(0)
-        except Exception as e:
+        except FileNotFoundError as e:
+            if "BLOCKER::" in str(e):
+                sys.exit(2)
             print(f"FAIL: merge_cta_parts failed: {e}", file=sys.stderr)
             sys.exit(1)
-
-    elif args.command == "stitch":
-        try:
-            res = stitch_cta_parts(args.work_dir, manifest_path=args.manifest)
-            print(f"SUCCESS: Stitched {res['total_competencies']} competencies in {res['elapsed_seconds']}s")
-            sys.exit(0)
         except Exception as e:
-            print(f"FAIL: stitch_cta_parts failed: {e}", file=sys.stderr)
+            print(f"FAIL: merge_cta_parts failed: {e}", file=sys.stderr)
             sys.exit(1)
 
     elif args.command == "apply":
@@ -1128,6 +1006,11 @@ def main():
             apply_harmonize(args.work_dir, no_merge=args.no_merge, manifest_path=args.manifest)
             print(f"SUCCESS: Harmonization applied in {args.work_dir}")
             sys.exit(0)
+        except FileNotFoundError as e:
+            if "BLOCKER::" in str(e):
+                sys.exit(2)
+            print(f"FAIL: apply_harmonize failed: {e}", file=sys.stderr)
+            sys.exit(1)
         except Exception as e:
             print(f"FAIL: apply_harmonize failed: {e}", file=sys.stderr)
             sys.exit(1)

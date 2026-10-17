@@ -92,34 +92,70 @@ class CtaDataLineLocator:
                         continue
                     global_c_idx += 1
                     c_line = getattr(c_node, "lineno", 1)
-                    raw_t = "concept"
+                    raw_t = ""
                     if len(c_node.elts) > 0 and isinstance(c_node.elts[0], ast.Constant) and isinstance(c_node.elts[0].value, str):
                         raw_t = c_node.elts[0].value.strip().lower()
-                    prefix = type_prefix_map.get(raw_t, "C")
-                    type_counts[prefix] = type_counts.get(prefix, 0) + 1
 
-                    cid = None
-                    if len(c_node.elts) > 1 and isinstance(c_node.elts[1], ast.Constant) and c_node.elts[1].value:
-                        cid = str(c_node.elts[1].value).strip()
-                    if not cid:
-                        cid = f"{prefix}-{type_counts[prefix]:02d}"
+                    is_6_format = (len(c_node.elts) == 6 and raw_t not in type_prefix_map)
+                    d_elts: List[Any] = []
+
+                    if is_6_format:
+                        title_str = str(c_node.elts[0].value).strip() if isinstance(c_node.elts[0], ast.Constant) else ""
+                        m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", title_str, re.IGNORECASE)
+                        if m_id:
+                            pfx = m_id.group(1).upper()
+                            pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                            cid = f"{pfx}-{int(m_id.group(2)):02d}"
+                            prefix = pfx
+                        else:
+                            name_lower = title_str.lower()
+                            if any(kw in name_lower for kw in ["cálculo", "calculo", "calcular", "resolver", "determinar"]):
+                                prefix = "Hab"
+                            elif any(kw in name_lower for kw in ["definición", "definicion", "fórmula", "formula", "constante"]):
+                                prefix = "H"
+                            else:
+                                prefix = "C"
+                            type_counts[prefix] = type_counts.get(prefix, 0) + 1
+                            cid = f"{prefix}-{type_counts[prefix]:02d}"
+
+                        if len(c_node.elts) > 5 and isinstance(c_node.elts[5], (ast.List, ast.Tuple)):
+                            d_elts = c_node.elts[5].elts
+                    else:
+                        prefix = type_prefix_map.get(raw_t, "C")
+                        type_counts[prefix] = type_counts.get(prefix, 0) + 1
+
+                        cid = None
+                        if len(c_node.elts) > 1 and isinstance(c_node.elts[1], ast.Constant) and c_node.elts[1].value:
+                            val_str = str(c_node.elts[1].value).strip()
+                            if re.match(r"^(?:H|C|Hab|Fact|Concept|Skill)-?\d+$", val_str, re.IGNORECASE):
+                                cid = val_str
+                        if not cid:
+                            cid = f"{prefix}-{type_counts[prefix]:02d}"
+
+                        if len(c_node.elts) > 8 and isinstance(c_node.elts[8], (ast.List, ast.Tuple)):
+                            d_elts = c_node.elts[8].elts
+                        elif len(c_node.elts) == 6 and isinstance(c_node.elts[5], (ast.List, ast.Tuple)):
+                            d_elts = c_node.elts[5].elts
+                        elif len(c_node.elts) == 7 and isinstance(c_node.elts[6], (ast.List, ast.Tuple)):
+                            d_elts = c_node.elts[6].elts
+                        elif len(c_node.elts) == 8 and isinstance(c_node.elts[7], (ast.List, ast.Tuple)):
+                            d_elts = c_node.elts[7].elts
 
                     self.comp_lines[cid] = c_line
                     self.comp_lines[cid.replace("-", "")] = c_line
                     self.comp_tuple_indices[global_c_idx] = c_line
                     cid_clean = cid.replace("-", "")
 
-                    if len(c_node.elts) > 8 and isinstance(c_node.elts[8], (ast.List, ast.Tuple)):
-                        for d_idx, d_node in enumerate(c_node.elts[8].elts, start=1):
-                            d_line = getattr(d_node, "lineno", c_line)
-                            did = f"D-{cid_clean}-{d_idx:02d}"
-                            self.distractor_lines[did] = d_line
-                            self.distractor_lines[f"D-{cid}-{d_idx:02d}"] = d_line
-                            if isinstance(d_node, (ast.List, ast.Tuple)) and len(d_node.elts) > 0:
-                                if isinstance(d_node.elts[0], ast.Constant) and d_node.elts[0].value:
-                                    d_name = str(d_node.elts[0].value).strip()
-                                    if d_name:
-                                        self.distractor_lines[d_name] = d_line
+                    for d_idx, d_node in enumerate(d_elts, start=1):
+                        d_line = getattr(d_node, "lineno", c_line)
+                        did = f"D-{cid_clean}-{d_idx:02d}"
+                        self.distractor_lines[did] = d_line
+                        self.distractor_lines[f"D-{cid}-{d_idx:02d}"] = d_line
+                        if isinstance(d_node, (ast.List, ast.Tuple)) and len(d_node.elts) > 0:
+                            if isinstance(d_node.elts[0], ast.Constant) and d_node.elts[0].value:
+                                d_name = str(d_node.elts[0].value).strip()
+                                if d_name:
+                                    self.distractor_lines[d_name] = d_line
         except Exception:
             pass
 
@@ -196,57 +232,25 @@ def _normalize_distractors_list(
     doc: str = "material_fuente.pdf",
     page: int = 1,
 ) -> List[Dict[str, Any]]:
-    """Normalizes distractors from either dict or tuple representation, guaranteeing
-    canonical id, error_type, evidence, and CTA-D2 compliance for skill competencies."""
+    """Normalizes distractors exclusively from tuple representations of at least 3 elements."""
     compiled_distractors: List[Dict[str, Any]] = []
 
     for d_idx, d in enumerate(raw_distractors, start=1):
         if isinstance(d, dict):
-            d_dict = dict(d)
-            d_id = str(d_dict.get("id") or "").strip() or f"D-{cid_clean}-{d_idx:02d}"
-            d_dict["id"] = d_id
-            d_name = str(d_dict.get("name") or "").strip() or f"Distractor {d_idx}"
-            d_dict["name"] = d_name
-
-            wrong_belief = d_dict.get("wrong_belief")
-            if wrong_belief is not None:
-                wrong_belief = str(wrong_belief).strip() or None
-            correct_belief = d_dict.get("correct_belief")
-            if correct_belief is not None:
-                correct_belief = str(correct_belief).strip() or f"Verdad teórica de {comp_name}."
-            else:
-                correct_belief = f"Verdad teórica de {comp_name}."
-            manifestation = str(d_dict.get("manifestation") or "$0$").strip()
-            hint = str(d_dict.get("remediation_hint") or f"Revisar la definición de {comp_name}.").strip()
-            omitted_step = d_dict.get("omitted_step")
-            if omitted_step is not None:
-                omitted_step = str(omitted_step).strip() or None
-
-            # Fallback if both wrong_belief and omitted_step are None (schema requires at least one)
-            if not wrong_belief and not omitted_step:
-                wrong_belief = f"Asume resultado incorrecto en {comp_name}"
-
-            error_type = d_dict.get("error_type")
-            if not error_type:
-                error_type = "skipped_step" if omitted_step else "conceptual_swap"
-
-            d_dict["wrong_belief"] = wrong_belief
-            d_dict["correct_belief"] = correct_belief
-            d_dict["manifestation"] = manifestation
-            d_dict["remediation_hint"] = hint
-            d_dict["omitted_step"] = omitted_step
-            d_dict["error_type"] = error_type
-            d_dict.setdefault("severity", "high")
-            d_dict.setdefault("origin", "inferred")
-            d_dict.setdefault("trigger", f"Evaluación formal de {comp_name}")
-            if "evidence" not in d_dict or not d_dict["evidence"]:
-                d_dict["evidence"] = {"doc": doc, "page": page}
-
-            compiled_distractors.append(d_dict)
-            continue
+            raise TypeError(
+                f"[compile_cta] Distractor #{d_idx} en '{comp_name}' es un diccionario. "
+                "Los distractores deben ser exclusivamente tuplas (o listas posicionales) de 3 a 6 elementos, no diccionarios."
+            )
 
         if not isinstance(d, (list, tuple)):
-            continue
+            raise TypeError(
+                f"[compile_cta] Distractor #{d_idx} en '{comp_name}' no es una tupla: {type(d).__name__}"
+            )
+
+        if len(d) < 3:
+            raise ValueError(
+                f"[compile_cta] Distractor #{d_idx} en '{comp_name}' tiene {len(d)} elementos (se requieren al menos 3)."
+            )
 
         d_name = str(d[0]).strip() if len(d) > 0 else f"Distractor {d_idx}"
         wrong_belief = str(d[1]).strip() if len(d) > 1 and d[1] is not None and str(d[1]).strip() else None
@@ -295,13 +299,26 @@ def _normalize_distractors_list(
     return compiled_distractors
 
 
-def compile_tuples_to_cta_dict(
-    competencies_tuples: List[Any],
+def compile_cta_module(
+    competencies_data: Any,
     course_id: str = "custom_course",
     title: str = "Curso Académico",
     macro_competency: str = "",
 ) -> Dict[str, Any]:
-    """Compiles tabular positional tuples into formal cta.json dictionary."""
+    """Compiles tabular positional tuples into formal cta.json dictionary.
+
+    Strictly rejects dictionary representations for competencies and distractors.
+    Exclusively requires tuples (or lists) of 6 to 9 elements for competencies,
+    and 3 to 6 elements for distractors.
+    """
+    if hasattr(competencies_data, "COMPETENCIES"):
+        competencies_tuples = getattr(competencies_data, "COMPETENCIES")
+        course_id = getattr(competencies_data, "COURSE_ID", course_id)
+        title = getattr(competencies_data, "COURSE_TITLE", getattr(competencies_data, "TITLE", title))
+        macro_competency = getattr(competencies_data, "MACRO_COMPETENCY", macro_competency)
+    else:
+        competencies_tuples = competencies_data
+
     compiled_comps: List[Dict[str, Any]] = []
 
     type_map = {
@@ -320,67 +337,134 @@ def compile_tuples_to_cta_dict(
 
     for comp_idx, item in enumerate(competencies_tuples, start=1):
         if isinstance(item, dict):
-            comp_obj = dict(item)
-            c_type = str(comp_obj.get("type", "concept")).strip().lower()
-            norm_type, default_prefix = type_map.get(c_type, ("concept", "C"))
-            comp_obj["type"] = norm_type
-
-            raw_id = str(comp_obj.get("id") or "").strip()
-            if not raw_id:
-                counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
-                raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
-                comp_obj["id"] = raw_id
-            else:
-                m_pref = re.match(r"^([A-Za-z]+)-(\d+)$", raw_id)
-                if m_pref:
-                    pfx, num = m_pref.group(1), int(m_pref.group(2))
-                    if pfx in counts_by_prefix:
-                        counts_by_prefix[pfx] = max(counts_by_prefix[pfx], num)
-
-            cid_clean = raw_id.replace("-", "")
-            comp_name = str(comp_obj.get("name") or f"Competencia {raw_id}").strip()
-            comp_obj["name"] = comp_name
-
-            raw_dists = comp_obj.get("distractors", [])
-            doc = "material_fuente.pdf"
-            page = 1
-            if comp_obj.get("evidence") and isinstance(comp_obj["evidence"], list) and len(comp_obj["evidence"]) > 0:
-                first_ev = comp_obj["evidence"][0]
-                if isinstance(first_ev, dict):
-                    doc = str(first_ev.get("doc") or first_ev.get("pdf") or doc).strip()
-                    page = int(first_ev.get("page", page)) if str(first_ev.get("page", "")).isdigit() else page
-
-            comp_obj["distractors"] = _normalize_distractors_list(
-                raw_distractors=raw_dists,
-                cid_clean=cid_clean,
-                comp_name=comp_name,
-                norm_type=norm_type,
-                doc=doc,
-                page=page,
+            raise TypeError(
+                f"[compile_cta] Competencia en índice {comp_idx} es un diccionario. "
+                "COMPETENCIES y distractors deben ser exclusivamente tuplas (o listas posicionales), no diccionarios."
             )
-            sanitize_competency_math(comp_obj)
-            compiled_comps.append(comp_obj)
-            continue
 
         if not isinstance(item, (list, tuple)):
-            continue
+            raise TypeError(
+                f"[compile_cta] Competencia en índice {comp_idx} no es una tupla o lista: {type(item).__name__}"
+            )
 
-        raw_type = str(item[0]).strip().lower() if len(item) > 0 else "concept"
-        norm_type, default_prefix = type_map.get(raw_type, ("concept", "C"))
-        counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+        if len(item) < 6:
+            raise ValueError(
+                f"[compile_cta] Tupla de competencia en índice {comp_idx} tiene {len(item)} elementos (se requieren al menos 6)."
+            )
 
-        raw_id = str(item[1]).strip() if len(item) > 1 and item[1] else f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
-        name = str(item[2]).strip() if len(item) > 2 else f"Competencia {raw_id}"
-        desc_latex = str(item[3]).strip() if len(item) > 3 else f"Definición formal de {name}."
-        raw_bloom = str(item[4]).strip() if len(item) > 4 and item[4] else ("Apply" if norm_type == "skill" else "Understand")
-        bloom = raw_bloom.capitalize()
-        if bloom not in ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"):
-            bloom = "Apply" if norm_type == "skill" else "Understand"
+        is_6_format = (len(item) == 6 and (isinstance(item[2], (list, tuple, set)) or str(item[0]).strip().lower() not in type_map))
 
-        doc = str(item[5]).strip() if len(item) > 5 and item[5] else "material_fuente.pdf"
-        page = int(item[6]) if len(item) > 6 and str(item[6]).isdigit() else 1
-        prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple)) else []
-        raw_distractors = item[8] if len(item) > 8 and isinstance(item[8], (list, tuple)) else []
+        if is_6_format:
+            name = str(item[0]).strip()
+            desc_latex = str(item[1]).strip()
+            prereqs = list(item[2]) if isinstance(item[2], (list, tuple, set)) else []
+            evidence_raw = item[3]
+            misconceptions_raw = item[4]
+            raw_distractors = item[5]
+
+            # Parse evidence_raw into (doc, page)
+            doc = "material_fuente.pdf"
+            page = 1
+            if isinstance(evidence_raw, dict):
+                doc = str(evidence_raw.get("doc") or evidence_raw.get("pdf") or doc).strip()
+                p_val = evidence_raw.get("page", 1)
+                page = int(p_val) if str(p_val).strip().isdigit() else 1
+            elif isinstance(evidence_raw, (list, tuple)) and len(evidence_raw) > 0:
+                first = evidence_raw[0]
+                if isinstance(first, dict):
+                    doc = str(first.get("doc") or first.get("pdf") or doc).strip()
+                    p_val = first.get("page", 1)
+                    page = int(p_val) if str(p_val).strip().isdigit() else 1
+                elif isinstance(first, (list, tuple)) and len(first) >= 2:
+                    doc = str(first[0]).strip()
+                    p_val = first[1]
+                    page = int(p_val) if str(p_val).strip().isdigit() else 1
+                elif isinstance(first, str):
+                    if ":" in first:
+                        d_p, p_p = first.split(":", 1)
+                        doc = d_p.strip()
+                        page = int(p_p.strip()) if p_p.strip().isdigit() else 1
+                    else:
+                        doc = first.strip()
+            elif isinstance(evidence_raw, str):
+                if ":" in evidence_raw:
+                    d_p, p_p = evidence_raw.split(":", 1)
+                    doc = d_p.strip()
+                    page = int(p_p.strip()) if p_p.strip().isdigit() else 1
+                else:
+                    doc = evidence_raw.strip()
+            elif isinstance(evidence_raw, (int, float)):
+                page = int(evidence_raw)
+
+            # Determine type, prefix, raw_id
+            m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", name, re.IGNORECASE)
+            if m_id:
+                pfx = m_id.group(1).upper()
+                pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                norm_type = "skill" if pfx == "Hab" else ("fact" if pfx == "H" else "concept")
+                default_prefix = pfx
+                raw_id = f"{pfx}-{int(m_id.group(2)):02d}"
+            else:
+                name_l = name.lower()
+                if any(kw in name_l for kw in ["cálculo", "calculo", "calcular", "resolver", "determinar", "derivación", "ejecutar"]):
+                    norm_type, default_prefix = "skill", "Hab"
+                elif any(kw in name_l for kw in ["definición", "definicion", "fórmula", "formula", "constante", "identidad", "enunciado", "teorema"]):
+                    norm_type, default_prefix = "fact", "H"
+                else:
+                    norm_type, default_prefix = "concept", "C"
+                counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+                raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+
+            bloom = "Apply" if norm_type == "skill" else ("Remember" if norm_type == "fact" else "Understand")
+
+            # Fallback if raw_distractors is empty or None, but misconceptions_raw has items
+            if (not raw_distractors or len(raw_distractors) == 0) and misconceptions_raw:
+                raw_distractors = []
+                for m_idx, m_item in enumerate(misconceptions_raw, start=1):
+                    if isinstance(m_item, (list, tuple)) and len(m_item) >= 3:
+                        raw_distractors.append(m_item)
+                    elif isinstance(m_item, str) and m_item.strip():
+                        raw_distractors.append((
+                            f"Error común #{m_idx} en {name}",
+                            f"Creencia errónea: {m_item.strip()}",
+                            f"Verdad teórica de {name}.",
+                            "$0$",
+                            f"Revisar {name}.",
+                            None,
+                        ))
+        else:
+            raw_type = str(item[0]).strip().lower()
+            norm_type, default_prefix = type_map.get(raw_type, ("concept", "C"))
+            counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+
+            raw_id = str(item[1]).strip() if len(item) > 1 and item[1] else f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+            name = str(item[2]).strip() if len(item) > 2 else f"Competencia {raw_id}"
+            desc_latex = str(item[3]).strip() if len(item) > 3 else f"Definición formal de {name}."
+            raw_bloom = str(item[4]).strip() if len(item) > 4 and item[4] else ("Apply" if norm_type == "skill" else "Understand")
+            bloom = raw_bloom.capitalize()
+            if bloom not in ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"):
+                bloom = "Apply" if norm_type == "skill" else "Understand"
+
+            if len(item) == 6:
+                doc = "material_fuente.pdf"
+                page = 1
+                prereqs = []
+                raw_distractors = item[5]
+            elif len(item) == 7:
+                doc = "material_fuente.pdf"
+                page = int(item[5]) if str(item[5]).strip().isdigit() else 1
+                prereqs = []
+                raw_distractors = item[6]
+            elif len(item) == 8:
+                doc = str(item[5]).strip()
+                page = int(item[6]) if str(item[6]).strip().isdigit() else 1
+                prereqs = []
+                raw_distractors = item[7]
+            else:  # >= 9
+                doc = str(item[5]).strip() if len(item) > 5 and item[5] else "material_fuente.pdf"
+                page = int(item[6]) if len(item) > 6 and str(item[6]).strip().isdigit() else 1
+                prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple)) else []
+                raw_distractors = item[8] if len(item) > 8 else []
 
         cid_clean = raw_id.replace("-", "")
         compiled_distractors = _normalize_distractors_list(
@@ -423,10 +507,133 @@ def compile_tuples_to_cta_dict(
     }
 
 
+def compile_tuples_to_cta_dict(
+    competencies_tuples: List[Any],
+    course_id: str = "custom_course",
+    title: str = "Curso Académico",
+    macro_competency: str = "",
+) -> Dict[str, Any]:
+    """Compatibility wrapper delegating to compile_cta_module."""
+    return compile_cta_module(
+        competencies_data=competencies_tuples,
+        course_id=course_id,
+        title=title,
+        macro_competency=macro_competency,
+    )
+
+
+def auto_normalize_page_numbers(
+    cta_dict: Dict[str, Any],
+    manifest: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Auto-normalizes cited page numbers from printed book pagination to 1-indexed PDF page numbers.
+
+    Rule: If for a doc whose valid PDF page range in pre_cta_manifest.json is [1, N],
+    the set of cited pages P contains values > N, but (max(P) - min(P) + 1) <= N and min(P) > 1,
+    AND all shifted pages (p - min(P) + 1) fall strictly within [1, N],
+    automatically shifts each cited page p in P to (p - min(P) + 1).
+
+    If any condition is not met (e.g. min(P) == 1, or shifting leaves pages outside [1, N]),
+    no shift is applied, preserving original page numbers so check_cta reports exact offending citations.
+    """
+    if not manifest:
+        return cta_dict
+
+    doc_limits: Dict[str, int] = {}
+    doc_alias_map: Dict[str, str] = {}
+    files_list = manifest.get("files") or manifest.get("documents") or []
+    for f in files_list:
+        d_name = f.get("doc") or f.get("name") or ""
+        d_slug = f.get("doc_slug", "")
+        v_range = f.get("valid_page_range", [1, f.get("total_pages", 1)])
+        n_pages = v_range[1] if len(v_range) > 1 else f.get("total_pages", 1)
+        if d_name:
+            doc_limits[d_name] = n_pages
+            doc_alias_map[d_name.lower()] = d_name
+            doc_alias_map[Path(d_name).stem.lower()] = d_name
+        if d_slug:
+            doc_alias_map[d_slug.lower()] = d_name
+
+    competencies = cta_dict.get("competencies", [])
+    if not competencies:
+        return cta_dict
+
+    doc_pages_cited: Dict[str, Set[int]] = defaultdict(set)
+    for comp in competencies:
+        for ev in comp.get("evidence", []):
+            d_raw = str(ev.get("doc") or ev.get("pdf") or "").strip().lower()
+            canon = doc_alias_map.get(d_raw) or doc_alias_map.get(Path(d_raw).stem.lower())
+            p = ev.get("page")
+            if canon and p is not None and str(p).isdigit():
+                doc_pages_cited[canon].add(int(p))
+        for dist in comp.get("distractors", []):
+            ev = dist.get("evidence", {})
+            if ev:
+                d_raw = str(ev.get("doc") or ev.get("pdf") or "").strip().lower()
+                canon = doc_alias_map.get(d_raw) or doc_alias_map.get(Path(d_raw).stem.lower())
+                p = ev.get("page")
+                if canon and p is not None and str(p).isdigit():
+                    doc_pages_cited[canon].add(int(p))
+
+    doc_shifts: Dict[str, int] = {}
+    for canon_doc, pages in doc_pages_cited.items():
+        if not pages:
+            continue
+        n_pages = doc_limits.get(canon_doc)
+        if not n_pages:
+            continue
+        p_min = min(pages)
+        p_max = max(pages)
+        shift = -p_min + 1
+
+        # Only shift if:
+        # 1. min page is > 1 (pages are offset from 1)
+        # 2. at least one page is > n_pages (confirms book pagination was cited)
+        # 3. all pages after shift fall strictly within [1, n_pages]
+        if p_min > 1 and any(p > n_pages for p in pages) and all(1 <= (p + shift) <= n_pages for p in pages):
+            doc_shifts[canon_doc] = shift
+            logger.info(
+                "Auto-normalizing page numbers for '%s': printed book pages [%d, %d] shifted by %d to PDF range [1, %d].",
+                canon_doc, p_min, p_max, shift, p_max - p_min + 1,
+            )
+
+    if not doc_shifts:
+        return cta_dict
+
+    for comp in competencies:
+        for ev in comp.get("evidence", []):
+            d_raw = str(ev.get("doc") or ev.get("pdf") or "").strip().lower()
+            canon = doc_alias_map.get(d_raw) or doc_alias_map.get(Path(d_raw).stem.lower())
+            shift = doc_shifts.get(canon, 0) if canon else 0
+            p = ev.get("page")
+            if shift != 0 and p is not None and str(p).isdigit():
+                old_p = int(p)
+                new_p = old_p + shift
+                ev["page"] = new_p
+                if comp.get("unit_index") == old_p:
+                    comp["unit_index"] = new_p
+                sess = comp.get("session")
+                if isinstance(sess, str) and sess.startswith(f"Unidad {old_p}:"):
+                    comp["session"] = f"Unidad {new_p}:" + sess[len(f"Unidad {old_p}:"):]
+
+        for dist in comp.get("distractors", []):
+            ev = dist.get("evidence", {})
+            if ev:
+                d_raw = str(ev.get("doc") or ev.get("pdf") or "").strip().lower()
+                canon = doc_alias_map.get(d_raw) or doc_alias_map.get(Path(d_raw).stem.lower())
+                shift = doc_shifts.get(canon, 0) if canon else 0
+                p = ev.get("page")
+                if shift != 0 and p is not None and str(p).isdigit():
+                    ev["page"] = int(p) + shift
+
+    return cta_dict
+
+
 def compile_cta(
     cta_data_path: Union[str, Path],
     output_dir: Optional[Union[str, Path]] = None,
     manifest_path: Optional[Union[str, Path]] = None,
+    output_json_name: Optional[str] = None,
 ) -> Tuple[bool, Dict[str, Any], List[str], float]:
     """Compiles cta_data.py into cta.json and cta.md, validating all constraints in < 5ms."""
     t0 = time.perf_counter()
@@ -496,16 +703,16 @@ def compile_cta(
 
     course_id = getattr(mod, "COURSE_ID", None)
     if not course_id or course_id in ("work", "Tops_academy"):
-        # Try reading course_id or source_path from manifest.json
+        # Read course_id from pre_cta_manifest.json
         mp_cands = []
         if manifest_path:
             mp_cands.append(Path(manifest_path))
-        mp_cands.extend([work_dir / "pages" / "manifest.json", work_dir / "manifest.json"])
+        mp_cands.append(work_dir / "pre_cta_manifest.json")
         for mp_cand in mp_cands:
             if mp_cand.is_file():
                 try:
                     m_obj = json.loads(mp_cand.read_text(encoding="utf-8"))
-                    cid = m_obj.get("course_id") or Path(m_obj.get("source_path", "")).stem
+                    cid = m_obj.get("course_id")
                     if cid and cid not in ("work", "Tops_academy"):
                         course_id = cid
                         break
@@ -524,14 +731,14 @@ def compile_cta(
     macro = getattr(mod, "MACRO_COMPETENCY", "")
 
     # 2. Compile to dict
-    cta_dict = compile_tuples_to_cta_dict(
-        competencies_tuples=competencies,
+    cta_dict = compile_cta_module(
+        competencies_data=competencies,
         course_id=course_id,
         title=title,
         macro_competency=macro,
     )
 
-    # 3. Load manifest if available
+    # 3. Load manifest: pre_cta_manifest.json required without fallback
     manifest_data = None
     if manifest_path:
         mp = Path(manifest_path)
@@ -541,15 +748,23 @@ def compile_cta(
             except Exception:
                 pass
     else:
-        def_manifest = work_dir / "pages" / "manifest.json"
+        def_manifest = work_dir / "pre_cta_manifest.json"
         if def_manifest.is_file():
             try:
                 manifest_data = json.loads(def_manifest.read_text(encoding="utf-8"))
             except Exception:
                 pass
+        else:
+            elapsed = (time.perf_counter() - t0) * 1000.0
+            return False, cta_dict, ["BLOCKER:: No existe pre_cta_manifest.json"], elapsed
+
+    # 3b. Auto-normalize page numbers before calling validate_cta_rules
+    if manifest_data:
+        cta_dict = auto_normalize_page_numbers(cta_dict, manifest_data)
 
     # 4. Validate with platform rules using in-memory JsonLineLocator
-    target_json_path = work_dir / "cta.json"
+    target_json_name = output_json_name or "cta.json"
+    target_json_path = work_dir / target_json_name
     json_str = json.dumps(cta_dict, indent=2, ensure_ascii=False)
     json_locator = JsonLineLocator(json_str)
     is_valid, validation_errors = validate_cta_rules(
@@ -578,9 +793,10 @@ def compile_cta(
     if not is_valid:
         return False, cta_dict, mapped_errors, elapsed_ms
 
-    # 6. Write cta.json and cta.md
+    # 6. Write target JSON and MD
     target_json_path.write_text(json.dumps(cta_dict, indent=2, ensure_ascii=False), encoding="utf-8")
-    target_md_path = work_dir / "cta.md"
+    target_md_name = (Path(target_json_name).stem + ".md") if output_json_name else "cta.md"
+    target_md_path = work_dir / target_md_name
     rendered_md = render_cta_md(cta_dict)
     target_md_path.write_text(rendered_md, encoding="utf-8")
 
@@ -754,26 +970,44 @@ def render_compact_cta_errors(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Deterministic Fast CTA Compiler")
-    parser.add_argument("cta_data_path", nargs="?", default="cta_data.py", help="Path to cta_data.py")
-    parser.add_argument("--work-dir", default=None, help="Output work directory (defaults to cta_data.py parent)")
-    parser.add_argument("--manifest", default=None, help="Optional manifest.json for evidence verification")
+    parser.add_argument("cta_data_path", nargs="?", default=None, help="Optional direct path to cta_data.py")
+    parser.add_argument("--work", "--work-dir", dest="work", default="work", help="Working directory containing pre_cta_manifest.json")
+    parser.add_argument("--part", default=None, help="Optional subpart id (e.g. part_01) to compile work/cta_parts/<part_id>_data.py -> work/cta_parts/<part_id>.json")
+    parser.add_argument("--manifest", default=None, help="Optional path to pre_cta_manifest.json")
     args = parser.parse_args()
 
-    data_path = Path(args.cta_data_path)
-    if not data_path.is_file() and (Path("work") / "cta_data.py").is_file():
-        data_path = Path("work") / "cta_data.py"
+    work_dir = Path(args.work).resolve()
+    manifest_p = Path(args.manifest).resolve() if args.manifest else work_dir / "pre_cta_manifest.json"
 
-    work_dir = Path(args.work_dir) if args.work_dir else data_path.parent
-    manifest_p = Path(args.manifest) if args.manifest else None
+    if not manifest_p.is_file():
+        print("BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
+        sys.exit(2)
 
-    print(f"[*] Compiling CTA data: {data_path.resolve()} -> {work_dir.resolve()} ...")
+    if args.part:
+        data_path = work_dir / "cta_parts" / f"{args.part}_data.py"
+        output_dir = work_dir / "cta_parts"
+        target_json_name = f"{args.part}.json"
+    elif args.cta_data_path:
+        data_path = Path(args.cta_data_path).resolve()
+        output_dir = work_dir
+        target_json_name = "cta.json"
+    else:
+        data_path = work_dir / "cta_data.py"
+        output_dir = work_dir
+        target_json_name = "cta.json"
+
+    print(f"[*] Compiling CTA data: {data_path.resolve()} -> {output_dir.resolve()} ...")
     valid, cta_dict, errors, elapsed_ms = compile_cta(
         cta_data_path=data_path,
-        output_dir=work_dir,
+        output_dir=output_dir,
         manifest_path=manifest_p,
+        output_json_name=target_json_name,
     )
 
     if not valid:
+        if any("BLOCKER::" in err for err in errors):
+            print("BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
+            sys.exit(2)
         source_lines = None
         if data_path.is_file():
             try:
@@ -786,11 +1020,12 @@ def main() -> None:
 
     comps = cta_dict.get("competencies", [])
     total_d = sum(len(c.get("distractors", [])) for c in comps)
-    print(f"PASS: cta.json satisfies all schema, CTA-D1, CTA-D2, and evidence constraints.")
+    target_md_name = (Path(target_json_name).stem + ".md")
+    print(f"PASS: {target_json_name} satisfies all schema, CTA-D1, CTA-D2, and evidence constraints.")
     print(f"  [+] Compiled {len(comps)} competencies ({total_d} distractors) in {elapsed_ms:.2f} ms.")
     print(f"  [+] Artifacts written:")
-    print(f"      - {work_dir / 'cta.json'}")
-    print(f"      - {work_dir / 'cta.md'}")
+    print(f"      - {output_dir / target_json_name}")
+    print(f"      - {output_dir / target_md_name}")
     sys.exit(0)
 
 

@@ -16,6 +16,11 @@ if str(SKILL_DIR) not in sys.path:
 from dispatch import (
     ROLE_SPECS,
     build_dispatch,
+    dispatch_cta,
+    dispatch_authors,
+    dispatch_judges,
+    generate_define_subagent_specs,
+    load_system_prompt,
     snapshot_work_dir,
     scope_check,
 )
@@ -28,178 +33,163 @@ PROMPTS_DIR = SKILL_DIR / "system_prompts"
 
 
 # ==============================================================================
-# 1. TEST SYSTEM PROMPTS: SCOPE-LOCK & DONE CONTRACTS
+# 1. TEST SYSTEM PROMPTS: SCOPE-LOCK & DONE CONTRACTS (v3.2)
 # ==============================================================================
 
 def test_all_system_prompts_have_scope_lock_and_done():
-    """Verify that every prompt in system_prompts/ has ## 0. SCOPE-LOCK and DONE: rule."""
-    prompt_files = list(PROMPTS_DIR.glob("prompt_*.md"))
-    assert len(prompt_files) >= 7, f"Expected at least 7 prompts in {PROMPTS_DIR}, found {len(prompt_files)}"
-
-    for pf in prompt_files:
+    """Verify that active prompts in system_prompts/ have ## 0. SCOPE-LOCK and DONE: rule."""
+    active_prompts = ["prompt_cta_architect.md", "prompt_shard_author.md", "prompt_blind_judge.md"]
+    for pf_name in active_prompts:
+        pf = PROMPTS_DIR / pf_name
+        assert pf.is_file(), f"Missing system prompt file: {pf_name}"
         content = pf.read_text(encoding="utf-8")
-        assert "## 0. SCOPE-LOCK (OBLIGATORIO)" in content, (
-            f"Prompt {pf.name} missing '## 0. SCOPE-LOCK (OBLIGATORIO)' section"
+        assert "## 0. SCOPE-LOCK" in content, (
+            f"Prompt {pf.name} missing '## 0. SCOPE-LOCK' section"
         )
         assert "DONE:" in content, (
             f"Prompt {pf.name} missing 'DONE:' termination contract"
         )
-        assert "Presupuesto de turnos sugerido:" in content, (
-            f"Prompt {pf.name} missing turn budget suggestion"
-        )
-        assert "BLOCKED:" in content, (
-            f"Prompt {pf.name} missing BLOCKED instruction for missing information"
-        )
+
+
+def test_prompt_shard_author_contracts():
+    """Verify that prompt_shard_author.md authorizes compile_shard.py, includes multi-domain examples and tuple line error recovery."""
+    content = (PROMPTS_DIR / "prompt_shard_author.md").read_text(encoding="utf-8")
+    assert "compile_shard.py" in content, "prompt_shard_author.md must mention compile_shard.py"
+    assert "Física" in content or "Fisica" in content, "Must include Physics domain example"
+    assert "Sistemas Distribuidos" in content or "Distribuidos" in content, "Must include Distributed Systems domain example"
+    assert "Líneas" in content or "Line" in content or "line" in content or "línea" in content, "Must include tuple-line error resolution"
 
 
 # ==============================================================================
-# 2. TEST BUILD_DISPATCH: PAYLOAD STRUCTURE & PATH SPECIFICATIONS
+# 2. TEST ZERO-BUNDLE DISPATCH AND 100% UNTRUNCATED PROMPTS (<46,080 BYTES)
 # ==============================================================================
 
-def test_build_dispatch_vision_with_manifest(tmp_path: Path):
-    """Verify build_dispatch for 'vision' role using handouts manifest."""
-    handouts_dir = tmp_path / "handouts"
-    handouts_dir.mkdir(parents=True)
+def test_define_subagent_specs_zero_bundle_under_45kb(tmp_path: Path):
+    """Verify generate_define_subagent_specs generates type json files < 46080 bytes with 100% full system prompts."""
+    res = generate_define_subagent_specs(tmp_path)
+    assert len(res["types"]) == 4
+    types_dir = tmp_path / "dispatch" / "types"
+    assert types_dir.is_dir()
 
-    manifest_data = {
-        "shards": [
-            {
-                "shard_id": 1,
-                "handout_ids": ["handout_001", "handout_002"],
-                "docs": ["doc_A.pdf"],
-            },
-            {
-                "shard_id": 2,
-                "handout_ids": ["handout_003"],
-                "docs": ["doc_B.pdf"],
-            },
-        ]
+    for spec in res["types"]:
+        tname = spec["name"]
+        clean_name = tname.replace("-", "_")
+        tfile = types_dir / f"{clean_name}.json"
+        assert tfile.is_file()
+        file_size = tfile.stat().st_size
+        assert file_size < 46080, f"Type file {tfile.name} exceeded 46,080 bytes: {file_size}"
+        data = json.loads(tfile.read_text(encoding="utf-8"))
+        assert len(data["system_prompt"]) > 500
+        # No truncation markers
+        assert "[TRUNCADO]" not in data["system_prompt"]
+        assert "..." not in data["system_prompt"][:50]
+
+
+def test_build_dispatch_cta_zero_bundle(tmp_path: Path):
+    """Verify dispatch_cta and build_dispatch for CTA role generate item files < 46080 bytes."""
+    manifest = {
+        "course_id": "test_c",
+        "cta_mode": "direct",
+        "total_files": 1,
+        "total_pages": 5,
+        "files": [{"doc": "doc.pdf", "file_index": 0, "type": "pdf", "total_pages": 5}],
+        "subparts": [],
     }
-    (handouts_dir / "handouts_manifest.json").write_text(json.dumps(manifest_data), encoding="utf-8")
+    (tmp_path / "pre_cta_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
-    payload = build_dispatch(role="vision", work_dir=tmp_path)
-    assert "Subagents" in payload
-    subagents = payload["Subagents"]
-    assert len(subagents) == 2
+    res = dispatch_cta(tmp_path)
+    assert len(res["Subagents"]) >= 1
+    assert len(res["item_files"]) >= 1
 
-    # Check first subagent
-    s1 = subagents[0]
-    assert s1["TypeName"] in ("self", "c2c-vision")
-    assert "Handout Vision Analyzer Shard 1" in s1["Role"]
-    prompt1 = s1["Prompt"]
-    assert "prompt_handout_transcriber.md" in prompt1
-    assert "## SCOPE-LOCK (OBLIGATORIO)" in prompt1
-    assert "work/handouts/handout_001.png" in prompt1
-    assert "work/handouts/handout_001_text.md" in prompt1
-    assert "work/handout_patches/patch_handout_001.md" in prompt1
-    assert "código fuente" in prompt1
-    assert "DONE: <archivos escritos>" in prompt1
+    item_path = Path(res["item_files"][0])
+    assert item_path.is_file()
+    assert item_path.stat().st_size < 46080, f"CTA item file exceeded 46,080 bytes: {item_path.stat().st_size}"
 
-    # Check audit file written
-    audit_file = tmp_path / "dispatch" / "vision.json"
-    assert audit_file.is_file()
-    audit_data = json.loads(audit_file.read_text(encoding="utf-8"))
-    assert audit_data["role"] == "vision"
-    assert len(audit_data["Subagents"]) == 2
+    # Verify build_dispatch integration
+    b_res = build_dispatch("cta", tmp_path)
+    assert len(b_res["Subagents"]) >= 1
+
+    # Verify legacy vision role raises ValueError
+    with pytest.raises(ValueError, match="vision"):
+        build_dispatch("vision", tmp_path)
 
 
-def test_build_dispatch_cta_map_and_reduce(tmp_path: Path):
-    """Verify build_dispatch for 'cta-map' (with ready_only filter) and 'cta-reduce'."""
-    sec_dir = tmp_path / "sections"
-    sec_dir.mkdir(parents=True)
-
-    sec_manifest = {
-        "sections": [
-            {"section_index": 1, "ready": True},
-            {"section_index": 2, "ready": False},
-        ]
+def test_build_dispatch_authors_zero_bundle(tmp_path: Path):
+    """Verify dispatch_authors generates author item files < 46080 bytes without COMPACT_AUTHOR_DIGEST and without pre-seeding templates."""
+    pre_cta = {
+        "course_id": "test_c",
+        "cta_mode": "direct",
+        "total_files": 1,
+        "total_pages": 5,
+        "files": [{"doc": "doc.pdf", "file_index": 0, "type": "pdf", "total_pages": 5}],
+        "subparts": [],
     }
-    (sec_dir / "sections_manifest.json").write_text(json.dumps(sec_manifest), encoding="utf-8")
+    (tmp_path / "pre_cta_manifest.json").write_text(json.dumps(pre_cta), encoding="utf-8")
 
-    # cta-map ready_only=True
-    map_payload = build_dispatch(role="cta-map", work_dir=tmp_path, ready_only=True)
-    assert len(map_payload["Subagents"]) == 1
-    m1 = map_payload["Subagents"][0]
-    assert m1["Role"] == "CTA Section Mapper 01"
-    assert "prompt_cta_sectional.md" in m1["Prompt"]
-    assert "work/sections/section_01.md" in m1["Prompt"]
-    assert "work/cta_parts/cta_part_01.json" in m1["Prompt"]
-
-    # Calling again with ready_only should return 0 (already dispatched)
-    map_payload_2 = build_dispatch(role="cta-map", work_dir=tmp_path, ready_only=True)
-    assert len(map_payload_2["Subagents"]) == 0
-
-    # cta-reduce
-    reduce_payload = build_dispatch(role="cta-reduce", work_dir=tmp_path)
-    assert len(reduce_payload["Subagents"]) == 1
-    r1 = reduce_payload["Subagents"][0]
-    assert r1["Role"] == "CTA Harmonizer"
-    assert "prompt_cta_harmonizer.md" in r1["Prompt"]
-    assert "work/cta_outline.json" in r1["Prompt"]
-    assert "work/duplicate_candidates.json" in r1["Prompt"]
-    assert "work/cta_harmonize.json" in r1["Prompt"]
-
-
-def test_build_dispatch_author(tmp_path: Path):
-    """Verify build_dispatch for 'author' role."""
     shards_dir = tmp_path / "shards"
-    shards_dir.mkdir(parents=True)
-
-    shards_manifest = {
+    shards_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "total_shards": 2,
+        "total_competencies": 4,
         "shards": [
             {
                 "shard_id": "shard_01",
                 "shard_index": 1,
                 "competency_ids": ["C-01", "C-02"],
+                "competencies": [{"id": "C-01", "name": "C1"}, {"id": "C-02", "name": "C2"}],
+                "shard_data_path": str((shards_dir / "shard_01_data.py").as_posix()),
+                "templates_dir": str((tmp_path / "templates").as_posix()),
             },
             {
                 "shard_id": "shard_02",
                 "shard_index": 2,
-                "competency_ids": ["Hab-01"],
+                "competency_ids": ["C-03", "C-04"],
+                "competencies": [{"id": "C-03", "name": "C3"}, {"id": "C-04", "name": "C4"}],
+                "shard_data_path": str((shards_dir / "shard_02_data.py").as_posix()),
+                "templates_dir": str((tmp_path / "templates").as_posix()),
             },
-        ]
+        ],
     }
-    (shards_dir / "manifest.json").write_text(json.dumps(shards_manifest), encoding="utf-8")
+    (shards_dir / "pre_shard_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
-    payload = build_dispatch(role="author", work_dir=tmp_path)
-    assert len(payload["Subagents"]) == 2
+    res = dispatch_authors(tmp_path)
+    assert len(res["Subagents"]) == 2
+    assert len(res["item_files"]) == 2
 
-    a1 = payload["Subagents"][0]
-    assert a1["Role"] == "Shard Author shard_01"
-    assert "work/shards/shard_01.json" in a1["Prompt"]
-    assert "work/templates/C-01.json" in a1["Prompt"]
-    assert "work/templates/C-02.json" in a1["Prompt"]
-    assert "engine/*" in a1["Prompt"]
+    for item_file in res["item_files"]:
+        ifile = Path(item_file)
+        assert ifile.is_file()
+        assert ifile.stat().st_size < 46080, f"Author item file exceeded 46,080 bytes: {ifile.stat().st_size}"
+        data = json.loads(ifile.read_text(encoding="utf-8"))
+        prompt = data["Prompt"]
+        assert "COMPACT_AUTHOR_DIGEST" not in prompt
+
+    # Verify templates were NOT pre-seeded in work/templates/
+    templates_dir = tmp_path / "templates"
+    if templates_dir.is_dir():
+        assert len(list(templates_dir.glob("*.json"))) == 0
 
 
 def test_build_dispatch_judge_never_reads_ground_truth(tmp_path: Path):
-    """CRITICAL: Blind Judge subagent prompt must NEVER contain ground_truth in READ."""
-    # Create judge batches
-    (tmp_path / "judge_batch_01.json").write_text(json.dumps([{"item_id": "1"}]), encoding="utf-8")
-    (tmp_path / "judge_batch_02.json").write_text(json.dumps([{"item_id": "2"}]), encoding="utf-8")
-    (tmp_path / "judge_ground_truth.json").write_text(json.dumps({"1": {}, "2": {}}), encoding="utf-8")
+    """CRITICAL: Blind Judge dispatch must generate in-prompt payload <46080 bytes and NEVER read ground_truth."""
+    (tmp_path / "judge_batch_01.json").write_text(
+        json.dumps([{"question_id": "Q-01", "question_type": "multiple_choice", "stem_es": "¿Cuánto es 2+2?", "options": ["A: 4", "B: 5"]}]),
+        encoding="utf-8",
+    )
+    (tmp_path / "judge_ground_truth.json").write_text(json.dumps({"Q-01": "A"}), encoding="utf-8")
 
-    payload = build_dispatch(role="judge", work_dir=tmp_path)
-    assert len(payload["Subagents"]) == 2
+    res = dispatch_judges(tmp_path)
+    assert len(res["Subagents"]) == 1
+    assert len(res["item_files"]) == 1
 
-    for judge_subagent in payload["Subagents"]:
-        prompt = judge_subagent["Prompt"]
+    item_file = Path(res["item_files"][0])
+    assert item_file.is_file()
+    assert item_file.stat().st_size < 46080
 
-        # Parse sections of Prompt
-        read_section = prompt.split("- WRITE permitido:")[0]
-        forbidden_section = prompt.split("- PROHIBIDO:")[1] if "- PROHIBIDO:" in prompt else ""
-
-        # Assert ground_truth NEVER in READ
-        assert "ground_truth" not in read_section.lower(), (
-            f"SECURITY VIOLATION: ground_truth was found in READ section of judge prompt:\n{read_section}"
-        )
-        assert "templates" not in read_section.lower(), (
-            f"SECURITY VIOLATION: templates directory found in READ section of judge prompt:\n{read_section}"
-        )
-
-        # Assert explicitly listed in FORBIDDEN
-        assert "judge_ground_truth.json" in forbidden_section
-        assert "templates/*" in forbidden_section
+    prompt = res["Subagents"][0]["Prompt"]
+    assert "judge_ground_truth.json" not in prompt.lower().split("prohibido")[0]
+    assert "Q-01" in prompt
+    assert "¿Cuánto es 2+2?" in prompt
 
 
 # ==============================================================================
@@ -211,24 +201,14 @@ def test_scope_check_clean_writes(tmp_path: Path):
     # 1. Author writes allowed template file
     snap_author = snapshot_work_dir(tmp_path)
     templates_dir = tmp_path / "templates"
-    templates_dir.mkdir(parents=True)
+    templates_dir.mkdir(parents=True, exist_ok=True)
     (templates_dir / "C-01.json").write_text('{"templates": []}', encoding="utf-8")
 
     is_clean, violations = scope_check(tmp_path, role="author", snapshot=snap_author)
     assert is_clean is True
     assert violations == []
 
-    # 2. Vision writes allowed patch file
-    snap_vision = snapshot_work_dir(tmp_path)
-    patches_dir = tmp_path / "handout_patches"
-    patches_dir.mkdir(parents=True)
-    (patches_dir / "patch_handout_001.md").write_text("## <<DOC: x | PAGE: 1>>", encoding="utf-8")
-
-    is_clean, violations = scope_check(tmp_path, role="vision", snapshot=snap_vision)
-    assert is_clean is True
-    assert violations == []
-
-    # 3. Judge writes allowed response file
+    # 2. Judge writes allowed response file
     snap_judge = snapshot_work_dir(tmp_path)
     (tmp_path / "judge_responses_01.json").write_text('{"responses": {}}', encoding="utf-8")
     is_clean, violations = scope_check(tmp_path, role="judge", snapshot=snap_judge)
@@ -242,7 +222,7 @@ def test_scope_check_detects_unauthorized_writes(tmp_path: Path):
 
     # 1. Author illegally touches engine file
     engine_dir = tmp_path / "engine"
-    engine_dir.mkdir(parents=True)
+    engine_dir.mkdir(parents=True, exist_ok=True)
     (engine_dir / "sandbox.py").write_text("# modified code", encoding="utf-8")
 
     is_clean, violations = scope_check(tmp_path, role="author", snapshot=snap)
@@ -254,12 +234,6 @@ def test_scope_check_detects_unauthorized_writes(tmp_path: Path):
     is_clean, violations = scope_check(tmp_path, role="judge", snapshot=snap)
     assert is_clean is False
     assert any("judge_ground_truth.json" in v for v in violations)
-
-    # 3. Vision analyzer illegally writes to corpus.md
-    (tmp_path / "corpus.md").write_text("# corpus", encoding="utf-8")
-    is_clean, violations = scope_check(tmp_path, role="vision", snapshot=snap)
-    assert is_clean is False
-    assert any("corpus.md" in v for v in violations)
 
 
 # ==============================================================================

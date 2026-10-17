@@ -10,9 +10,36 @@ Partitions CTA competencies into K balanced shards (max 2 competencies per shard
 import argparse
 import json
 import math
+import os
 import sys
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+
+def _atomic_write_json(target_path: Path, data: Any) -> None:
+    """Safely write JSON payload to file using atomic replace to prevent race conditions."""
+    target_path = Path(target_path).resolve()
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = target_path.with_name(f".{target_path.name}.tmp.{os.getpid()}_{uuid.uuid4().hex[:8]}")
+    payload_str = json.dumps(data, indent=2, ensure_ascii=False)
+    tmp_path.write_text(payload_str, encoding="utf-8")
+    try:
+        os.replace(tmp_path, target_path)
+    except Exception:
+        # Fallback in case os.replace encounters a transient lock on Windows
+        try:
+            if target_path.is_file():
+                target_path.unlink()
+            os.replace(tmp_path, target_path)
+        except Exception:
+            target_path.write_text(payload_str, encoding="utf-8")
+            if tmp_path.is_file():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
+
 
 # Self-contained reference for shard authors so they never read engine code
 DSL_REFERENCE: Dict[str, Any] = {
@@ -238,29 +265,44 @@ def calculate_competency_weight(comp: Dict[str, Any]) -> float:
 
 
 def determine_shard_count(
-    competencies: List[Dict[str, Any]],
+    competencies: Union[List[Dict[str, Any]], int],
+    avg_distractors: Optional[Union[float, int]] = None,
     requested_k: Optional[int] = None,
     max_comps_per_shard: Optional[int] = None,
 ) -> int:
-    """Determine shard count K with sweet-spot amortized sharding (default max 8, auto-adapting)."""
-    total_comps = len(competencies)
+    """Determine shard count K with sweet-spot amortized sharding (v3.2: max 5-6 per shard).
+
+    Can be invoked with:
+      determine_shard_count(num_competencies, avg_distractors)
+    or:
+      determine_shard_count(competencies, requested_k=k, max_comps_per_shard=max_comps)
+    """
+    if isinstance(competencies, int):
+        total_comps = competencies
+        avg_d = float(avg_distractors) if avg_distractors is not None else 0.0
+    else:
+        total_comps = len(competencies)
+        if avg_distractors is not None:
+            avg_d = float(avg_distractors)
+        else:
+            avg_d = sum(len(c.get("distractors", [])) for c in competencies) / max(1, total_comps)
+
     if total_comps <= 1:
         return max(1, total_comps)
 
-    if requested_k is not None:
+    if requested_k is not None and requested_k > 0:
         target_k = max(1, min(requested_k, total_comps))
         return target_k
 
     if max_comps_per_shard is not None and max_comps_per_shard > 0:
-        target_max = max_comps_per_shard
+        target_max = float(max_comps_per_shard)
     else:
-        # Heuristic auto-selection based on architectural audit:
-        # Check if distractor graph is dense (average distractors > 6) -> use 4 (Caso A.3)
-        avg_distractors = sum(len(c.get("distractors", [])) for c in competencies) / max(1, total_comps)
-        if avg_distractors > 6.0:
-            target_max = 4
+        # Heuristic auto-selection v3.2:
+        # max_per_shard = 5.0 instead of 4.0 when avg_distractors > 6.0, and 6.0 otherwise (cap reduced from 8 to 5-6)
+        if avg_d > 6.0:
+            target_max = 5.0
         else:
-            target_max = 8
+            target_max = 6.0
 
     # Balanced number of shards so that no shard exceeds target_max
     k = math.ceil(total_comps / float(target_max))
@@ -290,7 +332,7 @@ def partition_competencies_into_shards(
         cur_idx += size
         shards.append({
             "shard_id": f"shard_{idx + 1:02d}",
-            "shard_index": idx + 1,
+            "shard_index": idx,
             "total_shards": k,
             "weight": round(sum(calculate_competency_weight(c) for c in shard_comps), 2),
             "competency_ids": [c["id"] for c in shard_comps],
@@ -306,13 +348,47 @@ def plan_shards(
     k: Optional[int] = None,
     max_comps: Optional[int] = None,
 ) -> Dict[str, Any]:
-    """Execute sharding on cta.json and write shard JSON files."""
+    """Execute sharding on cta.json and write pre_shard_manifest.json (v3.2 canonical)."""
     cta_file = Path(cta_path).resolve()
     if not cta_file.is_file():
         raise FileNotFoundError(f"CTA file does not exist: {cta_file}")
 
     out_dir = Path(output_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
+    work_dir = out_dir.parent
+
+    # Locate pre_cta_manifest.json (No fallback: strict check)
+    pre_cta_candidates = [
+        work_dir / "pre_cta_manifest.json",
+        cta_file.parent / "pre_cta_manifest.json",
+        out_dir.parent / "pre_cta_manifest.json",
+        Path("work/pre_cta_manifest.json").resolve(),
+    ]
+    pre_cta_file = None
+    for cand in pre_cta_candidates:
+        if cand.is_file():
+            pre_cta_file = cand
+            break
+
+    if not pre_cta_file:
+        print("BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
+        raise FileNotFoundError("BLOCKER:: No existe pre_cta_manifest.json")
+
+    pre_cta_data = json.loads(pre_cta_file.read_text(encoding="utf-8"))
+    candidate_sources: List[Any] = []
+    if isinstance(pre_cta_data, list):
+        candidate_sources = pre_cta_data
+    elif isinstance(pre_cta_data, dict):
+        if "source_files" in pre_cta_data and isinstance(pre_cta_data["source_files"], list):
+            candidate_sources = pre_cta_data["source_files"]
+        elif "files" in pre_cta_data and isinstance(pre_cta_data["files"], list):
+            candidate_sources = pre_cta_data["files"]
+        elif "documents" in pre_cta_data and isinstance(pre_cta_data["documents"], list):
+            candidate_sources = pre_cta_data["documents"]
+        elif "handouts" in pre_cta_data and isinstance(pre_cta_data["handouts"], list):
+            candidate_sources = pre_cta_data["handouts"]
+        else:
+            candidate_sources = list(pre_cta_data.values()) + list(pre_cta_data.keys())
 
     cta_data = json.loads(cta_file.read_text(encoding="utf-8"))
     competencies = cta_data.get("competencies", [])
@@ -323,44 +399,106 @@ def plan_shards(
     shards = partition_competencies_into_shards(competencies, shard_count)
 
     manifest_shards = []
-    for shard in shards:
-        s_id = shard["shard_id"]
-        shard_file = out_dir / f"{s_id}.json"
+    templates_dir_abs = str((work_dir / "templates").resolve().as_posix())
 
+    for idx, shard in enumerate(shards):
+        s_id = shard["shard_id"]
+        shard_data_path_abs = str((out_dir / f"{s_id}_data.py").resolve().as_posix())
+
+        # Extract evidence docs from competencies and distractors
+        shard_docs = set()
+        for comp in shard["competencies"]:
+            ev = comp.get("evidence", [])
+            if isinstance(ev, list):
+                for e in ev:
+                    if isinstance(e, dict) and e.get("doc"):
+                        shard_docs.add(e["doc"])
+                    elif isinstance(e, str):
+                        shard_docs.add(e)
+            elif isinstance(ev, dict) and ev.get("doc"):
+                shard_docs.add(ev["doc"])
+            elif isinstance(ev, str):
+                shard_docs.add(ev)
+            for d in comp.get("distractors", []):
+                dev = d.get("evidence")
+                if isinstance(dev, dict) and dev.get("doc"):
+                    shard_docs.add(dev["doc"])
+                elif isinstance(dev, str):
+                    shard_docs.add(dev)
+
+        # Cross evidence.doc with pre_cta_manifest
+        matched_sources: List[str] = []
+        for doc in sorted(shard_docs):
+            doc_name = Path(doc).name.lower()
+            matched = False
+            for item in candidate_sources:
+                if isinstance(item, str):
+                    if doc_name == Path(item).name.lower() or doc.lower() in item.lower():
+                        if item not in matched_sources:
+                            matched_sources.append(item)
+                        matched = True
+                elif isinstance(item, dict):
+                    item_val = item.get("path") or item.get("doc") or item.get("file") or item.get("filename") or item.get("name")
+                    if item_val and (doc_name == Path(str(item_val)).name.lower() or doc.lower() in str(item_val).lower()):
+                        target_val = item.get("path") or str(item_val)
+                        if target_val not in matched_sources:
+                            matched_sources.append(target_val)
+                        matched = True
+            if not matched and doc not in matched_sources:
+                matched_sources.append(doc)
+
+        shard_entry = {
+            "shard_id": s_id,
+            "shard_index": idx,
+            "competencies": shard["competencies"],
+            "competency_count": len(shard["competency_ids"]),
+            "shard_data_path": shard_data_path_abs,
+            "templates_dir": templates_dir_abs,
+            "source_files": matched_sources,
+            "competency_ids": shard["competency_ids"],
+            "weight": shard["weight"],
+        }
+        manifest_shards.append(shard_entry)
+
+        # Write self-contained shard json for backward compatibility
+        shard_file = out_dir / f"{s_id}.json"
         shard_payload = {
             "shard_id": s_id,
-            "shard_index": shard["shard_index"],
-            "total_shards": shard["total_shards"],
+            "shard_index": idx,
+            "total_shards": len(shards),
             "weight": shard["weight"],
             "competency_ids": shard["competency_ids"],
             "course_id": cta_data.get("course_id", "course"),
             "course_title": cta_data.get("title", ""),
             "competencies": shard["competencies"],
             "expected_templates": [f"templates/{cid}.json" for cid in shard["competency_ids"]],
+            "shard_data_path": shard_data_path_abs,
+            "templates_dir": templates_dir_abs,
+            "source_files": matched_sources,
             "dsl_reference": DSL_REFERENCE,
         }
+        _atomic_write_json(shard_file, shard_payload)
 
-        shard_file.write_text(json.dumps(shard_payload, indent=2, ensure_ascii=False), encoding="utf-8")
-
-        manifest_shards.append({
-            "shard_id": s_id,
-            "shard_file": str(shard_file.as_posix()),
-            "competency_count": len(shard["competency_ids"]),
-            "competency_ids": shard["competency_ids"],
-            "weight": shard["weight"],
-        })
-
-    manifest_payload = {
+    pre_shard_manifest_payload = {
         "cta_source": str(cta_file.as_posix()),
         "total_competencies": len(competencies),
         "total_shards": len(shards),
         "shards": manifest_shards,
     }
 
-    manifest_file = out_dir / "manifest.json"
-    manifest_file.write_text(json.dumps(manifest_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    # Write work/shards/pre_shard_manifest.json (Canonical v3.2 Manifest)
+    pre_shard_manifest_file = out_dir / "pre_shard_manifest.json"
+    _atomic_write_json(pre_shard_manifest_file, pre_shard_manifest_payload)
 
-    return manifest_payload
+    # Clean up legacy manifest.json if present (strictly no manifest.json writing)
+    legacy_manifest = out_dir / "manifest.json"
+    if legacy_manifest.is_file():
+        try:
+            legacy_manifest.unlink()
+        except Exception:
+            pass
+
+    return pre_shard_manifest_payload
 
 
 def main():
@@ -368,10 +506,16 @@ def main():
     parser.add_argument("--cta", required=True, help="Path to cta.json")
     parser.add_argument("--output-dir", required=True, help="Output directory for shards (e.g. work/shards)")
     parser.add_argument("--k", type=int, default=None, help="Force specific shard count K")
-    parser.add_argument("--comps-per-shard", type=int, default=None, help="Target max competencies per shard (default: 8, or 4 for dense distractors)")
+    parser.add_argument("--comps-per-shard", type=int, default=None, help="Target max competencies per shard (default: 5-6)")
     args = parser.parse_args()
 
-    res = plan_shards(args.cta, args.output_dir, k=args.k, max_comps=args.comps_per_shard)
+    try:
+        res = plan_shards(args.cta, args.output_dir, k=args.k, max_comps=args.comps_per_shard)
+    except FileNotFoundError as ex:
+        if "BLOCKER::" in str(ex):
+            sys.exit(2)
+        raise
+
     print(f"[+] Successfully partitioned {res['total_competencies']} competencies into {res['total_shards']} shards:")
     for s in res["shards"]:
         print(f"    - [{s['shard_id']}] {s['competency_count']} competencies (weight={s['weight']}): {', '.join(s['competency_ids'])}")
@@ -379,3 +523,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

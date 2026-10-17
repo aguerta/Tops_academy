@@ -265,6 +265,13 @@ def run_full_population_test(course_path: str = "courses/pde_course.json") -> di
     }
 
 
+def test_blind_guess_empirical():
+    """Verify adversarial empirical blind-guess testing harness."""
+    summary_sample = run_blind_test(sample_size=10, seed=42)
+    assert summary_sample["sample_size"] == 10
+    assert "adversarial_success_rate" in summary_sample
+
+
 if __name__ == "__main__":
     summary_sample = run_blind_test(sample_size=50, seed=42)
     pop_summary = run_full_population_test()
@@ -287,3 +294,4 @@ if __name__ == "__main__":
     print("\nFull Population (N=250):")
     print(f"  Adversarial guess rate: {pop_summary['adversarial_rate']*100:.2f}% ({pop_summary['adversarial_correct']}/250)")
     print(f"  Unique 'en todo el dominio' giveaway rate: {pop_summary['unique_dominio_rate']*100:.2f}% ({pop_summary['unique_dominio_giveaways']}/250)")
+
