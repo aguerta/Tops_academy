@@ -287,6 +287,7 @@ _CONTROL_CHAR_TEXT_MAP = {
     "\x08": r"\b",   # \beta, \bar, \binom, \begin -> 1 backslash in text (len 2: '\', 'b')
     "\x07": r"\a",   # \alpha, \approx -> 1 backslash in text (len 2: '\', 'a')
     "\x0b": r"\v",   # \vec, \varepsilon -> 1 backslash in text (len 2: '\', 'v')
+    "\x0d": r"\r",   # \rho, \right, \Rightarrow, \rightarrow -> 1 backslash in text (len 2: '\', 'r')
 }
 
 _CONTROL_CHAR_CODE_MAP = {
@@ -294,9 +295,64 @@ _CONTROL_CHAR_CODE_MAP = {
     "\x08": r"\\b",
     "\x07": r"\\a",
     "\x0b": r"\\v",
+    "\x0d": r"\\r",
 }
 
 _CONTROL_CHAR_LATEX_MAP = _CONTROL_CHAR_TEXT_MAP
+
+LATEX_PREFIX_PATTERNS = [
+    r"rho\b|right\b|Rightarrow\b|rightarrow\b|ightharpoondown\b|ightharpoonup\b|rightleftharpoons\b|rangle\b|rceil\b|rfloor\b|rgroup\b|rhd\b|rule\b|rVert\b",
+    r"frac\b|forall\b|flat\b|frown\b|fbox\b",
+    r"alpha\b|approx\b|angle\b|alert\b|arrow\b|asymp\b|acute\b",
+    r"beta\b|bar\b|begin\b|binom\b|big\b|boldsymbol\b|backslash\b|boxed\b|bullet\b|bot\b|mathbb\b",
+    r"tau\b|theta\b|text\b|times\b|to\b|triangle\b|tilde\b|tanh\b|tan\b|top\b",
+    r"nu\b|neq\b|nabla\b|ni\b|not\b|natural\b",
+    r"vec\b|varepsilon\b|vartheta\b|varphi\b|varpi\b|varrho\b|varsigma\b|vdots\b|vdash\b|vee\b|vert\b",
+]
+COMBINED_LATEX = "|".join(LATEX_PREFIX_PATTERNS)
+
+
+def heal_control_chars_in_str(s: str) -> str:
+    """Heals ASCII control characters resulting from unescaped LaTeX backslashes."""
+    if not isinstance(s, str) or not s:
+        return s
+
+    s = s.replace("\r\n", "\n")
+
+    # 1. LaTeX prefixes collided with control characters
+    s = re.sub(r"\x07(lpha|pprox|ngle|lert|rrow|symp|cute)", r"\\a\1", s)
+    s = re.sub(r"\x08(eta|ar|egin|inom|ig|oldsymbol|ackslash|oxed|ullet|ot)", r"\\b\1", s)
+    s = re.sub(r"\x0b(ec|arepsilon|artheta|arphi|arpi|arrho|arsigma|dots|dash|ee|ert)", r"\\v\1", s)
+    s = re.sub(r"\x0c(rac|orall|lat|rown|box)", r"\\f\1", s)
+    s = re.sub(r"\x0d(ho|ight|ightarrow|ightharpoondown|ightharpoonup|ightleftharpoons|angle|ceil|floor|group|hd|ule|Vert)", r"\\r\1", s)
+    s = re.sub(r"\x09(au|heta|ext|imes|o\b|riangle|tilde|tanh|tan\b|top\b)", r"\\t\1", s)
+    s = re.sub(r"\x0a(u\b|eq\b|abla|i\b|ot\b|atural)", r"\\n\1", s)
+
+    # 2. Bare control characters
+    s = (
+        s.replace("\x07", r"\a")
+        .replace("\x08", r"\b")
+        .replace("\x0b", r"\v")
+        .replace("\x0c", r"\f")
+        .replace("\x0d", r"\r")
+    )
+    return s
+
+
+def heal_control_chars_in_obj(obj: Any) -> Any:
+    """Recursively traverses dictionaries, lists, tuples and heals control chars in all strings."""
+    if isinstance(obj, str):
+        return heal_control_chars_in_str(obj)
+    elif isinstance(obj, dict):
+        return {
+            (heal_control_chars_in_str(k) if isinstance(k, str) else k): heal_control_chars_in_obj(v)
+            for k, v in obj.items()
+        }
+    elif isinstance(obj, list):
+        return [heal_control_chars_in_obj(elem) for elem in obj]
+    elif isinstance(obj, tuple):
+        return tuple(heal_control_chars_in_obj(elem) for elem in obj)
+    return obj
 
 
 def _heal_code_control_chars(code_str: str) -> str:
@@ -386,6 +442,23 @@ def _extract_template_placeholders(text: str) -> Set[str]:
     return placeholders
 
 
+_GIVEAWAY_PREFIX_RE = re.compile(
+    r"^(?:Inversión de roles|Omisión de límites|Asumiendo erróneamente|Confusión de conceptos|Falsa generalización|Error de signo):\s*",
+    re.IGNORECASE,
+)
+_GIVEAWAY_PREFIX_STR_RE = re.compile(
+    r"(['\"])(?:Inversión de roles|Omisión de límites|Asumiendo erróneamente|Confusión de conceptos|Falsa generalización|Error de signo):\s*",
+    re.IGNORECASE,
+)
+
+
+def _strip_giveaway_prefix(text: str) -> str:
+    cleaned = _GIVEAWAY_PREFIX_RE.sub("", text).strip()
+    if cleaned:
+        cleaned = cleaned[0].upper() + cleaned[1:]
+    return cleaned
+
+
 def auto_heal_template_data(
     data: Dict[str, Any],
     cta_comp: Optional[Dict[str, Any]] = None,
@@ -395,6 +468,7 @@ def auto_heal_template_data(
     2. Auto-exports local variables computed in generate(rng) into 'vars' dict
        when referenced as {var_name} in stem, stem_variants, hints, or solution.
     3. Populates missing error_rationale in multiple_select incorrect options from cta_comp distractors.
+    4. Strips obvious R-18 giveaway prefixes from rationales and options.
     """
     modified = False
     fixes: List[str] = []
@@ -407,7 +481,7 @@ def auto_heal_template_data(
                 if isinstance(d, dict) and d.get("id"):
                     rationale = d.get("wrong_belief") or d.get("remediation_hint") or d.get("name") or ""
                     if rationale:
-                        distractor_lookup[str(d["id"])] = str(rationale)
+                        distractor_lookup[str(d["id"])] = _strip_giveaway_prefix(str(rationale))
         elif isinstance(cta_comp.get("competencies"), list):
             target_cid = data.get("competency_id") if isinstance(data, dict) else None
             for c in cta_comp["competencies"]:
@@ -416,13 +490,13 @@ def auto_heal_template_data(
                         if isinstance(d, dict) and d.get("id"):
                             rationale = d.get("wrong_belief") or d.get("remediation_hint") or d.get("name") or ""
                             if rationale:
-                                distractor_lookup[str(d["id"])] = str(rationale)
+                                distractor_lookup[str(d["id"])] = _strip_giveaway_prefix(str(rationale))
         elif all(isinstance(v, dict) for v in cta_comp.values()):
             for did, d in cta_comp.items():
                 if isinstance(d, dict):
                     rationale = d.get("wrong_belief") or d.get("remediation_hint") or d.get("name") or ""
                     if rationale:
-                        distractor_lookup[str(did)] = str(rationale)
+                        distractor_lookup[str(did)] = _strip_giveaway_prefix(str(rationale))
 
     templates_list: List[Dict[str, Any]] = []
     if isinstance(data, dict):
@@ -442,10 +516,7 @@ def auto_heal_template_data(
         for s_field in ("stem", "stem_es", "solution", "explanation_es", "detailed_solution"):
             val = tpl.get(s_field)
             if isinstance(val, str):
-                new_val = val
-                for ctrl, repl in _CONTROL_CHAR_TEXT_MAP.items():
-                    if ctrl in new_val:
-                        new_val = new_val.replace(ctrl, repl)
+                new_val = heal_control_chars_in_str(val)
                 if new_val != val:
                     tpl[s_field] = new_val
                     modified = True
@@ -467,10 +538,7 @@ def auto_heal_template_data(
             if isinstance(items, list):
                 for i, item in enumerate(items):
                     if isinstance(item, str):
-                        new_item = item
-                        for ctrl, repl in _CONTROL_CHAR_TEXT_MAP.items():
-                            if ctrl in new_item:
-                                new_item = new_item.replace(ctrl, repl)
+                        new_item = heal_control_chars_in_str(item)
                         if new_item != item:
                             items[i] = new_item
                             modified = True
@@ -611,6 +679,41 @@ def auto_heal_template_data(
                         pass
             tpl["generate_py"] = gp
 
+        # 4. Strip R-18 giveaway prefixes from distractor_archetypes and options
+        if "distractor_archetypes" in tpl and isinstance(tpl["distractor_archetypes"], list):
+            for da in tpl["distractor_archetypes"]:
+                if isinstance(da, dict):
+                    for rkey in ("rationale", "manifestation", "description"):
+                        if isinstance(da.get(rkey), str):
+                            old_r = da[rkey]
+                            new_r = _strip_giveaway_prefix(old_r)
+                            if new_r != old_r:
+                                da[rkey] = new_r
+                                modified = True
+                                fixes.append(f"{tid}.distractor_archetypes: stripped giveaway prefix from {rkey}")
+
+        if "options" in tpl and isinstance(tpl["options"], list):
+            for opt in tpl["options"]:
+                if isinstance(opt, dict) and isinstance(opt.get("error_rationale"), str):
+                    old_r = opt["error_rationale"]
+                    new_r = _strip_giveaway_prefix(old_r)
+                    if new_r != old_r:
+                        opt["error_rationale"] = new_r
+                        modified = True
+                        fixes.append(f"{tid}.options: stripped giveaway prefix from error_rationale")
+
+        if isinstance(tpl.get("generate_py"), str):
+            gp_curr = tpl["generate_py"]
+            gp_clean = _GIVEAWAY_PREFIX_STR_RE.sub(r"\1", gp_curr)
+            if gp_clean != gp_curr:
+                try:
+                    ast.parse(gp_clean)
+                    tpl["generate_py"] = gp_clean
+                    modified = True
+                    fixes.append(f"{tid}.generate_py: stripped giveaway prefixes")
+                except Exception:
+                    pass
+
     return modified, fixes
 
 
@@ -646,10 +749,10 @@ def auto_heal_template_file(
 def render_compact_aggregated_errors(
     errors: List[Union[str, DiagnosticError]],
     targets: Optional[List[Path]] = None,
-    max_output_lines: int = 35,
+    max_output_lines: int = 28,
     shard_py: Optional[Union[str, Path]] = None,
 ) -> str:
-    """Render canonical LLM-optimized single-line aggregated error output grouped by rule."""
+    """Render canonical LLM-optimized single-line aggregated error output grouped by rule (< 30 lines)."""
     if not errors:
         return ""
 
@@ -741,12 +844,18 @@ def render_compact_aggregated_errors(
                 locators_by_path[sp_key] = ShardDataLineLocator(sp_obj)
             target_locator = locators_by_path[sp_key]
 
-        if target_locator and cid_val:
-            t_info = target_locator.get_tuple_info(cid_val)
+        if target_locator:
+            lookup_key = cid_val or rec.get("template") or ""
+            t_info = target_locator.get_tuple_info(lookup_key) if lookup_key else None
+            if not t_info and rec.get("template"):
+                t_cand = rec["template"].replace("T-", "")
+                t_info = target_locator.get_tuple_info(t_cand)
+            if not t_info and len(target_locator.tuples) == 1:
+                t_info = target_locator.tuples[0]
             if t_info:
                 s_l = t_info["start_line"]
                 e_l = t_info["end_line"]
-                shard_ref = f" [Tupla en {target_locator.file_path.name}: Líneas {s_l}..{e_l}]"
+                shard_ref = f" [Tupla en {target_locator.file_path.name}: Líneas {s_l}..{e_l} (StartLine: {s_l}, EndLine: {e_l})]"
 
         rec["shard_ref"] = shard_ref
         records.append(rec)
@@ -770,14 +879,26 @@ def render_compact_aggregated_errors(
         grouped[rtag][(fp, s_ref)][(scause, sact)].extend(r["lines"])
 
     out_lines = [header, ""]
+    truncated = False
+    total_rendered_items = 0
+    total_items = sum(len(err_map) for file_map in grouped.values() for err_map in file_map.values())
 
     for rtag, file_map in grouped.items():
+        if len(out_lines) >= max_output_lines - 2:
+            truncated = True
+            break
         m_rid = re.match(r"^([A-Za-z0-9_-]+)", rtag)
         short_rid = m_rid.group(1) if m_rid else rtag
         out_lines.append(f"[-] [{rtag}]")
 
         for (fp, s_ref), err_map in file_map.items():
+            if len(out_lines) >= max_output_lines - 2:
+                truncated = True
+                break
             for (cause, act), l_list in err_map.items():
+                if len(out_lines) >= max_output_lines - 2:
+                    truncated = True
+                    break
                 uniq_lines = sorted(set(l_list))
                 if uniq_lines:
                     if len(uniq_lines) > 5:
@@ -789,9 +910,19 @@ def render_compact_aggregated_errors(
 
                 # Canonical single-line output containing: RULE, FILE, LINES, SHARD_TUPLE_REF, CAUSE, ACTION
                 out_lines.append(f"  • [{short_rid}] {fp}{lines_str}{s_ref} -> Causa: {cause} | Acción: {act}")
+                total_rendered_items += 1
         out_lines.append("")
 
-    return "\n".join(out_lines).strip()
+    if truncated:
+        remaining = total_items - total_rendered_items
+        out_lines.append(f"  ... y {remaining} diagnósticos adicionales consolidados.")
+
+    res_str = "\n".join(out_lines).strip()
+    res_lines = res_str.splitlines()
+    if len(res_lines) >= max_output_lines:
+        res_lines = res_lines[:max_output_lines - 1] + [f"  ... ({len(errors)} errores totales consolidados en formato compacto < 30 líneas)."]
+        res_str = "\n".join(res_lines)
+    return res_str
 
 
 def get_canonical_invariant_key(inv_err: str) -> str:
@@ -1788,6 +1919,7 @@ def check_competency_diversity(
     distractor_map: Optional[Dict[str, Dict[str, Any]]] = None,
     num_seeds: Optional[int] = None,
     return_questions: bool = False,
+    enforce_full_quota: bool = False,
 ) -> Union[List[str], Tuple[List[str], List[Dict[str, Any]]]]:
     """Verify stem structural diversity at the competency level (build simulation).
     
@@ -1817,7 +1949,9 @@ def check_competency_diversity(
         cid = getattr(competency, "id", "UNKNOWN")
         ctype = str(getattr(competency, "type", getattr(competency, "category", "concept"))).lower()
 
-    if num_seeds is not None:
+    if enforce_full_quota:
+        target_quota = 30 if ctype in ("skill", "hab", "habilidad") else 20
+    elif num_seeds is not None:
         target_quota = num_seeds
     else:
         target_quota = 30 if ctype in ("skill", "hab", "habilidad") else 20
@@ -2203,16 +2337,14 @@ def check_templates_file_or_dir(
             comp_tpls = templates_by_comp.get(cid, [])
             if not (comp_obj and comp_tpls):
                 return c_errors
-            if shard_id or shard_py or len(comp_tpls) < 3 or num_dry_run_seeds <= 20:
-                sim_seeds = num_dry_run_seeds
-            else:
-                sim_seeds = None
+            sim_seeds = num_dry_run_seeds if num_dry_run_seeds <= 20 else None
             div_errors, comp_questions = check_competency_diversity(
                 templates=comp_tpls,
                 competency=comp_obj,
                 distractor_map=cta_distractors_map,
                 num_seeds=sim_seeds,
                 return_questions=True,
+                enforce_full_quota=(num_dry_run_seeds >= 50),
             )
             c_errors.extend(div_errors)
 

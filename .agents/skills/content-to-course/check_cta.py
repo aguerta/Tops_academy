@@ -310,6 +310,11 @@ def validate_distractor_math(d: Dict[str, Any], did: str) -> List[str]:
     for field in ["manifestation", "remediation_hint", "wrong_belief", "omitted_step"]:
         val = d.get(field)
         if isinstance(val, str) and val.strip():
+            # Check for corrupted ASCII control characters
+            if any(c in val for c in ("\x07", "\x08", "\x0b", "\x0c", "\x0d")):
+                errors.append(
+                    f"Distractor ({did}): Corrupted ASCII control character (unescaped LaTeX backslash like \\rho, \\frac, \\alpha, \\beta) in '{field}'"
+                )
             # Check for raw LaTeX outside $...$ or $$...$$
             text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", val, flags=re.DOTALL)
             has_raw_latex = any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS)
@@ -318,7 +323,7 @@ def validate_distractor_math(d: Dict[str, Any], did: str) -> List[str]:
 
             clean_dollars = val.replace(r"\$", "")
             if "$" in clean_dollars:
-                errors.extend(validate_katex_syntax(val, f"distractor '{did}' {field}"))
+                errors.extend(validate_katex_syntax(val, f"distractor '{did}' {field}", allow_template_vars=True))
     return errors
 
 
@@ -353,22 +358,30 @@ def check_cta_katex(
         # competencies[].name
         c_name = comp.get("name")
         if isinstance(c_name, str) and c_name.strip():
+            if any(c in c_name for c in ("\x07", "\x08", "\x0b", "\x0c", "\x0d")):
+                errors.append(
+                    f"Competency ({cid}): Corrupted ASCII control character (unescaped LaTeX backslash like \\rho, \\frac, \\alpha, \\beta) in 'name'"
+                )
             text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", c_name, flags=re.DOTALL)
             if any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS):
                 raw_latex_items.setdefault("name", []).append((cid, c_name))
             if "$" in c_name.replace(r"\$", ""):
-                for kv in validate_katex_syntax(c_name, f"competency '{cid}' name"):
+                for kv in validate_katex_syntax(c_name, f"competency '{cid}' name", allow_template_vars=True):
                     katex_syntax_items.setdefault(kv, []).append((cid, "name"))
 
         # competencies[].description_latex and competencies[].description
         for desc_key in ("description_latex", "description"):
             c_desc = comp.get(desc_key)
             if isinstance(c_desc, str) and c_desc.strip():
+                if any(c in c_desc for c in ("\x07", "\x08", "\x0b", "\x0c", "\x0d")):
+                    errors.append(
+                        f"Competency ({cid}): Corrupted ASCII control character (unescaped LaTeX backslash like \\rho, \\frac, \\alpha, \\beta) in '{desc_key}'"
+                    )
                 text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", c_desc, flags=re.DOTALL)
                 if any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS):
                     raw_latex_items.setdefault(desc_key, []).append((cid, c_desc))
                 if "$" in c_desc.replace(r"\$", ""):
-                    for kv in validate_katex_syntax(c_desc, f"competency '{cid}' {desc_key}"):
+                    for kv in validate_katex_syntax(c_desc, f"competency '{cid}' {desc_key}", allow_template_vars=True):
                         katex_syntax_items.setdefault(kv, []).append((cid, desc_key))
 
         # distractors[] math validation
@@ -379,12 +392,16 @@ def check_cta_katex(
             for field in ["manifestation", "remediation_hint", "wrong_belief", "omitted_step"]:
                 val = d.get(field)
                 if isinstance(val, str) and val.strip():
+                    if any(c in val for c in ("\x07", "\x08", "\x0b", "\x0c", "\x0d")):
+                        errors.append(
+                            f"Distractor ({did}): Corrupted ASCII control character (unescaped LaTeX backslash like \\rho, \\frac, \\alpha, \\beta) in '{field}'"
+                        )
                     text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", val, flags=re.DOTALL)
                     if any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS):
                         raw_latex_items.setdefault(field, []).append((did, val))
                     clean_dollars = val.replace(r"\$", "")
                     if "$" in clean_dollars:
-                        for kv in validate_katex_syntax(val, f"distractor '{did}' {field}"):
+                        for kv in validate_katex_syntax(val, f"distractor '{did}' {field}", allow_template_vars=True):
                             katex_syntax_items.setdefault(kv, []).append((did, field))
 
     # Format aggregated raw LaTeX errors

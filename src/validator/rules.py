@@ -461,8 +461,29 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                 item_id=q_id
             ))
 
-        # 4. Prohibición de variables de plantilla no sustituidas (patrón '{variable_name}' o '{variable_name:.4f}' no reemplazado)
+        # 4. Detección de comandos LaTeX matemáticos no escapados: dot{w}, bar{k}, frac{a}{b}, etc.
+        MATH_ACCENT_COMMANDS = (
+            r"dot|ddot|hat|bar|tilde|vec|breve|check|acute|grave|mathring|"
+            r"textbf|textit|textrm|textsf|texttt|mathrm|mathbf|mathit|mathsf|mathtt|"
+            r"mathcal|mathbb|mathfrak|mathscr|operatorname|sqrt|frac|dfrac|tfrac|"
+            r"binom|overset|underset|stackrel"
+        )
+        for m_cmd in re.finditer(rf"(?<!\\)\b({MATH_ACCENT_COMMANDS})\s*\{{([^{{}}\n]+)\}}", text):
+            cmd_name = m_cmd.group(1)
+            arg = m_cmd.group(2).strip()
+            text_errors.append(ValidationError(
+                rule_id="R-20",
+                code="ERR_LATEX_SYNTAX",
+                message=f"Question '{q_id}' in {field_desc}: Unescaped LaTeX math command '{cmd_name}{{{arg}}}' detected. Must be prefixed with '\\' and enclosed in '$...$' (e.g. '$\\{cmd_name}{{{arg}}}$')",
+                item_id=q_id
+            ))
+
+        # 5. Prohibición de variables de plantilla no sustituidas (patrón '{variable_name}' o '{variable_name:.4f}' no reemplazado)
         # Permite explícitamente notación matemática de conjuntos/tuplas mayúsculas (ej. {K}, {Y}, {K, L})
+        math_spans = [m_span.span() for m_span in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", text)]
+        def is_in_math_span(pos: int) -> bool:
+            return any(s_pos <= pos < e_pos for s_pos, e_pos in math_spans)
+
         unreplaced: list[str] = []
         for m in re.finditer(r"\{([a-zA-Z0-9_,\s:.+\-%]+)\}", text):
             inner = m.group(1).strip()
@@ -473,8 +494,20 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
             # Solo evaluar como variable de plantilla si coincide con identificador típico (ej. {k_val}, {slope}, {r2_val:.4f})
             if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*(?::[^{}\s]+)?$", inner):
                 continue
+
             start = m.start()
             prefix = text[:start]
+
+            # a) Followed immediately by subscript '_' or superscript '^' (e.g. {k}^*, {r}_t)
+            after = text[m.end():].lstrip()
+            if after.startswith(("^", "_")):
+                continue
+
+            # b) Course-agnostic short variable protection inside math blocks: e.g. $f({k}) = {r}$
+            is_unescaped_cmd_arg = bool(re.search(rf"(?<!\\)\b({MATH_ACCENT_COMMANDS})\s*$", prefix.rstrip()))
+            if is_in_math_span(start) and not is_unescaped_cmd_arg and ":" not in inner and not inner.endswith(("_val", "_num", "_str", "_res")) and inner.isalpha() and len(inner) <= 2:
+                continue
+
             if ":" not in inner:
                 # Valid LaTeX macro preceding: e.g. \text{, \frac{a}{b}, \frac{\dot{k}}{k}, \begin{cases}
                 is_latex_arg = False

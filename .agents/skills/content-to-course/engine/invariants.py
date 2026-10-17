@@ -290,9 +290,29 @@ def validate_katex_syntax(text: str, context: str, allow_template_vars: bool = F
     elif total_right > total_left and left_paren == right_paren and left_bracket == right_bracket and left_brace == right_brace:
         errors.append(f"Unmatched scalable delimiter '\\right' without matching '\\left' in {context}.")
 
-    # 9. Unsubstituted template variables: {var} or {var:.4f}
+    # 9. Unescaped LaTeX math commands: dot{w}, bar{k}, frac{a}{b}, etc.
+    # Must be caught even when allow_template_vars=True
+    MATH_ACCENT_COMMANDS = (
+        r"dot|ddot|hat|bar|tilde|vec|breve|check|acute|grave|mathring|"
+        r"textbf|textit|textrm|textsf|texttt|mathrm|mathbf|mathit|mathsf|mathtt|"
+        r"mathcal|mathbb|mathfrak|mathscr|operatorname|sqrt|frac|dfrac|tfrac|"
+        r"binom|overset|underset|stackrel"
+    )
+    for m_cmd in re.finditer(rf"(?<!\\)\b({MATH_ACCENT_COMMANDS})\s*\{{([^{{}}\n]+)\}}", text):
+        cmd_name = m_cmd.group(1)
+        arg = m_cmd.group(2).strip()
+        errors.append(
+            f"Unescaped LaTeX math command '{cmd_name}{{{arg}}}' detected in {context}. "
+            f"Must be prefixed with '\\' and enclosed in '$...$' (e.g. '$\\{cmd_name}{{{arg}}}$')."
+        )
+
+    # 10. Unsubstituted template variables: {var} or {var:.4f}
     # Explicitly permit uppercase set/tuple notation (e.g. {K}, {Y}, {K, L}) in text
     if not (allow_template_vars or context.startswith("stem_variants")):
+        math_spans = [m_span.span() for m_span in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", text)]
+        def is_in_math_span(pos: int) -> bool:
+            return any(s_pos <= pos < e_pos for s_pos, e_pos in math_spans)
+
         for m in re.finditer(r"\{([a-zA-Z0-9_,\s:.+\-%]+)\}", text):
             inner = m.group(1).strip()
             letters = re.findall(r"[a-zA-Z]", inner)
@@ -309,7 +329,17 @@ def validate_katex_syntax(text: str, context: str, allow_template_vars: bool = F
             if ":" not in inner and start > 0 and text[start - 1] in ("_", "^"):
                 continue
 
+            # Legitimate LaTeX: immediately followed by subscript '_' or superscript '^' (e.g. {k}^*, {r}_t)
+            after = text[m.end():].lstrip()
+            if after.startswith(("^", "_")):
+                continue
+
             prefix = text[:start].rstrip()
+
+            # Course-agnostic short variable protection inside math blocks: e.g. $f({k}) = {r}$
+            is_unescaped_cmd_arg = bool(re.search(rf"(?<!\\)\b({MATH_ACCENT_COMMANDS})\s*$", prefix))
+            if is_in_math_span(start) and not is_unescaped_cmd_arg and ":" not in inner and not inner.endswith(("_val", "_num", "_str", "_res")) and inner.isalpha() and len(inner) <= 2:
+                continue
             if ":" not in inner:
                 # Legitimate LaTeX: argument of a LaTeX command e.g. \frac, \text, \mathbf, \begin, \sqrt[...]
                 if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?\s*$", prefix):
@@ -340,14 +370,8 @@ def validate_katex_syntax(text: str, context: str, allow_template_vars: bool = F
                 if is_subsequent_latex_arg:
                     continue
 
-                # Check if this looks like an unescaped LaTeX math command (e.g. dot{w}, bar{k}, frac{a}{b})
-                m_accent = re.search(r"\b(dot|ddot|bar|hat|tilde|vec|frac|sqrt)\s*$", prefix)
-                if m_accent:
-                    cmd_name = m_accent.group(1)
-                    errors.append(
-                        f"Unescaped LaTeX math command '{cmd_name}{{{var_name}}}' detected in {context}. "
-                        f"Must be prefixed with '\\' and enclosed in '$...$' (e.g. '$\\{cmd_name}{{{var_name}}}$')."
-                    )
+                # Check if this was an unescaped LaTeX math command (already reported above)
+                if re.search(rf"\b({MATH_ACCENT_COMMANDS})\s*$", prefix):
                     continue
 
             errors.append(f"Unsubstituted template variable '{{{var_name}}}' detected in {context}.")

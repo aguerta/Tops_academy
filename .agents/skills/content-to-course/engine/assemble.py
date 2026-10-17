@@ -37,6 +37,21 @@ _LATEX_VALUE_MACROS_2ARG = {
     "overset", "underset", "stackrel",
 }
 
+_GIVEAWAY_PREFIX_RE = re.compile(
+    r"^(?:Inversión de roles|Omisión de límites|Asumiendo erróneamente|Confusión de conceptos|Falsa generalización|Error de signo):\s*",
+    re.IGNORECASE,
+)
+
+
+def _strip_giveaway_prefix(text: str) -> str:
+    """Strips R-18 pedagogical giveaway prefixes like 'Inversión de roles: ' from options or rationales."""
+    if not isinstance(text, str):
+        return text
+    cleaned = _GIVEAWAY_PREFIX_RE.sub("", text).strip()
+    if cleaned:
+        cleaned = cleaned[0].upper() + cleaned[1:]
+    return cleaned
+
 
 def _inspect_second_arg_of_value_macro(prefix_stripped: str, key: str) -> Tuple[bool, bool]:
     """Return (is_second_arg_of_2arg_macro, first_arg_has_symbolic_key)."""
@@ -79,6 +94,9 @@ def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
     result = template_str
     for k, v in variables.items():
         pattern = re.compile(rf"\{{{re.escape(k)}(?::([^{{}}]+))?\}}")
+        math_spans = [m_s.span() for m_s in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", result)]
+        def is_in_math_span(pos: int) -> bool:
+            return any(s_pos <= pos < e_pos for s_pos, e_pos in math_spans)
 
         def _replacer(m: re.Match, key: str = k, val: Any = v) -> str:
             fmt_spec = m.group(1)
@@ -98,8 +116,16 @@ def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
             prefix = result[:start]
             suffix = result[end:]
 
+            is_escaped_open = prefix.endswith("{") and suffix.startswith("}")
+
+            # Course-agnostic short variable / sub-superscript base protection inside math blocks:
+            # e.g. ${k}^*$, ${r}_t$, or escaped $\{k\}$
+            if not is_escaped_open and not fmt_spec and is_in_math_span(start):
+                if suffix.lstrip().startswith(("^", "_")) or prefix.rstrip().endswith("\\"):
+                    return m.group(0)
+
             # Case 1: Inside double braces {{k}}
-            if prefix.endswith("{") and suffix.startswith("}"):
+            if is_escaped_open:
                 outer_prefix = prefix[:-1].rstrip()
                 macro_m = re.search(r"\\([a-zA-Z]+)(\[[^\]]*\])?\s*$", outer_prefix)
                 if macro_m and macro_m.group(1) in _LATEX_SYMBOL_MACROS and not fmt_spec and "_" not in key:
@@ -272,7 +298,12 @@ def assemble_question(
     if cta_distractors_map:
         for d_id in template.get("distractor_ids", []):
             if d_id in cta_distractors_map:
-                rh = cta_distractors_map[d_id].get("remediation_hint")
+                d_entry = cta_distractors_map[d_id]
+                rh = (
+                    d_entry.get("remediation_hint")
+                    or d_entry.get("wrong_belief")
+                    or d_entry.get("omitted_step")
+                )
                 if rh:
                     remediation_hints.append(rh)
     
@@ -309,8 +340,10 @@ def assemble_question(
         assembled["graph"] = template["graph"]
 
     if isinstance(common_misconception_warning, str) and common_misconception_warning:
+        clean_warning = _strip_giveaway_prefix(common_misconception_warning)
+        cta_vars = {k: v for k, v in variables.items() if len(k) > 2 or k.endswith(("_val", "_num", "_str", "_res"))}
         common_misconception_warning = sanitize_katex_syntax(
-            format_template_string(common_misconception_warning, variables)
+            format_template_string(clean_warning, cta_vars)
         )
         assembled["common_misconception_warning"] = common_misconception_warning
         assembled["misconception_warning"] = common_misconception_warning
@@ -341,9 +374,17 @@ def assemble_question(
             d_id = d.get("distractor_id")
             rationale = d.get("error_rationale") or d.get("rationale") or "Distractor derivado de error de procedimiento o misconception"
             if cta_distractors_map and d_id in cta_distractors_map:
-                rationale = cta_distractors_map[d_id].get("manifestation", rationale)
+                d_entry = cta_distractors_map[d_id]
+                rationale = (
+                    d_entry.get("manifestation")
+                    or d_entry.get("wrong_belief")
+                    or d_entry.get("omitted_step")
+                    or rationale
+                )
             if isinstance(rationale, str):
-                rationale = sanitize_katex_syntax(format_template_string(rationale, variables))
+                clean_rat = _strip_giveaway_prefix(rationale)
+                cta_vars = {k: v for k, v in variables.items() if len(k) > 2 or k.endswith(("_val", "_num", "_str", "_res"))} if (cta_distractors_map and d_id in cta_distractors_map) else variables
+                rationale = sanitize_katex_syntax(format_template_string(clean_rat, cta_vars))
             
             items_to_shuffle.append({
                 "content": d_val,
@@ -437,7 +478,9 @@ def assemble_question(
                     rationale = None
 
             if isinstance(rationale, str):
-                rationale = sanitize_katex_syntax(format_template_string(rationale, variables))
+                clean_ms_rat = _strip_giveaway_prefix(rationale)
+                cta_vars = {k: v for k, v in variables.items() if len(k) > 2 or k.endswith(("_val", "_num", "_str", "_res"))} if (cta_distractors_map and d_id in cta_distractors_map) else variables
+                rationale = sanitize_katex_syntax(format_template_string(clean_ms_rat, cta_vars))
             raw_opt_content = str(opt.get("text", opt.get("content", "")))
             opt_content = sanitize_katex_syntax(format_template_string(raw_opt_content, variables))
 

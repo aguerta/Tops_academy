@@ -129,65 +129,124 @@ def normalize_orphan_math(text: str) -> str:
     if not isinstance(text, str) or not text:
         return text
 
+    text = text.replace("\r\n", "\n")
+
+    # Heal control-character collisions
+    text = re.sub(r"\x07(?:a)?(lpha|pprox|ngle|lert|rrow|symp|cute)", r"\\a\1", text)
+    text = re.sub(r"\x08(?:b)?(eta|ar|egin|inom|ig|oldsymbol|ackslash|oxed|ullet|ot)", r"\\b\1", text)
+    text = re.sub(r"\x0b(?:v)?(ec|arepsilon|artheta|arphi|arpi|arrho|arsigma|dots|dash|ee|ert)", r"\\v\1", text)
+    text = re.sub(r"\x0c(?:f)?(rac|orall|lat|rown|box)", r"\\f\1", text)
+    text = re.sub(r"\x0d(?:r)?(ho|ight|ightarrow|ightharpoondown|ightharpoonup|ightleftharpoons|angle|ceil|floor|group|hd|ule|Vert)", r"\\r\1", text)
+    text = re.sub(r"\x09(?:t)?(au|heta|ext|imes|o\b|riangle|tilde|tanh|tan\b|top\b)", r"\\t\1", text)
+    text = re.sub(r"\x0a(?:n)?(u\b|eq\b|abla|i\b|ot\b|atural)", r"\\n\1", text)
+    text = (
+        text.replace("\x07", r"\a")
+        .replace("\x08", r"\b")
+        .replace("\x0b", r"\v")
+        .replace("\x0c", r"\f")
+        .replace("\x0d", r"\r")
+    )
+
     text = auto_balance_math_delimiters(text)
 
-    # Split text into outside-math and inside-math segments using $ / $$ blocks
-    parts = re.split(r"(\$\$.*?\$\$|\$.*?\$)", text, flags=re.DOTALL)
-    for i in range(0, len(parts), 2):
-        chunk = parts[i]
-        if not chunk:
-            continue
-        # 1. \dot{w} -> $\dot{w}$, \bar{k} -> $\bar{k}$, etc. (with backslash)
-        chunk = re.sub(
-            r"\\(dot|ddot|bar|hat|tilde|vec)\{([^{}]+)\}",
-            r"$\\\1{\2}$",
-            chunk,
+    def _apply_outside_math(s: str, fn) -> str:
+        parts = re.split(r"(\$\$.*?\$\$|\$.*?\$)", s, flags=re.DOTALL)
+        for i in range(0, len(parts), 2):
+            if parts[i]:
+                parts[i] = fn(parts[i])
+        return "".join(parts)
+
+    # 1. \dot{w} -> $\dot{w}$, \bar{k} -> $\bar{k}$, etc. (with backslash, plus optional sub/superscripts)
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"\\(dot|ddot|bar|hat|tilde|vec)\{((?:[^{}]|\{[^{}]*\})*)\}(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9*+]+))*",
+            lambda m: f"${m.group(0)}$",
+            c,
         )
-        # 1b. dot{w} or bar{k} (without backslash) ONLY if argument is a concise math token (1-4 chars, no spaces)
-        chunk = re.sub(
-            r"(?<!\\)\b(dot|ddot|bar|hat|tilde|vec)\{([a-zA-Z0-9_+\-*^./]{1,4})\}",
-            r"$\\\1{\2}$",
-            chunk,
+    )
+
+    # 1b. dot{w} or bar{k} (without backslash) ONLY if argument is a concise math token (1-4 chars, no spaces)
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"(?<!\\)\b(dot|ddot|bar|hat|tilde|vec)\{([a-zA-Z0-9_+\-*^./]{1,4})\}(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9*+]+))*",
+            lambda m: f"$\\{m.group(1)}{{{m.group(2)}}}{m.group(0)[len(m.group(1)) + len(m.group(2)) + 2:]}$",
+            c,
         )
-        # 2. \frac{a}{b} -> $\frac{a}{b}$ (with backslash)
-        chunk = re.sub(
-            r"\\(frac|dfrac|tfrac|cfrac)\{([^{}]+)\}\{([^{}]+)\}",
+    )
+
+    # 2. \frac{a}{b} -> $\frac{a}{b}$ (with backslash, supports 1-level nested braces)
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"\\(frac|dfrac|tfrac|cfrac)\{((?:[^{}]|\{[^{}]*\})*)\}\{((?:[^{}]|\{[^{}]*\})*)\}",
             r"$\\\1{\2}{\3}$",
-            chunk,
+            c,
         )
-        # 2b. frac{a}{b} (without backslash)
-        chunk = re.sub(
-            r"(?<!\\)\b(frac|dfrac|tfrac|cfrac)\{([a-zA-Z0-9_+\-*^./]+)\}\{([a-zA-Z0-9_+\-*^./]+)\}",
+    )
+
+    # 2b. frac{a}{b} (without backslash)
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"(?<!\\)\b(frac|dfrac|tfrac|cfrac)\{((?:[^{}]|\{[^{}]*\})*)\}\{((?:[^{}]|\{[^{}]*\})*)\}",
             r"$\\\1{\2}{\3}$",
-            chunk,
+            c,
         )
-        # 3. \sqrt{x} -> $\sqrt{x}$ (with backslash)
-        chunk = re.sub(
-            r"\\sqrt\{([^{}]+)\}",
+    )
+
+    # 3. \sqrt{x} -> $\sqrt{x}$ (with backslash)
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"\\sqrt\{((?:[^{}]|\{[^{}]*\})*)\}",
             r"$\\sqrt{\1}$",
-            chunk,
+            c,
         )
-        # 3b. sqrt{x} (without backslash)
-        chunk = re.sub(
-            r"(?<!\\)\bsqrt\{([a-zA-Z0-9_+\-*^./]+)\}",
+    )
+
+    # 3b. sqrt{x} (without backslash)
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"(?<!\\)\bsqrt\{((?:[^{}]|\{[^{}]*\})*)\}",
             r"$\\sqrt{\1}$",
-            chunk,
+            c,
         )
-        # 4. Greek letters and common math operators with backslash: \alpha -> $\alpha$, \partial -> $\partial$, etc.
-        chunk = re.sub(
+    )
+
+    # 4. Greek letters and common math operators with backslash: \alpha -> $\alpha$
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
             r"\\(alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega|partial|int|sum|prod|infty|times|cdot|approx|leq|geq|neq)\b",
             r"$\\\1$",
-            chunk,
+            c,
         )
-        # 5. Raw subscript or superscript with braces: k_{t+1} -> $k_{t+1}$
-        chunk = re.sub(
-            r"(?<!\$)\b([a-zA-Z0-9\\]+[_^]\{[a-zA-Z0-9_+\-*./]+\})(?!\$)",
-            r"$\1$",
-            chunk,
-        )
-        parts[i] = chunk
+    )
 
-    return auto_balance_math_delimiters("".join(parts))
+    # 5. Braced math base with sub/superscripts: {k}^*, {r}^*, {k}_{t+1}
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"(?<!\$)(?:(?<=\s)|(?<=^)|(?<=[(\"'«]))(\{[a-zA-Z0-9_+\-*./]+\}(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9*+]+))+)(?!\$)",
+            r"$\1$",
+            c,
+        )
+    )
+
+    # 5b. Raw subscript or superscript with braces or asterisk: k_{t+1}, k^*, r^*
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"(?<!\$)\b([a-zA-Z0-9\\]+[_^](?:\{[a-zA-Z0-9_+\-*./]+\}|\*))(?!\$)",
+            r"$\1$",
+            c,
+        )
+    )
+
+    return auto_balance_math_delimiters(text)
 
 
 def sanitize_competency_math(comp: Dict[str, Any]) -> None:

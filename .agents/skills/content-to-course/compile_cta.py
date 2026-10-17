@@ -22,8 +22,10 @@ from collections import defaultdict
 import argparse
 import ast
 import importlib.util
+import io
 import json
 import logging
+import tokenize
 import re
 import sys
 import time
@@ -214,6 +216,123 @@ class CtaDataLineLocator:
         return base_line
 
 
+LATEX_PREFIX_PATTERNS = [
+    r"rho\b|right\b|Rightarrow\b|rightarrow\b|ightharpoondown\b|ightharpoonup\b|rightleftharpoons\b|rangle\b|rceil\b|rfloor\b|rgroup\b|rhd\b|rule\b|rVert\b",
+    r"frac\b|forall\b|flat\b|frown\b|fbox\b",
+    r"alpha\b|approx\b|angle\b|alert\b|arrow\b|asymp\b|acute\b",
+    r"beta\b|bar\b|begin\b|binom\b|big\b|boldsymbol\b|backslash\b|boxed\b|bullet\b|bot\b|mathbb\b",
+    r"tau\b|theta\b|text\b|times\b|to\b|triangle\b|tilde\b|tanh\b|tan\b|top\b",
+    r"nu\b|neq\b|nabla\b|ni\b|not\b|natural\b",
+    r"vec\b|varepsilon\b|vartheta\b|varphi\b|varpi\b|varrho\b|varsigma\b|vdots\b|vdash\b|vee\b|vert\b",
+    r"left\b|lambda\b|langle\b|lceil\b|lfloor\b",
+]
+COMBINED_LATEX = "|".join(LATEX_PREFIX_PATTERNS)
+
+
+def heal_control_chars_in_str(s: str) -> str:
+    """Heals ASCII control characters resulting from unescaped LaTeX backslashes."""
+    if not isinstance(s, str) or not s:
+        return s
+
+    # First, preserve standard CRLF line endings by normalizing to \n
+    s = s.replace("\r\n", "\n")
+
+    # 1. LaTeX prefixes collided with control characters
+    s = re.sub(r"\x07(?:a)?(lpha|pprox|ngle|lert|rrow|symp|cute)", r"\\a\1", s)
+    s = re.sub(r"\x08(?:b)?(eta|ar|egin|inom|ig|oldsymbol|ackslash|oxed|ullet|ot)", r"\\b\1", s)
+    s = re.sub(r"\x0b(?:v)?(ec|arepsilon|artheta|arphi|arpi|arrho|arsigma|dots|dash|ee|ert)", r"\\v\1", s)
+    s = re.sub(r"\x0c(?:f)?(rac|orall|lat|rown|box)", r"\\f\1", s)
+    s = re.sub(r"\x0d(?:r)?(ho|ight|ightarrow|ightharpoondown|ightharpoonup|ightleftharpoons|angle|ceil|floor|group|hd|ule|Vert)", r"\\r\1", s)
+    s = re.sub(r"\x09(?:t)?(au|heta|ext|imes|o\b|riangle|tilde|tanh|tan\b|top\b)", r"\\t\1", s)
+    s = re.sub(r"\x0a(?:n)?(u\b|eq\b|abla|i\b|ot\b|atural)", r"\\n\1", s)
+
+    # 2. Bare control characters
+    s = (
+        s.replace("\x07", r"\a")
+        .replace("\x08", r"\b")
+        .replace("\x0b", r"\v")
+        .replace("\x0c", r"\f")
+        .replace("\x0d", r"\r")
+    )
+    return s
+
+
+def heal_control_chars_in_obj(obj: Any) -> Any:
+    """Recursively traverses dictionaries, lists, tuples and heals control chars in all strings."""
+    if isinstance(obj, str):
+        return heal_control_chars_in_str(obj)
+    elif isinstance(obj, dict):
+        return {
+            (heal_control_chars_in_str(k) if isinstance(k, str) else k): heal_control_chars_in_obj(v)
+            for k, v in obj.items()
+        }
+    elif isinstance(obj, list):
+        return [heal_control_chars_in_obj(elem) for elem in obj]
+    elif isinstance(obj, tuple):
+        return tuple(heal_control_chars_in_obj(elem) for elem in obj)
+    return obj
+
+
+def heal_string_token(token_str: str) -> str:
+    """Heals a single STRING token from Python source."""
+    m = re.match(r"^([a-zA-Z]*)(['\"]{1,3})(.*)(['\"]{1,3})$", token_str, flags=re.DOTALL)
+    if not m:
+        return token_str
+    prefix, q_open, body, q_close = m.groups()
+    is_raw = "r" in prefix.lower()
+
+    new_body = heal_control_chars_in_str(body)
+    if not is_raw:
+        new_body = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", new_body)
+
+    if new_body != body:
+        return f"{prefix}{q_open}{new_body}{q_close}"
+    return token_str
+
+
+def heal_cta_source_file(py_path: Path) -> bool:
+    """Uses Python's tokenize module to inspect and heal non-raw string tokens and control characters.
+
+    Heals unescaped LaTeX prefixes and ASCII control characters in py_path before importing.
+    Returns True if the file was modified and rewritten, False otherwise.
+    """
+    if not py_path.is_file():
+        return False
+    try:
+        source_text = py_path.read_bytes().decode("utf-8")
+        clean_source = heal_control_chars_in_str(source_text)
+        modified = (clean_source != source_text)
+        tokens = list(tokenize.tokenize(io.BytesIO(clean_source.encode("utf-8")).readline))
+        new_tokens = []
+        for t in tokens:
+            if t.type == tokenize.STRING:
+                healed_str = heal_string_token(t.string)
+                if healed_str != t.string:
+                    modified = True
+                new_tokens.append(tokenize.TokenInfo(t.type, healed_str, t.start, t.end, t.line))
+            else:
+                new_tokens.append(t)
+
+        if not modified:
+            return False
+
+        rebuilt_text = tokenize.untokenize(new_tokens).decode("utf-8")
+        py_path.write_bytes(rebuilt_text.encode("utf-8"))
+        return True
+    except Exception as e:
+        logger.warning("heal_cta_source_file fallback for %s due to: %s", py_path.name, e)
+        try:
+            source_text = py_path.read_bytes().decode("utf-8")
+            healed = heal_control_chars_in_str(source_text)
+            healed = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", healed)
+            if healed != source_text:
+                py_path.write_bytes(healed.encode("utf-8"))
+                return True
+        except Exception:
+            pass
+        return False
+
+
 def load_cta_data_module(cta_data_path: Path) -> Any:
     """Loads cta_data.py module dynamically without poluting global sys.modules."""
     spec = importlib.util.spec_from_file_location("cta_data", str(cta_data_path))
@@ -318,6 +437,10 @@ def compile_cta_module(
         macro_competency = getattr(competencies_data, "MACRO_COMPETENCY", macro_competency)
     else:
         competencies_tuples = competencies_data
+
+    competencies_tuples = heal_control_chars_in_obj(competencies_tuples)
+    title = heal_control_chars_in_str(str(title))
+    macro_competency = heal_control_chars_in_str(str(macro_competency))
 
     compiled_comps: List[Dict[str, Any]] = []
 
@@ -499,12 +622,12 @@ def compile_cta_module(
     if not macro_competency and compiled_comps:
         macro_competency = f"Dominio y aplicación analítica integral de {title}"
 
-    return {
+    return heal_control_chars_in_obj({
         "course_id": course_id,
         "title": title,
         "macro_competency": macro_competency,
         "competencies": compiled_comps,
-    }
+    })
 
 
 def compile_tuples_to_cta_dict(
@@ -645,6 +768,9 @@ def compile_cta(
     work_dir.mkdir(parents=True, exist_ok=True)
     bak_file = work_dir / ".cta_data.py.bak"
 
+    # Source-Level Pre-Healer: heal unescaped LaTeX prefixes and control characters before loading
+    heal_cta_source_file(data_file)
+
     source_text = data_file.read_text(encoding="utf-8")
     source_lines = source_text.splitlines()
     locator = CtaDataLineLocator(source_text)
@@ -682,6 +808,9 @@ def compile_cta(
     if competencies is None:
         elapsed = (time.perf_counter() - t0) * 1000.0
         return False, {}, [f"{data_file.name} does not define 'COMPETENCIES = [...]' list of tuples."], elapsed
+
+    # Post-Import String Healer: clean control characters from imported competencies
+    competencies = heal_control_chars_in_obj(competencies)
 
     # Anti-Overwrite Guard: protect against accidental write_to_file(Overwrite=True) shrinking >=10 comps to <6
     if len(competencies) >= 10:
@@ -728,7 +857,8 @@ def compile_cta(
     if not course_id or course_id in ("work", "Tops_academy"):
         course_id = "custom_course"
     title = getattr(mod, "COURSE_TITLE", None) or getattr(mod, "TITLE", None) or course_id.replace("_", " ").title()
-    macro = getattr(mod, "MACRO_COMPETENCY", "")
+    title = heal_control_chars_in_str(str(title))
+    macro = heal_control_chars_in_str(str(getattr(mod, "MACRO_COMPETENCY", "")))
 
     # 2. Compile to dict
     cta_dict = compile_cta_module(
@@ -737,6 +867,7 @@ def compile_cta(
         title=title,
         macro_competency=macro,
     )
+    cta_dict = heal_control_chars_in_obj(cta_dict)
 
     # 3. Load manifest: pre_cta_manifest.json required without fallback
     manifest_data = None
@@ -814,28 +945,72 @@ def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
         action = "Corregir sintaxis de Python (comilla, paréntesis o delimitador sin cerrar)"
         return rule_tag, short_rule, cause, action
 
-    # 1. KaTeX errors
-    if any(k in err for k in ["Unbalanced inline math", "Unbalanced display math", "Triple dollar", "Residual double curly", "sin delimitar por '$...$'"]):
+    # 1. Corrupted ASCII control characters (unescaped \rho, \frac, \alpha, etc.)
+    if "Corrupted ASCII control character" in err:
+        return (
+            "CTA-ESCAPE: CONTROL CHARACTERS CORRUPTOS",
+            "CTA-ESCAPE",
+            "Caracteres de control ASCII por barras LaTeX sin escapar (\\rho, \\frac, \\alpha)",
+            "Prefijar strings con r'...' o usar doble barra '\\\\' en expresiones LaTeX",
+        )
+
+    # 2. KaTeX and LaTeX errors
+    if any(k in err for k in [
+        "Unbalanced inline math", "Unbalanced display math", "Triple dollar",
+        "Residual double curly", "sin delimitar", "RAW_LATEX", "KaTeX",
+        "Error de sintaxis KaTeX", "scalable delimiter", "LaTeX macro",
+        "Unclosed LaTeX environment", "Unbalanced curly braces",
+        "Unclosed nested macro brace", "Unsubstituted template variable",
+        "Unescaped LaTeX", "LaTeX math command", "math command",
+    ]):
         short_rule = "CTA-KATEX"
         rule_tag = "CTA-KATEX: SINTAXIS / DELIMITADORES"
-        if "Unbalanced inline math" in err:
+        if "Unbalanced inline math" in err or "delimitador '$' impar" in err.lower():
             cause = "Delimitador '$' impar en expresión matemática"
             action = "Cerrar delimitador '$...$' o usar raw string r'...'"
         elif "sin delimitar" in err:
             cause = "Comandos LaTeX sin delimitar por '$...$'"
             action = "Encerrar expresión matemática en '$...$'"
+        elif "unescaped latex" in err.lower() or "math command" in err.lower():
+            cause = "Comandos LaTeX sin barra invertida o sin delimitar (e.g. bar{k}, dot{w})"
+            action = "Prefijar con '\\' y encerrar en '$...$' (e.g. '$\\bar{k}$')"
+        elif "Unbalanced display math" in err:
+            cause = "Delimitador '$$' impar en expresión matemática"
+            action = "Cerrar delimitador '$$...$$'"
         elif "Triple dollar" in err:
             cause = "Delimitador '$$$' inválido"
             action = "Reemplazar por '$$' (display) o '$' (inline)"
         elif "Residual double" in err:
             cause = "Llaves dobles '{{' o '}}' residuales"
             action = "Usar llaves simples '{...}' para KaTeX"
+        elif "Unsubstituted template variable" in err:
+            cause = "Llaves '{x}' interpretadas como variable o comando sin barra"
+            action = "Verificar sintaxis de llaves o comandos KaTeX"
+        elif "Unbalanced" in err or "desbalancead" in err.lower():
+            cause = "Delimitadores o llaves desbalanceadas en LaTeX"
+            action = "Cerrar todas las llaves '{...}' y delimitadores KaTeX"
+        elif "scalable delimiter" in err:
+            cause = "Delimitadores escalables \\left / \\right desbalanceados"
+            action = "Verificar pares de delimitadores escalables (\\left( ... \\right))"
+        elif "LaTeX macro" in err:
+            cause = "Argumentos incompletos o faltantes en macro LaTeX"
+            action = "Completar argumentos requeridos '{...}' de la macro KaTeX"
+        elif "environment" in err.lower():
+            cause = "Entorno \\begin{...} / \\end{...} desbalanceado o mal cerrado"
+            action = "Cerrar entorno con \\end{...} correspondiente"
         else:
-            cause = err
+            clean_detail = err.splitlines()[0]
+            clean_detail = re.sub(r"\[(?:.+:)?L[íi]nea\s+\d+\]", "", clean_detail)
+            clean_detail = re.sub(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", "", clean_detail)
+            clean_detail = re.sub(r"['\"][^'\"]*['\"]", "...", clean_detail)
+            clean_detail = re.sub(r"\s+", " ", clean_detail).strip()
+            if len(clean_detail) > 80:
+                clean_detail = clean_detail[:77] + "..."
+            cause = f"Sintaxis LaTeX inválida ({clean_detail})"
             action = "Verificar sintaxis KaTeX y escapar barras invertidas"
         return rule_tag, short_rule, cause, action
 
-    # 2. Distractor count
+    # 3. Distractor count
     if "distractors (minimum" in err or "declarados" in err:
         return (
             "CTA-D1: CUOTA DE DISTRACTORES",
@@ -844,7 +1019,7 @@ def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
             "Completar la lista con al menos 6 tuplas de distractores",
         )
 
-    # 3. DAG / Prerequisites
+    # 4. DAG / Prerequisites
     if "Cycle detected" in err or "prerequisite" in err.lower():
         return (
             "CTA-DAG: GRAFO DE PRERREQUISITOS",
@@ -853,7 +1028,7 @@ def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
             "Corregir la lista de prerrequisitos para mantener un DAG acíclico",
         )
 
-    # 4. Evidence
+    # 5. Evidence
     if "evidence" in err.lower() or "manifest" in err.lower():
         return (
             "CTA-EV: EVIDENCIA EN CORPUS",
@@ -862,13 +1037,17 @@ def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
             "Alinear el número de página y nombre de documento con el corpus",
         )
 
-    # 5. Schema fallback
+    # 6. Schema fallback
     m_code = re.match(r"^\[([A-Z0-9_-]+)\]", err)
     code = m_code.group(1) if m_code else "CTA-SCHEMA"
+    clean_msg = re.sub(r"\[(?:.+:)?L[íi]nea\s+\d+\]", "", err.splitlines()[0])
+    clean_msg = re.sub(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", "", clean_msg)
+    clean_msg = re.sub(r"['\"][^'\"]*['\"]", "...", clean_msg)
+    clean_msg = re.sub(r"\s+", " ", clean_msg).strip()[:80]
     return (
         f"{code}: ESQUEMA FORMAL",
         code,
-        err.splitlines()[0][:90],
+        clean_msg,
         "Corregir estructura de campos en la tupla",
     )
 
@@ -903,7 +1082,9 @@ def render_compact_cta_errors(
             except Exception:
                 pass
 
-    grouped: Dict[str, Dict[Tuple[str, str, str], List[int]]] = defaultdict(lambda: defaultdict(list))
+    grouped: Dict[str, Dict[Tuple[str, str, str], Dict[str, Any]]] = defaultdict(
+        lambda: defaultdict(lambda: {"lines": [], "items": []})
+    )
 
     for raw_err in errors:
         rule_tag, short_rule, cause, action = categorize_cta_error(raw_err)
@@ -912,21 +1093,33 @@ def render_compact_cta_errors(
 
         m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", raw_err)
         item_id = m_id.group(1) if m_id else ""
-        full_cause = f"{cause} en '{item_id}'" if item_id and item_id not in cause else cause
 
-        key = (short_rule, full_cause, action)
+        key = (short_rule, cause, action)
         if line_num:
-            grouped[rule_tag][key].append(line_num)
-        else:
-            grouped[rule_tag][key]
+            grouped[rule_tag][key]["lines"].append(line_num)
+        if item_id:
+            grouped[rule_tag][key]["items"].append(item_id)
 
     out_lines = [f"[ERROR] CTA compilation failed ({len(errors)} errors) [{data_filename}]:", ""]
     snippet_lines_to_show: List[int] = []
 
+    # Target: total rendered lines strictly < 25 lines. Footer is ~5 lines, header is 2 lines.
+    max_group_lines = 8 if source_lines else 12
+    rendered_groups = 0
+    omitted_groups = 0
+
     for rule_tag, err_map in grouped.items():
+        if rendered_groups >= max_group_lines:
+            omitted_groups += len(err_map)
+            continue
         out_lines.append(f"[-] [{rule_tag}]")
-        for (short_rule, cause, action), line_list in err_map.items():
-            uniq_lines = sorted(set(line_list))
+        for (short_rule, cause, action), rec in err_map.items():
+            if rendered_groups >= max_group_lines:
+                omitted_groups += 1
+                continue
+            rendered_groups += 1
+            uniq_lines = sorted(set(rec["lines"]))
+            uniq_ids = [x for x in dict.fromkeys(rec["items"]) if x]
             if uniq_lines:
                 snippet_lines_to_show.extend(uniq_lines[:2])
                 if len(uniq_lines) > 5:
@@ -936,12 +1129,25 @@ def render_compact_cta_errors(
             else:
                 lines_str = ""
 
-            out_lines.append(f"  • [{short_rule}] {data_filename}{lines_str} -> Causa: {cause} | Acción: {action}")
+            if len(uniq_ids) > 5:
+                ids_str = f" [{', '.join(uniq_ids[:5])} (+{len(uniq_ids) - 5} más)]"
+            elif uniq_ids:
+                ids_str = f" [{', '.join(uniq_ids)}]"
+            else:
+                ids_str = ""
+
+            out_lines.append(
+                f"  • [{short_rule}] {data_filename}{lines_str}{ids_str} -> Causa: {cause} | Acción: {action}"
+            )
         out_lines.append("")
 
-    if source_lines and snippet_lines_to_show:
+    if omitted_groups > 0:
+        out_lines.append(f"  • [+ {omitted_groups} categorías de error adicionales omitidas por brevedad]")
+        out_lines.append("")
+
+    if source_lines and snippet_lines_to_show and rendered_groups <= 8:
         out_lines.append("CONTEXTO EXACTO PARA replace_file_content (NO uses view_file ni write_to_file Overwrite):")
-        for ln in sorted(set(snippet_lines_to_show))[:3]:
+        for ln in sorted(set(snippet_lines_to_show))[:2]:
             start_l, end_l, snip = get_source_line_snippet(source_lines, ln, radius=1)
             out_lines.append(f"  --- {data_filename} (StartLine={start_l}, EndLine={end_l}) ---")
             out_lines.append(snip)
@@ -965,7 +1171,26 @@ def render_compact_cta_errors(
     else:
         out_lines.append(f"  3. Re-ejecuta: python compile_cta.py")
 
-    return "\n".join(out_lines).strip()
+    rendered_text = "\n".join(out_lines).strip()
+    res_lines = rendered_text.splitlines()
+    if len(res_lines) >= 25:
+        filtered = []
+        skip_snippet = False
+        for line in res_lines:
+            if line.startswith("CONTEXTO EXACTO"):
+                skip_snippet = True
+                continue
+            if skip_snippet and line.startswith("ACTION REQUIRED:"):
+                skip_snippet = False
+            if not skip_snippet:
+                filtered.append(line)
+        res_lines = filtered
+
+    while len(res_lines) >= 25 and len(res_lines) > 8:
+        act_idx = next((i for i, l in enumerate(res_lines) if l.startswith("ACTION REQUIRED:")), len(res_lines))
+        res_lines.pop(act_idx - 1)
+
+    return "\n".join(res_lines).strip()
 
 
 def main() -> None:

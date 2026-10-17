@@ -1025,7 +1025,7 @@ class TestC2CV32AdvancedEdgeCases(unittest.TestCase):
 
         # Seed authoritative pre_shard_manifest.json and cta.json with matching distractors
         distractors_c01 = [
-            {"id": f"D-C01-{i:02d}", "name": f"Distractor {i}", "wrong_belief": f"Error {i}"}
+            {"id": f"D-C01-{i:02d}", "name": f"Confusión conceptual {i}", "wrong_belief": f"Creencia errónea {i}"}
             for i in range(1, 7)
         ]
         (shards_dir / "pre_shard_manifest.json").write_text(json.dumps({
@@ -1060,7 +1060,7 @@ def gen_steady_state(rng):
         {"value": rf"$k^* = {round(k_star * 0.8, 3)}$", "distractor_id": "D-C01-02", "error_rationale": "Tasa g duplicada"},
         {"value": rf"$k^* = {round(k_star * 1.5, 3)}$", "distractor_id": "D-C01-03", "error_rationale": "Exponente inverso"},
         {"value": rf"$k^* = {round(k_star * 0.5, 3)}$", "distractor_id": "D-C01-04", "error_rationale": "Suma directa de tasas"},
-        {"value": rf"$k^* = {round(k_star * 1.1, 3)}$", "distractor_id": "D-C01-05", "error_rationale": "Error aritmético menor"},
+        {"value": rf"$k^* = {round(k_star * 1.1, 3)}$", "distractor_id": "D-C01-05", "error_rationale": "Fallo aritmético en el producto"},
         {"value": rf"$k^* = {round(k_star * 0.9, 3)}$", "distractor_id": "D-C01-06", "error_rationale": "Subestimación"},
     ]
     return {
@@ -1141,8 +1141,15 @@ TEMPLATES = [
             spec_json = json.loads(t_path.read_text(encoding="utf-8"))
             self.assertIn("name", spec_json)
             self.assertIn("system_prompt", spec_json)
-            # Verify system prompt has full integrity (> 3,000 characters)
-            self.assertGreater(len(spec_json["system_prompt"]), 3000)
+            # Verify system prompt has full integrity (> 2,000 characters)
+            self.assertGreater(len(spec_json["system_prompt"]), 2000)
+
+        # Load Inversion: Full uncompressed prompt is stored in work/dispatch/types/c2c_cta_architect.json
+        raw_cta_prompt = load_system_prompt("prompt_cta_architect.md")
+        cta_type_file = self.work_dir / "dispatch" / "types" / "c2c_cta_architect.json"
+        self.assertTrue(cta_type_file.is_file())
+        cta_type_json = json.loads(cta_type_file.read_text(encoding="utf-8"))
+        self.assertEqual(cta_type_json["system_prompt"].strip(), raw_cta_prompt.strip(), "System prompt in c2c_cta_architect type spec must be 100% full and uncompressed")
 
         # 4.2 Missing pre_cta_manifest.json -> FileNotFoundError(BLOCKER)
         with self.assertRaises(FileNotFoundError) as ctx:
@@ -1168,8 +1175,14 @@ TEMPLATES = [
         self.assertLess(direct_item.stat().st_size, 46080, f"Direct item file exceeded 46,080 bytes: {direct_item.stat().st_size}")
 
         direct_prompt = direct_res["Subagents"][0]["Prompt"]
-        raw_cta_prompt = load_system_prompt("prompt_cta_architect.md")
-        self.assertIn(raw_cta_prompt.strip(), direct_prompt, "System prompt in direct dispatch must be 100% full and uncompressed")
+        # Load Inversion Architecture: direct item prompt is concise (< 3,500 chars) and does NOT duplicate system prompt
+        self.assertNotIn(raw_cta_prompt.strip(), direct_prompt, "Direct item prompt must not duplicate raw system prompt markdown")
+        self.assertLess(len(direct_prompt), 3500, f"Direct item prompt exceeded 3,500 chars: {len(direct_prompt)}")
+        self.assertIn("SCOPE-LOCK", direct_prompt)
+        self.assertIn("granularity", direct_prompt.lower())
+        self.assertIn("1..N", direct_prompt)
+        self.assertIn("compile_cta.py", direct_prompt)
+        self.assertIn("DONE:", direct_prompt)
 
         # 4.4 MapReduce mode dispatch with M=6 subparts
         (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
@@ -1209,7 +1222,13 @@ TEMPLATES = [
             self.assertIn(part_tag, prompt)
             self.assertIn(f"module_{idx:02d}.pdf", prompt)
             self.assertIn(f"--part {part_tag}", prompt)
-            self.assertIn(raw_cta_prompt.strip(), prompt, f"Prompt in {item_p.name} must preserve 100% of prompt_cta_architect.md")
+            # Load Inversion Architecture: mapreduce item prompt is concise (< 3,500 chars) and does NOT duplicate system prompt
+            self.assertNotIn(raw_cta_prompt.strip(), prompt, f"Prompt in {item_p.name} must not duplicate raw system prompt markdown")
+            self.assertLess(len(prompt), 3500, f"MapReduce item prompt {item_p.name} exceeded 3,500 chars: {len(prompt)}")
+            self.assertIn("SCOPE-LOCK", prompt)
+            self.assertIn("1..N", prompt)
+            self.assertIn("compile_cta.py", prompt)
+            self.assertIn("DONE:", prompt)
 
 
 if __name__ == "__main__":
