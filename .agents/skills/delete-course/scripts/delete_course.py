@@ -435,7 +435,7 @@ def delete_course(
 
     # Stamp QA audit reports
     for q_file in qa_reports:
-        if q_file.suffix == ".json" and "qa_report" in q_file.name:
+        if q_file.suffix == ".json" and ("qa_report" in q_file.name or "payload" in q_file.name):
             if stamp_individual_audit_json(q_file, timestamp_str, dry_run=dry_run):
                 stamped_reports.append(str(q_file))
         elif q_file.suffix == ".md" and "qa_report" in q_file.name:
@@ -614,7 +614,29 @@ def main() -> None:
                 except Exception:
                     target_ids.append(f.stem)
     elif args.course_id:
-        target_ids.append(args.course_id)
+        req_id = args.course_id.strip()
+        exact_target = COURSES_DIR / f"{req_id}.json"
+        if not exact_target.is_file() and COURSES_DIR.exists():
+            candidates: List[str] = []
+            for f in COURSES_DIR.glob("*.json"):
+                try:
+                    data = json.loads(f.read_text(encoding="utf-8"))
+                    cid = data.get("course_id", f.stem)
+                    if req_id.lower() in cid.lower() or req_id.lower() in f.stem.lower():
+                        candidates.append(cid)
+                except Exception:
+                    if req_id.lower() in f.stem.lower():
+                        candidates.append(f.stem)
+            if len(candidates) == 1:
+                print(f"[i] Identificador '{req_id}' resuelto unívocamente al curso activo: '{candidates[0]}'")
+                target_ids.append(candidates[0])
+            elif len(candidates) > 1:
+                print(f"[!] Múltiples cursos activos coinciden con '{req_id}': {candidates}. Especifique el ID exacto.")
+                return
+            else:
+                target_ids.append(req_id)
+        else:
+            target_ids.append(req_id)
 
     if not target_ids:
         print("[!] No se encontraron cursos para eliminar.")

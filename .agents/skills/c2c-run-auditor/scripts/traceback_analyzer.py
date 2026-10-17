@@ -456,7 +456,7 @@ class ForensicsEngine:
 
     @staticmethod
     def audit_shard_author(shard_name: str, steps: List[Dict[str, Any]], turns: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Audits a Shard Author: micro-loops, check_templates runs, and reverse engineering."""
+        """Audits a Shard Author: micro-loops, compile_shard / check_templates runs, and reverse engineering."""
         timings = ForensicsEngine.compute_agent_timings(steps, turns)
 
         check_runs: List[Dict[str, Any]] = []
@@ -464,6 +464,11 @@ class ForensicsEngine:
         writes_count = 0
         edits_count = 0
         scripts_written: Set[str] = set()
+
+        _real_exec_re = re.compile(
+            r"python(?:\.exe)?\s+(?!-c\b)(?:[^\s\"']*[/\\])?(?:check_templates|compile_shard)\.py\b",
+            re.IGNORECASE,
+        )
 
         for t_idx, turn in enumerate(turns):
             for tc in turn.get("tools", []):
@@ -474,36 +479,67 @@ class ForensicsEngine:
                 if tname == "write_to_file":
                     writes_count += 1
                     tf = Path(args.get("TargetFile", "")).name
-                    scripts_written.add(tf)
+                    if tf:
+                        scripts_written.add(tf)
                 elif tname == "replace_file_content":
                     edits_count += 1
                 elif tname == "view_file":
                     target_file = str(args.get("AbsolutePath", ""))
-                    # Detect reverse engineering of validator or rules
-                    if any(k in target_file.lower() for k in ("check_templates.py", "rules.py", "invariants.py", "assembler.py")):
+                    if any(k in target_file.lower() for k in ("check_templates.py", "compile_shard.py", "rules.py", "invariants.py", "assembler.py")):
                         reverse_eng_reads.append({
                             "turn": t_idx + 1,
                             "file": Path(target_file).name,
                             "step_index": turn.get("step_index"),
+                            "via": "view_file",
                         })
                 elif tname == "run_command":
                     cmd = args.get("CommandLine", "")
-                    if "check_templates.py" in cmd:
-                        is_fail = ("FAIL:" in res_content or "exited with code 1" in res_content or "Error" in res_content)
+                    cmd_lower = cmd.lower()
+                    is_real_validator_exec = bool(_real_exec_re.search(cmd)) or (
+                        ("check_templates.py" in cmd_lower or "compile_shard.py" in cmd_lower)
+                        and "python -c" not in cmd_lower
+                        and "get-content" not in cmd_lower
+                        and "select-string" not in cmd_lower
+                    )
+                    if is_real_validator_exec:
+                        is_fail = (
+                            "FAIL:" in res_content
+                            or "VALIDATION FAILED" in res_content.upper()
+                            or "exited with code 1" in res_content
+                            or "Traceback (most recent call last)" in res_content
+                        )
                         fail_snippets = [
                             line.strip() for line in res_content.splitlines()
-                            if any(k in line.lower() for k in ("violation", "error", "fail", "traceback"))
+                            if any(k in line.lower() for k in ("violation", "error", "fail", "traceback", "r-", "tpl-"))
                         ][:2]
                         check_runs.append({
                             "turn": t_idx + 1,
                             "failed": is_fail,
                             "snippets": fail_snippets,
                         })
+                    elif any(k in cmd_lower for k in ("check_templates.py", "compile_shard.py", "rules.py", "invariants.py", "assembler.py")):
+                        # Static inspection of validator via python -c / Get-Content / Select-String
+                        reverse_eng_reads.append({
+                            "turn": t_idx + 1,
+                            "file": "check_templates.py / compile_shard.py",
+                            "step_index": turn.get("step_index"),
+                            "via": "run_command (static read)",
+                        })
 
         failed_checks = sum(1 for c in check_runs if c["failed"])
         passed_checks = sum(1 for c in check_runs if not c["failed"])
         has_reverse_eng_loop = len(reverse_eng_reads) >= 5
-        has_micro_loop = len(scripts_written) >= 4 and len(check_runs) >= 10
+        has_micro_loop = (
+            (len(scripts_written) >= 4 and len(check_runs) >= 10)
+            or timings["turns_count"] > 35
+            or failed_checks >= 5
+        )
+        if timings["turns_count"] > 35 and failed_checks < 5:
+            micro_loop_reason = f"⚠️ SÍ (Edición Granular: {timings['turns_count']}t)"
+        elif has_micro_loop:
+            micro_loop_reason = f"⚠️ SÍ (Check Loop: {failed_checks} fallos)"
+        else:
+            micro_loop_reason = "NO"
 
         return {
             "shard_name": shard_name,
@@ -517,6 +553,7 @@ class ForensicsEngine:
             "reverse_eng_reads_count": len(reverse_eng_reads),
             "has_reverse_eng_loop": has_reverse_eng_loop,
             "has_micro_loop": has_micro_loop,
+            "micro_loop_reason": micro_loop_reason,
         }
 
     @staticmethod
@@ -550,56 +587,183 @@ class ForensicsEngine:
 
     @staticmethod
     def classify_error_taxonomy(all_steps: Dict[str, List[Dict[str, Any]]]) -> Dict[str, List[Dict[str, Any]]]:
-        """Classifies every error across all orchestrator and subagent transcripts."""
+        """Classifies every error across all orchestrator and subagent transcripts into 16 technical categories."""
         categories: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
         for agent_name, steps in all_steps.items():
             last_thinking = ""
+            last_tool_calls: List[Dict[str, Any]] = []
             for s in steps:
                 stype = s.get("type")
                 status = s.get("status")
-                content = s.get("content", "")
+                content = s.get("content", "") or ""
                 s_idx = s.get("step_index", 0)
 
                 if stype == "PLANNER_RESPONSE":
                     last_thinking = s.get("thinking", "") or ""
+                    last_tool_calls = s.get("tool_calls", []) or []
 
                 if stype == "ERROR_MESSAGE":
                     categories["Token Limit Cutoff (Model Truncation)"].append({
                         "agent": agent_name,
                         "step_index": s_idx,
-                        "snippet": content[:120].strip(),
+                        "snippet": content[:140].strip(),
                         "thinking": last_thinking[:180].strip(),
                     })
-                elif stype in ("GENERIC", "TOOL_RESPONSE") and (status == "ERROR" or "exited with code 1" in content):
+                elif stype in ("GENERIC", "TOOL_RESPONSE") and (status == "ERROR" or "exited with code 1" in content or "exited with code 2" in content):
+                    cmd_str = ""
+                    tool_names = []
+                    for tc in last_tool_calls:
+                        if isinstance(tc, dict):
+                            tn = tc.get("function", {}).get("name") if "function" in tc else tc.get("name", "")
+                            ta = tc.get("function", {}).get("arguments") if "function" in tc else tc.get("args", {})
+                            if isinstance(ta, str):
+                                try:
+                                    ta = json.loads(ta)
+                                except Exception:
+                                    ta = {}
+                            tool_names.append(tn)
+                            if isinstance(ta, dict) and ta.get("CommandLine"):
+                                cmd_str += " " + str(ta.get("CommandLine"))
+
+                    combined = f"{content}\n{cmd_str}"
+                    c_low = combined.lower()
+                    content_low = content.lower()
+
+                    clean_snip = " | ".join(
+                        line.strip() for line in content.splitlines()
+                        if line.strip() and not line.strip().startswith("Created At:") and not line.strip().startswith("Completed At:")
+                    )[:140]
                     error_entry = {
                         "agent": agent_name,
                         "step_index": s_idx,
-                        "snippet": content[:120].strip(),
+                        "snippet": clean_snip or content[:140].strip(),
                         "thinking": last_thinking[:180].strip(),
                     }
-                    if "Unsubstituted template variable" in content or "Unreplaced template variable" in content:
+
+                    if "unsubstituted template variable" in content_low or "unreplaced template variable" in content_low or "tpl-unsub" in content_low:
                         categories["Unsubstituted Template Variables ({var})"].append(error_entry)
-                    elif "Residual double curly braces" in content or "double curly" in content.lower():
+                    elif "residual double curly braces" in content_low or "double curly" in content_low or "[r-01]" in content_low:
                         categories["KaTeX Double Curly Braces ({{ / }})"].append(error_entry)
-                    elif "math delimiter" in content.lower() or "katex" in content.lower():
+                    elif "math delimiter" in content_low or "unbalanced $" in content_low or "[r-02]" in content_low:
                         categories["Unbalanced Math Delimiters ($)"].append(error_entry)
-                    elif "TPL-VAR" in content or "diversity quota" in content.lower():
-                        categories["Parameter Diversity Violation (TPL-VAR)"].append(error_entry)
-                    elif "cross_check verification returned False" in content or "cross_check" in content.lower():
-                        categories["Cross-check Verification False"].append(error_entry)
-                    elif "Could not successfully apply any edits" in content:
-                        categories["replace_file_content Mismatch"].append(error_entry)
-                    elif "El término" in content or "CommandNotFoundException" in content:
-                        categories["PowerShell Command / Path Not Found"].append(error_entry)
-                    elif "ModuleNotFoundError" in content:
-                        categories["Python Environment / Virtualenv Discrepancy"].append(error_entry)
-                    elif "Length anti-giveaway" in content or "leaks the correct answer" in content:
-                        categories["Anti-Giveaway & Parity Violations (R-18/R-19)"].append(error_entry)
-                    elif "Template schema violation" in content:
-                        categories["Template Schema Violation"].append(error_entry)
+                    elif (
+                        "[r-03]" in content_low
+                        or "control char" in content_low
+                        or "corrupted control" in content_low
+                        or "invalid escape sequence" in content_low
+                        or "syntaxwarning" in content_low
+                        or "check_escapes" in c_low
+                        or "raw_string" in c_low
+                    ):
+                        categories["LaTeX Control Character / Raw-String Corruption (R-03 / SyntaxWarning)"].append(error_entry)
+                    elif (
+                        "tpl-var" in content_low
+                        or "tpl-collapse" in content_low
+                        or "tpl-dist" in content_low
+                        or "diversity quota" in content_low
+                        or "duplicate option" in content_low
+                        or "collapsed option" in content_low
+                        or "distinct parameter" in content_low
+                        or "unique question" in content_low
+                    ):
+                        categories["Parameter Diversity & Option Collapse (TPL-VAR / TPL-COLLAPSE)"].append(error_entry)
+                    elif "cross_check" in content_low or "tpl-cross" in content_low:
+                        categories["Cross-check Verification False (TPL-CROSS)"].append(error_entry)
+                    elif (
+                        "length anti-giveaway" in content_low
+                        or "leaks the correct answer" in content_low
+                        or "[r-18]" in content_low
+                        or "[r-19]" in content_low
+                        or "[r-14]" in content_low
+                        or "[r-16]" in content_low
+                        or "anti-giveaway" in content_low
+                        or "banned pattern" in content_low
+                        or "forbidden" in content_low
+                        or "distractor" in content_low
+                    ):
+                        categories["Anti-Giveaway & Psychometric Parity Violations (R-14..R-19)"].append(error_entry)
+                    elif (
+                        "cta-" in content_low
+                        or "compile_cta" in c_low
+                        or "cta_data" in c_low
+                        or ("cycle" in content_low and "prerequisite" in content_low)
+                        or ("evidence" in content_low and "competenc" in content_low)
+                    ):
+                        categories["CTA Compilation & Schema Errors (CTA-SCHEMA / CTA-EV / DAG Cycle)"].append(error_entry)
+                    elif (
+                        "could not successfully apply any edits" in content_low
+                        or "target content not found" in content_low
+                        or "multiple occurrences" in content_low
+                        or "replace_file_content" in tool_names
+                        or ("targetfile" in content_low and "overwrite" in content_low)
+                    ):
+                        categories["File Edit / Write Tool Target Mismatch (replace_file_content / Overwrite)"].append(error_entry)
+                    elif (
+                        "filenotfounderror" in content_low
+                        or "no such file or directory" in content_low
+                        or "cannot find the path" in content_low
+                        or "does not exist" in content_low
+                        or "no se encuentra la ruta" in content_low
+                        or "itemnotfoundexception" in content_low
+                        or "view_file" in tool_names
+                    ):
+                        categories["Missing File / Relative Path / Directory Error (FileNotFoundError)"].append(error_entry)
+                    elif (
+                        "el término" in content_low
+                        or "commandnotfoundexception" in content_low
+                        or "parsererror" in content_low
+                        or "token inesperado" in content_low
+                        or "unexpectedtoken" in content_low
+                        or "missingendcurlybrace" in content_low
+                        or "ambiguousparameter" in content_low
+                        or "positionalparameter" in content_low
+                        or "&&" in cmd_str
+                        or ("powershell" in content_low and "error" in content_low)
+                    ):
+                        categories["PowerShell Command / Quoting / $Variable Expansion Friction"].append(error_entry)
+                    elif (
+                        "modulenotfounderror" in content_low
+                        or "importerror" in content_low
+                        or "unicodeencodeerror" in content_low
+                        or "unicodedecodeerror" in content_low
+                        or "charmap" in content_low
+                    ):
+                        categories["Python Environment / Virtualenv / Encoding Discrepancy"].append(error_entry)
+                    elif (
+                        "contract error" in content_low
+                        or "no valid judge" in content_low
+                        or "judge_responses" in c_low
+                        or ("run.py" in cmd_str and ("verify" in cmd_str or "judge" in cmd_str or "build" in cmd_str or "publish" in cmd_str))
+                    ):
+                        categories["Stage Contract / Pipeline Loader Mismatch (run.py / judge.py)"].append(error_entry)
+                    elif (
+                        "template schema violation" in content_low
+                        or "tpl-exec" in content_low
+                        or "tpl-schema" in content_low
+                        or "validation failed" in content_low
+                        or "compile_shard" in c_low
+                        or "check_templates" in c_low
+                    ):
+                        categories["Shard Compilation & Template Validator Failure (compile_shard / check_templates)"].append(error_entry)
+                    elif (
+                        "syntaxerror" in content_low
+                        or "indentationerror" in content_low
+                        or "nameerror" in content_low
+                        or "keyerror" in content_low
+                        or "typeerror" in content_low
+                        or "attributeerror" in content_low
+                        or "valueerror" in content_low
+                        or "indexerror" in content_low
+                        or "zerodivisionerror" in content_low
+                        or "jsondecodeerror" in content_low
+                        or "assertionerror" in content_low
+                        or "traceback (most recent call last)" in content_low
+                        or "python -c" in cmd_str.lower()
+                    ):
+                        categories["Exploratory Python One-Liner / Script Exceptions (Syntax/Key/Type/ValueError)"].append(error_entry)
                     else:
-                        categories["Other Console / Tool Failures"].append(error_entry)
+                        categories["Non-Zero CLI Exit / Subprocess Probe (Exit Code 1)"].append(error_entry)
 
         return dict(categories)
 
@@ -620,6 +784,7 @@ class DeepDiveReportBuilder:
         error_taxonomy: Dict[str, List[Dict[str, Any]]],
         global_timings: Dict[str, Any],
         thinking_traces_summary: Optional[Dict[str, Any]] = None,
+        stage_telemetry_v3: Optional[Dict[str, Any]] = None,
     ) -> str:
         lines: List[str] = []
 
@@ -628,6 +793,8 @@ class DeepDiveReportBuilder:
         lines.append(f"")
         lines.append(f"**Fecha de Auditoría:** `{datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}`  ")
         lines.append(f"**Conversación Orquestadora:** [`{conv_id}`](conversation://{conv_id})  ")
+        if stage_telemetry_v3 and stage_telemetry_v3.get("work_dir"):
+            lines.append(f"**Directorio de Telemetría Validado (Zero-Collision):** `{stage_telemetry_v3.get('work_dir')}` (`{stage_telemetry_v3.get('snapshots_count', 0)}` snapshots C2C v3.2)  ")
         lines.append(f"**Motor Forense:** C2C Traceback Deep-Dive Analyzer (Antigravity SDK)  ")
         lines.append(f"")
         lines.append(f"---")
@@ -638,7 +805,7 @@ class DeepDiveReportBuilder:
         lines.append(f"| :--- | :--- | :--- |")
         lines.append(f"| **Tiempo de Pared Total** | **`{global_timings.get('wall_clock_minutes', 0.0)} min`** ({global_timings.get('wall_clock_seconds', 0.0)} s) | Tiempo transcurrido de extremo a extremo |")
         lines.append(f"| **Total de Turnos Analizados** | **`{global_timings.get('total_turns', 0)} turnos`** | Suma de orquestador y subagentes |")
-        lines.append(f"| **Total de Errores Catalogados** | **`{global_timings.get('total_errors', 0)} errores`** | Fallos en consola, validadores y truncamientos |")
+        lines.append(f"| **Total de Errores Catalogados** | **`{global_timings.get('total_errors', 0)} errores`** | Clasificados en {len(error_taxonomy)} categorías técnicas (0% caja negra) |")
         lines.append(f"| **Inferencia LLM Promedio** | **`{global_timings.get('avg_inference_pct', 95.0)}%`** | Porcentaje de tiempo dedicado a generación/thinking |")
         lines.append(f"| **Ejecución Local de Tools** | **`{global_timings.get('avg_tool_pct', 5.0)}%`** | Porcentaje de tiempo consumido en I/O y terminal |")
         lines.append(f"")
@@ -664,6 +831,25 @@ class DeepDiveReportBuilder:
         lines.append(f"========================================================================================")
         lines.append(f"```")
         lines.append(f"")
+
+        if stage_telemetry_v3 and stage_telemetry_v3.get("stages"):
+            lines.append(f"### 1.2. Telemetría Incremental por Etapa C2C v3.2 (`work/telemetry/*.json`)")
+            lines.append(f"")
+            lines.append(f"| Etapa | Timestamp (UTC) | Duración Etapa | Tokens Etapa (Total / Activos) | Subagentes en Snapshot | Metadatos de Etapa |")
+            lines.append(f"| :--- | :--- | :---: | :---: | :---: | :--- |")
+            for st_item in stage_telemetry_v3["stages"]:
+                ts_short = str(st_item.get("timestamp", ""))[:19].replace("T", " ")
+                dur_s = st_item.get("duration_seconds", 0.0)
+                tot_t = st_item.get("stage_total_tokens", 0)
+                act_t = st_item.get("stage_active_tokens", 0)
+                meta_clean = {k: v for k, v in (st_item.get("metadata") or {}).items() if k != "duration_seconds"}
+                meta_str = ", ".join(f"{k}={v}" for k, v in meta_clean.items()) or "—"
+                lines.append(
+                    f"| **`{st_item['stage_key']}`** | `{ts_short}` | `{dur_s}s` | "
+                    f"`{tot_t:,}` (`{act_t:,}` act) | {st_item.get('subagents_captured_count', 0)} | `{meta_str}` |"
+                )
+            lines.append(f"")
+
         lines.append(f"---")
         lines.append(f"")
         lines.append(f"## 2. Análisis Forense: CTA Architects (Stage 1)")
@@ -682,12 +868,13 @@ class DeepDiveReportBuilder:
         lines.append(f"")
         lines.append(f"## 3. Análisis Forense: Shards de Autoría (Stage 3)")
         lines.append(f"")
-        lines.append(f"| Shard ID | Duración (min) | Turnos | Writes | Edits | Check Runs (Fail/Pass) | Loop de Ingeniería Inversa | Micro-Bucle |")
-        lines.append(f"| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |")
+        lines.append(f"| Shard ID | Duración (min) | Turnos | Writes | Edits | Check Runs (Fail/Pass) | Lecturas Validador (Ing. Inversa) | Micro-Bucle / Patrón |")
+        lines.append(f"| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |")
         for sname, sinfo in shards_data.items():
             t = sinfo.get("timings", {})
-            rev = "🛑 SÍ (30+ turnos)" if sinfo.get("has_reverse_eng_loop") else "NO"
-            micro = "⚠️ SÍ (Secuencial)" if sinfo.get("has_micro_loop") else "NO"
+            rev_cnt = sinfo.get("reverse_eng_reads_count", 0)
+            rev = f"🛑 SÍ ({rev_cnt} lecturas)" if sinfo.get("has_reverse_eng_loop") else f"NO ({rev_cnt})"
+            micro = sinfo.get("micro_loop_reason") or ("⚠️ SÍ" if sinfo.get("has_micro_loop") else "NO")
             lines.append(f"| **{sname}** | {t.get('wall_time_minutes', 0.0)} | {t.get('turns_count', 0)} | {sinfo.get('writes_count', 0)} | {sinfo.get('edits_count', 0)} | {sinfo.get('check_runs_total', 0)} ({sinfo.get('check_runs_failed', 0)}/{sinfo.get('check_runs_passed', 0)}) | {rev} | {micro} |")
         lines.append(f"")
         lines.append(f"---")
@@ -734,10 +921,121 @@ class DeepDiveReportBuilder:
 
 
 # ---------------------------------------------------------------------------
+# C2C v3.2 Verified Stage Telemetry Loader
+# ---------------------------------------------------------------------------
+
+def load_verified_stage_telemetry(
+    conv_id: str,
+    root_steps: List[Dict[str, Any]],
+    work_dir: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Resolves and loads C2C v3.2 work/telemetry/*.json strictly matching conv_id."""
+    candidates: List[Path] = []
+    if work_dir:
+        candidates.append(Path(work_dir))
+
+    # Extract --work-dir or courses/<id>/work from root_steps
+    for s in root_steps:
+        for tc in s.get("tool_calls", []) or []:
+            if not isinstance(tc, dict):
+                continue
+            args = tc.get("function", {}).get("arguments") if "function" in tc else tc.get("args", {})
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args)
+                except Exception:
+                    args = {}
+            if isinstance(args, dict):
+                cmd = str(args.get("CommandLine", ""))
+                for m in re.finditer(r'--work-dir\s+["\']?([^"\'\s;]+)["\']?', cmd):
+                    candidates.append(Path(m.group(1)))
+                for m in re.finditer(r'--course-id\s+["\']?([a-zA-Z0-9_\-]+)["\']?', cmd):
+                    candidates.append(Path("courses") / m.group(1) / "work")
+
+    courses_dir = Path("courses")
+    if courses_dir.is_dir():
+        for d in sorted(courses_dir.iterdir(), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True):
+            if d.is_dir() and (d / "work").is_dir():
+                candidates.append(d / "work")
+    if Path("work").is_dir():
+        candidates.append(Path("work"))
+
+    seen: Set[str] = set()
+    for cand in candidates:
+        try:
+            key = str(cand.resolve())
+        except Exception:
+            key = str(cand)
+        if key in seen or not cand.is_dir():
+            continue
+        seen.add(key)
+
+        # Check archived by_conversation/<conv_id> first, then active telemetry/
+        telem_dirs = [
+            cand / "telemetry" / "by_conversation" / conv_id,
+            cand / "telemetry",
+        ]
+        for tdir in telem_dirs:
+            if not tdir.is_dir():
+                continue
+            matched_snaps: Dict[str, Any] = {}
+            foreign_found = False
+            for tf in sorted(tdir.glob("*.json")):
+                if tf.name == "state.json":
+                    continue
+                try:
+                    tdata = json.loads(tf.read_text(encoding="utf-8"))
+                    snap_cid = tdata.get("conversation_id")
+                    if snap_cid == conv_id:
+                        matched_snaps[tf.stem] = tdata
+                    elif snap_cid:
+                        foreign_found = True
+                except Exception:
+                    pass
+            if matched_snaps and not foreign_found:
+                stages_list = []
+                for skey, sdata in sorted(matched_snaps.items()):
+                    st_toks = sdata.get("stage_tokens") or {}
+                    subs_m = sdata.get("subagents") or []
+                    stages_list.append({
+                        "stage_key": skey,
+                        "stage_index": sdata.get("stage_idx") or sdata.get("stage_index", ""),
+                        "stage_name": sdata.get("stage_name", ""),
+                        "timestamp": sdata.get("recorded_at") or sdata.get("timestamp", ""),
+                        "duration_seconds": round(float(sdata.get("duration_seconds", 0.0)), 2),
+                        "stage_total_tokens": st_toks.get("total", st_toks.get("total_tokens", 0)),
+                        "stage_active_tokens": st_toks.get("active_tokens", st_toks.get("input", 0) + st_toks.get("output", 0)),
+                        "subagents_captured_count": len(subs_m),
+                        "metadata": sdata.get("metadata") or {},
+                    })
+                return {
+                    "work_dir": str(cand),
+                    "telemetry_dir": str(tdir),
+                    "conversation_id_verified": True,
+                    "snapshots_count": len(stages_list),
+                    "stages": stages_list,
+                    "raw_snapshots": matched_snaps,
+                }
+
+    return {
+        "work_dir": None,
+        "telemetry_dir": None,
+        "conversation_id_verified": False,
+        "snapshots_count": 0,
+        "stages": [],
+        "raw_snapshots": {},
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main Orchestration CLI
 # ---------------------------------------------------------------------------
 
-def run_traceback_audit(conversation_id_or_link: str, output_dir: Optional[Path] = None) -> Path:
+def run_traceback_audit(
+    conversation_id_or_link: str,
+    output_dir: Optional[Path] = None,
+    work_dir: Optional[Path] = None,
+) -> Path:
     """Performs end-to-end traceback deep dive audit and saves reports."""
     transcript_p = resolve_transcript_path(conversation_id_or_link)
     if not transcript_p or not transcript_p.exists():
@@ -751,7 +1049,41 @@ def run_traceback_audit(conversation_id_or_link: str, output_dir: Optional[Path]
     root_steps = TranscriptReader.read_steps(transcript_p)
     root_turns = TranscriptReader.extract_turns(root_steps)
     subagents = SubagentTreeResolver.discover_subagents(root_steps)
-    print(f"[+] Discovered {len(subagents)} subagents in orchestrator tree.")
+
+    # 1b. Load C2C v3.2 verified stage telemetry (Zero-Collision Gate)
+    stage_telemetry_v3 = load_verified_stage_telemetry(conv_id, root_steps, work_dir=work_dir)
+    if stage_telemetry_v3.get("raw_snapshots"):
+        for sdata in stage_telemetry_v3["raw_snapshots"].values():
+            for snap_sub in sdata.get("subagents") or []:
+                scid = snap_sub.get("conversation_id")
+                srole = snap_sub.get("role", "")
+                if scid and scid not in subagents:
+                    subagents[scid] = {
+                        "conversation_id": scid,
+                        "role": srole if srole and not srole.startswith("Subagent-") else "unknown",
+                        "type": "telemetry_snapshot",
+                    }
+        # Re-run role inference if any new subagents were added from stage snapshots
+        for cid, info in list(subagents.items()):
+            if info.get("role") in ("unknown", "subagent", "") or info.get("role", "").startswith("Subagent-"):
+                t_path = brain_dir / cid / ".system_generated" / "logs" / "transcript.jsonl"
+                if t_path.exists():
+                    first_steps = TranscriptReader.read_steps(t_path)[:6]
+                    for s in first_steps:
+                        c = s.get("content", "")
+                        m_shard = re.search(r"(?:shard_|Shard Author shard_|Author Shard\s+|Shard\s+)(\d+)", c, re.IGNORECASE)
+                        m_judge = re.search(r"(?:Judge\s+|judge_batch_|judge_responses_|judge_)(\d+)", c, re.IGNORECASE)
+                        if m_shard:
+                            info["role"] = f"Author Shard {int(m_shard.group(1)):02d}"
+                            break
+                        elif m_judge:
+                            info["role"] = f"Judge {int(m_judge.group(1)):02d}"
+                            break
+                        elif any(k in c.lower() for k in ("direct cta", "cta-direct", "prompt_cta", "director de análisis cognitivo", "cta architect", "c2c_cta_architect")):
+                            info["role"] = "Direct CTA Architect"
+                            break
+
+    print(f"[+] Discovered {len(subagents)} subagents in orchestrator tree (v3.2 Stage Snapshots: {stage_telemetry_v3.get('snapshots_count', 0)}).")
 
     # 2. Parse subagent transcripts
     all_agent_steps: Dict[str, List[Dict[str, Any]]] = {"Orchestrator": root_steps}
@@ -842,6 +1174,8 @@ def run_traceback_audit(conversation_id_or_link: str, output_dir: Optional[Path]
         output_dir = Path("reports/c2c_audits")
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    stage_v3_clean = {k: v for k, v in stage_telemetry_v3.items() if k != "raw_snapshots"}
+
     report_md = DeepDiveReportBuilder.build_markdown(
         conv_id=conv_id,
         cta_data=cta_data,
@@ -850,6 +1184,7 @@ def run_traceback_audit(conversation_id_or_link: str, output_dir: Optional[Path]
         error_taxonomy=taxonomy,
         global_timings=global_timings,
         thinking_traces_summary=thinking_traces_summary,
+        stage_telemetry_v3=stage_v3_clean,
     )
 
     out_file = output_dir / f"traceback_deepdive_{conv_id[:8]}.md"
@@ -859,6 +1194,7 @@ def run_traceback_audit(conversation_id_or_link: str, output_dir: Optional[Path]
     dataset = {
         "conversation_id": conv_id,
         "global_timings": global_timings,
+        "stage_telemetry_v3": stage_v3_clean,
         "thinking_traces": thinking_traces_summary,
         "cta_architect": cta_data,
         "shards": shards_data,
@@ -880,6 +1216,7 @@ def main():
     parser = argparse.ArgumentParser(description="Traceback Deep-Dive Analyzer for Antigravity C2C Workflows")
     parser.add_argument("-c", "--conversation", default=None, help="Conversation ID, link, or transcript.jsonl path")
     parser.add_argument("-o", "--output-dir", default="reports/c2c_audits", help="Output directory for reports")
+    parser.add_argument("-w", "--work-dir", default=None, help="Optional verified work directory")
     parser.add_argument("--recent", action="store_true", help="List recent conversations")
     args = parser.parse_args()
 
@@ -901,8 +1238,10 @@ def main():
             sys.exit(1)
 
     out_dir = Path(args.output_dir)
-    run_traceback_audit(target, out_dir)
+    w_dir = Path(args.work_dir) if args.work_dir else None
+    run_traceback_audit(target, out_dir, work_dir=w_dir)
 
 
 if __name__ == "__main__":
     main()
+

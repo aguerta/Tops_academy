@@ -49,7 +49,7 @@
       "difficulty": "hard",
       "bloom": "Analyze",
       "stem": "Para un sistema plano con matriz Jacobiana $\\mathbf{{J}}(x_0, y_0) = \\begin{{bmatrix}} -{a} & 0 \\\\ 0 & -{b} \\end{{bmatrix}}$ donde $a = {a} > 0$ y $b = {b} > 0$, seleccione todas las afirmaciones correctas sobre la estabilidad local:",
-      "generate_py": "def generate(rng):\n    a = rng.randint(2, 5)\n    b = rng.randint(2, 5)\n    opts = [\n        {'content': 'La traza de la Jacobiana es estrictamente negativa: tr(J) < 0.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'El determinante de la Jacobiana es estrictamente positivo: det(J) > 0.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'El punto de equilibrio es asintóticamente estable en el plano.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'El punto es un punto de silla inestable debido a autovalores.', 'is_correct': False, 'distractor_id': 'D-Hab02-04'},\n    ]\n    return {\n        'vars': {'a': a, 'b': b},\n        'options': opts,\n        'distractors': []\n    }",
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 5)\n    b = rng.randint(2, 5)\n    opts = [\n        {'content': 'La traza de la Jacobiana es estrictamente negativa: tr(J) < 0.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'El determinante de la Jacobiana es estrictamente positivo: det(J) > 0.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'El punto de equilibrio es asintóticamente estable en el plano.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'El punto es un punto de silla inestable debido a autovalores.', 'is_correct': False, 'distractor_id': 'D-Hab02-04', 'error_rationale': 'La derivada de -x^2 respecto de x es 2x.'},\n    ]\n    return {\n        'vars': {'a': a, 'b': b},\n        'options': opts,\n        'distractors': []\n    }",
       "cross_check_py": "def verify(result):\n    return True",
       "hints": [
         "Examine los signos de los elementos diagonales -a y -b.",
@@ -57,7 +57,9 @@
         "Concluya la estabilidad según el criterio traza-determinante."
       ],
       "solution": "Los autovalores son lambda_1 = -{a} < 0 y lambda_2 = -{b} < 0. Ambos son reales negativos, garantizando que el equilibrio es un nodo asintóticamente estable.",
-      "distractor_ids": ["D-Hab02-04"]
+      "distractor_ids": [
+        "D-Hab02-04"
+      ]
     }
   ]
 }

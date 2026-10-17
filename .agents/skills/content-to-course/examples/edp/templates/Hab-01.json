@@ -49,7 +49,7 @@
       "difficulty": "hard",
       "bloom": "Analyze",
       "stem": "Dada la ecuación cuasilineal de Lagrange $${a} x u_x + {b} y u_y = {c} u$$, seleccione todas las afirmaciones operativas correctas sobre el proceso de resolución:",
-      "generate_py": "def generate(rng):\n    a = rng.randint(1, 4)\n    b = rng.randint(1, 4)\n    c = rng.randint(1, 4)\n    opts = [\n        {'content': 'El sistema característico de Lagrange asocia dx con el coeficiente ax y dy con by.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La solución general puede expresarse como una relación funcional entre dos integrales primeras independientes.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'Basta con una única constante de integración para fijar unívocamente la solución general sin curva de Cauchy.', 'is_correct': False, 'distractor_id': 'D-Hab01-03'},\n        {'content': 'El sistema característico intercambia dx con by y dy con ax.', 'is_correct': False, 'distractor_id': 'D-Hab01-02'},\n    ]\n    return {\n        'vars': {'a': a, 'b': b, 'c': c},\n        'options': opts,\n        'distractors': []\n    }",
+      "generate_py": "def generate(rng):\n    a = rng.randint(1, 4)\n    b = rng.randint(1, 4)\n    c = rng.randint(1, 4)\n    opts = [\n        {'content': 'El sistema característico de Lagrange asocia dx con el coeficiente ax y dy con by.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La solución general puede expresarse como una relación funcional entre dos integrales primeras independientes.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'Basta con una única constante de integración para fijar unívocamente la solución general sin curva de Cauchy.', 'is_correct': False, 'distractor_id': 'D-Hab01-03', 'error_rationale': 'Una sola integral característica es suficiente para construir la solución general.'},\n        {'content': 'El sistema característico intercambia dx con by y dy con ax.', 'is_correct': False, 'distractor_id': 'D-Hab01-02', 'error_rationale': 'El sistema auxiliar se plantea como dx/Q = dy/P = du/R.'},\n    ]\n    return {\n        'vars': {'a': a, 'b': b, 'c': c},\n        'options': opts,\n        'distractors': []\n    }",
       "cross_check_py": "def verify(result):\n    return True",
       "hints": [
         "Recuerde la estructura del sistema característico dx/P = dy/Q = du/R.",
@@ -57,7 +57,10 @@
         "Marque sólo las propiedades que reflejan fielmente el teorema de Lagrange."
       ],
       "solution": "El método de Lagrange construye el sistema característico dx/(ax) = dy/(by) = du/(cu) y requiere dos integrales primeras independientes para expresar la solución general Phi(C_1, C_2) = 0.",
-      "distractor_ids": ["D-Hab01-02", "D-Hab01-03"]
+      "distractor_ids": [
+        "D-Hab01-02",
+        "D-Hab01-03"
+      ]
     }
   ]
 }

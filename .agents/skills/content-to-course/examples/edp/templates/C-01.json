@@ -54,7 +54,7 @@
         "Considere el modelo diferencial lineal ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$. ¿Cuáles de las siguientes propiedades sobre su clasificación y curvas características son correctas?",
         "Dada la ecuación de segundo orden ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, identifique todas las proposiciones verdaderas respecto a su discriminante Delta = {B}^2 - 4({A})({C}) = {delta}:"
       ],
-      "generate_py": "def generate(rng):\n    A = 1\n    C = 1\n    B = rng.randint(4, 12)\n    delta = B**2 - 4 * A * C\n    opts = [\n        {'content': 'El discriminante Delta es estrictamente positivo en todo el dominio.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La ecuación admite dos familias reales y distintas de curvas características.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La ecuación es de tipo elíptico en todo el plano euclídeo.', 'is_correct': False, 'distractor_id': 'D-C01-01'},\n        {'content': 'El discriminante se calcula como Delta = B^2 - AC sin el factor cuatro.', 'is_correct': False, 'distractor_id': 'D-C01-02'},\n    ]\n    return {\n        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta},\n        'options': opts,\n        'distractors': []\n    }",
+      "generate_py": "def generate(rng):\n    A = 1\n    C = 1\n    B = rng.randint(4, 12)\n    delta = B**2 - 4 * A * C\n    opts = [\n        {'content': 'El discriminante Delta es estrictamente positivo en todo el dominio.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La ecuación admite dos familias reales y distintas de curvas características.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'La ecuación es de tipo elíptico en todo el plano euclídeo.', 'is_correct': False, 'distractor_id': 'D-C01-01', 'error_rationale': 'Un discriminante negativo indica una ecuación hiperbólica por semejanza con raíces complejas.'},\n        {'content': 'El discriminante se calcula como Delta = B^2 - AC sin el factor cuatro.', 'is_correct': False, 'distractor_id': 'D-C01-02', 'error_rationale': 'El discriminante de segundo orden es B^2 - AC.'},\n    ]\n    return {\n        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta},\n        'options': opts,\n        'distractors': []\n    }",
       "cross_check_py": "def verify(result):\n    return result['vars']['delta'] > 0",
       "hints": [
         "Calcule el signo de Delta = B^2 - 4AC.",
@@ -62,7 +62,10 @@
         "Marque sólo las propiedades que se desprenden del carácter hiperbólico de la ecuación."
       ],
       "solution": "Dado que B^2 - 4AC = {delta} > 0, la ecuación es hiperbólica y admite dos familias de curvas características reales y distintas.",
-      "distractor_ids": ["D-C01-01", "D-C01-02"]
+      "distractor_ids": [
+        "D-C01-01",
+        "D-C01-02"
+      ]
     }
   ]
 }

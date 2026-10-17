@@ -303,6 +303,25 @@ def inspect_subagent_transcript(
     }
 
 
+def _infer_canonical_subagent_role(p0: str, fallback_role: str, cid: str) -> str:
+    """Infers canonical role (Direct CTA Architect, Author Shard XX, Judge XX) from step 0 prompt."""
+    combined = f"{fallback_role} {p0[:600]}"
+    m_part = re.search(r"(?:part_|cta_|CTA Architect\s*\(?part_|CTA Architect\s+)(\d+)", combined, re.IGNORECASE)
+    m_shard = re.search(r"(?:shard_|Shard Exercise Author:\s*`?shard_|Shard Author shard_|Author Shard\s+|Shard\s+)(\d+)", combined, re.IGNORECASE)
+    m_judge = re.search(r"(?:Judge\s+|judge_batch_|judge_responses_|judge_)(\d+)", combined, re.IGNORECASE)
+    if m_part:
+        return f"CTA Architect (part_{int(m_part.group(1)):02d})"
+    if any(k in combined.lower() for k in ("direct cta", "cta-direct", "prompt_cta", "cognitive task analysis architect", "c2c_cta_architect", "compile_cta.py")):
+        return "Direct CTA Architect"
+    if m_shard:
+        return f"Author Shard {int(m_shard.group(1)):02d}"
+    if m_judge:
+        return f"Judge {int(m_judge.group(1)):02d}"
+    if fallback_role and not fallback_role.startswith("Subagent"):
+        return fallback_role
+    return f"Subagent-{cid[:8]}"
+
+
 def extract_stage_subagents(
     root_conv_id: str,
     stage_name: str,
@@ -323,12 +342,12 @@ def extract_stage_subagents(
     stage_lower = stage_name.lower()
     stage_keywords = {
         "prepare": ["vision", "c2c-vision", "handout"],
-        "cta": ["cta", "cta-direct", "cta-map", "cta-reduce", "c2c-cta", "architect", "part_"],
-        "shard": ["shard"],
-        "templates": ["author", "c2c-author", "shard_", "exercise"],
+        "cta": ["cta", "cta-direct", "cta-map", "cta-reduce", "c2c-cta", "architect", "part_", "compile_cta"],
+        "shard": ["shard", "author", "compile_shard"],
+        "templates": ["author", "c2c-author", "shard_", "exercise", "compile_shard"],
         "build": ["build"],
         "verify": ["judge", "c2c-judge", "repair", "c2c-repair"],
-        "judge_compare": ["judge", "c2c-judge"],
+        "judge_compare": ["judge", "c2c-judge", "judge_batch", "judge_responses"],
         "publish": ["publish"],
     }
     keywords = stage_keywords.get(stage_lower, [stage_lower])
@@ -359,11 +378,22 @@ def extract_stage_subagents(
                                 role = item.get("role", "")
                                 tname = item.get("type", "")
                                 model = item.get("model", "inherit")
-                                if any(k in role.lower() or k in tname.lower() for k in keywords):
+                                p0 = ""
+                                sub_t0 = brain_dir / cid / ".system_generated" / "logs" / "transcript.jsonl"
+                                if sub_t0.is_file():
+                                    try:
+                                        with open(sub_t0, "r", encoding="utf-8", errors="ignore") as sf:
+                                            first_l = sf.readline()
+                                            if first_l:
+                                                p0 = json.loads(first_l).get("content", "")
+                                    except Exception:
+                                        pass
+                                canon_role = _infer_canonical_subagent_role(p0, role, cid)
+                                if any(k in canon_role.lower() or k in role.lower() or k in tname.lower() or k in p0.lower() for k in keywords):
                                     discovered.append({
                                         "conversation_id": cid,
-                                        "role": role,
-                                        "type_name": tname,
+                                        "role": canon_role,
+                                        "type_name": tname or "subagent",
                                         "model": model,
                                     })
                     except Exception:
@@ -374,8 +404,6 @@ def extract_stage_subagents(
                 for cid in cids:
                     if cid not in seen_cids:
                         seen_cids.add(cid)
-                        # Probe step 0 of subagent transcript to see if it matches stage
-                        sub_meta = {"role": "Subagent", "type_name": "generic", "model": "inherit"}
                         sub_t0 = brain_dir / cid / ".system_generated" / "logs" / "transcript.jsonl"
                         if sub_t0.is_file():
                             try:
@@ -384,10 +412,11 @@ def extract_stage_subagents(
                                     if first_l:
                                         d0 = json.loads(first_l)
                                         p0 = d0.get("content", "")
-                                        if any(k in p0.lower() for k in keywords):
+                                        canon_role = _infer_canonical_subagent_role(p0, "", cid)
+                                        if any(k in canon_role.lower() or k in p0.lower() for k in keywords):
                                             discovered.append({
                                                 "conversation_id": cid,
-                                                "role": f"Subagent-{cid[:8]}",
+                                                "role": canon_role,
                                                 "type_name": "subagent",
                                                 "model": "inherit",
                                             })
@@ -471,12 +500,18 @@ def update_master_state(
     work_dir: Path,
     stage_snapshot: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """Updates work/state.json accumulating stage history, counts, tokens, and timestamps."""
+    """Updates work/state.json accumulating stage history, counts, tokens, and timestamps.
+    Enforces strict conversation_id isolation so different runs never collide.
+    """
+    import shutil
     state_file = work_dir / "state.json"
+    telemetry_dir = work_dir / "telemetry"
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    curr_conv_id = stage_snapshot.get("conversation_id")
 
     state: Dict[str, Any] = {
         "course_id": work_dir.parent.name if work_dir.name == "work" else work_dir.name,
+        "conversation_id": curr_conv_id,
         "started_at": now_iso,
         "updated_at": now_iso,
         "last_stage": f"{stage_snapshot['stage_idx']}_{stage_snapshot['stage_name']}",
@@ -497,9 +532,28 @@ def update_master_state(
         try:
             existing = json.loads(state_file.read_text(encoding="utf-8"))
             if isinstance(existing, dict):
-                state["started_at"] = existing.get("started_at", state["started_at"])
-                state["course_id"] = existing.get("course_id", state["course_id"])
-                state["stages"] = existing.get("stages", {})
+                prev_conv = existing.get("conversation_id")
+                # If a previous run had a DIFFERENT conversation_id, archive its state & stage files to prevent collision
+                if prev_conv and curr_conv_id and prev_conv != curr_conv_id:
+                    arch_dir = telemetry_dir / "by_conversation" / prev_conv
+                    arch_dir.mkdir(parents=True, exist_ok=True)
+                    try:
+                        shutil.copy2(state_file, arch_dir / "state.json")
+                        for old_snap in telemetry_dir.glob("*.json"):
+                            if old_snap.name != f"{stage_snapshot['stage_idx']}_{stage_snapshot['stage_name']}.json":
+                                try:
+                                    od = json.loads(old_snap.read_text(encoding="utf-8"))
+                                    if od.get("conversation_id") == prev_conv:
+                                        shutil.move(str(old_snap), str(arch_dir / old_snap.name))
+                                except Exception:
+                                    pass
+                    except Exception:
+                        pass
+                else:
+                    state["started_at"] = existing.get("started_at", state["started_at"])
+                    state["course_id"] = existing.get("course_id", state["course_id"])
+                    state["conversation_id"] = curr_conv_id or prev_conv
+                    state["stages"] = existing.get("stages", {})
         except Exception:
             pass
 
@@ -531,39 +585,10 @@ def update_master_state(
         "tokens": stage_snapshot.get("stage_tokens", {}),
     }
 
-    # Re-calculate totals across all stage files in work/telemetry
-    telemetry_dir = work_dir / "telemetry"
+    # Re-calculate totals ONLY across stage files matching curr_conv_id
     tot_tokens = {"input": 0, "output": 0, "cached": 0, "thinking": 0, "total": 0}
     all_subagents = []
     seen_cids = set()
-
-    if telemetry_dir.is_dir():
-        for snap_f in sorted(telemetry_dir.glob("*.json")):
-            try:
-                s_data = json.loads(snap_f.read_text(encoding="utf-8"))
-                s_toks = s_data.get("stage_tokens", {})
-                for k in tot_tokens:
-                    tot_tokens[k] += s_toks.get(k, 0)
-                for sa in s_data.get("subagents", []):
-                    cid = sa.get("conversation_id")
-                    if cid and cid not in seen_cids:
-                        seen_cids.add(cid)
-                        all_subagents.append({
-                            "conversation_id": cid,
-                            "role": sa.get("role"),
-                            "type_name": sa.get("type_name"),
-                            "tokens": sa.get("tokens"),
-                            "turns_count": sa.get("turns_count"),
-                            "duration_seconds": sa.get("duration_seconds"),
-                        })
-            except Exception:
-                pass
-
-    state["tokens_total"] = tot_tokens
-    state["subagents_summary"] = all_subagents
-    state["artifact_counts"] = collect_artifact_counts(work_dir)
-
-    # Collect thinking traces metrics across subagents
     total_thinking_turns = 0
     total_thinking_chars = 0
     subagents_with_thinking = 0
@@ -572,18 +597,37 @@ def update_master_state(
         for snap_f in sorted(telemetry_dir.glob("*.json")):
             try:
                 s_data = json.loads(snap_f.read_text(encoding="utf-8"))
+                if curr_conv_id and s_data.get("conversation_id") and s_data.get("conversation_id") != curr_conv_id:
+                    continue
                 for sa in s_data.get("subagents", []):
-                    traces = sa.get("thinking_traces", [])
-                    if traces:
-                        subagents_with_thinking += 1
-                        for tr in traces:
-                            th_txt = tr.get("thinking", "")
-                            if th_txt:
-                                total_thinking_turns += 1
-                                total_thinking_chars += len(th_txt)
+                    cid = sa.get("conversation_id")
+                    if cid and cid not in seen_cids:
+                        seen_cids.add(cid)
+                        sa_toks = sa.get("tokens", {})
+                        for k in tot_tokens:
+                            tot_tokens[k] += sa_toks.get(k, 0)
+                        all_subagents.append({
+                            "conversation_id": cid,
+                            "role": sa.get("role"),
+                            "type_name": sa.get("type_name"),
+                            "tokens": sa_toks,
+                            "turns_count": sa.get("turns_count"),
+                            "duration_seconds": sa.get("duration_seconds"),
+                        })
+                        traces = sa.get("thinking_traces", [])
+                        if traces:
+                            subagents_with_thinking += 1
+                            for tr in traces:
+                                th_txt = tr.get("thinking", "")
+                                if th_txt:
+                                    total_thinking_turns += 1
+                                    total_thinking_chars += len(th_txt)
             except Exception:
                 pass
 
+    state["tokens_total"] = tot_tokens
+    state["subagents_summary"] = all_subagents
+    state["artifact_counts"] = collect_artifact_counts(work_dir)
     state["thinking_traces_summary"] = {
         "total_thinking_turns": total_thinking_turns,
         "total_thinking_chars": total_thinking_chars,
@@ -593,8 +637,15 @@ def update_master_state(
 
     # Persist state.json atomically
     temp_state = state_file.with_suffix(".tmp")
-    temp_state.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+    state_json_str = json.dumps(state, indent=2, ensure_ascii=False)
+    temp_state.write_text(state_json_str, encoding="utf-8")
     temp_state.replace(state_file)
+
+    # Also mirror into isolated per-conversation directory: work/telemetry/by_conversation/<conv_id>/
+    if curr_conv_id:
+        conv_iso_dir = telemetry_dir / "by_conversation" / curr_conv_id
+        conv_iso_dir.mkdir(parents=True, exist_ok=True)
+        (conv_iso_dir / "state.json").write_text(state_json_str, encoding="utf-8")
 
     return state
 
@@ -675,8 +726,15 @@ def record_stage_telemetry(
     stage_filename = f"{stage_idx}_{stage_name}.json"
     stage_file = telemetry_dir / stage_filename
     temp_stage = stage_file.with_suffix(".tmp")
-    temp_stage.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False), encoding="utf-8")
+    snap_json_str = json.dumps(snapshot, indent=2, ensure_ascii=False)
+    temp_stage.write_text(snap_json_str, encoding="utf-8")
     temp_stage.replace(stage_file)
+
+    # Also save into isolated per-conversation folder: work/telemetry/by_conversation/<conv_id>/<stage_idx>_<stage_name>.json
+    if resolved_conv:
+        conv_iso_dir = telemetry_dir / "by_conversation" / resolved_conv
+        conv_iso_dir.mkdir(parents=True, exist_ok=True)
+        (conv_iso_dir / stage_filename).write_text(snap_json_str, encoding="utf-8")
 
     # Update master state.json
     try:

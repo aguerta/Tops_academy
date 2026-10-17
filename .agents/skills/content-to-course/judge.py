@@ -445,9 +445,17 @@ def compare_judge_responses(
             raise ValueError("Either responses or work_dir must be provided")
         # Discover all judge_responses_*.json and judge_responses.json
         cand_files = sorted(resolved_work_dir.glob("judge_responses_*.json"))
+        verif_dir = resolved_work_dir / "verification"
+        if verif_dir.is_dir():
+            for vf in sorted(verif_dir.glob("judge_responses_*.json")):
+                if vf.name not in [cf.name for cf in cand_files]:
+                    cand_files.append(vf)
         main_resp = resolved_work_dir / "judge_responses.json"
         if main_resp.is_file() and main_resp not in cand_files:
             cand_files.append(main_resp)
+        verif_main = verif_dir / "judge_responses.json"
+        if verif_main.is_file() and verif_main not in cand_files:
+            cand_files.append(verif_main)
         for f in cand_files:
             try:
                 raw_responses_list.append(json.loads(f.read_text(encoding="utf-8")))

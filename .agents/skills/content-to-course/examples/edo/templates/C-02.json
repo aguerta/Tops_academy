@@ -49,7 +49,7 @@
       "difficulty": "hard",
       "bloom": "Analyze",
       "stem": "Para un sistema plano lineal cuya matriz satisface $\\det(\\mathbf{{A}}) = {det_val} > 0$ y $\\mathrm{{tr}}(\\mathbf{{A}}) = {tr_val} < 0$, seleccione todas las afirmaciones verdaderas:",
-      "generate_py": "def generate(rng):\n    det_val = rng.randint(4, 9)\n    tr_val = -rng.randint(2, 6)\n    opts = [\n        {'content': 'El origen es asintóticamente estable en el sentido de Lyapunov.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'Todos los autovalores de la matriz tienen parte real estrictamente negativa.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'El origen es un punto de silla inestable.', 'is_correct': False, 'distractor_id': 'D-C02-03'},\n        {'content': 'El sistema carece de estabilidad por tener determinante positivo.', 'is_correct': False, 'distractor_id': 'D-C02-01'},\n    ]\n    return {\n        'vars': {'det_val': det_val, 'tr_val': tr_val},\n        'options': opts,\n        'distractors': []\n    }",
+      "generate_py": "def generate(rng):\n    det_val = rng.randint(4, 9)\n    tr_val = -rng.randint(2, 6)\n    opts = [\n        {'content': 'El origen es asintóticamente estable en el sentido de Lyapunov.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'Todos los autovalores de la matriz tienen parte real estrictamente negativa.', 'is_correct': True, 'distractor_id': None},\n        {'content': 'El origen es un punto de silla inestable.', 'is_correct': False, 'distractor_id': 'D-C02-03', 'error_rationale': 'Un punto de silla es estable a lo largo de su variedad estable, por tanto es estable.'},\n        {'content': 'El sistema carece de estabilidad por tener determinante positivo.', 'is_correct': False, 'distractor_id': 'D-C02-01', 'error_rationale': 'Un determinante positivo garantiza por sí solo que el punto de equilibrio es asintóticamente estable.'},\n    ]\n    return {\n        'vars': {'det_val': det_val, 'tr_val': tr_val},\n        'options': opts,\n        'distractors': []\n    }",
       "cross_check_py": "def verify(result):\n    return True",
       "hints": [
         "Analice las condiciones de Routh-Hurwitz para dimensión 2: det(A) > 0 y tr(A) < 0.",
@@ -57,7 +57,10 @@
         "Marque sólo las opciones que reflejan estabilidad asintótica."
       ],
       "solution": "Dado que det(A) > 0 y tr(A) < 0, los autovalores tienen parte real negativa, lo que garantiza estabilidad asintótica.",
-      "distractor_ids": ["D-C02-01", "D-C02-03"]
+      "distractor_ids": [
+        "D-C02-01",
+        "D-C02-03"
+      ]
     }
   ]
 }
