@@ -171,16 +171,17 @@ class PipelineRunner:
         self.ready_only = ready_only
         self.skip_judges = skip_judges
 
-        # Determine work directory first
+        # Determine work directory first (isolate --append into work_append/)
+        work_leaf = "work_append" if self.append else "work"
         if work_dir:
             self.work_dir = Path(work_dir)
         elif course_id:
-            self.work_dir = Path("courses") / sanitize_slug(course_id) / "work"
+            self.work_dir = Path("courses") / sanitize_slug(course_id) / work_leaf
         elif self.raw_pdf:
             first_path = Path(self.raw_pdf[0] if isinstance(self.raw_pdf, (list, tuple)) else self.raw_pdf)
-            self.work_dir = Path("courses") / sanitize_slug(first_path.stem) / "work"
+            self.work_dir = Path("courses") / sanitize_slug(first_path.stem) / work_leaf
         else:
-            self.work_dir = Path("courses") / "custom_course" / "work"
+            self.work_dir = Path("courses") / "custom_course" / work_leaf
 
         self.work_dir.mkdir(parents=True, exist_ok=True)
 
@@ -225,6 +226,15 @@ class PipelineRunner:
             raise FileNotFoundError(
                 "Cannot execute Stage 0 (prepare): No input path provided via --pdf."
             )
+
+        if self.append and self.work_dir.name == "work_append" and self.work_dir.is_dir():
+            import shutil
+            for stale_item in ("cta.json", "cta.md", "cta_data.py", "course.json", "course_verified.json", "judge_report.json", "templates", "shards", "verification", "cta_parts", "cta"):
+                stale_p = self.work_dir / stale_item
+                if stale_p.is_dir():
+                    shutil.rmtree(stale_p, ignore_errors=True)
+                elif stale_p.is_file():
+                    stale_p.unlink(missing_ok=True)
 
         sources: List[Path] = []
         raw_items = self.raw_pdf if isinstance(self.raw_pdf, (list, tuple)) else [self.raw_pdf]
@@ -611,6 +621,11 @@ class PipelineRunner:
                 for t in tdata:
                     cid = t.get("competency_id", tf.stem)
                     templates_by_comp.setdefault(cid, []).append(t)
+            elif isinstance(tdata, dict):
+                cid = tdata.get("competency_id", tf.stem)
+                if "competency_id" not in tdata:
+                    tdata["competency_id"] = cid
+                templates_by_comp.setdefault(cid, []).append(tdata)
 
         # Parallel competency question instantiation
         import zlib
