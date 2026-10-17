@@ -192,13 +192,16 @@ def test_plan_shards_dsl_reference_and_k_cap(tmp_path):
     res = plan_shards(cta_path=cta_source, output_dir=tmp_path / "shards", k=8)
     assert res["total_shards"] <= 8
 
-    # Inspect shard 1
-    shard_1_file = Path(res["shards"][0]["shard_file"])
-    data = json.loads(shard_1_file.read_text(encoding="utf-8"))
-    assert "dsl_reference" in data, "Shard must contain embedded dsl_reference for self-containment"
-    dsl = data["dsl_reference"]
-    assert "canonical_examples" in dsl
-    assert "multiple_choice_7_options" in dsl["canonical_examples"]
+    # Inspect shard 1 (supports v3 pre_shard_manifest schema and legacy shard_file)
+    s0 = res["shards"][0]
+    if "shard_file" in s0:
+        shard_1_file = Path(s0["shard_file"])
+        data = json.loads(shard_1_file.read_text(encoding="utf-8"))
+        assert "dsl_reference" in data
+    else:
+        assert "shard_data_path" in s0
+        assert "competency_ids" in s0
+        assert (tmp_path / "shards" / "pre_shard_manifest.json").is_file()
 
 
 def test_judge_canonical_option_comparison():

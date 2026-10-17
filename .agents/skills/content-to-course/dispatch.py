@@ -293,7 +293,7 @@ def build_scope_header(
     lines = [
         "## 0. SCOPE-LOCK Y CONTRATO DE EJECUCIÓN",
         f"- **Rol:** `{role}`",
-        "- **READ permitido:**",
+        "- READ permitido:",
     ]
     if r_paths:
         for p in r_paths:
@@ -301,14 +301,14 @@ def build_scope_header(
     else:
         lines.append("  - (Ninguno adicional fuera de este prompt)")
 
-    lines.append("- **WRITE permitido:**")
+    lines.append("- WRITE permitido:")
     if w_paths:
         for p in w_paths:
             lines.append(f"  - `{p}`")
     else:
         lines.append("  - (Ninguno)")
 
-    lines.append("- **PROHIBIDO:**")
+    lines.append("- PROHIBIDO:")
     if f_paths:
         for p in f_paths:
             lines.append(f"  - `{p}`")
