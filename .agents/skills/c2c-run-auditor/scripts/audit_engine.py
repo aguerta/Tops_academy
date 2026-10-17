@@ -1732,11 +1732,11 @@ class ReportGenerator:
             "",
             f"**Fecha de Auditoría:** `{meta['audit_timestamp'][:19].replace('T', ' ')} UTC`  ",
             f"**Conversación Orquestadora:** [`{meta['orchestrator_conversation_id']}`](conversation://{meta['orchestrator_conversation_id']})  ",
-            f"**Enfoque:** Telemetría de API, Comportamiento de Subagentes, Shards, Latencias Críticas y Síndrome del Orquestador Reparador.",
+            f"**Enfoque:** Telemetría Determinista de API, Subagentes, Shards, Latencias y Operaciones del Orquestador.",
             "",
             "---",
             "",
-            "## 1. Consolidación de Métricas: La Caracterización de Carga y la Paradoja del Material",
+            "## 1. Consolidación de Métricas y Caracterización de Carga",
             "",
             "| Dimensión / Métrica | Valor Registrado | Observaciones de Ingeniería |",
             "| :--- | :--- | :--- |",
@@ -1746,7 +1746,7 @@ class ReportGenerator:
             f"| **Competencias Extraídas** | **`{w['competencies_count']} competencias`** | Desglose pedagógico (Hechos, Conceptos, Habilidades) |",
             f"| **Shards Particionados** | **`{w['shards_count']} shards`** | Unidades de trabajo concurrentes |",
             f"| **Subagentes Desplegados** | **`{summary['total_subagents_spawned']} subagentes`** | Visión ({stg['stage_1a_vision']['agents_count']}), CTA ({stg['stage_1b_cta'].get('agents_count', stg['stage_1b_cta']['mappers_count'] + (1 if stg['stage_1b_cta']['harmonizer'] else 0))}), Autores ({stg['stage_3_authors']['shards_count']}) |",
-            f"| **Reactivos Finales Validadas** | **`{w['questions_count']} preguntas`** | 100% conformes con invariantes de sandbox |",
+            f"| **Reactivos Finales Validados** | **`{w['questions_count']} preguntas`** | Evaluadas en sandbox |",
             f"| **Tokens Entrada (Subagentes)** | **`{sum(s['input_tokens'] for s in subs):,}` tokens** | Contexto acumulativo enviado a subagentes |",
             f"| **Tokens Salida (Subagentes)** | **`{sum(s['output_tokens'] for s in subs):,}` tokens** | Código de plantillas y JSON generado |",
             f"| **Tokens Caché (Leídos)** | **`{summary['total_cache_read_tokens']:,}` tokens** | Caché de contexto reutilizado por la API |",
@@ -1854,21 +1854,16 @@ class ReportGenerator:
 
         md.extend([
             "",
-            "#### 💡 El Principio de Amortización de Shards Demostrado Empíricamente:",
-            "Al analizar la tabla anterior, se verifica la relación inversa entre competencias por shard y costo unitario:",
-            "- Shards con **2 competencias** (ej. Shard 05) promedian **~112,000 tokens/competencia** debido al overhead fijo de prompts, schemas y herramientas (~85% de la carga).",
-            "- Shards con **6-7 competencias** (ej. Shard 01, 02) promedian **~45,000 a 55,000 tokens/competencia**, logrando un **ahorro neto superior al 55% por competencia**.",
-            "",
             "---",
             "",
             "### 3.4. Evaluación y Arbitraje de Blind Judges (Verificación Psicométrica Ciega)"
         ])
 
         bj = stg["stage_5_judges"]
-        first_att_res = "✅ 100% Limpio (Sin Discrepancias)" if bj["passed_first_attempt"] else "❌ Falló (Colapso R-18 / R-19)"
-        first_att_obs = "Sin discrepancias ni arbitraje necesario" if bj["passed_first_attempt"] else f"{bj['initial_errors_count']} violaciones bloqueantes iniciales"
-        rep_obs = "0 requeridas" if bj["passed_first_attempt"] else "Auto-repair final cerró discrepancias residuales"
-        orch_obs = "Ninguna (ejecución autónoma)" if bj["passed_first_attempt"] else "Parches directos en plantillas y scripts en scratch/"
+        first_att_res = "✅ 100% Limpio (Sin Discrepancias)" if bj["passed_first_attempt"] else "❌ Falló al primer intento"
+        first_att_obs = "Sin discrepancias ni arbitraje necesario" if bj["passed_first_attempt"] else f"{bj['initial_errors_count']} violaciones iniciales registradas"
+        rep_obs = "0 requeridas" if bj["passed_first_attempt"] else f"{bj['repair_iterations']} iteraciones ejecutadas"
+        orch_obs = "Ninguna (ejecución autónoma)" if bj["supervisor_interventions_count"] == 0 else f"{bj['supervisor_interventions_count']} ediciones registradas"
 
         md.extend([
             "",
@@ -1882,9 +1877,8 @@ class ReportGenerator:
             f"| **Resultado al Primer Intento** | **`{first_att_res}`** | {first_att_obs} |",
             f"| **Iteraciones de Auto-Reparación** | `{bj['repair_iterations']} iteraciones` en sandbox | {rep_obs} |",
             f"| **Intervenciones del Supervisor** | 🛠️ `{bj['supervisor_interventions_count']} operaciones directas` | {orch_obs} |",
-            f"| **Estado Previo a Publicación** | ✅ **Certificado / Validado** | Curso verificado conforme a invariantes de plataforma |",
             "",
-            "#### Detalle de Acciones Tomadas en Caso Contrario:"
+            "#### Detalle de Acciones Registradas:"
         ])
         for act in bj["actions_taken"]:
             md.append(f"- {act}")
@@ -1903,27 +1897,30 @@ class ReportGenerator:
             f"- 🧠 **Tiempo de Inferencia y Razonamiento del Modelo:** `{orch['time_decomposition']['model_thinking_minutes']} min` (`{orch['time_decomposition']['model_thinking_seconds']}s`)",
             "",
             "### 4.2. Catálogo Cronológico de Reparaciones Manuales del Orquestador",
-            f"El orquestador ejecutó **`{orch['interventions_count']} operaciones directas de edición de código`**, cayendo en el **Síndrome del Supervisor Reparador**:",
+            f"Operaciones directas de edición de código ejecutadas por el orquestador: **`{orch['interventions_count']}`**",
             "",
             "| Paso | Archivo Afectado | Tipo de Acción | Causa Raíz / Justificación Técnica | Herramienta | Tokens Paso |",
             "| :---: | :--- | :--- | :--- | :--- | :--- |"
         ])
 
-        for it in orch["interventions"]:
-            md.append(
-                f"| **{it['step']}** | `{it['file']}` | {it['action_type']} | {it['cause']} | `{it['tool']}` | {it['tokens_step']:,} |"
-            )
+        if orch["interventions"]:
+            for it in orch["interventions"]:
+                md.append(
+                    f"| **{it['step']}** | `{it['file']}` | {it['action_type']} | {it['cause']} | `{it['tool']}` | {it['tokens_step']:,} |"
+                )
+        else:
+            md.append("| — | *Ninguna intervención registrada* | — | — | — | 0 |")
 
         md.extend([
             "",
             "---",
             "",
-            "## 5. Diagnóstico de Cuellos de Botella y Antipatrones del SDK",
+            "## 5. Diagnóstico de Cuellos de Botella y Antipatrones Detectados",
             ""
         ])
 
         if not bottlenecks:
-            md.append("> ✅ **No se detectaron cuellos de botella severos ni anomalías.** El run operó dentro de los márgenes óptimos.")
+            md.append("> ✅ **0 cuellos de botella detectados según los umbrales deterministas.**")
         else:
             for b in bottlenecks:
                 sev_icon = "🛑" if b["severity"] == "HIGH" else ("⚠️" if b["severity"] == "MEDIUM" else "ℹ️")
@@ -1959,16 +1956,7 @@ class ReportGenerator:
 
         md.extend([
             "---",
-            "",
-            "## 7. Recomendaciones de Arquitectura y Contratos Isomórficos",
-            "",
-            "1. **Erradicación del Supervisor Reparador mediante Shift-Left:** Integrar las reglas psicométricas (R-18 meta-giveaways, R-19 fugas FIB, R-20 KaTeX) dentro de `check_templates.py --strict` para que los autores corrijan su propio código en su hilo, eliminando las 17 intervenciones manuales del orquestador.",
-            "2. **Adopción de Sharding Amortizado (7-8 Competencias/Shard):** Balancear las competencias asignadas por shard para evitar shards enanos de 2 competencias, reduciendo el consumo de tokens en un 55-70%.",
-            "3. **Protocolo Atómico por Lotes:** Forzar a los autores a escribir todas las plantillas del shard en 1 solo `write_to_file` en lugar de iterar en bucles microscópicos de 60-80 turnos.",
-            "4. **Aislamiento de Namespaces en Fusión de CTA:** Garantizar que `cta_merge.py` utilice siempre `part_id_maps` para prevenir colisiones de identificadores y ciclos artificiales en el grafo de prerrequisitos.",
-            "",
-            "---",
-            "*Reporte forense emitido por `c2c-run-auditor`.*"
+            "*Reporte forense determinista emitido por `c2c-run-auditor`.*"
         ])
 
         return "\n".join(md)
@@ -2248,9 +2236,9 @@ class ReportGenerator:
              growth_factor(uea.get("seconds_per_question", 1), ueb.get("seconds_per_question", 1))),
 
             ("Blind Judges (1er Intento)",
-             "✅ Pasó perfecto (100% limpio)" if ma.get("blind_judges", {}).get("passed_first_attempt", True) else "❌ Falló (Req. intervenciones)",
-             "✅ Pasó perfecto (100% limpio)" if mb.get("blind_judges", {}).get("passed_first_attempt", False) else "❌ Falló (Req. 17 fixes + auto-repair)",
-             "Desviación Crítica: Fallo R-18/R-19" if ma.get("blind_judges", {}).get("passed_first_attempt", True) != mb.get("blind_judges", {}).get("passed_first_attempt", False) else "Paridad"),
+             "✅ Pasó (100% limpio)" if ma.get("blind_judges", {}).get("passed_first_attempt", True) else f"❌ Falló ({ma.get('orchestrator_interventions', 0)} fixes)",
+             "✅ Pasó (100% limpio)" if mb.get("blind_judges", {}).get("passed_first_attempt", False) else f"❌ Falló ({mb.get('orchestrator_interventions', 0)} fixes)",
+             "Cambio de estado" if ma.get("blind_judges", {}).get("passed_first_attempt", True) != mb.get("blind_judges", {}).get("passed_first_attempt", False) else "Paridad"),
 
             ("Intervenciones Manuales (Orch)", f"{ma.get('orchestrator_interventions', 0)} fixes",
              f"{mb.get('orchestrator_interventions', 0)} fixes",
@@ -2278,13 +2266,13 @@ class ReportGenerator:
             "",
             "---",
             "",
-            "## 2. Diagnóstico Comparativo de Eficiencia",
+            "## 2. Variación Determinista de Ratios",
             "",
-            f"- **Intensidad de Tokens por Pregunta**: Pasó de `{uea.get('tokens_per_question', 0):,}` a `{ueb.get('tokens_per_question', 0):,}` ({growth_factor(uea.get('tokens_per_question', 1), ueb.get('tokens_per_question', 1))}).",
-            f"- **Multiplicador de Tokens Activos**: Las llamadas de subagentes escalaron por un factor de `{growth_factor(ma.get('total_active_tokens', 1), mb.get('total_active_tokens', 1))}`.",
-            f"- **Ritmo de Entrega (Seg/Pregunta)**: Se modificó de `{uea.get('seconds_per_question', 0)}s` a `{ueb.get('seconds_per_question', 0)}s`.",
-            f"- **Arbitraje de Blind Judges**: `{name_a}` {'pasó de forma 100% limpia al primer intento' if ma.get('blind_judges', {}).get('passed_first_attempt', True) else 'requirió correcciones'}, mientras que `{name_b}` {'pasó limpio' if mb.get('blind_judges', {}).get('passed_first_attempt', False) else 'no pasó al primer intento (colapso por R-18/R-19) y requirió 17 intervenciones manuales del supervisor'}.",
-            f"- **Intervenciones del Supervisor**: `{ma.get('orchestrator_interventions', 0)}` en la corrida base vs `{mb.get('orchestrator_interventions', 0)}` en la corrida analizada.",
+            f"- **Intensidad de Tokens por Pregunta**: `{uea.get('tokens_per_question', 0):,}` -> `{ueb.get('tokens_per_question', 0):,}` ({growth_factor(uea.get('tokens_per_question', 1), ueb.get('tokens_per_question', 1))}).",
+            f"- **Multiplicador de Tokens Activos**: `{growth_factor(ma.get('total_active_tokens', 1), mb.get('total_active_tokens', 1))}`.",
+            f"- **Ritmo de Entrega (Seg/Pregunta)**: `{uea.get('seconds_per_question', 0)}s` -> `{ueb.get('seconds_per_question', 0)}s`.",
+            f"- **Arbitraje de Blind Judges (1er Intento)**: `{name_a}` = `{ma.get('blind_judges', {}).get('passed_first_attempt', True)}`, `{name_b}` = `{mb.get('blind_judges', {}).get('passed_first_attempt', False)}`.",
+            f"- **Intervenciones del Supervisor**: `{ma.get('orchestrator_interventions', 0)}` vs `{mb.get('orchestrator_interventions', 0)}`.",
             "",
             "---",
             "*Generado por el motor forense `c2c-run-auditor`.*"
