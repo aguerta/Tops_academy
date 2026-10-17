@@ -57,25 +57,27 @@ Herramienta de auditoría forense y análisis de rendimiento para pipelines de o
 
 ---
 
-## 1. Arquitectura de Telemetría y Persistencia
+## 1. Arquitectura de Telemetría y Persistencia (C2C v3.2)
 
 ```mermaid
 flowchart TD
-    User["Invocación: Target (UUID, Chat Link, Curso o 'recent')"] --> Resolver["1. Target Resolver"]
-    Resolver --> Parser["2. Transcript Parser (< 400 ms)\n(Stream de transcript.jsonl del Director y de cada Subagente)"]
+    User["Invocación: Target (UUID, Chat Link, Curso o 'recent')"] --> Resolver["1. Target & Manifest Resolver"]
+    Resolver --> Streamer["2. Single-Pass Transcript Streamer (< 400 ms)\n(transcript.jsonl + resolución selectiva de transcript_full.jsonl)"]
+    Resolver --> IncTel["2b. Incremental Telemetry Ingestor\n(work/state.json + work/telemetry/<idx>_<stage>.json)"]
     
-    subgraph Engine ["scripts/audit_engine.py"]
-        Parser --> Workload["3. Workload Profiler\n- Archivos fuente originales & peso (MB)\n- Páginas / Slides (PyMuPDF / budget.json)\n- Handouts, Competencias & Preguntas"]
-        Workload --> Metrics["4. Granular Metrics Computer\n- Tokens: In / Out / Cache / Thinking\n- Tiempos: Inferencia vs Tools vs Espera\n- Turnos y desglose de herramientas"]
-        Metrics --> Stages["5. Stage Classifier (Etapas 0 a 6 C2C)"]
-        Stages --> Bottlenecks["6. Bottleneck & Straggler Analyzer\n- Identificación de Camino Crítico\n- Desviaciones > 1.5x mediana\n- Inflación de contexto & fallos en tools"]
+    subgraph Engine ["scripts/audit_engine.py & scripts/traceback_analyzer.py"]
+        Streamer --> Workload["3. Workload Profiler (Zero-Waste v3.2)\n- pre_cta_manifest.json (archivos, páginas PDF 1..N, subparts)\n- pre_shard_manifest.json (N shards dinámicos)\n- Competencias & Preguntas compiladas"]
+        IncTel --> Workload
+        Workload --> Metrics["4. Granular Metrics & Thinking Extractor\n- Tokens: In / Out / Cache / Thinking\n- Tiempos: Inferencia LLM vs Tools vs Espera\n- thinking_traces: Razonamiento cronológico por turno y antes de cada fallo"]
+        Metrics --> Stages["5. Dynamic M/N/K Stage Classifier\n- M CTA Architects (direct o mapreduce part_01..MM)\n- N Shard Authors (shard_01..NN)\n- K Blind Judges (judge_01..KK, 1-turn Zero-Warmup)"]
+        Stages --> Bottlenecks["6. Bottleneck & Straggler Analyzer\n- Identificación de Camino Crítico\n- Desviaciones > 1.5x mediana\n- Taxonomía de errores con snippet de thinking previo"]
         Bottlenecks --> UnitEcon["7. Unit Economics Normalizados\n(Tokens/Pregunta, Seg/Pregunta, Preg/Minuto)"]
     end
     
     UnitEcon --> Persistence["8. Repositorio Persistente (reports/c2c_audits/)"]
     Persistence --> RunDir["reports/c2c_audits/<timestamp>_<course>_<id>/"]
-    RunDir --> RepMD["report.md (Informe Ejecutivo & Forense)"]
-    RunDir --> TelJSON["telemetry.json (Dataset completo en JSON)"]
+    RunDir --> RepMD["report.md (Informe Ejecutivo, Forense & Thinking Traces)"]
+    RunDir --> TelJSON["telemetry.json (Dataset completo + thinking_traces_summary)"]
     RunDir --> DashHTML["dashboard.html (Dashboard interactivo autónomo)"]
     
     Persistence --> Registry["Registro Histórico Longitudinal"]
@@ -93,11 +95,11 @@ flowchart TD
 Cuando el usuario solicita auditar una corrida, el agente debe seguir estos pasos deterministas:
 
 ### Paso 1: Resolver y Ejecutar Directamente
-- Para auditoría ejecutiva de telemetría, unit economics y dashboard:
+- Para auditoría ejecutiva de telemetría, unit economics, `thinking_traces` y dashboard:
   ```bash
   python .agents/skills/c2c-run-auditor/scripts/audit_engine.py --conversation <ID_O_ENLACE>
   ```
-- Para auditoría integral completa con **Traceback Deep-Dive** (turnos de subagentes, bottlenecks de CTA/shards, fugas web de jueces y taxonomía de errores):
+- Para auditoría integral completa con **Traceback Deep-Dive** (turnos de subagentes, escalado dinámico de $M$ CTA Architects / $N$ Shards / $K$ Judges, `thinking_traces` previos a cada error y taxonomía de fricciones):
   ```bash
   python .agents/skills/c2c-run-auditor/scripts/audit_engine.py --conversation <ID_O_ENLACE> --traceback
   ```
@@ -110,24 +112,26 @@ Cuando el usuario solicita auditar una corrida, el agente debe seguir estos paso
   python .agents/skills/c2c-run-auditor/scripts/audit_engine.py --recent
   ```
 
-### Paso 2: Resiliencia y Deduplicación Canónica
+### Paso 2: Capacidades C2C v3.2, Resiliencia y Deduplicación Canónica
 El motor maneja de forma autónoma:
-1. **Auto-descubrimiento estructurado de subagentes:** Extrae roles y tipos de los JSON de `manage_subagents` y headers `# Asignación de Tarea para <Rol>`, mapeando cada shard de visión, CTA y autoría.
-2. **Resiliencia post-publicación:** Si la carpeta temporal `work/` ya fue eliminada, el motor resuelve el curso publicado en `courses/<course_id>.json` (preguntas validadas), reconstruye la carga desde logs y calcula unit economics sin errores.
-3. **Deduplicación canónica por corrida:** Mantiene estrictamente **1 sola entrada por conversación** en `audit_registry.json` y `historical_benchmark.md`, reemplazando automáticamente auditorías preliminares y evitando duplicados artificiales.
+1. **Ingesta de Telemetría Incremental (`telemetry_collector.py`):** Fusiona los snapshots deterministas por etapa (`work/telemetry/00_prepare.json` .. `06_publish.json`) y el estado maestro acumulativo (`work/state.json`), cruzando los manifiestos `work/pre_cta_manifest.json` y `work/shards/pre_shard_manifest.json`.
+2. **Escalado Dinámico $M \times N \times K$:** Descubre y clasifica automáticamente **cualquier número $M$ de CTA Architects** (modo `direct` o `mapreduce` con `part_01..part_MM` y `cta_harmonizer`), **cualquier número $N$ de Shard Authors** (`shard_01..shard_NN`) y **cualquier número $K$ de Blind Judges** (`judge_01..judge_KK`).
+3. **Extracción Forense de `thinking_traces` (Qué pensaron los subagentes):** Lee en streaming de una sola pasada `transcript.jsonl` y resuelve selectivamente desde `transcript_full.jsonl` únicamente los pasos con `truncated_fields`, extrayendo el razonamiento interno (`thinking`) de cada subagente turno por turno y adjuntando el pensamiento exacto previo a cada error de compilación o validación (`last_thinking`).
+4. **Resiliencia post-publicación:** Si la carpeta temporal `work/` ya fue eliminada, el motor resuelve el curso publicado en `courses/<course_id>.json` (preguntas validadas), reconstruye la carga desde logs y calcula unit economics sin errores.
+5. **Deduplicación canónica por corrida:** Mantiene estrictamente **1 sola entrada por conversación** en `audit_registry.json` y `historical_benchmark.md`, reemplazando automáticamente auditorías preliminares y evitando duplicados artificiales.
 
 ### Paso 3: Presentar el Resumen Ejecutivo Inmediato
 Inmediatamente tras la ejecución del CLI (< 1.5s), el agente lee el `report.md` emitido y presenta al usuario:
-- **Ficha de Carga (Workload Context)**: Cuántas páginas/slides, archivos fuente y preguntas/competencias se procesaron.
+- **Ficha de Carga (Workload Context v3.2)**: Cuántas páginas PDF (`pre_cta_manifest.json`), archivos fuente, $M$ subpartes CTA, $N$ shards (`pre_shard_manifest.json`) y preguntas/competencias se procesaron.
 - **Métricas Clave de Rendimiento**:
   - Tiempo de pared (*wall-clock*) y factor de aceleración (*speedup*).
-  - Tokens totales y densidad normalizada: **Tokens por pregunta** y **Segundos por pregunta**.
-- **Diagnóstico Principal de Cuellos de Botella**:
-  - Identificar si hubo subagentes *stragglers* (rezagados).
-  - Reportar exceso de turnos o errores en herramientas.
-- **Dictamen de Blind Judges (Verificación Ciega)**:
-  - Indicar explícitamente si el lote estratificado pasó 100% perfecto al primer intento sin discrepancias.
-  - En caso contrario, catalogar detalladamente las acciones tomadas: fallos psicométricos iniciales (R-18/R-19), rondas de auto-reparación e intervenciones directas del supervisor.
+  - Tokens totales (incluyendo desglose de tokens de `thinking`) y densidad normalizada: **Tokens por pregunta** y **Segundos por pregunta**.
+- **Diagnóstico Principal de Cuellos de Botella y `thinking_traces`**:
+  - Identificar si hubo subagentes *stragglers* (rezagados) entre los $M$ CTA Architects o los $N$ Shard Authors.
+  - Reportar exceso de turnos, errores de compilación de tuplas (`compile_cta.py` / `compile_shard.py`) y qué pensó el subagente (`thinking_traces`) antes del fallo.
+- **Dictamen de Blind Judges ($K$ Jueces en 1 Turno Zero-Warmup)**:
+  - Indicar explícitamente si el lote estratificado pasó 100% perfecto en 1 turno sin llamadas adicionales.
+  - En caso contrario, catalogar detalladamente las acciones tomadas: fallos psicométricos iniciales, rondas de auto-reparación e intervenciones directas del supervisor.
 - **Enlaces Clicables**:
   - Enlace al informe Markdown generado: `[report.md](file:///.../report.md)`
   - Enlace al dashboard HTML: `[dashboard.html](file:///.../dashboard.html)`

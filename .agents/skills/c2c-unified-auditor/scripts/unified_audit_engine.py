@@ -432,13 +432,21 @@ def generate_merged_markdown_report(
     now = datetime.datetime.now()
     today_str = f"{now.day} de {months_es[now.month - 1]} de {now.year}"
 
-    # Build ASCII chart of timings
+    # Build ASCII chart of timings (supporting M CTA Architects, N Shards, K Judges)
     shards_data = traceback_data.get("shards", {})
+    cta_architects_map = traceback_data.get("cta_architects", {})
     cta_data = traceback_data.get("cta_architect", {})
     judges_data = traceback_data.get("judges", {})
 
     ascii_bars = []
-    if cta_data:
+    if cta_architects_map and isinstance(cta_architects_map, dict):
+        for c_name, c_info in cta_architects_map.items():
+            ct = c_info.get("timings", {})
+            inf_pct = ct.get("inference_pct", 99.0)
+            filled = int(inf_pct / 2.5)
+            bar = "█" * filled + "░" * (40 - filled)
+            ascii_bars.append(f"{c_name:<23}: [{bar}] {int(ct.get('inference_seconds', 0))}s ({inf_pct}%) LLM | {int(ct.get('tool_seconds', 0))}s Tools")
+    elif cta_data:
         ct = cta_data.get("timings", {})
         inf_pct = ct.get("inference_pct", 99.0)
         filled = int(inf_pct / 2.5)
@@ -461,7 +469,7 @@ def generate_merged_markdown_report(
 
     ascii_block = "\n".join(ascii_bars) if ascii_bars else "Telemetría de distribución calculada mediante logs de subagentes."
 
-    # Error taxonomy table
+    # Error taxonomy table (with subagent thinking traces on failure)
     taxonomy = traceback_data.get("error_taxonomy", {})
     tax_rows = []
     total_tax_errors = 0
@@ -481,6 +489,9 @@ def generate_merged_markdown_report(
                 agents_str = ", ".join(agents[:3]) or "Múltiples agentes"
                 first_item = cat_val[0] if cat_val and isinstance(cat_val[0], dict) else {}
                 sample = first_item.get("snippet", "").replace("\n", " ").replace("|", "/").strip()[:90] or "—"
+                th_snip = (first_item.get("thinking_snippet") or first_item.get("last_thinking") or "").replace("\n", " ").replace("|", "/").strip()[:70]
+                if th_snip:
+                    sample = f"{sample} *(Thinking: {th_snip})*"
             elif isinstance(cat_val, dict):
                 cnt = cat_val.get("count", 0)
                 total_tax_errors += cnt
@@ -493,9 +504,13 @@ def generate_merged_markdown_report(
             tax_rows.append(f"| **{cat_name}** | **{cnt}** | {agents_str} | {sample} |")
     tax_table = "\n".join(tax_rows) if tax_rows else "| **Fricción Operativa General** | **0** | Ninguno | Sin errores registrados |"
 
+    th_summary = telemetry_data.get("thinking_traces_summary", {})
+    total_thinking_turns = th_summary.get("total_thinking_turns", 0)
+    total_thinking_chars = t_summary.get("total_thinking_chars", th_summary.get("subagents_thinking_chars", 0))
+
     md = f"""# Reporte Unificado de Auditoría Integral: Calidad Pedagógica, Telemetría Forense y Rendimiento Multi-Agente
 ## Curso: {unit_title} (`{course_id}`)
-### Plataforma Top's Academy — Pipeline Content-to-Course (C2C) v2
+### Plataforma Top's Academy — Pipeline Content-to-Course (C2C) v3.2
 
 ---
 
@@ -656,16 +671,15 @@ Durante la inspección semántica detallada se identificaron las siguientes regl
 
 | Dimensión / Métrica | Valor Registrado | Observaciones de Ingeniería |
 | :--- | :--- | :--- |
-| **Material de Entrada** | `{workload.get('source_files_count', len(workload.get('source_files', [])))} archivos` ({workload.get('pages_or_slides', workload.get('total_pages_or_slides', 0))} págs / {workload.get('input_mb', workload.get('total_input_mb', 0.0))} MB) | Documentos originales procesados |
-| **Requerimiento de Visión** | `{workload.get('pages_needing_vision', 0)} páginas` ({workload.get('total_handouts', workload.get('handouts', 0))} handouts) | Handouts de visión generados |
-| **Corpus Sintetizado** | `{workload.get('corpus_chars', 0):,} caracteres` ({workload.get('corpus_words', 0):,} palabras) | Texto consolidado tras ingesta |
-| **Competencias Extraídas** | **`{total_comps} competencias`** | Desglose pedagógico formalizado |
-| **Shards Particionados** | **`{workload.get('shards_count', 3)} shards`** | Distribución concurrente de autoría |
-| **Subagentes Desplegados** | **`{t_summary.get('total_subagents_spawned', 6)} subagentes`** | Fan-out coordinado por orquestador |
-| **Reactivos Finales Validados** | **`{total_questions} preguntas`** | 100% conformes con invariantes de sandbox y paridad |
+| **Material de Entrada (`pre_cta_manifest.json`)** | `{workload.get('source_files_count', len(workload.get('source_files', [])))} archivos` ({workload.get('pages_or_slides', workload.get('total_pages_or_slides', 0))} págs / {workload.get('input_mb', workload.get('total_input_mb', 0.0))} MB) | Ingesta directa PDF Zero-Waste (v3.2) |
+| **Competencias Extraídas (`cta.json`)** | **`{total_comps} competencias`** | Compiladas desde tuplas posicionales (`compile_cta.py`) |
+| **Shards Particionados (`pre_shard_manifest.json`)** | **`{workload.get('shards_count', len(shards_data) or 3)} shards`** | Tope 5–6 competencias por shard (`compile_shard.py`) |
+| **Subagentes Desplegados ($M$ CTA, $N$ Shards, $K$ Judges)** | **`{t_summary.get('total_subagents_spawned', 6)} subagentes`** | Fan-out dinámico coordinado por orquestador |
+| **Reactivos Finales Validados** | **`{total_questions} preguntas`** | 100% conformes con invariantes de sandbox in-process y paridad |
 | **Tokens Entrada (Subagentes)** | **`{t_summary.get('total_input_tokens', 0):,} tokens`** | Contexto acumulativo enviado a subagentes |
-| **Tokens Salida (Subagentes)** | **`{t_summary.get('total_output_tokens', 0):,} tokens`** | Código de plantillas y JSON generado |
+| **Tokens Salida (Subagentes)** | **`{t_summary.get('total_output_tokens', 0):,} tokens`** | Código de tuplas Python y JSON generado |
 | **Tokens Caché (Leídos)** | **`{t_summary.get('total_cache_read_tokens', 0):,} tokens`** | Caché de contexto reutilizado por la API |
+| **Trazas de Pensamiento (`thinking_traces`)** | **`{total_thinking_turns} turnos` ({total_thinking_chars:,} chars)** | Razonamiento interno extraído de `transcript.jsonl` / `transcript_full.jsonl` |
 | **Gran Total Tokens Activos** | **`{t_summary.get('total_active_tokens', 0):,} tokens`** | Entrada + Salida neto (sin contar caché) |
 | **Gran Total Tokens (con Caché)** | **`{t_summary.get('total_tokens', 0):,} tokens`** | Consumo total de cuota facturable |
 | **Tiempo de Pared Total** | **`{wall_sec:.1f} s` ({wall_min} min)** | Tiempo transcurrido de principio a fin |
