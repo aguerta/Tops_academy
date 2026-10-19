@@ -4,7 +4,9 @@
     "unit_title": "Estadística III: Econometría y Modelo de Regresión Lineal",
     "detected_objective": "Dominar la especificación matemática, estimación MCO en notación matricial, propiedades estadísticas y asintóticas de Gauss-Markov, álgebra geométrica de proyecciones, descomposición ANOVA de sumas de cuadrados, inferencia de hipótesis lineales y diagnóstico econométrico integral.",
     "total_competencies": 16,
-    "total_questions": 390
+    "total_questions": 390,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-10-17 00:24:26"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -82,5 +84,8 @@
     "Corregir el cierre de fracción en Q-Hab02-118 y reactivos análogos de modelos recíprocos: '\\frac{500}{\\text{Q}$$' por '$$\\text{CMe} = 30 + \\frac{500}{\\text{Q}}$$' o '\\frac{500}{Q}'.",
     "Formalizar en el esquema raíz del curso una jerarquía modular (macro-módulos temáticos) y un grafo de prerrequisitos (DAG) entre competencias para optimizar la navegación adaptativa en Mastery Learning.",
     "Aumentar la variabilidad sintáctica de distractores en preguntas generadas paramétricamente para evitar fatiga por patrones predecibles."
-  ]
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-17 00:24:26",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

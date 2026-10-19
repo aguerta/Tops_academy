@@ -1,0 +1,2458 @@
+{
+  "course_id": "solow_model_v15",
+  "filename": "solow_model_v15.json",
+  "title": "Solow Model V15",
+  "description": "Dominio y aplicación analítica integral de Solow Model V15",
+  "total_competencies": 15,
+  "total_questions": 360,
+  "question_types_distribution": {
+    "multiple_choice_7_options": 360
+  },
+  "questions_per_competency": {
+    "C-01": 20,
+    "H-01": 20,
+    "Hab-01": 30,
+    "H-02": 20,
+    "C-02": 20,
+    "C-03": 20,
+    "Hab-02": 30,
+    "Hab-03": 30,
+    "C-04": 20,
+    "Hab-04": 30,
+    "H-03": 20,
+    "C-05": 20,
+    "Hab-05": 30,
+    "Hab-06": 30,
+    "C-06": 20
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (conteo de KaTeX roto, distractores delatores, pistas faltantes, placeholders f-string y distribución de Bloom) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts de prueba exploratorios en Python. Aplica el Adaptive Semantic Loop y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 0.0,
+    "hard_penalties_precalculated": []
+  },
+  "audit_telemetry": {
+    "course_id": "solow_model_v15",
+    "title": "Solow Model V15",
+    "total_competencies": 15,
+    "total_questions": 360,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 15,
+        "category_distribution": {
+          "Fact": 3,
+          "Concept": 6,
+          "Skill": 6,
+          "Other": 0
+        },
+        "competencies_missing_prerequisites_count": 2,
+        "underpopulated_competencies_count": 0,
+        "underpopulated_competencies": [],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 20,
+        "max_questions_per_comp": 30
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 2160,
+        "distractors_with_rationale_count": 2160,
+        "rationale_coverage_pct": 100.0,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 0,
+        "zero_hints_items": [],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 0,
+        "missing_solutions_count": 0
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 0,
+        "unclosed_braces_items": [],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 0,
+        "template_variable_residue_items": []
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 0,
+        "blind_string_replacement_items": []
+      }
+    },
+    "hard_penalties": [],
+    "risk_score": 0.0,
+    "risk_clusters": {
+      "katex_issues": [],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [],
+      "template_residues": [],
+      "blind_replacements": []
+    },
+    "all_issues": [],
+    "issues_by_item": {}
+  },
+  "competencies": [
+    {
+      "id": "C-01",
+      "name": "Hipótesis de Sustitución de Factores y Rendimientos Constantes a Escala",
+      "category": "Concept",
+      "description": "En el modelo neoclásico, la producción agregada $Q = F(K, L)$ admite sustitución continua entre factores con rendimientos constantes a escala: $F(\\mu K, \\mu L) = \\mu F(K, L)$ para todo $\\mu > 0$, con productos marginales positivos $F_K > 0, F_L > 0$ y rendimientos marginales decrecientes $F_{KK} < 0, F_{LL} < 0$.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "H-01",
+      "name": "Definición de la Función de Producción en Forma Intensiva",
+      "category": "Fact",
+      "description": "Gracias a la homogeneidad de grado 1, el producto por trabajador $q \\equiv \\frac{Q}{L}$ se expresa como una función de la relación capital-trabajo $k \\equiv \\frac{K}{L}$: $q = \\phi(k) \\equiv F(k, 1)$, con $\\phi'(k) > 0$ y $\\phi''(k) < 0$.",
+      "prerequisites": [
+        "C-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-01",
+      "name": "Derivación de la Tasa de Variación Temporal del Capital por Trabajador",
+      "category": "Skill",
+      "description": "A partir de la identidad $K = k L$, derivar la tasa de cambio temporal $\\dot{k} \\equiv \\frac{dk}{dt}$ aplicando la regla de la cadena y del producto: $\\dot{K} = \\dot{k}L + k\\dot{L} = \\dot{k}L + \\lambda k L$, para despejar $\\dot{k} = \\frac{\\dot{K}}{L} - \\lambda k$.",
+      "prerequisites": [
+        "C-01",
+        "H-01"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "H-02",
+      "name": "Ecuación Diferencial Fundamental del Modelo de Solow",
+      "category": "Fact",
+      "description": "La ecuación diferencial ordinaria no lineal de primer orden que gobierna la trayectoria temporal de la relación capital-trabajo es: $\\dot{k} = s\\phi(k) - \\lambda k$, donde $s\\phi(k)$ es la inversión bruta por trabajador y $\\lambda k$ es la inversión de reposición o ensanchamiento de capital.",
+      "prerequisites": [
+        "Hab-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-02",
+      "name": "Estabilidad Dinámica Global en el Diagrama de Línea de Fase",
+      "category": "Concept",
+      "description": "El estado estacionario $\\bar{k} > 0$ satisface $s\\phi(\\bar{k}) = \\lambda \\bar{k}$. El equilibrio es dinámicamente estable si la pendiente de la línea de fase es negativa en $\\bar{k}$: $\\left.\\frac{d\\dot{k}}{dk}\\right|_{k = \\bar{k}} = s\\phi'(\\bar{k}) - \\lambda < 0$, de modo que si $k < \\bar{k}$, $\\dot{k} > 0$, y si $k > \\bar{k}$, $\\dot{k} < 0$.",
+      "prerequisites": [
+        "H-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-03",
+      "name": "Propiedades del Estado Uniforme de Crecimiento Equilibrado",
+      "category": "Concept",
+      "description": "En el estado uniforme (o balanced growth path) donde $\\dot{k} = 0$, la relación capital-trabajo $k = \\bar{k}$ y el producto por trabajador $q = \\phi(\\bar{k})$ permanecen constantes en el tiempo, lo que implica que el capital agregado $K$, el producto agregado $Q$ y la inversión neta crecen exactamente a la tasa de crecimiento poblacional $\\lambda$.",
+      "prerequisites": [
+        "C-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-02",
+      "name": "Linealización y Resolución de la Ecuación de Bernoulli Cobb-Douglas",
+      "category": "Skill",
+      "description": "Para una función de producción Cobb-Douglas $Q = K^\\alpha L^{1-\\alpha}$, la ecuación fundamental $\\dot{k} + \\lambda k = s k^\\alpha$ es de Bernoulli. Al definir el cambio de variable $z \\equiv k^{1-\\alpha}$, linealizarla en la forma canónica $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$ y obtener su solución general por factor integrante.",
+      "prerequisites": [
+        "H-02",
+        "C-03"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "Hab-03",
+      "name": "Cálculo del Capital de Estado Uniforme y Estática Comparativa",
+      "category": "Skill",
+      "description": "Determinar el nivel analítico de capital por trabajador en el estado uniforme igualando $\\dot{k} = 0 \\implies s \\bar{k}^\\alpha = \\lambda \\bar{k}$, obteniendo $\\bar{k} = \\left(\\frac{s}{\\lambda}\\right)^{\\frac{1}{1-\\alpha}}$, y calcular sus derivadas parciales respecto a $s$ y $\\lambda$ para evaluar impactos de política.",
+      "prerequisites": [
+        "Hab-02"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-04",
+      "name": "Colapso del Filo de la Navaja de Harrod-Domar bajo Proporciones Fijas",
+      "category": "Concept",
+      "description": "En la tecnología con proporciones fijas $Y = \\min\\left(\\frac{K}{a}, \\frac{L}{b}\\right)$, la ley de movimiento $\\dot{r} = s\\min\\left(\\frac{r}{a}, \\frac{1}{b}\\right) - nr$ genera desequilibrios estructurales insolubles por mercado: si $n > \\frac{s}{a}$, el capital es el cuello de botella y surge desempleo secular creciente; si $n < \\frac{s}{a}$, el trabajo es el cuello de botella y surge capacidad ociosa redundante.",
+      "prerequisites": [
+        "C-01",
+        "H-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-04",
+      "name": "Determinación de la Condición de Existencia de Equilibrio en Tecnologías CES",
+      "category": "Skill",
+      "description": "Para una función de producción CES con $\\rho = 1/2$, $Y = (a\\sqrt{K} + \\sqrt{L})^2$, formular la ecuación diferencial intensiva $\\dot{r} = s(a\\sqrt{r} + 1)^2 - nr$ y determinar algebraicamente la condición de existencia de estado estacionario estable $sa^2 < n$, despejando el valor $r^* = \\left(\\frac{1}{\\sqrt{n/s} - a}\\right)^2$.",
+      "prerequisites": [
+        "H-02",
+        "C-02"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "H-03",
+      "name": "Ecuación de Arbitraje de Activos de Bienes de Capital y Tasa Propia",
+      "category": "Fact",
+      "description": "En equilibrio competitivo continuo sin incertidumbre, el arbitraje entre activos financieros y bienes de capital impone que la tasa de interés monetaria $i(t)$ iguale la tasa de rendimiento propio del capital más la ganancia de capital: $i(t) = \\frac{q(t)}{p(t)} + \\frac{\\dot{p}(t)}{p(t)}$, donde $q(t)$ es el alquiler del capital y $p(t)$ su precio de transferencia.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-05",
+      "name": "Comportamiento de Precios de Factores y Distribución Funcional Neoclásica",
+      "category": "Concept",
+      "description": "En equilibrio competitivo, los factores reciben sus productos marginales reales: $\\frac{w}{p} = \\frac{\\partial F}{\\partial L} = \\phi(k) - k\\phi'(k)$ y $\\frac{q}{p} = \\frac{\\partial F}{\\partial K} = \\phi'(k)$. Al aumentar la dotación $k$, la tasa de alquiler real $q/p$ cae monótonamente mientras que el salario real $w/p$ y la relación de precios relativos $w/q$ aumentan estrictamente.",
+      "prerequisites": [
+        "H-03",
+        "C-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-05",
+      "name": "Modelación del Progreso Técnico Neutral y Dinámica Asintótica de Crecimiento",
+      "category": "Skill",
+      "description": "Bajo progreso tecnológico Hicks-neutral $Y = e^{gt} K^\\alpha L^{1-\\alpha}$, derivar la ecuación diferencial de acumulación $\\dot{K} = s e^{gt} K^\\alpha (L_0 e^{nt})^{1-\\alpha}$ y resolverla mostrando que la tasa asintótica de crecimiento del capital es $n + \\frac{g}{1-\\alpha}$ y la del producto per cápita es $\\frac{g}{1-\\alpha}$.",
+      "prerequisites": [
+        "Hab-02",
+        "C-03"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "Hab-06",
+      "name": "Evaluación del Impacto de la Política Fiscal en la Acumulación de Capital",
+      "category": "Skill",
+      "description": "Modelar la intervención estatal mediante un impuesto proporcional a la renta $t \\in (0, 1)$ donde una fracción $v \\in [0, 1]$ del recaudo se destina a inversión pública y el resto a consumo, obteniendo la tasa de ahorro efectiva modificada $s^* = s + (v - s)t$, y determinar la dirección del desplazamiento del stock de capital de estado uniforme.",
+      "prerequisites": [
+        "H-02",
+        "Hab-03"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-06",
+      "name": "Equilibrios Múltiples y la Trampa de Pobreza Demográfica",
+      "category": "Concept",
+      "description": "Cuando la tasa de crecimiento poblacional es endógena al nivel de vida $n = n(r)$, la curva de ensanchamiento demográfico $n(r)r$ puede intersectar a la curva de ahorro $sF(r, 1)$ en múltiples puntos, generando un equilibrio estable de bajo nivel de ingresos (trampa de pobreza) en $r_1$ y un umbral inestable de despegue en $r_2$, requiriendo un 'gran empujón' de inversión para alcanzar el crecimiento sostenido.",
+      "prerequisites": [
+        "C-02",
+        "H-02"
+      ],
+      "question_count": 20
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-C01-001",
+      "competency_id": "C-01",
+      "competency_name": "Hipótesis de Sustitución de Factores y Rendimientos Constantes a Escala",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Verifique la consistencia del modelo y obtenga: En el marco del modelo neoclásico de Solow aplicado al sector industrial, la función de producción agregada $Q = F(K, L)$ opera bajo una escala factorial uniforme $\\mu = 2$. De acuerdo con los supuestos analíticos de sustitución continua y rendimientos a escala, determine cuál de las siguientes afirmaciones describe con precisión las propiedades de $F(K, L)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Rige $F(2K, 2L) = 2F(K, L)$ donde la retribución al capital equivale al producto medio $\\frac{Q}{K}$ y no a su derivada parcial.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Cálculo de retornos factoriales sobrestimados en regímenes decrecientes}$",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Rige escala creciente $F(2K, 2L) > 2F(K, L)$ debido a supuestas economías de aglomeración e indivisibilidades de factores.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Existencia de un tamaño óptimo finito de economía y competencia imperfecta}$",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Rige $F(2K, 2L) = 2F(K, L)$ pero con fallo en Euler donde $F(K, L) \\ne K \\frac{\\partial F}{\\partial K} + L \\frac{\\partial F}{\\partial L}$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Agotamiento del producto incompatible con pagos a factores por productividad marginal}$",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Rige tecnología rígida de Leontief $Q = \\min\\left(\\frac{K}{a}, \\frac{L}{b}\\right)$ sin posibilidad de sustitución suave de factores.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Isocuantas en ángulo recto sin posibilidad de sustitución de factores}$",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Rige $F(2K, 2L) = 2F(K, L)$ pero con productos marginales constantes $\\frac{\\partial^2 F}{\\partial K^2} = 0$ por homogeneidad lineal.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir que duplicar solo el capital duplica el producto}$",
+          "distractor_id": "D-C01-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Rige escala decreciente en $(K, L)$ debido a la inclusión de factores fijos no reproducibles como la tierra en la función agregada.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Rendimientos decrecientes a escala en el conjunto }(K, L)\\text{ por congestión de recursos}$",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Rige $F(2K, 2L) = 2F(K, L)$ con rendimientos marginales decrecientes $\\frac{\\partial^2 F}{\\partial K^2} < 0$ y sustitución factorial suave.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Distinga entre la variación simultánea de todos los factores productivos y la variación marginal de un factor individual manteniendo el otro constante.",
+        "Recuerde que los rendimientos constantes a escala $F(\\mu K, \\mu L) = \\mu F(K, L)$ son plenamente compatibles con una segunda derivada parcial negativa respecto a cada factor.",
+        "Verifique el cumplimiento del teorema de Euler para funciones homogéneas de grado 1 y el supuesto de sustituibilidad continua entre capital y trabajo."
+      ],
+      "detailed_solution": "En el modelo de crecimiento de Solow, la función de producción agregada $Q = F(K, L)$ se postula como linealmente homogénea de grado 1, lo cual establece que para cualquier factor de escala $\\mu = 2 > 0$ rige estrictamente $F(2K, 2L) = 2F(K, L)$. Esta propiedad de rendimientos constantes a escala global coexiste con rendimientos marginales decrecientes respecto a cada insumo individual ($F_{KK} < 0, F_{LL} < 0$), pues la adición de unidades de un factor manteniendo el otro constante rinde incrementos sucesivamente menores. Asimismo, por el teorema de Euler, el producto total se agota exactamente ($F(K, L) = K F_K + L F_L$) al remunerar cada factor según su productividad marginal, requiriendo sustitución continua y la ausencia de insumos fijos no reproducibles."
+    },
+    {
+      "id": "Q-C01-002",
+      "competency_id": "C-01",
+      "competency_name": "Hipótesis de Sustitución de Factores y Rendimientos Constantes a Escala",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Procediendo conforme al marco teórico correspondiente, deduzca: En el marco del modelo neoclásico de Solow aplicado al sector tecnológico, la función de producción agregada $Q = F(K, L)$ opera bajo una escala factorial uniforme $\\mu = 7$. De acuerdo con los supuestos analíticos de sustitución continua y rendimientos a escala, determine cuál de las siguientes afirmaciones describe con precisión las propiedades de $F(K, L)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Rige $F(7K, 7L) = 7F(K, L)$ pero con fallo en Euler donde $F(K, L) \\ne K \\frac{\\partial F}{\\partial K} + L \\frac{\\partial F}{\\partial L}$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Agotamiento del producto incompatible con pagos a factores por productividad marginal}$",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Rige $F(7K, 7L) = 7F(K, L)$ con rendimientos marginales decrecientes $\\frac{\\partial^2 F}{\\partial K^2} < 0$ y sustitución factorial suave.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Rige escala creciente $F(7K, 7L) > 7F(K, L)$ debido a supuestas economías de aglomeración e indivisibilidades de factores.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Existencia de un tamaño óptimo finito de economía y competencia imperfecta}$",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Rige tecnología rígida de Leontief $Q = \\min\\left(\\frac{K}{a}, \\frac{L}{b}\\right)$ sin posibilidad de sustitución suave de factores.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Isocuantas en ángulo recto sin posibilidad de sustitución de factores}$",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Rige escala decreciente en $(K, L)$ debido a la inclusión de factores fijos no reproducibles como la tierra en la función agregada.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Rendimientos decrecientes a escala en el conjunto }(K, L)\\text{ por congestión de recursos}$",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Rige $F(7K, 7L) = 7F(K, L)$ donde la retribución al capital equivale al producto medio $\\frac{Q}{K}$ y no a su derivada parcial.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Cálculo de retornos factoriales sobrestimados en regímenes decrecientes}$",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Rige $F(7K, 7L) = 7F(K, L)$ pero con productos marginales constantes $\\frac{\\partial^2 F}{\\partial K^2} = 0$ por homogeneidad lineal.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir que duplicar solo el capital duplica el producto}$",
+          "distractor_id": "D-C01-01"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Distinga entre la variación simultánea de todos los factores productivos y la variación marginal de un factor individual manteniendo el otro constante.",
+        "Recuerde que los rendimientos constantes a escala $F(\\mu K, \\mu L) = \\mu F(K, L)$ son plenamente compatibles con una segunda derivada parcial negativa respecto a cada factor.",
+        "Verifique el cumplimiento del teorema de Euler para funciones homogéneas de grado 1 y el supuesto de sustituibilidad continua entre capital y trabajo."
+      ],
+      "detailed_solution": "En el modelo de crecimiento de Solow, la función de producción agregada $Q = F(K, L)$ se postula como linealmente homogénea de grado 1, lo cual establece que para cualquier factor de escala $\\mu = 7 > 0$ rige estrictamente $F(7K, 7L) = 7F(K, L)$. Esta propiedad de rendimientos constantes a escala global coexiste con rendimientos marginales decrecientes respecto a cada insumo individual ($F_{KK} < 0, F_{LL} < 0$), pues la adición de unidades de un factor manteniendo el otro constante rinde incrementos sucesivamente menores. Asimismo, por el teorema de Euler, el producto total se agota exactamente ($F(K, L) = K F_K + L F_L$) al remunerar cada factor según su productividad marginal, requiriendo sustitución continua y la ausencia de insumos fijos no reproducibles."
+    },
+    {
+      "id": "Q-H01-021",
+      "competency_id": "H-01",
+      "competency_name": "Definición de la Función de Producción en Forma Intensiva",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Analice la formulación operativa y deduzca: En una economía de mercado correspondiente al sector industrial, se registra un stock de capital agregado $K = 164$ unidades y un volumen de empleo de $L = 82$ trabajadores. Si la tecnología se expresa mediante una función agregada homogénea de grado 1, $Q = F(K, L)$, normalizada a su forma intensiva $q \\equiv \\phi(k)$, determine la caracterización analítica formal de la relación capital-trabajo $k$ y de las propiedades de $\\phi(k)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Define $k = \\frac{K}{L} = 2$, pero confundiendo producto por trabajador con agregado $\\phi(k) = Q$ donde $Q = F(K, L)$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Falta del factor de escala } L \\text{ para reconstruir el producto macroeconómico}$",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Define $k = \\frac{K}{L} = 2$, con $\\phi(k) = F(k, 1)$, primera derivada $\\phi'(k) > 0$ y supuesta curvatura convexa $\\phi''(k) > 0$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Rendimientos marginales crecientes del capital en forma intensiva}$",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Define $k = \\frac{K}{L} = 2$, con $\\phi(k) = F(k, 1)$, pero igualando derivada y producto medio $\\phi'(k) = \\frac{\\phi(k)}{k}$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Igualar el producto marginal del capital con el producto medio del capital}$",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Define $k = \\frac{K}{L} = 2$, con $\\phi(k) = F(k, 1)$, pero asumiendo colapso asintótico con $\\lim_{k \\to \\infty} \\phi(k) = 0$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Comportamiento asintótico erróneo de la curva de producto por trabajador}$",
+          "distractor_id": "D-H01-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Define $k = \\frac{K}{L} = 2$, con $\\phi(k) = F(k, 1)$, primera derivada $\\phi'(k) > 0$ y curvatura cóncava $\\phi''(k) < 0$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Define $k = \\frac{K}{L} = 2$, pero evaluando con capital agregado $\\phi(k) = F(K, 1)$ con $\\phi'(k) > 0$ y $\\phi''(k) < 0$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Mezcla dimensional entre capital agregado } K \\text{ y factor unitario}$",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Define $k = \\frac{L}{K} = \\frac{1}{2}$, con $\\phi(k) = F(1, k)$, primera derivada $\\phi'(k) > 0$ y curvatura cóncava $\\phi''(k) < 0$.",
+          "is_correct": false,
+          "error_rationale": "$q = \\phi\\left(\\frac{1}{k}\\right)$",
+          "distractor_id": "D-H01-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que la relación capital-trabajo $k$ mide las unidades de capital físico disponibles por cada trabajador, expresada como $k = K/L$.",
+        "Considere que al normalizar la función linealmente homogénea $F(K, L)$ dividiendo por $L$, el argumento de trabajo se reduce a la unidad: $F(K/L, 1) = F(k, 1) \\equiv \\phi(k)$.",
+        "Verifique el signo de las derivadas: la productividad marginal es positiva $\\phi'(k) > 0$ y los rendimientos marginales decrecientes imponen concavidad estricta $\\phi''(k) < 0$."
+      ],
+      "detailed_solution": "A partir de la homogeneidad de grado 1 de la tecnología neoclásica, la función de producción agregada $Q = F(K, L)$ puede normalizarse dividiendo todos sus términos por el factor trabajo $L$, obteniendo el producto por trabajador $q \\equiv \\frac{Q}{L} = F\\left(\\frac{K}{L}, 1\\right) \\equiv \\phi(k)$. La relación capital-trabajo queda definida analíticamente por el cociente entre el capital agregado y la fuerza laboral: $k \\equiv \\frac{K}{L} = \\frac{164}{82} = 2$. Las propiedades matemáticas fundamentales de la forma intensiva $\\phi(k)$ exigen que su primera derivada sea estrictamente positiva ($\\phi'(k) > 0$), coincidiendo exactamente con el producto marginal del capital ($\\frac{\\partial Q}{\\partial K}$), y que su segunda derivada sea estrictamente negativa ($\\phi''(k) < 0$), lo que refleja rendimientos marginales decrecientes del capital por trabajador."
+    },
+    {
+      "id": "Q-H01-022",
+      "competency_id": "H-01",
+      "competency_name": "Definición de la Función de Producción en Forma Intensiva",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Verifique la consistencia del modelo y obtenga: En una economía de mercado correspondiente al sector energético, se registra un stock de capital agregado $K = 182$ unidades y un volumen de empleo de $L = 91$ trabajadores. Si la tecnología se expresa mediante una función agregada homogénea de grado 1, $Q = F(K, L)$, normalizada a su forma intensiva $q \\equiv \\phi(k)$, determine la caracterización analítica formal de la relación capital-trabajo $k$ y de las propiedades de $\\phi(k)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Define $k = \\frac{K}{L} = 2$, pero confundiendo producto por trabajador con agregado $\\phi(k) = Q$ donde $Q = F(K, L)$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Falta del factor de escala } L \\text{ para reconstruir el producto macroeconómico}$",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Define $k = \\frac{K}{L} = 2$, con $\\phi(k) = F(k, 1)$, pero igualando derivada y producto medio $\\phi'(k) = \\frac{\\phi(k)}{k}$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Igualar el producto marginal del capital con el producto medio del capital}$",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Define $k = \\frac{K}{L} = 2$, con $\\phi(k) = F(k, 1)$, primera derivada $\\phi'(k) > 0$ y supuesta curvatura convexa $\\phi''(k) > 0$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Rendimientos marginales crecientes del capital en forma intensiva}$",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Define $k = \\frac{L}{K} = \\frac{1}{2}$, con $\\phi(k) = F(1, k)$, primera derivada $\\phi'(k) > 0$ y curvatura cóncava $\\phi''(k) < 0$.",
+          "is_correct": false,
+          "error_rationale": "$q = \\phi\\left(\\frac{1}{k}\\right)$",
+          "distractor_id": "D-H01-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Define $k = \\frac{K}{L} = 2$, con $\\phi(k) = F(k, 1)$, primera derivada $\\phi'(k) > 0$ y curvatura cóncava $\\phi''(k) < 0$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Define $k = \\frac{K}{L} = 2$, pero evaluando con capital agregado $\\phi(k) = F(K, 1)$ con $\\phi'(k) > 0$ y $\\phi''(k) < 0$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Mezcla dimensional entre capital agregado } K \\text{ y factor unitario}$",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Define $k = \\frac{K}{L} = 2$, con $\\phi(k) = F(k, 1)$, pero asumiendo colapso asintótico con $\\lim_{k \\to \\infty} \\phi(k) = 0$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Comportamiento asintótico erróneo de la curva de producto por trabajador}$",
+          "distractor_id": "D-H01-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que la relación capital-trabajo $k$ mide las unidades de capital físico disponibles por cada trabajador, expresada como $k = K/L$.",
+        "Considere que al normalizar la función linealmente homogénea $F(K, L)$ dividiendo por $L$, el argumento de trabajo se reduce a la unidad: $F(K/L, 1) = F(k, 1) \\equiv \\phi(k)$.",
+        "Verifique el signo de las derivadas: la productividad marginal es positiva $\\phi'(k) > 0$ y los rendimientos marginales decrecientes imponen concavidad estricta $\\phi''(k) < 0$."
+      ],
+      "detailed_solution": "A partir de la homogeneidad de grado 1 de la tecnología neoclásica, la función de producción agregada $Q = F(K, L)$ puede normalizarse dividiendo todos sus términos por el factor trabajo $L$, obteniendo el producto por trabajador $q \\equiv \\frac{Q}{L} = F\\left(\\frac{K}{L}, 1\\right) \\equiv \\phi(k)$. La relación capital-trabajo queda definida analíticamente por el cociente entre el capital agregado y la fuerza laboral: $k \\equiv \\frac{K}{L} = \\frac{182}{91} = 2$. Las propiedades matemáticas fundamentales de la forma intensiva $\\phi(k)$ exigen que su primera derivada sea estrictamente positiva ($\\phi'(k) > 0$), coincidiendo exactamente con el producto marginal del capital ($\\frac{\\partial Q}{\\partial K}$), y que su segunda derivada sea estrictamente negativa ($\\phi''(k) < 0$), lo que refleja rendimientos marginales decrecientes del capital por trabajador."
+    },
+    {
+      "id": "Q-Hab01-041",
+      "competency_id": "Hab-01",
+      "competency_name": "Derivación de la Tasa de Variación Temporal del Capital por Trabajador",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Aplicando las identidades teóricas pertinentes, evalúe: En el marco del modelo de crecimiento de Solow, el stock de capital de una economía es $K = 7310\\text{ u.}$, el volumen de empleo actual es $L = 170\\text{ trabajadores}$, la inversión agregada neta es $\\dot{K} = 612.0\\text{ u./año}$ y la población crece a una tasa continua constante $\\lambda = 0.015\\text{ anual}$. Diferenciando respecto al tiempo la identidad fundamental $K = k L$, determine la tasa de variación temporal del capital por trabajador $\\dot{k}$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{k} = 3.60\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K}}{170}$",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} \\text{ sobreestimado al no descontar la dilución de capital por nuevos trabajadores}$",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{k} = -3.21\\text{ u./año}$ según $\\dot{k} = \\lambda k - \\frac{\\dot{K}}{170}$",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} = \\lambda k - \\frac{\\dot{K}}{L}$",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{k} = 4.25\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K}}{170} + \\lambda k$",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} \\text{ artificialmente inflado por crecimiento poblacional}$",
+          "distractor_id": "D-Hab01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{k} = 0.07\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K}}{K} - \\lambda$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Mezcla de magnitudes absolutas y relativas en la ley de movimiento}$",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{k} = 2.96\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K}}{170} - \\lambda k$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{k} = 4.40\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K}}{L_0}$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Análisis estático sin expansión de la fuerza laboral}$",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{k} = 3.35\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K} - k}{170}$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Dimensionalidad incoherente en la tasa de acumulación de capital}$",
+          "distractor_id": "D-Hab01-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Diferencie ambos lados de la identidad $K = k L$ con respecto al tiempo aplicando la regla del producto: $\\dot{K} = \\dot{k} L + k \\dot{L}$.",
+        "Considere que la fuerza de trabajo crece exponencialmente a tasa $\\lambda$, de modo que su derivada temporal es $\\dot{L} = \\lambda L$.",
+        "Divida la expresión resultante por $L$ y despeje la tasa de acumulación per cápita $\\dot{k}$, verificando que el ensanchamiento demográfico $\\lambda k$ diluye el capital disponible."
+      ],
+      "detailed_solution": "A partir de la identidad $K = k L$, aplicamos la regla del producto respecto al tiempo $t$: $\\dot{K} = \\dot{k} L + k \\dot{L}$. Dado que la población crece de forma exponencial según $L(t) = L_0 e^{\\lambda t}$, su derivada temporal es $\\dot{L} = \\lambda L$. Sustituyendo esta expresión se obtiene $\\dot{K} = \\dot{k} L + \\lambda k L$. Al dividir ambos miembros por $L$ y despejar $\\dot{k}$, resulta la ley de movimiento $\\dot{k} = \\frac{\\dot{K}}{170} - \\lambda k$. Evaluando con los datos provistos: $\\dot{k} = \\frac{612.0}{170} - (0.015)(43) = 3.6 - 0.65 = 2.96\\text{ u./año}$."
+    },
+    {
+      "id": "Q-Hab01-042",
+      "competency_id": "Hab-01",
+      "competency_name": "Derivación de la Tasa de Variación Temporal del Capital por Trabajador",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Al examinar detenidamente las condiciones de frontera, resuelva: En el marco del modelo de crecimiento de Solow, el stock de capital de una economía es $K = 8140\\text{ u.}$, el volumen de empleo actual es $L = 220\\text{ trabajadores}$, la inversión agregada neta es $\\dot{K} = 1232.0\\text{ u./año}$ y la población crece a una tasa continua constante $\\lambda = 0.015\\text{ anual}$. Diferenciando respecto al tiempo la identidad fundamental $K = k L$, determine la tasa de variación temporal del capital por trabajador $\\dot{k}$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{k} = 7.47\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K}}{L_0}$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Análisis estático sin expansión de la fuerza laboral}$",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{k} = 0.14\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K}}{K} - \\lambda$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Mezcla de magnitudes absolutas y relativas en la ley de movimiento}$",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{k} = 5.60\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K}}{220}$",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} \\text{ sobreestimado al no descontar la dilución de capital por nuevos trabajadores}$",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{k} = 5.43\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K} - k}{220}$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Dimensionalidad incoherente en la tasa de acumulación de capital}$",
+          "distractor_id": "D-Hab01-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{k} = 5.04\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K}}{220} - \\lambda k$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{k} = -5.29\\text{ u./año}$ según $\\dot{k} = \\lambda k - \\frac{\\dot{K}}{220}$",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} = \\lambda k - \\frac{\\dot{K}}{L}$",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{k} = 6.15\\text{ u./año}$ según $\\dot{k} = \\frac{\\dot{K}}{220} + \\lambda k$",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} \\text{ artificialmente inflado por crecimiento poblacional}$",
+          "distractor_id": "D-Hab01-02"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Diferencie ambos lados de la identidad $K = k L$ con respecto al tiempo aplicando la regla del producto: $\\dot{K} = \\dot{k} L + k \\dot{L}$.",
+        "Considere que la fuerza de trabajo crece exponencialmente a tasa $\\lambda$, de modo que su derivada temporal es $\\dot{L} = \\lambda L$.",
+        "Divida la expresión resultante por $L$ y despeje la tasa de acumulación per cápita $\\dot{k}$, verificando que el ensanchamiento demográfico $\\lambda k$ diluye el capital disponible."
+      ],
+      "detailed_solution": "A partir de la identidad $K = k L$, aplicamos la regla del producto respecto al tiempo $t$: $\\dot{K} = \\dot{k} L + k \\dot{L}$. Dado que la población crece de forma exponencial según $L(t) = L_0 e^{\\lambda t}$, su derivada temporal es $\\dot{L} = \\lambda L$. Sustituyendo esta expresión se obtiene $\\dot{K} = \\dot{k} L + \\lambda k L$. Al dividir ambos miembros por $L$ y despejar $\\dot{k}$, resulta la ley de movimiento $\\dot{k} = \\frac{\\dot{K}}{220} - \\lambda k$. Evaluando con los datos provistos: $\\dot{k} = \\frac{1232.0}{220} - (0.015)(37) = 5.6 - 0.55 = 5.04\\text{ u./año}$."
+    },
+    {
+      "id": "Q-H02-071",
+      "competency_id": "H-02",
+      "competency_name": "Ecuación Diferencial Fundamental del Modelo de Solow",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Al examinar detenidamente las condiciones de frontera, resuelva: Considere una economía en el modelo de Solow con función de producción intensiva $\\phi(k) = 4\\sqrt{k}$, propensión marginal al ahorro constante $s = 0.15$, tasa de crecimiento poblacional $\\lambda = 0.02$ y depreciación física $\\delta = 0.02$. Determine la ecuación diferencial fundamental que gobierna la trayectoria del capital por trabajador $\\dot{k}$ y su valor numérico instantáneo cuando $k = 81$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{k} = -4.08\\text{ u./año}$ según $\\dot{k} = \\lambda k - s\\phi(k)$",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} < 0 \\text{ en regímenes donde la inversión supera el ensanchamiento demográfico}$",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{k} = 11.43\\text{ u./año}$ según $\\dot{k} = s k - \\lambda\\phi(k)$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ecuación diferencial lineal errónea desacoplada de la tecnología}$",
+          "distractor_id": "D-H02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{k} = 2.94\\text{ u./año}$ según $\\dot{k} = s(k)\\phi(k) - \\lambda k$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Complicación innecesaria de la ecuación fundamental básica}$",
+          "distractor_id": "D-H02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{k} = 133.38\\text{ u./año}$ según $\\dot{k} = s Q(t) - \\lambda k$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Inconsistencia dimensional entre variables per cápita y agregadas}$",
+          "distractor_id": "D-H02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{k} = 8.64\\text{ u./año}$ según $\\dot{k} = s\\phi(k) + (\\lambda+\\delta)k$",
+          "is_correct": false,
+          "error_rationale": "$\\text{La depreciación actúa incrementando artificialmente el capital per cápita}$",
+          "distractor_id": "D-H02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{k} = 34.38\\text{ u./año}$ según $\\dot{k} = \\phi(k) - \\lambda k$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir que todo el producto generado se destina a la inversión bruta}$",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{k} = 3.78\\text{ u./año}$ según $\\dot{k} = s\\phi(k) - \\lambda k$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Identifique los dos componentes que determinan la evolución de la dotación de capital por operario: la inversión bruta y la inversión de reposición.",
+        "Recuerde que la inversión bruta por trabajador equivale al ahorro generado $s\\phi(k)$, donde $s \\in (0, 1)$ es la propensión marginal al ahorro constante.",
+        "Verifique que la dilución poblacional $\\lambda k$ reduce la tasa neta de acumulación per cápita, requiriendo un signo negativo en la ecuación diferencial fundamental."
+      ],
+      "detailed_solution": "La ecuación diferencial fundamental del modelo neoclásico de Solow es $\\dot{k} = s\\phi(k) - \\lambda k$, donde $s\\phi(k)$ representa la inversión bruta por trabajador y $\\lambda k$ es la inversión de ensanchamiento demográfico requerida para equipar a los nuevos entrantes a la fuerza laboral. Para los valores del problema, $\\phi(81) = 4\\sqrt{81} = 36$, la inversión bruta por trabajador es $s\\phi(81) = 0.15 \\times {36} = 5.4$ y la dilución es $\\lambda {k0} = 0.02 \\times {k0} = 1.62$. En consecuencia, $\\dot{k} = 5.4 - 1.62 = 3.78\\text{ u./año}$."
+    },
+    {
+      "id": "Q-H02-072",
+      "competency_id": "H-02",
+      "competency_name": "Ecuación Diferencial Fundamental del Modelo de Solow",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Con arreglo a las definiciones operativas del sistema, verifique: Considere una economía en el modelo de Solow con función de producción intensiva $\\phi(k) = 3\\sqrt{k}$, propensión marginal al ahorro constante $s = 0.2$, tasa de crecimiento poblacional $\\lambda = 0.015$ y depreciación física $\\delta = 0.02$. Determine la ecuación diferencial fundamental que gobierna la trayectoria del capital por trabajador $\\dot{k}$ y su valor numérico instantáneo cuando $k = 49$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{k} = 9.49\\text{ u./año}$ según $\\dot{k} = s k - \\lambda\\phi(k)$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ecuación diferencial lineal errónea desacoplada de la tecnología}$",
+          "distractor_id": "D-H02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{k} = 20.27\\text{ u./año}$ según $\\dot{k} = \\phi(k) - \\lambda k$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir que todo el producto generado se destina a la inversión bruta}$",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{k} = 3.47\\text{ u./año}$ según $\\dot{k} = s\\phi(k) - \\lambda k$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{k} = 5.92\\text{ u./año}$ según $\\dot{k} = s\\phi(k) + (\\lambda+\\delta)k$",
+          "is_correct": false,
+          "error_rationale": "$\\text{La depreciación actúa incrementando artificialmente el capital per cápita}$",
+          "distractor_id": "D-H02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{k} = 2.48\\text{ u./año}$ según $\\dot{k} = s(k)\\phi(k) - \\lambda k$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Complicación innecesaria de la ecuación fundamental básica}$",
+          "distractor_id": "D-H02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{k} = -3.77\\text{ u./año}$ según $\\dot{k} = \\lambda k - s\\phi(k)$",
+          "is_correct": false,
+          "error_rationale": "$\\dot{k} < 0 \\text{ en regímenes donde la inversión supera el ensanchamiento demográfico}$",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{k} = 49.67\\text{ u./año}$ según $\\dot{k} = s Q(t) - \\lambda k$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Inconsistencia dimensional entre variables per cápita y agregadas}$",
+          "distractor_id": "D-H02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Identifique los dos componentes que determinan la evolución de la dotación de capital por operario: la inversión bruta y la inversión de reposición.",
+        "Recuerde que la inversión bruta por trabajador equivale al ahorro generado $s\\phi(k)$, donde $s \\in (0, 1)$ es la propensión marginal al ahorro constante.",
+        "Verifique que la dilución poblacional $\\lambda k$ reduce la tasa neta de acumulación per cápita, requiriendo un signo negativo en la ecuación diferencial fundamental."
+      ],
+      "detailed_solution": "La ecuación diferencial fundamental del modelo neoclásico de Solow es $\\dot{k} = s\\phi(k) - \\lambda k$, donde $s\\phi(k)$ representa la inversión bruta por trabajador y $\\lambda k$ es la inversión de ensanchamiento demográfico requerida para equipar a los nuevos entrantes a la fuerza laboral. Para los valores del problema, $\\phi(49) = 3\\sqrt{49} = 21$, la inversión bruta por trabajador es $s\\phi(49) = 0.2 \\times {21} = 4.2$ y la dilución es $\\lambda {k0} = 0.015 \\times {k0} = 0.73$. En consecuencia, $\\dot{k} = 4.2 - 0.73 = 3.47\\text{ u./año}$."
+    },
+    {
+      "id": "Q-C02-091",
+      "competency_id": "C-02",
+      "competency_name": "Estabilidad Dinámica Global en el Diagrama de Línea de Fase",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Con arreglo a las definiciones operativas del sistema, verifique: En una economía descrita por el modelo de Solow con función de producción $\\phi(k) = k^{2/5}$, propensión al ahorro $s = 0.17$ y crecimiento poblacional $\\lambda = 0.033$, se analiza el estado estacionario $\\bar{k} = 15.37$. En el diagrama de línea de fase $\\dot{k}$ frente a $k$, ¿cuál es la propiedad que rige la estabilidad dinámica global del equilibrio?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El equilibrio en el origen $k = 0$ es asintóticamente estable para toda dotación inicial, atrayendo las trayectorias dinámicas de capital per cápita en el largo plazo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predicción de colapso inevitable a cero capital}$",
+          "distractor_id": "D-C02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Pendiente positiva $\\left.\\frac{d\\dot{k}}{dk}\\right|_{\\bar{k}} = s\\phi'(\\bar{k}) - \\lambda = +0.0198 > 0$, interpretada como condición suficiente de atracción hacia $\\bar{k} = 15.37$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Clasificación errónea de puntos repulsores como atractores}$",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La dinámica de acumulación viene gobernada por la relación $\\dot{k} = s\\phi(k) = 0.507$, prescindiendo del término de dilución demográfica $\\lambda k$ en el diagrama",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ignorar el desplazamiento vertical impuesto por el rayo de dilución } \\lambda k$",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Un incremento en la propensión al ahorro desde $s = 0.17$ altera la estabilidad intrínseca del sistema, transformando el atractor $\\bar{k}$ en un punto repulsor inestable",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribución errónea de caos o bifurcaciones al parámetro } s$",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El ajuste temporal hacia $\\bar{k} = 15.37$ exhibe ciclos oscilatorios periódicos amortiguados alrededor del equilibrio inducidos por la ecuación diferencial autónoma",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ciclos espurios en una ecuación diferencial escalar autónoma}$",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Toda intersección algebraica donde $s\\phi(k) = \\lambda k$ con $\\dot{k} = 0$ constituye un atractor dinámicamente estable independientemente del signo de la pendiente local",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ignorar la existencia de equilibrios inestables de umbral}$",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Pendiente negativa $\\left.\\frac{d\\dot{k}}{dk}\\right|_{\\bar{k}} = s\\phi'(\\bar{k}) - \\lambda = -0.0198 < 0$, garantizando convergencia monótona hacia $\\bar{k} = 15.37$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Analice el signo de la derivada temporal del capital per cápita a la izquierda y a la derecha del punto de corte estacionario.",
+        "Considere la condición analítica de estabilidad local para una ecuación diferencial ordinaria unidimensional autónoma evaluada en el estado estacionario.",
+        "Compruebe que una desviación positiva del capital respecto al equilibrio genere una tasa de variación negativa que restaure el sistema sin oscilaciones."
+      ],
+      "detailed_solution": "El estado estacionario satisface $s\\phi(\\bar{k}) - \\lambda \\bar{k} = 0$. La estabilidad dinámica global requiere que ante perturbaciones, la ley de movimiento restaure el equilibrio. Diferenciando la ecuación fundamental $\\dot{k} = s\\phi(k) - \\lambda k$ respecto a $k$ en el punto $\\bar{k}$, se obtiene la pendiente $\\left.\\frac{d\\dot{k}}{dk}\\right|_{\\bar{k}} = s\\phi'(\\bar{k}) - \\lambda = \\lambda(\\alpha - 1) = -0.0198 < 0$. Como la tecnología presenta rendimientos decrecientes ($\\alpha \\in (0, 1)$), la pendiente es estrictamente negativa: si $k < \\bar{k}$ se cumple $\\dot{k} > 0$ (acumulación), y si $k > \\bar{k}$ se cumple $\\dot{k} < 0$ (desacumulación), convergiendo monótonamente a $\\bar{k} = 15.37$."
+    },
+    {
+      "id": "Q-C02-092",
+      "competency_id": "C-02",
+      "competency_name": "Estabilidad Dinámica Global en el Diagrama de Línea de Fase",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Efectuando el análisis formal respectivo, precise: En una economía descrita por el modelo de Solow con función de producción $\\phi(k) = k^{1/3}$, propensión al ahorro $s = 0.27$ y crecimiento poblacional $\\lambda = 0.043$, se analiza el estado estacionario $\\bar{k} = 15.73$. En el diagrama de línea de fase $\\dot{k}$ frente a $k$, ¿cuál es la propiedad que rige la estabilidad dinámica global del equilibrio?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El ajuste temporal hacia $\\bar{k} = 15.73$ exhibe ciclos oscilatorios periódicos amortiguados alrededor del equilibrio inducidos por la ecuación diferencial autónoma",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ciclos espurios en una ecuación diferencial escalar autónoma}$",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Toda intersección algebraica donde $s\\phi(k) = \\lambda k$ con $\\dot{k} = 0$ constituye un atractor dinámicamente estable independientemente del signo de la pendiente local",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ignorar la existencia de equilibrios inestables de umbral}$",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Un incremento en la propensión al ahorro desde $s = 0.27$ altera la estabilidad intrínseca del sistema, transformando el atractor $\\bar{k}$ en un punto repulsor inestable",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribución errónea de caos o bifurcaciones al parámetro } s$",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Pendiente positiva $\\left.\\frac{d\\dot{k}}{dk}\\right|_{\\bar{k}} = s\\phi'(\\bar{k}) - \\lambda = +0.0287 > 0$, interpretada como condición suficiente de atracción hacia $\\bar{k} = 15.73$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Clasificación errónea de puntos repulsores como atractores}$",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Pendiente negativa $\\left.\\frac{d\\dot{k}}{dk}\\right|_{\\bar{k}} = s\\phi'(\\bar{k}) - \\lambda = -0.0287 < 0$, garantizando convergencia monótona hacia $\\bar{k} = 15.73$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La dinámica de acumulación viene gobernada por la relación $\\dot{k} = s\\phi(k) = 0.677$, prescindiendo del término de dilución demográfica $\\lambda k$ en el diagrama",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ignorar el desplazamiento vertical impuesto por el rayo de dilución } \\lambda k$",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El equilibrio en el origen $k = 0$ es asintóticamente estable para toda dotación inicial, atrayendo las trayectorias dinámicas de capital per cápita en el largo plazo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predicción de colapso inevitable a cero capital}$",
+          "distractor_id": "D-C02-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Analice el signo de la derivada temporal del capital per cápita a la izquierda y a la derecha del punto de corte estacionario.",
+        "Considere la condición analítica de estabilidad local para una ecuación diferencial ordinaria unidimensional autónoma evaluada en el estado estacionario.",
+        "Compruebe que una desviación positiva del capital respecto al equilibrio genere una tasa de variación negativa que restaure el sistema sin oscilaciones."
+      ],
+      "detailed_solution": "El estado estacionario satisface $s\\phi(\\bar{k}) - \\lambda \\bar{k} = 0$. La estabilidad dinámica global requiere que ante perturbaciones, la ley de movimiento restaure el equilibrio. Diferenciando la ecuación fundamental $\\dot{k} = s\\phi(k) - \\lambda k$ respecto a $k$ en el punto $\\bar{k}$, se obtiene la pendiente $\\left.\\frac{d\\dot{k}}{dk}\\right|_{\\bar{k}} = s\\phi'(\\bar{k}) - \\lambda = \\lambda(\\alpha - 1) = -0.0287 < 0$. Como la tecnología presenta rendimientos decrecientes ($\\alpha \\in (0, 1)$), la pendiente es estrictamente negativa: si $k < \\bar{k}$ se cumple $\\dot{k} > 0$ (acumulación), y si $k > \\bar{k}$ se cumple $\\dot{k} < 0$ (desacumulación), convergiendo monótonamente a $\\bar{k} = 15.73$."
+    },
+    {
+      "id": "Q-C03-111",
+      "competency_id": "C-03",
+      "competency_name": "Propiedades del Estado Uniforme de Crecimiento Equilibrado",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para el modelo formulado a continuación, evalúe: En una economía de Solow cerrada sin progreso técnico con función de producción $\\phi(k) = k^{2/5}$, tasa de ahorro $s = 0.19$ y crecimiento de la población activa $\\lambda = 0.027$, se alcanza el estado uniforme donde $\\dot{k} = 0$, con capital por trabajador $\\bar{k} = 25.84$ y producto medio $\\bar{q} = 3.67$. ¿Cuál de las siguientes proposiciones describe las propiedades dinámicas de las variables per cápita y agregadas en dicha senda de crecimiento equilibrado?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Las magnitudes per cápita $k = 25.84$ y $q = 3.67$ permanecen constantes con $\\dot{q}/q = 0$, mientras que el capital $K$, el producto $Q$ y la inversión $I$ crecen a la tasa poblacional $\\lambda = 0.027$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El capital agregado $K$ se expande a tasa $\\lambda = 0.027$, pero el flujo de inversión agregada $I$ crece a un ritmo amortiguado proporcional de $s\\lambda = 0.0051 \\ne 0.027$ en equilibrio",
+          "is_correct": false,
+          "error_rationale": "$\\text{Discrepancia espuria en las tasas de crecimiento de los componentes de la demanda}$",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Tanto las variables per cápita como las magnitudes macroeconómicas agregadas detienen su expansión, verificándose $\\dot{K} = 0$ y $\\dot{Q} = 0$ como en el estado estacionario clásico de Smith",
+          "is_correct": false,
+          "error_rationale": "$\\text{Parálisis de la acumulación agregada de capital}$",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Un incremento permanente en la tasa de ahorro por encima de $s = 0.19$ eleva indefinidamente la tasa asintótica de crecimiento del producto agregado a un valor superior a $\\lambda = 0.027$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribución de efectos de crecimiento permanente (endógeno) a la tasa de ahorro}$",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La tasa de variación del capital por trabajador $\\dot{k}/k = 0$ se mantiene invariablemente nula incluso ante la presencia de progreso tecnológico neutral exógeno continuo en el tiempo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Falta de acumulación per cápita ante mejoras tecnológicas}$",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La relación agregada capital-producto $K/Q$ experimenta un crecimiento porcentual sostenido a tasa $\\lambda = 0.027$ en lugar de permanecer constante a lo largo de la senda equilibrada",
+          "is_correct": false,
+          "error_rationale": "$\\text{Tendencia secular errónea en el coeficiente de capital}$",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El producto por trabajador $q = 3.67$ mantiene un crecimiento positivo constante a tasa $\\dot{q}/q = 0.027$ aun en ausencia de progreso técnico exógeno en la economía de largo plazo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre crecimiento de magnitudes agregadas y variables per cápita}$",
+          "distractor_id": "D-C03-01"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde la distinción entre variables intensivas por trabajador y magnitudes macroeconómicas agregadas.",
+        "Considere que cuando la derivada temporal del capital por trabajador se anula, las variables per cápita no varían en el tiempo.",
+        "Diferencie logarítmicamente las identidades agregadas de capital y producto recordando que la mano de obra crece a tasa exógena lambda."
+      ],
+      "detailed_solution": "En el estado uniforme de Solow sin progreso técnico, la condición $\\dot{k} = 0$ fija la relación capital-trabajo en $k = \\bar{k}$ y el producto medio en $q = \\phi(\\bar{k})$, por lo que $\\dot{k}/k = 0$ y $\\dot{q}/q = 0$. Puesto que $K(t) = \\bar{k} L(t)$ y $Q(t) = \\phi(\\bar{k}) L(t)$, diferenciando logarítmicamente se obtiene $\\dot{K}/K = \\dot{k}/k + \\dot{L}/L = 0 + \\lambda = 0.027$ y $\\dot{Q}/Q = \\dot{q}/q + \\dot{L}/L = 0 + \\lambda = 0.027$. Asimismo, como $I = s Q$, la inversión neta crece a $\\dot{I}/I = \\dot{Q}/Q = 0.027$. La relación capital-producto $K/Q$ permanece constante a lo largo de la senda equilibrada."
+    },
+    {
+      "id": "Q-C03-112",
+      "competency_id": "C-03",
+      "competency_name": "Propiedades del Estado Uniforme de Crecimiento Equilibrado",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el contexto formal planteado, analice con rigor: En una economía de Solow cerrada sin progreso técnico con función de producción $\\phi(k) = k^{4/9}$, tasa de ahorro $s = 0.18$ y crecimiento de la población activa $\\lambda = 0.02$, se alcanza el estado uniforme donde $\\dot{k} = 0$, con capital por trabajador $\\bar{k} = 52.2$ y producto medio $\\bar{q} = 5.8$. ¿Cuál de las siguientes proposiciones describe las propiedades dinámicas de las variables per cápita y agregadas en dicha senda de crecimiento equilibrado?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La tasa de variación del capital por trabajador $\\dot{k}/k = 0$ se mantiene invariablemente nula incluso ante la presencia de progreso tecnológico neutral exógeno continuo en el tiempo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Falta de acumulación per cápita ante mejoras tecnológicas}$",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Tanto las variables per cápita como las magnitudes macroeconómicas agregadas detienen su expansión, verificándose $\\dot{K} = 0$ y $\\dot{Q} = 0$ como en el estado estacionario clásico de Smith",
+          "is_correct": false,
+          "error_rationale": "$\\text{Parálisis de la acumulación agregada de capital}$",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Un incremento permanente en la tasa de ahorro por encima de $s = 0.18$ eleva indefinidamente la tasa asintótica de crecimiento del producto agregado a un valor superior a $\\lambda = 0.02$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribución de efectos de crecimiento permanente (endógeno) a la tasa de ahorro}$",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El capital agregado $K$ se expande a tasa $\\lambda = 0.02$, pero el flujo de inversión agregada $I$ crece a un ritmo amortiguado proporcional de $s\\lambda = 0.0036 \\ne 0.02$ en equilibrio",
+          "is_correct": false,
+          "error_rationale": "$\\text{Discrepancia espuria en las tasas de crecimiento de los componentes de la demanda}$",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El producto por trabajador $q = 5.8$ mantiene un crecimiento positivo constante a tasa $\\dot{q}/q = 0.02$ aun en ausencia de progreso técnico exógeno en la economía de largo plazo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre crecimiento de magnitudes agregadas y variables per cápita}$",
+          "distractor_id": "D-C03-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La relación agregada capital-producto $K/Q$ experimenta un crecimiento porcentual sostenido a tasa $\\lambda = 0.02$ en lugar de permanecer constante a lo largo de la senda equilibrada",
+          "is_correct": false,
+          "error_rationale": "$\\text{Tendencia secular errónea en el coeficiente de capital}$",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Las magnitudes per cápita $k = 52.2$ y $q = 5.8$ permanecen constantes con $\\dot{q}/q = 0$, mientras que el capital $K$, el producto $Q$ y la inversión $I$ crecen a la tasa poblacional $\\lambda = 0.02$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde la distinción entre variables intensivas por trabajador y magnitudes macroeconómicas agregadas.",
+        "Considere que cuando la derivada temporal del capital por trabajador se anula, las variables per cápita no varían en el tiempo.",
+        "Diferencie logarítmicamente las identidades agregadas de capital y producto recordando que la mano de obra crece a tasa exógena lambda."
+      ],
+      "detailed_solution": "En el estado uniforme de Solow sin progreso técnico, la condición $\\dot{k} = 0$ fija la relación capital-trabajo en $k = \\bar{k}$ y el producto medio en $q = \\phi(\\bar{k})$, por lo que $\\dot{k}/k = 0$ y $\\dot{q}/q = 0$. Puesto que $K(t) = \\bar{k} L(t)$ y $Q(t) = \\phi(\\bar{k}) L(t)$, diferenciando logarítmicamente se obtiene $\\dot{K}/K = \\dot{k}/k + \\dot{L}/L = 0 + \\lambda = 0.02$ y $\\dot{Q}/Q = \\dot{q}/q + \\dot{L}/L = 0 + \\lambda = 0.02$. Asimismo, como $I = s Q$, la inversión neta crece a $\\dot{I}/I = \\dot{Q}/Q = 0.02$. La relación capital-producto $K/Q$ permanece constante a lo largo de la senda equilibrada."
+    },
+    {
+      "id": "Q-Hab02-131",
+      "competency_id": "Hab-02",
+      "competency_name": "Linealización y Resolución de la Ecuación de Bernoulli Cobb-Douglas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere el siguiente planteamiento formal: Considere el modelo de Solow con tecnología Cobb-Douglas $q = k^{\\alpha}$ y ecuación fundamental $\\dot{k} + \\lambda k = s k^\\alpha$, con parámetros $\\alpha = 0.35$, $\\lambda = 0.03$, $s = 0.2$ y capital inicial $k(0) = 5$. Aplicando la transformación canónica de Bernoulli $z \\equiv k^{1-\\alpha}$, determine la forma linealizada de la ecuación diferencial ordinaria para $z(t)$ y su correspondiente solución temporal exacta:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Con $z = k^{0.65}$, EDO $\\frac{dz}{dt} + 0.03 z = 0.2$ y trayectoria $z(t) = -3.82 e^{-0.03 t} + 6.667$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Solución con velocidad de convergencia distorsionada por omisión de } (1-\\alpha)$",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Con $z = k^{0.65}$, EDO $\\frac{dz}{dt} + 0.0195 z = 0.13$ y trayectoria $z(t) = 6.667$ idéntica para todo $t \\ge 0$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir ajuste instantáneo a estado uniforme sin dinámica de transición}$",
+          "distractor_id": "D-Hab02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Con $z = k^{0.65}$, EDO $\\frac{dz}{dt} + 0.0195 z = 0.13$ y trayectoria $z(t) = -3.82 e^{-0.0195 t} + 6.667$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Con $z = k^{0.65}$, EDO $\\frac{dz}{dt} + 0.0195 z = 0.13$ y trayectoria $z(t) = -3.82 e^{0.0195 t} + 6.667$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Trayectoria temporal divergente hacia el infinito en lugar de convergente}$",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Con $z = k^{0.35}$, EDO $\\frac{dz}{dt} + 0.0105 z = 0.07$ y trayectoria $z(t) = -3.82 e^{-0.0105 t} + 6.667$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ecuación diferencial transformada que no elimina la no-linealidad en } k^\\alpha$",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Con $z = k^{-0.65}$, EDO $\\frac{dz}{dt} - 0.0195 z = -0.13$ y trayectoria $z(t) = -3.82 e^{0.0195 t} - 6.667$",
+          "is_correct": false,
+          "error_rationale": "$\\frac{dz}{dt} - (1-\\alpha)\\lambda z = -(1-\\alpha)s$",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Con $z = k^{0.65}$, EDO $\\frac{dz}{dt} + 0.0195 z = 0.13$ deduciendo la trayectoria con $k(t) = [z(t)]^{0.65}$",
+          "is_correct": false,
+          "error_rationale": "$k(t) = \\left(\\frac{s}{\\lambda}\\right)^{1-\\alpha} \\text{ en el límite estacionario}$",
+          "distractor_id": "D-Hab02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura de Bernoulli en la ecuación fundamental y plantee el cambio canónico $z = k^{1-\\alpha}$.",
+        "Multiplique la ecuación por $(1-\\alpha)k^{-\\alpha}$ para agrupar la derivada temporal $\\dot{z}$ de forma lineal.",
+        "Aplique el método del factor integrante lineal para obtener la función exponencial transitoria de $z(t)$."
+      ],
+      "detailed_solution": "La ecuación fundamental $\\dot{k} + \\lambda k = s k^\\alpha$ es una ecuación diferencial de Bernoulli con exponente no lineal $m = \\alpha$. Al definir la variable linealizadora $z \\equiv k^{1-\\alpha} = k^{0.65}$, su derivada temporal por regla de la cadena es $\\dot{z} = (1-\\alpha)k^{-\\alpha}\\dot{k}$. Multiplicando la ecuación original por $(1-\\alpha)k^{-\\alpha}$, obtenemos $(1-\\alpha)k^{-\\alpha}\\dot{k} + (1-\\alpha)\\lambda k^{1-\\alpha} = (1-\\alpha)s$, lo que equivale a la ecuación lineal canónica $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$, es decir, $\\frac{dz}{dt} + 0.0195 z = 0.13$. Resolviendo por factor integrante $e^{(1-\\alpha)\\lambda t} = e^{0.0195 t}$, la solución general es $z(t) = \\left[z(0) - \\frac{0.2}{\\lambda}\\right]e^{-(1-\\alpha)\\lambda t} + \\frac{0.2}{\\lambda} = -3.82 e^{-0.0195 t} + 6.667$."
+    },
+    {
+      "id": "Q-Hab02-132",
+      "competency_id": "Hab-02",
+      "competency_name": "Linealización y Resolución de la Ecuación de Bernoulli Cobb-Douglas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A partir de las condiciones analíticas dadas, determine: Considere el modelo de Solow con tecnología Cobb-Douglas $q = k^{\\alpha}$ y ecuación fundamental $\\dot{k} + \\lambda k = s k^\\alpha$, con parámetros $\\alpha = 0.7$, $\\lambda = 0.02$, $s = 0.35$ y capital inicial $k(0) = 2$. Aplicando la transformación canónica de Bernoulli $z \\equiv k^{1-\\alpha}$, determine la forma linealizada de la ecuación diferencial ordinaria para $z(t)$ y su correspondiente solución temporal exacta:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Con $z = k^{0.3}$, EDO $\\frac{dz}{dt} + 0.02 z = 0.35$ y trayectoria $z(t) = -16.269 e^{-0.02 t} + 17.5$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Solución con velocidad de convergencia distorsionada por omisión de } (1-\\alpha)$",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Con $z = k^{-0.3}$, EDO $\\frac{dz}{dt} - 0.006 z = -0.105$ y trayectoria $z(t) = -16.269 e^{0.006 t} - 17.5$",
+          "is_correct": false,
+          "error_rationale": "$\\frac{dz}{dt} - (1-\\alpha)\\lambda z = -(1-\\alpha)s$",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Con $z = k^{0.7}$, EDO $\\frac{dz}{dt} + 0.014 z = 0.245$ y trayectoria $z(t) = -16.269 e^{-0.014 t} + 17.5$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ecuación diferencial transformada que no elimina la no-linealidad en } k^\\alpha$",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Con $z = k^{0.3}$, EDO $\\frac{dz}{dt} + 0.006 z = 0.105$ deduciendo la trayectoria con $k(t) = [z(t)]^{0.3}$",
+          "is_correct": false,
+          "error_rationale": "$k(t) = \\left(\\frac{s}{\\lambda}\\right)^{1-\\alpha} \\text{ en el límite estacionario}$",
+          "distractor_id": "D-Hab02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Con $z = k^{0.3}$, EDO $\\frac{dz}{dt} + 0.006 z = 0.105$ y trayectoria $z(t) = -16.269 e^{0.006 t} + 17.5$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Trayectoria temporal divergente hacia el infinito en lugar de convergente}$",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Con $z = k^{0.3}$, EDO $\\frac{dz}{dt} + 0.006 z = 0.105$ y trayectoria $z(t) = -16.269 e^{-0.006 t} + 17.5$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Con $z = k^{0.3}$, EDO $\\frac{dz}{dt} + 0.006 z = 0.105$ y trayectoria $z(t) = 17.5$ idéntica para todo $t \\ge 0$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir ajuste instantáneo a estado uniforme sin dinámica de transición}$",
+          "distractor_id": "D-Hab02-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura de Bernoulli en la ecuación fundamental y plantee el cambio canónico $z = k^{1-\\alpha}$.",
+        "Multiplique la ecuación por $(1-\\alpha)k^{-\\alpha}$ para agrupar la derivada temporal $\\dot{z}$ de forma lineal.",
+        "Aplique el método del factor integrante lineal para obtener la función exponencial transitoria de $z(t)$."
+      ],
+      "detailed_solution": "La ecuación fundamental $\\dot{k} + \\lambda k = s k^\\alpha$ es una ecuación diferencial de Bernoulli con exponente no lineal $m = \\alpha$. Al definir la variable linealizadora $z \\equiv k^{1-\\alpha} = k^{0.3}$, su derivada temporal por regla de la cadena es $\\dot{z} = (1-\\alpha)k^{-\\alpha}\\dot{k}$. Multiplicando la ecuación original por $(1-\\alpha)k^{-\\alpha}$, obtenemos $(1-\\alpha)k^{-\\alpha}\\dot{k} + (1-\\alpha)\\lambda k^{1-\\alpha} = (1-\\alpha)s$, lo que equivale a la ecuación lineal canónica $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$, es decir, $\\frac{dz}{dt} + 0.006 z = 0.105$. Resolviendo por factor integrante $e^{(1-\\alpha)\\lambda t} = e^{0.006 t}$, la solución general es $z(t) = \\left[z(0) - \\frac{0.35}{\\lambda}\\right]e^{-(1-\\alpha)\\lambda t} + \\frac{0.35}{\\lambda} = -16.269 e^{-0.006 t} + 17.5$."
+    },
+    {
+      "id": "Q-Hab03-161",
+      "competency_id": "Hab-03",
+      "competency_name": "Cálculo del Capital de Estado Uniforme y Estática Comparativa",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Desde la perspectiva analítica correspondiente, compute: En el marco del modelo de crecimiento de Solow aplicado al estudio de un país en desarrollo, con tecnología intensiva $q = k^{\\alpha}$, tasa de ahorro $s = 0.16$, depreciación y crecimiento poblacional conjunto $\\lambda = 0.085$, y elasticidad capital $\\alpha = 0.58$: determine el stock de capital por trabajador de estado uniforme $\\bar{k}$, su elasticidad formal respecto al ahorro y los efectos analíticos de estática comparativa.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Producto $\\bar{q} = 2.4$ evaluado como capital de equilibrio al aplicar $\\bar{q} = (s/\\lambda)^{\\frac{\\alpha}{1-\\alpha}}$ en vez de $\\bar{k}$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Igualar el producto por trabajador con el stock de capital por trabajador}$",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Capital $\\bar{k} = 4.51$ afirmando un crecimiento continuo ilimitado $\\left.\\frac{\\dot{k}}{k}\\right|_{t \\to \\infty} > 0$ ante alzas de $s$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión recurrente entre niveles de variables y sus tasas asintóticas de crecimiento}$",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Capital $\\bar{k} = 1.88$ suprimiendo la potencia no lineal mediante $\\bar{k} = \\frac{0.16}{\\lambda}$ asumiendo proporcionalidad constante",
+          "is_correct": false,
+          "error_rationale": "$\\bar{k} \\text{ lineal en el cociente ahorro-población, subestimando la curvatura de la tecnología}$",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Capital $\\bar{k} = 0.222$ invirtiendo el cociente a $\\left(\\frac{\\lambda}{0.16}\\right)^{\\frac{1}{1-\\alpha}}$ con elasticidad $\\frac{\\partial \\ln \\bar{k}}{\\partial \\ln s} = 2.38$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir que un mayor ahorro reduce la dotación de capital por operario}$",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Capital $\\bar{k} = 4.51$ fijando una elasticidad unitaria $\\frac{\\partial \\ln \\bar{k}}{\\partial \\ln s} = 1.0$ e impacto $\\frac{\\partial \\bar{k}}{\\partial \\lambda} < 0$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Subestimación del efecto multiplicador de la acumulación de capital cuando } \\alpha \\in (0, 1)$",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Capital $\\bar{k} = 4.51$ con elasticidad $\\frac{\\partial \\ln \\bar{k}}{\\partial \\ln s} = 2.38 > 1$ e impacto poblacional negativo $\\frac{\\partial \\bar{k}}{\\partial \\lambda} < 0$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Capital $\\bar{k} = 4.51$ proyectando intensificación del capital $\\frac{\\partial \\bar{k}}{\\partial \\lambda} > 0$ frente a aumentos en la tasa $\\lambda$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Conclusión errónea de que una mayor tasa demográfica intensifica el capital per cápita}$",
+          "distractor_id": "D-Hab03-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Iguale la tasa neta de acumulación a cero para definir el balance estacionario entre ahorro e inversión requerida.",
+        "Despeje algebraicamente el capital per cápita aplicando la potencia fraccionaria recíproca $\\frac{1}{1-\\alpha}$.",
+        "Diferencie la solución respecto a los parámetros para verificar el signo negativo de la dilución poblacional y la elasticidad mayor a uno."
+      ],
+      "detailed_solution": "En el estado uniforme de Solow, la acumulación neta se anula: $\\dot{k} = 0 \\iff s \\bar{k}^\\alpha = \\lambda \\bar{k}$. Despejando el capital per cápita: $\\bar{k}^{1-\\alpha} = \\frac{0.16}{\\lambda} \\implies \\bar{k} = \\left(\\frac{0.16}{\\lambda}\\right)^{\\frac{1}{1-\\alpha}} = 4.51$. La elasticidad respecto al ahorro es $\\frac{\\partial \\ln \\bar{k}}{\\partial \\ln s} = \\frac{1}{1-\\alpha} = 2.38 > 1$. La estática comparativa respecto a la dilución demográfica y depreciación es negativa: $\\frac{\\partial \\bar{k}}{\\partial \\lambda} = -\\frac{1}{1-\\alpha}\\frac{s^{\\frac{1}{1-\\alpha}}}{\\lambda^{\\frac{2-\\alpha}{1-\\alpha}}} < 0$. Finalmente, en el estado uniforme el capital per cápita es constante en el tiempo, por lo que su tasa asintótica de crecimiento es nula: $\\left.\\frac{\\dot{k}}{k}\\right|_{t \\to \\infty} = 0$."
+    },
+    {
+      "id": "Q-Hab03-162",
+      "competency_id": "Hab-03",
+      "competency_name": "Cálculo del Capital de Estado Uniforme y Estática Comparativa",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Atendiendo a la relación funcional planteada, halle: En el marco del modelo de crecimiento de Solow aplicado al estudio de un país de renta media, con tecnología intensiva $q = k^{\\alpha}$, tasa de ahorro $s = 0.38$, depreciación y crecimiento poblacional conjunto $\\lambda = 0.02$, y elasticidad capital $\\alpha = 0.25$: determine el stock de capital por trabajador de estado uniforme $\\bar{k}$, su elasticidad formal respecto al ahorro y los efectos analíticos de estática comparativa.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Capital $\\bar{k} = 50.7$ proyectando intensificación del capital $\\frac{\\partial \\bar{k}}{\\partial \\lambda} > 0$ frente a aumentos en la tasa $\\lambda$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Conclusión errónea de que una mayor tasa demográfica intensifica el capital per cápita}$",
+          "distractor_id": "D-Hab03-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Capital $\\bar{k} = 19.0$ suprimiendo la potencia no lineal mediante $\\bar{k} = \\frac{0.38}{\\lambda}$ asumiendo proporcionalidad constante",
+          "is_correct": false,
+          "error_rationale": "$\\bar{k} \\text{ lineal en el cociente ahorro-población, subestimando la curvatura de la tecnología}$",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Capital $\\bar{k} = 0.02$ invirtiendo el cociente a $\\left(\\frac{\\lambda}{0.38}\\right)^{\\frac{1}{1-\\alpha}}$ con elasticidad $\\frac{\\partial \\ln \\bar{k}}{\\partial \\ln s} = 1.33$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir que un mayor ahorro reduce la dotación de capital por operario}$",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Capital $\\bar{k} = 50.7$ afirmando un crecimiento continuo ilimitado $\\left.\\frac{\\dot{k}}{k}\\right|_{t \\to \\infty} > 0$ ante alzas de $s$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión recurrente entre niveles de variables y sus tasas asintóticas de crecimiento}$",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Producto $\\bar{q} = 2.67$ evaluado como capital de equilibrio al aplicar $\\bar{q} = (s/\\lambda)^{\\frac{\\alpha}{1-\\alpha}}$ en vez de $\\bar{k}$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Igualar el producto por trabajador con el stock de capital por trabajador}$",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Capital $\\bar{k} = 50.7$ fijando una elasticidad unitaria $\\frac{\\partial \\ln \\bar{k}}{\\partial \\ln s} = 1.0$ e impacto $\\frac{\\partial \\bar{k}}{\\partial \\lambda} < 0$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Subestimación del efecto multiplicador de la acumulación de capital cuando } \\alpha \\in (0, 1)$",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Capital $\\bar{k} = 50.7$ con elasticidad $\\frac{\\partial \\ln \\bar{k}}{\\partial \\ln s} = 1.33 > 1$ e impacto poblacional negativo $\\frac{\\partial \\bar{k}}{\\partial \\lambda} < 0$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Iguale la tasa neta de acumulación a cero para definir el balance estacionario entre ahorro e inversión requerida.",
+        "Despeje algebraicamente el capital per cápita aplicando la potencia fraccionaria recíproca $\\frac{1}{1-\\alpha}$.",
+        "Diferencie la solución respecto a los parámetros para verificar el signo negativo de la dilución poblacional y la elasticidad mayor a uno."
+      ],
+      "detailed_solution": "En el estado uniforme de Solow, la acumulación neta se anula: $\\dot{k} = 0 \\iff s \\bar{k}^\\alpha = \\lambda \\bar{k}$. Despejando el capital per cápita: $\\bar{k}^{1-\\alpha} = \\frac{0.38}{\\lambda} \\implies \\bar{k} = \\left(\\frac{0.38}{\\lambda}\\right)^{\\frac{1}{1-\\alpha}} = 50.7$. La elasticidad respecto al ahorro es $\\frac{\\partial \\ln \\bar{k}}{\\partial \\ln s} = \\frac{1}{1-\\alpha} = 1.33 > 1$. La estática comparativa respecto a la dilución demográfica y depreciación es negativa: $\\frac{\\partial \\bar{k}}{\\partial \\lambda} = -\\frac{1}{1-\\alpha}\\frac{s^{\\frac{1}{1-\\alpha}}}{\\lambda^{\\frac{2-\\alpha}{1-\\alpha}}} < 0$. Finalmente, en el estado uniforme el capital per cápita es constante en el tiempo, por lo que su tasa asintótica de crecimiento es nula: $\\left.\\frac{\\dot{k}}{k}\\right|_{t \\to \\infty} = 0$."
+    },
+    {
+      "id": "Q-C04-191",
+      "competency_id": "C-04",
+      "competency_name": "Colapso del Filo de la Navaja de Harrod-Domar bajo Proporciones Fijas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A la luz de los supuestos del modelo, identifique el valor de: Considere una economía con tecnología de proporciones fijas tipo Harrod-Domar $Y = \\min(K/3.2, L/1.2)$, con coeficientes $a = 3.2$, $b = 1.2$, propensión al ahorro $s = 12.0\\%$ y crecimiento poblacional $n = 3.0\\%$. En este marco, la tasa garantizada es $s/a = 3.75\\%$, de modo que $n = 3.0\\% < s/a = 3.75\\%$. De acuerdo con el análisis de Solow (1956), determine cuál de las siguientes afirmaciones describe con precisión la dinámica del sistema frente al filo de la navaja:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Al cumplirse $n < s/a$, la inestabilidad de filo de la navaja persiste en el modelo neoclásico aun incorporando isocuantas convexas.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Negación del resultado teórico central del artículo de Solow de 1956}$",
+          "distractor_id": "D-C04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Al cumplirse $n < s/a$, la productividad marginal del capital permanece estrictamente positiva $\\text{PMg}_K > 0$ aun si $r > a/b$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Retornos factoriales positivos a pesar de existir capacidad totalmente ociosa}$",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Al asumirse $a = Y/K$, la tasa garantizada efectiva se convierte en $s \\cdot a$ eliminando la discrepancia estructural con $n$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Inversión dimensional de la relación capital-producto teórica}$",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Al cumplirse $n < s/a$, el trabajo es el cuello de botella limitante y genera acumulación redundante con capacidad ociosa de capital.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Al cumplirse $n < s/a$, la flexibilidad en la tasa de interés de mercado absorbe y elimina íntegramente la capacidad ociosa instalada.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predicción neoclásica errónea en tecnologías Leontief con isocuantas angulares}$",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Al cumplirse $n < s/a$, el capital es el cuello de botella limitante y genera desempleo estructural secular por déficit de acumulación.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Identificación invertida de los factores sobrantes y limitantes}$",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Al cumplirse $n < s/a$, las fuerzas del mercado competitivo ajustan la tasa de ahorro endógenamente forzando $s/a = n$ sin fricción.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribución de estabilidad automática a un sistema estrictamente rígido}$",
+          "distractor_id": "D-C04-05"
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que con coeficientes fijos $Y = \\min(K/a, L/b)$, los factores productivos son complementarios estrictos y no pueden sustituirse entre sí.",
+        "Compare la tasa garantizada de Harrod $s/a$ con la tasa natural de crecimiento demográfico $n$ para identificar cuál factor restringe la producción.",
+        "Observe que cuando un factor resulta redundante su productividad marginal cae a cero, mientras que el factor escaso genera desempleo estructural o capacidad ociosa insoluble por precios."
+      ],
+      "detailed_solution": "En la tecnología de proporciones fijas $Y = \\min(K/3.2, L/1.2)$, la ley de acumulación derivada por Solow (1956, pág. 10) es $\\dot{r} = s\\min(r/3.2, 1/1.2) - nr$, donde $r = K/L$. Con $s = 12.0\\%$ y $a = 3.2$, la tasa garantizada de Harrod es $s/a = 3.75\\%$, mientras que la tasa natural de crecimiento demográfico es $n = 3.0\\%$. Cuando $n > s/a$, la tasa de ahorro resulta insuficiente para dotar de capital a la nueva fuerza de trabajo; en consecuencia, el capital opera como factor limitante y se genera desempleo estructural secular creciente que no puede subsanarse mediante caídas del salario real. Por el contrario, cuando $n < s/a$, el ahorro supera el crecimiento poblacional, el trabajo se convierte en el factor limitante y surge capacidad ociosa redundante de capital, donde $\\text{PMg}_K = 0$ para todo $r > a/b$. Solow demuestra que esta inestabilidad de filo de la navaja proviene de la hipótesis de proporciones fijas y desaparece al introducir sustituibilidad neoclásica de factores."
+    },
+    {
+      "id": "Q-C04-192",
+      "competency_id": "C-04",
+      "competency_name": "Colapso del Filo de la Navaja de Harrod-Domar bajo Proporciones Fijas",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A partir del marco de análisis cuantitativo, encuentre: Considere una economía con tecnología de proporciones fijas tipo Harrod-Domar $Y = \\min(K/4.5, L/1.5)$, con coeficientes $a = 4.5$, $b = 1.5$, propensión al ahorro $s = 10.0\\%$ y crecimiento poblacional $n = 5.5\\%$. En este marco, la tasa garantizada es $s/a = 2.22\\%$, de modo que $n = 5.5\\% > s/a = 2.22\\%$. De acuerdo con el análisis de Solow (1956), determine cuál de las siguientes afirmaciones describe con precisión la dinámica del sistema frente al filo de la navaja:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Al cumplirse $n > s/a$, un ajuste competitivo a la baja en el salario real restablece plenamente el pleno empleo en el mercado laboral.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predicción neoclásica errónea en tecnologías Leontief con isocuantas angulares}$",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Al cumplirse $n > s/a$, las fuerzas del mercado competitivo ajustan la tasa de ahorro endógenamente forzando $s/a = n$ sin fricción.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribución de estabilidad automática a un sistema estrictamente rígido}$",
+          "distractor_id": "D-C04-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Al asumirse $a = Y/K$, la tasa garantizada efectiva se convierte en $s \\cdot a$ eliminando la discrepancia estructural con $n$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Inversión dimensional de la relación capital-producto teórica}$",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Al cumplirse $n > s/a$, la productividad marginal del capital permanece estrictamente positiva $\\text{PMg}_K > 0$ aun si $r > a/b$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Retornos factoriales positivos a pesar de existir capacidad totalmente ociosa}$",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Al cumplirse $n > s/a$, el capital es el cuello de botella limitante y genera desempleo estructural permanente sin ajuste por salarios.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Al cumplirse $n > s/a$, el trabajo es el cuello de botella limitante y genera acumulación redundante con exceso crónico de capital.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Identificación invertida de los factores sobrantes y limitantes}$",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Al cumplirse $n > s/a$, la inestabilidad de filo de la navaja persiste en el modelo neoclásico aun incorporando isocuantas convexas.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Negación del resultado teórico central del artículo de Solow de 1956}$",
+          "distractor_id": "D-C04-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que con coeficientes fijos $Y = \\min(K/a, L/b)$, los factores productivos son complementarios estrictos y no pueden sustituirse entre sí.",
+        "Compare la tasa garantizada de Harrod $s/a$ con la tasa natural de crecimiento demográfico $n$ para identificar cuál factor restringe la producción.",
+        "Observe que cuando un factor resulta redundante su productividad marginal cae a cero, mientras que el factor escaso genera desempleo estructural o capacidad ociosa insoluble por precios."
+      ],
+      "detailed_solution": "En la tecnología de proporciones fijas $Y = \\min(K/4.5, L/1.5)$, la ley de acumulación derivada por Solow (1956, pág. 10) es $\\dot{r} = s\\min(r/4.5, 1/1.5) - nr$, donde $r = K/L$. Con $s = 10.0\\%$ y $a = 4.5$, la tasa garantizada de Harrod es $s/a = 2.22\\%$, mientras que la tasa natural de crecimiento demográfico es $n = 5.5\\%$. Cuando $n > s/a$, la tasa de ahorro resulta insuficiente para dotar de capital a la nueva fuerza de trabajo; en consecuencia, el capital opera como factor limitante y se genera desempleo estructural secular creciente que no puede subsanarse mediante caídas del salario real. Por el contrario, cuando $n < s/a$, el ahorro supera el crecimiento poblacional, el trabajo se convierte en el factor limitante y surge capacidad ociosa redundante de capital, donde $\\text{PMg}_K = 0$ para todo $r > a/b$. Solow demuestra que esta inestabilidad de filo de la navaja proviene de la hipótesis de proporciones fijas y desaparece al introducir sustituibilidad neoclásica de factores."
+    },
+    {
+      "id": "Q-Hab04-211",
+      "competency_id": "Hab-04",
+      "competency_name": "Determinación de la Condición de Existencia de Equilibrio en Tecnologías CES",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el marco de referencia correspondiente, establezca: Para una función de producción CES con parámetro $\\rho = 1/2$ dada por $Y = (0.5\\sqrt{K} + \\sqrt{L})^2$, propensión marginal al ahorro $s = 28.0\\%$ y tasa de crecimiento poblacional $n = 12.0\\%$, determine la condición analítica de existencia de un estado estacionario estable $r^* > 0$ y el valor de equilibrio de la relación capital-trabajo en el modelo de Solow (1956):",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Condición $s a^2 < n$ (se cumple 0.07 < 0.12) con capital estacionario $r^* = \\left(\\frac{1}{\\sqrt{n/s} - 0.5}\\right)^2 = 41.81$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Condición $s a^2 > n$ (postulando 0.07 > 0.12) con capital estacionario $r^* = \\left(\\frac{1}{0.5 - \\sqrt{n/s}}\\right)^2 = 41.81$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir convergencia cuando la economía entra en régimen de crecimiento ilimitado autosostenido}$",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Condición $s a^2 < n$ (se cumple 0.07 < 0.12) con capital estacionario $r^* = \\left(\\frac{1}{\\sqrt{n/s} + 0.5}\\right)^2 = 0.75$.",
+          "is_correct": false,
+          "error_rationale": "$r^* \\text{ subestimado por signo positivo en el denominador}$",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Condición $s a^2 < n$ con producto por trabajador obtenido sin exponente cuadrático $y^* = \\frac{1}{1 - 0.5\\sqrt{s/n}} = 4.23$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Subestimar el nivel de producto per cápita estacionario por falta de elevación al cuadrado}$",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Condición $s a^2 < n$ omitiendo el producto cruzado con función $y = a^2 r + 1$ obteniendo $r^* = \\frac{0.28}{0.12 - 0.07} = 5.6$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Omisión del término cruzado } 2a\\sqrt{r} \\text{ que altera las raíces de equilibrio}$",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Condición de sustitución con parámetro elástico $\\rho = 0.5$ en lugar de $\\rho = 1/2$, fijando el umbral asintótico en $s \\cdot 0.5 < 0.12$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Identificación incorrecta de la elasticidad de sustitución tecnológica}$",
+          "distractor_id": "D-Hab04-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Garantía universal $\\forall a, s, n \\implies \\exists r^* > 0$ sin restricción de umbral debido a la elasticidad de sustitución $\\sigma = 2$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Creencia errónea de que toda función cóncava cruza necesariamente el rayo demográfico}$",
+          "distractor_id": "D-Hab04-04"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Exprese la función de producción en forma intensiva dividiendo entre $L$ y expandiendo el binomio $(a\\sqrt{r} + 1)^2 = a^2 r + 2a\\sqrt{r} + 1$.",
+        "Plantee la condición de estado estacionario $\\dot{r} = 0 \\iff s(a\\sqrt{r} + 1)^2 = nr$ y aplique raíz cuadrada en ambos miembros para despejar $\\sqrt{r}$.",
+        "Analice el límite asintótico $\\lim_{r \\to \\infty} \\frac{s y}{r} = s a^2$ para deducir por qué se requiere la condición estricta $s a^2 < n$ a fin de evitar crecimiento perpetuo sin equilibrio."
+      ],
+      "detailed_solution": "Para la tecnología CES $Y = (0.5\\sqrt{K} + \\sqrt{L})^2$, dividiendo entre $L$ se obtiene la función intensiva $y = F(r, 1) = (0.5\\sqrt{r} + 1)^2 = 0.25 r + 1.0\\sqrt{r} + 1$, donde $r = K/L$. La ley de acumulación de Solow (1956, pág. 14) es $\\dot{r} = s(0.5\\sqrt{r} + 1)^2 - nr$. El estado estacionario exige $\\dot{r} = 0 \\iff s(0.5\\sqrt{r} + 1)^2 = nr$. Tomando raíz cuadrada en ambos miembros: $\\sqrt{s}(0.5\\sqrt{r} + 1) = \\sqrt{n}\\sqrt{r} \\iff \\sqrt{s} = (\\sqrt{n} - 0.5\\sqrt{s})\\sqrt{r}$. Para que exista una solución finita y estrictamente positiva $r^* > 0$, el coeficiente debe ser positivo: $\\sqrt{n} - 0.5\\sqrt{s} > 0 \\iff \\sqrt{n/s} > 0.5 \\iff s a^2 < n$. Con $s = 0.28$, $a = 0.5$ y $n = 0.12$, tenemos $s a^2 = 0.07 < 0.12$, por lo que el umbral se satisface. Despejando se obtiene $r^* = \\left(\\frac{1}{\\sqrt{n/s} - 0.5}\\right)^2 = 41.81$. Si $s a^2 \\ge n$, la tasa marginal de ahorro supera asintóticamente a la dilución demográfica y la economía experimenta crecimiento perpetuo sin estado estacionario."
+    },
+    {
+      "id": "Q-Hab04-212",
+      "competency_id": "Hab-04",
+      "competency_name": "Determinación de la Condición de Existencia de Equilibrio en Tecnologías CES",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Evalúe la expresión y determine la cantidad buscada: Para una función de producción CES con parámetro $\\rho = 1/2$ dada por $Y = (0.15\\sqrt{K} + \\sqrt{L})^2$, propensión marginal al ahorro $s = 36.0\\%$ y tasa de crecimiento poblacional $n = 6.0\\%$, determine la condición analítica de existencia de un estado estacionario estable $r^* > 0$ y el valor de equilibrio de la relación capital-trabajo en el modelo de Solow (1956):",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Condición $s a^2 < n$ omitiendo el producto cruzado con función $y = a^2 r + 1$ obteniendo $r^* = \\frac{0.36}{0.06 - 0.0081} = 6.94$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Omisión del término cruzado } 2a\\sqrt{r} \\text{ que altera las raíces de equilibrio}$",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Condición $s a^2 < n$ (se cumple 0.0081 < 0.06) con capital estacionario $r^* = \\left(\\frac{1}{\\sqrt{n/s} + 0.15}\\right)^2 = 3.21$.",
+          "is_correct": false,
+          "error_rationale": "$r^* \\text{ subestimado por signo positivo en el denominador}$",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Garantía universal $\\forall a, s, n \\implies \\exists r^* > 0$ sin restricción de umbral debido a la elasticidad de sustitución $\\sigma = 2$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Creencia errónea de que toda función cóncava cruza necesariamente el rayo demográfico}$",
+          "distractor_id": "D-Hab04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Condición $s a^2 < n$ con producto por trabajador obtenido sin exponente cuadrático $y^* = \\frac{1}{1 - 0.15\\sqrt{s/n}} = 1.58$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Subestimar el nivel de producto per cápita estacionario por falta de elevación al cuadrado}$",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Condición $s a^2 < n$ (se cumple 0.0081 < 0.06) con capital estacionario $r^* = \\left(\\frac{1}{\\sqrt{n/s} - 0.15}\\right)^2 = 14.99$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Condición $s a^2 > n$ (postulando 0.0081 > 0.06) con capital estacionario $r^* = \\left(\\frac{1}{0.15 - \\sqrt{n/s}}\\right)^2 = 14.99$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir convergencia cuando la economía entra en régimen de crecimiento ilimitado autosostenido}$",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Condición de sustitución con parámetro elástico $\\rho = 0.15$ en lugar de $\\rho = 1/2$, fijando el umbral asintótico en $s \\cdot 0.15 < 0.06$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Identificación incorrecta de la elasticidad de sustitución tecnológica}$",
+          "distractor_id": "D-Hab04-06"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Exprese la función de producción en forma intensiva dividiendo entre $L$ y expandiendo el binomio $(a\\sqrt{r} + 1)^2 = a^2 r + 2a\\sqrt{r} + 1$.",
+        "Plantee la condición de estado estacionario $\\dot{r} = 0 \\iff s(a\\sqrt{r} + 1)^2 = nr$ y aplique raíz cuadrada en ambos miembros para despejar $\\sqrt{r}$.",
+        "Analice el límite asintótico $\\lim_{r \\to \\infty} \\frac{s y}{r} = s a^2$ para deducir por qué se requiere la condición estricta $s a^2 < n$ a fin de evitar crecimiento perpetuo sin equilibrio."
+      ],
+      "detailed_solution": "Para la tecnología CES $Y = (0.15\\sqrt{K} + \\sqrt{L})^2$, dividiendo entre $L$ se obtiene la función intensiva $y = F(r, 1) = (0.15\\sqrt{r} + 1)^2 = 0.0225 r + 0.3\\sqrt{r} + 1$, donde $r = K/L$. La ley de acumulación de Solow (1956, pág. 14) es $\\dot{r} = s(0.15\\sqrt{r} + 1)^2 - nr$. El estado estacionario exige $\\dot{r} = 0 \\iff s(0.15\\sqrt{r} + 1)^2 = nr$. Tomando raíz cuadrada en ambos miembros: $\\sqrt{s}(0.15\\sqrt{r} + 1) = \\sqrt{n}\\sqrt{r} \\iff \\sqrt{s} = (\\sqrt{n} - 0.15\\sqrt{s})\\sqrt{r}$. Para que exista una solución finita y estrictamente positiva $r^* > 0$, el coeficiente debe ser positivo: $\\sqrt{n} - 0.15\\sqrt{s} > 0 \\iff \\sqrt{n/s} > 0.15 \\iff s a^2 < n$. Con $s = 0.36$, $a = 0.15$ y $n = 0.06$, tenemos $s a^2 = 0.0081 < 0.06$, por lo que el umbral se satisface. Despejando se obtiene $r^* = \\left(\\frac{1}{\\sqrt{n/s} - 0.15}\\right)^2 = 14.99$. Si $s a^2 \\ge n$, la tasa marginal de ahorro supera asintóticamente a la dilución demográfica y la economía experimenta crecimiento perpetuo sin estado estacionario."
+    },
+    {
+      "id": "Q-H03-241",
+      "competency_id": "H-03",
+      "competency_name": "Ecuación de Arbitraje de Activos de Bienes de Capital y Tasa Propia",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Realizando las deducciones matemáticas pertinentes, calcule: En un modelo de crecimiento continuo sin incertidumbre, el canon de alquiler de un bien de capital es $q(t) = 22.2\\text{ u.m./año}$, el precio del bien es $p(t) = 370\\text{ u.m.}$ (con rendimiento por alquiler $q/p = 6\\%$) y la tasa esperada de revalorización es $\\dot{p}/p = 1\\%$. Según la condición de arbitraje de activos de Solow (1956), identifique la formulación y valor de la tasa de interés monetaria $i(t)$ y la tasa propia del capital:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Tasa propia igual a $i(t) + \\frac{\\dot{p}}{p} = 8\\%$, sumando la apreciación a la tasa monetaria en el rendimiento",
+          "is_correct": false,
+          "error_rationale": "$\\text{Definición invertida de la ecuación de Fisher en términos del activo real}$",
+          "distractor_id": "D-H03-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Tasa $i(t) = 7\\%$, postulando que la renta real del activo $\\frac{q}{p}$ se mantiene invariante ante cambios en $k$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Desconexión entre el mercado de activos y la productividad marginal del factor}$",
+          "distractor_id": "D-H03-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Tasa $i(t) = \\frac{q}{p} - \\frac{\\dot{p}}{p} = 5\\%$, descontando la tasa de apreciación del precio en el arbitraje",
+          "is_correct": false,
+          "error_rationale": "$\\text{Tratamiento de la inflación del precio del capital como un costo en lugar de un rendimiento}$",
+          "distractor_id": "D-H03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Tasa $i(t) \\ne \\frac{q}{p}$ aun cuando $\\dot{p} = 0$, preservando una prima estructural entre tasa monetaria y canon real",
+          "is_correct": false,
+          "error_rationale": "$\\text{Violación del arbitraje en estado de precios estacionarios}$",
+          "distractor_id": "D-H03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Tasa $i(t) = \\frac{q}{p} + \\frac{\\dot{p}}{p} = 7\\%$, con tasa propia del capital definida por $\\frac{q}{p} = 6\\%$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Precio $p(t) = \\int_t^\\infty q(u) du$, determinando el valor del capital mediante la suma simple de los flujos de canon futuros",
+          "is_correct": false,
+          "error_rationale": "$\\text{Suma de flujos futuros sin factor de descuento temporal por preferencia intertemporal}$",
+          "distractor_id": "D-H03-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Tasa $i(t) = \\frac{q}{p} = 6\\%$, considerando que el activo financiero rinde el flujo directo del alquiler corriente",
+          "is_correct": false,
+          "error_rationale": "$\\text{Descuido de la apreciación del precio del activo en el retorno total de la inversión}$",
+          "distractor_id": "D-H03-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Considere las alternativas de inversión de un agente en equilibrio continuo: mantener dinero a tasa nominal $i(t)$ frente a adquirir un bien de capital físico.",
+        "Recuerde que el rendimiento total del bien de capital se compone del flujo corriente de alquileres y de la variación en el tiempo de su precio de transferencia.",
+        "Aplique la condición de no arbitraje para igualar el rendimiento monetario con la suma del canon real $q/p$ y la tasa de revalorización de capital $\\dot{p}/p$."
+      ],
+      "detailed_solution": "En equilibrio competitivo de activos sin incertidumbre, la condición de no arbitraje exige que el rendimiento total de poseer capital iguale la tasa de interés monetaria: $i(t) = \\frac{q(t)}{p(t)} + \\frac{\\dot{p}(t)}{p(t)} = 6\\% + 1\\% = 7\\%$. La tasa propia del bien es el rendimiento directo del alquiler $q/p = 6\\%$."
+    },
+    {
+      "id": "Q-H03-242",
+      "competency_id": "H-03",
+      "competency_name": "Ecuación de Arbitraje de Activos de Bienes de Capital y Tasa Propia",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Teniendo en consideración los fundamentos del equilibrio, determine: En un modelo de crecimiento continuo sin incertidumbre, el canon de alquiler de un bien de capital es $q(t) = 31.5\\text{ u.m./año}$, el precio del bien es $p(t) = 350\\text{ u.m.}$ (con rendimiento por alquiler $q/p = 9\\%$) y la tasa esperada de revalorización es $\\dot{p}/p = 2\\%$. Según la condición de arbitraje de activos de Solow (1956), identifique la formulación y valor de la tasa de interés monetaria $i(t)$ y la tasa propia del capital:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Tasa $i(t) = 11\\%$, postulando que la renta real del activo $\\frac{q}{p}$ se mantiene invariante ante cambios en $k$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Desconexión entre el mercado de activos y la productividad marginal del factor}$",
+          "distractor_id": "D-H03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Tasa propia igual a $i(t) + \\frac{\\dot{p}}{p} = 13\\%$, sumando la apreciación a la tasa monetaria en el rendimiento",
+          "is_correct": false,
+          "error_rationale": "$\\text{Definición invertida de la ecuación de Fisher en términos del activo real}$",
+          "distractor_id": "D-H03-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Tasa $i(t) = \\frac{q}{p} + \\frac{\\dot{p}}{p} = 11\\%$, con tasa propia del capital definida por $\\frac{q}{p} = 9\\%$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Tasa $i(t) \\ne \\frac{q}{p}$ aun cuando $\\dot{p} = 0$, preservando una prima estructural entre tasa monetaria y canon real",
+          "is_correct": false,
+          "error_rationale": "$\\text{Violación del arbitraje en estado de precios estacionarios}$",
+          "distractor_id": "D-H03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Tasa $i(t) = \\frac{q}{p} = 9\\%$, considerando que el activo financiero rinde el flujo directo del alquiler corriente",
+          "is_correct": false,
+          "error_rationale": "$\\text{Descuido de la apreciación del precio del activo en el retorno total de la inversión}$",
+          "distractor_id": "D-H03-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Precio $p(t) = \\int_t^\\infty q(u) du$, determinando el valor del capital mediante la suma simple de los flujos de canon futuros",
+          "is_correct": false,
+          "error_rationale": "$\\text{Suma de flujos futuros sin factor de descuento temporal por preferencia intertemporal}$",
+          "distractor_id": "D-H03-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Tasa $i(t) = \\frac{q}{p} - \\frac{\\dot{p}}{p} = 7\\%$, descontando la tasa de apreciación del precio en el arbitraje",
+          "is_correct": false,
+          "error_rationale": "$\\text{Tratamiento de la inflación del precio del capital como un costo en lugar de un rendimiento}$",
+          "distractor_id": "D-H03-02"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Considere las alternativas de inversión de un agente en equilibrio continuo: mantener dinero a tasa nominal $i(t)$ frente a adquirir un bien de capital físico.",
+        "Recuerde que el rendimiento total del bien de capital se compone del flujo corriente de alquileres y de la variación en el tiempo de su precio de transferencia.",
+        "Aplique la condición de no arbitraje para igualar el rendimiento monetario con la suma del canon real $q/p$ y la tasa de revalorización de capital $\\dot{p}/p$."
+      ],
+      "detailed_solution": "En equilibrio competitivo de activos sin incertidumbre, la condición de no arbitraje exige que el rendimiento total de poseer capital iguale la tasa de interés monetaria: $i(t) = \\frac{q(t)}{p(t)} + \\frac{\\dot{p}(t)}{p(t)} = 9\\% + 2\\% = 11\\%$. La tasa propia del bien es el rendimiento directo del alquiler $q/p = 9\\%$."
+    },
+    {
+      "id": "Q-C05-261",
+      "competency_id": "C-05",
+      "competency_name": "Comportamiento de Precios de Factores y Distribución Funcional Neoclásica",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "De acuerdo con los postulados fundamentales del sistema, verifique: En una economía descrita por el modelo de crecimiento de Solow (1956), la tecnología intensiva es $\\phi(k) = k^\\alpha$ con elasticidad del capital $\\alpha = 0.25$, tasa de ahorro $s = 0.12$ y crecimiento poblacional $n = 0.03$. Si la dotación efectiva de capital por trabajador aumenta en el entorno de $k = 9$, determine el comportamiento analítico de los precios reales factoriales ($\\frac{w}{p}$ y $\\frac{q}{p}$) y de la distribución del ingreso:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La participación distributiva laboral $\\frac{wL}{pY}$ varía con la dotación $k$ y el ahorro $s$, apartándose de la fracción constante de producto igual a 0.75",
+          "is_correct": false,
+          "error_rationale": "$\\text{Variación espuria en la distribución funcional del ingreso}$",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La suma de las remuneraciones factoriales difiere del producto total ($\\frac{w}{p}L + \\frac{q}{p}K \\ne Y$), provocando un desbalance distributivo en el equilibrio de mercado",
+          "is_correct": false,
+          "error_rationale": "$\\text{Superávit o déficit distributivo no nulo en equilibrio competitivo}$",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El salario real cae con la acumulación ($\\frac{d(w/p)}{dk} < 0$), pues la mayor dotación de capital por operario reduce la productividad marginal de la mano de obra contratada",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir pauperización salarial como consecuencia de la capitalización}$",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La tasa de alquiler real $\\frac{q}{p}$ debe converger obligatoriamente a cero ($\\lim_{t \\to \\infty} \\frac{q}{p} = 0$) para sostener el pleno empleo permanente en el largo plazo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Aceptación de la tesis de Harrod refutada formalmente por Solow}$",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La tasa marginal de sustitución técnica sobre la isocuanta iguala la relación de cantidades $-\\frac{dK}{dL} = \\frac{K}{L}$, en lugar del ratio de precios factoriales $\\frac{w}{q}$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre la relación técnica de sustitución y la intensidad factorial}$",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Los precios factoriales $\\frac{w}{p}$ y $\\frac{q}{p}$ permanecen indeterminados en equilibrio para todo nivel de $k$ debido a los rendimientos constantes de escala neoclásicos",
+          "is_correct": false,
+          "error_rationale": "$\\text{Extensión errónea de la indeterminación de Harrod a la economía neoclásica}$",
+          "distractor_id": "D-C05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El salario real $\\frac{w}{p}$ y el cociente $\\frac{w}{q}$ aumentan con $k$, mientras que la tasa de alquiler real $\\frac{q}{p}$ desciende hacia un valor positivo finito $\\phi'(\\bar{k})$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Identifique las fórmulas neoclásicas que vinculan los precios reales de los factores con las productividades marginales del capital y del trabajo.",
+        "Analice el signo de las derivadas parciales de $\\frac{w}{p} = \\phi(k) - k\\phi'(k)$ y $\\frac{q}{p} = \\phi'(k)$ ante variaciones en la relación capital-trabajo $k$.",
+        "Recuerde que por el Teorema de Euler sobre funciones homogéneas de grado 1, la retribución factorial agota exactamente el producto agregado total."
+      ],
+      "detailed_solution": "Bajo rendimientos constantes a escala y mercados competitivos, los factores se remuneran según sus productividades marginales: $\\frac{q}{p} = \\phi'(k) = \\alpha k^{\\alpha - 1}$ y $\\frac{w}{p} = \\phi(k) - k\\phi'(k) = (1 - \\alpha) k^\\alpha$ (con $\\alpha = 0.25$ y participación laboral $1 - \\alpha = 0.75$). Al acumularse capital ($k$ crece), $\\phi''(k) < 0$ implica que el canon real $\\frac{q}{p}$ cae monótonamente hacia $\\phi'(\\bar{k}) > 0$, el salario real $\\frac{w}{p}$ aumenta estrictamente pues $\\frac{d(w/p)}{dk} = -k\\phi''(k) > 0$, y el cociente $\\frac{w}{q}$ se expande. La participación laboral permanece constante en 0.75 y el Teorema de Euler asegura el agotamiento exacto del producto: $\\frac{w}{p}L + \\frac{q}{p}K = Y$."
+    },
+    {
+      "id": "Q-C05-262",
+      "competency_id": "C-05",
+      "competency_name": "Comportamiento de Precios de Factores y Distribución Funcional Neoclásica",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo los parámetros establecidos, calcule el valor exacto: En una economía descrita por el modelo de crecimiento de Solow (1956), la tecnología intensiva es $\\phi(k) = k^\\alpha$ con elasticidad del capital $\\alpha = 0.35$, tasa de ahorro $s = 0.1$ y crecimiento poblacional $n = 0.04$. Si la dotación efectiva de capital por trabajador aumenta en el entorno de $k = 3$, determine el comportamiento analítico de los precios reales factoriales ($\\frac{w}{p}$ y $\\frac{q}{p}$) y de la distribución del ingreso:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La tasa de alquiler real $\\frac{q}{p}$ debe converger obligatoriamente a cero ($\\lim_{t \\to \\infty} \\frac{q}{p} = 0$) para sostener el pleno empleo permanente en el largo plazo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Aceptación de la tesis de Harrod refutada formalmente por Solow}$",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La participación distributiva laboral $\\frac{wL}{pY}$ varía con la dotación $k$ y el ahorro $s$, apartándose de la fracción constante de producto igual a 0.65",
+          "is_correct": false,
+          "error_rationale": "$\\text{Variación espuria en la distribución funcional del ingreso}$",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El salario real $\\frac{w}{p}$ y el cociente $\\frac{w}{q}$ aumentan con $k$, mientras que la tasa de alquiler real $\\frac{q}{p}$ desciende hacia un valor positivo finito $\\phi'(\\bar{k})$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El salario real cae con la acumulación ($\\frac{d(w/p)}{dk} < 0$), pues la mayor dotación de capital por operario reduce la productividad marginal de la mano de obra contratada",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir pauperización salarial como consecuencia de la capitalización}$",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La tasa marginal de sustitución técnica sobre la isocuanta iguala la relación de cantidades $-\\frac{dK}{dL} = \\frac{K}{L}$, en lugar del ratio de precios factoriales $\\frac{w}{q}$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre la relación técnica de sustitución y la intensidad factorial}$",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La suma de las remuneraciones factoriales difiere del producto total ($\\frac{w}{p}L + \\frac{q}{p}K \\ne Y$), provocando un desbalance distributivo en el equilibrio de mercado",
+          "is_correct": false,
+          "error_rationale": "$\\text{Superávit o déficit distributivo no nulo en equilibrio competitivo}$",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Los precios factoriales $\\frac{w}{p}$ y $\\frac{q}{p}$ permanecen indeterminados en equilibrio para todo nivel de $k$ debido a los rendimientos constantes de escala neoclásicos",
+          "is_correct": false,
+          "error_rationale": "$\\text{Extensión errónea de la indeterminación de Harrod a la economía neoclásica}$",
+          "distractor_id": "D-C05-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Identifique las fórmulas neoclásicas que vinculan los precios reales de los factores con las productividades marginales del capital y del trabajo.",
+        "Analice el signo de las derivadas parciales de $\\frac{w}{p} = \\phi(k) - k\\phi'(k)$ y $\\frac{q}{p} = \\phi'(k)$ ante variaciones en la relación capital-trabajo $k$.",
+        "Recuerde que por el Teorema de Euler sobre funciones homogéneas de grado 1, la retribución factorial agota exactamente el producto agregado total."
+      ],
+      "detailed_solution": "Bajo rendimientos constantes a escala y mercados competitivos, los factores se remuneran según sus productividades marginales: $\\frac{q}{p} = \\phi'(k) = \\alpha k^{\\alpha - 1}$ y $\\frac{w}{p} = \\phi(k) - k\\phi'(k) = (1 - \\alpha) k^\\alpha$ (con $\\alpha = 0.35$ y participación laboral $1 - \\alpha = 0.65$). Al acumularse capital ($k$ crece), $\\phi''(k) < 0$ implica que el canon real $\\frac{q}{p}$ cae monótonamente hacia $\\phi'(\\bar{k}) > 0$, el salario real $\\frac{w}{p}$ aumenta estrictamente pues $\\frac{d(w/p)}{dk} = -k\\phi''(k) > 0$, y el cociente $\\frac{w}{q}$ se expande. La participación laboral permanece constante en 0.65 y el Teorema de Euler asegura el agotamiento exacto del producto: $\\frac{w}{p}L + \\frac{q}{p}K = Y$."
+    },
+    {
+      "id": "Q-Hab05-281",
+      "competency_id": "Hab-05",
+      "competency_name": "Modelación del Progreso Técnico Neutral y Dinámica Asintótica de Crecimiento",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Sustentando la solución en los principios teóricos, halle: Considere el modelo de Solow con progreso técnico Hicks-neutral $Y = e^{g t} K^\\alpha L^{1-\\alpha}$, donde la elasticidad del capital es $\\alpha = 0.32$, la tasa de progreso técnico es $g = 1.0\\%$, la tasa de ahorro es $s = 21.0\\%$ y la tasa de crecimiento poblacional es $n = 2.4\\%$. A partir de la ecuación diferencial de acumulación $\\dot{K} = s Y$, determine las tasas asintóticas de crecimiento del capital agregado $\\gamma_K$, del producto per cápita $\\gamma_y$ y la propiedad factorial correspondiente:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Evolución con $\\gamma_K = 3.87\\%$ y $\\gamma_y = 1.47\\%$, con una participación relativa del trabajo $wL/Y$ que colapsa asintóticamente hacia cero con el tiempo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Erosión espuria de la masa salarial ante el avance de la productividad}$",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Convergencia con $\\gamma_K = 2.40\\%$ y $\\gamma_y = 0.00\\%$, alcanzando una intensidad de capital per cápita estrictamente estacionaria sin avance tecnológico secular",
+          "is_correct": false,
+          "error_rationale": "$\\text{Incapacidad de reconocer el ensanchamiento continuo del capital por trabajador}$",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Ritmo secular de $\\gamma_K = 3.87\\%$ y $\\gamma_y = 3.87\\%$, igualando la expansión del producto por trabajador a la tasa del capital agregado sin descontar $n$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre la tasa de variación de variables agregadas y variables per cápita}$",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Dinámica con $\\gamma_K = 3.87\\%$ y $\\gamma_y = 1.47\\%$, imponiendo una relación capital-producto $K/Y$ estrictamente constante en toda la transición histórica",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre neutralidad de Hicks y neutralidad de Harrod en crecimiento equilibrado}$",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Trayectoria con $\\gamma_K = 5.52\\%$ y $\\gamma_y = 3.12\\%$, dividiendo el progreso técnico neutral por la elasticidad del capital $\\alpha$ en vez de la del trabajo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Uso de la elasticidad del capital en el denominador en vez de la elasticidad del trabajo}$",
+          "distractor_id": "D-Hab05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Crecimiento asintótico de $\\gamma_K = 3.87\\%$ y $\\gamma_y = 1.47\\%$, expandiendo el capital per cápita con participación laboral $1-\\alpha = 0.68$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Tasas agregada $\\gamma_K = 3.40\\%$ y secular $\\gamma_y = 1.00\\%$, sumando directamente las tasas demográfica y de progreso técnico neutral",
+          "is_correct": false,
+          "error_rationale": "$\\text{Subestimación sistemática del crecimiento del capital al ignorar el canal } \\frac{g}{1-\\alpha}$",
+          "distractor_id": "D-Hab05-01"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Considere la ecuación diferencial de acumulación $\\dot{K} = s Y$ y sustituya la trayectoria de la fuerza laboral $L(t) = L_0 e^{n t}$ junto con el factor tecnológico $e^{g t}$.",
+        "Aplique la transformación no lineal $Z = K^{1-\\alpha}$ para linealizar la ecuación diferencial y deduzca la tasa de expansión asintótica del capital agregado $\\gamma_K$.",
+        "Reste la tasa de crecimiento demográfico $n$ de la tasa de crecimiento del capital para obtener el ritmo de expansión secular del producto por trabajador $\\gamma_y = \\gamma_K - n$."
+      ],
+      "detailed_solution": "Bajo la función de producción Cobb-Douglas $Y = e^{g t} K^\\alpha L^{1-\\alpha}$ con $L(t) = L_0 e^{n t}$, la ecuación de acumulación es $\\dot{K} = s e^{g t} K^\\alpha (L_0 e^{n t})^{1-\\alpha}$. Mediante el cambio de variable $Z = K^{1-\\alpha}$, la ecuación se linealiza con tasa de crecimiento exponencial $g + n(1-\\alpha)$. La solución asintótica implica que el capital agregado crece a tasa $\\gamma_K = n + \\frac{g}{1-\\alpha} = 3.87\\%$. En consecuencia, el producto por trabajador $y = Y/L$ crece a tasa $\\gamma_y = \\gamma_K - n = \\frac{g}{1-\\alpha} = 1.47\\%$, mientras que la participación del trabajo en el producto se mantiene constante e igual a $1 - \\alpha = 0.68$."
+    },
+    {
+      "id": "Q-Hab05-282",
+      "competency_id": "Hab-05",
+      "competency_name": "Modelación del Progreso Técnico Neutral y Dinámica Asintótica de Crecimiento",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Siguiendo el procedimiento analítico estándar, calcule: Considere el modelo de Solow con progreso técnico Hicks-neutral $Y = e^{g t} K^\\alpha L^{1-\\alpha}$, donde la elasticidad del capital es $\\alpha = 0.6$, la tasa de progreso técnico es $g = 3.7\\%$, la tasa de ahorro es $s = 22.0\\%$ y la tasa de crecimiento poblacional es $n = 2.1\\%$. A partir de la ecuación diferencial de acumulación $\\dot{K} = s Y$, determine las tasas asintóticas de crecimiento del capital agregado $\\gamma_K$, del producto per cápita $\\gamma_y$ y la propiedad factorial correspondiente:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Ritmo secular de $\\gamma_K = 11.35\\%$ y $\\gamma_y = 11.35\\%$, igualando la expansión del producto por trabajador a la tasa del capital agregado sin descontar $n$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre la tasa de variación de variables agregadas y variables per cápita}$",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Crecimiento asintótico de $\\gamma_K = 11.35\\%$ y $\\gamma_y = 9.25\\%$, expandiendo el capital per cápita con participación laboral $1-\\alpha = 0.40$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Tasas agregada $\\gamma_K = 5.80\\%$ y secular $\\gamma_y = 3.70\\%$, sumando directamente las tasas demográfica y de progreso técnico neutral",
+          "is_correct": false,
+          "error_rationale": "$\\text{Subestimación sistemática del crecimiento del capital al ignorar el canal } \\frac{g}{1-\\alpha}$",
+          "distractor_id": "D-Hab05-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Convergencia con $\\gamma_K = 2.10\\%$ y $\\gamma_y = 0.00\\%$, alcanzando una intensidad de capital per cápita estrictamente estacionaria sin avance tecnológico secular",
+          "is_correct": false,
+          "error_rationale": "$\\text{Incapacidad de reconocer el ensanchamiento continuo del capital por trabajador}$",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Dinámica con $\\gamma_K = 11.35\\%$ y $\\gamma_y = 9.25\\%$, imponiendo una relación capital-producto $K/Y$ estrictamente constante en toda la transición histórica",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre neutralidad de Hicks y neutralidad de Harrod en crecimiento equilibrado}$",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Evolución con $\\gamma_K = 11.35\\%$ y $\\gamma_y = 9.25\\%$, con una participación relativa del trabajo $wL/Y$ que colapsa asintóticamente hacia cero con el tiempo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Erosión espuria de la masa salarial ante el avance de la productividad}$",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Trayectoria con $\\gamma_K = 8.27\\%$ y $\\gamma_y = 6.17\\%$, dividiendo el progreso técnico neutral por la elasticidad del capital $\\alpha$ en vez de la del trabajo",
+          "is_correct": false,
+          "error_rationale": "$\\text{Uso de la elasticidad del capital en el denominador en vez de la elasticidad del trabajo}$",
+          "distractor_id": "D-Hab05-04"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Considere la ecuación diferencial de acumulación $\\dot{K} = s Y$ y sustituya la trayectoria de la fuerza laboral $L(t) = L_0 e^{n t}$ junto con el factor tecnológico $e^{g t}$.",
+        "Aplique la transformación no lineal $Z = K^{1-\\alpha}$ para linealizar la ecuación diferencial y deduzca la tasa de expansión asintótica del capital agregado $\\gamma_K$.",
+        "Reste la tasa de crecimiento demográfico $n$ de la tasa de crecimiento del capital para obtener el ritmo de expansión secular del producto por trabajador $\\gamma_y = \\gamma_K - n$."
+      ],
+      "detailed_solution": "Bajo la función de producción Cobb-Douglas $Y = e^{g t} K^\\alpha L^{1-\\alpha}$ con $L(t) = L_0 e^{n t}$, la ecuación de acumulación es $\\dot{K} = s e^{g t} K^\\alpha (L_0 e^{n t})^{1-\\alpha}$. Mediante el cambio de variable $Z = K^{1-\\alpha}$, la ecuación se linealiza con tasa de crecimiento exponencial $g + n(1-\\alpha)$. La solución asintótica implica que el capital agregado crece a tasa $\\gamma_K = n + \\frac{g}{1-\\alpha} = 11.35\\%$. En consecuencia, el producto por trabajador $y = Y/L$ crece a tasa $\\gamma_y = \\gamma_K - n = \\frac{g}{1-\\alpha} = 9.25\\%$, mientras que la participación del trabajo en el producto se mantiene constante e igual a $1 - \\alpha = 0.4$."
+    },
+    {
+      "id": "Q-Hab06-311",
+      "competency_id": "Hab-06",
+      "competency_name": "Evaluación del Impacto de la Política Fiscal en la Acumulación de Capital",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Al examinar detenidamente las condiciones de frontera, resuelva: Considere el modelo de crecimiento de Solow con una política fiscal donde el gobierno grava el producto con un impuesto proporcional $t = 24.0\\%$. La tasa de ahorro privada sobre el ingreso disponible es $s = 23.0\\%$, y el sector público destina una fracción $v = 50.0\\%$ de su recaudación a inversión pública, consumiendo el resto. Determine la tasa de ahorro efectiva modificada $s^*$ de la economía, la dirección del desplazamiento del stock de capital per cápita de estado estacionario $k^*$ y su impacto en el crecimiento de largo plazo:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Tasa agregada $s^* = 29.48\\%$, desplazando el capital estacionario $k^*$ hacia un nivel superior sin perturbar el crecimiento asintótico de la economía",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Ahorro efectivo de $s^* = 16.52\\%$, contrayendo el stock estacionario $k^*$ bajo la premisa de que todo tributo reduce incondicionalmente la acumulación",
+          "is_correct": false,
+          "error_rationale": "$\\text{Incapacidad de reconocer el efecto expansivo de la inversión pública cuando } v > s$",
+          "distractor_id": "D-Hab06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Neutralidad fiscal con $s^* = 23.00\\%$, preservando $k^*$ inalterado al considerar que la recaudación pública no modifica la tasa de ahorro de la economía",
+          "is_correct": false,
+          "error_rationale": "$\\text{Descuido de la desacumulación de capital provocada por consumo público improductivo}$",
+          "distractor_id": "D-Hab06-05"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Formulación tributaria con $s^* = 23.00\\%$, deduciendo el gravamen fiscal directamente del stock de capital $K$ en lugar del flujo de producto agregado $Y$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre impuesto al flujo de renta e impuesto al stock de patrimonio}$",
+          "distractor_id": "D-Hab06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Régimen efectivo con $s^* = 29.48\\%$, ajustando el capital de equilibrio pero manteniendo los precios relativos factoriales $w/q$ estrictamente invariantes",
+          "is_correct": false,
+          "error_rationale": "$\\text{Omisión del ajuste en los mercados competitivos de factores tras choques fiscales}$",
+          "distractor_id": "D-Hab06-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Tasa de acumulación $s^* = 29.48\\%$, desplazando $k^*$ hacia un nivel superior y alterando permanentemente la tasa asintótica de crecimiento económico",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribución de distorsiones sobre el ritmo de expansión de largo plazo en modelos neoclásicos}$",
+          "distractor_id": "D-Hab06-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Proporción de inversión $s^* = 11.00\\%$, desplazando $k^*$ según la fórmula $s + (v - 1)t$ al omitir restar la tasa privada dentro del componente estatal",
+          "is_correct": false,
+          "error_rationale": "$\\text{Factor de ponderación erróneo que distorsiona el umbral de neutralidad fiscal}$",
+          "distractor_id": "D-Hab06-02"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Formule la inversión total agregada como la suma del ahorro privado sobre el ingreso disponible $(1-t)Y$ más la inversión pública financiada con la fracción $v$ de la recaudación fiscal $tY$.",
+        "Factorice el producto agregado $Y$ para expresar la tasa de ahorro efectiva en la forma canónica $s^* = s + (v - s)t$ y evalúe el signo de la diferencia $(v - s)$.",
+        "Analice el desplazamiento de la curva de inversión efectiva $s^* f(k)$ respecto al equilibrio previo y recuerde si los cambios en la tasa de ahorro alteran el nivel de capital o la tasa de crecimiento asintótica de largo plazo."
+      ],
+      "detailed_solution": "El ingreso disponible del sector privado es $(1 - t)Y$, por lo que el ahorro privado asciende a $S_p = s(1 - t)Y$. La recaudación fiscal total es $T = t Y$, de la cual el gobierno invierte una fracción $v$, destinando $I_g = v t Y$ a la formación de capital. La inversión agregada total de la economía es $I = S_p + I_g = [s(1 - t) + v t]Y = [s + (v - s)t]Y$. Así, la tasa de ahorro efectiva agregada resulta $s^* = s + (v - s)t = 29.48\\%$. Dado que $v = 50.0\\%$ y $s = 23.0\\%$, el término $(v - s)t$ genera que la curva de ahorro efectiva desplace $k^*$ hacia un nivel superior. En el modelo de Solow neoclásico, la política fiscal tiene efectos de nivel sobre el stock de capital, pero no altera la tasa asintótica de crecimiento económico secular determinada exógenamente por la demografía y la tecnología."
+    },
+    {
+      "id": "Q-Hab06-312",
+      "competency_id": "Hab-06",
+      "competency_name": "Evaluación del Impacto de la Política Fiscal en la Acumulación de Capital",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Con arreglo a las definiciones operativas del sistema, verifique: Considere el modelo de crecimiento de Solow con una política fiscal donde el gobierno grava el producto con un impuesto proporcional $t = 22.0\\%$. La tasa de ahorro privada sobre el ingreso disponible es $s = 18.0\\%$, y el sector público destina una fracción $v = 68.0\\%$ de su recaudación a inversión pública, consumiendo el resto. Determine la tasa de ahorro efectiva modificada $s^*$ de la economía, la dirección del desplazamiento del stock de capital per cápita de estado estacionario $k^*$ y su impacto en el crecimiento de largo plazo:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Neutralidad fiscal con $s^* = 18.00\\%$, preservando $k^*$ inalterado al considerar que la recaudación pública no modifica la tasa de ahorro de la economía",
+          "is_correct": false,
+          "error_rationale": "$\\text{Descuido de la desacumulación de capital provocada por consumo público improductivo}$",
+          "distractor_id": "D-Hab06-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Tasa agregada $s^* = 29.00\\%$, desplazando el capital estacionario $k^*$ hacia un nivel superior sin perturbar el crecimiento asintótico de la economía",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Proporción de inversión $s^* = 10.96\\%$, desplazando $k^*$ según la fórmula $s + (v - 1)t$ al omitir restar la tasa privada dentro del componente estatal",
+          "is_correct": false,
+          "error_rationale": "$\\text{Factor de ponderación erróneo que distorsiona el umbral de neutralidad fiscal}$",
+          "distractor_id": "D-Hab06-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Régimen efectivo con $s^* = 29.00\\%$, ajustando el capital de equilibrio pero manteniendo los precios relativos factoriales $w/q$ estrictamente invariantes",
+          "is_correct": false,
+          "error_rationale": "$\\text{Omisión del ajuste en los mercados competitivos de factores tras choques fiscales}$",
+          "distractor_id": "D-Hab06-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Tasa de acumulación $s^* = 29.00\\%$, desplazando $k^*$ hacia un nivel superior y alterando permanentemente la tasa asintótica de crecimiento económico",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribución de distorsiones sobre el ritmo de expansión de largo plazo en modelos neoclásicos}$",
+          "distractor_id": "D-Hab06-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Ahorro efectivo de $s^* = 7.00\\%$, contrayendo el stock estacionario $k^*$ bajo la premisa de que todo tributo reduce incondicionalmente la acumulación",
+          "is_correct": false,
+          "error_rationale": "$\\text{Incapacidad de reconocer el efecto expansivo de la inversión pública cuando } v > s$",
+          "distractor_id": "D-Hab06-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Formulación tributaria con $s^* = 18.00\\%$, deduciendo el gravamen fiscal directamente del stock de capital $K$ en lugar del flujo de producto agregado $Y$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre impuesto al flujo de renta e impuesto al stock de patrimonio}$",
+          "distractor_id": "D-Hab06-06"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Formule la inversión total agregada como la suma del ahorro privado sobre el ingreso disponible $(1-t)Y$ más la inversión pública financiada con la fracción $v$ de la recaudación fiscal $tY$.",
+        "Factorice el producto agregado $Y$ para expresar la tasa de ahorro efectiva en la forma canónica $s^* = s + (v - s)t$ y evalúe el signo de la diferencia $(v - s)$.",
+        "Analice el desplazamiento de la curva de inversión efectiva $s^* f(k)$ respecto al equilibrio previo y recuerde si los cambios en la tasa de ahorro alteran el nivel de capital o la tasa de crecimiento asintótica de largo plazo."
+      ],
+      "detailed_solution": "El ingreso disponible del sector privado es $(1 - t)Y$, por lo que el ahorro privado asciende a $S_p = s(1 - t)Y$. La recaudación fiscal total es $T = t Y$, de la cual el gobierno invierte una fracción $v$, destinando $I_g = v t Y$ a la formación de capital. La inversión agregada total de la economía es $I = S_p + I_g = [s(1 - t) + v t]Y = [s + (v - s)t]Y$. Así, la tasa de ahorro efectiva agregada resulta $s^* = s + (v - s)t = 29.0\\%$. Dado que $v = 68.0\\%$ y $s = 18.0\\%$, el término $(v - s)t$ genera que la curva de ahorro efectiva desplace $k^*$ hacia un nivel superior. En el modelo de Solow neoclásico, la política fiscal tiene efectos de nivel sobre el stock de capital, pero no altera la tasa asintótica de crecimiento económico secular determinada exógenamente por la demografía y la tecnología."
+    },
+    {
+      "id": "Q-C06-341",
+      "competency_id": "C-06",
+      "competency_name": "Equilibrios Múltiples y la Trampa de Pobreza Demográfica",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere el modelo de Solow con crecimiento demográfico endógeno $n = n(r)$, donde la curva de ahorro $s f(r)$ intersecta al requerimiento de ensanchamiento demográfico $n(r)r$ en tres equilibrios de estado estacionario: $r_1 = 2.8$, $r_2 = 11.5$ y $r_3 = 26.0$ (con $0 < 2.8 < 11.5 < 26.0$). A partir de la ecuación diferencial fundamental $\\dot{r} = s f(r) - n(r) r$, determine la caracterización analítica de la estabilidad dinámica del sistema y los requerimientos de inversión para el despegue económico:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Una dotacion inicial que logre situarse holgadamente por encima del umbral con $r_0 > 11.5$ experimenta un ensanchamiento demografico dominante que retrotrae la relacion capital-trabajo en el largo plazo hacia la trampa de pobreza $r_1 = 2.8$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Identificación invertida de la dinámica de escape}$",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$r_2 = 11.5$ constituye un atractor local estable al que convergen las economias con dotaciones iniciales intermedias, de modo que cualquier perturbacion en su vecindad retorna espontaneamente a dicho equilibrio sin requerir impulsos externos.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predicción de convergencia hacia un punto de umbral inestable}$",
+          "distractor_id": "D-C06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Una economia atrapada en $r_1 = 2.8$ puede superar la barrera demografica acumulando capital mediante sucesivos incrementos marginales continuos y graduales de inversion, sin necesidad de que la dotacion salte de manera inmediata sobre $r_2 = 11.5$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Fracaso de políticas de ayuda incremental frente a trampas demográficas}$",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En el equilibrio estacionario de trampa demografica $r_1 = 2.8$, el ingreso por habitante continua expandiendose a una tasa estrictamente positiva $\\frac{\\dot{y}}{y} > 0$ gracias al progreso derivado del ajuste demografico endogeno de subsistencia.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Negación del carácter estacionario de la trampa de pobreza}$",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$r_1 = 2.8$ y $r_3 = 26.0$ son atractores estables mientras que $r_2 = 11.5$ es un umbral inestable, por lo que toda dotacion $r_0 \\le r_2$ decae hacia $r_1$ y se requiere un impulso discontinuo inicial con $r_0 > 11.5$ para converger hacia $r_3$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La multiplicidad de equilibrios estacionarios y la trampa en $r_1 = 2.8$ exigen necesariamente la presencia de rendimientos crecientes a escala o indivisibilidades tecnologicas en la funcion de produccion agregada para poder manifestarse.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Desconocimiento de la causa demográfica de la trampa malthusiana en Solow}$",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La tasa de crecimiento poblacional $n(r)$ aumenta de manera estrictamente monotona e indefinida con el capital per capita, provocando que la inversion demografica supere a la curva de ahorro para todo nivel de renta elevado impidiendo la existencia de $r_3$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Desconocimiento de la transición demográfica modelada por Solow}$",
+          "distractor_id": "D-C06-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Analice el signo de la tasa de acumulación de capital $\\dot{r} = s f(r) - n(r) r$ a la izquierda y a la derecha de cada uno de los tres puntos de corte.",
+        "Determine qué puntos actúan como atractores hacia los que converge la economía y cuál actúa como umbral repulsor inestable que separa las dos cuencas de atracción.",
+        "Considere si incrementos infinitesimales de capital en el entorno de $r_1$ son suficientes para superar la dinámica contractiva que rige para cualquier dotación inferior a $r_2$."
+      ],
+      "detailed_solution": "En el modelo de Solow con crecimiento demográfico endógeno $n(r)$, la dinámica viene dada por $\\dot{r} = s f(r) - n(r) r$. En los puntos de corte $r_1 = 2.8$ y $r_3 = 26.0$, la pendiente de la curva de ahorro es menor que la del requerimiento demográfico, de modo que a la izquierda $\\dot{r} > 0$ y a la derecha $\\dot{r} < 0$, lo que convierte a $r_1$ y $r_3$ en equilibrios localmente estables (atractores). Por el contrario, en el punto intermedio $r_2 = 11.5$, la curva de ahorro corta desde abajo a la curva demográfica, por lo que para $r \\in (r_1, r_2)$ se tiene $\\dot{r} < 0$ (el capital decae hacia la trampa $r_1$) y para $r \\in (r_2, r_3)$ se tiene $\\dot{r} > 0$ (el capital se acumula hacia $r_3$). Por consiguiente, $r_2$ es un umbral inestable (repulsor). Una economía en $r_1$ no puede escapar mediante pequeñas adiciones marginales de capital porque para todo $r < r_2$ la dinámica la devuelve a $r_1$; se requiere un 'gran empujón' (*big push*) discontinuo de inversión que eleve la dotación inicial a $r_0 > 11.5$ para cruzar la cuenca de atracción y permitir la convergencia hacia el estado de alta renta $r_3$. Este fenómeno surge puramente de la no linealidad en $n(r)$, sin requerir rendimientos crecientes a escala."
+    },
+    {
+      "id": "Q-C06-342",
+      "competency_id": "C-06",
+      "competency_name": "Equilibrios Múltiples y la Trampa de Pobreza Demográfica",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere el siguiente planteamiento formal: Considere el modelo de Solow con crecimiento demográfico endógeno $n = n(r)$, donde la curva de ahorro $s f(r)$ intersecta al requerimiento de ensanchamiento demográfico $n(r)r$ en tres equilibrios de estado estacionario: $r_1 = 1.6$, $r_2 = 10.5$ y $r_3 = 40.0$ (con $0 < 1.6 < 10.5 < 40.0$). A partir de la ecuación diferencial fundamental $\\dot{r} = s f(r) - n(r) r$, determine la caracterización analítica de la estabilidad dinámica del sistema y los requerimientos de inversión para el despegue económico:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La multiplicidad de equilibrios estacionarios y la trampa en $r_1 = 1.6$ exigen necesariamente la presencia de rendimientos crecientes a escala o indivisibilidades tecnologicas en la funcion de produccion agregada para poder manifestarse.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Desconocimiento de la causa demográfica de la trampa malthusiana en Solow}$",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Una dotacion inicial que logre situarse holgadamente por encima del umbral con $r_0 > 10.5$ experimenta un ensanchamiento demografico dominante que retrotrae la relacion capital-trabajo en el largo plazo hacia la trampa de pobreza $r_1 = 1.6$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Identificación invertida de la dinámica de escape}$",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Una economia atrapada en $r_1 = 1.6$ puede superar la barrera demografica acumulando capital mediante sucesivos incrementos marginales continuos y graduales de inversion, sin necesidad de que la dotacion salte de manera inmediata sobre $r_2 = 10.5$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Fracaso de políticas de ayuda incremental frente a trampas demográficas}$",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En el equilibrio estacionario de trampa demografica $r_1 = 1.6$, el ingreso por habitante continua expandiendose a una tasa estrictamente positiva $\\frac{\\dot{y}}{y} > 0$ gracias al progreso derivado del ajuste demografico endogeno de subsistencia.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Negación del carácter estacionario de la trampa de pobreza}$",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$r_1 = 1.6$ y $r_3 = 40.0$ son atractores estables mientras que $r_2 = 10.5$ es un umbral inestable, por lo que toda dotacion $r_0 \\le r_2$ decae hacia $r_1$ y se requiere un impulso discontinuo inicial con $r_0 > 10.5$ para converger hacia $r_3$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La tasa de crecimiento poblacional $n(r)$ aumenta de manera estrictamente monotona e indefinida con el capital per capita, provocando que la inversion demografica supere a la curva de ahorro para todo nivel de renta elevado impidiendo la existencia de $r_3$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Desconocimiento de la transición demográfica modelada por Solow}$",
+          "distractor_id": "D-C06-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$r_2 = 10.5$ constituye un atractor local estable al que convergen las economias con dotaciones iniciales intermedias, de modo que cualquier perturbacion en su vecindad retorna espontaneamente a dicho equilibrio sin requerir impulsos externos.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predicción de convergencia hacia un punto de umbral inestable}$",
+          "distractor_id": "D-C06-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Analice el signo de la tasa de acumulación de capital $\\dot{r} = s f(r) - n(r) r$ a la izquierda y a la derecha de cada uno de los tres puntos de corte.",
+        "Determine qué puntos actúan como atractores hacia los que converge la economía y cuál actúa como umbral repulsor inestable que separa las dos cuencas de atracción.",
+        "Considere si incrementos infinitesimales de capital en el entorno de $r_1$ son suficientes para superar la dinámica contractiva que rige para cualquier dotación inferior a $r_2$."
+      ],
+      "detailed_solution": "En el modelo de Solow con crecimiento demográfico endógeno $n(r)$, la dinámica viene dada por $\\dot{r} = s f(r) - n(r) r$. En los puntos de corte $r_1 = 1.6$ y $r_3 = 40.0$, la pendiente de la curva de ahorro es menor que la del requerimiento demográfico, de modo que a la izquierda $\\dot{r} > 0$ y a la derecha $\\dot{r} < 0$, lo que convierte a $r_1$ y $r_3$ en equilibrios localmente estables (atractores). Por el contrario, en el punto intermedio $r_2 = 10.5$, la curva de ahorro corta desde abajo a la curva demográfica, por lo que para $r \\in (r_1, r_2)$ se tiene $\\dot{r} < 0$ (el capital decae hacia la trampa $r_1$) y para $r \\in (r_2, r_3)$ se tiene $\\dot{r} > 0$ (el capital se acumula hacia $r_3$). Por consiguiente, $r_2$ es un umbral inestable (repulsor). Una economía en $r_1$ no puede escapar mediante pequeñas adiciones marginales de capital porque para todo $r < r_2$ la dinámica la devuelve a $r_1$; se requiere un 'gran empujón' (*big push*) discontinuo de inversión que eleve la dotación inicial a $r_0 > 10.5$ para cruzar la cuenca de atracción y permitir la convergencia hacia el estado de alta renta $r_3$. Este fenómeno surge puramente de la no linealidad en $n(r)$, sin requerir rendimientos crecientes a escala."
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [],
+    "template_residues": [],
+    "blind_replacements": []
+  }
+}

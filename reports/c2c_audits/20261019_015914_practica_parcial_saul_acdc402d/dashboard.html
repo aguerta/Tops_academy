@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>C2C Architectural Forensic Dashboard - practica_parcial_saul</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); padding: 24px; line-height: 1.5; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { font-size: 1.5rem; color: var(--accent); }
+    .header .meta { color: var(--text-muted); font-size: 0.85rem; }
+    .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .kpi-card .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-card .val { font-size: 1.6rem; font-weight: bold; color: var(--text); margin-top: 4px; }
+    .kpi-card .sub { font-size: 0.75rem; color: var(--accent-green); margin-top: 2px; }
+    .section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .section h2 { font-size: 1.1rem; color: var(--accent); margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-high { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); }
+    .badge-med { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }
+    .badge-ok { background: rgba(74, 222, 128, 0.2); color: var(--accent-green); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>C2C Architectural Forensic Telemetry</h1>
+      <div class="meta">Practica Parcial Saul (<code>practica_parcial_saul</code>) | Conv: <code>acdc402d-080...</code></div>
+    </div>
+    <div class="meta">Audit Date: 2026-10-19T06:59:14 UTC</div>
+  </div>
+
+  <div class="grid-kpi">
+    <div class="kpi-card">
+      <div class="label">Wall-Clock Time</div>
+      <div class="val">37.57 min</div>
+      <div class="sub">2254.0s elapsed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Parallel Speedup</div>
+      <div class="val">8.63x</div>
+      <div class="sub">324.35m compute time</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Total Tokens</div>
+      <div class="val">53,435,338</div>
+      <div class="sub">Active: 8,011,958 | Cache: 45,423,380</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Tokens / Question</div>
+      <div class="val">0.0</div>
+      <div class="sub">0 questions generated</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Seconds / Question</div>
+      <div class="val">0.0s</div>
+      <div class="sub">0.0 questions/min</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Supervisor Interventions</div>
+      <div class="val">1</div>
+      <div class="sub">0.1m spent repairing</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Stage 3: Shard Question Authoring & Competency Metrics</h2>
+    <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
+      Critical Straggler: <strong>Shard Author shard_15</strong> (842.0s | +125.0s vs median) |
+      Avg Tokens / Competency: <strong>50,089.8</strong>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Shard ID</th>
+          <th>Competencias</th>
+          <th>Comps</th>
+          <th>Tokens In</th>
+          <th>Tokens Out</th>
+          <th>Active Tokens</th>
+          <th>Tokens / Comp</th>
+          <th>Turns</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Shard Author shard_09</strong></td>
+          <td><code>Hab-18, Hab-19, H-15...</code></td>
+          <td>6</td>
+          <td>147,012</td>
+          <td>61,619</td>
+          <td><strong>208,631</strong></td>
+          <td><strong>34,771.8</strong></td>
+          <td>13</td>
+          <td><strong>448.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_10</strong></td>
+          <td><code>H-16, C-19, Hab-22...</code></td>
+          <td>6</td>
+          <td>146,106</td>
+          <td>70,379</td>
+          <td><strong>216,485</strong></td>
+          <td><strong>36,080.8</strong></td>
+          <td>20</td>
+          <td><strong>570.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_16</strong></td>
+          <td><code>Hab-38, Hab-39, H-25...</code></td>
+          <td>6</td>
+          <td>269,793</td>
+          <td>102,879</td>
+          <td><strong>372,672</strong></td>
+          <td><strong>62,112.0</strong></td>
+          <td>25</td>
+          <td><strong>834.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_02</strong></td>
+          <td><code>H-03, Hab-03, H-04...</code></td>
+          <td>6</td>
+          <td>222,431</td>
+          <td>97,767</td>
+          <td><strong>320,198</strong></td>
+          <td><strong>53,366.3</strong></td>
+          <td>29</td>
+          <td><strong>833.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_04</strong></td>
+          <td><code>Hab-08, H-07, C-06...</code></td>
+          <td>6</td>
+          <td>133,077</td>
+          <td>62,655</td>
+          <td><strong>195,732</strong></td>
+          <td><strong>32,622.0</strong></td>
+          <td>19</td>
+          <td><strong>487.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_12</strong></td>
+          <td><code>Hab-28, Hab-29, C-22...</code></td>
+          <td>6</td>
+          <td>187,904</td>
+          <td>93,977</td>
+          <td><strong>281,881</strong></td>
+          <td><strong>46,980.2</strong></td>
+          <td>13</td>
+          <td><strong>694.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_13</strong></td>
+          <td><code>Hab-31, H-20, Hab-32...</code></td>
+          <td>6</td>
+          <td>302,477</td>
+          <td>97,754</td>
+          <td><strong>400,231</strong></td>
+          <td><strong>66,705.2</strong></td>
+          <td>15</td>
+          <td><strong>724.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_14</strong></td>
+          <td><code>C-25, H-22, Hab-34...</code></td>
+          <td>6</td>
+          <td>304,697</td>
+          <td>80,156</td>
+          <td><strong>384,853</strong></td>
+          <td><strong>64,142.2</strong></td>
+          <td>18</td>
+          <td><strong>599.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_18</strong></td>
+          <td><code>C-33, Hab-43, H-29...</code></td>
+          <td>6</td>
+          <td>154,747</td>
+          <td>91,416</td>
+          <td><strong>246,163</strong></td>
+          <td><strong>41,027.2</strong></td>
+          <td>13</td>
+          <td><strong>597.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_01</strong></td>
+          <td><code>H-01, C-01, Hab-01...</code></td>
+          <td>6</td>
+          <td>216,335</td>
+          <td>92,230</td>
+          <td><strong>308,565</strong></td>
+          <td><strong>51,427.5</strong></td>
+          <td>22</td>
+          <td><strong>734.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_03</strong></td>
+          <td><code>H-05, Hab-06, H-06...</code></td>
+          <td>6</td>
+          <td>313,365</td>
+          <td>78,148</td>
+          <td><strong>391,513</strong></td>
+          <td><strong>65,252.2</strong></td>
+          <td>43</td>
+          <td><strong>759.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_05</strong></td>
+          <td><code>C-07, C-08, Hab-11...</code></td>
+          <td>6</td>
+          <td>212,368</td>
+          <td>92,863</td>
+          <td><strong>305,231</strong></td>
+          <td><strong>50,871.8</strong></td>
+          <td>22</td>
+          <td><strong>717.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_06</strong></td>
+          <td><code>H-10, Hab-13, C-10...</code></td>
+          <td>6</td>
+          <td>261,285</td>
+          <td>91,510</td>
+          <td><strong>352,795</strong></td>
+          <td><strong>58,799.2</strong></td>
+          <td>18</td>
+          <td><strong>627.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_07</strong></td>
+          <td><code>H-12, Hab-15, C-12...</code></td>
+          <td>6</td>
+          <td>149,017</td>
+          <td>84,537</td>
+          <td><strong>233,554</strong></td>
+          <td><strong>38,925.7</strong></td>
+          <td>14</td>
+          <td><strong>582.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_11</strong></td>
+          <td><code>Hab-26, H-17, C-20...</code></td>
+          <td>6</td>
+          <td>181,785</td>
+          <td>75,182</td>
+          <td><strong>256,967</strong></td>
+          <td><strong>42,827.8</strong></td>
+          <td>28</td>
+          <td><strong>612.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_08</strong></td>
+          <td><code>H-14, C-14, C-15...</code></td>
+          <td>6</td>
+          <td>259,610</td>
+          <td>101,933</td>
+          <td><strong>361,543</strong></td>
+          <td><strong>60,257.2</strong></td>
+          <td>34</td>
+          <td><strong>829.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_15</strong></td>
+          <td><code>H-23, C-27, C-28...</code></td>
+          <td>6</td>
+          <td>178,653</td>
+          <td>110,649</td>
+          <td><strong>289,302</strong></td>
+          <td><strong>48,217.0</strong></td>
+          <td>12</td>
+          <td><strong>842.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_17</strong></td>
+          <td><code>H-26, C-31, H-27...</code></td>
+          <td>6</td>
+          <td>105,194</td>
+          <td>101,525</td>
+          <td><strong>206,719</strong></td>
+          <td><strong>34,453.2</strong></td>
+          <td>8</td>
+          <td><strong>758.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_19</strong></td>
+          <td><code>Hab-46, H-30, C-35...</code></td>
+          <td>5</td>
+          <td>209,970</td>
+          <td>91,783</td>
+          <td><strong>301,753</strong></td>
+          <td><strong>60,350.6</strong></td>
+          <td>18</td>
+          <td><strong>832.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_20</strong></td>
+          <td><code>C-36, Hab-48, H-32...</code></td>
+          <td>5</td>
+          <td>178,156</td>
+          <td>97,647</td>
+          <td><strong>275,803</strong></td>
+          <td><strong>55,160.6</strong></td>
+          <td>20</td>
+          <td><strong>705.0s</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Blind Judges & Psychometric Verification</h2>
+    <div style="margin-bottom: 12px; font-size: 0.9rem;">
+      <span class="badge badge-high">❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)</span>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+      Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Lote Estratificado</th>
+          <th>Primer Intento</th>
+          <th>Auto-Repair Iterations</th>
+          <th>Supervisor Fixes</th>
+          <th>Status Final</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>236 reactivos</strong></td>
+          <td><span class="badge badge-high">FAILED</span></td>
+          <td>0 iteraciones</td>
+          <td><strong>1 fixes</strong></td>
+          <td><span class="badge badge-ok">CERTIFICADO</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top: 14px; font-size: 0.85rem;">
+      <strong>Acciones Correctivas Tomadas:</strong>
+      <ul style="margin-left: 20px; margin-top: 6px; color: var(--text-muted);">
+        <li>1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.</li><li>2. **Intervenciones de Supervisor (1 operaciones)**: Operaciones sobre `prepare.py`.</li><li>3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 236 reactivos.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Orchestrator Manual Interventions (Supervisor Repair Anti-Pattern)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Target File</th>
+          <th>Action Type</th>
+          <th>Root Cause / Snippet</th>
+          <th>Tool</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>29</strong></td>
+          <td><code>prepare.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>"Ensure granularity is saved in pre_cta_manifest.json"</td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>

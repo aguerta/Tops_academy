@@ -49,16 +49,140 @@
     "bottlenecks_count": 0
   },
   {
-    "run_id": "20261013_175025_solow_growth_model_b258c6b2",
-    "timestamp": "2026-10-13T22:50:25.366478+00:00",
-    "course_id": "solow_growth_model",
-    "course_title": "El Modelo de Crecimiento Económico de Solow (1956)",
+    "run_id": "20261016_203306_solow_model_ab9cdbf6",
+    "timestamp": "2026-10-17T01:33:06.952732+00:00",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
+    "conversation_id": "ab9cdbf6-d44c-4ab2-b3bd-4575b6ae7b8f",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 33,
+      "questions": 790,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 4824.0,
+      "agent_compute_seconds": 12414.0,
+      "speedup": 2.57,
+      "total_tokens": 107300562,
+      "total_active_tokens": 5031432,
+      "input_tokens": 3000336,
+      "output_tokens": 743349,
+      "cache_read_tokens": 102269130,
+      "total_turns": 871,
+      "subagents_count": 12,
+      "tool_errors": 91,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 1197.0,
+      "stage_3_max_wall": 1468.0,
+      "orchestrator_interventions": 13,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 66/66 APROBADOS AL PRIMER INTENTO (100% AGREEMENT, +1 PARCHE EN JUDGE.PY)",
+        "batch_items_count": 66,
+        "initial_errors_count": 1,
+        "repair_iterations": 1,
+        "supervisor_interventions_count": 1,
+        "summary_desc": "Los 5 Blind Judges evaluaron los 66 reactivos en 1 turno de razonamiento cada uno (0 búsquedas web, 100% aislamiento epistémico) y lograron 66/66 acuerdos (100.0% agreement rate, 0 discrepancias psicométricas). Previamente, `--stage verify` detectó 1 error léxico (`R-03`: `\\rho` -> `\\x0d` en `Hab-07` heredado de `cta_data.py`), reparado convirtiendo 33 cadenas a raw strings `r\"...\"`, y `--stage judge-compare` requirió 1 parche en `judge.py` para buscar `judge_responses_*.json` dentro del subdirectorio `verification/`.",
+        "actions_taken": [
+          "1. **Saneamiento Léxico Previo (`--stage verify`)**: Reparación de 33 strings sin prefijo `r\"...\"` en `cta_data.py` (donde `\\rho` se serializaba como `\\x0dho` en `Hab-07`).",
+          "2. **Recuperación Forense ante Borrado Externo (Steps 275-434)**: Reconstrucción íntegra de `cta_data.py` y `shard_01..06_data.py` desde los `transcript.jsonl` tras la eliminación externa de `courses/solow_model`.",
+          "3. **Alineación de Ruta en `judge.py` (Step 518)**: Parche en `judge.py` para globear `verification/judge_responses_*.json` además de la raíz de `work_dir`, certificando 66/66 acuerdos (100.0%)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 2980571.2,
+      "active_tokens_per_page": 139762.0,
+      "tokens_per_input_kb": 70459.6,
+      "tokens_per_competency": 3251532.2,
+      "active_tokens_per_competency": 152467.6,
+      "author_tokens_per_competency": 93957.5,
+      "tokens_per_question": 135823.5,
+      "active_tokens_per_question": 6368.9,
+      "seconds_per_page": 134.0,
+      "seconds_per_question": 6.11,
+      "questions_per_minute": 9.83,
+      "agent_seconds_per_question": 15.71,
+      "output_tokens_per_question": 1150.6
+    },
+    "bottlenecks_count": 4
+  },
+  {
+    "run_id": "20261016_224918_solow_model_3a4ba3e1",
+    "timestamp": "2026-10-17T03:49:18.616194+00:00",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
+    "conversation_id": "3a4ba3e1-2636-4f66-bef4-695d22acbac9",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 33,
+      "questions": 0,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 27.0,
+      "agent_compute_seconds": 27.0,
+      "speedup": 1.0,
+      "total_tokens": 132864,
+      "total_active_tokens": 67197,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 65667,
+      "total_turns": 6,
+      "subagents_count": 0,
+      "tool_errors": 0,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 0.0,
+      "stage_3_max_wall": 0.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 66,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (0 operaciones)**: Operaciones sobre archivos de reactivos.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 66 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 3690.7,
+      "active_tokens_per_page": 1866.6,
+      "tokens_per_input_kb": 87.2,
+      "tokens_per_competency": 4026.2,
+      "active_tokens_per_competency": 2036.3,
+      "author_tokens_per_competency": 0.0,
+      "tokens_per_question": 0.0,
+      "active_tokens_per_question": 0.0,
+      "seconds_per_page": 0.75,
+      "seconds_per_question": 0.0,
+      "questions_per_minute": 0.0,
+      "agent_seconds_per_question": 0.0,
+      "output_tokens_per_question": 0.0
+    },
+    "bottlenecks_count": 0
+  },
+  {
+    "run_id": "20261016_224918_solow_model_b258c6b2",
+    "timestamp": "2026-10-17T03:49:18.979058+00:00",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
     "conversation_id": "b258c6b2-3fa2-4890-ba12-22b7aa1604f3",
     "workload": {
       "source_files_count": 2,
       "pages_or_slides": 36,
-      "input_mb": 0.0,
-      "competencies": 25,
+      "input_mb": 1.49,
+      "competencies": 33,
       "questions": 0,
       "handouts": 0
     },
@@ -79,24 +203,26 @@
       "stage_3_max_wall": 0.0,
       "orchestrator_interventions": 0,
       "blind_judges": {
-        "passed_first_attempt": true,
-        "badge": "✅ PASARON PERFECTOS AL PRIMER INTENTO",
-        "batch_items_count": 50,
-        "initial_errors_count": 126,
-        "repair_iterations": 2,
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 66,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
         "supervisor_interventions_count": 0,
-        "summary_desc": "El lote de evaluación de blind judges y la verificación psicométrica pasaron de forma 100% limpia en su primera pasada, sin registrar discrepancias ni requerir rondas de auto-reparación ni intervención manual.",
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
         "actions_taken": [
-          "No se requirieron acciones correctivas. El pipeline avanzó directamente a la etapa de publicación."
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (0 operaciones)**: Operaciones sobre archivos de reactivos.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 66 reactivos."
         ]
       }
     },
     "unit_economics": {
       "tokens_per_page": 18162.4,
       "active_tokens_per_page": 6300.9,
-      "tokens_per_input_kb": 0.0,
-      "tokens_per_competency": 26153.9,
-      "active_tokens_per_competency": 9073.2,
+      "tokens_per_input_kb": 429.4,
+      "tokens_per_competency": 19813.5,
+      "active_tokens_per_competency": 6873.7,
       "author_tokens_per_competency": 0.0,
       "tokens_per_question": 0.0,
       "active_tokens_per_question": 0.0,
@@ -109,10 +235,257 @@
     "bottlenecks_count": 1
   },
   {
-    "run_id": "20261015_222016_Tops_academy_2d6847f0",
-    "timestamp": "2026-10-16T03:20:16.372705+00:00",
-    "course_id": "Tops_academy",
-    "course_title": "Tops Academy",
+    "run_id": "20261016_224919_solow_model_236c54b4",
+    "timestamp": "2026-10-17T03:49:19.296406+00:00",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
+    "conversation_id": "236c54b4-d37a-43d4-89b9-437ec9a08cf4",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 33,
+      "questions": 0,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 48.0,
+      "agent_compute_seconds": 48.0,
+      "speedup": 1.0,
+      "total_tokens": 268780,
+      "total_active_tokens": 63664,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 205116,
+      "total_turns": 11,
+      "subagents_count": 0,
+      "tool_errors": 1,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 0.0,
+      "stage_3_max_wall": 0.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 66,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (0 operaciones)**: Operaciones sobre archivos de reactivos.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 66 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 7466.1,
+      "active_tokens_per_page": 1768.4,
+      "tokens_per_input_kb": 176.5,
+      "tokens_per_competency": 8144.8,
+      "active_tokens_per_competency": 1929.2,
+      "author_tokens_per_competency": 0.0,
+      "tokens_per_question": 0.0,
+      "active_tokens_per_question": 0.0,
+      "seconds_per_page": 1.33,
+      "seconds_per_question": 0.0,
+      "questions_per_minute": 0.0,
+      "agent_seconds_per_question": 0.0,
+      "output_tokens_per_question": 0.0
+    },
+    "bottlenecks_count": 0
+  },
+  {
+    "run_id": "20261016_224920_solow_model_b1a6a9dc",
+    "timestamp": "2026-10-17T03:49:20.876396+00:00",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
+    "conversation_id": "b1a6a9dc-4a57-46d0-b26a-65b9f4d9ce02",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 33,
+      "questions": 790,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 8595.0,
+      "agent_compute_seconds": 14978.0,
+      "speedup": 1.74,
+      "total_tokens": 48667362,
+      "total_active_tokens": 3122460,
+      "input_tokens": 1562214,
+      "output_tokens": 686897,
+      "cache_read_tokens": 45544902,
+      "total_turns": 461,
+      "subagents_count": 8,
+      "tool_errors": 49,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 1051.0,
+      "stage_3_max_wall": 1265.0,
+      "orchestrator_interventions": 4,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 50,
+        "initial_errors_count": 3,
+        "repair_iterations": 2,
+        "supervisor_interventions_count": 2,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con 3 errores iniciales, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (4 operaciones)**: Operaciones sobre `cta.json`, `rules.py`, `run.py`.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 2 iteraciones sobre el lote de 50 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 1351871.2,
+      "active_tokens_per_page": 86735.0,
+      "tokens_per_input_kb": 31957.7,
+      "tokens_per_competency": 1474768.5,
+      "active_tokens_per_competency": 94620.0,
+      "author_tokens_per_competency": 45381.2,
+      "tokens_per_question": 61604.3,
+      "active_tokens_per_question": 3952.5,
+      "seconds_per_page": 238.75,
+      "seconds_per_question": 10.88,
+      "questions_per_minute": 5.51,
+      "agent_seconds_per_question": 18.96,
+      "output_tokens_per_question": 982.8
+    },
+    "bottlenecks_count": 3
+  },
+  {
+    "run_id": "20261016_224921_solow_model_e065ef4b",
+    "timestamp": "2026-10-17T03:49:21.727626+00:00",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
+    "conversation_id": "e065ef4b-3fe6-4000-8a58-3ffff991c017",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 33,
+      "questions": 0,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1731.0,
+      "agent_compute_seconds": 5833.0,
+      "speedup": 3.37,
+      "total_tokens": 18610255,
+      "total_active_tokens": 2476224,
+      "input_tokens": 1938442,
+      "output_tokens": 417226,
+      "cache_read_tokens": 16134031,
+      "total_turns": 240,
+      "subagents_count": 5,
+      "tool_errors": 31,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 1591.0,
+      "stage_3_max_wall": 638.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 66,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (0 operaciones)**: Operaciones sobre archivos de reactivos.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 66 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 516951.5,
+      "active_tokens_per_page": 68784.0,
+      "tokens_per_input_kb": 12220.5,
+      "tokens_per_competency": 563947.1,
+      "active_tokens_per_competency": 75037.1,
+      "author_tokens_per_competency": 52183.8,
+      "tokens_per_question": 0.0,
+      "active_tokens_per_question": 0.0,
+      "seconds_per_page": 48.08,
+      "seconds_per_question": 0.0,
+      "questions_per_minute": 0.0,
+      "agent_seconds_per_question": 0.0,
+      "output_tokens_per_question": 0.0
+    },
+    "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261016_224932_solow_model_f1d88c9d",
+    "timestamp": "2026-10-17T03:49:32.139166+00:00",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
+    "conversation_id": "f1d88c9d-0f80-40c5-ac71-b48e644b9eac",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 33,
+      "questions": 790,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 4558.0,
+      "agent_compute_seconds": 13134.0,
+      "speedup": 2.88,
+      "total_tokens": 51065968,
+      "total_active_tokens": 3618779,
+      "input_tokens": 2383454,
+      "output_tokens": 990961,
+      "cache_read_tokens": 47447189,
+      "total_turns": 459,
+      "subagents_count": 8,
+      "tool_errors": 41,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 2218.0,
+      "stage_3_max_wall": 1809.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (66/66 REACTIVOS)",
+        "batch_items_count": 66,
+        "initial_errors_count": 1,
+        "repair_iterations": 1,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 2 Blind Judges evaluaron el lote estratificado de 66 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (66/66) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 66/66 acuerdos (`100.0% agreement rate`, `0 discrepancias`).",
+          "2. **Verificación Determinista Previa (`--stage verify`)**: Detectó 1 error(es) léxico/estructural(es) corregido(s) antes del arbitraje ciego."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 1418499.1,
+      "active_tokens_per_page": 100521.6,
+      "tokens_per_input_kb": 33532.8,
+      "tokens_per_competency": 1547453.6,
+      "active_tokens_per_competency": 109660.0,
+      "author_tokens_per_competency": 71599.2,
+      "tokens_per_question": 64640.5,
+      "active_tokens_per_question": 4580.7,
+      "seconds_per_page": 126.61,
+      "seconds_per_question": 5.77,
+      "questions_per_minute": 10.4,
+      "agent_seconds_per_question": 16.63,
+      "output_tokens_per_question": 1299.9
+    },
+    "bottlenecks_count": 3
+  },
+  {
+    "run_id": "20261016_224932_solow_model_2d6847f0",
+    "timestamp": "2026-10-17T03:49:32.545041+00:00",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
     "conversation_id": "2d6847f0-229a-4645-8fe3-da1767e3c146",
     "workload": {
       "source_files_count": 2,
@@ -139,15 +512,17 @@
       "stage_3_max_wall": 1115.0,
       "orchestrator_interventions": 0,
       "blind_judges": {
-        "passed_first_attempt": true,
-        "badge": "✅ PASARON PERFECTOS AL PRIMER INTENTO",
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
         "batch_items_count": 66,
-        "initial_errors_count": 126,
-        "repair_iterations": 2,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
         "supervisor_interventions_count": 0,
-        "summary_desc": "El lote de evaluación de blind judges y la verificación psicométrica pasaron de forma 100% limpia en su primera pasada, sin registrar discrepancias ni requerir rondas de auto-reparación ni intervención manual.",
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
         "actions_taken": [
-          "No se requirieron acciones correctivas. El pipeline avanzó directamente a la etapa de publicación."
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (0 operaciones)**: Operaciones sobre archivos de reactivos.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 66 reactivos."
         ]
       }
     },
@@ -167,5 +542,558 @@
       "output_tokens_per_question": 0.0
     },
     "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261017_063549_pde_saul_1_876ad3df",
+    "timestamp": "2026-10-17T11:35:49.867104+00:00",
+    "course_id": "pde_saul_1",
+    "course_title": "Ecuaciones en Derivadas Parciales - Saúl Elguera",
+    "conversation_id": "876ad3df-153b-4de2-8d3a-43a580b2dbc6",
+    "workload": {
+      "source_files_count": 1,
+      "pages_or_slides": 25,
+      "input_mb": 0.56,
+      "competencies": 16,
+      "questions": 380,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 3352.0,
+      "agent_compute_seconds": 6463.0,
+      "speedup": 1.93,
+      "total_tokens": 49363575,
+      "total_active_tokens": 2918171,
+      "input_tokens": 1442204,
+      "output_tokens": 359271,
+      "cache_read_tokens": 46445404,
+      "total_turns": 408,
+      "subagents_count": 5,
+      "tool_errors": 33,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 629.0,
+      "stage_3_max_wall": 1000.0,
+      "orchestrator_interventions": 7,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 32,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 7,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (7 operaciones)**: Operaciones sobre `shard_01_data.py`, `shard_03_data.py`.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 32 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 1974543.0,
+      "active_tokens_per_page": 116726.8,
+      "tokens_per_input_kb": 85533.0,
+      "tokens_per_competency": 3085223.4,
+      "active_tokens_per_competency": 182385.7,
+      "author_tokens_per_competency": 77266.8,
+      "tokens_per_question": 129904.1,
+      "active_tokens_per_question": 7679.4,
+      "seconds_per_page": 134.08,
+      "seconds_per_question": 8.82,
+      "questions_per_minute": 6.8,
+      "agent_seconds_per_question": 17.01,
+      "output_tokens_per_question": 1265.8
+    },
+    "bottlenecks_count": 4
+  },
+  {
+    "run_id": "20261017_063550_estadistica_regresion_0f573810",
+    "timestamp": "2026-10-17T11:35:50.716420+00:00",
+    "course_id": "estadistica_regresion",
+    "course_title": "Estadística: Regresión",
+    "conversation_id": "0f573810-f492-4d3f-8cc8-a4ed3b74c03a",
+    "workload": {
+      "source_files_count": 5,
+      "pages_or_slides": 83,
+      "input_mb": 4.93,
+      "competencies": 43,
+      "questions": 1050,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 21961.0,
+      "agent_compute_seconds": 31863.0,
+      "speedup": 1.45,
+      "total_tokens": 86861352,
+      "total_active_tokens": 6236770,
+      "input_tokens": 3312716,
+      "output_tokens": 1171466,
+      "cache_read_tokens": 80624582,
+      "total_turns": 717,
+      "subagents_count": 10,
+      "tool_errors": 46,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 0.0,
+      "stage_3_max_wall": 0.0,
+      "orchestrator_interventions": 18,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 86,
+        "initial_errors_count": 1,
+        "repair_iterations": 1,
+        "supervisor_interventions_count": 1,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con 1 errores iniciales, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (18 operaciones)**: Operaciones sobre `assemble.py`, `cta_data.py`.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 86 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 1046522.3,
+      "active_tokens_per_page": 75141.8,
+      "tokens_per_input_kb": 17195.7,
+      "tokens_per_competency": 2020031.4,
+      "active_tokens_per_competency": 145041.2,
+      "author_tokens_per_competency": 0.0,
+      "tokens_per_question": 82725.1,
+      "active_tokens_per_question": 5939.8,
+      "seconds_per_page": 264.59,
+      "seconds_per_question": 20.92,
+      "questions_per_minute": 2.87,
+      "agent_seconds_per_question": 30.35,
+      "output_tokens_per_question": 1269.7
+    },
+    "bottlenecks_count": 3
+  },
+  {
+    "run_id": "20261017_063551_practica_parcial_saul_9ed41fb3",
+    "timestamp": "2026-10-17T11:35:51.226116+00:00",
+    "course_id": "practica_parcial_saul",
+    "course_title": "Solow Model",
+    "conversation_id": "9ed41fb3-f9b3-4442-aa04-99f31a3c001c",
+    "workload": {
+      "source_files_count": 3,
+      "pages_or_slides": 62,
+      "input_mb": 2.43,
+      "competencies": 18,
+      "questions": 0,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 233.0,
+      "agent_compute_seconds": 2821.0,
+      "speedup": 12.11,
+      "total_tokens": 10296430,
+      "total_active_tokens": 680256,
+      "input_tokens": 414397,
+      "output_tokens": 112535,
+      "cache_read_tokens": 9616174,
+      "total_turns": 85,
+      "subagents_count": 1,
+      "tool_errors": 10,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 0.0,
+      "stage_3_max_wall": 0.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 36,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (0 operaciones)**: Operaciones sobre archivos de reactivos.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 36 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 166071.5,
+      "active_tokens_per_page": 10971.9,
+      "tokens_per_input_kb": 4135.9,
+      "tokens_per_competency": 572023.9,
+      "active_tokens_per_competency": 37792.0,
+      "author_tokens_per_competency": 0.0,
+      "tokens_per_question": 0.0,
+      "active_tokens_per_question": 0.0,
+      "seconds_per_page": 3.76,
+      "seconds_per_question": 0.0,
+      "questions_per_minute": 0.0,
+      "agent_seconds_per_question": 0.0,
+      "output_tokens_per_question": 0.0
+    },
+    "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261017_063551_solow_model_812bfecd",
+    "timestamp": "2026-10-17T11:35:51.685219+00:00",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
+    "conversation_id": "812bfecd-f742-46f1-8863-5c7b61096754",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 21,
+      "questions": 500,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 2936.0,
+      "agent_compute_seconds": 7224.0,
+      "speedup": 2.46,
+      "total_tokens": 27699093,
+      "total_active_tokens": 2821776,
+      "input_tokens": 1909792,
+      "output_tokens": 541700,
+      "cache_read_tokens": 24877317,
+      "total_turns": 274,
+      "subagents_count": 8,
+      "tool_errors": 13,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 0.0,
+      "stage_3_max_wall": 0.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (42/42 REACTIVOS)",
+        "batch_items_count": 42,
+        "initial_errors_count": 1,
+        "repair_iterations": 1,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 0 Blind Judges evaluaron el lote estratificado de 42 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (42/42) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 42/42 acuerdos (`100.0% agreement rate`, `0 discrepancias`).",
+          "2. **Verificación Determinista Previa (`--stage verify`)**: Detectó 1 error(es) léxico/estructural(es) corregido(s) antes del arbitraje ciego."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 769419.2,
+      "active_tokens_per_page": 78382.7,
+      "tokens_per_input_kb": 18188.8,
+      "tokens_per_competency": 1319004.4,
+      "active_tokens_per_competency": 134370.3,
+      "author_tokens_per_competency": 0.0,
+      "tokens_per_question": 55398.2,
+      "active_tokens_per_question": 5643.6,
+      "seconds_per_page": 81.56,
+      "seconds_per_question": 5.87,
+      "questions_per_minute": 10.22,
+      "agent_seconds_per_question": 14.45,
+      "output_tokens_per_question": 1230.0
+    },
+    "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261017_063552_solow_model_v14_7818f6af",
+    "timestamp": "2026-10-17T11:35:52.338865+00:00",
+    "course_id": "solow_model_v14",
+    "course_title": "Solow Model V14",
+    "conversation_id": "7818f6af-4344-4f6c-8f01-24ecdf14c583",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 23,
+      "questions": 540,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 19792.0,
+      "agent_compute_seconds": 25659.0,
+      "speedup": 1.3,
+      "total_tokens": 44765174,
+      "total_active_tokens": 4765328,
+      "input_tokens": 2847511,
+      "output_tokens": 670644,
+      "cache_read_tokens": 39999846,
+      "total_turns": 408,
+      "subagents_count": 10,
+      "tool_errors": 27,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 1016.0,
+      "stage_3_max_wall": 1902.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (46/46 REACTIVOS)",
+        "batch_items_count": 46,
+        "initial_errors_count": 1,
+        "repair_iterations": 1,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 4 Blind Judges evaluaron el lote estratificado de 46 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (46/46) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 46/46 acuerdos (`100.0% agreement rate`, `0 discrepancias`).",
+          "2. **Verificación Determinista Previa (`--stage verify`)**: Detectó 1 error(es) léxico/estructural(es) corregido(s) antes del arbitraje ciego."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 1243477.1,
+      "active_tokens_per_page": 132370.2,
+      "tokens_per_input_kb": 29395.3,
+      "tokens_per_competency": 1946311.9,
+      "active_tokens_per_competency": 207188.2,
+      "author_tokens_per_competency": 112932.8,
+      "tokens_per_question": 82898.5,
+      "active_tokens_per_question": 8824.7,
+      "seconds_per_page": 549.78,
+      "seconds_per_question": 36.65,
+      "questions_per_minute": 1.64,
+      "agent_seconds_per_question": 47.52,
+      "output_tokens_per_question": 1428.6
+    },
+    "bottlenecks_count": 3
+  },
+  {
+    "run_id": "20261017_063552_solow_model_f2be91cd",
+    "timestamp": "2026-10-17T11:35:52.964704+00:00",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
+    "conversation_id": "f2be91cd-72b0-4b72-820f-22d3bc20e7ab",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 24,
+      "questions": 570,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 20393.0,
+      "agent_compute_seconds": 26079.0,
+      "speedup": 1.28,
+      "total_tokens": 59974427,
+      "total_active_tokens": 4009500,
+      "input_tokens": 2205251,
+      "output_tokens": 667694,
+      "cache_read_tokens": 55964927,
+      "total_turns": 474,
+      "subagents_count": 5,
+      "tool_errors": 54,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 1393.0,
+      "stage_3_max_wall": 2504.0,
+      "orchestrator_interventions": 4,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 48,
+        "initial_errors_count": 1,
+        "repair_iterations": 1,
+        "supervisor_interventions_count": 4,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con 1 errores iniciales, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (4 operaciones)**: Operaciones sobre `debug_test.py`, `shard_03_data.py`.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 48 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 1665956.3,
+      "active_tokens_per_page": 111375.0,
+      "tokens_per_input_kb": 39382.6,
+      "tokens_per_competency": 2498934.5,
+      "active_tokens_per_competency": 167062.5,
+      "author_tokens_per_competency": 96775.1,
+      "tokens_per_question": 105218.3,
+      "active_tokens_per_question": 7034.2,
+      "seconds_per_page": 566.47,
+      "seconds_per_question": 35.78,
+      "questions_per_minute": 1.68,
+      "agent_seconds_per_question": 45.75,
+      "output_tokens_per_question": 1363.2
+    },
+    "bottlenecks_count": 4
+  },
+  {
+    "run_id": "20261017_063553_solow_model_v13_18ae4bcc",
+    "timestamp": "2026-10-17T11:35:53.607160+00:00",
+    "course_id": "solow_model_v13",
+    "course_title": "El Modelo de Crecimiento de Solow",
+    "conversation_id": "18ae4bcc-90ae-4890-bc9a-293ddf907d71",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 24,
+      "questions": 570,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 3714.0,
+      "agent_compute_seconds": 8331.0,
+      "speedup": 2.24,
+      "total_tokens": 34966209,
+      "total_active_tokens": 3244368,
+      "input_tokens": 1544418,
+      "output_tokens": 538004,
+      "cache_read_tokens": 31721841,
+      "total_turns": 328,
+      "subagents_count": 10,
+      "tool_errors": 15,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 1436.0,
+      "stage_3_max_wall": 920.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (48/48 REACTIVOS)",
+        "batch_items_count": 48,
+        "initial_errors_count": 1,
+        "repair_iterations": 1,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 5 Blind Judges evaluaron el lote estratificado de 48 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (48/48) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 48/48 acuerdos (`100.0% agreement rate`, `0 discrepancias`).",
+          "2. **Verificación Determinista Previa (`--stage verify`)**: Detectó 1 error(es) léxico/estructural(es) corregido(s) antes del arbitraje ciego."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 971283.6,
+      "active_tokens_per_page": 90121.3,
+      "tokens_per_input_kb": 22960.8,
+      "tokens_per_competency": 1456925.4,
+      "active_tokens_per_competency": 135182.0,
+      "author_tokens_per_competency": 52706.8,
+      "tokens_per_question": 61344.2,
+      "active_tokens_per_question": 5691.9,
+      "seconds_per_page": 103.17,
+      "seconds_per_question": 6.52,
+      "questions_per_minute": 9.21,
+      "agent_seconds_per_question": 14.62,
+      "output_tokens_per_question": 1203.8
+    },
+    "bottlenecks_count": 3
+  },
+  {
+    "run_id": "20261019_015316_solow_model_v15_4ceacf92",
+    "timestamp": "2026-10-19T06:53:16.423365+00:00",
+    "course_id": "solow_model_v15",
+    "course_title": "Solow Model V15",
+    "conversation_id": "4ceacf92-ef82-4fb0-899d-87aa310873c1",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 36,
+      "input_mb": 1.49,
+      "competencies": 15,
+      "questions": 360,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1626.0,
+      "agent_compute_seconds": 5391.0,
+      "speedup": 3.32,
+      "total_tokens": 22064985,
+      "total_active_tokens": 2350556,
+      "input_tokens": 1505611,
+      "output_tokens": 483695,
+      "cache_read_tokens": 19714429,
+      "total_turns": 269,
+      "subagents_count": 12,
+      "tool_errors": 24,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 345.0,
+      "stage_3_max_wall": 578.0,
+      "orchestrator_interventions": 1,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (30/30 REACTIVOS)",
+        "batch_items_count": 30,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 3 Blind Judges evaluaron el lote estratificado de 30 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (30/30) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 30/30 acuerdos (`100.0% agreement rate`, `0 discrepancias`)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 612916.2,
+      "active_tokens_per_page": 65293.2,
+      "tokens_per_input_kb": 14489.1,
+      "tokens_per_competency": 1470999.0,
+      "active_tokens_per_competency": 156703.7,
+      "author_tokens_per_competency": 106181.8,
+      "tokens_per_question": 61291.6,
+      "active_tokens_per_question": 6529.3,
+      "seconds_per_page": 45.17,
+      "seconds_per_question": 4.52,
+      "questions_per_minute": 13.28,
+      "agent_seconds_per_question": 14.97,
+      "output_tokens_per_question": 1476.2
+    },
+    "bottlenecks_count": 3
+  },
+  {
+    "run_id": "20261019_015914_practica_parcial_saul_acdc402d",
+    "timestamp": "2026-10-19T06:59:14.294634+00:00",
+    "course_id": "practica_parcial_saul",
+    "course_title": "Practica Parcial Saul",
+    "conversation_id": "acdc402d-0803-468b-9c6c-b069a2dc6c09",
+    "workload": {
+      "source_files_count": 7,
+      "pages_or_slides": 103,
+      "input_mb": 10.39,
+      "competencies": 118,
+      "questions": 0,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 2254.0,
+      "agent_compute_seconds": 19461.0,
+      "speedup": 8.63,
+      "total_tokens": 53435338,
+      "total_active_tokens": 8011958,
+      "input_tokens": 5230913,
+      "output_tokens": 2170666,
+      "cache_read_tokens": 45423380,
+      "total_turns": 589,
+      "subagents_count": 27,
+      "tool_errors": 57,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 1055.0,
+      "stage_3_max_wall": 842.0,
+      "orchestrator_interventions": 1,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 236,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 1,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (1 operaciones)**: Operaciones sobre `prepare.py`.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 236 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 518789.7,
+      "active_tokens_per_page": 77786.0,
+      "tokens_per_input_kb": 5020.3,
+      "tokens_per_competency": 452841.8,
+      "active_tokens_per_competency": 67897.9,
+      "author_tokens_per_competency": 50089.8,
+      "tokens_per_question": 0.0,
+      "active_tokens_per_question": 0.0,
+      "seconds_per_page": 21.88,
+      "seconds_per_question": 0.0,
+      "questions_per_minute": 0.0,
+      "agent_seconds_per_question": 0.0,
+      "output_tokens_per_question": 0.0
+    },
+    "bottlenecks_count": 3
   }
 ]

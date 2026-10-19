@@ -4,6 +4,8 @@
 > **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-10-12 23:30:29**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
 
 **Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-10-18 22:25:16  
+**Fecha de Eliminación:** 2026-10-16 23:51:31  
 **Fecha de Eliminación:** 2026-10-13 09:14:43  
 **Fecha de Eliminación:** 2026-10-12 23:30:29  
 **Curso Auditado:** El Modelo de Crecimiento Económico de Solow: Teoría, Dinámica y Métodos Cuantitativos  

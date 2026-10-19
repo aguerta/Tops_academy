@@ -16,9 +16,9 @@ Se ha completado la auditoría exhaustiva y concurrente sobre la suite de cursos
 
 | Curso | Preguntas | Comp. | D1: Arq. (4 pts) | D2: React. (5 pts) | D3: Pistas (5 pts) | D4: Alin. (4 pts) | D5: KaTeX (2 pts) | Pen. | Nota Final | Quality Tier | Estado | Fecha Eliminación |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :---: |
-| **Estadística III: Econometría** (`estadistica3_regresion_v3`) | 390 | 16 | **3.8** | **4.8** | **4.8** | **4.0** | **2.0** | 0.0 | **19.4 / 20.0** | **EXCELENTE** | Aprobado / Producción Certificada | — |
-| **Modelo de Crecimiento de Solow** (`solow_growth_model`) | 580 | 25 | **3.8** | **4.8** | **4.8** | **3.9** | **2.0** | 0.0 | **19.3 / 20.0** | **EXCELENTE** | Retirado / Eliminado de Plataforma | 2026-10-13 02:08:08 |
-| **Modelo de Solow (Versión Inicial)** (`solow_model`) | 1,040 | 44 | **3.3** | **3.2** | **3.7** | **3.8** | **1.3** | 0.0 | **15.3 / 20.0** | **ACEPTABLE** | Eliminado de la Plataforma | 2026-10-13 09:14:43 |
+| **Estadística III: Econometría** (`estadistica3_regresion_v3`) | 390 | 16 | **3.8** | **4.8** | **4.8** | **4.0** | **2.0** | 0.0 | **19.4 / 20.0** | **EXCELENTE** | Eliminado de la Plataforma | 2026-10-17 00:24:26 |
+| **Modelo de Crecimiento de Solow** (`solow_growth_model`) | 580 | 25 | **3.8** | **4.8** | **4.8** | **3.9** | **2.0** | 0.0 | **19.3 / 20.0** | **EXCELENTE** | Eliminado de la Plataforma | 2026-10-16 19:08:36 |
+| **Modelo de Solow (Versión Inicial)** (`solow_model`) | 1,040 | 44 | **3.3** | **3.2** | **3.7** | **3.8** | **1.3** | 0.0 | **15.3 / 20.0** | **ACEPTABLE** | Eliminado de la Plataforma | 2026-10-18 22:25:16 |
 | **Promedio Global de la Suite** | **2,010** | **85** | **3.63** | **4.27** | **4.43** | **3.90** | **1.77** | **0.0** | **18.00 / 20.0** | **EXCELENTE** | Suite Histórica Auditada |
 
 ---

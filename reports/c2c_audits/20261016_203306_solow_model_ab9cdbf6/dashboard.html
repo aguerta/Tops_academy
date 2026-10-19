@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>C2C Architectural Forensic Dashboard - solow_model</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); padding: 24px; line-height: 1.5; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { font-size: 1.5rem; color: var(--accent); }
+    .header .meta { color: var(--text-muted); font-size: 0.85rem; }
+    .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .kpi-card .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-card .val { font-size: 1.6rem; font-weight: bold; color: var(--text); margin-top: 4px; }
+    .kpi-card .sub { font-size: 0.75rem; color: var(--accent-green); margin-top: 2px; }
+    .section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .section h2 { font-size: 1.1rem; color: var(--accent); margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-high { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); }
+    .badge-med { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }
+    .badge-ok { background: rgba(74, 222, 128, 0.2); color: var(--accent-green); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>C2C Architectural Forensic Telemetry (Agentic Audit)</h1>
+      <div class="meta">Solow Model (<code>solow_model</code>) | CTA Mode: <code>direct</code> | Conv: <code>ab9cdbf6-d44c-4ab2-b3bd-4575b6ae7b8f</code></div>
+    </div>
+    <div class="meta">Audit Date: 2026-10-17T01:33:06 UTC</div>
+  </div>
+
+  <div class="grid-kpi">
+    <div class="kpi-card">
+      <div class="label">Wall-Clock Time</div>
+      <div class="val">80.4 min</div>
+      <div class="sub">4824.0s elapsed (incl. 8.7m disaster recovery)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Parallel Speedup</div>
+      <div class="val">2.57x</div>
+      <div class="sub">206.9m compute time across 13 agents</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Total Tokens</div>
+      <div class="val">107,300,562</div>
+      <div class="sub">Active: 5,031,432 | Cache: 102,269,130</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Tokens / Question</div>
+      <div class="val">135,823.5</div>
+      <div class="sub">790 questions (33 competencies, 6 shards)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Blind Judges Agreement</div>
+      <div class="val">100.0%</div>
+      <div class="sub">66/66 items agreed on Cycle 1 (0 web searches)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Supervisor Interventions</div>
+      <div class="val">13</div>
+      <div class="sub">5 episodes (TPL-VAR, run.py, \rho raw strings, disaster recovery, judge.py)</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Stage 3: Shard Question Authoring & True Competency Metrics (courses/solow_model/work)</h2>
+    <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
+      Critical Straggler: <strong>Shard Exercise Author: `shard_04`</strong> (1468.0s | +567.5s vs median 900.0s) |
+      Avg Author Active Tokens / Competency: <strong>93,957.5</strong>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Shard ID</th>
+          <th>Competencias Asignadas</th>
+          <th>Comps</th>
+          <th>Tokens In</th>
+          <th>Tokens Out</th>
+          <th>Active Tokens</th>
+          <th>Tokens / Comp</th>
+          <th>Turns</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Shard Exercise Author: `shard_01`</strong></td>
+          <td><code>H-01, C-01, H-02, Hab-01, C-02, C-03</code></td>
+          <td>6</td>
+          <td>518,461</td>
+          <td>75,592</td>
+          <td><strong>594,053</strong></td>
+          <td><strong>99,008.8</strong></td>
+          <td>70</td>
+          <td><strong>1034.0s</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Shard Exercise Author: `shard_02`</strong></td>
+          <td><code>Hab-02, Hab-03, C-04, H-03, Hab-04, C-05</code></td>
+          <td>6</td>
+          <td>531,269</td>
+          <td>120,588</td>
+          <td><strong>651,857</strong></td>
+          <td><strong>108,642.8</strong></td>
+          <td>130</td>
+          <td><strong>1364.0s</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Shard Exercise Author: `shard_03`</strong></td>
+          <td><code>C-06, C-07, C-08, Hab-05, Hab-06, H-04</code></td>
+          <td>6</td>
+          <td>284,496</td>
+          <td>66,212</td>
+          <td><strong>350,708</strong></td>
+          <td><strong>58,451.3</strong></td>
+          <td>80</td>
+          <td><strong>707.0s</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Shard Exercise Author: `shard_04` 🛑</strong></td>
+          <td><code>Hab-07, C-09, H-05, C-10, Hab-08</code></td>
+          <td>5</td>
+          <td>453,023</td>
+          <td>128,373</td>
+          <td><strong>581,396</strong></td>
+          <td><strong>116,279.2</strong></td>
+          <td>135</td>
+          <td><strong>1468.0s</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Shard Exercise Author: `shard_05`</strong></td>
+          <td><code>Hab-09, Hab-10, C-11, Hab-11, C-12</code></td>
+          <td>5</td>
+          <td>330,437</td>
+          <td>71,533</td>
+          <td><strong>401,970</strong></td>
+          <td><strong>80,394.0</strong></td>
+          <td>77</td>
+          <td><strong>766.0s</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Shard Exercise Author: `shard_06`</strong></td>
+          <td><code>Hab-12, C-13, C-14, Hab-13, C-15</code></td>
+          <td>5</td>
+          <td>447,633</td>
+          <td>72,982</td>
+          <td><strong>520,615</strong></td>
+          <td><strong>104,123.0</strong></td>
+          <td>80</td>
+          <td><strong>741.0s</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Stage 5: Blind Judges & Psychometric Verification</h2>
+    <div style="margin-bottom: 12px; font-size: 0.9rem;">
+      <span class="badge badge-ok">✅ 66/66 REACTIVOS APROBADOS EN CICLO 1 (100.0% AGREEMENT | 0 DISCREPANCIAS)</span>
+      <span class="badge badge-med" style="margin-left: 8px;">🛠️ 1 PARCHE DE RUTA EN JUDGE.PY + SANEAMIENTO PREVIO R-03</span>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+      Los 5 Blind Judges operaron con aislamiento epistémico absoluto (1 turno de razonamiento por juez, 0 búsquedas web) y coincidieron en 66/66 reactivos (100.0%). La etapa previa <code>--stage verify</code> detectó 1 corrupción de escape LaTeX (<code>\rho</code> &rarr; <code>\x0d</code> en <code>Hab-07</code> de <code>cta_data.py</code>), y <code>--stage judge-compare</code> requirió actualizar <code>judge.py</code> para buscar respuestas en <code>verification/judge_responses_*.json</code>.
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Lote Estratificado</th>
+          <th>Acuerdo de Jueces Ciegos</th>
+          <th>Aislamiento Epistémico</th>
+          <th>Parches de Infraestructura</th>
+          <th>Status Final</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>66 reactivos (33 competencias)</strong></td>
+          <td><span class="badge badge-ok">66 / 66 (100.0%)</span></td>
+          <td><span class="badge badge-ok">100% (1 Turno/Juez, 0 Web)</span></td>
+          <td><strong>1 fix en <code>judge.py</code> (Step 518)</strong></td>
+          <td><span class="badge badge-ok">CERTIFICADO</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Orchestrator Manual Interventions (13 Operations Across 5 Forensic Episodes)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Episode</th>
+          <th>Target File</th>
+          <th>Forensic Root Cause</th>
+          <th>Tool</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>82</strong></td>
+          <td>Ep. 1: TPL-VAR 50 Seeds</td>
+          <td><code>shard_02_data.py</code></td>
+          <td>Expandir espacio paramétrico en <code>gen_hab03</code> (20/50 &rarr; 50/50 semillas únicas)</td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+        <tr>
+          <td><strong>86</strong></td>
+          <td>Ep. 1: TPL-VAR 50 Seeds</td>
+          <td><code>shard_02_data.py</code></td>
+          <td>Expandir espacio paramétrico en <code>gen_hab04</code> (48/50 &rarr; 50/50 semillas únicas)</td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+        <tr>
+          <td><strong>118</strong></td>
+          <td>Ep. 2: Stage Build Loader</td>
+          <td><code>run.py</code></td>
+          <td>Soportar archivos JSON de plantilla individual en formato <code>dict</code> además de <code>list</code> en <code>run_stage_build</code></td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+        <tr>
+          <td><strong>152</strong></td>
+          <td>Ep. 3: Escape <code>\rho</code> (R-03)</td>
+          <td><code>check_escapes.py</code></td>
+          <td>Script diagnóstico para detectar strings no-raw con backslashes LaTeX en <code>cta_data.py</code></td>
+          <td><code>write_to_file</code></td>
+        </tr>
+        <tr>
+          <td><strong>158</strong></td>
+          <td>Ep. 3: Escape <code>\rho</code> (R-03)</td>
+          <td><code>check_escapes.py</code></td>
+          <td>Inspeccionar líneas 1105..fin de <code>cta_data.py</code> (donde <code>\rho</code> generó <code>\x0dho</code> en <code>Hab-07</code>)</td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+        <tr>
+          <td><strong>164</strong></td>
+          <td>Ep. 3: Escape <code>\rho</code> (R-03)</td>
+          <td><code>cta_data.py</code></td>
+          <td>Añadir prefijo raw string <code>r"..."</code> en línea 92 de <code>cta_data.py</code></td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+        <tr>
+          <td><strong>168</strong></td>
+          <td>Ep. 3: Escape <code>\rho</code> (R-03)</td>
+          <td><code>fix_raw_strings.py</code></td>
+          <td>Convertir en lote las 33 cadenas con backslashes LaTeX en <code>cta_data.py</code> a raw strings <code>r"..."</code></td>
+          <td><code>write_to_file</code></td>
+        </tr>
+        <tr>
+          <td><strong>393</strong></td>
+          <td>Ep. 4: Disaster Recovery</td>
+          <td><code>fix_cta.py</code></td>
+          <td>Reconstruir y sanear <code>cta_data.py</code> desde <code>transcript.jsonl</code> tras borrado externo de <code>courses/solow_model</code></td>
+          <td><code>write_to_file</code></td>
+        </tr>
+        <tr>
+          <td><strong>413</strong></td>
+          <td>Ep. 4: Disaster Recovery</td>
+          <td><code>recover_shards.py</code></td>
+          <td>Reconstruir <code>shard_01..06_data.py</code> re-ejecutando <code>write_to_file</code> y <code>replace_file_content</code> desde los transcripts</td>
+          <td><code>write_to_file</code></td>
+        </tr>
+        <tr>
+          <td><strong>424</strong></td>
+          <td>Ep. 4: Disaster Recovery</td>
+          <td><code>shard_02_data.py</code></td>
+          <td>Re-aplicar expansión paramétrica en <code>shard_02_data.py</code> reconstruido (falló por ruta relativa)</td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+        <tr>
+          <td><strong>426</strong></td>
+          <td>Ep. 4: Disaster Recovery</td>
+          <td><code>shard_02_data.py</code></td>
+          <td>Re-aplicar expansión paramétrica en <code>gen_hab03</code> sobre <code>shard_02_data.py</code> reconstruido</td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+        <tr>
+          <td><strong>428</strong></td>
+          <td>Ep. 4: Disaster Recovery</td>
+          <td><code>shard_02_data.py</code></td>
+          <td>Re-aplicar expansión paramétrica en <code>gen_hab04</code> sobre <code>shard_02_data.py</code> reconstruido</td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+        <tr>
+          <td><strong>518</strong></td>
+          <td>Ep. 5: Judge Path Fix</td>
+          <td><code>judge.py</code></td>
+          <td>Soportar búsqueda de <code>judge_responses_*.json</code> dentro de <code>verification/</code> además de <code>work_dir</code></td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>

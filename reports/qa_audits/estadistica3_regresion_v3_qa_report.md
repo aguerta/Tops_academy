@@ -1,6 +1,7 @@
 # Informe de Auditoría Técnico-Pedagógica de Calidad Instruccional
 
-**Estado en Plataforma:** Activo (Vigente)  
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-10-17 00:24:26  
 **Fecha de Eliminación:** Nulo  
 **Curso:** Estadística III: Econometría y Modelo de Regresión Lineal (`estadistica3_regresion_v3`)  
 **Fecha de Auditoría:** 12 de Octubre, 2026  

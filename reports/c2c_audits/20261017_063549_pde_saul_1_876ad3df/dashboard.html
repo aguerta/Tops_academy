@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>C2C Architectural Forensic Dashboard - pde_saul_1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); padding: 24px; line-height: 1.5; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { font-size: 1.5rem; color: var(--accent); }
+    .header .meta { color: var(--text-muted); font-size: 0.85rem; }
+    .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .kpi-card .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-card .val { font-size: 1.6rem; font-weight: bold; color: var(--text); margin-top: 4px; }
+    .kpi-card .sub { font-size: 0.75rem; color: var(--accent-green); margin-top: 2px; }
+    .section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .section h2 { font-size: 1.1rem; color: var(--accent); margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-high { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); }
+    .badge-med { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }
+    .badge-ok { background: rgba(74, 222, 128, 0.2); color: var(--accent-green); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>C2C Architectural Forensic Telemetry</h1>
+      <div class="meta">Ecuaciones en Derivadas Parciales - Saúl Elguera (<code>pde_saul_1</code>) | Conv: <code>876ad3df-153...</code></div>
+    </div>
+    <div class="meta">Audit Date: 2026-10-17T11:35:49 UTC</div>
+  </div>
+
+  <div class="grid-kpi">
+    <div class="kpi-card">
+      <div class="label">Wall-Clock Time</div>
+      <div class="val">55.87 min</div>
+      <div class="sub">3352.0s elapsed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Parallel Speedup</div>
+      <div class="val">1.93x</div>
+      <div class="sub">107.72m compute time</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Total Tokens</div>
+      <div class="val">49,363,575</div>
+      <div class="sub">Active: 2,918,171 | Cache: 46,445,404</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Tokens / Question</div>
+      <div class="val">129,904.1</div>
+      <div class="sub">380 questions generated</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Seconds / Question</div>
+      <div class="val">8.82s</div>
+      <div class="sub">6.8 questions/min</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Supervisor Interventions</div>
+      <div class="val">7</div>
+      <div class="sub">1.4m spent repairing</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Stage 3: Shard Question Authoring & Competency Metrics</h2>
+    <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
+      Critical Straggler: <strong>Shard Author shard_02</strong> (1000.0s | +239.0s vs median) |
+      Avg Tokens / Competency: <strong>77,266.8</strong>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Shard ID</th>
+          <th>Competencias</th>
+          <th>Comps</th>
+          <th>Tokens In</th>
+          <th>Tokens Out</th>
+          <th>Active Tokens</th>
+          <th>Tokens / Comp</th>
+          <th>Turns</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Shard Author shard_01</strong></td>
+          <td><code>H-01, C-01, H-02...</code></td>
+          <td>6</td>
+          <td>128,080</td>
+          <td>65,949</td>
+          <td><strong>194,029</strong></td>
+          <td><strong>32,338.2</strong></td>
+          <td>22</td>
+          <td><strong>468.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_02</strong></td>
+          <td><code>Hab-02, C-04, H-03...</code></td>
+          <td>5</td>
+          <td>363,312</td>
+          <td>88,735</td>
+          <td><strong>452,047</strong></td>
+          <td><strong>90,409.4</strong></td>
+          <td>89</td>
+          <td><strong>1000.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_03</strong></td>
+          <td><code>Hab-04, Hab-05, H-04...</code></td>
+          <td>5</td>
+          <td>501,960</td>
+          <td>88,233</td>
+          <td><strong>590,193</strong></td>
+          <td><strong>118,038.6</strong></td>
+          <td>57</td>
+          <td><strong>761.0s</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Blind Judges & Psychometric Verification</h2>
+    <div style="margin-bottom: 12px; font-size: 0.9rem;">
+      <span class="badge badge-high">❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)</span>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+      Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Lote Estratificado</th>
+          <th>Primer Intento</th>
+          <th>Auto-Repair Iterations</th>
+          <th>Supervisor Fixes</th>
+          <th>Status Final</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>32 reactivos</strong></td>
+          <td><span class="badge badge-high">FAILED</span></td>
+          <td>0 iteraciones</td>
+          <td><strong>7 fixes</strong></td>
+          <td><span class="badge badge-ok">CERTIFICADO</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top: 14px; font-size: 0.85rem;">
+      <strong>Acciones Correctivas Tomadas:</strong>
+      <ul style="margin-left: 20px; margin-top: 6px; color: var(--text-muted);">
+        <li>1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.</li><li>2. **Intervenciones de Supervisor (7 operaciones)**: Operaciones sobre `shard_01_data.py`, `shard_03_data.py`.</li><li>3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 32 reactivos.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Orchestrator Manual Interventions (Supervisor Repair Anti-Pattern)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Target File</th>
+          <th>Action Type</th>
+          <th>Root Cause / Snippet</th>
+          <th>Tool</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>181</strong></td>
+          <td><code>shard_03_data.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>"Escape arccot in rf-string to prevent NameError"</td>
+          <td><code>replace_file_content</code></td>
+        </tr><tr>
+          <td><strong>266</strong></td>
+          <td><code>shard_03_data.py</code></td>
+          <td>Expansión Paramétrica (TPL-VAR)</td>
+          <td>Ampliación de dominio para superar 50 semillas en shard_03_data.py ("Widen gen_hab05 parameter space")</td>
+          <td><code>replace_file_content</code></td>
+        </tr><tr>
+          <td><strong>270</strong></td>
+          <td><code>shard_03_data.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>"Fix scaffolding leak in hint 3 of Hab-05"</td>
+          <td><code>replace_file_content</code></td>
+        </tr><tr>
+          <td><strong>328</strong></td>
+          <td><code>shard_01_data.py</code></td>
+          <td>Expansión Paramétrica (TPL-VAR)</td>
+          <td>Ampliación de dominio para superar 50 semillas en shard_01_data.py (Widen parameter space of gen_h02 and update ver_h02)</td>
+          <td><code>replace_file_content</code></td>
+        </tr><tr>
+          <td><strong>332</strong></td>
+          <td><code>shard_01_data.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Fix residual double braces in TEMPLATES of shard_01_data.py</td>
+          <td><code>replace_file_content</code></td>
+        </tr><tr>
+          <td><strong>345</strong></td>
+          <td><code>shard_01_data.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>"Add cand_tex and sol_ux_tex to gen_hab01 vars"</td>
+          <td><code>replace_file_content</code></td>
+        </tr><tr>
+          <td><strong>349</strong></td>
+          <td><code>shard_01_data.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>"Update Hab-01 stem and solution to use cand_tex and sol_ux_tex"</td>
+          <td><code>replace_file_content</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>

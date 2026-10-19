@@ -1,0 +1,256 @@
+{
+  "meta": {
+    "audit_timestamp": "2026-10-17T03:49:18.616194+00:00",
+    "orchestrator_conversation_id": "3a4ba3e1-2636-4f66-bef4-695d22acbac9",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
+    "work_dir_resolved": "N/A",
+    "telemetry_v3_snapshots_used": 0
+  },
+  "summary": {
+    "wall_clock_seconds": 27.0,
+    "wall_clock_minutes": 0.45,
+    "agent_compute_seconds": 27.0,
+    "agent_compute_minutes": 0.45,
+    "parallel_speedup_factor": 1.0,
+    "total_tokens": 132864,
+    "total_active_tokens": 67197,
+    "total_input_tokens": 65466,
+    "total_output_tokens": 1731,
+    "total_cache_read_tokens": 65667,
+    "total_thinking_tokens": 181,
+    "total_thinking_turns": 2,
+    "total_thinking_chars": 727,
+    "total_turns": 6,
+    "total_subagents_spawned": 0,
+    "tool_calls_total": 6,
+    "tool_errors_total": 0
+  },
+  "workload": {
+    "source_files": [
+      {
+        "name": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+        "size_bytes": 981980,
+        "pages": 5,
+        "ext": ".pdf"
+      },
+      {
+        "name": "solow1956.pdf",
+        "size_bytes": 577436,
+        "pages": 31,
+        "ext": ".pdf"
+      }
+    ],
+    "total_input_bytes": 1559416,
+    "total_input_mb": 1.49,
+    "total_pages_or_slides": 36,
+    "pages_needing_vision": 0,
+    "total_handouts": 0,
+    "corpus_chars": 0,
+    "corpus_words": 0,
+    "competencies_count": 33,
+    "shards_count": 0,
+    "shards_competencies_map": {},
+    "questions_count": 0,
+    "templates_compiled_count": 0,
+    "cta_mode": "unknown",
+    "course_id": "solow_model",
+    "course_title": "Solow Model",
+    "run_status": "ABORTED_INCOMPLETE",
+    "work_dir_resolved": null,
+    "work_dir_conversation_match": false
+  },
+  "unit_economics": {
+    "tokens_per_page": 3690.7,
+    "active_tokens_per_page": 1866.6,
+    "tokens_per_input_kb": 87.2,
+    "tokens_per_competency": 4026.2,
+    "active_tokens_per_competency": 2036.3,
+    "author_tokens_per_competency": 0.0,
+    "tokens_per_question": 0.0,
+    "active_tokens_per_question": 0.0,
+    "seconds_per_page": 0.75,
+    "seconds_per_question": 0.0,
+    "questions_per_minute": 0.0,
+    "agent_seconds_per_question": 0.0,
+    "output_tokens_per_question": 0.0
+  },
+  "stage_telemetry_v3": [],
+  "stage_deep_dives": {
+    "stage_1a_vision": {
+      "agents_count": 0,
+      "agents": [],
+      "individual_durations": [],
+      "max_wall_time_seconds": 0.0,
+      "total_active_tokens": 0,
+      "total_cache_tokens": 0,
+      "critical_path_agent": "N/A"
+    },
+    "stage_1b_cta": {
+      "agents_count": 0,
+      "mappers_count": 0,
+      "mappers": [],
+      "mappers_max_wall_time": 0.0,
+      "harmonizer": null,
+      "harmonizers": [],
+      "harmonizer_duration": 0.0,
+      "total_stage_wall_time": 0.0,
+      "total_active_tokens": 0,
+      "critical_mapper": "N/A"
+    },
+    "stage_3_authors": {
+      "shards_count": 0,
+      "shards": [],
+      "min_duration_seconds": 0.0,
+      "median_duration_seconds": 0.0,
+      "max_duration_seconds": 0.0,
+      "straggler_shard": "N/A",
+      "straggler_delay_vs_median": 0.0,
+      "total_author_active_tokens": 0,
+      "total_author_cache_tokens": 0,
+      "avg_tokens_per_competency": 0.0
+    },
+    "stage_5_judges": {
+      "judges_count": 0,
+      "judges": [],
+      "max_judge_duration": 0.0,
+      "repairs_count": 0,
+      "repairs": [],
+      "passed_first_attempt": false,
+      "agreement_rate": 0.0,
+      "discrepancies_count": 0,
+      "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+      "batch_items_count": 66,
+      "initial_errors_count": 0,
+      "repair_iterations": 0,
+      "supervisor_interventions_count": 0,
+      "infra_interventions_count": 0,
+      "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+      "actions_taken": [
+        "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+        "2. **Intervenciones de Supervisor (0 operaciones)**: Operaciones sobre archivos de reactivos.",
+        "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 66 reactivos."
+      ]
+    }
+  },
+  "orchestrator_audit": {
+    "metrics": {
+      "conversation_id": "3a4ba3e1-2636-4f66-bef4-695d22acbac9",
+      "label": "Director (Orchestrator)",
+      "start_time": "2026-10-13T23:31:23+00:00",
+      "end_time": "2026-10-13T23:31:50+00:00",
+      "start_iso": "2026-10-13T23:31:23+00:00",
+      "end_iso": "2026-10-13T23:31:50+00:00",
+      "duration_seconds": 27.0,
+      "duration_minutes": 0.45,
+      "turns_count": 6,
+      "input_tokens": 65466,
+      "output_tokens": 1731,
+      "cache_read_tokens": 65667,
+      "thinking_tokens": 181,
+      "active_tokens": 67197,
+      "total_tokens": 132864,
+      "thinking_chars": 727,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 6,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "run_command": 1,
+        "define_subagent": 4
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-13T23:31:23Z",
+          "input_tokens": 13229,
+          "output_tokens": 320,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-13T23:31:27Z",
+          "input_tokens": 21601,
+          "output_tokens": 705,
+          "cache_read_tokens": 0,
+          "tools": [
+            "run_command"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-13T23:31:33Z",
+          "input_tokens": 2082,
+          "output_tokens": 179,
+          "cache_read_tokens": 21600,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-13T23:31:37Z",
+          "input_tokens": 23958,
+          "output_tokens": 148,
+          "cache_read_tokens": 0,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-13T23:31:40Z",
+          "input_tokens": 2295,
+          "output_tokens": 153,
+          "cache_read_tokens": 21910,
+          "tools": [
+            "define_subagent"
+          ]
+        },
+        {
+          "step_index": 11,
+          "created_at": "2026-10-13T23:31:47Z",
+          "input_tokens": 2301,
+          "output_tokens": 226,
+          "cache_read_tokens": 22157,
+          "tools": [
+            "define_subagent"
+          ]
+        }
+      ],
+      "from_v3_telemetry_snapshot": false
+    },
+    "time_decomposition": {
+      "cli_execution_seconds": 6.0,
+      "cli_execution_minutes": 0.1,
+      "supervisor_repair_seconds": 0.0,
+      "supervisor_repair_minutes": 0.0,
+      "barrier_wait_seconds": 0.0,
+      "barrier_wait_minutes": 0.0,
+      "model_thinking_seconds": 0.0,
+      "model_thinking_minutes": 0.0,
+      "total_tracked_seconds": 6.0
+    },
+    "interventions_count": 0,
+    "interventions": []
+  },
+  "bottlenecks": [],
+  "subagents": [],
+  "pipeline_state": null,
+  "telemetry_snapshots": [],
+  "thinking_traces_summary": {
+    "total_thinking_turns": 2,
+    "total_thinking_chars": 727,
+    "total_thinking_tokens": 181,
+    "orchestrator_thinking_turns": 2,
+    "orchestrator_thinking_chars": 727,
+    "subagents_thinking_turns": 0,
+    "subagents_thinking_chars": 0,
+    "stage_snapshots": {}
+  }
+}
