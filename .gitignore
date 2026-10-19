@@ -28,6 +28,8 @@ work/
 work_test_v3/
 **/work/
 **/work/**
+courses/**/reports/
+courses/reports/
 
 # 5. Materiales de Estudio de Entrada (Fuentes Pesadas / Escalamiento Externo)
 # Los materiales fuente (PDFs/PNGs pesados) viven fuera del control de versiones
