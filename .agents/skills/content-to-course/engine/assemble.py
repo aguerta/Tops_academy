@@ -248,18 +248,20 @@ def sanitize_katex_syntax(text: str) -> str:
     text = frac_simple_fix.sub(r"\1}{\2", text)
 
     # 3. Auto-repair \frac missing denominator closing brace when denominator ends with an inner braced group
-    frac_den_fix = re.compile(
-        r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{(?:[^{}]|\{[^{}]*\})*\}\s*\{[^{}]*(?:\\[a-zA-Z]+|[_^])\s*\{[^{}]*\})"
-        r"(?!\s*\})(?=\s*(?:[$=<>,.;:)\]|]|\\(?:right|le|ge|neq|approx|implies|iff)\b|$))"
-    )
-    text = frac_den_fix.sub(r"\1}", text)
+    if text.count("{") > text.count("}"):
+        frac_den_fix = re.compile(
+            r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{(?:[^{}]|\{[^{}]*\})*\}\s*\{[^{}]*(?:\\[a-zA-Z]+|[_^])\s*\{[^{}]*\})"
+            r"(?!\s*\})(?=\s*(?:[$=<>,.;:)\]|]|\\(?:le|ge|neq|approx|implies|iff)\b|$))"
+        )
+        text = frac_den_fix.sub(r"\1}", text)
 
     # 4. Auto-repair superscript/subscript missing outer closing brace after inner macro
-    script_outer_fix = re.compile(
-        r"([_^]\s*\{[^{}]*\\[a-zA-Z]+(?:\s*\{[^{}]*\})+)"
-        r"(?!\s*\})(?=\s*(?:[$=<>,.;:)\]|]|\\(?:right|le|ge|neq|approx|implies|iff)\b|$))"
-    )
-    text = script_outer_fix.sub(r"\1}", text)
+    if text.count("{") > text.count("}"):
+        script_outer_fix = re.compile(
+            r"([_^]\s*\{[^{}]*\\[a-zA-Z]+(?:\s*\{[^{}]*\})+)"
+            r"(?!\s*\})(?=\s*(?:[$=<>,.;:)\]|]|\\(?:le|ge|neq|approx|implies|iff)\b|$))"
+        )
+        text = script_outer_fix.sub(r"\1}", text)
 
     # 5. Auto-repair unbraced numeric denominator after \frac{num}: \frac{s}3 -> \frac{s}{3}
     frac_unbraced_den = re.compile(
