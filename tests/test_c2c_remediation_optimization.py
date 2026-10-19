@@ -186,6 +186,7 @@ COMPETENCIES = [
         success, res, errs, elapsed_ms = compile_cta.compile_cta(
             cta_data_path=data_file,
             output_dir=self.work_dir,
+            allow_degrade=False,
         )
 
         self.assertFalse(success)

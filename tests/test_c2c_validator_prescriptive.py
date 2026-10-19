@@ -198,6 +198,8 @@ class TestHermeticPublisherAndRuntime:
         # Use an existing course JSON file or create a minimally valid one
         valid_course_file = Path("courses/solow_model.json")
         if not valid_course_file.exists():
+            valid_course_file = Path("courses/solow_growth_model.json")
+        if not valid_course_file.exists():
             pytest.skip("courses/solow_model.json not found for fallback test")
 
         # Mock subprocess.run to simulate ModuleNotFoundError: No module named 'validator'

@@ -683,3 +683,80 @@ class TestMarkdownRenderingAndSectionalCheck:
         ]
         with pytest.raises(TypeError, match="diccionario"):
             compile_cta.compile_tuples_to_cta_dict(comp_with_dict_distractor)
+
+    def test_mapreduce_solow_model_p30_spike(self, tmp_path: Path):
+        """P3.0 Verification Spike: MapReduce partitioning and merge against solow1956.pdf."""
+        import pymupdf
+        from partition_corpus import partition_corpus
+        from check_cta import check_prerequisites_dag
+
+        solow_pdf = Path("content/Solow_model/solow1956.pdf").resolve()
+        if not solow_pdf.is_file():
+            pytest.skip("content/Solow_model/solow1956.pdf not found")
+
+        # 1. Structural Weight Partitioning into 4 parts
+        parts_info = partition_corpus(
+            corpus_path=solow_pdf,
+            work_dir=tmp_path,
+            k_parts=4,
+            course_id="solow_model",
+        )
+        assert len(parts_info) == 4
+
+        # 2. Slice fidelity check
+        doc_orig = pymupdf.open(str(solow_pdf))
+        for p in parts_info:
+            slice_path = Path(p["slice_path"])
+            assert slice_path.is_file()
+            doc_slice = pymupdf.open(str(slice_path))
+            for loc_str, mapping in p["page_map"].items():
+                l_idx = int(loc_str)
+                g_idx = mapping["doc_page"]
+                p_orig = doc_orig[g_idx - 1].get_pixmap(dpi=150)
+                p_slice = doc_slice[l_idx - 1].get_pixmap(dpi=150)
+                assert p_orig.samples == p_slice.samples, f"Pixel difference at global page {g_idx}"
+            doc_slice.close()
+        doc_orig.close()
+
+        # 3. Create mock sectional CTA parts with slice-local coordinates
+        cta_parts_dir = tmp_path / "cta_parts"
+        cta_parts_dir.mkdir(parents=True, exist_ok=True)
+        for idx, p in enumerate(parts_info, 1):
+            p_data = {
+                "course_id": "solow_model",
+                "part_id": p["part_id"],
+                "competencies": [
+                    {
+                        "id": f"C-{idx:02d}",
+                        "type": "concept",
+                        "name": f"Solow Concept Part {idx}",
+                        "description_latex": f"Description for part {idx}",
+                        "bloom": "Understand",
+                        "evidence": [{"doc": "solow1956.pdf", "page": 1}],
+                        "prerequisites": [f"C-{idx-1:02d}"] if idx > 1 else [],
+                        "distractors": [
+                            make_mock_distractor(f"D-C{idx:02d}-0{j}", doc="solow1956.pdf", page=1)
+                            for j in range(1, 4)
+                        ],
+                    }
+                ],
+            }
+            (cta_parts_dir / f"{p['part_id']}.json").write_text(
+                json.dumps(p_data, indent=2), encoding="utf-8"
+            )
+
+        # 4. Merge CTA parts and verify coordinate remapping and DAG
+        merged = merge_cta_parts(tmp_path)
+        assert len(merged["competencies"]) == 4
+
+        # Verify DAG validity
+        dag_errs = check_prerequisites_dag(merged["competencies"])
+        assert len(dag_errs) == 0
+
+        # Verify coordinate remapping: local page 1 of each slice was remapped
+        pages_remapped = [c["evidence"][0]["page"] for c in merged["competencies"]]
+        assert len(pages_remapped) == 4
+        # Each part's page 1 remapped to global page
+        assert pages_remapped[0] == 1
+        assert pages_remapped[1] == 8  # Part 2 local page 1 is context page 8
+
