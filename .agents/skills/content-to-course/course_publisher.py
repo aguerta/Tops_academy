@@ -22,6 +22,37 @@ from validator.models import ValidationResult
 logger = logging.getLogger(__name__)
 
 
+def sanitize_cli_arg(arg: Any) -> Any:
+    """Sanitize CLI argument by stripping outer and escaped quotes from Windows shells."""
+    if not isinstance(arg, str):
+        return arg
+    cleaned = arg.strip()
+    for _ in range(3):
+        if (cleaned.startswith('"') and cleaned.endswith('"')) or (
+            cleaned.startswith("'") and cleaned.endswith("'")
+        ):
+            if len(cleaned) <= 1:
+                break
+            cleaned = cleaned[1:-1].strip()
+        if cleaned.startswith(r'\"') and cleaned.endswith(r'\"'):
+            cleaned = cleaned[2:-2].strip()
+    cleaned = cleaned.replace(r'\"', '"')
+    if (cleaned.startswith('"') and cleaned.endswith('"')) or (
+        cleaned.startswith("'") and cleaned.endswith("'")
+    ):
+        cleaned = cleaned[1:-1].strip()
+    if len(cleaned) > 3 and cleaned.endswith("\\"):
+        cleaned = cleaned.rstrip("\\")
+    return cleaned
+
+
+def is_corrupted_unicode(text: Optional[str]) -> bool:
+    """Detect if string contains corrupted Unicode replacement character (\ufffd)."""
+    if not text:
+        return False
+    return "\ufffd" in text or "\uFFFD" in text
+
+
 @dataclass
 class PublicationResult:
     """Outcome of publishing a course to the platform."""
@@ -87,8 +118,40 @@ class CoursePublisher:
             parsed = json.loads(json.dumps(course_data))
 
         course_id = parsed.get("course_id", "course_demo")
-        course_title = parsed.get("course_title", "Curso Top's Academy")
+        course_title = parsed.get("course_title") or parsed.get("title") or "Curso Top's Academy"
         json_path = out_dir / f"{course_id}.json"
+
+        # Handle corrupted Unicode in course_title (\ufffd)
+        if is_corrupted_unicode(course_title):
+            logger.warning("Course title contains corrupted Unicode character ('\\ufffd'): %r.", course_title)
+            # 1. Recover from existing course in append mode if available
+            if append and json_path.is_file():
+                try:
+                    ex_data = json.loads(json_path.read_text(encoding="utf-8"))
+                    ex_title = ex_data.get("course_title") or ex_data.get("title")
+                    if ex_title and not is_corrupted_unicode(ex_title):
+                        logger.info("Recovered course title from existing course: %r", ex_title)
+                        course_title = ex_title
+                        parsed["course_title"] = ex_title
+                        parsed["title"] = ex_title
+                except Exception:
+                    pass
+            # 2. Check cta.json in work dir if available
+            if is_corrupted_unicode(course_title) and hasattr(self, "courses_dir"):
+                for cand_dir in (Path(out_dir) / course_id / "work", Path(out_dir) / course_id / "work_append", Path("courses") / course_id / "work"):
+                    work_cta = cand_dir / "cta.json"
+                    if work_cta.is_file():
+                        try:
+                            c_data = json.loads(work_cta.read_text(encoding="utf-8"))
+                            c_title = c_data.get("course_title") or c_data.get("title")
+                            if c_title and not is_corrupted_unicode(c_title):
+                                logger.info("Recovered course title from cta.json: %r", c_title)
+                                course_title = c_title
+                                parsed["course_title"] = c_title
+                                parsed["title"] = c_title
+                                break
+                        except Exception:
+                            pass
 
         # 1b. If append mode is active and existing file exists, merge content with ID collision remapping
         comp_id_remap: dict[str, str] = {}
@@ -164,6 +227,12 @@ class CoursePublisher:
                                 new_cid = f"{orig_cid}_{idx_s:02d}"
 
                             comp_id_remap[orig_cid] = new_cid
+                            logger.warning(
+                                "[WARN] FALLBACK REMAP: Competency ID collision detected during append for '%s' "
+                                "(incoming: '%s' vs existing: '%s'). Remapping to '%s' as fallback. "
+                                "Upstream stages should generate non-overlapping delta IDs via prepare --append.",
+                                orig_cid, inc_name, ex_name, new_cid
+                            )
                             c["id"] = new_cid
                             if "competency_id" in c:
                                 c["competency_id"] = new_cid
@@ -441,12 +510,15 @@ def main() -> None:
     parser.add_argument("--output-dir", "-o", default="courses", help="Courses destination directory")
     parser.add_argument("--strict", action="store_true", default=True, help="Enforce strict mode")
     parser.add_argument("--append", action="store_true", default=False, help="Append questions to existing course JSON")
-    args = parser.parse_args()
+    sanitized_argv = [sys.argv[0]] + [sanitize_cli_arg(a) for a in sys.argv[1:]]
+    args = parser.parse_args(sanitized_argv[1:])
 
-    input_p = Path(args.course_json)
+    clean_json_path = sanitize_cli_arg(args.course_json)
+    input_p = Path(clean_json_path)
     data = json.loads(input_p.read_text(encoding="utf-8"))
 
-    publisher = CoursePublisher(courses_dir=args.output_dir)
+    clean_out_dir = sanitize_cli_arg(args.output_dir)
+    publisher = CoursePublisher(courses_dir=clean_out_dir)
     result = publisher.publish(data, strict=args.strict, append=args.append)
 
     if result.success:

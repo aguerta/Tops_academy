@@ -117,6 +117,68 @@ def _format_socratic_step(text: str) -> str:
     return cleaned
 
 
+def normalize_double_braces(text: str, declared_vars: Optional[Set[str]] = None) -> str:
+    r"""Normalize non-variable double curly braces {{token}} -> {token} when token is not a declared variable.
+
+    Protects declared variables so that {var} can still be evaluated, while ensuring LaTeX braces like
+    {{0.5}}, {{\operatorname{arccot}}}, {{S_{xy}}} are normalized to {0.5}, {\operatorname{arccot}}, {S_{xy}}
+    before R-20 validation.
+    """
+    if not isinstance(text, str) or "{{" not in text:
+        return text
+
+    v_set = declared_vars or set()
+
+    def _normalize_once(s: str) -> str:
+        out = []
+        i = 0
+        n = len(s)
+        while i < n:
+            if s[i:i+2] == "{{":
+                j = i + 2
+                depth = 0
+                found = False
+                while j < n:
+                    if s[j:j+2] == "}}" and depth == 0:
+                        found = True
+                        break
+                    elif s[j] == "{":
+                        depth += 1
+                        j += 1
+                    elif s[j] == "}":
+                        if depth > 0:
+                            depth -= 1
+                            j += 1
+                        else:
+                            break
+                    else:
+                        j += 1
+
+                if found:
+                    token = s[i+2:j]
+                    var_name = token.strip().split(":")[0].strip()
+                    if v_set and var_name in v_set:
+                        out.append(s[i:j+2])
+                    else:
+                        out.append("{" + token + "}")
+                    i = j + 2
+                else:
+                    out.append(s[i])
+                    i += 1
+            else:
+                out.append(s[i])
+                i += 1
+        return "".join(out)
+
+    prev = None
+    curr = text
+    while prev != curr:
+        prev = curr
+        curr = _normalize_once(curr)
+    return curr
+
+
+
 class ShardDataLineLocator:
     """AST-based source line tracker for shard_XX_data.py files.
 
@@ -567,13 +629,17 @@ def compile_shard(
     target_p = Path(work_dir_or_path).resolve()
 
     # Determine if target_p is a shard data file or a work directory
-    if target_p.is_file() and target_p.name.endswith(".py"):
-        shard_data_path = target_p
-        shards_dir = shard_data_path.parent
-        work_p = shards_dir.parent if shards_dir.name == "shards" else shards_dir
+    if target_p.name.endswith(".py"):
         if not shard_id:
-            m_s = re.search(r"shard_(\d+)", shard_data_path.stem)
-            shard_id = f"shard_{m_s.group(1)}" if m_s else shard_data_path.stem.replace("_data", "")
+            m_s = re.search(r"shard_(\d+)", target_p.stem)
+            shard_id = f"shard_{m_s.group(1)}" if m_s else target_p.stem.replace("_data", "")
+        shards_dir = target_p.parent
+        work_p = shards_dir.parent if shards_dir.name == "shards" else shards_dir
+        if not target_p.is_file():
+            err_msg = f"ERROR: No existe el archivo de datos del shard: {target_p}"
+            print(err_msg, file=sys.stderr)
+            return False, [err_msg]
+        shard_data_path = target_p
     else:
         work_p = target_p
         shards_dir = work_p / "shards"
@@ -591,6 +657,40 @@ def compile_shard(
         return False, [err_msg]
 
     norm_shard_id = shard_id.lower().strip()
+
+    # Bounded compilation counter [COMPILE n/6]
+    att_dir = work_p / ".check_attempts"
+    att_dir.mkdir(parents=True, exist_ok=True)
+    compile_att_file = att_dir / f"compile_{norm_shard_id}.json"
+    compile_count = 0
+    if compile_att_file.is_file():
+        try:
+            compile_count = json.loads(compile_att_file.read_text(encoding="utf-8")).get("count", 0)
+        except Exception:
+            compile_count = 0
+
+    compile_count += 1
+    try:
+        tmp_f = compile_att_file.with_name(f".{compile_att_file.name}.tmp.{uuid.uuid4().hex[:8]}")
+        tmp_f.write_text(json.dumps({"count": compile_count}), encoding="utf-8")
+        os.replace(tmp_f, compile_att_file)
+    except Exception:
+        pass
+
+    print(f"[COMPILE {compile_count}/6] Compilando shard '{shard_id}'...")
+
+    def _fail(msg: str) -> Tuple[bool, List[str]]:
+        res_msg = msg
+        if compile_count >= 6:
+            terminal_stop = f"\n[-] [COMPILE {compile_count}/6] Límite de compilaciones alcanzado para shard '{shard_id}'. STOP, send_message the Director."
+            res_msg = res_msg + terminal_stop
+            print(terminal_stop, file=sys.stderr)
+        print(msg, file=sys.stderr)
+        return False, [res_msg]
+
+    if compile_count > 6:
+        return _fail(f"[-] [COMPILE {compile_count}/6] Límite de compilaciones alcanzado para shard '{shard_id}'. STOP, send_message the Director.")
+
 
     # 1. Verify pre_shard_manifest.json (Strict: ZERO Fallbacks)
     manifest_p = shards_dir / "pre_shard_manifest.json"
@@ -617,8 +717,7 @@ def compile_shard(
 
     if not shard_entry:
         err_msg = f"ERROR: Shard '{shard_id}' no encontrado en pre_shard_manifest.json."
-        print(err_msg, file=sys.stderr)
-        return False, [err_msg]
+        return _fail(err_msg)
 
     expected_cids: List[str] = shard_entry.get("competency_ids", [])
     if not expected_cids and "competencies" in shard_entry:
@@ -635,8 +734,7 @@ def compile_shard(
                 shard_data_path = candidate
             else:
                 err_msg = f"ERROR: No existe el archivo de datos del shard: {candidate}"
-                print(err_msg, file=sys.stderr)
-                return False, [err_msg]
+                return _fail(err_msg)
 
     # Pre-heal unescaped LaTeX prefixes and ASCII control characters in shard_XX_data.py before parsing and importing
     heal_shard_source_file(shard_data_path)
@@ -645,8 +743,7 @@ def compile_shard(
     locator = ShardDataLineLocator(shard_data_path)
     if locator.syntax_error:
         print(f"FAIL: Error sintáctico en {shard_data_path.name}:", file=sys.stderr)
-        print(locator.syntax_error, file=sys.stderr)
-        return False, [locator.syntax_error]
+        return _fail(locator.syntax_error)
 
     # 3. Load shard_XX_data.py module dynamically
     try:
@@ -659,14 +756,12 @@ def compile_shard(
     except Exception as e:
         tb = traceback.format_exc()
         err_msg = f"FAIL: Excepción al ejecutar {shard_data_path.name}:\n{tb}"
-        print(err_msg, file=sys.stderr)
-        return False, [err_msg]
+        return _fail(err_msg)
 
     raw_templates = getattr(mod, "TEMPLATES", None)
     if raw_templates is None or not isinstance(raw_templates, (list, tuple)):
         err_msg = f"FAIL: {shard_data_path.name} no define la lista 'TEMPLATES = [...]'."
-        print(err_msg, file=sys.stderr)
-        return False, [err_msg]
+        return _fail(err_msg)
     from check_templates import heal_control_chars_in_obj
     raw_templates = heal_control_chars_in_obj(raw_templates)
 
@@ -682,8 +777,7 @@ def compile_shard(
                 f"  Ubicación: Líneas {s_t}..{e_t} en {shard_data_path.name}\n"
                 f"{snip}"
             )
-            print(err_msg, file=sys.stderr)
-            return False, [err_msg]
+            return _fail(err_msg)
 
         # Check tuple format: Form B (pos 0 = tpl_id, pos 1 = cid) vs Form A (pos 0 = cid, pos 1 = qtype)
         if len(t) >= 3 and str(t[2]).lower().strip() in known_types:
@@ -706,8 +800,8 @@ def compile_shard(
         if unexpected_cids:
             err_parts.append(f"Competencias no asignadas a este shard: {', '.join(unexpected_cids)}")
         err_msg = f"FAIL: Paridad de competencias violada en {shard_data_path.name}: " + " | ".join(err_parts)
-        print(err_msg, file=sys.stderr)
-        return False, [err_msg]
+        return _fail(err_msg)
+
 
     from check_templates import auto_heal_template_data, check_templates_file_or_dir
 
@@ -855,8 +949,32 @@ def compile_shard(
                 hint3 = f"Verifique la consistencia lógica y matemática de la solución obtenida para {c_name} contrastándola con el comportamiento límite."
             hints = [hint1, hint2, hint3]
 
-        # Heal solution double-braces {{var}} -> {var}
-        healed_solution = re.sub(r"\{\{([A-Za-z0-9_]+)\}\}", r"{\1}", sol_raw)
+        # Determine declared vars from generator callable or ast
+        declared_vars: Set[str] = set()
+        if callable(gen_raw):
+            try:
+                import random
+                sample_res = gen_raw(random.Random(42))
+                if isinstance(sample_res, dict) and "vars" in sample_res and isinstance(sample_res["vars"], dict):
+                    declared_vars = set(str(k) for k in sample_res["vars"].keys())
+            except Exception:
+                pass
+        if not declared_vars and gen_code:
+            m_vars = re.search(r"['\"]vars['\"]\s*:\s*\{([^}]+)\}", gen_code)
+            if m_vars:
+                var_names = re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", m_vars.group(1))
+                declared_vars = set(var_names)
+
+        # Normalize non-variable double curly braces {{token}} -> {token} before R-20 validation
+        stem_es = normalize_double_braces(stem_es, declared_vars)
+        stem_variants = [normalize_double_braces(sv, declared_vars) for sv in stem_variants]
+        hints = [normalize_double_braces(h, declared_vars) for h in hints]
+        healed_solution = normalize_double_braces(sol_raw, declared_vars)
+        healed_solution = re.sub(
+            r"\{\{([A-Za-z0-9_]+)\}\}",
+            lambda m: f"{{{m.group(1)}}}" if m.group(1) not in declared_vars else m.group(0),
+            healed_solution,
+        )
 
         canonical_dict: Dict[str, Any] = {
             "template_id": tpl_id,
@@ -924,8 +1042,19 @@ def compile_shard(
         compact_report = render_compact_aggregated_errors(
             raw_errors, targets=compiled_paths, shard_py=shard_data_path, max_output_lines=28
         )
+        if compile_count >= 6:
+            terminal_stop = f"\n[-] [COMPILE {compile_count}/6] Límite de compilaciones alcanzado para shard '{shard_id}'. STOP, send_message the Director."
+            compact_report = compact_report + terminal_stop
+            print(terminal_stop, file=sys.stderr)
         print(f"\n[-] FAIL: {len(raw_errors)} errores detectados al compilar {shard_id}:\n{compact_report}", file=sys.stderr)
         return False, [compact_report]
+
+    # Clear compilation attempts on success (pass clears the halt)
+    if compile_att_file.is_file():
+        try:
+            compile_att_file.unlink()
+        except Exception:
+            pass
 
     print(f"[+] PASS: Shard '{shard_id}' compilado exitosamente ({len(compiled_paths)} plantillas, {seeds} semillas dry-run validadas).")
     return True, []

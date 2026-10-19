@@ -746,6 +746,152 @@ def auto_heal_template_file(
     return modified, fixes
 
 
+def _format_dry_failure(
+    competency_id: str = "UNKNOWN",
+    tpl_id: str = "UNKNOWN",
+    generate_py: str = "",
+    failing_seed: int = 100,
+    cross_check_py: Optional[str] = None,
+    shard_py: Optional[Union[str, Path]] = None,
+    exc: Optional[Exception] = None,
+    params: Optional[Dict[str, Any]] = None,
+    print_output: bool = True,
+    raw_error: Optional[str] = None,
+) -> str:
+    """Format and print TPL-DRY failure diagnostics with line-mapped traceback frames.
+
+    Reports:
+    - First failing seed
+    - Generator parameters for that seed
+    - type(exc).__name__: str(exc)
+    - Last 3 traceback frames mapped to shard_XX_data.py source lines
+    """
+    import inspect
+    import traceback
+    from engine.sandbox import build_sandbox_globals, _LazyNPRNG
+
+    extracted_params: Dict[str, Any] = dict(params) if params else {}
+
+    # If exc or params not provided, execute generate(rng) for failing_seed to capture live state
+    if (exc is None or not extracted_params) and generate_py:
+        try:
+            env = build_sandbox_globals()
+            import random
+            random.seed(failing_seed)
+            rng = random.Random(failing_seed)
+            rng.np = _LazyNPRNG(failing_seed)
+            compiled = compile(generate_py, "<generate_py>", "exec")
+            exec(compiled, env)
+            gen_fn = env.get("generate")
+            if gen_fn:
+                try:
+                    res = gen_fn(rng)
+                    if isinstance(res, dict) and "vars" in res and isinstance(res["vars"], dict):
+                        if not extracted_params:
+                            extracted_params = {k: v for k, v in res["vars"].items()}
+                    if cross_check_py:
+                        cc_env = build_sandbox_globals()
+                        cc_compiled = compile(cross_check_py, "<cross_check_py>", "exec")
+                        exec(cc_compiled, cc_env)
+                        ver_fn = cc_env.get("verify")
+                        if ver_fn:
+                            cc_res = ver_fn(res)
+                            if cc_res is False:
+                                raise AssertionError("cross_check verification returned False")
+                except Exception as run_e:
+                    if exc is None:
+                        exc = run_e
+                    if not extracted_params:
+                        tb = run_e.__traceback__
+                        while tb:
+                            f = tb.tb_frame
+                            if f.f_code.co_name == "generate":
+                                for k, v in f.f_locals.items():
+                                    if k not in ("rng", "__builtins__") and not callable(v) and not inspect.ismodule(v):
+                                        extracted_params[k] = v
+                                break
+                            tb = tb.tb_next
+        except Exception as comp_e:
+            if exc is None:
+                exc = comp_e
+
+    # Format exception name and message
+    if exc is not None:
+        exc_str = f"{type(exc).__name__}: {exc}"
+    elif raw_error:
+        exc_str = str(raw_error)
+    else:
+        exc_str = "Exception: Unknown error during dry-run execution"
+
+    # Extract traceback frames
+    tb_frames = []
+    if exc is not None and exc.__traceback__ is not None:
+        tb_frames = traceback.extract_tb(exc.__traceback__)
+
+    # Fallback if no traceback frames: create a frame for generate_py
+    if not tb_frames:
+        tb_frames = [traceback.FrameSummary("<sandbox>", 1, "generate", line="")]
+
+    last_frames = tb_frames[-3:] if len(tb_frames) >= 3 else tb_frames
+
+    # Map frames to shard_XX_data.py source lines if shard_py is available
+    shard_obj = Path(shard_py).resolve() if shard_py and Path(shard_py).is_file() else None
+    locator = None
+    if shard_obj and ShardDataLineLocator:
+        try:
+            locator = ShardDataLineLocator(shard_obj)
+        except Exception:
+            locator = None
+
+    frame_lines = []
+    for fr in last_frames:
+        fr_lineno = fr.lineno or 1
+        fr_name = fr.name
+        fr_line = fr.line or ""
+
+        mapped_file = shard_obj.name if shard_obj else fr.filename
+        mapped_lineno = fr_lineno
+        mapped_code = fr_line
+
+        if locator:
+            if fr_name in locator.functions:
+                fn_start, _ = locator.functions[fr_name]
+                mapped_lineno = fn_start + fr_lineno - 1
+            else:
+                t_info = locator.get_tuple_info(competency_id) or locator.get_tuple_info(tpl_id)
+                if t_info:
+                    gen_fn_name = t_info.get("gen_fn_name")
+                    if gen_fn_name and gen_fn_name in locator.functions:
+                        fn_start, _ = locator.functions[gen_fn_name]
+                        mapped_lineno = fn_start + fr_lineno - 1
+                    else:
+                        gen_elt = t_info.get("elements", {}).get("generator_code", {})
+                        gen_start = gen_elt.get("start_line", t_info.get("start_line", 1))
+                        mapped_lineno = gen_start + fr_lineno - 1
+            if 1 <= mapped_lineno <= len(locator.lines):
+                mapped_code = locator.lines[mapped_lineno - 1].strip()
+
+        frame_lines.append(
+            f"      File \"{mapped_file}\", line {mapped_lineno}, in {fr_name}\n        {mapped_code}"
+        )
+
+    shard_label = shard_obj.name if shard_obj else "shard_XX_data.py"
+    report_lines = [
+        f"[-] [TPL-DRY: FALLO EN EJECUCIÓN DRY-RUN]",
+        f"    Competencia: {competency_id} | Plantilla: {tpl_id}",
+        f"    Primer seed fallido: {failing_seed}",
+        f"    Parámetros: {extracted_params}",
+        f"    Excepción: {exc_str}",
+        f"    Traceback (últimos {len(frame_lines)} frames mapeados a {shard_label}):",
+    ]
+    report_lines.extend(frame_lines)
+
+    formatted_msg = "\n".join(report_lines)
+    if print_output:
+        print(formatted_msg, file=sys.stderr)
+    return formatted_msg
+
+
 def render_compact_aggregated_errors(
     errors: List[Union[str, DiagnosticError]],
     targets: Optional[List[Path]] = None,
@@ -1601,6 +1747,7 @@ def check_single_template(
     declared_distractor_ids: Set[str],
     cta_distractors_map: Optional[Dict[str, Dict[str, Any]]] = None,
     num_dry_run_seeds: int = 50,
+    shard_py: Optional[Union[str, Path]] = None,
 ) -> List[str]:
     """Validate a single template including AST, dry-run, invariants, and TPL rules."""
     errors = []
@@ -1759,12 +1906,23 @@ def check_single_template(
 
     failed_seeds = [r for r in batch_results if not r.get("success")]
     if failed_seeds:
-        first_err = failed_seeds[0].get("error", "Unknown error")
+        first_failed = failed_seeds[0]
+        first_seed = first_failed.get("seed", 100)
+        first_err = first_failed.get("error", "Unknown error")
         seed_items = [f"seed={r.get('seed')}" for r in failed_seeds]
+        dry_failure_report = _format_dry_failure(
+            competency_id=competency_id,
+            tpl_id=tpl_id,
+            generate_py=generate_py,
+            failing_seed=first_seed,
+            cross_check_py=cross_check_py,
+            shard_py=shard_py,
+            raw_error=first_err,
+        )
         errors.append(format_diagnostic_error(
             "TPL-DRY: FALLO EN EJECUCIÓN DRY-RUN", competency_id, tpl_id, seed_items, "generate_py / cross_check_py",
-            f"Error en seed {failed_seeds[0].get('seed')}: {first_err}",
-            f"La ejecución en sandbox falló en {len(failed_seeds)}/{num_dry_run_seeds} semillas evaluadas.",
+            f"Error en seed {first_seed}: {first_err}",
+            f"La ejecución en sandbox falló en {len(failed_seeds)}/{num_dry_run_seeds} semillas evaluadas.\n{dry_failure_report}",
             [
                 "Revisar la excepción en generate_py (división por cero, clave faltante, error de tipos, etc.).",
                 "Probar localmente la función generate_py con la semilla que causó el fallo.",
@@ -2077,6 +2235,7 @@ def _validate_single_template_file(
     cta_distractors_by_comp: Dict[str, Set[str]],
     cta_distractors_map: Dict[str, Dict[str, Any]],
     num_dry_run_seeds: int,
+    shard_py: Optional[Union[str, Path]] = None,
 ) -> Tuple[List[str], Optional[str], Set[str], List[Dict[str, Any]]]:
     """Validate a single template file and return (errors, comp_id, referenced_distractor_ids, templates_list)."""
     file_errors = []
@@ -2122,6 +2281,7 @@ def _validate_single_template_file(
             declared_distractor_ids=declared_dids,
             cta_distractors_map=cta_distractors_map,
             num_dry_run_seeds=num_dry_run_seeds,
+            shard_py=shard_py,
         )
         file_errors.extend(single_errs)
 
@@ -2278,6 +2438,7 @@ def check_templates_file_or_dir(
                     cta_distractors_by_comp,
                     cta_distractors_map,
                     num_dry_run_seeds,
+                    shard_py,
                 ): tf
                 for tf in template_files
             }
@@ -2296,6 +2457,7 @@ def check_templates_file_or_dir(
                 cta_distractors_by_comp,
                 cta_distractors_map,
                 num_dry_run_seeds,
+                shard_py,
             )
             errors.extend(file_errs)
             if comp_id:
@@ -2461,7 +2623,7 @@ def check_templates_file_or_dir(
                         f"    CAUSA: Se han detectado 3 ejecuciones consecutivas de check_templates.py con exactamente el mismo número ({len(errors)}) y tipo de errores sin ningún progreso.\n"
                         f"    ACTION REQUIRED: Detener de inmediato las llamadas a herramientas y responder:\n"
                         f"    BLOCKED: CONTRACT_ERROR - Circuit breaker activado tras 3 fallos consecutivos idénticos.\n"
-                        f"    PROHIBIDO reintentar modificaciones a ciegas sin consultar al orquestador."
+                        f"    STOP, send_message the Director."
                     )
                     errors.append(cb_msg)
             else:
@@ -2477,30 +2639,71 @@ def check_templates_file_or_dir(
                     except Exception:
                         pass
 
-            # Per-competency budget halt tracking with shard isolation
+            # Per-competency budget halt tracking with shard isolation and stateful SHA-256 circuit breaker
             for cid in processed_comp_ids:
                 att_fname = f"{shard_id}_{cid}.json" if shard_id else f"{cid}.json"
                 f_att = att_path / att_fname
-                cur_att = 0
+                att_data = {"attempts": 0, "last_hash": None, "halted": False}
                 if f_att.is_file():
                     try:
-                        cur_att = json.loads(f_att.read_text(encoding="utf-8")).get("attempts", 0)
+                        loaded = json.loads(f_att.read_text(encoding="utf-8"))
+                        if isinstance(loaded, dict):
+                            att_data["attempts"] = loaded.get("attempts", 0)
+                            att_data["last_hash"] = loaded.get("last_hash")
+                            att_data["halted"] = bool(loaded.get("halted", False))
                     except Exception:
                         pass
-                if not is_clean:
-                    cur_att += 1
-                    _safe_write_text(f_att, json.dumps({"attempts": cur_att}))
-                    if cur_att >= 4:
-                        errors.append(
-                            f"[!] BUDGET HALT on competency '{cid}': Exceeded {cur_att} validation cycles. "
-                            f"Action required: Cease iteration and report: BLOCKED: {cid} - validation failure limit reached."
-                        )
+
+                # Compute SHA-256 of competency source
+                comp_tpls = templates_by_comp.get(cid, [])
+                comp_source_text = ""
+                if comp_tpls:
+                    comp_source_text = json.dumps(comp_tpls, sort_keys=True, ensure_ascii=False)
                 else:
+                    for tf in template_files:
+                        if tf.stem == cid or f"{cid}.json" in tf.name:
+                            if tf.is_file():
+                                comp_source_text = tf.read_text(encoding="utf-8")
+                            break
+                if not comp_source_text:
+                    comp_source_text = cid
+
+                comp_hash = hashlib.sha256(comp_source_text.encode("utf-8")).hexdigest()
+                last_hash = att_data.get("last_hash")
+                was_halted = att_data.get("halted", False)
+                hash_changed = (last_hash is not None and last_hash != comp_hash)
+
+                if hash_changed:
+                    # Changed hash is re-evaluated; clear previous halt and reset attempts
+                    att_data["attempts"] = 0
+                    att_data["halted"] = False
+                    was_halted = False
+
+                if is_clean:
+                    # Pass clears the halt
                     if f_att.is_file():
                         try:
                             f_att.unlink()
                         except Exception:
                             pass
+                else:
+                    if was_halted and not hash_changed:
+                        terminal_msg = (
+                            f"[!] BUDGET HALT on competency '{cid}': Repeat failure with unchanged SHA-256 source hash ({comp_hash[:10]}). "
+                            f"STOP, send_message the Director."
+                        )
+                        errors.append(terminal_msg)
+                    else:
+                        att_data["attempts"] = att_data.get("attempts", 0) + 1
+                        att_data["last_hash"] = comp_hash
+                        if att_data["attempts"] >= 3:
+                            att_data["halted"] = True
+                            terminal_msg = (
+                                f"[!] BUDGET HALT on competency '{cid}': Exceeded {att_data['attempts']} validation cycles with identical source hash ({comp_hash[:10]}). "
+                                f"STOP, send_message the Director."
+                            )
+                            errors.append(terminal_msg)
+                        _safe_write_text(f_att, json.dumps(att_data, indent=2, ensure_ascii=False))
         except Exception:
             pass
 

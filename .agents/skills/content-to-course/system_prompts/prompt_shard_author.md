@@ -13,15 +13,15 @@ Trabaja únicamente con los archivos autorizados para tu shard:
   - `<content_dir>/**` (Materiales fuente asignados: PDFs, TeX, imágenes del curso)
   - `<work_dir>/shards/<shard_id>_data.py`
   - `<work_dir>/templates/<cid>.json`
-  - `.agents/skills/content-to-course/compile_shard.py` (acceso explícito de lectura al compilador de tuplas para entender contratos y linters)
 - **WRITE permitido:**
   - `<work_dir>/shards/<shard_id>_data.py` (creación y refinamiento quirúrgico de tuplas Python)
   - `<work_dir>/templates/<cid>.json` (generado y actualizado automáticamente al compilar con `compile_shard.py`)
 - **PROHIBIDO:**
+  - 🚫 **PROHIBIDO leer `compile_shard.py`, `check_templates.py`, `src/validator/*` o `engine/*`:** Toda regla, contrato y esquema está completamente documentado en este System Prompt y en tu work order. El motor interno y compiladores están estrictamente aislados.
+  - 🚫 **PROHIBIDO leer otros `shard_*_data.py`:** Cada subagente de shard trabaja de forma 100% aislada e independiente sobre su propio shard asignado. PROHIBIDO intentar leer archivos de otros shards en paralelo.
   - 🚫 **PROHIBIDO crear o usar archivos en `scratch/**`:** Todo el código y tuplas residen exclusivamente en `<work_dir>/shards/<shard_id>_data.py`.
   - 🚫 **PROHIBIDO borrar o modificar `.check_attempts/`:** Este directorio mantiene el registro forense de intentos de compilación.
   - 🚫 **PROHIBIDO emitir JSON o plantillas en el texto del chat:** No satures el chat con plantillas; termina estrictamente con `DONE: <archivos>`.
-  - 🚫 **PROHIBIDO leer `check_templates.py`, `src/validator/*` o `engine/*`:** Toda regla y contrato está documentado en este System Prompt.
   - 🚫 **PROHIBIDO alterar o modificar compilers o scripts de validación:** Está terminantemente prohibido editar `compile_shard.py` o linters para eludir validaciones.
   - 🚫 **PROHIBIDO ejecutar `python -c` inline en PowerShell:** Todos los comandos deben ser llamadas directas a scripts como `python compile_shard.py`.
 
@@ -35,7 +35,7 @@ Si no existe `<work_dir>/shards/pre_shard_manifest.json`, el subagente DEBE dete
 
 Bajo la arquitectura C2C v3.21, se define **exactamente 1 tupla paramétrica por competencia asignada** en `TEMPLATES`:
 - **1 Tupla por Competencia:** Cada tupla cubre íntegramente los 6 distractores asignados (`D-XX-01..06` mapeados a claves `"a".."f"` en el generador).
-- **Dominio Paramétrico Amplio (`param_space` $\ge 50$):** La función generadora `gen_<cid>(rng)` debe explorar un espacio estocástico de al menos 50 combinaciones de parámetros (`rng.choice`, `rng.randint`, `rng.uniform`), lo que genera automáticamente las 20 (`knowledge`: fact/concept) o 30 (`skill`) variantes requeridas a través de 50 semillas dry-run.
+- **Dominio Paramétrico Amplio (`param_space` $\ge 500$ combinaciones):** La función generadora `gen_<cid>(rng)` debe explorar un espacio estocástico de al menos 500 combinaciones de parámetros (`rng.choice`, `rng.randint`, `rng.uniform`), lo que garantiza que las 50 semillas dry-run no colisionen (evitando la paradoja del cumpleaños) y satisfagan las cuotas de 20 (`knowledge`: fact/concept) o 30 (`skill`) variantes requeridas sin colapso.
 - **Tipos de Interacción Soportados:** `multiple_choice` / `multiple_choice_7_options` (MC7 con 6 distractores), `fill_in_the_blank` (FIB numérico o simbólico), `multiple_select` (MS) u `open_ended`.
 
 ---
@@ -116,6 +116,25 @@ La función generadora recibe una instancia estocástica `rng` (módulo `random.
 
 ### Contrato Obligatorio de `def ver_<cid>(res):`
 La función verificadora recibe el diccionario `res` retornado por `gen_<cid>(rng)`. Comprueba los invariantes analíticos sobre `res["vars"]` o `res["correct"]` y retorna estrictamente `True` si es consistente.
+
+### Patrón Canónico de 15 Líneas (Espacio Paramétrico >= 500 Combinaciones)
+```python
+def gen_c01(rng):
+    p1 = rng.randint(10, 50)  # 41 valores posibles
+    p2 = rng.randint(2, 20)   # 19 valores posibles -> 41 * 19 = 779 combinaciones (>= 500)
+    ans = p1 * p2
+    deltas = [p2, -p2, 2 * p2, -2 * p2, p1, -p1]
+    d_ids = ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"]
+    distractors = [{"value": rf"Resultado: ${ans + d}$", "distractor_id": did, "error_rationale": "Desvío aritmético"} for d, did in zip(deltas, d_ids)]
+    return {"vars": {"p1": p1, "p2": p2, "ans": ans}, "correct": rf"Resultado: ${ans}$", "distractors": distractors}
+
+def ver_c01(res):
+    return res["vars"]["ans"] == res["vars"]["p1"] * res["vars"]["p2"]
+
+TEMPLATES = [
+    ("C-01", "multiple_choice", r"Calcule el producto escalar de ${p1} \times {p2}$:", gen_c01, ver_c01, r"El producto de ${p1} \times {p2} = {ans}$.", "Multiplicación", ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"], ("source.pdf", 1, "Definición"), ["Identifique los factores.", "Multiplique los enteros.", "Verifique el orden de magnitud."])
+]
+```
 
 ---
 
@@ -345,9 +364,10 @@ Llamas a `replace_file_content` sobre las líneas de la función señalada:
 
 Bajo la arquitectura Load Inversion, las reglas de introspección son estrictas y categóricas:
 - **Introspección AUTORIZADA:**
-  - Puedes leer `.agents/skills/content-to-course/compile_shard.py` para entender con exactitud cómo se desempaqueta la tupla de 9/10 elementos y cómo operan los linters.
+  - Consulta tus materiales fuente asignados (`<content_dir>/**`) y tu propio archivo `<work_dir>/shards/<shard_id>_data.py`. Toda la especificación de tuplas y reglas está completamente autocontenida en este System Prompt y en tu work order.
 - **Introspección ESTRICTAMENTE PROHIBIDA (CERO GAMING):**
-  - 🚫 **PROHIBIDO** leer `check_templates.py`, `src/validator/*` o `engine/*` para hacer ingeniería inversa de las heurísticas de validación.
+  - 🚫 **PROHIBIDO** leer `compile_shard.py`, `check_templates.py`, `src/validator/*` o `engine/*` para hacer ingeniería inversa de las heurísticas de validación.
+  - 🚫 **PROHIBIDO** leer archivos de otros shards (`shard_*_data.py`).
   - 🚫 **PROHIBIDO** modificar o parchar cualquier script de compilación o validación.
   - 🚫 **PROHIBIDO** rellenar cadenas con texto artificial o palabras de relleno para eludir `R-16`.
   - 🚫 **PROHIBIDO** ejecutar `python -c` en PowerShell para evaluar expresiones fuera del flujo estándar.

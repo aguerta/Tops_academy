@@ -64,6 +64,7 @@ from engine.invariants import check_instance_invariants
 from ingest import ingest_course
 from judge import compare_judge_responses, generate_judge_batch
 from plan_shards import plan_shards
+from prepare import is_corrupted_unicode, prepare_course, sanitize_cli_arg, sanitize_path
 from repair_loop import RepairLoop
 from telemetry_collector import record_stage_telemetry
 from validator.core import validate_course_content
@@ -173,10 +174,14 @@ class PipelineRunner:
 
         # Determine work directory first (isolate --append into work_append/)
         work_leaf = "work_append" if self.append else "work"
-        if work_dir:
-            self.work_dir = Path(work_dir)
-        elif course_id:
-            self.work_dir = Path("courses") / sanitize_slug(course_id) / work_leaf
+        clean_work_dir = sanitize_cli_arg(work_dir) if work_dir else None
+        clean_course_id = sanitize_cli_arg(course_id) if course_id else None
+        clean_title = sanitize_cli_arg(title) if title else None
+
+        if clean_work_dir:
+            self.work_dir = Path(clean_work_dir)
+        elif clean_course_id:
+            self.work_dir = Path("courses") / sanitize_slug(clean_course_id) / work_leaf
         elif self.raw_pdf:
             first_path = Path(self.raw_pdf[0] if isinstance(self.raw_pdf, (list, tuple)) else self.raw_pdf)
             self.work_dir = Path("courses") / sanitize_slug(first_path.stem) / work_leaf
@@ -186,8 +191,8 @@ class PipelineRunner:
         self.work_dir.mkdir(parents=True, exist_ok=True)
 
         # Determine course ID
-        if course_id:
-            self.course_id = sanitize_slug(course_id)
+        if clean_course_id:
+            self.course_id = sanitize_slug(clean_course_id)
         elif (self.work_dir / "cta.json").is_file():
             try:
                 c_data = json.loads((self.work_dir / "cta.json").read_text(encoding="utf-8"))
@@ -200,17 +205,39 @@ class PipelineRunner:
         else:
             self.course_id = "custom_course"
 
-        # Determine course title
-        if title:
-            self.title = title
-        elif (self.work_dir / "cta.json").is_file():
-            try:
-                c_data = json.loads((self.work_dir / "cta.json").read_text(encoding="utf-8"))
-                self.title = c_data.get("title", self.course_id.replace("_", " ").title())
-            except Exception:
-                self.title = self.course_id.replace("_", " ").title()
+        # Determine course title with Windows Unicode fallback
+        if clean_title and not is_corrupted_unicode(clean_title):
+            self.title = clean_title
         else:
-            self.title = self.course_id.replace("_", " ").title()
+            # Fallback to cta.json, pre_cta_manifest.json, or courses/<id>.json if title is missing or contains \ufffd
+            recovered_title: Optional[str] = None
+            for cand_path in (
+                self.work_dir / "cta.json",
+                self.work_dir / "pre_cta_manifest.json",
+                self.output_dir / f"{self.course_id}.json",
+                Path("courses") / f"{self.course_id}.json",
+            ):
+                if cand_path.is_file():
+                    try:
+                        c_data = json.loads(cand_path.read_text(encoding="utf-8"))
+                        t_val = c_data.get("course_title") or c_data.get("title")
+                        if t_val and not is_corrupted_unicode(t_val):
+                            recovered_title = t_val
+                            break
+                    except Exception:
+                        pass
+            if recovered_title:
+                if clean_title and is_corrupted_unicode(clean_title):
+                    logger.warning(
+                        "CLI --title contains corrupted character ('\\ufffd'): %r. "
+                        "Recovered title from course metadata: %r",
+                        clean_title, recovered_title
+                    )
+                self.title = recovered_title
+            elif clean_title:
+                self.title = clean_title
+            else:
+                self.title = self.course_id.replace("_", " ").title()
 
     # -------------------------------------------------------------------------
     # STAGE 0: Prepare (replaces Ingest)
@@ -219,7 +246,7 @@ class PipelineRunner:
         """Stage 0: Multiformat pre-processing, Beamer cleanup, density scoring & manifest."""
         t0 = time.time()
         print("\n" + "=" * 70)
-        print("[STAGE 0: PREPARE] Multiformat extraction, density scoring & corpus assembly")
+        print("[STAGE 0: PREPARE] Stage 0: Lossless source partitioning & pre_cta_manifest generation")
         print("=" * 70)
 
         if not self.raw_pdf:
@@ -239,18 +266,22 @@ class PipelineRunner:
         sources: List[Path] = []
         raw_items = self.raw_pdf if isinstance(self.raw_pdf, (list, tuple)) else [self.raw_pdf]
         for item in raw_items:
-            p = Path(item)
-            if not p.exists():
-                raise FileNotFoundError(f"Input path does not exist: {p.resolve()}")
+            p = sanitize_path(item)
+            if not p or not p.exists():
+                raise FileNotFoundError(f"Input path does not exist: {p.resolve() if p else item}")
             sources.append(p)
 
         input_target = sources[0] if len(sources) == 1 else sources[0].parent
-        prep_res = ingest_course(
-            input_target,
-            self.work_dir,
+        prep_res = prepare_course(
+            input_path=input_target,
+            work_dir=self.work_dir,
             course_id=self.course_id,
+            courses_dir=self.output_dir,
+            append=self.append,
             cta_mode=self.cta_mode,
+            granularity=self.granularity,
             order_override=self.order,
+            title=self.title,
         )
 
         # Ensure work/pre_cta_manifest.json exists (zero fallbacks)
@@ -268,7 +299,6 @@ class PipelineRunner:
         total_items = prep_res.get("total_pages", prep_res.get("manifest", {}).get("total_items", prep_res.get("total_files", 0)))
         print(f"  [+] Ingest completed with {total_items} items.")
         print(f"  [+] Manifest generated at: {pre_cta_file.resolve()}")
-        print(f"  [+] Corpus file: {prep_res.get('corpus_path', self.work_dir / 'corpus.md')}")
 
         # Display resolved document order if order.json exists
         order_file = self.work_dir / "order.json"
@@ -848,9 +878,25 @@ class PipelineRunner:
         course_data = json.loads(source_file.read_text(encoding="utf-8"))
         if self.course_id and self.course_id != "custom_course":
             course_data["course_id"] = self.course_id
-        if self.title:
+        if self.title and not is_corrupted_unicode(self.title):
             course_data["course_title"] = self.title
             course_data["title"] = self.title
+        elif is_corrupted_unicode(self.title):
+            clean_title = course_data.get("course_title") or course_data.get("title")
+            if is_corrupted_unicode(clean_title) and (self.work_dir / "cta.json").is_file():
+                try:
+                    c_data = json.loads((self.work_dir / "cta.json").read_text(encoding="utf-8"))
+                    clean_title = c_data.get("course_title") or c_data.get("title")
+                except Exception:
+                    pass
+            if clean_title and not is_corrupted_unicode(clean_title):
+                logger.warning(
+                    "Publish --title contains corrupted character ('\\ufffd'): %r. "
+                    "Falling back to clean title: %r",
+                    self.title, clean_title
+                )
+                course_data["course_title"] = clean_title
+                course_data["title"] = clean_title
 
         cta_md: Optional[str] = None
         cta_md_file = self.work_dir / "cta.md"
@@ -1253,17 +1299,24 @@ def main() -> None:
         help="Bypass independent blind judge report verification on publish stage.",
     )
 
-    args = parser.parse_args()
+    sanitized_argv = [sys.argv[0]] + [sanitize_cli_arg(a) for a in sys.argv[1:]]
+    args = parser.parse_args(sanitized_argv[1:])
 
-    pdf_arg = args.pdf[0] if (args.pdf and len(args.pdf) == 1) else args.pdf
+    pdf_arg = args.pdf
+    if args.pdf:
+        if len(args.pdf) == 1:
+            pdf_arg = sanitize_cli_arg(args.pdf[0])
+        else:
+            pdf_arg = [sanitize_cli_arg(p) for p in args.pdf]
+
     order_arg = args.order[0] if (args.order and len(args.order) == 1) else args.order
 
     runner = PipelineRunner(
         pdf=pdf_arg,
-        course_id=args.course_id,
-        title=args.title,
-        work_dir=args.work_dir,
-        output_dir=args.output_dir,
+        course_id=sanitize_cli_arg(args.course_id),
+        title=sanitize_cli_arg(args.title),
+        work_dir=sanitize_cli_arg(args.work_dir),
+        output_dir=sanitize_cli_arg(args.output_dir),
         review_cta=args.review_cta,
         strict=args.strict,
         append=args.append,

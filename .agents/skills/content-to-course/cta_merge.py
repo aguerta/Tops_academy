@@ -85,41 +85,23 @@ def auto_balance_math_delimiters(text: str) -> str:
     masked = re.sub(r"(?<!\\)\$\$", "__DISPLAY_MATH__", text)
     unescaped_dollars = [m.start() for m in re.finditer(r"(?<!\\)\$", masked)]
     if len(unescaped_dollars) % 2 == 1:
-        # Only auto-close if curly braces and \left / \right sizing delimiters are balanced
         open_braces = len(re.findall(r"(?<!\\)\{", text))
         close_braces = len(re.findall(r"(?<!\\)\}", text))
-        left_count = len(re.findall(r"\\left(?![a-zA-Z])", text))
-        right_count = len(re.findall(r"\\right(?![a-zA-Z])", text))
-        if open_braces == close_braces and left_count == right_count:
-            last_dollar = unescaped_dollars[-1]
-            prefix = text[:last_dollar]
+        if open_braces != close_braces:
+            return text
 
-            unmatched_open_parens = 0
-            for ch in prefix:
-                if ch == "(":
-                    unmatched_open_parens += 1
-                elif ch == ")" and unmatched_open_parens > 0:
-                    unmatched_open_parens -= 1
+        stripped = text.rstrip()
+        trailing_whitespace = text[len(stripped):]
 
-            unmatched_open_brackets = 0
-            for ch in prefix:
-                if ch == "[":
-                    unmatched_open_brackets += 1
-                elif ch == "]" and unmatched_open_brackets > 0:
-                    unmatched_open_brackets -= 1
+        compound_suffixes = (").", "),", ");", "):", ")?", '?"', '!"')
+        single_suffixes = (".", ",", ";", ":")
 
-            stripped = text.rstrip()
-            trailing_whitespace = text[len(stripped):]
-
-            compound_suffixes = (").", "),", ");", "):", ")?", '?"', '!"')
-            single_suffixes = (".", ",", ";", ":")
-
-            if stripped.endswith(compound_suffixes):
-                text = stripped[:-2].rstrip() + "$" + stripped[-2:] + trailing_whitespace
-            elif stripped.endswith(single_suffixes):
-                text = stripped[:-1].rstrip() + "$" + stripped[-1] + trailing_whitespace
-            else:
-                text = stripped + "$" + trailing_whitespace
+        if stripped.endswith(compound_suffixes):
+            text = stripped[:-2].rstrip() + "$" + stripped[-2:] + trailing_whitespace
+        elif stripped.endswith(single_suffixes):
+            text = stripped[:-1].rstrip() + "$" + stripped[-1] + trailing_whitespace
+        else:
+            text = stripped + "$" + trailing_whitespace
 
     return text
 
@@ -130,6 +112,13 @@ def normalize_orphan_math(text: str) -> str:
         return text
 
     text = text.replace("\r\n", "\n")
+
+    # 0a. Normalize double curly braces {{x}} -> {x}
+    text = re.sub(r"\{\{([a-zA-Z0-9_+\-*./^\\]+)\}\}", r"{\1}", text)
+
+    # 0b. Single-line display math $$ -> $
+    if "\n" not in text and "$$" in text:
+        text = re.sub(r"(?<!\\)\$\$([^\n]+?)(?<!\\)\$\$", r"$\1$", text)
 
     # Heal control-character collisions
     text = re.sub(r"\x07(?:a)?(lpha|pprox|ngle|lert|rrow|symp|cute)", r"\\a\1", text)
@@ -427,7 +416,69 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         else:
             comps = []
 
+        # Check for local slice page_map to remap local slice pages (1..n) to global document coordinates
+        part_manifest_candidates = [
+            work_path / "parts" / f"part_{sp_idx+1:02d}" / f"part_manifest_{sp_idx+1:02d}.json",
+            work_path / "parts" / f"part_{sp_idx+1:02d}" / "part_manifest.json",
+            work_path / "parts" / f"part_manifest_{sp_idx+1:02d}.json",
+            work_path / "parts" / f"{stem}_manifest.json",
+            work_path / "parts" / f"part_{sp_idx+1:02d}" / "manifest.json",
+            work_path / "parts" / stem / "manifest.json",
+            parts_dir / f"part_manifest_{sp_idx+1:02d}.json",
+            parts_dir / f"{stem}_manifest.json",
+        ]
+        page_map: Dict[str, Any] = sp_info.get("page_map") or sp_info.get("page_mapping", {}) if sp_info else {}
+        if not page_map:
+            for pm_cand in part_manifest_candidates:
+                if pm_cand.is_file():
+                    try:
+                        pm_data = json.loads(pm_cand.read_text(encoding="utf-8"))
+                        page_map = pm_data.get("page_map") or pm_data.get("page_mapping", {})
+                        if page_map:
+                            break
+                    except Exception:
+                        pass
+
         for orig_idx, c in enumerate(comps):
+            # Remap local slice page numbers to global document coordinates if page_map is present
+            if page_map:
+                for ev in c.get("evidence", []):
+                    loc_p_str = str(ev.get("page", "")).strip()
+                    if loc_p_str in page_map:
+                        mapped = page_map[loc_p_str]
+                        if isinstance(mapped, dict):
+                            ev["doc"] = mapped.get("doc", ev.get("doc"))
+                            ev["page"] = mapped.get("doc_page", mapped.get("page", ev.get("page")))
+                        elif isinstance(mapped, (int, str)):
+                            try:
+                                ev["page"] = int(mapped)
+                            except ValueError:
+                                pass
+
+                for d in c.get("distractors", []):
+                    d_ev = d.get("evidence")
+                    if isinstance(d_ev, dict):
+                        d_loc_p_str = str(d_ev.get("page", "")).strip()
+                        if d_loc_p_str in page_map:
+                            mapped = page_map[d_loc_p_str]
+                            if isinstance(mapped, dict):
+                                d_ev["doc"] = mapped.get("doc", d_ev.get("doc"))
+                                d_ev["page"] = mapped.get("doc_page", mapped.get("page", d_ev.get("page")))
+                            elif isinstance(mapped, (int, str)):
+                                try:
+                                    d_ev["page"] = int(mapped)
+                                except ValueError:
+                                    pass
+
+                if c.get("evidence"):
+                    first_ev = c["evidence"][0]
+                    global_p = first_ev.get("page")
+                    if global_p is not None:
+                        c["unit_index"] = global_p
+                        sess = c.get("session")
+                        if isinstance(sess, str):
+                            c["session"] = re.sub(r"^Unidad\s+\d+:", f"Unidad {global_p}:", sess)
+
             ev_list = c.get("evidence", [])
             ev_doc = str(ev_list[0].get("doc", "")).strip().lower() if ev_list else ""
             f_idx = doc_to_file_idx.get(ev_doc, doc_to_file_idx.get(Path(ev_doc).stem.lower(), def_file_idx))

@@ -7,7 +7,7 @@ You are the Lead Curriculum Engineer and Cognitive Task Analysis (CTA) Architect
 ## 0. SCOPE-LOCK (OBLIGATORIO)
 
 Trabaja únicamente con los archivos listados para tu tarea asignada.
-- **READ permitido:** `work/corpus.md` o archivos transcritos asignados en `pages/`.
+- **READ permitido:** Archivos fuente originales (`.pdf`) o particiones asignadas en `work/pre_cta_manifest.json`.
 - **WRITE permitido:** `work/cta.json`, `work/generate_cta.py`.
 - **PROHIBIDO:** No explores directorios ni leas código fuente del motor ni `SKILL.md`. Si te falta información, responde `BLOCKED: <motivo>` en lugar de buscarla.
 

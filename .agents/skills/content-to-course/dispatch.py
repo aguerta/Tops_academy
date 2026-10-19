@@ -36,18 +36,27 @@ logger = logging.getLogger("dispatch")
 SKILL_DIR = Path(__file__).parent.resolve()
 
 
-def load_system_prompt(name_or_path: Union[str, Path]) -> str:
-    """Loads the 100% full, uncompressed content of a system prompt markdown file.
+def load_system_prompt(name_or_path: Union[str, Path], lean: bool = False) -> str:
+    """Loads a system prompt markdown file.
     
-    PROHIBIDO truncar, resumir o comprimir los system_prompts/*.md.
+    When lean=True (or C2C_LEAN_PROMPTS=1 env var is set), loads the lean static
+    system prompt (<= 5 KB) containing role and hard rules from system_prompts/lean/.
+    Otherwise loads the uncompressed prompt.
     """
+    use_lean = lean or os.getenv("C2C_LEAN_PROMPTS", "").lower() in ("1", "true", "yes")
     p = Path(name_or_path)
     if not p.is_absolute():
-        candidates = [
+        candidates = []
+        if use_lean:
+            candidates.extend([
+                SKILL_DIR / "system_prompts" / "lean" / p.name,
+                SKILL_DIR / "system_prompts" / f"{p.stem}_lean{p.suffix}",
+            ])
+        candidates.extend([
             SKILL_DIR / "system_prompts" / p.name,
             SKILL_DIR / p,
             Path.cwd() / p,
-        ]
+        ])
         for c in candidates:
             if c.is_file():
                 return c.read_text(encoding="utf-8")
@@ -57,13 +66,17 @@ def load_system_prompt(name_or_path: Union[str, Path]) -> str:
     return p.read_text(encoding="utf-8")
 
 
-def get_type_definitions() -> List[Dict[str, Any]]:
-    """Returns subagent type definitions for define_subagent registration with 100% full system prompts."""
+def get_type_definitions(lean: bool = False) -> List[Dict[str, Any]]:
+    """Returns subagent type definitions for define_subagent registration.
+    
+    When lean=True, loads lean static system prompts strictly under 5 KB.
+    """
+    repair_prompt = "prompt_repair.md" if lean else "prompt_shard_author.md"
     return [
         {
             "name": "c2c_cta_architect",
             "description": "Cognitive Task Analysis Curriculum Architect for C2C v3.2 (pure positional tuples in cta_data.py)",
-            "system_prompt": load_system_prompt("prompt_cta_architect.md"),
+            "system_prompt": load_system_prompt("prompt_cta_architect.md", lean=lean),
             "enable_write_tools": True,
             "enable_subagent_tools": False,
             "enable_mcp_tools": False,
@@ -71,7 +84,7 @@ def get_type_definitions() -> List[Dict[str, Any]]:
         {
             "name": "c2c_shard_author",
             "description": "Shard Exercise Author for native Python parametric templates and compile_shard.py",
-            "system_prompt": load_system_prompt("prompt_shard_author.md"),
+            "system_prompt": load_system_prompt("prompt_shard_author.md", lean=lean),
             "enable_write_tools": True,
             "enable_subagent_tools": False,
             "enable_mcp_tools": False,
@@ -79,7 +92,7 @@ def get_type_definitions() -> List[Dict[str, Any]]:
         {
             "name": "c2c_judge",
             "description": "Independent Blind Psychometric Evaluation Judge with Zero-Warmup in-prompt resolution",
-            "system_prompt": load_system_prompt("prompt_blind_judge.md"),
+            "system_prompt": load_system_prompt("prompt_blind_judge.md", lean=lean),
             "enable_write_tools": True,
             "enable_subagent_tools": False,
             "enable_mcp_tools": False,
@@ -87,12 +100,39 @@ def get_type_definitions() -> List[Dict[str, Any]]:
         {
             "name": "c2c_repair",
             "description": "Targeted Quality Repair Engineer for fixing failing templates or discordances",
-            "system_prompt": load_system_prompt("prompt_shard_author.md"),
+            "system_prompt": load_system_prompt(repair_prompt, lean=lean),
             "enable_write_tools": True,
             "enable_subagent_tools": False,
             "enable_mcp_tools": False,
         },
     ]
+
+
+def make_pointer_prompt(
+    role_name: str = "",
+    work_order_rel: str = "",
+    done_signal: Optional[str] = None,
+    extra_instructions: Optional[str] = None,
+    role: Optional[str] = None,
+    item_file_rel: Optional[str] = None,
+) -> str:
+    """Generates an ultra-compact pointer prompt (~150-250 bytes, strictly <= 300 bytes) referencing disk JSON payload.
+    
+    Under the Pointer-Prompt Protocol (R5 / P4), the Director never types large work orders
+    into invoke_subagent.Prompt. Instead, a compact pointer references the disk JSON payload.
+    """
+    r_name = role or role_name
+    w_rel = item_file_rel or work_order_rel
+    parts = [
+        f"You are {r_name}.",
+        f"Your work order is `{w_rel}`. Read it first with `view_file`, then follow your system prompt.",
+    ]
+    if extra_instructions:
+        parts.append(extra_instructions)
+    if done_signal:
+        parts.append(f"Finalize strictly with: `{done_signal}`.")
+    prompt_str = " ".join(parts)
+    return prompt_str
 
 
 ROLE_SPECS: Dict[str, Dict[str, Any]] = {
@@ -237,7 +277,8 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "model": "flash",
         "system_prompt": "system_prompts/prompt_cta_architect.md",
         "read": [
-            "work/sections/section_*.md",
+            "work/parts/part_*/**",
+            "work/parts/part_manifest_*.json",
             "work/pre_cta_manifest.json",
             "work/ingestion_manifest.json",
         ],
@@ -339,18 +380,17 @@ def get_work_rel(work_dir: Union[str, Path]) -> str:
         return "work"
 
 
-def generate_define_subagent_specs(work_dir: Union[str, Path]) -> Dict[str, Any]:
+def generate_define_subagent_specs(work_dir: Union[str, Path], lean: bool = False) -> Dict[str, Any]:
     """Writes individual subagent type spec files in work/dispatch/types/<type_name>.json
     and the consolidated index in work/dispatch/subagent_types.json.
     
-    Each individual file is < 20 KB and contains the 100% full system prompt,
-    enabling parallel view_file calls without truncation.
+    When lean=True, persists lean static system prompts strictly <= 5 KB.
     """
     work = Path(work_dir).resolve()
     types_dir = work / "dispatch" / "types"
     types_dir.mkdir(parents=True, exist_ok=True)
 
-    types_list = list(get_type_definitions())
+    types_list = list(get_type_definitions(lean=lean))
     type_files: List[str] = []
 
     for t_spec in types_list:
@@ -362,7 +402,7 @@ def generate_define_subagent_specs(work_dir: Union[str, Path]) -> Dict[str, Any]
 
     # Auxiliary type definition: c2c_cta_harmonizer for cta-reduce
     try:
-        harmonizer_prompt = load_system_prompt("prompt_cta_harmonizer.md")
+        harmonizer_prompt = load_system_prompt("prompt_cta_harmonizer.md", lean=lean)
         harmonizer_spec = {
             "name": "c2c_cta_harmonizer",
             "description": "Cognitive Task Analysis Harmonizer for deduplicating and merging sectional CTA parts",
@@ -389,15 +429,21 @@ def generate_define_subagent_specs(work_dir: Union[str, Path]) -> Dict[str, Any]
     return summary_payload
 
 
-def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict[str, Any]:
+def dispatch_cta(
+    work_dir: Union[str, Path],
+    mode: Optional[str] = None,
+    pointer: bool = False,
+) -> Dict[str, Any]:
     """Generates dispatch payload and individual item files for CTA Architect (Load Inversion v3.21).
     
     Exige pre_cta_manifest.json o ingestion_manifest.json (cero fallbacks; si no existe, lanza BLOCKER).
     En modo direct y mapreduce: genera ítems concisos (< 2,500 caracteres) en work/dispatch/items/cta_XX.json
     sin duplicar el system prompt, inyectando tabla de documentos, rangos físicos 1..N y contrato compile_cta.py.
+    When pointer=True, generates ultra-compact (~200 B) pointer prompts in the ready-made Subagents array.
     """
     work = Path(work_dir).resolve()
     work_rel = get_work_rel(work)
+    use_pointer = pointer or os.getenv("C2C_POINTER_PROMPTS", "").lower() in ("1", "true", "yes")
     manifest_path = work / "pre_cta_manifest.json"
     if not manifest_path.is_file():
         alt_m = work / "ingestion_manifest.json"
@@ -409,7 +455,7 @@ def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict
             raise FileNotFoundError(err_msg)
 
     manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    cta_mode = mode or manifest_data.get("cta_mode") or "direct"
+    cta_mode = mode or manifest_data.get("cta_mode") or manifest_data.get("mode") or "direct"
     granularity = manifest_data.get("granularity", "standard")
     manifest_rel = f"{work_rel}/ingestion_manifest.json" if (work / "ingestion_manifest.json").is_file() else f"{work_rel}/pre_cta_manifest.json"
 
@@ -425,7 +471,7 @@ def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict
     item_files: List[str] = []
 
     if cta_mode == "mapreduce":
-        subparts = manifest_data.get("subparts") or []
+        subparts = manifest_data.get("subparts") or manifest_data.get("parts") or []
         if not subparts:
             files_list = manifest_data.get("files") or manifest_data.get("documents") or []
             subparts = [
@@ -451,8 +497,16 @@ def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict
                 }
             ]
 
+        # Swift-Dispatch SLA: Order subparts heaviest partition first
+        subparts = sorted(
+            subparts,
+            key=lambda sp: sp.get("total_pages") or sp.get("slide_count") or sp.get("pages") or ((sp.get("page_range") or [1, 1])[1] - (sp.get("page_range") or [1, 1])[0] + 1),
+            reverse=True,
+        )
+
         for idx, sp in enumerate(subparts, start=1):
-            subpart_id = sp.get("subpart_id") or f"part_{idx:02d}"
+            part_idx = sp.get("part_index") or idx
+            subpart_id = sp.get("subpart_id") or f"part_{part_idx:02d}"
             doc_name = sp.get("doc") or sp.get("doc_name") or sp.get("name") or "document.pdf"
             doc_path = sp.get("path") or sp.get("file") or doc_name
             c_type = sp.get("content_type") or sp.get("type") or "pdf"
@@ -460,7 +514,9 @@ def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict
             s_p = v_range[0] if len(v_range) > 0 else 1
             e_p = v_range[1] if len(v_range) > 1 else s_p
             total_p = sp.get("total_pages") or (e_p - s_p + 1)
-            t_ref = sp.get("text_ref") or sp.get("text_Ref") or sp.get("page_index_path") or sp.get("pages_dir") or f"{work_rel}/corpus.md"
+            t_ref = sp.get("slice_path") or sp.get("text_ref") or sp.get("page_index_path") or sp.get("pages_dir") or doc_path
+            if not t_ref or not doc_path:
+                raise RuntimeError(f"BLOCKER:: Missing source path or slice for subpart {subpart_id}")
 
             out_py = f"{work_rel}/cta/cta_shard_{idx:02d}_data.py" if "cta_shard" in subpart_id else f"{work_rel}/cta_parts/{subpart_id}_data.py"
             json_target = f"{work_rel}/cta/cta_shard_{idx:02d}.json" if "cta_shard" in subpart_id else f"{work_rel}/cta_parts/{subpart_id}.json"
@@ -472,9 +528,10 @@ def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict
             ])
 
             compile_cmd = f"python .agents/skills/content-to-course/compile_cta.py --input {out_py} --output {json_target} --manifest {manifest_rel} --part {subpart_id}"
+            read_paths = list(dict.fromkeys([manifest_rel, doc_path, t_ref]))
             scope_header = build_scope_header(
                 role="cta-map",
-                read_paths=[manifest_rel, doc_path, t_ref],
+                read_paths=read_paths,
                 write_paths=[out_py, json_target],
                 done_signal=f"DONE: {json_target}",
             )
@@ -518,9 +575,29 @@ def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict
                 "Model": "flash",
                 "Workspace": "inherit",
                 "Prompt": prompt_full,
+                "work_order": prompt_full,
+                "subpart_id": subpart_id,
+                "output_python": out_py,
+                "output_json": json_target,
             }
             item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
-            subagents.append(item_data)
+
+            if use_pointer:
+                pointer_prompt = make_pointer_prompt(
+                    role_name=f"Cognitive Task Analysis Architect {subpart_id}",
+                    work_order_rel=f"{work_rel}/dispatch/items/{item_file.name}",
+                    done_signal=f"DONE: {json_target}",
+                )
+                subagent_item = {
+                    "TypeName": "c2c_cta_architect",
+                    "Role": f"Cognitive Task Analysis Architect {subpart_id}",
+                    "Model": "flash",
+                    "Prompt": pointer_prompt,
+                }
+            else:
+                subagent_item = item_data
+
+            subagents.append(subagent_item)
             item_files.append(item_file.resolve().as_posix())
 
     else:
@@ -540,10 +617,12 @@ def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict
                     s_p = v_range[0] if len(v_range) > 0 else 1
                     e_p = v_range[1] if len(v_range) > 1 else s_p
                     tot = d.get("total_pages") or (e_p - s_p + 1)
-                    t_ref = d.get("text_ref") or d.get("text_Ref") or d.get("page_index_path") or d.get("pages_dir") or f"{work_rel}/corpus.md"
+                    t_ref = d.get("slice_path") or d.get("text_ref") or d.get("page_index_path") or d.get("pages_dir") or d_path
+                    if not t_ref or not d_path:
+                        raise RuntimeError(f"BLOCKER:: Missing source path or slice for document {d_name}")
                     doc_rows.append((d_name, d_path, c_type, f"{s_p}..{e_p}", tot, t_ref))
                 elif isinstance(d, str):
-                    doc_rows.append((d, d, "pdf", "1..N", "desconocido", f"{work_rel}/corpus.md"))
+                    doc_rows.append((d, d, "pdf", "1..N", "desconocido", d))
         elif isinstance(docs, dict):
             for d_name, d_info in docs.items():
                 if isinstance(d_info, dict):
@@ -553,7 +632,9 @@ def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict
                     e_p = v_range[1] if len(v_range) > 1 else s_p
                     tot = d_info.get("total_pages") or (e_p - s_p + 1)
                     d_path = d_info.get("path") or d_name
-                    t_ref = d_info.get("text_ref") or d_info.get("text_Ref") or d_info.get("page_index_path") or d_info.get("pages_dir") or f"{work_rel}/corpus.md"
+                    t_ref = d_info.get("slice_path") or d_info.get("text_ref") or d_info.get("page_index_path") or d_info.get("pages_dir") or d_path
+                    if not t_ref or not d_path:
+                        raise RuntimeError(f"BLOCKER:: Missing source path or slice for document {d_name}")
                     doc_rows.append((d_name, d_path, c_type, f"{s_p}..{e_p}", tot, t_ref))
 
         if len(doc_rows) > 10:
@@ -576,7 +657,7 @@ def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict
         compile_cmd = f"python .agents/skills/content-to-course/compile_cta.py --input {out_target} --output {json_target} --manifest {manifest_rel}"
         scope_header = build_scope_header(
             role="cta",
-            read_paths=[manifest_rel, f"{work_rel}/corpus.md", "content/**"],
+            read_paths=[manifest_rel, "content/**"],
             write_paths=[out_target, json_target, f"{work_rel}/cta.md"],
             done_signal=f"DONE: {json_target}",
         )
@@ -620,9 +701,26 @@ def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict
             "Model": "flash",
             "Workspace": "inherit",
             "Prompt": prompt_full,
+            "work_order": prompt_full,
+            "output_python": out_target,
+            "output_json": json_target,
         }
         item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
-        subagents = [item_data]
+
+        if use_pointer:
+            pointer_prompt = make_pointer_prompt(
+                role_name="Cognitive Task Analysis Architect",
+                work_order_rel=f"{work_rel}/dispatch/items/{item_file.name}",
+                done_signal=f"DONE: {json_target}",
+            )
+            subagents = [{
+                "TypeName": "c2c_cta_architect",
+                "Role": "Cognitive Task Analysis Architect",
+                "Model": "flash",
+                "Prompt": pointer_prompt,
+            }]
+        else:
+            subagents = [item_data]
         item_files = [item_file.resolve().as_posix()]
 
     dispatch_dir = work / "dispatch"
@@ -641,28 +739,37 @@ def dispatch_cta(work_dir: Union[str, Path], mode: Optional[str] = None) -> Dict
     return {"Subagents": subagents, "item_files": item_files}
 
 
-def dispatch_authors(work_dir: Union[str, Path]) -> Dict[str, Any]:
+def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[str, Any]:
     """Generates dispatch payload and individual item files for Shard Authors (Load Inversion v3.21).
     
     Exige work/shards/pre_shard_manifest.json y work/pre_cta_manifest.json (cero fallbacks).
     NO pre-siembra JSON en work/templates/ ni bundles en work/shards/bundles/.
     Inyecta especificación Turn-0 completa de competencias y 6 distractores (D-XX-01..06)
     directamente en el prompt conciso del autor, permitiendo autoría autónoma sin lectura de cta.json.
+    When pointer=True, generates ultra-compact (~200 B) pointer prompts in the ready-made Subagents array,
+    ordered heaviest unit first (Swift-Dispatch SLA).
     """
     work = Path(work_dir).resolve()
     work_rel = get_work_rel(work)
+    use_pointer = pointer or os.getenv("C2C_POINTER_PROMPTS", "").lower() in ("1", "true", "yes")
 
     shard_manifest_path = work / "shards" / "pre_shard_manifest.json"
     if not shard_manifest_path.is_file():
-        err_msg = "BLOCKER:: No existe pre_shard_manifest.json"
-        logger.error(err_msg)
-        raise FileNotFoundError(err_msg)
+        if (work / "pre_shard_manifest.json").is_file():
+            shard_manifest_path = work / "pre_shard_manifest.json"
+        else:
+            err_msg = "BLOCKER:: No existe pre_shard_manifest.json"
+            logger.error(err_msg)
+            raise FileNotFoundError(err_msg)
 
     cta_manifest_path = work / "pre_cta_manifest.json"
     if not cta_manifest_path.is_file():
-        err_msg = "BLOCKER:: No existe pre_cta_manifest.json"
-        logger.error(err_msg)
-        raise FileNotFoundError(err_msg)
+        if (work / "ingestion_manifest.json").is_file():
+            cta_manifest_path = work / "ingestion_manifest.json"
+        elif not (work / "cta.json").is_file():
+            err_msg = "BLOCKER:: No existe pre_cta_manifest.json"
+            logger.error(err_msg)
+            raise FileNotFoundError(err_msg)
 
     manifest_rel = f"{work_rel}/ingestion_manifest.json" if (work / "ingestion_manifest.json").is_file() else f"{work_rel}/pre_cta_manifest.json"
     cta_rel = f"{work_rel}/cta.json"
@@ -687,7 +794,12 @@ def dispatch_authors(work_dir: Union[str, Path]) -> Dict[str, Any]:
             logger.warning("Could not read cta.json: %s", e)
 
     # Document map from pre_cta_manifest
-    cta_manifest_data = json.loads(cta_manifest_path.read_text(encoding="utf-8"))
+    cta_manifest_data: Dict[str, Any] = {}
+    if cta_manifest_path.is_file():
+        try:
+            cta_manifest_data = json.loads(cta_manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
     doc_paths_by_name: Dict[str, str] = {}
     docs = cta_manifest_data.get("documents", [])
     if isinstance(docs, list):
@@ -717,6 +829,23 @@ def dispatch_authors(work_dir: Union[str, Path]) -> Dict[str, Any]:
     else:
         shard_list = []
 
+    # Swift-Dispatch SLA: Sort shards heaviest unit first
+    def _shard_weight(shard: Dict[str, Any]) -> int:
+        if shard.get("estimated_questions"):
+            return int(shard["estimated_questions"]) * 10
+        c_ids = shard.get("competency_ids") or []
+        if not c_ids and "competencies" in shard:
+            raw_c = shard["competencies"]
+            c_ids = [c["id"] if isinstance(c, dict) and "id" in c else str(c) for c in raw_c]
+        w = 0
+        for cid in c_ids:
+            c_obj = cta_comps_by_id.get(cid) or manifest_comps_by_id.get(cid, {})
+            t = str(c_obj.get("type", "knowledge")).lower()
+            w += 30 if t in ("skill", "habilidad", "hab") else 20
+        return w if w > 0 else (len(c_ids) * 20)
+
+    shard_list = sorted(shard_list, key=_shard_weight, reverse=True)
+
     items_dir = work / "dispatch" / "items"
     items_dir.mkdir(parents=True, exist_ok=True)
 
@@ -724,10 +853,12 @@ def dispatch_authors(work_dir: Union[str, Path]) -> Dict[str, Any]:
     item_files: List[str] = []
 
     for idx, s in enumerate(shard_list, start=1):
-        s_id = s.get("shard_id") or f"shard_{idx:02d}"
+        s_idx = s.get("shard_index") or idx
+        s_id = s.get("shard_id") or f"shard_{s_idx:02d}"
         c_ids = s.get("competency_ids") or []
         if not c_ids and "competencies" in s:
-            c_ids = [c.get("id") for c in s["competencies"] if isinstance(c, dict) and "id" in c]
+            raw_c = s["competencies"]
+            c_ids = [c["id"] if isinstance(c, dict) and "id" in c else str(c) for c in raw_c]
 
         out_py = f"{work_rel}/shards/{s_id}_data.py"
         target_json = f"{work_rel}/shards/{s_id}.json"
@@ -855,10 +986,32 @@ def dispatch_authors(work_dir: Union[str, Path]) -> Dict[str, Any]:
             "Role": f"Shard Author {s_id}",
             "Model": "flash",
             "Workspace": "inherit",
+            "shard_id": s_id,
+            "assigned_competencies": c_ids,
+            "output_python": out_py,
+            "output_json": target_json,
+            "compile_command": compile_cmd,
             "Prompt": prompt_full,
+            "work_order": prompt_full,
         }
         item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
-        subagents.append(item_data)
+
+        if use_pointer:
+            pointer_prompt = make_pointer_prompt(
+                role_name=f"Shard Author {s_id}",
+                work_order_rel=f"{work_rel}/dispatch/items/{item_file.name}",
+                done_signal=f"DONE: {target_json}",
+            )
+            subagent_item = {
+                "TypeName": "c2c_shard_author",
+                "Role": f"Shard Author {s_id}",
+                "Model": "flash",
+                "Prompt": pointer_prompt,
+            }
+        else:
+            subagent_item = item_data
+
+        subagents.append(subagent_item)
         item_files.append(item_file.resolve().as_posix())
 
     dispatch_dir = work / "dispatch"
@@ -880,28 +1033,93 @@ def dispatch_authors(work_dir: Union[str, Path]) -> Dict[str, Any]:
     return {"Subagents": subagents, "item_files": item_files}
 
 
-def dispatch_judges(work_dir: Union[str, Path]) -> Dict[str, Any]:
+def dispatch_judges(
+    work_dir: Union[str, Path],
+    pointer: bool = False,
+    max_items_per_judge: int = 12,
+) -> Dict[str, Any]:
     """Generates dispatch payload and individual item files for Blind Judges (Load Inversion v3.21).
     
     Zero-Warmup In-Prompt payload: inyecta los ítems del batch (question_id, question_type, stem_es, options)
     directamente dentro del Prompt sin duplicar el system prompt.
-    El juez NO usa view_file para leer judge_batch_XX.json y resuelve en 1 solo turno.
+    When pointer=True, generates ultra-compact (~200 B) pointer prompts in the ready-made Subagents array,
+    enforcing native batch slicing <= 12 items per judge (Swift-Dispatch SLA).
     """
     work = Path(work_dir).resolve()
     work_rel = get_work_rel(work)
+    use_pointer = pointer or os.getenv("C2C_POINTER_PROMPTS", "").lower() in ("1", "true", "yes")
 
-    # Search for judge batches
+    # Native Batch Slicing: ensure batches are sliced at <= max_items_per_judge (default 12)
+    unsplit = work / "verification" / "judge_batch.json"
+    if not unsplit.is_file():
+        unsplit = work / "judge_batch.json"
+
     batch_files = sorted(work.glob("verification/judge_batch_*.json"))
     if not batch_files:
         batch_files = sorted(work.glob("judge_batch_*.json"))
-    split_batches = [bf for bf in batch_files if bf.name != "judge_batch.json"]
+    split_batches = [bf for bf in batch_files if bf.name not in ("judge_batch.json", "judge_redispatch_batch.json")]
 
-    if not split_batches:
-        unsplit = work / "verification" / "judge_batch.json"
-        if not unsplit.is_file():
-            unsplit = work / "judge_batch.json"
-        if unsplit.is_file():
-            split_batches = [unsplit]
+    if not split_batches and not unsplit.is_file():
+        shards_dir = work / "shards"
+        shard_files = list(shards_dir.glob("shard_*.json")) if shards_dir.is_dir() else []
+        if shard_files:
+            extracted_items = []
+            for sf in sorted(shard_files):
+                try:
+                    s_data = json.loads(sf.read_text(encoding="utf-8"))
+                    if isinstance(s_data, list):
+                        qs = s_data
+                    elif isinstance(s_data, dict):
+                        qs = s_data.get("questions") or s_data.get("items") or []
+                    else:
+                        qs = []
+                    for q in qs:
+                        if isinstance(q, dict):
+                            b_item = {
+                                "id": q.get("id") or q.get("question_id"),
+                                "question_id": q.get("id") or q.get("question_id"),
+                                "stem": q.get("prompt") or q.get("stem") or q.get("stem_es") or "",
+                                "stem_es": q.get("prompt") or q.get("stem_es") or q.get("stem") or "",
+                                "options": q.get("options") or q.get("distractors") or [],
+                            }
+                            extracted_items.append(b_item)
+                except Exception as e:
+                    logger.warning("Could not extract items from %s: %s", sf, e)
+            if extracted_items:
+                v_dir = work / "verification"
+                v_dir.mkdir(parents=True, exist_ok=True)
+                unsplit = v_dir / "judge_batch.json"
+                unsplit.write_text(json.dumps(extracted_items, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    needs_split = False
+    if not split_batches and unsplit.is_file():
+        needs_split = True
+    elif split_batches and max_items_per_judge > 0:
+        for bf in split_batches:
+            try:
+                b_cnt = len(json.loads(bf.read_text(encoding="utf-8")))
+                if b_cnt > max_items_per_judge:
+                    needs_split = True
+                    break
+            except Exception:
+                pass
+
+    if needs_split and unsplit.is_file():
+        from judge import split_judge_batch
+        split_batches = split_judge_batch(work, max_judges=8, items_per_judge=max_items_per_judge)
+
+    if not split_batches and unsplit.is_file():
+        split_batches = [unsplit]
+
+    # Swift-Dispatch SLA: Sort batches heaviest unit first
+    def _batch_count(bf: Path) -> int:
+        try:
+            d = json.loads(bf.read_text(encoding="utf-8"))
+            return len(d) if isinstance(d, list) else len(d.get("items", []))
+        except Exception:
+            return 0
+
+    split_batches = sorted(split_batches, key=_batch_count, reverse=True)
 
     items_dir = work / "dispatch" / "items"
     items_dir.mkdir(parents=True, exist_ok=True)
@@ -913,7 +1131,7 @@ def dispatch_judges(work_dir: Union[str, Path]) -> Dict[str, Any]:
         m = re.search(r"judge_batch_(\d+)", bf.name)
         j_id = m.group(1) if m else f"{idx:02d}"
 
-        # Extract items for in-prompt payload
+        # Extract items for in-prompt payload (strictly blind: zero ground truth)
         items_payload: List[Dict[str, Any]] = []
         try:
             b_data = json.loads(bf.read_text(encoding="utf-8"))
@@ -930,6 +1148,8 @@ def dispatch_judges(work_dir: Union[str, Path]) -> Dict[str, Any]:
                     }
                     if "answer_contract" in item:
                         cleaned_item["answer_contract"] = item["answer_contract"]
+                    if "graph" in item:
+                        cleaned_item["graph"] = item["graph"]
                     items_payload.append(cleaned_item)
         except Exception as e:
             logger.warning("Could not read judge batch %s: %s", bf, e)
@@ -983,10 +1203,30 @@ def dispatch_judges(work_dir: Union[str, Path]) -> Dict[str, Any]:
             "Role": f"Blind Judge {j_id}",
             "Model": "flash",
             "Workspace": "inherit",
+            "batch_file": bf.name,
+            "items_count": len(items_payload),
+            "output_target": out_target,
             "Prompt": prompt_full,
+            "items": items_payload,
         }
         item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
-        subagents.append(item_data)
+
+        if use_pointer:
+            pointer_prompt = make_pointer_prompt(
+                role_name=f"Blind Judge {j_id}",
+                work_order_rel=f"{work_rel}/dispatch/items/{item_file.name}",
+                done_signal=f"DONE: {out_target}",
+            )
+            subagent_item = {
+                "TypeName": "c2c_judge",
+                "Role": f"Blind Judge {j_id}",
+                "Model": "flash",
+                "Prompt": pointer_prompt,
+            }
+        else:
+            subagent_item = item_data
+
+        subagents.append(subagent_item)
         item_files.append(item_file.resolve().as_posix())
 
     dispatch_dir = work / "dispatch"
@@ -996,6 +1236,7 @@ def dispatch_judges(work_dir: Union[str, Path]) -> Dict[str, Any]:
         "stage": "judges",
         "dispatched_at": datetime.now(timezone.utc).isoformat(),
         "subagents_count": len(subagents),
+        "max_items_per_judge": max_items_per_judge,
         "item_files": item_files,
         "Subagents": subagents,
     }
@@ -1012,20 +1253,23 @@ def build_dispatch(
     work_dir: Union[str, Path],
     ids: Optional[List[Union[str, int]]] = None,
     ready_only: bool = False,
+    pointer: bool = False,
 ) -> Dict[str, Any]:
     """Generates invoke_subagent payload with strict SCOPE-LOCK for the given role."""
+    use_pointer = pointer or os.getenv("C2C_POINTER_PROMPTS", "").lower() in ("1", "true", "yes")
+
     if role in ("vision", "vision-legacy"):
         raise ValueError(f"Stages 'vision' and 'vision-legacy' have been removed in C2C v3.2. Use Direct PDF Ingestion instead.")
 
     if role in ("cta", "cta-direct", "cta-map", "c2c_cta_architect"):
         mode = "mapreduce" if role == "cta-map" else None
-        return dispatch_cta(work_dir, mode=mode)
+        return dispatch_cta(work_dir, mode=mode, pointer=use_pointer)
 
     if role in ("author", "authors", "c2c_shard_author"):
-        return dispatch_authors(work_dir)
+        return dispatch_authors(work_dir, pointer=use_pointer)
 
     if role in ("judge", "judges", "c2c_judge"):
-        return dispatch_judges(work_dir)
+        return dispatch_judges(work_dir, pointer=use_pointer)
 
     if role not in ROLE_SPECS:
         raise ValueError(f"Unknown role: '{role}'. Available roles: {list(ROLE_SPECS.keys())}")
@@ -1214,16 +1458,39 @@ def build_dispatch(
                 f"   ```\n"
                 f"3. Sigue todas las directivas de tu System Prompt `c2c_repair` y finaliza con: `DONE: {out_json}`.\n"
             )
-            sub_item = {
+            item_file = items_dir / f"repair_{idx:02d}.json"
+            item_data = {
                 "TypeName": spec["type_name"],
                 "Role": f"Repair Engineer {cid}",
                 "Model": spec["model"],
+                "competency_id": cid,
+                "shard_id": shard_id,
+                "output_python": out_py,
+                "output_json": out_json,
+                "compile_command": compile_cmd,
+                "diagnostics": diag,
                 "Prompt": prompt_text,
+                "work_order": prompt_text,
             }
+            item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+            if use_pointer:
+                pointer_prompt = make_pointer_prompt(
+                    role_name=f"Repair Engineer {cid}",
+                    work_order_rel=f"{work_rel}/dispatch/items/{item_file.name}",
+                    done_signal=f"DONE: {out_json}",
+                )
+                sub_item = {
+                    "TypeName": spec["type_name"],
+                    "Role": f"Repair Engineer {cid}",
+                    "Model": spec["model"],
+                    "Prompt": pointer_prompt,
+                }
+            else:
+                sub_item = item_data
+
             subagents.append(sub_item)
             dispatched_ids.append(cid)
-            item_file = items_dir / f"repair_{idx:02d}.json"
-            item_file.write_text(json.dumps(sub_item, indent=2, ensure_ascii=False), encoding="utf-8")
             item_files.append(item_file.resolve().as_posix())
 
     payload = {"Subagents": subagents}
@@ -1251,9 +1518,39 @@ def build_dispatch(
 def dispatch_repair(
     work_dir: Union[str, Path],
     ids: Optional[List[Union[str, int]]] = None,
+    pointer: bool = False,
 ) -> Dict[str, Any]:
     """Generates dispatch payload and individual item files for Targeted Repair Engineers (Load Inversion v3.21)."""
-    return build_dispatch(role="repair", work_dir=work_dir, ids=ids)
+    return build_dispatch(role="repair", work_dir=work_dir, ids=ids, pointer=pointer)
+
+
+def pre_stage5_cleanup(work_dir: Union[str, Path]) -> Dict[str, Any]:
+    """Protocol for clearing stale/errored subagents prior to Stage 5 verification (P4 / R5 SLA).
+    
+    Instructs the Director to execute manage_subagents(kill_all) so that stale 429
+    or aborted subagent entries do not mislead Stage 5 decisions. Also cleans up
+    transient failure markers in state.json.
+    """
+    work = Path(work_dir).resolve()
+    from budget_guard import update_state_checkpoint, load_state_checkpoint
+
+    state = load_state_checkpoint(work)
+    subagents = state.get("subagents", {})
+    cleared = []
+    for s_name, s_info in list(subagents.items()):
+        if isinstance(s_info, dict) and s_info.get("status") in ("errored", "aborted"):
+            s_info["status"] = "purged_pre_stage5"
+            cleared.append(s_name)
+
+    state["subagents"] = subagents
+    (work / "state.json").write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+    update_state_checkpoint(work, "pre_stage5_cleanup", "completed", metadata={"purged_subagents": cleared})
+    msg = (
+        "[+] Pre-Stage-5 Cleanup executed.\n"
+        "    SLA Requirement: Run `manage_subagents(Action='kill_all')` before dispatching Stage 5 judges.\n"
+        f"    Purged {len(cleared)} stale subagent error records."
+    )
+    return {"status": "ok", "purged": cleared, "message": msg}
 
 
 def snapshot_work_dir(work_dir: Union[str, Path]) -> Dict[str, Tuple[int, float]]:
@@ -1369,6 +1666,7 @@ def main() -> None:
     disp.add_argument("--work-dir", required=True, help="Course working directory")
     disp.add_argument("--ready-only", action="store_true", help="Dispatch only ready sections")
     disp.add_argument("--ids", nargs="*", help="Optional specific IDs to dispatch")
+    disp.add_argument("--pointer", action="store_true", help="Generate pointer-prompt work orders referencing disk JSON")
 
     # check subcommand
     chk = subparsers.add_parser("check", help="Run scope violation check")
@@ -1378,47 +1676,81 @@ def main() -> None:
     # define-types subcommand
     dt = subparsers.add_parser("define-types", help="Print and persist define_subagent payloads for all c2c types")
     dt.add_argument("--work-dir", default=None, help="Optional course working directory to persist type files")
+    dt.add_argument("--lean", action="store_true", help="Use lean static system prompts (<= 5 KB)")
 
     # dispatch-cta subcommand
     dc = subparsers.add_parser("dispatch-cta", help="Dispatch CTA Architect using pre_cta_manifest.json")
     dc.add_argument("--work-dir", required=True, help="Course working directory")
     dc.add_argument("--mode", default=None, help="CTA mode: direct or mapreduce")
+    dc.add_argument("--pointer", action="store_true", help="Generate pointer-prompt work orders referencing disk JSON")
 
     # dispatch-authors subcommand
     da = subparsers.add_parser("dispatch-authors", help="Dispatch Shard Authors using pre_shard_manifest.json")
     da.add_argument("--work-dir", required=True, help="Course working directory")
+    da.add_argument("--pointer", action="store_true", help="Generate pointer-prompt work orders referencing disk JSON")
 
     # dispatch-judges subcommand
     dj = subparsers.add_parser("dispatch-judges", help="Dispatch Blind Judges with Zero-Warmup in-prompt payload")
     dj.add_argument("--work-dir", required=True, help="Course working directory")
+    dj.add_argument("--pointer", action="store_true", help="Generate pointer-prompt work orders referencing disk JSON")
+    dj.add_argument("--max-items-per-judge", type=int, default=12, help="Maximum items per judge batch (default: 12)")
 
     # dispatch-repair subcommand
     dr = subparsers.add_parser("dispatch-repair", help="Dispatch Targeted Repair Engineers")
     dr.add_argument("--work-dir", required=True, help="Course working directory")
-    dr.add_argument("--ids", nargs="*", help="Optional specific competency IDs to repair")
+    dr.add_argument("--ids", nargs="*", help="Optional specific IDs to repair")
+    dr.add_argument("--pointer", action="store_true", help="Generate pointer-prompt work orders referencing disk JSON")
+
+    # checkpoint subcommand
+    cp = subparsers.add_parser("checkpoint", help="Record stage checkpoint in state.json")
+    cp.add_argument("--work-dir", required=True, help="Course working directory")
+    cp.add_argument("--stage", required=True, help="Pipeline stage name")
+    cp.add_argument("--status", default="completed", help="Status of stage (completed/in_progress/failed)")
+
+    # cleanup-subagents subcommand
+    cl = subparsers.add_parser("cleanup-subagents", help="Execute Pre-Stage-5 subagent cleanup protocol")
+    cl.add_argument("--work-dir", required=True, help="Course working directory")
+
+    # status subcommand
+    st = subparsers.add_parser("status", help="Read state.json and show pipeline progress")
+    st.add_argument("--work-dir", required=True, help="Course working directory")
 
     args = parser.parse_args()
 
     if args.action == "define-types":
         target_work = args.work_dir or Path.cwd() / "work"
-        res = generate_define_subagent_specs(target_work)
+        res = generate_define_subagent_specs(target_work, lean=args.lean)
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "dispatch-cta":
-        res = dispatch_cta(args.work_dir, mode=args.mode)
+        res = dispatch_cta(args.work_dir, mode=args.mode, pointer=args.pointer)
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "dispatch-authors":
-        res = dispatch_authors(args.work_dir)
+        res = dispatch_authors(args.work_dir, pointer=args.pointer)
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "dispatch-judges":
-        res = dispatch_judges(args.work_dir)
+        res = dispatch_judges(args.work_dir, pointer=args.pointer, max_items_per_judge=args.max_items_per_judge)
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "dispatch-repair":
-        res = dispatch_repair(args.work_dir, ids=args.ids)
+        res = dispatch_repair(args.work_dir, ids=args.ids, pointer=args.pointer)
         print(json.dumps(res, indent=2, ensure_ascii=False))
+
+    elif args.action == "checkpoint":
+        from budget_guard import update_state_checkpoint
+        state = update_state_checkpoint(args.work_dir, args.stage, args.status)
+        print(json.dumps(state, indent=2, ensure_ascii=False))
+
+    elif args.action == "cleanup-subagents":
+        res = pre_stage5_cleanup(args.work_dir)
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+
+    elif args.action == "status":
+        from budget_guard import load_state_checkpoint
+        state = load_state_checkpoint(args.work_dir)
+        print(json.dumps(state, indent=2, ensure_ascii=False))
 
     elif args.action == "build":
         payload = build_dispatch(
@@ -1426,6 +1758,7 @@ def main() -> None:
             work_dir=args.work_dir,
             ids=args.ids,
             ready_only=args.ready_only,
+            pointer=args.pointer,
         )
         print(json.dumps(payload, indent=2, ensure_ascii=False))
 

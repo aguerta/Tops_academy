@@ -184,10 +184,48 @@ def sanitize_katex_syntax(text: str) -> str:
 
     # Normalize residual paired double curly braces from f-strings {{var}} -> {var}
     # NEVER do a blind text.replace("}}", "}") as that destroys nested LaTeX groups!
+    def _normalize_double_braces_step(s: str) -> str:
+        out = []
+        i = 0
+        n = len(s)
+        while i < n:
+            if s[i:i+2] == "{{":
+                j = i + 2
+                depth = 0
+                found = False
+                while j < n:
+                    if s[j:j+2] == "}}" and depth == 0:
+                        found = True
+                        break
+                    elif s[j] == "{":
+                        depth += 1
+                        j += 1
+                    elif s[j] == "}":
+                        if depth > 0:
+                            depth -= 1
+                            j += 1
+                        else:
+                            break
+                    else:
+                        j += 1
+
+                if found:
+                    token = s[i+2:j]
+                    out.append("{" + token + "}")
+                    i = j + 2
+                else:
+                    out.append(s[i])
+                    i += 1
+            else:
+                out.append(s[i])
+                i += 1
+        return "".join(out)
+
     prev = None
     while prev != text:
         prev = text
-        text = re.sub(r"\{\{([^{}]+)\}\}", r"{\1}", text)
+        text = _normalize_double_braces_step(text)
+
 
     # 1. Auto-close unclosed nested accent/style/sqrt macros: \hat{\boldsymbol{\beta} -> \hat{\boldsymbol{\beta}}
     outer_macros = r"(?:hat|bar|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|widecheck|overline|underline|sqrt)"
@@ -203,9 +241,9 @@ def sanitize_katex_syntax(text: str) -> str:
     )
     text = frac_inner_fix.sub(r"\1}{", text)
 
-    # Simple \frac{a{b} where numerator has no macros
+    # Simple \frac{a{b} where numerator has no macros or scripts
     frac_simple_fix = re.compile(
-        r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{[^{}\\]+)\{([^{}]+\})"
+        r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{[^{}\\^_]+)\{([^{}]+\})"
     )
     text = frac_simple_fix.sub(r"\1}{\2", text)
 

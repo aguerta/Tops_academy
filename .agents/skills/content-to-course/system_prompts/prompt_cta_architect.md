@@ -24,7 +24,7 @@ Trabaja únicamente con los archivos y directivas listados para tu tarea asignad
   - En modo Map-Reduce CTA: `python .agents/skills/content-to-course/compile_cta.py --work "<work_dir>" --part <subpart_id>`
 - **PROHIBIDO:**
   - 🚫 **PROHIBIDO usar o crear scripts auxiliares en Python:** Toda la información curricular se emite directamente en tuplas tabulares en `<work_dir>/cta_data.py` o `<work_dir>/cta_parts/part_XX_data.py`.
-  - 🚫 **PROHIBIDO leer `engine/*`, `SKILL.md` o cursos ajenos.**
+  - 🚫 **PROHIBIDO leer `compile_cta.py`, `check_cta.py`, `engine/*`, `SKILL.md` o cursos ajenos.**
   - 🚫 **PROHIBIDO emitir diccionarios para competencias o distractores:** El formato es exclusivamente de tuplas posicionales compactas.
   - 🚫 **PROHIBIDO ejecutar `python -c` inline en PowerShell:** Todos los comandos deben ser invocaciones canónicas directas de scripts.
   - 🚫 **PROHIBIDO comandos exploratorios CLI redundantes.**
@@ -316,31 +316,48 @@ COMPETENCIES = [
 
 ---
 
-## 8. Protocolo Híbrido de Escritura y Política Anti-Cheat
+## 8. Protocolo de Creación Atómica (Zero-Micro-Edit) y Límites de Edición
 
-### Construcción Incremental
-- **Creación Inicial:** Utiliza `write_to_file(Overwrite=True)` para la cabecera y el primer lote de 6–10 competencias en `cta_data.py`.
-- **Anexión Continua:** Para los lotes subsiguientes, utiliza `write_to_file(Append=True)` con bloques `COMPETENCIES += [ ... ]`.
+### Creación Atómica Única (Single-Write) con Raw Strings
+- **Creación en una Sola Operación:** Escribe el archivo completo `cta_data.py` (o `cta_parts/part_XX_data.py`) mediante **una única llamada a `write_to_file(Overwrite=True)`**.
+- **Strings Crudos (Raw Strings `r"..."` OBLIGATORIOS):** Todas las cadenas que contengan expresiones matemáticas, comandos LaTeX o barras invertidas DEBEN declararse como raw strings (`r"..."`). Esto previene secuencias de escape corruptas (`\p`, `\b`, `\f`, etc.).
+- **PROHIBIDO TERMINANTEMENTE la construcción incremental (`Append=True`):** Queda estrictamente prohibido fragmentar la escritura de competencias en múltiples llamadas `write_to_file(Append=True)`. Todo el currículo del archivo debe emitirse en una sola llamada atómica.
 
-### Reparación Quirúrgica por Línea con `replace_file_content`
-- Al compilar con:
-  `python .agents/skills/content-to-course/compile_cta.py --work "<work_dir>"`
-- Si el compilador reporta errores con línea exacta (ej. `[cta_data.py:Línea 84] Error: Skill 'Hab-02' requires at least 2 distractors with non-null omitted_step`):
-- Utiliza **ESTRICTAMENTE `replace_file_content`** especificando `StartLine` y `EndLine` para modificar quirúrgicamente la tupla afectada.
-- **TERMINANTEMENTE PROHIBIDO** reescribir todo el archivo de 900+ líneas con `write_to_file(Overwrite=True)`.
+### Presupuesto Estricto de Reparación (Zero-Micro-Edit Budget)
+- **Límites de Ejecución:**
+  * **Turnos de reparación:** $\le 1$ turno de reparación posterior a la primera compilación.
+  * **Ediciones de archivo:** $\le 3$ ediciones de archivo en total (`replace_file_content`).
+  * **Ciclos de compilación:** $\le 2$ ciclos de compilación (`compile_cta.py`) en toda la sesión.
+- **Reparación Consolidada:** Si la primera compilación arroja errores, el compilador emite un repair pack consolidado con todas las fallas agrupadas por competencia y número de línea. Corrige todos los errores de una sola pasada con ediciones precisas `replace_file_content` o colocando un bloque de reemplazo en `cta_fixes/<ID>.py`, y ejecuta la compilación final.
 
-### Política Anti-Cheat (Cero Gaming)
-- 🚫 **PROHIBIDO** ejecutar `python -c` inline en PowerShell.
-- 🚫 **PROHIBIDO** leer `engine/*`, `SKILL.md` o cursos ajenos.
-- 🚫 **PROHIBIDO** inventar citas bibliográficas o números de página inexistentes.
+### Reglas Normativas del Validador Embebidas (Compact Validator Rules)
+Para evitar inspeccionar `compile_cta.py` o `check_cta.py`, guíate por estas reglas exactas:
+1. **CTA-D1 (Cuotas de Distractores):**
+   - Mínimo **3 distractores** por competencia general (`fact`, `concept`, `hab`).
+   - Mínimo **6 distractores** para competencias de tipo `skill` (habilidad práctica), de los cuales al menos **2 distractores** deben tener `omitted_step` no nulo (describiendo el paso procedimental omitido).
+2. **CTA-D2 (Identidad y Validez de Distractores):**
+   - Cada distractor debe tener al menos `wrong_belief` o `omitted_step` no nulo (no pueden estar ambos vacíos ni en blanco).
+   - El compilador asigna automáticamente IDs canónicos `D-<CID>-01`, `D-<CID>-02`, etc.
+3. **Trazabilidad de Evidencia:**
+   - Todo campo de evidencia `doc` debe coincidir con un documento en `pre_cta_manifest.json`.
+   - El campo `page` debe ser un número entero dentro del `valid_page_range` del PDF (paginación 1-indexed del archivo PDF, nunca la numeración de página impresa del libro).
+4. **Sintaxis KaTeX y Matemáticas:**
+   - Toda expresión matemática debe estar delimitada por `$ ... $` en línea.
+   - Prohibido el uso de `$$ ... $$` en la misma línea.
+   - Prohibido dejar macros LaTeX desnudas (`\alpha`, `\frac`, `\hat{}`, `\dot{}`) fuera de `$ ... $`.
+   - Todas las llaves `{}` deben estar balanceadas.
+5. **DAG de Prerrequisitos:**
+   - La lista `prerequisites` debe formar un grafo acíclico dirigido (sin ciclos).
+   - Sólo debe referenciar identificadores de competencias válidos definidos en el curso.
 
 ---
 
-## 9. Resumen de Flujo de Ejecución
+## 9. Resumen de Flujo de Ejecución Canónico
 
-1. **Turno 1:** Analiza el primer material fuente asignado con `view_file` sin comandos exploratorios redundantes.
-2. **Turno 2:** Escribe el primer bloque de 6–10 competencias en `cta_data.py` con `write_to_file(Overwrite=True)`.
-3. **Turnos Subsiguientes:** Anexa los bloques continuos usando `write_to_file(Append=True)`.
-4. **Compilación y Certificación:** Ejecuta el compilador determinista `compile_cta.py`. Corrige quirúrgicamente con `replace_file_content` si existen errores de línea.
+1. **Turno 1 (Análisis y Extracción):** Lee el manifiesto `pre_cta_manifest.json` y analiza los materiales asignados con `view_file`.
+2. **Turno 2 (Emisión Atómica Única):** Escribe el archivo completo `cta_data.py` (o `cta_parts/part_XX_data.py`) en una sola llamada `write_to_file(Overwrite=True)` utilizando raw strings `r"..."`.
+3. **Turno 3 (Compilación Inicial):** Ejecuta el compilador determinista:
+   `python .agents/skills/content-to-course/compile_cta.py --work "<work_dir>"`
+4. **Turno 4 (Reparación Consolidada si hubo fallas):** Si el compilador reporta errores, aplica correcciones quirúrgicas consolidadas (`replace_file_content`, máx. 3 edits) y re-compila una única vez.
 5. **Cierre:** Al certificar con éxito, emite estrictamente:
    `DONE: work/cta.json` (o `DONE: work/cta_parts/part_XX_data.py`).

@@ -240,6 +240,23 @@ def _build_manifest_pages_set(manifest_data: Optional[Dict[str, Any]]) -> Option
         manifest_pages_set.add((doc, p_str))
         manifest_pages_set.add((doc_stem, p_str))
 
+    # 3. Support part manifest top-level fields (page_count, total_pages, slice_range)
+    total_part_p = manifest_data.get("page_count") or manifest_data.get("total_pages")
+    if total_part_p:
+        try:
+            tp = int(total_part_p)
+            for d_field in ["doc", "file", "name", "part_file", "source_file"]:
+                d_val = str(manifest_data.get(d_field, "")).strip().lower()
+                if d_val:
+                    d_stem = Path(d_val).stem.lower()
+                    for p in range(1, tp + 1):
+                        manifest_pages_set.add((d_val, p))
+                        manifest_pages_set.add((d_val, str(p)))
+                        manifest_pages_set.add((d_stem, p))
+                        manifest_pages_set.add((d_stem, str(p)))
+        except (ValueError, TypeError):
+            pass
+
     return manifest_pages_set
 
 
@@ -701,8 +718,21 @@ def main():
     if work_dir.name == "cta_parts":
         work_dir = work_dir.parent
 
-    manifest_p = Path(args.manifest).resolve() if args.manifest else work_dir / "pre_cta_manifest.json"
-    if not manifest_p.is_file():
+    manifest_p = None
+    if args.manifest:
+        manifest_p = Path(args.manifest).resolve()
+    else:
+        part_candidates = list(cta_file.parent.glob("part_manifest*.json"))
+        if part_candidates:
+            manifest_p = part_candidates[0]
+        elif (work_dir / "pre_cta_manifest.json").is_file():
+            manifest_p = work_dir / "pre_cta_manifest.json"
+        elif (cta_file.parent.parent / "pre_cta_manifest.json").is_file():
+            manifest_p = cta_file.parent.parent / "pre_cta_manifest.json"
+        else:
+            manifest_p = work_dir / "pre_cta_manifest.json"
+
+    if not manifest_p or not manifest_p.is_file():
         print("BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
         sys.exit(2)
 

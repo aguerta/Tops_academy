@@ -69,9 +69,9 @@ outputs:
     description: Absolute path to the Cognitive Task Analysis document
 ---
 
-# Content-to-Course Antigravity Skill (v3.21 High-Throughput Load Inversion Architecture)
+# Content-to-Course Antigravity Skill (v3.22 High-Throughput Hardened Architecture)
 
-A universal, subject-agnostic educational engineering pipeline that converts raw academic materials (Beamer presentations, handwritten OneNote notes, statistical software exports, and high-resolution chalkboard images) into fully playable, interactive Top's Academy courses.
+A universal, subject-agnostic educational engineering pipeline that converts raw academic materials (Beamer presentations, handwritten OneNote notes, statistical software exports, and high-resolution chalkboard images) into fully playable, interactive Top's Academy courses in **≤ 20 minutes** for a standard 20-competency curriculum.
 
 ---
 
@@ -80,250 +80,230 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 > 
 > La conversación principal actúa **exclusivamente como Directora de Proyecto / Orquestadora General**. Su responsabilidad es coordinar el flujo de trabajo, invocar las etapas del runner CLI (`run.py`), inspeccionar los presupuestos y artefactos de control, y **delegar todas las tareas intensivas a subagentes especializados en paralelo mediante `invoke_subagent`**.
 >
-> ### 🏛️ ARQUITECTURA DE INVERSIÓN DE CARGA (LOAD INVERSION ARCHITECTURE - v3.21):
-> - **`work/dispatch/types/*.json`**: Almacena el **100% íntegro del `system_prompt` universal** (sin truncar ni comprimir), registrado una sola vez al inicio de la sesión mediante `define_subagent`.
-> - **`work/dispatch/items/*.json`**: Contiene exclusivamente **órdenes de trabajo atómicas, concisas y con cero duplicación de system prompt** (`< 2,500 caracteres`), equipadas con encabezado Scope-Lock, directivas de tarea, comandos exactos de compilación determinista y señal de finalización `DONE:`.
->
-> ### 🚫 REGLAS ESTRICTAS DE CONDUCTA DEL DIRECTOR:
-> 1. **PASO 0 (Registro de Tipos Especializados con Load Inversion vía `define_subagent`):** Al inicio de la sesión, el Director ejecuta `python .agents/skills/content-to-course/run.py --stage define-types` (o `dispatch.py define-types --work-dir <work_dir>`). Este comando genera archivos individuales por tipo en `work/dispatch/types/<type_name>.json` (`c2c_cta_architect.json`, `c2c_shard_author.json`, `c2c_judge.json`, `c2c_repair.json`), cada uno conteniendo el 100% del system prompt sin truncamiento (`< 20 KB`). El Director lee en **1 solo turno paralelo de llamadas a `view_file`** todos los archivos de tipos y emite simultáneamente en un **ÚNICO turno paralelo las llamadas a `define_subagent`** (Parallel Tool Calling).
-> 2. **DESPACHO LOAD INVERSION Y TRASPASO DIRECTO (`work/dispatch/items/`):** Al despachar subagentes (`cta`, `authors`, `judges`, `repair`), `dispatch.py` genera un archivo individual por subagente en `work/dispatch/items/<stage>_<idx:02d>.json` (cada uno `< 5 KB`, conciso y libre de system prompts duplicados). El Director ejecuta llamadas paralelas a `view_file` en **1 solo turno** sobre todos los archivos de ítems asignados para obtener las órdenes de trabajo íntegras, y las pasa directamente a `invoke_subagent`.
-> 3. **MODELO ESTÁNDAR PARA SUBAGENTES:** Todos los subagentes especializados y jueces ciegos operan con el modelo rápido `flash` (`"Model": "flash"`).
-> 4. **PROHIBIDO redactar plantillas de ejercicios (`work/templates/*.json`) en el hilo principal:** La autoría de plantillas **DEBE** ser delegada a subagentes autores en paralelo (`invoke_subagent`).
-> 5. **INGESTA DIRECTA DE PDF POR DEFECTO:** En Antigravity, la herramienta `view_file` lee archivos PDF (`.pdf`) directamente. Se debe utilizar **Ingesta Directa de PDF** (`--no-handouts --vision none`), aprovechando la extracción de texto en `work/corpus.md` y la lectura directa del PDF.
-> 6. **PROHIBIDO resolver manualmente lotes de evaluación a ciegas:** La resolución ciega se delega a subagentes jueces en paralelo con Zero-Warmup in-prompt payload.
-> 7. **FAN-OUT EN UN SOLO LLAMADO CONCURRENTE (`invoke_subagent`):** Al delegar trabajo en paralelo en cualquier etapa (CTA, Shards/Autores, Jueces Ciegos), el Director **DEBE** leer todos los ítems en **1 solo turno paralelo de `view_file`** e invocar a **TODOS** los subagentes concurrentes dentro del array `Subagents` en un **ÚNICO llamado a `invoke_subagent`** con `"Model": "flash"` (incluyendo **todos los `judge_01..judge_N` simultáneamente en una sola llamada**, ¡NUNCA de forma secuencial ni en tandas separadas!). Inmediatamente después, el Director finaliza su turno (sin invocar más herramientas) para esperar el despertar reactivo del sistema.
-> 8. **BLINDAJE OPERATIVO DE DIRECT CTA (TUPLAS POSICIONALES EN `cta_data.py`):** El subagente `c2c_cta_architect` emite tuplas pedagógicas compactas en `work/cta_data.py` (o `work/cta_parts/part_XX_data.py`) en estricto orden cronológico. Cero diccionarios y cero chat emissions.
-> 9. **BLINDAJE OPERATIVO DE AUTORES DE SHARDS (CONTEXTO TURN-0 COMPLETO & `compile_shard.py`):** Los autores `c2c_shard_author` reciben la especificación completa Turn-0 de sus competencias y los 6 distractores (D-XX-01..06) inyectados en su orden de trabajo, escriben funciones Python nativas y tuplas de 9 elementos en `work/shards/shard_XX_data.py` y compilan deterministamente con `compile_shard.py`. Cero scaffolds pre-sembrados en `work/templates/` y cero carpetas `scratch/`.
-> 10. **BLINDAJE OPERATIVO DE JUECES CIEGOS (ZERO-WARMUP EN 1 SOLO TURNO):** Los jueces `c2c_judge` reciben el lote completo de preguntas inyectado directamente en su prompt, resuelven por primeros principios sin llamar a `view_file` ni `run_command`, y escriben `work/verification/judge_responses_XX.json` (o `work/judges/judge_XX.json`) en **1 solo turno**.
-> 11. **RECOLECCIÓN INCREMENTAL DE TELEMETRÍA ETAPA POR ETAPA:** El estado y la telemetría de cada etapa se recolectan y persisten de forma incremental en `work/state.json` y `work/telemetry/` (`telemetry_<stage>.json`), registrando tokens (input, output, thinking, cache), latencias por turno y estado de cumplimiento.
+> ### 🏛️ ARQUITECTURA HARDENED v3.22 (SWIFT-DISPATCH & POINTER PROMPTS):
+> - **Pointer Prompts (~300 B)**: El Director NUNCA transcribe grandes fragmentos de especificación en el chat. Los system prompts se definen una sola vez (≤ 5 KB cada uno) y las llamadas a `invoke_subagent` utilizan encabezados ultra-compactos que apuntan a órdenes de trabajo en disco (`work/dispatch/items/<role>_XX.json`). El tiempo de mecanografiado del Director se reduce de 96–186s a ≤ 1s.
+> - **Swift-Dispatch SLA (≤ 20s)**: Entre la finalización del comando `dispatch` y el envío de `invoke_subagent`, el Director no debe inspeccionar los contenidos ni razonar sobre ellos: toma el bloque estructurado de subagentes y lo despacha de inmediato en **un único llamado concurrente** ordenado por peso descendente.
+> - **Lossless MapReduce Slicing**: Partición física de PDFs mediante `pymupdf` `select()` + `save()` en `work/parts/part_NN/`, preservando trazos vectoriales y tipografías originales. Las citas de evidencia se mantienen locales (1..n) y se remapean deterministamente en la fase reduce.
+> - **Automated Watchdog (`budget_guard.py`)**: Temporizador reactivo (`schedule`) que despierta al Director tras 5–8 minutos de fan-out para auditar `transcript.jsonl`. Subagentes con > 40 turnos, > 5M tokens o bucles de lectura son abortados y reemplazados quirúrgicamente por `c2c_repair`.
+> - **Layered Automated Healing (L1–L5)**: Ciclo cerrado que repara sintaxis KaTeX, snapping de encabezados y delimitadores de matemáticas antes de requerir intervención del subagente, registrando cada ajuste en `patch_ledger.json`.
+> - **Append Workflow & Environment Resilience**: Inyección delta en `prepare.py --append` leyendo `courses/<id>.json` para generar secuencias numéricas continuas sin solapamiento (ej. Solow 21 → 45). Resiliencia a UTF-8 en PowerShell (fallback ante `\ufffd`) y saneamiento de comillas en rutas de Windows.
 
 ---
 
-## Arquitectura del Pipeline y Contratos de Etapa (v3.2 High-Throughput)
+## 🏗️ Diagrama de Arquitectura del Pipeline v3.22
 
 ```
-[ Documentos del Curso: PDFs Beamer, Papers, Libros ]
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Stage 0: Prepare & Manifiesto Pre-CTA (run.py --stage prepare)  │
-│ - Extrae capa de texto/matemáticas (work/corpus.md)             │
-│ - Genera manifiesto de fuentes: work/pre_cta_manifest.json      │
-│   (documentos, rutas y rangos de páginas válidas 1..N)          │
-│ - Si falta pre_cta_manifest.json: BLOCKER inmediato             │
-└────────────────────────────────┬────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Stage 1: Síntesis de Competencias CTA (dispatch-cta)             │
-│ - Exige work/pre_cta_manifest.json (cero fallbacks)             │
-│ - Director lee work/dispatch/items/cta_01.json (<28KB)          │
-│ - Subagente c2c_cta_architect escribe tuplas en cta_data.py     │
-│ - Compilación y certificación determinista a work/cta.json      │
-└────────────────────────────────┬────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Stage 2: Sharding de Competencias (run.py --stage shard)        │
-│ - Particiona en shards balanceados contiguos (4 a 8 comp.)      │
-│ - Genera manifiesto de shards: work/shards/pre_shard_manifest.json
-└────────────────────────────────┬────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Stage 3: Fan-Out de Autores Atómicos (dispatch-authors)         │
-│ - Exige pre_shard_manifest.json y pre_cta_manifest.json         │
-│ - Director lee work/dispatch/items/author_XX.json (<28KB) c/u   │
-│ - K subagentes c2c_shard_author escriben shard_XX_data.py       │
-│ - Compilación estricta con compile_shard.py                     │
-│ - Gate de plantillas: run.py --stage templates                  │
-└────────────────────────────────┬────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Stage 4: Instanciación Masiva en Sandbox (run.py --stage build) │
-│ - Sweeps deterministas CRC32 cumpliendo cuotas (30/20)          │
-│ - Verificación de invariantes y diversidad de stems >= 0.5      │
-│ - Outputs: work/course.json                                     │
-└────────────────────────────────┬────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Stage 5: Verificación y Jueces Ciegos (dispatch-judges)         │
-│ - Genera lotes ciegos en work/verification/judge_batch_XX.json   │
-│ - Director lee work/dispatch/items/judge_XX.json (<28KB) c/u    │
-│ - Zero-Warmup: Ítems inyectados directamente en prompt de juez  │
-│ - Jueces resuelven y escriben en 1 solo turno                   │
-│ - run.py --stage judge-compare evalúa acuerdo contra claves     │
-│ - Circuito de reparación focalizado ante discordancias          │
-└────────────────────────────────┬────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ Stage 6: Publicación en Plataforma (run.py --stage publish)     │
-│ - Valida arbitraje ciego aprobado                               │
-│ - Publica a courses/<course_id>.json y registra en plataforma   │
-│ - Plataforma interactiva lista en http://localhost:3000         │
-└─────────────────────────────────────────────────────────────────┘
+[ Fuentes Originales: PDFs Beamer, Trazos Vectoriales, Apuntes ]
+                           │
+                           ▼
+┌───────────────────────────────────────────────────────────────────────┐
+│ Stage 0: Prepare & Delta Manifest (prepare.py / run.py --stage prepare)│
+│ - Particionado físico sin pérdidas (pymupdf select() + save())        │
+│ - Ponderación estructural por streams vectoriales e imágenes          │
+│ - Modo --append: Lee courses/<id>.json e inyecta next_ids continuos    │
+│ - Genera: work/pre_cta_manifest.json (y delta_manifest.json)          │
+│ - BLOCKER estricto si falta manifiesto central                        │
+└──────────────────────────────────┬────────────────────────────────────┘
+                                   │
+                                   ▼
+┌───────────────────────────────────────────────────────────────────────┐
+│ Stage 1: Síntesis CTA MapReduce / Directa (dispatch-cta)              │
+│ - Swift-Dispatch: Director emite invoke_subagent con Pointer Prompts  │
+│ - Arquitectos leen su slice (work/parts/part_NN/) citando páginas 1..n│
+│ - Layered Healing L1–L5: KaTeX tokenization, snapped headings         │
+│ - patch_ledger.json audita reparaciones; cta_merge.py remapea global  │
+│ - Cero micro-ediciones: emisión atómica en work/cta_data.py           │
+└──────────────────────────────────┬────────────────────────────────────┘
+                                   │
+                                   ▼
+┌───────────────────────────────────────────────────────────────────────┐
+│ Stage 2: Sizing Adaptativo y Sharding (run.py --stage shard)          │
+│ - Shards dinámicos: clamp(ceil(N / 8), 2, 6) comp/shard, hasta 8 aut. │
+│ - Balanceo contiguo de dependencias pedagógicas sin cortes arbitrarios│
+│ - Genera manifiesto: work/shards/pre_shard_manifest.json              │
+└──────────────────────────────────┬────────────────────────────────────┘
+                                   │
+                                   ▼
+┌───────────────────────────────────────────────────────────────────────┐
+│ Stage 3: Fan-Out de Autores Atómicos & Watchdog (dispatch-authors)    │
+│ - Pointer Prompts (<300 B) apuntando a work/dispatch/items/author_XX  │
+│ - Contexto Turn-0 completo inyectado en disco; prohibido compile_shard│
+│ - SHA-256 Circuit Breaker: auto-reset inmediato ante cambios de código│
+│ - Interpolación de variables por regex; espacio paramétrico >= 500    │
+│ - Watchdog (budget_guard.py a 8 min): aborta y reemplaza stragglers   │
+│ - Gate de compilación: run.py --stage templates                       │
+└──────────────────────────────────┬────────────────────────────────────┘
+                                   │
+                                   ▼
+┌───────────────────────────────────────────────────────────────────────┐
+│ Stage 4: Instanciación Masiva en Sandbox (run.py --stage build)       │
+│ - Sweeps deterministas CRC32 (30 habilidad / 20 concepto y hecho)     │
+│ - Diversidad de stems >= 0.5 y verificación de invariantes algebraicos│
+│ - Genera curso unificado instanciado: work/course.json                │
+└──────────────────────────────────┬────────────────────────────────────┘
+                                   │
+                                   ▼
+┌───────────────────────────────────────────────────────────────────────┐
+│ Stage 5: Verificación Ciega en Lotes Nativos (dispatch-judges)        │
+│ - Limpieza previa: manage_subagents(kill_all) para purgar errored     │
+│ - Lotes ciegos particionados nativamente: <= 12 ítems por juez        │
+│ - Zero context checkpoint: Director nunca lee los 90 KB de preguntas  │
+│ - Jueces resuelven por primeros principios en 1 solo turno            │
+│ - Autovalidación de completitud y re-despacho de reactivos faltantes  │
+│ - run.py --stage judge-compare evalúa acuerdo contra claves           │
+└──────────────────────────────────┬────────────────────────────────────┘
+                                   │
+                                   ▼
+┌───────────────────────────────────────────────────────────────────────┐
+│ Stage 6: Publicación y Registro en Plataforma (run.py --stage publish)│
+│ - Valida arbitraje ciego aprobado (acuerdo >= 95% o 0 discordancias)  │
+│ - Saneamiento UTF-8: fallback a cta.json ante \ufffd en --title       │
+│ - Modo --append: fusión directa continua; remap como fallback avisado │
+│ - Publica a courses/<course_id>.json y registra en base de datos      │
+│ - Acceso inmediato en: http://localhost:3000/#/course/<course_id>     │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Protocolo de Orquestación del Director (Paso a Paso)
+## 📋 Taxonomía Forense de Fallas y Matriz de Mitigación (12 Defectos Críticos)
 
-### Paso 0a: Preparación y Manifiesto Pre-CTA
-1. Ejecutar en terminal:
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage prepare --pdf <pdf_path> --course-id <course_id> --work-dir <work_dir> [--granularity standard] [--cta-mode auto]
-   ```
-2. La salida del comando genera:
-   - Capa de texto enriquecida: `work/corpus.md`.
-   - **Manifiesto de documentos pre-CTA (`work/pre_cta_manifest.json`)**: lista exhaustiva de documentos fuente, rutas de acceso y rango de páginas PDF válidas `1..N`.
-   - Si no existe `work/pre_cta_manifest.json`, el pipeline se detiene inmediatamente con:
-     `BLOCKER:: No existe pre_cta_manifest.json`
+A partir de la síntesis forense sobre las 7 corridas de producción, se consolidaron los 12 modos de falla que degradaban el rendimiento del pipeline y sus correspondientes soluciones arquitectónicas en v3.22:
 
----
-
-### Paso 0 (0b): Registro de Tipos Especializados de Subagentes con Load Inversion (<20s)
-1. El Director ejecuta:
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage define-types --work-dir <work_dir>
-   ```
-   *(Este comando genera los archivos individuales en `work/dispatch/types/<type_name>.json`, cada uno con el 100% íntegro del system prompt universal, y el índice en `work/dispatch/subagent_types.json`).*
-
-2. **Lectura Paralela de Tipos y Registro Simultáneo con `define_subagent`:**
-   El Director lee en **1 solo turno paralelo de llamadas a `view_file`** todos los archivos individuales (`< 20 KB` cada uno):
-   - `work/dispatch/types/c2c_cta_architect.json`
-   - `work/dispatch/types/c2c_shard_author.json`
-   - `work/dispatch/types/c2c_judge.json`
-   - `work/dispatch/types/c2c_repair.json`
-
-   Y emite simultáneamente en ese **mismo único turno** las 4 llamadas a `define_subagent` (Parallel Tool Calling), registrando:
-   - `c2c_cta_architect`: Cognitive Task Analysis Architect (`enable_write_tools: true`)
-   - `c2c_shard_author`: Shard Exercise Author (`enable_write_tools: true`)
-   - `c2c_judge`: Blind Evaluation Judge (`enable_write_tools: true`)
-   - `c2c_repair`: Targeted Repair Engineer (`enable_write_tools: true`)
+| # | Modo de Falla | Causa Raíz Exacta | Impacto en Producción | Mitigación Arquitectónica v3.22 |
+| :-: | :--- | :--- | :--- | :--- |
+| **1** | **Purga de Espacios Activos en `delete_course.py`** | `clean_orphan_course_dirs` borraba carpetas sin JSON final aunque tuvieran trabajo en curso. | Eliminación accidental de `work/` activo en Runs 1–3 y pérdida de artefactos. | Guardia estricta: prohibido borrar si existe `state.json`, `pre_cta_manifest.json` o archivos con `< 24h` de modificación. |
+| **2** | **Residuos de `corpus.md` en Stdout / Logs** | Referencias heredadas a archivos de texto intermedios en scripts y prompts. | Confusión en subagentes, intentos de lectura de archivos inexistentes. | Purga completa de código y stdout para `corpus.md` y `section_*.md`; lectura directa de PDF/imágenes. |
+| **3** | **Micro-Ediciones Iterativas en CTA** | Arquitecto emitía el archivo con múltiples llamadas a `replace_file_content` corrigiendo sintaxis. | Hasta 33 turnos y 24 minutos en Stage 1 (Run 2). | Emisión atómica en 1 solo `write_to_file`; capas de auto-healing L1–L5; límite de ≤ 3 edits y ≤ 2 compilaciones. |
+| **4** | **Sobre-Lectura de Herramientas por Autores** | Subagentes ejecutaban `view_file` de `compile_shard.py` o `check_templates.py`. | Quema masiva de tokens de lectura (hasta 18M en Shard 03). | Prohibición en Scope-Lock de leer herramientas internas; inyección de plantilla canónica de 15 líneas en prompt. |
+| **5** | **Colisión LaTeX `{...}` vs Regla `R-20`** | `str.format(**vars)` en `assemble.py` fallaba con llaves de KaTeX (`K^{0.5}`, `\frac{a}{b}`). | 132 turnos en Shard 03 (Run 6) al intentar escapar con llaves dobles residuales. | Reemplazo de `.format()` por regex selectivo de variables; normalización automática `{{token}}` → `{token}` en compilador. |
+| **6** | **Corrupción de Subíndices en `\frac`** | Regex simple de fracciones rompía subíndices compuestos tipo `\frac{S_{xy}}{S_{xx}}`. | 136 turnos y 16.4M tokens en Shard 01 (Run 2) hasta intervención manual. | Parche estructural de fracciones balanceadas (`frac_simple_fix`) protegido por suite unitaria de regresión. |
+| **7** | **Bloqueo Permanente de Circuit Breaker** | `BUDGET HALT` en `.check_attempts` no se reseteaba tras corregir el código del shard. | Autores en bucle infinito reintentando contra un bloqueo permanente (Runs 2, 5, 6). | Circuit Breaker con hash SHA-256: auto-reset inmediato en cuanto el código del archivo cambia. |
+| **8** | **Creación de Carpeta en vez de Archivo** | `compile_shard.py` ejecutaba `mkdir(parents=True)` sobre la ruta destino cuando el archivo no existía. | Creación de directorios `shard_XX_data.py/` que impedían escrituras futuras (Runs 1 y 5). | Comprobación estricta de extensión `.py` y salida con error limpio sin invocar `mkdir`. |
+| **9** | **Discrepancia de Flags CLI en Shards** | Omisión de `--shard` o `--work` en ejemplos de ejecución del prompt de autores. | `ERROR: shard_id no especificado` y lecturas cruzadas entre autores concurrentes. | Auto-inferencia de `shard_id` y `work_dir` a partir de la ruta de `--input`; aislamiento de espacio paramétrico (≥500 comb). |
+| **10** | **Lotes Monolíticos en Jueces y Context Checkpoint** | Despacho de 42–48 reactivos en un solo lote a jueces; Director hacía `view_file` de 260 KB. | Salida truncada del juez (22/48 en Run 7) y `CHECKPOINT` de compactación en Director (Run 2). | Particionado nativo en sub-lotes de ≤ 12 ítems (`judge_batch_NN.json`); Pointer Prompts (<300 B) sin saturar contexto. |
+| **11** | **Ceguera Delta en Modo `--append`** | Etapas 0–5 no leían el curso existente, re-extrayendo competencias desde `C-01` y remapeando al final. | Gasto innecesario de 7.68M tokens y remapeo heurístico tardío en Stage 6 (Run 6). | `prepare.py --append` lee `courses/<id>.json`, inyecta competencias existentes y secuencias numéricas continuas desde Stage 0. |
+| **12** | **Fricción de Consola Windows y Caracteres `\ufffd`** | Codificación PowerShell corrompía tildes en `--title` (`Estad\ufffdstica`); comillas escapadas `\"`. | 12 turnos reparando títulos y fallos de sintaxis en one-liners de `python -c` (Runs 2, 3, 7). | Saneamiento de argumentos CLI; fallback automático al título de `cta.json`; prohibición de `python -c` con comillas anidadas. |
 
 ---
 
-### Paso 1 / Paso 2 (CTA): Síntesis Cognitiva de Competencias
+## 🛡️ Procedimientos de Watchdog y Protocolo de Presupuesto
 
-1. **Generar Despacho CTA:**
-   ```bash
-   python .agents/skills/content-to-course/dispatch.py dispatch-cta --work-dir <work_dir> [--mode direct]
-   ```
-   - El script verifica estrictamente que exista `work/pre_cta_manifest.json` (o `work/ingestion_manifest.json`). Si no existe, detiene con:
-     `BLOCKER:: No existe pre_cta_manifest.json`.
-   - Genera los archivos de subagente individuales en `work/dispatch/items/cta_*.json` (`< 2,500 caracteres`, sin duplicación de system prompt gracias a Load Inversion) y el log en `work/dispatch/cta.json`.
+Para garantizar que ningún subagente descontrolado queme tokens en bucle, el Director implementa una vigilancia automatizada en dos capas:
 
-2. **Lectura en 1 Solo Turno Paralelo e Invocación Única:**
-   El Director lee todos los archivos `work/dispatch/items/cta_*.json` generados en **1 solo turno paralelo de llamadas a `view_file`**, e invoca inmediatamente a todos los subagentes CTA en **1 sola llamada a `invoke_subagent`** con `"Model": "flash"`.
+### 1. Despacho Rápido y SLAs de Tiempo (Swift-Dispatch SLA)
+- **SLA de Despacho (≤ 20 segundos)**: El Director debe despachar los subagentes en **un único llamado paralelo a `invoke_subagent`** en un plazo no mayor a 20s desde que el comando `dispatch` finaliza.
+- **Orden de Fan-Out**: Las tareas se ordenan de mayor a menor peso computacional (ej. el shard con mayor densidad de cálculos primero), permitiendo que el straggler potencial inicie primero.
+- **Finalización de Turno Inmediata**: Tras emitir `invoke_subagent`, el Director NO invoca más herramientas y finaliza su turno para esperar el despertar reactivo.
 
-3. **Contrato de Operación del Arquitecto:**
-   - **Paginación 1-indexed:** Cita exclusivamente páginas `1..N` del archivo PDF según la tabla de `pre_cta_manifest.json` / `ingestion_manifest.json`. NUNCA usa la numeración impresa del libro o capítulo.
-   - **Tuplas Puras:** Emite tuplas de 9 elementos en `work/cta_data.py` (o `work/cta_parts/part_XX_data.py`). Cero diccionarios y cero chat output.
-   - **Compilación Determinista:** Compila con `python .agents/skills/content-to-course/compile_cta.py --input <py_path> --output <json_path> --manifest <manifest_path>` y corrige errores línea a línea con `replace_file_content`.
-
-> [!NOTE]
-> **Modos CTA (`direct` vs `mapreduce`):**
-> - **Modo `direct` (por defecto):** Despacha un único arquitecto con `work/dispatch/items/cta_01.json` (`< 2,500 caracteres`) para emitir el currículo completo en `work/cta_data.py`.
-> - **Modo `mapreduce`:** Despacha un subagente arquitecto por cada subparte declarada (`work/dispatch/items/cta_01.json`, `cta_02.json`, ..., `cta_MM.json`), pasando a cada uno exclusivamente el documento/rango de páginas de su subparte y el comando `compile_cta.py`.
-
-4. **Validar Gate de CTA:**
-   Al despertar tras `DONE`:
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage cta --work-dir <work_dir>
-   ```
+### 2. Guardián de Presupuesto (`budget_guard.py`)
+- Al fannear autores o jueces, el Director agenda un temporizador de control mediante `schedule`:
+  - **Autores de Shards**: Timer a **8 minutos** (`DurationSeconds=480`).
+  - **Particiones CTA MapReduce**: Timer a **5 minutos** (`DurationSeconds=300`).
+- Al sonar el temporizador, si el fan-out no ha concluido, el Director ejecuta:
+  ```bash
+  python .agents/skills/content-to-course/budget_guard.py --work-dir <work_dir>
+  ```
+- **Criterios de Aborto**:
+  - Subagente con más de **40 turnos**.
+  - Subagente con más de **5,000,000 tokens** acumulados.
+  - Subagente en bucle repetitivo de lecturas de herramientas (`compile_shard.py`, `check_templates.py`).
+- **Protocolo de Recuperación**:
+  1. Abortar el subagente conflictivo mediante `manage_task(Action='kill', TaskId=...)` o `manage_subagents(Action='kill')`.
+  2. Despachar un subagente de rescate `c2c_repair` asignado **exclusivamente a las competencias incompletas**, heredando el código parcial compilado.
 
 ---
 
-### Paso 2: Partición en Shards Amortizados
+## 🔄 Playbook de Resunción ante Límites de Tasa (429 / 404)
 
-1. El Director ejecuta el particionador:
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage shard --work-dir <work_dir>
-   ```
-   - Genera `work/shards/pre_shard_manifest.json` con la distribución de competencias por shard.
+Cuando la API emite errores de cuota o indisponibilidad (`429 RESOURCE_EXHAUSTED` o `404 NOT_FOUND`):
+
+1. **Estado Incremental Persistente (`work/state.json`)**:
+   - Cada etapa registra checkpoints atómicos con el estado de cada shard o partición (`completed`, `in_progress`, `pending`).
+   - Los archivos completados en disco (`shard_01.json`, `cta_parts/part_01.json`) son inmutables e idempotentes: no se vuelven a procesar.
+2. **Limpieza de Subagentes Residuales Pre-Stage 5**:
+   - Antes de iniciar la verificación de jueces ciegos, el Director ejecuta:
+     ```bash
+     manage_subagents(Action="kill_all")
+     ```
+   - Esto evita que entradas residuales en estado `errored` por 429 previos confundan la toma de decisiones del Director.
+3. **Resunción Focalizada**:
+   - Al recuperarse de un corte, el Director reanuda la ejecución únicamente para las unidades no marcadas como completadas en `work/state.json`.
+   - PROHIBIDO reiniciar el pipeline desde la etapa 0 si las etapas previas ya están certificadas.
+
+---
+
+## 💻 Guía de Entorno y Manejo de Rutas en Windows PowerShell
+
+Para evitar anomalías de quoting y fallos de codificación observados en sistemas Windows:
+
+1. **Saneamiento de Títulos Unicode**:
+   - Si la terminal pasa un título con caracteres de reemplazo (`\ufffd`), los componentes `run.py`, `prepare.py` y `course_publisher.py` descartan automáticamente la cadena dañada y leen el título íntegro UTF-8 desde `cta.json`, `pre_cta_manifest.json` o el curso base.
+2. **Rutas Absolutas Limpias (Cero `\"` Incrustadas)**:
+   - Pasar siempre rutas absolutas limpias sin comillas dobles escapadas internas:
+     - ✅ Correcto: `--work-dir D:/Augusto/courses/solow/work`
+     - ❌ Incorrecto: `--work-dir "\"D:\\Augusto\\courses\\solow\\work\""`
+3. **Prohibición de One-Liners Complejos con `python -c`**:
+   - No ejecutar comandos complejos con comillas anidadas en PowerShell mediante `python -c`.
+   - Si se requiere una manipulación de datos o particionado auxiliar, escribir un script temporal en `scratch/script.py` y ejecutarlo directamente:
+     ```bash
+     python scratch/helper.py
+     ```
 
 ---
 
-### Paso 3 / Paso 4 (Shards): Fan-Out Paralelo de Autores con Contexto Turn-0
+## 🚀 Guía de Ejecución Paso a Paso del Director
 
-1. **Generar Despacho de Autores:**
-   ```bash
-   python .agents/skills/content-to-course/dispatch.py dispatch-authors --work-dir <work_dir>
-   ```
-   - Exige `work/shards/pre_shard_manifest.json` y `work/pre_cta_manifest.json`. Si falta alguno, emite:
-     `BLOCKER:: No existe pre_shard_manifest.json` o `BLOCKER:: No existe pre_cta_manifest.json`.
-   - Escribe archivos individuales por autor en `work/dispatch/items/author_01.json`, `author_02.json`, ... con especificación Turn-0 completa (competencias + 6 distractores D-XX-01..06) y cero duplicación de system prompt.
+### Paso 0: Preparación y Manifiesto (prepare.py)
+```bash
+python .agents/skills/content-to-course/run.py --stage prepare --pdf <pdf_path> --course-id <course_id> --work-dir <work_dir> [--append] [--cta-mode auto]
+```
+- Si se activa `--append`, lee `courses/<id>.json` y calcula la secuencia continua de IDs (`delta_manifest.json`).
 
-2. **Lectura en 1 Solo Turno Paralelo e Invocación Masiva Única:**
-   El Director lee **todos** los archivos `work/dispatch/items/author_*.json` generados en **1 solo turno paralelo de llamadas a `view_file`**, y lanza simultáneamente a **todos los subagentes autores (`author_01..author_N`) en 1 sola llamada a `invoke_subagent`** con `"Model": "flash"`.
+### Paso 1: Registro de Tipos con Load Inversion (<20s)
+```bash
+python .agents/skills/content-to-course/run.py --stage define-types --work-dir <work_dir>
+```
+- El Director lee los 4 tipos en 1 solo turno de `view_file` y registra `define_subagent` en paralelo.
 
-3. **Contrato de Autoría Nativa de Shards:**
-   - Cada autor escribe funciones Python y tuplas de 9 elementos en `work/shards/shard_XX_data.py` (`TEMPLATES = [...]`).
-   - Cero pre-siembra de JSONs en `work/templates/` ni bundles en `work/shards/bundles/`.
-   - Ejecuta la compilación estricta con:
-     `python .agents/skills/content-to-course/compile_shard.py --input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --cta work/cta.json --manifest work/ingestion_manifest.json`
-   - Si se reportan errores mapeados a línea, los corrige con `replace_file_content` sobre `shard_XX_data.py` y finaliza con `DONE: work/shards/<shard_id>.json`.
+### Paso 2: Despacho CTA y Validación
+```bash
+python .agents/skills/content-to-course/dispatch.py dispatch-cta --work-dir <work_dir>
+```
+- Despacha los arquitectos con Pointer Prompts en 1 solo turno concurrente. Al finalizar:
+```bash
+python .agents/skills/content-to-course/run.py --stage cta --work-dir <work_dir>
+```
 
-4. **Validar Gate de Plantillas:**
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage templates --work-dir <work_dir>
-   ```
-
----
+### Paso 3: Sharding y Fan-Out de Autores
+```bash
+python .agents/skills/content-to-course/run.py --stage shard --work-dir <work_dir>
+python .agents/skills/content-to-course/dispatch.py dispatch-authors --work-dir <work_dir>
+```
+- El Director lanza todos los autores en **una sola llamada concurrente a `invoke_subagent`**.
+- Activa el watchdog a 8 minutos. Al concluir:
+```bash
+python .agents/skills/content-to-course/run.py --stage templates --work-dir <work_dir>
+```
 
 ### Paso 4: Instanciación Masiva en Sandbox
+```bash
+python .agents/skills/content-to-course/run.py --stage build --work-dir <work_dir>
+```
 
-1. El Director ejecuta:
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage build --work-dir <work_dir>
-   ```
-   - Valida sweeps deterministas CRC32, cuotas (≥30 por habilidad, ≥20 por hecho/concepto), invariantes y diversidad de stems (≥0.5).
+### Paso 5: Verificación Ciega y Arbitraje
+```bash
+manage_subagents(Action="kill_all")
+python .agents/skills/content-to-course/run.py --stage verify --work-dir <work_dir>
+python .agents/skills/content-to-course/dispatch.py dispatch-judges --work-dir <work_dir>
+```
+- Lotes nativos de ≤ 12 ítems por juez. Lanzamiento simultáneo en 1 solo turno de `invoke_subagent`. Al concluir:
+```bash
+python .agents/skills/content-to-course/run.py --stage judge-compare --work-dir <work_dir>
+```
 
----
-
-### Paso 5: Verificación Independiente y Circuito Cerrado de Jueces Ciegos
-
-1. Generar lote de evaluación ciego:
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage verify --work-dir <work_dir>
-   ```
-
-2. **Despachar Jueces con Zero-Warmup:**
-   ```bash
-   python .agents/skills/content-to-course/dispatch.py dispatch-judges --work-dir <work_dir>
-   ```
-   - Escribe archivos de ítems en `work/dispatch/items/judge_01.json`, `judge_02.json`, ...
-   - Inyecta los reactivos del batch (`question_id`, `question_type`, `stem_es`, `options`) directamente dentro del `Prompt` sin duplicar el system prompt.
-
-3. **Lectura en 1 Solo Turno Paralelo y Lanzamiento Concurrente Total:**
-   El Director lee **todos** los archivos `work/dispatch/items/judge_*.json` en **1 solo turno paralelo de llamadas a `view_file`** y lanza a **TODOS los jueces (`judge_01..judge_N`) concurrentemente en 1 único llamado a `invoke_subagent`** con `"Model": "flash"` (¡estrictamente PROHIBIDO lanzarlos secuencialmente o en tandas separadas!).
-   - Los jueces ciegos **NO leen archivos con `view_file` ni ejecutan `run_command`**: resuelven analíticamente desde primeros principios y escriben `work/verification/judge_responses_XX.json` (o `work/judges/judge_XX.json`) en **1 solo turno**.
-
-4. **Evaluar Respuestas contra Claves:**
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage judge-compare --work-dir <work_dir>
-   ```
-
-5. **Circuito de Reparación Focalizada:**
-   Si se reportan discordancias en `work/judge_report.json`:
-   ```bash
-   python .agents/skills/content-to-course/dispatch.py dispatch-repair --work-dir <work_dir>
-   ```
-   El subagente `c2c_repair` corrige quirúrgicamente las tuplas en `work/shards/shard_XX_data.py` y re-compila con `compile_shard.py`.
-
----
-
-### Paso 6: Publicación y Registro del Curso
-
-1. El Director publica el curso:
-   ```bash
-   python .agents/skills/content-to-course/run.py --stage publish --work-dir <work_dir> --output-dir courses
-   ```
-2. Presenta el resumen ejecutivo al usuario:
-   - Título y Course ID.
-   - Ruta del archivo publicado (`courses/<course_id>.json`).
-   - Conteo de preguntas y competencias validadas (100% de reglas psicométricas).
-   - Enlace interactivo en la plataforma: `http://localhost:3000/#/course/<course_id>`.
+### Paso 6: Publicación en Plataforma
+```bash
+python .agents/skills/content-to-course/run.py --stage publish --work-dir <work_dir> --output-dir courses [--append]
+```
+- Publica a `courses/<course_id>.json` e imprime URL interactiva: `http://localhost:3000/#/course/<course_id>`.

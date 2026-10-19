@@ -15,8 +15,9 @@ import logging
 import math
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Set
 
 # Ensure skill directory is in sys.path
 skill_dir = Path(__file__).parent.resolve()
@@ -355,22 +356,36 @@ def generate_judge_batch(
 
 
 def split_judge_batch(
-    work_dir: Union[str, Path],
-    max_judges: int = 4,
-    items_per_judge: int = 40,
-) -> List[Path]:
-    """Splits work/judge_batch.json into stratified batches work/judge_batch_{idx:02d}.json.
+    work_dir: Union[str, Path, List[Dict[str, Any]]],
+    max_judges: int = 8,
+    items_per_judge: int = 12,
+    max_items_per_judge: Optional[int] = None,
+) -> Any:
+    """Splits work/judge_batch.json or raw items list into batches with at most items_per_judge items each (default <= 12).
     
     Args:
-        work_dir: Working directory containing judge_batch.json.
-        max_judges: Maximum number of split batches / judges.
-        items_per_judge: Target item count per judge.
+        work_dir: Working directory containing judge_batch.json, OR a direct list of item dicts.
+        max_judges: Soft target for maximum number of judges.
+        items_per_judge: Maximum item count per judge (default: 12).
+        max_items_per_judge: Alias for items_per_judge.
 
     Returns:
-        List of Paths to generated judge_batch_{idx:02d}.json files.
+        List of Paths if work_dir is a Path/str, or List of List[Dict] if work_dir is a list.
     """
+    if max_items_per_judge is not None:
+        items_per_judge = max_items_per_judge
+
+    if isinstance(work_dir, list):
+        items = work_dir
+        if not items:
+            return []
+        limit = max(1, items_per_judge)
+        return [items[i : i + limit] for i in range(0, len(items), limit)]
+
     work = Path(work_dir)
-    batch_file = work / "judge_batch.json"
+    batch_file = work / "verification" / "judge_batch.json"
+    if not batch_file.is_file():
+        batch_file = work / "judge_batch.json"
     if not batch_file.is_file():
         logger.warning("judge_batch.json not found in %s", work)
         return []
@@ -385,7 +400,9 @@ def split_judge_batch(
         return []
 
     total_items = len(items)
-    num_judges = min(max_judges, max(1, math.ceil(total_items / items_per_judge))) if items_per_judge > 0 else max_judges
+    # Strictly enforce items_per_judge <= 12 by sizing num_judges appropriately
+    needed_judges = math.ceil(total_items / items_per_judge) if items_per_judge > 0 else 1
+    num_judges = max(1, max(max_judges, needed_judges) if needed_judges > max_judges else needed_judges)
     num_judges = min(num_judges, total_items)
     num_judges = max(1, num_judges)
 
@@ -402,14 +419,275 @@ def split_judge_batch(
             buckets[curr_j % num_judges].append(itm)
             curr_j += 1
 
+    # Filter out empty buckets if any
+    non_empty_buckets = [b for b in buckets if b]
+
+    # Verification directory support
+    verif_dir = work / "verification"
+    verif_dir.mkdir(parents=True, exist_ok=True)
+
     generated_paths: List[Path] = []
-    for idx, b_items in enumerate(buckets):
+    for idx, b_items in enumerate(non_empty_buckets):
+        # Write to work/judge_batch_{idx+1:02d}.json
         out_p = work / f"judge_batch_{idx + 1:02d}.json"
         out_p.write_text(json.dumps(b_items, indent=2, ensure_ascii=False), encoding="utf-8")
         generated_paths.append(out_p)
 
-    logger.info("Split %d items across %d judge batches in %s", total_items, num_judges, work)
+        # Also write to work/verification/judge_batch_{idx+1:02d}.json
+        verif_out_p = verif_dir / f"judge_batch_{idx + 1:02d}.json"
+        verif_out_p.write_text(json.dumps(b_items, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    logger.info("Split %d items across %d judge batches (max %d items/judge) in %s", total_items, len(non_empty_buckets), items_per_judge, work)
     return generated_paths
+
+
+def check_judge_completeness(work_dir: Union[str, Path]) -> Dict[str, Any]:
+    """Detects truncated or missing judge responses across all batch files.
+    
+    Verifies that len(responses) == len(batch_items) for each judge batch.
+    Returns completeness metrics, truncated batches, and exact missing item IDs.
+    """
+    work = Path(work_dir).resolve()
+    verif_dir = work / "verification"
+    judges_dir = work / "judges"
+
+    # Locate batch files
+    cand_batches = sorted(verif_dir.glob("judge_batch_*.json")) if verif_dir.is_dir() else []
+    if not cand_batches:
+        cand_batches = sorted(work.glob("judge_batch_*.json"))
+    split_batches = [bf for bf in cand_batches if bf.name not in ("judge_batch.json", "judge_redispatch_batch.json")]
+    if not split_batches:
+        unsplit = verif_dir / "judge_batch.json"
+        if not unsplit.is_file():
+            unsplit = work / "judge_batch.json"
+        if unsplit.is_file():
+            split_batches = [unsplit]
+
+    total_expected = 0
+    total_received = 0
+    all_missing_ids: List[str] = []
+    batch_reports: List[Dict[str, Any]] = []
+
+    for bf in split_batches:
+        m = re.search(r"judge_batch_(\d+)", bf.name)
+        j_id = m.group(1) if m else "01"
+
+        try:
+            b_data = json.loads(bf.read_text(encoding="utf-8"))
+            raw_items = b_data.get("items", []) if isinstance(b_data, dict) else (b_data if isinstance(b_data, list) else [])
+        except Exception:
+            raw_items = []
+
+        expected_ids: List[str] = []
+        for itm in raw_items:
+            if isinstance(itm, dict):
+                iid = itm.get("item_id") or itm.get("question_id") or itm.get("id")
+                if iid:
+                    expected_ids.append(str(iid))
+
+        # Look for corresponding response file
+        resp_candidates = [
+            verif_dir / f"judge_responses_{j_id}.json",
+            work / f"judge_responses_{j_id}.json",
+            judges_dir / f"judge_{j_id}.json",
+            verif_dir / "judge_responses.json",
+            work / "judge_responses.json",
+        ]
+        resp_file: Optional[Path] = None
+        for rc in resp_candidates:
+            if rc.is_file():
+                resp_file = rc
+                break
+
+        resp_map: Dict[str, Any] = {}
+        if resp_file:
+            try:
+                raw_resp = json.loads(resp_file.read_text(encoding="utf-8"))
+                eval_list = None
+                if isinstance(raw_resp, list):
+                    eval_list = raw_resp
+                elif isinstance(raw_resp, dict):
+                    for cand_key in ("evaluations", "items", "results", "responses"):
+                        if isinstance(raw_resp.get(cand_key), list):
+                            eval_list = raw_resp[cand_key]
+                            break
+                if eval_list is not None:
+                    for r in eval_list:
+                        if isinstance(r, dict):
+                            rid = r.get("item_id") or r.get("question_id") or r.get("id")
+                            if rid:
+                                resp_map[str(rid)] = r.get("answer") or r.get("response") or r.get("verdict") or True
+                elif isinstance(raw_resp, dict):
+                    dict_inner = raw_resp.get("responses", raw_resp) if isinstance(raw_resp.get("responses"), dict) else raw_resp
+                    for k, v in dict_inner.items():
+                        if isinstance(v, dict) and ("answer" in v or "response" in v or "verdict" in v):
+                            resp_map[str(k)] = v.get("answer") or v.get("response") or v.get("verdict")
+                        else:
+                            resp_map[str(k)] = v
+            except Exception as e:
+                logger.warning("Could not read response file %s: %s", resp_file, e)
+
+        # Check completeness for this batch
+        received_ids = [iid for iid in expected_ids if iid in resp_map and resp_map[iid] is not None]
+        missing_ids = [iid for iid in expected_ids if iid not in received_ids]
+
+        total_expected += len(expected_ids)
+        total_received += len(received_ids)
+        all_missing_ids.extend(missing_ids)
+
+        is_truncated = len(missing_ids) > 0
+        batch_reports.append({
+            "batch_file": bf.name,
+            "judge_id": j_id,
+            "expected_count": len(expected_ids),
+            "received_count": len(received_ids),
+            "missing_count": len(missing_ids),
+            "missing_item_ids": missing_ids,
+            "is_truncated": is_truncated,
+            "status": "truncated" if is_truncated else "complete",
+            "response_file": resp_file.as_posix() if resp_file else None,
+        })
+
+    is_complete = (len(all_missing_ids) == 0) and (total_expected > 0)
+    truncated_batches_count = sum(1 for b in batch_reports if b["is_truncated"])
+
+    return {
+        "is_complete": is_complete,
+        "total_batches": len(batch_reports),
+        "completed_batches": len(batch_reports) - truncated_batches_count,
+        "truncated_batches": truncated_batches_count,
+        "total_expected_items": total_expected,
+        "total_received_items": total_received,
+        "total_missing_items": len(all_missing_ids),
+        "missing_ids": all_missing_ids,
+        "missing_item_ids": all_missing_ids,
+        "batch_reports": batch_reports,
+    }
+
+
+def emit_judge_redispatch(
+    work_dir: Union[str, Path],
+    max_items_per_judge: int = 12,
+) -> Dict[str, Any]:
+    """Automatically detects incomplete evaluations and emits re-dispatch batch files for only missing IDs.
+    
+    Guarantees that re-dispatched items remain 100% blind (no ground truth or answer keys).
+    """
+    work = Path(work_dir).resolve()
+    verif_dir = work / "verification"
+    verif_dir.mkdir(parents=True, exist_ok=True)
+
+    completeness = check_judge_completeness(work)
+    if completeness["is_complete"] or completeness["total_missing_items"] == 0:
+        logger.info("All judge evaluations are complete. No re-dispatch needed.")
+        return {
+            "redispatch_needed": False,
+            "missing_count": 0,
+            "batches": [],
+            "item_files": [],
+        }
+
+    missing_set = set(completeness["missing_item_ids"])
+
+    # Collect blind question definitions for missing IDs
+    missing_items: List[Dict[str, Any]] = []
+    seen_ids: Set[str] = set()
+
+    cand_batches = sorted(verif_dir.glob("judge_batch_*.json")) + sorted(work.glob("judge_batch_*.json"))
+    for bf in cand_batches:
+        if bf.name.startswith("judge_redispatch_"):
+            continue
+        try:
+            b_data = json.loads(bf.read_text(encoding="utf-8"))
+            raw_items = b_data.get("items", []) if isinstance(b_data, dict) else (b_data if isinstance(b_data, list) else [])
+            for itm in raw_items:
+                if isinstance(itm, dict):
+                    iid = str(itm.get("item_id") or itm.get("question_id") or itm.get("id"))
+                    if iid in missing_set and iid not in seen_ids:
+                        seen_ids.add(iid)
+                        # Blind copy: ensure answer keys are absent
+                        blind_item = {
+                            "item_id": iid,
+                            "question_id": itm.get("question_id") or iid,
+                            "interaction_type": itm.get("interaction_type") or itm.get("question_type") or "multiple_choice",
+                            "stem": itm.get("stem") or itm.get("stem_es") or "",
+                            "stem_es": itm.get("stem_es") or itm.get("stem") or "",
+                        }
+                        if "options" in itm:
+                            # Strip any is_correct flags
+                            clean_opts = []
+                            for opt in itm["options"]:
+                                if isinstance(opt, dict):
+                                    clean_opts.append({
+                                        "id": opt.get("id") or opt.get("option_id", ""),
+                                        "content": opt.get("content", ""),
+                                    })
+                            blind_item["options"] = clean_opts
+                        if "answer_contract" in itm:
+                            blind_item["answer_contract"] = itm["answer_contract"]
+                        if "graph" in itm:
+                            blind_item["graph"] = itm["graph"]
+                        missing_items.append(blind_item)
+        except Exception as e:
+            logger.warning("Could not parse batch %s for re-dispatch: %s", bf, e)
+
+    # Slice missing items into batches of <= max_items_per_judge (default 12)
+    redispatch_batches: List[Path] = []
+    num_batches = max(1, math.ceil(len(missing_items) / max_items_per_judge))
+    batch_size = math.ceil(len(missing_items) / num_batches)
+
+    for b_idx in range(num_batches):
+        chunk = missing_items[b_idx * batch_size : (b_idx + 1) * batch_size]
+        batch_path = verif_dir / f"judge_redispatch_batch_{b_idx + 1:02d}.json"
+        batch_path.write_text(json.dumps(chunk, indent=2, ensure_ascii=False), encoding="utf-8")
+        redispatch_batches.append(batch_path)
+
+        # Also write to work/ root for compatibility
+        work_batch_path = work / f"judge_redispatch_batch_{b_idx + 1:02d}.json"
+        work_batch_path.write_text(json.dumps(chunk, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    # Consolidated re-dispatch file
+    consolidated_p = verif_dir / "judge_redispatch_batch.json"
+    consolidated_p.write_text(json.dumps(missing_items, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    # Save redispatch manifest in work/dispatch/
+    dispatch_dir = work / "dispatch"
+    dispatch_dir.mkdir(parents=True, exist_ok=True)
+    manifest_p = dispatch_dir / "judge_redispatch_manifest.json"
+    manifest_payload = {
+        "redispatch_needed": True,
+        "missing_count": len(missing_items),
+        "missing_item_ids": [m["item_id"] for m in missing_items],
+        "batch_count": len(redispatch_batches),
+        "batches": [p.as_posix() for p in redispatch_batches],
+        "consolidated_batch": consolidated_p.as_posix(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    manifest_p.write_text(json.dumps(manifest_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    # Generate Subagents array for re-dispatch
+    subagents = []
+    for b_idx, b_path in enumerate(redispatch_batches, start=1):
+        for j_num in (1, 2):
+            subagents.append({
+                "TypeName": "c2c_blind_judge",
+                "Role": f"Blind Judge Re-dispatch Batch {b_idx:02d} - Judge {j_num}",
+                "Model": "flash",
+                "Prompt": (
+                    f"You are Blind Judge {j_num} for Re-dispatch Batch {b_idx:02d}. "
+                    f"Your work order is `{b_path.as_posix()}`. Read it first with `view_file`. "
+                    f"Finalize strictly with: `DONE: verification/judge_responses_redispatch_{b_idx:02d}_{j_num}.json`."
+                ),
+            })
+
+    logger.info("Emitted %d judge re-dispatch batches for %d missing items in %s", len(redispatch_batches), len(missing_items), work)
+    return {
+        "redispatch_needed": True,
+        "missing_count": len(missing_items),
+        "batches": [p.as_posix() for p in redispatch_batches],
+        "consolidated_batch": consolidated_p.as_posix(),
+        "Subagents": subagents,
+    }
 
 
 def compare_judge_responses(
@@ -624,6 +902,16 @@ def compare_judge_responses(
 
     if resolved_work_dir:
         try:
+            completeness = check_judge_completeness(resolved_work_dir)
+            report_data["completeness"] = completeness
+            if not completeness.get("is_complete", True) and completeness.get("total_missing_items", 0) > 0:
+                report_data["truncated_warning"] = (
+                    f"Incomplete evaluation detected: {completeness['total_missing_items']} missing/truncated items."
+                )
+        except Exception as e:
+            logger.warning("Could not execute check_judge_completeness: %s", e)
+
+        try:
             (resolved_work_dir / "judge_report.json").write_text(
                 json.dumps(report_data, indent=2, ensure_ascii=False),
                 encoding="utf-8",
@@ -654,8 +942,17 @@ def main() -> None:
     # split subcommand
     split_p = subparsers.add_parser("split", help="Split judge_batch.json into stratified batches")
     split_p.add_argument("--work-dir", required=True, help="Working directory containing judge_batch.json")
-    split_p.add_argument("--max-judges", type=int, default=4, help="Maximum number of judges (default: 4)")
-    split_p.add_argument("--items-per-judge", type=int, default=40, help="Target items per judge (default: 40)")
+    split_p.add_argument("--max-judges", type=int, default=8, help="Maximum number of judges (default: 8)")
+    split_p.add_argument("--items-per-judge", type=int, default=12, help="Target items per judge (default: 12)")
+
+    # check-completeness subcommand
+    chk = subparsers.add_parser("check-completeness", help="Detect truncated or missing judge responses")
+    chk.add_argument("--work-dir", required=True, help="Working directory containing judge batches and responses")
+
+    # emit-redispatch subcommand
+    redisp = subparsers.add_parser("emit-redispatch", help="Emit blind re-dispatch batches for missing items")
+    redisp.add_argument("--work-dir", required=True, help="Working directory containing judge batches and responses")
+    redisp.add_argument("--max-items-per-judge", type=int, default=12, help="Max items per judge batch (default: 12)")
 
     # compare subcommand
     comp = subparsers.add_parser("compare", help="Compare judge responses against ground truth")
@@ -684,6 +981,16 @@ def main() -> None:
         print(f"Generated {len(split_batches)} split judge batches in {args.work_dir}:")
         for sb in split_batches:
             print(f"  * {sb}")
+
+    elif args.action == "check-completeness":
+        comp_res = check_judge_completeness(args.work_dir)
+        print(json.dumps(comp_res, indent=2, ensure_ascii=False))
+        if not comp_res["is_complete"]:
+            sys.exit(2)
+
+    elif args.action == "emit-redispatch":
+        redisp_res = emit_judge_redispatch(args.work_dir, max_items_per_judge=args.max_items_per_judge)
+        print(json.dumps(redisp_res, indent=2, ensure_ascii=False))
 
     elif args.action == "compare":
         truth_p = Path(args.work_dir) / "judge_ground_truth.json"

@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Resolve repository root
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
-COURSES_DIR = REPO_ROOT / "courses"
+COURSES_DIR = Path(os.environ.get("COURSES_DIR", REPO_ROOT / "courses"))
 REPORTS_DIR = REPO_ROOT / "reports" / "qa_audits"
 ARCHIVE_DIR = REPO_ROOT / "archive_rejected_courses"
 WORK_DIR = REPO_ROOT / "work"
@@ -42,6 +42,49 @@ PROTECTED_RELATIVE_DIRS: Set[str] = {
     "system_prompts",
     "scripts",
 }
+
+ACTIVE_WORKSPACE_STATE_FILES: Tuple[str, ...] = (
+    "work/state.json",
+    "work/pre_cta_manifest.json",
+    "work/cta_data.py",
+    "state.json",
+    "pre_cta_manifest.json",
+    "cta_data.py",
+)
+
+
+def get_effective_courses_dir() -> Path:
+    """Return the effective courses directory, respecting environment variable or module override."""
+    if "COURSES_DIR" in os.environ:
+        return Path(os.environ["COURSES_DIR"])
+    return COURSES_DIR
+
+
+def is_active_workspace(course_dir: Path, max_age_seconds: float = 24 * 3600) -> bool:
+    """Determine if a directory is an active workspace that must NEVER be deleted.
+    
+    A directory is considered active if:
+    1. It contains active workspace state files (work/state.json, work/pre_cta_manifest.json, work/cta_data.py).
+    2. Any file inside the directory was modified within the last 24 hours.
+    """
+    for rel_path in ACTIVE_WORKSPACE_STATE_FILES:
+        if (course_dir / rel_path).is_file():
+            return True
+
+    now = time.time()
+    try:
+        for file_path in course_dir.rglob("*"):
+            if file_path.is_file():
+                try:
+                    mtime = file_path.stat().st_mtime
+                    if (now - mtime) < max_age_seconds:
+                        return True
+                except (OSError, ValueError):
+                    pass
+    except (OSError, ValueError):
+        pass
+
+    return False
 
 
 class SecurityError(Exception):
@@ -83,13 +126,16 @@ def assert_path_safe(target_path: Path) -> Path:
                 f"PROTECTED DIRECTORY: '{target_path}' es un directorio protegido del sistema. Operación abortada."
             )
 
-    # 4. Must be inside repository
-    try:
-        resolved.relative_to(repo_resolved)
-    except ValueError:
-        raise SecurityError(
-            f"PATH ESCAPE: '{target_path}' está fuera del repositorio. Operación abortada."
-        )
+    # 4. Must be inside repository (or within explicitly configured COURSES_DIR override)
+    effective_courses = get_effective_courses_dir().resolve()
+    is_in_courses_dir = (resolved == effective_courses or effective_courses in resolved.parents)
+    if not is_in_courses_dir:
+        try:
+            resolved.relative_to(repo_resolved)
+        except ValueError:
+            raise SecurityError(
+                f"PATH ESCAPE: '{target_path}' está fuera del repositorio. Operación abortada."
+            )
 
     return resolved
 
@@ -300,16 +346,17 @@ def find_course_artifacts(course_id: str) -> Dict[str, List[Path]]:
         "work_dirs": [],
     }
 
-    if not COURSES_DIR.exists():
+    courses_dir = get_effective_courses_dir()
+    if not courses_dir.exists():
         return artifacts
 
     # 1. Main JSON file: courses/<course_id>.json
-    target_json = COURSES_DIR / f"{course_id}.json"
+    target_json = courses_dir / f"{course_id}.json"
     if target_json.is_file():
         artifacts["platform_json"].append(target_json)
 
     # Scan for JSONs whose internal course_id matches
-    for jf in COURSES_DIR.glob("*.json"):
+    for jf in courses_dir.glob("*.json"):
         if jf == target_json:
             continue
         try:
@@ -321,15 +368,15 @@ def find_course_artifacts(course_id: str) -> Dict[str, List[Path]]:
 
     # 2. CTA analysis markdown: courses/competence_analysis_<course_id>.md
     cta_patterns = [
-        COURSES_DIR / f"competence_analysis_{course_id}.md",
-        COURSES_DIR / f"competence_analysis_{course_id}_v3.md",
+        courses_dir / f"competence_analysis_{course_id}.md",
+        courses_dir / f"competence_analysis_{course_id}_v3.md",
     ]
     for cta_p in cta_patterns:
         if cta_p.is_file():
             artifacts["platform_cta"].append(cta_p)
 
     # 3. Intermediate course directory: courses/<course_id>/
-    for cand in COURSES_DIR.iterdir():
+    for cand in courses_dir.iterdir():
         if cand.is_dir() and cand.name != "fixtures":
             if cand.name == course_id or cand.name.startswith(f"{course_id}_"):
                 artifacts["course_dirs"].append(cand)
@@ -463,19 +510,30 @@ def delete_course(
 
 
 def clean_orphan_course_dirs(dry_run: bool = False) -> List[str]:
-    """Clean intermediate directories in courses/ that have no corresponding JSON."""
-    if not COURSES_DIR.exists():
+    """Clean intermediate directories in courses/ that have no corresponding JSON.
+    
+    Guarantees & Safeguards:
+    1. NEVER deletes any directory containing active workspace state files
+       (work/state.json, work/pre_cta_manifest.json, work/cta_data.py).
+    2. NEVER deletes any directory containing any file modified within the last 24 hours.
+    3. NEVER deletes courses/fixtures or protected directories.
+    4. Respects COURSES_DIR override via environment variable or module attribute.
+    """
+    courses_dir = get_effective_courses_dir()
+    if not courses_dir.exists():
         return []
 
-    active_json_stems = {f.stem for f in COURSES_DIR.glob("*.json")}
+    active_json_stems = {f.stem for f in courses_dir.glob("*.json")}
     cleaned: List[str] = []
 
-    for d in COURSES_DIR.iterdir():
+    for d in courses_dir.iterdir():
         if not d.is_dir() or d.name == "fixtures":
             continue
         assert_path_safe(d)
         # If directory stem does not match any active course JSON
         if d.name not in active_json_stems:
+            if is_active_workspace(d):
+                continue
             if not dry_run:
                 shutil.rmtree(d, ignore_errors=True)
             cleaned.append(str(d))
@@ -491,8 +549,9 @@ def list_courses_status() -> None:
 
     # 1. Platform published courses
     platform_courses: Dict[str, Dict[str, Any]] = {}
-    if COURSES_DIR.exists():
-        for jf in sorted(COURSES_DIR.glob("*.json")):
+    courses_dir = get_effective_courses_dir()
+    if courses_dir.exists():
+        for jf in sorted(courses_dir.glob("*.json")):
             try:
                 data = json.loads(jf.read_text(encoding="utf-8"))
                 cid = data.get("course_id", jf.stem)
@@ -604,9 +663,10 @@ def main() -> None:
         sys.exit(1)
 
     target_ids: List[str] = []
+    courses_dir = get_effective_courses_dir()
     if args.all:
-        if COURSES_DIR.exists():
-            for f in COURSES_DIR.glob("*.json"):
+        if courses_dir.exists():
+            for f in courses_dir.glob("*.json"):
                 try:
                     data = json.loads(f.read_text(encoding="utf-8"))
                     cid = data.get("course_id", f.stem)
@@ -615,10 +675,10 @@ def main() -> None:
                     target_ids.append(f.stem)
     elif args.course_id:
         req_id = args.course_id.strip()
-        exact_target = COURSES_DIR / f"{req_id}.json"
-        if not exact_target.is_file() and COURSES_DIR.exists():
+        exact_target = courses_dir / f"{req_id}.json"
+        if not exact_target.is_file() and courses_dir.exists():
             candidates: List[str] = []
-            for f in COURSES_DIR.glob("*.json"):
+            for f in courses_dir.glob("*.json"):
                 try:
                     data = json.loads(f.read_text(encoding="utf-8"))
                     cid = data.get("course_id", f.stem)

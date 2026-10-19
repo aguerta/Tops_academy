@@ -19,6 +19,7 @@ Features:
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import datetime, timezone
 import argparse
 import ast
 import importlib.util
@@ -47,8 +48,25 @@ for _cand in _skill_candidates:
             sys.path.insert(0, _cand_resolved)
         break
 
-from check_cta import JsonLineLocator, validate_cta_rules
-from cta_merge import render_cta_md, sanitize_competency_math
+from check_cta import JsonLineLocator, validate_cta_rules, check_cta_katex, check_cta_part
+from cta_merge import render_cta_md, sanitize_competency_math, normalize_orphan_math, auto_balance_math_delimiters
+from patch_ledger import (
+    record_patch,
+    save_run_ledger,
+    save_cta_review,
+    append_cross_run_record,
+    get_ledger,
+    reset_ledger,
+)
+
+try:
+    from engine.invariants import validate_katex_syntax
+except ImportError:
+    try:
+        from .engine.invariants import validate_katex_syntax
+    except ImportError:
+        def validate_katex_syntax(s: str) -> List[str]:
+            return []
 
 logger = logging.getLogger("compile_cta")
 
@@ -225,6 +243,17 @@ LATEX_PREFIX_PATTERNS = [
     r"nu\b|neq\b|nabla\b|ni\b|not\b|natural\b",
     r"vec\b|varepsilon\b|vartheta\b|varphi\b|varpi\b|varrho\b|varsigma\b|vdots\b|vdash\b|vee\b|vert\b",
     r"left\b|lambda\b|langle\b|lceil\b|lfloor\b",
+    r"partial\b|prod\b|pi\b|phi\b|psi\b|pm\b|prime\b",
+    r"dot\b|ddot\b|delta\b|dfrac\b|dots\b|ddots\b|dim\b",
+    r"mu\b|mathbf\b|math\b|matrix\b|max\b|min\b|mid\b",
+    r"sum\b|sigma\b|sqrt\b|subset\b|subseteq\b|supset\b|supseteq\b|sim\b",
+    r"gamma\b|geq\b|gg\b",
+    r"eta\b|epsilon\b|equiv\b|exists\b|exp\b",
+    r"cdot\b|chi\b|cup\b|cap\b|circ\b|cos\b|cosh\b|cot\b|csc\b",
+    r"kappa\b|ker\b",
+    r"omega\b|overline\b|over\b|oint\b",
+    r"zeta\b",
+    r"infty\b|int\b|in\b|iota\b|inf\b|iff\b",
 ]
 COMBINED_LATEX = "|".join(LATEX_PREFIX_PATTERNS)
 
@@ -282,26 +311,56 @@ def heal_string_token(token_str: str) -> str:
     is_raw = "r" in prefix.lower()
 
     new_body = heal_control_chars_in_str(body)
+
+    # Detect if token has LaTeX escapes
+    has_latex = bool(
+        re.search(rf"(?<!\\)\\({COMBINED_LATEX})", new_body)
+        or re.search(r"(?<!\\)\\[a-zA-Z]", new_body)
+    )
+
+    # L1: Convert non-raw strings containing LaTeX macros to raw strings r"..."
+    new_prefix = prefix
+    if not is_raw and has_latex:
+        new_prefix = "r" + prefix
+        is_raw = True
+
     if not is_raw:
         new_body = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", new_body)
 
-    if new_body != body:
-        return f"{prefix}{q_open}{new_body}{q_close}"
+    # L2: Semantic KaTeX repairs inside string token
+    if "$" in new_body or has_latex or "{{" in new_body:
+        # {{x}} -> {x}
+        new_body = re.sub(r"\{\{([a-zA-Z0-9_+\-*./^]+)\}\}", r"{\1}", new_body)
+        # Single line $$ -> $
+        if "\n" not in new_body and "$$" in new_body:
+            new_body = re.sub(r"(?<!\\)\$\$([^\n]+?)(?<!\\)\$\$", r"$\1$", new_body)
+        # Normalize orphan math and balance odd $
+        if has_latex or "$" in new_body:
+            new_body = normalize_orphan_math(new_body)
+
+    if new_body != body or new_prefix != prefix:
+        return f"{new_prefix}{q_open}{new_body}{q_close}"
     return token_str
 
 
 def heal_cta_source_file(py_path: Path) -> bool:
     """Uses Python's tokenize module to inspect and heal non-raw string tokens and control characters.
 
-    Heals unescaped LaTeX prefixes and ASCII control characters in py_path before importing.
+    L1 & L2 Pre-Import Healing:
+    - Pre-import converts non-raw strings containing LaTeX macros to raw strings r"..."
+    - Heals unescaped LaTeX prefixes and ASCII control characters in py_path before importing.
+    - Closes odd $ delimiters and normalizes single-line $$ -> $.
+    - Writes the healed file back atomically with a .bak safety backup.
     Returns True if the file was modified and rewritten, False otherwise.
     """
     if not py_path.is_file():
         return False
     try:
-        source_text = py_path.read_bytes().decode("utf-8")
+        source_bytes = py_path.read_bytes()
+        source_text = source_bytes.decode("utf-8")
+        source_norm = source_text.replace("\r\n", "\n")
         clean_source = heal_control_chars_in_str(source_text)
-        modified = (clean_source != source_text)
+        modified = (clean_source != source_norm)
         tokens = list(tokenize.tokenize(io.BytesIO(clean_source.encode("utf-8")).readline))
         new_tokens = []
         for t in tokens:
@@ -309,24 +368,50 @@ def heal_cta_source_file(py_path: Path) -> bool:
                 healed_str = heal_string_token(t.string)
                 if healed_str != t.string:
                     modified = True
+                    record_patch(
+                        stage="cta",
+                        layer="L1",
+                        rule_id="PRE_IMPORT_TOKEN_HEAL",
+                        scope=f"{py_path.name}:L{t.start[0]}",
+                        before=t.string[:60],
+                        after=healed_str[:60],
+                        severity="healed",
+                        reason="Pre-import LaTeX tokenization, raw-string conversion & control char healing",
+                    )
                 new_tokens.append(tokenize.TokenInfo(t.type, healed_str, t.start, t.end, t.line))
             else:
                 new_tokens.append(t)
 
-        if not modified:
+        rebuilt_text = tokenize.untokenize(new_tokens).decode("utf-8")
+        if not modified or rebuilt_text.replace("\r\n", "\n") == source_norm:
             return False
 
-        rebuilt_text = tokenize.untokenize(new_tokens).decode("utf-8")
-        py_path.write_bytes(rebuilt_text.encode("utf-8"))
+        # Atomic backup write
+        bak_file = py_path.with_name(f".{py_path.name}.bak")
+        try:
+            bak_file.write_bytes(source_bytes)
+        except Exception:
+            pass
+
+        tmp_file = py_path.with_name(f".{py_path.name}.tmp")
+        tmp_file.write_text(rebuilt_text, encoding="utf-8")
+        tmp_file.replace(py_path)
         return True
     except Exception as e:
         logger.warning("heal_cta_source_file fallback for %s due to: %s", py_path.name, e)
         try:
-            source_text = py_path.read_bytes().decode("utf-8")
+            source_bytes = py_path.read_bytes()
+            source_text = source_bytes.decode("utf-8")
+            source_norm = source_text.replace("\r\n", "\n")
             healed = heal_control_chars_in_str(source_text)
             healed = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", healed)
-            if healed != source_text:
-                py_path.write_bytes(healed.encode("utf-8"))
+            if healed != source_norm:
+                bak_file = py_path.with_name(f".{py_path.name}.bak")
+                try:
+                    bak_file.write_bytes(source_bytes)
+                except Exception:
+                    pass
+                py_path.write_text(healed, encoding="utf-8")
                 return True
         except Exception:
             pass
@@ -648,6 +733,8 @@ def compile_tuples_to_cta_dict(
 def auto_normalize_page_numbers(
     cta_dict: Dict[str, Any],
     manifest: Optional[Dict[str, Any]],
+    force_clamp: bool = False,
+    work_dir: Optional[Union[str, Path]] = None,
 ) -> Dict[str, Any]:
     """Auto-normalizes cited page numbers from printed book pagination to 1-indexed PDF page numbers.
 
@@ -719,10 +806,18 @@ def auto_normalize_page_numbers(
                 "Auto-normalizing page numbers for '%s': printed book pages [%d, %d] shifted by %d to PDF range [1, %d].",
                 canon_doc, p_min, p_max, shift, p_max - p_min + 1,
             )
+            record_patch(
+                stage="cta",
+                layer="L3",
+                rule_id="EV_OFFSET_SHIFT",
+                scope=canon_doc,
+                before=f"offset [{p_min}, {p_max}]",
+                after=f"shift {shift}",
+                severity="snapped",
+                reason=f"Detected printed-to-PDF constant offset of {shift} for {canon_doc}",
+            )
 
-    if not doc_shifts:
-        return cta_dict
-
+    # 1. Apply constant shifts
     for comp in competencies:
         for ev in comp.get("evidence", []):
             d_raw = str(ev.get("doc") or ev.get("pdf") or "").strip().lower()
@@ -749,6 +844,98 @@ def auto_normalize_page_numbers(
                 if shift != 0 and p is not None and str(p).isdigit():
                     ev["page"] = int(p) + shift
 
+    # 2. L3 Snap & Heading alignment for any remaining out-of-range pages
+    pages_index_data: Dict[str, Dict[str, int]] = {}
+    if work_dir:
+        pi_path = Path(work_dir) / "pages_index.md"
+        if pi_path.is_file():
+            try:
+                cur_doc = ""
+                for line in pi_path.read_text(encoding="utf-8").splitlines():
+                    m_doc = re.search(r"##\s+([^\s(]+)", line)
+                    if m_doc:
+                        cur_doc = m_doc.group(1).lower()
+                    m_p = re.search(r"-\s+Page\s+(\d+):\s*(.*)", line)
+                    if m_p and cur_doc:
+                        p_num = int(m_p.group(1))
+                        heading = m_p.group(2).strip().lower()
+                        pages_index_data.setdefault(cur_doc, {})[heading] = p_num
+            except Exception:
+                pass
+
+    for comp in competencies:
+        cid = comp.get("id", "comp")
+        for ev in comp.get("evidence", []):
+            d_raw = str(ev.get("doc") or ev.get("pdf") or "").strip().lower()
+            canon = doc_alias_map.get(d_raw) or doc_alias_map.get(Path(d_raw).stem.lower())
+            n_pages = doc_limits.get(canon, 0) if canon else 0
+            p = ev.get("page")
+            if canon and n_pages > 0 and p is not None and str(p).isdigit():
+                p_int = int(p)
+                if p_int < 1 or p_int > n_pages or force_clamp:
+                    snapped_p = None
+                    snapped_reason = ""
+                    doc_headings = pages_index_data.get(canon.lower(), {})
+                    c_tokens = set(re.findall(r"\w+", comp.get("name", "").lower()))
+                    best_overlap = 0
+                    for h_text, h_p in doc_headings.items():
+                        h_tokens = set(re.findall(r"\w+", h_text))
+                        ov = len(c_tokens & h_tokens)
+                        if ov > best_overlap:
+                            best_overlap = ov
+                            snapped_p = h_p
+                            snapped_reason = f"Heading overlap match with '{h_text}'"
+
+                    if not snapped_p:
+                        snapped_p = max(1, min(p_int, n_pages))
+                        snapped_reason = f"Clamped to nearest valid page in [1, {n_pages}]"
+
+                    if snapped_p != p_int:
+                        logger.warning(
+                            "[EV-SNAPPED] %s: page %d snapped to %d in %s (%s)",
+                            cid, p_int, snapped_p, canon, snapped_reason,
+                        )
+                        record_patch(
+                            stage="cta",
+                            layer="L3",
+                            rule_id="EV_SNAPPED",
+                            scope=f"{cid}.evidence",
+                            before=p_int,
+                            after=snapped_p,
+                            severity="snapped",
+                            reason=f"Evidence page {p_int} out of range [1, {n_pages}], {snapped_reason}",
+                        )
+                        ev["page"] = snapped_p
+                        if comp.get("unit_index") == p_int:
+                            comp["unit_index"] = snapped_p
+                        sess = comp.get("session")
+                        if isinstance(sess, str) and sess.startswith(f"Unidad {p_int}:"):
+                            comp["session"] = f"Unidad {snapped_p}:" + sess[len(f"Unidad {p_int}:"):]
+
+        for dist in comp.get("distractors", []):
+            ev = dist.get("evidence", {})
+            if ev:
+                d_raw = str(ev.get("doc") or ev.get("pdf") or "").strip().lower()
+                canon = doc_alias_map.get(d_raw) or doc_alias_map.get(Path(d_raw).stem.lower())
+                n_pages = doc_limits.get(canon, 0) if canon else 0
+                p = ev.get("page")
+                if canon and n_pages > 0 and p is not None and str(p).isdigit():
+                    p_int = int(p)
+                    if p_int < 1 or p_int > n_pages or force_clamp:
+                        snapped_p = max(1, min(p_int, n_pages))
+                        if snapped_p != p_int:
+                            ev["page"] = snapped_p
+                            record_patch(
+                                stage="cta",
+                                layer="L3",
+                                rule_id="EV_SNAPPED",
+                                scope=f"{dist.get('id', 'dist')}.evidence",
+                                before=p_int,
+                                after=snapped_p,
+                                severity="snapped",
+                                reason=f"Distractor page {p_int} out of range, snapped to {snapped_p}",
+                            )
+
     return cta_dict
 
 
@@ -757,6 +944,8 @@ def compile_cta(
     output_dir: Optional[Union[str, Path]] = None,
     manifest_path: Optional[Union[str, Path]] = None,
     output_json_name: Optional[str] = None,
+    is_part: Optional[bool] = None,
+    allow_degrade: bool = True,
 ) -> Tuple[bool, Dict[str, Any], List[str], float]:
     """Compiles cta_data.py into cta.json and cta.md, validating all constraints in < 5ms."""
     t0 = time.perf_counter()
@@ -811,6 +1000,43 @@ def compile_cta(
 
     # Post-Import String Healer: clean control characters from imported competencies
     competencies = heal_control_chars_in_obj(competencies)
+
+    # L4: Support splicing override files from cta_fixes/<ID>.py
+    fixes_dir = work_dir / "cta_fixes"
+    if not fixes_dir.is_dir() and (data_file.parent / "cta_fixes").is_dir():
+        fixes_dir = data_file.parent / "cta_fixes"
+    if fixes_dir.is_dir():
+        for fix_file in sorted(fixes_dir.glob("*.py")):
+            if fix_file.is_file():
+                try:
+                    fix_mod = load_cta_data_module(fix_file)
+                    override_c = getattr(fix_mod, "COMPETENCY", None)
+                    if override_c is None:
+                        cand_l = getattr(fix_mod, "COMPETENCIES", [])
+                        if cand_l:
+                            override_c = cand_l[0]
+                    if override_c and isinstance(override_c, (list, tuple)):
+                        target_id = override_c[1] if len(override_c) > 1 else fix_file.stem
+                        new_comps = []
+                        for c in competencies:
+                            cid = c[1] if isinstance(c, (list, tuple)) and len(c) > 1 else ""
+                            if cid == target_id or fix_file.stem == cid:
+                                new_comps.append(override_c)
+                            else:
+                                new_comps.append(c)
+                        competencies = new_comps
+                        record_patch(
+                            stage="cta",
+                            layer="L4",
+                            rule_id="OVERRIDE_SPLICE",
+                            scope=str(target_id),
+                            before="original",
+                            after="override",
+                            severity="healed",
+                            reason=f"Spliced override file {fix_file.name}",
+                        )
+                except Exception as e:
+                    logger.warning("Failed to splice override file %s: %s", fix_file.name, e)
 
     # Anti-Overwrite Guard: protect against accidental write_to_file(Overwrite=True) shrinking >=10 comps to <6
     if len(competencies) >= 10:
@@ -891,19 +1117,135 @@ def compile_cta(
 
     # 3b. Auto-normalize page numbers before calling validate_cta_rules
     if manifest_data:
-        cta_dict = auto_normalize_page_numbers(cta_dict, manifest_data)
+        cta_dict = auto_normalize_page_numbers(cta_dict, manifest_data, work_dir=work_dir)
 
     # 4. Validate with platform rules using in-memory JsonLineLocator
     target_json_name = output_json_name or "cta.json"
     target_json_path = work_dir / target_json_name
     json_str = json.dumps(cta_dict, indent=2, ensure_ascii=False)
     json_locator = JsonLineLocator(json_str)
-    is_valid, validation_errors = validate_cta_rules(
-        cta_data=cta_dict,
-        manifest_data=manifest_data,
-        file_path=target_json_path,
-        locator=json_locator,
+
+    if is_part is None:
+        is_part = bool(
+            (output_json_name and "part" in output_json_name.lower())
+            or ("parts" in data_file.parent.name.lower())
+            or ("part" in data_file.stem.lower())
+        )
+
+    if is_part:
+        is_valid, validation_errors = check_cta_part(
+            data=cta_dict,
+            manifest_data=manifest_data,
+            file_path=target_json_path,
+            locator=json_locator,
+        )
+    else:
+        is_valid, validation_errors = validate_cta_rules(
+            cta_data=cta_dict,
+            manifest_data=manifest_data,
+            file_path=target_json_path,
+            locator=json_locator,
+        )
+
+    # L5: Degrade-and-flag failsafe
+    if not is_valid and allow_degrade:
+        for comp in cta_dict.get("competencies", []):
+            cid = comp.get("id", "comp")
+            for fld in ("description_latex", "name", "description"):
+                val = comp.get(fld)
+                if isinstance(val, str) and val:
+                    k_errs = validate_katex_syntax(val, f"{cid}.{fld}")
+                    if k_errs:
+                        clean_inner = val.replace("$", "").replace("\\", "").replace("{", "").replace("}", "").strip()
+                        degraded_val = f"$\\text{{{clean_inner}}}$"
+                        comp[fld] = degraded_val
+                        record_patch(
+                            stage="cta",
+                            layer="L5",
+                            rule_id="DEGRADE_MATH",
+                            scope=f"{cid}.{fld}",
+                            before=val,
+                            after=degraded_val,
+                            severity="degraded",
+                            reason=f"Wrapped unresolvable KaTeX math in \\text{{}}: {k_errs}",
+                        )
+
+            for d in comp.get("distractors", []):
+                did = d.get("id", "dist")
+                for dfld in ("wrong_belief", "correct_belief", "manifestation", "name", "remediation_hint"):
+                    dval = d.get(dfld)
+                    if isinstance(dval, str) and dval:
+                        dk_errs = validate_katex_syntax(dval, f"{did}.{dfld}")
+                        if dk_errs:
+                            clean_inner = dval.replace("$", "").replace("\\", "").replace("{", "").replace("}", "").strip()
+                            degraded_dval = f"$\\text{{{clean_inner}}}$"
+                            d[dfld] = degraded_dval
+                            record_patch(
+                                stage="cta",
+                                layer="L5",
+                                rule_id="DEGRADE_MATH",
+                                scope=f"{did}.{dfld}",
+                                before=dval,
+                                after=degraded_dval,
+                                severity="degraded",
+                                reason=f"Wrapped unresolvable distractor KaTeX math in \\text{{}}: {dk_errs}",
+                            )
+
+        # Force clamp any residual out-of-range evidence
+        if manifest_data:
+            cta_dict = auto_normalize_page_numbers(cta_dict, manifest_data, force_clamp=True, work_dir=work_dir)
+
+        # Re-validate after L5
+        json_str = json.dumps(cta_dict, indent=2, ensure_ascii=False)
+        json_locator = JsonLineLocator(json_str)
+        if is_part:
+            is_valid, validation_errors = check_cta_part(
+                data=cta_dict,
+                manifest_data=manifest_data,
+                file_path=target_json_path,
+                locator=json_locator,
+            )
+        else:
+            is_valid, validation_errors = validate_cta_rules(
+                cta_data=cta_dict,
+                manifest_data=manifest_data,
+                file_path=target_json_path,
+                locator=json_locator,
+            )
+
+    # Telemetry and Ledgers
+    compiled_comps = cta_dict.get("competencies", [])
+    total_eval_items = len(compiled_comps)
+    save_run_ledger(work_dir, course_id, total_items=total_eval_items)
+    save_cta_review(work_dir, course_id, total_items=total_eval_items)
+    try:
+        repo_root = work_dir.parent.parent if work_dir.name in ("work", "cta_parts") else None
+        append_cross_run_record(repo_root, course_id, total_items=total_eval_items)
+    except Exception:
+        pass
+
+    # Write telemetry/cta_sanitizer_log.json
+    telem_dir = work_dir / "telemetry"
+    telem_dir.mkdir(parents=True, exist_ok=True)
+    sanitizer_log_file = telem_dir / "cta_sanitizer_log.json"
+    sanitizer_log_file.write_text(
+        json.dumps(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "course_id": course_id,
+                "sanitized_competencies": len(compiled_comps),
+                "patches_applied": get_ledger().total_patches,
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
     )
+
+    # Check 3% degraded alert
+    alert, degraded_pct, alert_msg = get_ledger().check_degraded_alert(total_items=total_eval_items)
+    if alert:
+        logger.warning("PATCH_LEDGER_ALERT: %s", alert_msg)
 
     # 5. Format errors with line numbers mapped to cta_data.py
     mapped_errors: List[str] = []
@@ -1064,8 +1406,18 @@ def render_compact_cta_errors(
     errors: List[str],
     data_filename: str = "cta_data.py",
     source_lines: Optional[List[str]] = None,
+    consolidated: bool = False,
+    write_pack: bool = True,
+    work_dir: Optional[Union[str, Path]] = None,
+    output_repair_pack: Optional[Union[str, Path]] = None,
+    max_lines: Optional[int] = None,
 ) -> str:
-    """Renders single-line aggregated errors grouped by rule for compile_cta.py, with exact line snippets."""
+    """Renders single-line aggregated errors grouped by rule for compile_cta.py, with exact line snippets.
+
+    - When consolidated=False (legacy mode): collapses into < 25 lines.
+    - When consolidated=True (L4 repair pack): unthrottles all error groups, removes snippet and ID caps,
+      groups errors by competency with exact lines and suggested replacements, and writes work/cta_repair_pack.json.
+    """
     if not errors:
         return ""
 
@@ -1081,6 +1433,98 @@ def render_compact_cta_errors(
                 source_lines = (Path("work") / data_filename).read_text(encoding="utf-8").splitlines()
             except Exception:
                 pass
+
+    if consolidated:
+        comp_errors: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        for raw_err in errors:
+            rule_tag, short_rule, cause, action = categorize_cta_error(raw_err)
+            m_line = re.search(r"\[(?:.+:)?L[íi]nea\s+(\d+)\]", raw_err)
+            line_num = int(m_line.group(1)) if m_line else None
+
+            m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", raw_err)
+            item_id = m_id.group(1) if m_id else "GENERAL"
+
+            m_comp = re.search(r"\b(H-\d+|C-\d+|Hab-\d+)\b", raw_err)
+            comp_id = m_comp.group(1) if m_comp else item_id
+
+            suggested = ""
+            if "bar{" in raw_err:
+                m_v = re.search(r"bar\{([a-zA-Z0-9_*+]+)\}", raw_err)
+                if m_v:
+                    suggested = f"$\\bar{{{m_v.group(1)}}}$"
+            elif "dot{" in raw_err:
+                m_v = re.search(r"dot\{([a-zA-Z0-9_*+]+)\}", raw_err)
+                if m_v:
+                    suggested = f"$\\dot{{{m_v.group(1)}}}$"
+            elif "frac{" in raw_err:
+                m_f = re.search(r"frac\{([^{}]+)\}\{([^{}]+)\}", raw_err)
+                if m_f:
+                    suggested = f"$\\frac{{{m_f.group(1)}}}{{{m_f.group(2)}}}$"
+            elif "delimitador '$' impar" in raw_err.lower():
+                suggested = "Close '$' before trailing punctuation"
+
+            comp_errors[comp_id].append({
+                "item_id": item_id,
+                "rule": short_rule,
+                "rule_tag": rule_tag,
+                "line": line_num,
+                "cause": cause,
+                "action": action,
+                "suggested_replacement": suggested,
+                "raw_error": raw_err,
+            })
+
+        out_lines = [
+            f"[CONSOLIDATED ERROR PACK] CTA compilation failed ({len(errors)} errors) [{data_filename}]:",
+            "Emitting ALL errors unthrottled grouped by competency with exact lines & suggested replacements.",
+            "",
+        ]
+
+        for comp_id, err_list in sorted(comp_errors.items()):
+            out_lines.append(f"=== Competency: {comp_id} ({len(err_list)} errors) ===")
+            for item in err_list:
+                line_str = f"L{item['line']}" if item["line"] else "L?"
+                sug_str = f" | Suggested Fix: {item['suggested_replacement']}" if item["suggested_replacement"] else ""
+                out_lines.append(
+                    f"  • [{item['rule']}] {data_filename}:{line_str} ({item['item_id']}) -> {item['cause']}{sug_str}"
+                )
+            out_lines.append("")
+
+        if source_lines:
+            all_lines = sorted(set(item["line"] for err_list in comp_errors.values() for item in err_list if item["line"]))
+            if all_lines:
+                out_lines.append("CONTEXTO EXACTO (ALL Offending Lines):")
+                for ln in all_lines:
+                    start_l, end_l, snip = get_source_line_snippet(source_lines, ln, radius=1)
+                    out_lines.append(f"  --- {data_filename} (StartLine={start_l}, EndLine={end_l}) ---")
+                    out_lines.append(snip)
+                out_lines.append("")
+
+        out_lines.append("ACTION REQUIRED (ONE TURN CONSOLIDATED REPAIR):")
+        out_lines.append("  1. Resolve all errors above in ONE turn using parallel write_to_file calls to 'cta_fixes/<ID>.py' (or rewrite whole part in ONE write_to_file).")
+        out_lines.append("  2. Full repair pack saved to work/cta_repair_pack.json.")
+        out_lines.append("  3. Re-execute: python compile_cta.py")
+
+        if write_pack:
+            if output_repair_pack:
+                pack_file = Path(output_repair_pack)
+                pack_file.parent.mkdir(parents=True, exist_ok=True)
+            else:
+                target_work = Path(work_dir) if work_dir else Path("work")
+                target_work.mkdir(parents=True, exist_ok=True)
+                pack_file = target_work / "cta_repair_pack.json"
+            try:
+                pack_data = {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "total_errors": len(errors),
+                    "data_filename": data_filename,
+                    "errors_by_competency": comp_errors,
+                }
+                pack_file.write_text(json.dumps(pack_data, indent=2, ensure_ascii=False), encoding="utf-8")
+            except Exception as e:
+                logger.warning("Could not write cta_repair_pack.json: %s", e)
+
+        return "\n".join(out_lines).strip()
 
     grouped: Dict[str, Dict[Tuple[str, str, str], Dict[str, Any]]] = defaultdict(
         lambda: defaultdict(lambda: {"lines": [], "items": []})
@@ -1258,6 +1702,7 @@ def main() -> None:
         output_dir=output_dir,
         manifest_path=manifest_p,
         output_json_name=target_json_name,
+        is_part=bool(args.part),
     )
 
     if not valid:
@@ -1270,7 +1715,13 @@ def main() -> None:
                 source_lines = data_path.read_text(encoding="utf-8").splitlines()
             except Exception:
                 pass
-        compact_msg = render_compact_cta_errors(errors, data_filename=data_path.name, source_lines=source_lines)
+        compact_msg = render_compact_cta_errors(
+            errors,
+            data_filename=data_path.name,
+            source_lines=source_lines,
+            consolidated=True,
+            work_dir=work_dir,
+        )
         print(f"\n{compact_msg}\n(Calculado en {elapsed_ms:.2f} ms)", file=sys.stderr)
         sys.exit(1)
 

@@ -1545,6 +1545,9 @@ class ExecutionAuditor:
             and "fix_raw" not in it.get("file", "").lower()
             and "cta_data" not in it.get("file", "").lower()
             and "run.py" not in it.get("file", "").lower()
+            and "dump_prompts" not in it.get("file", "").lower()
+            and "prompt" not in it.get("file", "").lower()
+            and "helper" not in it.get("file", "").lower()
             and "tpl-var" not in it.get("cause", "").lower()
         ]
         infra_judge_interventions = [it for it in interv_list if "judge.py" in it.get("file", "").lower()]

@@ -1,9 +1,10 @@
-"""Dynamic Competency Sharding Engine for content-to-course v3.
+"""Dynamic Competency Sharding Engine for content-to-course v3.22.
 
-Partitions CTA competencies into K balanced shards (max 2 competencies per shard, K = ceil(N/2)):
+Partitions CTA competencies into K balanced shards using adaptive sizing:
+- comps_per_shard = clamp(ceil(N / 8), 2, 6) with up to 8 concurrent authors
 - Weights competencies by cognitive demand (Skill=3.0, Concept=2.0, Fact=1.0 + 0.1 * distractors)
-- Keeps consecutive competencies co-located in pairs (exact 2 per shard; odd total leaves 1 in last shard)
-- Emits work/shards/shard_01.json ... shard_0K.json and work/shards/manifest.json
+- Keeps consecutive competencies co-located in contiguous shards
+- Emits work/shards/shard_01.json ... shard_0K.json and work/shards/pre_shard_manifest.json
 - Injects self-contained dsl_reference into every shard for 100% author isolation
 """
 
@@ -297,12 +298,10 @@ def determine_shard_count(
     if max_comps_per_shard is not None and max_comps_per_shard > 0:
         target_max = float(max_comps_per_shard)
     else:
-        # Heuristic auto-selection v3.2:
-        # max_per_shard = 5.0 instead of 4.0 when avg_distractors > 6.0, and 6.0 otherwise (cap reduced from 8 to 5-6)
-        if avg_d > 6.0:
-            target_max = 5.0
-        else:
-            target_max = 6.0
+        # Adaptive Shard Sizing (v3.22): comps_per_shard = clamp(ceil(N / 8), 2, 6)
+        # Sized for up to 8 concurrent author subagents:
+        # e.g., N=16 -> 2/shard (K=8); N=24 -> 3/shard (K=8); N=43 -> 6/shard (K=8)
+        target_max = float(max(2, min(6, math.ceil(total_comps / 8.0))))
 
     # Balanced number of shards so that no shard exceeds target_max
     k = math.ceil(total_comps / float(target_max))
@@ -357,12 +356,10 @@ def plan_shards(
     out_dir.mkdir(parents=True, exist_ok=True)
     work_dir = out_dir.parent
 
-    # Locate pre_cta_manifest.json (No fallback: strict check)
+    # Locate pre_cta_manifest.json (No global fallback: strict workspace isolation)
     pre_cta_candidates = [
         work_dir / "pre_cta_manifest.json",
         cta_file.parent / "pre_cta_manifest.json",
-        out_dir.parent / "pre_cta_manifest.json",
-        Path("work/pre_cta_manifest.json").resolve(),
     ]
     pre_cta_file = None
     for cand in pre_cta_candidates:
@@ -506,7 +503,7 @@ def main():
     parser.add_argument("--cta", required=True, help="Path to cta.json")
     parser.add_argument("--output-dir", required=True, help="Output directory for shards (e.g. work/shards)")
     parser.add_argument("--k", type=int, default=None, help="Force specific shard count K")
-    parser.add_argument("--comps-per-shard", type=int, default=None, help="Target max competencies per shard (default: 5-6)")
+    parser.add_argument("--comps-per-shard", type=int, default=None, help="Target max competencies per shard (default: adaptive 2-6)")
     args = parser.parse_args()
 
     try:
