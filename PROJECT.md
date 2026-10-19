@@ -29,7 +29,7 @@ The system delivers a complete, local, self-contained educational ecosystem comp
 
 3. **Content-to-Course Antigravity Skill (`.agents/skills/content-to-course/`)**:
    - High-throughput v3 educational authoring pipeline:
-     1. **Stage 0 (Ingestion & Corpus Slicing)**: PyMuPDF extraction, vision tiling fallback, direct PDF viewing, and curricular session partitioning.
+     1. **Stage 0 (Ingestion & Source Slicing)**: PyMuPDF extraction, vision tiling fallback, direct PDF viewing, and curricular session partitioning.
      2. **Stage 1 (CTA Map-Reduce)**: Concurrent *Sectional CTA Analyzers* generating partial JSONs in parallel, unified by the *CTA Harmonizer & DAG Integrator* with inter-session prerequisite DAGs.
      3. **Stage 2 (Shard Planning)**: Partitioning into self-contained shard payloads (`work/shards/shard_XX.json`) with embedded DSL references and dynamic shard caps up to $K=8$.
      4. **Stage 3 (Shard Authoring with Shift-Left Self-Audit)**: Subagents authoring parametric templates in sandboxed Python, strictly gating on `check_templates.py` with mandatory `stem_variants >= 3` and simulated diversity ratio $\ge 0.50$ (Rule `TPL-VAR`).

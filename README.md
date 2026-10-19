@@ -225,7 +225,7 @@ Exit codes: `0` = Valid, `1` = Validation failure, `2` = File not found or I/O e
 Located under `.agents/skills/`, five specialized skills automate authoring, quality evaluation, telemetry, and lifecycle management:
 
 ### 1. `content-to-course` (v3 High-Throughput Pipeline)
-- **Multiformat Ingestion (`ingest.py`)**: PyMuPDF extraction, session slicing (`generate_session_slices`), and direct PDF reading (`work/corpus.md`).
+- **Multiformat Ingestion (`ingest.py`)**: PyMuPDF extraction, session slicing (`generate_session_slices`), and direct PDF reading (`work/pre_cta_manifest.json`).
 - **CTA Map-Reduce (`run.py --stage cta-map` & `--stage cta-reduce`)**:
   - *Phase Map*: Concurrent *Sectional CTA Analyzers* processing individual session slices.
   - *Phase Reduce*: *CTA Harmonizer & DAG Integrator* (`cta_merge.py`) assembling `work/cta.json` with canonical IDs and inter-session prerequisite DAGs.
