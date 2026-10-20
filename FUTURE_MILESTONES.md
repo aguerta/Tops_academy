@@ -1,242 +1,300 @@
-# Future Milestones: Plataforma Web, Móvil y Optimización de Pipeline
+# Hoja de Ruta Maestra de Evolución y Milestones: Tops Academy
+## Elevando la Vara: Del Paradigma Cerrado al "Antigravity Study Harness", Autenticidad Cognitiva y Ultra-Aprendizaje
 
-> **Documento de Planificación y Análisis de Arquitectura**  
-> **Fecha:** Octubre 2026  
-> **Áreas:** Top's Academy Platform (`React 18 + Vite`) y Pipeline de Cursos (`content-to-course` / Agentes)  
-> **Estado:** Milestone móvil planificado; optimizaciones Tier 1 + CTA Map-Reduce + Shard Shift-Left completadas y verificadas; Fase 2 Daemon y Scratch SSD en hoja de ruta.
-
----
-
-## 1. Contexto y Visión General
-
-La plataforma web interactiva de práctica y maestría de competencias opera con fluidez en entornos de escritorio (Desktop). Sin embargo, el acceso desde dispositivos móviles (**iPhone** y **Android**) presenta problemas de visualización debido a componentes con anchos fijos, barras rígidas y ausencia de menús adaptativos.
-
-El objetivo de este documento es registrar el **análisis preliminar de viabilidad**, la **evaluación de tecnologías** (Responsive Web vs. PWA vs. Capacitor vs. React Native), y definir la **hoja de ruta (milestones)** para transformar la plataforma en una experiencia móvil de primer nivel sin incurrir en reescrituras costosas de código.
+> **Documento Estratégico, Psicométrico y de Arquitectura de Sistemas**  
+> **Fecha de Actualización:** Octubre 2026  
+> **Áreas:** Top's Academy Web Platform (`React 18 + Vite`), UI Multi-Panel (Split-View Harness), Pipeline Multi-Agente (`content-to-course`), Auditoría de Calidad (`course-qa-evaluator`) y Ciencia del Aprendizaje (*Learning Architect Framework*).  
+> **Ubicación Principal y Archivos de Soporte:** [`docs/future_milestones/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/) *(con espejo en la raíz)*.
 
 ---
 
-## 2. Comparativa de Enfoques Tecnológicos
+## 1. El Diagnóstico Estratégico: Por Qué Necesitamos "Aumentar la Vara"
 
-| Criterio | Camino 1: Responsive Web + PWA *(Recomendado)* | Camino 2: Capacitor / Ionic *(Wrapper Nativo)* | Camino 3: React Native *(Reescritura Completa)* |
-| :--- | :--- | :--- | :--- |
-| **Tiempo de desarrollo** | **1 a 2 días** (8 - 14 hrs) | **2 a 3 días** (16 - 24 hrs) | **3 a 5 semanas** (120+ hrs) |
-| **Grado de refactorización** | **Mínimo (~10% - 15%)** (Solo estilos y layout responsive) | **Mínimo (~15%)** (Mismo código web + config nativa) | **Masivo (~85% - 95%)** (Reescribir JSX, CSS, KaTeX, SVGs) |
-| **Renderizado KaTeX (Matemáticas)** | **Nativo y fluido** (Usa el DOM y fuentes web actuales) | **Nativo y fluido** (Mismo motor web) | **Complejo** (Requiere embeber WebViews por cada fórmula o parsers incompletos) |
-| **Plano Cartesiano SVG y Confeti** | **Directo** (SVG responsive y Canvas estándar) | **Directo** (Sin cambios) | Requiere `react-native-svg` y librerías nativas |
-| **Distribución / Instalación** | Web directa + "Agregar a inicio" (modo standalone sin barra de URL) | Genera binario `.apk` (Android) e `.ipa` (iOS) | Binario nativo para Google Play y App Store |
-| **Costo de mantenimiento** | Una sola base de código para Desktop y Móvil | Una sola base de código | Doble base de código o abstracciones complejas |
+En las recientes auditorías automatizadas bajo estándares de Quality Matters (QM), OSCQR y Mastery Learning, el pipeline C2C alcanzó puntajes de excelencia consistente:
+- **`solow_model_v15`**: **20.0 / 20.0 pts** (Quality Tier: EXCELENTE)
+- **`practica_parcial_saul_standard_coarse`**: **19.0 / 20.0 pts** (Quality Tier: EXCELENTE)
+- **`practica_parcial_saul` (Masivo)**: **18.7 / 20.0 pts** (Quality Tier: EXCELENTE)
+- **`practica_parcial_saul_standard`**: **18.3 / 20.0 pts** (Quality Tier: EXCELENTE)
 
-### ¿Por qué se descarta React Native en esta etapa?
-1. **Incompatibilidad de DOM con KaTeX:** KaTeX depende del motor de diseño tipográfico web y manipulación directa del DOM. En React Native no existe DOM; renderizar decenas de fórmulas en una sesión de práctica obligaría a crear múltiples instancias de `react-native-webview`, lo cual degrada la memoria y fluidez del scroll.
-2. **Reescritura total de componentes:** Todo el HTML (`<div>`, `<button>`, `<input>`, `<span>`) y clases Tailwind tendrían que traducirse a primitivas nativas (`<View>`, `<Text>`, `<Pressable>`).
-3. **Costo desproporcionado:** Requeriría 3 a 5 semanas de trabajo frente a 1 o 2 días que toma adaptar la base web actual.
+Sin embargo, estos puntajes revelan una **paradoja de falsa suficiencia**: estamos obteniendo calificaciones perfectas **dentro de los límites de un paradigma de evaluación cerrado**.
 
----
+### 1.1. La Trampa de la "Ilusión de Fluidez" por Repetición de Plantillas
+Al inspeccionar las sesiones prácticas por unidad, aparece un fallo pedagógico crítico: **dentro de una misma competencia existen solo 5 o 6 preguntas generadas a partir de una única estructura o plantilla idéntica**, donde solo varían los números o coeficientes.
+- **El Problema:** El estudiante no adquiere fluidez en la competencia en general, sino que se **sobreajusta (*overfitting*) a la plantilla específica** generada por la plataforma.
+- **La Ilusión:** El alumno cree dominar el tema porque responde rápido, pero en realidad solo ha memorizado la heurística superficial (*surface cues*) de ese formato exacto de pregunta. Si en un examen real le cambian la perspectiva o el punto de partida, el conocimiento no transfiere.
+- **La Consigna Central:** **¿Cómo forzamos realmente al estudiante a aprender de forma profunda y rigurosa?** Toda la tecnología y la plataforma son medios al servicio de ese único fin: obligar al cerebro a procesar, inferir, deducir y sintetizar.
 
-## 3. Dinámica del Esfuerzo: ¿Por qué la PWA es Rápida y el Layout Requiere Cuidado?
+```mermaid
+graph TD
+    subgraph CurrentParadigm ["Paradigma Actual (Riesgo de Ilusión de Fluidez)"]
+        P1["100% Opción Múltiple (MC7)\nRespuesta correcta siempre visible"]
+        P2["Plantillas Repetitivas por Competencia\nEl estudiante memoriza el molde, no el concepto"]
+        P3["Canal Verbal-Simbólico Exclusivo\nCero evaluación gráfica o espacial"]
+        P4["Fricción en Laptops\n7 opciones desbordan la pantalla; obliga a zoom out"]
+    end
 
-Existe una aparente paradoja: *¿por qué configurar una Progressive Web App (PWA) toma apenas 1-2 horas, mientras que los layouts móviles toman más tiempo si 'solo es CSS'?*
+    subgraph FutureParadigm ["Nuevo Paradigma: Antigravity Study Harness & Deep Learning"]
+        N1["Web Adaptativa Multi-Resolución\nGrid 2 cols sin zoom out en laptops + PWA móvil"]
+        N2["Variedad de Plantillas y Contraejemplos\nMínimo 3-4 estructuras disjuntas por competencia"]
+        N3["Entradas Simbólicas Libres (Open Symbolic)\nFuerza la Evocación Pura (Free Recall)"]
+        N4["Antigravity Study Harness (Split-View Multi-Panel)\nCanvas de Preguntas + Material Fuente Original + Tab Gemini"]
+        N5["Desacoplamiento Estricto KaTeX-Python\nPatrón PrairieLearn con tokens ortogonales @PARAM@"]
+    end
 
-### A. La PWA es rápida porque es puramente declarativa y automatizada
-* Gracias al ecosistema moderno de Vite (`vite-plugin-pwa`), no se programa lógica desde cero.
-* El plugin autogenera el *Service Worker*, los scripts de caché fuera de línea y la sincronización.
-* Solo requiere definir un archivo `manifest.webmanifest` (nombre de la app, iconos `192x192` y `512x512`, colores de tema) y 3 metatags en `index.html` para iOS/Safari.
-
-### B. El layout móvil toma tiempo porque implica **nuevos estados interactivos y UX física**
-No se trata de cambiar un par de clases de Tailwind; involucra resolver problemas de interacción móvil reales:
-
-1. **El Menú Lateral a Drawer Desplegable:**
-   * En Desktop, el sidebar de unidades mide `w-64` (256px) fijo. En un celular de 375px aplasta el contenido.
-   * Ocultarlo no basta: el alumno necesita navegar entre unidades. Hay que programar un Drawer deslizable, botón hamburguesa, backdrop oscurecido, animación y cierre al tocar fuera o seleccionar unidad.
-2. **El Teclado Virtual (Teclado en pantalla de iOS y Android):**
-   * En preguntas de tipo *fill in the blank*, al hacer focus en el input el teclado virtual sube y oculta el 40%-50% de la pantalla.
-   * Una barra inferior rígida (`fixed bottom-0`) puede colisionar con el input o taparlo si no se gestionan unidades dinámicas de viewport (`dvh`).
-3. **FeedbackToast como "Bottom Sheet":**
-   * En Desktop, el cuadro de respuesta errónea es un toast flotante en la esquina (`right-8 bottom-24 w-96`).
-   * En celular, una solución paso a paso de matemáticas desborda la pantalla. Debe transformarse en un modal deslizable desde abajo (*Bottom Sheet* estilo Duolingo / Top's Academy) con scroll interno propio.
-4. **Desborde de Ecuaciones Matemáticas:**
-   * Fórmulas KaTeX extensas rompen el ancho de 360px si no cuentan con contención `overflow-x-auto`.
-5. **Escalado del Plano Cartesiano:**
-   * `CoordinatePlane.tsx` tiene un ancho por defecto de 360px en SVG. Debe utilizar `viewBox` y clases responsivas (`w-full max-w-[340px] h-auto`).
+    CurrentParadigm -->|Elevando la Vara| FutureParadigm
+```
 
 ---
 
-## 4. Hoja de Ruta de Implementación (Milestones)
+## 2. Matriz de Priorización de Ingeniería: Ganancia Cognitiva vs. Tiempo de Implementación
+
+Para ordenar la ejecución de manera quirúrgica, los hitos se estructuran en función de su **ganancia neta** (ganancia en aprendizaje profundo, calidad del curso, velocidad de uso y eliminación de fricción) frente al **tiempo de desarrollo**:
+
+| Prioridad / Hito | Área | Ganancia Real (Cognitiva y de Ingeniería) | Tiempo Estimado | Clasificación Estratégica |
+| :--- | :--- | :--- | :---: | :--- |
+| **Milestone 1: Web Ergonomía para Laptops (Zoom-Fix)** | Frontend / Layout | **Elimina la fricción física inmediata.** Evita que el usuario tenga que hacer zoom out en laptops de 13"-14" para ver las 7 opciones. Grid de 2 columnas + clamp elástico. | **2 a 4 horas** | 🚀 **Quick Win #1 (Inmediato)** |
+| **Milestone 2: PWA Móvil para Estudio en Celular** | Frontend / PWA | **Habilita el estudio ubicuo en celular.** Experiencia de app nativa sin barra de navegador, offline cache de fuentes KaTeX y safe areas. | **1 a 2 horas** | 🚀 **Quick Win #2 (Inmediato)** |
+| **Milestone 3: Anti-Overfitting y Variedad de Plantillas (QA v2.0 Early)** | Pipeline / Rúbrica | **Destruye la ilusión de fluidez.** Exige mínimo 3 a 4 plantillas disjuntas por competencia con contraejemplos, evitando el aprendizaje de memoria. | **1 a 2 días** | 🎯 **Core Pedagógico Alto** |
+| **Milestone 4: Desacoplamiento KaTeX-Python (PrairieLearn & pykatex)** | Pipeline / Backend | **Erradica los fallos de sintaxis al 100%.** Separa el cálculo en Python (`generate() -> dict`) de plantillas declarativas con `@PARAM@` y validación con `pykatex` (QuickJS). | **1 a 2 días** | 🛠️ **Estabilidad Sistémica** |
+| **Milestone 5: Entradas Simbólicas Libres y Demostraciones por Pasos** | Backend / Frontend | **Fuerza la evocación libre (Free Recall).** Reemplaza la opción múltiple por cajas MathLive validadas con SymPy y validadores de derivaciones intermedias. | **2 a 3 días** | 🧠 **Impacto Cognitivo Máximo** |
+| **Milestone 6: Antigravity Study Harness (Multi-Panel Split-View)** | Arquitectura de UI | **El salto cuántico en flow de estudio.** Canvas de preguntas + Visor de material original sincronizado + Pestaña de Google Gemini socrático. | **3 a 5 días** | 👑 **La Joya de la Corona (Máxima Ambición)** |
+| **Milestone 7: QA Rubric v2.0 Completa (Certificación Deep Mastery)** | Auditoría QA | **Sello de certificación estricta.** Evalúa multimodalidad, penaliza monocultivo MC7 e integra los 6 linters automáticos descubiertos. | **1 a 2 días** | 📋 **Garantía y Gobernanza** |
+| *Opcional A: Pipeline Performance Daemon en RAM / SSD* | Infraestructura | *Acelera subprocesos locales, pero el cuello de botella real es la inferencia LLM (optimizable con prompt engineering).* | *3 a 4 horas* | ⏳ **Opcional / Secundario** |
+| *Opcional B: Empaquetado Nativo con Capacitor* | Distribución | *Generación de APK para tiendas de aplicaciones.* | *4 a 6 horas* | ⏳ **Opcional / Backlog** |
+
+---
+
+## 3. La Joya de la Corona: El "Antigravity Study Harness" (Milestone 6)
+
+Inspirado en la interfaz de trabajo de **Google Antigravity** —donde conviven de forma sincronizada el panel de tarea/conversación, el panel de artefactos/código y el inspector de herramientas—, la plataforma de estudio evoluciona hacia una **Estación de Ultra-Aprendizaje en Flow**:
 
 ```mermaid
 flowchart LR
-    M1["Milestone 1: Layouts & UX Móvil (2-3 hrs)"] --> M2["Milestone 2: PWA & Safe Areas (1-2 hrs)"]
-    M2 -.-> M3["Milestone 3 (Opcional): Capacitor APK / App Store (4-6 hrs)"]
+    subgraph HarnessUI ["Antigravity Study Harness (Plataforma Web / Desktop Split-View)"]
+        PanelA["Panel 1: Question & Action Canvas\n- Enunciado interactivo\n- 7 opciones adaptativas (Grid 2 cols en laptops)\n- Entrada simbólica (MathLive)\n- Barra de comprobación"]
+        PanelB["Panel 2: Contextual Source Anchor\n- Visor integrado del material fuente (PDF/Apuntes)\n- Sincronización automática con la página del teorema\n- Búsqueda y análisis autónomo guiado"]
+        PanelC["Panel 3: Socratic AI Sidecar (Google Gemini Tab)\n- Pestaña / Panel de conversación con Gemini\n- Preguntas metodológicas de primer principio\n- Prohibición de respuestas directas; guía socrática"]
+    end
 ```
 
-### Milestone 1: Refactorización Mobile-First y Adaptación de Componentes
-* **Objetivo:** Garantizar que todas las vistas se muestren de forma ergonómica en pantallas de 360px a 430px (iPhone SE, iPhone Pro, Samsung Galaxy).
-* **Tareas Específicas:**
-  * [ ] **Sidebar Adaptativo (`Sidebar.tsx` / `App.tsx`):**
-    * Ocultar sidebar en pantallas menores a `md`.
-    * Agregar barra superior móvil con botón hamburguesa para desplegar el drawer de unidades.
-  * [ ] **Barra Inferior de Práctica (`PracticeSession.tsx`):**
-    * Reorganizar la fila rígida inferior (`fixed bottom-0`): botón "Comprobar / Siguiente" a ancho completo (`w-full`) o barra compacta adaptada para una sola mano.
-  * [ ] **Bottom Sheet para Retroalimentación (`FeedbackToast.tsx`):**
-    * En pantallas móviles, convertir el toast en una hoja inferior (`fixed bottom-0 left-0 right-0 rounded-t-2xl max-h-[85dvh]`).
-  * [ ] **Contención de Fórmulas y Gráficos:**
-    * Actualizar `CoordinatePlane.tsx` con `viewBox="0 0 360 360"` y `w-full max-w-[340px]`.
-    * Envolver bloques KaTeX en `MathText.tsx` con `overflow-x-auto`.
-  * [ ] **Manejo de Viewport y Teclado Virtual:**
-    * Usar `min-h-[100dvh]` para evitar saltos de pantalla al desplegar el teclado en preguntas de entrada de texto.
+### 3.1. Panel 1: Canvas de Preguntas y Acción
+- El área activa de interacción donde el estudiante lee el problema, reflexiona y formula su respuesta.
+- **Resolución al problema de laptops:** En pantallas pequeñas (13"-14", resoluciones 1366x768, 1440x900 o con escalado de Windows al 125%/150%), las 7 opciones se reorganizan automáticamente en un **Grid responsivo de 2 columnas** o en un contenedor elástico con scroll suave, eliminando por completo la necesidad de hacer zoom out en el navegador.
+
+### 3.2. Panel 2: Ancla Contextual al Material de Origen (*Contextual Source Anchor*)
+- Cada competencia (`H-XX`, `C-XX`, `Hab-XX`) está vinculada metadatamente al archivo fuente en `content/` (`MATH_IV_Problem_Set_I.pdf`, `TEMA 1 (EDP SAUL).pdf`, `solow1956.pdf`) con su rango exacto de páginas o diapositivas.
+- Si el estudiante entra en duda o falla, el panel secundario se despliega automáticamente abriendo el visor del documento fuente exactamente en el teorema, demostración o gráfico del que se extrajo la competencia.
+- **Principio Pedagógico:** La pregunta **jamás es un copy-paste** del texto; es una instancia de aplicación profunda que obliga a inferir. El estudiante revisa la fuente no para copiar una respuesta, sino para refrescar el modelo mental y razonar desde los primeros principios (*Search-Organize-Integrate*).
+
+### 3.3. Panel 3: Asistente Socrático Integrado (Google Gemini Tab)
+- Una pestaña o panel lateral desplegable dentro de la propia plataforma conectado a Google Gemini.
+- Si tras consultar el material de origen el estudiante continúa bloqueado, puede interactuar con Gemini como un tutor socrático en tiempo real:
+  - *"¿Cuál es la intuición física de esta condición de frontera?"*
+  - *"¿Cómo debo plantear el polinomio característico cuando las raíces son imaginarias puras?"*
+- Gemini opera bajo un system prompt socrático: **guía metodológicamente, explica la intuición y propone el punto de partida sin revelar la opción correcta ni dar la solución numérica directa**, convirtiendo a la plataforma en un simulador de ultra-aprendizaje de alta exigencia.
+
+### 3.4. El Bucle de Retroalimentación en Estado de Flow (*Active Mastery Flow Loop*)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Estudiante
+    participant Canvas as Panel 1: Question Canvas
+    participant Source as Panel 2: Material Original (PDF)
+    participant Tutor as Panel 3: Gemini Socratic Tab
+
+    Estudiante->>Canvas: Lee problema y reflexiona
+    alt Acierto directo
+        Estudiante->>Canvas: Envía respuesta correcta
+        Canvas-->>Estudiante: Refuerzo positivo inmediato + Siguiente pregunta (Flow continuo)
+    else Duda o Primer Fallo (Fricción Cognitiva)
+        Canvas-->>Estudiante: Oculta opciones distractores; solicita recuerdo activo
+        Note over Estudiante: "Trata de recordar: ¿dónde estaba este concepto en los apuntes?"
+        Estudiante->>Canvas: Reintento autónomo
+    else Segundo Fallo o Solicitud de Ayuda
+        Canvas->>Source: Despliega Panel 2 posicionado en la página exacta del PDF
+        Note over Estudiante,Source: El estudiante busca, analiza y razona desde el material original
+        Estudiante->>Canvas: Reintento basado en el análisis de la fuente
+    else Bloqueo Persistente
+        Canvas->>Tutor: Habilita el Tab de Google Gemini
+        Estudiante->>Tutor: "No entiendo cómo empezar este despeje"
+        Tutor-->>Estudiante: Guía socrática de primer principio (sin regalar la respuesta)
+        Estudiante->>Canvas: Resuelve y consolida el aprendizaje profundo
+    end
+```
+
+---
+
+## 4. Diagnóstico de los 7 Puntos Ciegos Cognitivos que Definen la Nueva Vara
+
+A partir de las investigaciones independientes preservadas en [`docs/future_milestones/investigaciones/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/):
+- [`03_Limitaciones_de_la_plataforma_de_estudio.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/03_Limitaciones_de_la_plataforma_de_estudio.md)
+- [`04_Limites_de_la_plataforma_y_estudio.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/04_Limites_de_la_plataforma_y_estudio.md)
+
+Se establecen las 7 dimensiones que la plataforma debe incorporar para certificar auténtico dominio disciplinar:
+
+1. **Evocación Libre (*Free Recall*) vs. Reconocimiento (*Recognition*):** Con 7 opciones múltiples, la respuesta correcta siempre está visible en pantalla. Se entrena descarte guiado, no evocación pura desde memoria a largo plazo frente a una hoja en blanco.
+2. **Traducción y Construcción Gráfico-Visual (*Dual Channels & Drawing Effect*):** El motor opera 100% en texto/LaTeX. Se requiere evaluar la conversión visoespacial: diagramas de fase, campos de pendientes, isoclinas nulas y retratos de estabilidad.
+3. **Encadenamiento de Demostraciones Largas (*Bundling & Step-by-Step Proofs*):** Se evalúa el resultado final o un eslabón aislado, sin auditar derivaciones de 10 pasos ni detectar la violación intermedia de un supuesto.
+4. **Combate a la Ilusión de Maestría Explicativa (*Illusion of Explanatory Depth*):** Leer soluciones prefabricadas genera fluidez de lectura pasiva. Es necesario forzar la formulación escrita y el contraste de contraejemplos.
+5. **Formulación de Modelos No Estructurados (*Adaptive Expertise*):** Introducir casos difusos (*fuzzy boundaries*) donde el modelo no está dado de antemano y el alumno debe seleccionar supuestos (*Learning as "less"*).
+6. **Trabajo Computacional y Simulación Empírica (*Shop Time*):** Simulación numérica en Python/Julia de dinámicas complejas sin solución analítica cerrada (Runge-Kutta, perturbaciones estocásticas).
+7. **Automonitoreo y Resiliencia con Andamiaje Diferido (*Delayed Scaffolding*):** Bloqueo inicial de pistas para entrenar la resistencia a la frustración y el automonitoreo metacognitivo.
+
+---
+
+## 5. Investigaciones de Ingeniería: Desacoplamiento KaTeX y Python (Milestone 4)
+
+Preservadas en:
+- [`01_Solucion_al_conflicto_KaTeX_y_Python_en_LLMs.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/01_Solucion_al_conflicto_KaTeX_y_Python_en_LLMs.md)
+- [`02_Separacion_KaTeX_y_Python_LLM.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/02_Separacion_KaTeX_y_Python_LLM.md)
+
+### 5.1. Causa Raíz de la Colisión Léxica
+El uso de llaves dobles (`{{...}}`) para escapar caracteres en f-strings de Python mientras se escriben comandos de KaTeX (`\frac{a}{b}`) colapsa la atención autorregresiva de los LLMs. El modelo sobrecompensa duplicando llaves innecesarias o produce escapes malformados que disparan *Circuit Breakers* y fuerzan intervenciones manuales del supervisor.
+
+### 5.2. Solución Arquitectónica (Patrón PrairieLearn y Tokens Ortogonales)
+1. **Desacoplamiento Estricto por Contrato:** Prohibir que Python ensamble cadenas con LaTeX o HTML. La función `generate()` solo debe calcular y retornar un diccionario de parámetros puros (números, tensores o strings simbólicos generados con `sympy.latex()`).
+2. **Plantilla Declarativa con Delimitadores Ortogonales:** La redacción pedagógica y el marcado KaTeX residen en plantillas Markdown estáticas, usando marcadores neutros que no colisionan con llaves ni con dólares: `@PARAM_NAME@` o `<eval-var name="var_name"/>`.
+3. **Validación Temprana mediante `pykatex` (QuickJS Embebido):** Validar la sintaxis KaTeX del lado del servidor a una velocidad de **15,000 fórmulas/segundo** mediante el motor oficial de JavaScript, reinyectando de inmediato el `katex.ParseError` exacto al LLM en caso de fallo sintáctico.
+4. **Inspección AST con `markdown-it-py`:** Separar nodos matemáticos de la prosa antes de validar, eliminando falsos positivos por caracteres especiales en el texto en español.
+
+---
+
+## 6. Especificación Detallada de los Milestones
+
+### Milestone 1: Layouts Adaptativos Multi-Resolución (Laptops Pequeñas, Pantallas Medianas y Móvil)
+* **Objetivo Crítico:** Resolver el problema de adaptabilidad donde las 7 opciones (MC7) se desbordan verticalmente en computadoras portátiles (13"-14", resoluciones 1366x768 o 1440x900) obligando al usuario a hacer zoom out continuo en el navegador.
+* **Componentes Técnicos:**
+  1. **Grid Inteligente de 2 Columnas para Opciones:**
+     - En pantallas de escritorio medianas o laptops con altura reducida (`max-height: 850px` y `min-width: 1024px`), las 7 alternativas se organizan automáticamente en 2 columnas equilibradas (4 en columna izquierda, 3 en columna derecha), garantizando que todo el reactivo quepa en una sola pantalla sin scroll.
+  2. **Contenedor Elástico con `clamp()` y Scroll Suave:**
+     - Espaciados y tipografías elásticas usando unidades dinámicas (`clamp(0.875rem, 1.5vh, 1.125rem)`) para padding de opciones y enunciados.
+     - Scroll interno contenido en el bloque de opciones si el enunciado es excepcionalmente largo, manteniendo fijos el encabezado y el botón de comprobación.
+  3. **Refactorización Mobile-First:**
+     - Drawer desplegable para `Sidebar.tsx` con botón hamburguesa.
+     - `FeedbackToast.tsx` transformado en Bottom Sheet deslizable con scroll propio.
+     - SVG responsive en `CoordinatePlane.tsx` (`viewBox` + `max-w-[340px]`).
+     - Viewports dinámicos (`100dvh`) para mitigar el teclado virtual en preguntas de texto.
 
 ---
 
 ### Milestone 2: Configuración PWA (Progressive Web App)
-* **Objetivo:** Permitir que los usuarios instalen la plataforma en su iPhone o Android mediante "Agregar a pantalla de inicio", funcionando a pantalla completa como una aplicación nativa.
-* **Tareas Específicas:**
-  * [ ] **Instalación de Dependencias:**
-    * Agregar `vite-plugin-pwa` a `platform/package.json`.
-  * [ ] **Configuración en `vite.config.ts`:**
-    * Configurar `VitePWA` con registro automático de Service Worker y caché estática de assets (fuentes KaTeX, estilos, scripts).
-  * [ ] **Manifiesto Web (`manifest.webmanifest`):**
-    * Definir `name: "Top's Academy Platform"`, `short_name: "Top's Academy"`.
-    * Definir `display: "standalone"` y `orientation: "portrait"`.
-    * Crear assets de iconos en `public/icons/`: `icon-192.png`, `icon-512.png` y `apple-touch-icon.png`.
-  * [ ] **Soporte de Safe Areas e iOS en `index.html`:**
-    * Agregar `<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />`.
-    * Agregar `<meta name="apple-mobile-web-app-capable" content="yes" />` y `<meta name="apple-mobile-web-app-status-bar-style" content="default" />`.
-    * Agregar utilidades de Tailwind para safe areas (`pb-[env(safe-area-inset-bottom)]`).
+* **Objetivo:** Instalación en pantalla de inicio en Android e iOS con comportamiento nativo standalone.
+* **Componentes:**
+  - `vite-plugin-pwa` con service worker automático y precaching de assets/fuentes KaTeX.
+  - `manifest.webmanifest` con iconos adaptativos (`192x192`, `512x512`).
+  - Metatags de Safe Areas para iOS/Safari (`viewport-fit=cover`, utilidades `env(safe-area-inset-bottom)`).
 
 ---
 
-### Milestone 3 (Opcional): Empaquetado Nativo con Capacitor
-* **Objetivo:** Generar instalables directos (`.apk` para Android / proyecto Xcode para iOS) si se requiere distribución fuera de la web o publicación en tiendas de aplicaciones.
-* **Tareas Específicas:**
-  * [ ] Instalar `@capacitor/core`, `@capacitor/cli`, `@capacitor/android`, `@capacitor/ios`.
-  * [ ] Ejecutar `npx cap init` y configurar `webDir: "dist"`.
-  * [ ] Ejecutar `npx cap add android` para compilar el APK con Gradle.
-  * [ ] Configurar splash screen y barra de estado nativa.
+### Milestone 3: Anti-Overfitting y Variedad de Plantillas por Competencia (QA v2.0 Early)
+* **Objetivo:** Destruir la ilusión de fluidez erradicando el monocultivo de una única plantilla por competencia.
+* **Componentes Técnicos:**
+  1. **Requisito de Mínimo 3 a 4 Plantillas Disjuntas por Competencia:**
+     - El pipeline C2C debe generar al menos 3 a 4 arquitecturas de plantilla cualitativamente distintas por competencia (ej. una analítica directa, una de perturbación de supuestos, una geométrica/cualitativa y una de caso límite o contraejemplo).
+  2. **Auditoría de Diversidad Semántica:**
+     - Algoritmo de similitud léxica/estructural en `standardized_audit_engine.py` que penalice cursos donde los reactivos de una misma competencia compartan el mismo esqueleto gramatical.
 
 ---
 
-## 5. Estimación de Tiempos y Plan de Ejecución
-
-| Tarea | Modalidad Ágil | Modalidad Pulida / Exhaustiva |
-| :--- | :--- | :--- |
-| **Milestone 1 (Layouts + Drawer + Teclado)** | 2 a 3 horas | 6 a 8 horas |
-| **Milestone 2 (PWA + Iconos + Manifest + iOS)** | 1 a 2 horas | 2 a 3 horas |
-| **Total para dejar la app corriendo en celular:** | **~4 a 5 horas** | **~8 a 11 horas** |
-
-### Conclusión Estratégica (Móvil)
-La arquitectura actual basada en React y Vite permite alcanzar una experiencia móvil idéntica a una aplicación nativa sin tener que reescribir la plataforma. La ruta más eficiente y de menor costo técnico es ejecutar primero el **Milestone 1** (diseño adaptativo) y sellarlo con el **Milestone 2** (PWA).
-
----
-
-## 6. Milestone 4: Optimización de Alta Velocidad para Pipeline y Subagentes LLM (Local Daemon & SSD Scratch)
-
-> **Área:** Motor de ejecución de cursos (`content-to-course`), validación de plantillas y suites de prueba.  
-> **Estado:** Fase 1 (Tier 1 Fast-Path) implementada con éxito; Fase 2 (Daemon + Scratch SSD) planificada.  
-> **Objetivo:** Reducir la latencia de feedback de los subagentes a **< 0.40 segundos** y recortar el tiempo total de generación de un curso completo de **~6.5 minutos a ~1.2 minutos**.
-
----
-
-### 6.1 Contexto y Logros Previos (Fase 1 - Tier 1)
-
-Durante las iteraciones de los subagentes LLM en etapas de autoría (`c2c-author`) y validación, los procesos de prueba en Python generaban demoras críticas (entre 10s, 48s y 62s). 
-
-Tras la implementación de las optimizaciones de **Tier 1 (In-Process Fast-Path + Paralelización de Competencias + Pytest en Memoria + Caching de Esquema)**, se obtuvieron las siguientes reducciones iniciales sin alterar contratos ni plantillas:
-* **`run.py --stage build` (500+ preguntas):** Reducido de **48.19 s a 6.10 s** (~8x más rápido).
-* **`run.py --stage templates` (todas las plantillas):** Reducido de **62.14 s a 18.00 s** (~3.5x más rápido).
-* **Validación de autor individual (`check_templates.py`):** Reducido de **3.60 s a 0.83 s** (~4.3x más rápido tras eliminar el warmup ciego).
-* **Suite de pruebas combinada (367 tests / 363 passed, 4 skipped):** Reducido a **18.05 s** con 100% de éxito en todas las suites unitarias y de integración.
-
-Este Milestone 4 aborda la **Fase 2**, orientada a erradicar el arranque frío del intérprete y la latencia del disco virtual de Google Drive (`G:\Mi unidad`).
+### Milestone 4: Desacoplamiento Arquitectónico KaTeX-Python & AST Validation Engine (PrairieLearn Pattern)
+* **Objetivo:** Erradicar al 100% los fallos sintácticos por duplicación de llaves (`{{...}}`), escapes corruptos de LaTeX y micro-bucles de edición en los subagentes autores.
+* **Componentes Técnicos:**
+  1. **Contrato de Autoría Tipado (Pydantic / Structured Outputs):**
+     - Reescribir el contrato de `c2c_shard_author` dividiendo la salida en dos campos estrictos:
+       ```python
+       class ShardCompetenceContract(BaseModel):
+           competence_id: str
+           python_pure_logic: str = Field(description="Solo función generate() -> dict. Cero strings con LaTeX/HTML.")
+           statement_markdown: str = Field(description="Markdown + KaTeX puro con tokens @PARAM@")
+           solution_markdown: str = Field(description="Explicación paso a paso con tokens @PARAM@")
+       ```
+  2. **Erradicación de Llaves en la Interpolación:**
+     - Sustituir las f-strings y `.format()` por el interpolador de tokens ortogonales `@PARAM_NAME@` o `<eval-var name="..."/>`.
+  3. **Generación Simbólica Garantizada con `sympy.latex()`:**
+     - Prohibir el ensamblado manual de matrices o polinomios en Python. Exigir la exportación canónica mediante SymPy.
+  4. **Validador Estricto con `pykatex` (QuickJS Embebido):**
+     - Integrar `pykatex` en `compile_shard.py` para compilar y validar árboles KaTeX del lado del servidor a 15,000 fórmulas/segundo.
+  5. **Auto-Corrección con Diagnóstico de Compilador:**
+     - Ante fallos, inyectar directamente la excepción técnica (`katex.ParseError` con número de columna) en el contexto de autorreparación del agente.
 
 ---
 
-### 6.2 Componentes Técnicos Planificados
-
-```mermaid
-flowchart TD
-    subgraph Pipeline["Orquestación del Curso (run.py)"]
-        P0["Paso 0a: Iniciar Local Daemon en background"] --> P1["Etapas de Ingest, CTA y Sharding en SSD Local"]
-        P1 --> P2["Fan-out de 22 Autores Concurrentes"]
-    end
-
-    subgraph Daemon["Local Daemon Runner (Memoria RAM)"]
-        D1["localhost:8765 (ThreadingHTTPServer)"]
-        D1 -->|Precargado| D2["SymPy, NumPy, JSON Schemas en RAM"]
-        D1 -->|Respuesta <400ms| P2
-    end
-
-    subgraph Scratch["Bypass de Disco (SSD Local %TEMP%)"]
-        S1["C:/Users/.../AppData/Local/Temp/c2c_work"]
-        S1 -->|Cero latencia de red/locks| D1
-        S1 -->|Sync atómico al finalizar| RepoCourses["courses/ del repositorio"]
-    end
-```
-
-#### Componente A: Local Daemon Runner en Memoria (Language-Server Pattern)
-* **Concepto:** Similar a cómo operan Vitest, ESLint o los Language Servers en IDEs modernos, un proceso ligero en background mantiene las librerías matemáticas (`sympy`, `numpy`), los esquemas y las funciones de validación precargadas en memoria RAM.
-* **Tiempo Estimado de Implementación:** **2 a 3 horas**.
-* **Desglose Técnico de las 2 - 3 Horas:**
-  1. **Gestión de Puertos y Ciclo de Vida (45 min):** Detección automática de puerto libre (puerto base `8765` con fallback efímero) y escritura de archivo de control (`work/.daemon_port`). Arranque transparente desacoplado en background durante `prepare` con polling a `/health` hasta responder `200 OK`.
-  2. **Cliente con Fallback Infalible (45 min):** En `check_templates.py`, el cliente consulta el demonio local vía HTTP nativo en <10 ms. Si el demonio no responde en 500 ms o no está activo, realiza un fallback automático e imperceptible a la ejecución local (0.83 s), garantizando que el agente nunca se bloquee.
-  3. **Concurrencia Segura para Fan-Out (30 min):** Implementación con `ThreadingHTTPServer` para atender simultáneamente a los 22 subagentes autores concurrentes sin contención.
-  4. **Apagado Limpio / Graceful Shutdown (20 min):** Hook `/shutdown` invocado al publicar el curso (`stage publish`) o ante interrupciones de terminal (`SIGINT`/`SIGTERM`) para evitar procesos huérfanos en Windows.
-  5. **Pruebas de Estrés y Concurrencia (20 min):** Verificación de 20+ solicitudes simultáneas sin fugas de memoria.
-* **Ganancia Comprobada Empíricamente:** Validación completa de un archivo de competencias en **0.39 segundos (399 ms)** (frente a los 3.60 s originales).
-
-#### Componente B: Directorio de Trabajo Temporal en SSD Local (`--scratch-dir` en `%TEMP%`)
-* **Concepto:** Redirigir los artefactos intermedios de trabajo (`work/`) a la unidad de almacenamiento SSD local (`C:\Users\augus\AppData\Local\Temp\c2c_work`) durante la ejecución, copiando únicamente el producto terminado (`courses/<id>.json` y `cta.json`) a la carpeta definitiva `courses/`.
-* **Tiempo Estimado de Implementación:** **1 hora**.
-* **Desglose Técnico de la 1 Hora:**
-  1. **Gestión de Unidades Cruzadas Windows (20 min):** Resolver la incompatibilidad de `os.rename()` entre particiones o unidades distintas mediante streaming atómico con `shutil.copytree()` y sincronización transaccional al publicar.
-  2. **Ciclo de Vida y Limpieza Automática (15 min):** Context manager con bloque `try ... finally` para limpiar temporales en caso de interrupción o fallo, evitando acumulación de basura en disco local.
-  3. **Parametrización en Runner CLI (15 min):** Flag opcional `--scratch-dir` en `run.py` con fallback por defecto al directorio actual para no romper workflows existentes.
-  4. **Pruebas de Verificación de Integridad (10 min):** Confirmar que los cursos generados se sincronicen intactos a `courses/`.
-* **Ganancia:** Elimina la latencia de I/O de red y bloqueos del sistema de archivos, reduciendo las lecturas de JSON de 80 ms a <1 ms.
+### Milestone 5: Entradas Simbólicas Abiertas, Demostraciones por Pasos y Módulos SVG
+* **Objetivo:** Trascender la opción múltiple forzando el efecto de generación y la multimodalidad visoespacial.
+* **Componentes Técnicos:**
+  1. **Tipo de Reactivo de Entrada Simbólica Abierta (`open_symbolic`):**
+     - Cajas de texto matemáticas (MathLive) evaluadas mediante `SymPy`: `simplify(user_expr - correct_expr) == 0`.
+  2. **Validador de Demostraciones por Pasos Intermedios (*Step-by-Step Proof Grader*):**
+     - Validación secuencial de 3 hitos intermedios en `engine/sandbox.py`.
+  3. **Módulo Gráfico Interactivo Visoespacial (SVG / Canvas):**
+     - Componentes interactivos para arrastrar vectores en campos de pendientes, marcar isoclinas nulas y seleccionar diagramas de fase.
+  4. **Generador de Perturbaciones y Contraejemplos Teóricos (*Boundary Testing*):**
+     - Distractores programados para capturar la violación deliberada de supuestos axiomáticos.
+  5. **Andamiaje con Retardo y Escalera de Fricción (*Delayed Scaffolding*):**
+     - Bloqueo temporal inicial de pistas (5 min) para forzar la búsqueda autónoma en el material original.
 
 ---
 
-### 6.3 Impacto en el Tiempo Total del Sistema (Curso Completo)
-
-Para un curso estándar de **22 competencias y más de 500 preguntas interactivas**:
-
-| Etapa / Componente | Tiempo Original | Estado Actual (Tier 1) | Con Milestone 4 (Daemon + Scratch) | Ahorro Neto en el Sistema |
-| :--- | :--- | :--- | :--- | :--- |
-| **Stage 0: Prepare & Ingest** | 19.1 s | 19.1 s | **~10.0 s** | Lecturas de PyMuPDF aceleradas en SSD |
-| **Stage 1 & 2: CTA & Sharding** | 1.1 s | 1.1 s | **1.1 s** | Ya optimizado (<1s) |
-| **Ciclo de Autores (22 shards $\times$ 3 checks)** | **~238 s** (acumulado) | **~55 s** | **~24 s** | Cada autor recibe feedback en ~0.39 s |
-| **Stage 3: Gate `templates` (22 comp.)** | **62.1 s** | **18.0 s** | **~6.0 s** | En memoria RAM sin latencia de disco |
-| **Stage 4: `build` (500+ preguntas)** | **48.2 s** | **6.1 s** | **~4.0 s** | Paralelizado con I/O en SSD local |
-| **Stage 5 & 6: `verify` y `publish`** | 21.3 s | 21.3 s | **~15.0 s** | Sin sobrecostes de subprocesos |
-| **TIEMPO TOTAL DEL CURSO** | **~390 s (~6.5 min)** | **~120 s (~2.0 min)** | **~60 - 75 s (~1.2 min)** | **Ahorro de más del 80% (>5 minutos por curso)** |
-
----
-
-### 6.4 Garantía de Cero Refactorización de Código
-
-* **Contratos Inmutables:** No se modifican las plantillas generadas (`work/templates/*.json`), la sintaxis de las funciones `generate(rng)`, ni los esquemas de validación.
-* **Transparencia para los Agentes:** Los subagentes continúan ejecutando el mismo comando estándar documentado en sus instrucciones:
-  ```bash
-  python .agents/skills/content-to-course/check_templates.py work/templates/<comp_id>.json --cta work/cta.json
-  ```
-  La aceleración ocurre bajo el capó de forma totalmente transparente.
+### Milestone 6: Arquitectura "Antigravity Study Harness" (Multi-Panel Split-View, Source Anchor & Gemini Sidecar)
+* **Objetivo:** Transformar la plataforma en una estación de trabajo de ultra-aprendizaje en flow, conectando preguntas interactivas con el material de origen y tutoría socrática por IA.
+* **Componentes Técnicos:**
+  1. **Split-View Layout Adaptativo (`platform/src/components/HarnessLayout.tsx`):**
+     - Disposición multi-panel con divisiones ajustables o colapsables (Splitter).
+     - Panel A: Área de preguntas y respuestas (Canvas de práctica).
+     - Panel B: Visor de PDF/Markdown con resaltado del fragmento fuente exacto.
+     - Panel C: Panel lateral o pestaña emergente de Google Gemini.
+  2. **Indexador y Ancla de Contenido Fuente (`c2c-ingest` / `cta.json`):**
+     - El pipeline C2C estampa en cada competencia la referencia precisa de origen:
+       `"source_anchor": {"file": "MATH_IV_Problem_Set_I.pdf", "page": 14, "section": "Problema 3: EDP cuasilineal"}`.
+     - El visor de la plataforma se sincroniza automáticamente con el `source_anchor` de la competencia activa.
+  3. **Sidecar Socrático de Google Gemini (`GeminiSocraticTutor.tsx`):**
+     - Integración de API / webview de Gemini dentro de la plataforma con contexto precargado del problema y del material fuente.
+     - Guardas de prompt socrático: prohibir entregar la solución directa; formular preguntas orientadoras ("¿Qué método de integración aprendiste para derivadas parciales respecto a $x$ mientras mantienes $y$ constante?").
+  4. **Motor de Bucle de Flujo (Active Mastery Loop):**
+     - Transición sin fricciones entre aciertos y reintentos guiados con escalera de asistencia gradual.
 
 ---
 
-### 6.5 Checklist de Implementación de Milestone 4
+### Milestone 7: Rúbrica de Auditoría QA de Próxima Generación (QA Rubric v2.0 - Deep Mastery)
+* **Objetivo:** Actualizar el motor de auditoría (`course-qa-evaluator`) para calificar no solo la corrección formal, sino la profundidad cognitiva real de los cursos.
+* **Componentes Técnicos:**
+  1. **Penalización por Monocultivo Psicométrico:**
+     - Descuento de hasta **-3.0 puntos** si un curso presenta 100% de preguntas en un único formato (ej. exclusivamente MC7).
+  2. **Exigencia de Diversidad Multimodal (Mínimo 20%):**
+     - Bonificación y certificación solo para cursos que incorporen reactivos abiertos simbólicos, pasos intermedios o interacción gráfica.
+  3. **Formalización Permanente de las 6 Nuevas Reglas de Linteo:**
+     - `uninterpolated_math_placeholder_linter` (tokens `{var}` en KaTeX).
+     - `katex_delimiter_parity_shift_linter` (macros en texto plano por falta de `$`).
+     - `katex_concatenated_macro_linter` (macros concatenadas sin espacio `\muu`).
+     - `telltale_distractor_gerund_label_linter` (gerundios delatores en opciones).
+     - `arithmetic_unnormalized_sign_linter` (operadores `+ -` y coeficientes `1x`).
+     - `dag_orphan_prerequisites_linter` (habilidades sin prerrequisitos en grafo DAG).
+  4. **Métricas de Resiliencia ante Overfitting:**
+     - Auditoría de similitud léxica entre instancias de una misma competencia para garantizar variabilidad semántica profunda (*deep structure*) sobre pistas superficiales (*surface features*).
 
-* [ ] **Sub-tarea 4.1: Servidor Local Daemon (`daemon_runner.py`)**
-  * [ ] Crear `engine/daemon.py` con `ThreadingHTTPServer` en `localhost:8765`.
-  * [ ] Precargar `check_templates_file_or_dir`, `jsonschema` y `cta.json` en memoria.
-  * [ ] Exponer endpoints `/validate`, `/health` y `/shutdown`.
-  * [ ] Implementar escritura y lectura de `work/.daemon_port`.
-* [ ] **Sub-tarea 4.2: Cliente con Fallback Transparente (`check_templates.py`)**
-  * [ ] Añadir sondeo rápido a `/health` (<10 ms).
-  * [ ] Enviar payload de validación vía HTTP local si el demonio está activo.
-  * [ ] Ejecutar fallback in-process si el demonio no responde en 500 ms.
-* [ ] **Sub-tarea 4.3: Scratch Dir en SSD Local (`run.py`)**
-  * [ ] Implementar `--scratch-dir` apuntando a `%TEMP%/c2c_work`.
-  * [ ] Sincronizar de forma atómica los archivos consolidados a `courses/` en `G:\Mi unidad`.
-  * [ ] Agregar limpieza de temporales con context manager.
-* [ ] **Sub-tarea 4.4: Pruebas de Estrés y Verificación**
-  * [ ] Simular ráfaga de 22 solicitudes concurrentes al demonio.
-  * [ ] Confirmar que las 367 pruebas de la suite (363 passing, 4 skipped) y los 81 casos matemáticos adversariales pasen con 100% de éxito.
+---
+
+### Módulos Opcionales y de Backlog Secundario
+
+#### Opcional A: Pipeline Performance Daemon en RAM / SSD
+* **Estado:** **Opcional / Secundario**.
+* **Nota Técnica de Prioridad:** El cuello de botella principal de la generación de cursos en Antigravity SDK **no es la I/O de disco ni el arranque de Python**, sino el **tiempo de inferencia del LLM** (que representa entre el 95.8% y el 98.5% del tiempo de pared de cada subagente, como demostró la auditoría forense). La aceleración sustancial del pipeline debe buscarse mediante **prompt engineering de precisión** (órdenes lean, pointer-prompts, supresión de lecturas especulativas y emisión streaming compacta), antes que micro-optimizaciones de subprocesos locales.
+
+#### Opcional B: Empaquetado Nativo con Capacitor
+* **Estado:** **Opcional / Backlog**.
+* **Nota:** La implementación de la PWA (Milestone 2) cubre el 95% de los casos de uso móvil sin añadir la sobrecarga de mantenimiento de binarios en Google Play y App Store.
+
+---
+
+## 7. Índice de Archivos e Investigaciones Relacionadas
+
+Todos los estudios de respaldo se encuentran preservados en el directorio dedicado:
+- 📁 [`docs/future_milestones/investigaciones/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/)
+  - 📄 [`01_Solucion_al_conflicto_KaTeX_y_Python_en_LLMs.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/01_Solucion_al_conflicto_KaTeX_y_Python_en_LLMs.md)
+  - 📄 [`02_Separacion_KaTeX_y_Python_LLM.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/02_Separacion_KaTeX_y_Python_LLM.md)
+  - 📄 [`03_Limitaciones_de_la_plataforma_de_estudio.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/03_Limitaciones_de_la_plataforma_de_estudio.md)
+  - 📄 [`04_Limites_de_la_plataforma_y_estudio.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/04_Limites_de_la_plataforma_y_estudio.md)
+
+---
+*Documento consolidado para la evolución de Tops Academy.*
