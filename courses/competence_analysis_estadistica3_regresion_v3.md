@@ -878,3 +878,263 @@ Procedimiento de estimación, diagnóstico de significancia individual y predicc
 - **Pauta de Remediación:** *Distingue entre pronosticar la media condicional E[Y|X_0] y pronosticar un individuo Y_0 = E[Y|X_0] + u_0 (este último suma la varianza residual s^2).*
 
 ---
+
+---
+
+## Actualización Incremental (Append)
+
+# Cognitive Task Analysis (CTA): Estadistica3 Regresion V3
+
+- **Course ID:** `estadistica3_regresion_v3`
+- **Macro-Competency:** Dominio y aplicación analítica integral de Estadistica3 Regresion V3
+- **Structure:** 10 total competencies (1 Facts, 5 Concepts, 4 Skills) with 60 fused distractors.
+
+## Curriculum Overview
+
+| ID | Name | Type | Bloom | Session | Prerequisites | Distractors |
+|:---|:---|:---:|:---:|:---|:---|:---:|
+| `C-06` | Naturaleza, Consecuencias en Eficiencia e Inferencia y Corrección Robusta de la Heterocedasticidad | Concept | Understand | Unidad 2: Naturaleza, Consecuencias en Eficiencia e Inferencia y Corrección Robusta de la Heterocedasticidad | - | 6 |
+| `Hab-08` | Diagnóstico Formal de Heterocedasticidad mediante Test de Breusch-Pagan y Test de White | Skill | Apply | Unidad 4: Diagnóstico Formal de Heterocedasticidad mediante Test de Breusch-Pagan y Test de White | C-06 | 6 |
+| `C-07` | Dinámica Temporal, Pérdida de Eficiencia y Distorsión Inferencial por Autocorrelación de Errores | Concept | Understand | Unidad 8: Dinámica Temporal, Pérdida de Eficiencia y Distorsión Inferencial por Autocorrelación de Errores | - | 6 |
+| `Hab-09` | Detección de Autocorrelación de Primer Orden y de Orden Superior mediante Durbin-Watson y Breusch-Godfrey | Skill | Apply | Unidad 9: Detección de Autocorrelación de Primer Orden y de Orden Superior mediante Durbin-Watson y Breusch-Godfrey | C-07 | 6 |
+| `C-08` | Quiebre Estructural e Inestabilidad de Parámetros en Regresiones Transversales y Series Temporales | Concept | Understand | Unidad 10: Quiebre Estructural e Inestabilidad de Parámetros en Regresiones Transversales y Series Temporales | - | 6 |
+| `Hab-10` | Evaluación de Estabilidad Estructural mediante el Test de Chow y Formulación de Modelos con Interacción | Skill | Apply | Unidad 12: Evaluación de Estabilidad Estructural mediante el Test de Chow y Formulación de Modelos con Interacción | C-08 | 6 |
+| `C-09` | Mecanismo de Inflación de Varianzas y Diagnóstico de Multicolinealidad mediante el VIF | Concept | Understand | Unidad 15: Mecanismo de Inflación de Varianzas y Diagnóstico de Multicolinealidad mediante el VIF | - | 6 |
+| `H-05` | Momentos Teóricos de Asimetría y Curtosis y Formulación del Test de Jarque-Bera | Fact | Remember | Unidad 17: Momentos Teóricos de Asimetría y Curtosis y Formulación del Test de Jarque-Bera | - | 6 |
+| `C-10` | Fuentes Estructurales de Endogeneidad y Sesgo de Atenuación por Error de Medición | Concept | Understand | Unidad 18: Fuentes Estructurales de Endogeneidad y Sesgo de Atenuación por Error de Medición | - | 6 |
+| `Hab-11` | Diagnóstico de Endogeneidad mediante Tests de Hausman y Durbin-Wu-Hausman y Corrección por Variables Instrumentales | Skill | Apply | Unidad 20: Diagnóstico de Endogeneidad mediante Tests de Hausman y Durbin-Wu-Hausman y Corrección por Variables Instrumentales | C-10 | 6 |
+
+---
+
+## Detailed Competency Specifications
+
+### [C-06] Naturaleza, Consecuencias en Eficiencia e Inferencia y Corrección Robusta de la Heterocedasticidad (Concept)
+
+- **Bloom Level:** Understand
+- **Session:** Unidad 2: Naturaleza, Consecuencias en Eficiencia e Inferencia y Corrección Robusta de la Heterocedasticidad
+- **Prerequisites:** None
+- **Evidence Citations:** `Nota_academica_Econometria.pdf` (page 2)
+
+#### Description & Cognitive Model
+La heterocedasticidad se produce cuando la varianza condicional de las perturbaciones no es constante entre observaciones, $\text{Var}(u_i | X_i) = \sigma_i^2 \neq \sigma^2$. Bajo exogeneidad estricta $E(u_i | X_i) = 0$, los estimadores de MCO preservan la insesgadez y consistencia, pero pierden la eficiencia (propiedad BLUE). En consecuencia, la matriz de varianzas y covarianzas convencional $\sigma^2 (\mathbf{X}'\mathbf{X})^{-1}$ queda invalidada, sesgando los errores estándar y tornando no confiables las inferencias basadas en los contrastes $t$ y $F$, requiriendo el uso de estimadores robustos de varianza tipo White/Huber-White o Mínimos Cuadrados Generalizados (GLS).
+
+#### Fused Distractor Models (6)
+
+| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
+|:---|:---|:---:|:---:|:---|:---|
+| `D-C06-01` | Creer que la heterocedasticidad sesga los estimadores puntuales de MCO | conceptual_swap | high | $E(\hat{\boldsymbol{\beta}}_{\text{MCO}}) \neq \boldsymbol{\beta}$ | La insesgadez depende exclusivamente del supuesto de exogeneidad condicional, no de la varianza del error. |
+| `D-C06-02` | Confundir la pérdida de eficiencia con pérdida de consistencia asintótica | conceptual_swap | high | $\text{plim}_{n \to \infty} \hat{\boldsymbol{\beta}}_{\text{MCO}} \neq \boldsymbol{\beta}$ | MCO sigue siendo consistente bajo heterocedasticidad; lo que se pierde es la varianza mínima (BLUE). |
+| `D-C06-03` | Asumir que los errores estándar clásicos de MCO siempre sobreestiman la verdadera varianza | conceptual_swap | high | $\text{s.e.}_{\text{clásico}}(\hat{\beta}_j) > \text{s.e.}_{\text{verdadero}}(\hat{\beta}_j)$ | La dirección del sesgo en los errores estándar clásicos depende de la correlación muestral entre los regresores al cuadrado y las varianzas del error. |
+| `D-C06-04` | Suponer que los errores robustos de White modifican las estimaciones puntuales de los coeficientes | conceptual_swap | high | $\hat{\boldsymbol{\beta}}_{\text{Robusto}} \neq \hat{\boldsymbol{\beta}}_{\text{MCO}}$ | La corrección de White ajusta exclusivamente la matriz de covarianzas y los errores estándar, no los coeficientes puntuales MCO. |
+| `D-C06-05` | Atribuir la heterocedasticidad únicamente a variabilidad pura del error ignorando la omisión de variables | conceptual_swap | high | $\sigma_i^2 \neq \sigma^2 \implies \text{el proceso físico del error es intrínsecamente no homogéneo}$ | Una mala especificación funcional o la omisión de variables relevantes se manifiesta formalmente como heterocedasticidad residual. |
+| `D-C06-06` | Creer que la transformación logarítmica elimina cualquier forma de heterocedasticidad | conceptual_swap | high | $\text{Var}(\ln u_i | X_i) = \text{constante}$ | Las transformaciones logarítmicas atenúan varianzas crecientes con la escala, pero requieren verificación econométrica posterior. |
+
+---
+
+### [Hab-08] Diagnóstico Formal de Heterocedasticidad mediante Test de Breusch-Pagan y Test de White (Skill)
+
+- **Bloom Level:** Apply
+- **Session:** Unidad 4: Diagnóstico Formal de Heterocedasticidad mediante Test de Breusch-Pagan y Test de White
+- **Prerequisites:** C-06
+- **Evidence Citations:** `Nota_academica_Econometria.pdf` (page 4)
+
+#### Description & Cognitive Model
+Procedimiento estructurado para contrastar la hipótesis nula de homocedasticidad $H_0: \sigma_i^2 = \sigma^2$ frente a $H_1: \sigma_i^2 = h(\mathbf{Z}_i'\boldsymbol{\alpha})$. El método comprende estimar el modelo original por MCO para obtener los residuos $\hat{\varepsilon}_i$, estimar una regresión auxiliar con la variable proxy de varianza $\hat{\varepsilon}_i^2$ (o $\hat{\varepsilon}_i^2 / \hat{\sigma}^2$) frente a los regresores $X_j$ (en Breusch-Pagan) o frente a $X_j$, sus cuadrados $X_j^2$ y productos cruzados $X_j X_k$ (en White), calcular el estadístico multiplicador de Lagrange $LM = n R^2_{\text{aux}} \sim \chi^2(p)$ (o $LM = \frac{SEC}{2\hat{\sigma}^4} \sim \chi^2(k)$), y contrastarlo frente al valor crítico de la distribución Chi-cuadrada al nivel de significancia prefijado $\alpha = 0.05$.
+
+#### Fused Distractor Models (6)
+
+| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
+|:---|:---|:---:|:---:|:---|:---|
+| `D-Hab08-01` | Omitir la estimación de la regresión auxiliar de residuos al cuadrado | skipped_step | high | Correr la regresión auxiliar de los residuos al cuadrado contra las variables explicativas | La prueba de heterocedasticidad requiere modelar la dispersión al cuadrado de los residuos respecto a los regresores. |
+| `D-Hab08-02` | Confundir los grados de libertad de la distribución Chi-cuadrada en el test de White | conceptual_swap | high | $LM \sim \chi^2(n-k)$ | Los grados de libertad del estadístico LM coinciden con el número de restricciones de no heterocedasticidad evaluadas en la regresión auxiliar. |
+| `D-Hab08-03` | Omitir la multiplicación por el tamaño muestral en el cálculo del estadístico LM | skipped_step | high | Multiplicar el $R^2$ de la regresión auxiliar por el tamaño muestral $n$ | El estadístico asintótico de Breusch-Pagan/White requiere escalar el coeficiente de determinación auxiliar $R^2$ por el tamaño muestral $n$. |
+| `D-Hab08-04` | Invertir la regla de decisión rechazando homocedasticidad cuando el p-valor supera el umbral crítico | conceptual_swap | high | $p > 0.05 \implies \text{Rechazar } H_0 \text{ (concluir heterocedasticidad)}$ | Un p-valor superior a 0.05 indica que la evidencia empírica no es suficiente para refutar la hipótesis nula de homocedasticidad. |
+| `D-Hab08-05` | Utilizar los residuos sin elevar al cuadrado como variable dependiente auxiliar | conceptual_swap | high | $\hat{\varepsilon}_i = \hat{\alpha}_0 + \sum \hat{\alpha}_j X_{ji} + \hat{v}_i$ | Por propiedades numéricas de MCO, los residuos lineales tienen correlación cero con los regresores; debe modelarse $\hat{\varepsilon}_i^2$. |
+| `D-Hab08-06` | Omitir los términos cuadráticos y productos cruzados en el test de White | skipped_step | high | Incluir los cuadrados y productos cruzados de los regresores en la regresión auxiliar de White | El test de White es no paramétrico respecto a la forma funcional porque incluye términos de segundo orden y cruzados para captar no linealidades. |
+
+---
+
+### [C-07] Dinámica Temporal, Pérdida de Eficiencia y Distorsión Inferencial por Autocorrelación de Errores (Concept)
+
+- **Bloom Level:** Understand
+- **Session:** Unidad 8: Dinámica Temporal, Pérdida de Eficiencia y Distorsión Inferencial por Autocorrelación de Errores
+- **Prerequisites:** None
+- **Evidence Citations:** `Nota_academica_Econometria.pdf` (page 8)
+
+#### Description & Cognitive Model
+La autocorrelación ocurre en estructuras temporales cuando las perturbaciones estocásticas de períodos distintos covarían entre sí, $\text{Cov}(u_t, u_s) \neq 0$ para $t \neq s$. Si los regresores son estrictamente exógenos, el estimador MCO permanece insesgado y consistente, pero deja de ser de varianza mínima (BLUE). Más aún, cuando la autocorrelación es positiva ($\rho > 0$, caso más habitual en series macroeconómicas por inercia o variables omitidas persistentes), la fórmula clásica de MCO subestima severamente las verdaderas varianzas de los coeficientes, inflando artificialmente los estadísticos $t$ y $F$ y generando rechazos espurios de hipótesis nulas (falsa significancia estadística).
+
+#### Fused Distractor Models (6)
+
+| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
+|:---|:---|:---:|:---:|:---|:---|
+| `D-C07-01` | Creer que la autocorrelación sesga directamente los coeficientes MCO en ausencia de rezagos de Y | conceptual_swap | high | $E(\hat{\boldsymbol{\beta}}_{\text{MCO}}) \neq \boldsymbol{\beta} \text{ en cualquier modelo con errores autocorrelacionados}$ | La insesgadez de MCO se mantiene con errores autocorrelacionados siempre que los regresores sean exógenos y no incluyan la variable dependiente rezagada. |
+| `D-C07-02` | Asumir que la autocorrelación positiva infla los errores estándar calculados por MCO | conceptual_swap | high | $\text{s.e.}_{\text{MCO}}(\hat{\beta}_j) > \text{s.e.}_{\text{verdadero}}(\hat{\beta}_j) \text{ cuando } \rho > 0$ | Con $\rho > 0$, la correlación serial positiva hace que las observaciones aporten menos información independiente, provocando que la fórmula clásica de MCO subestime el error estándar. |
+| `D-C07-03` | Confundir la autocorrelación de las perturbaciones con persistencia autorregresiva de la variable dependiente | conceptual_swap | high | $\text{Corr}(Y_t, Y_{t-1}) \neq 0 \implies \text{Existe obligatoriamente autocorrelación en los errores } u_t$ | La autocorrelación de los regresores o de $Y_t$ no implica autocorrelación en las perturbaciones $u_t$ si el modelo está bien especificado. |
+| `D-C07-04` | Creer que aumentar el tamaño de muestra temporal elimina la pérdida de eficiencia provocada por la autocorrelación | conceptual_swap | high | $\lim_{T \to \infty} \text{Var}_{\text{MCO}}(\hat{\boldsymbol{\beta}}) = \text{Var}_{\text{GLS}}(\hat{\boldsymbol{\beta}})$ | Aunque MCO sea consistente, la ineficiencia frente al estimador lineal óptimo persiste asintóticamente a menos que se modele la estructura serial. |
+| `D-C07-05` | Suponer que los estimadores HAC tipo Newey-West modifican los coeficientes calculados por MCO | conceptual_swap | high | $\hat{\boldsymbol{\beta}}_{\text{HAC}} \neq \hat{\boldsymbol{\beta}}_{\text{MCO}}$ | Los errores estándar HAC (heteroskedasticity and autocorrelation consistent) corrigen la matriz de inferencia sin alterar los coeficientes MCO. |
+| `D-C07-06` | Atribuir la autocorrelación únicamente a shocks exógenos persistentes descartando la mala especificación funcional | conceptual_swap | high | $\text{Cov}(u_t, u_{t-1}) \neq 0 \implies \text{El proceso estocástico intrínseco contiene inercia inmodificable}$ | La autocorrelación aparente en residuos frecuentemente delata una mala especificación dinámica, resolviéndose al agregar rezagos relevantes. |
+
+---
+
+### [Hab-09] Detección de Autocorrelación de Primer Orden y de Orden Superior mediante Durbin-Watson y Breusch-Godfrey (Skill)
+
+- **Bloom Level:** Apply
+- **Session:** Unidad 9: Detección de Autocorrelación de Primer Orden y de Orden Superior mediante Durbin-Watson y Breusch-Godfrey
+- **Prerequisites:** C-07
+- **Evidence Citations:** `Nota_academica_Econometria.pdf` (page 9)
+
+#### Description & Cognitive Model
+Procedimiento algorítmico para detectar autocorrelación serial en los residuos de regresión temporal. Incluye calcular el estadístico de Durbin-Watson $DW = \frac{\sum_{t=2}^T (u_t - u_{t-1})^2}{\sum_{t=1}^T u_t^2} \approx 2(1 - \hat{\rho})$ para contrastar correlación de orden 1 en presencia de término constante y regresores estrictamente exógenos, evaluando las zonas de rechazo ($DW < d_L$, autocorrelación positiva; $DW > 4 - d_L$, autocorrelación negativa), no rechazo ($d_U < DW < 4 - d_U$) y las zonas de indecisión; así como formular la regresión auxiliar de Breusch-Godfrey $\hat{u}_t = \mathbf{X}_t'\boldsymbol{\gamma} + \sum_{j=1}^p \rho_j \hat{u}_{t-j} + \varepsilon_{pt}$ y calcular el estadístico multiplicador de Lagrange $LM = (T-p) R^2_{\text{aux}} \sim \chi^2(p)$ para contrastes de orden superior $p$ válidos incluso con retardos de la variable dependiente.
+
+#### Fused Distractor Models (6)
+
+| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
+|:---|:---|:---:|:---:|:---|:---|
+| `D-Hab09-01` | Interpretar erróneamente un valor de Durbin-Watson cercano a 0 como ausencia de autocorrelación | conceptual_swap | high | $DW \approx 0 \implies \hat{\rho} \approx 0 \text{ (residuos aleatorios sin correlación)}$ | El estadístico $DW \approx 2(1-\rho)$; por lo tanto, cuando $\rho \to 1$, $DW \to 0$. La ausencia de correlación exige $DW \approx 2$. |
+| `D-Hab09-02` | Omitir la inclusión de los regresores originales en la regresión auxiliar de Breusch-Godfrey | skipped_step | high | Incluir los regresores explicativos originales del modelo junto con los residuos rezagados en la ecuación auxiliar | El principio de multiplicadores de Lagrange exige proyectar sobre todos los regresores originales además de los residuos rezagados. |
+| `D-Hab09-03` | Aplicar el estadístico de Durbin-Watson en modelos autorregresivos con la variable dependiente rezagada como regresor | conceptual_swap | high | $DW \text{ es válido cuando } Y_{t-1} \text{ forma parte de las variables explicativas } \mathbf{X}_t$ | En presencia de la variable endógena rezagada $Y_{t-1}$, el estadístico DW está sesgado hacia 2, enmascarando la autocorrelación serial. |
+| `D-Hab09-04` | Omitir la verificación de las zonas de indecisión en el contraste de Durbin-Watson | skipped_step | high | Verificar si el valor calculado de $DW$ cae en los intervalos de indecisión $[d_L, d_U]$ o $[4-d_U, 4-d_L]$ | La distribución del estadístico DW no es única y depende de la matriz $\mathbf{X}$, generando regiones donde no es posible concluir con certeza. |
+| `D-Hab09-05` | Confundir el número de restricciones en el test de Breusch-Godfrey fijando grados de libertad iguales a k | conceptual_swap | high | $LM = (T-p) R^2_{\text{aux}} \sim \chi^2(k) \text{ donde } k \text{ es el número de variables de la regresión original}$ | La hipótesis nula de Breusch-Godfrey evalúa $\rho_1 = \dots = \rho_p = 0$, por lo que la distribución asintótica tiene $p$ grados de libertad. |
+| `D-Hab09-06` | Calcular el estadístico de Durbin-Watson ignorando la pérdida de la primera observación temporal | conceptual_swap | high | $DW = \frac{\sum_{t=1}^T (u_t - u_{t-1})^2}{\sum_{t=1}^T u_t^2} \text{ con } u_0 = 0$ | En el numerador del estadístico DW, las primeras diferencias $(u_t - u_{t-1})$ sólo existen a partir del segundo período $t=2$. |
+
+---
+
+### [C-08] Quiebre Estructural e Inestabilidad de Parámetros en Regresiones Transversales y Series Temporales (Concept)
+
+- **Bloom Level:** Understand
+- **Session:** Unidad 10: Quiebre Estructural e Inestabilidad de Parámetros en Regresiones Transversales y Series Temporales
+- **Prerequisites:** None
+- **Evidence Citations:** `Nota_academica_Econometria.pdf` (page 10)
+
+#### Description & Cognitive Model
+El supuesto de estabilidad paramétrica establece que los coeficientes estructurales $\boldsymbol{\beta}$ permanecen constantes e invariantes a través de todas las unidades transversales o períodos de tiempo de la muestra. Su violación —inducida por crisis macroeconómicas, reformas institucionales, cambios tecnológicos o divergencias conductuales entre grupos (por ejemplo, género)— provoca que la estimación global de MCO promedie erróneamente regímenes distintos, destruyendo la capacidad predictiva del modelo y sesgando la interpretación de los efectos causales marginales. Dicha heterogeneidad puede modelarse incorporando variables ficticias de nivel (quiebre de intercepto $\gamma_1 D$) e interacciones multiplicativas con los regresores (quiebre de pendiente $\gamma_2 (X \times D)$).
+
+#### Fused Distractor Models (6)
+
+| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
+|:---|:---|:---:|:---:|:---|:---|
+| `D-C08-01` | Creer que estimar un modelo conjunto sin dummies es preferible porque maximiza los grados de libertad globales | conceptual_swap | high | $\text{Mayor tamaño muestral } n \text{ siempre compensa la presencia de inestabilidad paramétrica}$ | Agregar observaciones de un régimen con coeficientes distintos genera sesgo de agregación e invalida las predicciones. |
+| `D-C08-02` | Confundir un quiebre en el intercepto con un quiebre en la pendiente estructural | conceptual_swap | high | $\text{Un cambio en el nivel medio de la variable dependiente altera idénticamente la respuesta marginal } \frac{\partial Y}{\partial X}$ | Para contrastar o capturar un cambio en el efecto marginal de una variable explicativa, se requiere un término interactivo $X \times D$. |
+| `D-C08-03` | Suponer que los residuos del modelo global sin quiebre se mantienen como ruido blanco homocedástico | conceptual_swap | high | $\text{La inestabilidad de parámetros no afecta la varianza de los residuos en las submuestras}$ | Si los parámetros cambian entre períodos o grupos y no se modelan, los residuos capturan el salto de régimen generando heterocedasticidad o autocorrelación espuria. |
+| `D-C08-04` | Creer que el efecto marginal de una variable con término de interacción es constante e igual a su coeficiente lineal | conceptual_swap | high | $\frac{\partial \ln w_i}{\partial Educ_i} = \beta_1 \text{ en el modelo } \ln w_i = \beta_0 + \beta_1 Educ_i + \beta_2 gen_i + \beta_3(Educ_i \times gen_i) + u_i$ | En modelos interactivos, el efecto marginal de una variable continua depende del valor de la variable con la que interactúa. |
+| `D-C08-05` | Asumir que las pruebas de estabilidad como Chow son aplicables cuando el punto de quiebre es totalmente desconocido | conceptual_swap | high | $\text{El test estándar de Chow es óptimo sin necesidad de especificar a priori la fecha o grupo de corte}$ | El test clásico de Chow requiere conocer la fecha del quiebre; buscar la fecha que maximice el estadístico invalida su distribución asintótica sin corrección de Quandt-Andrews. |
+| `D-C08-06` | Creer que la significancia de la dummy aditiva prueba por sí sola la inestabilidad de todos los parámetros | conceptual_swap | high | $\gamma_1 \neq 0 \text{ en } Y = \alpha_0 + \gamma_1 D + \beta_1 X + u \implies \text{Todos los coeficientes son inestables}$ | La significancia del término constante o dummy individual no demuestra inestabilidad en las pendientes marginales. |
+
+---
+
+### [Hab-10] Evaluación de Estabilidad Estructural mediante el Test de Chow y Formulación de Modelos con Interacción (Skill)
+
+- **Bloom Level:** Apply
+- **Session:** Unidad 12: Evaluación de Estabilidad Estructural mediante el Test de Chow y Formulación de Modelos con Interacción
+- **Prerequisites:** C-08
+- **Evidence Citations:** `Nota_academica_Econometria.pdf` (page 12)
+
+#### Description & Cognitive Model
+Procedimiento analítico y econométrico para contrastar la hipótesis de estabilidad estructural $H_0: \boldsymbol{\beta}_1 = \boldsymbol{\beta}_2$ dividiendo la muestra en dos subconjuntos independientes de tamaños $n_1$ y $n_2$ ($n = n_1 + n_2$). El método consiste en estimar el modelo restringido agrupado ($SSRC$) y los modelos no restringidos independientes en cada submuestra para calcular la suma de cuadrados no restringida $SSRU = SSR_1 + SSR_2$ con grados de libertad $df_u = n - 2k$, computar el estadístico $F$ de Chow: $F = \frac{(SSRC - SSRU)/k}{SSRU / (n - 2k)} \sim F(k, n - 2k)$, y contrastarlo frente al valor crítico al nivel de significancia seleccionado; así como formular la especificación equivalente con dummies e interacciones multiplicativas estimando el modelo ampliado para evaluar directamente los efectos diferenciales mediante contrastes de Wald.
+
+#### Fused Distractor Models (6)
+
+| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
+|:---|:---|:---:|:---:|:---|:---|
+| `D-Hab10-01` | Invertir los términos en el numerador del estadístico de Chow obteniendo un estadístico negativo | conceptual_swap | high | $F = \frac{(SSRU - SSRC)/k}{SSRU/(n-2k)}$ | La suma de residuos al cuadrado del modelo restringido ($SSRC$) es siempre mayor o igual que la suma de los modelos libres ($SSRU$). |
+| `D-Hab10-02` | Omitir la suma de las sumas de residuos al cuadrado de ambas submuestras para formar la suma no restringida | skipped_step | high | Sumar las sumas de residuos al cuadrado de cada estimación submuestral independiente ($SSRU = SSR_1 + SSR_2$) | El modelo sin restricciones permite que los parámetros difieran libremente en ambas submuestras, por lo que $SSRU$ es la suma de los $SSR$ de cada grupo. |
+| `D-Hab10-03` | Asignar erróneamente los grados de libertad del denominador como n - k en vez de n - 2k | conceptual_swap | high | $df_u = n - k$ | Al estimar el modelo por separado en dos subgrupos se estiman $2k$ parámetros en total, dejando $n - 2k$ grados de libertad en el denominador. |
+| `D-Hab10-04` | Omitir el cálculo del número de restricciones k en el numerador del estadístico de Chow | skipped_step | high | Dividir la diferencia de sumas de cuadrados $(SSRC - SSRU)$ entre el número de restricciones $k$ | El numerador del estadístico $F$ representa el incremento cuadrático medio por restricción, por lo que debe dividirse entre $k$. |
+| `D-Hab10-05` | Caer en la trampa de la multicolinealidad perfecta al incluir dummies para ambos grupos junto con el intercepto | conceptual_swap | high | $Y_i = \beta_0 + \gamma_1 D_{F,i} + \gamma_2 D_{M,i} + \beta_1 X_i + u_i \text{ con } D_{F} + D_{M} = 1$ | Para evitar la trampa de la variable dummy, una de las categorías debe servir como base o de lo contrario debe suprimirse el intercepto. |
+| `D-Hab10-06` | Interpretar el coeficiente del término interactivo como el efecto marginal de la variable base en vez de la diferencia | conceptual_swap | high | $\beta_3 \text{ en } Y = \beta_0 + \beta_1 X + \beta_2 D + \beta_3 (X \times D) + u \text{ es la pendiente para el grupo } D=1$ | El coeficiente del producto interactivo mide el diferencial adicional de pendiente respecto al grupo de referencia. |
+
+---
+
+### [C-09] Mecanismo de Inflación de Varianzas y Diagnóstico de Multicolinealidad mediante el VIF (Concept)
+
+- **Bloom Level:** Understand
+- **Session:** Unidad 15: Mecanismo de Inflación de Varianzas y Diagnóstico de Multicolinealidad mediante el VIF
+- **Prerequisites:** None
+- **Evidence Citations:** `Nota_academica_Econometria.pdf` (page 15)
+
+#### Description & Cognitive Model
+La multicolinealidad se produce cuando dos o más variables explicativas exhiben una alta correlación lineal en la muestra, dificultando aislar sus efectos parciales individuales sobre la variable dependiente. Aunque los estimadores MCO retienen la insesgadez y la eficiencia BLUE en sentido formal, sus varianzas muestrales se inflan exponencialmente según el Factor de Inflación de Varianza: $\text{VIF}(j) = \frac{1}{1 - R_j^2}$, donde $R_j^2$ es el coeficiente de determinación de la regresión auxiliar de $X_j$ sobre los restantes regresores. Como consecuencia, los errores estándar se magnifican, los estadísticos $t$ individuales colapsan volviendo a las variables estadísticamente no significativas, los signos de los coeficientes pueden volverse contraintuitivos, coexistiendo paradójicamente con un coeficiente de determinación global $R^2$ elevado y un contraste $F$ altamente significativo (regla práctica: $\text{VIF} > 10$ o $\text{VIF} > 5$ señala multicolinealidad severa).
+
+#### Fused Distractor Models (6)
+
+| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
+|:---|:---|:---:|:---:|:---|:---|
+| `D-C09-01` | Creer que la multicolinealidad sesga los estimadores de los parámetros MCO | conceptual_swap | high | $E(\hat{\beta}_j) \neq \beta_j \text{ en presencia de alta correlación entre regresores}$ | La multicolinealidad no viola el supuesto de exogeneidad condicional; los estimadores siguen siendo insesgados y consistentes. |
+| `D-C09-02` | Confundir multicolinealidad imperfecta con multicolinealidad perfecta asumiendo imposibilidad matemática de cálculo | conceptual_swap | high | $\text{rango}(\mathbf{X}) < k \implies \text{MCO no puede computarse con VIF finito}$ | La multicolinealidad perfecta impide invertir $\mathbf{X}'\mathbf{X}$; la multicolinealidad imperfecta permite la estimación pero con varianzas infladas. |
+| `D-C09-03` | Interpretar erróneamente un R-cuadrado global elevado junto con t-Student no significativos como falla en los datos | conceptual_swap | high | $R^2 \text{ alto y pruebas } t \text{ no significativas es una contradicción teórica que invalida el software}$ | La prueba $F$ global detecta que el conjunto de variables es explicativo, pero la alta colinealidad impide a los tests $t$ asignar crédito a un regresor individual. |
+| `D-C09-04` | Invertir la fórmula del Factor de Inflación de Varianza fijándolo como 1 - R_j^2 | conceptual_swap | high | $\text{VIF}(j) = 1 - R_j^2$ | El VIF es el inverso de la tolerancia: conforme $R_j^2 \to 1$, el denominador tiende a 0 y $\text{VIF} \to \infty$. |
+| `D-C09-05` | Creer que la correlación simple por pares cercana a cero descarta totalmente la multicolinealidad | conceptual_swap | high | $|\text{Corr}(X_j, X_k)| < 0.5 \implies \text{No existe ningún riesgo de multicolinealidad en el modelo}$ | La multicolinealidad puede ser de orden múltiple: una variable puede correlacionar fuertemente con una combinación lineal de varios regresores aunque sus correlaciones simples sean bajas. |
+| `D-C09-06` | Eliminar automáticamente variables teóricamente fundamentales ante un VIF moderadamente alto | conceptual_swap | high | $\text{VIF} > 5 \implies \text{Es imperativo eliminar de inmediato la variable del modelo empírico}$ | Eliminar una variable explicativa relevante para reducir el VIF reemplaza la imprecisión muestral por un sesgo sistemático permanente en el modelo. |
+
+---
+
+### [H-05] Momentos Teóricos de Asimetría y Curtosis y Formulación del Test de Jarque-Bera (Fact)
+
+- **Bloom Level:** Remember
+- **Session:** Unidad 17: Momentos Teóricos de Asimetría y Curtosis y Formulación del Test de Jarque-Bera
+- **Prerequisites:** None
+- **Evidence Citations:** `Nota_academica_Econometria.pdf` (page 17)
+
+#### Description & Cognitive Model
+En la inferencia en muestras pequeñas del Modelo Lineal General, el supuesto de normalidad de las perturbaciones $u_i \sim \mathcal{N}(0, \sigma^2)$ fundamenta la distribución exacta de los estadísticos $t$ y $F$. El test de Jarque-Bera evalúa dicho supuesto contrastando conjuntamente los coeficientes de asimetría $S = \frac{E[(u - \mu)^3]}{\sigma^3}$ y de curtosis $K = \frac{E[(u - \mu)^4]}{\sigma^4}$, los cuales para una distribución normal satisfacen $S = 0$ y $K = 3$ (mesocúrtica). El estadístico de prueba canónico se formula como: $JB = \frac{T-k}{6}\left[ S^2 + \frac{(K - 3)^2}{4} \right]$, el cual sigue asintóticamente una distribución Chi-cuadrada con 2 grados de libertad, $JB \sim \chi^2(2)$, con valor crítico canónico $\chi^2_{(0.05, 2)} \approx 5.99$ al nivel de significancia del $5\%$.
+
+#### Fused Distractor Models (6)
+
+| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
+|:---|:---|:---:|:---:|:---|:---|
+| `D-H05-01` | Confundir el valor de referencia de la curtosis normal asumiendo que debe ser igual a cero | conceptual_swap | high | $K_{\text{normal}} = 0 \text{ y estadístico } JB = \frac{T-k}{6}\left[ S^2 + \frac{K^2}{4} \right]$ | Para la distribución normal, el momento de cuarto orden estandarizado es igual a 3. La desviación respecto a la normalidad se mide mediante el exceso de curtosis $(K - 3)$. |
+| `D-H05-02` | Invertir los coeficientes de ponderación en los denominadores de los momentos en el estadístico JB | conceptual_swap | high | $JB = \frac{T-k}{6}\left[ \frac{S^2}{4} + (K-3)^2 \right]$ | Bajo normalidad, la varianza asintótica de $S$ es $6/T$ y la de $K$ es $24/T = 4 \times (6/T)$; de ahí que el término de curtosis se divida entre 4. |
+| `D-H05-03` | Asignar grados de libertad iguales al tamaño de muestra T en lugar de 2 en la distribución Chi-cuadrada | conceptual_swap | high | $JB \sim \chi^2(T-k)$ | El contraste de Jarque-Bera evalúa dos restricciones simultáneas ($S=0$ y $K=3$), por lo que la distribución asintótica tiene siempre 2 grados de libertad. |
+| `D-H05-04` | Invertir la regla de decisión rechazando normalidad cuando el estadístico JB es menor a 5.99 | conceptual_swap | high | $JB < 5.99 \implies \text{Rechazar normalidad}$ | Valores pequeños de JB indican cercanía a $S=0$ y $K=3$. Se rechaza la normalidad cuando $JB \ge 5.99$ al 5% de significancia. |
+| `D-H05-05` | Creer que la falta de normalidad de los residuos sesga los estimadores puntuales de MCO | conceptual_swap | high | $u_i \text{ no normal } \implies E(\hat{\boldsymbol{\beta}}_{\text{MCO}}) \neq \boldsymbol{\beta}$ | La normalidad no es requerida para la insesgadez ni para el Teorema de Gauss-Markov; solo se requiere para la inferencia exacta con distribuciones $t$ y $F$ en muestras finitas. |
+| `D-H05-06` | Suponer que el teorema central del límite no protege la inferencia asintótica en muestras grandes sin normalidad | conceptual_swap | high | $\text{Si } u_i \text{ no es normal, las pruebas de hipótesis son inválidas sin importar cuán grande sea } T$ | En muestras grandes ($T \to \infty$), los estimadores MCO son asintóticamente normales aún cuando los residuos individuales no sigan una distribución normal. |
+
+---
+
+### [C-10] Fuentes Estructurales de Endogeneidad y Sesgo de Atenuación por Error de Medición (Concept)
+
+- **Bloom Level:** Understand
+- **Session:** Unidad 18: Fuentes Estructurales de Endogeneidad y Sesgo de Atenuación por Error de Medición
+- **Prerequisites:** None
+- **Evidence Citations:** `Nota_academica_Econometria.pdf` (page 18)
+
+#### Description & Cognitive Model
+La endogeneidad ocurre cuando se viola el supuesto central de ortogonalidad entre los regresores y la perturbación aleatoria, $E(x_i \varepsilon_i) \neq 0$, provocando que el estimador MCO resulte sesgado e inconsistente, $\text{plim}_{n \to \infty} \hat{\beta}_{\text{MCO}} \neq \beta$. Sus fuentes principales son: (1) sesgo por variable omitida correlacionada con los regresores incluidos, (2) simultaneidad o causalidad bidireccional entre la variable dependiente y explicativa, y (3) error de medición clásico en los regresores ($x = x^* + u$). En este último caso, el estimador MCO sufre el sesgo de atenuación: $E[\hat{\beta}] = \lambda \beta$, donde el factor de atenuación es $\lambda = \frac{\text{Var}(x^*)}{\text{Var}(x^*) + \text{Var}(u)} \in (0,1)$, empujando sistemáticamente la estimación hacia cero y subestimando la verdadera magnitud del impacto causal.
+
+#### Fused Distractor Models (6)
+
+| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
+|:---|:---|:---:|:---:|:---|:---|
+| `D-C10-01` | Creer que aumentar el tamaño muestral elimina el sesgo provocado por la endogeneidad | conceptual_swap | high | $\text{plim}_{n \to \infty} \hat{\beta}_{\text{MCO}} = \beta \text{ cuando } E(x_i \varepsilon_i) \neq 0$ | A diferencia de la ineficiencia, el sesgo por endogeneidad es asintótico: no desaparece al aumentar la muestra a infinito. |
+| `D-C10-02` | Confundir la atenuación del error de medición con una sobreestimación de la magnitud del parámetro | conceptual_swap | high | $|E[\hat{\beta}]| > |\beta| \text{ debido al ruido adicional inducido por el error de medición } u$ | El sesgo de atenuación siempre diluye el efecto de la variable hacia cero debido a la varianza espuria del error de medición en el denominador. |
+| `D-C10-03` | Creer que el error de medición en la variable dependiente Y produce sesgo de atenuación en las pendientes | conceptual_swap | high | $y = y^* + e \implies E[\hat{\beta}] = \lambda \beta \text{ con } \lambda < 1$ | El error de medición clásico en $Y$ pasa a formar parte de la perturbación $\varepsilon_i$, preservando la insesgadez de $\hat{\beta}$ aunque aumentando su error estándar. |
+| `D-C10-04` | Determinar la dirección del sesgo por variable omitida ignorando el signo de la correlación entre regresores | conceptual_swap | high | $\text{Sesgo} = \gamma \text{ (el signo del sesgo depende únicamente del signo del efecto omitido } \gamma\text{)}$ | El sesgo por variable omitida es $\beta_{\text{sesgo}} = \gamma \cdot \frac{\text{Cov}(x, w)}{\text{Var}(x)}$. Si $\gamma > 0$ y $\text{corr}(x,w) < 0$, el sesgo es negativo. |
+| `D-C10-05` | Asumir que el factor de atenuación lambda puede superar la unidad | conceptual_swap | high | $\lambda = \frac{\text{Var}(x^*)}{\text{Var}(x^*) + \text{Var}(u)} > 1 \text{ si } \text{Var}(x^*) > \text{Var}(u)$ | Como las varianzas son no negativas y $\text{Var}(u) > 0$, el cociente $\lambda$ es estrictamente inferior a 1. |
+| `D-C10-06` | Suponer que la simultaneidad solo ocurre cuando ambas variables tienen la misma unidad de medida | conceptual_swap | high | $\text{Existe simultaneidad únicamente entre variables macroeconómicas agregadas equivalentes}$ | Cualquier sistema de ecuaciones de equilibrio o causalidad recíproca entre variables genera simultaneidad y correlación contemporánea con el error. |
+
+---
+
+### [Hab-11] Diagnóstico de Endogeneidad mediante Tests de Hausman y Durbin-Wu-Hausman y Corrección por Variables Instrumentales (Skill)
+
+- **Bloom Level:** Apply
+- **Session:** Unidad 20: Diagnóstico de Endogeneidad mediante Tests de Hausman y Durbin-Wu-Hausman y Corrección por Variables Instrumentales
+- **Prerequisites:** C-10
+- **Evidence Citations:** `Nota_academica_Econometria.pdf` (page 20)
+
+#### Description & Cognitive Model
+Procedimiento econométrico estructurado para contrastar la endogeneidad de regresores y aplicar el método de Variables Instrumentales (VI / 2SLS). La prueba clásica de Hausman evalúa $H_0: \text{Los regresores son exógenos}$ (donde MCO es eficiente y consistente, y 2SLS es consistente pero ineficiente) comparando la diferencia de vectores de coeficientes mediante el estadístico cuadrático: $H = (\hat{\mathbf{b}}_{\text{IV}} - \hat{\mathbf{b}}_{\text{MCO}})' [\text{Var}(\hat{\mathbf{b}}_{\text{IV}}) - \text{Var}(\hat{\mathbf{b}}_{\text{MCO}})]^{-1} (\hat{\mathbf{b}}_{\text{IV}} - \hat{\mathbf{b}}_{\text{MCO}}) \sim \chi^2(m)$. Complementariamente, el contraste operativo de Durbin-Wu-Hausman (DWH) se ejecuta en dos etapas: (1) estimar la regresión de primera etapa del regresor potencialmente endógeno sobre los instrumentos y variables exógenas, prediciendo los residuos $\hat{v}_i$; (2) incorporar $\hat{v}_i$ como regresor en la ecuación estructural original evaluada por MCO; la significancia estadística del coeficiente de $\hat{v}_i$ (rechazo de $H_0$) confirma empíricamente la endogeneidad, validando la sustitución obligatoria de MCO por el estimador de variables instrumentales consistente.
+
+#### Fused Distractor Models (6)
+
+| Distractor ID | Trap / Name | Error Type | Severity | Misconception / Omitted Step | Remediation Hint |
+|:---|:---|:---:|:---:|:---|:---|
+| `D-Hab11-01` | Invertir el orden de los estimadores en el comando de Hausman generando diferencias de matrices no semidefinidas positivas | conceptual_swap | high | $\text{hausman modelo\_mco modelo\_iv}$ | El contraste de Hausman resta la varianza del estimador eficiente de la del consistente: $\text{Var}(\hat{\mathbf{b}}_{\text{IV}}) - \text{Var}(\hat{\mathbf{b}}_{\text{MCO}})$. Invertir el orden causa matrices negativas. |
+| `D-Hab11-02` | Omitir la incorporación de los residuos de primera etapa en la ecuación estructural en el test DWH | skipped_step | high | Incorporar los residuos predichos de la primera etapa como regresor auxiliar en la ecuación estructural de segunda etapa | El test de Durbin-Wu-Hausman evalúa si los residuos de la primera etapa $\hat{v}_i$ tienen poder explicativo sobre $Y_i$ tras controlar por $X_i$. |
+| `D-Hab11-03` | Interpretar el rechazo de la hipótesis nula en el test de Hausman como justificación para continuar con MCO | conceptual_swap | high | $p < 0.05 \text{ en Hausman} \implies \text{MCO es preferible porque tiene menor varianza}$ | Al rechazar la exogeneidad ($p < 0.05$), MCO no converge al verdadero parámetro poblacional; la consistencia exige migrar a Variables Instrumentales. |
+| `D-Hab11-04` | Omitir la verificación de los requisitos de relevancia y exogeneidad en los instrumentos elegidos | skipped_step | high | Comprobar las condiciones de relevancia instrumental y validez de exclusión de los instrumentos propuestos | Un instrumento que no correlacione fuertemente con $X$ (instrumento débil) o que correlacione con el error estructural causa severa inconsistencia en 2SLS. |
+| `D-Hab11-05` | Utilizar los valores predichos de Y en lugar de los residuos del regresor endógeno en el test DWH | conceptual_swap | high | $\text{Regresar } Y_i \text{ sobre } \hat{Y}_i \text{ para contrastar endogeneidad}$ | La prueba DWH detecta si la parte no explicada de $X$ (sus residuos $\hat{v}$) covaría con la perturbación estructural de $Y$. |
+| `D-Hab11-06` | Confundir la hipótesis nula de Hausman creyendo que postula que ambos estimadores son inconsistentes | conceptual_swap | high | $H_0: \text{Ambos estimadores MCO e IV están igualmente sesgados e inconsistentes}$ | Bajo la hipótesis nula de Hausman, no hay endogeneidad: tanto MCO como IV estiman consistentemente el parámetro, difiriendo solo por variabilidad muestral. |
+
+---
+
