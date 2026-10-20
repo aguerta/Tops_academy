@@ -28,6 +28,8 @@ work/
 work_test_v3/
 **/work/
 **/work/**
+**/work_append/
+**/work_append/**
 courses/**/reports/
 courses/reports/
 
