@@ -1,0 +1,1318 @@
+[
+  {
+    "cid": "4ceacf92",
+    "folder": "20261019_223736_solow_model_v15_4ceacf92",
+    "title": "Solow Model v15",
+    "type": "Coarse/Opt (15 comps, 360 Qs)",
+    "source": "Auditoria De Curso Con Agente",
+    "total_wall_seconds": 1626.0,
+    "total_wall_minutes": 27.1,
+    "competencies": 15,
+    "questions": 360,
+    "total_tokens": 22064985,
+    "active_tokens": 2350556,
+    "turns": 269,
+    "subagents": 12,
+    "tool_errors": 24,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 2.5,
+        "wall_minutes": 0.04,
+        "percentage_of_total": 0.15,
+        "recorded_at": "2026-10-19T06:19:12.531097+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 594.4,
+        "wall_minutes": 9.91,
+        "percentage_of_total": 36.56,
+        "recorded_at": "2026-10-19T06:29:06.942866+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 8.7,
+        "wall_minutes": 0.15,
+        "percentage_of_total": 0.54,
+        "recorded_at": "2026-10-19T06:29:15.677072+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 675.9,
+        "wall_minutes": 11.27,
+        "percentage_of_total": 41.57,
+        "recorded_at": "2026-10-19T06:40:31.578814+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 10.9,
+        "wall_minutes": 0.18,
+        "percentage_of_total": 0.67,
+        "recorded_at": "2026-10-19T06:40:42.490543+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 13.9,
+        "wall_minutes": 0.23,
+        "percentage_of_total": 0.86,
+        "recorded_at": "2026-10-19T06:40:56.436738+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 247.0,
+        "wall_minutes": 4.12,
+        "percentage_of_total": 15.19,
+        "recorded_at": "2026-10-19T06:45:03.392708+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 10.7,
+        "wall_minutes": 0.18,
+        "percentage_of_total": 0.66,
+        "recorded_at": "2026-10-19T06:45:14.112016+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 2.5,
+        "wall_minutes": 0.04,
+        "percentage_of_total": 0.15,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 594.4,
+        "wall_minutes": 9.91,
+        "percentage_of_total": 36.56
+      },
+      "charts": {
+        "wall_seconds": 8.7,
+        "wall_minutes": 0.14,
+        "percentage_of_total": 0.54
+      },
+      "plan": {
+        "wall_seconds": 947.7,
+        "wall_minutes": 15.79,
+        "percentage_of_total": 58.28,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 675.9,
+          "build_stage_04_wall_seconds": 10.9,
+          "verify_stage_05_wall_seconds": 13.9,
+          "judge_compare_stage_05b_wall_seconds": 247.0
+        }
+      },
+      "publish": {
+        "wall_seconds": 10.7,
+        "wall_minutes": 0.18,
+        "percentage_of_total": 0.66
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 62.0,
+        "wall_minutes": 1.03,
+        "percentage_of_total": 3.81
+      }
+    }
+  },
+  {
+    "cid": "a53e6af1",
+    "folder": "20261019_223720_practica_parcial_saul_standard_coarse_a53e6af1",
+    "title": "Práctica Parcial Saúl Standard Coarse v1",
+    "type": "Coarse Zero-Intervention (13 comps, 320 Qs)",
+    "source": "Auditoria De Curso Con Agente",
+    "total_wall_seconds": 1970.0,
+    "total_wall_minutes": 32.83,
+    "competencies": 13,
+    "questions": 320,
+    "total_tokens": 21128769,
+    "active_tokens": 2926179,
+    "turns": 260,
+    "subagents": 11,
+    "tool_errors": 15,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 4.2,
+        "wall_minutes": 0.07,
+        "percentage_of_total": 0.21,
+        "recorded_at": "2026-10-19T07:39:02.853210+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 776.9,
+        "wall_minutes": 12.95,
+        "percentage_of_total": 39.44,
+        "recorded_at": "2026-10-19T07:51:59.740803+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 6.8,
+        "wall_minutes": 0.11,
+        "percentage_of_total": 0.35,
+        "recorded_at": "2026-10-19T07:52:06.582913+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 882.3,
+        "wall_minutes": 14.7,
+        "percentage_of_total": 44.79,
+        "recorded_at": "2026-10-19T08:06:48.861645+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 10.0,
+        "wall_minutes": 0.17,
+        "percentage_of_total": 0.51,
+        "recorded_at": "2026-10-19T08:06:58.860086+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 25.1,
+        "wall_minutes": 0.42,
+        "percentage_of_total": 1.27,
+        "recorded_at": "2026-10-19T08:07:23.923019+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 171.0,
+        "wall_minutes": 2.85,
+        "percentage_of_total": 8.68,
+        "recorded_at": "2026-10-19T08:10:14.941569+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 10.5,
+        "wall_minutes": 0.17,
+        "percentage_of_total": 0.53,
+        "recorded_at": "2026-10-19T08:10:25.412670+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 4.2,
+        "wall_minutes": 0.07,
+        "percentage_of_total": 0.21,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 776.9,
+        "wall_minutes": 12.95,
+        "percentage_of_total": 39.44
+      },
+      "charts": {
+        "wall_seconds": 6.8,
+        "wall_minutes": 0.11,
+        "percentage_of_total": 0.35
+      },
+      "plan": {
+        "wall_seconds": 1088.4,
+        "wall_minutes": 18.14,
+        "percentage_of_total": 55.25,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 882.3,
+          "build_stage_04_wall_seconds": 10.0,
+          "verify_stage_05_wall_seconds": 25.1,
+          "judge_compare_stage_05b_wall_seconds": 171.0
+        }
+      },
+      "publish": {
+        "wall_seconds": 10.5,
+        "wall_minutes": 0.17,
+        "percentage_of_total": 0.53
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 83.2,
+        "wall_minutes": 1.39,
+        "percentage_of_total": 4.22
+      }
+    }
+  },
+  {
+    "cid": "f9b9d459",
+    "folder": "20261019_223715_practica_parcial_saul_standard_f9b9d459",
+    "title": "Práctica Parcial Saúl Standard",
+    "type": "Standard Sweet-Spot (65 comps, 1,590 Qs)",
+    "source": "Auditoria De Curso Con Agente",
+    "total_wall_seconds": 3853.0,
+    "total_wall_minutes": 64.22,
+    "competencies": 65,
+    "questions": 1590,
+    "total_tokens": 71443646,
+    "active_tokens": 6491590,
+    "turns": 674,
+    "subagents": 30,
+    "tool_errors": 61,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 4.2,
+        "wall_minutes": 0.07,
+        "percentage_of_total": 0.11,
+        "recorded_at": "2026-10-19T07:45:47.761411+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 726.3,
+        "wall_minutes": 12.11,
+        "percentage_of_total": 18.85,
+        "recorded_at": "2026-10-19T07:57:54.070665+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 6.5,
+        "wall_minutes": 0.11,
+        "percentage_of_total": 0.17,
+        "recorded_at": "2026-10-19T07:58:00.560492+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 2027.7,
+        "wall_minutes": 33.8,
+        "percentage_of_total": 52.63,
+        "recorded_at": "2026-10-19T08:31:48.273811+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 34.9,
+        "wall_minutes": 0.58,
+        "percentage_of_total": 0.91,
+        "recorded_at": "2026-10-19T08:32:23.214317+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 43.4,
+        "wall_minutes": 0.72,
+        "percentage_of_total": 1.13,
+        "recorded_at": "2026-10-19T08:33:06.648376+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 441.6,
+        "wall_minutes": 7.36,
+        "percentage_of_total": 11.46,
+        "recorded_at": "2026-10-19T08:40:28.239455+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 16.8,
+        "wall_minutes": 0.28,
+        "percentage_of_total": 0.43,
+        "recorded_at": "2026-10-19T08:40:44.991955+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 4.2,
+        "wall_minutes": 0.07,
+        "percentage_of_total": 0.11,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 726.3,
+        "wall_minutes": 12.1,
+        "percentage_of_total": 18.85
+      },
+      "charts": {
+        "wall_seconds": 6.5,
+        "wall_minutes": 0.11,
+        "percentage_of_total": 0.17
+      },
+      "plan": {
+        "wall_seconds": 2547.6,
+        "wall_minutes": 42.46,
+        "percentage_of_total": 66.12,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 2027.7,
+          "build_stage_04_wall_seconds": 34.9,
+          "verify_stage_05_wall_seconds": 43.4,
+          "judge_compare_stage_05b_wall_seconds": 441.6
+        }
+      },
+      "publish": {
+        "wall_seconds": 16.8,
+        "wall_minutes": 0.28,
+        "percentage_of_total": 0.44
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 551.6,
+        "wall_minutes": 9.19,
+        "percentage_of_total": 14.32
+      }
+    }
+  },
+  {
+    "cid": "afb5aa18",
+    "folder": "20261019_223707_practica_parcial_saul_standard_coarse_v2_afb5aa18",
+    "title": "Práctica Parcial Saúl Standard Coarse v2",
+    "type": "Coarse Friction Paradox (14 comps, 370 Qs)",
+    "source": "Auditoria De Curso Con Agente",
+    "total_wall_seconds": 3602.0,
+    "total_wall_minutes": 60.03,
+    "competencies": 14,
+    "questions": 370,
+    "total_tokens": 59269221,
+    "active_tokens": 5129203,
+    "turns": 646,
+    "subagents": 17,
+    "tool_errors": 42,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 4.1,
+        "wall_minutes": 0.07,
+        "percentage_of_total": 0.11,
+        "recorded_at": "2026-10-19T08:16:01.704587+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 965.7,
+        "wall_minutes": 16.1,
+        "percentage_of_total": 26.81,
+        "recorded_at": "2026-10-19T08:32:07.440621+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 7.1,
+        "wall_minutes": 0.12,
+        "percentage_of_total": 0.2,
+        "recorded_at": "2026-10-19T08:32:14.525561+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 2254.7,
+        "wall_minutes": 37.58,
+        "percentage_of_total": 62.6,
+        "recorded_at": "2026-10-19T09:09:49.265931+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 23.2,
+        "wall_minutes": 0.39,
+        "percentage_of_total": 0.64,
+        "recorded_at": "2026-10-19T09:10:12.439881+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 11.6,
+        "wall_minutes": 0.19,
+        "percentage_of_total": 0.32,
+        "recorded_at": "2026-10-19T09:10:24.049681+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 232.0,
+        "wall_minutes": 3.87,
+        "percentage_of_total": 6.44,
+        "recorded_at": "2026-10-19T09:14:16.022733+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 10.2,
+        "wall_minutes": 0.17,
+        "percentage_of_total": 0.28,
+        "recorded_at": "2026-10-19T09:14:26.257240+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 4.1,
+        "wall_minutes": 0.07,
+        "percentage_of_total": 0.11,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 965.7,
+        "wall_minutes": 16.1,
+        "percentage_of_total": 26.81
+      },
+      "charts": {
+        "wall_seconds": 7.1,
+        "wall_minutes": 0.12,
+        "percentage_of_total": 0.2
+      },
+      "plan": {
+        "wall_seconds": 2521.5,
+        "wall_minutes": 42.02,
+        "percentage_of_total": 70.0,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 2254.7,
+          "build_stage_04_wall_seconds": 23.2,
+          "verify_stage_05_wall_seconds": 11.6,
+          "judge_compare_stage_05b_wall_seconds": 232.0
+        }
+      },
+      "publish": {
+        "wall_seconds": 10.2,
+        "wall_minutes": 0.17,
+        "percentage_of_total": 0.28
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 93.4,
+        "wall_minutes": 1.56,
+        "percentage_of_total": 2.59
+      }
+    }
+  },
+  {
+    "cid": "acdc402d",
+    "folder": "20261019_223729_practica_parcial_saul_acdc402d",
+    "title": "Práctica Parcial Saúl Fine / Masivo",
+    "type": "Fine Masivo Stress-Test (118 comps, 2,850 Qs)",
+    "source": "Auditoria De Curso Con Agente",
+    "total_wall_seconds": 5139.0,
+    "total_wall_minutes": 85.65,
+    "competencies": 118,
+    "questions": 2850,
+    "total_tokens": 102715610,
+    "active_tokens": 11725289,
+    "turns": 1005,
+    "subagents": 67,
+    "tool_errors": 82,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 4.0,
+        "wall_minutes": 0.07,
+        "percentage_of_total": 0.08,
+        "recorded_at": "2026-10-19T06:22:00.736959+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 1265.9,
+        "wall_minutes": 21.1,
+        "percentage_of_total": 24.63,
+        "recorded_at": "2026-10-19T06:43:06.674390+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 9.0,
+        "wall_minutes": 0.15,
+        "percentage_of_total": 0.17,
+        "recorded_at": "2026-10-19T06:43:15.648890+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 2701.4,
+        "wall_minutes": 45.02,
+        "percentage_of_total": 52.57,
+        "recorded_at": "2026-10-19T07:28:17.090927+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 128.5,
+        "wall_minutes": 2.14,
+        "percentage_of_total": 2.5,
+        "recorded_at": "2026-10-19T07:30:25.541928+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 14.2,
+        "wall_minutes": 0.24,
+        "percentage_of_total": 0.28,
+        "recorded_at": "2026-10-19T07:30:39.791640+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 825.7,
+        "wall_minutes": 13.76,
+        "percentage_of_total": 16.07,
+        "recorded_at": "2026-10-19T07:44:25.481570+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 24.3,
+        "wall_minutes": 0.4,
+        "percentage_of_total": 0.47,
+        "recorded_at": "2026-10-19T07:44:49.774449+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 4.0,
+        "wall_minutes": 0.07,
+        "percentage_of_total": 0.08,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 1265.9,
+        "wall_minutes": 21.1,
+        "percentage_of_total": 24.63
+      },
+      "charts": {
+        "wall_seconds": 9.0,
+        "wall_minutes": 0.15,
+        "percentage_of_total": 0.18
+      },
+      "plan": {
+        "wall_seconds": 3669.8,
+        "wall_minutes": 61.16,
+        "percentage_of_total": 71.41,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 2701.4,
+          "build_stage_04_wall_seconds": 128.5,
+          "verify_stage_05_wall_seconds": 14.2,
+          "judge_compare_stage_05b_wall_seconds": 825.7
+        }
+      },
+      "publish": {
+        "wall_seconds": 24.3,
+        "wall_minutes": 0.41,
+        "percentage_of_total": 0.47
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 166.0,
+        "wall_minutes": 2.77,
+        "percentage_of_total": 3.23
+      }
+    }
+  },
+  {
+    "cid": "876ad3df",
+    "folder": "20261017_063549_pde_saul_1_876ad3df",
+    "title": "PDE Saúl 1",
+    "type": "Standard Small (16 comps, 380 Qs)",
+    "source": "Master Forensic Synthesis (7 Runs)",
+    "total_wall_seconds": 3352.0,
+    "total_wall_minutes": 55.87,
+    "competencies": 16,
+    "questions": 380,
+    "total_tokens": 49363575,
+    "active_tokens": 2918171,
+    "turns": 408,
+    "subagents": 5,
+    "tool_errors": 33,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 0.3,
+        "wall_minutes": 0.01,
+        "percentage_of_total": 0.01,
+        "recorded_at": "2026-10-17T05:58:34.548922+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 13.9,
+        "wall_minutes": 0.23,
+        "percentage_of_total": 0.42,
+        "recorded_at": "2026-10-17T05:58:48.482653+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 897.9,
+        "wall_minutes": 14.97,
+        "percentage_of_total": 26.79,
+        "recorded_at": "2026-10-17T06:13:46.387448+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 11.1,
+        "wall_minutes": 0.18,
+        "percentage_of_total": 0.33,
+        "recorded_at": "2026-10-17T06:13:57.478628+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 7.5,
+        "wall_minutes": 0.12,
+        "percentage_of_total": 0.22,
+        "recorded_at": "2026-10-17T06:14:04.974261+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 407.6,
+        "wall_minutes": 6.79,
+        "percentage_of_total": 12.16,
+        "recorded_at": "2026-10-17T06:20:52.551913+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 14.1,
+        "wall_minutes": 0.24,
+        "percentage_of_total": 0.42,
+        "recorded_at": "2026-10-17T06:21:06.660478+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 0.3,
+        "wall_minutes": 0.01,
+        "percentage_of_total": 0.01,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 0.0,
+        "wall_minutes": 0.0,
+        "percentage_of_total": 0.0
+      },
+      "charts": {
+        "wall_seconds": 13.9,
+        "wall_minutes": 0.23,
+        "percentage_of_total": 0.41
+      },
+      "plan": {
+        "wall_seconds": 1324.1,
+        "wall_minutes": 22.07,
+        "percentage_of_total": 39.5,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 897.9,
+          "build_stage_04_wall_seconds": 11.1,
+          "verify_stage_05_wall_seconds": 7.5,
+          "judge_compare_stage_05b_wall_seconds": 407.6
+        }
+      },
+      "publish": {
+        "wall_seconds": 14.1,
+        "wall_minutes": 0.23,
+        "percentage_of_total": 0.42
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 1999.6,
+        "wall_minutes": 33.33,
+        "percentage_of_total": 59.65
+      }
+    }
+  },
+  {
+    "cid": "0f573810",
+    "folder": "20261017_063550_estadistica_regresion_0f573810",
+    "title": "Estadística Regresión",
+    "type": "Standard Medium (43 comps, 1,050 Qs)",
+    "source": "Master Forensic Synthesis (7 Runs)",
+    "total_wall_seconds": 21961.0,
+    "total_wall_minutes": 366.02,
+    "competencies": 43,
+    "questions": 1050,
+    "total_tokens": 86861352,
+    "active_tokens": 6236770,
+    "turns": 717,
+    "subagents": 10,
+    "tool_errors": 46,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 2.6,
+        "wall_minutes": 0.04,
+        "percentage_of_total": 0.01,
+        "recorded_at": "2026-10-17T05:57:20.169976+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 1312.6,
+        "wall_minutes": 21.88,
+        "percentage_of_total": 5.98,
+        "recorded_at": "2026-10-17T06:19:12.765936+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 7.3,
+        "wall_minutes": 0.12,
+        "percentage_of_total": 0.03,
+        "recorded_at": "2026-10-17T06:19:20.027395+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 18318.9,
+        "wall_minutes": 305.31,
+        "percentage_of_total": 83.42,
+        "recorded_at": "2026-10-17T11:24:38.878184+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 21.3,
+        "wall_minutes": 0.36,
+        "percentage_of_total": 0.1,
+        "recorded_at": "2026-10-17T11:25:00.181045+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 19.2,
+        "wall_minutes": 0.32,
+        "percentage_of_total": 0.09,
+        "recorded_at": "2026-10-17T11:25:19.425833+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 304.1,
+        "wall_minutes": 5.07,
+        "percentage_of_total": 1.38,
+        "recorded_at": "2026-10-17T11:30:23.540720+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 14.4,
+        "wall_minutes": 0.24,
+        "percentage_of_total": 0.07,
+        "recorded_at": "2026-10-17T11:30:37.923308+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 2.6,
+        "wall_minutes": 0.04,
+        "percentage_of_total": 0.01,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 1312.6,
+        "wall_minutes": 21.88,
+        "percentage_of_total": 5.98
+      },
+      "charts": {
+        "wall_seconds": 7.3,
+        "wall_minutes": 0.12,
+        "percentage_of_total": 0.03
+      },
+      "plan": {
+        "wall_seconds": 18663.5,
+        "wall_minutes": 311.06,
+        "percentage_of_total": 84.98,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 18318.9,
+          "build_stage_04_wall_seconds": 21.3,
+          "verify_stage_05_wall_seconds": 19.2,
+          "judge_compare_stage_05b_wall_seconds": 304.1
+        }
+      },
+      "publish": {
+        "wall_seconds": 14.4,
+        "wall_minutes": 0.24,
+        "percentage_of_total": 0.07
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 1960.6,
+        "wall_minutes": 32.68,
+        "percentage_of_total": 8.93
+      }
+    }
+  },
+  {
+    "cid": "9ed41fb3",
+    "folder": "20261017_063551_practica_parcial_saul_9ed41fb3",
+    "title": "Práctica Parcial Saúl (Truncado 404)",
+    "type": "Stage 1 Incomplete (18 comps)",
+    "source": "Master Forensic Synthesis (7 Runs)",
+    "total_wall_seconds": 233.0,
+    "total_wall_minutes": 3.88,
+    "competencies": 18,
+    "questions": 0,
+    "total_tokens": 10296430,
+    "active_tokens": 680256,
+    "turns": 85,
+    "subagents": 1,
+    "tool_errors": 10,
+    "stages_breakdown": {},
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 0.0,
+        "wall_minutes": 0.0,
+        "percentage_of_total": 0.0,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 0.0,
+        "wall_minutes": 0.0,
+        "percentage_of_total": 0.0
+      },
+      "charts": {
+        "wall_seconds": 0.0,
+        "wall_minutes": 0.0,
+        "percentage_of_total": 0.0
+      },
+      "plan": {
+        "wall_seconds": 0,
+        "wall_minutes": 0.0,
+        "percentage_of_total": 0.0,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 0.0,
+          "build_stage_04_wall_seconds": 0.0,
+          "verify_stage_05_wall_seconds": 0.0,
+          "judge_compare_stage_05b_wall_seconds": 0.0
+        }
+      },
+      "publish": {
+        "wall_seconds": 0.0,
+        "wall_minutes": 0.0,
+        "percentage_of_total": 0.0
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 233.0,
+        "wall_minutes": 3.88,
+        "percentage_of_total": 100.0
+      }
+    }
+  },
+  {
+    "cid": "812bfecd",
+    "folder": "20261017_063551_solow_model_812bfecd",
+    "title": "Solow Model (Base)",
+    "type": "Standard Base (21 comps, 500 Qs)",
+    "source": "Master Forensic Synthesis (7 Runs)",
+    "total_wall_seconds": 2936.0,
+    "total_wall_minutes": 48.93,
+    "competencies": 21,
+    "questions": 500,
+    "total_tokens": 27699093,
+    "active_tokens": 2821776,
+    "turns": 274,
+    "subagents": 8,
+    "tool_errors": 13,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 2.6,
+        "wall_minutes": 0.04,
+        "percentage_of_total": 0.09,
+        "recorded_at": "2026-10-17T04:53:20.120979+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 1091.9,
+        "wall_minutes": 18.2,
+        "percentage_of_total": 37.19,
+        "recorded_at": "2026-10-17T05:11:32.069480+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 5.6,
+        "wall_minutes": 0.09,
+        "percentage_of_total": 0.19,
+        "recorded_at": "2026-10-17T05:11:37.623918+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 1458.6,
+        "wall_minutes": 24.31,
+        "percentage_of_total": 49.68,
+        "recorded_at": "2026-10-17T05:35:56.244851+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 12.2,
+        "wall_minutes": 0.2,
+        "percentage_of_total": 0.41,
+        "recorded_at": "2026-10-17T05:36:08.404042+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 11.1,
+        "wall_minutes": 0.18,
+        "percentage_of_total": 0.38,
+        "recorded_at": "2026-10-17T05:36:19.491981+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 300.6,
+        "wall_minutes": 5.01,
+        "percentage_of_total": 10.24,
+        "recorded_at": "2026-10-17T05:41:20.134172+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 9.8,
+        "wall_minutes": 0.16,
+        "percentage_of_total": 0.33,
+        "recorded_at": "2026-10-17T05:41:29.941403+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 2.6,
+        "wall_minutes": 0.04,
+        "percentage_of_total": 0.09,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 1091.9,
+        "wall_minutes": 18.2,
+        "percentage_of_total": 37.19
+      },
+      "charts": {
+        "wall_seconds": 5.6,
+        "wall_minutes": 0.09,
+        "percentage_of_total": 0.19
+      },
+      "plan": {
+        "wall_seconds": 1782.5,
+        "wall_minutes": 29.71,
+        "percentage_of_total": 60.71,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 1458.6,
+          "build_stage_04_wall_seconds": 12.2,
+          "verify_stage_05_wall_seconds": 11.1,
+          "judge_compare_stage_05b_wall_seconds": 300.6
+        }
+      },
+      "publish": {
+        "wall_seconds": 9.8,
+        "wall_minutes": 0.16,
+        "percentage_of_total": 0.33
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 43.6,
+        "wall_minutes": 0.73,
+        "percentage_of_total": 1.49
+      }
+    }
+  },
+  {
+    "cid": "7818f6af",
+    "folder": "20261017_063552_solow_model_v14_7818f6af",
+    "title": "Solow Model v14",
+    "type": "Standard Base (23 comps, 540 Qs)",
+    "source": "Master Forensic Synthesis (7 Runs)",
+    "total_wall_seconds": 19792.0,
+    "total_wall_minutes": 329.87,
+    "competencies": 23,
+    "questions": 540,
+    "total_tokens": 44765174,
+    "active_tokens": 4765328,
+    "turns": 408,
+    "subagents": 10,
+    "tool_errors": 27,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 2.9,
+        "wall_minutes": 0.05,
+        "percentage_of_total": 0.01,
+        "recorded_at": "2026-10-17T05:52:22.648499+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 2184.7,
+        "wall_minutes": 36.41,
+        "percentage_of_total": 11.04,
+        "recorded_at": "2026-10-17T06:28:47.330510+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 5.3,
+        "wall_minutes": 0.09,
+        "percentage_of_total": 0.03,
+        "recorded_at": "2026-10-17T06:28:52.651454+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 2062.2,
+        "wall_minutes": 34.37,
+        "percentage_of_total": 10.42,
+        "recorded_at": "2026-10-17T07:03:14.811854+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 14.8,
+        "wall_minutes": 0.25,
+        "percentage_of_total": 0.07,
+        "recorded_at": "2026-10-17T07:03:29.627697+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 11.6,
+        "wall_minutes": 0.19,
+        "percentage_of_total": 0.06,
+        "recorded_at": "2026-10-17T07:03:41.242827+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 15426.2,
+        "wall_minutes": 257.1,
+        "percentage_of_total": 77.94,
+        "recorded_at": "2026-10-17T11:20:47.482597+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 25.1,
+        "wall_minutes": 0.42,
+        "percentage_of_total": 0.13,
+        "recorded_at": "2026-10-17T11:21:12.551127+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 2.9,
+        "wall_minutes": 0.05,
+        "percentage_of_total": 0.01,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 2184.7,
+        "wall_minutes": 36.41,
+        "percentage_of_total": 11.04
+      },
+      "charts": {
+        "wall_seconds": 5.3,
+        "wall_minutes": 0.09,
+        "percentage_of_total": 0.03
+      },
+      "plan": {
+        "wall_seconds": 17514.8,
+        "wall_minutes": 291.91,
+        "percentage_of_total": 88.49,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 2062.2,
+          "build_stage_04_wall_seconds": 14.8,
+          "verify_stage_05_wall_seconds": 11.6,
+          "judge_compare_stage_05b_wall_seconds": 15426.2
+        }
+      },
+      "publish": {
+        "wall_seconds": 25.1,
+        "wall_minutes": 0.42,
+        "percentage_of_total": 0.13
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 59.2,
+        "wall_minutes": 0.99,
+        "percentage_of_total": 0.3
+      }
+    }
+  },
+  {
+    "cid": "f2be91cd",
+    "folder": "20261017_063552_solow_model_f2be91cd",
+    "title": "Solow Model (Append Mode)",
+    "type": "Append Delta (24 comps, 570 Qs -> 45c)",
+    "source": "Master Forensic Synthesis (7 Runs)",
+    "total_wall_seconds": 20393.0,
+    "total_wall_minutes": 339.88,
+    "competencies": 24,
+    "questions": 570,
+    "total_tokens": 59974427,
+    "active_tokens": 4009500,
+    "turns": 474,
+    "subagents": 5,
+    "tool_errors": 54,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 3.4,
+        "wall_minutes": 0.06,
+        "percentage_of_total": 0.02,
+        "recorded_at": "2026-10-17T05:53:49.696347+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 1564.5,
+        "wall_minutes": 26.07,
+        "percentage_of_total": 7.67,
+        "recorded_at": "2026-10-17T06:19:54.152269+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 6.1,
+        "wall_minutes": 0.1,
+        "percentage_of_total": 0.03,
+        "recorded_at": "2026-10-17T06:20:00.263171+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 18456.0,
+        "wall_minutes": 307.6,
+        "percentage_of_total": 90.5,
+        "recorded_at": "2026-10-17T11:27:36.238032+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 14.2,
+        "wall_minutes": 0.24,
+        "percentage_of_total": 0.07,
+        "recorded_at": "2026-10-17T11:27:50.477094+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 15.4,
+        "wall_minutes": 0.26,
+        "percentage_of_total": 0.08,
+        "recorded_at": "2026-10-17T11:28:05.832373+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 174.2,
+        "wall_minutes": 2.9,
+        "percentage_of_total": 0.85,
+        "recorded_at": "2026-10-17T11:31:00.008905+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 69.7,
+        "wall_minutes": 1.16,
+        "percentage_of_total": 0.34,
+        "recorded_at": "2026-10-17T11:32:09.754888+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 3.4,
+        "wall_minutes": 0.06,
+        "percentage_of_total": 0.02,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 1564.5,
+        "wall_minutes": 26.07,
+        "percentage_of_total": 7.67
+      },
+      "charts": {
+        "wall_seconds": 6.1,
+        "wall_minutes": 0.1,
+        "percentage_of_total": 0.03
+      },
+      "plan": {
+        "wall_seconds": 18659.8,
+        "wall_minutes": 311.0,
+        "percentage_of_total": 91.5,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 18456.0,
+          "build_stage_04_wall_seconds": 14.2,
+          "verify_stage_05_wall_seconds": 15.4,
+          "judge_compare_stage_05b_wall_seconds": 174.2
+        }
+      },
+      "publish": {
+        "wall_seconds": 69.7,
+        "wall_minutes": 1.16,
+        "percentage_of_total": 0.34
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 89.5,
+        "wall_minutes": 1.49,
+        "percentage_of_total": 0.44
+      }
+    }
+  },
+  {
+    "cid": "18ae4bcc",
+    "folder": "20261017_063553_solow_model_v13_18ae4bcc",
+    "title": "Solow Model v13",
+    "type": "Standard Base (24 comps, 570 Qs)",
+    "source": "Master Forensic Synthesis (7 Runs)",
+    "total_wall_seconds": 3714.0,
+    "total_wall_minutes": 61.9,
+    "competencies": 24,
+    "questions": 570,
+    "total_tokens": 34966209,
+    "active_tokens": 3244368,
+    "turns": 328,
+    "subagents": 10,
+    "tool_errors": 15,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 2.9,
+        "wall_minutes": 0.05,
+        "percentage_of_total": 0.08,
+        "recorded_at": "2026-10-17T05:52:20.586719+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 1593.4,
+        "wall_minutes": 26.56,
+        "percentage_of_total": 42.9,
+        "recorded_at": "2026-10-17T06:18:53.977153+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 5.8,
+        "wall_minutes": 0.1,
+        "percentage_of_total": 0.16,
+        "recorded_at": "2026-10-17T06:18:59.789798+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 1084.6,
+        "wall_minutes": 18.08,
+        "percentage_of_total": 29.2,
+        "recorded_at": "2026-10-17T06:37:04.367278+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 12.5,
+        "wall_minutes": 0.21,
+        "percentage_of_total": 0.34,
+        "recorded_at": "2026-10-17T06:37:16.888059+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 12.5,
+        "wall_minutes": 0.21,
+        "percentage_of_total": 0.34,
+        "recorded_at": "2026-10-17T06:37:29.368765+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 919.4,
+        "wall_minutes": 15.32,
+        "percentage_of_total": 24.76,
+        "recorded_at": "2026-10-17T06:52:48.809481+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 9.6,
+        "wall_minutes": 0.16,
+        "percentage_of_total": 0.26,
+        "recorded_at": "2026-10-17T06:52:58.372050+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 2.9,
+        "wall_minutes": 0.05,
+        "percentage_of_total": 0.08,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 1593.4,
+        "wall_minutes": 26.56,
+        "percentage_of_total": 42.9
+      },
+      "charts": {
+        "wall_seconds": 5.8,
+        "wall_minutes": 0.1,
+        "percentage_of_total": 0.16
+      },
+      "plan": {
+        "wall_seconds": 2029.0,
+        "wall_minutes": 33.82,
+        "percentage_of_total": 54.63,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 1084.6,
+          "build_stage_04_wall_seconds": 12.5,
+          "verify_stage_05_wall_seconds": 12.5,
+          "judge_compare_stage_05b_wall_seconds": 919.4
+        }
+      },
+      "publish": {
+        "wall_seconds": 9.6,
+        "wall_minutes": 0.16,
+        "percentage_of_total": 0.26
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 73.3,
+        "wall_minutes": 1.22,
+        "percentage_of_total": 1.97
+      }
+    }
+  }
+]
