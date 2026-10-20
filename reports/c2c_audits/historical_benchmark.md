@@ -1,14 +1,17 @@
 # Content-to-Course: Registro Histórico y Evolución de Rendimiento
 
 > [!NOTE]
-> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-10-19 01:59:14`. Total de ejecuciones auditadas: **18**.
+> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-10-19 22:37:36`. Total de ejecuciones auditadas: **21**.
 
 ## 1. Matriz de Evolución Temporal (Normalizada por Carga de Contenido)
 
 | Fecha | Run / Curso | Input (Pág / MB) | Output (Comp / Preg) | Tiempo de Pared | Speedup | Tokens Totales | Tok / Preg | Seg / Preg | Blind Judges (1st) | Intervenciones | Bottlenecks |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `2026-10-19 06:59` | **practica_parcial_saul** (`acdc402d`) | 103 pág (10.39 MB) | 118 comp / 0 preg | 37.6 min (2254.0s) | **8.63x** | 53,435,338 | **0.0** | **0.0s** | ❌ Falló | 🛠️ 1 | ⚠️ 3 |
-| `2026-10-19 06:53` | **solow_model_v15** (`4ceacf92`) | 36 pág (1.49 MB) | 15 comp / 360 preg | 27.1 min (1626.0s) | **3.32x** | 22,064,985 | **61,291.6** | **4.52s** | ✅ Limpio | 🛠️ 1 | ⚠️ 3 |
+| `2026-10-20 03:37` | **solow_model_v15** (`4ceacf92`) | 36 pág (1.49 MB) | 15 comp / 360 preg | 27.1 min (1626.0s) | **3.32x** | 22,064,985 | **61,291.6** | **4.52s** | ✅ Limpio | 🛠️ 1 | ⚠️ 3 |
+| `2026-10-20 03:37` | **practica_parcial_saul** (`acdc402d`) | 103 pág (10.39 MB) | 118 comp / 2850 preg | 85.7 min (5139.0s) | **5.17x** | 102,715,610 | **36,040.6** | **1.8s** | ❌ Falló | 🛠️ 17 | ⚠️ 4 |
+| `2026-10-20 03:37` | **practica_parcial_saul_standard_coarse** (`a53e6af1`) | 103 pág (10.39 MB) | 13 comp / 320 preg | 32.8 min (1970.0s) | **3.33x** | 21,128,769 | **66,027.4** | **6.16s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
+| `2026-10-20 03:37` | **practica_parcial_saul_standard** (`f9b9d459`) | 103 pág (10.39 MB) | 65 comp / 1590 preg | 64.2 min (3853.0s) | **3.92x** | 71,443,646 | **44,933.1** | **2.42s** | ❌ Falló | 🛠️ 3 | ⚠️ 4 |
+| `2026-10-20 03:37` | **practica_parcial_saul_standard_coarse_v2** (`afb5aa18`) | 103 pág (10.39 MB) | 14 comp / 370 preg | 60.0 min (3602.0s) | **3.03x** | 59,269,221 | **160,187.1** | **9.74s** | ❌ Falló | 🛠️ 5 | ⚠️ 3 |
 | `2026-10-17 11:35` | **solow_model_v13** (`18ae4bcc`) | 36 pág (1.49 MB) | 24 comp / 570 preg | 61.9 min (3714.0s) | **2.24x** | 34,966,209 | **61,344.2** | **6.52s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
 | `2026-10-17 11:35` | **solow_model** (`f2be91cd`) | 36 pág (1.49 MB) | 24 comp / 570 preg | 339.9 min (20393.0s) | **1.28x** | 59,974,427 | **105,218.3** | **35.78s** | ❌ Falló | 🛠️ 4 | ⚠️ 4 |
 | `2026-10-17 11:35` | **solow_model_v14** (`7818f6af`) | 36 pág (1.49 MB) | 23 comp / 540 preg | 329.9 min (19792.0s) | **1.3x** | 44,765,174 | **82,898.5** | **36.65s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
@@ -30,10 +33,10 @@
 
 ## 2. Métricas Promedio del Sistema (Baselines Globales)
 
-- **Factor de Aceleración Paralela Promedio**: `3.12x`
-- **Densidad de Tokens Promedio por Pregunta**: `78,078.1 tokens/pregunta`
-- **Latencia Promedio por Pregunta Validada**: `13.58 s/pregunta`
-- **Rendimiento Promedio de Generación**: `7.22 preguntas/minuto`
+- **Factor de Aceleración Paralela Promedio**: `3.0x`
+- **Densidad de Tokens Promedio por Pregunta**: `77,736.5 tokens/pregunta`
+- **Latencia Promedio por Pregunta Validada**: `11.3 s/pregunta`
+- **Rendimiento Promedio de Generación**: `10.23 preguntas/minuto`
 
 ---
 *Generado por el motor forense `c2c-run-auditor`.*

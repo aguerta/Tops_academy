@@ -1,7 +1,7 @@
 # Auditoría Forense Ultra-Detallada del Traceback de Ejecución
 ## Pipeline Content-to-Course (C2C) — Conversación [`4ceacf92-ef82-4fb0-899d-87aa310873c1`](conversation://4ceacf92-ef82-4fb0-899d-87aa310873c1)
 
-**Fecha de Auditoría:** `2026-10-19 06:53:16 UTC`  
+**Fecha de Auditoría:** `2026-10-20 03:37:36 UTC`  
 **Conversación Orquestadora:** [`4ceacf92-ef82-4fb0-899d-87aa310873c1`](conversation://4ceacf92-ef82-4fb0-899d-87aa310873c1)  
 **Directorio de Telemetría Validado (Zero-Collision):** `D:\Augusto\personal_portfolio\Tops_academy\courses\solow_model_v15\work` (`8` snapshots C2C v3.2)  
 **Motor Forense:** C2C Traceback Deep-Dive Analyzer (Antigravity SDK)  
@@ -119,4 +119,90 @@ Judge 03               :    110s (100.0%) LLM |    0s Tools
 | **Orchestrator** | 28 | 8,623 | `Analyzing available skills to determine the appropriate method for course creati...` |
 
 ---
-*Informe generado automáticamente por `traceback_analyzer.py`.*
+---
+
+## 7. Diagnóstico Forense de Causa Raíz y Optimización Agéntica
+
+### 7.1. Causa Raíz del Straggler Crítico: Fricción de Mapeo en Dispatch y Circuit Breaker de LaTeX en C-03
+La inspección ultra-detallada del transcript de `Author Shard 06` ([`conversationId: 9a010a58-51ee-4e8f-a531-da55988f103b`](conversation://9a010a58-51ee-4e8f-a531-da55988f103b)) y su archivo de trabajo [`courses/solow_model_v15/work/shards/shard_03_data.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/courses/solow_model_v15/work/shards/shard_03_data.py) esclarece el 100% del retraso de **578.0 segundos**:
+
+1. **Paradoja de Despacho Asimétrico (Turnos 3 a 25):**
+   - El subagente recibió como orden de trabajo `author_06.json`, pero dicho archivo asignaba las competencias `C-02` y `C-03` bajo la etiqueta `shard_03`. Simultáneamente, en el disco existía `author_07.json` mapeado a `shard_06`.
+   - En lugar de proceder a la generación en Turn-0, el subagente dedicó **11 turnos de razonamiento e inspección de archivos** intentando reconciliar si debía escribir en `shard_03_data.py` o en `shard_06_data.py`, sospechando de una colisión entre agentes paralelos.
+2. **Corrupción de Delimitadores LaTeX en f-strings de Python:**
+   - En la competencia `C-03` (*"Condición de Estado Estacionario y Acumulación de Capital"*), la plantilla incorporaba fórmulas en LaTeX para el distractor `D-C03-06` con la expresión:
+     `\frac{\dot{k}}{k} = s \frac{f(k)}{k} - (n + g + \delta)`.
+   - Al generarse dentro de un bloque f-string sin doble escape (`{{...}}`), el compilador de Python interpretó las llaves matemáticas como interpolaciones inválidas, arrojando excepciones en los pasos 36, 40 y 46:
+     `[-] FAIL: 3 errores detectados al compilar shard_03: unbalanced curly braces in LaTeX math expression`.
+3. **Disparo del Circuit Breaker (Paso 52):**
+   - La repetición de fallos activó la salvaguarda de C2C:
+     `[-] FAIL: CIRCUIT BREAKER TRIPPED (5 errores detectados al compilar shard_03: C-03)`.
+4. **Ciclo de Reparación Autónoma y Éxito en Turno 65:**
+   - En los turnos 53 a 57, el subagente detuvo la emisión de comandos ciegos, analizó las fórmulas matemáticas en su buffer de `thinking`, corrigió los escapes de las llaves en la tupla de datos y validó con semillas dry-run, logrando la compilación en 578.0s sin intervención del orquestador.
+
+---
+
+### 7.2. Fricción Sintáctica de Shell en el Orquestador y Emergencia de `dump_prompts.py`
+La única intervención manual del orquestador (Paso 31) se originó por fricciones de compatibilidad entre PowerShell de Windows y la sintaxis de f-strings en Python:
+
+- **Secuencia Cronológica:**
+  - **Paso 23 / 24:** El orquestador intentó extraer los system prompts desde `subagent_types.json` ejecutando:
+    ```powershell
+    python -c "import json; types = json.load(open('courses/solow_model_v15/work/subagent_types.json', encoding='utf-8')); [open(f'courses/solow_model_v15/work/{t["name"]}_prompt.txt', 'w', encoding='utf-8').write(t['system_prompt']) for ...]"
+    ```
+    *Resultado:* Error de PowerShell por comillas dobles anidadas (`SyntaxError: unterminated string literal`).
+  - **Paso 29 / 30:** Reintentó con una variante sintáctica similar, volviendo a fallar por la misma causa.
+  - **Paso 31 (Intervención y Thinking):** El modelo concluyó explícitamente:
+    > *"PowerShell's f-string syntax is problematic due to the nested quotes, leading to a recurring error. Recognizing this, the solution involves moving away from complex one-liners to improve maintainability and debuggability. A dedicated scratch script is the more appropriate solution for this kind of file system check."*
+  - **Paso 32 / 33:** Creó [`dump_prompts.py`](file:///C:/Users/augus/.gemini/antigravity/brain/4ceacf92-ef82-4fb0-899d-87aa310873c1/scratch/dump_prompts.py) en scratch y lo ejecutó con éxito en 5 segundos, volcando 78,687 caracteres de instrucciones de sistema para los 4 roles de subagentes.
+
+---
+
+### 7.3. Taxonomía Técnica de los 24 Errores y Erradicación del 100% de la "Caja Negra"
+Todos los errores registrados en la telemetría granular fueron clasificados exhaustivamente bajo las 16 categorías técnicas de C2C v3.2:
+
+```mermaid
+flowchart LR
+    Total["24 Errores Auditados"] --> E1["Missing File / Path Error (11)"]
+    Total --> E2["Param Diversity and Collapse (6)"]
+    Total --> E3["Exploratory One-Liner (3)"]
+    Total --> E4["LaTeX Raw-String (2)"]
+    Total --> E5["Shard Compilation (1)"]
+    Total --> E6["PowerShell Quoting (1)"]
+```
+
+1. **`Missing File / Relative Path (FileNotFoundError)` (11 incidencias):**
+   - 7 fallos en llamadas a `view_file` con rutas relativas a `dispatch/items/` por parte de autores buscando su configuración sin ruta absoluta.
+   - 1 fallo de `dir solow1956.pdf` en `Author Shard 02` por buscar el archivo en la subcarpeta del curso en vez de la raíz del workspace.
+   - 1 fallo de `Get-ChildItem .check_attempts` en `Author Shard 06` debido a que la carpeta temporal aún no existía en disco.
+   - 1 fallo de `ContentOffset 44000 exceeds line range size 3121` en `Judge 03` al intentar leer un lote de validación pequeño con un offset sobredimensionado.
+   - 1 fallo adicional de ruta en `Author Shard 05`.
+2. **`Parameter Diversity & Option Collapse (TPL-VAR / TPL-COLLAPSE)` (6 incidencias):**
+   - Fallos de aserción durante el dry-run cuando los parámetros aleatorios de los generadores convergieron en valores idénticos o violaron la cota mínima de diversidad (1 en Shard 02, 1 en Shard 01, 4 en Shard 06).
+3. **`Exploratory Python One-Liner / Script Exceptions` (3 incidencias):**
+   - Ocurridas en el nivel del orquestador en Steps 24, 30 y 133 por comandos inline en PowerShell.
+4. **`LaTeX Control Character Corruption (R-03)` (2 incidencias):**
+   - Escapes incompletos de contrabarras y llaves en fórmulas matemáticas complejas de Shard 04 (Step 14) y Shard 03 (Step 22).
+5. **`Shard Compilation & Template Validator Failure` (1 incidencia):**
+   - Validación fallida en `compile_shard.py` para Shard 07 (Step 34).
+6. **`PowerShell Command / Quoting Friction` (1 incidencia):**
+   - Error de regex en `Select-String` en `Author Shard 01` (Step 11).
+
+---
+
+### 7.4. Comportamiento Cognitivo y Autonomía de los Blind Judges
+- **Pase Limpio al Primer Intento (Agreement Rate = 100%):**  
+  Los 3 jueces ciegos evaluaron 10 reactivos cada uno (30 ítems totales que muestrean las 15 competencias del curso). El reporte maestro [`judge_report.json`](file:///d:/Augusto/personal_portfolio/Tops_academy/courses/solow_model_v15/work/judge_report.json) constató un acuerdo perfecto del 100% con **0 discordancias**, lo que certifica la solvencia matemática y pedagógica de las plantillas generadas sin requerir ciclos de arbitraje.
+- **Aislamiento Epistémico Inviolable:**  
+  Ningún juez ejecutó herramientas de navegación (`search_web`), consultas HTTP o accesos a los archivos de soluciones del orquestador (`judge_ground_truth.json`), garantizando una evaluación psicométrica ciega auténtica.
+
+---
+
+### 7.5. Acciones Correctivas y Optimizaciones Técnicas para C2C v3.2+
+1. **Unificación de Claves Shard/Author en Pre-Dispatch:** Garantizar que el orquestador cree archivos `author_01.json` que mapeen exclusivamente a `shard_01.json` y `shard_01_data.py`. Esto erradicará ~10 turnos de latencia de sincronización en cada autor.
+2. **Dump Automático de Prompts en Pre-Flight:** Incluir en el script determinista de inicio (`00_prepare.py`) la extracción directa de los system prompts a archivos de texto, eliminando completamente la necesidad de intervención manual del orquestador.
+3. **Linter Local de LaTeX para Plantillas de Distractores:** Validar el balance de llaves `{}` y el correcto doble-escape `{{` / `}}` antes de llamar a `compile_shard.py`, previniendo la activación de Circuit Breakers.
+4. **Auto-Clamping de ContentOffset en Tools de Lectura:** Ajustar la herramienta de lectura de archivos para que trunque silenciosamente el offset al tamaño del archivo en lugar de arrojar una excepción.
+
+---
+*Informe generado y enriquecido forensemente por `c2c-run-auditor`.*

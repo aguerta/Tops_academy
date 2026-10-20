@@ -975,8 +975,255 @@
     "bottlenecks_count": 3
   },
   {
-    "run_id": "20261019_015316_solow_model_v15_4ceacf92",
-    "timestamp": "2026-10-19T06:53:16.423365+00:00",
+    "run_id": "20261019_223707_practica_parcial_saul_standard_coarse_v2_afb5aa18",
+    "timestamp": "2026-10-20T03:37:07.020925+00:00",
+    "course_id": "practica_parcial_saul_standard_coarse_v2",
+    "course_title": "Practica Parcial Saul Standard Coarse V2",
+    "conversation_id": "afb5aa18-d2f3-4bd2-b452-4b73c313316e",
+    "workload": {
+      "source_files_count": 7,
+      "pages_or_slides": 103,
+      "input_mb": 10.39,
+      "competencies": 14,
+      "questions": 370,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 3602.0,
+      "agent_compute_seconds": 10916.0,
+      "speedup": 3.03,
+      "total_tokens": 59269221,
+      "total_active_tokens": 5129203,
+      "input_tokens": 2983655,
+      "output_tokens": 698105,
+      "cache_read_tokens": 54140018,
+      "total_turns": 646,
+      "subagents_count": 17,
+      "tool_errors": 42,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 777.0,
+      "stage_3_max_wall": 858.0,
+      "orchestrator_interventions": 5,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 28,
+        "initial_errors_count": 1,
+        "repair_iterations": 1,
+        "supervisor_interventions_count": 5,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con 1 errores iniciales, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (5 operaciones)**: Operaciones sobre `c2c_cta_architect.json`, `shard_06_data.py`.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 28 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 575429.3,
+      "active_tokens_per_page": 49798.1,
+      "tokens_per_input_kb": 5568.4,
+      "tokens_per_competency": 4233515.8,
+      "active_tokens_per_competency": 366371.6,
+      "author_tokens_per_competency": 173132.1,
+      "tokens_per_question": 160187.1,
+      "active_tokens_per_question": 13862.7,
+      "seconds_per_page": 34.97,
+      "seconds_per_question": 9.74,
+      "questions_per_minute": 6.16,
+      "agent_seconds_per_question": 29.5,
+      "output_tokens_per_question": 2231.8
+    },
+    "bottlenecks_count": 3
+  },
+  {
+    "run_id": "20261019_223715_practica_parcial_saul_standard_f9b9d459",
+    "timestamp": "2026-10-20T03:37:15.496080+00:00",
+    "course_id": "practica_parcial_saul_standard",
+    "course_title": "Practica Parcial Saul Standard",
+    "conversation_id": "f9b9d459-d84a-4e3d-bf32-48e74d8b5c5a",
+    "workload": {
+      "source_files_count": 7,
+      "pages_or_slides": 103,
+      "input_mb": 10.39,
+      "competencies": 65,
+      "questions": 1590,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 3853.0,
+      "agent_compute_seconds": 15097.0,
+      "speedup": 3.92,
+      "total_tokens": 71443646,
+      "total_active_tokens": 6491590,
+      "input_tokens": 4144071,
+      "output_tokens": 1436374,
+      "cache_read_tokens": 64952056,
+      "total_turns": 674,
+      "subagents_count": 30,
+      "tool_errors": 61,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 558.0,
+      "stage_3_max_wall": 1426.0,
+      "orchestrator_interventions": 3,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 130,
+        "initial_errors_count": 1,
+        "repair_iterations": 1,
+        "supervisor_interventions_count": 3,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con 1 errores iniciales, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (3 operaciones)**: Operaciones sobre `assemble.py`, `circuit_breaker_Hab-12.json`, `compile_shard_05.json`.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 130 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 693627.6,
+      "active_tokens_per_page": 63025.1,
+      "tokens_per_input_kb": 6712.2,
+      "tokens_per_competency": 1099133.0,
+      "active_tokens_per_competency": 99870.6,
+      "author_tokens_per_competency": 52438.2,
+      "tokens_per_question": 44933.1,
+      "active_tokens_per_question": 4082.8,
+      "seconds_per_page": 37.41,
+      "seconds_per_question": 2.42,
+      "questions_per_minute": 24.76,
+      "agent_seconds_per_question": 9.49,
+      "output_tokens_per_question": 962.7
+    },
+    "bottlenecks_count": 4
+  },
+  {
+    "run_id": "20261019_223720_practica_parcial_saul_standard_coarse_a53e6af1",
+    "timestamp": "2026-10-20T03:37:20.898930+00:00",
+    "course_id": "practica_parcial_saul_standard_coarse",
+    "course_title": "Practica Parcial Saul Standard Coarse",
+    "conversation_id": "a53e6af1-07b8-4246-8afd-4b4ac647d536",
+    "workload": {
+      "source_files_count": 7,
+      "pages_or_slides": 103,
+      "input_mb": 10.39,
+      "competencies": 13,
+      "questions": 320,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1970.0,
+      "agent_compute_seconds": 6560.0,
+      "speedup": 3.33,
+      "total_tokens": 21128769,
+      "total_active_tokens": 2926179,
+      "input_tokens": 1682013,
+      "output_tokens": 492786,
+      "cache_read_tokens": 18202590,
+      "total_turns": 260,
+      "subagents_count": 11,
+      "tool_errors": 15,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 601.0,
+      "stage_3_max_wall": 785.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (26/26 REACTIVOS)",
+        "batch_items_count": 26,
+        "initial_errors_count": 1,
+        "repair_iterations": 1,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 0 Blind Judges evaluaron el lote estratificado de 26 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (26/26) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 26/26 acuerdos (`100.0% agreement rate`, `0 discrepancias`).",
+          "2. **Verificación Determinista Previa (`--stage verify`)**: Detectó 1 error(es) léxico/estructural(es) corregido(s) antes del arbitraje ciego."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 205133.7,
+      "active_tokens_per_page": 28409.5,
+      "tokens_per_input_kb": 1985.1,
+      "tokens_per_competency": 1625289.9,
+      "active_tokens_per_competency": 225090.7,
+      "author_tokens_per_competency": 138133.5,
+      "tokens_per_question": 66027.4,
+      "active_tokens_per_question": 9144.3,
+      "seconds_per_page": 19.13,
+      "seconds_per_question": 6.16,
+      "questions_per_minute": 9.75,
+      "agent_seconds_per_question": 20.5,
+      "output_tokens_per_question": 1650.2
+    },
+    "bottlenecks_count": 3
+  },
+  {
+    "run_id": "20261019_223729_practica_parcial_saul_acdc402d",
+    "timestamp": "2026-10-20T03:37:29.790162+00:00",
+    "course_id": "practica_parcial_saul",
+    "course_title": "Practica Parcial Saul",
+    "conversation_id": "acdc402d-0803-468b-9c6c-b069a2dc6c09",
+    "workload": {
+      "source_files_count": 7,
+      "pages_or_slides": 103,
+      "input_mb": 10.39,
+      "competencies": 118,
+      "questions": 2850,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 5139.0,
+      "agent_compute_seconds": 26585.0,
+      "speedup": 5.17,
+      "total_tokens": 102715610,
+      "total_active_tokens": 11725289,
+      "input_tokens": 7432820,
+      "output_tokens": 2674622,
+      "cache_read_tokens": 90990321,
+      "total_turns": 1005,
+      "subagents_count": 67,
+      "tool_errors": 82,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 1055.0,
+      "stage_3_max_wall": 1265.0,
+      "orchestrator_interventions": 17,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 236,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 13,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (17 operaciones)**: Operaciones sobre `check_judge_prompts.py`, `dbg17.py`, `fix_shard_17.py`, `gen_authorized_judges.py`, `inspect_judges_dispatch.py`.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 236 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 997238.9,
+      "active_tokens_per_page": 113837.8,
+      "tokens_per_input_kb": 9650.2,
+      "tokens_per_competency": 870471.3,
+      "active_tokens_per_competency": 99366.9,
+      "author_tokens_per_competency": 55832.6,
+      "tokens_per_question": 36040.6,
+      "active_tokens_per_question": 4114.1,
+      "seconds_per_page": 49.89,
+      "seconds_per_question": 1.8,
+      "questions_per_minute": 33.27,
+      "agent_seconds_per_question": 9.33,
+      "output_tokens_per_question": 988.1
+    },
+    "bottlenecks_count": 4
+  },
+  {
+    "run_id": "20261019_223736_solow_model_v15_4ceacf92",
+    "timestamp": "2026-10-20T03:37:36.339724+00:00",
     "course_id": "solow_model_v15",
     "course_title": "Solow Model V15",
     "conversation_id": "4ceacf92-ef82-4fb0-899d-87aa310873c1",
@@ -1031,68 +1278,6 @@
       "questions_per_minute": 13.28,
       "agent_seconds_per_question": 14.97,
       "output_tokens_per_question": 1476.2
-    },
-    "bottlenecks_count": 3
-  },
-  {
-    "run_id": "20261019_015914_practica_parcial_saul_acdc402d",
-    "timestamp": "2026-10-19T06:59:14.294634+00:00",
-    "course_id": "practica_parcial_saul",
-    "course_title": "Practica Parcial Saul",
-    "conversation_id": "acdc402d-0803-468b-9c6c-b069a2dc6c09",
-    "workload": {
-      "source_files_count": 7,
-      "pages_or_slides": 103,
-      "input_mb": 10.39,
-      "competencies": 118,
-      "questions": 0,
-      "handouts": 0
-    },
-    "metrics": {
-      "wall_clock_seconds": 2254.0,
-      "agent_compute_seconds": 19461.0,
-      "speedup": 8.63,
-      "total_tokens": 53435338,
-      "total_active_tokens": 8011958,
-      "input_tokens": 5230913,
-      "output_tokens": 2170666,
-      "cache_read_tokens": 45423380,
-      "total_turns": 589,
-      "subagents_count": 27,
-      "tool_errors": 57,
-      "stage_1a_max_wall": 0.0,
-      "stage_1b_total_wall": 1055.0,
-      "stage_3_max_wall": 842.0,
-      "orchestrator_interventions": 1,
-      "blind_judges": {
-        "passed_first_attempt": false,
-        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
-        "batch_items_count": 236,
-        "initial_errors_count": 0,
-        "repair_iterations": 0,
-        "supervisor_interventions_count": 1,
-        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
-        "actions_taken": [
-          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
-          "2. **Intervenciones de Supervisor (1 operaciones)**: Operaciones sobre `prepare.py`.",
-          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 236 reactivos."
-        ]
-      }
-    },
-    "unit_economics": {
-      "tokens_per_page": 518789.7,
-      "active_tokens_per_page": 77786.0,
-      "tokens_per_input_kb": 5020.3,
-      "tokens_per_competency": 452841.8,
-      "active_tokens_per_competency": 67897.9,
-      "author_tokens_per_competency": 50089.8,
-      "tokens_per_question": 0.0,
-      "active_tokens_per_question": 0.0,
-      "seconds_per_page": 21.88,
-      "seconds_per_question": 0.0,
-      "questions_per_minute": 0.0,
-      "agent_seconds_per_question": 0.0,
-      "output_tokens_per_question": 0.0
     },
     "bottlenecks_count": 3
   }
