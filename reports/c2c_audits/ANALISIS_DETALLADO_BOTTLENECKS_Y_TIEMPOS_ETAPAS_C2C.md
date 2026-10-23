@@ -1,7 +1,7 @@
 # Análisis Forense Exhaustivo de Cuellos de Botella, Modos de Falla y Desglose Temporal de Wall-Clock por Etapa en Pipelines Content-to-Course (C2C)
 
-**Fecha de Auditoría:** `2026-10-20`  
-**Origen de Consigna:** Derivado de la conversación `@[conversation:"Auditoria De Curso Con Agente"]` (`818c07d2-9be5-4c52-9b87-0e19ae616fe7`), integrando las 5 corridas directas auditadas y las 7 corridas de la síntesis forense maestra previa.  
+**Fecha de Auditoría:** `2026-10-23`  
+**Origen de Consigna:** Derivado de la conversación `@[conversation:"Auditoria De Curso Con Agente"]` (`818c07d2-9be5-4c52-9b87-0e19ae616fe7`), integrando las 5 corridas directas auditadas, las 7 corridas de la síntesis forense maestra previa, y expandido con la investigación forense profunda de las 2 nuevas corridas de producción: `@[conversation:"Curso de Violaciones de Supuestos Econométricos"]` (`b9316152-ba51-410b-8449-bce23f6885bd`) y `@[conversation:"Asymptotic Statistics Course Generation"]` (`d52ee475-f39d-4b22-9b17-05752ffc79fb`) (Total: **14 corridas longitudinales auditadas**).  
 **Metodología:** Análisis forense ultra-granular de telemetría de Google Antigravity SDK (`telemetry.json`, `stage_telemetry_v3`, `stage_deep_dives`, `traceback_deepdive.json` y `transcript.jsonl`), inspección de trazas cognitivas (*thinking traces*), perfilado temporal de llamadas a herramientas e ingeniería de sistemas /boost.  
 
 ---
@@ -39,6 +39,8 @@ La descomposición temporal solicitada abarca las 5 fases funcionales:
 | **Solow Model v14** (`7818f6af`) | Standard Base (23 comps, 540 Qs) | **329.87 min** (19792.0s) | **2.9s** (0.0%) | **2184.7s** (11.0%) | **5.3s** (0.0%) | **2062.2s** (10.4%) | **14.8s** (0.1%) | **11.6s** (0.1%) | **15426.2s** (77.9%) | **25.1s** (0.1%) |
 | **Solow Model (Append Mode)** (`f2be91cd`) | Append Delta (24 comps, 570 Qs -> 45c) | **339.88 min** (20393.0s) | **3.4s** (0.0%) | **1564.5s** (7.7%) | **6.1s** (0.0%) | **18456.0s** (90.5%) | **14.2s** (0.1%) | **15.4s** (0.1%) | **174.2s** (0.8%) | **69.7s** (0.3%) |
 | **Solow Model v13** (`18ae4bcc`) | Standard Base (24 comps, 570 Qs) | **61.9 min** (3714.0s) | **2.9s** (0.1%) | **1593.4s** (42.9%) | **5.8s** (0.2%) | **1084.6s** (29.2%) | **12.5s** (0.3%) | **12.5s** (0.3%) | **919.4s** (24.8%) | **9.6s** (0.3%) |
+| **Violaciones de Supuestos Econométricos** (`b9316152`) | Standard Direct (14 comps, 360 Qs) | **40.62 min** (2437.0s) | **1.1s** (0.05%) | **384.5s** (15.8%) | **9.2s** (0.4%) | **1761.7s** (72.3%) | **26.0s** (1.1%) | **25.4s** (1.0%) | **129.3s** (5.3%) | **17.8s** (0.7%) |
+| **Estadística Asintótica** (`d52ee475`) | Standard High-Density MapReduce (28 comps, 660 Qs) | **26.88 min** (1613.0s) | **10.2s** (0.6%) | **575.4s** (35.7%) | **6.7s** (0.4%) | **790.4s** (49.0%) | **15.1s** (0.9%) | **17.9s** (1.1%) | **146.7s** (9.1%) | **10.6s** (0.7%) |
 
 ### 1.2. Agrupación Funcional Solicitada (5 Bloques Operativos)
 
@@ -56,16 +58,23 @@ La descomposición temporal solicitada abarca las 5 fases funcionales:
 | **Solow Model v14** (`7818f6af`) | 23 | 540 | **329.87 min** (19,792.0s) | 2.9s (0.0%) | 2184.7s (11.0%) | 5.3s (0.0%) | **17514.8s** (88.5%) | 25.1s (0.1%) | 59.2s (0.3%) |
 | **Solow Model (Append Mode)** (`f2be91cd`) | 24 | 570 | **339.88 min** (20,393.0s) | 3.4s (0.0%) | 1564.5s (7.7%) | 6.1s (0.0%) | **18659.8s** (91.5%) | 69.7s (0.3%) | 89.5s (0.4%) |
 | **Solow Model v13** (`18ae4bcc`) | 24 | 570 | **61.90 min** (3,714.0s) | 2.9s (0.1%) | 1593.4s (42.9%) | 5.8s (0.2%) | **2029.0s** (54.6%) | 9.6s (0.3%) | 73.3s (2.0%) |
+| **Violaciones de Supuestos Econométricos** (`b9316152`) | 14 | 360 | **40.62 min** (2,437.0s) | 1.1s (0.05%) | 384.5s (15.8%) | 9.2s (0.4%) | **1942.4s** (79.7%) | 17.8s (0.7%) | 82.0s (3.4%) |
+| **Estadística Asintótica** (`d52ee475`) | 28 | 660 | **26.88 min** (1,613.0s) | 10.2s (0.6%) | 575.4s (35.7%) | 6.7s (0.4%) | **970.1s** (60.1%) | 10.6s (0.7%) | 40.0s (2.5%) |
 
 #### 1.3. Hallazgo Crítico en la Fase de Inicialización: Duración Real (3 a 5 min) vs Target SLA (1 min)
 
 > [!WARNING]
 > **Brecha en el Tiempo de Inicialización:**  
-> En las métricas puras registradas por el runner CLI (`run.py --stage prepare`), el script de Python reporta únicamente entre 2.5s y 4.2s. Sin embargo, **el tiempo de inicialización integral de todas las corridas se extiende en realidad entre 3 y 5 minutos (180 a 300 segundos)** desde el momento en que se instruye la orden de creación hasta que el CTA comienza su ejecución efectiva.
+> En las métricas puras registradas por el runner CLI (`run.py --stage prepare`), el script de Python reporta entre 1.1s y 10.2s. Sin embargo, **el tiempo de inicialización integral de todas las corridas se extiende en realidad entre 3 y 5 minutos (173 a 300 segundos)** desde el momento en que se instruye la orden de creación hasta que el CTA comienza su ejecución efectiva.
 >
 > **Meta Operativa (Target SLA):** $\le 1\text{ minuto}$ (60 segundos).  
-> **Tiempo Real Observado:** $3\text{ a }5\text{ minutos}$ (180 a 300 segundos).  
-> **Sobrecosto Temporal:** Entre **+200% y +400%** por encima del target de diseño.
+> **Tiempo Real Observado:** $3\text{ a }5\text{ minutos}$ (173 a 300 segundos).  
+> **Sobrecosto Temporal:** Entre **+188% y +400%** por encima del target de diseño.
+>
+> **Evidencia Empírica Cronometrada en las Nuevas Corridas:**
+> - En `b9316152` (Violaciones de Supuestos Econométricos): El script puntual `prepare.py` duró 1.1s, pero desde el primer mensaje del usuario (`01:30:34 UTC`) hasta el despacho efectivo del arquitecto CTA (`01:33:27 UTC`) transcurrieron **173.0 segundos (2.88 min)**.
+> - En `d52ee475` (Estadística Asintótica): El script puntual `prepare.py` duró 10.2s (ingesta y extracción PyMuPDF de 2 PDFs, 52 páginas), pero desde el primer mensaje del usuario (`05:50:55 UTC`) hasta el despacho de los mappers CTA (`05:54:04 UTC`) transcurrieron **189.0 segundos (3.15 min)**.
+> Ambas mediciones confirman cuantitativamente la brecha operativa estructural frente al target SLA de 1 minuto.
 >
 > Este retardo inicial proviene de:
 > 1. **Inspección y Escaneo Previo del Workspace:** Búsqueda y catalogación de archivos fuente, verificación de coherencia de rutas y análisis de entorno por parte del orquestador (absorbido frecuentemente en el overhead inicial).
@@ -76,11 +85,11 @@ La descomposición temporal solicitada abarca las 5 fases funcionales:
 
 ## 2. Anatomía Profunda de Cuellos de Botella y Modos de Falla (¿Por qué no funcionó como Clockwork?)
 
-La metrología longitudinal de las 12 corridas demuestra que cuando C2C opera en condiciones ideales nominales (ej. `solow_model_v15` o `practica_parcial_saul_standard_coarse`), **converge en 27–32 minutos con 100% de acuerdo ciego**. Sin embargo, en las corridas complejas o de estrés masivo, el tiempo se multiplicó hasta **85–366 minutos**. A continuación se analizan a profundidad los **12 cuellos de botella y factores de fricción sistémica**:
+La metrología longitudinal de las 14 corridas demuestra que cuando C2C opera en condiciones ideales nominales o con alta disciplina de prompts (ej. `solow_model_v15` o `estadistica_asintotica`), **converge en 26–32 minutos con 100% de acuerdo ciego**. Sin embargo, en las corridas con fricción en autores, stragglers o estrés masivo, el tiempo se elevó a **40–366 minutos**. A continuación se analizan a profundidad los **12 cuellos de botella y factores de fricción sistémica**:
 
 ### 2.1. Cuello de Botella #1: Colisión Sintáctica KaTeX en f-strings de Python vs Reglas R-20 y R-03
 - **Severidad Registrada:** CRÍTICA (Detonador del 55% de los Stragglers)
-- **Corridas e Incidencias Afectadas:** `f9b9d459` (Saúl Std, Shard 05), `afb5aa18` (Saúl Coarse v2, Shards 03, 06, 07), `acdc402d` (Saúl Fine, Shards 12, 15, 17), `4ceacf92` (Solow v15, Shard 06), `f2be91cd` (Solow Append, Shard 03).
+- **Corridas e Incidencias Afectadas:** `f9b9d459` (Saúl Std, Shard 05), `afb5aa18` (Saúl Coarse v2, Shards 03, 06, 07), `b9316152` (Econometría, Shard 06: 13 errores y 84 turnos en C-11/C-12), `acdc402d` (Saúl Fine, Shards 12, 15, 17), `4ceacf92` (Solow v15, Shard 06), `f2be91cd` (Solow Append, Shard 03).
 - **Archivos y Líneas Clave en el Código (Evidencia Técnica en Repositorio):**
   - [`engine/assemble.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/engine/assemble.py#L101-L166): Motor de interpolación de plantillas paramétricas `render_template(template_str, vars)` y función `_replacer()`.
   - [`engine/assemble.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/engine/assemble.py#L169-L272): Función `sanitize_katex_syntax(text)` con heurísticas de auto-reparación de llaves `frac_den_fix` (líneas 251–256) y `script_outer_fix` (líneas 259–264) que insertaban incondicionalmente llaves `}` ante delimitadores `\left(` y `\right)`.
@@ -138,7 +147,7 @@ Circuit Breaker con Hash SHA-256 de Contenido: El disyuntor debe almacenar el ha
 
 ### 2.5. Cuello de Botella #5: Ocultamiento del Traceback de Python en Sandbox (`[TPL-DRY]`) y Caza a Ciegas
 - **Severidad Registrada:** ALTA (Provocó más de 250 lecturas estáticas de ingeniería inversa sobre el código core)
-- **Corridas e Incidencias Afectadas:** `7818f6af` (91 `view_file` a `compile_shard.py`), `f2be91cd` (86 lecturas), `afb5aa18` (Shard 07: 16 lecturas), `a53e6af1` (Shard 03: 10 lecturas), `0f573810` (32 lecturas).
+- **Corridas e Incidencias Afectadas:** `7818f6af` (91 `view_file` a `compile_shard.py`), `f2be91cd` (86 lecturas), `b9316152` (64 lecturas acumuladas: Shard 02 con 29, Shard 06 con 14, Shard 07 con 11, Shard 01 con 10), `0f573810` (32 lecturas), `afb5aa18` (Shard 07: 16 lecturas), `a53e6af1` (Shard 03: 10 lecturas). *(En agudo contraste, `d52ee475` registró exactamente 0 lecturas de ingeniería inversa sobre el validador, demostrando que scaffolds limpios erradican este antipatrón)*.
 - **Archivos y Líneas Clave en el Código (Evidencia Técnica en Repositorio):**
   - [`check_templates.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/check_templates.py#L760-L825): Implementación de la función diagnóstica `_format_tpl_dry_diagnostics` para mapear excepciones a marcos de traceback y números de línea de `generate_py` / `verify_py`.
   - [`check_templates.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/check_templates.py#L1895-L1930): Diagnóstico `[TPL-DRY: FALLO EN EJECUCIÓN DRY-RUN]` emitido durante la evaluación de 50 semillas estocásticas en sandbox.
@@ -181,7 +190,7 @@ Inyección obligatoria de una plantilla sintáctica canónica de 12 líneas en e
 
 ### 2.8. Cuello de Botella #8: Lotes Monolíticos en Jueces Ciegos y Límite de Tokens de Salida (Stage 5)
 - **Severidad Registrada:** ALTA (Causa de truncamiento silencioso y CHECKPOINTS de compactación)
-- **Corridas e Incidencias Afectadas:** `18ae4bcc` (Juez 1 truncado en preg 22/48), `812bfecd` (Prompts de 88.7 KB), `0f573810` (Paso 407: CHECKPOINT por leer 260 KB en view_file).
+- **Corridas e Incidencias Afectadas:** `18ae4bcc` (Juez 1 truncado en preg 22/48), `812bfecd` (Prompts de 88.7 KB), `0f573810` (Paso 407: CHECKPOINT por leer 260 KB en view_file). *(Tanto `b9316152` con 3 jueces como `d52ee475` con 5 jueces ratifican el éxito de la mitigación: particionado nativo en lotes de <= 12 reactivos con 100% de acuerdo y 0 truncamientos)*.
 - **Archivos y Líneas Clave en el Código (Evidencia Técnica en Repositorio):**
   - [`dispatch.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/dispatch.py#L1039): Declaración de cuota máxima de evaluación: `max_items_per_judge: int = 12`.
   - [`dispatch.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/dispatch.py#L1052-L1115): Algoritmo de división nativa de batches (`split_batches`) que particiona `judge_batch.json` en sub-archivos de máximo 12 reactivos por juez para respetar el techo de 8,192 tokens de salida.
@@ -291,6 +300,51 @@ Estandarizar el modo **`granularity: standard`** (1 competencia por cada 1.5 a 2
 | **Segundos de Pared / Pregunta** | 4.52 s/preg | 6.16 s/preg | 2.42 s/preg | 9.74 s/preg | **1.80 s/preg** |
 | **Intervenciones Manuales** | 🛠️ 1 (8s, benigna) | **🛠️ 0 (Autonomía 100%)**| 🛠️ 3 (Reset + Regex fix) | 🛠️ 5 (Prompt + Shard 06) | 🛠️ 17 (Crisis múltiples) |
 | **Acuerdo Blind Judges Pass 1** | ✅ **100% (30/30)** | ✅ **100% (26/26)** | ✅ **98.5% (128/130)** | ✅ **100% (28/28)** | ❌ **0% pass 1 $\to$ 100% pass 2** |
+
+---
+
+### 3.1. Matriz Forense Comparativa: Nuevas Corridas de Producción frente a Benchmarks de Referencia
+
+A fin de situar cuantitativamente las dos nuevas corridas frente al estándar dorado de alta velocidad (`Solow Model v15`, `4ceacf92`) y el estándar balanceado multi-documento (`Práctica Parcial Saúl Standard`, `f9b9d459`), se presenta la siguiente síntesis multidimensional:
+
+| Métrica / Dimensión | `4ceacf92` (Solow v15 - Benchmark) | `b9316152` (Econometría Violaciones) | `d52ee475` (Estadística Asintótica) | `f9b9d459` (Saúl Standard) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Material de Entrada** | 1 PDF (36 págs, 1.49 MB) | 1 PDF (23 págs, 0.56 MB) | 2 PDFs (52 págs, 3.44 MB) | 7 PDFs (103 págs, 10.39 MB) |
+| **Modo Arquitectónico CTA** | Direct (1 Architect) | Direct (1 Architect) | **MapReduce (2 Mappers: part_01, part_02)** | MapReduce (4 Mappers: part_01..04) |
+| **Competencias Extraídas** | 15 competencias | 14 competencias | **28 competencias** | 65 competencias |
+| **Reactivos Publicados** | 360 preguntas | 360 preguntas | **660 preguntas** | 1,590 preguntas |
+| **Subagentes Totales** | 12 subagentes | 11 subagentes | **14 subagentes** | 30 subagentes |
+| **Tiempo de Pared Total (Wall)** | **27.10 min** (1,626.0s) | 40.62 min (2,437.0s) | **26.88 min** (1,613.0s) ⚡ | 64.22 min (3,853.0s) |
+| **Stage 0 (Prepare CLI)** | 2.5s (0.1%) | 1.1s (0.05%) | 10.2s (0.6%) | 4.2s (0.1%) |
+| **Inicialización Real End-to-End**| 185s (3.1 min) | 173s (2.9 min) | 189s (3.2 min) | 553s (9.2 min) |
+| **Stage 1 (CTA) Wall-Clock** | 9.91 min (594.4s) | 6.41 min (384.5s) | 9.59 min (575.4s) | 12.11 min (726.3s) |
+| **Stage 2 (Shard) Wall-Clock**| 8.7s (0.5%) | 9.2s (0.4%) | 6.7s (0.4%) | 6.5s (0.2%) |
+| **Stage 3 (Shards) Wall-Clock**| **11.27 min** (675.9s) | 29.36 min (1,761.7s) | **13.17 min** (790.4s) | 33.80 min (2,027.7s) |
+| **Stage 4 (Build) Wall-Clock** | 10.9s (0.7%) | 26.0s (1.1%) | 15.1s (0.9%) | 34.9s (0.9%) |
+| **Stage 5 (Verify) Wall-Clock**| 13.9s (0.9%) | 25.4s (1.0%) | 17.9s (1.1%) | 43.4s (1.1%) |
+| **Stage 5b (Jueces) Wall-Clock**| 4.12 min (247.0s) | 2.16 min (129.3s) | 2.45 min (146.7s) | 7.36 min (441.6s) |
+| **Stage 6 (Publish) Wall-Clock**| 10.7s (0.7%) | 17.8s (0.7%) | 10.6s (0.7%) | 16.8s (0.4%) |
+| **Overhead No Asignado** | 62.0s (3.8%) | 82.0s (3.4%) | 40.0s (2.5%) | 551.6s (14.3%) |
+| **Parallel Speedup Factor** | 3.32x | 2.87x | **4.09x** | 3.92x |
+| **Throughput (Preguntas/Minuto)**| 13.28 preg/min | 8.86 preg/min | **24.55 preg/min** 🚀 | 24.76 preg/min |
+| **Costo Unitario (Tokens/Preg)**| 61,291 tok/preg | 113,412 tok/preg | **36,462 tok/preg** 💎 | 44,933 tok/preg |
+| **Tokens Activos / Pregunta** | 6,529 tok/preg | 7,728 tok/preg | **4,054 tok/preg** | 4,083 tok/preg |
+| **Segundos de Pared / Pregunta**| 4.52 s/preg | 6.77 s/preg | **2.44 s/preg** | 2.42 s/preg |
+| **Intervenciones Manuales** | 🛠️ 1 (8s, benigna) | **🛠️ 0 (Autonomía 100%)**| **🛠️ 0 (Autonomía 100%)** | 🛠️ 3 (Reset + Regex fix) |
+| **Acuerdo Blind Judges Pass 1** | ✅ **100% (30/30)** | ✅ **100% (28/28)** | ✅ **100% (56/56)** | ✅ **98.5% (128/130)** |
+| **Lecturas Inversas del Validador**| 0 lecturas | 🛑 **64 lecturas** (Shard 02: 29, Shard 06: 14) | ✅ **0 lecturas (Cero Stragglers)** | 27 lecturas |
+
+#### Hallazgos Clave de la Comparativa:
+1. **El Hito Histórico de `d52ee475` (Estadística Asintótica):**  
+   Representa la **ejecución más eficiente registrada en la historia del pipeline C2C**:
+   - Concluyó en **26.88 minutos**, batiendo incluso la marca de `solow_model_v15` (27.10 min) a pesar de haber producido **casi el doble de contenido** (660 reactivos en 28 competencias vs 360 reactivos en 15 competencias).
+   - Registró un throughput de **24.55 preguntas/minuto** con una economía unitaria sobresaliente de **36,462 tokens/pregunta**, equiparable a la eficiencia del modo Fine Masivo (36,040 tok/preg) pero con **cero fricción operativa ni intervenciones del supervisor (100% autónomo)**.
+   - Erradicó por completo las lecturas de ingeniería inversa sobre `compile_shard.py` (0 lecturas), operando todos los autores en tiempos acotados de 5.3 a 11.9 minutos sin stragglers.
+2. **La Fricción Focalizada en `b9316152` (Econometría Violaciones de Supuestos):**  
+   Aunque el pipeline concluyó de forma totalmente autónoma (0 intervenciones humanas) y con 100% de acuerdo de jueces ciegos en 40.62 minutos, experimentó el clásico cuello de botella en Stage 3:
+   - `Shard Author shard_06` se convirtió en un **straggler crítico de 20.2 minutos (1,213s)** con 84 turnos, 13 errores y 14 lecturas del validador por dificultades en el tipado y auto-healing de variables paramétricas en C-11 y C-12.
+   - `Shard Author shard_02` acumuló **29 lecturas de ingeniería inversa** sobre `compile_shard.py`, dilatando su tiempo a 12.0 minutos.
+   - Esta retención en la barrera síncrona elevó el costo a 113,412 tokens/pregunta y redujo el throughput a 8.86 preg/min.
 
 ---
 

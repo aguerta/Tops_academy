@@ -1,12 +1,14 @@
 # Content-to-Course: Registro Histórico y Evolución de Rendimiento
 
 > [!NOTE]
-> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-10-19 22:37:36`. Total de ejecuciones auditadas: **21**.
+> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-10-23 08:58:13`. Total de ejecuciones auditadas: **23**.
 
 ## 1. Matriz de Evolución Temporal (Normalizada por Carga de Contenido)
 
 | Fecha | Run / Curso | Input (Pág / MB) | Output (Comp / Preg) | Tiempo de Pared | Speedup | Tokens Totales | Tok / Preg | Seg / Preg | Blind Judges (1st) | Intervenciones | Bottlenecks |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-10-23 13:58` | **estadistica_asintotica** (`d52ee475`) | 52 pág (3.44 MB) | 28 comp / 660 preg | 26.9 min (1613.0s) | **4.09x** | 24,065,386 | **36,462.7** | **2.44s** | ✅ Limpio | 🛠️ 0 | ⚠️ 1 |
+| `2026-10-23 13:58` | **econometria_violaciones_supuestos** (`b9316152`) | 23 pág (0.56 MB) | 14 comp / 360 preg | 40.6 min (2437.0s) | **2.87x** | 40,828,445 | **113,412.3** | **6.77s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
 | `2026-10-20 03:37` | **solow_model_v15** (`4ceacf92`) | 36 pág (1.49 MB) | 15 comp / 360 preg | 27.1 min (1626.0s) | **3.32x** | 22,064,985 | **61,291.6** | **4.52s** | ✅ Limpio | 🛠️ 1 | ⚠️ 3 |
 | `2026-10-20 03:37` | **practica_parcial_saul** (`acdc402d`) | 103 pág (10.39 MB) | 118 comp / 2850 preg | 85.7 min (5139.0s) | **5.17x** | 102,715,610 | **36,040.6** | **1.8s** | ❌ Falló | 🛠️ 17 | ⚠️ 4 |
 | `2026-10-20 03:37` | **practica_parcial_saul_standard_coarse** (`a53e6af1`) | 103 pág (10.39 MB) | 13 comp / 320 preg | 32.8 min (1970.0s) | **3.33x** | 21,128,769 | **66,027.4** | **6.16s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
@@ -33,10 +35,10 @@
 
 ## 2. Métricas Promedio del Sistema (Baselines Globales)
 
-- **Factor de Aceleración Paralela Promedio**: `3.0x`
-- **Densidad de Tokens Promedio por Pregunta**: `77,736.5 tokens/pregunta`
-- **Latencia Promedio por Pregunta Validada**: `11.3 s/pregunta`
-- **Rendimiento Promedio de Generación**: `10.23 preguntas/minuto`
+- **Factor de Aceleración Paralela Promedio**: `3.04x`
+- **Densidad de Tokens Promedio por Pregunta**: `77,407.2 tokens/pregunta`
+- **Latencia Promedio por Pregunta Validada**: `10.51 s/pregunta`
+- **Rendimiento Promedio de Generación**: `10.99 preguntas/minuto`
 
 ---
 *Generado por el motor forense `c2c-run-auditor`.*

@@ -1314,5 +1314,235 @@
         "percentage_of_total": 1.97
       }
     }
+  },
+  {
+    "cid": "b9316152",
+    "folder": "20261023_085806_econometria_violaciones_supuestos_b9316152",
+    "title": "Violaciones de Supuestos Econométricos",
+    "type": "Standard Direct (14 comps, 360 Qs)",
+    "source": "Curso de Violaciones de Supuestos Econométricos",
+    "total_wall_seconds": 2437.0,
+    "total_wall_minutes": 40.62,
+    "competencies": 14,
+    "questions": 360,
+    "total_tokens": 40828445,
+    "active_tokens": 2782178,
+    "turns": 403,
+    "subagents": 11,
+    "tool_errors": 46,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 1.1,
+        "wall_minutes": 0.02,
+        "percentage_of_total": 0.05,
+        "recorded_at": "2026-10-22T01:31:38.609425+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 384.5,
+        "wall_minutes": 6.41,
+        "percentage_of_total": 15.78,
+        "recorded_at": "2026-10-22T01:38:03.148962+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 9.2,
+        "wall_minutes": 0.15,
+        "percentage_of_total": 0.38,
+        "recorded_at": "2026-10-22T01:38:12.325041+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 1761.7,
+        "wall_minutes": 29.36,
+        "percentage_of_total": 72.29,
+        "recorded_at": "2026-10-22T02:07:34.062153+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 26.0,
+        "wall_minutes": 0.43,
+        "percentage_of_total": 1.07,
+        "recorded_at": "2026-10-22T02:08:00.055757+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 25.4,
+        "wall_minutes": 0.42,
+        "percentage_of_total": 1.04,
+        "recorded_at": "2026-10-22T02:08:25.415459+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 129.3,
+        "wall_minutes": 2.16,
+        "percentage_of_total": 5.31,
+        "recorded_at": "2026-10-22T02:10:34.761459+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 17.8,
+        "wall_minutes": 0.3,
+        "percentage_of_total": 0.73,
+        "recorded_at": "2026-10-22T02:10:52.601694+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 1.1,
+        "wall_minutes": 0.02,
+        "percentage_of_total": 0.05,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 384.5,
+        "wall_minutes": 6.41,
+        "percentage_of_total": 15.78
+      },
+      "charts": {
+        "wall_seconds": 9.2,
+        "wall_minutes": 0.15,
+        "percentage_of_total": 0.38
+      },
+      "plan": {
+        "wall_seconds": 1942.4,
+        "wall_minutes": 32.37,
+        "percentage_of_total": 79.7,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 1761.7,
+          "build_stage_04_wall_seconds": 26.0,
+          "verify_stage_05_wall_seconds": 25.4,
+          "judge_compare_stage_05b_wall_seconds": 129.3
+        }
+      },
+      "publish": {
+        "wall_seconds": 17.8,
+        "wall_minutes": 0.3,
+        "percentage_of_total": 0.73
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 82.0,
+        "wall_minutes": 1.37,
+        "percentage_of_total": 3.36
+      }
+    }
+  },
+  {
+    "cid": "d52ee475",
+    "folder": "20261023_085813_estadistica_asintotica_d52ee475",
+    "title": "Estadística Asintótica",
+    "type": "Standard High-Density MapReduce (28 comps, 660 Qs)",
+    "source": "Asymptotic Statistics Course Generation",
+    "total_wall_seconds": 1613.0,
+    "total_wall_minutes": 26.88,
+    "competencies": 28,
+    "questions": 660,
+    "total_tokens": 24065386,
+    "active_tokens": 2675362,
+    "turns": 264,
+    "subagents": 14,
+    "tool_errors": 25,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 10.2,
+        "wall_minutes": 0.17,
+        "percentage_of_total": 0.63,
+        "recorded_at": "2026-10-23T05:51:38.800344+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 575.4,
+        "wall_minutes": 9.59,
+        "percentage_of_total": 35.67,
+        "recorded_at": "2026-10-23T06:01:14.212983+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 6.7,
+        "wall_minutes": 0.11,
+        "percentage_of_total": 0.42,
+        "recorded_at": "2026-10-23T06:01:20.863517+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 790.4,
+        "wall_minutes": 13.17,
+        "percentage_of_total": 49.0,
+        "recorded_at": "2026-10-23T06:14:31.296827+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 15.1,
+        "wall_minutes": 0.25,
+        "percentage_of_total": 0.94,
+        "recorded_at": "2026-10-23T06:14:46.411972+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 17.9,
+        "wall_minutes": 0.3,
+        "percentage_of_total": 1.11,
+        "recorded_at": "2026-10-23T06:15:04.265942+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 146.7,
+        "wall_minutes": 2.45,
+        "percentage_of_total": 9.1,
+        "recorded_at": "2026-10-23T06:17:30.934608+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 10.6,
+        "wall_minutes": 0.18,
+        "percentage_of_total": 0.66,
+        "recorded_at": "2026-10-23T06:17:41.500330+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 10.2,
+        "wall_minutes": 0.17,
+        "percentage_of_total": 0.63,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "3-5 min",
+        "sla_status": "EXCEEDED (3-5 min observed vs 1.0 min target)"
+      },
+      "cta": {
+        "wall_seconds": 575.4,
+        "wall_minutes": 9.59,
+        "percentage_of_total": 35.67
+      },
+      "charts": {
+        "wall_seconds": 6.7,
+        "wall_minutes": 0.11,
+        "percentage_of_total": 0.42
+      },
+      "plan": {
+        "wall_seconds": 970.1,
+        "wall_minutes": 16.17,
+        "percentage_of_total": 60.14,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 790.4,
+          "build_stage_04_wall_seconds": 15.1,
+          "verify_stage_05_wall_seconds": 17.9,
+          "judge_compare_stage_05b_wall_seconds": 146.7
+        }
+      },
+      "publish": {
+        "wall_seconds": 10.6,
+        "wall_minutes": 0.18,
+        "percentage_of_total": 0.66
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 40.0,
+        "wall_minutes": 0.67,
+        "percentage_of_total": 2.48
+      }
+    }
   }
 ]
