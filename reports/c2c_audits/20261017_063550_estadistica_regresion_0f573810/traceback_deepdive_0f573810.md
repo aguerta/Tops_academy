@@ -47,25 +47,13 @@ Author Shard 08 (bf535826) :   1312s (95.0%) LLM |   45s Tools (63t)
 ### 1.2. Cronología Forense de Fases y Bloqueos
 
 ```mermaid
-timeline
-    title Cronología de Ejecución y Cuellos de Botella (0f573810)
-    05:26 UTC : Prepare Exitoso (Paso 9) : run.py --stage prepare genera pre_cta_manifest.json
-    05:29 UTC : Despacho CTA 1 (f693443d) : Comienza extracción de competencias
-    05:47 UTC : Colisión Exógena pytest : clean_orphan_course_dirs(dry_run=False) borra work/
-    05:57 UTC : Diagnóstico & Re-Prepare : Orquestador audita delete_course.py y re-ejecuta prepare
-    05:58 UTC : Despacho CTA 2 (f6a30810) : Redacta cta_data.py (43 comps); error 404 exógeno en paso 68
-    06:12 UTC : 33 Errores KaTeX en cta_data.py : Orquestador realiza 17 reemplazos manuales
-    06:23 UTC : Despacho Paralelo Shards 01-08 : Comienza autoría concurrente de reactivos
-    06:33 UTC : Shards 02,03,04,06 terminan : Shard 01 entra en micro-bucle
-    06:47 UTC : Bug frac_simple_fix en assemble.py : Shard 01 corrompe Hab-01 reiteradamente
-    07:03 UTC : Circuit Breaker & 429 Quota : RESOURCE_EXHAUSTED congela temporalmente el pipeline
-    07:03 - 11:12 UTC : Freeze Exógeno de 4h 9m : Espera de reabastecimiento de cuota en plataforma
-    11:12 UTC : Orquestador Reanuda : Diagnostica y parchea assemble.py (Paso 316)
-    11:20 UTC : Compilación Shard 01 & Build : 1050 reactivos compilados
-    11:28 UTC : Paso 407 Compaction Event : Lectura concurrente de batches satura contexto
-    11:30 UTC : Verificación Programática Stage 5 : Validación exitosa contra judge_ground_truth.json
-    11:31 UTC : PowerShell UTF-8 Cleanup : Corrección de \ufffd en títulos
-    11:32 UTC : Publicación Exitosa : estadistica_regresion.json
+flowchart LR
+    subgraph Timeline ["Línea de Tiempo de Ejecución"]
+        T1["00:00 Ingest y CTA"] --> T2["05:00 Sharding"]
+        T2 --> T3["15:00 Autores"]
+        T3 --> T4["50:00 Validación"]
+        T4 --> T5["55:00 Publicación"]
+    end
 ```
 
 ---
