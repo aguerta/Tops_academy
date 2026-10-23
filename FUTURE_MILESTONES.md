@@ -24,23 +24,39 @@ Al inspeccionar las sesiones prácticas por unidad en la plataforma, aparece un 
 - **La Ilusión:** El alumno cree dominar el tema porque responde rápido, pero en realidad solo ha memorizado la heurística superficial (*surface cues*) de ese formato exacto de pregunta. Si en un examen real le cambian la perspectiva o el punto de partida, el conocimiento no transfiere.
 - **La Consigna Central:** **¿Cómo forzamos realmente al estudiante a aprender de forma profunda y rigurosa?** Toda la tecnología y la plataforma son medios al servicio de ese único fin: obligar al cerebro a procesar, inferir, deducir y sintetizar.
 
+### 1.2. La Falsa Atomización de la "Unidad Plana" vs. la Jerarquía de Contenido Real (PPT $\to$ Glosario, Núcleo y Subtemas)
+Actualmente, el sistema incurre en una **confusión de granularidad**: iguala cada competencia atómica individual con una "unidad de curso" completa:
+- **El Esquema Plano Actual:** En la plataforma, cada competencia individual (`H-01`, `C-01`, `Hab-01`) se trata de forma aislada como si fuera una unidad independiente, asociándole mecánicamente su propia práctica, su propio quiz y su propio unit test idénticos.
+- **El Defecto Pedagógico:** El estudiante no asimila el conocimiento en compartimentos estancos. En la realidad académica, el material de estudio proviene de artefactos integrados de contenido (por ejemplo, una **presentación PPT**, una clase magistral temática o un capítulo de apuntes). Tratar cada micro-competencia como una unidad aislada rompe la visión de conjunto (*gestalt*), desconecta los conceptos y genera una fatiga artificial donde los quizzes y los challenges pierden su jerarquía natural.
+- **La Nueva Jerarquía Pedagógica de 3 Capas:**
+  1. **Nivel Contenido / Módulo Temático (PPT / Presentación Padre):** Representa el artefacto fuente completo (ej. *"PPT 01: Dinámica Fundamental del Crecimiento de Solow"* o *"Clase 03: Ecuaciones Diferenciales Parciales Cuasilineales"*). Cada contenido incorpora a su vez:
+     - **Glosario Unificado:** Diccionario técnico de términos clave, axiomas, convenciones de notación y definiciones formales de esa PPT.
+     - **Núcleo (*Core / Nucleus*):** El corazón conceptual, teorema directriz o deducción maestra que vertebra toda la presentación y le da sentido a los subtemas.
+  2. **Familia de Unidades / Subtemas:** Las unidades no son silos atómicos, sino una **familia de subtemas articulados** dentro de la PPT que agrupa las competencias específicas evaluadas en esa sección.
+  3. **Evaluación Escalonada por Granularidad Cognitiva:**
+     - **Quizzes por Subtema:** Evaluaciones formativas rápidas, focalizadas y diagnósticas acotadas estrictamente a los subtemas de la PPT.
+     - **Challenges de Unidad / Contenido:** Retos acumulativos e integradores que abarcan **toda la PPT o todo el contenido en concreto**, evaluando la síntesis, la transferencia y el dominio conjunto del Núcleo y sus competencias asociadas.
+
 ```mermaid
 graph TD
-    subgraph CurrentParadigm ["Paradigma Actual (Riesgo de Ilusión de Fluidez)"]
+    subgraph CurrentParadigm ["Paradigma Actual (Riesgo de Ilusión de Fluidez y Fragmentación)"]
         P1["100% Opción Múltiple (MC7)\nRespuesta correcta siempre visible en pantalla"]
         P2["Plantillas Repetitivas por Competencia\nEl estudiante memoriza el molde sintáctico, no el concepto"]
-        P3["Canal Verbal-Simbólico Exclusivo\nCero evaluación gráfica o espacial interactiva"]
-        P4["Fricción en Laptops\n7 opciones verticales desbordan la pantalla; obliga a zoom out"]
-        P5["Desconexión con la Fuente\nPreguntas huérfanas sin ancla al material original"]
+        P3["Unidades Atómicas Aisladas (Unit = Competencia)\nQuiz y challenge redundantes por cada micro-destreza"]
+        P4["Canal Verbal-Simbólico Exclusivo\nCero evaluación gráfica o espacial interactiva"]
+        P5["Fricción en Laptops\n7 opciones verticales desbordan la pantalla; obliga a zoom out"]
+        P6["Desconexión con la Fuente\nPreguntas huérfanas sin ancla al material original"]
     end
 
     subgraph FutureParadigm ["Nuevo Paradigma: Antigravity Study Harness & Deep Learning"]
         N1["Web Adaptativa Multi-Resolución\nGrid 2 cols sin zoom out en laptops + PWA móvil nativa"]
         N2["Variedad de Plantillas y Contraejemplos\nMínimo 3-4 estructuras disjuntas por competencia"]
-        N3["Entradas Simbólicas Libres (Open Symbolic)\nFuerza la Evocación Pura (Free Recall) con MathLive + SymPy"]
-        N4["Antigravity Study Harness (Split-View Multi-Panel)\nCanvas de Preguntas + Visor de Fuente Original + Tab Gemini"]
-        N5["Desacoplamiento Estricto KaTeX-Python\nPatrón PrairieLearn con tokens ortogonales @PARAM@"]
-        N6["Arquitectura Streaming DAG en Pipeline\nValidación in-situ sin barreras síncronas bloqueantes"]
+        N3["Arquitectura Jerárquica de Contenido (PPT/Módulo)\nContenido -> [Glosario + Núcleo] + Familia de Subtemas"]
+        N4["Evaluación Escalonada por Granularidad\nQuizzes por subtema de PPT + Challenge Integrador de toda la PPT"]
+        N5["Entradas Simbólicas Libres (Open Symbolic)\nFuerza la Evocación Pura (Free Recall) con MathLive + SymPy"]
+        N6["Antigravity Study Harness (Split-View Multi-Panel)\nCanvas de Preguntas + Visor de Fuente Original + Tab Gemini"]
+        N7["Desacoplamiento Estricto KaTeX-Python\nPatrón PrairieLearn con tokens ortogonales @PARAM@"]
+        N8["Arquitectura Streaming DAG en Pipeline\nValidación in-situ sin barreras síncronas bloqueantes"]
     end
 
     CurrentParadigm -->|Elevando la Vara| FutureParadigm
@@ -128,6 +144,10 @@ La frontera entre Python y TypeScript es el archivo `courses/<course_id>.json`, 
 3. **El Coste de la Cardinalidad Psicométrica (MC7):**
    - El pipeline en Python exige 7 opciones para garantizar estándares psicométricos de Quality Matters (reduciendo la probabilidad de acierto por azar al $14.3\%$).
    - Pero en el frontend, apilar 7 botones verticales de opciones ([`QuestionCard.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/QuestionCard.tsx#L76-L138)) en una pantalla de laptop de 13"-14" satura la altura del viewport y destruye la ergonomía de estudio.
+4. **El Desajuste de Granularidad Estructural (`Course` $\to$ `Competencies[]` plano):**
+   - En el contrato JSON actual (`courses/<course_id>.json`), el curso contiene un arreglo plano `competencies: Competency[]` y `questions: Question[]`.
+   - La plataforma interpreta ingenuamente cada índice de competencia como una "Unit" completa ([`App.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/App.tsx#L145-L159), [`MasteryGrid.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/MasteryGrid.tsx#L25-L57)).
+   - Esto impide agrupar competencias por artefacto de origen (ej. una PPT), presentar un Glosario y Núcleo unificados por contenido, o limitar los quizzes a subtemas mientras se reserva el Challenge para la totalidad de la presentación.
 
 ### 2.4. La Brecha entre el Pipeline y la Experiencia en Plataforma (*Impedance Mismatch*)
 Existe una brecha de expectativas entre lo que el pipeline optimiza y lo que el usuario final experimenta:
@@ -205,6 +225,7 @@ Integrando los diagnósticos cognitivos, los hallazgos de las auditorías forens
 | **Milestone 6: Antigravity Study Harness (Multi-Panel Split-View)** | Arquitectura de UI | **El salto cuántico en flow de estudio.** Canvas de preguntas + Visor de material original sincronizado (`source_anchor`) + Pestaña de Google Gemini socrático. | **3 a 5 días** | 👑 **La Joya de la Corona (Máxima Ambición)** |
 | **Milestone 7: Pipeline Streaming DAG y Pool de Subprocesos** | Infraestructura Pipeline | **Quiebra la barrera de los 20 minutos (Target: 10–14 min).** Transforma barreras bloqueantes en un grafo asíncrono por competencia, con pool pre-calentado de `sympy` y autocheck in-situ. | **2 a 3 días** | ⚡ **Rendimiento de Pipeline** |
 | **Milestone 8: QA Rubric v2.0 Completa (Certificación Deep Mastery)** | Auditoría QA | **Sello de certificación estricta.** Evalúa multimodalidad, penaliza monocultivo MC7 e integra los linters automáticos descubiertos. | **1 a 2 días** | 📋 **Garantía y Gobernanza** |
+| **Milestone 9: Arquitectura Jerárquica de Contenido (PPT $\to$ Glosario, Núcleo, Quizzes por Subtema y Content Challenge)** | Full-Stack / Arquitectura Curricular | **Estructura el aprendizaje en torno a la fuente real (PPT).** Agrupa competencias bajo módulos de contenido con Glosario y Núcleo unificados. Desacopla los Quizzes por subtema (evaluación formativa) y reserva el Challenge para toda la PPT (síntesis integradora). | **2 a 3 días** | 🏛️ **Arquitectura Curricular y Pedagógica** |
 | *Opcional A: Pipeline Performance Daemon en RAM / SSD* | Infraestructura | *Acelera subprocesos locales, complementando el pool lazy.* | *3 a 4 horas* | ⏳ **Opcional / Secundario** |
 | *Opcional B: Empaquetado Nativo con Capacitor* | Distribución | *Generación de APK para tiendas de aplicaciones.* | *4 a 6 horas* | ⏳ **Opcional / Backlog** |
 
@@ -278,7 +299,7 @@ sequenceDiagram
 
 ---
 
-## 6. Diagnóstico de los 7 Puntos Ciegos Cognitivos que Definen la Nueva Vara
+## 6. Diagnóstico de los 8 Puntos Ciegos Cognitivos que Definen la Nueva Vara
 
 A partir de las investigaciones independientes preservadas en [`docs/future_milestones/investigaciones/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/):
 - [`03_Limitaciones_de_la_plataforma_de_estudio.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/investigaciones/03_Limitaciones_de_la_plataforma_de_estudio.md)
@@ -293,6 +314,7 @@ Se establecen las 7 dimensiones que la plataforma debe incorporar para certifica
 5. **Formulación de Modelos No Estructurados (*Adaptive Expertise*):** Introducir casos difusos (*fuzzy boundaries*) donde el modelo no está dado de antemano y el alumno debe seleccionar supuestos (*Learning as "less"*).
 6. **Trabajo Computacional y Simulación Empírica (*Shop Time*):** Simulación numérica en Python/Julia de dinámicas complejas sin solución analítica cerrada (Runge-Kutta, perturbaciones estocásticas).
 7. **Automonitoreo y Resiliencia con Andamiaje Diferido (*Delayed Scaffolding*):** Bloqueo inicial de pistas para entrenar la resistencia a la frustración y el automonitoreo metacognitivo.
+8. **Fragmentación Atomizada vs. Síntesis Estructural (*Part-Whole Cognitive Integration*):** La memorización de habilidades aisladas en micro-unidades no conduce a la comprensión sistémica si no existe un ancla macro que unifique los términos técnicos (**Glosario**), los principios rectores (**Núcleo**) y la evaluación escalonada (**Quizzes formativos por subtema** para validar la micro-comprensión y **Challenges de contenido completo** para certificar la transferencia y la síntesis global sobre toda la PPT).
 
 ---
 
@@ -424,6 +446,85 @@ Se establecen las 7 dimensiones que la plataforma debe incorporar para certifica
      - `dag_orphan_prerequisites_linter` (habilidades sin prerrequisitos en grafo DAG).
   4. **Métricas de Resiliencia ante Overfitting:**
      - Auditoría de similitud léxica entre instancias de una misma competencia para garantizar variabilidad semántica profunda (*deep structure*) sobre pistas superficiales (*surface features*).
+
+---
+
+### Milestone 9: Arquitectura Jerárquica de Contenido y Evaluación Escalonada (Content Modules, Glosario, Núcleo, Quizzes por Subtema y Content Challenges)
+* **Objetivo Crítico:**
+  Erradicar la atomización artificial donde cada micro-competencia se modela como una "unidad" autosuficiente con su propia terna redundante (`practice + quiz + unit test`). Reorganizar la plataforma y el pipeline en una arquitectura pedagógica jerárquica de 3 niveles anclada a los artefactos de estudio reales (ej. **presentaciones PPT**, clases magistrales o capítulos temáticos):
+  $$\text{Curso} \longrightarrow \text{Contenido / PPT (Módulo)} \longrightarrow \text{Familia de Unidades (Subtemas)} \longrightarrow \text{Competencias}$$
+  Donde cada Contenido (PPT) contiene un **Glosario** unificado, un **Núcleo conceptual**, una **Familia de Subtemas**, y desacopla la evaluación: **Quizzes formativos por subtema** y **Challenges integradores de la PPT completa**.
+
+* **Componentes Técnicos:**
+  1. **Evolución del Contrato de Datos (Course Schema en Python y TypeScript):**
+     - Refactorizar el esquema JSON canónico (`schemas/course.schema.json` y [`platform/src/types.ts`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/types.ts)) para incorporar la entidad superior `ContentModule` (o `ContentUnit`):
+       ```typescript
+       export interface ContentGlossaryTerm {
+         term: string;
+         definition: string;
+         formula_latex?: string;
+         related_competencies?: string[];
+       }
+
+       export interface ContentCore {
+         title: string;
+         summary: string;
+         governing_theorems: string[];
+         big_ideas: string[];
+         conceptual_anchor_latex?: string;
+       }
+
+       export interface SubtopicUnit {
+         id: string; // ej. "subtopic_01_steady_state"
+         title: string;
+         description: string;
+         competency_ids: string[]; // Competencias afines a este subtema
+         quiz_question_pool?: string[]; // IDs de preguntas para el Quiz del Subtema
+       }
+
+       export interface ContentModule {
+         id: string; // ej. "module_ppt_01_solow_growth"
+         title: string; // ej. "PPT 01: Dinámica Fundamental del Modelo de Solow"
+         source_file: string; // ej. "solow_growth_model.pdf"
+         slide_range?: [number, number]; // ej. [1, 38]
+         glossary: ContentGlossaryTerm[];
+         core: ContentCore;
+         subtopics: SubtopicUnit[];
+         content_challenge_pool: string[]; // Banco de preguntas integradoras de toda la PPT
+       }
+       ```
+     - Cada curso alberga un array de módulos `content_modules: ContentModule[]`, manteniendo compatibilidad con `competencies` y `questions` mediante punteros canónicos de ID.
+
+  2. **Glosario Operativo y Núcleo Conceptual del Contenido (PPT):**
+     - **Glosario de Presentación:** Glosario formal de símbolos, notación, definiciones operativas y lemas de esa PPT, accesible en cualquier momento desde un Drawer lateral en el Study Harness o la cabecera del módulo.
+     - **Núcleo del Contenido (*Core / Nucleus*):** Un bloque sintetizado que expone la tesis o modelo rector de la PPT (ej. la ecuación fundamental diferencial $\dot{k} = s f(k) - (n + g + \delta)k$ y su interpretación geométrica). Funciona como referencia maestra a la que se anclan las explicaciones y las pistas del asistente socrático.
+
+  3. **Doble Nivel de Evaluación Psicométrica (Evaluación Escalonada):**
+     - **Quizzes Formativos por Subtema:**
+       - **Alcance:** Exclusivamente la familia de competencias de un subtema puntual de la PPT (2 a 4 competencias).
+       - **Formato:** 3 a 5 preguntas enfocadas en fluidez mecánica, reconocimiento conceptual y cálculo básico.
+       - **Propósito:** *Low-stakes checkpoint* que valida que el alumno entendió ese fragmento de la clase antes de continuar.
+     - **Challenges de Unidad / Contenido Completo (PPT / Módulo Challenge):**
+       - **Alcance:** **Toda la PPT o todo el contenido en concreto**.
+       - **Formato:** 6 a 10 reactivos multidisciplinares que combinan múltiples subtemas de la presentación, evalúan perturbaciones de supuestos del Núcleo y exigen deducciones de transferencia (*Far Transfer*).
+       - **Propósito:** *High-stakes mastery certification* de la presentación completa.
+
+  4. **Ingesta y CTA Jerárquico en el Pipeline C2C (`ingest.py`, `cta_analyzer.py`):**
+     - El analizador CTA detecta la estructura natural del documento (secciones de diapositivas en PPT o capítulos) y genera la agrupación por módulos.
+     - Durante el Cognitive Task Analysis, el LLM sintetiza automáticamente:
+       - Las entradas de glosario y términos basales para `glossary`.
+       - El mapa de relaciones e ideas fuerza para `core`.
+       - La asignación de competencias a subtemas (`subtopics`).
+       - La formulación explícita de reactivos de síntesis transversal para el `content_challenge_pool`.
+
+  5. **Rediseño de Experiencia de Usuario en la Plataforma Web ([`CourseOverview.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseOverview.tsx) y [`MasteryGrid.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/MasteryGrid.tsx)):**
+     - Sustituir la lista plana de 20 botones idénticos por tarjetas de **Módulo de Contenido (PPT)**:
+       - **Cabecera del Módulo:** Título de la PPT, progreso global, botón de visualización de **Glosario** y botón de **Núcleo Conceptual**.
+       - **Cuerpo de Subtemas:** Lista colapsable de subtemas, donde cada subtema contiene sus competencias, su botón de **Práctica** y su **Quiz de Subtema** focalizado.
+       - **Cierre del Módulo:** Botón prominente de **Challenge de la PPT** (desbloqueable tras completar o practicar los subtemas del contenido).
+
+  6. **Mecanismo de Retrocompatibilidad Gradual (*Graceful Degradation*):**
+     - Para cursos existentes en `courses/` que carezcan de metadatos de módulo jerárquico, el cargador de la plataforma ([`courseServer.cjs`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/server/courseServer.cjs) y cliente) infiere automáticamente un módulo temático virtual unificando las competencias existentes, asegurando que ningún curso actual quede roto ni inaccesible.
 
 ---
 
