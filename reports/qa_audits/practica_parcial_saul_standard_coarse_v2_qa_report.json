@@ -1,0 +1,89 @@
+{
+  "course_metadata": {
+    "course_id": "practica_parcial_saul_standard_coarse_v2",
+    "unit_title": "Práctica Parcial Saúl: Ecuaciones en Derivadas Parciales y Sistemas Dinámicos en Economía",
+    "detected_objective": "Dominio y aplicación analítica integral de la resolución de ecuaciones en derivadas parciales cuasilineales de primer orden mediante el método de Lagrange y curvas características, modelado económico con homogeneidad de Euler, dualidad microeconómica, precios espaciales con costos de transporte, y análisis cualitativo y cuantitativo de sistemas dinámicos continuos lineales y no lineales 2D (isoclinas, linealización jacobiana, autovalores y estabilidad local).",
+    "total_competencies": 14,
+    "total_questions": 370,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-10-20 13:26:21"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 3.2,
+      "max": 4.0,
+      "feedback": "Descomposición curricular de 14 competencias con 370 reactivos de alta profundidad. Sin embargo, se identifican dos deficiencias estructurales en la arquitectura modular: 1) Desbalance taxonómico: carece por completo de micro-competencias de Hechos [Fact] (0 Hechos, 5 Conceptos [35.7%], 9 Habilidades [64.3%]), sobrecargando la entrada cognitiva del estudiante; 2) Grafo DAG de prerrequisitos desconectado y desalineado: 7 de las 14 competencias tienen 'prerequisites': []. Específicamente, Hab-01 y Hab-07 carecen de prerrequisitos pese a requerir bases de C-03 y C-04/C-05; y habilidades de EDPs (Hab-03 y Hab-05) declaran como prerrequisito a C-05 (estabilidad de EDOs 2x2) en lugar de C-03 (fundamentos de EDPs), mientras que Hab-02 declara a Hab-09 en vez de C-01."
+    },
+    "assessment_quality": {
+      "score": 4.2,
+      "max": 5.0,
+      "feedback": "Banco masivo de 370 reactivos con 2220 distractores evaluados al 100% de cobertura diagnóstica con 'error_rationale' de alta precisión conceptual y psicométrica. Cero fugas de respuesta ('Answer Leaks') y cero distractores delatores ('telltale distractors'). Los problemas evalúan destreza operativa y deducción matemática formal en niveles superiores de Bloom. Deducción aplicada debido a: 1) Ausencia total de diversidad psicométrica: el 100% de los reactivos es de opción múltiple de 7 alternativas (multiple_choice_7_options), omitiendo reactivos de selección múltiple (multiple_select) o respuesta construida (fill_in_the_blank); 2) Estructura paramétrica altamente repetitiva con prefijos mecánicos en los enunciados."
+    },
+    "scaffolding_hints": {
+      "score": 4.0,
+      "max": 5.0,
+      "feedback": "Cumplimiento del 100% en andamiaje socrático con exactamente 3 pistas progresivas por reactivo (1110 pistas en total) estructuradas en progresión cognitiva rigurosa: Pista 1 (Conceptual) -> Pista 2 (Procedimental) -> Pista 3 (Operativa/Cálculo). Todas las preguntas contienen soluciones detalladas completas con demostraciones analíticas. Se reduce puntuación debido a residuos de plantillas en soluciones detalladas: presencia de marcadores literales de una sola llave sin interpolar ({b}, {c}, {a}, {d}) en Hab-05 y Hab-09 (ej. '${b} \\frac{dx}{x} - 3 \\frac{dy}{y} = 0$', '{a}x + 4y + -68 = 0'), así como matrices en Hab-08 con variables no evaluadas (\\beta, j_{12}) que deterioran la retroalimentación al estudiante."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación semántica y temática absoluta entre los objetivos declarados de la práctica parcial de economía matemática y los reactivos diseñados. Cero preguntas huérfanas y nula contaminación cruzada inter-dominio. Cobertura completa del temario de EDPs cuasilineales, teorema de Euler en dualidad, dinámica de precios con fletes, sistemas IS-LM, modelo de Goodwin, autovalores y diagramas de fase, con concentración predominante en niveles de Aplicación (Bloom 3) y Análisis (Bloom 4)."
+    },
+    "technical_ergonomics": {
+      "score": 1.4,
+      "max": 2.0,
+      "feedback": "Expresiones matemáticas formalmente compilables en KaTeX con delimitadores balanceados, sin triples delimitadores ni desbordes estructurales. No obstante, se detectan vicios ergonómicos sistemáticos en la notación: 1) Concatenación cruda de signos aritméticos (+ -) sin normalizar (ej. '1x + 1y + -8', '12x + -6y + -78'); 2) Coeficientes unitarios redundantes no simplificados ('1x', '1y'); 3) Fuga de identificadores de plantilla en modo matemático ({a}, {b}, {c}, {d}) que KaTeX interpreta como agrupaciones de caracteres y renderiza como letras en lugar de los coeficientes numéricos reales calculados."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 16.8,
+  "quality_tier": "ACEPTABLE (14.0 - 16.9 pts)",
+  "discovered_lint_rules": [
+    {
+      "rule_id": "KATEX_SINGLE_BRACE_TEMPLATE_RESIDUE",
+      "dimension": "technical_ergonomics",
+      "severity": "warning",
+      "description": "Detección de variables de plantilla de una sola llave ({a}, {b}, {c}, {d}) dentro de expresiones KaTeX ($...$ o $$...$$) no sustituidas por el motor de plantillas, que renderizan como texto matemático literal en lugar de los valores numéricos correspondientes.",
+      "regex_pattern": "(?<=\\$)[^$]*\\{[a-zA-Z]\\}(?=[^$]*\\$)",
+      "sample_snippet": "${b} \\frac{dx}{x} - 3 \\frac{dy}{y} = 0$",
+      "affected_items_count": 60
+    },
+    {
+      "rule_id": "ARITHMETIC_UNNORMALIZED_SIGN_CONCATENATION",
+      "dimension": "technical_ergonomics",
+      "severity": "minor",
+      "description": "Detección de concatenación cruda de operadores aritméticos (+ - o - -) y coeficientes unitarios no simplificados (1x, 1y) generados por sustitución paramétrica directa f'{a}x + {b}y + {c}' sin normalización matemática.",
+      "regex_pattern": "(?:[+\\-]\\s*[+\\-]\\s*\\d+|\\b1[a-zA-Z]\\b)",
+      "sample_snippet": "\\dot{x} = 1x + 1y + -8",
+      "affected_items_count": 60
+    },
+    {
+      "rule_id": "DAG_DISCONNECTED_OR_MISALIGNED_PREREQUISITES",
+      "dimension": "architecture_granularity",
+      "severity": "warning",
+      "description": "Detección de competencias de habilidad (Skill) sin prerrequisitos declarados (prerequisites = []) cuando existen conceptos fundacionales afines en el curso, o con dependencias cruzadas semánticamente incongruentes entre subdominios matemáticos.",
+      "regex_pattern": null,
+      "sample_snippet": "\"Hab-01\": {\"prerequisites\": []}, \"Hab-03\": {\"prerequisites\": [\"C-05\"]}",
+      "affected_items_count": 7
+    },
+    {
+      "rule_id": "ASSESSMENT_ZERO_ITEM_TYPE_DIVERSITY",
+      "dimension": "assessment_quality",
+      "severity": "minor",
+      "description": "Detección de cursos con 0% de diversidad psicométrica donde el 100% de las preguntas corresponde a una única tipología (ej. multiple_choice_7_options), omitiendo opciones de selección múltiple (multiple_select) o completación numérica (fill_in_the_blank).",
+      "regex_pattern": null,
+      "sample_snippet": "\"question_types_distribution\": {\"multiple_choice_7_options\": 370}",
+      "affected_items_count": 370
+    }
+  ],
+  "remediation_actions": [
+    "Normalizar el motor de renderizado de expresiones algebraicas para eliminar concatenaciones de signos (+ -68 -> - 68) y simplificar coeficientes unitarios (1x -> x) en los enunciados y soluciones de Hab-09.",
+    "Corregir los templates paramétricos en Hab-05 y Hab-09 eliminando las llaves simples sin interpolar ({b}, {c}, {a}, {d}) en las soluciones detalladas e inyectando los valores escalares calculados.",
+    "Reestructurar el grafo acíclico dirigido (DAG) de prerrequisitos: conectar Hab-01 y Hab-05 con C-03; conectar Hab-02 con C-01 y C-03; reasignar Hab-03 a C-03; y anclar Hab-07 a C-04 y C-05.",
+    "Diversificar el banco evaluativo incorporando reactivos de respuesta construida (fill_in_the_blank) para el cálculo de autovalores y equilibrios, así como reactivos de selección múltiple (multiple_select) para propiedades cualitativas.",
+    "Integrar competencias atómicas de Hechos [Fact] (ej. definiciones canónicas de orden, grado y tipos de puntos fijos) para nivelar la pirámide cognitiva curricular."
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-20 13:26:21",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}

@@ -1,0 +1,2142 @@
+{
+  "course_id": "practica_parcial_saul_standard_coarse",
+  "filename": "practica_parcial_saul_standard_coarse.json",
+  "title": "Practica Parcial Saul Standard Coarse",
+  "description": "Dominio y aplicación analítica integral de Practica Parcial Saul Standard Coarse",
+  "total_competencies": 13,
+  "total_questions": 320,
+  "question_types_distribution": {
+    "multiple_choice_7_options": 320
+  },
+  "questions_per_competency": {
+    "C-01": 20,
+    "Hab-01": 30,
+    "H-01": 20,
+    "Hab-02": 30,
+    "C-02": 20,
+    "Hab-03": 30,
+    "C-03": 20,
+    "Hab-04": 30,
+    "C-04": 20,
+    "C-05": 20,
+    "Hab-05": 30,
+    "C-06": 20,
+    "Hab-06": 30
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (conteo de KaTeX roto, distractores delatores, pistas faltantes, placeholders f-string y distribución de Bloom) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts de prueba exploratorios en Python. Aplica el Adaptive Semantic Loop y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 0.0,
+    "hard_penalties_precalculated": []
+  },
+  "audit_telemetry": {
+    "course_id": "practica_parcial_saul_standard_coarse",
+    "title": "Practica Parcial Saul Standard Coarse",
+    "total_competencies": 13,
+    "total_questions": 320,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 13,
+        "category_distribution": {
+          "Fact": 1,
+          "Concept": 6,
+          "Skill": 6,
+          "Other": 0
+        },
+        "competencies_missing_prerequisites_count": 2,
+        "underpopulated_competencies_count": 0,
+        "underpopulated_competencies": [],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 20,
+        "max_questions_per_comp": 30
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 1920,
+        "distractors_with_rationale_count": 1920,
+        "rationale_coverage_pct": 100.0,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 0,
+        "zero_hints_items": [],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 0,
+        "missing_solutions_count": 0
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 0,
+        "unclosed_braces_items": [],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 0,
+        "template_variable_residue_items": []
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 0,
+        "blind_string_replacement_items": []
+      }
+    },
+    "hard_penalties": [],
+    "risk_score": 0.0,
+    "risk_clusters": {
+      "katex_issues": [],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [],
+      "template_residues": [],
+      "blind_replacements": []
+    },
+    "all_issues": [],
+    "issues_by_item": {}
+  },
+  "competencies": [
+    {
+      "id": "C-01",
+      "name": "Método de Curvas Características para Ecuaciones en Derivadas Parciales de Primer Orden",
+      "category": "Concept",
+      "description": "Para una EDP cuasilineal $a(x, y) U_x + b(x, y) U_y = c(x, y)$, la derivada direccional a lo largo de una curva parametrizada $(x(s), y(s))$ satisface $\\frac{dU}{ds} = U_x \\frac{dx}{ds} + U_y \\frac{dy}{ds}$, lo que reduce la EDP al sistema característico $\\frac{dx}{ds} = a(x, y)$, $\\frac{dy}{ds} = b(x, y)$ y $\\frac{dU}{ds} = c(x, y)$.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-01",
+      "name": "Resolución de EDPs Cuasilineales mediante el Método de Lagrange y Multiplicadores",
+      "category": "Skill",
+      "description": "Formular el sistema de ecuaciones subsidiarias de Lagrange $\\frac{dx}{a(x, y, U)} = \\frac{dy}{b(x, y, U)} = \\frac{dU}{c(x, y, U)}$, integrar dos combinaciones diferenciales independientes $m(x, y, U) = c_1$ y $n(x, y, U) = c_2$ mediante separación o combinaciones lineales de multiplicadores, y expresar la solución general implícita $\\phi(m, n) = 0$.",
+      "prerequisites": [
+        "C-01"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "H-01",
+      "name": "Teorema de Euler sobre Funciones Homogéneas y Relación de Identidad Diferencial",
+      "category": "Fact",
+      "description": "Una función diferenciable $f: \\mathbb{R}^n \\to \\mathbb{R}$ es homogénea de grado $n$ si y solo si verifica la identidad de Euler: $\\sum_{i=1}^n x_i \\frac{\\partial f}{\\partial x_i} = n f(x_1, \\dots, x_n)$, lo que en economía fundamenta el agotamiento del producto bajo rendimientos constantes de escala.",
+      "prerequisites": [
+        "C-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-02",
+      "name": "Resolución de Problemas de Frontera y Aplicaciones Económicas de EDPs",
+      "category": "Skill",
+      "description": "Integrar EDPs de primer orden que modelan funciones económicas (utilidad $U(\\gamma, \\theta)$, beneficios $\\Pi(p, w)$ o precios espaciales $P(x, y)$), imponer condiciones de frontera como $\\Pi(p, 1) = \\frac{p^2}{4}$ o $U(\\gamma, 0) = \\gamma^2$ para determinar la forma funcional unívoca, y derivar funciones de demanda y oferta óptimas mediante los Lemas de Roy y Hotelling.",
+      "prerequisites": [
+        "H-01",
+        "Hab-01"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-02",
+      "name": "Estructura Algebraica del Espacio de Soluciones de Sistemas Lineales Autónomos de EDOs",
+      "category": "Concept",
+      "description": "Para el sistema lineal $\\dot{X} = AX$, la solución general se construye como combinación lineal de soluciones independientes $X(t) = \\sum_{i=1}^n c_i X_i(t)$ a partir de los pares propios $(\\lambda_i, v_i)$ que satisfacen $(A - \\lambda_i I) v_i = 0$, gobernada por las raíces del polinomio característico $p(\\lambda) = \\det(A - \\lambda I) = 0$.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-03",
+      "name": "Cálculo de Soluciones Analíticas de Sistemas Lineales de EDOs Homogéneos y No Homogéneos",
+      "category": "Skill",
+      "description": "Calcular los autovalores y autovectores de la matriz $A \\in \\mathbb{R}^{2 \\times 2}$, formular la matriz fundamental de soluciones según la naturaleza espectral (reales distintos, complejos o repetidos), y determinar la solución particular del sistema no homogéneo $\\dot{X} = AX + B$ mediante $X_p = -A^{-1} B$ para vectores constantes o coeficientes indeterminados.",
+      "prerequisites": [
+        "C-02"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-03",
+      "name": "Clasificación Topológica de Puntos de Equilibrio mediante el Esquema Traza-Determinante",
+      "category": "Concept",
+      "description": "Para la matriz jacobiana $A$ de un sistema de EDOs $2 \\times 2$, el polinomio característico es $\\lambda^2 - \\operatorname{tr}(A) \\lambda + \\det(A) = 0$ con discriminante $\\Delta = \\operatorname{tr}(A)^2 - 4 \\det(A)$, de modo que el equilibrio es punto silla si $\\det(A) < 0$, nodo estable si $\\det(A) > 0, \\Delta \\ge 0, \\operatorname{tr}(A) < 0$, y foco o espiral estable si $\\det(A) > 0, \\Delta < 0, \\operatorname{tr}(A) < 0$.",
+      "prerequisites": [
+        "C-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-04",
+      "name": "Construcción de Diagramas de Fase y Análisis de Isoclinas Nulas en Sistemas 2x2",
+      "category": "Skill",
+      "description": "Determinar las isoclinas nulas $\\dot{x} = 0$ y $\\dot{y} = 0$, calcular sus pendientes para particionar el plano de fase en cuadrantes dinámicos, deducir los signos vectoriales $(\\operatorname{sgn}(\\dot{x}), \\operatorname{sgn}(\\dot{y}))$ en cada región, y esbozar las trayectorias de fase identificando ramas estables e inestables.",
+      "prerequisites": [
+        "C-03"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-04",
+      "name": "Linealización Local de Sistemas Dinámicos No Lineales y Teorema de Hartman-Grobman",
+      "category": "Concept",
+      "description": "Para un sistema no lineal autónomo $\\dot{X} = F(X)$, la dinámica cualitativa en la vecindad de un punto de equilibrio hiperbólico $X^*$ ($\\operatorname{Re}(\\lambda_i) \\neq 0$) es topológicamente equivalente a la de su sistema linealizado $\\dot{X} = J(X^*) (X - X^*)$, donde $J(X^*) = \\left[ \\frac{\\partial F_i}{\\partial x_j}(X^*) \\right]$ es la matriz jacobiana evaluada en el equilibrio.",
+      "prerequisites": [
+        "C-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-05",
+      "name": "Dinámica Macroeconómica Continua y Ajuste en Modelos IS-LM e Inflación-Desempleo",
+      "category": "Concept",
+      "description": "En modelos macroeconómicos continuos con ajuste proporcional por exceso de demanda (mercado de bienes $\\dot{Y} = c_1(D - O)$ y monetario $\\dot{r} = c_2(L^d - L^o)$ o curva de Phillips adaptativa $\\dot{\\pi} = j(p - \\pi)$), la velocidad de ajuste y los parámetros estructurales condicionan la traza y determinante del sistema, determinando si la convergencia al estado estacionario es monótona (nodo) u oscilatoria (foco amortiguado).",
+      "prerequisites": [
+        "C-03",
+        "Hab-03"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-05",
+      "name": "Resolución y Calibración de Sistemas Macroeconómicos Dinámicos Continuos",
+      "category": "Skill",
+      "description": "Escribir modelos macroeconómicos dinámicos en la forma matricial $\\dot{X} = AX + B$, calcular los valores de estado estacionario $X^* = -A^{-1} B$, calibrar los parámetros numéricos para derivar los autovalores y trayectorias analíticas explícitas $X(t)$, y evaluar el impacto de perturbaciones paramétricas en la trayectoria temporal.",
+      "prerequisites": [
+        "C-05"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-06",
+      "name": "Dinámica No Lineal en Modelos Ecológicos y Ciclos Económicos de Goodwin",
+      "category": "Concept",
+      "description": "En sistemas biológicos de Lokta-Volterra y en el modelo macroeconómico de distribución y crecimiento de Goodwin ($\\dot{v} = v(\\gamma - u \\delta)$, $\\dot{u} = u(-a + b v)$), las no linealidades bilineales generan un equilibrio interior positivo $(u^*, v^*) = (\\frac{\\gamma}{\\delta}, \\frac{a}{b})$ con jacobiano de traza nula $\\operatorname{tr}(J^*) = 0$ y determinante positivo $\\det(J^*) = \\delta b u^* v^* = \\gamma a > 0$, caracterizando un centro lineal con oscilaciones cíclicas cerradas en el plano distributivo empleo-salario.",
+      "prerequisites": [
+        "C-04"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-06",
+      "name": "Análisis Cualitativo y Estabilidad de Sistemas No Lineales de Crecimiento, Polución y Especies",
+      "category": "Skill",
+      "description": "Para sistemas no lineales en economía ambiental ($\\dot{k} = s \\frac{k^\\alpha}{p} - \\delta k$, $\\dot{p} = k^\\beta - \\gamma p$) o crecimiento endógeno con I+D, determinar analíticamente los puntos de equilibrio interiores $(k^*, p^*)$, calcular las derivadas parciales de la matriz jacobiana $J(k^*, p^*)$, y evaluar la estabilidad asintótica local determinando si el equilibrio es un atractor nodal o un punto silla.",
+      "prerequisites": [
+        "C-04",
+        "C-06"
+      ],
+      "question_count": 30
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-C01-001",
+      "competency_id": "C-01",
+      "competency_name": "Método de Curvas Características para Ecuaciones en Derivadas Parciales de Primer Orden",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Verifique la consistencia del modelo y obtenga: Para la ecuación en derivadas parciales cuasilineal de primer orden dada por $(2 x) U_x + (2 y + 5 U) U_y = 6 x$, identifique la formulación analítica correcta del sistema característico y la evolución de $U$ a lo largo de las curvas integrales:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La función solución satisface que $\\frac{dU}{ds} = 0$, tratando las curvas características como curvas de nivel donde $U$ permanece invariante a pesar de la presencia del término fuente $6 x$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Igualar incorrectamente } U(s) = C \\text{ en EDPs no homogéneas}$",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La superficie integral verifica estrictamente $(2 x) U_x + (2 y + 5 U) U_y = 0$, anulando el término fuente $6 x$ al considerar el vector gradiente ortogonal al plano coordenado.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Anulación incorrecta del término fuente homogéneo } c(x, y)$",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La proyección espacial satisface $\\frac{dy}{dx} = \\frac{2 y}{2 x}$ ignorando el término $5 U$, asumiendo que las curvas características nunca se acoplan con la función incógnita $U$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Proyección de curvas características calculada como si la ecuación fuese lineal}$",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El sistema característico invierte los coeficientes asignando $\\frac{dx}{ds} = 2 y + 5 U, \\frac{dy}{ds} = 2 x$ y $\\frac{dU}{ds} = 6 x$, alterando la dirección tangente a la trayectoria.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Pendiente característica invertida: } \\frac{dy}{dx} = \\frac{a(x,y)}{b(x,y)}$",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El sistema característico asume $\\frac{dU}{ds} = U_x + U_y = 6 x$, omitiendo las velocidades de parametrización $\\frac{dx}{ds} = 2 x$ y $\\frac{dy}{ds} = 2 y + 5 U$ en la regla de la cadena.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Omisión de las velocidades de parametrización } \\frac{dx}{ds} \\text{ y } \\frac{dy}{ds}$",
+          "distractor_id": "D-C01-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Toda curva plana provista de condiciones iniciales permite reconstruir una superficie integral única, prescindiendo del requisito geométrico de transversalidad con las curvas características.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Existencia de infinitas soluciones o ninguna si la curva base coincide con una característica}$",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El sistema característico es $\\frac{dx}{ds} = 2 x, \\frac{dy}{ds} = 2 y + 5 U, \\frac{dU}{ds} = 6 x$, satisfaciendo $\\frac{dU}{ds} = U_x \\frac{dx}{ds} + U_y \\frac{dy}{ds}$ con fuente no nula.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde cómo la regla de la cadena multivariada expresa la derivada total $\\frac{dU}{ds}$ en función de las derivadas parciales y las velocidades direccionales $\\frac{dx}{ds}$ y $\\frac{dy}{ds}$.",
+        "Compare los coeficientes de la EDP $a(x, y, U) U_x + b(x, y, U) U_y = c(x, y, U)$ con los términos del sistema característico autónomo en el parámetro $s$.",
+        "Analice si la presencia del término $U$ en los coeficientes y el término fuente no homogéneo permiten desacoplar las ecuaciones o tratar a $U$ como constante."
+      ],
+      "detailed_solution": "Para la EDP cuasilineal $(2 x) U_x + (2 y + 5 U) U_y = 6 x$, por la regla de la cadena multivariada la derivada a lo largo de una curva parametrizada $(x(s), y(s))$ satisface $\\frac{dU}{ds} = U_x \\frac{dx}{ds} + U_y \\frac{dy}{ds}$. Comparando con la EDP, el sistema característico asociado es $\\frac{dx}{ds} = 2 x$, $\\frac{dy}{ds} = 2 y + 5 U$, y $\\frac{dU}{ds} = 6 x$. Dado que el coeficiente de $U_y$ depende de $U$, las trayectorias características espaciales están acopladas a la solución, y $U$ evoluciona según la fuente no homogénea $6 x$, requiriéndose además la transversalidad con la curva inicial para asegurar unicidad."
+    },
+    {
+      "id": "Q-C01-002",
+      "competency_id": "C-01",
+      "competency_name": "Método de Curvas Características para Ecuaciones en Derivadas Parciales de Primer Orden",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Procediendo conforme al marco teórico correspondiente, deduzca: Para la ecuación en derivadas parciales cuasilineal de primer orden dada por $(5 x) U_x + (4 y + 6 U) U_y = 6 x$, identifique la formulación analítica correcta del sistema característico y la evolución de $U$ a lo largo de las curvas integrales:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La proyección espacial satisface $\\frac{dy}{dx} = \\frac{4 y}{5 x}$ ignorando el término $6 U$, asumiendo que las curvas características nunca se acoplan con la función incógnita $U$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Proyección de curvas características calculada como si la ecuación fuese lineal}$",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El sistema característico es $\\frac{dx}{ds} = 5 x, \\frac{dy}{ds} = 4 y + 6 U, \\frac{dU}{ds} = 6 x$, satisfaciendo $\\frac{dU}{ds} = U_x \\frac{dx}{ds} + U_y \\frac{dy}{ds}$ con fuente no nula.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La superficie integral verifica estrictamente $(5 x) U_x + (4 y + 6 U) U_y = 0$, anulando el término fuente $6 x$ al considerar el vector gradiente ortogonal al plano coordenado.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Anulación incorrecta del término fuente homogéneo } c(x, y)$",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El sistema característico invierte los coeficientes asignando $\\frac{dx}{ds} = 4 y + 6 U, \\frac{dy}{ds} = 5 x$ y $\\frac{dU}{ds} = 6 x$, alterando la dirección tangente a la trayectoria.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Pendiente característica invertida: } \\frac{dy}{dx} = \\frac{a(x,y)}{b(x,y)}$",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Toda curva plana provista de condiciones iniciales permite reconstruir una superficie integral única, prescindiendo del requisito geométrico de transversalidad con las curvas características.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Existencia de infinitas soluciones o ninguna si la curva base coincide con una característica}$",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La función solución satisface que $\\frac{dU}{ds} = 0$, tratando las curvas características como curvas de nivel donde $U$ permanece invariante a pesar de la presencia del término fuente $6 x$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Igualar incorrectamente } U(s) = C \\text{ en EDPs no homogéneas}$",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El sistema característico asume $\\frac{dU}{ds} = U_x + U_y = 6 x$, omitiendo las velocidades de parametrización $\\frac{dx}{ds} = 5 x$ y $\\frac{dy}{ds} = 4 y + 6 U$ en la regla de la cadena.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Omisión de las velocidades de parametrización } \\frac{dx}{ds} \\text{ y } \\frac{dy}{ds}$",
+          "distractor_id": "D-C01-01"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde cómo la regla de la cadena multivariada expresa la derivada total $\\frac{dU}{ds}$ en función de las derivadas parciales y las velocidades direccionales $\\frac{dx}{ds}$ y $\\frac{dy}{ds}$.",
+        "Compare los coeficientes de la EDP $a(x, y, U) U_x + b(x, y, U) U_y = c(x, y, U)$ con los términos del sistema característico autónomo en el parámetro $s$.",
+        "Analice si la presencia del término $U$ en los coeficientes y el término fuente no homogéneo permiten desacoplar las ecuaciones o tratar a $U$ como constante."
+      ],
+      "detailed_solution": "Para la EDP cuasilineal $(5 x) U_x + (4 y + 6 U) U_y = 6 x$, por la regla de la cadena multivariada la derivada a lo largo de una curva parametrizada $(x(s), y(s))$ satisface $\\frac{dU}{ds} = U_x \\frac{dx}{ds} + U_y \\frac{dy}{ds}$. Comparando con la EDP, el sistema característico asociado es $\\frac{dx}{ds} = 5 x$, $\\frac{dy}{ds} = 4 y + 6 U$, y $\\frac{dU}{ds} = 6 x$. Dado que el coeficiente de $U_y$ depende de $U$, las trayectorias características espaciales están acopladas a la solución, y $U$ evoluciona según la fuente no homogénea $6 x$, requiriéndose además la transversalidad con la curva inicial para asegurar unicidad."
+    },
+    {
+      "id": "Q-Hab01-021",
+      "competency_id": "Hab-01",
+      "competency_name": "Resolución de EDPs Cuasilineales mediante el Método de Lagrange y Multiplicadores",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Aplicando las identidades teóricas pertinentes, evalúe: Considere la ecuación en derivadas parciales cuasilineal de primer orden $(9 x) U_x + (9 y) U_y = 1 x e^{-U}$. Mediante el método de curvas características y ecuaciones subsidiarias de Lagrange, determine la solución general:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Solución implícita $\\Phi\\left(9 x - 9 y, 1 e^U - 9 x\\right) = 0$, con forma explícita desacoplada $U(x, y) = \\ln\\left(\\frac{9}{1} x + \\psi(9 x - 9 y)\\right)$.",
+          "is_correct": false,
+          "error_rationale": "$m(x, y, U) = x - y \\text{ sin constante parametrizable}$",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Solución algebraica $U(x, y) = \\left(\\frac{x^9}{y^9}\\right) \\cdot \\left(1 e^U - 9 x\\right)$, formulada como producto directo en lugar de función arbitraria $\\Phi$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Solución general expresada como producto algebraico arbitrario en vez de función arbitraria}$",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Solución implícita $\\Phi\\left(\\frac{x^9}{y^9}, \\left(\\frac{x^9}{y^9}\\right)^2\\right) = 0$, con dependencia funcional que anula el gradiente y no despeja $U(x, y)$.",
+          "is_correct": false,
+          "error_rationale": "$\\phi\\left(\\frac{x}{y}, \\left(\\frac{x}{y}\\right)^2\\right) = 0 \\text{ no define una familia bidimensional de soluciones}$",
+          "distractor_id": "D-Hab01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Solución implícita $\\Phi\\left(\\frac{x^9}{y^9}, 1 e^U + 9 x\\right) = 0$, con forma explícita alterada dada por $U(x, y) = \\ln\\left(\\psi\\left(\\frac{x^9}{y^9}\\right) - \\frac{9}{1} x\\right)$.",
+          "is_correct": false,
+          "error_rationale": "$m(x, y, U) = x + y - U$",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Solución implícita $\\Phi\\left(\\frac{x^9}{y^9}, 1 e^U - 9 x\\right) = 0$, con forma explícita dada por $U(x, y) = \\ln\\left(\\frac{9}{1} x + \\psi\\left(\\frac{x^9}{y^9}\\right)\\right)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Solución implícita $\\Phi\\left(\\frac{x^9}{y^9}, 1 e^U - 9 x\\right) = 0$, con forma explícita distributiva $U(x, y) = \\ln\\left(\\frac{9}{1} x\\right) + \\psi\\left(\\frac{x^9}{y^9}\\right)$.",
+          "is_correct": false,
+          "error_rationale": "$U(x, y) = \\ln x + \\psi\\left(\\frac{x}{y}\\right)$",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Solución implícita $\\Phi\\left(\\frac{x^9}{y^9}, 9 x + 9 y + 1 U\\right) = 0$, empleando multiplicadores que no anulan idénticamente el denominador del sistema.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Integración de una forma diferencial que no constituye un diferencial total exacto}$",
+          "distractor_id": "D-Hab01-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Formule el sistema de razones subsidiarias de Lagrange $\\frac{dx}{a(x, y, U)} = \\frac{dy}{b(x, y, U)} = \\frac{dU}{c(x, y, U)}$ identificando los coeficientes de la ecuación.",
+        "Integre una primera relación separable entre las variables espaciales para obtener una constante de movimiento $c_1 = \\frac{x^b}{y^a}$.",
+        "Combine una razón espacial con la razón diferencial en $dU$, integrando el término exponencial $e^U dU$ e introduciendo la función arbitraria diferenciable $\\psi$."
+      ],
+      "detailed_solution": "Para la EDP cuasilineal $(9 x) U_x + (9 y) U_y = 1 x e^{-U}$, el sistema de ecuaciones subsidiarias de Lagrange es $\\frac{dx}{9 x} = \\frac{dy}{9 y} = \\frac{dU}{1 x e^{-U}}$. De las dos primeras razones, 9 \\frac{dx}{x} - 9 \\frac{dy}{y} = 0 \\implies \\frac{x^{9}}{y^{9}} = c_1$. De la primera y tercera razón, cancelando $x$, 1 e^U dU - 9 dx = 0 \\implies {c} e^U - 9 x = c_2$. La solución general implícita es $\\Phi\\left(\\frac{x^{9}}{y^{9}}, 1 e^U - 9 x\\right) = 0$, de donde despejando la función incógnita se obtiene $U(x, y) = \\ln\\left(\\frac{9}{1} x + \\psi\\left(\\frac{x^{9}}{y^{9}}\\right)\\right)$."
+    },
+    {
+      "id": "Q-Hab01-022",
+      "competency_id": "Hab-01",
+      "competency_name": "Resolución de EDPs Cuasilineales mediante el Método de Lagrange y Multiplicadores",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Al examinar detenidamente las condiciones de frontera, resuelva: Considere la ecuación en derivadas parciales cuasilineal de primer orden $(7 x) U_x + (2 y) U_y = 7 x e^{-U}$. Mediante el método de curvas características y ecuaciones subsidiarias de Lagrange, determine la solución general:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Solución implícita $\\Phi\\left(\\frac{x^2}{y^7}, 7 e^U - 7 x\\right) = 0$, con forma explícita distributiva $U(x, y) = \\ln\\left(\\frac{7}{7} x\\right) + \\psi\\left(\\frac{x^2}{y^7}\\right)$.",
+          "is_correct": false,
+          "error_rationale": "$U(x, y) = \\ln x + \\psi\\left(\\frac{x}{y}\\right)$",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Solución implícita $\\Phi\\left(\\frac{x^2}{y^7}, 7 e^U + 7 x\\right) = 0$, con forma explícita alterada dada por $U(x, y) = \\ln\\left(\\psi\\left(\\frac{x^2}{y^7}\\right) - \\frac{7}{7} x\\right)$.",
+          "is_correct": false,
+          "error_rationale": "$m(x, y, U) = x + y - U$",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Solución implícita $\\Phi\\left(2 x - 7 y, 7 e^U - 7 x\\right) = 0$, con forma explícita desacoplada $U(x, y) = \\ln\\left(\\frac{7}{7} x + \\psi(2 x - 7 y)\\right)$.",
+          "is_correct": false,
+          "error_rationale": "$m(x, y, U) = x - y \\text{ sin constante parametrizable}$",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Solución implícita $\\Phi\\left(\\frac{x^2}{y^7}, 7 x + 2 y + 7 U\\right) = 0$, empleando multiplicadores que no anulan idénticamente el denominador del sistema.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Integración de una forma diferencial que no constituye un diferencial total exacto}$",
+          "distractor_id": "D-Hab01-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Solución implícita $\\Phi\\left(\\frac{x^2}{y^7}, 7 e^U - 7 x\\right) = 0$, con forma explícita dada por $U(x, y) = \\ln\\left(\\frac{7}{7} x + \\psi\\left(\\frac{x^2}{y^7}\\right)\\right)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Solución algebraica $U(x, y) = \\left(\\frac{x^2}{y^7}\\right) \\cdot \\left(7 e^U - 7 x\\right)$, formulada como producto directo en lugar de función arbitraria $\\Phi$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Solución general expresada como producto algebraico arbitrario en vez de función arbitraria}$",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Solución implícita $\\Phi\\left(\\frac{x^2}{y^7}, \\left(\\frac{x^2}{y^7}\\right)^2\\right) = 0$, con dependencia funcional que anula el gradiente y no despeja $U(x, y)$.",
+          "is_correct": false,
+          "error_rationale": "$\\phi\\left(\\frac{x}{y}, \\left(\\frac{x}{y}\\right)^2\\right) = 0 \\text{ no define una familia bidimensional de soluciones}$",
+          "distractor_id": "D-Hab01-02"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Formule el sistema de razones subsidiarias de Lagrange $\\frac{dx}{a(x, y, U)} = \\frac{dy}{b(x, y, U)} = \\frac{dU}{c(x, y, U)}$ identificando los coeficientes de la ecuación.",
+        "Integre una primera relación separable entre las variables espaciales para obtener una constante de movimiento $c_1 = \\frac{x^b}{y^a}$.",
+        "Combine una razón espacial con la razón diferencial en $dU$, integrando el término exponencial $e^U dU$ e introduciendo la función arbitraria diferenciable $\\psi$."
+      ],
+      "detailed_solution": "Para la EDP cuasilineal $(7 x) U_x + (2 y) U_y = 7 x e^{-U}$, el sistema de ecuaciones subsidiarias de Lagrange es $\\frac{dx}{7 x} = \\frac{dy}{2 y} = \\frac{dU}{7 x e^{-U}}$. De las dos primeras razones, 2 \\frac{dx}{x} - 7 \\frac{dy}{y} = 0 \\implies \\frac{x^{2}}{y^{7}} = c_1$. De la primera y tercera razón, cancelando $x$, 7 e^U dU - 7 dx = 0 \\implies {c} e^U - 7 x = c_2$. La solución general implícita es $\\Phi\\left(\\frac{x^{2}}{y^{7}}, 7 e^U - 7 x\\right) = 0$, de donde despejando la función incógnita se obtiene $U(x, y) = \\ln\\left(\\frac{7}{7} x + \\psi\\left(\\frac{x^{2}}{y^{7}}\\right)\\right)$."
+    },
+    {
+      "id": "Q-H01-051",
+      "competency_id": "H-01",
+      "competency_name": "Teorema de Euler sobre Funciones Homogéneas y Relación de Identidad Diferencial",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Analice la formulación operativa y deduzca: Considere una empresa del sector farmacéutico cuya tecnología se modela mediante la función de producción diferenciable $F(K, L) = 2 K^{0.25} L^{0.75}$, con parámetros $\\alpha = 0.25$ y $\\beta = 0.75$ que definen un grado de homogeneidad $k = 1.00$. De acuerdo con el teorema de Euler para funciones homogéneas y el análisis de rendimientos de escala, determine la proposición analítica verdadera respecto a su identidad diferencial y a sus productividades marginales:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Si los parámetros sumasen $k = 0$, la función de producción $F(K, L)$ sería forzosamente una constante numérica global e invariable en todo rayo.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Afirmar que las demandas marshallianas sin ilusión monetaria son números fijos independientes de los precios}$",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La relación diferencial de factores toma la forma $\\frac{1}{K} \\frac{\\partial F}{\\partial K} + \\frac{1}{L} \\frac{\\partial F}{\\partial L} = 1.00 F(K, L)$ en todo punto del dominio.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Multiplicación por el recíproco de la variable en la suma ponderada}$",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La suma ponderada de factores satisface $K \\frac{\\partial F}{\\partial K} + L \\frac{\\partial F}{\\partial L} = F(K, L)$ prescindiendo del factor de escala global 1.00.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir que toda función homogénea tiene grado unitario } n = 1$",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La identidad diferencial de Euler se cumple para cualquier tecnología homogénea de grado 1.00 aun sin requerir diferenciabilidad en el dominio.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Cálculo de derivadas en puntos donde no existe diferenciabilidad}$",
+          "distractor_id": "D-H01-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La combinación $K \\frac{\\partial F}{\\partial K} + L \\frac{\\partial F}{\\partial L} = 1.00 F(K, L)$ y las productividades marginales son homogéneas de grado 0.00.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Las derivadas parciales de factores $\\frac{\\partial F}{\\partial K}$ y $\\frac{\\partial F}{\\partial L}$ resultan homogéneas con el grado original 1.00 de la función.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribuir el mismo grado } n \\text{ a las productividades marginales de factores}$",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La función aditiva $G(K, L) = K^{0.25} + L^{0.75}$ resulta homogénea de grado $k = 1.00$ verificando la misma relación diferencial de Euler.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Aplicación del teorema de Euler a sumas de potencias con grados heterogéneos}$",
+          "distractor_id": "D-H01-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que el teorema de Euler establece que una función homogénea de grado $k$ satisface la suma ponderada de derivadas parciales igual a $k$ veces el valor de la función.",
+        "Considere el orden de homogeneidad de las derivadas parciales de primer orden al diferenciar una función homogénea de grado $k$.",
+        "Tenga en cuenta que la homogeneidad de grado cero no anula la variación ante cambios en las proporciones relativas de los insumos."
+      ],
+      "detailed_solution": "Por el teorema de Euler para funciones homogéneas de grado $k = 1.00$, se verifica idénticamente que $K \\frac{\\partial F}{\\partial K} + L \\frac{\\partial F}{\\partial L} = 1.00 F(K, L)$ al evaluar la regla de la cadena sobre la función de producción $F(tK, tL) = t^k F(K, L)$ en $t = 1$. Asimismo, al diferenciar respecto a cualquiera de los factores productivos, las derivadas parciales escalan como $t^{k-1}$, resultando homogéneas de grado $k - 1 = 0.00$. Las demás opciones son incorrectas porque una función aditiva de potencias heterogéneas no es homogénea, prescindir del factor de escala global asume indebidamente grado unitario, ponderar por el recíproco de los insumos carece de validez matemática y el teorema exige rigurosamente diferenciabilidad continua."
+    },
+    {
+      "id": "Q-H01-052",
+      "competency_id": "H-01",
+      "competency_name": "Teorema de Euler sobre Funciones Homogéneas y Relación de Identidad Diferencial",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Verifique la consistencia del modelo y obtenga: Considere una empresa del sector energético cuya tecnología se modela mediante la función de producción diferenciable $F(K, L) = 2 K^{0.50} L^{1.75}$, con parámetros $\\alpha = 0.50$ y $\\beta = 1.75$ que definen un grado de homogeneidad $k = 2.25$. De acuerdo con el teorema de Euler para funciones homogéneas y el análisis de rendimientos de escala, determine la proposición analítica verdadera respecto a su identidad diferencial y a sus productividades marginales:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Si los parámetros sumasen $k = 0$, la función de producción $F(K, L)$ sería forzosamente una constante numérica global e invariable en todo rayo.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Afirmar que las demandas marshallianas sin ilusión monetaria son números fijos independientes de los precios}$",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La suma ponderada de factores satisface $K \\frac{\\partial F}{\\partial K} + L \\frac{\\partial F}{\\partial L} = F(K, L)$ prescindiendo del factor de escala global 2.25.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir que toda función homogénea tiene grado unitario } n = 1$",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La relación diferencial de factores toma la forma $\\frac{1}{K} \\frac{\\partial F}{\\partial K} + \\frac{1}{L} \\frac{\\partial F}{\\partial L} = 2.25 F(K, L)$ en todo punto del dominio.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Multiplicación por el recíproco de la variable en la suma ponderada}$",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La función aditiva $G(K, L) = K^{0.50} + L^{1.75}$ resulta homogénea de grado $k = 2.25$ verificando la misma relación diferencial de Euler.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Aplicación del teorema de Euler a sumas de potencias con grados heterogéneos}$",
+          "distractor_id": "D-H01-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La combinación $K \\frac{\\partial F}{\\partial K} + L \\frac{\\partial F}{\\partial L} = 2.25 F(K, L)$ y las productividades marginales son homogéneas de grado 1.25.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Las derivadas parciales de factores $\\frac{\\partial F}{\\partial K}$ y $\\frac{\\partial F}{\\partial L}$ resultan homogéneas con el grado original 2.25 de la función.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribuir el mismo grado } n \\text{ a las productividades marginales de factores}$",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La identidad diferencial de Euler se cumple para cualquier tecnología homogénea de grado 2.25 aun sin requerir diferenciabilidad en el dominio.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Cálculo de derivadas en puntos donde no existe diferenciabilidad}$",
+          "distractor_id": "D-H01-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde que el teorema de Euler establece que una función homogénea de grado $k$ satisface la suma ponderada de derivadas parciales igual a $k$ veces el valor de la función.",
+        "Considere el orden de homogeneidad de las derivadas parciales de primer orden al diferenciar una función homogénea de grado $k$.",
+        "Tenga en cuenta que la homogeneidad de grado cero no anula la variación ante cambios en las proporciones relativas de los insumos."
+      ],
+      "detailed_solution": "Por el teorema de Euler para funciones homogéneas de grado $k = 2.25$, se verifica idénticamente que $K \\frac{\\partial F}{\\partial K} + L \\frac{\\partial F}{\\partial L} = 2.25 F(K, L)$ al evaluar la regla de la cadena sobre la función de producción $F(tK, tL) = t^k F(K, L)$ en $t = 1$. Asimismo, al diferenciar respecto a cualquiera de los factores productivos, las derivadas parciales escalan como $t^{k-1}$, resultando homogéneas de grado $k - 1 = 1.25$. Las demás opciones son incorrectas porque una función aditiva de potencias heterogéneas no es homogénea, prescindir del factor de escala global asume indebidamente grado unitario, ponderar por el recíproco de los insumos carece de validez matemática y el teorema exige rigurosamente diferenciabilidad continua."
+    },
+    {
+      "id": "Q-Hab02-071",
+      "competency_id": "Hab-02",
+      "competency_name": "Resolución de Problemas de Frontera y Aplicaciones Económicas de EDPs",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere el siguiente planteamiento formal: Considere una empresa competitiva del sector maderero cuya función de beneficios $\\Pi(p, w)$ satisface la EDP de homogeneidad lineal $p \\frac{\\partial \\Pi}{\\partial p} + w \\frac{\\partial \\Pi}{\\partial w} = \\Pi(p, w)$. La información contable observada al fijar un salario unitario de referencia ($w = 1\\text{ u.m.}$) establece la condición de frontera $\\Pi(p, 1) = \\frac{p^2}{8}$. Integrando la EDP y aplicando el lema de Hotelling, determine la forma funcional unívoca de los beneficios $\\Pi(p, w)$ y la correspondiente demanda óptima de trabajo $L(p, w)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La función de beneficios es $\\Pi(p, w) = \\frac{p^2}{8w}$ pero la demanda factorial por Hotelling resulta en el valor negativo $L(p, w) = -\\frac{p^2}{8w^2}$.",
+          "is_correct": false,
+          "error_rationale": "$L(p, w) < 0 \\text{ o contratación de trabajo negativa}$",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La función de beneficios es $\\Pi(p, w) = \\frac{p^2}{8w}$ y la demanda factorial se obtiene invirtiendo el cociente de Roy como $L(p, w) = -\\frac{\\Pi_p}{\\Pi_w}$.",
+          "is_correct": false,
+          "error_rationale": "$x(p, m) = \\frac{m}{p} \\text{ invertido como } \\frac{p}{m}$",
+          "distractor_id": "D-Hab02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La función de beneficios es $\\Pi(p, w) = \\frac{p^2}{8w}$ y la demanda óptima de trabajo derivada por Hotelling es $L(p, w) = \\frac{p^2}{8w^2}$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La función de beneficios satisface $p \\Pi_p + w \\Pi_w = 0$ por grado cero, generando la solución particular espuria $\\Pi(p, w) = \\frac{p^2}{8}$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre ausencia de ilusión monetaria en utilidad (grado 0) y beneficios nominales (grado 1)}$",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La función de beneficios es $\\Pi(p, w) = \\frac{p^2}{8w}$ mientras que la variación espacial de precios impone la relación invertida $a P_y + b P_x = \\tau$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Intercambio de coeficientes direccionales en la EDP espacial de precios}$",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La función de beneficios es $\\Pi(p, w) = w \\psi\\left(\\frac{p}{w}\\right)$ donde $\\psi$ queda indeterminada como función arbitraria diferenciable general.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Expresar la solución general sin calibrar la condición observada a nivel unitario } w = 1$",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La función de beneficios es $\\Pi(p, w) = \\frac{p^2}{8w}$ y la demanda factorial es $L(p, w) = \\frac{p^2 w^2}{8}$ exhibiendo elasticidad salario $\\epsilon = +2$.",
+          "is_correct": false,
+          "error_rationale": "$\\epsilon_{L, w} = +2 \\text{ (elasticidad precio de la demanda positiva violando la ley de demanda)}$",
+          "distractor_id": "D-Hab02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Plantee el sistema subsidiario de Lagrange para la EDP cuasilineal $p \\Pi_p + w \\Pi_w = \\Pi$ y obtenga la solución general $\\Pi(p, w) = w \\psi(p/w)$.",
+        "Evalúe la condición de frontera en salario base $w = 1$ para determinar unívocamente la forma funcional de la función univariada $\\psi$.",
+        "Aplique el lema de Hotelling recordando el signo negativo correspondiente a la demanda del factor trabajo: $L(p, w) = -\\frac{\\partial \\Pi}{\\partial w}$."
+      ],
+      "detailed_solution": "Por el método de características o Lagrange, la EDP cuasilineal $p \\frac{\\partial \\Pi}{\\partial p} + w \\frac{\\partial \\Pi}{\\partial w} = \\Pi(p, w)$ admite la solución general $\\Pi(p, w) = w \\psi(p/w)$. Imponiendo la condición de frontera en salario base unitario $w = 1$, se obtiene $\\Pi(p, 1) = 1 \\cdot \\psi(p) = \\frac{p^2}{8}$, por lo que $\\psi(z) = z^2 / 8$ y la función de beneficios particular resulta unívocamente $\\Pi(p, w) = \\frac{p^2}{8w}$. Aplicando el lema de Hotelling, la demanda óptima de trabajo es el negativo de la derivada del beneficio respecto al salario: $L(p, w) = -\\frac{\\partial \\Pi}{\\partial w} = \\frac{p^2}{8w^2}$. Las demás opciones son incorrectas porque dejar $\\psi$ indeterminada omite la condición de frontera, omitir el signo negativo genera contrataciones negativas y evaluar grado cero anula indebidamente la escala de beneficios."
+    },
+    {
+      "id": "Q-Hab02-072",
+      "competency_id": "Hab-02",
+      "competency_name": "Resolución de Problemas de Frontera y Aplicaciones Económicas de EDPs",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A partir de las condiciones analíticas dadas, determine: Considere una empresa competitiva del sector automotriz cuya función de beneficios $\\Pi(p, w)$ satisface la EDP de homogeneidad lineal $p \\frac{\\partial \\Pi}{\\partial p} + w \\frac{\\partial \\Pi}{\\partial w} = \\Pi(p, w)$. La información contable observada al fijar un salario unitario de referencia ($w = 1\\text{ u.m.}$) establece la condición de frontera $\\Pi(p, 1) = \\frac{p^2}{2}$. Integrando la EDP y aplicando el lema de Hotelling, determine la forma funcional unívoca de los beneficios $\\Pi(p, w)$ y la correspondiente demanda óptima de trabajo $L(p, w)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La función de beneficios es $\\Pi(p, w) = \\frac{p^2}{2w}$ pero la demanda factorial por Hotelling resulta en el valor negativo $L(p, w) = -\\frac{p^2}{2w^2}$.",
+          "is_correct": false,
+          "error_rationale": "$L(p, w) < 0 \\text{ o contratación de trabajo negativa}$",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La función de beneficios es $\\Pi(p, w) = w \\psi\\left(\\frac{p}{w}\\right)$ donde $\\psi$ queda indeterminada como función arbitraria diferenciable general.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Expresar la solución general sin calibrar la condición observada a nivel unitario } w = 1$",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La función de beneficios es $\\Pi(p, w) = \\frac{p^2}{2w}$ mientras que la variación espacial de precios impone la relación invertida $a P_y + b P_x = \\tau$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Intercambio de coeficientes direccionales en la EDP espacial de precios}$",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La función de beneficios es $\\Pi(p, w) = \\frac{p^2}{2w}$ y la demanda factorial es $L(p, w) = \\frac{p^2 w^2}{2}$ exhibiendo elasticidad salario $\\epsilon = +2$.",
+          "is_correct": false,
+          "error_rationale": "$\\epsilon_{L, w} = +2 \\text{ (elasticidad precio de la demanda positiva violando la ley de demanda)}$",
+          "distractor_id": "D-Hab02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La función de beneficios satisface $p \\Pi_p + w \\Pi_w = 0$ por grado cero, generando la solución particular espuria $\\Pi(p, w) = \\frac{p^2}{2}$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Confusión entre ausencia de ilusión monetaria en utilidad (grado 0) y beneficios nominales (grado 1)}$",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La función de beneficios es $\\Pi(p, w) = \\frac{p^2}{2w}$ y la demanda óptima de trabajo derivada por Hotelling es $L(p, w) = \\frac{p^2}{2w^2}$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La función de beneficios es $\\Pi(p, w) = \\frac{p^2}{2w}$ y la demanda factorial se obtiene invirtiendo el cociente de Roy como $L(p, w) = -\\frac{\\Pi_p}{\\Pi_w}$.",
+          "is_correct": false,
+          "error_rationale": "$x(p, m) = \\frac{m}{p} \\text{ invertido como } \\frac{p}{m}$",
+          "distractor_id": "D-Hab02-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Plantee el sistema subsidiario de Lagrange para la EDP cuasilineal $p \\Pi_p + w \\Pi_w = \\Pi$ y obtenga la solución general $\\Pi(p, w) = w \\psi(p/w)$.",
+        "Evalúe la condición de frontera en salario base $w = 1$ para determinar unívocamente la forma funcional de la función univariada $\\psi$.",
+        "Aplique el lema de Hotelling recordando el signo negativo correspondiente a la demanda del factor trabajo: $L(p, w) = -\\frac{\\partial \\Pi}{\\partial w}$."
+      ],
+      "detailed_solution": "Por el método de características o Lagrange, la EDP cuasilineal $p \\frac{\\partial \\Pi}{\\partial p} + w \\frac{\\partial \\Pi}{\\partial w} = \\Pi(p, w)$ admite la solución general $\\Pi(p, w) = w \\psi(p/w)$. Imponiendo la condición de frontera en salario base unitario $w = 1$, se obtiene $\\Pi(p, 1) = 1 \\cdot \\psi(p) = \\frac{p^2}{2}$, por lo que $\\psi(z) = z^2 / 2$ y la función de beneficios particular resulta unívocamente $\\Pi(p, w) = \\frac{p^2}{2w}$. Aplicando el lema de Hotelling, la demanda óptima de trabajo es el negativo de la derivada del beneficio respecto al salario: $L(p, w) = -\\frac{\\partial \\Pi}{\\partial w} = \\frac{p^2}{2w^2}$. Las demás opciones son incorrectas porque dejar $\\psi$ indeterminada omite la condición de frontera, omitir el signo negativo genera contrataciones negativas y evaluar grado cero anula indebidamente la escala de beneficios."
+    },
+    {
+      "id": "Q-C02-101",
+      "competency_id": "C-02",
+      "competency_name": "Estructura Algebraica del Espacio de Soluciones de Sistemas Lineales Autónomos de EDOs",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Con arreglo a las definiciones operativas del sistema, verifique: Considere el sistema lineal homogéneo de ecuaciones diferenciales ordinarias $\\dot{X}(t) = A X(t)$ con matriz de coeficientes $A \\in \\\\mathbb{R}^{2 \\\\times 2}$, cuya traza es $\\mathrm{tr}(A) = 1$ y determinante es $\\det(A) = -42$, asociado a los autovalores reales distintos $\\lambda_1 = -6$ y $\\lambda_2 = 7$ con autovectores propios independientes $v_1$ y $v_2$. De acuerdo con la estructura algebraica del espacio de soluciones, ¿cuál de las siguientes proposiciones resulta analíticamente válida?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Si se produjera coincidencia $\\lambda_1 = \\lambda_2 = -6$, la solución general siempre admitiría base $X(t) = c_1 e^{-6 t} v_1 + c_2 e^{-6 t} v_2$ con autovectores independientes.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Pérdida del término secular } t e^{\\lambda t} v_1 \\text{ en matrices defectivas}$",
+          "distractor_id": "D-C02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Cada autovector $v_i$ del sistema se determina planteando la igualdad matricial directa $(A - -6 I) = v_1$, prescindiendo del producto matricial por el vector propio.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Tratar al autovalor escalar como un vector en la combinación lineal}$",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "En presencia de autovalores complejos $\\lambda = 3 \\pm 4 i$, la base de soluciones reales del espacio se desacopla como $X(t) = e^{3 t} (v_1 + v_2)$ sin factores sinusoidales.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Desaparición del comportamiento oscilatorio senoidal y cosenoidal}$",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Para la ecuación no homogénea $\\dot{X} = AX + B$, la estructura del espacio afín de soluciones se obtiene multiplicando la solución homogénea por la particular: $X(t) = X_h(t) \\cdot X_p(t)$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Estructuración multiplicativa errónea del espacio afín de soluciones}$",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Los autovalores del sistema lineal se obtienen resolviendo el polinomio característico escalar simplificado $p(\\lambda) = \\det(A) - \\lambda = 0$, omitiendo la matriz identidad $I$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Restar el escalar } \\lambda \\text{ al determinante global en lugar de la diagonal principal}$",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El principio de superposición permite asegurar que la combinación $c_1 X_1(t) + c_2 X_2(t)$ constituye una solución general incluso en sistemas no lineales de la forma $\\dot{X} = f(X)$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Sumar soluciones particulares en sistemas dinámicos no lineales}$",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La solución general del sistema es $X(t) = c_1 e^{-6 t} v_1 + c_2 e^{7 t} v_2$, donde cada autovector no nulo satisface la ecuación matricial $(A - \\lambda_i I) v_i = 0$ para $i=1, 2$.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura del conjunto de soluciones de un sistema lineal homogéneo $\\dot{X} = AX$ a partir de la combinación lineal de sus soluciones fundamentales.",
+        "Considere cómo actúan los autovalores y autovectores que satisfacen $(A - \\lambda I)v = 0$ en la construcción de cada solución exponencial $e^{\\lambda t} v$.",
+        "Verifique que la solución general satisfaga la linealidad del operador diferencial y que los autovectores asociados a autovalores reales distintos sean linealmente independientes."
+      ],
+      "detailed_solution": "Para el sistema lineal homogéneo $\\dot{X} = AX$, el polinomio característico es $p(\\lambda) = \\det(A - \\lambda I) = \\lambda^2 - (\\lambda_1 + \\lambda_2)\\lambda + \\lambda_1 \\lambda_2 = 0$. Con traza $\\mathrm{tr}(A) = 1$ y determinante $\\det(A) = -42$, las raíces características son $\\lambda_1 = -6$ y $\\lambda_2 = 7$. Puesto que $\\lambda_1 \\\\neq \\lambda_2$, existen dos autovectores linealmente independientes $v_1$ y $v_2$ que satisfacen $(A - \\lambda_i I)v_i = 0$ con $v_i \\\\neq 0$. Por el principio de superposición, la solución general es la combinación lineal $X(t) = c_1 e^{-6 t} v_1 + c_2 e^{7 t} v_2$."
+    },
+    {
+      "id": "Q-C02-102",
+      "competency_id": "C-02",
+      "competency_name": "Estructura Algebraica del Espacio de Soluciones de Sistemas Lineales Autónomos de EDOs",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Efectuando el análisis formal respectivo, precise: Considere el sistema lineal homogéneo de ecuaciones diferenciales ordinarias $\\dot{X}(t) = A X(t)$ con matriz de coeficientes $A \\in \\\\mathbb{R}^{2 \\\\times 2}$, cuya traza es $\\mathrm{tr}(A) = 13$ y determinante es $\\det(A) = 40$, asociado a los autovalores reales distintos $\\lambda_1 = 5$ y $\\lambda_2 = 8$ con autovectores propios independientes $v_1$ y $v_2$. De acuerdo con la estructura algebraica del espacio de soluciones, ¿cuál de las siguientes proposiciones resulta analíticamente válida?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Los autovalores del sistema lineal se obtienen resolviendo el polinomio característico escalar simplificado $p(\\lambda) = \\det(A) - \\lambda = 0$, omitiendo la matriz identidad $I$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Restar el escalar } \\lambda \\text{ al determinante global en lugar de la diagonal principal}$",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El principio de superposición permite asegurar que la combinación $c_1 X_1(t) + c_2 X_2(t)$ constituye una solución general incluso en sistemas no lineales de la forma $\\dot{X} = f(X)$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Sumar soluciones particulares en sistemas dinámicos no lineales}$",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Para la ecuación no homogénea $\\dot{X} = AX + B$, la estructura del espacio afín de soluciones se obtiene multiplicando la solución homogénea por la particular: $X(t) = X_h(t) \\cdot X_p(t)$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Estructuración multiplicativa errónea del espacio afín de soluciones}$",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Cada autovector $v_i$ del sistema se determina planteando la igualdad matricial directa $(A - 5 I) = v_1$, prescindiendo del producto matricial por el vector propio.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Tratar al autovalor escalar como un vector en la combinación lineal}$",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La solución general del sistema es $X(t) = c_1 e^{5 t} v_1 + c_2 e^{8 t} v_2$, donde cada autovector no nulo satisface la ecuación matricial $(A - \\lambda_i I) v_i = 0$ para $i=1, 2$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "En presencia de autovalores complejos $\\lambda = 5 \\pm 2 i$, la base de soluciones reales del espacio se desacopla como $X(t) = e^{5 t} (v_1 + v_2)$ sin factores sinusoidales.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Desaparición del comportamiento oscilatorio senoidal y cosenoidal}$",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Si se produjera coincidencia $\\lambda_1 = \\lambda_2 = 5$, la solución general siempre admitiría base $X(t) = c_1 e^{5 t} v_1 + c_2 e^{5 t} v_2$ con autovectores independientes.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Pérdida del término secular } t e^{\\lambda t} v_1 \\text{ en matrices defectivas}$",
+          "distractor_id": "D-C02-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura del conjunto de soluciones de un sistema lineal homogéneo $\\dot{X} = AX$ a partir de la combinación lineal de sus soluciones fundamentales.",
+        "Considere cómo actúan los autovalores y autovectores que satisfacen $(A - \\lambda I)v = 0$ en la construcción de cada solución exponencial $e^{\\lambda t} v$.",
+        "Verifique que la solución general satisfaga la linealidad del operador diferencial y que los autovectores asociados a autovalores reales distintos sean linealmente independientes."
+      ],
+      "detailed_solution": "Para el sistema lineal homogéneo $\\dot{X} = AX$, el polinomio característico es $p(\\lambda) = \\det(A - \\lambda I) = \\lambda^2 - (\\lambda_1 + \\lambda_2)\\lambda + \\lambda_1 \\lambda_2 = 0$. Con traza $\\mathrm{tr}(A) = 13$ y determinante $\\det(A) = 40$, las raíces características son $\\lambda_1 = 5$ y $\\lambda_2 = 8$. Puesto que $\\lambda_1 \\\\neq \\lambda_2$, existen dos autovectores linealmente independientes $v_1$ y $v_2$ que satisfacen $(A - \\lambda_i I)v_i = 0$ con $v_i \\\\neq 0$. Por el principio de superposición, la solución general es la combinación lineal $X(t) = c_1 e^{5 t} v_1 + c_2 e^{8 t} v_2$."
+    },
+    {
+      "id": "Q-Hab03-121",
+      "competency_id": "Hab-03",
+      "competency_name": "Cálculo de Soluciones Analíticas de Sistemas Lineales de EDOs Homogéneos y No Homogéneos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Desde la perspectiva analítica correspondiente, compute: Considere el sistema lineal no homogéneo de ecuaciones diferenciales ordinarias $\\dot{X}(t) = A X(t) + B$, con matriz $A$ de entradas en primera fila $(4, -3)$ y segunda fila $(-2, 1)$, junto al vector forzante constante $B = (-23, 9)^T$. Al formular analíticamente el espacio de soluciones y el estado estacionario constante $X_p$, ¿cuál de las siguientes proposiciones resulta analíticamente válida?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Ante un término forzante no homogéneo lineal $B(t) = (3 t, 5 t)^T$, el método de coeficientes indeterminados plantea como solución particular $X_p(t) = (A_1, B_1)^T t$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Inconsistencia algebraica al igualar derivadas de polinomios de primer grado}$",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Al resolver el sistema indeterminado $(A - \\lambda I) v = 0$ para hallar la dirección propia fijando la variable libre, el autovector calculado resulta ser $v = (0, 0)^T$.",
+          "is_correct": false,
+          "error_rationale": "$v = \\mathbf{0} \\text{ (el vector nulo no es un autovector válido)}$",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La matriz inversa del sistema requerida para calcular el estado estacionario particular se calcula mediante la estructura $A^{-1} = \\frac{1}{-2} \\begin{pmatrix} 4 & 3 \\\\ 2 & 1 \\end{pmatrix}$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Elementos de la diagonal principal no intercambiados al invertir la matriz } A$",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El vector de estado estacionario o solución particular constante del sistema no homogéneo $\\dot{X} = AX + B$ se obtiene evaluando la expresión $X_p = A^{-1} B = (-2, 5)^T$.",
+          "is_correct": false,
+          "error_rationale": "$\\dot{X} = 0 \\implies AX_p + B = 0 \\implies X_p = -A^{-1} B$",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Con raíces complejas $\\lambda = \\alpha \\pm \\beta i$ y $v = r \\pm s i$, la solución real se expande como $X_h(t) = c_1 e^{\\alpha t}(r \\cos \\beta t + s \\sin \\beta t) + c_2 e^{\\alpha t}(s \\cos \\beta t - r \\sin \\beta t)$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Signos intercambiados en las componentes armónicas ortogonales}$",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El vector de estado estacionario o solución particular constante del sistema no homogéneo $\\dot{X} = AX + B$ está determinado mediante $X_p = -A^{-1} B = (2, -5)^T$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Para una matriz con autovalor doble $\\lambda_1 = \\lambda_2 = 7$, el segundo autovector de la base de soluciones se obtiene planteando directamente $(A - 7 I) v_2 = 0$.",
+          "is_correct": false,
+          "error_rationale": "$v_2 \\text{ resulta colineal a } v_1, \\text{ impidiendo cubrir el espacio bidimensional}$",
+          "distractor_id": "D-Hab03-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Para hallar la solución particular constante $X_p$ de un sistema lineal con forzamiento constante, plantee la condición de equilibrio dinámico $\\dot{X} = 0$.",
+        "Despeje $X_p$ a partir de la ecuación matricial lineal $A X_p + B = 0$, recordando la regla de los signos al transponer términos algebraicos.",
+        "Multiplique por la matriz inversa $A^{-1}$ por la izquierda para obtener la formulación explícita $X_p = -A^{-1} B$ y verifique su consistencia."
+      ],
+      "detailed_solution": "Para el sistema no homogéneo $\\dot{X} = AX + B$, la condición de estado estacionario impone $\\dot{X} = 0$, es decir $A X_p + B = 0 \\iff A X_p = -B \\iff X_p = -A^{-1} B$. Dado que $\\det(A) = -2 \\\\neq 0$, la matriz inversa existe. Calculando el producto matricial $-A^{-1} B$ se obtiene el vector constante particular $X_p = (2, -5)^T$."
+    },
+    {
+      "id": "Q-Hab03-122",
+      "competency_id": "Hab-03",
+      "competency_name": "Cálculo de Soluciones Analíticas de Sistemas Lineales de EDOs Homogéneos y No Homogéneos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Atendiendo a la relación funcional planteada, halle: Considere el sistema lineal no homogéneo de ecuaciones diferenciales ordinarias $\\dot{X}(t) = A X(t) + B$, con matriz $A$ de entradas en primera fila $(1, 1)$ y segunda fila $(1, 2)$, junto al vector forzante constante $B = (-6, -11)^T$. Al formular analíticamente el espacio de soluciones y el estado estacionario constante $X_p$, ¿cuál de las siguientes proposiciones resulta analíticamente válida?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Para una matriz con autovalor doble $\\lambda_1 = \\lambda_2 = 4$, el segundo autovector de la base de soluciones se obtiene planteando directamente $(A - 4 I) v_2 = 0$.",
+          "is_correct": false,
+          "error_rationale": "$v_2 \\text{ resulta colineal a } v_1, \\text{ impidiendo cubrir el espacio bidimensional}$",
+          "distractor_id": "D-Hab03-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La matriz inversa del sistema requerida para calcular el estado estacionario particular se calcula mediante la estructura $A^{-1} = \\frac{1}{1} \\begin{pmatrix} 1 & -1 \\\\ -1 & 2 \\end{pmatrix}$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Elementos de la diagonal principal no intercambiados al invertir la matriz } A$",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El vector de estado estacionario o solución particular constante del sistema no homogéneo $\\dot{X} = AX + B$ se obtiene evaluando la expresión $X_p = A^{-1} B = (-1, -5)^T$.",
+          "is_correct": false,
+          "error_rationale": "$\\dot{X} = 0 \\implies AX_p + B = 0 \\implies X_p = -A^{-1} B$",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Al resolver el sistema indeterminado $(A - \\lambda I) v = 0$ para hallar la dirección propia fijando la variable libre, el autovector calculado resulta ser $v = (0, 0)^T$.",
+          "is_correct": false,
+          "error_rationale": "$v = \\mathbf{0} \\text{ (el vector nulo no es un autovector válido)}$",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Ante un término forzante no homogéneo lineal $B(t) = (3 t, 4 t)^T$, el método de coeficientes indeterminados plantea como solución particular $X_p(t) = (A_1, B_1)^T t$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Inconsistencia algebraica al igualar derivadas de polinomios de primer grado}$",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Con raíces complejas $\\lambda = \\alpha \\pm \\beta i$ y $v = r \\pm s i$, la solución real se expande como $X_h(t) = c_1 e^{\\alpha t}(r \\cos \\beta t + s \\sin \\beta t) + c_2 e^{\\alpha t}(s \\cos \\beta t - r \\sin \\beta t)$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Signos intercambiados en las componentes armónicas ortogonales}$",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El vector de estado estacionario o solución particular constante del sistema no homogéneo $\\dot{X} = AX + B$ está determinado mediante $X_p = -A^{-1} B = (1, 5)^T$.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Para hallar la solución particular constante $X_p$ de un sistema lineal con forzamiento constante, plantee la condición de equilibrio dinámico $\\dot{X} = 0$.",
+        "Despeje $X_p$ a partir de la ecuación matricial lineal $A X_p + B = 0$, recordando la regla de los signos al transponer términos algebraicos.",
+        "Multiplique por la matriz inversa $A^{-1}$ por la izquierda para obtener la formulación explícita $X_p = -A^{-1} B$ y verifique su consistencia."
+      ],
+      "detailed_solution": "Para el sistema no homogéneo $\\dot{X} = AX + B$, la condición de estado estacionario impone $\\dot{X} = 0$, es decir $A X_p + B = 0 \\iff A X_p = -B \\iff X_p = -A^{-1} B$. Dado que $\\det(A) = 1 \\\\neq 0$, la matriz inversa existe. Calculando el producto matricial $-A^{-1} B$ se obtiene el vector constante particular $X_p = (1, 5)^T$."
+    },
+    {
+      "id": "Q-C03-151",
+      "competency_id": "C-03",
+      "competency_name": "Clasificación Topológica de Puntos de Equilibrio mediante el Esquema Traza-Determinante",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para el modelo formulado a continuación, evalúe: Para la linealización de un sistema dinámico plano no lineal $\\dot{X} = F(X)$ en el punto de equilibrio aislado $X^* = (-3, -2)$, la matriz jacobiana $J(X^*)$ posee traza $\\operatorname{tr}(J) = -11$, determinante $\\det(J) = 24$ y discriminante $\\Delta = 25$. Determine la clasificación cualitativa del equilibrio según el esquema traza-determinante:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Representa un nodo asintóticamente estable local en el equilibrio, con $\\det(J) = 24 > 0$, $\\Delta = 25 > 0$ y $\\operatorname{tr}(J) = -11 < 0$ determinando convergencia real.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Representa un centro o vórtice con órbitas periódicas cerradas, omitiendo que la traza no nula $\\operatorname{tr}(J) = -11$ introduce disipación que destruye la periodicidad.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir ciclos cerrados conservativos cuando existe amortiguamiento o disipación }(\\operatorname{tr}(A) \\neq 0)$",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Representa un foco o espiral oscilatoria en el equilibrio, sosteniendo que un discriminante positivo $\\Delta = 25 > 0$ genera autovalores con componente imaginaria pura.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir oscilaciones cíclicas cuando los autovalores son puramente reales}$",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Representa un equilibrio asintóticamente estable cuando la traza resulta positiva, asignando estabilidad a la magnitud $|\\operatorname{tr}(J)| = 11$ en el semiplano.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribuir estabilidad asintótica a un sistema con autovalores de parte real positiva}$",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Representa un equilibrio asintóticamente estable global en todo $\\mathbb{R}^2$, extrapolando la linealización de $J(X^*)$ con $\\det(J) = 24$ a todo el espacio de fases.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Extrapolar conclusiones locales a cuencas de atracción globales sin función de Lyapunov}$",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Representa un régimen de dinámica caótica aperiódica, suponiendo que la transición sobre la parábola frontera $\\Delta = 0$ ante $\\Delta = 25$ desintegra las trayectorias regulares.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Clasificación arbitraria fuera de la bifurcación frontera entre nodo y foco}$",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Representa un punto silla en el equilibrio, deduciendo que la condición de silla proviene de $\\operatorname{tr}(J) = -11$ y no de la exigencia de un determinante negativo.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Clasificar como silla un nodo inestable con determinante positivo y traza positiva}$",
+          "distractor_id": "D-C03-01"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Identifique los signos de la traza $\\operatorname{tr}(J)$, el determinante $\\det(J)$ y el discriminante $\\Delta$ de la matriz jacobiana.",
+        "Recuerde que un determinante positivo junto con una traza negativa sitúa los autovalores en el semiplano izquierdo con estabilidad.",
+        "Considere que un discriminante positivo descarta componentes imaginarias u oscilaciones, caracterizando un nodo y no un foco."
+      ],
+      "detailed_solution": "El polinomio característico es $\\lambda^2 - \\operatorname{tr}(J)\\lambda + \\det(J) = 0$. Al tener $\\det(J) = 24 > 0$, $\\operatorname{tr}(J) = -11 < 0$ y discriminante $\\Delta = 25 > 0$, los autovalores $\\lambda_1 = -3$ y $\\lambda_2 = -8$ son reales distintos y estrictamente negativos. Por el teorema de Hartman-Grobman, el equilibrio $X^*$ es un nodo asintóticamente estable en un entorno local."
+    },
+    {
+      "id": "Q-C03-152",
+      "competency_id": "C-03",
+      "competency_name": "Clasificación Topológica de Puntos de Equilibrio mediante el Esquema Traza-Determinante",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el contexto formal planteado, analice con rigor: Para la linealización de un sistema dinámico plano no lineal $\\dot{X} = F(X)$ en el punto de equilibrio aislado $X^* = (-4, -3)$, la matriz jacobiana $J(X^*)$ posee traza $\\operatorname{tr}(J) = -12$, determinante $\\det(J) = 32$ y discriminante $\\Delta = 16$. Determine la clasificación cualitativa del equilibrio según el esquema traza-determinante:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Representa un equilibrio asintóticamente estable global en todo $\\mathbb{R}^2$, extrapolando la linealización de $J(X^*)$ con $\\det(J) = 32$ a todo el espacio de fases.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Extrapolar conclusiones locales a cuencas de atracción globales sin función de Lyapunov}$",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Representa un foco o espiral oscilatoria en el equilibrio, sosteniendo que un discriminante positivo $\\Delta = 16 > 0$ genera autovalores con componente imaginaria pura.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir oscilaciones cíclicas cuando los autovalores son puramente reales}$",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Representa un equilibrio asintóticamente estable cuando la traza resulta positiva, asignando estabilidad a la magnitud $|\\operatorname{tr}(J)| = 12$ en el semiplano.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Atribuir estabilidad asintótica a un sistema con autovalores de parte real positiva}$",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Representa un centro o vórtice con órbitas periódicas cerradas, omitiendo que la traza no nula $\\operatorname{tr}(J) = -12$ introduce disipación que destruye la periodicidad.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir ciclos cerrados conservativos cuando existe amortiguamiento o disipación }(\\operatorname{tr}(A) \\neq 0)$",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Representa un punto silla en el equilibrio, deduciendo que la condición de silla proviene de $\\operatorname{tr}(J) = -12$ y no de la exigencia de un determinante negativo.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Clasificar como silla un nodo inestable con determinante positivo y traza positiva}$",
+          "distractor_id": "D-C03-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Representa un régimen de dinámica caótica aperiódica, suponiendo que la transición sobre la parábola frontera $\\Delta = 0$ ante $\\Delta = 16$ desintegra las trayectorias regulares.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Clasificación arbitraria fuera de la bifurcación frontera entre nodo y foco}$",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Representa un nodo asintóticamente estable local en el equilibrio, con $\\det(J) = 32 > 0$, $\\Delta = 16 > 0$ y $\\operatorname{tr}(J) = -12 < 0$ determinando convergencia real.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Identifique los signos de la traza $\\operatorname{tr}(J)$, el determinante $\\det(J)$ y el discriminante $\\Delta$ de la matriz jacobiana.",
+        "Recuerde que un determinante positivo junto con una traza negativa sitúa los autovalores en el semiplano izquierdo con estabilidad.",
+        "Considere que un discriminante positivo descarta componentes imaginarias u oscilaciones, caracterizando un nodo y no un foco."
+      ],
+      "detailed_solution": "El polinomio característico es $\\lambda^2 - \\operatorname{tr}(J)\\lambda + \\det(J) = 0$. Al tener $\\det(J) = 32 > 0$, $\\operatorname{tr}(J) = -12 < 0$ y discriminante $\\Delta = 16 > 0$, los autovalores $\\lambda_1 = -4$ y $\\lambda_2 = -8$ son reales distintos y estrictamente negativos. Por el teorema de Hartman-Grobman, el equilibrio $X^*$ es un nodo asintóticamente estable en un entorno local."
+    },
+    {
+      "id": "Q-Hab04-171",
+      "competency_id": "Hab-04",
+      "competency_name": "Construcción de Diagramas de Fase y Análisis de Isoclinas Nulas en Sistemas 2x2",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el marco de referencia correspondiente, establezca: Considere el sistema dinámico lineal en el plano de fases dado por:\n$$\\dot{x} = 6x - 7y$$\n$$\\dot{y} = 5x - 6y$$\ncon punto de equilibrio en el origen $(0,0)$. Al realizar el análisis geométrico mediante isoclinas nulas y campo de direcciones, determine la proposición válida sobre la configuración del plano de fases:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La isoclina $\\dot{x} = 0$ es la recta $y = \\frac{6}{7} x$ con cruce vertical, mientras que $\\dot{y} = 0$ es $y = \\frac{5}{6} x$ con cruce horizontal del flujo.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La isoclina $\\dot{x} = 0$ es la recta $y = \\frac{6}{7} x$ con cruce horizontal, mientras que $\\dot{y} = 0$ es $y = \\frac{5}{6} x$ con cruce vertical del flujo.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Vectores de velocidad tangencial graficados ortogonalmente a la dinámica real}$",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El sentido del campo vectorial asigna flechas dirigidas a la izquierda si $\\dot{x} > 0$ y flechas descendentes siempre que $\\dot{y} > 0$ en el plano.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Flechas direccionales invertidas generando trayectorias falsamente atractoras}$",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La isoclina $\\dot{x} = 0$ es la recta $y = \\frac{7}{6} x$ con cruce vertical, mientras que $\\dot{y} = 0$ es $y = \\frac{6}{5} x$ con cruce horizontal del flujo.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Pendiente invertida en el trazado de la isoclina vertical } \\dot{x} = 0$",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El cuadrante dinámico positivo $x > 0, y > 0$ posee necesariamente signos $(\\dot{x} > 0, \\dot{y} > 0)$ sin requerir evaluación en puntos de prueba.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asignación de sentidos de flujo incoherentes con las ecuaciones diferenciales}$",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La variedad invariante asintóticamente estable que converge al origen está gobernada por el autovector correspondiente al autovalor positivo mayor.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Selección de la rama divergente como ruta de ajuste asintótico}$",
+          "distractor_id": "D-Hab04-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Las órbitas de fase colapsan sobre las rectas de las isoclinas nulas, impidiendo que cualquier trayectoria cruce transversalmente dichas fronteras.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Dibujar órbitas restringidas a colapsar sobre las rectas } \\dot{x} = 0 \\text{ o } \\dot{y} = 0$",
+          "distractor_id": "D-Hab04-04"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Plantee algebraicamente las ecuaciones de las isoclinas nulas igualando las derivadas temporales a cero por separado.",
+        "Deduzca la orientación del campo de direcciones recordando que la tangente geométrica en el plano cartesiano es el cociente de derivadas.",
+        "Verifique que sobre la curva de velocidad horizontal nula el flujo sólo puede desplazarse en dirección vertical."
+      ],
+      "detailed_solution": "Para determinar las isoclinas nulas se anulan las velocidades de cada variable de estado:\n1. Para $\\dot{x} = 0$, se tiene $6x - 7y = 0 \\implies y = \\frac{6}{7} x$. Sobre esta recta, $\\dot{x} = 0$, por lo que la pendiente de las trayectorias es $\\frac{dy}{dx} = \\frac{\\dot{y}}{\\dot{x}} \\to \\pm\\infty$, indicando que el flujo cruza de manera estrictamente vertical.\n2. Para $\\dot{y} = 0$, se tiene $5x - 6y = 0 \\implies y = \\frac{5}{6} x$. Sobre esta recta, $\\dot{y} = 0$, por lo que $\\frac{dy}{dx} = \\frac{\\dot{y}}{\\dot{x}} = 0$, indicando que el flujo cruza de manera estrictamente horizontal.\nLas trayectorias de fase cruzan las isoclinas transversalmente y los signos en cada región se certifican evaluando puntos de prueba."
+    },
+    {
+      "id": "Q-Hab04-172",
+      "competency_id": "Hab-04",
+      "competency_name": "Construcción de Diagramas de Fase y Análisis de Isoclinas Nulas en Sistemas 2x2",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Evalúe la expresión y determine la cantidad buscada: Considere el sistema dinámico lineal en el plano de fases dado por:\n$$\\dot{x} = -3x + 2y$$\n$$\\dot{y} = 3x + 4y$$\ncon punto de equilibrio en el origen $(0,0)$. Al realizar el análisis geométrico mediante isoclinas nulas y campo de direcciones, determine la proposición válida sobre la configuración del plano de fases:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El cuadrante dinámico positivo $x > 0, y > 0$ posee necesariamente signos $(\\dot{x} > 0, \\dot{y} > 0)$ sin requerir evaluación en puntos de prueba.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asignación de sentidos de flujo incoherentes con las ecuaciones diferenciales}$",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El sentido del campo vectorial asigna flechas dirigidas a la izquierda si $\\dot{x} > 0$ y flechas descendentes siempre que $\\dot{y} > 0$ en el plano.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Flechas direccionales invertidas generando trayectorias falsamente atractoras}$",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Las órbitas de fase colapsan sobre las rectas de las isoclinas nulas, impidiendo que cualquier trayectoria cruce transversalmente dichas fronteras.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Dibujar órbitas restringidas a colapsar sobre las rectas } \\dot{x} = 0 \\text{ o } \\dot{y} = 0$",
+          "distractor_id": "D-Hab04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La isoclina $\\dot{x} = 0$ es la recta $y = \\frac{2}{3} x$ con cruce vertical, mientras que $\\dot{y} = 0$ es $y = -\\frac{4}{3} x$ con cruce horizontal del flujo.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Pendiente invertida en el trazado de la isoclina vertical } \\dot{x} = 0$",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La isoclina $\\dot{x} = 0$ es la recta $y = \\frac{3}{2} x$ con cruce vertical, mientras que $\\dot{y} = 0$ es $y = -\\frac{3}{4} x$ con cruce horizontal del flujo.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La isoclina $\\dot{x} = 0$ es la recta $y = \\frac{3}{2} x$ con cruce horizontal, mientras que $\\dot{y} = 0$ es $y = -\\frac{3}{4} x$ con cruce vertical del flujo.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Vectores de velocidad tangencial graficados ortogonalmente a la dinámica real}$",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La variedad invariante asintóticamente estable que converge al origen está gobernada por el autovector correspondiente al autovalor positivo mayor.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Selección de la rama divergente como ruta de ajuste asintótico}$",
+          "distractor_id": "D-Hab04-06"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Plantee algebraicamente las ecuaciones de las isoclinas nulas igualando las derivadas temporales a cero por separado.",
+        "Deduzca la orientación del campo de direcciones recordando que la tangente geométrica en el plano cartesiano es el cociente de derivadas.",
+        "Verifique que sobre la curva de velocidad horizontal nula el flujo sólo puede desplazarse en dirección vertical."
+      ],
+      "detailed_solution": "Para determinar las isoclinas nulas se anulan las velocidades de cada variable de estado:\n1. Para $\\dot{x} = 0$, se tiene $-3x + 2y = 0 \\implies y = \\frac{3}{2} x$. Sobre esta recta, $\\dot{x} = 0$, por lo que la pendiente de las trayectorias es $\\frac{dy}{dx} = \\frac{\\dot{y}}{\\dot{x}} \\to \\pm\\infty$, indicando que el flujo cruza de manera estrictamente vertical.\n2. Para $\\dot{y} = 0$, se tiene $3x + 4y = 0 \\implies y = -\\frac{3}{4} x$. Sobre esta recta, $\\dot{y} = 0$, por lo que $\\frac{dy}{dx} = \\frac{\\dot{y}}{\\dot{x}} = 0$, indicando que el flujo cruza de manera estrictamente horizontal.\nLas trayectorias de fase cruzan las isoclinas transversalmente y los signos en cada región se certifican evaluando puntos de prueba."
+    },
+    {
+      "id": "Q-C04-201",
+      "competency_id": "C-04",
+      "competency_name": "Linealización Local de Sistemas Dinámicos No Lineales y Teorema de Hartman-Grobman",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A la luz de los supuestos del modelo, identifique el valor de: Considere el sistema dinámico autónomo no lineal en el plano: $\\dot{x} = -3(x - 5) + 8(y - 4) + (x - 5)^2$, $\\dot{y} = 5(x - 5) - 6(y - 4) + (y - 4)^2$, con punto de equilibrio estacionario en $X^* = (5, 4)$. De acuerdo con el Teorema de Hartman-Grobman y la teoría de linealización local, determine la formulación del sistema linealizado en la vecindad de $X^*$ y la condición analítica requerida para que su dinámica cualitativa sea localmente equivalente a la del sistema no lineal original:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{X} = \\begin{pmatrix} -3 & 8 \\\\ 5 & -6 \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\end{pmatrix}$, aplicando la matriz jacobiana sobre coordenadas absolutas al omitir el vector de traslación respecto al punto de equilibrio.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir que el punto de equilibrio siempre está situado en el origen } (0, 0)$",
+          "distractor_id": "D-C04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{X} = \\begin{pmatrix} -3 & 8 \\\\ 5 & -6 \\end{pmatrix} \\begin{pmatrix} x - 5 \\\\ y - 4 \\end{pmatrix}$, exigiendo un difeomorfismo suave que preserve ángulos, curvaturas y la diferenciabilidad de las trayectorias.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Exigir preservación exacta de las derivadas temporales bajo el cambio coordenado topológico}$",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{X} = \\begin{pmatrix} -3 & 5 \\\\ 8 & -6 \\end{pmatrix} \\begin{pmatrix} x - 5 \\\\ y - 4 \\end{pmatrix}$, disponiendo las derivadas parciales de forma transpuesta respecto a las filas y columnas de cada ecuación del sistema.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Jacobiano transpuesto con autovalores o traza distorsionados}$",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{X} = \\begin{pmatrix} -3 & 8 \\\\ 5 & -6 \\end{pmatrix} \\begin{pmatrix} x - 5 \\\\ y - 4 \\end{pmatrix}$, garantizando equivalencia topológica local mediante homeomorfismo continuo si $\\operatorname{Re}(\\lambda_i) \\neq 0$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{X} = \\begin{pmatrix} -3 & 8 \\\\ 5 & -6 \\end{pmatrix} \\begin{pmatrix} x - 5 \\\\ y - 4 \\end{pmatrix}$, afirmando equivalencia topológica local incluso si los autovalores tienen $\\operatorname{Re}(\\lambda_i) = 0$ con centros puros.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Concluir falsamente que un vórtice linealizado implica órbitas cerradas en el sistema no lineal}$",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{X} = \\begin{pmatrix} -3 + 2(x - 5) & 8 \\\\ 5 & -6 + 2(y - 4) \\end{pmatrix} \\begin{pmatrix} x - 5 \\\\ y - 4 \\end{pmatrix}$, conservando variables dinámicas en la matriz de coeficientes locales en lugar de evaluarlas en el punto de equilibrio.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Conservar variables algebraicas } x, y \\text{ dentro de la matriz linealizada constante}$",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{X} = \\begin{pmatrix} -3 & 8 \\\\ 5 & -6 \\end{pmatrix} \\begin{pmatrix} x - 5 \\\\ y - 4 \\end{pmatrix}$, extendiendo la clasificación local de este equilibrio de forma global a todos los demás puntos de equilibrio del plano de fases.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Extender la clasificación de un punto silla a otros equilibrios simultáneos del sistema}$",
+          "distractor_id": "D-C04-05"
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la definición del jacobiano $J(X^*)$ evaluando las derivadas parciales de cada ecuación en las coordenadas del equilibrio $X^* = (5, 4)$.",
+        "Recuerde que la aproximación lineal en torno a un equilibrio no centrado en el origen requiere expandir en potencias de las desviaciones relativas $(X - X^*)$.",
+        "Considere los requisitos del Teorema de Hartman-Grobman: exige hiperbolicidad ($\\operatorname{Re}(\\lambda_i) \\neq 0$) y garantiza equivalencia topológica cualitativa (homeomorfismo continuo), no una equivalencia analítica global ni difeomórfica."
+      ],
+      "detailed_solution": "La matriz jacobiana del sistema evaluada en el punto de equilibrio $X^* = (5, 4)$ es $J(X^*) = \\left(\\begin{array}{cc} -3 & 8 \\\\ {d} & -6 \\end{array}\\right)$. El desarrollo en serie de Taylor de primer orden alrededor de $X^*$ establece que $\\dot{X} \\approx J(X^*) (X - X^*)$, esto es, $\\begin{pmatrix} \\dot{x} \\\\ \\dot{y} \\end{pmatrix} = \\begin{pmatrix} -3 & 8 \\\\ {d} & -6 \\end{pmatrix} \\begin{pmatrix} x - 5 \\\\ y - 4 \\end{pmatrix}$. El Teorema de Hartman-Grobman garantiza que la estructura cualitativa de las trayectorias del sistema no lineal en una vecindad abierta de $X^*$ es topológicamente equivalente (mediante un homeomorfismo local continuo) a la de su linealización siempre que el equilibrio sea hiperbólico ($\\operatorname{Re}(\\lambda_i) \\neq 0$). Si existieran autovalores con parte real nula ($\\operatorname{Re}(\\lambda) = 0$), los términos no lineales de orden superior determinarían la estabilidad real, invalidando la suficiencia del Jacobiano."
+    },
+    {
+      "id": "Q-C04-202",
+      "competency_id": "C-04",
+      "competency_name": "Linealización Local de Sistemas Dinámicos No Lineales y Teorema de Hartman-Grobman",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A partir del marco de análisis cuantitativo, encuentre: Considere el sistema dinámico autónomo no lineal en el plano: $\\dot{x} = -2(x - 8) + 4(y - 5) + (x - 8)^2$, $\\dot{y} = 2(x - 8) - 9(y - 5) + (y - 5)^2$, con punto de equilibrio estacionario en $X^* = (8, 5)$. De acuerdo con el Teorema de Hartman-Grobman y la teoría de linealización local, determine la formulación del sistema linealizado en la vecindad de $X^*$ y la condición analítica requerida para que su dinámica cualitativa sea localmente equivalente a la del sistema no lineal original:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{X} = \\begin{pmatrix} -2 & 4 \\\\ 2 & -9 \\end{pmatrix} \\begin{pmatrix} x - 8 \\\\ y - 5 \\end{pmatrix}$, afirmando equivalencia topológica local incluso si los autovalores tienen $\\operatorname{Re}(\\lambda_i) = 0$ con centros puros.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Concluir falsamente que un vórtice linealizado implica órbitas cerradas en el sistema no lineal}$",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{X} = \\begin{pmatrix} -2 & 4 \\\\ 2 & -9 \\end{pmatrix} \\begin{pmatrix} x - 8 \\\\ y - 5 \\end{pmatrix}$, extendiendo la clasificación local de este equilibrio de forma global a todos los demás puntos de equilibrio del plano de fases.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Extender la clasificación de un punto silla a otros equilibrios simultáneos del sistema}$",
+          "distractor_id": "D-C04-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{X} = \\begin{pmatrix} -2 & 2 \\\\ 4 & -9 \\end{pmatrix} \\begin{pmatrix} x - 8 \\\\ y - 5 \\end{pmatrix}$, disponiendo las derivadas parciales de forma transpuesta respecto a las filas y columnas de cada ecuación del sistema.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Jacobiano transpuesto con autovalores o traza distorsionados}$",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{X} = \\begin{pmatrix} -2 & 4 \\\\ 2 & -9 \\end{pmatrix} \\begin{pmatrix} x - 8 \\\\ y - 5 \\end{pmatrix}$, exigiendo un difeomorfismo suave que preserve ángulos, curvaturas y la diferenciabilidad de las trayectorias.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Exigir preservación exacta de las derivadas temporales bajo el cambio coordenado topológico}$",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{X} = \\begin{pmatrix} -2 & 4 \\\\ 2 & -9 \\end{pmatrix} \\begin{pmatrix} x - 8 \\\\ y - 5 \\end{pmatrix}$, garantizando equivalencia topológica local mediante homeomorfismo continuo si $\\operatorname{Re}(\\lambda_i) \\neq 0$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{X} = \\begin{pmatrix} -2 + 2(x - 8) & 4 \\\\ 2 & -9 + 2(y - 5) \\end{pmatrix} \\begin{pmatrix} x - 8 \\\\ y - 5 \\end{pmatrix}$, conservando variables dinámicas en la matriz de coeficientes locales en lugar de evaluarlas en el punto de equilibrio.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Conservar variables algebraicas } x, y \\text{ dentro de la matriz linealizada constante}$",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{X} = \\begin{pmatrix} -2 & 4 \\\\ 2 & -9 \\end{pmatrix} \\begin{pmatrix} x \\\\ y \\end{pmatrix}$, aplicando la matriz jacobiana sobre coordenadas absolutas al omitir el vector de traslación respecto al punto de equilibrio.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir que el punto de equilibrio siempre está situado en el origen } (0, 0)$",
+          "distractor_id": "D-C04-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la definición del jacobiano $J(X^*)$ evaluando las derivadas parciales de cada ecuación en las coordenadas del equilibrio $X^* = (8, 5)$.",
+        "Recuerde que la aproximación lineal en torno a un equilibrio no centrado en el origen requiere expandir en potencias de las desviaciones relativas $(X - X^*)$.",
+        "Considere los requisitos del Teorema de Hartman-Grobman: exige hiperbolicidad ($\\operatorname{Re}(\\lambda_i) \\neq 0$) y garantiza equivalencia topológica cualitativa (homeomorfismo continuo), no una equivalencia analítica global ni difeomórfica."
+      ],
+      "detailed_solution": "La matriz jacobiana del sistema evaluada en el punto de equilibrio $X^* = (8, 5)$ es $J(X^*) = \\left(\\begin{array}{cc} -2 & 4 \\\\ {d} & -9 \\end{array}\\right)$. El desarrollo en serie de Taylor de primer orden alrededor de $X^*$ establece que $\\dot{X} \\approx J(X^*) (X - X^*)$, esto es, $\\begin{pmatrix} \\dot{x} \\\\ \\dot{y} \\end{pmatrix} = \\begin{pmatrix} -2 & 4 \\\\ {d} & -9 \\end{pmatrix} \\begin{pmatrix} x - 8 \\\\ y - 5 \\end{pmatrix}$. El Teorema de Hartman-Grobman garantiza que la estructura cualitativa de las trayectorias del sistema no lineal en una vecindad abierta de $X^*$ es topológicamente equivalente (mediante un homeomorfismo local continuo) a la de su linealización siempre que el equilibrio sea hiperbólico ($\\operatorname{Re}(\\lambda_i) \\neq 0$). Si existieran autovalores con parte real nula ($\\operatorname{Re}(\\lambda) = 0$), los términos no lineales de orden superior determinarían la estabilidad real, invalidando la suficiencia del Jacobiano."
+    },
+    {
+      "id": "Q-C05-221",
+      "competency_id": "C-05",
+      "competency_name": "Dinámica Macroeconómica Continua y Ajuste en Modelos IS-LM e Inflación-Desempleo",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "De acuerdo con los postulados fundamentales del sistema, verifique: Considere el modelo macroeconómico dinámico IS-LM continuo en el plano $(Y, r)$, en el que las ecuaciones de ajuste por exceso de demanda en los mercados de bienes y dinero son $\\dot{Y} = -3(Y - Y^*) - 3(r - r^*)$ y $\\dot{r} = 5(Y - Y^*) - 7(r - r^*)$, con velocidades de ajuste calibradas $c_1 = 1$ y $c_2 = 5$. Determine la matriz jacobiana $A$ del sistema linealizado, su traza $\\operatorname{tr}(A)$, su determinante $\\det(A)$ y el comportamiento asintótico cualitativo de las trayectorias hacia el equilibrio estacionario $(Y^*, r^*)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$A = \\begin{pmatrix} -3 & 3 \\\\ 5 & -7 \\end{pmatrix}$, con $\\operatorname{tr}(A) = -10$ y $\\det(A) = 6$, invirtiendo el signo de la sensibilidad de la inversión a la tasa de interés en el mercado de bienes.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Concluir erróneamente que una menor respuesta de la inversión hace el ajuste más cíclico}$",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$A = \\begin{pmatrix} -3 & -3 \\\\ 5 & -7 \\end{pmatrix}$, con $\\operatorname{tr}(A) = -10 < 0$ y $\\Delta = -44 < 0$, pero concluyendo que engendra un ciclo límite autosostenido permanente sin disipación asintótica.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Afirmar que un sistema lineal con autovalores complejos engendra fluctuaciones permanentes sin disipación}$",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$A = \\begin{pmatrix} 3 & -3 \\\\ 5 & -7 \\end{pmatrix}$, con traza inestable $\\operatorname{tr}(A) = -4$ y $\\det(A) = -6$, omitiendo verificar la condición de estabilidad $c(1 - \\tau) < 1$ en el mercado de bienes.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir estabilidad cuando } c(1 - \\tau) > 1 \\text{ genera una traza positiva explosiva}$",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$A = \\begin{pmatrix} -3 & -3 \\\\ 5 & -7 \\end{pmatrix}$, con $\\operatorname{tr}(A) = -10$ y $\\det(A) = 36$, pero afirmando que variar las velocidades $c_1$ o $c_2$ desplaza la posición del estado estacionario $(Y^*, r^*)$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Alterar los valores estacionarios al variar parámetros de velocidad fuera de la estática comparativa}$",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$A = \\begin{pmatrix} -3 & -3 \\\\ 5 & -7 \\end{pmatrix}$, afirmando ajuste instantáneo continuo donde los excesos de demanda se anulan en todo instante $t$ sin rezago temporal ni convergencia dinámica.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Eliminar la ecuación diferencial de expectativas asumiendo ajuste sin fricciones}$",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$A = \\begin{pmatrix} 5 & -7 \\\\ -3 & -3 \\end{pmatrix}$, con $\\operatorname{tr}(A) = 2$ y $\\det(A) = -36$, intercambiando las ecuaciones de ajuste entre los mercados de bienes y de dinero en la matriz.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Desplazamiento erróneo de la curva de ajuste de producción en el diagrama de fase}$",
+          "distractor_id": "D-C05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$A = \\begin{pmatrix} -3 & -3 \\\\ 5 & -7 \\end{pmatrix}$, con $\\operatorname{tr}(A) = -10 < 0$, $\\det(A) = 36 > 0$ y $\\Delta = -44 < 0$, describiendo un foco estable con convergencia oscilatoria amortiguada hacia $(Y^*, r^*)$.",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Identifique los coeficientes de la matriz jacobiana $A$ a partir de las derivadas parciales de las ecuaciones de ajuste de bienes y dinero.",
+        "Calcule la traza $\\operatorname{tr}(A)$ y el determinante $\\det(A)$, verificando las condiciones de estabilidad de Routh-Hurwitz.",
+        "Evalúe el signo del discriminante $\\Delta = [\\operatorname{tr}(A)]^2 - 4\\det(A)$ para distinguir entre un nodo monótono ($\\Delta > 0$) y un foco oscilatorio amortiguado ($\\Delta < 0$)."
+      ],
+      "detailed_solution": "El sistema dinámico continuo IS-LM expresado en desviaciones respecto al equilibrio estacionario es $\\dot{X} = A(X - X^*)$, donde $A = \\begin{pmatrix} -3 & -3 \\\\ {5} & -7 \\end{pmatrix}$. La traza de la matriz jacobiana es $\\operatorname{tr}(A) = -3 - 7 = -10 < 0$, y el determinante es $\\det(A) = (-3)(-7) - (-3)(5) = 36 > 0$. Al ser $\\operatorname{tr}(A) < 0$ y $\\det(A) > 0$, el punto de equilibrio $(Y^*, r^*)$ es asintóticamente estable por el criterio de Routh-Hurwitz. Como el discriminante de la ecuación característica es $\\Delta = [\\operatorname{tr}(A)]^2 - 4\\det(A) = (-10)^2 - 4(36) = -44 < 0$, los autovalores son complejos conjugados con parte real negativa, lo que caracteriza un foco estable amortiguado. Además, el estado estacionario satisface $\\dot{Y} = 0$ y $\\dot{r} = 0$, por lo que las velocidades de ajuste $c_1$ y $c_2$ determinan únicamente la rapidez de convergencia y los autovalores, sin alterar la posición de $(Y^*, r^*)$."
+    },
+    {
+      "id": "Q-C05-222",
+      "competency_id": "C-05",
+      "competency_name": "Dinámica Macroeconómica Continua y Ajuste en Modelos IS-LM e Inflación-Desempleo",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo los parámetros establecidos, calcule el valor exacto: Considere el modelo macroeconómico dinámico IS-LM continuo en el plano $(Y, r)$, en el que las ecuaciones de ajuste por exceso de demanda en los mercados de bienes y dinero son $\\dot{Y} = -2(Y - Y^*) - 6(r - r^*)$ y $\\dot{r} = 8(Y - Y^*) - 2(r - r^*)$, con velocidades de ajuste calibradas $c_1 = 5$ y $c_2 = 3$. Determine la matriz jacobiana $A$ del sistema linealizado, su traza $\\operatorname{tr}(A)$, su determinante $\\det(A)$ y el comportamiento asintótico cualitativo de las trayectorias hacia el equilibrio estacionario $(Y^*, r^*)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$A = \\begin{pmatrix} -2 & -6 \\\\ 8 & -2 \\end{pmatrix}$, con $\\operatorname{tr}(A) = -4$ y $\\det(A) = 52$, pero afirmando que variar las velocidades $c_1$ o $c_2$ desplaza la posición del estado estacionario $(Y^*, r^*)$.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Alterar los valores estacionarios al variar parámetros de velocidad fuera de la estática comparativa}$",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$A = \\begin{pmatrix} -2 & 6 \\\\ 8 & -2 \\end{pmatrix}$, con $\\operatorname{tr}(A) = -4$ y $\\det(A) = -44$, invirtiendo el signo de la sensibilidad de la inversión a la tasa de interés en el mercado de bienes.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Concluir erróneamente que una menor respuesta de la inversión hace el ajuste más cíclico}$",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$A = \\begin{pmatrix} -2 & -6 \\\\ 8 & -2 \\end{pmatrix}$, con $\\operatorname{tr}(A) = -4 < 0$, $\\det(A) = 52 > 0$ y $\\Delta = -192 < 0$, describiendo un foco estable con convergencia oscilatoria amortiguada hacia $(Y^*, r^*)$.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$A = \\begin{pmatrix} 2 & -6 \\\\ 8 & -2 \\end{pmatrix}$, con traza inestable $\\operatorname{tr}(A) = 0$ y $\\det(A) = 44$, omitiendo verificar la condición de estabilidad $c(1 - \\tau) < 1$ en el mercado de bienes.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir estabilidad cuando } c(1 - \\tau) > 1 \\text{ genera una traza positiva explosiva}$",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$A = \\begin{pmatrix} -2 & -6 \\\\ 8 & -2 \\end{pmatrix}$, afirmando ajuste instantáneo continuo donde los excesos de demanda se anulan en todo instante $t$ sin rezago temporal ni convergencia dinámica.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Eliminar la ecuación diferencial de expectativas asumiendo ajuste sin fricciones}$",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$A = \\begin{pmatrix} -2 & -6 \\\\ 8 & -2 \\end{pmatrix}$, con $\\operatorname{tr}(A) = -4 < 0$ y $\\Delta = -192 < 0$, pero concluyendo que engendra un ciclo límite autosostenido permanente sin disipación asintótica.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Afirmar que un sistema lineal con autovalores complejos engendra fluctuaciones permanentes sin disipación}$",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$A = \\begin{pmatrix} 8 & -2 \\\\ -2 & -6 \\end{pmatrix}$, con $\\operatorname{tr}(A) = 2$ y $\\det(A) = -52$, intercambiando las ecuaciones de ajuste entre los mercados de bienes y de dinero en la matriz.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Desplazamiento erróneo de la curva de ajuste de producción en el diagrama de fase}$",
+          "distractor_id": "D-C05-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Identifique los coeficientes de la matriz jacobiana $A$ a partir de las derivadas parciales de las ecuaciones de ajuste de bienes y dinero.",
+        "Calcule la traza $\\operatorname{tr}(A)$ y el determinante $\\det(A)$, verificando las condiciones de estabilidad de Routh-Hurwitz.",
+        "Evalúe el signo del discriminante $\\Delta = [\\operatorname{tr}(A)]^2 - 4\\det(A)$ para distinguir entre un nodo monótono ($\\Delta > 0$) y un foco oscilatorio amortiguado ($\\Delta < 0$)."
+      ],
+      "detailed_solution": "El sistema dinámico continuo IS-LM expresado en desviaciones respecto al equilibrio estacionario es $\\dot{X} = A(X - X^*)$, donde $A = \\begin{pmatrix} -2 & -6 \\\\ {8} & -2 \\end{pmatrix}$. La traza de la matriz jacobiana es $\\operatorname{tr}(A) = -2 - 2 = -4 < 0$, y el determinante es $\\det(A) = (-2)(-2) - (-6)(8) = 52 > 0$. Al ser $\\operatorname{tr}(A) < 0$ y $\\det(A) > 0$, el punto de equilibrio $(Y^*, r^*)$ es asintóticamente estable por el criterio de Routh-Hurwitz. Como el discriminante de la ecuación característica es $\\Delta = [\\operatorname{tr}(A)]^2 - 4\\det(A) = (-4)^2 - 4(52) = -192 < 0$, los autovalores son complejos conjugados con parte real negativa, lo que caracteriza un foco estable amortiguado. Además, el estado estacionario satisface $\\dot{Y} = 0$ y $\\dot{r} = 0$, por lo que las velocidades de ajuste $c_1$ y $c_2$ determinan únicamente la rapidez de convergencia y los autovalores, sin alterar la posición de $(Y^*, r^*)$."
+    },
+    {
+      "id": "Q-Hab05-241",
+      "competency_id": "Hab-05",
+      "competency_name": "Resolución y Calibración de Sistemas Macroeconómicos Dinámicos Continuos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Sustentando la solución en los principios teóricos, halle: Considere el modelo macroeconómico dinámico continuo IS-LM en el plano $(Y, R)$ definido por $\\dot Y = 1 [(0.55 - 1) Y - 2 R + 16]$ y $\\dot R = 5 [4 Y - 5 R + -2]$. En la representación matricial $\\dot X = A X + B$ con vector de estado $X = (Y, R)^T$, determine la caracterización analítica y cálculo del estado estacionario $X^*$ del sistema:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La calibración paramétrica alternativa con $\\mu = 1.0$ genera una matriz dinámica con traza $\\operatorname{tr}(A) = -25.45$ y $\\det(A) = 25.6$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Discriminante y autovalores calculados con matriz incompleta}$",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "La trayectoria temporal general del sistema es $X(t) = e^{\\lambda_1 t} v_1 + e^{\\lambda_2 t} v_2 + X^*$ con ponderaciones unitarias fijas",
+          "is_correct": false,
+          "error_rationale": "$X(0) \\neq \\binom{Y_0}{r_0} \\text{ violando las condiciones iniciales del problema de Cauchy}$",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El estado estacionario del sistema es $X^* = (2.2, 1.9)^T$ obtenido por agregación directa de los componentes del vector autónomo $B$",
+          "is_correct": false,
+          "error_rationale": "$X^* \\text{ calculado sin considerar el determinante de la matriz } A$",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "En el equilibrio dinámico con curva de Phillips adaptativa, la tasa de inflación de largo plazo converge a un valor disjunto $p^* \\neq \\pi^*$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Existencia espuria de discrepancia entre inflación efectiva y esperada en estado estacionario}$",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Una disminución en la sensibilidad financiera $\\Delta \\mu < 0$ induce una reducción permanente en el nivel de ingreso de equilibrio $Y^*$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Conclusión errónea sobre el efecto estático comparativo de una política crediticia}$",
+          "distractor_id": "D-Hab05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El estado estacionario es $X^* = (8.2, 6.16)^T$ con matriz dinámica $A$ de traza $\\operatorname{tr}(A) = -25.45$ y determinante $\\det(A) = 51.25$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La matriz dinámica del sistema adopta coeficientes positivos $\\mu c_1 = 2$ y $\\gamma c_2 = 25$ con derivadas de tasa de interés positivas",
+          "is_correct": false,
+          "error_rationale": "$\\operatorname{tr}(A) > 0 \\text{ y determinantes con signos opuestos a la estructura teórica}$",
+          "distractor_id": "D-Hab05-01"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Plantee las ecuaciones dinámicas en la forma matricial $\\dot X = A X + B$, prestando especial atención a los signos negativos de las sensibilidades a la tasa de interés.",
+        "Para calcular el estado estacionario $X^* = (Y^*, R^*)^T$, resuelva el sistema algebraico lineal $A X^* + B = 0$ invirtiendo la matriz $A$.",
+        "Verifique las condiciones de estabilidad del equilibrio analizando el signo de la traza $\\operatorname{tr}(A) < 0$ y del determinante $\\det(A) > 0$."
+      ],
+      "detailed_solution": "El sistema dinámico continuo en forma matricial es $\\dot X = A X + B$. Resolviendo la condición de equilibrio estacionario $A X^* + B = 0$, se obtiene el estado estacionario $X^* = (8.2, 6.16)^T$. Dado que la traza jacobiana es $\\operatorname{tr}(A) = -25.45 < 0$ y el determinante es $\\det(A) = 51.25 > 0$, ambos autovalores poseen parte real estrictamente negativa, lo que garantiza la estabilidad asintótica del equilibrio."
+    },
+    {
+      "id": "Q-Hab05-242",
+      "competency_id": "Hab-05",
+      "competency_name": "Resolución y Calibración de Sistemas Macroeconómicos Dinámicos Continuos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Siguiendo el procedimiento analítico estándar, calcule: Considere el modelo macroeconómico dinámico continuo IS-LM en el plano $(Y, R)$ definido por $\\dot Y = 5 [(0.85 - 1) Y - 4 R + 22]$ y $\\dot R = 4 [2 Y - 4 R + -14]$. En la representación matricial $\\dot X = A X + B$ con vector de estado $X = (Y, R)^T$, determine la caracterización analítica y cálculo del estado estacionario $X^*$ del sistema:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El estado estacionario del sistema es $X^* = (3.5, 1.7)^T$ obtenido por agregación directa de los componentes del vector autónomo $B$",
+          "is_correct": false,
+          "error_rationale": "$X^* \\text{ calculado sin considerar el determinante de la matriz } A$",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El estado estacionario es $X^* = (16.74, 4.87)^T$ con matriz dinámica $A$ de traza $\\operatorname{tr}(A) = -16.75$ y determinante $\\det(A) = 172.0$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La matriz dinámica del sistema adopta coeficientes positivos $\\mu c_1 = 20$ y $\\gamma c_2 = 16$ con derivadas de tasa de interés positivas",
+          "is_correct": false,
+          "error_rationale": "$\\operatorname{tr}(A) > 0 \\text{ y determinantes con signos opuestos a la estructura teórica}$",
+          "distractor_id": "D-Hab05-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La trayectoria temporal general del sistema es $X(t) = e^{\\lambda_1 t} v_1 + e^{\\lambda_2 t} v_2 + X^*$ con ponderaciones unitarias fijas",
+          "is_correct": false,
+          "error_rationale": "$X(0) \\neq \\binom{Y_0}{r_0} \\text{ violando las condiciones iniciales del problema de Cauchy}$",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "En el equilibrio dinámico con curva de Phillips adaptativa, la tasa de inflación de largo plazo converge a un valor disjunto $p^* \\neq \\pi^*$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Existencia espuria de discrepancia entre inflación efectiva y esperada en estado estacionario}$",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La calibración paramétrica alternativa con $\\mu = 2.0$ genera una matriz dinámica con traza $\\operatorname{tr}(A) = -16.75$ y $\\det(A) = 86.0$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Discriminante y autovalores calculados con matriz incompleta}$",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Una disminución en la sensibilidad financiera $\\Delta \\mu < 0$ induce una reducción permanente en el nivel de ingreso de equilibrio $Y^*$",
+          "is_correct": false,
+          "error_rationale": "$\\text{Conclusión errónea sobre el efecto estático comparativo de una política crediticia}$",
+          "distractor_id": "D-Hab05-04"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Plantee las ecuaciones dinámicas en la forma matricial $\\dot X = A X + B$, prestando especial atención a los signos negativos de las sensibilidades a la tasa de interés.",
+        "Para calcular el estado estacionario $X^* = (Y^*, R^*)^T$, resuelva el sistema algebraico lineal $A X^* + B = 0$ invirtiendo la matriz $A$.",
+        "Verifique las condiciones de estabilidad del equilibrio analizando el signo de la traza $\\operatorname{tr}(A) < 0$ y del determinante $\\det(A) > 0$."
+      ],
+      "detailed_solution": "El sistema dinámico continuo en forma matricial es $\\dot X = A X + B$. Resolviendo la condición de equilibrio estacionario $A X^* + B = 0$, se obtiene el estado estacionario $X^* = (16.74, 4.87)^T$. Dado que la traza jacobiana es $\\operatorname{tr}(A) = -16.75 < 0$ y el determinante es $\\det(A) = 172.0 > 0$, ambos autovalores poseen parte real estrictamente negativa, lo que garantiza la estabilidad asintótica del equilibrio."
+    },
+    {
+      "id": "Q-C06-271",
+      "competency_id": "C-06",
+      "competency_name": "Dinámica No Lineal en Modelos Ecológicos y Ciclos Económicos de Goodwin",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el modelo macroeconómico de ciclos distributivos de Goodwin y Lotka-Volterra, la dinámica de la tasa de empleo $v$ y la participación salarial $u$ está regida por el sistema bilineal $\\dot v = v(0.4 - 0.5 u)$ y $\\dot u = u(-0.1 + 0.45 v)$, donde la tasa de crecimiento demográfico es $n = 0.03$. Determine la caracterización cualitativa y cuantitativa del equilibrio interior $(u^*, v^*)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El equilibrio estacionario en el espacio fásico invierte sus coordenadas resultando en $(u^*, v^*) = (0.222, 0.8)$ según las tasas marginales.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Coordenadas del equilibrio invertidas entre los ejes de empleo y salarios}$",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El equilibrio genera atracción asintótica global donde las trayectorias convergen hacia un único ciclo límite periódico aislado e independiente, para la muestra de datos observada.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Afirmar que existe un atractor periódico global independiente de las condiciones iniciales}$",
+          "distractor_id": "D-C06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La curva salarial de Phillips estipula que un mayor nivel de empleo $v$ induce una reducción en el ritmo de crecimiento de los salarios reales.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ecuaciones diferenciales formuladas con signo inverso en la curva de Phillips}$",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El modelo biológico de dos especies competidoras genera órbitas periódicas cerradas continuas idénticas al sistema predador-presa de Goodwin.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir dinámica armónica cerrada en el modelo de supervivencia del más fuerte}$",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El equilibrio interior es $(u^*, v^*) = (0.8, 0.222)$ con jacobiano de traza nula $\\operatorname{tr}(J^*) = 0$ y centro de órbitas cerradas continuas.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Los autovalores imaginarios $\\lambda = \\pm 0.2 i$ generan inestabilidad fásica global con trayectorias espirales divergentes hacia el infinito.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir hiperinflación o colapso del empleo por presencia de números imaginarios}$",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La tasa demográfica $n = 0.03$ altera la acumulación pero no modifica la participación salarial distributiva de largo plazo $u^*$ del sistema.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir neutralidad distributiva de largo plazo ante cambios demográficos}$",
+          "distractor_id": "D-C06-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Iguale las derivadas temporales $\\dot v = 0$ y $\\dot u = 0$ considerando únicamente la solución interior con empleo y salarios estrictamente positivos.",
+        "Linealice el sistema bilineal mediante la matriz jacobiana evaluada en el estado estacionario $(u^*, v^*)$ y calcule su traza y determinante.",
+        "Deduzca el tipo de punto de equilibrio a partir de los autovalores imaginarios puros $\\lambda = \\pm i \\sqrt{\\det(J^*)}$, distinguiendo un centro de un ciclo límite atrayente."
+      ],
+      "detailed_solution": "El modelo de Goodwin-Lotka-Volterra iguala $\\dot v = v(0.4 - 0.5 u) = 0$ y $\\dot u = u(-0.1 + 0.45 v) = 0$. Para el equilibrio interior no trivial se obtiene $u^* = \\frac{0.4}{0.5} = 0.8$ y $v^* = \\frac{0.1}{0.45} = 0.222$. El jacobiano evaluado en dicho punto posee traza nula $\\operatorname{tr}(J^*) = 0$ y determinante positivo $\\det(J^*) = 0.04 > 0$, generando autovalores puramente imaginarios $\\lambda = \\pm {0.2} i$. Esto caracteriza un centro rodeado por una familia continua de órbitas periódicas cerradas en el plano $(v, u)$."
+    },
+    {
+      "id": "Q-C06-272",
+      "competency_id": "C-06",
+      "competency_name": "Dinámica No Lineal en Modelos Ecológicos y Ciclos Económicos de Goodwin",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere el siguiente planteamiento formal: En el modelo macroeconómico de ciclos distributivos de Goodwin y Lotka-Volterra, la dinámica de la tasa de empleo $v$ y la participación salarial $u$ está regida por el sistema bilineal $\\dot v = v(0.2 - 0.8 u)$ y $\\dot u = u(-0.35 + 0.75 v)$, donde la tasa de crecimiento demográfico es $n = 0.01$. Determine la caracterización cualitativa y cuantitativa del equilibrio interior $(u^*, v^*)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Los autovalores imaginarios $\\lambda = \\pm 0.265 i$ generan inestabilidad fásica global con trayectorias espirales divergentes hacia el infinito, de acuerdo con la teoría econométrica.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir hiperinflación o colapso del empleo por presencia de números imaginarios}$",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El equilibrio estacionario en el espacio fásico invierte sus coordenadas resultando en $(u^*, v^*) = (0.467, 0.25)$ según las tasas marginales.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Coordenadas del equilibrio invertidas entre los ejes de empleo y salarios}$",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La curva salarial de Phillips estipula que un mayor nivel de empleo $v$ induce una reducción en el ritmo de crecimiento de los salarios reales.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Ecuaciones diferenciales formuladas con signo inverso en la curva de Phillips}$",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El modelo biológico de dos especies competidoras genera órbitas periódicas cerradas continuas idénticas al sistema predador-presa de Goodwin.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Asumir dinámica armónica cerrada en el modelo de supervivencia del más fuerte}$",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El equilibrio interior es $(u^*, v^*) = (0.25, 0.467)$ con jacobiano de traza nula $\\operatorname{tr}(J^*) = 0$ y centro de órbitas cerradas continuas.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La tasa demográfica $n = 0.01$ altera la acumulación pero no modifica la participación salarial distributiva de largo plazo $u^*$ del sistema.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predecir neutralidad distributiva de largo plazo ante cambios demográficos}$",
+          "distractor_id": "D-C06-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El equilibrio genera atracción asintótica global donde las trayectorias convergen hacia un único ciclo límite periódico aislado e independiente.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Afirmar que existe un atractor periódico global independiente de las condiciones iniciales}$",
+          "distractor_id": "D-C06-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Iguale las derivadas temporales $\\dot v = 0$ y $\\dot u = 0$ considerando únicamente la solución interior con empleo y salarios estrictamente positivos.",
+        "Linealice el sistema bilineal mediante la matriz jacobiana evaluada en el estado estacionario $(u^*, v^*)$ y calcule su traza y determinante.",
+        "Deduzca el tipo de punto de equilibrio a partir de los autovalores imaginarios puros $\\lambda = \\pm i \\sqrt{\\det(J^*)}$, distinguiendo un centro de un ciclo límite atrayente."
+      ],
+      "detailed_solution": "El modelo de Goodwin-Lotka-Volterra iguala $\\dot v = v(0.2 - 0.8 u) = 0$ y $\\dot u = u(-0.35 + 0.75 v) = 0$. Para el equilibrio interior no trivial se obtiene $u^* = \\frac{0.2}{0.8} = 0.25$ y $v^* = \\frac{0.35}{0.75} = 0.467$. El jacobiano evaluado en dicho punto posee traza nula $\\operatorname{tr}(J^*) = 0$ y determinante positivo $\\det(J^*) = 0.07 > 0$, generando autovalores puramente imaginarios $\\lambda = \\pm {0.265} i$. Esto caracteriza un centro rodeado por una familia continua de órbitas periódicas cerradas en el plano $(v, u)$."
+    },
+    {
+      "id": "Q-Hab06-291",
+      "competency_id": "Hab-06",
+      "competency_name": "Análisis Cualitativo y Estabilidad de Sistemas No Lineales de Crecimiento, Polución y Especies",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Al examinar detenidamente las condiciones de frontera, resuelva: Considere el modelo de producción y polución ambiental definido por el sistema dinámico no lineal: $\\dot{k} = 0.35\\frac{k^{0.60}}{p} - 0.15k$ y $\\dot{p} = k^{2.5} - 0.55p$, donde la tasa de ahorro es $s = 0.35$, la tasa de depreciación del capital es $\\delta = 0.15$, la tasa de disipación de contaminantes es $\\gamma = 0.55$, y las elasticidades del sistema son $\\alpha = 0.60$ y $\\beta = 2.5$. Al determinar el punto de equilibrio interior $(k^*, p^*)$, las derivadas parciales de la matriz jacobiana $J(k^*, p^*)$ y clasificar la estabilidad asintótica local en dicho estado estacionario, se concluye que:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "El equilibrio interior es $k^* = \\left(\\frac{0.35\\cdot 0.55}{0.15}\\right)^{\\frac{1}{1-0.60+2.5}}$, con derivada cruzada $J_{12} = -\\frac{0.35(k^*)^{0.60}}{(p^*)^2}$ y determinante $\\det(J^*) = (1 - 0.60 + 2.5)\\cdot 0.15\\cdot 0.55 > 0$, siendo un equilibrio asintóticamente estable.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El equilibrio interior es $k^* = \\left(\\frac{0.35}{0.15}\\right)^{\\frac{1}{1-0.60}}$, desacoplando la dinámica del capital respecto a la polución $p$ y evaluando la convergencia local mediante la derivada unidimensional del capital en el estado estacionario.",
+          "is_correct": false,
+          "error_rationale": "$k^* \\text{ calculado con la fórmula de Solow estándar sin interacción ambiental}$",
+          "distractor_id": "D-Hab06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La dinámica global depende de una separatriz entre trayectorias, de modo que cualquier condición inicial con razón capital-polución $k/p$ por encima de la diagonal converge hacia la dominancia monótona del stock de capital $k$ frente a la polución $p$ en el largo plazo.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predicción contraria de la especie ganadora en el problema de supervivencia}$",
+          "distractor_id": "D-Hab06-05"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El equilibrio interior presenta un determinante jacobiano evaluado como $\\det(J^*) = 0.15\\cdot 0.55(0.60 - 1) < 0$, lo que clasifica al punto estacionario $(k^*, p^*)$ como un punto silla inestable en el plano de fases del sistema dinámico.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Determinante negativo espurio por cancelar términos cruzados del producto } J_{12}J_{21}$",
+          "distractor_id": "D-Hab06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El comportamiento dinámico se linealiza en tasas de crecimiento según $\\frac{\\dot{g}_A}{g_A} = 2.5 g_K + 0.55 n + 0.70 g_A$, asumiendo rendimientos de escala constantes e interacciones lineales entre variables agregadas de producción y conocimiento.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Omitir el término } -1 \\text{ proveniente de dividir } \\dot{A} \\text{ entre } A$",
+          "distractor_id": "D-Hab06-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El equilibrio interior satisface $\\operatorname{tr}(J^*) = (0.60 - 1)\\cdot 0.15 - 0.55 < 0$, lo que permite clasificarlo como atractor asintóticamente estable sin requerir la evaluación explícita del determinante jacobiano $\\det(J^*)$ en el punto estacionario.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Clasificación de un punto silla como sumidero estable basándose únicamente en la traza negativa}$",
+          "distractor_id": "D-Hab06-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El equilibrio interior es $k^* = \\left(\\frac{0.35\\cdot 0.55}{0.15}\\right)^{\\frac{1}{1-0.60+2.5}}$, con derivada cruzada $J_{12} = +\\frac{0.35(k^*)^{0.60}}{(p^*)^2}$ en la matriz jacobiana, alterando el acoplamiento mutuo entre la polución y la acumulación de capital en el sistema dinámico.",
+          "is_correct": false,
+          "error_rationale": "$J_{12} > 0 \\text{ sugiriendo que un aumento de polución acelera la acumulación de capital}$",
+          "distractor_id": "D-Hab06-02"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Plantee las condiciones de estado estacionario igualando simultáneamente $\\dot{k} = 0$ y $\\dot{p} = 0$ para despejar el punto de equilibrio acoplado $(k^*, p^*)$.",
+        "Construya la matriz jacobiana $J(k, p)$ calculando cuidadosamente las derivadas parciales, en particular el término cruzado $\\frac{\\partial \\dot{k}}{\\partial p} = -s \\frac{k^\\alpha}{p^2}$.",
+        "Evalúe la traza $\\operatorname{tr}(J^*)$ y el determinante $\\det(J^*)$ en el equilibrio interior $(k^*, p^*)$ para clasificar rigurosamente la estabilidad asintótica local."
+      ],
+      "detailed_solution": "Para determinar el punto de equilibrio interior $(k^*, p^*)$ y evaluar su estabilidad asintótica local:\n1. Condiciones de estado estacionario ($\\dot{k} = 0$, $\\dot{p} = 0$):\nDe $\\dot{p} = k^\\beta - \\gamma p = 0$, se obtiene $p^* = \\frac{(k^*)^\\beta}{\\gamma}$.\nSustituyendo en $\\dot{k} = s \\frac{(k^*)^\\alpha}{p^*} - \\delta k^* = 0$, resulta:\n$$s \\gamma (k^*)^{\\alpha - \\beta} = \\delta k^* \\implies (k^*)^{1 - \\alpha + \\beta} = \\frac{s \\gamma}{\\delta} \\implies k^* = \\left(\\frac{s \\gamma}{\\delta}\\right)^{\\frac{1}{1 - \\alpha + \\beta}}$$\n2. Matriz jacobiana en el estado estacionario:\nLas derivadas parciales evaluadas en $(k^*, p^*)$ son $J_{11} = (\\alpha - 1)\\delta$, $J_{12} = -s \\frac{(k^*)^\\alpha}{(p^*)^2}$, $J_{21} = \\beta (k^*)^{\\beta - 1}$ y $J_{22} = -\\gamma$.\n3. Clasificación de estabilidad:\nLa traza es $\\operatorname{tr}(J^*) = (\\alpha - 1)\\delta - \\gamma < 0$ (puesto que $0 < \\alpha < 1$).\nEl determinante es $\\det(J^*) = (1 - \\alpha + \\beta)\\delta\\gamma > 0$ (puesto que $1 - \\alpha + \\beta > 0$).\nDado que $\\operatorname{tr}(J^*) < 0$ y $\\det(J^*) > 0$, ambos valores propios tienen parte real estrictamente negativa, por lo que el equilibrio es asintóticamente estable."
+    },
+    {
+      "id": "Q-Hab06-292",
+      "competency_id": "Hab-06",
+      "competency_name": "Análisis Cualitativo y Estabilidad de Sistemas No Lineales de Crecimiento, Polución y Especies",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Con arreglo a las definiciones operativas del sistema, verifique: Considere el modelo de producción y polución ambiental definido por el sistema dinámico no lineal: $\\dot{k} = 0.25\\frac{k^{0.60}}{p} - 0.14k$ y $\\dot{p} = k^{2.0} - 0.40p$, donde la tasa de ahorro es $s = 0.25$, la tasa de depreciación del capital es $\\delta = 0.14$, la tasa de disipación de contaminantes es $\\gamma = 0.40$, y las elasticidades del sistema son $\\alpha = 0.60$ y $\\beta = 2.0$. Al determinar el punto de equilibrio interior $(k^*, p^*)$, las derivadas parciales de la matriz jacobiana $J(k^*, p^*)$ y clasificar la estabilidad asintótica local en dicho estado estacionario, se concluye que:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La dinámica global depende de una separatriz entre trayectorias, de modo que cualquier condición inicial con razón capital-polución $k/p$ por encima de la diagonal converge hacia la dominancia monótona del stock de capital $k$ frente a la polución $p$ en el largo plazo.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Predicción contraria de la especie ganadora en el problema de supervivencia}$",
+          "distractor_id": "D-Hab06-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El equilibrio interior es $k^* = \\left(\\frac{0.25\\cdot 0.40}{0.14}\\right)^{\\frac{1}{1-0.60+2.0}}$, con derivada cruzada $J_{12} = -\\frac{0.25(k^*)^{0.60}}{(p^*)^2}$ y determinante $\\det(J^*) = (1 - 0.60 + 2.0)\\cdot 0.14\\cdot 0.40 > 0$, siendo un equilibrio asintóticamente estable.",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El equilibrio interior es $k^* = \\left(\\frac{0.25\\cdot 0.40}{0.14}\\right)^{\\frac{1}{1-0.60+2.0}}$, con derivada cruzada $J_{12} = +\\frac{0.25(k^*)^{0.60}}{(p^*)^2}$ en la matriz jacobiana, alterando el acoplamiento mutuo entre la polución y la acumulación de capital en el sistema dinámico.",
+          "is_correct": false,
+          "error_rationale": "$J_{12} > 0 \\text{ sugiriendo que un aumento de polución acelera la acumulación de capital}$",
+          "distractor_id": "D-Hab06-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "El comportamiento dinámico se linealiza en tasas de crecimiento según $\\frac{\\dot{g}_A}{g_A} = 2.0 g_K + 0.40 n + 0.40 g_A$, asumiendo rendimientos de escala constantes e interacciones lineales entre variables agregadas de producción y conocimiento.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Omitir el término } -1 \\text{ proveniente de dividir } \\dot{A} \\text{ entre } A$",
+          "distractor_id": "D-Hab06-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El equilibrio interior satisface $\\operatorname{tr}(J^*) = (0.60 - 1)\\cdot 0.14 - 0.40 < 0$, lo que permite clasificarlo como atractor asintóticamente estable sin requerir la evaluación explícita del determinante jacobiano $\\det(J^*)$ en el punto estacionario.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Clasificación de un punto silla como sumidero estable basándose únicamente en la traza negativa}$",
+          "distractor_id": "D-Hab06-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El equilibrio interior es $k^* = \\left(\\frac{0.25}{0.14}\\right)^{\\frac{1}{1-0.60}}$, desacoplando la dinámica del capital respecto a la polución $p$ y evaluando la convergencia local mediante la derivada unidimensional del capital en el estado estacionario.",
+          "is_correct": false,
+          "error_rationale": "$k^* \\text{ calculado con la fórmula de Solow estándar sin interacción ambiental}$",
+          "distractor_id": "D-Hab06-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El equilibrio interior presenta un determinante jacobiano evaluado como $\\det(J^*) = 0.14\\cdot 0.40(0.60 - 1) < 0$, lo que clasifica al punto estacionario $(k^*, p^*)$ como un punto silla inestable en el plano de fases del sistema dinámico.",
+          "is_correct": false,
+          "error_rationale": "$\\text{Determinante negativo espurio por cancelar términos cruzados del producto } J_{12}J_{21}$",
+          "distractor_id": "D-Hab06-06"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Plantee las condiciones de estado estacionario igualando simultáneamente $\\dot{k} = 0$ y $\\dot{p} = 0$ para despejar el punto de equilibrio acoplado $(k^*, p^*)$.",
+        "Construya la matriz jacobiana $J(k, p)$ calculando cuidadosamente las derivadas parciales, en particular el término cruzado $\\frac{\\partial \\dot{k}}{\\partial p} = -s \\frac{k^\\alpha}{p^2}$.",
+        "Evalúe la traza $\\operatorname{tr}(J^*)$ y el determinante $\\det(J^*)$ en el equilibrio interior $(k^*, p^*)$ para clasificar rigurosamente la estabilidad asintótica local."
+      ],
+      "detailed_solution": "Para determinar el punto de equilibrio interior $(k^*, p^*)$ y evaluar su estabilidad asintótica local:\n1. Condiciones de estado estacionario ($\\dot{k} = 0$, $\\dot{p} = 0$):\nDe $\\dot{p} = k^\\beta - \\gamma p = 0$, se obtiene $p^* = \\frac{(k^*)^\\beta}{\\gamma}$.\nSustituyendo en $\\dot{k} = s \\frac{(k^*)^\\alpha}{p^*} - \\delta k^* = 0$, resulta:\n$$s \\gamma (k^*)^{\\alpha - \\beta} = \\delta k^* \\implies (k^*)^{1 - \\alpha + \\beta} = \\frac{s \\gamma}{\\delta} \\implies k^* = \\left(\\frac{s \\gamma}{\\delta}\\right)^{\\frac{1}{1 - \\alpha + \\beta}}$$\n2. Matriz jacobiana en el estado estacionario:\nLas derivadas parciales evaluadas en $(k^*, p^*)$ son $J_{11} = (\\alpha - 1)\\delta$, $J_{12} = -s \\frac{(k^*)^\\alpha}{(p^*)^2}$, $J_{21} = \\beta (k^*)^{\\beta - 1}$ y $J_{22} = -\\gamma$.\n3. Clasificación de estabilidad:\nLa traza es $\\operatorname{tr}(J^*) = (\\alpha - 1)\\delta - \\gamma < 0$ (puesto que $0 < \\alpha < 1$).\nEl determinante es $\\det(J^*) = (1 - \\alpha + \\beta)\\delta\\gamma > 0$ (puesto que $1 - \\alpha + \\beta > 0$).\nDado que $\\operatorname{tr}(J^*) < 0$ y $\\det(J^*) > 0$, ambos valores propios tienen parte real estrictamente negativa, por lo que el equilibrio es asintóticamente estable."
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [],
+    "template_residues": [],
+    "blind_replacements": []
+  },
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-20 13:26:21",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}

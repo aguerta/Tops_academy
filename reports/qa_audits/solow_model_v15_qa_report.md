@@ -3,11 +3,12 @@
 > [!NOTE]
 > **CURSO CERTIFICADO PARA PRODUCCIÓN INMEDIATA**: Este informe presenta la auditoría pedagógica, técnica y psicométrica integral realizada sobre la versión oficial `solow_model_v15`.
 
-**Estado en Plataforma:** ACTIVO / CERTIFICADO  
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-10-20 13:26:24  
 **Curso Auditado:** Dominio del Modelo de Crecimiento de Solow  
 **Identificador del Curso:** `solow_model_v15`  
 **Archivo Fuente:** `solow_model_v15.json`  
-**Fecha de Evaluación:** 19 de Octubre de 2026  
+**Fecha de Evaluación:** 20 de Octubre de 2026  
 **Auditor Técnico Pedagógico:** Course QA Auditor — Top's Academy  
 **Marco Normativo de Referencia:** Quality Matters (QM), OSCQR y Mastery Learning  
 
@@ -15,7 +16,7 @@
 
 ## 1. Resumen Ejecutivo
 
-El curso **"Dominio del Modelo de Crecimiento de Solow"** (`solow_model_v15`) ha sido sometido a una auditoría técnica, curricular y psicométrica exhaustiva bajo los estándares de calidad de **Top's Academy**. La evaluación combinó la ingestión de la telemetría métrica determinista universal provista en el payload determinista con el **Loop de Verificación Semántica Adaptativa** aplicado a las 15 micro-competencias del curso, inspeccionando rigurosamente el rigor conceptual, la formulación matemática de Solow (1956), la plausibilidad y valor diagnóstico de los 2,160 distractores, el andamiaje socrático de 3 pistas por ítem y la compilabilidad formal de KaTeX.
+El curso **"Dominio del Modelo de Crecimiento de Solow"** (`solow_model_v15`), asociado a la conversación `Crear Curso Modelo Solow` (`4ceacf92`), ha sido sometido a una auditoría técnica, curricular y psicométrica exhaustiva bajo los estándares de calidad de **Top's Academy**. La evaluación combinó la ingestión directa de la telemetría métrica determinista provista en `solow_model_v15_payload.json` con el **Loop de Verificación Semántica Adaptativa** aplicado a las 15 micro-competencias del curso, inspeccionando rigurosamente el rigor conceptual, la formulación matemática de Solow (1956), la plausibilidad y valor diagnóstico de los 2,160 distractores, el andamiaje socrático de 3 pistas por ítem y la compilabilidad formal de KaTeX.
 
 | Métrica de Auditoría | Valor Consolidado | Estado / Estándar QM-OSCQR |
 | :--- | :--- | :--- |
@@ -62,7 +63,7 @@ xychart-beta
 ### Dimensión 1: Arquitectura y Granularidad (4.0 / 4.0 pts)
 * **Estándar Normativo:** Micro-habilidades atómicas, prerrequisitos explícitos modelados en Grafo Acíclico Dirigido (DAG), balance cognitivo óptimo entre Hechos [H], Conceptos [C] y Habilidades [Hab], y suficiencia muestral de problemas por unidad.
 * **Evaluación de Hallazgos:**
-  - El curso exhibe una estructura curricular impecable articulada en **15 micro-competencias atómicas** que segmentan minuciosamente el modelo de crecimiento de Solow (1956):
+  - El curso exhibe una estructura curricular articulada en **15 micro-competencias atómicas** que segmentan minuciosamente el modelo de crecimiento de Solow (1956):
     - **Hechos [Fact]:** 3 unidades (20.0%) dedicadas a definiciones axiomáticas fundamentales (forma intensiva $q = \phi(k)$, ecuación diferencial fundamental $\dot{k} = s\phi(k) - \lambda k$, y la ecuación de arbitraje de activos $i = q/p + \dot{p}/p$).
     - **Conceptos [Concept]:** 6 unidades (40.0%) enfocadas en principios estructurales (sustitución factorial y Euler, estabilidad global en diagrama de fases, estado uniforme equilibrado, colapso de Harrod-Domar bajo proporciones fijas, distribución funcional neoclásica de precios de factores, y equilibrios múltiples con trampa de pobreza demográfica).
     - **Habilidades [Skill]:** 6 unidades (40.0%) dedicadas a la resolución cuantitativa y deducción operativa (derivación de la regla de la cadena para $\dot{k}$, resolución analítica de la ecuación de Bernoulli Cobb-Douglas, cálculo de capital estacionario y estática comparativa, umbral de existencia en tecnologías CES, dinámica asintótica con progreso técnico Hicks-neutral, y modelación de política fiscal).
@@ -102,7 +103,7 @@ xychart-beta
   - **Rigor Macroeconómico de Solow (1956):** El curso reproduce con fidelidad matemática los resultados fundamentales del modelo neoclásico y sus extensiones:
     - Cumplimiento estricto del teorema de Euler y rendimientos marginales decrecientes ($F_{KK} < 0, F_{LL} < 0$).
     - Ley de acumulación fundamental $\dot{k} = s\phi(k) - \lambda k$.
-    - Análisis cualitativo de estabilidad global mediante el signo de la derivada de fase $\left.\frac{d\dot{k}}{dk}\right|_{\bar{k}} = s\phi'(\bar{k}) - \lambda < 0$.
+    - Análisis cualitativo de estabilidad global mediante el signo de la derivada de fase $\left.\frac{d\dot{k}}{dk}\right|_{\bar{k}} = s\phi'(\\bar{k}) - \lambda < 0$.
     - Resolución formal de la ecuación no lineal de Bernoulli para tecnologías Cobb-Douglas mediante $z \equiv k^{1-\alpha}$ y factor integrante lineal.
     - Contraste formal con el filo de la navaja de Harrod-Domar bajo Leontief, demostrando cómo surge desempleo estructural secular cuando $n > s/a$ o capacidad ociosa redundante cuando $n < s/a$.
     - Dinámica de frontera en tecnologías CES con elasticidad de sustitución $\sigma = 2$ ($\rho = 1/2$), derivando el umbral de bifurcación $s a^2 < n$ para la existencia de un estado estacionario finito frente al crecimiento perpetuo sin cota.

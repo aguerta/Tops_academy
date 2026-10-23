@@ -1,0 +1,79 @@
+{
+  "course_metadata": {
+    "course_id": "practica_parcial_saul_standard",
+    "unit_title": "Practica Parcial Saul Standard: Ecuaciones en Derivadas Parciales y Sistemas Dinámicos Macroeconómicos",
+    "detected_objective": "Dominio y aplicación analítica integral de ecuaciones en derivadas parciales (método de Lagrange, problemas de Cauchy, funciones homogéneas y teorema de Euler, optimización de la producción, lema de Hotelling, identidad de Roy y precios espaciales) y sistemas de ecuaciones diferenciales dinámicos lineales y no lineales (IS-LM, inflación-desempleo, Goodwin, Lotka-Volterra, planos de fases, isoclinas nulas, clasificación traza-determinante y análisis de estabilidad asintótica local y global).",
+    "total_competencies": 65,
+    "total_questions": 1590,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 1590
+    }
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 3.9,
+      "max": 4.0,
+      "feedback": "Excepcional arquitectura curricular modular con 65 micro-competencias altamente atómicas que cubren exhaustivamente el cálculo avanzado y los sistemas dinámicos macroeconómicos. Muestra un balance cognitivo óptimo: 11 Hechos [H] (16.9%), 25 Conceptos [C] (38.5%) y 29 Habilidades [Hab] (44.6%), asegurando una transición fluida desde fundamentos axiomáticos hacia la resolución procedimental y cualitativa compleja. El Grafo Acíclico Dirigido (DAG) conecta coherentemente los prerrequisitos hacia las habilidades avanzadas. Existen 26 competencias raíz sin prerrequisitos (11 Hechos y 15 Conceptos basales) que actúan como puntos de entrada naturales. La densidad por competencia es sobresaliente (20 reactivos en Hechos/Conceptos y 30 en Habilidades), con cero competencias subpobladas (mínimo 20 reactivos, superando con creces la norma regulatoria de 3)."
+    },
+    "assessment_quality": {
+      "score": 4.2,
+      "max": 5.0,
+      "feedback": "Sobresaliente calidad psicométrica general con 1,590 reactivos en formato de opción múltiple con 7 alternativas (A-G), reduciendo la probabilidad de acierto por azar al 14.3%. Se evaluaron 9,540 distractores con una cobertura del 100.0% de rationales diagnósticos explícitos (error_rationale), modelando errores matemáticos y económicos auténticos de la literatura (confusión de derivadas parciales, inversión de coeficientes en jacobianos, violación de condiciones de Cauchy, inversión de signos en multiplicadores de Lagrange y descarte indebido de equilibrios). Cero fugas de respuesta en enunciados. Se descuentan 0.8 puntos debido a dos factores: (1) ausencia total de variedad en tipología de ítems (100% MC7, sin selección múltiple ni fill-in-the-blank) y (2) presencia de etiquetas explicativas del error en el texto visible de ciertas alternativas incorrectas (e.g., 'despejando erróneamente...', 'introduciendo un signo negativo espurio...', 'confundiendo la evolución...'), que ofrecen pistas metacognitivas no deseadas."
+    },
+    "scaffolding_hints": {
+      "score": 4.4,
+      "max": 5.0,
+      "feedback": "Andamiaje pedagógico y feedback formativo de alta calidad. El 100% de los reactivos (1,590/1,590) cuenta con exactamente 3 pistas escalonadas socráticas: Pista 1 (Conceptual) -> Pista 2 (Procedimental) -> Pista 3 (Cálculo operativo paso a paso), guiando el razonamiento sin regalar el valor numérico final. El 100% de los reactivos dispone de una solución detallada completa (detailed_solution) que desarrolla analíticamente el paso a paso algebraico y geométrico. Se descuentan 0.6 puntos debido a la detección de residuos literales de variables de plantilla no interpoladas ({j21}, {omega}, {p}, {a}, {b}, {gamma}, {theta}, {p0}) en un subconjunto de soluciones detalladas, evidenciando un leve fallo en la sustitución de cadenas de plantilla."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación instruccional impecable (100% de congruencia semántica). Cero preguntas huérfanas en el catálogo (0 orphan items) y cero contaminación cruzada inter-dominio. Cada ítem evalúa con rigor y exactitud la competencia asignada, abarcando desde EDPs de primer orden (Lagrange, Cauchy, Euler, Hotelling, Roy) hasta dinámica no lineal en el plano (Goodwin, Lotka-Volterra, IS-LM, curvas isoclinas, variedades invariantes de punto silla y bifurcaciones/centros). Fuerte congruencia con los niveles de Aplicación y Análisis de la Taxonomía de Bloom."
+    },
+    "technical_ergonomics": {
+      "score": 1.8,
+      "max": 2.0,
+      "feedback": "Excelente ergonomía técnica y compilabilidad KaTeX. Cero llaves desbalanceadas, cero delimitadores triples espurios ($$$), cero dobles llaves residuales ({{...}}), cero delimitadores abiertos sin cierre y cero fragmentos de LaTeX huérfanos en texto plano. La notación de matrices (\\begin{pmatrix} ... \\end{pmatrix}), derivadas parciales, índices y caracteres griegos compila de forma limpia en frontend. Se descuentan 0.2 puntos debido a la inserción tipográfica de llaves de variables no interpoladas dentro del entorno KaTeX (ej. \\det(H) = -{p}^2 < 0 o J^* = \\begin{pmatrix} 0 & -0.1333 \\cr {j21} & 0 \\end{pmatrix}), que aunque no rompen el renderizador, degradan la estética formal."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 18.3,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "remediation_actions": [
+    "Aprobar el curso para producción inmediata en la plataforma interactiva Top's Academy, certificando su alto rigor matemático, microeconómico y macroeconómico dinámico.",
+    "Corrección de variables de plantilla en detailed_solution: Ejecutar un reemplazo dirigido sobre las soluciones detalladas afectadas para interpolar los valores numéricos/simbólicos correspondientes en lugar de los identificadores entre llaves ({j21}, {omega}, {p}, {a}, {b}, {gamma}, {theta}, {p0}) en competencias como Hab-19, Hab-29, C-02 y C-06.",
+    "Refactorización de distractores con metainformación delatora: En competencias como Hab-01, Hab-02 y Hab-14, eliminar los calificativos léxicos explícitos en el texto visible de las opciones (tales como 'despejando erróneamente...', 'introduciendo un signo negativo espurio...') y trasladarlos exclusivamente al campo 'error_rationale'.",
+    "Diversificación psicométrica futura: Para futuras iteraciones curriculares, incorporar ítems de selección múltiple (multiple_select) y de respuesta numérica directa (fill_in_the_blank) para complementar el banco actual homogéneo de MC7.",
+    "Cierre de prerrequisitos raíz: Declarar explícitamente prerrequisitos globales de entrada (e.g., 'Cálculo Multivariable', 'Álgebra Lineal Matricial') para las 26 competencias basales (11 Hechos y 15 Conceptos raíz)."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "uninterpolated_math_placeholder_linter",
+      "severity": "medium",
+      "description": "Detecta identificadores o variables de plantilla sin interpolar encerrados en llaves simples dentro de expresiones matemáticas o texto explicativo (ej. '{j21}', '{omega}', '{p}', '{a}', '{b}', '{gamma}', '{theta}', '{p0}') en reactivos y soluciones detalladas, originados por plantillas de formateo donde los argumentos no fueron suministrados en la interpolación o sufrieron doble escape.",
+      "regex_pattern": "(?<!\\\\)\\{([a-zA-Z][a-zA-Z0-9_]*)\\}(?!\\s*[\\{])",
+      "evidence_items": [
+        "Q-C02-131",
+        "Q-C02-132",
+        "Q-C06-441",
+        "Q-Hab19-1041",
+        "Q-Hab19-1042",
+        "Q-Hab29-1561",
+        "Q-Hab29-1562"
+      ]
+    },
+    {
+      "rule_id": "telltale_distractor_gerund_label_linter",
+      "severity": "medium",
+      "description": "Detecta opciones de distractores visibles que contienen autoconfesiones o rótulos metacognitivos del error mediante cláusulas de gerundio (ej. 'despejando erróneamente...', 'introduciendo un signo negativo espurio...', 'confundiendo la evolución...'), lo cual delata la opción errónea sin requerir que el estudiante ejecute el análisis procedimental.",
+      "regex_pattern": "\\b(despejando|introduciendo|confundiendo|asumiendo|omitiendo|restringiendo|invirtiendo|fijando|adoptando|sustituyendo)\\s+(erróneamente|espurio|incorrectamente|arbitrariamente|ingenuamente)\\b",
+      "evidence_items": [
+        "Q-Hab01-021",
+        "Q-Hab01-022",
+        "Q-Hab02-051",
+        "Q-Hab02-052",
+        "Q-Hab14-791"
+      ]
+    }
+  ]
+}

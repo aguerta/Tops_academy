@@ -7,7 +7,9 @@
     "total_questions": 360,
     "question_types_distribution": {
       "multiple_choice_7_options": 360
-    }
+    },
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-10-20 13:26:24"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -66,5 +68,8 @@
         "Q-C06-342"
       ]
     }
-  ]
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-20 13:26:24",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

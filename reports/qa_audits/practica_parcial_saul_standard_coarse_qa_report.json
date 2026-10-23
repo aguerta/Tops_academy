@@ -1,0 +1,65 @@
+{
+  "course_metadata": {
+    "course_id": "practica_parcial_saul_standard_coarse",
+    "unit_title": "Practica Parcial Saul Standard Coarse",
+    "detected_objective": "Dominio y aplicación analítica integral de Ecuaciones en Derivadas Parciales de Primer Orden (curvas características y método de Lagrange) y Sistemas Dinámicos de Ecuaciones Diferenciales Ordinarias (análisis espectral, estabilidad cualitativa en el plano de fases traza-determinante, teorema de Hartman-Grobman, dinámica macroeconómica continua IS-LM y ciclos de Goodwin).",
+    "total_competencies": 13,
+    "total_questions": 320,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-10-20 13:26:21"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Excelente estructuración curricular basada en un Grafo Acíclico Dirigido (DAG) perfectamente balanceado y conectado. Posee 13 micro-competencias con clara delimitación jerárquica (1 Hecho [H-01], 6 Conceptos [C-01 a C-06] y 6 Habilidades [Hab-01 a Hab-06]), ancladas en dos nodos raíz conceptuales fundamentales (C-01 para EDPs y C-02 para sistemas de EDOs). Cero competencias desabastecidas (mínimo de 20 reactivos en conceptos/hecho y 30 en habilidades prácticas)."
+    },
+    "assessment_quality": {
+      "score": 4.9,
+      "max": 5.0,
+      "feedback": "Extraordinaria solidez psicométrica en el banco de 320 reactivos bajo formato uniforme de opción múltiple de 7 alternativas (MC7). El 100% de los distractores evaluados (1,920 opciones de distracción) cuentan con 'error_rationale' diagnóstico explícito, abordando con gran rigor errores conceptuales y procedimentales arquetípicos (inversión de pendientes características, pérdida de términos seculares, confusión de paridades de homogeneidad, etc.). Cero delaciones o confesiones visibles en los distractores (telltale cues = 0) y cero answer leaks. Se deduce 0.1 pt únicamente por la homogeneidad exclusiva en tipo de ítem (100% MC7, sin reactivos de selección múltiple o fill-in-the-blank)."
+    },
+    "scaffolding_hints": {
+      "score": 4.6,
+      "max": 5.0,
+      "feedback": "El andamiaje cognitivo es consistente y de alta calidad: el 100% de las preguntas dispone de exactamente 3 pistas escalonadas socráticas (Pista 1: Conceptual -> Pista 2: Metodológica/Procedimental -> Pista 3: Cálculo operativo y discriminación de casos) y una solución detallada completa. Se deduce 0.4 pts debido a la presencia de residuos de tokens de plantilla algebraicos no interpolados ('{c}' en Hab-01 y '{d}' en el jacobiano de C-04) detectados mediante el análisis semántico de las soluciones paso a paso."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación instruccional impecable. Cada uno de los 320 reactivos está estrictamente alineado con su objetivo pedagógico y contenido teórico declarado, sin preguntas huérfanas (orphan_questions = 0) ni contaminación cruzada inter-dominio. El nivel taxonómico de Bloom se sitúa congruentemente en los niveles de Aplicación (Nivel 3) y Análisis cualitativo-cuantitativo (Nivel 4)."
+    },
+    "technical_ergonomics": {
+      "score": 1.5,
+      "max": 2.0,
+      "feedback": "Sintaxis matemática globalmente clara, balanceada y de alto nivel formal en KaTeX, sin delimitadores triples espurios ('$$$') ni llaves dobles desbalanceadas. No obstante, se descuentan 0.5 pts por el hallazgo semántico de 'desfase de delimitadores KaTeX por omisión de apertura' (Inverted Delimiter Parity Shift) en las soluciones detalladas de Hab-01 (ej. Q-Hab01-021 y Q-Hab01-022), donde la falta de un signo '$' de apertura expone comandos como '\\frac' e '\\implies' en texto plano y conmuta erróneamente la prosa explicativa a modo matemático."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 19.0,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "remediation_actions": [
+    "Corregir el desfase de delimitadores KaTeX en las soluciones detalladas de Hab-01 (específicamente la inserción del signo '$' de apertura antes de las razones diferenciales subsidiarias de Lagrange, ej. '$9 \\frac{dx}{x} - 9 \\frac{dy}{y} = 0...$').",
+    "Revisar el motor de interpolación paramétrica para eliminar residuos literales de variables de plantilla algebraicas entre llaves ('{c}' en Hab-01 y '{d}' en matrices jacobianas de C-04) en las plantillas de soluciones detalladas.",
+    "Para futuras iteraciones del curso, incorporar diversidad de reactivos interactivos (como Fill-in-the-blank para cálculo de autovalores o Multiple Select para propiedades de diagramas de fase) para complementar el banco actual de MC7."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "katex_delimiter_parity_shift_linter",
+      "dimension": "D5_katex",
+      "target": "all_text_fields",
+      "description": "Detecta comandos LaTeX de renderizado matemático (tales como '\\frac', '\\implies', '\\partial', '\\sum', '\\sqrt') ubicados en fragmentos de texto plano FUERA de los bloques delimitados por '$' o '$$', o prosa gramatical con puntuación formal dentro de bloques '$...$', síntoma de un desfase por omisión de delimitadores que pasa desapercibido ante linters de paridad par simple.",
+      "severity": "critical"
+    },
+    {
+      "rule_id": "unsubstituted_template_token_linter",
+      "dimension": "D2_assessment",
+      "target": "stem_hints_solutions",
+      "description": "Detecta variables de plantilla alfabéticas de una sola letra encerradas entre llaves literales (ej. '{c}', '{d}', '{a}', '{b}') dentro de entornos matriciales o expresiones algebraicas en las que se esperaba la sustitución numérica de un coeficiente paramétrico.",
+      "severity": "warning"
+    }
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-20 13:26:21",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}

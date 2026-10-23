@@ -1,0 +1,68 @@
+{
+  "course_metadata": {
+    "course_id": "practica_parcial_saul",
+    "unit_title": "Practica Parcial Saul",
+    "detected_objective": "Dominio, formulación y resolución analítica rigurosa de EDPs cuasilineales de primer orden mediante curvas características, integrales primeras, problemas de Cauchy y sus aplicaciones en teoría económica avanzada (teoría de la producción y Euler, dualidad del consumidor y Roy, Hotelling, modelos espaciales de transporte, y sistemas dinámicos continuos y de bifurcación como Lotka-Volterra).",
+    "total_competencies": 118,
+    "total_questions": 2850
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Excelente arquitectura curricular y atomicidad micro-estructural. Distribución de competencias perfectamente balanceada bajo los principios de Mastery Learning: 32 Hechos [Fact] (27.1%), 37 Conceptos [Concept] (31.4%) y 49 Habilidades [Skill] (41.5%), formando una sólida pirámide cognitiva donde los fundamentos fácticos y conceptuales sustentan la resolución operativa de habilidades analíticas. Grafo de dependencias (DAG) explícito y coherente, con 38 nodos raíz fundacionales y 80 competencias con prerrequisitos claramente delimitados sin ciclos. Excelente densidad de reactivos por competencia (20 a 30 ítems por nodo, media de 24.15 reactivos/competencia, 0 competencias subpobladas)."
+    },
+    "assessment_quality": {
+      "score": 4.6,
+      "max": 5.0,
+      "feedback": "Calidad psicométrica sobresaliente con reactivos de opción múltiple de 7 alternativas (MC7) en el 100% del banco (2850 ítems), reduciendo la probabilidad de acierto por azar al 14.3%. El 100% de los distractores (17,100 distractores evaluados) cuenta con error_rationale diagnóstico y plausible que ataca concepciones erróneas canónicas en EDPs y microeconomía matemática (violaciones de transversalidad, fallas de homogeneidad de Euler, signos invertidos en derivadas de Lagrange, confusión de dinámica de equilibrio). Cero distractores delatores (telltale = 0) y cero fugas de respuestas (answer leaks = 0). Se deduce 0.4 pts debido al monocultivo de formato de reactivo (ausencia de ítems multiple_select o fill-in-the-blank) y deslices menores donde ciertos rationales conservan expresiones de ejemplos base del generador (ej. mención de funciones trigonométricas en problemas puramente polinomiales en Hab-02)."
+    },
+    "scaffolding_hints": {
+      "score": 4.5,
+      "max": 5.0,
+      "feedback": "Andamiaje pedagógico de alto calibre. Cero reactivos sin pistas (zero_hints = 0). El 100% de los reactivos implementa exactamente 3 pistas socráticas rigurosamente escalonadas (8550 pistas en total) que transitan progresivamente desde el principio conceptual abstracto (Pista 1), a la estrategia procedimental intermedia (Pista 2), hasta la verificación operativa y resolución de cálculo paso a paso (Pista 3) sin revelar la respuesta prematuramente. 100% de cobertura de soluciones detalladas completas (2850 detailed_solutions). Se deduce 0.5 pts por detección semántica de variables de plantilla no sustituidas en detailed_solution de Hab-49 ('5 \\cdot {a} = 100' y '\\lambda = \\pm {omega}i') y desajuste de notación en pistas de Hab-16 (pistas que mencionan variables canónicas K, L, t, n mientras el enunciado parametriza funciones abstractas con u, v, \\mu, \\alpha)."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación instruccional impecable. Congruencia semántica absoluta entre las competencias formuladas y el banco de evaluación. Cero preguntas huérfanas (orphan_questions = 0) y total pertinencia disciplinar en la articulación de EDPs aplicadas a la teoría económica. Cobertura taxonómica de Bloom óptimamente calibrada con fuerte énfasis en Aplicación (Skill) y Análisis (Concept)."
+    },
+    "technical_ergonomics": {
+      "score": 1.6,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica globalmente robusta con cero delimitadores desbalanceados, cero triples delimitadores ($$$) y cero colapsos de KaTeX compilables. Se deduce 0.4 pts por defectos sintácticos descubiertos en la interpolación de cadenas de plantillas matemáticas: en Hab-16 (Q-Hab16-951 y Q-Hab16-952) la macro \\mu se concatenó sin espacio con variables paramétricas produciendo '\\muu' y '\\muv' (macro no estándar en LaTeX), además de contener variables literales entre llaves en modo matemático ('\\mu{v1}', '\\mu{v2}') y residuos '{a}', '{omega}' en Hab-49."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 18.7,
+  "quality_tier": "EXCELENTE (17-20)",
+  "remediation_actions": [
+    "Corregir en los templates generadores de Hab-16 la interpolación de \\mu para garantizar espacios obligatorios antes de variables (reemplazar '\\mu{var}' por '\\mu {var}', transformando '\\muu' y '\\muv' en '\\mu u' y '\\mu v').",
+    "Depurar los templates de detailed_solution en la competencia Hab-49 para asegurar la sustitución aritmética de los parámetros '{a}' y '{omega}' por sus valores calculados concretos en el discriminante y autovalores de Lotka-Volterra.",
+    "Alinear la notación del andamiaje (hints y error_rationales) en Hab-16 para que coincida exactamente con las variables declaradas en el enunciado ($u, v, \\mu, \\alpha$ en lugar de variables fijas de producción $K, L, t, n$).",
+    "Para iteraciones futuras, diversificar el banco de evaluación incorporando reactivos de selección múltiple (multiple_select) y fill-in-the-blank para enriquecer la variedad de pruebas psicométricas."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "katex_concatenated_macro_linter",
+      "target_dimension": "technical_ergonomics",
+      "description": "Detecta macros de KaTeX (ej. \\mu, \\alpha, \\beta, \\theta, \\lambda) seguidas inmediatamente por caracteres alfabéticos sin espacio ni delimitador (ej. '\\muu', '\\muv', '\\thetax'), usualmente originadas por interpolaciones f-string defectuosas f'\\mu{var}'.",
+      "severity": "medium",
+      "suggested_regex": "\\\\[a-zA-Z]+[a-zA-Z]{1,2}(?=[^a-zA-Z]|$)"
+    },
+    {
+      "rule_id": "unexpanded_math_template_placeholder_linter",
+      "target_dimension": "scaffolding_hints",
+      "description": "Detecta parámetros entre llaves simples dentro de bloques matemáticos KaTeX (ej. '\\cdot {a}', '\\pm {omega}i', '\\mu{v1}') que coinciden con identificadores de variables de plantilla y que no constituyen macros de LaTeX válidas.",
+      "severity": "medium",
+      "suggested_regex": "\\{[a-zA-Z_][a-zA-Z0-9_]*\\}(?=[^a-zA-Z0-9_]|$)"
+    },
+    {
+      "rule_id": "scaffolding_variable_consistency_linter",
+      "target_dimension": "instructional_alignment",
+      "description": "Detecta desajustes semánticos entre las variables utilizadas en el enunciado de la pregunta (stem) y las variables citadas en las pistas de andamiaje (hints) o en los rationales de distractores (ej. enunciado con variables genéricas u, v frente a pistas con K, L).",
+      "severity": "low",
+      "suggested_regex": "semantic_variable_crosscheck"
+    }
+  ]
+}

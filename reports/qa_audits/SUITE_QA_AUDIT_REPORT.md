@@ -1,71 +1,97 @@
-# Reporte Maestro Consolidado: Auditoría de Calidad de la Suite de Cursos
+# Matriz Comparativa Consolidada de Auditoría QA de Calidad Pedagógica y Psicométrica
+## Suite de Cursos Auditados (Quality Matters, OSCQR y Mastery Learning)
 
-**Fecha de Ejecución:** 12 de Octubre de 2026  
-**Última Actualización:** 13 de Octubre de 2026 (Post-saneamiento KaTeX y Verificación Estricta)  
-**Estándares de Evaluación:** Quality Matters (QM), OSCQR Higher Ed, Mastery Learning  
-**Orquestador Multi-Agente:** Google Antigravity SDK Orchestrator  
-**Subagentes Ejecutados:** `course_qa_auditor` (Gemini Flash High, ejecución paralela aislada)
-
----
-
-## 1. Resumen Ejecutivo y Matriz Comparativa de la Suite
-
-Se ha completado la auditoría exhaustiva y concurrente sobre la suite de cursos en la plataforma Top's Academy. Tras el saneamiento sintáctico y la remediación KaTeX (`bf7e634`), el curso activo de producción `estadistica3_regresion_v3` cuenta con certificación plena.
-
-### Matriz Comparativa Consolidada
-
-| Curso | Preguntas | Comp. | D1: Arq. (4 pts) | D2: React. (5 pts) | D3: Pistas (5 pts) | D4: Alin. (4 pts) | D5: KaTeX (2 pts) | Pen. | Nota Final | Quality Tier | Estado | Fecha Eliminación |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :---: |
-| **Estadística III: Econometría** (`estadistica3_regresion_v3`) | 390 | 16 | **3.8** | **4.8** | **4.8** | **4.0** | **2.0** | 0.0 | **19.4 / 20.0** | **EXCELENTE** | Eliminado de la Plataforma | 2026-10-17 00:24:26 |
-| **Modelo de Crecimiento de Solow** (`solow_growth_model`) | 580 | 25 | **3.8** | **4.8** | **4.8** | **3.9** | **2.0** | 0.0 | **19.3 / 20.0** | **EXCELENTE** | Eliminado de la Plataforma | 2026-10-16 19:08:36 |
-| **Modelo de Solow (Versión Inicial)** (`solow_model`) | 1,040 | 44 | **3.3** | **3.2** | **3.7** | **3.8** | **1.3** | 0.0 | **15.3 / 20.0** | **ACEPTABLE** | Eliminado de la Plataforma | 2026-10-18 22:25:16 |
-| **Promedio Global de la Suite** | **2,010** | **85** | **3.63** | **4.27** | **4.43** | **3.90** | **1.77** | **0.0** | **18.00 / 20.0** | **EXCELENTE** | Suite Histórica Auditada |
+**Fecha de Consolidación:** `2026-10-20`  
+**Modalidad:** Auditoría Agéntica Híbrida (Fast Deterministic Pass + Subagentes Concurrentes `course_qa_auditor`)  
+**Corridas y Cursos Evaluados:**
+1. [`4ceacf92`](conversation://4ceacf92-ef82-4fb0-899d-87aa310873c1) — **Dominio del Modelo de Crecimiento de Solow** (`solow_model_v15`)
+2. [`a53e6af1`](conversation://a53e6af1-07b8-4246-8afd-4b4ac647d536) — **Practica Parcial Saul Standard Coarse** (`practica_parcial_saul_standard_coarse`)
+3. [`acdc402d`](conversation://acdc402d-0803-468b-9c6c-b069a2dc6c09) — **Practica Parcial Saul (Masivo)** (`practica_parcial_saul`)
+4. [`f9b9d459`](conversation://f9b9d459-d84a-4e3d-bf32-48e74d8b5c5a) — **Practica Parcial Saul Standard** (`practica_parcial_saul_standard`)
+5. [`afb5aa18`](conversation://afb5aa18-d2f3-4bd2-b452-4b73c313316e) — **Practica Parcial Saul Standard Coarse V2** (`practica_parcial_saul_standard_coarse_v2`)
 
 ---
 
-## 2. Hallazgos Sistemáticos y Patrones Transversales
+## 1. Tabla de Calificaciones y Matriz Comparativa (20 Puntos)
 
-### Fortalezas Compartidas de la Plataforma
-1. **Rigor Psicométrico y Cobertura de Distractores (QM 3.1, Mastery Learning):**
-   - El 100% de los distractores en ambos cursos cuentan con explicación diagnóstica de error (`error_rationale`) pedagógicamente motivada.
-   - Variedad amplia de reactivos combinando opción múltiple de 7 alternativas (MC7), selección múltiple (MS) y respuesta numérica/fill-in-the-blank (FIB).
-2. **Andamiaje Socrático Escalonado (QM 3.5, OSCQR 40):**
-   - Cobertura de 3 pistas progresivas por reactivo (Pista 1: Conceptual $\to$ Pista 2: Procedimental $\to$ Pista 3: Cálculo Operativo) y soluciones paso a paso con advertencia de ideas erróneas (`misconception_warning`).
-   - Cero preguntas sin andamiaje (`hints = 0` es 0 en reactivos de producción).
-3. **Alineación Cognitiva de Alto Orden (Bloom / OSCQR 14):**
-   - Promedio de 67.5% de reactivos evaluando niveles de Aplicación y Análisis, superando con creces la memorización básica.
-
-### Patrones Críticos de Vulnerabilidad y Desviación (Históricos y Resueltos)
-1. **Sintaxis KaTeX y Procesamiento de f-strings en Python (Dimensión 5):**
-   - Detectado inicialmente en generación automática con comandos anidados (`\hat{\boldsymbol{\beta}`, etc.) con llaves sin cerrar y dobles llaves residuales `{{...}}`. *Completamente subsanado en commit `bf7e634` y blindado con la Regla R-20 en commit `75ba68d`.*
-2. **Metainformación Delatora ("Telltale Distractors" en Dimensión 2):**
-   - En `solow_model`, 130 opciones confesaban textualmente su error (*"tras factorizar erróneamente..."*). *Erradicado mediante la formalización de la Regla R-18 (filtro antidelación).*
-3. **Corrupción Matemática Conceptual en Ítems Clave:**
-   - En `solow_model` (`Q-C04-169`), la opción declaraba $\phi(k) < 0$ en lugar de $\phi''(k) < 0$. *Motivó el retiro del curso y la formalización de la preservación de apóstrofes de derivadas en el ensamblador.*
+| Curso / Identificador | Dim 1: Arq. & DAG (4.0) | Dim 2: Reactivos (5.0) | Dim 3: Andamiaje (5.0) | Dim 4: Alineación (4.0) | Dim 5: KaTeX (2.0) | Penalizaciones | Nota Final | Quality Tier | Estado Operativo  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---  :---:  :---:  :---: |
+| **`solow_model_v15`** (`4ceacf92`) | **4.0** | **5.0** | **5.0** | **4.0** | **2.0** | 0.0 | **20.0 / 20.0** | **EXCELENTE** | ✅ Producción Inmediata (Certificación Plena) | Nulo | Eliminado de la Plataforma | 2026-10-20 13:26:24 |
+| **`practica_parcial_saul_standard_coarse`** (`a53e6af1`) | **4.0** | **4.9** | **4.6** | **4.0** | **1.5** | 0.0 | **19.0 / 20.0** | **EXCELENTE** | ✅ Producción Inmediata (Aprobado) | Nulo | 2026-10-20 13:26:21 | Nulo |
+| **`practica_parcial_saul`** (`acdc402d`) | **4.0** | **4.6** | **4.5** | **4.0** | **1.6** | 0.0 | **18.7 / 20.0** | **EXCELENTE** | ✅ Producción Inmediata (Observaciones Menores) | Nulo | Nulo | Nulo |
+| **`practica_parcial_saul_standard`** (`f9b9d459`) | **3.9** | **4.2** | **4.4** | **4.0** | **1.8** | 0.0 | **18.3 / 20.0** | **EXCELENTE** | ✅ Producción Inmediata (Pulido Opcional) | Nulo | Nulo | Nulo |
+| **`practica_parcial_saul_standard_coarse_v2`** (`afb5aa18`) | **3.2** | **4.2** | **4.0** | **4.0** | **1.4** | 0.0 | **16.8 / 20.0** | **ACEPTABLE** | ⚠️ Requiere Pulido Previo a Producción | 2026-10-20 13:26:15 | 2026-10-20 13:26:21 | Nulo |
 
 ---
 
-## 3. Dictamen Individual por Curso
+## 2. Metrología Psicométrica y Cobertura de la Suite
 
-### 1. `estadistica3_regresion_v3` (Calificación: 19.4 / 20.0 — EXCELENTE)
-- **Veredicto:** Curso de máxima excelencia pedagógica y técnica, certificado para producción.
-- **Acciones Ejecutadas:**
-  1. Se aplicó el saneamiento sintáctico KaTeX cerrando llaves en `\hat{\boldsymbol{\beta}}`, `\hat{\mathbf{u}}`, `\hat{\mathbf{Y}}`, `\frac{\text{SRC}}{\text{STC}}`.
-  2. Se depuraron las interpolaciones residuales en soluciones de inferencia.
-  3. Verificación estricta exitosa (`python -m src.validator.cli courses/estadistica3_regresion_v3.json --strict` -> EXIT 0).
-
-### 2. `solow_growth_model` (Calificación: 19.3 / 20.0 — EXCELENTE)
-- **Veredicto:** Curso de alta excelencia tras reingeniería y saneamiento total de KaTeX, DAG de 25 competencias y erradicación de fugas.
-- **Resolución:** Eliminado de la plataforma interactiva (`delete-course`) conforme al ciclo de vida de experimentación, preservando su informe de auditoría (`reports/qa_audits/solow_growth_model_qa_report.md`) y telemetría forense.
-
-### 3. `solow_model` (Calificación: 15.3 / 20.0 — ACEPTABLE)
-- **Veredicto:** Aprobado con observaciones metodológicas, pero con problemas pedagógicos y conceptuales sustanciales.
-- **Resolución:** Conforme a la directiva institucional, este curso fue **eliminado por completo de la plataforma** (`delete-course`), preservando únicamente este informe histórico.
+| Parámetro Psicométrico | `solow_model_v15` | `saul_coarse` (v1) | `saul_masivo` (Fine) | `saul_standard` | `saul_coarse_v2` | Total Suite Auditada |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Total Micro-Competencias** | 15 | 13 | 118 | 65 | 14 | **225 competencias** |
+| **Total Preguntas Validadas** | 360 | 320 | 2,850 | 1,590 | 370 | **5,490 reactivos** |
+| **Formato de Reactivos** | 100% MC7 | 100% MC7 | 100% MC7 | 100% MC7 | 100% MC7 | **100% MC7 (5,490 items)** |
+| **Distractores con Rationale** | 2,160 / 2,160 (100%) | 1,920 / 1,920 (100%) | 17,100 / 17,100 (100%) | 9,540 / 9,540 (100%) | 2,220 / 2,220 (100%) | **32,940 / 32,940 (100.0%)** |
+| **Pistas Escalonadas (Hints)** | 1,080 (3/preg) | 960 (3/preg) | 8,550 (3/preg) | 4,770 (3/preg) | 1,110 (3/preg) | **16,470 pistas (100.0%)** |
+| **Soluciones Detalladas** | 360 (100%) | 320 (100%) | 2,850 (100%) | 1,590 (100%) | 370 (100%) | **5,490 soluciones (100.0%)** |
+| **Distractores Delatores (Telltale)** | 0 | 0 | 0 | Telltale gerunds en Hab-01/02 | 0 | **Aislados en 1 curso** |
+| **Answer Leaks** | 0 | 0 | 0 | 0 | 0 | **0 en toda la suite** |
+| **Preguntas Huérfanas** | 0 | 0 | 0 | 0 | 0 | **0 en toda la suite** |
 
 ---
 
-## 4. Plan de Acción y Estado de Implementación en el Motor de Generación
+## 3. Diagnóstico Técnico Pedagógico Transversal
 
-1. **Pipeline de Validación KaTeX Pre-Publicación [COMPLETADO]:** Integrada la Regla R-20 en `src/validator/rules.py` con validación de aridad de macros (`\frac{}{}`), macros anidados, entornos cerrados, balance de delimitadores y erradicación de llaves dobles.
-2. **Filtro Léxico Antidelación [COMPLETADO]:** Implementada la Regla R-18 (`ERR_META_GIVEAWAY`) que prohíbe términos diagnósticos ("erróneamente", "omitiendo", "falsamente") en el contenido visible para el alumno.
-3. **Modelado Explícito de Prerrequisitos [COMPLETADO]:** El pipeline v3 (`cta_merge.py`, `plan_shards.py`) modela y enlaza el grafo DAG acíclico de prerrequisitos inter-sesión.
+### 3.1. Fortalezas Sistémicas Consolidadas
+1. **Andamiaje Psicométrico Universal:** En los **5,490 reactivos evaluados** (32,940 opciones), el 100% posee:
+   - 3 pistas socráticas escalonadas (Conceptual $\to$ Procedimental $\to$ Operativo).
+   - Cobertura total de `error_rationale` diagnóstico para cada una de las 6 opciones distractoras por ítem.
+   - Solución analítica detallada completa.
+2. **Alineación Instruccional Perfecta (4.0/4.0 en todos los cursos):** Cero preguntas huérfanas, sin contaminación inter-dominio y estricto enfoque en niveles 3 y 4 de Bloom (Aplicación y Análisis).
+3. **Erradicación del Acierto por Azar:** El estándar exclusivo de 7 alternativas (MC7) abate la probabilidad de acierto aleatorio al $14.28\%$, superando los estándares convencionales de la industria (25% en 4 alternativas).
+
+### 3.2. Vulnerabilidades Técnicas y Áreas de Mejora
+1. **Monocultivo de Tipología de Ítems (100% MC7):** Ninguno de los 5 cursos incorpora reactivos de respuesta numérica directa (`fill_in_the_blank`) ni selección múltiple (`multiple_select`), restando versatilidad psicométrica.
+2. **Residuos de Variables de Plantilla en Modo Matemático:**
+   - En `practica_parcial_saul_standard_coarse_v2` (`afb5aa18`): variables sin sustituir `{b}`, `{c}`, `{d}` compiladas literalmente en KaTeX.
+   - En `practica_parcial_saul` (`acdc402d`): expresiones tipo `5 \cdot {a} = 100` y `\lambda = \pm {omega}i` en `Hab-49`.
+   - En `practica_parcial_saul_standard` (`f9b9d459`): tokens `{j21}`, `{omega}` en 4 competencias.
+3. **Desfase de Delimitadores KaTeX (*Inverted Parity Shift*):**
+   - Detectado en `practica_parcial_saul_standard_coarse` (`a53e6af1`): la omisión de un signo `$` inicial en una fórmula de `Hab-01` mantuvo la paridad par global pero invirtió el contexto texto/matemática.
+4. **Desconexiones en Grafo DAG en Variantes Coarse:**
+   - En `afb5aa18` (`coarse_v2`): 7 competencias quedaron con `prerequisites: []` desconectadas de las raíces conceptuales, provocando un puntaje de 3.2 en D1.
+
+---
+
+## 4. Loop de Auto-Mejora: Catálogo de Nuevas Reglas Descubiertas (`discovered_lint_rules`)
+
+A partir de las auditorías agénticas, se han identificado y formalizado **6 nuevas reglas de linter** para retroalimentar `scripts/standardized_audit_engine.py`:
+
+```mermaid
+graph TD
+    subgraph NewLinters ["Catálogo de Nuevos Linters para StandardizedAuditEngine"]
+        L1["1. uninterpolated_math_placeholder_linter\nDetecta tokens simples {var} en KaTeX sin modificador de f-string"]
+        L2["2. katex_delimiter_parity_shift_linter\nDetecta macros crudos \frac, \implies en bloques de texto plano"]
+        L3["3. katex_concatenated_macro_linter\nDetecta \muu o \muv por concatenación f'\\mu{var}' sin espacio"]
+        L4["4. telltale_distractor_gerund_label_linter\nDetecta cláusulas visibles 'despejando erróneamente...'"]
+        L5["5. arithmetic_unnormalized_sign_linter\nDetecta concatenaciones crudas '+ -8' o '1x'"]
+        L6["6. dag_orphan_prerequisites_linter\nAlerta competencias 'Skill' sin prerrequisitos declarados"]
+    end
+```
+
+1. **`uninterpolated_math_placeholder_linter`** (Severidad: Media): Detecta variables `{ [a-zA-Z0-9_]+ }` en modo matemático que no corresponden a macros LaTeX válidas y delatan variables de Python no interpoladas.
+2. **`katex_delimiter_parity_shift_linter`** (Severidad: Alta): Analiza texto fuera de delimitadores `$...$` buscando comandos matemáticos (`\frac`, `\implies`, `\partial`) que evidencian un signo `$` faltante.
+3. **`katex_concatenated_macro_linter`** (Severidad: Media): Detecta macros de KaTeX seguidas de texto alfanumérico sin espacio separador (`\muu`, `\thetax`).
+4. **`telltale_distractor_gerund_label_linter`** (Severidad: Media): Detecta explicaciones delatoras en el texto visible de las opciones de distractores (ej. *"sumando erróneamente..."*).
+5. **`arithmetic_unnormalized_sign_linter`** (Severidad: Baja): Detecta operadores dobles (`+ -`) y coeficientes unitarios innecesarios (`1x`, `1y`).
+6. **`dag_orphan_prerequisites_linter`** (Severidad: Media): Detecta competencias de nivel Habilidad (`Hab-*`) que carecen de prerrequisitos de nivel Concepto o Hecho.
+
+---
+
+## 5. Rutas a Informes Individuales
+
+- [solow_model_v15_qa_report.md](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/solow_model_v15_qa_report.md) | [JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/solow_model_v15_qa_report.json)
+- [practica_parcial_saul_standard_coarse_qa_report.md](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_qa_report.md) | [JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_qa_report.json)
+- [practica_parcial_saul_qa_report.md](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_qa_report.md) | [JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_qa_report.json)
+- [practica_parcial_saul_standard_qa_report.md](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_qa_report.md) | [JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_qa_report.json)
+- [practica_parcial_saul_standard_coarse_v2_qa_report.md](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_v2_qa_report.md) | [JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_v2_qa_report.json)
