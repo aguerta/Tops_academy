@@ -70,6 +70,63 @@ WORKER_DENIED_WRITE_SUBSTRINGS = [
     "judge_ground_truth.json",
 ]
 
+_WRITE_TOOLS = (
+    "write_file",
+    "write_to_file",
+    "edit_file",
+    "replace_file_content",
+    "multi_replace_file_content",
+    "notebook_edit",
+)
+
+WORKER_AUTHORIZED_PYTHON_PATTERNS = [
+    re.compile(r"(?:^|/)shards/[a-zA-Z0-9_-]+_data\.py$", re.IGNORECASE),
+    re.compile(r"(?:^|/)shard_[a-zA-Z0-9_-]+_data\.py$", re.IGNORECASE),
+    re.compile(r"(?:^|/)(?:shards/)?shard_fixes/[^/\\<>:\"|?*]+\.py$", re.IGNORECASE),
+    re.compile(r"(?:^|/)(?:shards/)?build_[a-zA-Z0-9_-]+\.py$", re.IGNORECASE),
+    re.compile(r"(?:^|/)(?:cta/)?part_[a-zA-Z0-9_-]+\.py$", re.IGNORECASE),
+    re.compile(r"(?:^|/)cta_data\.py$", re.IGNORECASE),
+]
+
+SHARD_DATA_PATTERN = re.compile(
+    r"(?:^|/)(?:.*/shards/|shards/)?(shard_[a-zA-Z0-9_-]+|[a-zA-Z0-9_-]+)_data\.py$",
+    re.IGNORECASE,
+)
+
+
+def _extract_target_file_path(args: Dict[str, Any]) -> Optional[str]:
+    """Extracts the primary target file path from write/edit tool arguments."""
+    for k in (
+        "Path",
+        "path",
+        "AbsolutePath",
+        "absolute_path",
+        "TargetFile",
+        "target_file",
+        "file_path",
+        "filePath",
+        "file",
+    ):
+        if k in args and args[k]:
+            return _normalize_path(args[k])
+    return None
+
+
+def _is_authorized_worker_python_write(p: str) -> bool:
+    """Checks whether a .py file write is within authorized C2C worker boundaries."""
+    norm = _normalize_path(p)
+    norm_lower = norm.lower()
+    if "/scratch/" in f"/{norm_lower}" or norm_lower.startswith("scratch/"):
+        return True
+    if "/work_append/" in f"/{norm_lower}" or norm_lower.startswith("work_append/"):
+        return True
+    if "/shard_fixes/" in f"/{norm_lower}" or norm_lower.startswith("shard_fixes/"):
+        return True
+    for pat in WORKER_AUTHORIZED_PYTHON_PATTERNS:
+        if pat.search(norm):
+            return True
+    return False
+
 # Shell reader / inspection command tokens (PowerShell, CMD, bash)
 SHELL_READ_CMDS_PATTERN = re.compile(
     r"(?<![-/a-zA-Z0-9_])(?:get-content|gc|cat|type|more|head|tail|select-string|sls|grep|findstr|copy-item|copy|cp|move-item|move|mv)(?!\w)",
@@ -145,9 +202,11 @@ def _normalize_path(p: Any) -> str:
     if not p:
         return ""
     s = str(p).strip().strip('"\'')
-    if s.startswith("file:///"):
+    if s.lower().startswith("file://localhost/"):
+        s = s[17:]
+    elif s.lower().startswith("file:///"):
         s = s[8:]
-    elif s.startswith("file://"):
+    elif s.lower().startswith("file://"):
         s = s[7:]
     try:
         s = urllib.parse.unquote(s)
@@ -156,6 +215,8 @@ def _normalize_path(p: Any) -> str:
     s = s.replace("\\", "/")
     while "//" in s:
         s = s.replace("//", "/")
+    if re.match(r"^/[a-zA-Z]:", s):
+        s = s[1:]
     if s.startswith("./"):
         s = s[2:]
     return s
@@ -292,6 +353,30 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
 
     director_id = str(active_lock.get("director_conversation_id") or "").strip()
 
+    # INDEPENDENT CONVERSATION EXEMPTION: If caller_id != director_id, check whether
+    # the active director's real AGY transcript exists on disk. In a real AGY session,
+    # every child subagent spawned by director_id is recorded in director_id's transcript.jsonl.
+    # If director_id's transcript.jsonl exists on disk and does NOT contain caller_id,
+    # then caller_id is an independent top-level user/auditor session (e.g. /c2c-run-auditor,
+    # /learn) and must NOT be blocked by a concurrent C2C run.
+    if caller_id and director_id and caller_id != director_id:
+        director_transcript = (
+            Path.home()
+            / ".gemini"
+            / "antigravity"
+            / "brain"
+            / director_id
+            / ".system_generated"
+            / "logs"
+            / "transcript.jsonl"
+        )
+        if director_transcript.is_file():
+            try:
+                if caller_id not in director_transcript.read_text(encoding="utf-8", errors="ignore"):
+                    return {"decision": "allow"}
+            except OSError:
+                pass
+
     # CASE A: Caller IS Director
     if director_id and caller_id == director_id:
         file_tools = (
@@ -319,14 +404,7 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
 
     # CASE B: Caller IS C2C Worker Subagent
     read_tools = ("read_file", "view_file", "read_resource")
-    write_tools = (
-        "write_file",
-        "write_to_file",
-        "edit_file",
-        "replace_file_content",
-        "multi_replace_file_content",
-        "notebook_edit",
-    )
+    write_tools = _WRITE_TOOLS
 
     # 0. Cross-Course Isolation Guard: prevent workers from reading/copying from sibling courses/<other_id>/
     active_course_id = str(active_lock.get("course_id") or "").strip().lower()
@@ -399,6 +477,169 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                         "decision": "deny",
                         "reason": f"C2C Worker Boundary: Modification denied to protected internal skills/scripts or check attempts: {p}.",
                     }
+
+        # Stream 1D: Worker Write Isolation, Early Post-PASS Cut, & Anti-Monolithic Rewrite Guards
+        target_file = _extract_target_file_path(args) or (paths[0] if paths else "")
+        if target_file:
+            norm_target = _normalize_path(target_file)
+
+            # Rule A: Worker Python write path isolation (blocking ad-hoc debug scripts)
+            if norm_target.lower().endswith(".py"):
+                if not _is_authorized_worker_python_write(norm_target):
+                    return {
+                        "decision": "deny",
+                        "reason": (
+                            "BLOCKER:: Prohibido crear o editar scripts Python arbitrarios fuera de tu shard asignado "
+                            "(ej. scripts de debug sueltos). Escribe únicamente en work/shards/<shard_id>_data.py "
+                            "o work/shards/shard_fixes/<CID>.py."
+                        ),
+                    }
+
+            # Shard data files (.../shards/<shard_id>_data.py) guards
+            # Ensure shard_fixes is NEVER considered a shard data file
+            is_shard_fix = "/shard_fixes/" in f"/{norm_target.lower()}" or norm_target.lower().startswith("shard_fixes/")
+            if not is_shard_fix:
+                shard_match = SHARD_DATA_PATTERN.search(norm_target)
+                if shard_match:
+                    shard_id = shard_match.group(1)
+                    norm_shard_id = re.sub(r"[^\w-]", "_", shard_id)
+
+                    candidate_dirs: List[Path] = []
+                    if active_lock.get("work_dir"):
+                        try:
+                            lock_wd = Path(str(active_lock["work_dir"]))
+                            candidate_dirs.append(lock_wd)
+                            if not lock_wd.is_absolute():
+                                candidate_dirs.append(REPO_ROOT / lock_wd)
+                                candidate_dirs.append(Path.cwd() / lock_wd)
+                        except Exception:
+                            pass
+
+                    try:
+                        p_target = Path(norm_target)
+                        p_parent_2 = p_target.parent.parent
+                        candidate_dirs.append(p_parent_2)
+                        if not p_parent_2.is_absolute():
+                            candidate_dirs.append(REPO_ROOT / p_parent_2)
+                            candidate_dirs.append(Path.cwd() / p_parent_2)
+                    except Exception:
+                        pass
+
+                    seen_keys: Set[str] = set()
+                    deduped_candidate_dirs: List[Path] = []
+                    for cd in candidate_dirs:
+                        k = str(cd).replace("\\", "/").lower()
+                        if k not in seen_keys:
+                            seen_keys.add(k)
+                            deduped_candidate_dirs.append(cd)
+
+                    # Rule B: Early cut guard post-PASS (.check_attempts/pass_<shard_id>.json)
+                    for wd in deduped_candidate_dirs:
+                        for s_id in (shard_id, norm_shard_id, shard_id.lower(), norm_shard_id.lower()):
+                            try:
+                                pass_file = wd / ".check_attempts" / f"pass_{s_id}.json"
+                                if pass_file.is_file():
+                                    p_raw = pass_file.read_text(encoding="utf-8", errors="ignore")
+                                    if p_raw.strip():
+                                        p_data = json.loads(p_raw)
+                                        if isinstance(p_data, dict):
+                                            st = str(p_data.get("status", "")).strip().upper()
+                                            if st == "PASS":
+                                                return {
+                                                    "decision": "deny",
+                                                    "reason": (
+                                                        f"BLOCKER:: El shard {shard_id} ya aprobó todas las validaciones estrictas ([+] PASS). "
+                                                        "Detén llamadas a herramientas de edición y emite DONE inmediatamente."
+                                                    ),
+                                                }
+                            except Exception:
+                                continue
+
+                    # Rule C: Anti-monolithic rewrite guard after compile failure (write_file vs edit_file)
+                    full_write_tools = ("write_file", "write_to_file")
+                    if tool_name in full_write_tools:
+                        target_file_on_disk: Optional[Path] = None
+                        p_norm = Path(norm_target)
+                        check_paths = [p_norm]
+                        if not p_norm.is_absolute():
+                            check_paths.extend([REPO_ROOT / p_norm, Path.cwd() / p_norm])
+
+                        for cand_f in check_paths:
+                            try:
+                                if cand_f.is_file():
+                                    target_file_on_disk = cand_f
+                                    break
+                            except Exception:
+                                continue
+
+                        if not target_file_on_disk:
+                            for wd in deduped_candidate_dirs:
+                                for s_id in (shard_id, norm_shard_id, shard_id.lower(), norm_shard_id.lower()):
+                                    try:
+                                        cand_f = wd / "shards" / f"{s_id}_data.py"
+                                        if cand_f.is_file():
+                                            target_file_on_disk = cand_f
+                                            break
+                                    except Exception:
+                                        continue
+                                if target_file_on_disk:
+                                    break
+
+                        if target_file_on_disk:
+                            compile_file_on_disk: Optional[Path] = None
+                            for wd in deduped_candidate_dirs:
+                                for s_id in (shard_id, norm_shard_id, shard_id.lower(), norm_shard_id.lower()):
+                                    try:
+                                        cf = wd / ".check_attempts" / f"compile_{s_id}.json"
+                                        if cf.is_file():
+                                            compile_file_on_disk = cf
+                                            break
+                                    except Exception:
+                                        continue
+                                if compile_file_on_disk:
+                                    break
+
+                            if compile_file_on_disk:
+                                try:
+                                    c_raw = compile_file_on_disk.read_text(encoding="utf-8", errors="ignore")
+                                    c_data = json.loads(c_raw) if c_raw.strip() else {}
+                                except Exception:
+                                    c_data = {}
+
+                                has_compile_attempt = (
+                                    isinstance(c_data, dict)
+                                    and (
+                                        c_data.get("distinct_compiles", 0) >= 1
+                                        or bool(c_data.get("last_err_hash"))
+                                        or c_data.get("total_compiles", 0) >= 1
+                                        or c_data.get("attempts", 0) >= 1
+                                    )
+                                )
+
+                                if has_compile_attempt:
+                                    try:
+                                        existing_lines = len(
+                                            target_file_on_disk.read_text(encoding="utf-8", errors="ignore").splitlines()
+                                        )
+                                    except Exception:
+                                        existing_lines = 0
+
+                                    new_content = args.get("Content") or args.get("content") or ""
+                                    if isinstance(new_content, list):
+                                        new_lines = len(new_content)
+                                    else:
+                                        new_lines = len(str(new_content).splitlines())
+
+                                    if existing_lines > 250 or new_lines > 250:
+                                        return {
+                                            "decision": "deny",
+                                            "reason": (
+                                                f"BLOCKER:: El archivo {shard_id}_data.py ya fue compilado y supera las 250 líneas. "
+                                                "Para corregir errores de validación usa edit_file quirúrgico sobre las líneas indicadas "
+                                                "por el compilador o escribe un override modular en work/shards/shard_fixes/<CID>.py "
+                                                "en lugar de reescribir todo el archivo con write_file."
+                                            ),
+                                        }
 
     # 3. Deny circumventing via shell commands
     if tool_name in cmd_tools:
