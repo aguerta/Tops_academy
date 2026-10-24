@@ -1080,15 +1080,16 @@ def dispatch_authors(
             "\n\n".join(comp_blocks),
             "",
             "## 3. INSTRUCCIONES DE EJECUCIÓN",
-            f"1. Escribe en `{out_py}` (`TEMPLATES = [...]`) las funciones generadoras y tuplas de plantillas.",
-            f"2. Para CADA competencia asignada: redacta 4 plantillas paramétricas disjuntas cubriendo los 4 arquetipos: (1) Directo / Frontal, (2) Inverso / Diagnóstico, (3) Perturbación / Estática Comparativa, y (4) Frontera / Casos Límite.",
-            f"3. Cubre el 100% de los 6 distractores canónicos definidos arriba en las plantillas.",
-            f"4. Compila deterministamente:",
+            f"1. Escribe en `{out_py}` (`TEMPLATES = [...]`) las funciones generadoras y tuplas de plantillas de forma concisa (<= 150-250 líneas por competencia, estándar Clean-Room `shard_08`).",
+            f"2. Para CADA competencia asignada: cubre los 4 arquetipos (1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite) y el 100% de los 6 distractores (`D-XX-01..06`).",
+            f"3. **[TPL-VAR Obligatorio]:** Cada `gen_*(rng)` DEBE tener espacio paramétrico >= 500 combinaciones (`rng.randint` amplios, NUNCA listas pequeñas `rng.choice`) para producir >= 30 instancias únicas (`Hab-*`) o >= 20 (`C-*`/`H-*`) en 50 semillas.",
+            f"4. **[R-18 / R-15 / R-20 Obligatorio]:** Usa siempre `r\"...\"` con `@var@` (PROHIBIDO `rf\"...\"`, `\\implies` -> usa `\\Rightarrow`, o `hat{{\\theta}}` sin barra). En `distractors`, `\"value\"` es visible al estudiante (ecuación limpia `r\"$\\text{{Avar}} = @d1@$\"` o afirmación declarativa neutra con longitud homogénea `0.80x-1.20x` respecto a `correct`; PROHIBIDO usar gerundios/giveaways como `'omitiendo'`, `'confundiendo'`, `'asumiendo'`, `'erróneamente'`, `'espuria'`, `'olvidando'` en `\"value\"`). Coloca la explicación del error exclusivamente en `\"error_rationale\"`.",
+            f"5. Compila deterministamente:",
             f"   ```bash",
             f"   {compile_cmd}",
             f"   ```",
-            f"5. Si reporta errores con línea exacta, corrígelos quirúrgicamente con `replace_file_content` sobre `{out_py}`.",
-            f"6. Sigue las directivas de `c2c_shard_author` y finaliza estrictamente con: `DONE: {target_json}`.",
+            f"6. Si reporta errores con línea exacta, corrígelos quirúrgicamente con `edit_file` (`replace_file_content`) sobre `{out_py}` (o en `{work_rel}/shards/shard_fixes/<CID>.py` si > 15 líneas). NO reescribas todo el archivo desde cero.",
+            f"7. Sigue las directivas de `c2c_shard_author` y finaliza estrictamente con: `DONE: {target_json}`.",
         ])
         prompt_full = "\n".join(prompt_lines)
 
