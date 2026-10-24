@@ -360,7 +360,7 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
         for d in dists:
             if re.search(r"\b(?:distractor|dummy|placeholder)\b", d, re.IGNORECASE):
                 continue
-            sk = _skel(d)
+            sk = _skel(re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]*\$", " ", d))
             if len(sk) >= 20:
                 counts.setdefault(sk, []).append(d)
         for sk, group in counts.items():

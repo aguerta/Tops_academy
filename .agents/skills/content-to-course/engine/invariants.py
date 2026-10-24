@@ -35,6 +35,35 @@ ANTONYM_PAIRS: List[Tuple[str, str]] = [
 ]
 
 
+_LATEX_ARG_MACROS = {
+    # Text / formatting / math style macros that take 1 argument: \text{...}, \mathbf{...}
+    "text", "textbf", "textit", "textrm", "textsf", "texttt", "textsc", "textmd", "textup", "textsl",
+    "mathbf", "boldsymbol", "bm", "mathit", "mathrm", "mathcal", "mathbb",
+    "mathfrak", "mathsf", "mathtt", "mathscr", "symbf", "operatorname",
+    # Accents that take 1 argument: \hat{...}, \dot{...}
+    "dot", "ddot", "dddot", "ddddot", "hat", "bar", "tilde", "vec", "acute", "grave", "check",
+    "breve", "mathring", "widehat", "widetilde", "widecheck", "overline", "underline",
+    # Extensible arrows & relation macros that take arguments e.g. \xrightarrow{d}, \xleftarrow{n}
+    "xrightarrow", "xleftarrow", "xleftrightarrow", "xLeftarrow", "xRightarrow", "xLeftrightarrow",
+    "xhookleftarrow", "xhookrightarrow", "xmapsto", "xtwoheadleftarrow", "xtwoheadrightarrow",
+    "xleftharpoondown", "xleftharpoonup", "xrightharpoondown", "xrightharpoonup",
+    # Structural / environment macros
+    "begin", "end", "sqrt", "substack", "prescript", "pmod", "pod",
+    # 2-arg macros
+    "frac", "dfrac", "tfrac", "cfrac", "binom", "dbinom", "tbinom",
+    "overset", "underset", "stackrel",
+}
+
+MATH_ACCENT_COMMANDS = (
+    r"dot|ddot|hat|bar|tilde|vec|breve|check|acute|grave|mathring|"
+    r"textbf|textit|textrm|textsf|texttt|mathrm|mathbf|mathit|mathsf|mathtt|"
+    r"mathcal|mathbb|mathfrak|mathscr|operatorname|sqrt|frac|dfrac|tfrac|"
+    r"binom|overset|underset|stackrel"
+)
+
+_PL_TOKEN_PATTERN = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*(?::[^@\s{}]+)?)@")
+
+
 def check_synthetic_boilerplate_distractors(
     correct_content: Optional[str],
     distractor_contents: List[str],
@@ -55,13 +84,18 @@ def check_synthetic_boilerplate_distractors(
         s_low = re.sub(r"[^\w\s<>+\-*/=^\\{}()]", " ", s_low)
         return re.sub(r"\s+", " ", s_low).strip()
 
-    # 1. Repetitive skeleton across distractors (>= 4 share same skeleton of >= 20 chars)
+    def _prose_skeleton(s: str) -> str:
+        """Extracts natural-language prose skeleton outside LaTeX math ($...$ / $$...$$) so valid mathematical LHS expressions (e.g. '$\\text{Est. Asy. Var}[b_{IV}] = 0.0412$') are never falsely flagged as boilerplate."""
+        no_math = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]*\$", " ", s)
+        return _skeleton(no_math)
+
+    # 1. Repetitive prose skeleton across distractors (>= 4 share same prose skeleton of >= 20 chars)
     # Ignore test dummy fixtures that explicitly contain 'distractor', 'dummy', 'placeholder'
     skel_counts: Dict[str, List[str]] = {}
     for d in distractor_contents:
         if re.search(r"\b(?:distractor|dummy|placeholder)\b", d, re.IGNORECASE):
             continue
-        sk = _skeleton(d)
+        sk = _prose_skeleton(d)
         if len(sk) >= 20:
             skel_counts.setdefault(sk, []).append(d)
     for sk, group in skel_counts.items():
@@ -132,7 +166,113 @@ def check_scaffolding_answer_leaks(hints: List[Any]) -> List[str]:
 
 
 
-def validate_katex_syntax(text: str, context: str, allow_template_vars: bool = False) -> List[str]:
+def check_unrendered_placeholders(
+    text: str,
+    context: str = "text",
+    variables: Optional[Dict[str, Any]] = None,
+) -> List[str]:
+    """Deterministically detect unresolved PrairieLearn (@var@/@var:fmt@) and uninterpolated ({var}/{var:fmt}) placeholders.
+    
+    Catches:
+    1. Any unresolved PrairieLearn token @ident@ or @ident:fmt@.
+    2. Any uninterpolated {key} (or {key:fmt}) where key is in variables, OR standalone {ident}
+       outside LaTeX macro arguments, avoiding false positives on legitimate LaTeX like
+       \\frac{delta}{2}, \\frac{delta}{n}, \\text{delta}, x_{delta}, x^{delta}, \\begin{matrix}, \\operatorname{plim}.
+    """
+    errors: List[str] = []
+    if not isinstance(text, str):
+        return errors
+
+    # 1. Detect unresolved PrairieLearn tokens: @var@ or @var:fmt@
+    for m in _PL_TOKEN_PATTERN.finditer(text):
+        token = m.group(1)
+        errors.append(f"Unresolved PrairieLearn template token '@{token}@' detected in {context}.")
+
+    # 2. Detect uninterpolated template variables: {var} or {var:fmt}
+    math_spans = [m_s.span() for m_s in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", text)]
+    def is_in_math_span(pos: int) -> bool:
+        return any(s_pos <= pos < e_pos for s_pos, e_pos in math_spans)
+
+    for m in re.finditer(r"\{([a-zA-Z0-9_,\s:.+\-%]+)\}", text):
+        inner = m.group(1).strip()
+        letters = re.findall(r"[a-zA-Z]", inner)
+        if ":" not in inner and letters and all(c.isupper() for c in letters):
+            continue
+        if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*(?::[^{}\s]+)?$", inner):
+            continue
+        var_name = inner
+        var_key = inner.split(":")[0]
+        start = m.start()
+        prefix = text[:start].rstrip()
+
+        # Legitimate LaTeX: preceded by escape '\' (odd number of backslashes), subscript '_', or superscript '^'
+        num_slashes_before = len(text[:start]) - len(text[:start].rstrip("\\"))
+        if num_slashes_before % 2 == 1:
+            continue
+        if ":" not in inner and (
+            (start > 0 and text[start - 1] in ("_", "^"))
+            or prefix.endswith(("_", "^"))
+        ):
+            continue
+
+        # Legitimate LaTeX: immediately followed by subscript '_' or superscript '^' (e.g. {k}^*, {r}_t)
+        after = text[m.end():].lstrip()
+        if after.startswith(("^", "_")):
+            continue
+
+        # Legitimate LaTeX: argument of a valid LaTeX macro e.g. \frac, \text, \mathbf, \begin, \sqrt[...]
+        m_cmd = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?\s*$", prefix)
+        if ":" not in inner and m_cmd and m_cmd.group(1) in _LATEX_ARG_MACROS:
+            continue
+
+        # Legitimate LaTeX: subsequent argument of a multi-arg LaTeX command e.g. \frac{a}{b}, \frac{d\dot{k}}{dk}
+        if ":" not in inner:
+            is_subsequent_latex_arg = False
+            s = prefix
+            while s.endswith("}"):
+                depth = 0
+                idx = len(s) - 1
+                while idx >= 0:
+                    if s[idx] == "}":
+                        depth += 1
+                    elif s[idx] == "{":
+                        depth -= 1
+                        if depth == 0:
+                            break
+                    idx -= 1
+                if depth == 0 and idx >= 0:
+                    s = s[:idx].rstrip()
+                    m_sub = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?$", s)
+                    if m_sub and m_sub.group(1) in _LATEX_ARG_MACROS:
+                        is_subsequent_latex_arg = True
+                        break
+                else:
+                    break
+
+            if is_subsequent_latex_arg:
+                continue
+
+            # Check if this was an unescaped LaTeX math command (already reported separately in validate_katex_syntax)
+            if re.search(rf"\b({MATH_ACCENT_COMMANDS})\s*$", prefix):
+                continue
+
+        # If variable key is known in variables, it MUST NOT be left as {var_key}
+        # If variable is not in variables: short variables (<=2 chars) inside math blocks without format spec are allowed
+        is_known_var = bool(variables and var_key in variables)
+        if not is_known_var and is_in_math_span(start) and ":" not in inner and not inner.endswith(("_val", "_num", "_str", "_res")) and inner.isalpha() and len(inner) <= 2:
+            continue
+
+        errors.append(f"Unsubstituted template variable '{{{var_name}}}' detected in {context}.")
+
+    return errors
+
+
+def validate_katex_syntax(
+    text: str,
+    context: str,
+    allow_template_vars: bool = False,
+    variables: Optional[Dict[str, Any]] = None,
+) -> List[str]:
     """Validate KaTeX delimiter balance, absence of $$$, {{/}}, macro arity, environments, delimiters, and unsubstituted {var}."""
     errors: List[str] = []
     if not isinstance(text, str):
@@ -306,75 +446,10 @@ def validate_katex_syntax(text: str, context: str, allow_template_vars: bool = F
             f"Must be prefixed with '\\' and enclosed in '$...$' (e.g. '$\\{cmd_name}{{{arg}}}$')."
         )
 
-    # 10. Unsubstituted template variables: {var} or {var:.4f}
+    # 10. Unsubstituted template variables: {var} or {var:.4f} and unresolved PrairieLearn tokens @var@
     # Explicitly permit uppercase set/tuple notation (e.g. {K}, {Y}, {K, L}) in text
     if not (allow_template_vars or context.startswith("stem_variants")):
-        math_spans = [m_span.span() for m_span in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", text)]
-        def is_in_math_span(pos: int) -> bool:
-            return any(s_pos <= pos < e_pos for s_pos, e_pos in math_spans)
-
-        for m in re.finditer(r"\{([a-zA-Z0-9_,\s:.+\-%]+)\}", text):
-            inner = m.group(1).strip()
-            letters = re.findall(r"[a-zA-Z]", inner)
-            if ":" not in inner and letters and all(c.isupper() for c in letters):
-                continue
-            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*(?::[^{}\s]+)?$", inner):
-                continue
-            var_name = inner
-            start = m.start()
-
-            # Legitimate LaTeX: preceded by escape '\', subscript '_', or superscript '^'
-            if start > 0 and text[start - 1] == "\\":
-                continue
-            if ":" not in inner and start > 0 and text[start - 1] in ("_", "^"):
-                continue
-
-            # Legitimate LaTeX: immediately followed by subscript '_' or superscript '^' (e.g. {k}^*, {r}_t)
-            after = text[m.end():].lstrip()
-            if after.startswith(("^", "_")):
-                continue
-
-            prefix = text[:start].rstrip()
-
-            # Course-agnostic short variable protection inside math blocks: e.g. $f({k}) = {r}$
-            is_unescaped_cmd_arg = bool(re.search(rf"(?<!\\)\b({MATH_ACCENT_COMMANDS})\s*$", prefix))
-            if is_in_math_span(start) and not is_unescaped_cmd_arg and ":" not in inner and not inner.endswith(("_val", "_num", "_str", "_res")) and inner.isalpha() and len(inner) <= 2:
-                continue
-            if ":" not in inner:
-                # Legitimate LaTeX: argument of a LaTeX command e.g. \frac, \text, \mathbf, \begin, \sqrt[...]
-                if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?\s*$", prefix):
-                    continue
-
-                # Legitimate LaTeX: subsequent argument of a multi-arg LaTeX command e.g. \frac{a}{b}, \frac{d\dot{k}}{dk}
-                is_subsequent_latex_arg = False
-                s = prefix
-                while s.endswith("}"):
-                    depth = 0
-                    idx = len(s) - 1
-                    while idx >= 0:
-                        if s[idx] == "}":
-                            depth += 1
-                        elif s[idx] == "{":
-                            depth -= 1
-                            if depth == 0:
-                                break
-                        idx -= 1
-                    if depth == 0 and idx >= 0:
-                        s = s[:idx].rstrip()
-                        if re.search(r"\\[a-zA-Z]+(\[[^\]]*\])?$", s):
-                            is_subsequent_latex_arg = True
-                            break
-                    else:
-                        break
-
-                if is_subsequent_latex_arg:
-                    continue
-
-                # Check if this was an unescaped LaTeX math command (already reported above)
-                if re.search(rf"\b({MATH_ACCENT_COMMANDS})\s*$", prefix):
-                    continue
-
-            errors.append(f"Unsubstituted template variable '{{{var_name}}}' detected in {context}.")
+        errors.extend(check_unrendered_placeholders(text, context, variables=variables))
 
     return errors
 
@@ -383,6 +458,7 @@ def check_instance_invariants(
     instance: Dict[str, Any],
     interaction_type: str,
     strict_length_bounds: bool = True,
+    variables: Optional[Dict[str, Any]] = None,
 ) -> Tuple[bool, List[str]]:
     """Check whether a generated question instance satisfies all invariant rules.
     
@@ -390,17 +466,19 @@ def check_instance_invariants(
         instance: The dictionary of generated parameters/options/hints.
         interaction_type: "multiple_choice_7_options", "fill_in_the_blank", or "multiple_select".
         strict_length_bounds: Whether to enforce the 0.80/1.20 length bound on MC7.
+        variables: Optional generator variables dict to detect unrendered placeholders.
         
     Returns:
         (is_valid, list_of_error_messages)
     """
     errors: List[str] = []
+    effective_vars = variables if variables is not None else (instance.get("vars") or instance.get("variables"))
 
     stem = instance.get("stem", "")
     if not stem or not isinstance(stem, str) or len(stem.strip()) < 5:
         errors.append("Stem must be a non-empty string with at least 5 characters.")
     if isinstance(stem, str) and stem:
-        errors.extend(validate_katex_syntax(stem, "stem"))
+        errors.extend(validate_katex_syntax(stem, "stem", variables=effective_vars))
 
     hints = instance.get("hints", [])
     if not isinstance(hints, list):
@@ -412,17 +490,17 @@ def check_instance_invariants(
             if not isinstance(hint, str) or not hint.strip():
                 errors.append(f"Hint {idx + 1} must be a non-empty string.")
             else:
-                errors.extend(validate_katex_syntax(hint, f"hint {idx + 1}"))
+                errors.extend(validate_katex_syntax(hint, f"hint {idx + 1}", variables=effective_vars))
 
     for sol_key in ("detailed_solution", "solution"):
         solution = instance.get(sol_key)
         if isinstance(solution, str) and solution:
-            errors.extend(validate_katex_syntax(solution, sol_key))
+            errors.extend(validate_katex_syntax(solution, sol_key, variables=effective_vars))
 
     for misc_key in ("misconception_warning", "common_misconception_warning"):
         misc = instance.get(misc_key)
         if isinstance(misc, str) and misc:
-            errors.extend(validate_katex_syntax(misc, misc_key))
+            errors.extend(validate_katex_syntax(misc, misc_key, variables=effective_vars))
 
     options_raw = instance.get("options")
     if isinstance(options_raw, list):
@@ -430,10 +508,10 @@ def check_instance_invariants(
             if isinstance(opt, dict):
                 c = opt.get("content")
                 if isinstance(c, str):
-                    errors.extend(validate_katex_syntax(c, f"option {idx + 1} content"))
+                    errors.extend(validate_katex_syntax(c, f"option {idx + 1} content", variables=effective_vars))
                 r = opt.get("error_rationale")
                 if isinstance(r, str) and r:
-                    errors.extend(validate_katex_syntax(r, f"option {idx + 1} error_rationale"))
+                    errors.extend(validate_katex_syntax(r, f"option {idx + 1} error_rationale", variables=effective_vars))
 
     # 1. Multiple Choice 7 options
     if interaction_type == "multiple_choice_7_options":
@@ -529,9 +607,22 @@ def check_instance_invariants(
                 val = ans.get("value") or ans.get("expression") or ans.get("canonical_algebraic")
                 if val is None or str(val).strip() == "":
                     errors.append("FIB answer dict missing value/expression/canonical_algebraic.")
+                for field in ("value", "expression", "canonical_algebraic"):
+                    fval = ans.get(field)
+                    if isinstance(fval, str) and fval:
+                        errors.extend(validate_katex_syntax(fval, f"correct_answer.{field}", variables=effective_vars))
+                for eq_idx, eq in enumerate(ans.get("accepted_equivalents", []) or ans.get("equivalents", [])):
+                    if isinstance(eq, str) and eq:
+                        errors.extend(validate_katex_syntax(eq, f"correct_answer.accepted_equivalents[{eq_idx}]", variables=effective_vars))
+                    elif isinstance(eq, (int, float)):
+                        pass
+                    else:
+                        errors.append(f"Accepted equivalent [{eq_idx}] has invalid type: {type(eq).__name__}")
             elif isinstance(ans, (int, float, str)):
                 if str(ans).strip() == "":
                     errors.append("FIB scalar answer is empty.")
+                elif isinstance(ans, str):
+                    errors.extend(validate_katex_syntax(ans, "correct_answer", variables=effective_vars))
             else:
                 errors.append(f"FIB answer format invalid: {type(ans)}")
 
