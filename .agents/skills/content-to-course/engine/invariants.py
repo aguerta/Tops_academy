@@ -84,18 +84,16 @@ def check_synthetic_boilerplate_distractors(
         s_low = re.sub(r"[^\w\s<>+\-*/=^\\{}()]", " ", s_low)
         return re.sub(r"\s+", " ", s_low).strip()
 
-    def _prose_skeleton(s: str) -> str:
-        """Extracts natural-language prose skeleton outside LaTeX math ($...$ / $$...$$) so valid mathematical LHS expressions (e.g. '$\\text{Est. Asy. Var}[b_{IV}] = 0.0412$') are never falsely flagged as boilerplate."""
-        no_math = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]*\$", " ", s)
-        return _skeleton(no_math)
-
-    # 1. Repetitive prose skeleton across distractors (>= 4 share same prose skeleton of >= 20 chars)
-    # Ignore test dummy fixtures that explicitly contain 'distractor', 'dummy', 'placeholder'
+    # 1. Repetitive prose skeleton across distractors (>= 4 share same skeleton of >= 20 chars)
+    # Ignore test dummy fixtures and pure mathematical/numerical expressions (< 10 prose letters outside $...$)
     skel_counts: Dict[str, List[str]] = {}
     for d in distractor_contents:
         if re.search(r"\b(?:distractor|dummy|placeholder)\b", d, re.IGNORECASE):
             continue
-        sk = _prose_skeleton(d)
+        prose_outside = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]*\$", " ", d)
+        if len(re.sub(r"[^a-zA-ZáéíóúñÁÉÍÓÚÑ]", "", prose_outside)) < 10:
+            continue
+        sk = _skeleton(d)
         if len(sk) >= 20:
             skel_counts.setdefault(sk, []).append(d)
     for sk, group in skel_counts.items():
