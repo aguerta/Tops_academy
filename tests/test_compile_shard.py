@@ -100,24 +100,36 @@ class TestBoundedCompilation:
         return work_dir, shards_dir
 
     def test_compile_counter_increments_and_halts_at_limit(self, tmp_path: Path, capsys):
-        """Verify [COMPILE n/6] increments and triggers terminal STOP at limit 6."""
+        """Verify unified circuit breaker increments distinct compiles, handles [NO-CHANGE], and halts on 3 repeat errors."""
         work_dir, shards_dir = self._setup_minimal_workspace(tmp_path, "shard_01")
         shard_py = shards_dir / "shard_01_data.py"
 
         # Create broken shard data that fails syntax/parity
         shard_py.write_text("TEMPLATES = 'broken'\n", encoding="utf-8")
 
-        for attempt in range(1, 7):
-            success, errors = compile_shard(work_dir, shard_id="shard_01", strict=False)
-            assert not success
-            captured = capsys.readouterr()
-            assert f"[COMPILE {attempt}/6]" in captured.out or f"[COMPILE {attempt}/6]" in captured.err
+        # Attempt 1: First distinct compile
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=False)
+        assert not success
+        captured = capsys.readouterr()
+        assert "[COMPILE 1/10]" in captured.out or "[COMPILE 1/10]" in captured.err
 
-            if attempt == 6:
-                # Terminal STOP must be emitted at limit 6
-                assert "STOP, send_message the Director" in captured.err or any("STOP, send_message the Director" in e for e in errors)
+        # Attempt 2: Re-run with UNCHANGED code -> Idempotent [NO-CHANGE]
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=False)
+        assert not success
+        assert any("[NO-CHANGE" in e for e in errors)
+        captured = capsys.readouterr()
+        # Does NOT increment to [COMPILE 2/10]
+        assert "[COMPILE 2/10]" not in captured.out
 
-        # 7th attempt must immediately halt
+        # Distinct Attempt 2: modify code slightly but produce same error
+        shard_py.write_text("TEMPLATES = 'broken'  # distinct try 2\n", encoding="utf-8")
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=False)
+        assert not success
+        captured = capsys.readouterr()
+        assert "[COMPILE 2/10]" in captured.out or "[COMPILE 2/10]" in captured.err
+
+        # Distinct Attempt 3: modify code slightly, 3rd consecutive identical error -> HALT!
+        shard_py.write_text("TEMPLATES = 'broken'  # distinct try 3\n", encoding="utf-8")
         success, errors = compile_shard(work_dir, shard_id="shard_01", strict=False)
         assert not success
         assert any("STOP, send_message the Director" in e for e in errors)
@@ -321,10 +333,10 @@ class TestStatefulSHA256CircuitBreaker:
 
 
 class TestAdaptiveShardSizing:
-    """Tests for adaptive shard sizing in plan_shards.py: clamp(ceil(N / 8), 2, 6)."""
+    """Tests for adaptive shard sizing in plan_shards.py: clamp(ceil(N / 8), 2, DEFAULT_COMPS_PER_SHARD)."""
 
     def test_determine_shard_count_adaptive(self):
-        """Verify clamp(ceil(N / 8), 2, 6) across various course sizes."""
+        """Verify clamp(ceil(N / 8), 2, 2) in Case 2B across various course sizes."""
         # N = 1 -> 1 shard
         assert determine_shard_count(1) == 1
 
@@ -334,17 +346,24 @@ class TestAdaptiveShardSizing:
         # N = 16: ceil(16/8) = 2 -> 2/shard -> ceil(16/2) = 8 shards
         assert determine_shard_count(16) == 8
 
-        # N = 24: ceil(24/8) = 3 -> 3/shard -> ceil(24/3) = 8 shards
-        assert determine_shard_count(24) == 8
+        # N = 24: under Case 2B (max 2/shard) -> ceil(24/2) = 12 shards
+        assert determine_shard_count(24) == 12
 
-        # N = 32: ceil(32/8) = 4 -> 4/shard -> ceil(32/4) = 8 shards
-        assert determine_shard_count(32) == 8
+        # N = 32: under Case 2B (max 2/shard) -> ceil(32/2) = 16 shards
+        assert determine_shard_count(32) == 16
 
-        # N = 43: ceil(43/8) = 6 -> 6/shard -> ceil(43/6) = 8 shards
-        assert determine_shard_count(43) == 8
+        # N = 43: under Case 2B (max 2/shard) -> ceil(43/2) = 22 shards
+        assert determine_shard_count(43) == 22
 
-        # N = 60: ceil(60/8) = 8 -> clamped to 6 -> ceil(60/6) = 10 shards
-        assert determine_shard_count(60) == 10
+        # N = 60: under Case 2B (max 2/shard) -> ceil(60/2) = 30 shards
+        assert determine_shard_count(60) == 30
+
+        # Parametric override: Case 2A (max_comps_per_shard=3)
+        assert determine_shard_count(24, max_comps_per_shard=3) == 8
+
+        # Parametric override: legacy v3.22 (max_comps_per_shard=6)
+        assert determine_shard_count(43, max_comps_per_shard=6) == 8
+        assert determine_shard_count(60, max_comps_per_shard=6) == 10
 
     def test_requested_k_overrides_adaptive(self):
         """Explicit requested_k takes precedence."""

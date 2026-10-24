@@ -22,6 +22,7 @@ import re
 import sys
 import textwrap
 import traceback
+import types
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -57,18 +58,30 @@ def _atomic_write_json(target_path: Path, data: Any) -> None:
                     pass
 
 
-def heal_shard_source_file(py_path: Path) -> bool:
-    """Uses Python's tokenize module to inspect and heal non-raw string tokens and control characters.
+def check_ast_rf_triple_braces(source_text: str) -> List[str]:
+    """Check for rf'...' or fr'...' strings containing '{{{' which corrupts KaTeX braces."""
+    warnings = []
+    for m in re.finditer(r"(?i)\b(rf|fr)(['\"]{1,3})([\s\S]*?)\2", source_text):
+        if "{{{" in m.group(3):
+            snippet = m.group(0)[:60] + ("..." if len(m.group(0)) > 60 else "")
+            warnings.append(
+                f"[!] Warning: Se detectó {m.group(1)}{m.group(2)}...{m.group(2)} conteniendo '{{{{{{' ({snippet}). "
+                "Recomendación: Utilice raw strings r\"...\" con tokens @var@ para evitar la corrupción de llaves KaTeX."
+            )
+    return warnings
 
-    Heals unescaped LaTeX prefixes and ASCII control characters in py_path before importing.
-    Returns True if the file was modified and rewritten, False otherwise.
+
+def heal_shard_source_text(source_text: str) -> Tuple[bool, str]:
+    """Uses Python's tokenize module to inspect and heal non-raw string tokens and control characters in-memory.
+
+    Heals unescaped LaTeX prefixes and ASCII control characters without modifying files on disk.
+    Returns (modified, healed_text).
     """
-    if not py_path.is_file():
-        return False
+    if not source_text:
+        return False, source_text
     try:
         import io, tokenize
         from check_templates import heal_control_chars_in_str, COMBINED_LATEX
-        source_text = py_path.read_text(encoding="utf-8")
         clean_source = heal_control_chars_in_str(source_text)
         modified = (clean_source != source_text)
         tokens = list(tokenize.tokenize(io.BytesIO(clean_source.encode("utf-8")).readline))
@@ -82,28 +95,45 @@ def heal_shard_source_file(py_path: Path) -> bool:
                     new_body = heal_control_chars_in_str(body)
                     if not is_raw:
                         new_body = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", new_body)
+                    if "$" in new_body:
+                        _bs = "\\" if is_raw else "\\\\"
+                        new_body = re.sub(r"\\implies\b", f"{_bs}Rightarrow", new_body)
+                        new_body = re.sub(r"\\iff\b", f"{_bs}Leftrightarrow", new_body)
+                        new_body = re.sub(r"(?<!\\)\b(hat|bar|tilde|vec|dot|ddot|frac|dfrac|tfrac|sqrt|mathcal|mathbb|mathbf|boldsymbol|operatorname)\s*\{", rf"{_bs}\1{{", new_body)
+                        if new_body.count("$$") == 1 and new_body.replace("$$", "").count("$") == 1:
+                            new_body = new_body.replace("$$", "$")
                     if new_body != body:
                         modified = True
                         new_tokens.append(tokenize.TokenInfo(t.type, f"{prefix}{q_open}{new_body}{q_close}", t.start, t.end, t.line))
                         continue
             new_tokens.append(t)
         if not modified:
-            return False
+            return False, source_text
         rebuilt_text = tokenize.untokenize(new_tokens).decode("utf-8")
-        py_path.write_text(rebuilt_text, encoding="utf-8")
-        return True
+        return True, rebuilt_text
     except Exception:
         try:
             from check_templates import heal_control_chars_in_str, COMBINED_LATEX
-            source_text = py_path.read_text(encoding="utf-8")
             healed = heal_control_chars_in_str(source_text)
             healed = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", healed)
-            if healed != source_text:
-                py_path.write_text(healed, encoding="utf-8")
-                return True
+            return (healed != source_text), healed
         except Exception:
-            pass
+            return False, source_text
+
+
+def heal_shard_source_file(py_path: Path) -> bool:
+    """Uses Python's tokenize module to inspect and heal non-raw string tokens and control characters.
+
+    Heals unescaped LaTeX prefixes and ASCII control characters in py_path before importing.
+    Returns True if the file was modified and rewritten, False otherwise.
+    """
+    if not py_path.is_file():
         return False
+    source_text = py_path.read_text(encoding="utf-8")
+    modified, healed = heal_shard_source_text(source_text)
+    if modified:
+        py_path.write_text(healed, encoding="utf-8")
+    return modified
 
 
 def _format_socratic_step(text: str) -> str:
@@ -192,9 +222,12 @@ class ShardDataLineLocator:
     - Source snippet extraction for replace_file_content
     """
 
-    def __init__(self, file_path: Union[str, Path]):
+    def __init__(self, file_path: Union[str, Path], source_text: Optional[str] = None):
         self.file_path = Path(file_path).resolve()
-        self.source_text = self.file_path.read_text(encoding="utf-8") if self.file_path.is_file() else ""
+        if source_text is not None:
+            self.source_text = source_text
+        else:
+            self.source_text = self.file_path.read_text(encoding="utf-8") if self.file_path.is_file() else ""
         self.lines = self.source_text.splitlines()
         self.syntax_error: Optional[str] = None
         self.syntax_error_details: Optional[Dict[str, Any]] = None
@@ -339,15 +372,15 @@ class ShardDataLineLocator:
         return info
 
     def get_tuple_info(self, idx_or_cid: Union[int, str]) -> Optional[Dict[str, Any]]:
-        idx = self.competency_to_tuple_idx.get(idx_or_cid, idx_or_cid) if isinstance(idx_or_cid, str) else idx_or_cid
-        if 0 <= idx < len(self.tuples):
+        idx = self.competency_to_tuple_idx.get(idx_or_cid) if isinstance(idx_or_cid, str) else idx_or_cid
+        if idx is not None and isinstance(idx, int) and 0 <= idx < len(self.tuples):
             return self.tuples[idx]
         return None
 
     def get_tuple_snippet(self, idx_or_cid: Union[int, str]) -> Tuple[int, int, str]:
         """Returns (start_line, end_line, snippet_text) for a tuple."""
-        idx = self.competency_to_tuple_idx.get(idx_or_cid, idx_or_cid) if isinstance(idx_or_cid, str) else idx_or_cid
-        if 0 <= idx < len(self.tuples):
+        idx = self.competency_to_tuple_idx.get(idx_or_cid) if isinstance(idx_or_cid, str) else idx_or_cid
+        if idx is not None and isinstance(idx, int) and 0 <= idx < len(self.tuples):
             t = self.tuples[idx]
             s = t["start_line"]
             e = t["end_line"]
@@ -417,7 +450,7 @@ def extract_function_code(
     orig_name = getattr(fn_or_str, "__name__", fn_name_hint or "")
     if callable(fn_or_str):
         try:
-            raw_src = textwrap.dedent(inspect.getsource(fn_or_str))
+            raw_src = textwrap.dedent("\n".join(locator.lines[locator.functions[orig_name][0] - 1 : locator.functions[orig_name][1]])) if (locator and orig_name in locator.functions) else textwrap.dedent(inspect.getsource(fn_or_str))
         except Exception:
             if locator and orig_name in locator.functions:
                 s, e = locator.functions[orig_name]
@@ -514,13 +547,19 @@ def generate_params(rng):
         base_num = 1.0
         pfx, sfx = "", ""
         m_num = None
-        for token in correct_val.replace("$", " ").split():
+        _v_map = res.get("vars") if isinstance(res.get("vars"), dict) else {{}}
+        _resolved_c = correct_val
+        for _vk, _vv in _v_map.items():
+            _resolved_c = _resolved_c.replace(f"@{{_vk}}@", str(_vv))
+        for token in _resolved_c.replace("$", " ").split():
             clean_tok = token.strip("=")
             try:
                 base_num = float(clean_tok)
-                idx_tok = correct_val.find(token)
-                pfx = correct_val[:idx_tok]
-                sfx = correct_val[idx_tok + len(token):]
+                idx_tok = _resolved_c.find(token)
+                pfx = _resolved_c[:idx_tok]
+                sfx = _resolved_c[idx_tok + len(token):]
+
+
                 m_num = True
                 break
             except ValueError:
@@ -612,6 +651,46 @@ def generate_rich_stem_variants(stem: str) -> List[str]:
     return variants
 
 
+def discover_fix_files(fixes_dir: Optional[Path], expected_cids: List[str]) -> Tuple[Dict[str, Path], List[Path]]:
+    """Discovers and maps shard fix files to competency IDs with case-insensitive and delimiter-agnostic normalization.
+    
+    Matches Hab-03, Hab_03, hab-03, hab_03, T-Hab-03, and hab03 to Hab-03.
+    Returns (fix_files_by_cid, all_relevant_fix_files).
+    """
+    fix_files_by_cid: Dict[str, Path] = {}
+    relevant_files: List[Path] = []
+    if not fixes_dir or not fixes_dir.is_dir():
+        return fix_files_by_cid, relevant_files
+
+    all_fix_files = sorted(fixes_dir.glob("*.py"))
+    for fix_p in all_fix_files:
+        stem = fix_p.stem
+        norm_stem = re.sub(r"[^a-zA-Z0-9]", "", stem).lower()
+        matched = False
+        for ecid in expected_cids:
+            norm_ecid = re.sub(r"[^a-zA-Z0-9]", "", ecid).lower()
+            if (
+                stem == ecid
+                or stem == ecid.replace("-", "_")
+                or stem.lower() == ecid.lower()
+                or stem.replace("_", "-").lower() == ecid.lower()
+                or norm_stem == norm_ecid
+                or norm_stem == f"t{norm_ecid}"
+            ):
+                fix_files_by_cid[ecid] = fix_p
+                if fix_p not in relevant_files:
+                    relevant_files.append(fix_p)
+                matched = True
+                break
+        if not matched:
+            norm_stem_cid = stem.replace("_", "-")
+            fix_files_by_cid[norm_stem_cid] = fix_p
+            if fix_p not in relevant_files:
+                relevant_files.append(fix_p)
+
+    return fix_files_by_cid, relevant_files
+
+
 def compile_shard(
     work_dir_or_path: Union[str, Path],
     shard_id: Optional[str] = None,
@@ -627,6 +706,12 @@ def compile_shard(
     - compile_shard("work/shards/shard_01_data.py", output_dir="work/templates")
     """
     target_p = Path(work_dir_or_path).resolve()
+    # Guarantee sys.modules and linecache safety across multiple compiles in same process
+    import linecache
+    linecache.clearcache()
+    for k in list(sys.modules.keys()):
+        if k.startswith("c2c_fix_mod_") or k.startswith("c2c_shard_mod_"):
+            sys.modules.pop(k, None)
 
     # Determine if target_p is a shard data file or a work directory
     if target_p.name.endswith(".py"):
@@ -658,40 +743,6 @@ def compile_shard(
 
     norm_shard_id = shard_id.lower().strip()
 
-    # Bounded compilation counter [COMPILE n/6]
-    att_dir = work_p / ".check_attempts"
-    att_dir.mkdir(parents=True, exist_ok=True)
-    compile_att_file = att_dir / f"compile_{norm_shard_id}.json"
-    compile_count = 0
-    if compile_att_file.is_file():
-        try:
-            compile_count = json.loads(compile_att_file.read_text(encoding="utf-8")).get("count", 0)
-        except Exception:
-            compile_count = 0
-
-    compile_count += 1
-    try:
-        tmp_f = compile_att_file.with_name(f".{compile_att_file.name}.tmp.{uuid.uuid4().hex[:8]}")
-        tmp_f.write_text(json.dumps({"count": compile_count}), encoding="utf-8")
-        os.replace(tmp_f, compile_att_file)
-    except Exception:
-        pass
-
-    print(f"[COMPILE {compile_count}/6] Compilando shard '{shard_id}'...")
-
-    def _fail(msg: str) -> Tuple[bool, List[str]]:
-        res_msg = msg
-        if compile_count >= 6:
-            terminal_stop = f"\n[-] [COMPILE {compile_count}/6] Límite de compilaciones alcanzado para shard '{shard_id}'. STOP, send_message the Director."
-            res_msg = res_msg + terminal_stop
-            print(terminal_stop, file=sys.stderr)
-        print(msg, file=sys.stderr)
-        return False, [res_msg]
-
-    if compile_count > 6:
-        return _fail(f"[-] [COMPILE {compile_count}/6] Límite de compilaciones alcanzado para shard '{shard_id}'. STOP, send_message the Director.")
-
-
     # 1. Verify pre_shard_manifest.json (Strict: ZERO Fallbacks)
     manifest_p = shards_dir / "pre_shard_manifest.json"
     if not manifest_p.is_file():
@@ -717,11 +768,21 @@ def compile_shard(
 
     if not shard_entry:
         err_msg = f"ERROR: Shard '{shard_id}' no encontrado en pre_shard_manifest.json."
-        return _fail(err_msg)
+        print(err_msg, file=sys.stderr)
+        return False, [err_msg]
 
     expected_cids: List[str] = shard_entry.get("competency_ids", [])
     if not expected_cids and "competencies" in shard_entry:
         expected_cids = [c["id"] for c in shard_entry["competencies"] if isinstance(c, dict) and "id" in c]
+
+    # Locate shard_fixes directory
+    fixes_dir = shards_dir / "shard_fixes"
+    if not fixes_dir.is_dir() and (work_p / "shards" / "shard_fixes").is_dir():
+        fixes_dir = work_p / "shards" / "shard_fixes"
+
+    # Discover relevant fix files for hashing and modular splicing
+    fix_files_by_cid, relevant_fix_files = discover_fix_files(fixes_dir, expected_cids)
+    has_all_fixes = bool(expected_cids and all(ecid in fix_files_by_cid for ecid in expected_cids))
 
     # Locate shard data path if not provided
     if not shard_data_path or not shard_data_path.is_file():
@@ -733,53 +794,259 @@ def compile_shard(
             if candidate.is_file():
                 shard_data_path = candidate
             else:
-                err_msg = f"ERROR: No existe el archivo de datos del shard: {candidate}"
+                if not has_all_fixes:
+                    err_msg = f"ERROR: No existe el archivo de datos del shard: {candidate}"
+                    print(err_msg, file=sys.stderr)
+                    return False, [err_msg]
+                shard_data_path = candidate
+
+    # Compute source_sha256 over shard_data_path (if exists) + relevant fix files
+    hasher = hashlib.sha256()
+    if shard_data_path and shard_data_path.is_file():
+        hasher.update(shard_data_path.read_bytes())
+    for rf in sorted(relevant_fix_files, key=lambda p: p.name):
+        hasher.update(f"\n--FIX:{rf.name}--\n".encode("utf-8"))
+        hasher.update(rf.read_bytes())
+    source_sha256 = hasher.hexdigest()
+
+    # Bounded compilation counter & unified stateful circuit breaker (.check_attempts/compile_{norm_shard_id}.json)
+    att_dir = work_p / ".check_attempts"
+    att_dir.mkdir(parents=True, exist_ok=True)
+    compile_att_file = att_dir / f"compile_{norm_shard_id}.json"
+
+    state: Dict[str, Any] = {
+        "distinct_compiles": 0,
+        "same_error_streak": 0,
+        "last_source_sha256": "",
+        "last_err_hash": "",
+        "last_errors": [],
+    }
+    if compile_att_file.is_file():
+        try:
+            loaded_state = json.loads(compile_att_file.read_text(encoding="utf-8"))
+            if isinstance(loaded_state, dict):
+                if "distinct_compiles" in loaded_state:
+                    state.update(loaded_state)
+                elif "count" in loaded_state:
+                    state["distinct_compiles"] = loaded_state.get("count", 0)
+        except Exception:
+            pass
+
+    # Idempotent [NO-CHANGE] Re-Run check: do not increment counter or streak on identical source
+    if (
+        state.get("last_source_sha256") == source_sha256
+        and state.get("last_errors")
+    ):
+        cached_errors = state["last_errors"]
+        no_change_prefix = "[NO-CHANGE: código idéntico al intento previo; edita el archivo antes de recompilar]"
+        prefixed_errors = []
+        for e in cached_errors:
+            if no_change_prefix not in e:
+                prefixed_errors.append(f"{no_change_prefix}\n{e}")
+            else:
+                prefixed_errors.append(e)
+        print(prefixed_errors[0], file=sys.stderr)
+        return False, prefixed_errors
+
+    # Distinct compile increment
+    distinct_compiles = state.get("distinct_compiles", 0) + 1
+    state["distinct_compiles"] = distinct_compiles
+    state["last_source_sha256"] = source_sha256
+
+    print(f"[COMPILE {distinct_compiles}/10] Compilando shard '{shard_id}'...")
+
+    def _fail(msg: str) -> Tuple[bool, List[str]]:
+        from check_templates import normalize_error_string_for_hash
+        normalized_errs = sorted([normalize_error_string_for_hash(msg)])
+        err_hash = hashlib.sha256("\n".join(normalized_errs).encode("utf-8")).hexdigest()
+
+        if state.get("last_err_hash") == err_hash:
+            same_error_streak = state.get("same_error_streak", 0) + 1
+        else:
+            same_error_streak = 1
+        state["same_error_streak"] = same_error_streak
+        state["last_err_hash"] = err_hash
+
+        res_msg = msg
+        if same_error_streak >= 3:
+            terminal_stop = (
+                f"\n[-] [CIRCUIT BREAKER HALT: 3 fallos consecutivos idénticos para shard '{shard_id}']. "
+                f"STOP, send_message the Director."
+            )
+            res_msg = res_msg + terminal_stop
+            print(terminal_stop, file=sys.stderr)
+
+        state["last_errors"] = [res_msg]
+        _atomic_write_json(compile_att_file, state)
+        print(msg, file=sys.stderr)
+        return False, [res_msg]
+
+    # Dual Calibrated Halt Threshold: distinct_compiles > 10
+    if distinct_compiles > 10:
+        halt_msg = (
+            f"[-] [CIRCUIT BREAKER HALT: Límite de 10 compilaciones distintas alcanzado para shard '{shard_id}']. "
+            f"STOP, send_message the Director."
+        )
+        return _fail(halt_msg)
+
+    # In-memory healing of shard_XX_data.py (Zero-Disk-Mutation: source file on disk is NEVER modified)
+    raw_source = shard_data_path.read_text(encoding="utf-8") if shard_data_path.is_file() else ""
+    if raw_source:
+        rf_warnings = check_ast_rf_triple_braces(raw_source)
+        for w in rf_warnings:
+            print(w, file=sys.stderr)
+        _, healed_source = heal_shard_source_text(raw_source)
+    else:
+        healed_source = ""
+
+    # Staged copy under .check_attempts/_staged/ for debugging without mutating source
+    if healed_source:
+        staged_dir = att_dir / "_staged"
+        staged_dir.mkdir(parents=True, exist_ok=True)
+        staged_p = staged_dir / f"{norm_shard_id}_data.py"
+        try:
+            staged_p.write_text(healed_source, encoding="utf-8")
+        except Exception:
+            pass
+
+    # 2. AST Line Locator & Syntax Verification (evaluated on in-memory healed source)
+    locator = ShardDataLineLocator(shard_data_path, source_text=healed_source)
+    skip_base_module = False
+    if raw_source and locator.syntax_error:
+        if has_all_fixes:
+            print(
+                f"[!] Warning: {shard_data_path.name} contiene error sintáctico, pero el 100% de las competencias "
+                f"({expected_cids}) están cubiertas por fijaciones en shard_fixes/. Omitiendo {shard_data_path.name}.",
+                file=sys.stderr,
+            )
+            skip_base_module = True
+        else:
+            print(f"FAIL: Error sintáctico en {shard_data_path.name}:", file=sys.stderr)
+            return _fail(locator.syntax_error)
+
+    # 3. Load shard module dynamically from in-memory string
+    mod_name = f"c2c_shard_mod_{norm_shard_id}_{uuid.uuid4().hex[:6]}"
+    mod = types.ModuleType(mod_name)
+    mod.__file__ = str(shard_data_path)
+    if healed_source and not skip_base_module:
+        try:
+            code_obj = compile(healed_source, str(shard_data_path), "exec")
+            sys.modules[mod_name] = mod
+            exec(code_obj, mod.__dict__)
+        except Exception as e:
+            if has_all_fixes:
+                print(
+                    f"[!] Warning: Excepción al ejecutar {shard_data_path.name}, pero el 100% de las competencias "
+                    f"están cubiertas por shard_fixes/. Omitiendo {shard_data_path.name}.",
+                    file=sys.stderr,
+                )
+                skip_base_module = True
+            else:
+                tb = traceback.format_exc()
+                err_msg = f"FAIL: Excepción al ejecutar {shard_data_path.name}:\n{tb}"
                 return _fail(err_msg)
 
-    # Pre-heal unescaped LaTeX prefixes and ASCII control characters in shard_XX_data.py before parsing and importing
-    heal_shard_source_file(shard_data_path)
+    base_templates = [] if skip_base_module else (getattr(mod, "TEMPLATES", None) or [])
+    from check_templates import heal_control_chars_in_obj
+    base_templates = heal_control_chars_in_obj(base_templates)
 
-    # 2. AST Line Locator & Syntax Verification
-    locator = ShardDataLineLocator(shard_data_path)
-    if locator.syntax_error:
-        print(f"FAIL: Error sintáctico en {shard_data_path.name}:", file=sys.stderr)
-        return _fail(locator.syntax_error)
+    # Map tuples to their origin file and line locator
+    tuple_records: List[Dict[str, Any]] = []
+    for orig_idx, t in enumerate(base_templates):
+        tuple_records.append({
+            "tuple": t,
+            "file_path": shard_data_path,
+            "locator": locator,
+            "orig_idx": orig_idx,
+        })
 
-    # 3. Load shard_XX_data.py module dynamically
-    try:
-        mod_name = f"c2c_shard_mod_{norm_shard_id}_{uuid.uuid4().hex[:6]}"
-        spec = importlib.util.spec_from_file_location(mod_name, str(shard_data_path))
-        if spec is None or spec.loader is None:
-            raise ImportError(f"No se pudo cargar el spec de {shard_data_path}")
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-    except Exception as e:
-        tb = traceback.format_exc()
-        err_msg = f"FAIL: Excepción al ejecutar {shard_data_path.name}:\n{tb}"
-        return _fail(err_msg)
+    # Splice fix files from shards/shard_fixes/<CID>.py
+    known_types = {"multiple_choice", "multiple_choice_7_options", "fill_in_the_blank", "multiple_select", "open_ended"}
 
-    raw_templates = getattr(mod, "TEMPLATES", None)
-    if raw_templates is None or not isinstance(raw_templates, (list, tuple)):
+    for cid_fix, fix_path in fix_files_by_cid.items():
+        if not fix_path.is_file():
+            continue
+        try:
+            fix_raw_text = fix_path.read_text(encoding="utf-8")
+            rf_w = check_ast_rf_triple_braces(fix_raw_text)
+            for w in rf_w:
+                print(w, file=sys.stderr)
+            _, healed_fix_text = heal_shard_source_text(fix_raw_text)
+            fix_loc = ShardDataLineLocator(fix_path, source_text=healed_fix_text)
+            if fix_loc.syntax_error:
+                return _fail(f"FAIL: Error sintáctico en shard_fixes/{fix_path.name}:\n{fix_loc.syntax_error}")
+
+            fix_mod_name = f"c2c_fix_mod_{cid_fix.replace('-', '_')}_{uuid.uuid4().hex[:6]}"
+            fix_mod = types.ModuleType(fix_mod_name)
+            fix_mod.__file__ = str(fix_path)
+            fix_code_obj = compile(healed_fix_text, str(fix_path), "exec")
+            sys.modules[fix_mod_name] = fix_mod
+            exec(fix_code_obj, fix_mod.__dict__)
+
+            fix_templates = getattr(fix_mod, "TEMPLATES", None)
+            if fix_templates and isinstance(fix_templates, (list, tuple)):
+                fix_templates = heal_control_chars_in_obj(fix_templates)
+
+                new_records = []
+                replaced = False
+                for rec in tuple_records:
+                    t_cand = rec["tuple"]
+                    t_cid = None
+                    if len(t_cand) >= 3 and str(t_cand[2]).lower().strip() in known_types:
+                        t_cid = str(t_cand[1]).strip()
+                    elif len(t_cand) >= 3 and str(t_cand[1]).lower().strip() in known_types:
+                        t_cid = str(t_cand[0]).strip()
+                    else:
+                        t_cid = str(t_cand[0]).strip()
+
+                    if t_cid == cid_fix or t_cid.replace("-", "_") == cid_fix.replace("-", "_"):
+                        if not replaced:
+                            for fix_idx, ft in enumerate(fix_templates):
+                                new_records.append({
+                                    "tuple": ft,
+                                    "file_path": fix_path,
+                                    "locator": fix_loc,
+                                    "orig_idx": fix_idx,
+                                })
+                            replaced = True
+                    else:
+                        new_records.append(rec)
+
+                if not replaced:
+                    for fix_idx, ft in enumerate(fix_templates):
+                        new_records.append({
+                            "tuple": ft,
+                            "file_path": fix_path,
+                            "locator": fix_loc,
+                            "orig_idx": fix_idx,
+                        })
+
+                tuple_records = new_records
+        except Exception as e:
+            tb = traceback.format_exc()
+            return _fail(f"FAIL: Excepción al cargar shard_fixes/{fix_path.name}:\n{tb}")
+
+    raw_templates = [rec["tuple"] for rec in tuple_records]
+    if not raw_templates:
         err_msg = f"FAIL: {shard_data_path.name} no define la lista 'TEMPLATES = [...]'."
         return _fail(err_msg)
-    from check_templates import heal_control_chars_in_obj
-    raw_templates = heal_control_chars_in_obj(raw_templates)
 
     # 4. Identify competencies and verify parity
-    known_types = {"multiple_choice", "multiple_choice_7_options", "fill_in_the_blank", "multiple_select", "open_ended"}
     found_cids = []
-
-    for t_idx, t in enumerate(raw_templates):
+    for rec_idx, rec in enumerate(tuple_records):
+        t = rec["tuple"]
+        curr_loc = rec["locator"]
+        curr_p = rec["file_path"]
+        orig_idx = rec["orig_idx"]
         if not isinstance(t, (list, tuple)) or len(t) < 9:
-            s_t, e_t, snip = locator.get_tuple_snippet(t_idx)
+            s_t, e_t, snip = curr_loc.get_tuple_snippet(orig_idx)
             err_msg = (
-                f"FAIL: La tupla en índice {t_idx} tiene {len(t) if isinstance(t, (list, tuple)) else 0} elementos (se requieren 9 posicionales).\n"
-                f"  Ubicación: Líneas {s_t}..{e_t} en {shard_data_path.name}\n"
+                f"FAIL: La tupla en índice {orig_idx} tiene {len(t) if isinstance(t, (list, tuple)) else 0} elementos (se requieren 9 posicionales).\n"
+                f"  Ubicación: Líneas {s_t}..{e_t} en {curr_p.name}\n"
                 f"{snip}"
             )
             return _fail(err_msg)
 
-        # Check tuple format: Form B (pos 0 = tpl_id, pos 1 = cid) vs Form A (pos 0 = cid, pos 1 = qtype)
         if len(t) >= 3 and str(t[2]).lower().strip() in known_types:
             c_candidate = str(t[1]).strip()
         elif len(t) >= 3 and str(t[1]).lower().strip() in known_types:
@@ -802,7 +1069,6 @@ def compile_shard(
         err_msg = f"FAIL: Paridad de competencias violada en {shard_data_path.name}: " + " | ".join(err_parts)
         return _fail(err_msg)
 
-
     from check_templates import auto_heal_template_data, check_templates_file_or_dir
 
     cta_comp_map = {c["id"]: c for c in shard_entry.get("competencies", []) if isinstance(c, dict) and "id" in c}
@@ -810,10 +1076,14 @@ def compile_shard(
     # 5. Compile tuples into canonical JSON dictionaries grouped by competency
     templates_by_cid: Dict[str, List[Dict[str, Any]]] = {}
 
-    for t_idx, t in enumerate(raw_templates):
+    for t_idx, rec in enumerate(tuple_records):
+        t = rec["tuple"]
+        curr_loc = rec["locator"]
+        curr_p = rec["file_path"]
+        orig_idx = rec["orig_idx"]
+
         # Determine format
         if len(t) >= 3 and str(t[2]).lower().strip() in known_types:
-            # Form B: (tpl_id, cid, qtype, gen_fn, ver_fn, diff_bloom, stems, hints, sol)
             tpl_id = str(t[0]).strip()
             cid = str(t[1]).strip()
             qtype = str(t[2]).strip().lower()
@@ -827,7 +1097,6 @@ def compile_shard(
             target_misc = []
             src_ref = {"doc": "manifest.pdf", "page": 1, "quote": ""}
         else:
-            # Form A: (cid, qtype, stem_es, gen_fn, ver_fn, exp_es, target_kc, target_misc, src_ref[, hints])
             cid = str(t[0]).strip()
             qtype = str(t[1]).strip().lower()
             stems_raw = t[2]
@@ -841,7 +1110,6 @@ def compile_shard(
             hints_raw = list(t[9]) if len(t) >= 10 and isinstance(t[9], (list, tuple)) else []
             tpl_id = f"T-{cid}" if not cid.startswith("T-") else cid
 
-            # Normalize source reference
             if isinstance(src_ref_raw, (list, tuple)) and len(src_ref_raw) >= 3:
                 src_ref = {"doc": str(src_ref_raw[0]), "page": int(src_ref_raw[1]), "quote": str(src_ref_raw[2])}
             elif isinstance(src_ref_raw, dict):
@@ -876,13 +1144,13 @@ def compile_shard(
         else:
             interaction_type = qtype
 
-        # Extract functions
-        tuple_info = locator.get_tuple_info(cid) or {}
+        # Extract functions using originating file locator
+        tuple_info = curr_loc.get_tuple_info(orig_idx) or curr_loc.get_tuple_info(cid) or {}
         gen_fn_name = tuple_info.get("gen_fn_name")
         ver_fn_name = tuple_info.get("ver_fn_name")
 
-        gen_code = extract_function_code(gen_raw, "generate_params", locator=locator, fn_name_hint=gen_fn_name)
-        ver_code = extract_function_code(ver_raw, "verify", locator=locator, fn_name_hint=ver_fn_name)
+        gen_code = extract_function_code(gen_raw, "generate_params", locator=curr_loc, fn_name_hint=gen_fn_name)
+        ver_code = extract_function_code(ver_raw, "verify", locator=curr_loc, fn_name_hint=ver_fn_name)
 
         # Retrieve CTA distractors for this competency and strip giveaway prefixes
         cta_comp = cta_comp_map.get(cid, {})
@@ -902,7 +1170,6 @@ def compile_shard(
         # If MC7, apply robust generator adaptation to guarantee 6 disjoint distractors
         if interaction_type == "multiple_choice_7_options":
             gen_code = build_adapted_mc7_generator(gen_code, cid, clean_cta_distractors)
-            # Sync target_misc with cta distractors if sparse
             if len(target_misc) < 6 and clean_cta_distractors:
                 declared_ids = [d["id"] for d in clean_cta_distractors if isinstance(d, dict) and "id" in d]
                 for did in declared_ids:
@@ -922,14 +1189,12 @@ def compile_shard(
             stem_es = str(stems_raw)
             stem_variants = generate_rich_stem_variants(stem_es)
 
-        # Normalize hints: use provided hints or synthesize 3 contextualized Socratic hints
+        # Normalize hints
         if isinstance(hints_raw, (list, tuple)) and len(hints_raw) >= 3 and all(str(h).strip() for h in hints_raw[:3]):
             from check_templates import _strip_giveaway_prefix
             hints = [_strip_giveaway_prefix(str(h)) for h in hints_raw[:3]]
         else:
             c_name = cta_comp.get("name") or cta_comp.get("competency_name") or cid
-            c_desc = cta_comp.get("description_latex") or cta_comp.get("description") or ""
-
             d0 = clean_cta_distractors[0] if len(clean_cta_distractors) > 0 and isinstance(clean_cta_distractors[0], dict) else {}
             d1 = clean_cta_distractors[1] if len(clean_cta_distractors) > 1 and isinstance(clean_cta_distractors[1], dict) else {}
             omitted0 = d0.get("omitted_step") or d0.get("wrong_belief") or ""
@@ -999,6 +1264,7 @@ def compile_shard(
             "solution": healed_solution,
             "distractor_ids": target_misc,
             "hints": hints,
+            "source_file": curr_p.name,
         }
 
         # Apply mechanical auto-healing
@@ -1010,12 +1276,19 @@ def compile_shard(
     # 6. Write templates atomically grouped by competency
     compiled_paths: List[Path] = []
     for cid, tpls in templates_by_cid.items():
+        if len(tpls) > 1:
+            base_id = f"T-{cid}" if not cid.startswith("T-") else cid
+            for idx, tpl in enumerate(tpls, start=1):
+                cur_id = tpl.get("id") or base_id
+                if cur_id == base_id or any(tpls[j].get("id") == cur_id for j in range(len(tpls)) if j != idx - 1):
+                    unique_id = f"{base_id}-{idx:02d}"
+                    tpl["id"] = unique_id
+                    tpl["template_id"] = unique_id
+
         out_json_path = templates_dir / f"{cid}.json"
         if len(tpls) == 1:
-            # Single template schema structure with wrapped object compatibility
             payload = tpls[0]
         else:
-            # Multi-template container structure
             payload = {
                 "competency_id": cid,
                 "templates": tpls,
@@ -1033,8 +1306,9 @@ def compile_shard(
         num_dry_run_seeds=seeds,
         strict=strict,
         auto_fix=True,
-        shard_py=shard_data_path,
+        shard_py=(staged_p if (healed_source and staged_p.is_file()) else shard_data_path),
         shard_id=norm_shard_id,
+        from_compile_shard=True,
     )
 
     if not is_clean:
@@ -1042,11 +1316,28 @@ def compile_shard(
         compact_report = render_compact_aggregated_errors(
             raw_errors, targets=compiled_paths, shard_py=shard_data_path, max_output_lines=28
         )
-        if compile_count >= 6:
-            terminal_stop = f"\n[-] [COMPILE {compile_count}/6] Límite de compilaciones alcanzado para shard '{shard_id}'. STOP, send_message the Director."
+        from check_templates import normalize_error_string_for_hash
+        normalized_errs = sorted([normalize_error_string_for_hash(str(e)) for e in raw_errors])
+        err_hash = hashlib.sha256("\n".join(normalized_errs).encode("utf-8")).hexdigest()
+
+        if state.get("last_err_hash") == err_hash:
+            same_error_streak = state.get("same_error_streak", 0) + 1
+        else:
+            same_error_streak = 1
+        state["same_error_streak"] = same_error_streak
+        state["last_err_hash"] = err_hash
+
+        if same_error_streak >= 3:
+            terminal_stop = (
+                f"\n[-] [CIRCUIT BREAKER HALT: 3 fallos consecutivos idénticos para shard '{shard_id}']. "
+                f"STOP, send_message the Director."
+            )
             compact_report = compact_report + terminal_stop
             print(terminal_stop, file=sys.stderr)
+
         print(f"\n[-] FAIL: {len(raw_errors)} errores detectados al compilar {shard_id}:\n{compact_report}", file=sys.stderr)
+        state["last_errors"] = [compact_report]
+        _atomic_write_json(compile_att_file, state)
         return False, [compact_report]
 
     # Clear compilation attempts on success (pass clears the halt)
@@ -1056,7 +1347,10 @@ def compile_shard(
         except Exception:
             pass
 
-    print(f"[+] PASS: Shard '{shard_id}' compilado exitosamente ({len(compiled_paths)} plantillas, {seeds} semillas dry-run validadas).")
+
+    total_archetypes = sum(len(tpls) for tpls in templates_by_cid.values())
+    written_files_str = ", ".join(p.as_posix() for p in compiled_paths)
+    print(f"[+] PASS: Shard '{shard_id}' compilado exitosamente ({len(compiled_paths)} competencias, {total_archetypes} plantillas/arquetipos en [{written_files_str}], {seeds} semillas dry-run validadas). STOP: No ejecutes más herramientas y emite tu señal DONE.")
     return True, []
 
 
