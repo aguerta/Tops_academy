@@ -153,6 +153,7 @@ def prepare_course(
     dpi: int = 150,
     order_override: Optional[Sequence[str]] = None,
     title: Optional[str] = None,
+    render_pages: bool = False,
 ) -> Dict[str, Any]:
     """Executes Stage 0 preparation: partitioning, manifest generation, and append delta injection."""
     clean_work_dir = Path(sanitize_cli_arg(str(work_dir)))
@@ -188,16 +189,16 @@ def prepare_course(
     if not sources:
         raise FileNotFoundError("Cannot execute prepare: No valid input source paths provided.")
 
-    input_target = sources[0] if len(sources) == 1 else sources[0].parent
-
-    # 3. Execute core ingestion & partitioning
+    # 3. Execute core ingestion & partitioning with explicit input_files and zero-raster default
     manifest_payload = ingest_course(
-        input_path=input_target,
+        input_path=sources[0],
         output_dir=clean_work_dir,
         course_id=clean_course_id,
         cta_mode=cta_mode,
         dpi=dpi,
         order_override=order_override,
+        render_pages=render_pages,
+        input_files=sources,
     )
 
     # Pre-seed compile_cta.py compiler in canonical work directory if present
@@ -253,6 +254,14 @@ def prepare_course(
                             "id": c.get("id") or c.get("competency_id"),
                             "name": c.get("name") or c.get("title"),
                             "category": c.get("category", "Concept"),
+                        }
+                        for c in existing_comps
+                    ],
+                    "existing_competencies_outline": [
+                        {
+                            "id": c.get("id") or c.get("competency_id"),
+                            "type": c.get("type") or c.get("category", "concept").lower(),
+                            "name": c.get("name") or c.get("title"),
                         }
                         for c in existing_comps
                     ],
@@ -325,6 +334,8 @@ def main() -> None:
     parser.add_argument("--granularity", choices=["fine", "standard", "coarse"], default="standard", help="Competency granularity")
     parser.add_argument("--dpi", type=int, default=150, help="DPI for page rendering")
     parser.add_argument("--order", nargs="*", help="Optional document processing order")
+    parser.add_argument("--render-pages", dest="render_pages", action="store_true", default=False, help="Render PDF pages to PNG (default False)")
+    parser.add_argument("--no-render-pages", dest="render_pages", action="store_false", help="Do not render PDF pages to PNG")
 
     # Sanitize sys.argv arguments
     sanitized_argv = [sys.argv[0]] + [sanitize_cli_arg(a) for a in sys.argv[1:]]
@@ -344,6 +355,7 @@ def main() -> None:
             dpi=args.dpi,
             order_override=args.order,
             title=args.title,
+            render_pages=args.render_pages,
         )
         print(f"[+] Prepare complete: {manifest.get('total_files', 0)} files, {manifest.get('total_pages', 0)} pages processed.")
         print(f"[+] Manifest written to: {Path(args.work_dir) / 'pre_cta_manifest.json'}")

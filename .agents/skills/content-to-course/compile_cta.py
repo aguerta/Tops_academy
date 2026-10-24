@@ -49,7 +49,13 @@ for _cand in _skill_candidates:
         break
 
 from check_cta import JsonLineLocator, validate_cta_rules, check_cta_katex, check_cta_part
-from cta_merge import render_cta_md, sanitize_competency_math, normalize_orphan_math, auto_balance_math_delimiters
+from cta_merge import (
+    render_cta_md,
+    sanitize_competency_math,
+    normalize_orphan_math,
+    auto_balance_math_delimiters,
+    parse_next_ids_by_prefix,
+)
 from patch_ledger import (
     record_patch,
     save_run_ledger,
@@ -503,11 +509,42 @@ def _normalize_distractors_list(
     return compiled_distractors
 
 
+def count_evaluated_fields(cta_dict: Dict[str, Any]) -> int:
+    """Counts all evaluated string and structural fields across competencies and distractors."""
+    total = 0
+    for comp in cta_dict.get("competencies", []):
+        for fld in ("name", "description_latex", "description", "bloom", "session", "id", "type"):
+            if fld in comp:
+                total += 1
+        for d in comp.get("distractors", []):
+            if isinstance(d, dict):
+                for dfld in (
+                    "name",
+                    "wrong_belief",
+                    "correct_belief",
+                    "manifestation",
+                    "remediation_hint",
+                    "omitted_step",
+                    "trigger",
+                    "error_type",
+                    "severity",
+                    "origin",
+                    "id",
+                ):
+                    if dfld in d:
+                        total += 1
+            else:
+                total += 1
+    return max(1, total)
+
+
 def compile_cta_module(
     competencies_data: Any,
     course_id: str = "custom_course",
     title: str = "Curso Académico",
     macro_competency: str = "",
+    initial_counts: Optional[Dict[str, int]] = None,
+    existing_competency_ids: Optional[Set[str]] = None,
 ) -> Dict[str, Any]:
     """Compiles tabular positional tuples into formal cta.json dictionary.
 
@@ -541,7 +578,11 @@ def compile_cta_module(
         "hab": ("skill", "Hab"),
     }
 
-    counts_by_prefix: Dict[str, int] = {"H": 0, "C": 0, "Hab": 0}
+    counts_by_prefix: Dict[str, int] = {
+        "H": max(0, initial_counts.get("H", 0)) if initial_counts else 0,
+        "C": max(0, initial_counts.get("C", 0)) if initial_counts else 0,
+        "Hab": max(0, initial_counts.get("Hab", 0)) if initial_counts else 0,
+    }
 
     for comp_idx, item in enumerate(competencies_tuples, start=1):
         if isinstance(item, dict):
@@ -611,7 +652,13 @@ def compile_cta_module(
                 pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
                 norm_type = "skill" if pfx == "Hab" else ("fact" if pfx == "H" else "concept")
                 default_prefix = pfx
-                raw_id = f"{pfx}-{int(m_id.group(2)):02d}"
+                cand_id = f"{pfx}-{int(m_id.group(2)):02d}"
+                if existing_competency_ids and cand_id in existing_competency_ids:
+                    counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+                    raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+                else:
+                    raw_id = cand_id
+                    counts_by_prefix[default_prefix] = max(counts_by_prefix.get(default_prefix, 0), int(m_id.group(2)))
             else:
                 name_l = name.lower()
                 if any(kw in name_l for kw in ["cálculo", "calculo", "calcular", "resolver", "determinar", "derivación", "ejecutar"]):
@@ -643,9 +690,20 @@ def compile_cta_module(
         else:
             raw_type = str(item[0]).strip().lower()
             norm_type, default_prefix = type_map.get(raw_type, ("concept", "C"))
-            counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
 
-            raw_id = str(item[1]).strip() if len(item) > 1 and item[1] else f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+            user_id = str(item[1]).strip() if len(item) > 1 and item[1] else None
+            if user_id:
+                if existing_competency_ids and user_id in existing_competency_ids:
+                    counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+                    raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+                else:
+                    raw_id = user_id
+                    m_num = re.search(r"\d+", user_id)
+                    if m_num:
+                        counts_by_prefix[default_prefix] = max(counts_by_prefix.get(default_prefix, 0), int(m_num.group(0)))
+            else:
+                counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+                raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
             name = str(item[2]).strip() if len(item) > 2 else f"Competencia {raw_id}"
             desc_latex = str(item[3]).strip() if len(item) > 3 else f"Definición formal de {name}."
             raw_bloom = str(item[4]).strip() if len(item) > 4 and item[4] else ("Apply" if norm_type == "skill" else "Understand")
@@ -1086,16 +1144,7 @@ def compile_cta(
     title = heal_control_chars_in_str(str(title))
     macro = heal_control_chars_in_str(str(getattr(mod, "MACRO_COMPETENCY", "")))
 
-    # 2. Compile to dict
-    cta_dict = compile_cta_module(
-        competencies_data=competencies,
-        course_id=course_id,
-        title=title,
-        macro_competency=macro,
-    )
-    cta_dict = heal_control_chars_in_obj(cta_dict)
-
-    # 3. Load manifest: pre_cta_manifest.json required without fallback
+    # 2. Load manifest and append delta configuration
     manifest_data = None
     if manifest_path:
         mp = Path(manifest_path)
@@ -1113,7 +1162,36 @@ def compile_cta(
                 pass
         else:
             elapsed = (time.perf_counter() - t0) * 1000.0
-            return False, cta_dict, ["BLOCKER:: No existe pre_cta_manifest.json"], elapsed
+            return False, {}, ["BLOCKER:: No existe pre_cta_manifest.json"], elapsed
+
+    # Extract append delta metadata if present
+    delta_info = None
+    if manifest_data:
+        delta_info = manifest_data.get("delta") or manifest_data.get("existing_course")
+    if not delta_info and (work_dir / "delta_manifest.json").is_file():
+        try:
+            delta_info = json.loads((work_dir / "delta_manifest.json").read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    next_counts = parse_next_ids_by_prefix(delta_info)
+    initial_counts = {
+        "H": max(0, next_counts["H"] - 1),
+        "C": max(0, next_counts["C"] - 1),
+        "Hab": max(0, next_counts["Hab"] - 1),
+    }
+    existing_comp_ids: Set[str] = set(delta_info.get("existing_competency_ids", [])) if delta_info else set()
+
+    # 3. Compile to dict with continuous IDs
+    cta_dict = compile_cta_module(
+        competencies_data=competencies,
+        course_id=course_id,
+        title=title,
+        macro_competency=macro,
+        initial_counts=initial_counts,
+        existing_competency_ids=existing_comp_ids,
+    )
+    cta_dict = heal_control_chars_in_obj(cta_dict)
 
     # 3b. Auto-normalize page numbers before calling validate_cta_rules
     if manifest_data:
@@ -1146,6 +1224,16 @@ def compile_cta(
             file_path=target_json_path,
             locator=json_locator,
         )
+
+    if not is_valid and existing_comp_ids:
+        filtered_errors = []
+        for err in validation_errors:
+            m = re.match(r"Competency '([^']+)' references non-existent prerequisite '([^']+)'.", err)
+            if m and m.group(2) in existing_comp_ids:
+                continue
+            filtered_errors.append(err)
+        validation_errors = filtered_errors
+        is_valid = (len(validation_errors) == 0)
 
     # L5: Degrade-and-flag failsafe
     if not is_valid and allow_degrade:
@@ -1213,14 +1301,25 @@ def compile_cta(
                 locator=json_locator,
             )
 
+        if not is_valid and existing_comp_ids:
+            filtered_errors = []
+            for err in validation_errors:
+                m = re.match(r"Competency '([^']+)' references non-existent prerequisite '([^']+)'.", err)
+                if m and m.group(2) in existing_comp_ids:
+                    continue
+                filtered_errors.append(err)
+            validation_errors = filtered_errors
+            is_valid = (len(validation_errors) == 0)
+
     # Telemetry and Ledgers
     compiled_comps = cta_dict.get("competencies", [])
-    total_eval_items = len(compiled_comps)
-    save_run_ledger(work_dir, course_id, total_items=total_eval_items)
-    save_cta_review(work_dir, course_id, total_items=total_eval_items)
+    total_eval_fields = count_evaluated_fields(cta_dict)
+    get_ledger().set_total_fields(total_eval_fields)
+    save_run_ledger(work_dir, course_id, total_items=total_eval_fields)
+    save_cta_review(work_dir, course_id, total_items=total_eval_fields)
     try:
         repo_root = work_dir.parent.parent if work_dir.name in ("work", "cta_parts") else None
-        append_cross_run_record(repo_root, course_id, total_items=total_eval_items)
+        append_cross_run_record(repo_root, course_id, total_items=total_eval_fields)
     except Exception:
         pass
 
@@ -1234,6 +1333,7 @@ def compile_cta(
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "course_id": course_id,
                 "sanitized_competencies": len(compiled_comps),
+                "evaluated_fields": total_eval_fields,
                 "patches_applied": get_ledger().total_patches,
             },
             indent=2,
@@ -1243,7 +1343,7 @@ def compile_cta(
     )
 
     # Check 3% degraded alert
-    alert, degraded_pct, alert_msg = get_ledger().check_degraded_alert(total_items=total_eval_items)
+    alert, degraded_pct, alert_msg = get_ledger().check_degraded_alert(total_items=total_eval_fields)
     if alert:
         logger.warning("PATCH_LEDGER_ALERT: %s", alert_msg)
 

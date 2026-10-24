@@ -167,18 +167,22 @@ def validate_cta_schema(
     return errors
 
 
-def check_prerequisites_dag(competencies: List[Dict[str, Any]]) -> List[str]:
+def check_prerequisites_dag(
+    competencies: List[Dict[str, Any]],
+    allowed_prereq_ids: Optional[Set[str]] = None,
+) -> List[str]:
     """Ensure prerequisite references exist and form an acyclic graph."""
     errors = []
     comp_ids = {c["id"] for c in competencies}
+    valid_ids = comp_ids | (allowed_prereq_ids or set())
 
     adj: Dict[str, List[str]] = {cid: [] for cid in comp_ids}
     for comp in competencies:
         cid = comp["id"]
         for prereq in comp.get("prerequisites", []):
-            if prereq not in comp_ids:
+            if prereq not in valid_ids:
                 errors.append(f"Competency '{cid}' references non-existent prerequisite '{prereq}'.")
-            else:
+            elif prereq in comp_ids:
                 adj[cid].append(prereq)
 
     # Cycle detection using DFS
@@ -686,8 +690,15 @@ def validate_cta_rules(
     )
     errors.extend(comp_errors)
 
-    # 3. Prerequisites DAG check
-    dag_errors = check_prerequisites_dag(competencies)
+    # 3. Prerequisites DAG check (respecting base competencies in --append mode)
+    delta_info = None
+    if manifest_data and isinstance(manifest_data, dict):
+        delta_info = manifest_data.get("delta") or manifest_data.get("existing_course")
+    existing_comp_ids: Set[str] = set()
+    if isinstance(delta_info, dict):
+        existing_comp_ids = set(delta_info.get("existing_competency_ids", []))
+
+    dag_errors = check_prerequisites_dag(competencies, allowed_prereq_ids=existing_comp_ids)
     errors.extend(dag_errors)
 
     # 4. KaTeX syntax validation
@@ -767,3 +778,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# Public alias for pipeline compatibility
+check_cta_file = validate_cta_rules

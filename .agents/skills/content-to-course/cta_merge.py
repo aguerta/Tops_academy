@@ -26,6 +26,16 @@ try:
 except ImportError:
     from check_cta import JsonLineLocator, check_cta_katex, check_prerequisites_dag, validate_cta_rules
 
+# Import patch recording from patch_ledger
+try:
+    from .patch_ledger import record_patch
+except ImportError:
+    try:
+        from patch_ledger import record_patch
+    except ImportError:
+        def record_patch(*args: Any, **kwargs: Any) -> Any:
+            pass
+
 
 logger = logging.getLogger("cta_merge")
 
@@ -51,6 +61,48 @@ def jaccard_similarity(tokens_a: Set[str], tokens_b: Set[str]) -> float:
     intersection = len(tokens_a & tokens_b)
     union = len(tokens_a | tokens_b)
     return intersection / union if union > 0 else 0.0
+
+
+def parse_next_ids_by_prefix(delta_info: Optional[Dict[str, Any]]) -> Dict[str, int]:
+    """Parse next sequential starting counts from delta_manifest or manifest['delta'].
+
+    Returns {'H': next_h, 'C': next_c, 'Hab': next_hab}.
+    Default is 1 for all prefixes (meaning count starts at 0).
+    """
+    res = {"H": 1, "C": 1, "Hab": 1}
+    if not isinstance(delta_info, dict):
+        return res
+
+    def _extract_num(v: Any) -> int:
+        if isinstance(v, (int, float)):
+            return int(v)
+        m = re.search(r"\d+", str(v))
+        return int(m.group(0)) if m else 1
+
+    def _update(k: str, val: int) -> None:
+        clean_k = k.rstrip("-").capitalize()
+        if clean_k in ("Fact", "H"):
+            res["H"] = max(res["H"], val)
+        elif clean_k in ("Concept", "C"):
+            res["C"] = max(res["C"], val)
+        elif clean_k in ("Skill", "Hab"):
+            res["Hab"] = max(res["Hab"], val)
+
+    for field_name in (
+        "next_numbers_by_prefix",
+        "next_ids_by_prefix",
+        "next_ids_by_category",
+        "max_numbers_by_prefix",
+    ):
+        data = delta_info.get(field_name)
+        if isinstance(data, dict):
+            for k, v in data.items():
+                num = _extract_num(v)
+                if field_name == "max_numbers_by_prefix":
+                    num += 1
+                _update(k, num)
+
+    return res
 
 
 def extract_evidence_keys(evidence_list: Optional[List[Dict[str, Any]]]) -> Set[Tuple[str, str]]:
@@ -145,6 +197,16 @@ def normalize_orphan_math(text: str) -> str:
                 parts[i] = fn(parts[i])
         return "".join(parts)
 
+    # 0c. \operatorname{plim}_{n \to \infty} or \operatorname{...} operators (BEFORE \infty or symbol conversion)
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"\\operatorname\{[a-zA-Z0-9_* ]+\}(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9*+]+))*",
+            lambda m: f"${m.group(0)}$",
+            c,
+        )
+    )
+
     # 1. \dot{w} -> $\dot{w}$, \bar{k} -> $\bar{k}$, etc. (with backslash, plus optional sub/superscripts)
     text = _apply_outside_math(
         text,
@@ -215,6 +277,20 @@ def normalize_orphan_math(text: str) -> str:
         )
     )
 
+    # 4b. Parenthesized matrix transpose / inverse expressions: (Z'X)^{-1}, X'Z(Z'Z)^{-1}Z'X, (X'X)^{-1}X'y
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"(?<!\$)(?:(?<=\s)|(?<=^)|(?<=[(\"'«]))"
+            r"([a-zA-Z0-9\\\'_]*(?:\([a-zA-Z0-9\\\'_\+\*\- ]+\)|[a-zA-Z0-9\\\'_])+"
+            r"(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9\*\\+]+))+"
+            r"(?:\([a-zA-Z0-9\\\'_\+\*\- ]+\)|[a-zA-Z0-9\\\'_])*)"
+            r"(?!\$)",
+            lambda m: f"${m.group(1)}$",
+            c,
+        )
+    )
+
     # 5. Braced math base with sub/superscripts: {k}^*, {r}^*, {k}_{t+1}
     text = _apply_outside_math(
         text,
@@ -225,11 +301,11 @@ def normalize_orphan_math(text: str) -> str:
         )
     )
 
-    # 5b. Raw subscript or superscript with braces or asterisk: k_{t+1}, k^*, r^*
+    # 5b. Raw subscript or superscript with braces or asterisk: k_{t+1}, k^*, r^*, Q_{zx}^{-1}
     text = _apply_outside_math(
         text,
         lambda c: re.sub(
-            r"(?<!\$)\b([a-zA-Z0-9\\]+[_^](?:\{[a-zA-Z0-9_+\-*./]+\}|\*))(?!\$)",
+            r"(?<!\$)\b([a-zA-Z0-9\\]+(?:[_^](?:\{[a-zA-Z0-9_+\-*./]+\}|[a-zA-Z0-9*+]+))+)(?!\$)",
             r"$\1$",
             c,
         )
@@ -238,15 +314,33 @@ def normalize_orphan_math(text: str) -> str:
     return auto_balance_math_delimiters(text)
 
 
-def sanitize_competency_math(comp: Dict[str, Any]) -> None:
+def sanitize_competency_math(comp: Dict[str, Any], record_patches: bool = True) -> None:
     """Recursively normalizes orphan math expressions in competency fields and distractors."""
+    cid = comp.get("id", "comp")
     for field in ("name", "description_latex", "description"):
         val = comp.get(field)
         if isinstance(val, str):
-            comp[field] = normalize_orphan_math(val)
+            new_val = normalize_orphan_math(val)
+            if new_val != val:
+                comp[field] = new_val
+                if record_patches:
+                    try:
+                        record_patch(
+                            stage="cta",
+                            layer="L2",
+                            rule_id="NORMALIZE_ORPHAN_MATH",
+                            scope=f"{cid}.{field}",
+                            before=val,
+                            after=new_val,
+                            severity="healed",
+                            reason="Lossless normalization of orphan LaTeX math delimiters/braces",
+                        )
+                    except Exception:
+                        pass
 
     for d in comp.get("distractors", []):
         if isinstance(d, dict):
+            did = d.get("id", "dist")
             for d_field in (
                 "name",
                 "manifestation",
@@ -258,7 +352,23 @@ def sanitize_competency_math(comp: Dict[str, Any]) -> None:
             ):
                 d_val = d.get(d_field)
                 if isinstance(d_val, str):
-                    d[d_field] = normalize_orphan_math(d_val)
+                    new_d_val = normalize_orphan_math(d_val)
+                    if new_d_val != d_val:
+                        d[d_field] = new_d_val
+                        if record_patches:
+                            try:
+                                record_patch(
+                                    stage="cta",
+                                    layer="L2",
+                                    rule_id="NORMALIZE_ORPHAN_MATH",
+                                    scope=f"{did}.{d_field}",
+                                    before=d_val,
+                                    after=new_d_val,
+                                    severity="healed",
+                                    reason="Lossless normalization of orphan LaTeX math in distractor",
+                                )
+                            except Exception:
+                                pass
 
 
 def find_duplicate_candidates(competencies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -505,10 +615,18 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
     for comp in combined_competencies:
         sanitize_competency_math(comp)
 
-    # Renumber canonical sequential IDs per category
-    fact_count = 0
-    concept_count = 0
-    skill_count = 0
+    # Renumber canonical sequential IDs per category with append delta support
+    delta_info = manifest_data.get("delta") or manifest_data.get("existing_course")
+    if not delta_info and (work_path / "delta_manifest.json").is_file():
+        try:
+            delta_info = json.loads((work_path / "delta_manifest.json").read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    next_counts = parse_next_ids_by_prefix(delta_info)
+    fact_count = max(0, next_counts["H"] - 1)
+    concept_count = max(0, next_counts["C"] - 1)
+    skill_count = max(0, next_counts["Hab"] - 1)
 
     comp_id_map: Dict[str, str] = {}
     dist_id_map: Dict[str, str] = {}
@@ -683,13 +801,30 @@ def apply_harmonize(
     candidates_data = json.loads(candidates_file.read_text(encoding="utf-8"))
     harmonize_data = json.loads(harmonize_file.read_text(encoding="utf-8"))
 
+    # Load delta manifest or manifest['delta'] for append mode if present
+    delta_info = None
+    man_file = Path(manifest_path).resolve() if manifest_path else work_path / "pre_cta_manifest.json"
+    if man_file.is_file():
+        try:
+            m_tmp = json.loads(man_file.read_text(encoding="utf-8"))
+            delta_info = m_tmp.get("delta") or m_tmp.get("existing_course")
+        except Exception:
+            pass
+    if not delta_info and (work_path / "delta_manifest.json").is_file():
+        try:
+            delta_info = json.loads((work_path / "delta_manifest.json").read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    existing_competency_ids: Set[str] = set(delta_info.get("existing_competency_ids", [])) if delta_info else set()
+
     orig_order: List[str] = cta_order_data.get("order", [])
     competencies: List[Dict[str, Any]] = cta_draft.get("competencies", [])
 
     # Index allowed duplicate candidate pairs (normalized as sorted tuples)
     allowed_candidates_set: Set[Tuple[str, str]] = set()
     candidate_lookup: Dict[Tuple[str, str], Dict[str, Any]] = {}
-    for cand in candidates_data:
+    candidates_list = candidates_data if isinstance(candidates_data, list) else (candidates_data.get("candidates", []) if isinstance(candidates_data, dict) else [])
+    for cand in candidates_list:
         p = cand.get("pair", [])
         if len(p) == 2:
             key = tuple(sorted([p[0], p[1]]))
@@ -904,6 +1039,11 @@ def apply_harmonize(
 
         for req in reqs:
             if req not in current_order_map:
+                if req in existing_competency_ids:
+                    # Valid prerequisite from base course in append mode
+                    if req not in comp_prereqs:
+                        comp_prereqs.append(req)
+                    continue
                 raise ValueError(
                     f"add_prerequisites failed: Prerequisite '{req}' for '{cid}' not found."
                 )
@@ -927,7 +1067,8 @@ def apply_harmonize(
         })
 
     # 5. Validate DAG acyclicity
-    dag_errors = check_prerequisites_dag(competencies)
+    check_nodes = [{"id": x, "prerequisites": []} for x in existing_competency_ids] + competencies
+    dag_errors = check_prerequisites_dag(check_nodes)
     if dag_errors:
         raise ValueError(f"Prerequisite DAG validation failed: {dag_errors}")
 
@@ -954,6 +1095,15 @@ def apply_harmonize(
     manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
 
     valid, rule_errors = validate_cta_rules(cta_draft, manifest_data)
+    if not valid and existing_competency_ids:
+        filtered_errors = []
+        for err in rule_errors:
+            m = re.match(r"Competency '([^']+)' references non-existent prerequisite '([^']+)'.", err)
+            if m and m.group(2) in existing_competency_ids:
+                continue
+            filtered_errors.append(err)
+        rule_errors = filtered_errors
+        valid = (len(rule_errors) == 0)
     if not valid:
         raise ValueError(f"validate_cta_rules failed with errors: {rule_errors}")
 
