@@ -487,18 +487,40 @@ def build_adapted_mc7_generator(
     cid: str,
     cta_distractors: List[Dict[str, Any]],
 ) -> str:
-    """Wraps an MC7 generator function to reliably provide 6 non-colliding distractors.
+    """Wraps an MC7 generator function to reliably provide 6 non-colliding distractors with DRY rationale inheritance.
 
-    Ensures that if generate_params returns 'options' without 'distractors' (as in prompt_shard_author.md),
-    distractors are cleanly extracted and expanded to 6 without duplicates or correct-answer collisions.
+    Supports distractor items returned by author as:
+    1. Full dict: {"value": ..., "distractor_id": ..., "error_rationale": ...}
+    2. Compact dict: {"value": ..., "distractor_id": ...} or {"id": ..., "value": ...}
+    3. 2-tuple: ("D-XX-01", val) or (val, "D-XX-01")
+    4. 3-tuple: ("D-XX-01", val, rationale)
+    5. String / scalar: val (distractor_id and rationale populated by position from cta_distractors)
     """
-    d_repr = repr([
-        {
-            "id": d.get("id", f"D-{cid}-{idx+1:02d}"),
-            "wrong_belief": d.get("wrong_belief") or d.get("manifestation") or "Estimación o procedimiento alternativo",
-        }
-        for idx, d in enumerate(cta_distractors)
-    ])
+    from check_templates import _strip_giveaway_prefix, _wrap_bare_latex_in_rationale
+
+    clean_declared = []
+    for idx, d in enumerate(cta_distractors):
+        did = d.get("id", f"D-{cid}-{idx+1:02d}")
+        rem = d.get("remediation_hint") or ""
+        wb = d.get("wrong_belief") or d.get("manifestation") or ""
+        om = d.get("omitted_step") or ""
+        if rem:
+            rat = rem
+        elif wb and om:
+            rat = f"{wb.rstrip('.')}. Se debe considerar: {om.rstrip('.')}."
+        elif wb:
+            rat = wb
+        elif om:
+            rat = f"Error procedimental: {om}."
+        else:
+            rat = f"Procedimiento analítico alternativo para {cid}."
+        clean_rat = _wrap_bare_latex_in_rationale(_strip_giveaway_prefix(str(rat)))
+        clean_declared.append({
+            "id": did,
+            "rationale": clean_rat,
+        })
+
+    d_repr = repr(clean_declared)
 
     wrapper = f"""{base_gen_code}
 
@@ -506,8 +528,21 @@ _c2c_orig_generate = generate_params
 
 def generate_params(rng):
     res = _c2c_orig_generate(rng)
-    if not isinstance(res, dict):
+    if isinstance(res, (tuple, list)):
+        if len(res) >= 3:
+            v_map = res[0] if isinstance(res[0], dict) else {{"val": res[0]}}
+            res = {{"vars": v_map, "correct": str(res[1]), "distractors": res[2]}}
+        elif len(res) == 2:
+            v_map = res[0] if isinstance(res[0], dict) else {{"val": res[0]}}
+            res = {{"vars": v_map, "correct": str(res[1]), "distractors": []}}
+        else:
+            return res
+    elif not isinstance(res, dict):
         return res
+
+    declared_list = {d_repr}
+    declared_map = {{d["id"]: d["rationale"] for d in declared_list}}
+    declared_ids = set(declared_map.keys())
 
     # Synchronize options items (both 'value' and 'content')
     opts = res.get("options")
@@ -519,59 +554,126 @@ def generate_params(rng):
                 elif "content" in opt and "value" not in opt:
                     opt["value"] = opt["content"]
 
-    # Extract distractors from options if absent
-    dists = res.get("distractors")
-    if dists is None and isinstance(opts, list):
-        dists = [dict(opt) for opt in opts if not opt.get("is_correct")]
-        res["distractors"] = dists
-    elif dists is None:
-        dists = []
-        res["distractors"] = dists
+    # Extract distractors from options or distractors
+    dists_raw = res.get("distractors")
+    if dists_raw is None and isinstance(opts, list):
+        dists_raw = [dict(opt) for opt in opts if isinstance(opt, dict) and not opt.get("is_correct")]
+    elif dists_raw is None:
+        dists_raw = []
 
     correct_val = str(res.get("correct", "")).strip()
-    existing_vals = set()
+    if not correct_val and isinstance(opts, list):
+        for opt in opts:
+            if isinstance(opt, dict) and opt.get("is_correct"):
+                correct_val = str(opt.get("value") or opt.get("content", "")).strip()
+                res["correct"] = correct_val
+                break
+
+    used_values = set()
     if correct_val:
-        existing_vals.add(correct_val)
-    for d in dists:
-        v = str(d.get("value", "")).strip()
-        if v:
-            existing_vals.add(v)
+        used_values.add(correct_val)
+
+    normalized_dists = []
+    used_ids = set()
+
+    for idx, d in enumerate(dists_raw):
+        val = ""
+        did = None
+        rat = None
+        if isinstance(d, dict):
+            val = str(d.get("value") if "value" in d else (d.get("content") if "content" in d else d.get("ans", ""))).strip()
+            did = d.get("distractor_id") or d.get("id") or d.get("did")
+            rat = d.get("error_rationale") or d.get("rationale") or d.get("hint")
+        elif isinstance(d, (tuple, list)):
+            if len(d) >= 3:
+                e0, e1 = str(d[0]).strip(), str(d[1]).strip()
+                norm_e0 = e0.replace("_", "-")
+                norm_e1 = e1.replace("_", "-")
+                if e0.startswith(("D-", "D_")) or norm_e0 in declared_ids:
+                    did, val, rat = norm_e0, e1, str(d[2]).strip()
+                elif e1.startswith(("D-", "D_")) or norm_e1 in declared_ids:
+                    val, did, rat = e0, norm_e1, str(d[2]).strip()
+                else:
+                    val, did, rat = e0, e1, str(d[2]).strip()
+            elif len(d) == 2:
+                e0, e1 = str(d[0]).strip(), str(d[1]).strip()
+                norm_e0 = e0.replace("_", "-")
+                norm_e1 = e1.replace("_", "-")
+                if e0.startswith(("D-", "D_")) or norm_e0 in declared_ids:
+                    did, val = norm_e0, e1
+                elif e1.startswith(("D-", "D_")) or norm_e1 in declared_ids:
+                    val, did = e0, norm_e1
+                else:
+                    val = e0
+            elif len(d) == 1:
+                val = str(d[0]).strip()
+        elif isinstance(d, (str, int, float)):
+            val = str(d).strip()
+
+        # Infer did by position from declared_list if absent
+        if not did:
+            for cand_d in declared_list:
+                if cand_d["id"] not in used_ids:
+                    did = cand_d["id"]
+                    break
+            if not did:
+                did = f"D-{cid}-{{len(normalized_dists)+1:02d}}"
+
+        used_ids.add(did)
+
+        # Infer rationale if absent, empty or placeholder
+        if not rat or str(rat).strip() in ("", "None", "placeholder", "N/A", "error", "distractor"):
+            rat = declared_map.get(did)
+            if not rat:
+                cand_idx = len(normalized_dists)
+                if cand_idx < len(declared_list):
+                    rat = declared_list[cand_idx]["rationale"]
+                else:
+                    rat = "Procedimiento cuantitativo o analítico alternativo."
+        else:
+            rat = str(rat)
+
+        if val:
+            used_values.add(val)
+            normalized_dists.append({{
+                "value": val,
+                "content": val,
+                "distractor_id": did,
+                "error_rationale": rat,
+                "is_correct": False,
+            }})
 
     # Ensure at least 6 distinct distractors for MC7 compliance
-    if len(dists) < 6:
-        declared_list = {d_repr}
-        used_ids = set(d.get("distractor_id") for d in dists if d.get("distractor_id"))
+    if len(normalized_dists) < 6:
         avail_dids = [d for d in declared_list if d.get("id") not in used_ids]
 
         # Extract numeric anchor from correct_val if available
         base_num = 1.0
         pfx, sfx = "", ""
-        m_num = None
+        m_num = False
         _v_map = res.get("vars") if isinstance(res.get("vars"), dict) else {{}}
         _resolved_c = correct_val
         for _vk, _vv in _v_map.items():
-            _resolved_c = _resolved_c.replace(f"@{{_vk}}@", str(_vv))
+            _resolved_c = _resolved_c.replace("@" + str(_vk) + "@", str(_vv))
         for token in _resolved_c.replace("$", " ").split():
-            clean_tok = token.strip("=")
+            clean_tok = token.strip("=").strip()
             try:
                 base_num = float(clean_tok)
                 idx_tok = _resolved_c.find(token)
                 pfx = _resolved_c[:idx_tok]
                 sfx = _resolved_c[idx_tok + len(token):]
-
-
                 m_num = True
                 break
             except ValueError:
                 continue
 
-        needed = 6 - len(dists)
+        needed = 6 - len(normalized_dists)
         multipliers = [1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, 2.1, 0.45, 1.85, 0.15]
         m_idx = 0
         for i in range(needed):
-            did_obj = avail_dids[i] if i < len(avail_dids) else {{"id": f"D-{cid}-" + str(len(dists)+1).zfill(2), "wrong_belief": "Error analítico alternativo"}}
+            did_obj = avail_dids[i] if i < len(avail_dids) else {{"id": f"D-{cid}-" + str(len(normalized_dists)+1).zfill(2), "rationale": "Procedimiento analítico alternativo"}}
             did = did_obj.get("id")
-            rat = did_obj.get("wrong_belief") or "Concepción alternativa pedagógica"
+            rat = did_obj.get("rationale") or "Concepción alternativa pedagógica"
 
             cand_val = ""
             while m_idx < len(multipliers):
@@ -581,23 +683,34 @@ def generate_params(rng):
                     new_val_num = round(base_num * mult, 3)
                     cand = f"{{pfx}}{{new_val_num}}{{sfx}}"
                 else:
-                    cand = f"Opción alterna {{len(dists)+1}}: {{correct_val}}"
-                if cand not in existing_vals:
+                    cand = f"Opción alterna {{len(normalized_dists)+1}}: {{correct_val}}"
+                if cand not in used_values:
                     cand_val = cand
-                    existing_vals.add(cand)
+                    used_values.add(cand)
                     break
 
             if not cand_val:
-                cand_val = f"{{pfx}}{{round(base_num + (i + 1) * 0.137, 3)}}{{sfx}}" if m_num else f"Variante {{len(dists)+1}}"
-                existing_vals.add(cand_val)
+                cand_val = f"{{pfx}}{{round(base_num + (i + 1) * 0.137, 3)}}{{sfx}}" if m_num else f"Variante {{len(normalized_dists)+1}}"
+                used_values.add(cand_val)
 
-            dists.append({{
+            normalized_dists.append({{
                 "value": cand_val,
                 "content": cand_val,
                 "distractor_id": did,
                 "error_rationale": rat,
+                "is_correct": False,
             }})
+            used_ids.add(did)
 
+    res["distractors"] = normalized_dists
+
+    # Construct complete options list with 1 correct + 6 distractors
+    correct_opt = {{
+        "value": correct_val,
+        "content": correct_val,
+        "is_correct": True,
+    }}
+    res["options"] = [correct_opt] + normalized_dists
     return res
 
 generate = generate_params
@@ -691,12 +804,80 @@ def discover_fix_files(fixes_dir: Optional[Path], expected_cids: List[str]) -> T
     return fix_files_by_cid, relevant_files
 
 
+def infer_work_dir(
+    explicit_work: Union[str, Path] = "work",
+    shard_id: Optional[str] = None,
+) -> Path:
+    """Infers work directory if default 'work' is missing from CWD.
+
+    Searches for:
+    1. Active lockfiles: courses/*/.c2c_subagent_lock.json or courses/*/work/.c2c_subagent_lock.json with active=true.
+    2. Most recent courses/*/work directory containing shards/{shard_id}_data.py or shards/pre_shard_manifest.json.
+    Returns inferred Path, or Path(explicit_work) if no course match found.
+    """
+    target = Path(explicit_work)
+    if (target / "shards" / "pre_shard_manifest.json").is_file() or (target / "pre_shard_manifest.json").is_file():
+        return target
+
+    cwd = Path.cwd()
+    courses_dir = cwd / "courses"
+    if not courses_dir.is_dir():
+        return target
+
+    norm_s_id = (shard_id or "").lower().strip()
+    candidate_works: List[Tuple[float, Path]] = []
+
+    for c_dir in sorted(courses_dir.iterdir()):
+        if not c_dir.is_dir():
+            continue
+        lock_paths = [
+            c_dir / ".c2c_subagent_lock.json",
+            c_dir / "work" / ".c2c_subagent_lock.json",
+        ]
+        is_active = False
+        for lp in lock_paths:
+            if lp.is_file():
+                try:
+                    ldata = json.loads(lp.read_text(encoding="utf-8"))
+                    if isinstance(ldata, dict) and ldata.get("active") is True:
+                        is_active = True
+                        break
+                except Exception:
+                    pass
+
+        w_cand = c_dir / "work"
+        if w_cand.is_dir():
+            has_manifest = (w_cand / "shards" / "pre_shard_manifest.json").is_file() or (w_cand / "pre_shard_manifest.json").is_file()
+            has_shard = (w_cand / "shards" / f"{norm_s_id}_data.py").is_file() if norm_s_id else False
+
+            if is_active and (has_manifest or has_shard):
+                return w_cand
+
+            if has_shard or has_manifest:
+                mtime = 0.0
+                if has_shard:
+                    mtime = (w_cand / "shards" / f"{norm_s_id}_data.py").stat().st_mtime
+                elif has_manifest:
+                    m_p = (w_cand / "shards" / "pre_shard_manifest.json") if (w_cand / "shards" / "pre_shard_manifest.json").is_file() else (w_cand / "pre_shard_manifest.json")
+                    mtime = m_p.stat().st_mtime
+                candidate_works.append((mtime, w_cand))
+
+    if candidate_works:
+        candidate_works.sort(key=lambda x: x[0], reverse=True)
+        return candidate_works[0][1]
+
+    return target
+
+
 def compile_shard(
     work_dir_or_path: Union[str, Path],
     shard_id: Optional[str] = None,
     strict: bool = True,
     seeds: int = 50,
     output_dir: Optional[Union[str, Path]] = None,
+    output_path: Optional[Union[str, Path]] = None,
+    cta_path: Optional[Union[str, Path]] = None,
+    manifest_path: Optional[Union[str, Path]] = None,
     **kwargs,
 ) -> Tuple[bool, List[str]]:
     """Compiles shard data into canonical template JSON files with strict verification.
@@ -705,7 +886,18 @@ def compile_shard(
     - compile_shard("work", "shard_01", strict=True, seeds=50)
     - compile_shard("work/shards/shard_01_data.py", output_dir="work/templates")
     """
+    output_path = output_path or kwargs.get("output")
+    cta_path = cta_path or kwargs.get("cta")
+    manifest_path = manifest_path or kwargs.get("manifest")
+
     target_p = Path(work_dir_or_path).resolve()
+    # In-memory inference when default "work" does not have manifest
+    if not target_p.name.endswith(".py"):
+        if not (target_p / "shards" / "pre_shard_manifest.json").is_file() and not (target_p / "pre_shard_manifest.json").is_file():
+            inferred = infer_work_dir(target_p, shard_id=shard_id)
+            if inferred != target_p:
+                target_p = inferred.resolve()
+
     # Guarantee sys.modules and linecache safety across multiple compiles in same process
     import linecache
     linecache.clearcache()
@@ -730,8 +922,11 @@ def compile_shard(
         shards_dir = work_p / "shards"
         shard_data_path = None
 
+    receipt_p = Path(output_path).resolve() if output_path and str(output_path).lower().endswith(".json") else None
     if output_dir:
         templates_dir = Path(output_dir).resolve()
+    elif output_path and not receipt_p:
+        templates_dir = Path(output_path).resolve()
     else:
         templates_dir = work_p / "templates"
     templates_dir.mkdir(parents=True, exist_ok=True)
@@ -742,19 +937,33 @@ def compile_shard(
         return False, [err_msg]
 
     norm_shard_id = shard_id.lower().strip()
+    att_dir = work_p / ".check_attempts"
+    pass_marker = att_dir / f"pass_{norm_shard_id}.json"
+
+    def _cleanup_stale_pass_marker():
+        if pass_marker.is_file():
+            try:
+                pass_marker.unlink()
+            except Exception:
+                pass
 
     # 1. Verify pre_shard_manifest.json (Strict: ZERO Fallbacks)
-    manifest_p = shards_dir / "pre_shard_manifest.json"
-    if not manifest_p.is_file():
-        if (work_p / "pre_shard_manifest.json").is_file():
-            manifest_p = work_p / "pre_shard_manifest.json"
-        else:
-            print("BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
-            sys.exit(2)
+    if manifest_path and Path(manifest_path).is_file():
+        manifest_p = Path(manifest_path).resolve()
+    else:
+        manifest_p = shards_dir / "pre_shard_manifest.json"
+        if not manifest_p.is_file():
+            if (work_p / "pre_shard_manifest.json").is_file():
+                manifest_p = work_p / "pre_shard_manifest.json"
+            else:
+                _cleanup_stale_pass_marker()
+                print("BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
+                sys.exit(2)
 
     try:
         manifest_data = json.loads(manifest_p.read_text(encoding="utf-8"))
     except Exception as e:
+        _cleanup_stale_pass_marker()
         print(f"BLOCKER:: pre_shard_manifest.json corrupto o ilegible: {e}", file=sys.stderr)
         sys.exit(2)
 
@@ -767,6 +976,7 @@ def compile_shard(
             break
 
     if not shard_entry:
+        _cleanup_stale_pass_marker()
         err_msg = f"ERROR: Shard '{shard_id}' no encontrado en pre_shard_manifest.json."
         print(err_msg, file=sys.stderr)
         return False, [err_msg]
@@ -795,6 +1005,7 @@ def compile_shard(
                 shard_data_path = candidate
             else:
                 if not has_all_fixes:
+                    _cleanup_stale_pass_marker()
                     err_msg = f"ERROR: No existe el archivo de datos del shard: {candidate}"
                     print(err_msg, file=sys.stderr)
                     return False, [err_msg]
@@ -810,7 +1021,6 @@ def compile_shard(
     source_sha256 = hasher.hexdigest()
 
     # Bounded compilation counter & unified stateful circuit breaker (.check_attempts/compile_{norm_shard_id}.json)
-    att_dir = work_p / ".check_attempts"
     att_dir.mkdir(parents=True, exist_ok=True)
     compile_att_file = att_dir / f"compile_{norm_shard_id}.json"
 
@@ -875,6 +1085,25 @@ def compile_shard(
             )
             res_msg = res_msg + terminal_stop
             print(terminal_stop, file=sys.stderr)
+
+        _cleanup_stale_pass_marker()
+
+        if receipt_p:
+            try:
+                import time
+                r_data = {}
+                if receipt_p.is_file():
+                    try:
+                        r_data = json.loads(receipt_p.read_text(encoding="utf-8"))
+                    except Exception:
+                        r_data = {}
+                r_data["shard_id"] = shard_id
+                r_data["compiled_status"] = "FAIL"
+                r_data["compilation_errors"] = [res_msg]
+                r_data["compiled_at"] = time.time()
+                _atomic_write_json(receipt_p, r_data)
+            except Exception:
+                pass
 
         state["last_errors"] = [res_msg]
         _atomic_write_json(compile_att_file, state)
@@ -1071,7 +1300,25 @@ def compile_shard(
 
     from check_templates import auto_heal_template_data, check_templates_file_or_dir
 
+    if cta_path and Path(cta_path).is_file():
+        cta_p = Path(cta_path).resolve()
+    else:
+        cta_file_candidate = work_p / "cta.json"
+        cta_p = cta_file_candidate if cta_file_candidate.is_file() else None
+
     cta_comp_map = {c["id"]: c for c in shard_entry.get("competencies", []) if isinstance(c, dict) and "id" in c}
+    if cta_p and cta_p.is_file():
+        try:
+            cta_data = json.loads(cta_p.read_text(encoding="utf-8"))
+            for c in cta_data.get("competencies", []):
+                if isinstance(c, dict) and "id" in c:
+                    cid_key = c["id"]
+                    if cid_key not in cta_comp_map or not cta_comp_map[cid_key].get("distractors"):
+                        cta_comp_map[cid_key] = c
+                    elif c.get("distractors") and not cta_comp_map[cid_key].get("distractors"):
+                        cta_comp_map[cid_key]["distractors"] = c["distractors"]
+        except Exception:
+            pass
 
     # 5. Compile tuples into canonical JSON dictionaries grouped by competency
     templates_by_cid: Dict[str, List[Dict[str, Any]]] = {}
@@ -1222,6 +1469,8 @@ def compile_shard(
                 sample_res = gen_raw(random.Random(42))
                 if isinstance(sample_res, dict) and "vars" in sample_res and isinstance(sample_res["vars"], dict):
                     declared_vars = set(str(k) for k in sample_res["vars"].keys())
+                elif isinstance(sample_res, (tuple, list)) and len(sample_res) >= 1 and isinstance(sample_res[0], dict):
+                    declared_vars = set(str(k) for k in sample_res[0].keys())
             except Exception:
                 pass
         if not declared_vars and gen_code:
@@ -1297,9 +1546,6 @@ def compile_shard(
         compiled_paths.append(out_json_path)
 
     # 7. Execute Strict Validation with check_templates (isolated by shard_id)
-    cta_file_candidate = work_p / "cta.json"
-    cta_p = cta_file_candidate if cta_file_candidate.is_file() else None
-
     is_clean, raw_errors = check_templates_file_or_dir(
         target_path=compiled_paths,
         cta_path=cta_p,
@@ -1327,6 +1573,25 @@ def compile_shard(
         state["same_error_streak"] = same_error_streak
         state["last_err_hash"] = err_hash
 
+        _cleanup_stale_pass_marker()
+
+        if receipt_p:
+            try:
+                import time
+                r_data = {}
+                if receipt_p.is_file():
+                    try:
+                        r_data = json.loads(receipt_p.read_text(encoding="utf-8"))
+                    except Exception:
+                        r_data = {}
+                r_data["shard_id"] = shard_id
+                r_data["compiled_status"] = "FAIL"
+                r_data["compilation_errors"] = [compact_report]
+                r_data["compiled_at"] = time.time()
+                _atomic_write_json(receipt_p, r_data)
+            except Exception:
+                pass
+
         if same_error_streak >= 3:
             terminal_stop = (
                 f"\n[-] [CIRCUIT BREAKER HALT: 3 fallos consecutivos idénticos para shard '{shard_id}']. "
@@ -1347,6 +1612,32 @@ def compile_shard(
         except Exception:
             pass
 
+    import time
+    pass_marker = att_dir / f"pass_{norm_shard_id}.json"
+    pass_payload = {
+        "shard_id": shard_id,
+        "status": "PASS",
+        "source_sha256": source_sha256,
+        "template_counts": {cid: len(tpls) for cid, tpls in templates_by_cid.items()},
+        "timestamp": time.time(),
+    }
+    _atomic_write_json(pass_marker, pass_payload)
+
+    if receipt_p:
+        try:
+            r_data = {}
+            if receipt_p.is_file():
+                try:
+                    r_data = json.loads(receipt_p.read_text(encoding="utf-8"))
+                except Exception:
+                    r_data = {}
+            r_data["shard_id"] = shard_id
+            r_data["compiled_status"] = "PASS"
+            r_data["compiled_templates"] = [p.as_posix() for p in compiled_paths]
+            r_data["compiled_at"] = time.time()
+            _atomic_write_json(receipt_p, r_data)
+        except Exception:
+            pass
 
     total_archetypes = sum(len(tpls) for tpls in templates_by_cid.values())
     written_files_str = ", ".join(p.as_posix() for p in compiled_paths)
@@ -1368,6 +1659,7 @@ def compile_shard_file(
         strict=strict,
         seeds=seeds,
         output_dir=output_dir,
+        **kwargs,
     )
 
 
@@ -1388,9 +1680,18 @@ def main():
 
     work_or_path = args.input_path or args.shard_data_path or args.work
     s_id = args.shard
+    receipt_path = None
     eff_out_dir = args.output_dir
-    if not eff_out_dir and args.output_path and not str(args.output_path).lower().endswith(".json"):
-        eff_out_dir = args.output_path
+    if args.output_path:
+        if str(args.output_path).lower().endswith(".json"):
+            receipt_path = args.output_path
+        elif not eff_out_dir:
+            eff_out_dir = args.output_path
+
+    if work_or_path == "work" and not (Path("work/shards/pre_shard_manifest.json").is_file() or Path("work/pre_shard_manifest.json").is_file()):
+        inferred = infer_work_dir(work_or_path, shard_id=s_id)
+        if inferred != Path(work_or_path):
+            work_or_path = str(inferred)
 
     success, _ = compile_shard(
         work_dir_or_path=work_or_path,
@@ -1398,6 +1699,9 @@ def main():
         strict=args.strict,
         seeds=args.seeds,
         output_dir=eff_out_dir,
+        output_path=receipt_path,
+        cta_path=args.cta,
+        manifest_path=args.manifest,
     )
     sys.exit(0 if success else 1)
 
