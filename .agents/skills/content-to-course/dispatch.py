@@ -61,6 +61,16 @@ def _resolve_repo_python_and_env() -> Tuple[str, str, str]:
     return repo_posix, py_exe, cmd_prefix
 
 
+def _clean_str(val: Any) -> str:
+    """Sanitizes strings from CTA/manifest data, eliminating None, null, undefined, and empty values."""
+    if val is None:
+        return ""
+    s = str(val).strip()
+    if s.lower() in ("none", "null", "undefined"):
+        return ""
+    return s
+
+
 def load_system_prompt(name_or_path: Union[str, Path], lean: bool = False) -> str:
     """Loads a system prompt markdown file.
     
@@ -902,14 +912,19 @@ def dispatch_authors(
     if isinstance(docs, list):
         for d in docs:
             if isinstance(d, dict):
-                dn = d.get("doc_name") or d.get("name") or d.get("doc")
-                dp = d.get("path") or d.get("file") or dn
+                dn = _clean_str(d.get("doc_name") or d.get("name") or d.get("doc"))
+                dp = _clean_str(d.get("path") or d.get("file") or dn)
+                if dp:
+                    dp = dp.replace("\\", "/")
                 if dn:
                     doc_paths_by_name[dn] = dp
     elif isinstance(docs, dict):
         for dn, dinfo in docs.items():
             if isinstance(dinfo, dict):
-                doc_paths_by_name[dn] = dinfo.get("path") or dn
+                dp = _clean_str(dinfo.get("path") or dn)
+                if dp:
+                    dp = dp.replace("\\", "/")
+                doc_paths_by_name[dn] = dp
 
     shard_manifest_data = json.loads(shard_manifest_path.read_text(encoding="utf-8"))
     manifest_comps_by_id: Dict[str, Dict[str, Any]] = {}
@@ -979,7 +994,7 @@ def dispatch_authors(
 
         for cid in c_ids:
             c_obj = cta_comps_by_id.get(cid) or manifest_comps_by_id.get(cid, {})
-            c_name = c_obj.get("name", cid)
+            c_name = _clean_str(c_obj.get("name")) or cid
             raw_type = str(c_obj.get("type", "knowledge")).lower()
             if raw_type in ("skill", "habilidad", "hab"):
                 comp_type = "skill"
@@ -988,7 +1003,7 @@ def dispatch_authors(
                 comp_type = "knowledge"
                 quota = 20
 
-            desc_latex = c_obj.get("description_latex") or c_obj.get("description") or "(Definición pedagógica según fuentes del curso)"
+            desc_latex = _clean_str(c_obj.get("description_latex") or c_obj.get("description")) or "(Definición pedagógica según fuentes del curso)"
 
             # Evidence
             ev_list = []
@@ -998,10 +1013,11 @@ def dispatch_authors(
             if isinstance(raw_ev, list):
                 for ev in raw_ev:
                     if isinstance(ev, dict):
-                        doc = ev.get("doc") or ev.get("document") or ""
-                        sec = ev.get("section_heading") or ev.get("section") or ""
+                        doc = _clean_str(ev.get("doc") or ev.get("document"))
+                        sec = _clean_str(ev.get("section_heading") or ev.get("section"))
                         page = ev.get("page") or ev.get("page_or_slide") or ev.get("slide") or 1
-                        resolved_doc = doc_paths_by_name.get(doc, doc)
+                        raw_resolved = doc_paths_by_name.get(doc, doc) if doc else ""
+                        resolved_doc = raw_resolved.replace("\\", "/") if raw_resolved else ""
                         if resolved_doc:
                             source_doc_set.add(resolved_doc)
                         ev_desc = f"`{resolved_doc or doc}` (pág. {page}" + (f", sección: '{sec}'" if sec else "") + ")"
@@ -1011,15 +1027,27 @@ def dispatch_authors(
             # 6 Distractors D-XX-01..06
             raw_distractors = c_obj.get("distractors", [])
             d_lines = []
+            correct_belief = _clean_str(c_obj.get("correct_belief") or c_obj.get("canonical_formula"))
+            if not correct_belief and isinstance(raw_distractors, list) and raw_distractors:
+                first_d = raw_distractors[0]
+                if isinstance(first_d, dict):
+                    correct_belief = _clean_str(first_d.get("correct_belief"))
+
             if isinstance(raw_distractors, list):
                 for d in raw_distractors:
                     if isinstance(d, dict):
-                        did = d.get("id") or "D-XX"
-                        dname = d.get("name") or did
-                        dw = d.get("wrong_belief") or d.get("rationale") or "Creencia errónea no especificada"
-                        d_omit = d.get("omitted_step") or "N/A"
-                        d_warn = d.get("common_misconception_warning")
+                        did = _clean_str(d.get("id")) or "D-XX"
+                        dname = _clean_str(d.get("name")) or did
+                        dw = _clean_str(d.get("wrong_belief") or d.get("rationale")) or "Creencia errónea no especificada"
+                        d_omit = _clean_str(d.get("omitted_step")) or "N/A"
+                        d_manif = _clean_str(d.get("manifestation"))
+                        d_hint = _clean_str(d.get("remediation_hint"))
+                        d_warn = _clean_str(d.get("common_misconception_warning"))
                         line_entry = f"    - **`{did}`** (`{dname}`): Creencia errónea: *\"{dw}\"* | Paso omitido: `{d_omit}`"
+                        if d_manif:
+                            line_entry += f" | Manifestación: *\"{d_manif}\"*"
+                        if d_hint:
+                            line_entry += f" | Remediation Hint: *\"{d_hint}\"*"
                         if d_warn:
                             line_entry += f" | Advertencia: *\"{d_warn}\"*"
                         d_lines.append(line_entry)
@@ -1027,11 +1055,13 @@ def dispatch_authors(
                 d_lines.append("    - *(Distractores no provistos en manifiesto; sintetizar 6 distractores canónicos D-XX-01..06)*")
             distractors_block = "\n".join(d_lines)
 
+            cb_line = f"- **Modelo/Fórmula Correcta Canónica (correct_belief):** {correct_belief}\n" if correct_belief else ""
             block = (
                 f"### Competencia: `{cid}`\n"
                 f"- **Tipo:** `{comp_type}` (Cuota requerida: **{quota}** reactivos)\n"
                 f"- **Nombre:** {c_name}\n"
                 f"- **Descripción (LaTeX):** {desc_latex}\n"
+                f"{cb_line}"
                 f"- **Evidencia Fuente:** {ev_str}\n"
                 f"- **6 Distractores Canónicos (D-XX-01..06):**\n"
                 f"{distractors_block}"
@@ -1080,21 +1110,23 @@ def dispatch_authors(
             "\n\n".join(comp_blocks),
             "",
             "## 3. INSTRUCCIONES DE EJECUCIÓN",
+            f"0. **AUTOSUFICIENCIA TURN-0 (CERO LECTURA INNECESARIA DE PDFs):** La Sección 2 de esta orden ya contiene el 100% de las definiciones, fórmulas canónicas (correct_belief), manifestaciones de error (manifestation) y distractores de cta.json. NO abras ni leas los documentos fuente de content/ en Turno 1; empieza directamente escribiendo {s_id}_data.py.",
             f"1. Escribe en `{out_py}` (`TEMPLATES = [...]`) las funciones generadoras y tuplas de plantillas de forma concisa (<= 150-250 líneas por competencia, estándar Clean-Room `shard_08`).",
-            f"2. Para CADA competencia asignada: cubre los 4 arquetipos (1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite) y el 100% de los 6 distractores (`D-XX-01..06`).",
+            f"2. Para CADA competencia asignada: cubre los 4 arquetipos disjuntos (1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite) y el 100% de los 6 distractores (`D-XX-01..06`). Utiliza el formato DRY compacto de distractores en `gen_*(rng)`: tuplas `(\"D-XX-01\", f\"...\")` o dicts `{{\"distractor_id\": \"D-XX-01\", \"value\": f\"...\"}}` sin repetir los 6 párrafos de `error_rationale` (donde `compile_shard.py` los hereda automáticamente desde `cta.json`).",
             f"3. **[TPL-VAR Obligatorio]:** Cada `gen_*(rng)` DEBE tener espacio paramétrico >= 500 combinaciones (`rng.randint` amplios, NUNCA listas pequeñas `rng.choice`) para producir >= 30 instancias únicas (`Hab-*`) o >= 20 (`C-*`/`H-*`) en 50 semillas.",
             f"4. **[R-18 / R-15 / R-20 Obligatorio]:** Usa siempre `r\"...\"` con `@var@` (PROHIBIDO `rf\"...\"`, `\\implies` -> usa `\\Rightarrow`, o `hat{{\\theta}}` sin barra). En `distractors`, `\"value\"` es visible al estudiante (ecuación limpia `r\"$\\text{{Avar}} = @d1@$\"` o afirmación declarativa neutra con longitud homogénea `0.80x-1.20x` respecto a `correct`; PROHIBIDO usar gerundios/giveaways como `'omitiendo'`, `'confundiendo'`, `'asumiendo'`, `'erróneamente'`, `'espuria'`, `'olvidando'` en `\"value\"`). Coloca la explicación del error exclusivamente en `\"error_rationale\"`.",
             f"5. Compila deterministamente:",
             f"   ```bash",
             f"   {compile_cmd}",
             f"   ```",
-            f"6. Si reporta errores con línea exacta, corrígelos quirúrgicamente con `edit_file` (`replace_file_content`) sobre `{out_py}` (o en `{work_rel}/shards/shard_fixes/<CID>.py` si > 15 líneas). NO reescribas todo el archivo desde cero.",
-            f"7. Sigue las directivas de `c2c_shard_author` y finaliza estrictamente con: `DONE: {target_json}`.",
+            f"6. Si reporta errores con línea exacta, corrígelos quirúrgicamente con `edit_file` (`replace_file_content`) sobre `{out_py}` (o en `{work_rel}/shards/shard_fixes/<CID>.py` si > 15 líneas). NO reescribas todo el archivo desde cero con `write_file`.",
+            f"7. **[Corte Inmediato Post-PASS]:** Al obtener `PASS`, cesa inmediatamente toda edición y finaliza estrictamente con: `DONE: {target_json}`.",
         ])
         prompt_full = "\n".join(prompt_lines)
 
-        safe_s_id = re.sub(r"[^\w-]", "_", str(s_id))
-        item_file = items_dir / f"author_{safe_s_id}.json"
+        m_snum = re.search(r"(\d+)$", str(s_id))
+        s_num_str = f"{int(m_snum.group(1)):02d}" if m_snum else f"{idx:02d}"
+        item_file = items_dir / f"author_{s_num_str}.json"
         item_data = {
             "TypeName": "c2c_shard_author",
             "Role": f"Shard Author {s_id}",
@@ -1624,17 +1656,65 @@ def build_dispatch(
             shard_id = shard_map.get(cid, "shard_01")
 
             # Auto-reset sticky circuit breaker / attempt state in .check_attempts/ for this shard & cid
-            if attempts_dir.is_dir():
-                norm_s_id = re.sub(r"[^\w-]", "_", str(shard_id))
-                norm_cid = re.sub(r"[^\w-]", "_", str(cid))
-                for att_f in list(attempts_dir.glob("*.json")):
-                    stem = att_f.stem
-                    if norm_s_id in stem or norm_cid in stem or shard_id in stem or cid in stem:
+            try:
+                if attempts_dir.is_dir():
+                    norm_s_id = re.sub(r"[^\w]", "_", str(shard_id))
+                    dash_s_id = str(shard_id).replace("_", "-")
+                    norm_cid = re.sub(r"[^\w]", "_", str(cid))
+                    dash_cid = str(cid).replace("_", "-")
+                    targets_to_clear = [
+                        attempts_dir / f"pass_{shard_id}.json",
+                        attempts_dir / f"pass_{norm_s_id}.json",
+                        attempts_dir / f"pass_{dash_s_id}.json",
+                        attempts_dir / f"pass_{cid}.json",
+                        attempts_dir / f"pass_{norm_cid}.json",
+                        attempts_dir / f"pass_{dash_cid}.json",
+                        attempts_dir / f"pass_comp_{cid}.json",
+                        attempts_dir / f"pass_comp_{norm_cid}.json",
+                        attempts_dir / f"pass_comp_{dash_cid}.json",
+                        attempts_dir / f"pass_{shard_id}_{cid}.json",
+                        attempts_dir / f"pass_{shard_id}_{norm_cid}.json",
+                    ]
+                    for p_file in targets_to_clear:
                         try:
-                            att_f.unlink()
-                            cleared_attempt_files.append(att_f.name)
+                            if p_file.is_file():
+                                p_file.unlink()
+                                if p_file.name not in cleared_attempt_files:
+                                    cleared_attempt_files.append(p_file.name)
                         except Exception as e:
-                            logger.warning("Could not remove sticky attempt file %s: %s", att_f, e)
+                            logger.warning("Could not remove pass file %s: %s", p_file, e)
+
+                    try:
+                        f_list = list(attempts_dir.glob("*.json"))
+                    except Exception as e:
+                        logger.warning("Could not list attempt files in %s: %s", attempts_dir, e)
+                        f_list = []
+
+                    for att_f in f_list:
+                        stem = att_f.stem
+                        if (
+                            norm_s_id in stem
+                            or dash_s_id in stem
+                            or norm_cid in stem
+                            or dash_cid in stem
+                            or shard_id in stem
+                            or cid in stem
+                            or stem.startswith(f"pass_{shard_id}")
+                            or stem.startswith(f"pass_{norm_s_id}")
+                            or stem.startswith(f"pass_{dash_s_id}")
+                            or stem.startswith(f"pass_{cid}")
+                            or stem.startswith(f"pass_{norm_cid}")
+                            or stem.startswith(f"pass_{dash_cid}")
+                        ):
+                            try:
+                                if att_f.is_file():
+                                    att_f.unlink()
+                                    if att_f.name not in cleared_attempt_files:
+                                        cleared_attempt_files.append(att_f.name)
+                            except Exception as e:
+                                logger.warning("Could not remove sticky attempt file %s: %s", att_f, e)
+            except Exception as e:
+                logger.warning("Error accessing .check_attempts dir: %s", e)
 
             out_py = f"{work_rel}/shards/{shard_id}_data.py"
             out_json = f"{work_rel}/shards/{shard_id}.json"
@@ -1682,7 +1762,8 @@ def build_dispatch(
                 f"3. Sigue todas las directivas de tu System Prompt `c2c_repair` y finaliza con: `DONE: {out_json}`.\n"
             )
             safe_cid = re.sub(r"[^\w-]", "_", str(cid))
-            item_file = items_dir / f"repair_{safe_cid}.json"
+            item_file = items_dir / f"repair_{idx:02d}.json"
+            cid_item_file = items_dir / f"repair_{safe_cid}.json"
             item_data = {
                 "TypeName": spec["type_name"],
                 "Role": f"Repair Engineer {cid}",
@@ -1696,7 +1777,9 @@ def build_dispatch(
                 "Prompt": prompt_text,
                 "work_order": prompt_text,
             }
-            item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
+            item_json_str = json.dumps(item_data, indent=2, ensure_ascii=False)
+            item_file.write_text(item_json_str, encoding="utf-8")
+            cid_item_file.write_text(item_json_str, encoding="utf-8")
 
             if use_pointer:
                 extra = f"[SCOPE-LOCK] Fix {cid} in `{out_py}` or write `{shard_fix_path}`, compile with `compile_shard.py`."
