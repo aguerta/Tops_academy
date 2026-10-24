@@ -172,3 +172,29 @@ Opciones:
 ```
 
 
+---
+
+## 6. Protocolo Forense de Varianza Multi-Shard y Benchmarking Clean-Room (>= 10 Shards)
+
+Cuando el usuario solicite auditar corridas masivas ($\ge 10$ shards) o investigar causas de varianza entre shards, reintentos de compilación, colisiones de artefactos o desviaciones respecto a un shard de referencia:
+
+1. **Despacho Paralelo en `Model="flash"` (Protección de Contexto del Orquestador):**
+   - Nunca leer secuencialmente $\ge 10$ `transcript.jsonl` de subagentes desde el agente principal.
+   - Agrupar los shards en bloques de 5 (p. ej., `G1: Shards 01-05`, `G2: Shards 06-10`, `G3: Shards 11-15`, `G4: Shards 16-20`) e invocar subagentes `research` con `Model="flash"` en paralelo.
+   - Cada subagente debe escribir su tabla forense en `<artifact_dir>/scratch/audit_shards_XX_YY.md` para mantener limpio el contexto principal.
+
+2. **Descomposición Temporal Obligatoria por Shard (`Pre-1st-Compile` vs `Post-1st-Compile`):**
+   - Desglosar la duración total de cada shard en dos fases:
+     - **Tiempo `Pre-1st-Compile` ($t_{\text{1st\_compile}} - t_{\text{spawn}}$):** Mide cuánto tardó el autor antes de ejecutar su primer `compile_shard.py --strict`. Si supera los `240s`, auditar los `thinking` blocks del Turno 0/1 en busca de: (a) exploración prohibida de otros cursos (`Get-ChildItem courses/`), (b) colisión de punteros (`author_XX.json` apuntando a otro shard) o (c) `Overthinking` calculando álgebra/derivadas simbólicas en el `thinking` block en vez de delegar a Python en `gen_<cid>(rng)`.
+     - **Tiempo `Post-1st-Compile` ($t_{\text{end}} - t_{\text{1st\_compile}}$):** Mide el bucle de remediación tras el primer intento de compilación, enumerando cada código de rechazo exacto (`[TPL-VAR]`, `[R-15]`, `[R-18]`, `[GATEKEEPER]`, `SyntaxError`) y cuántos ciclos `edit_file` + `compile_shard.py` consumió cada error.
+
+3. **Detección de Contaminación Cross-Course (`Copy-Item` / Clonación entre Cursos):**
+   - Verificar en las llamadas a `run_command` de los subagentes si existió `Copy-Item`, `cp` o lectura de `courses/<otro_curso>/work/shards/*_data.py` seguida de reemplazos regex masivos (`-replace`), lo cual introduce `NameError`, `SyntaxError` o desalineación de `competency_id`.
+
+4. **Benchmarking contra el Shard `reference_cleanroom` (`shard_08` Pattern):**
+   - Identificar siempre el shard **Gold-Standard Clean-Room** de la corrida (aquel con `1` compilación, `0` reintentos, `0` edits post-escritura y `0` exploraciones fuera de su `<work_dir>`) y contrastar su estructura de `gen_<cid>(rng)`, `ver_<cid>(res)`, `stem_variants` y `distractor_map` línea por línea frente a los shards que requirieron múltiples ciclos o entraron en `dispatch-repair`.
+
+5. **Estructura Dual del Reporte (`Ya Parcheado` vs `Diagnóstico + Pendiente de Parchear`):**
+   - Separar explícitamente en el reporte consolidado:
+     - **Capa A (Orquestación, Guardas y Despacho):** Hiper-paralelismo en 1 ola, aislamiento Cross-Course en `c2c_hook_guard.py`, nombres deterministas de work orders (`author_01..20.json`, `repair_<CID>.json`) y reseteo de `.check_attempts/` al entrar a `dispatch-repair`.
+     - **Capa B (Motor `compile_shard.py`, Validador `invariants.py`/`rules.py` y Prompts):** Falsos positivos del validador (p. ej. `R-18` sobre opciones matemáticas puras), desincronización de `healed_source` vs archivo en disco, auto-healing de LaTeX (`\implies`, `\iff`, `$$`) y alineación del contrato Turn-0 en `prompt_shard_author.md`.

@@ -206,3 +206,20 @@ The initial step necessitates confi...` |
 | **`shard_18`** | `H-04, C-08` | 732s (12.20m) | 306s (41.8%) | 426s (58.2%) | 4 (1P / 3F) | `[R-18]` (x3), `[R-20]` (`hat{\theta}`), `[TPL-VAR]` (x3) + 4 `write_file` de 33–42 KB (566s) | 🌟 **100% Clean-Room** |
 | **`shard_19`** | `C-11, H-05` | 655s (10.92m) | 323s (49.3%) | 332s (50.7%) | 5 (4P / 1F) | `[R-15]` tras expandir de 3 a 6 distractores (corregido con `edit_file` de 43 líneas) | 🌟 **100% Clean-Room** |
 | **`shard_20`** | `H-06` | 539s (8.98m) | 270s (50.1%) | 269s (49.9%) | 4 (2P / 2F) | `[R-20]` (x2 por signos `$` impares), `[TPL-VAR]` (x2) | 🌟 **100% Clean-Room** |
+
+
+---
+
+### 7.2. Diagnóstico Raíz Detrás de los Errores: `shard_08` (`reference_cleanroom`) vs los Otros 19 Shards y `shard_02`
+
+1. **Por qué `shard_08` pasó limpio mientras `shard_02`, `shard_03`, `shard_01` y `shard_06` chocaron con `[R-18: DISTRACTORES BOILERPLATE SINTÉTICOS]`:**
+   - En `engine/invariants.py` y `src/validator/rules.py`, `check_synthetic_boilerplate_distractors` calculaba `_skeleton(d)` sin remover primero las expresiones matemáticas `$...$`.
+   - En `shard_08_data.py`, las opciones numéricas `r"$\text{Avar} = @d1@$"` producían el esqueleto `\text{avar} = <NUM>` de **19 caracteres (`< 20`)** y solo definían **3 distractores manuales (`< 4`)**, esquivando el umbral `len(sk) >= 20` y `len(group) >= 4` por **1 solo carácter**.
+   - En `shard_02` (Intento 1) y `shard_03`, las 6 opciones `r"$\text{Est. Asy. Var}[b_{IV}] = @d1@$"` producían el esqueleto `\text{est asy var} b_{iv} = <NUM>` de **33 caracteres (`>= 20`)** en los 6 distractores (`>= 4`), disparando un **falso positivo `[R-18]`**.
+   - Cuando `shard_02` (Intento 1) obedeció la instrucción del validador de agregar explicaciones conceptuales dentro del `"value"` de cada opción LaTeX, corrompió llaves (`\text{Asy. Var}[b_}{LS}]` $\to$ `[R-20]`), introdujo gerundios delatores (`[R-18: META-INFORMACIÓN]`) y cayó en el Circuit Breaker a los 21 minutos.
+2. **Por qué 11 de los 20 shards (incluido `shard_08` en su 1er intento) fallaron `[TPL-VAR]`:**
+   - `system_prompts/lean/prompt_shard_author.md` (L22) decía `TPL-VAR: Generator must produce >= 4 unique instances across seeds`, contradiciendo directamente el contrato real del validador ($\ge 30$ instancias únicas en 50 semillas para `Hab-*` y $\ge 20$ para `C-*`/`H-*`).
+3. **Por qué seguían ocurriendo fallos de LaTeX (`[AST]` / `[R-20]`) pese a `r"..."` y `@var@`:**
+   - `extract_function_code` en `compile_shard.py` (L446) llamaba a `inspect.getsource(fn_or_str)` antes de consultar `locator.lines`, leyendo el código **sin curar desde el disco** y anulando la auto-curación en memoria de `heal_shard_source_text` (lo que causó el fallo `[AST]` de `\beta, \alpha, \theta` en `shard_06`).
+   - Faltaba además auto-curar en `heal_shard_source_text` los comandos matemáticos sin barra dentro de `$...$` (`hat{\theta}` $\to$ `\hat{\theta}` en `shard_18`), `\implies` $\to$ `\Rightarrow` (`shard_11, 20`) y el doble `$$` accidental al final de expresiones inline (`shard_20`).
+4. **Todos estos defectos de motor, validador y prompts han sido parcheados en `engine/invariants.py`, `src/validator/rules.py`, `compile_shard.py`, `system_prompts/lean/prompt_shard_author.md` y `dispatch.py`.**
