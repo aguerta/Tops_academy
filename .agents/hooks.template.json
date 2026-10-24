@@ -1,0 +1,15 @@
+{
+  "c2c-lifecycle-guard": {
+    "PreToolUse": [
+      {
+        "matcher": "read_file|view_file|write_file|write_to_file|edit_file|replace_file_content|multi_replace_file_content|run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python skills/content-to-course/c2c_hook_guard.py"
+          }
+        ]
+      }
+    ]
+  }
+}
