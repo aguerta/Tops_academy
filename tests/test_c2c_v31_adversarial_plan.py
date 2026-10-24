@@ -852,8 +852,8 @@ TEMPLATES = [
         gt_file = self.work_dir / "judge_ground_truth.json"
         gt_file.write_text(json.dumps({"I-C01-01": {"correct": "A"}}, indent=2), encoding="utf-8")
 
-        # Build judge dispatch
-        dispatch_payload = dispatch.build_dispatch(role="judge", work_dir=self.work_dir)
+        # Build judge dispatch (pointer=False for inline zero-warmup payload assertion)
+        dispatch_payload = dispatch.build_dispatch(role="judge", work_dir=self.work_dir, pointer=False)
         subagents = dispatch_payload.get("Subagents", [])
         self.assertGreaterEqual(len(subagents), 1, "Expected at least 1 judge subagent")
 

@@ -10,11 +10,13 @@ Zero domain logic: agnostically operates on templates conforming to template.sch
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import logging
 import math
 import re
 import sys
+import zlib
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, Set
@@ -32,36 +34,57 @@ MAX_CORRECTION_CYCLES = 3
 
 
 def _load_templates(templates_path: Union[str, Path]) -> List[Dict[str, Any]]:
-    """Loads all template objects from a JSON file or directory of JSON files."""
+    """Loads all template objects from a JSON file or directory of JSON files, attaching SHA-256 hashes."""
     path = Path(templates_path)
     templates: List[Dict[str, Any]] = []
 
     if path.is_file():
-        content = json.loads(path.read_text(encoding="utf-8"))
+        raw_bytes = path.read_bytes()
+        file_sha = hashlib.sha256(raw_bytes).hexdigest()
+        content = json.loads(raw_bytes.decode("utf-8"))
         if isinstance(content, dict):
             if "templates" in content:
                 for t in content["templates"]:
                     if "competency_id" not in t and "competency_id" in content:
                         t["competency_id"] = content["competency_id"]
+                    t_sha = hashlib.sha256(json.dumps(t, sort_keys=True).encode("utf-8")).hexdigest()
+                    t["_sha256"] = t_sha
+                    t["_file_sha256"] = file_sha
                     templates.append(t)
             else:
+                t_sha = hashlib.sha256(json.dumps(content, sort_keys=True).encode("utf-8")).hexdigest()
+                content["_sha256"] = t_sha
+                content["_file_sha256"] = file_sha
                 templates.append(content)
         elif isinstance(content, list):
-            templates.extend(content)
+            for t in content:
+                t_sha = hashlib.sha256(json.dumps(t, sort_keys=True).encode("utf-8")).hexdigest()
+                t["_sha256"] = t_sha
+                t["_file_sha256"] = file_sha
+                templates.append(t)
     elif path.is_dir():
         for file in sorted(path.glob("*.json")):
             try:
-                data = json.loads(file.read_text(encoding="utf-8"))
+                raw_bytes = file.read_bytes()
+                file_sha = hashlib.sha256(raw_bytes).hexdigest()
+                data = json.loads(raw_bytes.decode("utf-8"))
                 if isinstance(data, dict):
                     if "templates" in data:
                         for t in data["templates"]:
                             if "competency_id" not in t and "competency_id" in data:
                                 t["competency_id"] = data["competency_id"]
+                            t["_sha256"] = file_sha
+                            t["_file_sha256"] = file_sha
                             templates.append(t)
                     else:
+                        data["_sha256"] = file_sha
+                        data["_file_sha256"] = file_sha
                         templates.append(data)
                 elif isinstance(data, list):
-                    templates.extend(data)
+                    for t in data:
+                        t["_sha256"] = file_sha
+                        t["_file_sha256"] = file_sha
+                        templates.append(t)
             except Exception as e:
                 logger.warning("Could not read template file %s: %s", file, e)
 
@@ -143,6 +166,7 @@ def generate_judge_batch(
     cta_path: Optional[Union[str, Path]] = None,
     seeds: Tuple[int, int] = (101, 202),
     items_per_competency: int = 2,
+    ready_only: bool = False,
 ) -> Tuple[Path, Path]:
     """Generates work/judge_batch.json WITHOUT answer keys using stratified sampling by competency.
     
@@ -155,6 +179,7 @@ def generate_judge_batch(
         seeds: Two deterministic seeds for generating instances.
         items_per_competency: Stratified sample count per competency (defaults to 2).
                               If <= 0, generates 2 instances for every template.
+        ready_only: If True, skips competencies that were already evaluated in earlier waves/batches.
 
     Returns:
         Tuple of (path_to_judge_batch_json, path_to_ground_truth_json).
@@ -165,6 +190,56 @@ def generate_judge_batch(
     templates = _load_templates(templates_path)
     if not templates:
         raise ValueError(f"No templates found in path: {templates_path}")
+
+    # Load previously evaluated competencies if in ready_only mode
+    evaluated_file = work / "verification" / "evaluated_competencies.json"
+    evaluated_ids: Set[str] = set()
+    saved_hashes: Dict[str, str] = {}
+    if evaluated_file.is_file():
+        try:
+            ev_data = json.loads(evaluated_file.read_text(encoding="utf-8"))
+            evaluated_ids = set(ev_data.get("evaluated_competency_ids", []))
+            saved_hashes = ev_data.get("competency_hashes", {})
+        except Exception:
+            pass
+    elif (work / "evaluated_competencies.json").is_file():
+        try:
+            ev_data = json.loads((work / "evaluated_competencies.json").read_text(encoding="utf-8"))
+            evaluated_ids = set(ev_data.get("evaluated_competency_ids", []))
+            saved_hashes = ev_data.get("competency_hashes", {})
+        except Exception:
+            pass
+
+    if ready_only and (evaluated_ids or saved_hashes):
+        unjudged_templates = []
+        for t in templates:
+            cid = str(t.get("competency_id", "comp-01"))
+            t_sha = t.get("_sha256") or hashlib.sha256(json.dumps(t, sort_keys=True).encode("utf-8")).hexdigest()
+            if cid in evaluated_ids:
+                if cid in saved_hashes:
+                    if saved_hashes[cid] == t_sha:
+                        # Template unchanged: skip
+                        continue
+                    else:
+                        # Template hash modified (repaired!): re-evaluate!
+                        unjudged_templates.append(t)
+                else:
+                    # Legacy record without hash: skip
+                    continue
+            else:
+                unjudged_templates.append(t)
+
+        if unjudged_templates:
+            templates = unjudged_templates
+        else:
+            logger.info("All templates in %s have already been evaluated and are unchanged (--ready-only).", templates_path)
+            batch_path = work / "judge_batch.json"
+            truth_path = work / "judge_ground_truth.json"
+            if not batch_path.is_file():
+                batch_path.write_text("[]", encoding="utf-8")
+            if not truth_path.is_file():
+                truth_path.write_text("{}", encoding="utf-8")
+            return batch_path, truth_path
 
     # Load CTA distractors map if available
     cta_distractors_map: Dict[str, Dict[str, Any]] = {}
@@ -238,6 +313,9 @@ def generate_judge_batch(
 
         gen_res = execute_sandbox_instance(template["generate_py"], seed=seed)
 
+        # Cryptographic per-item option shuffle seed (uniform A..G distribution)
+        option_shuffle_seed = zlib.crc32(f"{template_id}:{inst_idx}:{seed}".encode("utf-8")) & 0xFFFFFFFF
+
         # Assemble full question
         assembled = assemble_question(
             template=template,
@@ -245,7 +323,7 @@ def generate_judge_batch(
             competency_id=comp_id,
             question_index=inst_idx,
             cta_distractors_map=cta_distractors_map,
-            seed=seed,
+            seed=option_shuffle_seed,
         )
 
         # Strip all answer indicators for the blind judge
@@ -345,11 +423,44 @@ def generate_judge_batch(
         judge_batch_items.append(judge_item)
         ground_truth[item_id] = gt_record
 
+    v_dir = work / "verification"
+    v_dir.mkdir(parents=True, exist_ok=True)
+
     batch_path = work / "judge_batch.json"
-    batch_path.write_text(json.dumps(judge_batch_items, indent=2, ensure_ascii=False), encoding="utf-8")
+    batch_json_str = json.dumps(judge_batch_items, indent=2, ensure_ascii=False)
+    batch_path.write_text(batch_json_str, encoding="utf-8")
+    (v_dir / "judge_batch.json").write_text(batch_json_str, encoding="utf-8")
 
     truth_path = work / "judge_ground_truth.json"
-    truth_path.write_text(json.dumps(ground_truth, indent=2, ensure_ascii=False), encoding="utf-8")
+    truth_json_str = json.dumps(ground_truth, indent=2, ensure_ascii=False)
+    truth_path.write_text(truth_json_str, encoding="utf-8")
+    (v_dir / "judge_ground_truth.json").write_text(truth_json_str, encoding="utf-8")
+
+    # Clean up stale split batches in verification and work so dispatch_judges slices the new batch fresh
+    for stale_split in list(v_dir.glob("judge_batch_*.json")) + list(work.glob("judge_batch_*.json")):
+        if stale_split.name not in ("judge_batch.json", "judge_redispatch_batch.json"):
+            try:
+                stale_split.unlink(missing_ok=True)
+            except Exception:
+                pass
+
+    # Record evaluated competency IDs and their SHA-256 hashes for incremental streaming
+    new_comp_ids = {t.get("competency_id", "comp-01") for t, _ in planned_items}
+    total_evaluated_ids = sorted(evaluated_ids.union(new_comp_ids))
+    total_hashes = dict(saved_hashes)
+    for t in templates:
+        cid = str(t.get("competency_id", "comp-01"))
+        t_sha = t.get("_sha256") or hashlib.sha256(json.dumps(t, sort_keys=True).encode("utf-8")).hexdigest()
+        total_hashes[cid] = t_sha
+
+    ev_payload = {
+        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "evaluated_competency_ids": total_evaluated_ids,
+        "evaluated_count": len(total_evaluated_ids),
+        "competency_hashes": total_hashes,
+    }
+    (v_dir / "evaluated_competencies.json").write_text(json.dumps(ev_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    (work / "evaluated_competencies.json").write_text(json.dumps(ev_payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
     logger.info("Generated judge batch with %d items at %s", len(judge_batch_items), batch_path)
     return batch_path, truth_path
@@ -938,6 +1049,12 @@ def main() -> None:
         default=2,
         help="Stratified sample count per competency (default: 2, <=0 for unstratified)",
     )
+    prep.add_argument(
+        "--ready-only",
+        action="store_true",
+        default=False,
+        help="Only evaluate templates whose competencies have not yet been evaluated",
+    )
 
     # split subcommand
     split_p = subparsers.add_parser("split", help="Split judge_batch.json into stratified batches")
@@ -968,6 +1085,7 @@ def main() -> None:
             work_dir=args.work_dir,
             cta_path=args.cta,
             items_per_competency=args.items_per_competency,
+            ready_only=args.ready_only,
         )
         print(f"Generated judge batch: {batch_p}")
         print(f"Generated ground truth: {truth_p}")

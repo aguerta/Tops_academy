@@ -69,7 +69,7 @@ class TestMultiInstanceZeroCollisionDryRun:
             }
             (runner.work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest_data), encoding="utf-8")
 
-            cta_res = dispatch_cta(runner.work_dir)
+            cta_res = dispatch_cta(runner.work_dir, pointer=False)
             cta_prompt = cta_res["Subagents"][0]["Prompt"]
             assert f"courses/{cid}/work/cta_data.py" in cta_prompt
             assert f"courses/{cid}/work/cta.json" in cta_prompt

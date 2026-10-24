@@ -178,7 +178,8 @@ def test_build_dispatch_judge_never_reads_ground_truth(tmp_path: Path):
     )
     (tmp_path / "judge_ground_truth.json").write_text(json.dumps({"Q-01": "A"}), encoding="utf-8")
 
-    res = dispatch_judges(tmp_path)
+    # Legacy inline zero-warmup mode
+    res = dispatch_judges(tmp_path, pointer=False)
     assert len(res["Subagents"]) == 1
     assert len(res["item_files"]) == 1
 
@@ -190,6 +191,13 @@ def test_build_dispatch_judge_never_reads_ground_truth(tmp_path: Path):
     assert "judge_ground_truth.json" not in prompt.lower().split("prohibido")[0]
     assert "Q-01" in prompt
     assert "¿Cuánto es 2+2?" in prompt
+
+    # C2C v3.3 pointer=True default mode
+    res_ptr = dispatch_judges(tmp_path)
+    prompt_ptr = res_ptr["Subagents"][0]["Prompt"]
+    assert "judge_01.json" in prompt_ptr
+    item_disk = Path(res_ptr["item_files"][0])
+    assert "Q-01" in item_disk.read_text(encoding="utf-8")
 
 
 # ==============================================================================

@@ -328,7 +328,8 @@ class TestAuthorDispatchAndProtocol(unittest.TestCase):
         self.assertEqual(spec["turn_budget"], 30, "Author turn_budget is 30 in v3.2")
         self.assertIn("scratch/**", spec["forbidden"])
         self.assertIn("work/cta.json", spec["read"])
-        self.assertIn(".agents/skills/content-to-course/compile_shard.py", spec["read"])
+        self.assertIn(".agents/skills/content-to-course/compile_shard.py", spec["forbidden"])
+        self.assertNotIn(".agents/skills/content-to-course/compile_shard.py", spec["read"])
 
     def test_generate_author_bundle_has_50_turns_and_modular_directives(self):
         with tempfile.TemporaryDirectory() as tmpdir:

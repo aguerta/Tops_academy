@@ -1166,7 +1166,7 @@ TEMPLATES = [
             ],
         }), encoding="utf-8")
 
-        direct_res = dispatch_cta(self.work_dir, mode="direct")
+        direct_res = dispatch_cta(self.work_dir, mode="direct", pointer=False)
         self.assertEqual(len(direct_res["Subagents"]), 1)
         self.assertEqual(len(direct_res["item_files"]), 1)
 

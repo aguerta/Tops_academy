@@ -18,9 +18,12 @@ Strict Fail-Fast Guarantee:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime
+import io
 import json
 import logging
+import os
 import re
 import sys
 import time
@@ -56,14 +59,23 @@ except ImportError:
 from check_templates import check_templates_file_or_dir
 from course_publisher import CoursePublisher
 from cta_merge import apply_harmonize, merge_cta_parts
-from dispatch import build_dispatch, get_type_definitions, scope_check, snapshot_work_dir
+from dispatch import (
+    build_dispatch,
+    dispatch_authors,
+    dispatch_cta,
+    dispatch_judges,
+    generate_define_subagent_specs,
+    get_type_definitions,
+    scope_check,
+    snapshot_work_dir,
+)
 from engine.assemble import check_course_giveaway_distribution
 from engine.diversity import evaluate_competency_diversity
 from engine.instantiate import instantiate_competency
 from engine.invariants import check_instance_invariants
 from ingest import ingest_course
 from judge import compare_judge_responses, generate_judge_batch
-from plan_shards import plan_shards
+from plan_shards import DEFAULT_COMPS_PER_SHARD, plan_shards
 from prepare import is_corrupted_unicode, prepare_course, sanitize_cli_arg, sanitize_path
 from repair_loop import RepairLoop
 from telemetry_collector import record_stage_telemetry
@@ -92,6 +104,116 @@ def record_stage_timing(work_dir: Path, stage_name: str, duration_sec: float) ->
         logger.warning("Could not record timing in %s: %s", timings_file, e)
 
 
+@contextlib.contextmanager
+def cap_stdout_to_log(work_dir: Path, stage_name: str, max_bytes: int = 1500):
+    """Captures stage stdout, writes full verbose log to work/logs/<stage>.log, and caps console stdout to max_bytes."""
+    clean_stage = re.sub(r"[^\w-]", "_", stage_name)
+    logs_dir = work_dir / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    log_file = logs_dir / f"{clean_stage}.log"
+
+    old_stdout = sys.stdout
+    buffer = io.StringIO()
+    sys.stdout = buffer
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
+        captured = buffer.getvalue()
+        try:
+            log_file.write_text(captured, encoding="utf-8")
+        except Exception as e:
+            logger.warning("Could not write stage log to %s: %s", log_file, e)
+
+        encoded = captured.encode("utf-8", errors="replace")
+        if len(encoded) > max_bytes:
+            note = f"\n\n[... truncated verbose output ({len(encoded)} bytes). Full log: {log_file.as_posix()} ...]\n\n"
+            note_len = len(note.encode("utf-8"))
+            budget = max(0, max_bytes - note_len)
+            head_len = budget // 2
+            tail_len = budget - head_len
+            head_str = encoded[:head_len].decode("utf-8", errors="ignore")
+            tail_str = encoded[len(encoded) - tail_len:].decode("utf-8", errors="ignore") if tail_len > 0 else ""
+            sys.stdout.write(head_str + note + tail_str)
+        else:
+            sys.stdout.write(captured)
+        sys.stdout.flush()
+
+
+def format_compact_json_stdout(
+    payload: Dict[str, Any],
+    work_dir: Path,
+    stage_name: str,
+    work_orders_file: Optional[Path] = None,
+    max_bytes: int = 1450,
+) -> str:
+    """Serializes payload to JSON strictly guaranteeing stdout is <= max_bytes and 100% valid parseable JSON.
+
+    1. Tries standard indent=2.
+    2. If > max_bytes, tries compact separators=(',', ':').
+    3. If still > max_bytes, creates a valid compact summary JSON pointing to work orders on disk and stage log.
+    """
+    raw_indent = json.dumps(payload, indent=2, ensure_ascii=False)
+    if len(raw_indent.encode("utf-8")) <= max_bytes:
+        return raw_indent
+
+    raw_compact = json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
+    if len(raw_compact.encode("utf-8")) <= max_bytes:
+        return raw_compact
+
+    orders_rel = work_orders_file.as_posix() if work_orders_file else (work_dir / "dispatch" / f"{stage_name}_work_orders.json").as_posix()
+    log_rel = (work_dir / "logs" / f"{stage_name}.log").as_posix()
+
+    summary_dict = dict(payload)
+    subagents = summary_dict.get("Subagents", [])
+    total_subagents = len(subagents)
+
+    # First attempt at summary: shorten Prompt in Subagents
+    compact_subagents = []
+    for sa in subagents:
+        p_text = sa.get("Prompt", "")
+        if len(p_text) > 80:
+            p_text = p_text[:77] + "..."
+        c_sa = {
+            "Role": sa.get("Role", ""),
+            "TypeName": sa.get("TypeName", ""),
+            "Prompt": p_text,
+        }
+        compact_subagents.append(c_sa)
+    summary_dict["Subagents"] = compact_subagents
+    summary_dict["work_orders_file"] = orders_rel
+    summary_dict["stage_log"] = log_rel
+    summary_dict["_notice"] = f"Payload condensed ({total_subagents} subagents). Full orders: {orders_rel}"
+
+    # Remove verbose item_files if present to save bytes
+    if "item_files" in summary_dict and len(summary_dict["item_files"]) > 3:
+        summary_dict["item_files_count"] = len(summary_dict["item_files"])
+        summary_dict.pop("item_files", None)
+
+    cand = json.dumps(summary_dict, separators=(",", ":"), ensure_ascii=False)
+    if len(cand.encode("utf-8")) <= max_bytes:
+        return cand
+
+    # Second attempt: replace Subagents array with count and pointers only
+    summary_dict.pop("Subagents", None)
+    summary_dict["subagents_count"] = total_subagents
+    cand2 = json.dumps(summary_dict, separators=(",", ":"), ensure_ascii=False)
+    if len(cand2.encode("utf-8")) <= max_bytes:
+        return cand2
+
+    # Guaranteed ultra-minimal summary
+    minimal = {
+        "status": summary_dict.get("status", "ready"),
+        "stage": stage_name,
+        "course_id": summary_dict.get("course_id", ""),
+        "subagent_count": total_subagents,
+        "work_orders_file": orders_rel,
+        "stage_log": log_rel,
+        "_notice": f"Ultra-compact summary for {total_subagents} subagents. Inspect {orders_rel} with view_file.",
+    }
+    return json.dumps(minimal, separators=(",", ":"), ensure_ascii=False)
+
+
 STAGE_NAMES = ["prepare", "cta", "shard", "templates", "build", "verify", "publish"]
 STAGE_MAP = {
     "0": 0, "prepare": 0, "ingest": 0,
@@ -109,6 +231,13 @@ AUXILIARY_STAGES = {
     "scope-check": "run_stage_scope_check",
     "define-types": "run_stage_define_types",
     "judge-compare": "run_stage_judge_compare",
+    "bootstrap": "run_stage_bootstrap",
+    "unlock": "run_stage_unlock",
+    "wave-status": "run_stage_wave_status",
+    "dispatch-cta": "run_stage_dispatch_cta",
+    "dispatch-authors": "run_stage_dispatch_authors",
+    "dispatch-judges": "run_stage_dispatch_judges",
+    "judge-generate": "run_stage_judge_generate",
 }
 
 
@@ -136,6 +265,7 @@ class PipelineRunner:
         vision: str = "auto",
         legacy_transcribe: bool = False,
         shards_k: Optional[int] = None,
+        comps_per_shard: int = DEFAULT_COMPS_PER_SHARD,
         order: Optional[Union[str, List[str]]] = None,
         no_handouts: bool = False,
         cta_mode: str = "auto",
@@ -146,8 +276,27 @@ class PipelineRunner:
         ids: Optional[Union[str, List[Union[str, int]]]] = None,
         ready_only: bool = False,
         skip_judges: bool = False,
+        director_id: Optional[str] = None,
+        wave: Optional[int] = None,
+        no_pointer: bool = False,
+        sources: Optional[Union[str, List[str], Path, List[Path]]] = None,
+        source_dir: Optional[Union[str, Path]] = None,
+        unlock: bool = False,
+        base_course: Optional[Union[str, Path]] = None,
     ) -> None:
-        self.raw_pdf = pdf
+        if pdf is not None:
+            self.raw_pdf = pdf
+        elif sources is not None:
+            self.raw_pdf = sources
+        elif source_dir is not None:
+            self.raw_pdf = source_dir
+        else:
+            self.raw_pdf = None
+
+        self.director_id = str(director_id or "").strip() or os.environ.get("C2C_DIRECTOR_ID", "")
+        self.wave = wave
+        self.no_pointer = no_pointer
+        self.unlock = unlock
         self.output_dir = Path(output_dir)
         self.review_cta = review_cta
         self.strict = strict
@@ -156,6 +305,7 @@ class PipelineRunner:
         self.vision = vision
         self.legacy_transcribe = legacy_transcribe
         self.shards_k = shards_k
+        self.comps_per_shard = comps_per_shard
         self.order = order
         self.no_handouts = no_handouts
         if str(cta_mode).strip().lower() in ("multiple", "multi", "map-reduce", "map_reduce"):
@@ -172,11 +322,22 @@ class PipelineRunner:
         self.ready_only = ready_only
         self.skip_judges = skip_judges
 
-        # Determine work directory first (isolate --append into work_append/)
-        work_leaf = "work_append" if self.append else "work"
         clean_work_dir = sanitize_cli_arg(work_dir) if work_dir else None
         clean_course_id = sanitize_cli_arg(course_id) if course_id else None
         clean_title = sanitize_cli_arg(title) if title else None
+
+        if base_course is not None:
+            self.base_course = Path(sanitize_cli_arg(str(base_course)))
+            self.append = True
+            if not clean_course_id:
+                clean_course_id = self.base_course.stem
+            if Path(output_dir) == Path("courses") and self.base_course.parent.name:
+                self.output_dir = self.base_course.parent
+        else:
+            self.base_course = None
+
+        # Determine work directory first (isolate --append into work_append/)
+        work_leaf = "work_append" if self.append else "work"
 
         if clean_work_dir:
             self.work_dir = Path(clean_work_dir)
@@ -272,11 +433,15 @@ class PipelineRunner:
             sources.append(p)
 
         input_target = sources[0] if len(sources) == 1 else sources[0].parent
+        courses_dir_target = self.output_dir
+        if self.base_course and self.base_course.is_file():
+            courses_dir_target = self.base_course.parent
+
         prep_res = prepare_course(
             input_path=input_target,
             work_dir=self.work_dir,
             course_id=self.course_id,
-            courses_dir=self.output_dir,
+            courses_dir=courses_dir_target,
             append=self.append,
             cta_mode=self.cta_mode,
             granularity=self.granularity,
@@ -505,7 +670,7 @@ class PipelineRunner:
 
         shards_dir = self.work_dir / "shards"
         shards_dir.mkdir(parents=True, exist_ok=True)
-        res = plan_shards(cta_file, shards_dir, k=self.shards_k)
+        res = plan_shards(cta_file, shards_dir, k=self.shards_k, max_comps=self.comps_per_shard)
 
         # Verificar que exista work/shards/pre_shard_manifest.json (cero fallbacks)
         pre_shard_file = shards_dir / "pre_shard_manifest.json"
@@ -930,6 +1095,22 @@ class PipelineRunner:
         print(f"  Launch URL:   {pub_result.launch_url}")
         print(f"  Command:      {pub_result.launch_command}")
         print("=" * 70 + "\n")
+
+        # Automatic Lockfile Lifecycle Release on successful publish
+        lock_file = self.work_dir / ".c2c_subagent_lock.json"
+        if lock_file.is_file():
+            try:
+                try:
+                    lock_data = json.loads(lock_file.read_text(encoding="utf-8"))
+                    lock_data["active"] = False
+                    lock_file.write_text(json.dumps(lock_data, indent=2), encoding="utf-8")
+                except Exception:
+                    pass
+                lock_file.unlink(missing_ok=True)
+                print(f"  [+] Automatically released subagent lock: {lock_file.resolve()}")
+            except Exception as e:
+                logger.warning("Could not release lockfile at %s: %s", lock_file, e)
+
         return pub_result.to_dict()
 
     # -------------------------------------------------------------------------
@@ -1124,6 +1305,323 @@ class PipelineRunner:
         print("  [+] Auxiliary Stage (judge-compare) completed.")
         return res
 
+    def run_stage_bootstrap(self) -> Dict[str, Any]:
+        """Stage bootstrap: Atomically prepare, define subagent specs, pointer dispatch_cta, and write lockfile."""
+        t0 = time.time()
+        logs_dir = self.work_dir / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        bootstrap_log_file = logs_dir / "bootstrap.log"
+
+        if not self.raw_pdf:
+            raise FileNotFoundError(
+                "Cannot execute bootstrap: No input path provided via --pdf, --sources, or --source-dir."
+            )
+
+        if self.append and self.work_dir.name == "work_append" and self.work_dir.is_dir():
+            import shutil
+            for stale_item in ("cta.json", "cta.md", "cta_data.py", "course.json", "course_verified.json", "judge_report.json", "templates", "shards", "verification", "cta_parts", "cta"):
+                stale_p = self.work_dir / stale_item
+                if stale_p.is_dir():
+                    shutil.rmtree(stale_p, ignore_errors=True)
+                elif stale_p.is_file():
+                    stale_p.unlink(missing_ok=True)
+
+        prep_buffer = io.StringIO()
+        with contextlib.redirect_stdout(prep_buffer):
+            prep_res = self.run_stage_prepare()
+
+        # 2. generate_define_subagent_specs (lean=True)
+        type_res = generate_define_subagent_specs(self.work_dir, lean=True)
+        type_files = type_res.get("type_files", [])
+
+        # 3. dispatch_cta (pointer=True unless --no-pointer)
+        cta_dispatch = dispatch_cta(self.work_dir, pointer=not self.no_pointer)
+        cta_subagents = cta_dispatch.get("Subagents", [])
+
+        # 4. Write work/.c2c_subagent_lock.json conforming to c2c_hook_guard.py
+        lock_file = self.work_dir / ".c2c_subagent_lock.json"
+        now_utc = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        lock_payload = {
+            "active": True,
+            "director_conversation_id": self.director_id or "",
+            "course_id": self.course_id,
+            "work_dir": self.work_dir.resolve().as_posix(),
+            "created_at": now_utc,
+            "exempt_conversation_ids": [],
+        }
+        lock_file.write_text(json.dumps(lock_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        elapsed = time.time() - t0
+        record_stage_timing(self.work_dir, "bootstrap", elapsed)
+        record_stage_telemetry(self.work_dir, "00b", "bootstrap", status="completed", metadata={"duration_seconds": elapsed, "lock_file": str(lock_file.resolve())})
+
+        summary = {
+            "status": "ready_for_cta",
+            "course_id": self.course_id,
+            "work_dir": self.work_dir.resolve().as_posix(),
+            "lock_file": lock_file.resolve().as_posix(),
+            "type_spec_files": [Path(p).resolve().as_posix() for p in type_files],
+            "cta_unit_count": len(cta_subagents),
+            "Subagents": cta_subagents,
+            "elapsed_seconds": round(elapsed, 2),
+        }
+        orders_file = self.work_dir / "dispatch" / "cta_work_orders.json"
+        stdout_json = format_compact_json_stdout(
+            payload=summary,
+            work_dir=self.work_dir,
+            stage_name="bootstrap",
+            work_orders_file=orders_file,
+            max_bytes=1450,
+        )
+        prep_log = prep_buffer.getvalue()
+        bootstrap_log_file.write_text(prep_log + "\n" + json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(stdout_json)
+        return summary
+
+    def run_stage_unlock(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Release .c2c_subagent_lock.json."""
+        lock_file = self.work_dir / ".c2c_subagent_lock.json"
+        unlocked = False
+        if lock_file.is_file():
+            try:
+                try:
+                    data = json.loads(lock_file.read_text(encoding="utf-8"))
+                    data["active"] = False
+                    lock_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+                except Exception:
+                    pass
+                lock_file.unlink(missing_ok=True)
+                unlocked = True
+            except Exception as e:
+                logger.warning("Error releasing lockfile %s: %s", lock_file, e)
+        res = {
+            "status": "unlocked" if unlocked else "no_active_lock",
+            "lock_file": str(lock_file.resolve()),
+            "released": unlocked,
+        }
+        print(f"  [+] Subagent lock released: {lock_file.resolve()} (unlocked={unlocked})")
+        return res
+
+    def run_stage_wave_status(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Crystal-clear <= 5-line summary of shard compilation status per wave."""
+        t0 = time.time()
+        manifest_path = self.work_dir / "shards" / "pre_shard_manifest.json"
+        if not manifest_path.is_file():
+            manifest_path = self.work_dir / "pre_shard_manifest.json"
+
+        if not manifest_path.is_file():
+            print(f"[WAVE STATUS] No pre_shard_manifest.json found in {self.work_dir.as_posix()}")
+            return {"status": "no_manifest", "waves": []}
+
+        try:
+            mdata = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"[WAVE STATUS] Corrupted manifest at {manifest_path.as_posix()}: {e}")
+            return {"status": "corrupted_manifest", "error": str(e)}
+
+        shards = mdata.get("shards", [])
+        templates_dir = self.work_dir / "templates"
+        attempts_dir = self.work_dir / ".check_attempts"
+
+        waves_dict: Dict[int, List[Dict[str, Any]]] = {}
+        for s in shards:
+            w_idx = s.get("wave_index", 1)
+            waves_dict.setdefault(w_idx, []).append(s)
+
+        total_shards = len(shards)
+        total_completed = 0
+        total_pending = 0
+        total_cb = 0
+
+        wave_stats = []
+        for w_idx in sorted(waves_dict.keys()):
+            w_shards = waves_dict[w_idx]
+            w_comp = 0
+            w_pend = 0
+            w_cb = 0
+            for s in w_shards:
+                s_id = s.get("shard_id", "")
+                c_ids = s.get("competency_ids", [])
+
+                all_templates = bool(c_ids) and all((templates_dir / f"{cid}.json").is_file() for cid in c_ids)
+                if all_templates:
+                    w_comp += 1
+                    continue
+
+                norm_shard_id = re.sub(r"[^\w-]", "_", s_id)
+                att_file = attempts_dir / f"compile_{norm_shard_id}.json"
+                is_cb = False
+                if att_file.is_file():
+                    try:
+                        att_state = json.loads(att_file.read_text(encoding="utf-8"))
+                        streak = att_state.get("same_error_streak", 0)
+                        compiles = att_state.get("distinct_compiles", 0)
+                        last_errs = str(att_state.get("last_errors", []))
+                        if streak >= 3 or compiles > 10 or "CIRCUIT BREAKER" in last_errs:
+                            is_cb = True
+                    except Exception:
+                        pass
+
+                if is_cb:
+                    w_cb += 1
+                else:
+                    w_pend += 1
+
+            total_completed += w_comp
+            total_pending += w_pend
+            total_cb += w_cb
+            wave_stats.append({
+                "wave_index": w_idx,
+                "total": len(w_shards),
+                "completed": w_comp,
+                "pending": w_pend,
+                "circuit_broken": w_cb,
+            })
+
+        print(f"[WAVE STATUS] Total Shards: {total_completed}/{total_shards} completed ({total_pending} pending, {total_cb} circuit-broken)")
+        if len(wave_stats) <= 4:
+            for ws in wave_stats:
+                print(f"  * Wave {ws['wave_index']}: {ws['completed']}/{ws['total']} completed ({ws['pending']} pending, {ws['circuit_broken']} circuit-broken)")
+        else:
+            w_parts = [f"W{ws['wave_index']}: {ws['completed']}/{ws['total']} (cb={ws['circuit_broken']})" for ws in wave_stats]
+            print("  * " + " | ".join(w_parts[:len(w_parts)//2]))
+            print("  * " + " | ".join(w_parts[len(w_parts)//2:]))
+
+        elapsed = time.time() - t0
+        return {
+            "status": "ok",
+            "total_shards": total_shards,
+            "completed": total_completed,
+            "pending": total_pending,
+            "circuit_broken": total_cb,
+            "waves": wave_stats,
+            "duration_seconds": round(elapsed, 3),
+        }
+
+    def run_stage_dispatch_cta(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Generate CTA dispatch payload and work orders."""
+        t0 = time.time()
+        res = dispatch_cta(self.work_dir, pointer=not self.no_pointer)
+        elapsed = time.time() - t0
+        record_stage_timing(self.work_dir, "dispatch_cta", elapsed)
+
+        work_orders_file = self.work_dir / "dispatch" / "cta_work_orders.json"
+        summary_payload = {
+            "status": "dispatched",
+            "stage": "dispatch-cta",
+            "course_id": self.course_id,
+            "subagents_count": len(res.get("Subagents", [])),
+            "item_files": res.get("item_files", []),
+            "work_orders_file": work_orders_file.resolve().as_posix(),
+            "Subagents": res.get("Subagents", []),
+            "elapsed_seconds": round(elapsed, 2),
+        }
+        stdout_str = format_compact_json_stdout(
+            payload=summary_payload,
+            work_dir=self.work_dir,
+            stage_name="dispatch-cta",
+            work_orders_file=work_orders_file,
+            max_bytes=1450,
+        )
+        print(stdout_str)
+        return res
+
+    def run_stage_dispatch_authors(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Generate author dispatch payload with wave filtering."""
+        t0 = time.time()
+        res = dispatch_authors(
+            self.work_dir,
+            wave_index=self.wave,
+            ids=self.ids,
+            pointer=not self.no_pointer,
+        )
+        elapsed = time.time() - t0
+        record_stage_timing(self.work_dir, f"dispatch_authors_wave_{self.wave or 'all'}", elapsed)
+
+        work_orders_file = self.work_dir / "dispatch" / "author_work_orders.json"
+        (self.work_dir / "dispatch").mkdir(parents=True, exist_ok=True)
+        work_orders_file.write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        summary_payload = {
+            "status": "dispatched",
+            "stage": "dispatch-authors",
+            "wave": self.wave,
+            "course_id": self.course_id,
+            "subagents_count": len(res.get("Subagents", [])),
+            "item_files": res.get("item_files", []),
+            "work_orders_file": work_orders_file.resolve().as_posix(),
+            "Subagents": res.get("Subagents", []),
+            "elapsed_seconds": round(elapsed, 2),
+        }
+        stdout_str = format_compact_json_stdout(
+            payload=summary_payload,
+            work_dir=self.work_dir,
+            stage_name="dispatch-authors",
+            work_orders_file=work_orders_file,
+            max_bytes=1450,
+        )
+        print(stdout_str)
+        return res
+
+    def run_stage_dispatch_judges(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Generate blind judge dispatch payload."""
+        t0 = time.time()
+        res = dispatch_judges(
+            self.work_dir,
+            ready_only=self.ready_only,
+            ids=self.ids,
+            pointer=not self.no_pointer,
+        )
+        elapsed = time.time() - t0
+        record_stage_timing(self.work_dir, "dispatch_judges", elapsed)
+
+        work_orders_file = self.work_dir / "dispatch" / "judge_work_orders.json"
+        (self.work_dir / "dispatch").mkdir(parents=True, exist_ok=True)
+        work_orders_file.write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        summary_payload = {
+            "status": "dispatched",
+            "stage": "dispatch-judges",
+            "ready_only": self.ready_only,
+            "course_id": self.course_id,
+            "subagents_count": len(res.get("Subagents", [])),
+            "item_files": res.get("item_files", []),
+            "work_orders_file": work_orders_file.resolve().as_posix(),
+            "Subagents": res.get("Subagents", []),
+            "elapsed_seconds": round(elapsed, 2),
+        }
+        stdout_str = format_compact_json_stdout(
+            payload=summary_payload,
+            work_dir=self.work_dir,
+            stage_name="dispatch-judges",
+            work_orders_file=work_orders_file,
+            max_bytes=1450,
+        )
+        print(stdout_str)
+        return res
+
+    def run_stage_judge_generate(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Generate blind judge batch and ground truth."""
+        t0 = time.time()
+        print("\n" + "=" * 70)
+        print(f"[AUX STAGE: JUDGE-GENERATE] Generating judge batch (ready_only={self.ready_only})")
+        print("=" * 70)
+        templates_dir = self.work_dir / "templates"
+        cta_file = self.work_dir / "cta.json"
+        judge_p, gt_p = generate_judge_batch(
+            templates_path=templates_dir,
+            work_dir=self.work_dir,
+            cta_path=cta_file if cta_file.is_file() else None,
+            ready_only=self.ready_only,
+        )
+        elapsed = time.time() - t0
+        record_stage_timing(self.work_dir, "judge_generate", elapsed)
+        res = {"judge_batch_path": str(judge_p), "ground_truth_path": str(gt_p)}
+        print(f"  [+] Judge batch: {judge_p}")
+        print(f"  [+] Ground truth: {gt_p}")
+        print("  [+] Auxiliary Stage (judge-generate) completed.")
+        return res
+
     # -------------------------------------------------------------------------
     # Pipeline Orchestrator
     # -------------------------------------------------------------------------
@@ -1139,8 +1637,10 @@ class PipelineRunner:
         if target_stage is not None and str(target_stage).lower() in AUXILIARY_STAGES:
             method_name = AUXILIARY_STAGES[str(target_stage).lower()]
             method = getattr(self, method_name)
-            res = method()
-            return {str(target_stage).lower(): res, "elapsed_seconds": round(time.time() - start_time, 2)}
+            stage_slug = str(target_stage).lower()
+            with cap_stdout_to_log(self.work_dir, stage_slug):
+                res = method()
+            return {stage_slug: res, "elapsed_seconds": round(time.time() - start_time, 2)}
 
         if from_stage is not None:
             norm_from = str(from_stage).lower()
@@ -1172,7 +1672,8 @@ class PipelineRunner:
         for idx in range(start_idx, end_idx + 1):
             s_name = STAGE_NAMES[idx]
             method = stage_methods[idx]
-            res = method()
+            with cap_stdout_to_log(self.work_dir, s_name):
+                res = method()
             results[s_name] = res
             if res.get("paused_for_review") is True:
                 return results
@@ -1191,6 +1692,8 @@ def main() -> None:
         "0", "1", "2", "3", "4", "5", "6",
         "cta-merge", "cta-apply", "dispatch", "scope-check",
         "define-types", "judge-compare",
+        "bootstrap", "unlock", "wave-status",
+        "dispatch-cta", "dispatch-authors", "dispatch-judges", "judge-generate",
     ]
     parser.add_argument(
         "--stage",
@@ -1211,6 +1714,38 @@ def main() -> None:
         "--pdf",
         nargs="+",
         help="Path(s) to input course PDF(s) or directory containing course documents.",
+    )
+    parser.add_argument(
+        "--sources",
+        nargs="+",
+        help="Alias for --pdf (source PDF/document paths).",
+    )
+    parser.add_argument(
+        "--source-dir",
+        help="Directory of source course documents (alternative to --pdf).",
+    )
+    parser.add_argument(
+        "--director-id",
+        default=None,
+        help="Director conversation ID for subagent lockfile.",
+    )
+    parser.add_argument(
+        "--wave",
+        type=int,
+        default=None,
+        help="Wave index filter for shard authoring.",
+    )
+    parser.add_argument(
+        "--no-pointer",
+        action="store_true",
+        default=False,
+        help="Emit full inline prompts instead of compact pointer prompts.",
+    )
+    parser.add_argument(
+        "--unlock",
+        action="store_true",
+        default=False,
+        help="Release active .c2c_subagent_lock.json.",
     )
     parser.add_argument(
         "--course-id",
@@ -1242,6 +1777,11 @@ def main() -> None:
         help="Append questions into existing course JSON instead of overwriting.",
     )
     parser.add_argument(
+        "--base-course",
+        default=None,
+        help="Path or course ID of existing base course for incremental append mode.",
+    )
+    parser.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -1251,7 +1791,13 @@ def main() -> None:
         "--shards",
         type=int,
         default=None,
-        help="Number of author shards (defaults to dynamic max 2 competencies per shard).",
+        help="Number of author shards (defaults to dynamic max 2 competencies per shard in Case 2B).",
+    )
+    parser.add_argument(
+        "--comps-per-shard",
+        type=int,
+        default=DEFAULT_COMPS_PER_SHARD,
+        help="Max competencies per shard (defaults to 2 for Case 2B; change to 3 for Case 2A).",
     )
     parser.add_argument(
         "--order",
@@ -1302,12 +1848,16 @@ def main() -> None:
     sanitized_argv = [sys.argv[0]] + [sanitize_cli_arg(a) for a in sys.argv[1:]]
     args = parser.parse_args(sanitized_argv[1:])
 
-    pdf_arg = args.pdf
-    if args.pdf:
-        if len(args.pdf) == 1:
-            pdf_arg = sanitize_cli_arg(args.pdf[0])
+    raw_pdf_input = args.pdf or args.sources or args.source_dir
+    pdf_arg = raw_pdf_input
+    if raw_pdf_input:
+        if isinstance(raw_pdf_input, (list, tuple)):
+            if len(raw_pdf_input) == 1:
+                pdf_arg = sanitize_cli_arg(raw_pdf_input[0])
+            else:
+                pdf_arg = [sanitize_cli_arg(p) for p in raw_pdf_input]
         else:
-            pdf_arg = [sanitize_cli_arg(p) for p in args.pdf]
+            pdf_arg = sanitize_cli_arg(raw_pdf_input)
 
     order_arg = args.order[0] if (args.order and len(args.order) == 1) else args.order
 
@@ -1322,6 +1872,7 @@ def main() -> None:
         append=args.append,
         random_seed=args.seed,
         shards_k=args.shards,
+        comps_per_shard=args.comps_per_shard,
         order=order_arg,
         cta_mode=args.cta_mode,
         granularity=args.granularity,
@@ -1330,7 +1881,16 @@ def main() -> None:
         ids=args.ids,
         ready_only=args.ready_only,
         skip_judges=args.skip_judges,
+        director_id=sanitize_cli_arg(args.director_id),
+        wave=args.wave,
+        no_pointer=args.no_pointer,
+        unlock=args.unlock,
+        base_course=sanitize_cli_arg(args.base_course),
     )
+
+    if args.unlock:
+        runner.run_stage_unlock()
+        return
 
     try:
         runner.execute(

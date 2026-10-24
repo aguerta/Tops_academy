@@ -235,7 +235,7 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
             ],
         }), encoding="utf-8")
 
-        res = dispatch_authors(self.work_dir)
+        res = dispatch_authors(self.work_dir, pointer=False)
         self.assertEqual(len(res["Subagents"]), 1)
         self.assertEqual(len(res["item_files"]), 1)
 
@@ -300,7 +300,7 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
                 }
             }
         }), encoding="utf-8")
-        res_a = dispatch_authors(self.work_dir)
+        res_a = dispatch_authors(self.work_dir, pointer=False)
         prompt_a = res_a["Subagents"][0]["Prompt"]
         self.assertIn("Dict Mapping Competency", prompt_a)
         self.assertIn("Definicion A", prompt_a)
@@ -314,7 +314,7 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
                 "description_latex": "Definicion B",
             }
         ]), encoding="utf-8")
-        res_b = dispatch_authors(self.work_dir)
+        res_b = dispatch_authors(self.work_dir, pointer=False)
         prompt_b = res_b["Subagents"][0]["Prompt"]
         self.assertIn("List Top-level Competency", prompt_b)
         self.assertIn("Definicion B", prompt_b)
@@ -323,10 +323,12 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
     # 4. Scope-Lock Introspection Policy
     # =========================================================================
     def test_scope_lock_introspection_policy(self) -> None:
-        """ROLE_SPECS author and repair allow compile_shard.py in read, and strictly forbid check_templates, check_cta, src/validator."""
+        """ROLE_SPECS author and repair forbid compile_shard.py in read, and strictly forbid check_templates, check_cta, src/validator."""
         # Author role
         author_spec = ROLE_SPECS["author"]
-        self.assertIn(".agents/skills/content-to-course/compile_shard.py", author_spec["read"])
+        self.assertIn(".agents/skills/content-to-course/compile_shard.py", author_spec["forbidden"])
+        self.assertNotIn(".agents/skills/content-to-course/compile_shard.py", author_spec["read"])
+        self.assertIn("work/shards/shard_fixes/<CID>.py", author_spec["write"])
         for forbidden_path in [
             ".agents/skills/content-to-course/check_templates.py",
             ".agents/skills/content-to-course/check_cta.py",
@@ -338,7 +340,9 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
 
         # Repair role
         repair_spec = ROLE_SPECS["repair"]
-        self.assertIn(".agents/skills/content-to-course/compile_shard.py", repair_spec["read"])
+        self.assertIn(".agents/skills/content-to-course/compile_shard.py", repair_spec["forbidden"])
+        self.assertNotIn(".agents/skills/content-to-course/compile_shard.py", repair_spec["read"])
+        self.assertIn("work/shards/shard_fixes/<CID>.py", repair_spec["write"])
         for forbidden_path in [
             ".agents/skills/content-to-course/check_templates.py",
             ".agents/skills/content-to-course/check_cta.py",
@@ -452,7 +456,7 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
         ]
         (verif_dir / "judge_batch_01.json").write_text(json.dumps(batch_items), encoding="utf-8")
 
-        res = dispatch_judges(self.work_dir)
+        res = dispatch_judges(self.work_dir, pointer=False)
         self.assertEqual(len(res["Subagents"]), 1)
         self.assertEqual(len(res["item_files"]), 1)
 
@@ -478,6 +482,13 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
         self.assertIn("NO EJECUTES `view_file`", prompt)
         self.assertIn("NO EJECUTES `run_command`", prompt)
         self.assertIn("1 SOLO TURNO", prompt)
+
+        # Test pointer mode (v3.3 default)
+        res_ptr = dispatch_judges(self.work_dir, pointer=True)
+        prompt_ptr = res_ptr["Subagents"][0]["Prompt"]
+        self.assertIn("judge_01.json", prompt_ptr)
+        self.assertNotIn("NO EJECUTES `view_file`", prompt_ptr)
+        self.assertIn(f"DONE: {expected_target}", prompt_ptr)
 
 
 if __name__ == "__main__":
