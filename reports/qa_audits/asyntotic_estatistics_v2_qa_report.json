@@ -1,0 +1,71 @@
+{
+  "course_metadata": {
+    "course_id": "asyntotic_estatistics_v2",
+    "unit_title": "Asyntotic Estatistics V2 (Estadística Asintótica y Econometría de Muestras Grandes)",
+    "detected_objective": "Dominio y aplicación analítica integral de la teoría asintótica econométrica en muestras grandes (Greene, 5ta ed.): convergencia en probabilidad y en distribución, consistencia de MCO, teorema de Slutsky, teorema de mapeo continuo de Mann-Wald, método Delta multivariado, matrices robustas White HC0, estimación por variables instrumentales (IV), contrastes de especificación de Hausman y pruebas asintóticas de Wald bajo álgebra de órdenes de magnitud estocástica Op y op.",
+    "total_competencies": 32,
+    "total_questions": 740,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 740
+    },
+    "platform_status": "ACTIVO",
+    "evaluator": "Course QA Auditor — Top's Academy",
+    "evaluation_date": "2026-10-23"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Excelente arquitectura curricular modular y de alta densidad con 32 micro-competencias atómicas. Distribución balanceada: 6 Hechos (18.75%), 16 Conceptos (50.0%) y 10 Habilidades cuantitativas y analíticas (31.25%). Grafo Acíclico Dirigido (DAG) 100% formalizado con 2 nodos axiomáticos raíz bien definidos (H-01 y H-04), 30 competencias con dependencias explícitas y libres de ciclos (validación de ciclos: False). La densidad por competencia oscila entre 20 reactivos (Hechos y Conceptos) y 30 reactivos (Habilidades), acumulando 740 preguntas que superan ampliamente los requisitos regulatorios de Mastery Learning."
+    },
+    "assessment_quality": {
+      "score": 5.0,
+      "max": 5.0,
+      "feedback": "Calidad psicométrica sobresaliente. Banco integral de 740 reactivos en formato de opción múltiple de 7 alternativas (A-G), reduciendo la probabilidad de acierto por azar al 14.3%. Se evaluaron 4,440 distractores con una cobertura del 100.0% de rationales diagnósticos específicos (error_rationale), modelando fielmente confusiones teóricas reales en econometría asintótica (inversión de matrices en formulaciones sandwich IV, confusión entre convergencia en probabilidad y media cuadrática, omisión de normalización por raíz de n, atribución errónea de ganancias de eficiencia a IV sobre MCO, y aplicación indebida de Slutsky a razones con denominadores que convergen a cero). Cero distractores delatores (telltale = 0) y cero fugas de respuestas (answer leaks = 0)."
+    },
+    "scaffolding_hints": {
+      "score": 5.0,
+      "max": 5.0,
+      "feedback": "Andamiaje socrático y retroalimentación formativa de excelencia. El 100% de los reactivos (740/740) incorpora exactamente 3 pistas progresivas escalonadas bajo el modelo pedagógico socrático: Pista 1 (Marco Conceptual e identidades fundamentales) -> Pista 2 (Estrategia Procedimental y métodos analíticos) -> Pista 3 (Operación paso a paso y verificación de límites/signos). El 100% de los reactivos posee detailed_solution rigurosa con justificación analítica completa y advertencia explícita de concepciones erróneas comunes (common_misconception_warning). Cero residuos de placeholders f-string y cero variables de plantilla no resueltas."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación instruccional impecable y congruencia semántica absoluta con la literatura de econometría avanzada (Greene, caps. 4, 5, 9 y apéndices asintóticos). El curso abarca exhaustivamente todas las áreas críticas de la teoría asintótica: matriz de momentos regular Q, Grenander, Slutsky, Mann-Wald, método Delta, covarianza White HC0, estimación IV y condiciones de rango, estadístico de Hausman, estadístico de Wald invariante y cálculo de órdenes estocásticos Op y op. Fuerte anclaje en niveles de Bloom de Aplicación y Análisis. Cero preguntas huérfanas."
+    },
+    "technical_ergonomics": {
+      "score": 1.9,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica y compilabilidad KaTeX de alta calidad. Cero llaves desbalanceadas, cero delimitadores triples ($$$), cero dobles llaves residuales y cero delimitadores abiertos sin cierre en validación determinista. Se observa una deducción cosmética menor (-0.1 pt) por la aparición ocasional de números en notación científica cruda sin formatear en KaTeX (ej. '1e-05' en opción B de Q-Hab03-221) y encapsulamiento redundante con llaves superfluas '{...}' alrededor de expresiones '\\frac' en soluciones detalladas generadas por subagentes en respuesta a reglas de escape."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 19.9,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "remediation_actions": [
+    "Aprobación técnica e instruccional definitiva para despliegue en la plataforma interactiva Top's Academy.",
+    "Normalización de Notación Científica en Generadores: Añadir un formateador numérico determinista en el engine de instanciación que convierta valores flotantes pequeños < 1e-4 en notación decimal o científica formateada en LaTeX (ej. 1 \\times 10^{-5} en lugar de '1e-05').",
+    "Saneamiento de Llaves Redundantes en Fracciones: Incorporar una regla de limpieza de post-procesamiento que remueva llaves superfluas '{' y '}' que envuelven inmediatamente a comandos '\\frac' en detailed_solution."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "scientific_notation_float_format_linter",
+      "severity": "low",
+      "description": "Detecta opciones o textos que contienen números en formato de notación científica de Python (ej. '1e-05', '2.5e-06') en lugar de la notación matemática estándar en LaTeX (ej. '$1 \\times 10^{-5}$' o '$0.00001$'), preservando la elegancia tipográfica en el frontend.",
+      "regex_pattern": "\\b\\d+(?:\\.\\d+)?[eE][+-]?\\d+\\b",
+      "evidence_items": [
+        "Q-Hab03-221"
+      ]
+    },
+    {
+      "rule_id": "redundant_outer_brace_frac_linter",
+      "severity": "low",
+      "description": "Detecta encapsulamientos redundantes con llaves simples alrededor de expresiones '\\frac' (ej. '{\\frac{1100}{302500}}') que no alteran la semántica pero reflejan restos de auto-parcheo en autores de shards.",
+      "regex_pattern": "\\{\\\\frac\\{[^}]+\\}\\{[^}]+\\}\\}",
+      "evidence_items": [
+        "Q-Hab03-221"
+      ]
+    }
+  ],
+  "platform_status": "ACTIVO"
+}
