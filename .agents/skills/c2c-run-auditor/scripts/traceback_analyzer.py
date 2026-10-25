@@ -289,23 +289,25 @@ class SubagentTreeResolver:
                         try: args = json.loads(args)
                         except Exception: pass
                     if isinstance(args, dict):
-                        if "Role" in args or "TypeName" in args:
+                        role_val = str(args.get("Role", "unknown") or "unknown").strip(' "\'')
+                        type_val = str(args.get("TypeName", "unknown") or "unknown").strip(' "\'')
+                        if role_val != "unknown" or type_val != "unknown":
                             pending_invokes.append({
-                                "role": str(args.get("Role", "unknown") or "unknown"),
-                                "type": str(args.get("TypeName", "unknown") or "unknown"),
+                                "role": role_val,
+                                "type": type_val,
                             })
                         for sub in args.get("Subagents", []):
                             if isinstance(sub, dict):
                                 pending_invokes.append({
-                                    "role": str(sub.get("Role", "unknown") or "unknown"),
-                                    "type": str(sub.get("TypeName", "unknown") or "unknown"),
+                                    "role": str(sub.get("Role", "unknown") or "unknown").strip(' "\''),
+                                    "type": str(sub.get("TypeName", "unknown") or "unknown").strip(' "\''),
                                 })
 
             # 2. From tool result content of invoke_subagent
-            if "Created the following subagents:" in content or "conversationId" in content:
+            if "Created the following subagent" in content or "conversationId" in content:
                 uuid_matches = re.findall(r'"conversationId":\s*"([a-f0-9\-]{36})"', content)
                 for cid in uuid_matches:
-                    inv = pending_invokes.pop(0) if ("Created the following subagents:" in content and pending_invokes) else {}
+                    inv = pending_invokes.pop(0) if ("Created the following subagent" in content and pending_invokes) else {}
                     if cid not in subagents:
                         subagents[cid] = {
                             "conversation_id": cid,
