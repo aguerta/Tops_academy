@@ -7,7 +7,7 @@ import {
   CourseMasteryRecord,
 } from './types';
 import { loadCourseMastery, updateCompetencyScore, updateCourseChallengeCompleted } from './utils/masteryStorage';
-import { prepareSessionQuestions } from './utils/sessionShuffler';
+import { buildInterleavedSessionQuestions } from './utils/sessionShuffler';
 import { normalizeQuestion } from './utils/questionUtils';
 import { Sidebar } from './components/Sidebar';
 import { CourseOverview } from './components/CourseOverview';
@@ -129,7 +129,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // Unified session launcher with fresh Fisher-Yates reshuffle and strict unit boundary isolation
+  // Unified session launcher with ZPD difficulty calibration and pedagogical interleaving for Quiz & Unit Test
   const launchSession = (
     type: 'practice' | 'quiz' | 'test' | 'challenge',
     comp: Competency | null,
@@ -150,54 +150,33 @@ export const App: React.FC = () => {
     setSessionCompetency(targetComp);
     setSessionType(type);
 
-    let pool: Question[] = [];
-
-    if (type === 'challenge') {
-      // Course Challenge is the ONLY session type that spans the full course
-      pool = activeCourse.questions;
-    } else {
-      // Unit-specific sessions: Practice, Quiz, Unit Test MUST be strictly isolated to targetComp
-      if (!targetComp) {
-        console.error(`[launchSession] Cannot launch ${type} session without a specific competency/unit.`);
-        setSessionQuestions([]);
-        return;
-      }
-
-      const targetId = targetComp.id.trim().toLowerCase();
-      const targetCode = (targetComp.code || '').trim().toLowerCase();
-
-      // Strict matching: ONLY include questions that explicitly match this competency
-      pool = activeCourse.questions.filter((q) => {
-        if (!q.competency_id) return false;
-        const qComp = q.competency_id.trim().toLowerCase();
-        return qComp === targetId || (targetCode !== '' && qComp === targetCode);
-      });
-
-      if (pool.length === 0) {
-        console.warn(
-          `[launchSession] No questions found matching competency ${targetComp.id} (${targetComp.name}). Pool is empty.`
-        );
-        setSessionQuestions([]);
-        return;
-      }
+    if (type !== 'challenge' && !targetComp) {
+      console.error(`[launchSession] Cannot launch ${type} session without a specific competency/unit.`);
+      setSessionQuestions([]);
+      return;
     }
 
-    const count =
-      type === 'challenge'
-        ? Math.min(30, pool.length)
-        : type === 'test'
-        ? Math.min(9, pool.length)
-        : type === 'quiz'
-        ? Math.min(5, pool.length)
-        : Math.min(4, pool.length);
+    const currentTier =
+      targetComp && mastery?.competencies?.[targetComp.id]
+        ? mastery.competencies[targetComp.id].status
+        : undefined;
 
-    // Fresh Fisher-Yates reshuffle of both question selection and options, with strict competency validation
-    const shuffled = prepareSessionQuestions(
-      pool,
-      true,
-      type === 'challenge' ? undefined : targetComp?.id
+    const chosen = buildInterleavedSessionQuestions(
+      activeCourse.questions,
+      activeCourse.competencies,
+      type,
+      targetComp,
+      currentTier
     );
-    const chosen = shuffled.slice(0, count);
+
+    if (chosen.length === 0 && targetComp) {
+      console.warn(
+        `[launchSession] No questions found matching competency ${targetComp.id} (${targetComp.name}). Pool is empty.`
+      );
+      setSessionQuestions([]);
+      return;
+    }
+
     setSessionQuestions(chosen);
     setSessionKey((prev) => prev + 1);
 

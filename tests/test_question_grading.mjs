@@ -64,9 +64,32 @@ function getCorrectOptionIds(question) {
 
 function normalizeQuestion(question) {
   if (!question) return question;
+
+  const normalizedSolution =
+    (typeof question.solution === 'string' && question.solution.trim() !== ''
+      ? question.solution
+      : question.detailed_solution) || '';
+
+  const normalizedMisconception =
+    (typeof question.misconception_warning === 'string' &&
+    question.misconception_warning.trim() !== ''
+      ? question.misconception_warning
+      : question.common_misconception_warning) || question.misconception_warning;
+
   const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
   if (!question.options || question.options.length === 0) {
-    return { ...question };
+    return {
+      ...question,
+      solution: normalizedSolution,
+      detailed_solution: question.detailed_solution || normalizedSolution,
+      ...(normalizedMisconception
+        ? {
+            misconception_warning: normalizedMisconception,
+            common_misconception_warning:
+              question.common_misconception_warning || normalizedMisconception,
+          }
+        : {}),
+    };
   }
 
   const normalizedOptions = question.options.map((opt, idx) => {
@@ -87,6 +110,15 @@ function normalizeQuestion(question) {
 
   const q = {
     ...question,
+    solution: normalizedSolution,
+    detailed_solution: question.detailed_solution || normalizedSolution,
+    ...(normalizedMisconception
+      ? {
+          misconception_warning: normalizedMisconception,
+          common_misconception_warning:
+            question.common_misconception_warning || normalizedMisconception,
+        }
+      : {}),
     options: normalizedOptions,
   };
 
@@ -232,8 +264,17 @@ if (fs.existsSync(calculusPath)) {
   }
 }
 
-// Test 3: Sweep across ALL MC & MS questions in available courses
-for (const cFile of ['estadistica3_regresion_v3.json', 'sistemas_edos.json', 'pde_course.json']) {
+// Test 3: Sweep across MC & MS questions in active platform courses and legacy fixtures
+const coursesToSweep = [
+  'solow_growth_model.json',
+  'saul_control_optimo.json',
+  'asyntotic_estatistics_v7.json',
+  'gavilano_pre_parcial.json',
+  'sistemas_edos.json',
+  'pde_course.json'
+];
+
+for (const cFile of coursesToSweep) {
   let cPath = path.join(ROOT_DIR, 'courses', cFile);
   if (!fs.existsSync(cPath)) {
     cPath = path.join(ROOT_DIR, 'archive_rejected_courses', cFile);
@@ -255,6 +296,45 @@ for (const cFile of ['estadistica3_regresion_v3.json', 'sistemas_edos.json', 'pd
     }
   }
   console.log(`Verified ${cFile}: ${mcTested} MC items, ${msTested} MS items`);
+}
+
+// Test 4 (Horizon 1 P1 & P2): Verify detailed_solution -> solution normalization and distractor error_rationale presence across active courses
+const activeCoursesToAudit = [
+  'solow_growth_model.json',
+  'saul_control_optimo.json',
+  'asyntotic_estatistics_v7.json',
+  'gavilano_pre_parcial.json'
+];
+
+for (const cName of activeCoursesToAudit) {
+  const cPath = path.join(ROOT_DIR, 'courses', cName);
+  if (!fs.existsSync(cPath)) continue;
+  const cData = JSON.parse(fs.readFileSync(cPath, 'utf-8'));
+  for (const q of cData.questions) {
+    // Even if `solution` is removed to simulate raw engine output, normalizeQuestion must populate it from `detailed_solution`
+    const stripped = { ...q };
+    delete stripped.solution;
+    const normQ = normalizeQuestion(stripped);
+    assert(
+      typeof normQ.solution === 'string' && normQ.solution.trim().length > 10,
+      `Horizon 1 P1: ${cName} - ${q.id} (${q.type}) normalized solution must be non-empty`
+    );
+    assert(
+      typeof normQ.misconception_warning === 'string' && normQ.misconception_warning.trim().length > 5,
+      `Horizon 1 P1: ${cName} - ${q.id} normalized misconception_warning must be non-empty`
+    );
+
+    if (q.type === 'multiple_choice_7_options' || q.type === 'multiple_select') {
+      const distractors = normQ.options.filter((o) => !o.is_correct);
+      for (const d of distractors) {
+        assert(
+          typeof d.error_rationale === 'string' && d.error_rationale.trim().length > 5,
+          `Horizon 1 P2: ${cName} - ${q.id} distractor ${d.id} must have a diagnostic error_rationale`
+        );
+      }
+    }
+  }
+  console.log(`Verified Horizon 1 P1 & P2 across all ${cData.questions.length} questions in ${cName}`);
 }
 
 console.log('---------------------------------------------------------------');

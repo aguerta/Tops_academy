@@ -6,15 +6,25 @@ import { isOptionCorrect } from '../utils/questionUtils';
 interface FeedbackToastProps {
   isCorrect: boolean;
   question: Question;
+  selectedOption?: string | null;
+  selectedMultiOptions?: string[];
   onClose?: () => void;
   onRedo?: () => void;
   isExhausted?: boolean;
   wrongAttemptsCount?: number;
 }
 
+interface DiagnosticRationaleItem {
+  optionId: string;
+  content: string;
+  rationale: string;
+}
+
 export const FeedbackToast: React.FC<FeedbackToastProps> = ({
   isCorrect,
   question,
+  selectedOption = null,
+  selectedMultiOptions = [],
   onClose,
   onRedo,
   isExhausted = false,
@@ -27,6 +37,56 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
       setShowSolution(true);
     }
   }, [isExhausted]);
+
+  const getDiagnosticRationales = (): DiagnosticRationaleItem[] => {
+    if (isCorrect || !question || !question.options) {
+      return [];
+    }
+
+    if (question.type === 'multiple_choice_7_options' && selectedOption) {
+      const chosenOpt = question.options.find((opt) => opt.id === selectedOption);
+      if (
+        chosenOpt &&
+        !isOptionCorrect(question, chosenOpt.id) &&
+        typeof chosenOpt.error_rationale === 'string' &&
+        chosenOpt.error_rationale.trim() !== ''
+      ) {
+        return [
+          {
+            optionId: chosenOpt.option_id || chosenOpt.id,
+            content: chosenOpt.content,
+            rationale: chosenOpt.error_rationale.trim(),
+          },
+        ];
+      }
+    } else if (
+      question.type === 'multiple_select' &&
+      Array.isArray(selectedMultiOptions) &&
+      selectedMultiOptions.length > 0
+    ) {
+      return question.options
+        .filter(
+          (opt) =>
+            selectedMultiOptions.includes(opt.id) &&
+            !isOptionCorrect(question, opt.id) &&
+            typeof opt.error_rationale === 'string' &&
+            opt.error_rationale.trim() !== ''
+        )
+        .map((opt) => ({
+          optionId: opt.option_id || opt.id,
+          content: opt.content,
+          rationale: (opt.error_rationale || '').trim(),
+        }));
+    }
+
+    return [];
+  };
+
+  const diagnosticRationales = getDiagnosticRationales();
+  const resolvedSolution =
+    question.solution || question.detailed_solution || '';
+  const resolvedMisconception =
+    question.misconception_warning || question.common_misconception_warning || '';
 
   const renderCorrectAnswer = () => {
     if (question.type === 'multiple_choice_7_options') {
@@ -108,7 +168,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
       <div
         data-testid="feedback-toast"
         className={`feedback-toast absolute right-8 bottom-24 z-30 ${
-          isExhausted ? 'w-96 max-h-[80vh]' : 'w-80'
+          isExhausted || diagnosticRationales.length > 0 ? 'w-96 max-h-[80vh]' : 'w-80'
         } bg-white border border-red-200 rounded-xl shadow-2xl p-5 flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-200`}
       >
         <div className="overflow-y-auto max-h-[calc(80vh-2.5rem)] pr-1">
@@ -152,6 +212,23 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
             )}
           </div>
 
+          {/* Immediate Diagnostic Error Rationale (Refutation Feedback) */}
+          {diagnosticRationales.length > 0 && (
+            <div
+              data-testid="error-rationale-box"
+              className="mt-3.5 p-3 bg-rose-50/90 border border-rose-200 rounded-lg text-xs text-rose-950 space-y-1.5"
+            >
+              <span className="font-bold text-rose-800 uppercase tracking-wider text-[10px] block">
+                Diagnostic feedback on your selection:
+              </span>
+              {diagnosticRationales.map((item, idx) => (
+                <div key={idx} className="leading-relaxed text-slate-800">
+                  <MathText text={item.rationale} />
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Solution & Correct Answer Drawer for Exhausted Attempts */}
           {(isExhausted || showSolution) && (
             <div
@@ -165,14 +242,14 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
                   Step-by-step solution:
                 </span>
                 <div data-testid="solution-content" className="bg-slate-50 p-3 rounded-lg leading-relaxed text-slate-800">
-                  <MathText text={question.solution} />
+                  <MathText text={resolvedSolution} />
                 </div>
               </div>
 
-              {question.misconception_warning && (
+              {resolvedMisconception && (
                 <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900">
                   <span className="font-bold block mb-0.5">Common Misconception:</span>
-                  <MathText text={question.misconception_warning} />
+                  <MathText text={resolvedMisconception} />
                 </div>
               )}
             </div>
@@ -233,14 +310,14 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
               Step-by-step solution:
             </span>
             <div data-testid="solution-content" className="bg-slate-50 p-3 rounded-lg leading-relaxed">
-              <MathText text={question.solution} />
+              <MathText text={resolvedSolution} />
             </div>
           </div>
 
-          {question.misconception_warning && (
+          {resolvedMisconception && (
             <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900">
               <span className="font-bold block mb-0.5">Common Misconception:</span>
-              <MathText text={question.misconception_warning} />
+              <MathText text={resolvedMisconception} />
             </div>
           )}
         </div>
