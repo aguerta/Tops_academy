@@ -211,6 +211,40 @@ El análisis independiente realizado sobre las ejecuciones históricas del pipel
 
 ---
 
+### 3.6. Notas de Optimización Activa (C2C v3.4 $\to$ v3.5): Física de Inferencia y Umbral Oficial `< 6` (`edit_file` vs `write_file`) en Prompts de CTA y Shards
+
+A partir de la auditoría forense longitudinal de telemetría sobre las generaciones `asyntotic_estatistics_v3` (`bb98a610`), `v4` (`0b8b5084`) y `v5` (`89cf485b`) —complementada con el endurecimiento estructural del commit `9382200` (salida JSON ASCII pura en [`c2c_hook_guard.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/c2c_hook_guard.py), resolución de `pre_shard_manifest.json` y cota de pasos `max_user_steps=250_000` en [`engine/sandbox.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/engine/sandbox.py))— se documentan los siguientes aprendizajes operativos para la optimización en curso de los prompts, compiladores y guardas de **CTA Architects** y **Shard Authors**:
+
+#### 1. Física Empírica de Streaming en `Model="flash"` (Google Antigravity SDK)
+- **Velocidad de decodificación sostenida:** En producción sobre Google Antigravity SDK, los subagentes en `Model="flash"` decodifican a **$v_{\text{out}} \approx 168\text{ tokens de salida/s}$** (~`6.0 s` de latencia por cada `1,000` tokens emitidos en llamadas a herramientas).
+- **Asimetría de latencia entre reescritura completa y reemplazo quirúrgico:**
+  - **CTA Architects (`v5`):** Cuando `part_01` y `part_02` fallaron la primera compilación por comandos LaTeX sin delimitar (`[CTA-KATEX]`), la directiva comprimida del prompt lean los obligó a ejecutar un segundo `write_file(Overwrite=True)` monolítico de `31,682` y `32,250` tokens (**`177 s` y `187 s`** de streaming puro para archivos con `90.2%` y `77.4%` de líneas idénticas), degradando la etapa CTA de `6.68–6.87 min` (`v4`) a `11.43–12.20 min` (`v5`).
+  - **Shard Authors (`v5`):** Los shards que emitieron archivos sobredimensionados (`380–470` líneas, `30,930–41,044` tokens en `shard_10`, `shard_17`, `shard_03` y `shard_08`) o reescrituras completas consumieron **`179 s–236 s`** solo en escritura, mientras que `shard_14` reparó sus errores mediante `edit_file` quirúrgico en **`8 s–27 s`** (`109 s` más rápido que `shard_13`) y `shard_09` certificó en **`3.80 min`** (`78` líneas, `5,922` tokens = `36 s` de escritura).
+
+#### 2. Determinación del *Sweet Spot* y Umbral Oficial `< 6` (`1..5` Errores)
+Bajo la mecánica nativa de herramientas de Google Antigravity, `edit_file` (`replace_file_content`) exige coincidencia exacta carácter por carácter de `Target` (incluyendo espacios y barras invertidas en raw strings LaTeX) y llamadas separadas para regiones no contiguas:
+- **Zona Óptima de `edit_file` (`1 <= errores < 6`, es decir, de `1` a `5` errores/bloques):** Emitir de `1` a `5` llamadas quirúrgicas a `edit_file` en un único turno paralelo consume apenas `1,500–4,000` tokens (**`10 s–25 s`**), mantiene una fiabilidad $> 96\%$ cuando el compilador provee el rango exacto de líneas en Python y ahorra entre **`2.5` y `3.5 minutos`** por subagente frente a `write_file`.
+- **Punto de Salto (`errores >= 6`):** A partir de `6` errores simultáneos, aumenta drásticamente la probabilidad de deriva de líneas entre bloques, fallos de coincidencia exacta en tuplas anidadas y ciclos multi-turno de reintento. Por ello, **`< 6` se establece como el umbral oficial unificado** que separa la edición quirúrgica in-place (`edit_file`) de la reescritura modular o atómica (`write_file`) tanto para **CTA** como para **Shards**.
+
+#### 3. Matriz Oficial de Decisión (`edit_file` vs `write_file`) Aplicada a CTA y Shards
+
+| Nivel / Condición tras Compilar | Herramienta Mandatoria | Alcance en CTA (`c2c_cta_architect`) | Alcance en Shards (`c2c_shard_author` / `c2c_repair`) | Latencia Esperada |
+| :--- | :--- | :--- | :--- | :---: |
+| **Nivel 0: Error mecánico determinista** | **Auto-Heal en Compilador** (`0` turnos LLM) | Envoltura automática `$ ... $` de expresiones/macros LaTeX huérfanas en campos de distractores (`compile_cta.py` / `cta_merge.py`). | Curación léxica/AST en memoria y auto-exportación de `vars` (`compile_shard.py` / `check_templates.py`). | **`< 5 ms`** |
+| **Nivel 1: `1 <= errores < 6` (sin `SyntaxError`)** | **`edit_file` (`replace_file_content`) OBLIGATORIO** | Edición quirúrgica en 1 turno paralelo sobre `cta_data.py` o `cta_parts/part_XX_data.py` usando líneas Python exactas. `write_file` completo bloqueado por hook. | Edición quirúrgica en 1 turno paralelo sobre `shards/shard_XX_data.py` usando `StartLine..EndLine`. `write_file` completo bloqueado por hook. | **`10 – 25 s`** |
+| **Nivel 2: `errores >= 6` acotados a `1–2` competencias** | **`write_file(Overwrite=True)` Modular** | Sobrescritura aislada por competencia en `cta_fixes/<CID>.py` (ensamblada en memoria por `compile_cta.py`). | Sobrescritura aislada por competencia en `shards/shard_fixes/<CID>.py` (ensamblada en memoria por `compile_shard.py`). | **`25 – 45 s`** |
+| **Nivel 3: `errores >= 6` sistémicos (`>= 3` comps), Turno 1 o `SyntaxError`** | **`write_file(Overwrite=True)` Atómico Completo** | Creación inicial en Turno 1 o reescritura atómica completa de `cta_data.py` / `part_XX_data.py` en una sola pasada (`Append=True` prohibido). | Creación inicial en Turno 1 o reescritura atómica completa de `shard_XX_data.py` cuando el fallo es estructural o transversal. | **`90 – 180 s`** |
+
+#### 4. Optimizaciones Asociadas en Curso sobre Prompts, Compiladores y Guardas
+1. **Alineación de Prompts de CTA ([`prompt_cta_architect.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/system_prompts/prompt_cta_architect.md) Full y Lean) y [`compile_cta.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/compile_cta.py):**
+   - Restaurar en el prompt lean la distinción estricta entre *Creación Atómica Única en Turno 1 (`write_file`)* y *Reparación Quirúrgica Post-Compilación (`edit_file` para `< 6` errores)*.
+   - Reemplazar las referencias a líneas del JSON en memoria (`JsonLineLocator`) por números de línea exactos del campo/distractor en el archivo `.py` y aislar el paquete de reparación por subparte (`cta_parts/<part_id>_repair_pack.json`) para evitar condiciones de carrera en MapReduce.
+2. **Alineación de Prompts de Shards ([`prompt_shard_author.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/system_prompts/prompt_shard_author.md), [`prompt_repair.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/system_prompts/prompt_repair.md)) y Control de Varianza Pre-Compilación:**
+   - Unificar el criterio de reparación bajo el mismo umbral `< 6` errores (reemplazando la regla previa basada únicamente en conteo de líneas) y persistir `error_count` en `.check_attempts/compile_<id>.json`.
+   - Acotar el dimensionamiento Clean-Room en [`dispatch.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/dispatch.py) a `<= 80–110` líneas por competencia (`<= 180–220` líneas por shard) empleando tuplas DRY compactas `("D-XX-01", r"...")`, y bloquear en [`c2c_hook_guard.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/c2c_hook_guard.py) lecturas especulativas de `tests/**`, `git log` y listados recursivos sobre `courses/`.
+
+---
+
 ## 4. Matriz Maestra de Priorización de Ingeniería
 
 Integrando los diagnósticos cognitivos, los hallazgos de las auditorías forenses externas y la realidad operativa de la plataforma web, se consolida la siguiente matriz ordenada por **ganancia neta frente a esfuerzo de implementación**:
