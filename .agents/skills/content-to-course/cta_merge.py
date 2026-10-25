@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import heapq
 import json
 import logging
 import re
@@ -826,6 +827,7 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
                 m = re.search(r"\d+", str(p_val))
                 page_int = int(m.group(0)) if m else 0
 
+            c["_part_key"] = stem
             c["_sort_key"] = (sp_idx, f_idx, page_int, orig_idx)
             combined_competencies.append(c)
 
@@ -834,20 +836,108 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
 
     # Deterministic sort by (subpart_index, file_index, page, orig_idx)
     combined_competencies.sort(key=lambda c: c["_sort_key"])
+
+    # Stable Topological Sort intra-part (before renumbering IDs)
+    # If competency A depends on B within the same subpart, B must appear before A.
+    parts_order: List[str] = []
+    comps_by_part: Dict[str, List[Dict[str, Any]]] = {}
     for c in combined_competencies:
-        c.pop("_sort_key", None)
+        pk = c.get("_part_key", "")
+        if pk not in comps_by_part:
+            parts_order.append(pk)
+            comps_by_part[pk] = []
+        comps_by_part[pk].append(c)
+
+    reordered_competencies: List[Dict[str, Any]] = []
+    for pk in parts_order:
+        part_comps = comps_by_part[pk]
+        if len(part_comps) <= 1:
+            reordered_competencies.extend(part_comps)
+            continue
+
+        local_id_to_indices: Dict[str, List[int]] = {}
+        for idx, c in enumerate(part_comps):
+            cid = c.get("id")
+            if cid:
+                local_id_to_indices.setdefault(cid, []).append(idx)
+
+        in_degree = {i: 0 for i in range(len(part_comps))}
+        adj: Dict[int, List[int]] = {i: [] for i in range(len(part_comps))}
+
+        pk_nums = re.findall(r"\d+", pk)
+        pk_alias = f"part_{int(pk_nums[0]):02d}" if pk_nums else pk
+
+        for idx, c in enumerate(part_comps):
+            prereqs = c.get("prerequisites", [])
+            for p in prereqs:
+                target_id = p
+                if ":" in p:
+                    prefix_p, bare_id = p.split(":", 1)
+                    if prefix_p in (pk, pk_alias):
+                        target_id = bare_id
+                    else:
+                        continue  # External cross-part prerequisite
+                if target_id in local_id_to_indices:
+                    for dep_idx in local_id_to_indices[target_id]:
+                        if dep_idx != idx:
+                            adj[dep_idx].append(idx)
+                            in_degree[idx] += 1
+
+        ready = [i for i, deg in in_degree.items() if deg == 0]
+        heapq.heapify(ready)
+        visited_indices: List[int] = []
+        visited_set: Set[int] = set()
+
+        while ready:
+            curr = heapq.heappop(ready)
+            visited_indices.append(curr)
+            visited_set.add(curr)
+            for neighbor in adj[curr]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    heapq.heappush(ready, neighbor)
+
+        # Fallback for cycles: append unvisited nodes in their original relative sort order
+        if len(visited_indices) < len(part_comps):
+            logger.warning(
+                "Cycle detected in intra-part prerequisites for %s; appending %d unvisited nodes in deterministic sort order",
+                pk, len(part_comps) - len(visited_indices),
+            )
+            for i in range(len(part_comps)):
+                if i not in visited_set:
+                    visited_indices.append(i)
+
+        reordered_competencies.extend([part_comps[i] for i in visited_indices])
+
+    combined_competencies = reordered_competencies
 
     # Sanitize and normalize orphan LaTeX math in all competencies and distractors
     for comp in combined_competencies:
         sanitize_competency_math(comp)
 
     # Renumber canonical sequential IDs per category with append delta support
-    delta_info = manifest_data.get("delta") or manifest_data.get("existing_course")
+    delta_info = (
+        manifest_data.get("delta")
+        or manifest_data.get("existing_course")
+        or manifest_data.get("delta_manifest")
+    )
     if not delta_info and (work_path / "delta_manifest.json").is_file():
         try:
             delta_info = json.loads((work_path / "delta_manifest.json").read_text(encoding="utf-8"))
         except Exception:
             pass
+
+    existing_comp_ids: Set[str] = set()
+    if delta_info and isinstance(delta_info, dict):
+        existing_comp_ids.update(delta_info.get("existing_competency_ids", []))
+        for item in delta_info.get("existing_competencies_outline", []):
+            if isinstance(item, dict) and "id" in item:
+                existing_comp_ids.add(item["id"])
+        for item in delta_info.get("competencies", []):
+            if isinstance(item, dict) and "id" in item:
+                existing_comp_ids.add(item["id"])
+    if isinstance(manifest_data.get("existing_competency_ids"), list):
+        existing_comp_ids.update(manifest_data.get("existing_competency_ids", []))
 
     next_counts = parse_next_ids_by_prefix(delta_info)
     fact_count = max(0, next_counts["H"] - 1)
@@ -855,9 +945,14 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
     skill_count = max(0, next_counts["Hab"] - 1)
 
     comp_id_map: Dict[str, str] = {}
+    comp_id_map_by_part: Dict[str, Dict[str, str]] = {}
     dist_id_map: Dict[str, str] = {}
 
     for comp in combined_competencies:
+        part_key = comp.get("_part_key", "")
+        pk_nums = re.findall(r"\d+", part_key) if part_key else []
+        pk_alias = f"part_{int(pk_nums[0]):02d}" if pk_nums else part_key
+
         old_cid = comp.get("id", "")
         ctype = comp.get("type", "").lower()
 
@@ -879,7 +974,14 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
             prefix = f"H{fact_count:02d}"
 
         if old_cid:
-            comp_id_map[old_cid] = new_cid
+            if part_key:
+                comp_id_map_by_part.setdefault(part_key, {})[old_cid] = new_cid
+                comp_id_map[f"{part_key}:{old_cid}"] = new_cid
+                if pk_alias and pk_alias != part_key:
+                    comp_id_map_by_part.setdefault(pk_alias, {})[old_cid] = new_cid
+                    comp_id_map[f"{pk_alias}:{old_cid}"] = new_cid
+            if old_cid not in comp_id_map:
+                comp_id_map[old_cid] = new_cid
         comp["id"] = new_cid
 
         distractors = comp.get("distractors", [])
@@ -888,17 +990,79 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
             new_did = f"D-{prefix}-{d_idx:02d}"
             if old_did:
                 dist_id_map[old_did] = new_did
+                if part_key:
+                    dist_id_map[f"{part_key}:{old_did}"] = new_did
+                    if pk_alias and pk_alias != part_key:
+                        dist_id_map[f"{pk_alias}:{old_did}"] = new_did
             dist["id"] = new_did
 
-    # Rewrite prerequisites across all competencies
+    # Rewrite prerequisites across all competencies with scoped part mapping
     for comp in combined_competencies:
+        part_key = comp.get("_part_key", "")
+        pk_nums = re.findall(r"\d+", part_key) if part_key else []
+        pk_alias = f"part_{int(pk_nums[0]):02d}" if pk_nums else part_key
+
         prereqs = comp.get("prerequisites", [])
         new_prereqs: List[str] = []
         for p in prereqs:
-            mapped = comp_id_map.get(p, p)
+            # 1. Explicit prefixes: base course prefix (e.g. "base:C-01") or explicit part prefix (e.g. "part_01:C-01")
+            if ":" in p:
+                prefix_p, bare_id = p.split(":", 1)
+                prefix_lower = prefix_p.strip().lower()
+                if prefix_lower in ("existing", "base", "course", "delta"):
+                    mapped = bare_id
+                elif p in comp_id_map:
+                    mapped = comp_id_map[p]
+                elif prefix_p in (part_key, pk_alias) and bare_id in comp_id_map_by_part.get(part_key, {}):
+                    mapped = comp_id_map_by_part[part_key][bare_id]
+                else:
+                    mapped = comp_id_map.get(p, p)
+            # 2. Local scope within subpart
+            elif part_key and p in comp_id_map_by_part.get(part_key, {}):
+                mapped = comp_id_map_by_part[part_key][p]
+            elif pk_alias and p in comp_id_map_by_part.get(pk_alias, {}):
+                mapped = comp_id_map_by_part[pk_alias][p]
+            # 3. Existing base course scope (preserve base course prerequisites without cross-part collision)
+            elif p in existing_comp_ids:
+                mapped = p
+            # 4. Global fallback
+            else:
+                mapped = comp_id_map.get(p, p)
+
             if mapped not in new_prereqs and mapped != comp["id"]:
                 new_prereqs.append(mapped)
         comp["prerequisites"] = new_prereqs
+
+    # Strict Backward-Only Enforcement (pos[prereq] < pos[comp])
+    comp_pos = {c["id"]: idx for idx, c in enumerate(combined_competencies)}
+    for idx, comp in enumerate(combined_competencies):
+        filtered_prereqs: List[str] = []
+        for p in comp.get("prerequisites", []):
+            if p == comp["id"]:
+                continue
+            if p in comp_pos:
+                if comp_pos[p] < idx:
+                    if p not in filtered_prereqs:
+                        filtered_prereqs.append(p)
+                else:
+                    logger.warning(
+                        "Dropping forward prerequisite %s for competency %s (pos %d >= %d)",
+                        p, comp["id"], comp_pos[p], idx,
+                    )
+            elif existing_comp_ids and p in existing_comp_ids:
+                # Prerequisites outside newly combined competencies from existing base course
+                if p not in filtered_prereqs:
+                    filtered_prereqs.append(p)
+            else:
+                # Prerequisites outside newly combined competencies (e.g. delta/base course)
+                if p not in filtered_prereqs:
+                    filtered_prereqs.append(p)
+        comp["prerequisites"] = filtered_prereqs
+
+    # Guarantee removal of temporary internal keys (_part_key, _sort_key) from all competencies
+    for comp in combined_competencies:
+        comp.pop("_part_key", None)
+        comp.pop("_sort_key", None)
 
     # Detect duplicate candidates
     duplicate_candidates = find_duplicate_candidates(combined_competencies)
@@ -907,6 +1071,7 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
     id_map_payload = {
         "competencies": comp_id_map,
         "distractors": dist_id_map,
+        "by_part": comp_id_map_by_part,
     }
 
     draft_payload = {

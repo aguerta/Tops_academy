@@ -95,3 +95,5 @@
 {"timestamp": "2026-10-25T02:45:46.464957+00:00", "course_id": "test", "total_patches": 60, "healed": 30, "snapped": 0, "degraded": 30, "degraded_pct": 25.64, "alert": true, "by_rule": {"PRE_IMPORT_TOKEN_HEAL": 30, "DEGRADE_MATH": 30}}
 {"timestamp": "2026-10-25T02:45:59.168132+00:00", "course_id": "test", "total_patches": 60, "healed": 30, "snapped": 0, "degraded": 30, "degraded_pct": 25.64, "alert": true, "by_rule": {"PRE_IMPORT_TOKEN_HEAL": 30, "DEGRADE_MATH": 30}}
 {"timestamp": "2026-10-25T02:46:10.021070+00:00", "course_id": "test", "total_patches": 12, "healed": 12, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"PRE_IMPORT_TOKEN_HEAL": 12}}
+{"timestamp": "2026-10-25T04:32:55.628330+00:00", "course_id": "macro_base", "total_patches": 1, "healed": 1, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"PRE_IMPORT_TOKEN_HEAL": 1}}
+{"timestamp": "2026-10-25T04:42:01.321673+00:00", "course_id": "greene_append_v3", "total_patches": 0, "healed": 0, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {}}
