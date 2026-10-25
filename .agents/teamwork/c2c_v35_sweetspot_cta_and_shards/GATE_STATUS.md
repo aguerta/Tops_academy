@@ -1,0 +1,9 @@
+# GATE STATUS — `c2c_v35_sweetspot_cta_and_shards`
+
+| Gate | Stream | Phase 1: Implementer | Phase 2: Improver | Phase 3: Auditor | Estado Global |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Gate 1** | **Stream 1A** (`compile_cta.py`, `check_cta.py`, `cta_merge.py`, `tests/test_cta_sweetspot_and_autoheal.py`) | `DONE` (`bf0d6b2b-1917-4fa9-89ce-5f7bd3e74fc0`, 88/88 PASS) | `DONE` (`dde72c08-4fc6-4b60-bff1-0965718d191c`, 90/90 PASS) | `PASS` (`58c418ed-89ad-47d8-a1e6-8a76f3644a1f`, 90/90 PASS) | **`COMPLETED (PASS)`** |
+| **Gate 1** | **Stream 1B** (`compile_shard.py`, `check_templates.py`, `tests/test_shard06_and_dry_archetypes.py` + `[M3-ARCHETYPES]` Gate) | `DONE` (`49f12a2f-fd8e-44c6-a0f6-02a04177e599`, 68/68 PASS) | `DONE` (`adfb0cae-1812-4e84-8370-3dc7e8fa984f`, 71/71 PASS) | `PASS` (`888fbb1f-5452-4be4-b6b2-692ffd92daee`, 71/71 PASS) | **`COMPLETED (PASS)`** |
+| **Gate 1** | **Stream 1C** (`c2c_hook_guard.py`, `tests/test_hook_post_pass_and_write_isolation.py`) | `DONE` (`ca11091e-2e58-4dbd-a1b1-10c0d96eb3fb`, 50/50 PASS) | `DONE` (`3e11cb12-d241-4f84-aa7b-401e6ac5e285`, 55/55 PASS) | `PASS` (`f2a37939-d239-4b78-b44d-b642ce9cbf16`, 55/55 PASS) | **`COMPLETED (PASS)`** |
+| **Gate 1** | **Stream 1D** (`dispatch.py`, `system_prompts/**`, `tests/test_dispatch_turn0_and_milestone3_prompts.py` + M3 Anti-1-Tuple Hardening) | `DONE` (`3b377c71-e957-4f9e-a573-bb9215217eca`, 84/84 PASS) | `DONE` (`f8807725-a3c9-48f5-ab89-3c583cbd8814`, 44/44 PASS) | `PASS` (`7eda1974-37e2-4703-928b-c18e16549a43`, 44/44 PASS) | **`COMPLETED (PASS)`** |
+| **Gate 2** | **Stream 2A** (`subagent_types.json`, `tests/test_sweetspot_v35_cta_and_shards.py`) | `DONE` (`5ad672dc-22b8-4ed3-aa3f-3bd1fd9fc3f0`, 92/92 PASS) | `DONE` (`e80a0546-a17f-408d-98a0-67f552dc3ce2`, 98/98 PASS) | `PASS` (`2c190d15-fd06-4348-a2f5-f122da4dc055`, 148/148 PASS) | **`COMPLETED (PASS)`** |
