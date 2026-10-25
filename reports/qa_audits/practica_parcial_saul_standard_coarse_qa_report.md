@@ -1,229 +1,226 @@
-# Informe de Auditoría de Calidad Pedagógica, Psicométrica y Técnica
-
+# Informe de Auditoría de Calidad Pedagógica, Técnica y Psicométrica
 > [!WARNING]
-> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-10-20 13:26:21**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-10-25 10:12:15**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
 
 **Estado en Plataforma:** ELIMINADO  
-**Fecha de Eliminación:** 2026-10-20 13:26:21  
-**Curso:** `practica_parcial_saul_standard_coarse`  
-**Título:** Practica Parcial Saul Standard Coarse  
-**Fecha de Auditoría:** 20 de Octubre de 2026  
-**Auditor:** Course QA Auditor — Top's Academy  
-**Normativas de Referencia:** Quality Matters (QM), OSCQR Higher Education Course Design Quality, Mastery Learning Standard.
+**Fecha de Eliminación:** 2026-10-25 10:12:21  
+**Fecha de Eliminación:** 2026-10-25 10:12:15  
+**Curso:** `practica_parcial_saul_standard_coarse` (ID: `practica_parcial_saul_standard_coarse`)  
+**Título del Curso:** Practica Parcial Saul Standard Coarse  
+**Fecha de Auditoría:** 25 de Octubre de 2026  
+**Estándares de Referencia:** Quality Matters (QM), OSCQR, Mastery Learning & Antigravity SDK QA  
+**Auditor:** Course QA Auditor Agent — Top's Academy  
+**Estado de la Plataforma:** `ELIMINADO` (Retirado el 2026-10-20; preservado en el repositorio para auditoría pedagógica e histórica)  
 
 ---
 
-## 1. Resumen Ejecutivo y Veredicto
+## 1. Resumen Ejecutivo y Dictamen de Certificación
 
-Se ha completado la auditoría integral y estandarizada del curso **`practica_parcial_saul_standard_coarse`**, integrando la telemetría métrica universal obtenida vía `StandardizedAuditEngine` con el **Loop de Verificación Semántica Adaptativa** sobre las 13 micro-competencias y el 100% de su banco de reactivos (320 preguntas, 1,920 distractores evaluados).
+El curso **Practica Parcial Saul Standard Coarse** ha sido sometido a una exhaustiva auditoría pedagógica, técnica y psicométrica. Se trata de la versión agregada de granularidad gruesa (*coarse-grained*) del examen de métodos dinámicos para economía, estructurada en **13 macro-competencias** y un banco evaluativo de **320 reactivos de opción múltiple de 7 alternativas (MC7)** con **1,920 distractores analizados**.
 
-### Veredicto Global de Certificación
+| Métrica Global | Resultado | Estado / Referencia |
+| :--- | :---: | :--- |
+| **Puntaje Final Consolidado** | **16.3 / 20.0** | **Tier ACEPTABLE (14.0 – 16.9)** |
+| **Dictamen de Certificación** | **APROBADO CON OBSERVACIONES** | **Requiere diversificación tipológica y pulido de plantillas** |
+| **Penalizaciones Duras Aplicadas** | **0.0 pts** | Ninguna penalización dura activa |
+| **Volumen de Competencias** | **13** | 1 Hecho [Fact], 6 Conceptos [Concept], 6 Habilidades [Skill] |
+| **Volumen de Reactivos** | **320** | 100% MC7 (7 alternativas por ítem) |
+| **Cobertura de Rationales de Error** | **100.0%** | 1,920 / 1,920 distractores con justificación diagnóstica |
+| **Cobertura de Andamiaje (Hints)** | **100.0%** | Exactamente 3 pistas socráticas por reactivo (960 pistas) |
+| **Cobertura de Soluciones Detalladas** | **100.0%** | 320 soluciones paso a paso completas |
+| **Tasa de Distractores Delatores** | **0.0%** | 0 ítems delatores (cero *telltale items*) |
+| **Fugas de Respuestas (*Answer Leaks*)** | **0.0%** | 0 ítems con fuga de respuesta en el enunciado |
+| **Estatus en Servidor Activo** | **ELIMINADO** | Retirado de catálogo interactivo; preservado para auditoría |
 
-| Métrica | Resultado | Estado |
-| :--- | :---: | :---: |
-| **Puntaje Bruto** | **19.0 / 20.0** | Aprobado con Distinción |
-| **Penalizaciones Duras** | **0.0 pts** | Ninguna penalización dura aplicada |
-| **Calificación Final Consolidada** | **19.0 / 20.0** | **EXCELENTE** |
-| **Quality Tier** | **EXCELENTE (17.0 - 20.0 pts)** | **APROBADO PARA PRODUCCIÓN** |
+> [!NOTE]  
+> **Calificación Final: 16.3 / 20.0 — Quality Tier: ACEPTABLE (14.0 - 16.9).**  
+> El curso demuestra un sólido rigor conceptual y una excelente alineación con la teoría matemática avanzada de EDPs y EDOs económicas. No obstante, se sitúa en Tier Aceptable debido a dos factores determinantes: **(1)** la ausencia total de variedad de tipos de reactivos combinada con la falta de diversidad de arquetipos por competencia (riesgo elevado de mecanización del estudiante por repetición del mismo molde numérico), y **(2)** fallas de renderizado y sobre-escape de KaTeX en stems y soluciones detalladas (residuos `{c}`, `{d}`, cuádruple escape `\\\\mathbb{R}` y expresiones diferenciales en texto plano).
 
-### Desglose por Dimensiones Normativas
+---
+
+## 2. Desglose de Evaluación por Dimensiones
 
 ```mermaid
-xychart-beta
-    title "Calificación por Dimensión (Escala Normalizada %)"
-    x-axis ["D1 Arquitectura", "D2 Reactivos", "D3 Andamiaje", "D4 Alineación", "D5 KaTeX/Técnica"]
-    y-axis "Porcentaje (%)" 0 --> 100
-    bar [100.0, 98.0, 92.0, 100.0, 75.0]
+flowchart LR
+    subgraph Dimensions ["Calificación por Dimensiones (Top's Academy QA Rubric)"]
+        D1["D1: Arquitectura y Granularidad<br><b>3.8 / 4.0</b> (95%)"]
+        D2["D2: Calidad de Evaluación<br><b>3.4 / 5.0</b> (68%)"]
+        D3["D3: Andamiaje y Pistas<br><b>3.9 / 5.0</b> (78%)"]
+        D4["D4: Alineación Instruccional<br><b>4.0 / 4.0</b> (100%)"]
+        D5["D5: Ergonomía Técnica / KaTeX<br><b>1.2 / 2.0</b> (60%)"]
+    end
 ```
 
-| Dimensión | Puntos Obtenidos | Máximo | Porcentaje | Nivel de Cumplimiento |
+### Dimensión 1: Arquitectura y Granularidad (3.8 / 4.0 pts) — *Excelente*
+- **Estructuración en Grafo Acíclico Dirigido (DAG):**  
+  Las 13 competencias del curso están organizadas de forma lógica y sin ciclos topológicos. Presenta dos nodos raíz fundacionales sin prerrequisitos correspondientes a las dos grandes vertientes teóricas:
+  1. `C-01`: Método de Curvas Características para EDPs de Primer Orden.
+  2. `C-02`: Estructura Algebraica del Espacio de Soluciones de Sistemas Lineales Autónomos de EDOs.  
+  A partir de estos nodos se ramifican las competencias procedimentales intermedias y avanzadas (`Hab-01` a `Hab-06`, `H-01`, `C-03` a `C-06`) convergiendo limpiamente hacia aplicaciones económicas (teoría del consumidor, Hotelling, modelos IS-LM dinámicos y ciclos distributivos de Goodwin).
+- **Densidad de Reactivos:**  
+  Banco plenamente regular y libre de subpoblación: 20 reactivos en hechos y conceptos (`C-01` a `C-06`, `H-01`) y 30 reactivos en habilidades prácticas (`Hab-01` a `Hab-06`), totalizando 320 preguntas.
+- **Deducción Aplicada (-0.2 pts):**  
+  Asimetría en la base de la pirámide de Mastery Learning: únicamente 1 competencia está catalogada como Hecho [Fact] (`H-01`, 7.7%), frente a 6 Conceptos (46.2%) y 6 Habilidades (46.2%). Aunque adecuado para un curso avanzado, limita la verificación granular de hechos y definiciones previas antes de la ejercitación operativa.
+
+---
+
+### Dimensión 2: Calidad de Evaluación y Reactivos (3.4 / 5.0 pts) — *Aceptable*
+- **Fortalezas Psicométricas y Distractores:**  
+  - Los 320 reactivos utilizan el formato de 7 alternativas (`multiple_choice_7_options`), reduciendo el acierto por conjetura aleatoria a $p = 1/7 \approx 14.28\%$.
+  - Los 1,920 distractores cuentan con `error_rationale` diagnóstico al 100.0%. Capturan concepciones erróneas canónicas en EDPs y sistemas dinámicos: pendientes de características invertidas, violación de la transversalidad, ausencia de constante de integración, vectores nulos como supuestos autovectores y proyecciones como si la ecuación fuese lineal.
+  - Cero distractores delatores (*telltale items*) y cero fugas de respuestas en los textos visibles.
+- **Deducción Aplicada (-1.6 pts):**
+  1. **Monocultura tipológica absoluta:** El 100% de las evaluaciones son preguntas de opción múltiple de 7 alternativas. Cero presencia de reactivos `multiple_select`, reactivos de ordenamiento procedural o `fill_in_the_blank` analítico/numérico.
+  2. **Monotonía y Mecanización por Arquetipo Único:**  
+     Dentro de cada micro-competencia, las 20 o 30 preguntas se derivan de **un único molde o arquetipo paramétrico** idéntico, donde únicamente varían los coeficientes numéricos y el prefijo de cortesía del enunciado (*"Verifique la consistencia del modelo y obtenga..."*, *"Procediendo conforme al marco teórico..."*, *"Aplicando las identidades teóricas..."*).  
+     - En `C-01`: las 20 preguntas piden el sistema característico de $(ax)U_x + (by + cU)U_y = kx$ con las mismas opciones exactas.
+     - En `Hab-03`: las 30 preguntas calculan $X_p = -A^{-1}B$ para matrices $2 \times 2$.
+     - En `C-04`: las 20 preguntas evalúan la matriz de Hartman-Grobman para un equilibrio desplazado.  
+     Esta falta de diversidad de arquetipos permite que el estudiante, al resolver los dos primeros ítems, **mecanice el patrón formal sin profundizar en el razonamiento matemático**, invalidando el principio de Mastery Learning.
+
+---
+
+### Dimensión 3: Andamiaje y Feedback Progresivo (3.9 / 5.0 pts) — *Aceptable*
+- **Andamiaje Socrático Escalonado:**  
+  El 100% de las 320 preguntas implementa rigurosamente 3 pistas socráticas (960 pistas en total) con una secuencia didáctica ejemplar:
+  - **Pista 1 (Conceptual):** Introduce el principio o teorema de partida (regla de la cadena multivariada, ecuación característica de Lagrange, condición $\dot{X}=0$).
+  - **Pista 2 (Procedimental):** Enseña a plantear el sistema desacoplado, calcular la constante o invertir la matriz.
+  - **Pista 3 (Operativa / Cálculo):** Guía el paso final de verificación y despeje algebraico sin regalar la alternativa correcta.
+- **Deducción Aplicada (-1.1 pts):**
+  1. **Residuos de Parámetros en Detailed Solutions:**  
+     Se detectaron identificadores de variables de plantilla literales sin sustituir dentro del texto de la solución detallada:
+     - En `Hab-01` (`Q-Hab01-021` y `Q-Hab01-022`): aparece `{c}` como coeficiente literal en la solución general: `... \implies {c} e^U - 9 x = c_2`.
+     - En `C-04` (`Q-C04-201` y `Q-C04-202`): aparece `{d}` como entrada matricial del jacobiano: `J(X^*) = \left(\begin{array}{cc} -3 & 8 \\ {d} & -6 \end{array}\right)`.
+  2. **Inconsistencia en Misconception Warnings:**  
+     Mientras que en `H-01` y `Hab-02` las soluciones detalladas incluyen una sección explícita desglosando por qué los distractores son erróneos, en `Hab-03` y `Hab-05` las soluciones se limitan a un cálculo directo de dos líneas, sin advertencia de concepciones erróneas previas.
+
+---
+
+### Dimensión 4: Alineación Instruccional (4.0 / 4.0 pts) — *Excelente*
+- **Congruencia Disciplinar:**  
+  Alineación semántica sobresaliente entre el syllabus de matemáticas avanzadas para economía y los ítems del examen.
+- **Cero Preguntas Huérfanas:**  
+  Todos los 320 reactivos pertenecen formal y funcionalmente a la competencia declarada (`orphan_questions_count = 0`).
+- **Nivel Taxonómico de Bloom:**  
+  Fuerte anclaje en niveles de Aplicación (Skills: `Hab-01` a `Hab-06`) y Análisis (Concepts: `C-01` a `C-06`), acorde con un examen parcial universitario exigente.
+
+---
+
+### Dimensión 5: Accesibilidad y Ergonomía Técnica / KaTeX (1.2 / 2.0 pts) — *Deficiente / Aceptable*
+- **Integridad Sintáctica Global:**  
+  Cero triples delimitadores (`$$$`), cero llaves dobles (`{{...}}`), cero colapsos globales del compilador.
+- **Deducción Aplicada (-0.8 pts):**  
+  La inspección semántica identificó fallas técnicas que afectan directamente la experiencia visual y la ergonomía del estudiante:
+  1. **Fórmulas Matemáticas en Texto Plano / Delimitadores Omitidos en `Hab-01`:**  
+     En las soluciones detalladas de `Hab-01`, los pasos intermedios de integración aparecen sin delimitadores KaTeX o con el delimitador de apertura omitido:
+     - `De las dos primeras razones, 9 \frac{dx}{x} - 9 \frac{dy}{y} = 0 \implies \frac{x^{9}}{y^{9}} = c_1$.` (Falta el `$` inicial antes de `9 \frac{dx}{x}`).
+     - `1 e^U dU - 9 dx = 0 \implies {c} e^U - 9 x = c_2.` (Completamente en texto plano, sin signos `$`).
+  2. **Sobre-Escape Cuádruple de Barras Invertidas (`\\\\`):**  
+     En los enunciados y soluciones de `C-02` y `Hab-03` se observa un cuádruple escape que produce cadenas defectuosas:
+     - `A \in \\\\mathbb{R}^{2 \\\\times 2}` en el stem de `Q-C02-101` y `Q-C02-102`.
+     - `\lambda_1 \\\\neq \lambda_2` en la solución de `C-02`.
+     - `\det(A) = -2 \\\\neq 0` en la solución de `Hab-03`.
+  3. **Residuos de Llaves en Números y Parámetros:**  
+     Entornos matriciales que renderizan llaves innecesarias alrededor de escalares (ej. `\begin{pmatrix} -3 & -3 \\ {5} & -7 \end{pmatrix}` en `C-05`).
+
+---
+
+## 3. Matriz de Penalizaciones Duras Automáticas
+
+| Penalización Normativa | Criterio de Activación | Conteo Detectado | Deducción Aplicada |
+| :--- | :--- | :---: | :---: |
+| **Banco Subpoblado** | Menos de 3 problemas prácticos en una competencia | 0 | 0.0 pts |
+| **Ausencia de Pistas** | Reactivos con `hints = 0` (-1.0 pt c/u) | 0 | 0.0 pts |
+| **Preguntas Huérfanas** | Reactivos desvinculados o fuera de dominio (-2.0 pts) | 0 | 0.0 pts |
+| **Total Deducciones Duras** | — | — | **0.0 pts** |
+
+---
+
+## 4. Evidencias del Loop de Verificación Semántica
+
+Durante la auditoría sobre las muestras estratificadas del banco de 320 reactivos, se extrajeron las siguientes evidencias documentales:
+
+### Evidencia 1: Ausencia de Delimitador y Residuo de Variable `{c}` (Competencia `Hab-01`)
+- **Reactivo:** `Q-Hab01-021` (`detailed_solution`, Línea 449):
+  > *"De las dos primeras razones, 9 \frac{dx}{x} - 9 \frac{dy}{y} = 0 \implies \frac{x^{9}}{y^{9}} = c_1$. De la primera y tercera razón, cancelando $x$, 1 e^U dU - 9 dx = 0 \implies {c} e^U - 9 x = c_2. La solución general implícita es $\Phi\left(\frac{x^{9}}{y^{9}}, 1 e^U - 9 x\right) = 0$..."*
+- **Diagnóstico:** 
+  1. `9 \frac{dx}{x}...` carece de signo `$` inicial.
+  2. `1 e^U dU - 9 dx = 0 \implies {c} e^U - 9 x = c_2.` está sin delimitadores `$`, y contiene `{c}` literal en lugar del coeficiente numérico ($1$).
+
+### Evidencia 2: Residuo de Variable `{d}` en Matriz Jacobiana (Competencia `C-04`)
+- **Reactivo:** `Q-C04-201` (`detailed_solution`, Línea 1471):
+  > *"La matriz jacobiana del sistema evaluada en el punto de equilibrio $X^* = (5, 4)$ es $J(X^*) = \left(\begin{array}{cc} -3 & 8 \\ {d} & -6 \end{array}\right)$..."*
+- **Diagnóstico:** La posición $(2,1)$ de la matriz jacobiana contiene la letra `{d}` literal en lugar del valor calibrado $5$. KaTeX compila `{d}` sin arrojar error sintáctico porque lo interpreta como un grupo de un solo carácter, pero representa un error de renderizado semántico severo.
+
+### Evidencia 3: Cuádruple Escape de Barras Invertidas (Competencia `C-02`)
+- **Reactivo:** `Q-C02-101` (`stem`, Línea 822 y `detailed_solution`, Línea 887):
+  > *"Considere el sistema lineal homogéneo ... con matriz de coeficientes $A \in \\\\mathbb{R}^{2 \\\\times 2}$ ... Puesto que $\lambda_1 \\\\neq \lambda_2$..."*
+- **Diagnóstico:** Serialización excesiva de barras en la cadena Python original, generando `\\\\mathbb` y `\\\\neq`.
+
+### Evidencia 4: Homogeneidad de Arquetipos y Mecanización (Competencia `Hab-03`)
+- **Reactivos:** `Q-Hab03-121` y `Q-Hab03-122`:
+  - Ambos plantean exactamente: *"Considere el sistema lineal no homogéneo de ecuaciones diferenciales ordinarias $\dot{X}(t) = A X(t) + B$, con matriz $A$ de entradas en primera fila $(a, b)$ y segunda fila $(c, d)$, junto al vector forzante constante $B = (e, f)^T$..."*
+  - Ambos solicitan: $X_p = -A^{-1}B$.
+  - Los 30 ejercicios de esta habilidad repiten la misma operación $2 \times 2$ con perturbaciones de enteros. Esto no evalúa métodos alternativos (coeficientes indeterminados, variación de parámetros, ni interpretación económica de choques exógenos).
+
+---
+
+## 5. Nuevas Reglas de Linteo Propuestas (`discovered_lint_rules`)
+
+A partir de los vicios y deslices detectados, se proponen 4 nuevas reglas de auditoría para su integración en `StandardizedAuditEngine`:
+
+### 1. `unrendered_single_char_latex_token_residue`
+- **Dimensión:** Ergonomía Técnica / Andamiaje.
+- **Severidad:** Alta (`high`).
+- **Descripción:** Detecta variables de plantilla de un solo carácter entre llaves (ej. `{c}`, `{d}`, `{a}`, `{b}`) dentro de expresiones LaTeX en stems, opciones o detailed solutions. Corresponden a variables f-string no sustituidas que compilan en KaTeX como grupos válidos pero muestran código fuente literal al alumno.
+- **Regex:** `(?<=[^a-zA-Z\\])\{[a-zA-Z]\}(?=[^a-zA-Z]|$)`
+
+### 2. `raw_latex_missing_delimiters_in_solutions`
+- **Dimensión:** Ergonomía Técnica / KaTeX.
+- **Severidad:** Alta (`high`).
+- **Descripción:** Detecta macros y comandos LaTeX (ej. `\frac`, `\implies`, `\cdot`, `\partial`, `\det`) en campos de texto que carecen de delimitadores `$` de apertura o están expuestos en texto plano sin compilar.
+- **Regex:** `(^|[^\$])\\[a-zA-Z]+(\{[^\}]*\}|\s+)(?=[^\$]*\$|[^\$]*$)`
+
+### 3. `quadruple_backslash_overescaped_latex_linter`
+- **Dimensión:** Ergonomía Técnica.
+- **Severidad:** Media (`medium`).
+- **Descripción:** Detecta la presencia de cuádruple barra invertida (`\\\\\\\\`) antecediendo comandos LaTeX (`\\\\mathbb`, `\\\\neq`), provocada por doble serialización en scripts de Python.
+- **Regex:** `\\\\\\\\\\\\[a-zA-Z]+`
+
+### 4. `item_archetype_monoculture_detector`
+- **Dimensión:** Calidad de Evaluación y Reactivos.
+- **Severidad:** Media (`medium`).
+- **Descripción:** Evalúa la diversidad estructural de las preguntas por competencia. Emite una advertencia cuando el 100% de los reactivos de una competencia provienen de una única plantilla paramétrica con idéntica sintaxis y sólo permutación de enteros, propiciando la mecanización del estudiante.
+
+---
+
+## 6. Plan de Remediación Priorizado
+
+1. **Corrección de Delimitadores KaTeX en `Hab-01` (Prioridad Alta):**
+   - Asegurar que todas las ecuaciones diferenciales en la solución detallada de `Hab-01` estén delimitadas por signos `$`.
+2. **Sustitución de Placeholders `{c}` y `{d}` en `Hab-01` y `C-04` (Prioridad Alta):**
+   - Corregir las plantillas generadoras para que los parámetros `{c}` y `{d}` se sustituyan por sus valores numéricos reales antes de generar el JSON.
+3. **Eliminación del Cuádruple Escape en `C-02` y `Hab-03` (Prioridad Media):**
+   - Ajustar el script de serialización para producir `\mathbb{R}` y `\neq` con escape simple/doble válido.
+4. **Diversificación de Arquetipos de Reactivos (Prioridad Media):**
+   - Reestructurar los bancos de 20 y 30 ítems para incorporar al menos 3 arquetipos por competencia (ej. aplicación económica contextualizada, análisis de propiedades teóricas cualitativas y problemas de diagnóstico de errores).
+5. **Incorporación de Reactivos de Selección Múltiple y Respuesta Numérica (Prioridad Baja):**
+   - Introducir variedad tipológica (`multiple_select`, `fill_in_the_blank`) para evitar la monocultura de MC7.
+
+---
+
+## 7. Dictamen Final Consolidado
+
+| Dimensión | Puntos Obtenidos | Puntos Máximos | Porcentaje | Calificación Cualitativa |
 | :--- | :---: | :---: | :---: | :--- |
-| **D1: Arquitectura y Granularidad** | **4.0** | 4.0 | 100.0% | **Excelente** |
-| **D2: Calidad de Evaluación y Reactivos** | **4.9** | 5.0 | 98.0% | **Excelente** |
-| **D3: Andamiaje y Pistas Progresivas** | **4.6** | 5.0 | 92.0% | **Excelente** |
-| **D4: Alineación Instruccional** | **4.0** | 4.0 | 100.0% | **Excelente** |
-| **D5: Accesibilidad y Ergonomía KaTeX** | **1.5** | 2.0 | 75.0% | **Aceptable** |
-| **Total Consolidado** | **19.0** | **20.0** | **95.0%** | **Tier EXCELENTE** |
+| 1. Arquitectura y Granularidad | 3.8 | 4.0 | 95.0% | Excelente |
+| 2. Calidad de Evaluación y Reactivos | 3.4 | 5.0 | 68.0% | Aceptable |
+| 3. Andamiaje y Pistas Progresivas | 3.9 | 5.0 | 78.0% | Aceptable |
+| 4. Alineación Instruccional | 4.0 | 4.0 | 100.0% | Excelente |
+| 5. Ergonomía Técnica y KaTeX | 1.2 | 2.0 | 60.0% | Deficiente / Aceptable |
+| **Subtotal** | **16.3** | **20.0** | **81.5%** | — |
+| **Penalizaciones Duras** | **-0.0** | — | — | Sin penalizaciones activas |
+| **NOTA FINAL CONSOLIDADA** | **16.3** | **20.0** | **81.5%** | **Tier ACEPTABLE** |
 
----
-
-## 2. Metadatos del Curso y Arquitectura Curricular
-
-El curso presenta una estructura curricular avanzada centrada en el análisis analítico y cualitativo de **Ecuaciones en Derivadas Parciales de Primer Orden (EDPs)** y **Sistemas Dinámicos de Ecuaciones Diferenciales Ordinarias (EDOs)** con aplicaciones macroeconómicas y ecológicas.
-
-### Grafo Acíclico Dirigido (DAG) de Dependencias Curriculares
-
-```mermaid
-graph TD
-    subgraph Rama_EDP ["Vertiente 1: Ecuaciones en Derivadas Parciales"]
-        C01["C-01: Curvas Características (Raíz)"] --> Hab01["Hab-01: Método de Lagrange y Multiplicadores"]
-        C01 --> H01["H-01: Teorema de Euler sobre Homogeneidad"]
-        H01 --> Hab02["Hab-02: Problemas de Frontera, Roy y Hotelling"]
-        Hab01 --> Hab02
-    end
-
-    subgraph Rama_EDO ["Vertiente 2: Sistemas Dinámicos y Macroeconomía"]
-        C02["C-02: Espacio de Soluciones EDOs (Raíz)"] --> Hab03["Hab-03: Cálculo Espectral y Solución Particular"]
-        C02 --> C03["C-03: Esquema Traza-Determinante"]
-        C02 --> C04["C-04: Linealización y Hartman-Grobman"]
-        C03 --> Hab04["Hab-04: Isoclinas Nulas y Diagramas de Fase"]
-        C03 --> C05["C-05: Ajuste Macroeconómico IS-LM"]
-        Hab03 --> C05
-        C05 --> Hab05["Hab-05: Calibración Dinámica IS-LM"]
-        C04 --> C06["C-06: Ciclos de Goodwin y Lotka-Volterra"]
-        C04 --> Hab06["Hab-06: Sistemas de Crecimiento y Polución"]
-        C06 --> Hab06
-    end
-
-    style C01 fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
-    style C02 fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
-    style H01 fill:#fff8e1,stroke:#ffa000,stroke-width:2px
-    style Hab01 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    style Hab02 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    style Hab03 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    style Hab04 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    style Hab05 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    style Hab06 fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-```
-
-### Inventario y Carga Cognitiva por Competencia
-
-| ID | Nombre de la Competencia | Categoría | Prerrequisitos | Banco de Reactivos | Nivel Bloom Predominante |
-| :---: | :--- | :---: | :---: | :---: | :---: |
-| **C-01** | Método de Curvas Características para EDPs de Primer Orden | Concept | *(Raíz)* | 20 | Comprensión / Análisis |
-| **Hab-01** | Resolución de EDPs Cuasilineales vía Lagrange y Multiplicadores | Skill | `C-01` | 30 | Aplicación / Cálculo |
-| **H-01** | Teorema de Euler sobre Funciones Homogéneas | Fact | `C-01` | 20 | Conocimiento / Comprensión |
-| **Hab-02** | Problemas de Frontera y Aplicaciones Económicas (Roy/Hotelling) | Skill | `H-01`, `Hab-01` | 30 | Aplicación / Análisis |
-| **C-02** | Estructura Algebraica del Espacio de Soluciones de EDOs | Concept | *(Raíz)* | 20 | Comprensión / Análisis |
-| **Hab-03** | Soluciones Analíticas de Sistemas de EDOs ($X_h + X_p$) | Skill | `C-02` | 30 | Aplicación / Cálculo |
-| **C-03** | Clasificación Topológica de Equilibrios (Traza-Determinante) | Concept | `C-02` | 20 | Análisis Cualitativo |
-| **Hab-04** | Construcción de Diagramas de Fase e Isoclinas Nulas en 2x2 | Skill | `C-03` | 30 | Aplicación / Interpretación |
-| **C-04** | Linealización Local y Teorema de Hartman-Grobman | Concept | `C-02` | 20 | Comprensión / Análisis |
-| **C-05** | Dinámica Macroeconómica Continua y Ajuste IS-LM | Concept | `C-03`, `Hab-03` | 20 | Análisis / Evaluación |
-| **Hab-05** | Resolución y Calibración de Modelos Macroeconómicos Continuos | Skill | `C-05` | 30 | Aplicación / Modelado |
-| **C-06** | Dinámica No Lineal en Modelos Ecológicos y Ciclos de Goodwin | Concept | `C-04` | 20 | Análisis Cualitativo |
-| **Hab-06** | Análisis Cualitativo y Estabilidad en Crecimiento y Polución | Skill | `C-04`, `C-06` | 30 | Evaluación / Modelado |
-| **TOTAL** | **13 Competencias (1 Fact, 6 Concepts, 6 Skills)** | — | — | **320 Reactivos** | — |
-
----
-
-## 3. Evaluación Exhaustiva por Dimensión Normativa
-
-### Dimensión 1: Arquitectura y Granularidad (4.0 / 4.0 pts) — EXCELENTE
-
-- **Atomicidad y Micro-habilidades:** La delimitación de cada competencia es impecable. El curso separa de manera rigurosa los fundamentos formales (Conceptos) de los procedimientos computacionales y de modelización (Habilidades), manteniendo una unidad temática consistente sin dispersión enciclopédica.
-- **Modelado de Prerrequisitos:** El árbol curricular cuenta con dos puntos de entrada conceptuales legítimos (`C-01` para el análisis de EDPs de transporte y características, y `C-02` para sistemas lineales de EDOs). Todas las competencias subsiguientes declaran prerrequisitos consistentes formando un DAG estrictamente acíclico y sin callejones sin salida.
-- **Volumen y Balance de Carga Cognitiva:** Se observa una población mínima de 20 reactivos para competencias conceptuales y fácticas, y de 30 reactivos para habilidades prácticas, garantizando una suficiencia muestral robusta para el algoritmo de Mastery Learning (muy por encima del umbral de penalización dura de 3 ejercicios).
-
-### Dimensión 2: Calidad de Evaluación y Reactivos (4.9 / 5.0 pts) — EXCELENTE
-
-- **Estructura y Cobertura Psicométrica:** Los 320 reactivos implementan el formato estándar de **opción múltiple con 7 alternativas (MC7)**. Este formato reduce la probabilidad de acierto por azar al **14.28%**, exigiendo una discriminación cognitiva profunda.
-- **Integridad de Distractores y Rationale Coverage:**
-  - De los 1,920 distractores evaluados, el **100.0% cuenta con un `error_rationale` diagnóstico explícito**.
-  - No se detectaron enunciados de distractor con delaciones visibles directas (*telltale cues* = 0). Las opciones visibles mantienen un estilo formal y neutro, reservando la explicación pedagógica del error para la retroalimentación posterior.
-  - Los distractores capturan con fidelidad los conceptos erróneos arquetípicos de la literatura matemático-económica:
-    - *Pendiente característica invertida* ($\frac{dy}{dx} = \frac{a}{b}$ en vez de $\frac{b}{a}$).
-    - *Pérdida del término secular* $t e^{\lambda t} v_1$ en matrices defectivas.
-    - *Omisión del signo negativo en el lema de Hotelling* ($L = \Pi_w$ en lugar de $L = -\Pi_w$).
-    - *Inversión de las isoclinas nulas* (cruces horizontales vs. verticales).
-- **Deducción Menor (-0.1 pt):** Falta de diversidad en la tipología de preguntas (100% MC7). Si bien para evaluación cuantitativa avanzada MC7 ofrece máxima robustez, la inclusión de reactivos de selección múltiple (MS) o respuesta numérica cerrada (FIB) enriquecería la ergonomía del estudiante.
-
-### Dimensión 3: Andamiaje y Feedback Progresivo (4.6 / 5.0 pts) — EXCELENTE
-
-- **Pistas Escalonadas Socráticas:**
-  - El 100% de las preguntas dispone de exactamente **3 pistas estructuradas progresivamente**:
-    - *Pista 1 (Conceptual):* Evoca el principio general (ej. regla de la cadena multivariada, Teorema de Euler, condición de Routh-Hurwitz).
-    - *Pista 2 (Procedimental):* Guía la formulación metodológica intermedia (ej. planteo del sistema subsidiario de Lagrange, cálculo de la traza y determinante, sustitución de condiciones de frontera).
-    - *Pista 3 (Operativa / Discriminación):* Instruye sobre la manipulación algebraica final y la verificación de coherencia de signos y condiciones de hiperbolicidad.
-- **Solución Detallada:** Cada ítem cuenta con una deducción analítica exhaustiva paso a paso que valida la respuesta correcta y contextualiza por qué las proposiciones alternas representan patologías algebraicas.
-- **Deducción Identificada (-0.4 pts):** Durante el *Semantic Verification Loop*, se detectó la persistencia de residuos literales de plantillas algebraicas:
-  - En `Hab-01` (`Q-Hab01-021`, `Q-Hab01-022`), aparece `{c}` sin reemplazar en la integración exponencial: `... \implies {c} e^U - 9 x = c_2$.`
-  - En `C-04` (`Q-C04-201`, `Q-C04-202`), aparece `{d}` en la matriz jacobiana linealizada: `\begin{pmatrix} -3 & 8 \\ {d} & -6 \end{pmatrix}` en lugar del valor numérico correspondiente al coeficiente $J_{21}$.
-
-### Dimensión 4: Alineación Instruccional (4.0 / 4.0 pts) — EXCELENTE
-
-- **Alineación con Objetivos Curriculares:** Existe una correspondencia unívoca entre la competencia declarada y los ejercicios evaluados. Cero preguntas huérfanas (`orphan_questions_count = 0`).
-- **Nivel de Bloom:** El banco de reactivos se concentra de manera balanceada en los niveles 3 (*Aplicación*) y 4 (*Análisis cualitativo y cuantitativo*), requiriendo deducción formal, resolución de problemas de Cauchy y análisis de estabilidad de fase, evitando la memorización mecánica de definiciones.
-
-### Dimensión 5: Accesibilidad y Ergonomía Técnica / KaTeX (1.5 / 2.0 pts) — ACEPTABLE
-
-- **Evaluación General KaTeX:** La notación matemática es formal y rigurosa en matrices, derivadas parciales, notación de dot ($\dot{x}, \dot{y}$) y delimitación de ecuaciones. No hay delimitadores triples (`$$$`) ni desbalances globales de llaves.
-- **Deducción por Desfase de Delimitadores (-0.5 pts):**
-  - **Incidencia Crítica Detectada:** En la competencia `Hab-01` (ej. `Q-Hab01-021` y `Q-Hab01-022`), en el campo `detailed_solution`, se omitió el signo `$` de apertura al iniciar la derivación de las razones de Lagrange:
-    > *Fragmento actual:* `De las dos primeras razones, 9 \frac{dx}{x} - 9 \frac{dy}{y} = 0 \implies \frac{x^{9}}{y^{9}} = c_1$. De la primera y tercera razón, cancelando $x$, 1 e^U dU - 9 dx = 0 \implies {c} e^U - 9 x = c_2$.`
-  - *Impacto Visual:* La expresión `9 \frac{dx}{x}...` se muestra como texto plano no compilado. Al cerrarse con `c_1$.`, el `$` actúa erróneamente como delimitador de apertura, provocando que la frase en español subsiguiente (`. De la primera y tercera razón, cancelando `) sea procesada como modo matemático, produciendo distorsión tipográfica.
-
----
-
-## 4. Telemetría de Linters Deterministas y Deducciones Duras
-
-| Parámetro de Telemetría | Valor Registrado | Umbral Tolerable | Estado |
-| :--- | :---: | :---: | :---: |
-| **Total Preguntas Evaluadas** | 320 | $\ge 26$ | Cumple |
-| **Competencias con Banco $<3$ ejercicios** | 0 | 0 | Sin penalización |
-| **Preguntas Huérfanas** | 0 | 0 | Sin penalización |
-| **Reactivos con 0 Pistas (`hints = 0`)** | 0 | 0 | Sin penalización |
-| **Reactivos con Pistas Insuficientes ($<3$)** | 0 | 0 | Cumple |
-| **Distractores sin `error_rationale`** | 0 / 1,920 | 0 | Cobertura 100.0% |
-| **Distractores con Confesiones Delatoras** | 0 | 0 | Limpio |
-| **Placeholders f-string sin compilar (`{var:...}`)** | 0 | 0 | Limpio |
-| **KaTeX con Llaves Abiertas Sin Cerrar** | 0 | 0 | Limpio |
-| **KaTeX con Delimitador Triple `$$$`** | 0 | 0 | Limpio |
-| **Delimitadores `$` con Conteo Impar** | 0 | 0 | Paridad Global Cumplida |
-| **Residuos de Variable de Plantilla (`_val`, `_param`)** | 0 | 0 | Limpio |
-| **Sustituciones Ciegas en Operadores (`\dot{2}`)** | 0 | 0 | Limpio |
-| **Deducción Dura Acumulada** | **0.0 pts** | 0.0 pts | **Sin Penalización Dura** |
-
----
-
-## 5. Loop de Auto-Mejora: Nuevas Reglas Descubiertas (`discovered_lint_rules`)
-
-Durante la auditoría semántica adaptativa, el auditor identificó dos patrones de error no detectados por los linters estáticos existentes debido a limitaciones de diseño en las expresiones regulares actuales. Se formalizan las siguientes reglas para alimentar el motor `scripts/standardized_audit_engine.py`:
-
-### Regla 1: `katex_delimiter_parity_shift_linter`
-- **Dimensión:** D5 (Ergonomía KaTeX)
-- **Severidad:** Crítica
-- **Problema Detectado:** El linter previo `KaTeXSyntaxLinter` solo comprobaba `dollar_count % 2 != 0`. Cuando se omite un `$` de apertura al inicio de una fórmula, el signo `$` de cierre se convierte en uno de apertura y el signo `$` de la siguiente fórmula actúa como cierre. Como el número total de dólares sigue siendo par, el linter determinista no reportaba ninguna falla.
-- **Implementación Recomendada:**
-  ```python
-  # Comprobar comandos LaTeX fuera de delimitadores matemáticos
-  NON_MATH_CHUNKS = re.split(r"\${1,2}[^$]+\${1,2}", text)
-  LATEX_COMMAND_IN_TEXT = re.compile(r"\\(frac|implies|partial|sqrt|sum|int|begin|end)\b")
-  for chunk in NON_MATH_CHUNKS:
-      if LATEX_COMMAND_IN_TEXT.search(chunk):
-          report_issue("Comando LaTeX expuesto en texto plano fuera de bloque matemático")
-  ```
-
-### Regla 2: `unsubstituted_template_token_linter`
-- **Dimensión:** D2 / D3 (Calidad de Evaluación y Andamiaje)
-- **Severidad:** Advertencia (Warning)
-- **Problema Detectado:** El linter `TemplateVariableResidueLinter` utilizaba el patrón `\b[a-zA-Z0-9_]+_(?:val|param|var|arg)\b`. Sin embargo, en pipelines paramétricos es común usar tokens simples de una sola letra entre llaves como `{c}`, `{d}` o `{a}`. Al quedar sin sustituir en matrices o expresiones, no eran detectados.
-- **Implementación Recomendada:**
-  ```python
-  SINGLE_LETTER_TEMPLATE_TOKEN = re.compile(r"(?<!\\)\{([a-zA-Z])\}(?!\s*[\^_{])")
-  # Flaggea tokens como '{c}' o '{d}' dentro de soluciones detalladas o matrices
-  ```
-
----
-
-## 6. Plan de Remediación Prioritario
-
-Para elevar la calificación final de **19.0** a **20.0 (Calificación Perfecta)**, se sugiere ejecutar las siguientes acciones de optimización:
-
-1. **Corrección Tipográfica en `detailed_solution` de `Hab-01` (Inmediato):**
-   - Insertar el delimitador `$` faltante en las dos ecuaciones subsidiarias:
-     - Cambiar: `De las dos primeras razones, 9 \frac{dx}{x}...`  
-       Por: `De las dos primeras razones, $9 \frac{dx}{x}...$`
-     - Cambiar: `...cancelando $x$, 1 e^U dU - 9 dx = 0...`  
-       Por: `...cancelando $x$, $1 e^U dU - 9 dx = 0...$`
-2. **Reemplazo de Residuos de Plantilla `{c}` y `{d}` (Inmediato):**
-   - Sustituir `{c}` por el coeficiente numérico de la EDP en `Hab-01`.
-   - Sustituir `{d}` por la derivada parcial jacobiana $J_{21}$ evaluada en el equilibrio en `C-04`.
-3. **Diversificación de Tipologías de Reactivos (Medio Plazo):**
-   - En una futura actualización del curso, convertir un 15% de los reactivos MC7 a formato `fill_in_the_blank` (para valores puntuales de autovalores o estados estacionarios $X^*$) y `multiple_select` (para propiedades cualitativas simultáneas en diagramas de fase).
-
----
-
-## 7. Conclusión y Certificación
-
-El curso **`practica_parcial_saul_standard_coarse`** ha demostrado un **nivel excepcional de calidad académica y psicométrica**. Con una nota final de **19.0 / 20.0**, queda oficialmente **CERTIFICADO** en el rango **EXCELENTE**, validado para su despliegue activo en la plataforma Top's Academy.
+**Veredicto Final:** **APROBADO CON OBSERVACIONES (TIER ACEPTABLE)**  
+El curso `practica_parcial_saul_standard_coarse` cuenta con una sólida fundamentación matemática y un andamiaje socrático universalmente presente, pero presenta vulnerabilidades técnicas en KaTeX y una severa mecanización psicométrica por monocultura de arquetipos. Su estatus de `ELIMINADO` en la plataforma interactiva concuerda con la necesidad de consolidar estas mejoras antes de cualquier reincorporación a producción.

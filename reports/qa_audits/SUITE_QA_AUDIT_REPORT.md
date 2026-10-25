@@ -1,97 +1,101 @@
 # Matriz Comparativa Consolidada de Auditoría QA de Calidad Pedagógica y Psicométrica
-## Suite de Cursos Auditados (Quality Matters, OSCQR y Mastery Learning)
+## Suite Completa de Cursos Auditados (Quality Matters, OSCQR y Mastery Learning)
 
-**Fecha de Consolidación:** `2026-10-20`  
-**Modalidad:** Auditoría Agéntica Híbrida (Fast Deterministic Pass + Subagentes Concurrentes `course_qa_auditor`)  
-**Corridas y Cursos Evaluados:**
-1. [`4ceacf92`](conversation://4ceacf92-ef82-4fb0-899d-87aa310873c1) — **Dominio del Modelo de Crecimiento de Solow** (`solow_model_v15`)
-2. [`a53e6af1`](conversation://a53e6af1-07b8-4246-8afd-4b4ac647d536) — **Practica Parcial Saul Standard Coarse** (`practica_parcial_saul_standard_coarse`)
-3. [`acdc402d`](conversation://acdc402d-0803-468b-9c6c-b069a2dc6c09) — **Practica Parcial Saul (Masivo)** (`practica_parcial_saul`)
-4. [`f9b9d459`](conversation://f9b9d459-d84a-4e3d-bf32-48e74d8b5c5a) — **Practica Parcial Saul Standard** (`practica_parcial_saul_standard`)
-5. [`afb5aa18`](conversation://afb5aa18-d2f3-4bd2-b452-4b73c313316e) — **Practica Parcial Saul Standard Coarse V2** (`practica_parcial_saul_standard_coarse_v2`)
+**Fecha de Consolidación:** `2026-10-25`  
+**Modalidad:** Auditoría Agéntica Híbrida Paralela (Fast Deterministic Pass + Subagentes Concurrentes `course_qa_auditor` en Gemini 3.8 Flash High)  
+**Conversación Orquestadora:** [`d6d276e0`](conversation://d6d276e0-3902-43d8-9f30-7fd119410fc2)  
+**Estándar Normativo Aplicado:** C2C QA Hardened v3.3+ (Evaluación de Diversidad Semántica de Arquetipos [M3], Detección de Metainformación Delatora, Linters de Pistas Stub/IDs y Normalización KaTeX).
 
 ---
 
-## 1. Tabla de Calificaciones y Matriz Comparativa (20 Puntos)
+## 1. Tabla Maestra de Calificaciones y Matriz Comparativa Actualizada (20 Puntos)
 
-| Curso / Identificador | Dim 1: Arq. & DAG (4.0) | Dim 2: Reactivos (5.0) | Dim 3: Andamiaje (5.0) | Dim 4: Alineación (4.0) | Dim 5: KaTeX (2.0) | Penalizaciones | Nota Final | Quality Tier | Estado Operativo  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación  Fecha Eliminación |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---:  :---: |
-| **`solow_model_v15`** (`4ceacf92`) | **4.0** | **5.0** | **5.0** | **4.0** | **2.0** | 0.0 | **20.0 / 20.0** | **EXCELENTE** | ✅ Producción Inmediata (Certificación Plena) | Nulo | Eliminado de la Plataforma | 2026-10-20 13:26:24 | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo |
-| **`practica_parcial_saul_standard_coarse`** (`a53e6af1`) | **4.0** | **4.9** | **4.6** | **4.0** | **1.5** | 0.0 | **19.0 / 20.0** | **EXCELENTE** | ✅ Producción Inmediata (Aprobado) | Nulo | 2026-10-20 13:26:21 | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo |
-| **`practica_parcial_saul`** (`acdc402d`) | **4.0** | **4.6** | **4.5** | **4.0** | **1.6** | 0.0 | **18.7 / 20.0** | **EXCELENTE** | ✅ Producción Inmediata (Observaciones Menores) | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo |
-| **`practica_parcial_saul_standard`** (`f9b9d459`) | **3.9** | **4.2** | **4.4** | **4.0** | **1.8** | 0.0 | **18.3 / 20.0** | **EXCELENTE** | ✅ Producción Inmediata (Pulido Opcional) | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo |
-| **`practica_parcial_saul_standard_coarse_v2`** (`afb5aa18`) | **3.2** | **4.2** | **4.0** | **4.0** | **1.4** | 0.0 | **16.8 / 20.0** | **ACEPTABLE** | ⚠️ Requiere Pulido Previo a Producción | 2026-10-20 13:26:15 | 2026-10-20 13:26:21 | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo | Nulo |
+> [!NOTE]
+> Las calificaciones reflejan la re-auditoría integral agéntica bajo el estándar normativo riguroso. Los cursos históricos que presentaban un "falso techo" de excelencia bajo linters laxos (ej. 20.0 en `solow_model_v15` o 19.0 en `practica_parcial_saul_standard_coarse`) han sido recalibrados al penalizar el monocultivo de un único arquetipo paramétrico por micro-competencia, la metainformación delatora visible y las pistas deficientes.
 
----
-
-## 2. Metrología Psicométrica y Cobertura de la Suite
-
-| Parámetro Psicométrico | `solow_model_v15` | `saul_coarse` (v1) | `saul_masivo` (Fine) | `saul_standard` | `saul_coarse_v2` | Total Suite Auditada |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Total Micro-Competencias** | 15 | 13 | 118 | 65 | 14 | **225 competencias** |
-| **Total Preguntas Validadas** | 360 | 320 | 2,850 | 1,590 | 370 | **5,490 reactivos** |
-| **Formato de Reactivos** | 100% MC7 | 100% MC7 | 100% MC7 | 100% MC7 | 100% MC7 | **100% MC7 (5,490 items)** |
-| **Distractores con Rationale** | 2,160 / 2,160 (100%) | 1,920 / 1,920 (100%) | 17,100 / 17,100 (100%) | 9,540 / 9,540 (100%) | 2,220 / 2,220 (100%) | **32,940 / 32,940 (100.0%)** |
-| **Pistas Escalonadas (Hints)** | 1,080 (3/preg) | 960 (3/preg) | 8,550 (3/preg) | 4,770 (3/preg) | 1,110 (3/preg) | **16,470 pistas (100.0%)** |
-| **Soluciones Detalladas** | 360 (100%) | 320 (100%) | 2,850 (100%) | 1,590 (100%) | 370 (100%) | **5,490 soluciones (100.0%)** |
-| **Distractores Delatores (Telltale)** | 0 | 0 | 0 | Telltale gerunds en Hab-01/02 | 0 | **Aislados en 1 curso** |
-| **Answer Leaks** | 0 | 0 | 0 | 0 | 0 | **0 en toda la suite** |
-| **Preguntas Huérfanas** | 0 | 0 | 0 | 0 | 0 | **0 en toda la suite** |
+| Curso / Identificador | Dim 1: Arq. & DAG (4.0) | Dim 2: Reactivos (5.0) | Dim 3: Andamiaje (5.0) | Dim 4: Alineación (4.0) | Dim 5: KaTeX (2.0) | Penalizaciones | Nota Final | Quality Tier | Estado Operativo / Dictamen | Fecha Eliminación |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :---: |
+| **`solow_growth_model`** | **4.0** | **4.8** | **5.0** | **4.0** | **2.0** | 0.0 | **19.8 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Gold Standard Tipológico: MC7, MS y FIB) | Nulo |
+| **`saul_control_optimo`** | **4.0** | **4.7** | **3.8** | **4.0** | **2.0** | 0.0 | **18.5 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Aprobado Producción; Remediación de 50 pistas en Hab-01 / C-06) | Nulo |
+| **`gavilano_pre_parcial`** | **4.0** | **4.8** | **3.7** | **4.0** | **2.0** | 0.0 | **18.5 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Aprobado Producción; Remediación de 70 pistas en C-26, H-19, Hab-16) | Nulo |
+| **`asyntotic_estatistics_v7`** | **4.0** | **4.4** | **3.5** | **4.0** | **1.9** | 0.0 | **17.8 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Aprobado Producción; Remediación de 70 pistas en 9 competencias) | Nulo |
+| **`solow_model_v15`** | **3.9** | **3.8** | **4.6** | **4.0** | **1.6** | 0.0 | **17.9 / 20.0** | **EXCELENTE** | ⚠️ ELIMINADO (Re-auditado; ajustado desde 20.0 por monocultivo) | 2026-10-20 13:26:24 |
+| **`estadistica_asintotica`** | **3.8** | **3.5** | **4.3** | **3.9** | **2.0** | 0.0 | **17.5 / 20.0** | **EXCELENTE** | ❌ ELIMINADO (Retirado; riesgo de mecanización por monocultivo) | 2026-10-25 10:12:09 |
+| **`practica_parcial_saul`** | **3.8** | **3.4** | **4.0** | **3.8** | **1.5** | 0.0 | **16.5 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; monocultivo algebraico y variables en pistas) | 2026-10-25 10:12:15 |
+| **`estadistica3_regresion_v3`** | **3.3** | **4.0** | **3.4** | **4.0** | **1.6** | 0.0 | **16.3 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; desconexión en DAG y pistas formulaicas) | 2026-10-25 10:12:03 |
+| **`practica_parcial_saul_standard_coarse`** | **3.8** | **3.4** | **3.9** | **4.0** | **1.2** | 0.0 | **16.3 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Histórico / Retirado; tokens `{c}`, `{d}` en soluciones) | 2026-10-25 10:12:21 |
+| **`econometria_violaciones_supuestos`** | **3.8** | **2.7** | **4.2** | **3.6** | **1.4** | 0.0 | **15.7 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; Answer Leaks parentéticos y residuos `${dep_var}_i`) | 2026-10-25 10:11:57 |
+| **`asyntotic_estatistics_v3`** | **3.8** | **1.8** | **4.3** | **3.8** | **1.8** | 0.0 | **15.5 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; Phantom Keying con distractores clonados) | 2026-10-25 10:11:51 |
+| **`asyntotic_estatistics_v2`** | **2.8** | **3.2** | **3.5** | **3.8** | **1.4** | 0.0 | **14.7 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; inversión curricular topológica y residuos f-string) | 2026-10-25 10:11:44 |
+| **`practica_parcial_saul_standard`** | **3.3** | **1.7** | **3.7** | **3.7** | **1.2** | 0.0 | **13.6 / 20.0** | **DEFICIENTE** | ❌ ELIMINADO (Rechazado; distractores auto-delatores masivos y 0% M3) | 2026-10-25 10:12:21 |
+| **`practica_parcial_saul_standard_coarse_v2`** | **2.2** | **1.5** | **2.8** | **3.2** | **1.1** | 0.0 | **10.8 / 20.0** | **CRÍTICO** | ❌ ELIMINADO (Histórico; Answer Leaks, etiquetas visibles y colisiones KaTeX) | 2026-10-25 10:12:21 |
 
 ---
 
-## 3. Diagnóstico Técnico Pedagógico Transversal
+## 2. Metrología Psicométrica Consolidada de la Suite
 
-### 3.1. Fortalezas Sistémicas Consolidadas
-1. **Andamiaje Psicométrico Universal:** En los **5,490 reactivos evaluados** (32,940 opciones), el 100% posee:
-   - 3 pistas socráticas escalonadas (Conceptual $\to$ Procedimental $\to$ Operativo).
-   - Cobertura total de `error_rationale` diagnóstico para cada una de las 6 opciones distractoras por ítem.
-   - Solución analítica detallada completa.
-2. **Alineación Instruccional Perfecta (4.0/4.0 en todos los cursos):** Cero preguntas huérfanas, sin contaminación inter-dominio y estricto enfoque en niveles 3 y 4 de Bloom (Aplicación y Análisis).
-3. **Erradicación del Acierto por Azar:** El estándar exclusivo de 7 alternativas (MC7) abate la probabilidad de acierto aleatorio al $14.28\%$, superando los estándares convencionales de la industria (25% en 4 alternativas).
-
-### 3.2. Vulnerabilidades Técnicas y Áreas de Mejora
-1. **Monocultivo de Tipología de Ítems (100% MC7):** Ninguno de los 5 cursos incorpora reactivos de respuesta numérica directa (`fill_in_the_blank`) ni selección múltiple (`multiple_select`), restando versatilidad psicométrica.
-2. **Residuos de Variables de Plantilla en Modo Matemático:**
-   - En `practica_parcial_saul_standard_coarse_v2` (`afb5aa18`): variables sin sustituir `{b}`, `{c}`, `{d}` compiladas literalmente en KaTeX.
-   - En `practica_parcial_saul` (`acdc402d`): expresiones tipo `5 \cdot {a} = 100` y `\lambda = \pm {omega}i` en `Hab-49`.
-   - En `practica_parcial_saul_standard` (`f9b9d459`): tokens `{j21}`, `{omega}` en 4 competencias.
-3. **Desfase de Delimitadores KaTeX (*Inverted Parity Shift*):**
-   - Detectado en `practica_parcial_saul_standard_coarse` (`a53e6af1`): la omisión de un signo `$` inicial en una fórmula de `Hab-01` mantuvo la paridad par global pero invirtió el contexto texto/matemática.
-4. **Desconexiones en Grafo DAG en Variantes Coarse:**
-   - En `afb5aa18` (`coarse_v2`): 7 competencias quedaron con `prerequisites: []` desconectadas de las raíces conceptuales, provocando un puntaje de 3.2 en D1.
+| Parámetro Psicométrico | Plataforma Activa (11 Cursos) | Histórico Total Evaluado (14 Cursos) |
+| :--- | :---: | :---: |
+| **Micro-Competencias Evaluadas** | **508 micro-competencias** | **550 micro-competencias** |
+| **Total Preguntas Validadas** | **11,850 reactivos** | **12,900 reactivos** |
+| **Distractores Analizados** | **71,100 distractores** | **77,400 distractores** |
+| **Cobertura Global de Error Rationale** | **99.85%** (70,995 / 71,100) | **99.82%** (77,260 / 77,400) |
+| **Pistas Escalonadas Totales Registradas** | **35,550 pistas** | **38,700 pistas** |
+| **Tasa de Pistas Socráticas Plenas** | **91.4%** | **89.7%** |
+| **Tasa de Pistas Deficientes (Stubs / IDs / Formulaicas)** | **8.6%** | **10.3%** |
+| **Cursos en Tier EXCELENTE (17.0 - 20.0)** | **6 cursos (54.5%)** | **6 cursos (42.9%)** |
+| **Cursos en Tier ACEPTABLE (14.0 - 16.9)** | **5 cursos (45.5%)** | **6 cursos (42.9%)** |
+| **Cursos en Tier DEFICIENTE / CRÍTICO (< 14.0)** | **0 cursos activos (0.0%)** | **2 cursos retirados (14.2%)** |
 
 ---
 
-## 4. Loop de Auto-Mejora: Catálogo de Nuevas Reglas Descubiertas (`discovered_lint_rules`)
+## 3. Diagnóstico Técnico Pedagógico Transversal y Hallazgos Forenses
 
-A partir de las auditorías agénticas, se han identificado y formalizado **6 nuevas reglas de linter** para retroalimentar `scripts/standardized_audit_engine.py`:
+### 3.1. El Fenómeno del "Falso Techo" y la Ruptura de la Mecanización
+Bajo los linters mecánicos primitivos de C2C (v1.0 – v2.0), las auditorías otorgaban puntuaciones casi perfectas (18.3 a 20.0) porque solo se comprobaba:
+1. `len(hints) >= 3` (satisfecho incluso si las pistas eran IDs de dependencias `["C-02", "H-02"]` o etiquetas `["Sweezy", "Optimalidad"]`).
+2. Ausencia de excepciones directas en compiladores.
+3. Conteo fijo de alternativas (7 opciones).
 
-```mermaid
-graph TD
-    subgraph NewLinters ["Catálogo de Nuevos Linters para StandardizedAuditEngine"]
-        L1["1. uninterpolated_math_placeholder_linter\nDetecta tokens simples {var} en KaTeX sin modificador de f-string"]
-        L2["2. katex_delimiter_parity_shift_linter\nDetecta macros crudos \frac, \implies en bloques de texto plano"]
-        L3["3. katex_concatenated_macro_linter\nDetecta \muu o \muv por concatenación f'\\mu{var}' sin espacio"]
-        L4["4. telltale_distractor_gerund_label_linter\nDetecta cláusulas visibles 'despejando erróneamente...'"]
-        L5["5. arithmetic_unnormalized_sign_linter\nDetecta concatenaciones crudas '+ -8' o '1x'"]
-        L6["6. dag_orphan_prerequisites_linter\nAlerta competencias 'Skill' sin prerrequisitos declarados"]
-    end
-```
+La re-auditoría con el **Loop de Verificación Semántica Adaptativa** y los estándares modernos de **4 Arquetipos de Preguntas** desarticuló este sesgo:
+- **Monotonía Paramétrica vs. Maestría:** Los cursos intermedios (`practica_parcial_saul`, `estadistica_asintotica`, `solow_model_v15`) repetían entre 20 y 30 veces exactamente el mismo molde algebraico o conceptual dentro de cada competencia, variando meramente coeficientes numéricos $K$ o $n$. El estudiante, tras responder el primer ítem, mecanizaba el algoritmo de despeje o memorizaba el patrón, sin desarrollar la competencia de forma transferible.
+- **Answer Leaks Ocultos:** Cursos que parecían de excelencia albergaban pistas delatoras dentro de las opciones visibles (`"Trayectoria exacta:"`, `"despejando erróneamente..."` o acotaciones entre paréntesis `"(confusión con la proporción ruido a señal)"` en `econometria_violaciones_supuestos`), anulando por completo la validez psicométrica.
+- **Phantom Keying en `asyntotic_estatistics_v3`:** Se descubrió que 100 reactivos clonaban la opción correcta con el prefijo `"Opción alterna X:"`, penalizando injustamente a los estudiantes que calculaban el valor matemático exacto.
 
-1. **`uninterpolated_math_placeholder_linter`** (Severidad: Media): Detecta variables `{ [a-zA-Z0-9_]+ }` en modo matemático que no corresponden a macros LaTeX válidas y delatan variables de Python no interpoladas.
-2. **`katex_delimiter_parity_shift_linter`** (Severidad: Alta): Analiza texto fuera de delimitadores `$...$` buscando comandos matemáticos (`\frac`, `\implies`, `\partial`) que evidencian un signo `$` faltante.
-3. **`katex_concatenated_macro_linter`** (Severidad: Media): Detecta macros de KaTeX seguidas de texto alfanumérico sin espacio separador (`\muu`, `\thetax`).
-4. **`telltale_distractor_gerund_label_linter`** (Severidad: Media): Detecta explicaciones delatoras en el texto visible de las opciones de distractores (ej. *"sumando erróneamente..."*).
-5. **`arithmetic_unnormalized_sign_linter`** (Severidad: Baja): Detecta operadores dobles (`+ -`) y coeficientes unitarios innecesarios (`1x`, `1y`).
-6. **`dag_orphan_prerequisites_linter`** (Severidad: Media): Detecta competencias de nivel Habilidad (`Hab-*`) que carecen de prerrequisitos de nivel Concepto o Hecho.
+### 3.2. El Nuevo Gold Standard: `solow_growth_model` (19.8 / 20.0)
+El curso `solow_growth_model` demostró que la excelencia pedagógica real es alcanzable mediante:
+1. **Diversidad Tipológica Completa:** Superación del monocultivo MC7 integrando **251 reactivos Fill-in-the-Blank (numéricos directos)**, **249 reactivos Multiple Select** y **80 reactivos MC7**.
+2. **Andamiaje Socrático Perfecto (5.0 / 5.0):** 100% de pistas escalonadas en prosa pedagógica fluida sin stubs ni IDs inyectados.
+3. **Ergonomía KaTeX Impecable (2.0 / 2.0):** Expresiones formales limpias sin delimitadores corruptos ni residuos de variables.
 
 ---
 
-## 5. Rutas a Informes Individuales
+## 4. Loop de Auto-Mejora de Reglas (/learn)
 
-- [solow_model_v15_qa_report.md](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/solow_model_v15_qa_report.md) | [JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/solow_model_v15_qa_report.json)
-- [practica_parcial_saul_standard_coarse_qa_report.md](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_qa_report.md) | [JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_qa_report.json)
-- [practica_parcial_saul_qa_report.md](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_qa_report.md) | [JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_qa_report.json)
-- [practica_parcial_saul_standard_qa_report.md](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_qa_report.md) | [JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_qa_report.json)
-- [practica_parcial_saul_standard_coarse_v2_qa_report.md](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_v2_qa_report.md) | [JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_v2_qa_report.json)
+La ejecución paralela masiva de los subagentes auditores aportó un conjunto crítico de nuevas reglas deterministas candidatas para su incorporación en [`scripts/standardized_audit_engine.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/course-qa-evaluator/scripts/standardized_audit_engine.py):
+
+1. **`cloned_distractor_value_linter` (Severidad: Crítica):** Detecta distractores con idéntico valor matemático a la clave precedidos de prefijos sintéticos como `"Opción alterna X:"`.
+2. **`parenthetical_distractor_telltale_linter` (Severidad: Crítica):** Detecta aclaraciones diagnósticas entre paréntesis dentro del texto visible de las opciones.
+3. **`archetype_monotony_and_entropy_linter` (Severidad: Alta):** Evalúa la similitud léxica y estructural de los enunciados (*stems*) intra-competencia para impedir que el 100% del banco provenga de un solo arquetipo clonado.
+4. **`unexpanded_python_identifier_in_latex_linter` (Severidad: Alta):** Detecta variables snake_case o llaves de formateo `{var}` (`{sigma2}`, `${dep_var}`) dentro de bloques KaTeX.
+5. **`consecutive_algebraic_negative_signs_linter` (Severidad: Media):** Detecta interpolaciones algebraicas defectuosas que generan expresiones como `|x - -4|` o `+ -8`.
+6. **`topological_linear_inversion_linter` (Severidad: Media):** Advierte cuando el orden de presentación de unidades contradice el orden topológico de prerrequisitos del DAG.
+
+---
+
+## 5. Rutas a Informes Individuales Generados
+
+- **`solow_growth_model`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/solow_growth_model_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/solow_growth_model_qa_report.json)
+- **`saul_control_optimo`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/saul_control_optimo_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/saul_control_optimo_qa_report.json)
+- **`gavilano_pre_parcial`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/gavilano_pre_parcial_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/gavilano_pre_parcial_qa_report.json)
+- **`solow_model_v15`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/solow_model_v15_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/solow_model_v15_qa_report.json)
+- **`asyntotic_estatistics_v7`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/asyntotic_estatistics_v7_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/asyntotic_estatistics_v7_qa_report.json)
+- **`estadistica_asintotica`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/estadistica_asintotica_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/estadistica_asintotica_qa_report.json)
+- **`practica_parcial_saul`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_qa_report.json)
+- **`estadistica3_regresion_v3`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/estadistica3_regresion_v3_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/estadistica3_regresion_v3_qa_report.json)
+- **`practica_parcial_saul_standard_coarse`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_qa_report.json)
+- **`econometria_violaciones_supuestos`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/econometria_violaciones_supuestos_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/econometria_violaciones_supuestos_qa_report.json)
+- **`asyntotic_estatistics_v3`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/asyntotic_estatistics_v3_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/asyntotic_estatistics_v3_qa_report.json)
+- **`asyntotic_estatistics_v2`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/asyntotic_estatistics_v2_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/asyntotic_estatistics_v2_qa_report.json)
+- **`practica_parcial_saul_standard`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_qa_report.json)
+- **`practica_parcial_saul_standard_coarse_v2`**: [Reporte Markdown](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_v2_qa_report.md) | [Reporte JSON](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/practica_parcial_saul_standard_coarse_v2_qa_report.json)

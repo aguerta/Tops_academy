@@ -1,0 +1,112 @@
+{
+  "course_metadata": {
+    "course_id": "asyntotic_estatistics_v3",
+    "unit_title": "Asyntotic Estatistics V3 (Inferencia Asintótica y Teoría de Muestras Grandes)",
+    "detected_objective": "Dominio y aplicación analítica integral de la teoría asintótica econométrica y de muestras grandes: condiciones de identificación asintótica y comportamiento de momentos muestrales; consistencia de MCO y convergencia en media cuadrática; condiciones de regularidad de Grenander (G1, G2, G3); distribución asintótica y normalidad límite de MCO bajo el Teorema 5.1 de Greene; consistencia del estimador residual s2 y matriz de varianza asintótica empírica; método Delta univariado y multivariado para transformaciones continuas no lineales; eficiencia asintótica y comparación matricial de estimadores consistentes; regresores estocásticos, dependencia temporal, condiciones de innovación martingala (AD3) y ergodicidad; inconsistencia por endogeneidad y condiciones de identificación por variables instrumentales (rango y ortogonalidad); estimación IV justo identificada y estructura sándwich; estimación MC2E (2SLS) en modelos sobreidentificados con cálculo riguroso de varianza estructural original; contraste de especificación de Hausman y regresión auxiliar de Wu; sesgo de atenuación por error de medición clásico y propagación en regresión múltiple; variables proxy vs instrumentos en presencia de variables latentes; definición formal de convergencia en probabilidad y cotas de Chebyshev; leyes débiles de grandes números de Khinchine y Chebyshev bajo heterogeneidad; diferenciación entre convergencia casi segura y en probabilidad; implicaciones entre modos de convergencia estocástica (Lyapunov/Jensen); teorema de Slutsky y álgebra de límites; definición rigurosa de convergencia en distribución; teoremas de mapeo continuo y dispositivo de Cramér-Wold; transformación estabilizadora raíz-n en el TCL; teoremas del límite central de Lindeberg-Lévy y Lindeberg-Feller; distinción metodológica entre distribución límite y distribución asintótica; eficiencia de estimadores CAN; y caracterización formal de órdenes de magnitud estocástica O(n^delta) y o(n^delta).",
+    "total_competencies": 30,
+    "total_questions": 690,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 690
+    },
+    "platform_status": "ELIMINADO",
+    "evaluator": "Course QA Auditor — Top's Academy",
+    "evaluation_date": "2026-10-25",
+    "deleted_at": "2026-10-25 10:11:51"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 3.8,
+      "max": 4.0,
+      "feedback": "Sólida arquitectura curricular modular compuesta por 30 micro-competencias atómicas con clara delimitación técnica. Presenta un balance taxonómico funcional: 6 Hechos axiomáticos (20.0%), 15 Conceptos estructurales (50.0%) y 9 Habilidades analítico-operativas (30.0%). El Grafo Acíclico Dirigido (DAG) curricular está bien fundamentado con exactamente 2 nodos raíz axiomáticos legítimos (H-01: Identificación asintótica y H-04: Definición de convergencia en probabilidad) y 28 competencias con prerrequisitos explícitos que guían el aprendizaje secuencial. La densidad muestral es amplia y homogénea (20 reactivos por Hecho/Concepto y 30 por Habilidad, totalizando 690 reactivos), superando el umbral de Mastery Learning. Se aplica una deducción menor (-0.2 pts) debido a la ausencia de interconexiones cruzadas directas entre el subgrafo de procesos temporales/ergodicidad (C-04) y la inferencia asintótica de ecuaciones simultáneas/IV."
+    },
+    "assessment_quality": {
+      "score": 1.8,
+      "max": 5.0,
+      "feedback": "Dimensión críticamente comprometida por defectos psicométricos severos detectados mediante el Loop de Verificación Semántica, a pesar de que la telemetría determinista reportó 100% de rationales de error y cero telltales léxicos tradicionales. En 4 competencias completas (Hab-03: MC2E, Hab-08: Método Delta Multivariado, C-14: Distribución Límite vs Asintótica, y C-15: Eficiencia CAN), que abarcan 100 reactivos (14.49% de todo el curso), se descubrió un patrón de 'Distractor Cloning & Phantom Keying': 3 de los 6 distractores por ítem son clones textuales y numéricos idénticos de la respuesta correcta, diferenciados únicamente por prefijos espurios visibles como 'Opción alterna 4:', 'Opción alterna 5:' y 'Opción alterna 6:' (ej. en Q-Hab03-221, las opciones A, B y E tienen el valor idéntico 0.013714 de la clave correcta F, pero están marcadas como incorrectas). Esto crea ambigüedad insostenible, penaliza arbitrariamente al estudiante que calcula la respuesta correcta pero selecciona una opción alterna, y delata abiertamente la generación sintética. Adicionalmente, existe una monocultura absoluta de formato (100% opción múltiple de 7 alternativas, cero reactivos de selección múltiple o fill-in-the-blank) y una mecanización de enunciados basada en cláusulas introductorias rotativas sobre una única plantilla paramétrica por competencia."
+    },
+    "scaffolding_hints": {
+      "score": 4.3,
+      "max": 5.0,
+      "feedback": "Andamiaje formativo de muy buen nivel general. El 100% de los reactivos (690/690) cuenta con exactamente 3 pistas progresivas estructuradas en progresión socrática (Pista 1: Marco Conceptual -> Pista 2: Estrategia Procedimental -> Pista 3: Cálculo Operativo paso a paso) con expresiones matemáticas en KaTeX. A diferencia de versiones anteriores, este curso no presenta pistas stub de una sola palabra ni códigos de prerrequisitos inyectados. Todas las preguntas incluyen soluciones detalladas paso a paso con citas teóricas a Greene (2003). Se deduce -0.7 pts debido a que: (1) en competencias conceptuales y de definición (ej. H-04, C-10, C-14), varias pistas conceptuales son excesivamente escuetas (una sola oración genérica de menos de 15 palabras), y (2) las soluciones detalladas omiten una advertencia formal y explícitamente rotulada sobre ideas erróneas comunes ('Misconception Warning'), delegando todo el diagnóstico de concepciones erróneas a los rationales de los distractores."
+    },
+    "instructional_alignment": {
+      "score": 3.8,
+      "max": 4.0,
+      "feedback": "Excelente congruencia semántica y alineación instruccional con la literatura canónica de econometría asintótica avanzada (Greene, Hayashi, Wooldridge). Todos los reactivos tributan de manera directa y rigurosa al dominio declarado, evaluando desde fundamentos estocásticos de convergencia hasta contrastes no lineales complejos (Hausman, Delta method, Wu, Grenander, 2SLS). Cero preguntas huérfanas (0/690) y cero contaminación inter-dominio. Anclaje sólido en niveles Bloom de Aplicación y Análisis. Se deduce -0.2 pts debido a la alta rigidez y redundancia mecánica de las preguntas dentro de cada competencia, donde 20 a 30 reactivos replican la misma estructura sintáctica alterando únicamente los valores numéricos de entrada."
+    },
+    "technical_ergonomics": {
+      "score": 1.8,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica y compilabilidad KaTeX sobresaliente. La telemetría determinista certifica: 0 llaves desbalanceadas, 0 triples dólares ($$$), 0 dobles llaves de interpolación f-string y 0 bloques LaTeX huérfanos. Las matrices, límites, estimadores sandwich y vectores de derivadas compilan sin fricción visual en la plataforma. Se deduce -0.2 pts por anomalías tipográficas menores en reactivos de Lindeberg-Lévy (ej. Q-Hab07-541 con doble signo de resta consecutivo '\\sqrt{n}(\\bar{x}_n - -7)' en lugar de '\\sqrt{n}(\\bar{x}_n - (-7))' o '\\sqrt{n}(\\bar{x}_n + 7)')."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 15.5,
+  "quality_tier": "ACEPTABLE (14.0 - 16.9 pts)",
+  "remediation_actions": [
+    "REMEDIACIÓN CRÍTICA BLOQUEANTE (100 reactivos en Hab-03, Hab-08, C-14, C-15): Eliminar de inmediato los distractores clonados que contienen los prefijos 'Opción alterna 4:', 'Opción alterna 5:' y 'Opción alterna 6:'. Reformular 6 distractores conceptualmente genuinos y mutuamente excluyentes por cada uno de estos 100 reactivos para erradicar el 'Phantom Keying' y garantizar que ninguna opción incorrecta contenga el valor matemático de la clave verdadera.",
+    "Eliminación de Prefijos Sintéticos Residuales: Auditar y purgar cualquier residuo de etiquetas internas de plantillas ('Opción alterna', 'Dummy', 'Placeholder') en todo el banco de preguntas.",
+    "Diversificación Tipológica de Reactivos: Introducir reactivos de selección múltiple (multiple_select) y de respuesta numérica directa/fill-in-the-blank en al menos un 20% del curso, rompiendo la monocultura de 7 opciones múltiples conforme a los estándares OSCQR y Quality Matters.",
+    "Desarrollo de Arquetipos Alternativos por Competencia: Diseñar 2 a 3 arquetipos de problemas distintos por micro-competencia (ej. contraste empírico vs demostración teórica vs diagnóstico de violación de supuestos) para evitar la mecanización memorística generada por plantillas paramétricas únicas.",
+    "Profundización de Pistas en Competencias Conceptuales: Expandir las pistas de nivel 1 y 2 en H-04, C-10, C-14 y C-15 para proporcionar una guía pedagógica más rica que trascienda la mera referencia abstracta a la definición del texto.",
+    "Normalización Tipográfica de KaTeX: Corregir el formato de restas con números negativos en fórmulas de medias muestrales para emplear paréntesis protectores o suma simplificada."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "cloned_distractor_value_linter",
+      "severity": "critical",
+      "description": "Detecta reactivos donde el valor numérico, cálculo o proposición central de uno o más distractores (is_correct=false) es idéntico al de la opción correcta (is_correct=true), generando ambigüedad insoluble (Phantom Keying), opciones duplicadas y penalizaciones injustas al estudiante.",
+      "regex_pattern": "normalize_math(distractor.content) == normalize_math(correct_option.content)",
+      "evidence_items": [
+        "Q-Hab03-221",
+        "Q-Hab03-222",
+        "Q-Hab08-571",
+        "Q-Hab08-572",
+        "Q-C14-601",
+        "Q-C14-602",
+        "Q-C15-621",
+        "Q-C15-622"
+      ]
+    },
+    {
+      "rule_id": "synthetic_prefix_leak_linter",
+      "severity": "high",
+      "description": "Detecta prefijos o metadatos de plantillas sintéticas en el texto visible de las opciones de respuesta (ej. 'Opción alterna 4:', 'Alternativa dummy:', 'Placeholder option'), delatando el mecanismo de generación automática y degradando la calidad psicométrica.",
+      "regex_pattern": "^(?:Opción\\s+alterna|Alternativa\\s+sintética|Dummy\\s+option)\\s*\\d*\\s*:\\s*",
+      "evidence_items": [
+        "Q-Hab03-221",
+        "Q-Hab03-222",
+        "Q-Hab08-571",
+        "Q-Hab08-572",
+        "Q-C14-601",
+        "Q-C14-602",
+        "Q-C15-621",
+        "Q-C15-622"
+      ]
+    },
+    {
+      "rule_id": "distractor_content_collusion_linter",
+      "severity": "high",
+      "description": "Detecta duplicación de contenido entre múltiples distractores dentro del mismo ítem tras remover prefijos triviales, señalando incapacidad del generador para producir distractores conceptuales plausibles independientes.",
+      "regex_pattern": "len(set(clean_text(opt.content) for opt in options)) < len(options)",
+      "evidence_items": [
+        "Q-Hab03-221",
+        "Q-Hab08-571",
+        "Q-C14-601",
+        "Q-C15-621"
+      ]
+    },
+    {
+      "rule_id": "consecutive_minus_signs_linter",
+      "severity": "low",
+      "description": "Detecta signos de resta negativos consecutivos sin paréntesis protectores en código LaTeX/KaTeX (ej. 'x - -7'), provocando imperfecciones tipográficas.",
+      "regex_pattern": "-\\s*-\\d+",
+      "evidence_items": [
+        "Q-Hab07-541"
+      ]
+    }
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-25 10:11:51",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}

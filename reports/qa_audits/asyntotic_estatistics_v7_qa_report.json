@@ -1,0 +1,90 @@
+{
+  "course_metadata": {
+    "course_id": "asyntotic_estatistics_v7",
+    "unit_title": "Asyntotic Estatistics V7 (Teoría Asintótica y Econometría de Muestras Grandes)",
+    "detected_objective": "Dominio y aplicación analítica integral de la teoría asintótica econométrica y de muestras grandes: convergencia en probabilidad, convergencia casi segura, convergencia en media r-ésima y en distribución; consistencia y normalidad asintótica del estimador MCO bajo condiciones de Grenander y Lindeberg-Feller; consistencia de la varianza residual y covarianza asintótica; método Delta univariado y multivariado para transformaciones no lineales de parámetros; endogeneidad, identificación y estimación por Variables Instrumentales simples y MC2E con cálculo riguroso de varianzas estructurales; principio de la prueba de Hausman y regresión aumentada de Wu; sesgo de atenuación y contaminación multivariante por error de medición; leyes de grandes números (Khinchine, Chebychev, Kolmogorov); teoremas del límite central (Lindeberg-Lévy, Lindeberg-Feller, Liapounov); teorema de Slutsky y álgebra de límites matriciales; y órdenes de magnitud estocástica O(n^delta) y o(n^delta).",
+    "total_competencies": 32,
+    "total_questions": 710,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 710
+    },
+    "platform_status": "ACTIVO",
+    "evaluator": "Course QA Auditor — Top's Academy",
+    "evaluation_date": "2026-10-25"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Excelente arquitectura curricular modular y de alta atomicidad compuesta por 32 micro-competencias rigurosamente delimitadas. Distribución taxonómica perfectamente balanceada: 7 Hechos axiomáticos (21.88%), 18 Conceptos estructurales (56.25%) y 7 Habilidades analítico-computacionales (21.88%). El Grafo Acíclico Dirigido (DAG) curricular presenta una modelación 100% formal, coherente y libre de ciclos, con exactamente 2 nodos raíz axiomáticos fundacionales (H-01: Convergencia de momentos de regresores para el subgrafo econométrico; H-03: Definición de convergencia en probabilidad y cota de Chebychev para el subgrafo de probabilidad límite) y 30 competencias con dependencias explícitas. La densidad poblacional es sobresaliente y uniforme (20 reactivos por Hecho/Concepto y 30 por Habilidad, totalizando 710 reactivos), superando holgadamente los estándares de Mastery Learning."
+    },
+    "assessment_quality": {
+      "score": 4.4,
+      "max": 5.0,
+      "feedback": "Calidad psicométrica sobresaliente en el diseño de reactivos antiazar (100% en formato de opción múltiple de 7 alternativas A-G, limitando el acierto por conjetura aleatoria a solo 14.28%). Se evaluaron 4,260 distractores con una cobertura del 100.0% de rationales diagnósticos específicos (error_rationale), reflejando conceptos erróneos genuinos y profundos de la econometría teórica (ej. confusión entre consistencia e insesgadez finita, violación de continuidad en Slutsky, omisión de la escala raíz de n, uso de regresores proyectados en vez de estructurales al calcular la varianza de MC2E, y omisión de covarianzas cruzadas en el método Delta). Cero distractores delatores (telltale = 0) y cero fugas de respuestas. Se aplica una deducción menor (-0.6 pts) debido a: (1) ausencia total de diversidad de tipos de reactivos (100% opción múltiple, sin presencia de reactivos multiple_select ni fill-in-the-blank), y (2) presencia sistemática de cláusulas sintéticas de relleno añadidas a los distractores (ej. ', en la formulación matricial considerada', ', para la muestra de datos observada') para inducir variabilidad léxica."
+    },
+    "scaffolding_hints": {
+      "score": 3.5,
+      "max": 5.0,
+      "feedback": "Andamiaje formativo con desempeño heterogéneo detectado mediante el Loop de Verificación Semántica. En 23 de las 32 competencias (71.9%), el andamiaje socrático es ejemplar: 3 pistas progresivas escalonadas (Conceptual -> Procedimental -> Operativa) que guían el razonamiento sin regalar la clave, complementadas por soluciones detalladas paso a paso con advertencias explícitas de ideas erróneas. No obstante, se penaliza con -1.5 pts debido a que en 9 competencias (28.1%, correspondientes a H-01, C-01, Hab-01, C-03, C-04, C-09, C-10, H-05 y C-17), el arreglo de pistas no contiene oraciones socráticas escalonadas, sino meras etiquetas temáticas de una sola palabra (ej. ['Asintotica', 'Momentos', 'Regresores'], ['Consistencia', 'Mco', 'Asintotica'], ['Errors_in_variables', 'Attenuation_bias', 'Measurement_error']) o directamente códigos de prerrequisitos (ej. ['H-01', 'C-01', 'C-02'] en Q-Hab01-081), los cuales pasaron desapercibidos ante el linter determinista tradicional que solo verifica la longitud del arreglo (len >= 3)."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación instruccional impecable y congruencia semántica absoluta con los cánones de la econometría asintótica avanzada (Greene, Hayashi, Wooldridge). Todos los objetivos declarados en la descripción curricular están cubiertos exhaustivamente por el corpus de reactivos: desde los fundamentos de la teoría de la probabilidad asintótica (Khinchine, Chebychev, Kolmogorov, Lindeberg-Lévy, Lindeberg-Feller) hasta las aplicaciones econométricas complejas (MC2E, varianzas sándwich, contrastes de Hausman, regresiones aumentadas de Wu y error de medición con propagación multivariante). El banco presenta un fuerte anclaje en niveles cognitivos de Bloom de Aplicación y Análisis. Cero preguntas huérfanas y cero contaminación interdominio."
+    },
+    "technical_ergonomics": {
+      "score": 1.9,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica y compilabilidad KaTeX de excelente nivel. La telemetría determinista certifica: 0 llaves desbalanceadas, 0 triples delimitadores ($$$), 0 dobles llaves y 0 delimitadores rotos o texto LaTeX huérfano. Todas las matrices, derivadas, límites y proyecciones ortogonales compilan fluidamente en el renderizador. Se aplica una deducción cosmética leve (-0.1 pt) debido a la detección de duplicación contigua de cláusulas de plantilla generadas por perturbación sintética en distractores aislados (ej. ', en el marco de la especificación, en el marco de la especificación.' en Q-Hab07-662 opción C)."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 17.8,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "remediation_actions": [
+    "Aprobación oficial para despliegue en plataforma interactiva Top's Academy bajo la certificación de Calidad Excelente (17.8 / 20.0).",
+    "Remediación Prioritaria de Andamiaje en Shards con Pistas Stub/Keywords: Reemplazar las pistas de reactivos en las 9 competencias afectadas (H-01, C-01, Hab-01, C-03, C-04, C-09, C-10, H-05 y C-17) por pistas socráticas genuinamente escalonadas en 3 fases: Pista 1 (Fundamento Conceptual) -> Pista 2 (Estrategia Analítica/Procedimental) -> Pista 3 (Guía Operativa de Cálculo paso a paso), eliminando las palabras clave aisladas y los IDs de prerrequisitos inyectados.",
+    "Corrección de Filtros de Perturbación Sintética: Ajustar el generador de texto de distractores para prevenir la concatenación accidental duplicada de frases modificadoras (como ', en el marco de la especificación, en el marco de la especificación').",
+    "Ampliación Taxonómica de Formatos (v8): En futuras iteraciones mayores del curso, complementar el banco de 7 opciones múltiples con ítems de selección múltiple (multiple_select) y fill-in-the-blank para maximizar la variedad evaluativa recomendada por OSCQR y Quality Matters."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "single_word_or_id_hints_linter",
+      "severity": "medium",
+      "description": "Detecta reactivos donde el arreglo de pistas ('hints') contiene elementos que son palabras sueltas, etiquetas temáticas de una sola palabra (<= 1 palabra o < 20 caracteres) o identificadores de competencias (ej. 'H-01', 'C-02'), violando el principio de andamiaje socrático escalonado a pesar de tener 3 elementos en la lista.",
+      "regex_pattern": "^(?:[A-Za-z]+-\\d{2}|[A-Za-z_]{1,18})$",
+      "evidence_items": [
+        "Q-H01-001",
+        "Q-C01-021",
+        "Q-Hab01-081",
+        "Q-C03-111",
+        "Q-C04-131",
+        "Q-C09-321",
+        "Q-C10-371",
+        "Q-H05-581",
+        "Q-C17-601"
+      ]
+    },
+    {
+      "rule_id": "duplicated_option_clause_linter",
+      "severity": "low",
+      "description": "Detecta opciones donde una frase o cláusula sintética de modificación ha sido agregada dos veces de manera contigua debido a pasadas redundantes de generadores de perturbación léxica.",
+      "regex_pattern": "(,\\s*[^,]{10,60})\\1",
+      "evidence_items": [
+        "Q-Hab07-662"
+      ]
+    },
+    {
+      "rule_id": "root_competency_dag_linter",
+      "severity": "low",
+      "description": "Distingue competencias raíz axiomáticas legítimas (nodos con in-degree = 0 en un DAG conexo y acíclico bien fundamentado) de competencias huérfanas reales, evitando falsas alarmas en la telemetría de arquitectura.",
+      "regex_pattern": "in_degree == 0 and out_degree > 0 and reachability == total_nodes",
+      "evidence_items": [
+        "H-01",
+        "H-03"
+      ]
+    }
+  ],
+  "platform_status": "ACTIVO"
+}

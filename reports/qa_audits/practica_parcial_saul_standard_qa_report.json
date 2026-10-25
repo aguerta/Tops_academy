@@ -1,79 +1,108 @@
 {
   "course_metadata": {
     "course_id": "practica_parcial_saul_standard",
-    "unit_title": "Practica Parcial Saul Standard: Ecuaciones en Derivadas Parciales y Sistemas Dinámicos Macroeconómicos",
-    "detected_objective": "Dominio y aplicación analítica integral de ecuaciones en derivadas parciales (método de Lagrange, problemas de Cauchy, funciones homogéneas y teorema de Euler, optimización de la producción, lema de Hotelling, identidad de Roy y precios espaciales) y sistemas de ecuaciones diferenciales dinámicos lineales y no lineales (IS-LM, inflación-desempleo, Goodwin, Lotka-Volterra, planos de fases, isoclinas nulas, clasificación traza-determinante y análisis de estabilidad asintótica local y global).",
+    "unit_title": "Practica Parcial Saul Standard",
+    "detected_objective": "Dominio y aplicación analítica integral de ecuaciones en derivadas parciales, microeconomía matemática formal y análisis cualitativo y espectral de sistemas dinámicos continuos y no lineales.",
     "total_competencies": 65,
     "total_questions": 1590,
-    "question_types_distribution": {
-      "multiple_choice_7_options": 1590
-    }
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-10-25 10:12:21"
   },
   "dimension_scores": {
     "architecture_granularity": {
-      "score": 3.9,
+      "score": 3.3,
       "max": 4.0,
-      "feedback": "Excepcional arquitectura curricular modular con 65 micro-competencias altamente atómicas que cubren exhaustivamente el cálculo avanzado y los sistemas dinámicos macroeconómicos. Muestra un balance cognitivo óptimo: 11 Hechos [H] (16.9%), 25 Conceptos [C] (38.5%) y 29 Habilidades [Hab] (44.6%), asegurando una transición fluida desde fundamentos axiomáticos hacia la resolución procedimental y cualitativa compleja. El Grafo Acíclico Dirigido (DAG) conecta coherentemente los prerrequisitos hacia las habilidades avanzadas. Existen 26 competencias raíz sin prerrequisitos (11 Hechos y 15 Conceptos basales) que actúan como puntos de entrada naturales. La densidad por competencia es sobresaliente (20 reactivos en Hechos/Conceptos y 30 en Habilidades), con cero competencias subpobladas (mínimo 20 reactivos, superando con creces la norma regulatoria de 3)."
+      "feedback": "Excelente granularidad y atomicidad con 65 micro-competencias y un balance cognitivo saludable entre hechos (11), conceptos (25) y habilidades (29). Sin embargo, el grafo DAG presenta 26 competencias raíz con prerrequisitos vacíos, incluyendo 4 habilidades avanzadas (Hab-07, Hab-08, Hab-09, Hab-18) que carecen de anclaje formal a sus fundamentos conceptuales previos."
     },
     "assessment_quality": {
-      "score": 4.2,
+      "score": 1.7,
       "max": 5.0,
-      "feedback": "Sobresaliente calidad psicométrica general con 1,590 reactivos en formato de opción múltiple con 7 alternativas (A-G), reduciendo la probabilidad de acierto por azar al 14.3%. Se evaluaron 9,540 distractores con una cobertura del 100.0% de rationales diagnósticos explícitos (error_rationale), modelando errores matemáticos y económicos auténticos de la literatura (confusión de derivadas parciales, inversión de coeficientes en jacobianos, violación de condiciones de Cauchy, inversión de signos en multiplicadores de Lagrange y descarte indebido de equilibrios). Cero fugas de respuesta en enunciados. Se descuentan 0.8 puntos debido a dos factores: (1) ausencia total de variedad en tipología de ítems (100% MC7, sin selección múltiple ni fill-in-the-blank) y (2) presencia de etiquetas explicativas del error en el texto visible de ciertas alternativas incorrectas (e.g., 'despejando erróneamente...', 'introduciendo un signo negativo espurio...', 'confundiendo la evolución...'), que ofrecen pistas metacognitivas no deseadas."
+      "feedback": "Fallo psicométrico crítico: presencia sistemática de metainformación delatora en el texto visible de los distractores ('despejando erróneamente...', 'introduciendo un signo negativo espurio...', 'confundiendo la evolución...', 'sustituyendo incorrectamente...', 'Función errónea...', 'sumando en lugar de restar...'), permitiendo al estudiante descartar distractores por lectura superficial sin resolver el reactivo. Además, existe nula variedad tipológica (100% de 1,590 ítems son opción múltiple de 7 alternativas) y ausencia de diversidad de arquetipos (un único problema paramétrico repetido 20-30 veces por competencia con prefijos rotativos), induciendo la mecanización algorítmica."
     },
     "scaffolding_hints": {
-      "score": 4.4,
+      "score": 3.7,
       "max": 5.0,
-      "feedback": "Andamiaje pedagógico y feedback formativo de alta calidad. El 100% de los reactivos (1,590/1,590) cuenta con exactamente 3 pistas escalonadas socráticas: Pista 1 (Conceptual) -> Pista 2 (Procedimental) -> Pista 3 (Cálculo operativo paso a paso), guiando el razonamiento sin regalar el valor numérico final. El 100% de los reactivos dispone de una solución detallada completa (detailed_solution) que desarrolla analíticamente el paso a paso algebraico y geométrico. Se descuentan 0.6 puntos debido a la detección de residuos literales de variables de plantilla no interpoladas ({j21}, {omega}, {p}, {a}, {b}, {gamma}, {theta}, {p0}) en un subconjunto de soluciones detalladas, evidenciando un leve fallo en la sustitución de cadenas de plantilla."
+      "feedback": "Todos los reactivos cuentan con 3 pistas progresivas estructuradas que cubren los niveles conceptual, procedimental y operativo con solvencia matemática. Las soluciones detalladas son paso a paso. No obstante, las pistas son 100% estáticas y repetitivas entre las variantes de una misma competencia, no se incluyen secciones explícitas de advertencia de conceptos erróneos ('misconception warnings') y se detectaron residuos de plantillas f-string sin interpolar ({pi0}, {R}, {a}, {b}) en el desarrollo de soluciones."
     },
     "instructional_alignment": {
-      "score": 4.0,
+      "score": 3.7,
       "max": 4.0,
-      "feedback": "Alineación instruccional impecable (100% de congruencia semántica). Cero preguntas huérfanas en el catálogo (0 orphan items) y cero contaminación cruzada inter-dominio. Cada ítem evalúa con rigor y exactitud la competencia asignada, abarcando desde EDPs de primer orden (Lagrange, Cauchy, Euler, Hotelling, Roy) hasta dinámica no lineal en el plano (Goodwin, Lotka-Volterra, IS-LM, curvas isoclinas, variedades invariantes de punto silla y bifurcaciones/centros). Fuerte congruencia con los niveles de Aplicación y Análisis de la Taxonomía de Bloom."
+      "feedback": "Alta congruencia semántica y matemática con el dominio de economía matemática avanzada y sistemas dinámicos. Fuerte anclaje cognitivo en niveles Bloom de Aplicación y Análisis. Cero preguntas huérfanas y nula contaminación temática cruzada. Se deduce una leve penalización debido a que la excesiva uniformidad paramétrica de los reactivos no evalúa la totalidad de escenarios de borde descritos en la teoría."
     },
     "technical_ergonomics": {
-      "score": 1.8,
+      "score": 1.2,
       "max": 2.0,
-      "feedback": "Excelente ergonomía técnica y compilabilidad KaTeX. Cero llaves desbalanceadas, cero delimitadores triples espurios ($$$), cero dobles llaves residuales ({{...}}), cero delimitadores abiertos sin cierre y cero fragmentos de LaTeX huérfanos en texto plano. La notación de matrices (\\begin{pmatrix} ... \\end{pmatrix}), derivadas parciales, índices y caracteres griegos compila de forma limpia en frontend. Se descuentan 0.2 puntos debido a la inserción tipográfica de llaves de variables no interpoladas dentro del entorno KaTeX (ej. \\det(H) = -{p}^2 < 0 o J^* = \\begin{pmatrix} 0 & -0.1333 \\cr {j21} & 0 \\end{pmatrix}), que aunque no rompen el renderizador, degradan la estética formal."
+      "feedback": "La mayoría de expresiones matemáticas compilan adecuadamente en KaTeX. No obstante, se detectan fallas ergonómicas sistemáticas: delimitación doble-escapada de barras invertidas (\\\\frac), fórmulas matemáticas en texto plano sin delimitar (ej. '10 \\le {35}'), placeholders residuales entre llaves ({pi0}, {R}, {a}, {b}) y llaves espurias alrededor de constantes numéricas ({4}, {3}, {3.3})."
     }
   },
   "penalties_applied": [],
-  "final_score": 18.3,
-  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "final_score": 13.6,
+  "quality_tier": "DEFICIENTE (11.0 - 13.9)",
   "remediation_actions": [
-    "Aprobar el curso para producción inmediata en la plataforma interactiva Top's Academy, certificando su alto rigor matemático, microeconómico y macroeconómico dinámico.",
-    "Corrección de variables de plantilla en detailed_solution: Ejecutar un reemplazo dirigido sobre las soluciones detalladas afectadas para interpolar los valores numéricos/simbólicos correspondientes en lugar de los identificadores entre llaves ({j21}, {omega}, {p}, {a}, {b}, {gamma}, {theta}, {p0}) en competencias como Hab-19, Hab-29, C-02 y C-06.",
-    "Refactorización de distractores con metainformación delatora: En competencias como Hab-01, Hab-02 y Hab-14, eliminar los calificativos léxicos explícitos en el texto visible de las opciones (tales como 'despejando erróneamente...', 'introduciendo un signo negativo espurio...') y trasladarlos exclusivamente al campo 'error_rationale'.",
-    "Diversificación psicométrica futura: Para futuras iteraciones curriculares, incorporar ítems de selección múltiple (multiple_select) y de respuesta numérica directa (fill_in_the_blank) para complementar el banco actual homogéneo de MC7.",
-    "Cierre de prerrequisitos raíz: Declarar explícitamente prerrequisitos globales de entrada (e.g., 'Cálculo Multivariable', 'Álgebra Lineal Matricial') para las 26 competencias basales (11 Hechos y 15 Conceptos raíz)."
+    "Limpiar de inmediato la metainformación delatora en el texto de los distractores: reescribir las opciones para que describan resultados o formulaciones plausibles neutras, confinando el diagnóstico del error estrictamente al campo 'error_rationale'.",
+    "Diversificar los arquetipos de reactivos por competencia: para cada micro-competencia, formular al menos 3 arquetipos cualitativa y estructuralmente distintos (ej. deducción analítica, contraejemplos conceptuales, interpretación geométrica/diagramática) en lugar de una única plantilla paramétrica con números cambiantes.",
+    "Introducir variedad tipológica en la evaluación: balancear el banco incorporando preguntas de selección múltiple (multiple_select) y de respuesta numérica directa/fill-in-the-blank, reduciendo la hegemonía del 100% en opción múltiple de 7 alternativas.",
+    "Corregir el grafo DAG de prerrequisitos: conectar las 4 habilidades huérfanas de prerequisitos (Hab-07, Hab-08, Hab-09, Hab-18) a sus conceptos de soporte (C-15, C-18, C-20, C-21, H-09, H-10).",
+    "Saneamiento de plantillas y KaTeX: corregir las expresiones de formato en los generadores para eliminar placeholders residuales ({pi0}, {R}, {a}, {b}), llaves dobles innecesarias en constantes ({4}, {3}), dobles escapes en fracciones (\\\\frac) y delimitar expresiones matemáticas sueltas como '10 \\le 35'.",
+    "Enriquecer las soluciones detalladas incorporando advertencias explícitas de conceptos erróneos ('Misconception Warning') que desglosen por qué los caminos de cálculo intuitivos fallan."
   ],
   "discovered_lint_rules": [
     {
-      "rule_id": "uninterpolated_math_placeholder_linter",
-      "severity": "medium",
-      "description": "Detecta identificadores o variables de plantilla sin interpolar encerrados en llaves simples dentro de expresiones matemáticas o texto explicativo (ej. '{j21}', '{omega}', '{p}', '{a}', '{b}', '{gamma}', '{theta}', '{p0}') en reactivos y soluciones detalladas, originados por plantillas de formateo donde los argumentos no fueron suministrados en la interpolación o sufrieron doble escape.",
-      "regex_pattern": "(?<!\\\\)\\{([a-zA-Z][a-zA-Z0-9_]*)\\}(?!\\s*[\\{])",
-      "evidence_items": [
-        "Q-C02-131",
-        "Q-C02-132",
-        "Q-C06-441",
-        "Q-Hab19-1041",
-        "Q-Hab19-1042",
-        "Q-Hab29-1561",
-        "Q-Hab29-1562"
-      ]
+      "id": "LINT-OPT-TELLTALE-METAINFO",
+      "name": "Detección de Metainformación Delatora y Autoincriminatoria en Opciones",
+      "severity": "CRITICAL",
+      "dimension": "assessment_quality",
+      "pattern_description": "El texto visible de una opción de respuesta contiene adverbios, adjetivos o frases que autoincriminan el distractor (ej. 'erróneamente', 'incorrectamente', 'espurio', 'confundiendo', 'en lugar de restar', 'redundantes'), delatando que es falsa sin requerir cálculo ni análisis por parte del estudiante.",
+      "regex_rule": "\\b(erróneamente|incorrectamente|espurio|confundiendo|en lugar de|redundantes|omitiendo|asumiendo erróneamente|función errónea|pendiente errónea)\\b",
+      "remediation": "Mover la explicación del fallo exclusivamente al campo 'error_rationale'. La opción visible debe formular el resultado incorrecto con el mismo tono afirmativo y formal que la respuesta correcta."
     },
     {
-      "rule_id": "telltale_distractor_gerund_label_linter",
-      "severity": "medium",
-      "description": "Detecta opciones de distractores visibles que contienen autoconfesiones o rótulos metacognitivos del error mediante cláusulas de gerundio (ej. 'despejando erróneamente...', 'introduciendo un signo negativo espurio...', 'confundiendo la evolución...'), lo cual delata la opción errónea sin requerir que el estudiante ejecute el análisis procedimental.",
-      "regex_pattern": "\\b(despejando|introduciendo|confundiendo|asumiendo|omitiendo|restringiendo|invirtiendo|fijando|adoptando|sustituyendo)\\s+(erróneamente|espurio|incorrectamente|arbitrariamente|ingenuamente)\\b",
-      "evidence_items": [
-        "Q-Hab01-021",
-        "Q-Hab01-022",
-        "Q-Hab02-051",
-        "Q-Hab02-052",
-        "Q-Hab14-791"
-      ]
+      "id": "LINT-SOL-UNRENDERED-PLACEHOLDER",
+      "name": "Residuos de Variables de Plantilla f-string no Interpoladas",
+      "severity": "MAJOR",
+      "dimension": "scaffolding_hints",
+      "pattern_description": "Aparición de identificadores de plantilla literales encerrados entre llaves (ej. {pi0}, {R}, {a}, {b}) en los campos 'detailed_solution', 'hints' o 'stem', causados por errores de escape en f-strings o diccionarios de formateo incompletos.",
+      "regex_rule": "(?<!\\\\)\\{([a-zA-Z_][a-zA-Z0-9_]*)\\}(?![^$]*\\$)",
+      "remediation": "Verificar el contexto de formateo en el generador paramétrico asegurando que todas las variables estén presentes en kwargs y que los delimitadores KaTeX no interfieran con la sintaxis de f-strings de Python."
+    },
+    {
+      "id": "LINT-SPURIOUS-NUMBER-BRACES",
+      "name": "Llaves Espurias Alrededor de Constantes Numéricas",
+      "severity": "MINOR",
+      "dimension": "technical_ergonomics",
+      "pattern_description": "Presencia de números aislados encerrados en llaves dobles o espurias (ej. \\cdot {4}, \\cdot {3}, {35}, {15}, {3.3}), generados por triple escape '{{{var}}}' en plantillas f-string de Python.",
+      "regex_rule": "(?<![\\\\a-zA-Z_])\\{(\\d+(?:\\.\\d+)?)\\}",
+      "remediation": "Normalizar los bloques de formato en el script de generación para evitar '{{{valor}}}', utilizando '\\\\left( ... \\\\right)' y formateo explícito '{valor}' sin llaves KaTeX redundantes."
+    },
+    {
+      "id": "LINT-KATEX-ORPHAN-PLAIN-MATH",
+      "name": "Operadores Matemáticos KaTeX Huérfanos Fuera de Delimitadores",
+      "severity": "MAJOR",
+      "dimension": "technical_ergonomics",
+      "pattern_description": "Comandos de KaTeX (ej. \\le, \\ge, \\ne, \\times, \\to) insertados en prosa plana sin envolverse en delimitadores '$...$' o '$$...$$', provocando fallas visuales o renderizado de texto crudo.",
+      "regex_rule": "(?<!\\$)\\b(?:\\\\le|\\\\ge|\\\\ne|\\\\times|\\\\approx|\\\\to)\\b(?![^$]*\\$)",
+      "remediation": "Envolver toda expresión matemática y operador relacional estrictamente entre signos de dólar '$' en el texto explicativo de la solución."
+    },
+    {
+      "id": "LINT-ESCAPED-QUAD-BACKSLASH",
+      "name": "Doble Escape Excesivo de Macros KaTeX (Quad Backslash)",
+      "severity": "MINOR",
+      "dimension": "technical_ergonomics",
+      "pattern_description": "Uso de cuádruple barra invertida en el archivo fuente JSON (\\\\frac, \\\\theta), que al ser deserializado se traduce en '\\frac' pero en ciertos parsers de Markdown produce saltos de línea '\\' seguidos de texto crudo 'frac'.",
+      "regex_rule": "\\\\\\\\(frac|theta|gamma|alpha|beta|partial)",
+      "remediation": "Estandarizar la serialización JSON utilizando escapes simples compatibles '\\\\frac' que decodifiquen limpiamente a '\\frac' en memoria."
+    },
+    {
+      "id": "LINT-DAG-UNANCHORED-SKILLS",
+      "name": "Habilidades Complejas no Ancladas en el Grafo DAG",
+      "severity": "MAJOR",
+      "dimension": "architecture_granularity",
+      "pattern_description": "Competencias de categoría 'Skill' (Habilidad) que tienen 'prerequisites: []' vacío, violando los principios de Mastery Learning y el diseño curricular instruccional.",
+      "regex_rule": "\"category\":\\s*\"Skill\",[\\s\\S]*?\"prerequisites\":\\s*\\[\\s*\\]",
+      "remediation": "Revisar la matriz curricular y asignar obligatoriamente al menos una micro-competencia conceptual o factual de soporte a cada habilidad operativa del módulo."
     }
-  ]
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-25 10:12:21",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

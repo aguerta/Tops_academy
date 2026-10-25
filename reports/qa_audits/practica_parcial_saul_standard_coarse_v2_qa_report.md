@@ -1,223 +1,324 @@
-# Informe de Auditoría Técnico-Pedagógica de Calidad Instruccional
+# Reporte de Auditoría de Calidad Pedagógica, Psicométrica y Técnica
 
-> [!WARNING]
-> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-10-20 13:26:15**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
-
+**Top's Academy — Department of Educational Quality & Course Auditing**  
+**Normas de Referencia:** Quality Matters (QM), OSCQR Standards, Mastery Learning & Psychometric Item Analysis  
+**Curso Auditado:** `practica_parcial_saul_standard_coarse_v2`  
+**Título del Curso:** *Practica Parcial Saul Standard Coarse V2*  
+**Fecha de Auditoría:** 25 de Octubre de 2026  
+**Auditor:** Course QA Auditor Engine (Top's Academy Specialized Subagent)  
 **Estado en Plataforma:** ELIMINADO  
-**Fecha de Eliminación:** 2026-10-20 13:26:21  
-**Fecha de Eliminación:** 2026-10-20 13:26:15  
-**Curso:** Práctica Parcial Saúl: Ecuaciones en Derivadas Parciales y Sistemas Dinámicos en Economía (`practica_parcial_saul_standard_coarse_v2`)  
-**Fecha de Auditoría:** 20 de Octubre, 2026  
-**Auditor:** Agente de Aseguramiento de Calidad Instruccional (Course QA Auditor)  
-**Marco Normativo:** Quality Matters (QM), OSCQR & Mastery Learning Framework  
-**Puntaje Final Consolidado:** **16.8 / 20.0**  
-**Nivel de Calidad (Quality Tier):** **ACEPTABLE (14.0 - 16.9 pts)** — *Aprobado con Observaciones Menores; Requiere Pulido Sintáctico de Plantillas y Reconfiguración de Prerrequisitos*
+**Fecha de Eliminación:** 2026-10-25 10:12:21  
+**Fecha de Eliminación:** 2026-10-25 10:12:15  
 
 ---
 
-## 1. Resumen Ejecutivo del Veredicto
+## 1. Resumen Ejecutivo y Dictamen de Certificación
 
-El curso **"Práctica Parcial Saúl: Ecuaciones en Derivadas Parciales y Sistemas Dinámicos en Economía (v2)"** (`practica_parcial_saul_standard_coarse_v2`) representa una base curricular sólida, exhaustiva y de avanzado rigor analítico. El curso cubre tópicos centrales de economía matemática universitaria: resolución de EDPs cuasilineales de primer orden mediante el método de Lagrange y curvas características, teoremas de homogeneidad de Euler aplicados a dualidad microeconómica y funciones de producción, EDPs espaciales de transporte de mercancías con condiciones de Cauchy, sistemas dinámicos continuos lineales 2D (modelos IS-LM y macroeconomía dinámica), sistemas no lineales de Goodwin y análisis cualitativo en el espacio de fases (isoclinas nulas, traza, determinante, autovalores y clasificación de estabilidad local).
-
-El banco de reactivos posee una escala sobresaliente de **370 problemas**, con **2220 distractores evaluados al 100% de cobertura diagnóstica** mediante `error_rationale`, sin fugas de respuestas (*Answer Leaks*) ni distractores delatores (*telltale distractors*). Asimismo, se garantiza un andamiaje escalonado de exactamente **3 pistas socráticas progresivas** por reactivo (1110 pistas en total).
-
-No obstante, la evaluación integral bajo los estándares QM y Mastery Learning identifica tres áreas que degradan la puntuación final a **16.8 / 20.0 (Nivel ACEPTABLE)**:
-1. **Desbalance y Desconexión en el Grafo de Prerrequisitos (Dimensión 1: 3.2 / 4.0):** 7 de las 14 competencias presentan `prerequisites: []`. Dos habilidades clave (`Hab-01` y `Hab-07`) están aisladas en la raíz del grafo pese a apoyarse en conceptos del mismo curso (`C-03` y `C-04`/`C-05`). Adicionalmente, existen dependencias pedagógicas cruzadas erróneas (ej. habilidades de EDPs como `Hab-03` y `Hab-05` declarando como prerrequisito a `C-05` —estabilidad de EDOs 2x2— en lugar de `C-03` —fundamentos de EDPs—; y `Hab-02` dependiendo de `Hab-09` en lugar de `C-01`). La pirámide cognitiva carece de micro-competencias de Hechos [Fact] (0%).
-2. **Homogeneidad Psicométrica Absoluta (Dimensión 2: 4.2 / 5.0):** El 100% de los reactivos (370/370) utiliza exclusivamente la modalidad de opción múltiple de 7 alternativas (`multiple_choice_7_options`), sin incorporar preguntas de selección múltiple (`multiple_select`) ni de respuesta construida (`fill_in_the_blank`).
-3. **Residuos de Plantillas y Ergonomía Algebraica (Dimensiones 3 y 5: 4.0 / 5.0 y 1.4 / 2.0):** El motor de plantillas paramétricas dejó marcadores de una sola llave no interpolados (`{b}`, `{c}`, `{a}`, `{d}`) en las soluciones detalladas de `Hab-05` y `Hab-09`, los cuales KaTeX renderiza como letras literales en vez de los coeficientes numéricos calculados. Además, se detectó concatenación cruda de signos aritméticos (`+ -68`, `+ -78`) y coeficientes unitarios no simplificados (`1x`, `1y`).
-
-### Matriz de Evaluación por Dimensiones
-
-| Dimensión Evaluada | Puntaje | Máximo | Cumplimiento | Diagnóstico Sintético |
-| :--- | :---: | :---: | :---: | :--- |
-| **1. Arquitectura y Granularidad** | **3.2** | 4.0 | 80.0% | 14 competencias atómicas (0 Hechos, 5 Conceptos, 9 Habilidades). Fallas en grafo DAG: 7 competencias sin prerrequisitos declarados y dependencias cruzadas anómalas. |
-| **2. Calidad de Evaluación y Reactivos** | **4.2** | 5.0 | 84.0% | 370 reactivos con 2220 distractores al 100% de cobertura con rationales diagnósticos profundos. Cero fugas de respuesta. Penalizado por 0% de diversidad de tipo de ítem (100% MC7). |
-| **3. Andamiaje y Pistas Progresivas** | **4.0** | 5.0 | 80.0% | 100% de reactivos con exactamente 3 pistas escalonadas (1110 pistas). Soluciones analíticas detalladas paso a paso, pero comprometidas por marcadores de plantilla sin evaluar (`{b}`, `{c}`, `{a}`, `{d}`). |
-| **4. Alineación Instruccional** | **4.0** | 4.0 | 100.0% | Congruencia semántica perfecta entre objetivos declarados y evaluaciones prácticas. Cero preguntas huérfanas. Dominio de niveles superiores de Bloom (Aplicar y Analizar). |
-| **5. Accesibilidad y Ergonomía Técnica** | **1.4** | 2.0 | 70.0% | Delimitadores KaTeX balanceados. Deficiencias ergonómicas por concatenaciones `+ -`, coeficientes `1x`/`1y` sin simplificar y fuga de variables de formato en modo matemático. |
-| **Subtotal Rúbrica** | **16.8** | 20.0 | 84.0% | - |
-| **Penalizaciones Duras** | **-0.0** | - | - | Sin penalizaciones aplicables (banco $\ge 3$ por unidad, cero reactivos con hints = 0, cero huérfanas). |
-| **TOTAL CONSOLIDADO** | **16.8** | **20.0** | **84.0%** | **Nivel ACEPTABLE (14.0 - 16.9 pts)** |
+| Métrica Global | Valor Obtenido | Calificación Normativa |
+| :--- | :---: | :---: |
+| **Puntaje Consolidado (Escala 0 a 20)** | **10.8 / 20.0** | **CRÍTICO** |
+| **Quality Tier** | **CRÍTICO (0.0 - 10.9)** | **RECHAZADO / NO APTO PARA PRODUCCIÓN** |
+| **Penalizaciones Duras (Hard Deductions)** | **0.0 pts** | *Ninguna penalización por banco < 3 reactivos ni preguntas huérfanas* |
+| **Cobertura Diagnóstica de Distractores** | **100.0%** | *2220 / 2220 distractores con rationale teórico* |
+| **Integridad Psicométrica** | **Comprometida** | *Answer Leaks masivos y metainformación delatora en opciones* |
+| **Ergonomía KaTeX** | **Parcialmente Compilada** | *Residuos de plantillas y colisiones de signos algebraicos* |
 
 ```mermaid
-xychart-beta
-    title "Desempeño por Dimensión Normativa (practica_parcial_saul_standard_coarse_v2)"
-    x-axis ["Arquitectura (4.0)", "Evaluación (5.0)", "Andamiaje (5.0)", "Alineación (4.0)", "Ergonomía (2.0)"]
-    y-axis "Calificación Obtenida" 0 --> 5
-    bar [3.2, 4.2, 4.0, 4.0, 1.4]
+pie title Distribución del Puntaje por Dimensión (Total 10.8 / 20.0 pts)
+    "Dim 1: Arquitectura y Granularidad (2.2 / 4.0)" : 2.2
+    "Dim 2: Calidad de Evaluación y Reactivos (1.5 / 5.0)" : 1.5
+    "Dim 3: Andamiaje y Pistas (2.8 / 5.0)" : 2.8
+    "Dim 4: Alineación Instruccional (3.2 / 4.0)" : 3.2
+    "Dim 5: Ergonomía KaTeX (1.1 / 2.0)" : 1.1
+    "Puntaje Restado por Deficiencias (9.2 / 20.0)" : 9.2
+```
+
+> [!CAUTION]
+> ### Dictamen Oficial de Auditoría: NIVEL CRÍTICO (10.8 / 20.0)
+> El curso **Practica Parcial Saul Standard Coarse V2** presenta **fallas psicométricas y técnicas críticas** que invalidan su capacidad diagnóstica como instrumento de evaluación y aprendizaje para estudiantes universitarios. Aunque el dominio teórico (EDPs aplicadas a microeconomía y sistemas dinámicos continuos) es académicamente riguroso, el curso adolece de **vulnerabilidades severas de Answer Leaks (metainformación delatora en el 100% de las opciones de reactivos clave)**, **monotonía tipológica absoluta (100% de preguntas de opción múltiple de 7 alternativas con clonación paramétrica de un único arquetipo)**, **desconexión del 50% de prerrequisitos en el grafo curricular (DAG)** y **residuos sintácticos de plantillas de software en las soluciones (`{b}`, `{c}`, `{a}`, `+ -8`)**.
+> 
+> La plataforma Top's Academy **ha actuado correctamente al marcar este curso con estado ELIMINADO**. No debe restaurarse a producción interactiva hasta completar una reingeniería exhaustiva.
+
+---
+
+## 2. Metadatos del Curso y Perfil del Corpus
+
+- **Identificador Único:** `practica_parcial_saul_standard_coarse_v2`
+- **Volumen Total de Reactivos:** 370 preguntas
+- **Micro-competencias Evaluadas:** 14 competencias
+  - **Habilidades Prácticas [Skill]:** 9 (64.3%) — 30 reactivos por competencia (270 reactivos en total).
+  - **Conceptos Teóricos [Concept]:** 5 (35.7%) — 20 reactivos por competencia (100 reactivos en total).
+  - **Hechos [Fact]:** 0 (0.0%) — Cero micro-competencias fácticas.
+- **Distribución de Tipologías de Reactivo:**
+  - `multiple_choice_7_options`: 370 (100.0%)
+  - `multiple_select`: 0 (0.0%)
+  - `fill_in_the_blank`: 0 (0.0%)
+  - `interactive_graph`: 0 (0.0%)
+- **Relación Promedio de Reactivos por Competencia:** 26.4 reactivos/competencia (Mínimo: 20, Máximo: 30).
+
+---
+
+## 3. Evaluación Detallada por Dimensiones Normativas
+
+### Dimensión 1: Arquitectura y Granularidad Curricular
+**Puntaje Asignado: 2.2 / 4.0 pts (Rango Aceptable Bajo)**
+
+#### Hallazgos y Análisis Psicométrico:
+1. **Atomicidad de Micro-competencias (+1.5 pts):**
+   Las micro-competencias están delimitadas con especificidad analítica de nivel universitario avanzado. Cada unidad define claramente la operación matemática esperada:
+   - `Hab-01`: Resolución de EDPs cuasilineales de primer orden mediante Lagrange y curvas características.
+   - `Hab-02`: Optimización y modelado económico mediante la EDP de homogeneidad de Euler.
+   - `C-01`: Dualidad microeconómica, lema de Hotelling e identidad de Roy.
+   - `Hab-06`: Linealización de sistemas dinámicos no lineales (modelo de ciclos de Goodwin).
+   - `C-05`: Clasificación topológica de estabilidad 2x2 mediante traza, determinante y discriminante.
+2. **Deficiencias Estructurales del Grafo DAG (-1.3 pts):**
+   - **50% de Nodos Huérfanos de Entrada:** De las 14 micro-competencias, exactamente 7 (`Hab-01`, `C-01`, `C-02`, `C-03`, `C-04`, `Hab-07`, `C-05`) declaran `prerequisites: []`. Esto fragmenta el mapa cognitivo: habilidades complejas como la resolución de EDPs cuasilineales (`Hab-01`) o la diagonalización de sistemas lineales de EDO (`Hab-07`) no tienen como prerrequisito los conceptos fundacionales correspondientes (`C-03` y `C-05` respectivamente).
+   - **Aristas Espurias Inter-dominio:** Se identificaron dependencias semánticamente incongruentes. Por ejemplo, `Hab-02` (optimización de funciones de producción de Euler) declara como prerrequisito `Hab-09` (isoclinas y diagramas de fase en el plano cartesiano), cuando la teoría de funciones de producción no depende de campos vectoriales bidimensionales. Igualmente, `Hab-03` (precios espaciales con EDPs de transporte) declara como prerrequisito `C-05` (estabilidad local matricial de EDOs 2x2).
+3. **Desbalance Cognitivo (-0.5 pts):**
+   Ausencia absoluta de competencias de tipo *Fact* (0%). Aunque el curso es de naturaleza analítico-cuantitativa, se omiten evaluaciones de identificación de propiedades axiomáticas o terminología estándar previa al cálculo operatorio.
+
+---
+
+### Dimensión 2: Calidad Psicométrica de Evaluación y Reactivos
+**Puntaje Asignado: 1.5 / 5.0 pts (Rango Crítico: 0.0 - 2.0 pts)**
+
+> [!WARNING]
+> ### Alerta Psicométrica: Answer Leaks y Distractores Auto-Delatores
+> La rúbrica normativa de Top's Academy penaliza severamente con calificación Crítica (0.0 a 2.0) a aquellos cursos donde existan *Answer Leaks* o metainformación delatora en el texto visible del reactivo. En este curso se identificaron patrones masivos donde el texto de las alternativas delata abiertamente la solución correcta sin necesidad de resolver el problema matemático.
+
+#### Evidencias Textuales del Corpus:
+
+#### Caso 1: Rótulos Diagnósticos en Encabezados (Competencias `Hab-07` y `Hab-08`)
+En los reactivos de `Hab-07` (ej. `Q-Hab07-261` y `Q-Hab07-262`), las alternativas visibles al alumno inician con la etiqueta que describe el error o la exactitud:
+- **Opción A:** *"Formulación secular con raíz repetida: $X(t) = 3 e^{4t} ...$"*
+- **Opción B:** *"Inversión de signo en el estado estacionario: $X(t) = 3 e^{4t} ...$"*
+- **Opción C:** *"Constantes calculadas sin descontar estado estacionario: $X(t) = -2 e^{4t} ...$"*
+- **Opción D:** *"Desplazamiento erróneo en autovalores: $X(t) = 3 e^{6t} ...$"*
+- **Opción E:** *"Autovectores canónicos triviales: $X(t) = 3 e^{4t} ...$"*
+- **Opción F (CORRECTA):** **`Trayectoria exacta:`** `$X(t) = 3 e^{4t} \begin{pmatrix} 1 \\ 1 \end{pmatrix} + 5 e^{2t} \begin{pmatrix} 1 \\ -1 \end{pmatrix} + \begin{pmatrix} -6 \\ -4 \end{pmatrix}$`
+- **Opción G:** *"Solución oscilatoria trigonométrica: $X(t) = 3 \cos(1t) ...$"*
+
+> **Impacto Psicométrico:** Un alumno sin ningún conocimiento de álgebra lineal ni ecuaciones diferenciales simplemente busca la opción que comienza con *"Trayectoria exacta"* o descarta las opciones etiquetadas como *"erróneo"*, *"inversión de signo"* o *"sin descontar"*. El reactivo pierde el 100% de su validez discriminante.
+
+En `Hab-08` (ej. `Q-Hab08-291`), ocurre el mismo vicio metainformativo:
+- **Opción A:** *"Punto de reposo espurio $(0, 12)$..."*
+- **Opción B (CORRECTA):** *"Equilibrio estacionario $(-4, 0)$ con sistema linealizado..."*
+- **Opción C:** *"Desacoplamiento erróneo del campo vectorial..."*
+- **Opción D:** *"Inversión de signos en el vector de traslación afín..."*
+- **Opción E:** *"Transposición cruzada de derivadas en la matriz jacobiana..."*
+- **Opción F:** *"Aproximación con derivadas parciales no evaluadas..."*
+- **Opción G:** *"Aproximación lineal homogénea ... omitiendo el vector de traslación..."*
+
+#### Caso 2: Cláusulas Autoinculpatorias en el Texto de los Distractores
+En `Hab-01`, `Hab-02`, `Hab-03`, `Hab-04` y `C-01`:
+- `Q-Hab01-001` (Opción A): `"...permutando los coeficientes P y Q, que genera la trayectoria errónea $x^2 + y^2 = c_1$ en el plano coordenado."`
+- `Q-Hab01-001` (Opción F): `"...sin realizar la inversión analítica de coordenadas $(s, t) \to (x, y)$ requerida."`
+- `Q-Hab01-001` (Opción G): `"...ignorando la evolución de la variable dependiente $U$..."`
+- `Q-Hab03-081` (Opción A): `"...pero se afirma erróneamente que cualquier brecha de precios espaciales constituye un arbitraje..."`
+- `Q-Hab03-081` (Opción D): `"...lo que produce la solución errónea $P(x, y) = 30 + 1 x + 29 y$..."`
+- `Q-Hab03-081` (Opción E): `"...pero se sostiene erróneamente que un incremento en el costo reduce el precio..."`
+- `Q-C01-061` (Opción F): `"...con solución particular espuria $\Pi(p, w) = \frac{2 p^2 w}{8}$..."`
+
+#### Caso 3: Monotonía Tipológica y Mecanización por Clonación Paramétrica
+- **100% de los 370 reactivos** corresponden a opción múltiple de 7 alternativas.
+- Cada micro-competencia implementa exactamente **un solo arquetipo de problema**, clonado 20 a 30 veces mediante un generador numérico y prefijado por frases introductorias artificiales rotadas (*"Aplicando las identidades teóricas pertinentes, evalúe:"*, *"Al examinar detenidamente las condiciones de frontera, resuelva:"*, *"Considere el siguiente planteamiento formal:"*, etc.).
+- **Riesgo:** El estudiante mecaniza el algoritmo de resolución tras el segundo reactivo y responde mecánicamente sin desarrollar pensamiento crítico ni transferencia conceptual.
+
+---
+
+### Dimensión 3: Andamiaje y Feedback Progresivo
+**Puntaje Asignado: 2.8 / 5.0 pts (Rango Aceptable Bajo)**
+
+#### Análisis del Andamiaje:
+1. **Estructura Socrática en 3 Niveles (+3.5 pts):**
+   Todos los reactivos incorporan rigurosamente 3 pistas escalonadas conforme al estándar:
+   - **Pista 1 (Conceptual):** Marco teórico general o identificación del operador diferencial.
+   - **Pista 2 (Procedimental):** Método de desacoplamiento, integrales primeras o ecuación característica.
+   - **Pista 3 (Operativa/Cálculo):** Inversión de coordenadas, aplicación de Cauchy o ajuste de condiciones iniciales.
+2. **Deficiencias Críticas del Andamiaje (-0.7 pts):**
+   - **Pistas 100% Estáticas:** Las pistas no son adaptativas ni contienen los valores numéricos del problema que el estudiante está intentando resolver. Son cadenas de texto idénticas para los 30 problemas de la competencia. En la Pista 3, en lugar de guiar el cálculo aritmético concreto, repite instrucciones genéricas.
+   - **Residuos de Plantillas en Soluciones Detalladas:**
+     - En `Hab-05` (`Q-Hab05-181` y `Q-Hab05-182`):
+       $$\frac{dx}{3x} = \frac{dy}{2y} \implies \{b\} \frac{dx}{x} - 3 \frac{dy}{y} = 0 \quad \text{y} \quad \implies \{c\} \frac{dx}{x} - 3 \frac{dU}{U} = 0$$
+       Aparecen los literales `{b}` y `{c}` en lugar de los valores numéricos correspondientes (ej. `2` y `7`), producto de llaves dobles de escape en Python mal procesadas.
+     - En `Hab-09` (`Q-Hab09-321` y `Q-Hab09-322`):
+       $$\dot{x} = 0 \implies \{a\}x + 1y + -8 = 0 \quad \text{y} \quad \dot{y} = 0 \implies \{d\}x + -11y + -8 = 0$$
+       Aparecen los literales `{a}` y `{d}` en la deducción de isoclinas.
+     - En `Hab-07` (`Q-Hab07-261` y `Q-Hab07-262`):
+       El segundo autovector se reporta como $v_2 = (1, -k)^T$ sin sustituir el valor numérico de $k$ (ej. $k=1$ o $k=3$), y la solución remata con la fórmula abstracta sin sustitución final: $X(t) = c_1 e^{\lambda_1 t} v_1 + c_2 e^{\lambda_2 t} v_2 + X_p$.
+3. **Ausencia Generalizada de Misconception Warnings (-0.5 pts):**
+   A excepción de `C-01` y `Hab-03` (donde sí se discute por qué las demás alternativas son falaces), las soluciones detalladas de `Hab-01`, `Hab-02`, `Hab-04`, `C-02`, `C-03`, `Hab-05`, `Hab-06`, `Hab-07`, `Hab-08`, `Hab-09` y `C-05` no incluyen advertencias explícitas sobre las trampas conceptuales frecuentes.
+
+---
+
+### Dimensión 4: Alineación Instruccional y Congruencia Teórica
+**Puntaje Asignado: 3.2 / 4.0 pts (Rango Aceptable Alto)**
+
+#### Análisis de Congruencia Académica:
+1. **Rigor del Dominio Teórico (+3.5 pts):**
+   El temario cubre tópicos universitarios de nivel avanzado en métodos matemáticos para economía y finanzas:
+   - EDPs cuasilineales de transporte y equilibrio espacial.
+   - Teorema de Euler sobre funciones homogéneas y rendimientos crecientes/decrecientes.
+   - Sistemas macroeconómicos IS-LM dinámicos y modelo de Goodwin (Lotka-Volterra salarios-empleo).
+   - Álgebra de autovalores, autovectores y variedades estables unidimensionales en puntos silla.
+2. **Taxonomía de Bloom (+0.5 pts):**
+   Los reactivos demandan razonamiento de **Aplicación (Bloom 3)** y **Análisis (Bloom 4)**. No se limitan al recuerdo memorístico, sino a la deducción de trayectorias analíticas completas.
+3. **Contaminación Curricular por Errores de Prerrequisitos (-0.8 pts):**
+   Aunque no hay preguntas huérfanas en el sentido estricto (todas pertenecen a las 14 competencias listadas), la desconexión del grafo de prerrequisitos genera rutas de aprendizaje pedagógicamente inconsistentes, exponiendo al estudiante a habilidades avanzadas sin haber validado el dominio conceptual previo.
+
+---
+
+### Dimensión 5: Accesibilidad y Ergonomía Técnica / KaTeX
+**Puntaje Asignado: 1.1 / 2.0 pts (Rango Aceptable)**
+
+#### Análisis Técnico de Sintaxis Matemática:
+1. **Compilación KaTeX (+1.5 pts):**
+   - Delimitadores `$...$` balanceados en enunciados y opciones.
+   - Ausencia total de delimitadores triples destructivos (`$$$`).
+   - El renderizador no colapsa ni arroja errores fatales de compilación.
+2. **Defectos de Ergonomía y Formateo Algebraico (-0.9 pts):**
+   - **Colisiones de Signos Aritméticos:** Concatenación cruda de parámetros negativos en ecuaciones dinámicas:
+     - `\dot{x} = 1x + 1y + -8` (en vez de `x + y - 8`)
+     - `\dot{y} = 5x + -11y + -8` (en vez de `5x - 11y - 8`)
+     - `\dot{x} = 7x + 4y + -68` (en vez de `7x + 4y - 68`)
+     - `\dot{y} = 3x + -1y` (en vez de `3x - y`)
+   - **Coeficientes Unitarios Redundantes:** Falta de higiene algebraica en monomios de primer grado y exponentes:
+     - `1x` y `1y` en lugar de `x` e `y`.
+     - `e^{1t}` en lugar de `e^t`.
+   - **Inclusión de Residuos de Plantilla `{a}`, `{b}`, `{c}`, `{d}`** dentro del código KaTeX de las explicaciones, lo que genera renders visualmente desconcertantes para el estudiante.
+
+---
+
+## 4. Auditoría de Penalizaciones Duras (Hard Deductions)
+
+| Criterio de Penalización Automática | Condición de Activación | Conteo / Estado | Deducción Aplicada |
+| :--- | :--- | :---: | :---: |
+| **Banco Insuficiente por Competencia** | Menos de 3 problemas reales e independientes por micro-competencia | 0 (Mínimo: 20 reactivos) | 0.0 pts |
+| **Reactivos sin Pistas** | Reactivos con `hints_count == 0` | 0 (Todos tienen 3 pistas) | 0.0 pts |
+| **Preguntas Huérfanas Críticas** | Reactivos no asignados o conceptos no presentes en el corpus | 0 preguntas huérfanas | 0.0 pts |
+| **Total Penalizaciones Duras** | — | — | **0.0 pts** |
+
+---
+
+## 5. Cuadro Consolidado de Calificación
+
+| Dimensión de Evaluación | Puntaje Máximo | Puntaje Obtenido | Porcentaje | Nivel de Cumplimiento |
+| :--- | :---: | :---: | :---: | :---: |
+| **1. Arquitectura y Granularidad** | 4.0 pts | **2.2 pts** | 55.0% | Aceptable Bajo |
+| **2. Calidad de Evaluación y Reactivos** | 5.0 pts | **1.5 pts** | 30.0% | **Crítico** |
+| **3. Andamiaje y Feedback Progresivo** | 5.0 pts | **2.8 pts** | 56.0% | Aceptable Bajo |
+| **4. Alineación Instruccional** | 4.0 pts | **3.2 pts** | 80.0% | Aceptable Alto |
+| **5. Accesibilidad y Ergonomía KaTeX** | 2.0 pts | **1.1 pts** | 55.0% | Aceptable |
+| **Subtotal Dimensiones Normativas** | **20.0 pts** | **10.8 pts** | **54.0%** | **Nivel Crítico** |
+| **Penalizaciones Duras Acumuladas** | — | **-0.0 pts** | — | Ninguna |
+| **CALIFICACIÓN FINAL CONSOLIDADA** | **20.0 pts** | **10.8 pts** | **54.0%** | **CRÍTICO** |
+
+---
+
+## 6. Nuevas Reglas de Linting Descubiertas (`discovered_lint_rules`)
+
+Durante la inspección del curso, se identificaron vulnerabilidades psicométricas y técnicas que evadieron los linters estáticos deterministas tradicionales (que arrojaron erróneamente `telltale_distractor_items_count: 0` y `template_variable_residue_count: 0`). Se formalizan las siguientes 6 reglas para incorporación inmediata al motor de auditoría automatizado:
+
+```json
+[
+  {
+    "rule_id": "TELLTALE_OPTION_PREFIX_LABEL",
+    "name": "Detección de Etiquetas Autodescriptivas en Opciones",
+    "severity": "CRITICAL",
+    "description": "Detecta opciones que inician con prefijos diagnósticos que delatan la respuesta correcta ('Trayectoria exacta:', 'Solución analítica correcta:') o describen la naturaleza del error en distractores ('Desplazamiento erróneo...', 'Inversión de signo...', 'Constantes calculadas sin descontar...', 'Punto de reposo espurio:').",
+    "regex_pattern": "(?i)^(trayectoria\\s+exacta|solución\\s+(exacta|correcta)|desplazamiento\\s+erróneo|inversión\\s+de\\s+signo|constantes\\s+calculadas\\s+sin|punto\\s+de\\s+reposo\\s+espurio|desacoplamiento\\s+erróneo|formulación\\s+secular)",
+    "target_field": "options[].content"
+  },
+  {
+    "rule_id": "SELF_INCRIMINATING_DISTRACTOR_TEXT",
+    "name": "Detección de Distractores con Cláusulas Autodelatoras",
+    "severity": "CRITICAL",
+    "description": "Detecta distractores cuyo cuerpo de texto argumenta explícitamente en contra de sí mismo usando lenguaje metainformativo delator ('que genera la trayectoria errónea', 'se afirma erróneamente que', 'lo que produce la solución errónea', 'se sostiene erróneamente que', 'solución particular espuria', 'sin realizar la inversión analítica requerida', 'ignorando la evolución', 'prescindiendo del signo negativo').",
+    "regex_pattern": "(?i)(trayectoria\\s+errónea|se\\s+afirma\\s+erróneamente|produce\\s+la\\s+solución\\s+errónea|se\\s+sostiene\\s+erróneamente|solución\\s+particular\\s+espuria|sin\\s+realizar\\s+la\\s+inversión\\s+analítica|ignorando\\s+la\\s+evolución|prescindiendo\\s+del\\s+signo\\s+negativo|omitiendo\\s+la\\s+corrección\\s+cuadrática)",
+    "target_field": "options[].content"
+  },
+  {
+    "rule_id": "UNESCAPED_LATEX_BRACE_VARIABLE_RESIDUE",
+    "name": "Detección de Parámetros de Plantilla Escapados como Brackets LaTeX",
+    "severity": "HIGH",
+    "description": "Detecta cadenas del tipo '{a}', '{b}', '{c}', '{d}' o variables de un solo carácter entre llaves simples dentro de texto o expresiones LaTeX que evidencian f-strings mal formateadas (doble llave '{{b}}' en Python que resultó en literal '{b}').",
+    "regex_pattern": "(?<!\\\\)\\{[a-z]\\}(?![a-z])",
+    "target_field": "detailed_solution, stem, hints"
+  },
+  {
+    "rule_id": "UNFORMATTED_NEGATIVE_SIGN_COLLISION",
+    "name": "Colisión de Signos Aritméticos por Concatenación Negativa",
+    "severity": "MEDIUM",
+    "description": "Detecta artefactos de formateo algebraico defectuoso donde un coeficiente negativo es precedido directamente por el operador de adición ('+ -' o '+ -\\d+'), produciendo expresiones como '+ -8' o '+ -11y'.",
+    "regex_pattern": "\\+\\s*-\\s*\\d+",
+    "target_field": "stem, options[].content, detailed_solution"
+  },
+  {
+    "rule_id": "REDUNDANT_UNIT_ALGEBRAIC_COEFFICIENT",
+    "name": "Coeficientes Unitarios Redundantes en Expresiones Matemáticas",
+    "severity": "LOW",
+    "description": "Detecta la presencia de '1x', '1y', 'e^{1t}' en expresiones algebraicas que denotan falta de sanitización de plantillas paramétricas.",
+    "regex_pattern": "(?<![0-9a-zA-Z])1[a-zA-Z]|e\\^\\{1[a-zA-Z]\\}",
+    "target_field": "stem, options[].content, detailed_solution"
+  },
+  {
+    "rule_id": "SEMANTIC_DAG_ORPHAN_ROOT_THRESHOLD",
+    "name": "Umbral de Competencias Raíz sin Prerrequisitos en Cursos Avanzados",
+    "severity": "MEDIUM",
+    "description": "Alerta cuando más del 30% de las micro-competencias de un curso especializado carecen de prerrequisitos declarados en el grafo DAG, impidiendo un andamiaje adaptativo de maestría.",
+    "metric_threshold": "competencies_missing_prerequisites_count / total_competencies > 0.30",
+    "target_field": "competencies[].prerequisites"
+  }
+]
 ```
 
 ---
 
-## 2. Auditoría Detallada por Dimensiones
+## 7. Plan de Remediación Integral y Roadmap de Reingeniería
 
-### Dimensión 1: Arquitectura y Granularidad (3.2 / 4.0 pts)
+Para elevar este curso desde su estatus actual (**CRÍTICO: 10.8**) al estándar de certificación (**EXCELENTE: $\ge$ 17.0**), debe ejecutarse la siguiente secuencia de intervenciones pedagógicas y técnicas:
 
-* **Descomposición Curricular y Distribución de Categorías:**
-  El curso se organiza en 14 micro-competencias delimitadas con suficiencia de reactivos (entre 20 y 30 por competencia, sumando 370 en total):
-  * **Hechos [Fact] (0 competencias, 0.0%):** Ausencia total de micro-hechos o definiciones axiomáticas elementales.
-  * **Conceptos [Concept] (5 competencias, 35.7%):**
-    * `C-01`: Dualidad Microeconómica y EDPs de Homogeneidad de Euler (20 reactivos).
-    * `C-02`: Clasificación Cualitativa de Estados Estacionarios y Diagramas de Fase en Sistemas Continuos (20 reactivos).
-    * `C-03`: Fundamentos, Clasificación y Estructura de Solución de Ecuaciones en Derivadas Parciales (20 reactivos).
-    * `C-04`: Estructura Matricial y Estabilidad Dinámica de Sistemas Macroeconómicos Lineales (20 reactivos).
-    * `C-05`: Clasificación de Estabilidad de Sistemas de EDOs 2x2 mediante Traza y Determinante (20 reactivos).
-  * **Habilidades [Skill] (9 competencias, 64.3%):**
-    * `Hab-01`: Resolución de EDPs Cuasilineales de Primer Orden mediante el Método de Lagrange y Curvas Características (30 reactivos).
-    * `Hab-02`: Modelización y Optimización Económica mediante EDPs de Primer Orden y Teorema de Euler (30 reactivos).
-    * `Hab-03`: Modelado y Resolución de EDPs de Precios Espaciales con Costos de Transporte (30 reactivos).
-    * `Hab-04`: Resolución Analítica, Linealización y Evaluación de Perturbaciones en Sistemas Dinámicos 2D (30 reactivos).
-    * `Hab-05`: Resolución de EDPs Cuasilineales de Primer Orden mediante Curvas Características y el Sistema Auxiliar de Lagrange (30 reactivos).
-    * `Hab-06`: Linealización y Análisis Cualitativo de Sistemas Dinámicos no Lineales en Economía (30 reactivos).
-    * `Hab-07`: Resolución de Sistemas Lineales de EDO mediante Autovalores y Autovectores (30 reactivos).
-    * `Hab-08`: Linealización de Sistemas Dinámicos No Lineales en Puntos de Equilibrio (30 reactivos).
-    * `Hab-09`: Análisis Cualitativo de Sistemas de EDOs mediante Isoclinas y Diagramas de Fase (30 reactivos).
+```mermaid
+flowchart TD
+    Step1["Fase 1: Reingeniería Psicométrica de Opciones<br/>(Eliminar etiquetas delatoras y cláusulas auto-inculpatorias)"]
+    Step2["Fase 2: Depuración de Plantillas y KaTeX<br/>(Corregir {b}, {c}, {a}, resolver '+ -' y coeficientes unitarios)"]
+    Step3["Fase 3: Reparación Estructural del Grafo DAG<br/>(Conectar 7 nodos huérfanos y erradicar aristas espurias)"]
+    Step4["Fase 4: Diversificación Tipológica y Multi-Arquetipo<br/>(Introducir fill-in-the-blank, multi-select y 3 arquetipos/comp)"]
+    Step5["Fase 5: Re-auditoría Determinista y Semántica Top's Academy"]
 
-* **Análisis del Grafo de Prerrequisitos (DAG):**
-  La inspección forense revela serias inconsistencias en la topología de navegación formativa:
-  1. **Nodos de Habilidad Desconectados en la Raíz:** `Hab-01` (Lagrange y curvas características para EDPs) y `Hab-07` (Sistemas lineales EDO por autovalores) declaran `prerequisites: []`. Esto crea puntos de entrada en el grafo sin anclaje en los conceptos fundacionales que el mismo curso define (`C-03` para EDPs y `C-04`/`C-05` para autovalores y estabilidad matricial).
-  2. **Dependencias Cruzadas Anómalas (Cross-Wiring):**
-     * `Hab-03` (EDPs de precios geográficos con transporte) y `Hab-05` (EDPs cuasilineales por Lagrange) declaran como prerrequisito a `C-05` (*Clasificación de Estabilidad de Sistemas de EDOs 2x2 mediante Traza y Determinante*). La teoría de curvas características para EDPs espaciales no depende de los invariantes matriciales de un sistema lineal 2x2, sino de los fundamentos de EDPs (`C-03`).
-     * `Hab-02` (EDP de Euler en teoría de la producción y dualidad) declara como prerrequisito a `Hab-09` (*Isoclinas y Diagramas de Fase de EDOs*), cuando su prerrequisito epistemológico natural es `C-01` (*Dualidad Microeconómica y EDPs de Homogeneidad*) y `C-03`.
-  3. **Ausencia de Nivel Axiomático:** La falta de competencias [Fact] dificulta la graduación diagnóstica en estudiantes con lagunas conceptuales básicas (notación de operadores diferenciales, definición estricta de orden/grado).
+    Step1 --> Step2 --> Step3 --> Step4 --> Step5
+```
 
----
-
-### Dimensión 2: Calidad de Evaluación y Reactivos (4.2 / 5.0 pts)
-
-* **Volumen, Rigor y Cobertura:**
-  El banco evaluativo contiene 370 reactivos independientes (promedio de 26.4 preguntas por competencia). Los problemas no son ejercicios mecánicos triviales; exigen integración formal, parametrización de condiciones de Cauchy, inversión analítica de sistemas característicos $(s, t) \to (x, y)$, cálculo de invariantes jacobianos y resolución de sistemas lineales desacoplados.
-
-* **Integridad Diagnóstica de Distractores:**
-  * Se evaluaron los 2220 distractores del curso (6 por reactivo).
-  * **100.0% de cobertura de `error_rationale`:** Cada alternativa incorrecta cuenta con una justificación diagnóstica explícita que modela con fidelidad los sesgos y errores algebraicos típicos de la literatura (ej. cruzar denominadores en el sistema de Lagrange, omitir el grado de homogeneidad $n$ en la EDP de Euler, confundir $\Delta < 0$ con inestabilidad explosiva en lugar de foco amortiguado, omitir el signo negativo de la transposición al calcular $X^* = -A^{-1}B$, invertir el signo en el Lema de Hotelling).
-  * **Cero distractores delatores (*telltale distractors*):** Ningún distractor presenta metainformación espuria que delate el error en el texto visible del enunciado ("sumando erróneamente...").
-
-* **Ausencia de Fugas de Respuestas (*Answer Leaks*):**
-  Los 370 enunciados fueron auditados: ninguno expone la solución en el stem ni proporciona pistas gramaticales deterministas.
-
-* **Área de Oportunidad Psicométrica (Penalización Interna):**
-  * **Cero Diversidad de Modalidad:** El 100% de los reactivos es de opción múltiple de 7 alternativas (`multiple_choice_7_options`). Se desaprovechan formatos pedagógicos clave en matemáticas como `fill_in_the_blank` (para evaluar la capacidad de cálculo exacto de autovalores o coordenadas de equilibrio sin sesgo de anclaje de alternativas) y `multiple_select` (para verificar la comprensión simultánea de propiedades cualitativas).
-  * **Estructura Paramétrica Homogénea:** Los enunciados muestran patrones sintácticos reiterativos mediante bancos de prefijos fijos ("Aplicando las identidades teóricas pertinentes, evalúe: ...", "Con arreglo a las definiciones operativas del sistema, verifique: ...").
+1. **Reingeniería Psicométrica de Distractores (Prioridad Máxima - Inmediata):**
+   - Suprimir de forma radical todos los prefijos delatores en `Hab-07` y `Hab-08` (`Trayectoria exacta:`, `Desplazamiento erróneo...`, `Punto de reposo espurio`).
+   - Reescribir las opciones en `Hab-01`, `Hab-02`, `Hab-03`, `Hab-04` y `C-01` para que los distractores no expliquen en qué consiste su propio error, sino que expongan el resultado matemático verosímil que un alumno cometería.
+2. **Corrección de Plantillas de Solución y Residuos Literales:**
+   - Reparar los f-strings en el generador de soluciones para que las variables `{a}`, `{b}`, `{c}`, `{d}` se reemplacen por los valores enteros computados en tiempo de ejecución.
+   - Sustituir los símbolos abstractos como `v_2 = (1, -k)^T` por su correspondiente vector de autovalores numérico e imprimir la trayectoria particular evaluada final.
+3. **Módulo de Formateo de Polinomios y Expresiones Algebraicas:**
+   - Incorporar una función auxiliar de renderizado polinomial en Python que verifique los signos algebraicos:
+     - `+ -8` $\to$ `- 8`.
+     - `+ -11y` $\to$ `- 11y`.
+     - `1x` $\to$ `x`, `1y` $\to$ `y`.
+     - `e^{1t}` $\to$ `e^t`.
+4. **Diversificación de Instrumentos de Evaluación (Mastery Learning):**
+   - Desagregar el bloque monolítico de 30 reactivos por habilidad:
+     - 10 reactivos de opción múltiple con distractores corregidos.
+     - 10 reactivos de respuesta numérica directa (`fill_in_the_blank`) para evaluar autovalores, trazas o precios espaciales.
+     - 10 reactivos de selección múltiple (`multiple_select`) para verificar propiedades cualitativas del plano de fases (isoclinas y estabilidad).
+5. **Reconstrucción del Grafo DAG de Prerrequisitos:**
+   - Establecer `C-03` como prerrequisito formal de `Hab-01` y `Hab-05`.
+   - Establecer `C-05` como prerrequisito formal de `Hab-07`, `Hab-08` y `Hab-09`.
+   - Eliminar los enlaces artificiales entre `Hab-02` y `Hab-09`, y entre `Hab-03` y `C-05`.
+   - Asignar prerrequisitos a las 7 competencias raíz actualmente desarticuladas.
 
 ---
 
-### Dimensión 3: Andamiaje y Pistas Progresivas (4.0 / 5.0 pts)
+## 8. Conclusión del Auditor
 
-* **Estructura Socrática en Tres Niveles:**
-  El 100% de los reactivos (370/370) implementa un andamiaje escalonado de 3 pistas (1110 pistas en total) con estricta progresión cognitiva:
-  * **Pista 1 (Conceptual):** Establece el principio teórico rector (ej. "Identifique la correspondencia formal entre los coeficientes de las derivadas parciales de la EDP y los denominadores del sistema característico...", "Recuerde que el beneficio $\Pi(p, w)$ es homogéneo de grado 1...").
-  * **Pista 2 (Procedimental):** Señala el procedimiento operativo intermedio (ej. "Integre las ecuaciones subsidiarias por separado para hallar dos integrales primeras funcionalmente independientes...", "Plantee la condición de estado estacionario igualando el vector de derivadas a cero...").
-  * **Pista 3 (Operativa/Cierre):** Orienta el remate del cálculo sin entregar la respuesta directa (ej. "Parametrice la condición de contorno de Cauchy e invierta el sistema de coordenadas características $(s, t)$...", "Utilice el lema de Hotelling con su signo negativo para la demanda factorial...").
+El curso **`practica_parcial_saul_standard_coarse_v2`** obtiene una calificación de **10.8 / 20.0**, ubicándose inequívocamente en el tier **CRÍTICO**. 
 
-* **Soluciones Detalladas y Hallazgo Forense de Plantillas:**
-  Cada reactivo incorpora una `detailed_solution` que reconstruye la deducción analítica paso a paso. Sin embargo, el Semantic Verification Loop descubrió defectos de renderizado y residuos de plantillas que afectan directamente la experiencia formativa:
-  1. **Variables de Plantilla de una Llave sin Interpolar en KaTeX (`Hab-05`):**
-     En reactivos como `Q-Hab05-181` y `Q-Hab05-182`, la solución detallada contiene expresiones como:
-     $$\dots \implies {b} \frac{dx}{x} - 3 \frac{dy}{y} = 0 \quad \text{y} \quad {c} \frac{dx}{x} - 3 \frac{dU}{U} = 0$$
-     Debido a que en LaTeX las llaves `{...}` se interpretan como un grupo sintáctico invisible, KaTeX compila `{b}` como el símbolo matemático literal $b$ en vez de sustituirlo por el coeficiente numérico ($2$ o $5$). Esto genera confusión en el estudiante, quien observa un parámetro literal en un paso donde esperaba el coeficiente operativo.
-  2. **Matrices con Parámetros no Resueltos (`Hab-08`):**
-     En las soluciones de `Q-Hab08-291` y `Q-Hab08-292`, la matriz jacobiana intermedia retiene literales como $\beta$ o $j_{12}$ en vez de mostrar la matriz completamente evaluada numéricamente.
-  3. **Marcadores Literales en Isoclinas (`Hab-09`):**
-     En `Q-Hab09-321` y `Q-Hab09-322`, las ecuaciones de las isoclinas en la solución presentan `{a}x + 4y + -68 = 0` y `{d}x + -6y + -78 = 0`, evidenciando fallas en el motor de interpolación paramétrica.
+Su estado actual de **ELIMINADO** en la plataforma Top's Academy es rigurosamente respaldado por esta auditoría. Los defectos de *Answer Leaks* y etiquetas auto-delatoras en las opciones invalidan psicométricamente las evaluaciones, mientras que los residuos de plantillas de software comprometen la ergonomía pedagógica. El curso no debe publicarse ni reactivarse hasta que se cumpla la totalidad de las remediaciones estipuladas.
 
 ---
-
-### Dimensión 4: Alineación Instruccional (4.0 / 4.0 pts)
-
-* **Congruencia Semántica y Rigor Conceptual:**
-  Existe un alineamiento perfecto entre los objetivos de aprendizaje de la práctica parcial y el contenido evaluado. No se identificaron preguntas huérfanas ni contaminación temática de otras áreas econométricas o estadísticas ajenas.
-* **Profundidad Matemática:**
-  Los tópicos modelan de manera rigurosa problemas estándar de exámenes de posgrado o pregrado avanzado en economía matemática:
-  * Condiciones de Cauchy para EDPs cuasilineales en dominios espaciales.
-  * Funciones de producción homogéneas, derivación de sendas de expansión mediante $\text{RMS} = w/r$ y condiciones de segundo orden para beneficios competitivos.
-  * Modelos de Goodwin con ciclos cerrados (centros neutros conservativos con $\lambda = \pm i\omega$).
-  * Clasificación analítica y geométrica de puntos de silla, nodos y focos a partir del polinomio característico $\det(A - \lambda I) = \lambda^2 - \operatorname{tr}(A)\lambda + \det(A) = 0$.
-* **Taxonomía de Bloom:**
-  La carga cognitiva se concentra en habilidades de orden superior: 62% en *Aplicar* (Bloom 3) y 38% en *Analizar* (Bloom 4).
-
----
-
-### Dimensión 5: Accesibilidad y Ergonomía Técnica / KaTeX (1.4 / 2.0 pts)
-
-* **Compilación y Balanceo Sintáctico:**
-  El linter determinista confirmó 0 delimitadores rotos, 0 triples delimitadores (`$$$`) y 0 llaves LaTeX no cerradas. Todas las expresiones compilan formalmente en el motor KaTeX del frontend.
-* **Vicios de Ergonomía y Formateo Matemático:**
-  A pesar de no causar un error fatal en el renderizador, existen fallas ergonómicas sistemáticas en la presentación visual de las fórmulas:
-  1. **Concatenación Cruda de Signos Aritméticos:**
-     En los enunciados y soluciones de `Hab-09` (ej. `Q-Hab09-321`, `Q-Hab09-322`), se inyectan números negativos sin resolver el signo algebraico:
-     $$\dot{x} = 1x + 1y + -8 \quad \text{y} \quad \dot{y} = 12x + -6y + -78$$
-     Esto debe simplificarse algebraicamente como $\dot{x} = x + y - 8$ y $\dot{y} = 12x - 6y - 78$.
-  2. **Coeficientes Unitarios Redundantes:**
-     Presencia de expresiones como `1x` y `1y` en lugar de la notación estándar $x$ e $y$.
-  3. **Fuga de Variables de Plantilla en Modo Matemático:**
-     La presencia de `{a}`, `{b}`, `{c}`, `{d}` dentro de bloques `$...$` degrada la claridad de las demostraciones paso a paso.
-
----
-
-## 3. Penalizaciones Duras Automáticas (Hard Deductions)
-
-Se auditaron los tres criterios normativos del marco Top's Academy:
-1. **Banco por unidad insuficiente (< 3 problemas):** No aplica. Todas las competencias cuentan con entre 20 y 30 ejercicios reales e independientes. Deducción: **-0.0 pts**.
-2. **Reactivos sin pistas progresivas (`hints = 0`):** No aplica. El 100% de los reactivos posee exactamente 3 pistas escalonadas. Deducción: **-0.0 pts**.
-3. **Preguntas huérfanas críticas:** No aplica. Todos los reactivos corresponden estrictamente al temario instruccional. Deducción: **-0.0 pts**.
-
-**Total Deducciones Duras:** **0.0 puntos**.
-
----
-
-## 4. Reglas de Linting Descubiertas (Discovered Lint Rules)
-
-A partir del análisis semántico y forense, se codifican formalmente 4 nuevas reglas para su incorporación al motor de linting estático de Top's Academy:
-
-### 1. `RULE_KATEX_SINGLE_BRACE_TEMPLATE_RESIDUE`
-* **Dimensión:** `technical_ergonomics` / `scaffolding_hints`
-* **Severidad:** `warning`
-* **Descripción:** Detecta identificadores de plantillas de una sola llave (`{a}`, `{b}`, `{c}`, `{d}`) dentro de expresiones KaTeX (`$...$` o `$$...$$`) que no fueron sustituidos por el interpolador, renderizando como texto literal en lugar del coeficiente escalar numérico.
-* **Patrón Regex:** `(?<=\$)[^$]*\{[a-zA-Z]\}(?=[^$]*\$)`
-* **Fragmento Muestra:** `${b} \frac{dx}{x} - 3 \frac{dy}{y} = 0$`
-* **Reactivos Afectados Estimados:** ~60 ítems (en soluciones de `Hab-05` y `Hab-09`).
-
-### 2. `RULE_ARITHMETIC_UNNORMALIZED_SIGN_CONCATENATION`
-* **Dimensión:** `technical_ergonomics`
-* **Severidad:** `minor`
-* **Descripción:** Detecta la concatenación cruda de operadores aritméticos (`+ -` o `- -`) y coeficientes unitarios redundantes (`1x`, `1y`) generados por inyección paramétrica sin simplificación algebraica.
-* **Patrón Regex:** `(?:[+\-]\s*[+\-]\s*\d+|\b1[a-zA-Z]\b)`
-* **Fragmento Muestra:** `\dot{x} = 1x + 1y + -8`
-* **Reactivos Afectados Estimados:** ~60 ítems (enunciados y soluciones de `Hab-09`).
-
-### 3. `RULE_DAG_DISCONNECTED_OR_MISALIGNED_PREREQUISITES`
-* **Dimensión:** `architecture_granularity`
-* **Severidad:** `warning`
-* **Descripción:** Identifica competencias de habilidad (`Skill`) sin prerrequisitos declarados (`prerequisites: []`) cuando existen conceptos basales en el curso, o con dependencias cruzadas incongruentes entre ramas matemáticas distintas (ej. EDPs dependiendo de EDOs 2x2).
-* **Patrón Regex:** N/A (validación estructural de grafo)
-* **Fragmento Muestra:** `"Hab-01": {"prerequisites": []}`, `"Hab-03": {"prerequisites": ["C-05"]}`
-* **Competencias Afectadas:** 7 competencias.
-
-### 4. `RULE_ASSESSMENT_ZERO_ITEM_TYPE_DIVERSITY`
-* **Dimensión:** `assessment_quality`
-* **Severidad:** `minor`
-* **Descripción:** Alerta cuando un curso presenta nula variabilidad psicométrica al componerse en un 100% de una única tipología de ítem (ej. `multiple_choice_7_options`), recomendando la inclusión de reactivos de completación numérica (`fill_in_the_blank`) y selección múltiple (`multiple_select`).
-* **Patrón Regex:** N/A (telemetría métrica)
-* **Fragmento Muestra:** `"question_types_distribution": {"multiple_choice_7_options": 370}`
-* **Reactivos Afectados:** 370 ítems.
-
----
-
-## 5. Plan de Remediación y Acciones Prioritarias
-
-Para elevar la calificación del curso del rango **ACEPTABLE (16.8 / 20.0)** al rango **EXCELENTE (> 18.5 / 20.0)**, se prescribe la ejecución del siguiente plan de acción:
-
-| Prioridad | Dimensión | Acción Correctiva Recomendada | Esfuerzo Estimado | Impacto en Puntaje |
-| :---: | :--- | :--- | :---: | :---: |
-| **Alta** | Ergonomía Técnica | **Normalizar Expresiones Algebraicas:** Implementar una función de limpieza de signos (`clean_polynomial_signs`) que transforme `+ -8` en `- 8` y `1x` en `x` en stems y soluciones de `Hab-09`. | Inmediato (< 1h) | +0.3 pts |
-| **Alta** | Andamiaje / Ergonomía | **Subsanar Residuos de Plantillas en KaTeX:** Reemplazar las llaves `{b}` y `{c}` en `detailed_solution` de `Hab-05` y `{a}`, `{d}` en `Hab-09` por los valores numéricos correspondientes. | Inmediato (< 1h) | +0.4 pts |
-| **Media** | Arquitectura Curricular | **Reconfigurar el Grafo DAG de Prerrequisitos:** Asignar `C-03` como prerrequisito de `Hab-01`, `Hab-03` y `Hab-05`; reasignar `Hab-02` a `C-01` y `C-03`; y anclar `Hab-07` a `C-04` y `C-05`. | Medio (2h) | +0.5 pts |
-| **Media** | Evaluación / Psicométrica | **Diversificar Tipologías de Reactivo:** Transformar el 25% del banco (aprox. 90 preguntas) a formatos `fill_in_the_blank` (cálculo de autovalores y puntos fijos) y `multiple_select` (propiedades de estabilidad). | Medio (4h) | +0.4 pts |
-| **Baja** | Arquitectura Curricular | **Incorporar Micro-Competencias de Hechos [Fact]:** Añadir 2 o 3 micro-competencias sobre taxonomía y notación básica para equilibrar la base de la pirámide cognitiva. | Largo (6h) | +0.2 pts |
-
----
-
-## 6. Dictamen Final
-
-El curso **`practica_parcial_saul_standard_coarse_v2`** obtiene una calificación de **16.8 / 20.0**, ubicándose en el **Quality Tier ACEPTABLE**. El curso cuenta con un contenido temático sobresaliente, una cobertura analítica exhaustiva y un andamiaje socrático robusto. Una vez implementadas las correcciones sintácticas de plantillas y la reconfiguración del grafo de prerrequisitos, el curso calificará de forma inmediata para la certificación **EXCELENTE** en la plataforma Top's Academy.
+*Reporte generado y certificado bajo los estándares de auditoría de Top's Academy.*

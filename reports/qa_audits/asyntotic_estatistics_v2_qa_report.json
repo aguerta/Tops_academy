@@ -1,71 +1,82 @@
 {
   "course_metadata": {
     "course_id": "asyntotic_estatistics_v2",
-    "unit_title": "Asyntotic Estatistics V2 (Estadística Asintótica y Econometría de Muestras Grandes)",
-    "detected_objective": "Dominio y aplicación analítica integral de la teoría asintótica econométrica en muestras grandes (Greene, 5ta ed.): convergencia en probabilidad y en distribución, consistencia de MCO, teorema de Slutsky, teorema de mapeo continuo de Mann-Wald, método Delta multivariado, matrices robustas White HC0, estimación por variables instrumentales (IV), contrastes de especificación de Hausman y pruebas asintóticas de Wald bajo álgebra de órdenes de magnitud estocástica Op y op.",
+    "unit_title": "Asyntotic Estatistics V2",
+    "detected_objective": "Dominio analítico y aplicación formal de la teoría asintótica econométrica en grandes muestras: consistencia, leyes de grandes números, teoremas del límite central, método delta multivariado, endogeneidad, estimación por variables instrumentales (VI/2SLS), contraste de especificación de Hausman y corrección por error de medición.",
     "total_competencies": 32,
     "total_questions": 740,
-    "question_types_distribution": {
-      "multiple_choice_7_options": 740
-    },
-    "platform_status": "ACTIVO",
-    "evaluator": "Course QA Auditor — Top's Academy",
-    "evaluation_date": "2026-10-23"
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-10-25 10:11:44"
   },
   "dimension_scores": {
     "architecture_granularity": {
-      "score": 4.0,
+      "score": 2.8,
       "max": 4.0,
-      "feedback": "Excelente arquitectura curricular modular y de alta densidad con 32 micro-competencias atómicas. Distribución balanceada: 6 Hechos (18.75%), 16 Conceptos (50.0%) y 10 Habilidades cuantitativas y analíticas (31.25%). Grafo Acíclico Dirigido (DAG) 100% formalizado con 2 nodos axiomáticos raíz bien definidos (H-01 y H-04), 30 competencias con dependencias explícitas y libres de ciclos (validación de ciclos: False). La densidad por competencia oscila entre 20 reactivos (Hechos y Conceptos) y 30 reactivos (Habilidades), acumulando 740 preguntas que superan ampliamente los requisitos regulatorios de Mastery Learning."
+      "feedback": "Micro-competencias atómicas con formulación analítica precisa y balance cognitivo sólido (6 Hechos [18.8%], 16 Conceptos [50.0%], 10 Habilidades [31.2%]). Sin embargo, presenta una inversión curricular topológica severa: las competencias de aplicación econométrica (posiciones 1 a 16) tienen como prerrequisitos a las competencias fundamentales de estadística matemática (posiciones 17 a 32), forzando al estudiante a enfrentar conceptos avanzados de MCO, VI y 2SLS antes de formalizar la convergencia en probabilidad, la ley de grandes números o el TLC."
     },
     "assessment_quality": {
-      "score": 5.0,
+      "score": 3.2,
       "max": 5.0,
-      "feedback": "Calidad psicométrica sobresaliente. Banco integral de 740 reactivos en formato de opción múltiple de 7 alternativas (A-G), reduciendo la probabilidad de acierto por azar al 14.3%. Se evaluaron 4,440 distractores con una cobertura del 100.0% de rationales diagnósticos específicos (error_rationale), modelando fielmente confusiones teóricas reales en econometría asintótica (inversión de matrices en formulaciones sandwich IV, confusión entre convergencia en probabilidad y media cuadrática, omisión de normalización por raíz de n, atribución errónea de ganancias de eficiencia a IV sobre MCO, y aplicación indebida de Slutsky a razones con denominadores que convergen a cero). Cero distractores delatores (telltale = 0) y cero fugas de respuestas (answer leaks = 0)."
+      "feedback": "Excelente calidad diagnóstica de distractores con 100% de cobertura en error_rationale (4,440/4,440) y cero answer leaks. No obstante, sufre de nula variedad tipológica (100% de los 740 ítems son MC-7, sin reactivos de selección múltiple ni fill-in-the-blank) y baja diversidad de arquetipos por competencia (cada competencia clona 20 o 30 veces un único problema paramétrico alternando 18 prefijos rotativos, induciendo rápida mecanización del alumno)."
     },
     "scaffolding_hints": {
-      "score": 5.0,
+      "score": 3.5,
       "max": 5.0,
-      "feedback": "Andamiaje socrático y retroalimentación formativa de excelencia. El 100% de los reactivos (740/740) incorpora exactamente 3 pistas progresivas escalonadas bajo el modelo pedagógico socrático: Pista 1 (Marco Conceptual e identidades fundamentales) -> Pista 2 (Estrategia Procedimental y métodos analíticos) -> Pista 3 (Operación paso a paso y verificación de límites/signos). El 100% de los reactivos posee detailed_solution rigurosa con justificación analítica completa y advertencia explícita de concepciones erróneas comunes (common_misconception_warning). Cero residuos de placeholders f-string y cero variables de plantilla no resueltas."
+      "feedback": "Todos los reactivos cuentan con 3 pistas socráticas escalonadas en lenguaje natural (Conceptual -> Procedimental -> Operativa/Cálculo), sin stub hints ni códigos crudos de prerrequisitos. Se deduce puntaje por la invariabilidad de las pistas entre ítems hermanos de la misma micro-competencia, la ausencia de advertencias explícitas de ideas preconcebidas erróneas (misconception warnings) en detailed_solution, y la presencia de residuos f-string sin interpolar en varias soluciones."
     },
     "instructional_alignment": {
-      "score": 4.0,
+      "score": 3.8,
       "max": 4.0,
-      "feedback": "Alineación instruccional impecable y congruencia semántica absoluta con la literatura de econometría avanzada (Greene, caps. 4, 5, 9 y apéndices asintóticos). El curso abarca exhaustivamente todas las áreas críticas de la teoría asintótica: matriz de momentos regular Q, Grenander, Slutsky, Mann-Wald, método Delta, covarianza White HC0, estimación IV y condiciones de rango, estadístico de Hausman, estadístico de Wald invariante y cálculo de órdenes estocásticos Op y op. Fuerte anclaje en niveles de Bloom de Aplicación y Análisis. Cero preguntas huérfanas."
+      "feedback": "Extraordinario rigor conceptual y alineación con la econometría teórica de posgrado (Greene, Hayashi, Wooldridge). Fuerte anclaje en niveles Bloom de Análisis y Aplicación analítica. Cero preguntas huérfanas (los 740 ítems mapean a competencias válidas con bancos de 20 a 30 ejercicios por competencia). Leve descuento por la desconexión secuencial lineal entre teoría fundacional y aplicación práctica."
     },
     "technical_ergonomics": {
-      "score": 1.9,
+      "score": 1.4,
       "max": 2.0,
-      "feedback": "Ergonomía técnica y compilabilidad KaTeX de alta calidad. Cero llaves desbalanceadas, cero delimitadores triples ($$$), cero dobles llaves residuales y cero delimitadores abiertos sin cierre en validación determinista. Se observa una deducción cosmética menor (-0.1 pt) por la aparición ocasional de números en notación científica cruda sin formatear en KaTeX (ej. '1e-05' en opción B de Q-Hab03-221) y encapsulamiento redundante con llaves superfluas '{...}' alrededor de expresiones '\\frac' en soluciones detalladas generadas por subagentes en respuesta a reglas de escape."
+      "feedback": "Sintaxis KaTeX mayoritariamente balanceada y compilable sin triples dólares ($$$). Sin embargo, se identificaron defectos técnicos de interpolación: presencia de residuos literales de f-strings en detailed_solution ({delta22}, {sigma2}, {beta1}, {beta2}, {sig11}, {sig22}) e interpolación algebraica defectuosa de números negativos que genera expresiones con doble signo menos (|X_n - -4| y \\sqrt{n}(\\hat{\\theta}_n - -3))."
     }
   },
   "penalties_applied": [],
-  "final_score": 19.9,
-  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "final_score": 14.7,
+  "quality_tier": "ACEPTABLE (14-16)",
   "remediation_actions": [
-    "Aprobación técnica e instruccional definitiva para despliegue en la plataforma interactiva Top's Academy.",
-    "Normalización de Notación Científica en Generadores: Añadir un formateador numérico determinista en el engine de instanciación que convierta valores flotantes pequeños < 1e-4 en notación decimal o científica formateada en LaTeX (ej. 1 \\times 10^{-5} en lugar de '1e-05').",
-    "Saneamiento de Llaves Redundantes en Fracciones: Incorporar una regla de limpieza de post-procesamiento que remueva llaves superfluas '{' y '}' que envuelven inmediatamente a comandos '\\frac' en detailed_solution."
+    "Reordenamiento Curricular Topológico: Reestructurar el índice secuencial de competencias para ubicar las bases estocásticas (H-04 a Hab-10: convergencia en probabilidad, media cuadrática, Slutsky, TLC, método delta, órdenes O/o) en el Bloque Inicial (competencias 1 a 16) y las aplicaciones econométricas (H-01 a C-08: MCO, VI, 2SLS, Hausman, errores de medición) en el Bloque Avanzado (competencias 17 a 32).",
+    "Corrección de Residuos de Interpolación en Detailed Solutions: Reparar los templates de generación para evaluar debidamente los placeholders {delta22} en C-03 (Q-C03-141/142), {sigma2} en C-13 (Q-C13-551/552), y {beta1}, {beta2}, {sig11}, {sig22} en Hab-09 (Q-Hab09-621/622).",
+    "Normalización de Signos Algebraicos: Implementar una función auxiliar de formato algebraico que convierta sustracciones de valores negativos como 'x - -4' en 'x + 4' o 'x - (-4)' en C-11, C-12 y C-14.",
+    "Diversificación Tipológica de Reactivos: Introducir formatos complementarios como 'multiple_select' (para verificación simultánea de condiciones de regularidad como Grenander o supuestos de Khinchine) y 'fill_in_the_blank' numéricos (para cálculo de límites de probabilidad y varianzas asintóticas), reduciendo el monopolio absoluto de reactivos MC-7.",
+    "Ruptura de la Monotonía de Arquetipos Paramétricos: Enriquecer cada competencia con al menos 2 o 3 arquetipos cualitativos, conceptuales o de interpretación gráfica/matricial independientes para mitigar la mecanización predictiva del estudiante.",
+    "Incorporación de Misconception Warnings en Soluciones: Añadir un acápite explícito 'Advertencia de Error Común' en detailed_solution que contraste la solución analítica con los sesgos y trampas conceptuales presentes en los distractores principales."
   ],
   "discovered_lint_rules": [
     {
-      "rule_id": "scientific_notation_float_format_linter",
-      "severity": "low",
-      "description": "Detecta opciones o textos que contienen números en formato de notación científica de Python (ej. '1e-05', '2.5e-06') en lugar de la notación matemática estándar en LaTeX (ej. '$1 \\times 10^{-5}$' o '$0.00001$'), preservando la elegancia tipográfica en el frontend.",
-      "regex_pattern": "\\b\\d+(?:\\.\\d+)?[eE][+-]?\\d+\\b",
-      "evidence_items": [
-        "Q-Hab03-221"
-      ]
+      "rule_id": "LINT-FSTRING-MATH-LATEX-DETECTOR",
+      "severity": "CRITICAL",
+      "description": "Detecta identificadores de plantillas Python residuales entre llaves simples dentro de bloques matemáticos LaTeX (ej. '{sigma2}', '{delta22}', '{beta1}'). Los linters de KaTeX los ignoran porque las llaves simples son sintácticamente válidas para agrupar tokens en LaTeX, permitiendo que variables no interpoladas se rendericen de forma defectuosa al usuario.",
+      "trigger_pattern": "\\$[^$]*\\{[a-zA-Z0-9_]{3,}\\}[^$]*\\$",
+      "remediation": "Validar que cualquier subcadena '{token}' dentro de strings de salida no coincida con el nombre de variables locales o parámetros de plantillas."
     },
     {
-      "rule_id": "redundant_outer_brace_frac_linter",
-      "severity": "low",
-      "description": "Detecta encapsulamientos redundantes con llaves simples alrededor de expresiones '\\frac' (ej. '{\\frac{1100}{302500}}') que no alteran la semántica pero reflejan restos de auto-parcheo en autores de shards.",
-      "regex_pattern": "\\{\\\\frac\\{[^}]+\\}\\{[^}]+\\}\\}",
-      "evidence_items": [
-        "Q-Hab03-221"
-      ]
+      "rule_id": "LINT-DOUBLE-MINUS-INTERPOLATION",
+      "severity": "WARNING",
+      "description": "Detecta artefactos de interpolación cruda donde un valor negativo es insertado directamente tras un signo menos (ej. 'x - -4' o '\\theta - -3'), produciendo expresiones matemáticas tipográficamente inapropiadas.",
+      "trigger_pattern": "(?:-|\\b)\\s*-\\s*\\d+",
+      "remediation": "Encapsular la interpolación de sustracciones en un helper que transforme 'a - (-b)' en 'a + b' o 'a - (b)' según el contexto matemático."
+    },
+    {
+      "rule_id": "LINT-CURRICULAR-TOPOLOGICAL-SEQUENCE",
+      "severity": "HIGH",
+      "description": "Detecta cursos donde el orden de presentación lineal (índice 0 a N-1) viola el ordenamiento topológico del DAG de prerrequisitos, ubicando módulos avanzados antes de sus prerrequisitos fundamentales.",
+      "trigger_pattern": "competencies[i].prerequisites contains competency with index j > i",
+      "remediation": "Ejecutar una ordenación topológica canónica sobre el array de competencias antes de persistir o publicar el curso en la plataforma."
+    },
+    {
+      "rule_id": "LINT-ITEM-ARCHETYPE-CLONING-RATIO",
+      "severity": "MEDIUM",
+      "description": "Calcula el ratio de similitud estructural entre ítems de un mismo banco. Si más del 80% de las preguntas de una competencia provienen de una única plantilla paramétrica con idénticos distractores y sólo sustitución numérica / rotación de prefijos, emite alerta de riesgo de mecanización cognitiva.",
+      "trigger_pattern": "unique_distractor_id_sets_per_competency == 1 and total_questions_per_competency >= 15",
+      "remediation": "Exigir un mínimo de 3 arquetipos pedagógicos disímiles por banco de competencia cuando la población de ítems sea mayor o igual a 15."
     }
   ],
-  "platform_status": "ACTIVO"
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-25 10:11:44",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

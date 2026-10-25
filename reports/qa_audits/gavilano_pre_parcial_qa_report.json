@@ -1,0 +1,80 @@
+{
+  "course_metadata": {
+    "course_id": "gavilano_pre_parcial",
+    "unit_title": "Gavilano Pre Parcial (Organización Industrial y Microeconomía Aplicada)",
+    "detected_objective": "Dominio y aplicación analítica integral de los modelos fundamentales y avanzados de Organización Industrial y Microeconomía: competencia oligopólica (Cournot simétrico y con costos heterogéneos para n firmas, Bertrand homogéneo y diferenciado con sustituibilidad imperfecta, Stackelberg secuencial con inducción hacia atrás, colusión óptima en carteles y pérdida irrecuperable de eficiencia, modelo de Sweezy de curva de demanda quebrada con conjeturas asimétricas y rigidez local de precios, modelo de Hotelling de diferenciación espacial en la ciudad lineal con costos de transporte lineales y cuadráticos, modelo de Salop de ciudad circular con libre entrada y costos fijos, competencia monopolística de Spence-Dixit-Stiglitz con función de utilidad CES), taxonomía de Pigou para discriminación de precios (1er grado o perfecta, 2do grado con screening bajo asimetría informacional y restricciones de incentivos/participación, 3er grado con segmentación de submercados observables y regla de Lerner) y teoría de bienes durables (monopolio intertemporal en venta vs. alquiler, inconsistencia dinámica y conjetura de Coase).",
+    "total_competencies": 127,
+    "total_questions": 2950,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 2950
+    },
+    "platform_status": "ACTIVO",
+    "evaluator": "Course QA Auditor — Top's Academy",
+    "evaluation_date": "2026-10-25"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Arquitectura modular y granular de excelencia superior. El curso delimita con precisión 127 micro-competencias atómicas con una distribución balanceada según principios de Mastery Learning: 32 Hechos [Fact] (25.2%), 54 Conceptos [Concept] (42.5%) y 41 Habilidades [Skill] (32.3%). El Grafo Acíclico Dirigido (DAG) modela de forma rigurosa la progresión del conocimiento, contando con 10 nodos raíz axiomáticos que corresponden a los puntos de entrada temáticos del curso (H-01 Cournot, H-04 Bertrand Homogéneo, C-10 Bertrand Diferenciado, H-12 Stackelberg, H-16 Colusión/Cartel, H-18 Sweezy, H-20 Hotelling, Hab-21 Salop, C-34 Spence-Dixit-Stiglitz, H-28 Lerner/Monopolio) y 117 competencias con dependencias secuenciales sin ciclos. Cada competencia cuenta con un banco profundo de 20 preguntas (Hechos y Conceptos) o 30 preguntas (Habilidades), acumulando un banco masivo de 2,950 ítems que garantiza una evaluación formativa robusta."
+    },
+    "assessment_quality": {
+      "score": 4.8,
+      "max": 5.0,
+      "feedback": "Calidad psicométrica sobresaliente en el diseño de reactivos antiazar. El 100% de los reactivos (2,950/2,950) implementa el formato de opción múltiple de 7 alternativas (A-G), reduciendo la probabilidad de acierto por conjetura a solo 14.3%. Se evaluaron 17,700 distractores con una cobertura del 100.0% de rationales diagnósticos (error_rationale), modelando fielmente conceptos erróneos de la literatura microeconómica (inversión de signos en el Teorema de la Función Implícita, omisión del término inframarginal en el ingreso marginal, confusión entre sustitutos y complementos estratégicos, omisión de términos cuadráticos en la CSO de precios, confusión entre traza y radio espectral para estabilidad en tiempo discreto, violación de restricciones de holgura complementaria de Kuhn-Tucker, y errores de cálculo en excedentes y pérdida irrecuperable de eficiencia). Cero distractores delatores (telltale = 0) y cero fugas de respuestas. Se aplica una deducción menor (-0.2 pt) por monocultivo tipológico exclusivo (100% opción múltiple de 7 alternativas, sin incluir reactivos de selección múltiple o fill-in-the-blank)."
+    },
+    "scaffolding_hints": {
+      "score": 3.7,
+      "max": 5.0,
+      "feedback": "Andamiaje formativo funcional y detallado en la gran mayoría del banco, pero con una falla crítica identificada en el Loop de Verificación Semántica: el 97.6% de los reactivos (2,880/2,950) posee 3 pistas socráticas y soluciones detalladas completas con demostraciones analíticas. No obstante, en tres competencias completas de la sección del modelo de Sweezy (C-26 'Discontinuidad e Intervalo de Brecha del Ingreso Marginal' [20 reactivos], H-19 'Condición de Optimalidad en Punto No Diferenciable' [20 reactivos] y Hab-16 'Determinación del Intervalo de Costo Marginal Compatible con la Rigidez' [30 reactivos]), totalizando 70 reactivos (2.37% del banco), el arreglo 'hints' contiene únicamente palabras clave aisladas o tags con guión bajo (ej. ['Sweezy', 'Oligopolio', 'Demanda_quebrada'], ['Sweezy', 'Optimalidad', 'Quiebre'] y ['Sweezy', 'Rigidez', 'Costo_marginal']) en lugar de instrucciones socráticas en prosa escalonada. Aunque este defecto eludió los linters deterministas estáticos (que solo validan len >= 3), degrada severamente el andamiaje pedagógico en dichos ítems, justificando una deducción de -1.3 pts en esta dimensión."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación pedagógica e instruccional perfecta. Existe correspondencia biunívoca absoluta entre los objetivos formativos declarados, las definiciones analíticas y los reactivos de evaluación. El curso cubre exhaustivamente el núcleo de Organización Industrial avanzado: Cournot, Bertrand homogéneo y diferenciado, Stackelberg, colusión y carteles, demanda quebrada de Sweezy, diferenciación espacial de Hotelling y Salop, competencia monopolística de Spence-Dixit-Stiglitz, discriminación de precios de Pigou en 1er, 2do y 3er grado, y monopolio de bienes durables con la conjetura de Coase. Cero preguntas huérfanas (orphan_questions_count = 0) y cero contaminación inter-dominio, con un anclaje preponderante en niveles de Aplicación (60%) y Análisis/Evaluación (40%) de la taxonomía de Bloom."
+    },
+    "technical_ergonomics": {
+      "score": 2.0,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica y compilabilidad KaTeX impecables. Cero llaves desbalanceadas, cero delimitadores triples ($$$), cero dobles llaves espurias ({{...}}), cero delimitadores abiertos sin cierre, cero residuos de plantillas f-string y cero sustituciones ciegas de cadenas. Todas las fórmulas matemáticas, matrices, derivadas implícitas, derivadas laterales, integrales de excedente, límites asintóticos y fracciones se compilan de manera limpia y sin fallos de parseo en el motor de renderizado de Top's Academy. Prosa académica en español neutro, rigurosa y formal."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 18.5,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "remediation_actions": [
+    "Aprobación formal para despliegue en plataforma interactiva Top's Academy, certificada en Tier EXCELENTE (18.5 / 20.0).",
+    "Remediación focalizada de Pistas en C-26, H-19 y Hab-16: Regenerar las 3 pistas escalonadas en los 70 reactivos afectados (Q-C26-1281 a Q-C26-1300, Q-H19-1301 a Q-H19-1320 y Q-Hab16-1371 a Q-Hab16-1400) reemplazando los arreglos de palabras clave stubs (['Sweezy', 'Oligopolio', 'Demanda_quebrada'], ['Sweezy', 'Optimalidad', 'Quiebre'] y ['Sweezy', 'Rigidez', 'Costo_marginal']) por andamiaje socrático real en prosa (Pista 1: Marco Conceptual, Pista 2: Estrategia Procedimental, Pista 3: Cálculo Operativo).",
+    "Incorporación del nuevo linter preventivo 'keyword_stub_hint_linter' en la suite de linters deterministas de StandardizedAuditEngine para bloquear futuros pipelines donde se inyecten tags o palabras clave aisladas en el campo 'hints'.",
+    "Exploración futura de diversificación tipológica para enriquecer el formato de evaluación incorporando preguntas de valor numérico exacto (fill-in-the-blank) y opciones múltiples múltiples (multiple-select)."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "keyword_stub_hint_linter",
+      "severity": "high",
+      "description": "Detecta reactivos donde las entradas del arreglo de pistas ('hints') consisten en palabras clave individuales o tags en snake_case (ej. 'Sweezy', 'Optimalidad', 'Demanda_quebrada', 'Costo_marginal') en lugar de enunciados socráticos estructurados en prosa que guíen al estudiante en su razonamiento.",
+      "proposed_detection_logic": "Flag item if any hint string has <= 2 words, contains '_' as a tag separator, or has length < 15 characters without forming an explanatory sentence.",
+      "affected_items_count": 70,
+      "affected_competencies": [
+        "C-26",
+        "H-19",
+        "Hab-16"
+      ],
+      "evidence_items": [
+        "Q-C26-1281",
+        "Q-C26-1282",
+        "Q-H19-1301",
+        "Q-H19-1302",
+        "Q-Hab16-1371",
+        "Q-Hab16-1372"
+      ]
+    },
+    {
+      "rule_id": "boilerplate_hint_template_variation_linter",
+      "severity": "low",
+      "description": "Detecta si una proporción sustancial del banco de reactivos (> 30%) utiliza fórmulas retóricas idénticas al inicio de las pistas ('Identifique la estructura conceptual de...', 'Revise el procedimiento analítico paso a paso para...'), recomendando mayor variedad en la formulación pedagógica adaptada a cada micro-competencia.",
+      "proposed_detection_logic": "Flag course warning if more than 35% of hint strings share identical 6-gram prefixes across distinct competencies."
+    }
+  ],
+  "platform_status": "ACTIVO"
+}

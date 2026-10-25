@@ -4,72 +4,55 @@
     "unit_title": "El Modelo de Crecimiento Económico de Solow (1956)",
     "detected_objective": "Comprender, formular y resolver dinámicamente el modelo neoclásico de crecimiento económico de Solow (1956), analizando sus propiedades de estabilidad, implicaciones de precios factoriales, dinámicas de transición y extensiones analíticas.",
     "total_competencies": 25,
-    "total_questions": 580,
-    "platform_status": "ELIMINADO",
-    "deleted_at": "2026-10-16 19:08:36"
+    "total_questions": 580
   },
   "dimension_scores": {
     "architecture_granularity": {
-      "score": 4,
-      "max": 4,
-      "feedback": "Excelente granularidad y atomización conceptual con 25 competencias bien balanceadas (5 Hechos, 12 Conceptos y 8 Habilidades) que cubren exhaustivamente la dinámica de Solow (1956) y Chiang cap. 15. El grafo de dependencias (DAG) está 100% conectado, acíclico y validado formalmente, modelando con rigor todas las relaciones de precedencia pedagógica para Mastery Learning."
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Arquitectura curricular excepcional. Modelado como un grafo acíclico dirigido (DAG) perfecto donde H-01 actúa como raíz axiomática y las 24 micro-competencias subsiguientes se ramifican de forma estrictamente secuencial y acumulativa. La carga cognitiva está balanceada óptimamente entre Hechos (5 comps, 20.0%), Conceptos (12 comps, 48.0%) y Habilidades procedimentales avanzadas (8 comps, 32.0%). Densidad de banco robusta con 20 a 30 reactivos por micro-competencia sin unidades subpobladas."
     },
     "assessment_quality": {
       "score": 4.8,
-      "max": 5,
-      "feedback": "Banco extenso de 580 reactivos con balance tipológico óptimo (267 FIB, 233 MS, 80 MC7) y 100% de cobertura en rationales diagnósticos de distractores (996/996). Cero fugas de respuestas (answer leaks erradicadas en su totalidad, notación diferencial restaurada como \\dot{r} en Q-C07-271/272 y Q-Hab03-211..215). Cero identificadores crudos de código en opciones visibles."
+      "max": 5.0,
+      "feedback": "Excelente calidad psicométrica y diversidad de reactivos (251 fill-in-the-blank, 249 multiple-select y 80 reactivos de opción múltiple de 7 alternativas). Cobertura diagnóstica de distractores del 100.0% (1,227/1,227 evaluados) con rationales que capturan errores conceptuales y analíticos auténticos de la literatura (confusión entre producto medio y marginal, omisión de dilución demográfica, errores de signo en Bernoulli, confusión de regímenes en Leontief). Ausencia total de pistas delatoras ('telltale clues') o fugas de respuesta en el enunciado. Se deduce una penalización leve de 0.2 pts debido a la uniformidad sintáctica en los enunciados paramétricos de tipo fill-in-the-blank para competencias factuales básicas."
     },
     "scaffolding_hints": {
-      "score": 4.6,
-      "max": 5,
-      "feedback": "Cumplimiento del 100% en andamiaje socrático progresivo (exactamente 3 pistas por reactivo, 0 ítems huérfanos). Residuos de variables de plantilla ('c_val') completamente purgados en Q-C01-021/022. Soluciones detalladas analíticas disponibles en el 100% de los reactivos con sintaxis KaTeX rigurosa y advertencias diagnósticas integradas."
+      "score": 5.0,
+      "max": 5.0,
+      "feedback": "Andamiaje socrático impecable de 3 niveles escalonados (Pista 1: Conceptual -> Pista 2: Procedimental -> Pista 3: Operativa/Cálculo paso a paso) en el 100% de los reactivos (cero reactivos con hints insuficientes o stub hints). Soluciones analíticas detalladas paso a paso con advertencias explícitas de ideas preconcebidas erróneas ('misconception_warning') que previenen fallas de razonamiento habituales en macroeconomía dinámica."
     },
     "instructional_alignment": {
-      "score": 3.9,
-      "max": 4,
-      "feedback": "Alineación instruccional sobresaliente entre el objetivo declarado, la teoría macroeconómica neoclásica y los reactivos de prueba. Cobertura matemática exhaustiva de las Figuras I a IX de Solow (1956) y Chiang cap. 15, con cero preguntas huérfanas y predominio de niveles taxonómicos de Aplicación y Análisis."
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación instruccional y teórica perfecta con el artículo seminal de Robert Solow (1956, QJE) y los desarrollos de Chiang. Cubre la totalidad de las secciones del paper: contraste con Harrod-Domar, deducción y diagrama de fase, equilibrios múltiples (Fig. II), regímenes de Leontief (Fig. IV), dinámica cerrada de Bernoulli, tecnología CES con p=1/2 y umbral asintótico (Fig. V), precios factoriales y arbitraje financiero, progreso técnico neutral de Hicks, oferta laboral elástica, tributación proporcional, trampa malthusiana (Fig. IX) y salarios rígidos. Cero preguntas huérfanas o contaminación cruzada."
     },
     "technical_ergonomics": {
-      "score": 2,
-      "max": 2,
-      "feedback": "Ergonomía técnica impecable: 0 errores de sintaxis KaTeX (58/58 fórmulas reparadas con balance perfecto de llaves y delimitadores). Notación de derivadas temporales (\\dot{r}, \\dot{k}, \\dot{K}, \\dot{L}) y parciales preservada al 100%. Expresiones matemáticas completamente renderizables en frontend sin colapsos."
+      "score": 2.0,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica impecable. Compilación KaTeX 100% limpia sin delimitadores desbalanceados, sin triples dólares ($$$), sin llaves dobles espurias ({{...}}) y sin residuos de plantillas ni variables sin sustituir. Notación matemática matemáticamente rigurosa y visualmente elegante."
     }
   },
   "penalties_applied": [],
-  "final_score": 19.3,
-  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "final_score": 19.8,
+  "quality_tier": "EXCELENTE (17.0 - 20.0)",
   "remediation_actions": [
-    "Saneamiento integral ejecutado y verificado con éxito: 100% de errores KaTeX eliminados.",
-    "Grafo DAG formalmente interconectado entre las 25 competencias.",
-    "Linters de prevención integrados en el motor (R-20 y rules.py) para blindar futuras ejecuciones."
+    "Mantener la aprobación para producción inmediata (Tier Excelente).",
+    "Para futuras iteraciones, enriquecer los enunciados de los reactivos factuales de tipo 'fill_in_the_blank' incorporando contexto empírico o sectorial para mitigar la mecanización de la plantilla paramétrica.",
+    "Estandarizar en la plataforma el nuevo linter 'PED_STEM_TEMPLATING_HIGH' para detectar similitud de Jaccard/Levenshtein superior al 85% en reactivos dentro de una misma micro-competencia."
   ],
   "discovered_lint_rules": [
     {
-      "rule_id": "template_variable_residue_linter",
-      "severity": "high",
-      "description": "Detecta nombres de variables crudos de código o plantillas (ej. '*_val', '*_param', '*_var') que no fueron sustituidos durante la renderización y quedan visibles al estudiante en stems, distractores, pistas o soluciones.",
-      "regex_pattern": "\\b[a-zA-Z0-9_]+_(?:val|param|var|arg)\\b",
-      "evidence_items": [
-        "Q-C01-021",
-        "Q-C01-022",
-        "Q-Hab05-321",
-        "Q-Hab05-322"
-      ]
+      "rule_id": "PED_STEM_TEMPLATING_HIGH",
+      "category": "Pedagogical / Item Diversity",
+      "severity": "LOW_WARNING",
+      "description": "Detecta si más del 50% de los enunciados de tipo fill-in-the-blank dentro de una micro-competencia comparten una similitud textual superior al 85% (cambiando únicamente valores numéricos), incentivando la diversificación sintáctica y contextual."
     },
     {
-      "rule_id": "blind_string_replacement_linter",
-      "severity": "critical",
-      "description": "Detecta sustituciones ciegas de texto donde un escalar numérico reemplaza el símbolo de una variable bajo un operador diferencial (ej. '\\dot{36}', '\\dot36'), o donde el enunciado revela la respuesta exacta en su formulación matemática.",
-      "regex_pattern": "\\\\(?:dot|ddot)\\{?\\d+\\}?",
-      "evidence_items": [
-        "Q-C07-271",
-        "Q-C07-272",
-        "Q-Hab03-211",
-        "Q-Hab03-215"
-      ]
+      "rule_id": "SEM_NOTATION_TRANSITION_CHECK",
+      "category": "Instructional Alignment",
+      "severity": "INFO",
+      "description": "Verifica que las transiciones de notación intencionales entre fuentes académicas (ej. $k \\equiv K/L$ en Chiang vs. $r \\equiv K/L$ en Solow 1956) cuenten con un reactivo o rationale puente explícito que aclare el cambio de variable para evitar la desorientación del estudiante."
     }
-  ],
-  "platform_status": "ELIMINADO",
-  "deleted_at": "2026-10-16 19:08:36",
-  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+  ]
 }
