@@ -253,7 +253,7 @@ Integrando los diagnósticos cognitivos, los hallazgos de las auditorías forens
 | :--- | :--- | :--- | :---: | :--- |
 | **Milestone 1: Web Ergonomía para Laptops (Zoom-Fix)** | Frontend / Layout | **Elimina la fricción física inmediata.** Evita el zoom out en laptops de 13"-14". Transforma el apilamiento vertical de 7 opciones en un Grid responsivo de 2 columnas con clamp elástico. | **2 a 4 horas** | 🚀 **Quick Win #1 (Inmediato)** |
 | **Milestone 2: PWA Móvil para Estudio en Celular** | Frontend / PWA | **Habilita el estudio ubicuo en celular.** Experiencia de app nativa sin barra de navegador, offline cache de fuentes KaTeX y safe areas. | **1 a 2 horas** | 🚀 **Quick Win #2 (Inmediato)** |
-| **Milestone 3: Anti-Overfitting y Variedad de Plantillas** | Pipeline / Rúbrica | **Destruye la ilusión de fluidez.** Exige mínimo 3 a 4 plantillas disjuntas por competencia con contraejemplos, evitando la memorización superficial de una sola estructura. | **1 a 2 días** | 🎯 **Core Pedagógico Alto** |
+| **Milestone 3: Anti-Overfitting y Variedad de Plantillas** | Pipeline / Rúbrica | **Destruye la ilusión de fluidez.** Exige mínimo 3 a 4 plantillas disjuntas por competencia (`[M3-ARCHETYPES]`).<br>• **Pipeline:** ✅ Logrado en C2C v3.4.<br>• **Auditoría:** ⏳ Pendiente update de linter de diversidad en `standardized_audit_engine.py`. | **Auditoría: 2 a 4 horas** | 🎯 **Pipeline: Logrado / QA Engine: Pendiente** |
 | **Milestone 4: Desacoplamiento KaTeX-Python (PrairieLearn & AST)** | Pipeline / Backend | **Erradica las 4 capas de colisión sintáctica al 100%.** Separa el cálculo en Python (`generate() -> dict`) de plantillas declarativas con `@PARAM@` y validación con `pykatex` (QuickJS). | **1 a 2 días** | 🛠️ **Estabilidad Sistémica** |
 | **Milestone 5: Entradas Simbólicas Libres y Pasos Intermedios** | Full-Stack / Simbólico | **Fuerza la evocación libre (Free Recall).** Reemplaza la opción múltiple por cajas MathLive validadas con SymPy y validadores de derivaciones intermedias. | **2 a 3 días** | 🧠 **Impacto Cognitivo Máximo** |
 | **Milestone 6: Antigravity Study Harness (Multi-Panel Split-View)** | Arquitectura de UI | **El salto cuántico en flow de estudio.** Canvas de preguntas + Visor de material original sincronizado (`source_anchor`) + Pestaña de Google Gemini socrático. | **3 a 5 días** | 👑 **La Joya de la Corona (Máxima Ambición)** |
@@ -381,11 +381,17 @@ Se establecen las 7 dimensiones que la plataforma debe incorporar para certifica
 
 ### Milestone 3: Anti-Overfitting y Variedad de Plantillas por Competencia (QA v2.0 Early)
 * **Objetivo:** Destruir la ilusión de fluidez erradicando el monocultivo de una única plantilla por competencia.
+
+> [!NOTE]
+> **Estado de Implementación:**
+> - **A nivel de Pipeline (C2C v3.4): LOGRADO.** La arquitectura de autoría (`prompt_shard_author.md` y `compile_shard.py`) ya exige y valida obligatoriamente los 4 arquetipos disjuntos (`[M3-ARCHETYPES]`: 1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite o Contraejemplo), implementado y certificado con éxito en los cursos modernos (`gavilano_pre_parcial`, `saul_control_optimo`, `asyntotic_estatistics_v7`, `solow_growth_model`).
+> - **A nivel de Motor de Auditoría (`course-qa-evaluator`): PENDIENTE.** Falta incorporar en `standardized_audit_engine.py` el algoritmo determinista de diversidad léxica/estructural (similitud semántica entre reactivos de una misma competencia) para penalizar y auditar de forma automática cursos legacy o detectar regresiones en futuros pipelines.
+
 * **Componentes Técnicos:**
-  1. **Requisito de Mínimo 3 a 4 Plantillas Disjuntas por Competencia:**
-     - El pipeline C2C debe generar al menos 3 a 4 arquitecturas de plantilla cualitativamente distintas por competencia (ej. una analítica directa, una de perturbación de supuestos, una geométrica/cualitativa y una de caso límite o contraejemplo).
-  2. **Auditoría de Diversidad Semántica:**
-     - Algoritmo de similitud léxica/estructural en `standardized_audit_engine.py` que penalice cursos donde los reactivos de una misma competencia compartan el mismo esqueleto gramatical.
+  1. **Requisito de Mínimo 3 a 4 Plantillas Disjuntas por Competencia (`[M3-ARCHETYPES]`):** `[ESTADO: LOGRADO EN PIPELINE]`
+     - Implementado en C2C v3.4: cada competencia asignada genera y certifica obligatoriamente 4 arquetipos disjuntos (Directo/Frontal, Inverso/Diagnóstico, Perturbación/Estática Comparativa y Frontera/Casos Límite), superando la validación de `compile_shard.py`.
+  2. **Auditoría de Diversidad Semántica en el Motor de Evaluación:** `[ESTADO: PENDIENTE DE UPDATE EN MOTOR]`
+     - Falta incorporar formalmente en `standardized_audit_engine.py` el linter determinista de similitud léxica/estructural que detecte y penalice cursos donde los reactivos de una competencia compartan el mismo esqueleto gramatical (identificado en cursos legacy como `practica_parcial_saul_standard` con 0% de cumplimiento).
 
 ---
 
@@ -592,3 +598,25 @@ Todos los estudios de respaldo se encuentran preservados e indexados en el repos
 
 ---
 *Documento consolidado y actualizado para la evolución integral de Tops Academy.*
+
+
+---
+
+## 9. Iniciativas y Reglas Pendientes de Aprobación (Por Revisar — Sesión /learn Oct 2026)
+
+> [!NOTE]
+> Estas propuestas provienen del análisis forense de la auditoría agéntica longitudinal (Sesión `d6d276e0`). Han sido catalogadas como **"Por Revisar"** para posterior evaluación y refinamiento antes de su activación definitiva en el workspace.
+
+### 9.1. Propuesta de Regla Universal de Workspace: `c2c-quality-invariants.md`
+* **Estado:** 🟡 **Por Revisar**
+* **Archivo Destino Propuesto:** `.agents/rules/c2c-quality-invariants.md`
+* **Objetivo:** Forzar a todos los subagentes del workspace a adherirse a las siguientes 4 invariantes universales:
+  1. **Anti-Mecanización:** Obligatoriedad de 4 arquetipos disjuntos (`min_archetypes: 4`) para evitar que el estudiante memorice patrones superficiales de despeje algebraico.
+  2. **Aislamiento Diagnóstico:** Prohibir cualquier metainformación visible en las opciones (rótulos `"Trayectoria exacta:"`, justificaciones parentéticas `(confusión con...)`, prefijos sintéticos `"Opción alterna X:"` o auto-inculpaciones `"despejando erróneamente"`).
+  3. **Andamiaje Socrático en 3 Niveles:** Prohibir inyección de códigos de prerrequisitos (`C-01`, `H-02`) o tags de una sola palabra como pistas en el campo `hints`.
+  4. **Ergonomía KaTeX Limpia:** Prohibir variables sin interpolar (`{sigma2}`, `${dep_var}`) y colisiones de signos algebraicos (`|x - -4|`).
+
+### 9.2. Actualización de System Prompts de Autoría (`prompt_shard_author.md`)
+* **Estado:** 🟡 **Por Revisar**
+* **Archivo Destino Propuesto:** `.agents/skills/content-to-course/system_prompts/prompt_shard_author.md`
+* **Objetivo:** Inyectar en el contrato inicial del autor de shard cláusulas prohibitivas directas contra metainformación delatora visible y stub hints, reduciendo los turnos de remediación en Stage 3.
