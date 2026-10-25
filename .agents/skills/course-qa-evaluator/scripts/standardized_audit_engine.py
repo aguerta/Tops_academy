@@ -328,6 +328,27 @@ class ScaffoldingHintsLinter(BaseLinter):
                     message=f"Andamiaje insuficiente: reactivo cuenta solo con {len(hints)} pistas (norma: 3-5).",
                 ))
 
+            # 1b. Check for prerequisite IDs or keyword stubs as hints (Learned Linter)
+            stub_hints_found = []
+            for h in hints:
+                if isinstance(h, str):
+                    h_clean = h.strip()
+                    if re.match(r'^(?:C|H|Hab|Fact|Concept|Skill)-\d+$', h_clean, re.I):
+                        stub_hints_found.append(f"ID de competencia '{h_clean}'")
+                    elif len(h_clean.split()) <= 1 and len(h_clean) < 25 and not any(punct in h_clean for punct in '.!?:$'):
+                        stub_hints_found.append(f"Palabra clave stub '{h_clean}'")
+                    elif len(h_clean.split()) <= 2 and '_' in h_clean and len(h_clean) < 25:
+                        stub_hints_found.append(f"Tag snake_case '{h_clean}'")
+            if stub_hints_found:
+                issues.append(LintIssue(
+                    linter=self.name,
+                    dimension=self.dimension,
+                    severity="warning",
+                    item_id=qid,
+                    competency_id=cid,
+                    message=f"Pistas deficientes detectadas (no socráticas): {', '.join(stub_hints_found[:2])}",
+                ))
+
             # 2. Detailed solution check
             if not sol:
                 missing_solutions.append(qid)
@@ -536,6 +557,226 @@ class BlindStringReplacementLinter(BaseLinter):
         }
 
 
+class ClonedDistractorValueLinter(BaseLinter):
+    name = "cloned_distractor_value_linter"
+    dimension = "D2_assessment"
+
+    SYNTHETIC_PREFIX_PAT = re.compile(r"^\s*(?:Opci[oó]n|Alternativa)\s+alterna\s+\d+:\s*", re.IGNORECASE)
+
+    def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
+        questions = course_data.get("questions", [])
+        cloned_items = []
+
+        for q in questions:
+            qid = q.get("id", "unknown")
+            cid = q.get("competency_id", "unassigned")
+            options = q.get("options", [])
+            if not isinstance(options, list):
+                continue
+
+            correct_texts = []
+            for opt in options:
+                if isinstance(opt, dict) and opt.get("is_correct", False):
+                    correct_texts.append(opt.get("text", "").strip())
+
+            for opt_idx, opt in enumerate(options):
+                if not isinstance(opt, dict) or opt.get("is_correct", False):
+                    continue
+                text = opt.get("text", "").strip()
+
+                # 1. Check for synthetic clone prefix (e.g. 'Opción alterna 4:')
+                if self.SYNTHETIC_PREFIX_PAT.search(text):
+                    cloned_items.append(qid)
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="critical",
+                        item_id=qid,
+                        competency_id=cid,
+                        message=f"Distractor con prefijo sintético de clonación ('{text[:35]}...') en opción {opt_idx}",
+                        snippet=text[:50],
+                    ))
+                    continue
+
+                # 2. Check if distractor text matches any correct answer exactly
+                for c_text in correct_texts:
+                    if c_text and text == c_text:
+                        cloned_items.append(qid)
+                        issues.append(LintIssue(
+                            linter=self.name,
+                            dimension=self.dimension,
+                            severity="critical",
+                            item_id=qid,
+                            competency_id=cid,
+                            message=f"Distractor clonado con valor idéntico a la clave correcta en opción {opt_idx}",
+                            snippet=text[:50],
+                        ))
+                        break
+
+        return {
+            "cloned_distractor_items_count": len(set(cloned_items)),
+            "cloned_distractor_sample_items": list(set(cloned_items))[:15],
+        }
+
+
+class ParentheticalTelltaleLinter(BaseLinter):
+    name = "parenthetical_telltale_linter"
+    dimension = "D2_assessment"
+
+    PARENTHETICAL_TELLTALE_PAT = re.compile(
+        r"\(\s*(?:confusi[oó]n|error|omisi[oó]n|sesgo|falsamente|definici[oó]n\s+err[oó]nea|desplazamiento\s+err[oó]neo|c[aá]lculo\s+err[oó]neo)[^)]*\)",
+        re.IGNORECASE,
+    )
+
+    def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
+        questions = course_data.get("questions", [])
+        telltale_items = []
+
+        for q in questions:
+            qid = q.get("id", "unknown")
+            cid = q.get("competency_id", "unassigned")
+            options = q.get("options", [])
+            if not isinstance(options, list):
+                continue
+
+            for opt_idx, opt in enumerate(options):
+                if not isinstance(opt, dict):
+                    continue
+                text = opt.get("text", "")
+                m = self.PARENTHETICAL_TELLTALE_PAT.search(text)
+                if m:
+                    telltale_items.append(qid)
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="critical",
+                        item_id=qid,
+                        competency_id=cid,
+                        message=f"Metainformación delatora parentética en opción visible {opt_idx}: '{m.group(0)}'",
+                        snippet=m.group(0),
+                    ))
+
+        return {
+            "parenthetical_telltale_count": len(set(telltale_items)),
+            "parenthetical_telltale_items": list(set(telltale_items))[:15],
+        }
+
+
+class ArchetypeEntropyLinter(BaseLinter):
+    name = "archetype_entropy_linter"
+    dimension = "D2_assessment"
+
+    def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
+        questions = course_data.get("questions", [])
+        q_by_comp: dict[str, list[dict]] = {}
+        for q in questions:
+            cid = q.get("competency_id", "unassigned")
+            q_by_comp.setdefault(cid, []).append(q)
+
+        monotonous_comps = []
+        for cid, qlist in q_by_comp.items():
+            if len(qlist) < 15:
+                continue
+
+            skeletons = []
+            for q in qlist:
+                stem = q.get("stem", "")
+                clean_stem = re.sub(r"\$[^$]+\$", "$MATH$", stem)
+                clean_stem = re.sub(r"\d+", "NUM", clean_stem)
+                clean_stem = re.sub(r"\s+", " ", clean_stem).strip().lower()
+                skeletons.append(clean_stem)
+
+            if not skeletons:
+                continue
+
+            counts = {}
+            for sk in skeletons:
+                counts[sk] = counts.get(sk, 0) + 1
+            max_freq = max(counts.values())
+            ratio = max_freq / len(skeletons)
+
+            if ratio > 0.85:
+                monotonous_comps.append(cid)
+                issues.append(LintIssue(
+                    linter=self.name,
+                    dimension=self.dimension,
+                    severity="warning",
+                    item_id=qlist[0].get("id", cid),
+                    competency_id=cid,
+                    message=f"Monocultivo de arquetipo en competencia '{cid}': {round(ratio * 100, 1)}% de las preguntas comparten la misma plantilla estructural",
+                ))
+
+        return {
+            "monotonous_competencies_count": len(monotonous_comps),
+            "monotonous_competencies": monotonous_comps,
+        }
+
+
+class UninterpolatedMathVariableLinter(BaseLinter):
+    name = "uninterpolated_math_variable_linter"
+    dimension = "D5_katex"
+
+    UNINTERPOLATED_MATH_PAT = re.compile(r"(?:\$|\b)\{([a-zA-Z_][a-zA-Z0-9_]*)\}(?:\$|\b)")
+    CONSECUTIVE_SIGNS_PAT = re.compile(r"(?:\+\s*-\d+|-\s*-\d+)")
+    KNOWN_LATEX_SINGLE_LETTER_OR_MACRO = {"n", "i", "j", "k", "t", "x", "y", "z", "R", "C", "N", "alpha", "beta", "gamma", "theta", "sigma", "lambda", "mu"}
+
+    def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
+        questions = course_data.get("questions", [])
+        infracting_items = []
+
+        for q in questions:
+            qid = q.get("id", "unknown")
+            cid = q.get("competency_id", "unassigned")
+
+            texts_to_check = [("stem", q.get("stem", ""))]
+            for idx, opt in enumerate(q.get("options", [])):
+                if isinstance(opt, dict):
+                    texts_to_check.append((f"opt_{idx}", opt.get("text", "")))
+            sol = q.get("detailed_solution")
+            if isinstance(sol, dict):
+                texts_to_check.append(("solution_steps", " ".join(sol.get("steps", []))))
+            elif isinstance(sol, str):
+                texts_to_check.append(("solution", sol))
+
+            for field_name, text in texts_to_check:
+                if not text:
+                    continue
+
+                m_sign = self.CONSECUTIVE_SIGNS_PAT.search(text)
+                if m_sign:
+                    infracting_items.append(qid)
+                    issues.append(LintIssue(
+                        linter=self.name,
+                        dimension=self.dimension,
+                        severity="warning",
+                        item_id=qid,
+                        competency_id=cid,
+                        message=f"Colisión de signos algebraicos sin simplificar ('{m_sign.group(0)}') en '{field_name}'",
+                        snippet=m_sign.group(0),
+                    ))
+                    break
+
+                for m in self.UNINTERPOLATED_MATH_PAT.finditer(text):
+                    var_name = m.group(1)
+                    if var_name not in self.KNOWN_LATEX_SINGLE_LETTER_OR_MACRO:
+                        infracting_items.append(qid)
+                        issues.append(LintIssue(
+                            linter=self.name,
+                            dimension=self.dimension,
+                            severity="warning",
+                            item_id=qid,
+                            competency_id=cid,
+                            message=f"Variable de plantilla posiblemente sin interpolar '{{{var_name}}}' en '{field_name}'",
+                            snippet=m.group(0),
+                        ))
+                        break
+
+        return {
+            "uninterpolated_math_items_count": len(set(infracting_items)),
+            "uninterpolated_math_sample_items": list(set(infracting_items))[:15],
+        }
+
+
 # ============================================================================
 # Linter Registry & Engine Orchestrator
 # ============================================================================
@@ -551,6 +792,10 @@ class AuditLinterRegistry:
             KaTeXSyntaxLinter(),
             TemplateVariableResidueLinter(),
             BlindStringReplacementLinter(),
+            ClonedDistractorValueLinter(),
+            ParentheticalTelltaleLinter(),
+            ArchetypeEntropyLinter(),
+            UninterpolatedMathVariableLinter(),
         ]
         self.domain_linters: dict[str, list[BaseLinter]] = {}
 
@@ -616,6 +861,8 @@ class AuditLinterRegistry:
             "scaffolding_flaws": [],
             "template_residues": [],
             "blind_replacements": [],
+            "cloned_distractors": [],
+            "archetype_monotony": [],
         }
 
         issues_by_item: dict[str, list[str]] = {}
@@ -638,6 +885,10 @@ class AuditLinterRegistry:
                 risk_clusters["template_residues"].append(qid)
             elif iss.linter == "blind_string_replacement_linter" and qid not in risk_clusters["blind_replacements"]:
                 risk_clusters["blind_replacements"].append(qid)
+            elif iss.linter == "cloned_distractor_value_linter" and qid not in risk_clusters["cloned_distractors"]:
+                risk_clusters["cloned_distractors"].append(qid)
+            elif iss.linter == "archetype_entropy_linter" and qid not in risk_clusters["archetype_monotony"]:
+                risk_clusters["archetype_monotony"].append(qid)
 
         # 5. Calculate global Risk Score (0 to 100)
         total_q = max(len(questions), 1)
