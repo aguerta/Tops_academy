@@ -266,6 +266,14 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
      - Integrar `pykatex` en `compile_shard.py` para compilar y validar árboles KaTeX del lado del servidor a $>15,000\text{ fórmulas/s}$ e inyectar `katex.ParseError` con número de columna exacto.
   4. **Generación Simbólica Garantizada con `sympy.latex()`:**
      - Prohibir el ensamblado manual de matrices o polinomios en Python; exigir exportación canónica mediante SymPy.
+  5. **Salvaguarda Anti-Sobreescape y Validación Léxica KaTeX en JSON (Lección Aprendida `saul_control_optimo`):**
+     - **Diagnóstico del Fallo Silencioso:** Durante la exportación o post-procesamiento de templates a JSON, ciertos comandos de LaTeX que inician con letras correspondientes a escapes de control en JSON (`\b`, `\f`, `\n`, `\r`, `\t` como `\frac`, `\text`, `\to`, `\mathbb`, `\begin`, `\right`, `\neq`, `\times`, `\forall`, `\beta`) o Python (`\a` como `\alpha`) fueron sobreescapados con 4 barras invertidas (`\\\\` en archivo JSON, evaluado en memoria como `\\frac`, `\\to`).
+     - **Impacto Visual Silencioso en Cliente:** KaTeX no arroja error de parseo sintáctico (`throwOnError: true` y `throwOnError: false` pasan con éxito) porque `\\` es el comando válido de LaTeX para salto de línea (`<br>`). En consecuencia, KaTeX renderiza un salto de línea seguido de las letras literales del comando (`f r a c`, `t o`, `m a t h b b`), deformando fórmulas en pantalla (ej. `frac42\dot{x}^2`, o `to` y `mathbbR` aislados en líneas separadas) sin ser detectado por los linters de esquema tradicionales.
+     - **Protocolo de Protección Definitivo (Safeguards a Implementar):**
+       1. **Regla R-23 en Linter Léxico (`src/validator/lexical_scanner.py` & `engine/invariants.py`):** Prohibir estrictamente en memoria secuencias de doble barra invertida seguidas de caracteres alfabéticos (`r'\\\\([a-zA-Z]+)'`), discriminando de forma segura los saltos de fila legítimos en matrices o sistemas (`r'\\\\\s+'` dentro de entornos `\begin{bmatrix|matrix|pmatrix|cases}`).
+       2. **Paso de Normalización en `engine/assemble.py` (`sanitize_katex_syntax`):** Añadir una fase determinista de saneamiento que colapse automáticamente `re.sub(r'\\\\([a-zA-Z]+)', r'\\\1', text)` antes de la serialización del curso.
+       3. **Invariante KaTeX Inline en CI/CD:** Comprobar en tiempo de compilación que ningún bloque matemático delimitado por un solo `$` contenga el comando de salto de línea `\\`, ya que los saltos de línea están prohibidos en modo texto inline.
+       4. **Guardián de Admisión en Runtime (`run_platform.py` / `validate_platform_course`):** Bloquear o auto-reparar en el servidor de desarrollo cualquier JSON que contenga secuencias de sobreescape antes de servirlo al cliente web.
 
 ---
 
