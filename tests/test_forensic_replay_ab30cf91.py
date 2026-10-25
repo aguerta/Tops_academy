@@ -410,7 +410,11 @@ def test_v4_plan_shards_weighted_isolation_32_greene_competencies(tmp_path: Path
     """
     course_path = REPO_ROOT / "courses" / "asyntotic_estatistics_v2.json"
     if not course_path.is_file():
-        pytest.skip("courses/asyntotic_estatistics_v2.json not found")
+        alt_path = REPO_ROOT / "reports" / "qa_audits" / "asyntotic_estatistics_v2_payload.json"
+        if alt_path.is_file():
+            course_path = alt_path
+        else:
+            pytest.skip("courses/asyntotic_estatistics_v2.json not found")
 
     course_data = json.loads(course_path.read_text(encoding="utf-8"))
     comps = course_data.get("competencies", [])

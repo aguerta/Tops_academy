@@ -380,16 +380,20 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         templates_dir = self.work_dir / "templates"
         templates_dir.mkdir(parents=True, exist_ok=True)
 
+        now = time.time()
         shard_data_p = self.shards_dir / "shard_01_data.py"
         shard_data_p.write_text("# Shard 01 data\n", encoding="utf-8")
-        shard_mtime = time.time() - 100
-        os.utime(shard_data_p, (shard_mtime, shard_mtime))
+        os.utime(shard_data_p, (now - 100, now - 100))
+
+        # Ensure cta.json is older than templates
+        cta_file = self.work_dir / "cta.json"
+        if cta_file.is_file():
+            os.utime(cta_file, (now - 200, now - 200))
 
         # Template C-05.json newer than shard_01_data.py
         c05_json = templates_dir / "C-05.json"
         c05_json.write_text(json.dumps([{"id": "tpl_dummy"}]), encoding="utf-8")
-        tpl_mtime = time.time()
-        os.utime(c05_json, (tpl_mtime, tpl_mtime))
+        os.utime(c05_json, (now, now))
 
         runner = PipelineRunner(work_dir=self.work_dir)
 
