@@ -217,10 +217,45 @@ class TranscriptParser:
         seen_cids = set()
         subagents = []
 
-        # 1. Pre-build CID metadata mapping from manage_subagents & invoke_subagent
+        # 1. Pre-build CID metadata mapping from invoke_subagent tool calls & manage_subagents output
         cid_meta: Dict[str, Dict[str, Any]] = {}
+        pending_invokes: List[Dict[str, str]] = []
         for rec in records:
+            for tc in rec.get("tool_calls", []) or []:
+                if not isinstance(tc, dict):
+                    continue
+                tname = tc.get("function", {}).get("name") if "function" in tc else tc.get("name", "")
+                if tname == "invoke_subagent":
+                    args = tc.get("function", {}).get("arguments") if "function" in tc else tc.get("args", {})
+                    if isinstance(args, str):
+                        try:
+                            args = json.loads(args)
+                        except Exception:
+                            args = {}
+                    if isinstance(args, dict):
+                        if "Role" in args or "TypeName" in args:
+                            pending_invokes.append({
+                                "role": str(args.get("Role", "") or ""),
+                                "type_name": str(args.get("TypeName", "") or ""),
+                            })
+                        for sub in args.get("Subagents", []) or []:
+                            if isinstance(sub, dict):
+                                pending_invokes.append({
+                                    "role": str(sub.get("Role", "") or ""),
+                                    "type_name": str(sub.get("TypeName", "") or ""),
+                                })
+
             content = rec.get("content", "")
+            if "Created the following subagents" in content:
+                cids_created = re.findall(r'"conversationId":\s*"([^"]+)"', content)
+                for cid in cids_created:
+                    if pending_invokes:
+                        inv = pending_invokes.pop(0)
+                        cid_meta[cid] = {
+                            "role": inv.get("role") or cid_meta.get(cid, {}).get("role"),
+                            "type_name": inv.get("type_name") or cid_meta.get(cid, {}).get("type_name"),
+                        }
+
             if "active subagent" in content or "Created the following subagents" in content:
                 m_json = re.search(r"(\[\s*\{.*?\}\s*\])", content, re.DOTALL)
                 if m_json:
@@ -229,9 +264,10 @@ class TranscriptParser:
                         for item in arr:
                             cid = item.get("conversationId")
                             if cid:
+                                prev = cid_meta.get(cid, {})
                                 cid_meta[cid] = {
-                                    "role": item.get("role"),
-                                    "type_name": item.get("type")
+                                    "role": item.get("role") or prev.get("role"),
+                                    "type_name": item.get("type") or prev.get("type_name"),
                                 }
                     except Exception:
                         pass
@@ -266,10 +302,14 @@ class TranscriptParser:
                                     prompt_preview = p0[:300]
                                     m_asig = re.search(r"#\s*Asignaci[oó]n de Tarea para\s+([^\n\r\\#]+)", p0)
                                     m_inst = re.search(r"Instrucciones para\s+([^\n\r\\#]+)", p0)
+                                    m_rep = re.search(r"prompts[/\\]repair[/\\]repair_([a-zA-Z0-9_\-]+)\.json", p0, re.IGNORECASE)
                                     if m_asig:
                                         role = m_asig.group(1).strip()
                                     elif m_inst:
                                         role = m_inst.group(1).strip()
+                                    elif m_rep:
+                                        role = f"Repair Engineer ({m_rep.group(1).upper()})"
+                                        type_name = "c2c_repair"
                                     elif "Task:" in p0:
                                         role = p0.split("Task:")[1].split("\n")[0].strip()[:40]
                                     elif "Role:" in p0:
@@ -297,6 +337,8 @@ class TranscriptParser:
                     type_lower = type_name.lower()
                     if "vision" in role_lower or "handout" in role_lower or "vision" in type_lower:
                         category = "vision"
+                    elif "repair" in role_lower or "repair" in type_lower or "prompts/repair" in prompt_preview.lower():
+                        category = "repair"
                     elif (
                         "mapper" in role_lower
                         or "cta section" in role_lower
