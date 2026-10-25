@@ -22,7 +22,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / ".agents" / "skills" / "content-to-course"))
 
-from c2c_hook_guard import process_hook  # noqa: E402
+from c2c_hook_guard import evaluate_hook_payload, process_hook  # noqa: E402
 
 
 class TestHookPostPassAndWriteIsolation(unittest.TestCase):
@@ -651,6 +651,744 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
         self.assertEqual(decoded.get("decision"), "deny")
         self.assertIn("aprobó", decoded.get("reason", ""))
         self.assertIn("Detén", decoded.get("reason", ""))
+
+    # --------------------------------------------------------------------------
+    # STREAM 1C: Sweet Spot CTA & Shards, Error Thresholds, & Anti-Leak Guards
+    # --------------------------------------------------------------------------
+
+    def test_rule_c_error_count_under_6_blocks_write_file_on_shard_even_under_250_lines(self) -> None:
+        """When error_count is in [1, 5], write_file is blocked even if shard is under 250 lines (e.g. 120 lines)."""
+        shard_py = self.shards_dir / "shard_01_data.py"
+        shard_content = "".join([f"# Line {i}\n" for i in range(120)])
+        shard_py.write_text(shard_content, encoding="utf-8")
+
+        for err_cnt in (1, 3, 5):
+            compile_file = self.check_attempts_dir / "compile_shard_01.json"
+            compile_file.write_text(
+                json.dumps({
+                    "distinct_compiles": 1,
+                    "error_count": err_cnt,
+                    "last_errors": [f"Error {i}" for i in range(err_cnt)],
+                }),
+                encoding="utf-8",
+            )
+
+            # write_file must be DENIED
+            payload_write = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {
+                        "Path": str(shard_py),
+                        "Content": shard_content,
+                    },
+                },
+            }
+            res_write = process_hook(payload_write, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res_write.get("decision"), "deny")
+            self.assertIn(f"registra {err_cnt} errores (< 6, umbral oficial)", res_write.get("reason", ""))
+            self.assertIn("usa edit_file quirúrgico", res_write.get("reason", ""))
+            self.assertIn("work/shards/shard_fixes/<CID>.py", res_write.get("reason", ""))
+
+            # edit_file must be ALLOWED
+            payload_edit = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "edit_file",
+                    "args": {
+                        "Path": str(shard_py),
+                        "Target": "# Line 10",
+                        "Replacement": "# Line 10 fixed",
+                    },
+                },
+            }
+            res_edit = process_hook(payload_edit, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res_edit.get("decision"), "allow")
+
+            # writing to shard_fixes/Hab-01.py must be ALLOWED
+            payload_fix = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {
+                        "Path": str(self.shard_fixes_dir / "Hab-01.py"),
+                        "Content": "# modular fix",
+                    },
+                },
+            }
+            res_fix = process_hook(payload_fix, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res_fix.get("decision"), "allow")
+
+    def test_rule_c_error_count_6_or_more_allows_write_file_on_shard(self) -> None:
+        """When error_count >= 6 (e.g. 6, 10), official sweet spot allows write_file rewrite."""
+        shard_py = self.shards_dir / "shard_01_data.py"
+        shard_content = "".join([f"# Line {i}\n" for i in range(120)])
+        shard_py.write_text(shard_content, encoding="utf-8")
+
+        for err_cnt in (6, 10):
+            compile_file = self.check_attempts_dir / "compile_shard_01.json"
+            compile_file.write_text(
+                json.dumps({
+                    "distinct_compiles": 1,
+                    "error_count": err_cnt,
+                    "last_errors": [f"Error {i}" for i in range(err_cnt)],
+                }),
+                encoding="utf-8",
+            )
+
+            payload_write = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {
+                        "Path": str(shard_py),
+                        "Content": shard_content,
+                    },
+                },
+            }
+            res_write = process_hook(payload_write, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res_write.get("decision"), "allow")
+
+    def test_rule_c_has_syntax_error_allows_write_file_recovery(self) -> None:
+        """When has_syntax_error is True, write_file is allowed even with error_count=1."""
+        shard_py = self.shards_dir / "shard_01_data.py"
+        shard_py.write_text("def broken_syntax(:\n", encoding="utf-8")
+
+        compile_file = self.check_attempts_dir / "compile_shard_01.json"
+        compile_file.write_text(
+            json.dumps({
+                "distinct_compiles": 1,
+                "error_count": 1,
+                "has_syntax_error": True,
+                "last_errors": ["SyntaxError: invalid syntax at line 1"],
+            }),
+            encoding="utf-8",
+        )
+
+        payload_write = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "write_file",
+                "args": {
+                    "Path": str(shard_py),
+                    "Content": "def valid_syntax(): pass\n",
+                },
+            },
+        }
+        res_write = process_hook(payload_write, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_write.get("decision"), "allow")
+
+    def test_rule_c_cta_error_count_thresholds_and_fixes(self) -> None:
+        """Rule C applies < 6 errors threshold to cta_data.py and cta_parts/part_01_data.py."""
+        cta_parts_dir = self.work_dir / "cta_parts"
+        cta_fixes_dir = self.work_dir / "cta_fixes"
+        cta_parts_dir.mkdir(parents=True, exist_ok=True)
+        cta_fixes_dir.mkdir(parents=True, exist_ok=True)
+
+        cta_targets = [
+            (self.work_dir / "cta_data.py", "compile_cta.json", "cta_data.py"),
+            (cta_parts_dir / "part_01_data.py", "compile_cta_part_01.json", "part_01_data.py"),
+        ]
+
+        for target_path, compile_name, filename in cta_targets:
+            target_content = "".join([f"# Line {i}\n" for i in range(100)])
+            target_path.write_text(target_content, encoding="utf-8")
+
+            # 1. error_count in (2, 5) -> write_file DENIED, edit_file ALLOWED, cta_fixes ALLOWED
+            for err_cnt in (2, 5):
+                compile_file = self.check_attempts_dir / compile_name
+                compile_file.write_text(
+                    json.dumps({
+                        "distinct_compiles": 1,
+                        "error_count": err_cnt,
+                        "last_errors": [f"CTA error {i}" for i in range(err_cnt)],
+                    }),
+                    encoding="utf-8",
+                )
+
+                payload_write = {
+                    "conversationId": self.worker_id,
+                    "toolCall": {
+                        "name": "write_file",
+                        "args": {
+                            "Path": str(target_path),
+                            "Content": target_content,
+                        },
+                    },
+                }
+                res_write = process_hook(payload_write, custom_lock_file=str(self.lock_file))
+                self.assertEqual(res_write.get("decision"), "deny")
+                self.assertIn(f"registra {err_cnt} errores (< 6, umbral oficial)", res_write.get("reason", ""))
+                self.assertIn("work/cta_fixes/<CID>.py", res_write.get("reason", ""))
+
+                payload_edit = {
+                    "conversationId": self.worker_id,
+                    "toolCall": {
+                        "name": "edit_file",
+                        "args": {
+                            "Path": str(target_path),
+                            "Target": "# Line 5",
+                            "Replacement": "# Line 5 fixed",
+                        },
+                    },
+                }
+                res_edit = process_hook(payload_edit, custom_lock_file=str(self.lock_file))
+                self.assertEqual(res_edit.get("decision"), "allow")
+
+                # cta_fixes must always be allowed
+                payload_fix = {
+                    "conversationId": self.worker_id,
+                    "toolCall": {
+                        "name": "write_file",
+                        "args": {
+                            "Path": str(cta_fixes_dir / "C-01.py"),
+                            "Content": "# modular cta fix",
+                        },
+                    },
+                }
+                res_fix = process_hook(payload_fix, custom_lock_file=str(self.lock_file))
+                self.assertEqual(res_fix.get("decision"), "allow")
+
+            # 2. error_count = 6 -> write_file ALLOWED
+            compile_file = self.check_attempts_dir / compile_name
+            compile_file.write_text(
+                json.dumps({
+                    "distinct_compiles": 1,
+                    "error_count": 6,
+                    "last_errors": [f"CTA error {i}" for i in range(6)],
+                }),
+                encoding="utf-8",
+            )
+            payload_write = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {
+                        "Path": str(target_path),
+                        "Content": target_content,
+                    },
+                },
+            }
+            res_write_6 = process_hook(payload_write, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res_write_6.get("decision"), "allow")
+
+            # 3. has_syntax_error = True (with error_count = 2) -> write_file ALLOWED for recovery
+            compile_file.write_text(
+                json.dumps({
+                    "distinct_compiles": 1,
+                    "error_count": 2,
+                    "has_syntax_error": True,
+                    "last_errors": ["SyntaxError: invalid syntax line 1"],
+                }),
+                encoding="utf-8",
+            )
+            payload_syntax = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {
+                        "Path": str(target_path),
+                        "Content": target_content,
+                    },
+                },
+            }
+            res_syntax = process_hook(payload_syntax, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res_syntax.get("decision"), "allow")
+
+    def test_rule_b_cta_post_pass_early_cut(self) -> None:
+        """When pass_cta_{target_id}.json has PASS, writes and edits to CTA files are blocked."""
+        cta_parts_dir = self.work_dir / "cta_parts"
+        cta_parts_dir.mkdir(parents=True, exist_ok=True)
+        part_py = cta_parts_dir / "part_01_data.py"
+        part_py.write_text("# initial content\n", encoding="utf-8")
+
+        # Create pass_cta_part_01.json
+        pass_file = self.check_attempts_dir / "pass_cta_part_01.json"
+        pass_file.write_text(json.dumps({"status": "PASS", "part_id": "part_01"}), encoding="utf-8")
+
+        # write_file blocked
+        payload_write = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "write_file",
+                "args": {"Path": str(part_py), "Content": "# post-pass write"},
+            },
+        }
+        res_write = process_hook(payload_write, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_write.get("decision"), "deny")
+        self.assertIn("BLOCKER:: El módulo CTA part_01 ya aprobó todas las validaciones estrictas ([+] PASS)", res_write.get("reason", ""))
+        self.assertIn("emite DONE inmediatamente", res_write.get("reason", ""))
+
+        # edit_file blocked
+        payload_edit = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "edit_file",
+                "args": {"Path": str(part_py), "Target": "# initial", "Replacement": "# mod"},
+            },
+        }
+        res_edit = process_hook(payload_edit, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_edit.get("decision"), "deny")
+        self.assertIn("BLOCKER:: El módulo CTA part_01 ya aprobó todas las validaciones estrictas ([+] PASS)", res_edit.get("reason", ""))
+
+    def test_rule_a_allows_cta_fixes_and_parts_whitelist(self) -> None:
+        """Worker is allowed to write to cta_fixes and cta_parts while ad-hoc scripts are denied."""
+        cta_paths = [
+            "courses/demo_course/work/cta_fixes/C-01.py",
+            "cta_fixes/C-02.py",
+            "courses/demo_course/work/cta_parts/part_01_data.py",
+            "courses/demo_course/work/cta_parts/part_02.py",
+            "courses/demo_course/work/cta_parts/cta_fixes/C-03.py",
+        ]
+
+        for p in cta_paths:
+            payload = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {"Path": p, "Content": "# legitimate cta file"},
+                },
+            }
+            res = process_hook(payload, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res.get("decision"), "allow", f"Failed for {p}: {res}")
+
+        # Ad-hoc script still blocked and references cta_fixes
+        payload_bad = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "write_file",
+                "args": {"Path": "courses/demo_course/work/adhoc_debug.py", "Content": "print(1)"},
+            },
+        }
+        res_bad = process_hook(payload_bad, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_bad.get("decision"), "deny")
+        self.assertIn("work/cta_fixes/<CID>.py", res_bad.get("reason", ""))
+
+    def test_worker_denied_reading_tests_directory(self) -> None:
+        """Worker is denied viewing tests/test_validator.py via view_file, grep_search, and shell commands."""
+        # 1. view_file
+        payload_view = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "view_file",
+                "args": {"AbsolutePath": "tests/test_validator.py"},
+            },
+        }
+        res_view = process_hook(payload_view, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_view.get("decision"), "deny")
+        self.assertIn("Boundary", res_view.get("reason", ""))
+
+        # 2. grep_search targeting tests
+        payload_grep = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "grep_search",
+                "args": {"query": "def test_", "path": "tests/test_validator.py"},
+            },
+        }
+        res_grep = process_hook(payload_grep, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_grep.get("decision"), "deny")
+
+        # 3. shell reading commands targeting tests/
+        shell_cmds = [
+            "Get-Content tests/test_validator.py",
+            "type tests\\test_validator.py",
+            "cat tests/test_validator.py",
+            'python -c "open(\'tests/test_validator.py\').read()"',
+        ]
+        for cmd_str in shell_cmds:
+            payload_cmd = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "run_command",
+                    "args": {"CommandLine": cmd_str},
+                },
+            }
+            res_cmd = process_hook(payload_cmd, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res_cmd.get("decision"), "deny", f"Failed to deny: {cmd_str}")
+
+    def test_worker_denied_git_exploration_and_courses_listing(self) -> None:
+        """Worker is denied running git exploration commands and listing general courses/."""
+        # 1. Git exploration commands
+        git_cmds = [
+            "git log -n 5",
+            "git status",
+            "git diff HEAD~1",
+            "git branch -a",
+            "git show HEAD",
+            "git grep search_term",
+        ]
+        for cmd_str in git_cmds:
+            payload = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "run_command",
+                    "args": {"CommandLine": cmd_str},
+                },
+            }
+            res = process_hook(payload, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res.get("decision"), "deny", f"Failed for {cmd_str}")
+            self.assertIn("Git exploration commands", res.get("reason", ""))
+
+        # 2. Listing general courses/ or sibling courses
+        denied_listings = [
+            "Get-ChildItem -Path courses/ -Recurse",
+            "Get-ChildItem courses",
+            "dir courses\\",
+            "ls courses/",
+            "tree courses",
+        ]
+        for cmd_str in denied_listings:
+            payload = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "run_command",
+                    "args": {"CommandLine": cmd_str},
+                },
+            }
+            res = process_hook(payload, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res.get("decision"), "deny", f"Failed for {cmd_str}")
+            self.assertIn("Cross-Course Isolation", res.get("reason", ""))
+
+        # 3. Listing within active course should be ALLOWED
+        allowed_cmd = f"Get-ChildItem -Path courses/{self.course_id}/work"
+        payload_allowed = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "run_command",
+                "args": {"CommandLine": allowed_cmd},
+            },
+        }
+        res_allowed = process_hook(payload_allowed, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_allowed.get("decision"), "allow")
+
+    # --------------------------------------------------------------------------
+    # IMPROVER HARDENING: Windows Paths, error_count == 0, Corrupt JSON,
+    # [M3-ARCHETYPES] Denial Messaging, and evaluate_hook_payload Benchmark
+    # --------------------------------------------------------------------------
+
+    def test_windows_backslashes_and_relative_paths_rules_a_b_c(self) -> None:
+        r"""Windows backslashes (courses\c1\...) and relative paths normalize correctly across Rules A, B, and C."""
+        cta_parts_dir = self.work_dir / "cta_parts"
+        cta_fixes_dir = self.work_dir / "cta_fixes"
+        cta_parts_dir.mkdir(parents=True, exist_ok=True)
+        cta_fixes_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Rule A: writing to cta_fixes with Windows backslashes is ALLOWED
+        win_cta_fix = rf"courses\{self.course_id}\work\cta_fixes\C-01.py"
+        res_fix = evaluate_hook_payload(
+            {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {"Path": win_cta_fix, "Content": "# win fix"},
+                },
+            },
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_fix.get("decision"), "allow")
+
+        # 2. Rule A: relative path with backslashes to cta_fixes is ALLOWED
+        res_rel_fix = evaluate_hook_payload(
+            {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {"Path": r"work\cta_fixes\C-01.py", "Content": "# rel fix"},
+                },
+            },
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_rel_fix.get("decision"), "allow")
+
+        # 3. Rule B: post-PASS with Windows backslashes is BLOCKED on shard and CTA
+        shard_py = self.shards_dir / "shard_01_data.py"
+        shard_py.write_text("# shard content\n", encoding="utf-8")
+        pass_shard = self.check_attempts_dir / "pass_shard_01.json"
+        pass_shard.write_text(json.dumps({"status": "PASS"}), encoding="utf-8")
+
+        win_shard_path = rf"courses\{self.course_id}\work\shards\shard_01_data.py"
+        res_win_pass_shard = evaluate_hook_payload(
+            {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {"Path": win_shard_path, "Content": "# post pass"},
+                },
+            },
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_win_pass_shard.get("decision"), "deny")
+        self.assertIn("BLOCKER:: El shard shard_01 ya aprobó", res_win_pass_shard.get("reason", ""))
+
+        # 4. Rule B: post-PASS with Windows backslashes on CTA part
+        part_py = cta_parts_dir / "part_01_data.py"
+        part_py.write_text("# cta part content\n", encoding="utf-8")
+        pass_cta = self.check_attempts_dir / "pass_cta_part_01.json"
+        pass_cta.write_text(json.dumps({"status": "PASS"}), encoding="utf-8")
+
+        win_part_path = rf"courses\{self.course_id}\work\cta_parts\part_01_data.py"
+        res_win_pass_cta = evaluate_hook_payload(
+            {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {"Path": win_part_path, "Content": "# post pass"},
+                },
+            },
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_win_pass_cta.get("decision"), "deny")
+        self.assertIn("BLOCKER:: El módulo CTA part_01 ya aprobó", res_win_pass_cta.get("reason", ""))
+
+        # 5. Rule C: error_count < 6 with Windows backslashes blocks write_file
+        pass_shard.unlink()  # remove pass file so Rule C is evaluated
+        compile_shard = self.check_attempts_dir / "compile_shard_01.json"
+        compile_shard.write_text(
+            json.dumps({"distinct_compiles": 1, "error_count": 3, "last_errors": ["err1", "err2", "err3"]}),
+            encoding="utf-8",
+        )
+        shard_py.write_text("".join([f"# Line {i}\n" for i in range(100)]), encoding="utf-8")
+
+        res_win_rule_c = evaluate_hook_payload(
+            {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {"Path": win_shard_path, "Content": "# rewrite"},
+                },
+            },
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_win_rule_c.get("decision"), "deny")
+        self.assertIn("registra 3 errores (< 6, umbral oficial)", res_win_rule_c.get("reason", ""))
+
+    def test_rule_c_error_count_zero_and_none_safe_legacy_fallback(self) -> None:
+        """error_count == 0 or error_count is None safely falls back to legacy (>250 lines deny, <=250 lines allow)."""
+        shard_py = self.shards_dir / "shard_01_data.py"
+        compile_file = self.check_attempts_dir / "compile_shard_01.json"
+
+        # Case A: error_count == 0 with small shard (100 lines <= 250) -> ALLOW write_file
+        small_content = "".join([f"# Line {i}\n" for i in range(100)])
+        shard_py.write_text(small_content, encoding="utf-8")
+        compile_file.write_text(
+            json.dumps({"distinct_compiles": 1, "error_count": 0, "last_errors": []}),
+            encoding="utf-8",
+        )
+        res_small_0 = evaluate_hook_payload(
+            {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {"Path": str(shard_py), "Content": small_content},
+                },
+            },
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_small_0.get("decision"), "allow", f"Expected allow for error_count=0 on 100 lines: {res_small_0}")
+
+        # Case B: error_count == 0 with large shard (300 lines > 250) -> DENY write_file (legacy fallback)
+        large_content = "".join([f"# Line {i}\n" for i in range(300)])
+        shard_py.write_text(large_content, encoding="utf-8")
+        res_large_0 = evaluate_hook_payload(
+            {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {"Path": str(shard_py), "Content": large_content},
+                },
+            },
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_large_0.get("decision"), "deny")
+        self.assertIn("supera las 250 líneas", res_large_0.get("reason", ""))
+
+        # Case C: error_count is None with small shard (100 lines <= 250) -> ALLOW write_file
+        shard_py.write_text(small_content, encoding="utf-8")
+        compile_file.write_text(
+            json.dumps({"distinct_compiles": 1, "last_err_hash": "hash_abc"}),  # error_count omitted
+            encoding="utf-8",
+        )
+        res_small_none = evaluate_hook_payload(
+            {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {"Path": str(shard_py), "Content": small_content},
+                },
+            },
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_small_none.get("decision"), "allow")
+
+        # Case D: error_count is None with large shard (300 lines > 250) -> DENY write_file (legacy fallback)
+        shard_py.write_text(large_content, encoding="utf-8")
+        res_large_none = evaluate_hook_payload(
+            {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {"Path": str(shard_py), "Content": large_content},
+                },
+            },
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_large_none.get("decision"), "deny")
+        self.assertIn("supera las 250 líneas", res_large_none.get("reason", ""))
+
+    def test_rule_c_corrupt_json_in_check_attempts_fail_safe_without_exception(self) -> None:
+        """Corrupt JSON in .check_attempts/compile_shard_01.json or compile_cta.json falls back safely without unhandled exception."""
+        shard_py = self.shards_dir / "shard_01_data.py"
+        small_content = "".join([f"# Line {i}\n" for i in range(80)])
+        shard_py.write_text(small_content, encoding="utf-8")
+
+        # Corrupted compile file with truncated/invalid JSON
+        compile_file = self.check_attempts_dir / "compile_shard_01.json"
+        compile_file.write_text("{\"error_count\": 2, \"broken_json: ...", encoding="utf-8")
+
+        # Must not raise an unhandled JSONDecodeError and must fall back safely (allow for small shard)
+        payload = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "write_file",
+                "args": {"Path": str(shard_py), "Content": small_content},
+            },
+        }
+        res = evaluate_hook_payload(payload, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res.get("decision"), "allow")
+
+        # Empty compile file
+        compile_file.write_text("", encoding="utf-8")
+        res_empty = evaluate_hook_payload(payload, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_empty.get("decision"), "allow")
+
+        # CTA compile file corrupted
+        cta_data_py = self.work_dir / "cta_data.py"
+        cta_data_py.write_text("# cta data\n", encoding="utf-8")
+        compile_cta = self.check_attempts_dir / "compile_cta.json"
+        compile_cta.write_text("{bad cta json", encoding="utf-8")
+
+        payload_cta = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "write_file",
+                "args": {"Path": str(cta_data_py), "Content": "# new cta"},
+            },
+        }
+        res_cta = evaluate_hook_payload(payload_cta, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_cta.get("decision"), "allow")
+
+    def test_rule_c_m3_archetypes_denial_message_guidance(self) -> None:
+        """Small shard (1-2 competencies, ~75-120 lines) with [M3-ARCHETYPES] (error_count 1-2) gets clear denial guidance."""
+        shard_py = self.shards_dir / "shard_01_data.py"
+        # 1-2 competencies emitting only 1 archetype per competence (~85 lines)
+        short_shard_content = "".join([f"# Archetype template code line {i}\n" for i in range(85)])
+        shard_py.write_text(short_shard_content, encoding="utf-8")
+
+        # Compiler reports [M3-ARCHETYPES] missing archetype tuple (error_count = 1 or 2)
+        for err_cnt in (1, 2):
+            compile_file = self.check_attempts_dir / "compile_shard_01.json"
+            compile_file.write_text(
+                json.dumps({
+                    "distinct_compiles": 1,
+                    "error_count": err_cnt,
+                    "last_errors": ["[M3-ARCHETYPES] Competence C1 has only 1 archetype; minimum is 2."],
+                }),
+                encoding="utf-8",
+            )
+
+            # write_file rewrite is BLOCKED
+            payload_write = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {"Path": str(shard_py), "Content": short_shard_content},
+                },
+            }
+            res_write = evaluate_hook_payload(payload_write, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res_write.get("decision"), "deny")
+            # Verify ultra-clear guidance on TEMPLATES and [M3-ARCHETYPES]
+            reason = res_write.get("reason", "")
+            self.assertIn(f"registra {err_cnt} errores (< 6, umbral oficial)", reason)
+            self.assertIn("edit_file", reason)
+            self.assertIn("TEMPLATES", reason)
+            self.assertIn("[M3-ARCHETYPES]", reason)
+            self.assertIn("work/shards/shard_fixes/<CID>.py", reason)
+
+            # edit_file surgical addition is ALLOWED
+            payload_edit = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "edit_file",
+                    "args": {
+                        "Path": str(shard_py),
+                        "Target": "# Archetype template code line 10\n",
+                        "Replacement": "# Archetype template code line 10\n# Archetype 2 tuple added\n",
+                    },
+                },
+            }
+            res_edit = evaluate_hook_payload(payload_edit, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res_edit.get("decision"), "allow")
+
+            # writing modular fix in shard_fixes/<CID>.py is ALLOWED
+            payload_fix = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {
+                        "Path": str(self.shard_fixes_dir / "C1.py"),
+                        "Content": "# modular archetype fix\nTEMPLATES = [('arch2', ...)]\n",
+                    },
+                },
+            }
+            res_fix = evaluate_hook_payload(payload_fix, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res_fix.get("decision"), "allow")
+
+    def test_evaluate_hook_payload_benchmark_under_10ms_latency(self) -> None:
+        """Benchmark: 50 consecutive invocations of evaluate_hook_payload achieve average latency < 10ms (SLA target < 5ms)."""
+        import time
+
+        payload = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "write_file",
+                "args": {
+                    "Path": str(self.shards_dir / "shard_99_data.py"),
+                    "Content": "# new shard content\n",
+                },
+            },
+        }
+
+        # Warm up 5 calls
+        for _ in range(5):
+            evaluate_hook_payload(payload, custom_lock_file=str(self.lock_file))
+
+        latencies_ms: List[float] = []
+        for _ in range(50):
+            t0 = time.perf_counter()
+            res = evaluate_hook_payload(payload, custom_lock_file=str(self.lock_file))
+            lat = (time.perf_counter() - t0) * 1000.0
+            latencies_ms.append(lat)
+            self.assertEqual(res.get("decision"), "allow")
+
+        avg_latency = sum(latencies_ms) / len(latencies_ms)
+        max_latency = max(latencies_ms)
+
+        self.assertLess(
+            avg_latency,
+            10.0,
+            f"Average latency {avg_latency:.2f}ms exceeded SLA threshold of 10.0ms",
+        )
+        self.assertLess(
+            avg_latency,
+            5.0,
+            f"Average latency {avg_latency:.2f}ms exceeded high-performance target of 5.0ms",
+        )
+        self.assertLess(
+            max_latency,
+            25.0,
+            f"Max latency {max_latency:.2f}ms exceeded SLA threshold of 25.0ms",
+        )
 
 
 if __name__ == "__main__":
