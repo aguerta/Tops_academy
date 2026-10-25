@@ -6,6 +6,7 @@
 **Auditor Responsable:** Course QA Auditor — Top's Academy  
 **Estándares Normativos:** Quality Matters (QM), OSCQR, Mastery Learning  
 **Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-10-25 11:12:47  
 **Fecha de Eliminación:** 2026-10-25 10:12:09  
 
 ---

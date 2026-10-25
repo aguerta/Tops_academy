@@ -6,7 +6,7 @@
     "total_competencies": 32,
     "total_questions": 740,
     "platform_status": "ELIMINADO",
-    "deleted_at": "2026-10-25 10:11:44"
+    "deleted_at": "2026-10-25 11:12:46"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -77,6 +77,6 @@
     }
   ],
   "platform_status": "ELIMINADO",
-  "deleted_at": "2026-10-25 10:11:44",
+  "deleted_at": "2026-10-25 11:12:46",
   "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

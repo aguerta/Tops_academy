@@ -3,6 +3,7 @@
 > **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-10-25 10:12:15**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
 
 **Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-10-25 11:12:48  
 **Fecha de Eliminación:** 2026-10-25 10:12:15  
 **Curso:** `practica_parcial_saul` (ID: `practica_parcial_saul`)  
 **Título del Curso:** Practica Parcial Saul  

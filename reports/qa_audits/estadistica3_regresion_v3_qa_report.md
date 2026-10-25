@@ -4,6 +4,7 @@
 > **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-10-25 10:12:03**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
 
 **Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-10-25 11:12:47  
 **Fecha de Eliminación:** 2026-10-25 10:12:03  
 **Curso Auditado:** `estadistica3_regresion_v3`  
 **Título del Curso:** Estadística III: Econometría y Modelo de Regresión Lineal  

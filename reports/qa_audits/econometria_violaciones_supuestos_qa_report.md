@@ -5,6 +5,7 @@
 > **CURSO CERTIFICADO CON CALIFICACIÓN ACEPTABLE**: Este informe presenta la auditoría pedagógica, psicométrica y técnica exhaustiva realizada sobre el curso oficial `econometria_violaciones_supuestos`, evaluado bajo los estándares internacionales de **Quality Matters (QM)**, **OSCQR** y **Mastery Learning**.
 
 **Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-10-25 11:12:46  
 **Fecha de Eliminación:** 2026-10-25 10:11:57  
 **Curso Auditado:** Econometría: Violaciones de Supuestos del Modelo Lineal General  
 **Identificador del Curso:** `econometria_violaciones_supuestos`  

@@ -3,6 +3,7 @@
 > **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-10-25 10:11:44**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
 
 **Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-10-25 11:12:46  
 **Fecha de Eliminación:** 2026-10-25 10:11:44  
 ## Curso: `asyntotic_estatistics_v2` — Asyntotic Estatistics V2
 

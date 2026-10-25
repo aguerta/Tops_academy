@@ -20,15 +20,15 @@
 | **`gavilano_pre_parcial`** | **4.0** | **4.8** | **3.7** | **4.0** | **2.0** | 0.0 | **18.5 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Aprobado Producción; Remediación de 70 pistas en C-26, H-19, Hab-16) | Nulo |
 | **`asyntotic_estatistics_v7`** | **4.0** | **4.4** | **3.5** | **4.0** | **1.9** | 0.0 | **17.8 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Aprobado Producción; Remediación de 70 pistas en 9 competencias) | Nulo |
 | **`solow_model_v15`** | **3.9** | **3.8** | **4.6** | **4.0** | **1.6** | 0.0 | **17.9 / 20.0** | **EXCELENTE** | ⚠️ ELIMINADO (Re-auditado; ajustado desde 20.0 por monocultivo) | 2026-10-20 13:26:24 |
-| **`estadistica_asintotica`** | **3.8** | **3.5** | **4.3** | **3.9** | **2.0** | 0.0 | **17.5 / 20.0** | **EXCELENTE** | ❌ ELIMINADO (Retirado; riesgo de mecanización por monocultivo) | 2026-10-25 10:12:09 |
-| **`practica_parcial_saul`** | **3.8** | **3.4** | **4.0** | **3.8** | **1.5** | 0.0 | **16.5 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; monocultivo algebraico y variables en pistas) | 2026-10-25 10:12:15 |
-| **`estadistica3_regresion_v3`** | **3.3** | **4.0** | **3.4** | **4.0** | **1.6** | 0.0 | **16.3 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; desconexión en DAG y pistas formulaicas) | 2026-10-25 10:12:03 |
-| **`practica_parcial_saul_standard_coarse`** | **3.8** | **3.4** | **3.9** | **4.0** | **1.2** | 0.0 | **16.3 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Histórico / Retirado; tokens `{c}`, `{d}` en soluciones) | 2026-10-25 10:12:21 |
-| **`econometria_violaciones_supuestos`** | **3.8** | **2.7** | **4.2** | **3.6** | **1.4** | 0.0 | **15.7 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; Answer Leaks parentéticos y residuos `${dep_var}_i`) | 2026-10-25 10:11:57 |
-| **`asyntotic_estatistics_v3`** | **3.8** | **1.8** | **4.3** | **3.8** | **1.8** | 0.0 | **15.5 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; Phantom Keying con distractores clonados) | 2026-10-25 10:11:51 |
-| **`asyntotic_estatistics_v2`** | **2.8** | **3.2** | **3.5** | **3.8** | **1.4** | 0.0 | **14.7 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; inversión curricular topológica y residuos f-string) | 2026-10-25 10:11:44 |
-| **`practica_parcial_saul_standard`** | **3.3** | **1.7** | **3.7** | **3.7** | **1.2** | 0.0 | **13.6 / 20.0** | **DEFICIENTE** | ❌ ELIMINADO (Rechazado; distractores auto-delatores masivos y 0% M3) | 2026-10-25 10:12:21 |
-| **`practica_parcial_saul_standard_coarse_v2`** | **2.2** | **1.5** | **2.8** | **3.2** | **1.1** | 0.0 | **10.8 / 20.0** | **CRÍTICO** | ❌ ELIMINADO (Histórico; Answer Leaks, etiquetas visibles y colisiones KaTeX) | 2026-10-25 10:12:21 |
+| **`estadistica_asintotica`** | **3.8** | **3.5** | **4.3** | **3.9** | **2.0** | 0.0 | **17.5 / 20.0** | **EXCELENTE** | ❌ ELIMINADO (Retirado; riesgo de mecanización por monocultivo) | 2026-10-25 11:12:47 |
+| **`practica_parcial_saul`** | **3.8** | **3.4** | **4.0** | **3.8** | **1.5** | 0.0 | **16.5 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; monocultivo algebraico y variables en pistas) | 2026-10-25 11:12:48 |
+| **`estadistica3_regresion_v3`** | **3.3** | **4.0** | **3.4** | **4.0** | **1.6** | 0.0 | **16.3 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; desconexión en DAG y pistas formulaicas) | 2026-10-25 11:12:47 |
+| **`practica_parcial_saul_standard_coarse`** | **3.8** | **3.4** | **3.9** | **4.0** | **1.2** | 0.0 | **16.3 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Histórico / Retirado; tokens `{c}`, `{d}` en soluciones) | 2026-10-25 11:12:48 |
+| **`econometria_violaciones_supuestos`** | **3.8** | **2.7** | **4.2** | **3.6** | **1.4** | 0.0 | **15.7 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; Answer Leaks parentéticos y residuos `${dep_var}_i`) | 2026-10-25 11:12:46 |
+| **`asyntotic_estatistics_v3`** | **3.8** | **1.8** | **4.3** | **3.8** | **1.8** | 0.0 | **15.5 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; Phantom Keying con distractores clonados) | 2026-10-25 11:12:46 |
+| **`asyntotic_estatistics_v2`** | **2.8** | **3.2** | **3.5** | **3.8** | **1.4** | 0.0 | **14.7 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; inversión curricular topológica y residuos f-string) | 2026-10-25 11:12:46 |
+| **`practica_parcial_saul_standard`** | **3.3** | **1.7** | **3.7** | **3.7** | **1.2** | 0.0 | **13.6 / 20.0** | **DEFICIENTE** | ❌ ELIMINADO (Rechazado; distractores auto-delatores masivos y 0% M3) | 2026-10-25 11:12:48 |
+| **`practica_parcial_saul_standard_coarse_v2`** | **2.2** | **1.5** | **2.8** | **3.2** | **1.1** | 0.0 | **10.8 / 20.0** | **CRÍTICO** | ❌ ELIMINADO (Histórico; Answer Leaks, etiquetas visibles y colisiones KaTeX) | 2026-10-25 11:12:48 |
 
 ---
 

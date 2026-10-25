@@ -6,6 +6,7 @@
 > Si bien el curso presenta una arquitectura curricular sólida y un andamiaje socrático libre de pistas stub, se ha detectado una anomalía psicométrica severa en **100 reactivos (14.5% del curso)**: presencia de distractores clonados que replican el valor de la respuesta correcta bajo el prefijo delator `"Opción alterna X:"`, generando ambigüedad insoluble (*Phantom Keying*). Se requiere remediación prioritaria antes de su paso a producción final.
 
 **Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-10-25 11:12:46  
 **Fecha de Eliminación:** 2026-10-25 10:11:51  
 **Curso Auditado:** Asyntotic Estatistics V3 (Inferencia Asintótica y Teoría de Muestras Grandes)  
 **Identificador del Curso:** `asyntotic_estatistics_v3`  
