@@ -202,7 +202,7 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 | **Milestone 3: Anti-Overfitting y Variedad de Plantillas** | Pipeline & QA | **Destruye la automatización sintáctica.** 4 arquetipos disjuntos (`[M3-ARCHETYPES]`) en pipeline y linter de entropía en QA. | 2 a 3 h (Auditor) | 🛠️ **Pipeline: Hecho / Auditor: Falta contar $\ge 4$** |
 | **Milestone 4: Desacoplamiento KaTeX-Python (PrairieLearn)** | Backend / Pipeline | **Erradica al 100% las colisiones de sintaxis.** Tokens `@var@` activos; falta compilación AST QuickJS y contrato Pydantic. | 1 a 2 d | 🛠️ **Parcial (@var@ activo / AST pendiente)** |
 | **Milestone 5: Entradas Simbólicas Libres (Free Recall)** | Full-Stack | **Trascendencia del reconocimiento pasivo.** MathLive + SymPy para respuestas abiertas y validación de pasos intermedios. | 2 a 3 d | 🧠 **Impacto Cognitivo Máximo** |
-| **Milestone 6: Antigravity Study Harness (Split-View)** | Arquitectura UI | **Estación de ultra-aprendizaje en Flow.** Canvas de preguntas + Visor PDF sincronizado (`source_anchor`) + Tutor socrático Gemini. | 3 a 5 d | 👑 **La Joya de la Corona** |
+| **Milestone 6: Antigravity Study Harness (Split-View & 1/3–1/2 Viewport)** | Arquitectura UI | **Estación de ultra-aprendizaje en Flow.** Vía Pragmática: Viewport 1/3–1/2 + Pestañas (Hoja en Blanco / Teoría) + Copiar Prompt Socrático. Vía Full: Visor PDF integrado in-app. | 1 a 2 h (Vía Pragmática) / 3 a 5 d (Full) | 👑 **Redefinido: 80/20 Pragmático** |
 | **Milestone 7: Streaming DAG y Pool de Subprocesos** | Infraestructura | **Quiebra la barrera de 15 min en pipeline.** Grafo asíncrono sin barreras bloqueantes y pool persistente de workers SymPy. | 2 a 3 d | ⚡ **Rendimiento Pipeline** |
 | **Milestone 8: Repetición Espaciada (SRS) y Blind Mode** | Motor de Sesión | **Combate el decaimiento de memoria (Curva de Ebbinghaus).** Decaimiento temporal, refreshers a 1-4-14-45 días y sesiones a ciegas. | 2 a 3 d | 🔁 **Cierre de Ciclo de Pericia** |
 | **Milestone 9: Jerarquía de Contenido (PPT $\to$ Core/Subtemas)** | Curricular / Schema | **Organización natural en torno a la fuente real.** Contenido PPT $\to$ [Glosario + Núcleo] + Subtemas $\to$ Quizzes de subtema + Challenge PPT. | 2 a 3 d | 🏛️ **Arquitectura Curricular** |
@@ -283,54 +283,133 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 
 ---
 
-### Milestone 6: "Antigravity Study Harness" (Multi-Panel Split-View)
-* **Objetivo:** Transformar la plataforma en una estación de trabajo de ultra-aprendizaje en flow, conectando preguntas interactivas con el material de origen y tutoría socrática por IA.
+### Milestone 6: "Antigravity Study Harness" (Multi-Panel Split-View & Viewport 1/3–1/2 Adaptativo)
+* **Objetivo:** Transformar la plataforma en una estación de trabajo de ultra-aprendizaje en flow, conectando preguntas interactivas con el material de origen y tutoría socrática por IA, optimizada para la realidad operativa de un único mantenedor con recursos y suscripciones estándar (Plan Pro).
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Estudiante
-    participant Canvas as Panel 1: Question Canvas
-    participant Source as Panel 2: Material Original (PDF)
-    participant Tutor as Panel 3: Gemini Socratic Tab
+    participant Canvas as Panel 1: Question Canvas (Tops Academy)
+    participant Source as Panel 2: Hoja en Blanco / Teoría en Tabs (o PDF Externo)
+    participant Tutor as Panel 3: Tutor Socrático (Ventana Gemini Pro / Botón Prompt)
 
-    Estudiante->>Canvas: Lee problema y reflexiona
+    Estudiante->>Canvas: Lee problema y reflexiona en ventana compacta (1/3 o 1/2 pantalla)
     alt Acierto directo
         Estudiante->>Canvas: Envía respuesta correcta
         Canvas-->>Estudiante: Refuerzo positivo inmediato + Siguiente pregunta (Flow continuo)
     else Duda o Primer Fallo (Fricción Cognitiva)
-        Canvas-->>Estudiante: Oculta opciones distractores; solicita recuerdo activo
-        Note over Estudiante: "Trata de recordar: ¿dónde estaba este concepto en los apuntes?"
+        Canvas-->>Estudiante: Mantiene opciones; estimula recuerdo activo
+        Note over Estudiante,Source: Tab 1: Hoja en Blanco / Pizarra (Free Recall activo sin ver teoría)
         Estudiante->>Canvas: Reintento autónomo
-    else Segundo Fallo o Solicitud de Ayuda
-        Canvas->>Source: Despliega Panel 2 posicionado en la página exacta del PDF (source_anchor)
-        Note over Estudiante,Source: El estudiante busca, analiza y razona desde el material original
-        Estudiante->>Canvas: Reintento basado en el análisis de la fuente
+    else Segundo Fallo o Consulta Teórica
+        Canvas->>Source: Estudiante conmuta a Tab 2 (Teoría / Núcleo conceptual de la competencia)
+        Note over Estudiante,Source: Consulta la definición, fórmulas clave y prerrequisitos del JSON sin salir de la pregunta
+        Estudiante->>Canvas: Reintento basado en el análisis conceptual
     else Bloqueo Persistente
-        Canvas->>Tutor: Habilita el Tab de Google Gemini
-        Estudiante->>Tutor: "No entiendo cómo empezar este despeje"
-        Tutor-->>Estudiante: Guía socrática de primer principio (sin regalar la respuesta)
+        Canvas->>Tutor: Clic en botón "Copiar Prompt Socrático" (Copia al portapapeles con anti-giveaway)
+        Estudiante->>Tutor: Pega en ventana externa de Gemini Pro (Ctrl+V)
+        Tutor-->>Estudiante: Guía socrática de primer principio (sin regalar la respuesta ni la letra)
         Estudiante->>Canvas: Resuelve y consolida el aprendizaje profundo
     end
 ```
 
-* **Componentes Técnicos:**
-  1. **Split-View Layout Adaptativo (`platform/src/components/HarnessLayout.tsx`):**
-     - Panel 1: Canvas de Preguntas y Acción (Enunciado, opciones o MathLive, feedback).
-     - Panel 2: Visor de PDF/Markdown con resaltado del fragmento fuente exacto.
-     - Panel 3: Pestaña o drawer lateral con Google Gemini socrático.
-  2. **Indexador y Ancla de Contenido Fuente (`source_anchor`):**
-     - Cada competencia incluye el metadato exacto generado durante la ingesta:
-       ```json
-       "source_anchor": {
-         "file": "MATH_IV_Problem_Set_I.pdf",
-         "page": 14,
-         "section": "Problema 3: EDP cuasilineal y curvas características"
-       }
-       ```
-     - El visor de la plataforma se sincroniza automáticamente con el `source_anchor` activo.
-  3. **Sidecar Socrático de Google Gemini (`GeminiSocraticTutor.tsx`):**
-     - Tutoría contextual guiada por primeros principios con prohibición estricta de entregar la respuesta directa o señalar letras.
+#### 6.1. Diagnóstico Estratégico y Contraste de Hipótesis: Solo Maintainer vs. Harness Monolítico
+En el diseño original del Milestone 6 se concibió un harness monolítico "todo-en-uno" con visor interno de PDFs (`react-pdf`), servidor estático de archivos fuente, metadatos `source_anchor` inyectados en el pipeline C2C y un sidecar de chat con Google Gemini embebido dentro del cliente React.
+
+**Contraste de Realidad Operativa (Hipótesis Huertas):**
+Un equipo corporativo dispone de desarrolladores 24/7 y presupuestos de tokens dedicados. En Tops Academy, el proyecto es liderado por un único mantenedor (Augusto Huertas) con acceso a un plan Pro de IA personal. Desarrollar un visor de PDF integrado y un proxy de chat LLM con consumo de API dedicada introduce una triple penalización:
+1. **Sobrecosto financiero innecesario:** Pagar tokens de API por cada consulta cuando ya se dispone de una suscripción Pro activa en el navegador.
+2. **Deuda técnica y consumo de RAM:** Incrustar visores de PDF pesados en React (`pdf.js` workers, problemas de CORS, Canvas scaling) cuando los visores nativos del sistema operativo y del navegador ya renderizan documentos a 60 FPS con búsqueda `Ctrl+F` instantánea.
+3. **Mantenimiento sobredimensionado:** Mantener endpoints y estado multi-panel reactivo complejo en un solo dispositivo.
+
+**Veredicto de la Hipótesis de Ventana 1/3 – 1/2:**
+Permitir que la plataforma se comprima limpiamente a **1/3 (~450px–640px)** o **1/2 (~680px–960px)** del ancho de la pantalla horizontal mediante Snap Layouts del sistema operativo (`Win + Z`), liberando el resto del monitor para los apuntes/PDF y para la ventana de IA Pro externa, es **arquitectónicamente superior en un 85%**. Sin embargo, para no degradar el rigor pedagógico del Harness, se deben resolver las dos brechas remanentes:
+- **Preservar el principio de "Hoja en Blanco Primero":** Evitar que el alumno mire de inmediato los apuntes mediante una pestaña limpia de trabajo previo (*Scratchpad*).
+- **Resolver el puente contextual con la IA:** Proporcionar un botón de **1-clic ("Copiar Prompt Socrático")** que extraiga el enunciado KaTeX, el error cometido y el contrato anti-giveaway, listo para pegar en la ventana externa de Gemini Pro.
+
+---
+
+#### 6.2. Auditoría Forense de Puntos de Fricción en la Codebase Actual (Pantallas Estrechas)
+La codebase actual en `platform/src/` asume un viewport de pantalla completa de escritorio. Si la ventana se redimensiona a 1/3 o 1/2 de pantalla, emergen 5 puntos de rotura estructurales:
+
+1. **Sidebar Incolapsable con Ancho Rígido ([`Sidebar.tsx:L27`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/Sidebar.tsx#L27)):**
+   - Posee `w-64 flex-shrink-0` (256px fijos). En una ventana de 500px (1/3 de pantalla en laptop), el menú lateral consume más del 50% del ancho útil, aplastando [`CourseOverview.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseOverview.tsx).
+2. **Colisión en Barra Inferior de Práctica ([`PracticeSession.tsx:L385`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/PracticeSession.tsx#L385)):**
+   - El footer fijo combina en una sola fila `px-8`, el contador de reactivos, los puntos de progreso individuales (`gap-2`) y los botones de acción (`Skip`, `Quick Redo`, `Check ↵ Enter`). En anchos reducidos, los puntos chocan y desplazan el botón `Check` fuera del viewport.
+3. **Desbordamiento Asimétrico del Toast de Feedback ([`FeedbackToast.tsx:L170`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/FeedbackToast.tsx#L170)):**
+   - Posee ancho fijo `w-96` (384px) y anclaje absoluto `right-8 bottom-24`. En ventanas menores a 550px, se corta por la derecha o tapa la totalidad de las opciones de respuesta impidiendo reintentar.
+4. **Desborde Horizontal de Ecuaciones KaTeX en Opciones ([`QuestionCard.tsx:L131`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/QuestionCard.tsx#L131) y [`MathText.tsx:L73`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/MathText.tsx#L73)):**
+   - Las expresiones matemáticas inline carecen de `overflow-x-auto` contenedor. Ecuaciones largas (matrices, integrales con límites) en las opciones MC7 desbordan el ancho del botón en columnas de 400px.
+5. **Dimensionamiento Estático de Gráficos SVG ([`CoordinatePlane.tsx:L10`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CoordinatePlane.tsx#L10) y [`L167`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CoordinatePlane.tsx#L167)):**
+   - El plano cartesiano SVG tiene `width: 360` rígido en píxeles en lugar de un escalado vectorial fluido `w-full max-w-[360px] h-auto`.
+
+---
+
+#### 6.3. Especificación Técnica de la Solución Práctica (El Micro-Harness 80/20)
+
+El nuevo diseño del Milestone 6 se estructura en dos modalidades complementarias:
+
+##### Modalidad A: La Vía Pragmática Inmediata (1/3 y 1/2 de Pantalla + Micro-Tabs)
+1. **Layout Adaptativo Multi-Viewport:**
+   - **En Viewport 1/3 (< 640px):** `Sidebar.tsx` se transforma en Drawer desplegable con botón hamburguesa; el footer de `PracticeSession.tsx` compacta los puntos de progreso a una barra resumida (`X de Y`); `FeedbackToast.tsx` opera como Bottom Sheet acoplado abajo con altura elástica y botón de minimizar.
+   - **En Viewport 1/2 (640px – 1024px):** Las 7 opciones adoptan el Grid Inteligente de 2 columnas (Milestone 1) para erradicar el scroll vertical excesivo.
+2. **Micro-Harness de Pestañas en Sesión de Práctica:**
+   - **Tab 1: Pizarra / Hoja en Blanco (Scratchpad en Vacío):** Vista inicial que permite anotar datos, variables o bosquejos algebraicos con previsualización KaTeX inmediata, forzando la **evocación libre pura** (*Free Recall*) sin estímulos teóricos visibles.
+   - **Tab 2: Teoría y Fórmulas de la Competencia (Bajo Demanda):** Permanece oculta hasta que el alumno la solicita. Despliega la ficha de la competencia activa (`competency.name`, `competency.description`, fórmulas canónicas y prerrequisitos del curso), información que **ya está presente en los archivos JSON existentes** (`courses/*.json`), sin necesidad de migrar contratos.
+   - **Tab 3: Problema / Reactivo Activo:** Interfaz de resolución normal con enunciado, opciones, entrada simbólica y verificación.
+3. **Puente Socrático 1-Clic a IA Externa (Zero-Cost Sidecar):**
+   - Un botón integrado `🤖 Copiar Prompt Socrático` que genera en el portapapeles una plantilla contextualizada:
+     ```text
+     Actúa como un profesor universitario socrático riguroso en [NOMBRE_DEL_CURSO].
+     Estoy resolviendo este problema sobre la competencia "[NOMBRE_COMPETENCIA]":
+     
+     ENUNCIADO:
+     [STEM_EN_LATEX]
+     
+     MI RESPUESTA INCORRECTA:
+     [OPCION_SELECCIONADA]
+     
+     REGLA ESTRICTA ANTI-GIVEAWAY:
+     NO me des la respuesta correcta ni me indiques qué opción marcar.
+     Hazme UNA sola pregunta conceptual de primer principio que me ayude a detectar dónde cometí el error de razonamiento o qué supuesto pasé por alto.
+     ```
+   - El estudiante ejecuta `Ctrl+V` en su ventana contigua de Gemini Pro / ChatGPT, obteniendo tutoría de máxima calidad sin costo de API para el proyecto.
+
+##### Modalidad B: La Vía Monolítica Completa (Backlog para Escalamiento Institucional)
+- Integración de `react-pdf` o PDF.js en servidor [`courseServer.cjs`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/server/courseServer.cjs) para servir `content/*.pdf`.
+- Migración de esquemas en pipeline para generar `source_anchor: { file, page, section }`.
+- Componente `HarnessLayout.tsx` con paneles redimensionables con splitters `react-resizable-panels`.
+- Backend proxy con API Key de Gemini y streaming SSE de respuestas en chat embebido.
+
+---
+
+#### 6.4. Matriz Comparativa: Vía Pragmática vs. Vía Monolítica
+
+| Criterio de Comparación | Vía Pragmática (Modo 1/3–1/2 + Micro-Tabs + Prompt) | Vía Monolítica (Harness Embebido Completo) |
+| :--- | :---: | :---: |
+| **Tiempo de Implementación** | **~45 a 90 minutos (1 sesión de trabajo)** | **3 a 5 días hábiles de desarrollo intensivo** |
+| **Costo Operativo Mensual** | **$0.00 USD** (aprovecha la suscripción Pro personal del usuario) | **Variable según tokens de API** (Gemini Pro/Flash API calls) |
+| **Complejidad Arquitectural** | **100% Frontend React/Tailwind local**, cero dependencias pesadas | Servidor de archivos estáticos, workers PDF.js, proxy API, gestión de cuotas |
+| **Riesgo de Deuda Técnica** | **Mínimo** (utiliza los datos ya presentes en `courses/*.json`) | **Alto** (requiere regenerar todos los cursos para inyectar `source_anchor`) |
+| **Ergonomía de Multitarea** | **Máxima:** Integración fluida con el gestor de ventanas del SO | Confinada dentro de las pestañas del navegador en un solo canvas |
+| **Efecto Cognitivo (*Free Recall*)** | **Idéntico (100%):** Hoja en blanco primero, teoría en tab oculta y guía socrática | **Idéntico (100%):** Paneles sincronizados con ancla de página |
+
+---
+
+#### 6.5. Plan de Ejecución Quirúrgico para la Vía Pragmática (Paso a Paso)
+1. **Paso 1 — Refactor Responsivo de Navegación y Viewport (< 640px / 1/3 de Pantalla):**
+   - Dotar a [`Sidebar.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/Sidebar.tsx) de drawer colapsable con overlay accesible.
+   - Refactorizar el footer de [`PracticeSession.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/PracticeSession.tsx) con indicador de progreso compacto para pantallas estrechas.
+   - Ajustar [`FeedbackToast.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/FeedbackToast.tsx) como bottom sheet adaptativo con controles de repliegue.
+2. **Paso 2 — Ergonomía de Contenedores y KaTeX Líquido:**
+   - Inyectar contención `overflow-x-auto` en [`MathText.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/MathText.tsx) y escala SVG fluida en [`CoordinatePlane.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CoordinatePlane.tsx).
+   - Implementar grid condicional de 2 columnas en [`QuestionCard.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/QuestionCard.tsx) cuando el ancho horizontal lo permita.
+3. **Paso 3 — Montaje del Micro-Harness (Tabs de Hoja en Blanco, Teoría y Prompt Socrático):**
+   - Agregar selector de pestañas o toggle en cabecera de [`PracticeSession.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/PracticeSession.tsx) (`[ 📝 Reactivo ]`, `[ ⬜ Hoja en Blanco ]`, `[ 📖 Ficha Teórica ]`).
+   - Implementar el generador de clipboard socrático con feedback visual de copiado (`"¡Prompt socrático copiado para tu IA!"`).
+4. **Paso 4 — Verificación Determinista y Certificación:**
+   - Ejecutar suite de pruebas con Vitest y build estático de Vite (`npm run build`) para garantizar cero regresiones.
 
 ---
 

@@ -149,3 +149,4 @@
 {"timestamp": "2026-10-25T17:27:18.896975+00:00", "course_id": "macro_solow", "total_patches": 38, "healed": 38, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 31, "PRE_IMPORT_TOKEN_HEAL": 7}}
 {"timestamp": "2026-10-25T17:27:28.286201+00:00", "course_id": "macro_base", "total_patches": 1, "healed": 1, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"PRE_IMPORT_TOKEN_HEAL": 1}}
 {"timestamp": "2026-10-25T17:27:28.537846+00:00", "course_id": "greene_append_v3", "total_patches": 27, "healed": 27, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 27}}
+{"timestamp": "2026-10-25T17:30:11.622623+00:00", "course_id": "greene_append_v3", "total_patches": 27, "healed": 27, "snapped": 0, "degraded": 0, "degraded_pct": 0.0, "alert": false, "by_rule": {"NORMALIZE_ORPHAN_MATH": 27}}
