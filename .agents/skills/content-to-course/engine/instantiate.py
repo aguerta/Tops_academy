@@ -105,6 +105,11 @@ def instantiate_template(
 
         for item in batch_results:
             if not item.get("success"):
+                err_txt = str(item.get("error", ""))
+                if "SandboxTimeoutError" in err_txt:
+                    raise SandboxTimeoutError(
+                        f"Template {template.get('id', 'UNKNOWN')} timed out during instantiation: {err_txt}"
+                    )
                 continue
 
             gen_res = item["result"]

@@ -616,6 +616,42 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
             f"Average latency {avg_latency:.2f}ms exceeded target of 5ms",
         )
 
+    def test_hook_stdout_is_pure_ascii_json_under_cp1252_pipe(self) -> None:
+        """Subprocess stdout must be 100% 7-bit ASCII JSON even with Spanish accents and PYTHONIOENCODING=cp1252."""
+        import subprocess
+
+        hook_script = REPO_ROOT / ".agents" / "skills" / "content-to-course" / "c2c_hook_guard.py"
+        pass_file = self.check_attempts_dir / "pass_shard_01.json"
+        pass_file.write_text(json.dumps({"status": "PASS", "shard_id": "shard_01"}), encoding="utf-8")
+
+        payload = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "write_file",
+                "args": {
+                    "Path": str(self.shards_dir / "shard_01_data.py"),
+                    "Content": "# post-pass write",
+                },
+            },
+        }
+        env = dict(os.environ, PYTHONIOENCODING="cp1252")
+        proc = subprocess.run(
+            [sys.executable, str(hook_script)],
+            cwd=self.test_dir,
+            input=json.dumps(payload).encode("utf-8"),
+            capture_output=True,
+            env=env,
+        )
+        self.assertEqual(proc.returncode, 0, f"Hook must always exit 0, stderr={proc.stderr!r}")
+        self.assertTrue(
+            all(b < 128 for b in proc.stdout),
+            f"Hook emitted non-ASCII bytes on CP1252 pipe (breaks protojson UTF-8): {proc.stdout!r}",
+        )
+        decoded = json.loads(proc.stdout.decode("utf-8"))
+        self.assertEqual(decoded.get("decision"), "deny")
+        self.assertIn("aprobó", decoded.get("reason", ""))
+        self.assertIn("Detén", decoded.get("reason", ""))
+
 
 if __name__ == "__main__":
     unittest.main()

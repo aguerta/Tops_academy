@@ -394,6 +394,57 @@ def build_sandbox_globals() -> Dict[str, Any]:
     return env
 
 
+def call_with_timeout(
+    func: Any,
+    args: tuple = (),
+    kwargs: Optional[dict] = None,
+    timeout: Optional[float] = 0.5,
+    seed: Optional[int] = None,
+    max_user_steps: int = 250_000,
+) -> Any:
+    """Invoke a callable with a per-thread sys.settrace wall-clock and user-step guard."""
+    if kwargs is None:
+        kwargs = {}
+    prev_trace = sys.gettrace()
+    use_tracer = (timeout is not None and timeout > 0) or (max_user_steps and max_user_steps > 0)
+    if use_tracer:
+        deadline = time.perf_counter() + float(timeout) if (timeout is not None and timeout > 0) else None
+        total_steps = [0]
+        user_steps = [0]
+        target_code = getattr(func, "__code__", None)
+        target_filename = getattr(target_code, "co_filename", None)
+
+        def _timeout_tracer(frame, event, arg):
+            total_steps[0] += 1
+            f_code = frame.f_code
+            fn = f_code.co_filename
+            if (
+                f_code is target_code
+                or (target_filename and fn == target_filename)
+                or fn in ("<sandbox>", "<generate_py>", "<cross_check_py>")
+            ):
+                user_steps[0] += 1
+                if max_user_steps and user_steps[0] > max_user_steps:
+                    raise SandboxTimeoutError(
+                        f"Infinite loop guard triggered after {max_user_steps} steps (seed={seed})"
+                    )
+            if deadline is not None and (total_steps[0] & 63) == 0 and time.perf_counter() > deadline:
+                raise SandboxTimeoutError(
+                    f"Template execution timed out after {timeout}s (seed={seed})"
+                )
+            if prev_trace is not None:
+                prev_trace(frame, event, arg)
+            return _timeout_tracer
+
+        sys.settrace(_timeout_tracer)
+
+    try:
+        return func(*args, **kwargs)
+    finally:
+        if use_tracer:
+            sys.settrace(prev_trace)
+
+
 def run_code_in_env(
     code_str: str,
     func_name: str,
@@ -426,35 +477,20 @@ def run_code_in_env(
     if kwargs is None:
         kwargs = {}
 
-    prev_trace = sys.gettrace()
-    use_tracer = timeout is not None and timeout > 0
-    if use_tracer:
-        deadline = time.perf_counter() + float(timeout)
-        step_counter = [0]
-
-        def _timeout_tracer(frame, event, arg):
-            step_counter[0] += 1
-            if (step_counter[0] & 63) == 0 and time.perf_counter() > deadline:
-                raise SandboxTimeoutError(
-                    f"Template execution timed out after {timeout}s (seed={seed})"
-                )
-            if prev_trace is not None:
-                prev_trace(frame, event, arg)
-            return _timeout_tracer
-
-        sys.settrace(_timeout_tracer)
-
+    call_args = (rng,) if ("rng" not in kwargs and len(args) == 0) else args
     try:
-        if "rng" not in kwargs and len(args) == 0:
-            return func(rng, **kwargs)
-        return func(*args, **kwargs)
+        return call_with_timeout(
+            func,
+            args=call_args,
+            kwargs=kwargs,
+            timeout=timeout,
+            seed=seed,
+            max_user_steps=250_000 if (timeout is not None and timeout > 0) else 0,
+        )
     except (SecurityViolationError, SandboxTimeoutError, SandboxExecutionError):
         raise
     except Exception as e:
         raise SandboxExecutionError(f"{type(e).__name__}: {e}") from e
-    finally:
-        if use_tracer:
-            sys.settrace(prev_trace)
 
 
 def execute_template_code(
@@ -510,7 +546,16 @@ def execute_sandbox_batch(
         validate_code_ast(cross_check_py)
 
     results = []
+    timeout_count = 0
+    last_timeout_err = ""
     for s in seeds:
+        if timeout_count >= 2:
+            results.append({
+                "seed": s,
+                "success": False,
+                "error": last_timeout_err or f"SandboxTimeoutError: Batch aborted after repeated timeouts (seed={s})",
+            })
+            continue
         try:
             gen_res = run_code_in_env(generate_py, "generate", seed=s, timeout=timeout_per_item)
             if cross_check_py:
@@ -526,6 +571,14 @@ def execute_sandbox_batch(
                 "seed": s,
                 "success": True,
                 "result": serialize_for_json(gen_res),
+            })
+        except SandboxTimeoutError as te:
+            timeout_count += 1
+            last_timeout_err = f"SandboxTimeoutError: {str(te)}"
+            results.append({
+                "seed": s,
+                "success": False,
+                "error": last_timeout_err,
             })
         except Exception as e:
             results.append({

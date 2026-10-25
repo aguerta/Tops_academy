@@ -947,18 +947,22 @@ def compile_shard(
             except Exception:
                 pass
 
-    # 1. Verify pre_shard_manifest.json (Strict: ZERO Fallbacks)
+    # 1. Verify pre_shard_manifest.json (resolving --manifest pre_cta_manifest.json fallback cleanly)
+    def _find_pre_shard_manifest() -> Optional[Path]:
+        for cand in (shards_dir / "pre_shard_manifest.json", work_p / "pre_shard_manifest.json"):
+            if cand.is_file():
+                return cand.resolve()
+        return None
+
     if manifest_path and Path(manifest_path).is_file():
         manifest_p = Path(manifest_path).resolve()
     else:
-        manifest_p = shards_dir / "pre_shard_manifest.json"
-        if not manifest_p.is_file():
-            if (work_p / "pre_shard_manifest.json").is_file():
-                manifest_p = work_p / "pre_shard_manifest.json"
-            else:
-                _cleanup_stale_pass_marker()
-                print("BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
-                sys.exit(2)
+        found_m = _find_pre_shard_manifest()
+        if not found_m:
+            _cleanup_stale_pass_marker()
+            print("BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
+            sys.exit(2)
+        manifest_p = found_m
 
     try:
         manifest_data = json.loads(manifest_p.read_text(encoding="utf-8"))
@@ -966,6 +970,21 @@ def compile_shard(
         _cleanup_stale_pass_marker()
         print(f"BLOCKER:: pre_shard_manifest.json corrupto o ilegible: {e}", file=sys.stderr)
         sys.exit(2)
+
+    if not isinstance(manifest_data, dict) or "shards" not in manifest_data:
+        fallback_m = _find_pre_shard_manifest()
+        if fallback_m and fallback_m != manifest_p:
+            try:
+                manifest_data = json.loads(fallback_m.read_text(encoding="utf-8"))
+                manifest_p = fallback_m
+            except Exception as e:
+                _cleanup_stale_pass_marker()
+                print(f"BLOCKER:: pre_shard_manifest.json corrupto o ilegible: {e}", file=sys.stderr)
+                sys.exit(2)
+        elif not fallback_m:
+            _cleanup_stale_pass_marker()
+            print("BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
+            sys.exit(2)
 
     # Locate shard entry
     shard_entry = None
@@ -1461,12 +1480,18 @@ def compile_shard(
                 hint3 = f"Verifique la consistencia lógica y matemática de la solución obtenida para {c_name} contrastándola con el comportamiento límite."
             hints = [hint1, hint2, hint3]
 
-        # Determine declared vars from generator callable or ast
+        # Determine declared vars from generator callable (with timeout guard) or AST
         declared_vars: Set[str] = set()
         if callable(gen_raw):
             try:
                 import random
-                sample_res = gen_raw(random.Random(42))
+                from engine.sandbox import call_with_timeout
+                sample_res = call_with_timeout(
+                    gen_raw,
+                    args=(random.Random(42),),
+                    timeout=0.4,
+                    seed=42,
+                )
                 if isinstance(sample_res, dict) and "vars" in sample_res and isinstance(sample_res["vars"], dict):
                     declared_vars = set(str(k) for k in sample_res["vars"].keys())
                 elif isinstance(sample_res, (tuple, list)) and len(sample_res) >= 1 and isinstance(sample_res[0], dict):
@@ -1474,10 +1499,29 @@ def compile_shard(
             except Exception:
                 pass
         if not declared_vars and gen_code:
-            m_vars = re.search(r"['\"]vars['\"]\s*:\s*\{([^}]+)\}", gen_code)
-            if m_vars:
-                var_names = re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", m_vars.group(1))
-                declared_vars = set(var_names)
+            try:
+                _gtree = ast.parse(gen_code)
+                for _gnode in ast.walk(_gtree):
+                    if isinstance(_gnode, ast.Dict):
+                        for _gk, _gv in zip(_gnode.keys, _gnode.values):
+                            if isinstance(_gk, ast.Constant) and _gk.value == "vars":
+                                if isinstance(_gv, ast.Dict):
+                                    declared_vars.update(
+                                        str(k.value) for k in _gv.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)
+                                    )
+                                elif isinstance(_gv, ast.Name):
+                                    _vname = _gv.id
+                                    for _anode in ast.walk(_gtree):
+                                        if isinstance(_anode, ast.Assign) and isinstance(_anode.value, ast.Dict):
+                                            if any(isinstance(t, ast.Name) and t.id == _vname for t in _anode.targets):
+                                                declared_vars.update(
+                                                    str(k.value) for k in _anode.value.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)
+                                                )
+            except Exception:
+                m_vars = re.search(r"['\"]vars['\"]\s*:\s*\{([^}]+)\}", gen_code)
+                if m_vars:
+                    var_names = re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", m_vars.group(1))
+                    declared_vars = set(var_names)
 
         # Normalize non-variable double curly braces {{token}} -> {token} before R-20 validation
         stem_es = normalize_double_braces(stem_es, declared_vars)

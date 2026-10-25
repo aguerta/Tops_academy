@@ -878,7 +878,12 @@ def dispatch_authors(
             logger.error(err_msg)
             raise FileNotFoundError(err_msg)
 
-    manifest_rel = f"{work_rel}/ingestion_manifest.json" if (work / "ingestion_manifest.json").is_file() else f"{work_rel}/pre_cta_manifest.json"
+    shard_manifest_rel = (
+        f"{work_rel}/shards/pre_shard_manifest.json"
+        if (work / "shards" / "pre_shard_manifest.json").is_file()
+        else f"{work_rel}/pre_shard_manifest.json"
+    )
+    manifest_rel = shard_manifest_rel
     cta_rel = f"{work_rel}/cta.json"
 
     cta_file = work / "cta.json"
@@ -1643,7 +1648,12 @@ def build_dispatch(
                         diag_info["attempt_diagnostics"] = shard_attempt_diagnostics[s_id]
                     failing_targets[cid] = diag_info
 
-        manifest_rel = f"{work_rel}/ingestion_manifest.json" if (work / "ingestion_manifest.json").is_file() else f"{work_rel}/pre_cta_manifest.json"
+        shard_manifest_rel = (
+            f"{work_rel}/shards/pre_shard_manifest.json"
+            if (work / "shards" / "pre_shard_manifest.json").is_file()
+            else f"{work_rel}/pre_shard_manifest.json"
+        )
+        manifest_rel = shard_manifest_rel
         cta_rel = f"{work_rel}/cta.json"
 
         items_dir = work / "dispatch" / "items"

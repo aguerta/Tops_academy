@@ -1,12 +1,13 @@
 # Content-to-Course: Registro Histórico y Evolución de Rendimiento
 
 > [!NOTE]
-> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-10-24 16:37:32`. Total de ejecuciones auditadas: **26**.
+> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-10-24 19:52:33`. Total de ejecuciones auditadas: **27**.
 
 ## 1. Matriz de Evolución Temporal (Normalizada por Carga de Contenido)
 
 | Fecha | Run / Curso | Input (Pág / MB) | Output (Comp / Preg) | Tiempo de Pared | Speedup | Tokens Totales | Tok / Preg | Seg / Preg | Blind Judges (1st) | Intervenciones | Bottlenecks |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-10-25 00:52` | **asyntotic_estatistics_v5** (`89cf485b`) | 52 pág (3.44 MB) | 30 comp / 0 preg | 52.3 min (3139.0s) | **3.91x** | 44,473,361 | **0.0** | **0.0s** | ❌ Falló | 🛠️ 0 | ⚠️ 3 |
 | `2026-10-24 21:37` | **asyntotic_estatistics_v4** (`0b8b5084`) | 52 pág (3.44 MB) | 29 comp / 0 preg | 37.7 min (2264.0s) | **5.04x** | 57,328,892 | **0.0** | **0.0s** | ❌ Falló | 🛠️ 0 | ⚠️ 3 |
 | `2026-10-24 19:55` | **asyntotic_estatistics_v3** (`bb98a610`) | 52 pág (3.44 MB) | 30 comp / 690 preg | 66.6 min (3997.0s) | **4.75x** | 88,080,962 | **127,653.6** | **5.79s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
 | `2026-10-23 21:38` | **asyntotic_estatistics_v2** (`ab30cf91`) | 52 pág (3.44 MB) | 32 comp / 740 preg | 65.5 min (3930.0s) | **5.03x** | 129,061,781 | **174,407.8** | **5.31s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
@@ -38,7 +39,7 @@
 
 ## 2. Métricas Promedio del Sistema (Baselines Globales)
 
-- **Factor de Aceleración Paralela Promedio**: `3.26x`
+- **Factor de Aceleración Paralela Promedio**: `3.29x`
 - **Densidad de Tokens Promedio por Pregunta**: `85,157.0 tokens/pregunta`
 - **Latencia Promedio por Pregunta Validada**: `9.99 s/pregunta`
 - **Rendimiento Promedio de Generación**: `10.97 preguntas/minuto`

@@ -1585,5 +1585,67 @@
       "output_tokens_per_question": 0.0
     },
     "bottlenecks_count": 3
+  },
+  {
+    "run_id": "20261024_195233_asyntotic_estatistics_v5_89cf485b",
+    "timestamp": "2026-10-25T00:52:33.380935+00:00",
+    "course_id": "asyntotic_estatistics_v5",
+    "course_title": "Asyntotic Estatistics V3",
+    "conversation_id": "89cf485b-52bf-4cdd-b5cb-ede7a4c7ea5e",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 52,
+      "input_mb": 3.44,
+      "competencies": 30,
+      "questions": 0,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 3139.0,
+      "agent_compute_seconds": 12285.0,
+      "speedup": 3.91,
+      "total_tokens": 44473361,
+      "total_active_tokens": 5846270,
+      "input_tokens": 3850872,
+      "output_tokens": 1159313,
+      "cache_read_tokens": 38627091,
+      "total_turns": 712,
+      "subagents_count": 29,
+      "tool_errors": 118,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 732.0,
+      "stage_3_max_wall": 507.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 60,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (0 operaciones)**: Operaciones sobre archivos de reactivos.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 60 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 855256.9,
+      "active_tokens_per_page": 112428.3,
+      "tokens_per_input_kb": 12625.4,
+      "tokens_per_competency": 1482445.4,
+      "active_tokens_per_competency": 194875.7,
+      "author_tokens_per_competency": 140467.0,
+      "tokens_per_question": 0.0,
+      "active_tokens_per_question": 0.0,
+      "seconds_per_page": 60.37,
+      "seconds_per_question": 0.0,
+      "questions_per_minute": 0.0,
+      "agent_seconds_per_question": 0.0,
+      "output_tokens_per_question": 0.0
+    },
+    "bottlenecks_count": 3
   }
 ]

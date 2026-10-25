@@ -707,3 +707,89 @@ class TestSurgicalDiagnostics:
         assert any("{delta}" in e for e in leaked_errs)
         assert any("@delta@" in e for e in leaked_errs)
         assert any("{n}" in e for e in leaked_errs)
+
+
+class TestInfiniteLoopManifestAndAutoHealHardening:
+    """Regression suite for infinite-loop guard, --manifest fallback, and AST-safe f-string vars auto-heal."""
+
+    def test_infinite_while_loop_in_generator_aborts_rapidly_with_mapped_line(self, tmp_path: Path):
+        import time
+
+        work_dir, shards_dir = _setup_test_workspace(tmp_path, "shard_12", ["C-02"])
+        shard_py = shards_dir / "shard_12_data.py"
+        code = (
+            "def gen_c02_frontera(rng):\n"
+            "    k = rng.randint(2, 3)\n"
+            "    d1, d2, d6 = 1, k * 5, 2 * 5\n"
+            "    while len({0, d1, d2, d6}) < 4:\n"
+            "        d1 += 1\n"
+            "    return {'vars': {'d1': d1}, 'correct': str(d1), 'distractors': []}\n"
+            "def ver_c02(res):\n"
+            "    return True\n"
+            "TEMPLATES = [\n"
+            "    ('C-02', 'fill_in_the_blank', 'Stem @d1@', gen_c02_frontera, ver_c02, 'Sol @d1@', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "]\n"
+        )
+        shard_py.write_text(code, encoding="utf-8")
+
+        t0 = time.perf_counter()
+        success, errors = compile_shard(work_dir, shard_id="shard_12", strict=False, seeds=20)
+        elapsed = time.perf_counter() - t0
+
+        assert not success
+        assert elapsed < 3.0, f"Infinite loop took too long to abort: {elapsed:.2f}s"
+        joined = "\n".join(errors)
+        assert "TPL-DRY" in joined or "SandboxTimeoutError" in joined
+
+    def test_compile_shard_resolves_pre_shard_manifest_when_passed_pre_cta_manifest(self, tmp_path: Path):
+        work_dir, shards_dir = _setup_test_workspace(tmp_path, "shard_01", ["C-01"])
+        pre_cta = work_dir / "pre_cta_manifest.json"
+        pre_cta.write_text(json.dumps({"course_id": "test", "documents": [{"name": "doc.pdf"}]}), encoding="utf-8")
+
+        shard_py = shards_dir / "shard_01_data.py"
+        shard_py.write_text(
+            "def gen_c01(rng):\n"
+            "    v = rng.randint(10, 500)\n"
+            "    return {'vars': {'v': v}, 'correct': str(v), 'distractors': []}\n"
+            "def ver_c01(res): return True\n"
+            "TEMPLATES = [\n"
+            "    ('C-01', 'fill_in_the_blank', 'Calcule @v@', gen_c01, ver_c01, 'Sol @v@', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "]\n",
+            encoding="utf-8",
+        )
+
+        success, errors = compile_shard(
+            work_dir,
+            shard_id="shard_01",
+            strict=False,
+            manifest_path=pre_cta,
+        )
+        assert success, f"Expected --manifest pre_cta_manifest.json to fall back to pre_shard_manifest.json, got: {errors}"
+
+    def test_auto_heal_vars_export_preserves_fstring_format_specifiers_in_dict_var(self, tmp_path: Path):
+        work_dir, shards_dir = _setup_test_workspace(tmp_path, "shard_08", ["Hab-08"])
+        shard_py = shards_dir / "shard_08_data.py"
+        shard_py.write_text(
+            "def gen_hab08(rng):\n"
+            "    n = rng.randint(20, 200) * 10\n"
+            "    b = rng.randint(15, 95) / 10.0\n"
+            "    g = rng.randint(20, 75) / 100.0\n"
+            "    extra = rng.randint(1, 9)\n"
+            "    ans = f'{(b / (1.0 - g)) / n:.4f}'\n"
+            "    v = {\n"
+            "        'n': n,\n"
+            "        'b': f'{b:.1f}',\n"
+            "        'g': f'{g:.2f}',\n"
+            "        'ans': ans,\n"
+            "    }\n"
+            "    return {'vars': v, 'correct': ans, 'distractors': []}\n"
+            "def ver_hab08(res): return True\n"
+            "TEMPLATES = [\n"
+            "    ('Hab-08', 'fill_in_the_blank', r'Con $n=@n@$, $\\hat{\\beta}=@b@$, $\\hat{\\gamma}=@g@$ y ajuste {extra}:', gen_hab08, ver_hab08, r'Sol @ans@ ({extra})', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "]\n",
+            encoding="utf-8",
+        )
+
+        success, errors = compile_shard(work_dir, shard_id="shard_08", strict=False, seeds=30)
+        assert success, f"f-string format specifier inside dict variable was corrupted by auto-heal: {errors}"
+

@@ -44,6 +44,7 @@ from engine.diversity import evaluate_competency_diversity, mask_stem_numbers
 from engine.invariants import check_instance_invariants, validate_katex_syntax
 from engine.instantiate import instantiate_competency, competency_seed_base
 from engine.sandbox import (
+    call_with_timeout,
     execute_sandbox_batch,
     validate_code_ast,
     check_latex_escape_corruption,
@@ -770,68 +771,102 @@ def auto_heal_template_data(
 
                     missing_vars = (referenced_vars & assigned_locals) - {"rng"}
                     if missing_vars:
-                        # Case 2A: 'vars': { ... } is returned as a dict literal in return statement
-                        m_vars_dict = re.search(r"(['\"]vars['\"]\s*:\s*\{)([^}]*)(\})", gen_py)
-                        if m_vars_dict:
-                            vars_body = m_vars_dict.group(2)
-                            existing_keys = set(re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", vars_body))
+                        # AST-safe helper to convert (lineno, col_offset) to character index in gen_py
+                        gp_lines = gen_py.splitlines(keepends=True)
+                        line_offsets = [0]
+                        for _ln in gp_lines:
+                            line_offsets.append(line_offsets[-1] + len(_ln))
+
+                        def _ast_pos_to_idx(lineno: int, col_offset: int) -> int:
+                            line_str = gp_lines[lineno - 1]
+                            byte_prefix = line_str.encode("utf-8")[:col_offset]
+                            return line_offsets[lineno - 1] + len(byte_prefix.decode("utf-8", errors="replace"))
+
+                        def _inject_into_ast_dict(dict_node: ast.Dict, extra_existing: Optional[Set[str]] = None, label: str = "vars") -> bool:
+                            existing_keys = {
+                                k.value for k in dict_node.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)
+                            }
+                            if extra_existing:
+                                existing_keys |= extra_existing
                             missing_export = sorted(missing_vars - existing_keys)
-                            if missing_export:
-                                add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
-                                if vars_body.strip():
-                                    sep = " " if vars_body.rstrip().endswith(",") else ", "
-                                else:
-                                    sep = ""
-                                new_vars_segment = f"{m_vars_dict.group(1)}{vars_body}{sep}{add_pairs}{m_vars_dict.group(3)}"
-                                new_gp = gen_py[:m_vars_dict.start()] + new_vars_segment + gen_py[m_vars_dict.end():]
-                                try:
-                                    ast.parse(new_gp)
-                                    tpl["generate_py"] = new_gp
-                                    gen_py = new_gp
-                                    modified = True
-                                    fixes.append(f"{tid}.generate_py: auto-exported {missing_export} into 'vars'")
-                                except Exception:
-                                    pass
-                        else:
-                            # Case 2B: 'vars': var_name where var_name is an assigned dict (e.g. vars_dict = {...})
-                            m_vars_var = re.search(r"['\"]vars['\"]\s*:\s*([a-zA-Z_][a-zA-Z0-9_]*)", gen_py)
-                            if m_vars_var:
-                                vname = m_vars_var.group(1)
-                                m_assign = re.search(rf"(\b{re.escape(vname)}\s*=\s*\{{)([^}}]*)(\}})", gen_py)
-                                if m_assign:
-                                    vbody = m_assign.group(2)
-                                    existing_keys = set(re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", vbody))
-                                    missing_export = sorted(missing_vars - existing_keys)
-                                    if missing_export:
-                                        add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
-                                        sep = " " if vbody.rstrip().endswith(",") else (", " if vbody.strip() else "")
-                                        new_vseg = f"{m_assign.group(1)}{vbody}{sep}{add_pairs}{m_assign.group(3)}"
-                                        new_gp = gen_py[:m_assign.start()] + new_vseg + gen_py[m_assign.end():]
-                                        try:
-                                            ast.parse(new_gp)
-                                            tpl["generate_py"] = new_gp
-                                            gen_py = new_gp
-                                            modified = True
-                                            fixes.append(f"{tid}.generate_py: auto-exported {missing_export} into '{vname}'")
-                                        except Exception:
-                                            pass
+                            if not missing_export:
+                                return True
+                            if dict_node.end_lineno is None or dict_node.end_col_offset is None:
+                                return False
+                            end_idx = _ast_pos_to_idx(dict_node.end_lineno, dict_node.end_col_offset)
+                            # Locate the exact closing '}' of this ast.Dict
+                            close_brace_idx = end_idx - 1
+                            if close_brace_idx < 0 or close_brace_idx >= len(gen_py) or gen_py[close_brace_idx] != "}":
+                                return False
+                            start_idx = _ast_pos_to_idx(dict_node.lineno, dict_node.col_offset)
+                            inner_body = gen_py[start_idx + 1:close_brace_idx]
+                            add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
+                            if inner_body.strip():
+                                sep = " " if inner_body.rstrip().endswith(",") else ", "
                             else:
-                                # Case 2C: 'vars' key is completely missing from return { ... }
-                                m_ret = re.search(r"(\breturn\s*\{)(.*)", gen_py, re.DOTALL)
-                                if m_ret:
-                                    missing_export = sorted(missing_vars)
-                                    if missing_export:
-                                        add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
-                                        inject_str = f"\n        'vars': {{{add_pairs}}},"
-                                        new_gp = gen_py[:m_ret.start(1) + len(m_ret.group(1))] + inject_str + gen_py[m_ret.start(1) + len(m_ret.group(1)):]
-                                        try:
-                                            ast.parse(new_gp)
-                                            tpl["generate_py"] = new_gp
-                                            gen_py = new_gp
-                                            modified = True
-                                            fixes.append(f"{tid}.generate_py: injected missing 'vars' dict with {missing_export}")
-                                        except Exception:
-                                            pass
+                                sep = ""
+                            new_gp = gen_py[:close_brace_idx] + f"{sep}{add_pairs}" + gen_py[close_brace_idx:]
+                            try:
+                                ast.parse(new_gp)
+                                tpl["generate_py"] = new_gp
+                                nonlocal modified
+                                modified = True
+                                fixes.append(f"{tid}.generate_py: auto-exported {missing_export} into '{label}'")
+                                return True
+                            except Exception:
+                                return False
+
+                        # Locate 'vars' entry in AST Dicts (handling both inline dict and assigned dict variable)
+                        vars_val_node = None
+                        for dnode in ast.walk(tree):
+                            if isinstance(dnode, ast.Dict):
+                                for dk, dv in zip(dnode.keys, dnode.values):
+                                    if isinstance(dk, ast.Constant) and dk.value == "vars" and dv is not None:
+                                        vars_val_node = dv
+                                        break
+                            if vars_val_node is not None:
+                                break
+
+                        if isinstance(vars_val_node, ast.Dict):
+                            # Case 2A: 'vars': { ... } inline dict literal (f-string / nested-brace safe via AST)
+                            _inject_into_ast_dict(vars_val_node, label="vars")
+                        elif isinstance(vars_val_node, ast.Name):
+                            # Case 2B: 'vars': var_name where var_name = { ... } (never splits inside f"{b:.1f}")
+                            vname = vars_val_node.id
+                            target_dict_node: Optional[ast.Dict] = None
+                            subscript_keys: Set[str] = set()
+                            for anode in ast.walk(tree):
+                                if isinstance(anode, ast.Assign):
+                                    for tgt in anode.targets:
+                                        if isinstance(tgt, ast.Name) and tgt.id == vname and isinstance(anode.value, ast.Dict):
+                                            target_dict_node = anode.value
+                                        elif (
+                                            isinstance(tgt, ast.Subscript)
+                                            and isinstance(tgt.value, ast.Name)
+                                            and tgt.value.id == vname
+                                            and isinstance(tgt.slice, ast.Constant)
+                                            and isinstance(tgt.slice.value, str)
+                                        ):
+                                            subscript_keys.add(tgt.slice.value)
+                            if target_dict_node is not None:
+                                _inject_into_ast_dict(target_dict_node, extra_existing=subscript_keys, label=vname)
+                        elif vars_val_node is None:
+                            # Case 2C: 'vars' key is completely missing from return { ... }
+                            m_ret = re.search(r"(\breturn\s*\{)(.*)", gen_py, re.DOTALL)
+                            if m_ret:
+                                missing_export = sorted(missing_vars)
+                                if missing_export:
+                                    add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
+                                    inject_str = f"\n        'vars': {{{add_pairs}}},"
+                                    new_gp = gen_py[:m_ret.start(1) + len(m_ret.group(1))] + inject_str + gen_py[m_ret.start(1) + len(m_ret.group(1)):]
+                                    try:
+                                        ast.parse(new_gp)
+                                        tpl["generate_py"] = new_gp
+                                        gen_py = new_gp
+                                        modified = True
+                                        fixes.append(f"{tid}.generate_py: injected missing 'vars' dict with {missing_export}")
+                                    except Exception:
+                                        pass
                 except Exception:
                     pass
 
@@ -1039,7 +1074,7 @@ def _format_dry_failure(
             gen_fn = env.get("generate")
             if gen_fn:
                 try:
-                    res = gen_fn(rng)
+                    res = call_with_timeout(gen_fn, args=(rng,), timeout=0.4, seed=failing_seed)
                     if isinstance(res, dict) and "vars" in res and isinstance(res["vars"], dict):
                         if not extracted_params:
                             extracted_params = {k: v for k, v in res["vars"].items()}
@@ -1049,7 +1084,7 @@ def _format_dry_failure(
                         exec(cc_compiled, cc_env)
                         ver_fn = cc_env.get("verify")
                         if ver_fn:
-                            cc_res = ver_fn(res)
+                            cc_res = call_with_timeout(ver_fn, args=(res,), timeout=0.4, seed=failing_seed)
                             if cc_res is False:
                                 raise AssertionError("cross_check verification returned False")
                 except Exception as run_e:
@@ -2252,7 +2287,7 @@ def check_single_template(
             generate_py=generate_py,
             seeds=seeds,
             cross_check_py=cross_check_py,
-            timeout_per_item=2.0,
+            timeout_per_item=0.8,
         )
     except Exception as e:
         errors.append(format_diagnostic_error(

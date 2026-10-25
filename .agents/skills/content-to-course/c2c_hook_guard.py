@@ -709,25 +709,34 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
 
 
 def main() -> None:
-    # Fail-open safety default with exit code 0 invariant
+    # Fail-open safety default with exit code 0 invariant & pure 7-bit ASCII JSON stdout
+    # (prevents Windows CP1252 pipe byte corruption in Antigravity protojson unmarshaler).
     try:
+        try:
+            sys.stdin.reconfigure(encoding="utf-8", errors="replace")
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
         raw_input = sys.stdin.read()
         if not raw_input.strip():
-            print(json.dumps({"decision": "allow"}))
-            return
+            print(json.dumps({"decision": "allow"}, ensure_ascii=True))
+            sys.exit(0)
         payload = json.loads(raw_input)
         if not isinstance(payload, dict):
-            print(json.dumps({"decision": "allow"}))
-            return
-    except Exception:
-        print(json.dumps({"decision": "allow"}))
-        return
+            print(json.dumps({"decision": "allow"}, ensure_ascii=True))
+            sys.exit(0)
 
-    try:
         result = process_hook(payload)
-        print(json.dumps(result, ensure_ascii=False))
-    except Exception:
-        print(json.dumps({"decision": "allow"}))
+        print(json.dumps(result, ensure_ascii=True))
+    except SystemExit:
+        raise
+    except BaseException:
+        try:
+            print(json.dumps({"decision": "allow"}, ensure_ascii=True))
+        except BaseException:
+            pass
+    sys.exit(0)
 
 
 if __name__ == "__main__":
