@@ -2936,9 +2936,10 @@ def check_templates_file_or_dir(
     referenced_distractors_by_comp: Dict[str, Set[str]] = {cid: set() for cid in cta_distractors_by_comp}
     templates_by_comp: Dict[str, List[Dict[str, Any]]] = {}
     processed_comp_ids: Set[str] = set()
+    errors_by_comp: Dict[str, List[str]] = {}
 
     if len(template_files) > 1:
-        max_workers = min(16, (os.cpu_count() or 4) * 2, len(template_files))
+        max_workers = min(4, os.cpu_count() or 4, len(template_files))
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_file = {
                 executor.submit(
@@ -2956,6 +2957,8 @@ def check_templates_file_or_dir(
                 errors.extend(file_errs)
                 if comp_id:
                     processed_comp_ids.add(comp_id)
+                    if file_errs:
+                        errors_by_comp.setdefault(comp_id, []).extend(file_errs)
                     templates_by_comp.setdefault(comp_id, []).extend(tpls)
                     if comp_id in referenced_distractors_by_comp:
                         referenced_distractors_by_comp[comp_id].update(ref_dids)
@@ -2971,6 +2974,8 @@ def check_templates_file_or_dir(
             errors.extend(file_errs)
             if comp_id:
                 processed_comp_ids.add(comp_id)
+                if file_errs:
+                    errors_by_comp.setdefault(comp_id, []).extend(file_errs)
                 templates_by_comp.setdefault(comp_id, []).extend(tpls)
                 if comp_id in referenced_distractors_by_comp:
                     referenced_distractors_by_comp[comp_id].update(ref_dids)
@@ -2983,7 +2988,7 @@ def check_templates_file_or_dir(
             referenced_set = referenced_distractors_by_comp.get(cid, set())
             uncovered = declared_set - referenced_set
             if uncovered:
-                errors.append(format_diagnostic_error(
+                err_diag = format_diagnostic_error(
                     rule_tag="TPL-D3: COBERTURA COMPLETA DE DISTRACTORES",
                     competency=cid,
                     template="[Todas las plantillas de la competencia]",
@@ -2996,7 +3001,9 @@ def check_templates_file_or_dir(
                         "O crear plantillas adicionales que ejerciten los conceptos erróneos representados por estos distractores.",
                         "Asegurar que el 100% de los distractores de cta.json tengan al menos una plantilla que los emplee.",
                     ],
-                ))
+                )
+                errors.append(err_diag)
+                errors_by_comp.setdefault(cid, []).append(err_diag)
 
     # Rule TPL-VAR (Competency Diversity Gate) & Isomorphic Contract Parity Check
     if cta_data and "competencies" in cta_data:
@@ -3031,14 +3038,46 @@ def check_templates_file_or_dir(
 
         sorted_comps = sorted(comps_to_check)
         if len(sorted_comps) > 1:
-            max_workers = min(16, (os.cpu_count() or 4) * 2, len(sorted_comps))
+            max_workers = min(4, os.cpu_count() or 4, len(sorted_comps))
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                comp_futures = [executor.submit(_evaluate_comp_diversity_and_parity, cid) for cid in sorted_comps]
+                comp_futures = {executor.submit(_evaluate_comp_diversity_and_parity, cid): cid for cid in sorted_comps}
                 for fut in comp_futures:
-                    errors.extend(fut.result())
+                    cid = comp_futures[fut]
+                    c_errs = fut.result()
+                    errors.extend(c_errs)
+                    if c_errs:
+                        errors_by_comp.setdefault(cid, []).extend(c_errs)
         else:
             for cid in sorted_comps:
-                errors.extend(_evaluate_comp_diversity_and_parity(cid))
+                c_errs = _evaluate_comp_diversity_and_parity(cid)
+                errors.extend(c_errs)
+                if c_errs:
+                    errors_by_comp.setdefault(cid, []).extend(c_errs)
+
+    # Associate any global or unassociated errors with relevant competencies
+    for err in errors:
+        for cid in processed_comp_ids:
+            if err in errors_by_comp.get(cid, []):
+                continue
+            err_norm = err.replace("\\", "/")
+            cid_pat = re.compile(rf"\b{re.escape(cid)}\b", re.IGNORECASE)
+            if (
+                f"'{cid}'" in err
+                or f'"{cid}"' in err
+                or f"[{cid}]" in err
+                or f"({cid})" in err
+                or f"/{cid}.json" in err_norm
+                or err_norm.endswith(f"/{cid}.json")
+                or err_norm.startswith(f"{cid}.json")
+                or bool(cid_pat.search(err))
+            ):
+                errors_by_comp.setdefault(cid, []).append(err)
+
+    if len(processed_comp_ids) == 1 and errors:
+        only_cid = next(iter(processed_comp_ids))
+        for err in errors:
+            if err not in errors_by_comp.get(only_cid, []):
+                errors_by_comp.setdefault(only_cid, []).append(err)
 
     is_clean = (len(errors) == 0)
 
@@ -3151,6 +3190,17 @@ def check_templates_file_or_dir(
 
             # Per-competency budget halt tracking with shard isolation and stateful SHA-256 circuit breaker
             for cid in processed_comp_ids:
+                cid_errs = errors_by_comp.get(cid, [])
+                cid_is_clean = (len(cid_errs) == 0)
+
+                if len(processed_comp_ids) == 1 and err_hash:
+                    cid_err_hash = err_hash
+                elif cid_errs:
+                    cid_norm = sorted([normalize_error_string_for_hash(e) for e in cid_errs])
+                    cid_err_hash = hashlib.sha256("\n".join(cid_norm).encode("utf-8")).hexdigest()
+                else:
+                    cid_err_hash = None
+
                 att_fname = f"{shard_id}_{cid}.json" if shard_id else f"{cid}.json"
                 f_att = att_path / att_fname
                 att_data = {"attempts": 0, "last_hash": None, "last_err_hash": None, "halted": False}
@@ -3184,7 +3234,7 @@ def check_templates_file_or_dir(
                 last_err_hash = att_data.get("last_err_hash")
                 was_halted = att_data.get("halted", False)
                 hash_changed = (last_hash is not None and last_hash != comp_hash)
-                err_changed = (err_hash is not None and last_err_hash is not None and last_err_hash != err_hash)
+                err_changed = (cid_err_hash is not None and last_err_hash is not None and last_err_hash != cid_err_hash)
 
                 if hash_changed or (from_compile_shard and err_changed):
                     # Changed hash is re-evaluated; clear previous halt and reset attempts
@@ -3192,13 +3242,17 @@ def check_templates_file_or_dir(
                     att_data["halted"] = False
                     was_halted = False
 
-                if is_clean:
-                    # Pass clears the halt
-                    if f_att.is_file():
-                        try:
-                            f_att.unlink()
-                        except Exception:
-                            pass
+                if cid_is_clean:
+                    # Pass clears the halt and deletes any attempt files for this competency
+                    targets_to_unlink = [f_att, att_path / f"{cid}.json"]
+                    if shard_id:
+                        targets_to_unlink.append(att_path / f"{shard_id}_{cid}.json")
+                    for target_file in targets_to_unlink:
+                        if target_file.is_file():
+                            try:
+                                target_file.unlink()
+                            except Exception:
+                                pass
                 else:
                     if was_halted and not hash_changed and not err_changed:
                         terminal_msg = (
@@ -3209,7 +3263,7 @@ def check_templates_file_or_dir(
                     else:
                         att_data["attempts"] = att_data.get("attempts", 0) + 1
                         att_data["last_hash"] = comp_hash
-                        att_data["last_err_hash"] = err_hash
+                        att_data["last_err_hash"] = cid_err_hash
                         if att_data["attempts"] >= 3:
                             if not (from_compile_shard and err_changed):
                                 att_data["halted"] = True
