@@ -244,9 +244,27 @@ def gen_h01(rng): return gen_h01_1(rng)
 
 def _gen_h01(rng, arch=1):
     # Generador estocástico compartido para H-01 (4 arquetipos disjuntos)
-    tc = rng.randint(250, 350)
-    delta = rng.randint(150, 450)
-    th = tc + delta
+    if arch == 1:
+        # Arquetipo 1: Directo (régimen estándar de temperaturas)
+        tc = rng.randint(250, 350)
+        delta = rng.randint(150, 450)
+        th = tc + delta
+    elif arch == 2:
+        # Arquetipo 2: Inverso / Criogénico (temperaturas bajas)
+        tc = rng.randint(70, 180)
+        delta = rng.randint(100, 300)
+        th = tc + delta
+    elif arch == 3:
+        # Arquetipo 3: Perturbación (incremento de salto térmico)
+        tc = rng.randint(300, 400)
+        delta = rng.randint(500, 900)
+        th = tc + delta
+    else:
+        # Arquetipo 4: Frontera / Alta temperatura extrema
+        tc = rng.randint(200, 280)
+        delta = rng.randint(800, 1500)
+        th = tc + delta
+
     ans_val = round(1.0 - (tc / th), 3)
 
     d2 = round(tc / th, 3)
@@ -283,21 +301,39 @@ def ver_h01(res):
     return v.get("ans") == round(1.0 - (v.get("tc", 0) / v.get("th", 1)), 3)
 
 d_ids_h01 = ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"]
-stems_h01 = [
-    r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Determine el rendimiento térmico:",
-    r"Considere un ciclo reversible de Carnot con reservorios térmicos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Calcule la eficiencia máxima teórica $\eta$:",
-    r"Para una máquina térmica ideal operando bajo el ciclo de Carnot entre focos térmicos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, halle el rendimiento $\eta$:",
+
+# NOTA CRÍTICA [M3-ARCHETYPES]: Cada arquetipo DEBE tener su propia lista de stems distinta.
+# PROHIBIDO reutilizar la misma lista stems en las 4 tuplas, declarar 'arch=1' sin usarlo, o generar clones matemáticos (mismo correct/vars entre arquetipos).
+stems_h01_1 = [
+    r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Determine el rendimiento térmico directo:",
+    r"Considere un ciclo reversible de Carnot con reservorios térmicos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Calcule la eficiencia máxima teórica directa $\eta$:",
+    r"Para una máquina ideal que opera entre $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, determine el rendimiento directo $\eta$:",
+]
+stems_h01_2 = [
+    r"En un análisis inverso de ciclo térmico con foco frío a $T_C = @tc@\text{ K}$ y caliente a $T_H = @th@\text{ K}$, evalúe el rendimiento:",
+    r"Deduzca la eficiencia termodinámica inversa asociada a las cotas térmicas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"A partir de las condiciones observadas con $T_C = @tc@\text{ K}$ y $T_H = @th@\text{ K}$, determine el valor inverso de $\eta$:",
+]
+stems_h01_3 = [
+    r"Si se aplica una perturbación térmica tal que los reservorios operan a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, calcule la nueva eficiencia:",
+    r"Evalúe la respuesta de la eficiencia ante el régimen térmico perturbado $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Considere la variación de temperatura con focos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$; determine el rendimiento perturbado $\eta$:",
+]
+stems_h01_4 = [
+    r"Bajo el régimen asintótico de frontera extrema con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, halle la eficiencia límite:",
+    r"En la cota operacional extrema donde $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, determine el rendimiento límite de Carnot:",
+    r"Establezca el comportamiento en la frontera teórica para reservorios a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
 ]
 
 TEMPLATES = [
     # 1. Arquetipo Directo / Frontal
-    ("H-01", "multiple_choice", stems_h01, gen_h01_1, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", d_ids_h01, ("termodinamica_clausius.pdf", 8, "Carnot")),
+    ("H-01", "multiple_choice", stems_h01_1, gen_h01_1, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", d_ids_h01, ("termodinamica_clausius.pdf", 8, "Carnot")),
     # 2. Arquetipo Inverso / Diagnóstico ([] en pos 7 y sin hints: auto-heredado de cta.json)
-    ("H-01", "multiple_choice", stems_h01, gen_h01_2, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
+    ("H-01", "multiple_choice", stems_h01_2, gen_h01_2, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
     # 3. Arquetipo Perturbación / Estática Comparativa
-    ("H-01", "multiple_choice", stems_h01, gen_h01_3, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
+    ("H-01", "multiple_choice", stems_h01_3, gen_h01_3, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
     # 4. Arquetipo Frontera / Casos Límite
-    ("H-01", "multiple_choice", stems_h01, gen_h01_4, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
+    ("H-01", "multiple_choice", stems_h01_4, gen_h01_4, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
 ]
 ```
 

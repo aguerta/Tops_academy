@@ -24,8 +24,8 @@ import math
 def gen_h01(rng): return gen_h01_1(rng)
 
 def _gen_h01(rng, arch=1):
-    tc = rng.randint(250, 350)
-    th = tc + rng.randint(150, 450)
+    tc = rng.randint(250, 350) if arch == 1 else (rng.randint(70, 180) if arch == 2 else (rng.randint(300, 400) if arch == 3 else rng.randint(200, 280)))
+    th = tc + (rng.randint(150, 450) if arch == 1 else (rng.randint(100, 300) if arch == 2 else (rng.randint(500, 900) if arch == 3 else rng.randint(800, 1500))))
     ans = round(1.0 - (tc / th), 3)
     d2 = round(tc / th, 3) if round(tc / th, 3) != ans else round(tc / th + 0.05, 3)
     ds = [round(abs(1.0 - (th / tc)) + 0.1, 3), d2, round(1.0 - ((tc - 40) / (th - 40)), 3),
@@ -45,13 +45,17 @@ def ver_h01(res):
     return v.get("ans") == round(1.0 - (v.get("tc", 0) / v.get("th", 1)), 3)
 
 dids = [f"D-H01-{i:02d}" for i in range(1, 7)]
-stems = [r"Carnot $T_H=@th@, T_C=@tc@$. $\eta$:", r"Ciclo $T_H=@th@, T_C=@tc@$. $\eta$:", r"Focos $T_H=@th@, T_C=@tc@$. $\eta$:"]
+# NOTA [M3-ARCHETYPES]: stems distintos por arquetipo y uso explícito de arch en _gen_* (prohibidos clones matemáticos con mismo correct/vars).
+stems_1 = [r"Carnot $T_H=@th@, T_C=@tc@$. $\eta$:", r"Ciclo $T_H=@th@, T_C=@tc@$. $\eta$:"]
+stems_2 = [r"Inverso $T_C=@tc@, T_H=@th@$. $\eta$:", r"Deducción $T_C=@tc@, T_H=@th@$. $\eta$:"]
+stems_3 = [r"Perturbación $T_H=@th@, T_C=@tc@$. $\eta$:", r"Salto $T_H=@th@, T_C=@tc@$. $\eta$:"]
+stems_4 = [r"Frontera $T_H=@th@, T_C=@tc@$. $\eta$:", r"Límite $T_H=@th@, T_C=@tc@$. $\eta$:"]
 sol = r"$\eta = 1 - \frac{@tc@}{@th@} = @ans@$"
 TEMPLATES = [
-    ("H-01", "multiple_choice", stems, gen_h01_1, ver_ok, sol, "Carnot", dids, ("t.pdf", 1, "C"), ["h1", "h2", "h3"]),
-    ("H-01", "multiple_choice", stems, gen_h01_2, ver_ok, sol, "Carnot", [], ("t.pdf", 1, "C")),
-    ("H-01", "multiple_choice", stems, gen_h01_3, ver_ok, sol, "Carnot", [], ("t.pdf", 1, "C")),
-    ("H-01", "multiple_choice", stems, gen_h01_4, ver_ok, sol, "Carnot", [], ("t.pdf", 1, "C")),
+    ("H-01", "multiple_choice", stems_1, gen_h01_1, ver_ok, sol, "Carnot", dids, ("t.pdf", 1, "C"), ["h1", "h2", "h3"]),
+    ("H-01", "multiple_choice", stems_2, gen_h01_2, ver_ok, sol, "Carnot", [], ("t.pdf", 1, "C")),
+    ("H-01", "multiple_choice", stems_3, gen_h01_3, ver_ok, sol, "Carnot", [], ("t.pdf", 1, "C")),
+    ("H-01", "multiple_choice", stems_4, gen_h01_4, ver_ok, sol, "Carnot", [], ("t.pdf", 1, "C")),
 ]
 ```
 

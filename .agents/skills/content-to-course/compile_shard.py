@@ -1380,6 +1380,7 @@ def compile_shard(
 
     # 5. Compile tuples into canonical JSON dictionaries grouped by competency
     templates_by_cid: Dict[str, List[Dict[str, Any]]] = {}
+    gen_callables_by_cid: Dict[str, List[Any]] = {}
 
     for t_idx, rec in enumerate(tuple_records):
         t = rec["tuple"]
@@ -1451,8 +1452,8 @@ def compile_shard(
 
         # Extract functions using originating file locator
         tuple_info = curr_loc.get_tuple_info(orig_idx) or curr_loc.get_tuple_info(cid) or {}
-        gen_fn_name = tuple_info.get("gen_fn_name")
-        ver_fn_name = tuple_info.get("ver_fn_name")
+        gen_fn_name = tuple_info.get("gen_fn_name") or getattr(gen_raw, "__name__", None)
+        ver_fn_name = tuple_info.get("ver_fn_name") or getattr(ver_raw, "__name__", None)
 
         gen_code = extract_function_code(gen_raw, "generate_params", locator=curr_loc, fn_name_hint=gen_fn_name)
         ver_code = extract_function_code(ver_raw, "verify", locator=curr_loc, fn_name_hint=ver_fn_name)
@@ -1576,6 +1577,7 @@ def compile_shard(
         canonical_dict: Dict[str, Any] = {
             "template_id": tpl_id,
             "competency_id": cid,
+            "gen_fn_name": gen_fn_name,
             "question_type": qtype,
             "stem_es": stem_es,
             "stem_variants": stem_variants,
@@ -1604,6 +1606,7 @@ def compile_shard(
         canonical_dict = heal_control_chars_in_obj(canonical_dict)
 
         templates_by_cid.setdefault(cid, []).append(canonical_dict)
+        gen_callables_by_cid.setdefault(cid, []).append(gen_raw)
 
     # 6. Write templates atomically grouped by competency
     compiled_paths: List[Path] = []
@@ -1645,18 +1648,186 @@ def compile_shard(
     if strict and eff_min_arch > 1:
         target_cids = expected_cids if expected_cids else list(templates_by_cid.keys())
         shard_data_name = shard_data_path.name if shard_data_path else f"{norm_shard_id}_data.py"
+
+        def _fn_declares_arch(fn_node: Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> bool:
+            all_args = getattr(fn_node.args, "posonlyargs", []) + fn_node.args.args + getattr(fn_node.args, "kwonlyargs", [])
+            return any(a.arg == "arch" for a in all_args)
+
+        def _fn_uses_arch_in_body(fn_node: Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> bool:
+            for b_stmt in fn_node.body:
+                for sub in ast.walk(b_stmt):
+                    if isinstance(sub, ast.Name) and sub.id == "arch" and isinstance(sub.ctx, ast.Load):
+                        # Filter out dummy loads like _ = arch or dummy = arch or unused = arch
+                        if isinstance(b_stmt, ast.Assign):
+                            if any(isinstance(tgt, ast.Name) and tgt.id in ("_", "dummy", "unused") for tgt in b_stmt.targets):
+                                continue
+                        # Filter out bare statement expressions like `arch` or `arch == arch`
+                        if isinstance(b_stmt, ast.Expr):
+                            if isinstance(b_stmt.value, ast.Name) and b_stmt.value.id == "arch":
+                                continue
+                            if isinstance(b_stmt.value, ast.Compare):
+                                if isinstance(b_stmt.value.left, ast.Name) and b_stmt.value.left.id == "arch":
+                                    if any(isinstance(comp, ast.Name) and comp.id == "arch" for comp in b_stmt.value.comparators):
+                                        continue
+                        return True
+            return False
+
         for cid in target_cids:
             tpls = templates_by_cid.get(cid, [])
+            gen_callables = gen_callables_by_cid.get(cid, [])
+            is_modular_fix = bool(cid in fix_files_by_cid and fix_files_by_cid[cid].is_file())
+            source_name = fix_files_by_cid[cid].name if is_modular_fix else shard_data_name
+
             if len(tpls) < eff_min_arch:
                 m3_errors.append(
-                    f"{cid}.json ({shard_data_name}): [M3-ARCHETYPES] La competencia '{cid}' define solo {len(tpls)} tupla(s) en TEMPLATES, pero Milestone 3 exige mínimo {eff_min_arch} arquetipos disjuntos por competencia (1. Directo, 2. Inverso, 3. Perturbación, 4. Frontera). Nota: poner múltiples stem_variants dentro de 1 sola tupla NO cuenta como 4 arquetipos; agrega las {eff_min_arch - len(tpls)} tuplas faltantes para '{cid}' en TEMPLATES usando un helper parametrizado def _gen_{cid.lower().replace('-', '_')}(rng, arch) + 4 wrappers gen_1..4."
+                    f"{cid}.json ({source_name}): [M3-ARCHETYPES] La competencia '{cid}' define solo {len(tpls)} tupla(s) en TEMPLATES, pero Milestone 3 exige mínimo {eff_min_arch} arquetipos disjuntos por competencia (1. Directo, 2. Inverso, 3. Perturbación, 4. Frontera). Nota: poner múltiples stem_variants dentro de 1 sola tupla NO cuenta como 4 arquetipos; agrega las {eff_min_arch - len(tpls)} tuplas faltantes para '{cid}' en TEMPLATES usando un helper parametrizado def _gen_{cid.lower().replace('-', '_')}(rng, arch) + 4 wrappers gen_1..4."
                 )
             else:
-                distinct_tuples = {(t.get("stem_es", "").strip(), t.get("generator_code", "").strip()) for t in tpls}
-                if len(distinct_tuples) < min(eff_min_arch, 2):
+                # Verificación 1 — Enunciados (stem_es) distintos por arquetipo & detección de clones
+                distinct_stems = {t.get("stem_es", "").strip() for t in tpls if t.get("stem_es", "").strip()}
+                norm_gen_codes = {
+                    re.sub(r"def\s+gen_[a-zA-Z0-9_]+_\d+\s*\(", "def _gen_wrapper_(", t.get("generator_code", "").strip())
+                    for t in tpls
+                }
+
+                if len(distinct_stems) < min(eff_min_arch, 2) and len(norm_gen_codes) < min(eff_min_arch, 2):
                     m3_errors.append(
-                        f"{cid}.json ({shard_data_name}): [M3-ARCHETYPES] Las {len(tpls)} tuplas de '{cid}' en TEMPLATES son clones idénticos (mismo stem y mismo generador). Cada uno de los {eff_min_arch} arquetipos debe tener su propio enunciado y wrapper/generador (ej. gen_1..4)."
+                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Las {len(tpls)} tuplas de '{cid}' en TEMPLATES son clones idénticos (mismo stem y mismo generador). Cada uno de los {eff_min_arch} arquetipos debe tener su propio enunciado y wrapper/generador (ej. gen_1..4)."
                     )
+                elif len(tpls) >= 2 and len(distinct_stems) < min(eff_min_arch, len(tpls)):
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}' repite el mismo enunciado (stem_es) entre sus tuplas ({len(distinct_stems)} enunciados únicos de {len(tpls)} tuplas). Cada arquetipo (1=Directo, 2=Inverso, 3=Perturbación, 4=Frontera) debe tener su propia lista de enunciados distinta."
+                    )
+                elif len(norm_gen_codes) < min(eff_min_arch, 2):
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Las {len(tpls)} tuplas de '{cid}' en TEMPLATES son clones idénticos (mismo stem y mismo generador). Cada uno de los {eff_min_arch} arquetipos debe tener su propio enunciado y wrapper/generador (ej. gen_1..4)."
+                    )
+
+                # Verificación 2 — AST analysis de la fuente efectiva de esta competencia
+                # Si la competencia fue sobrescrita por shard_fixes/<CID>.py, se aísla el código modular
+                # evitando falsos positivos producidos por funciones obsoletas del shard base.
+                cid_sources: List[str] = []
+                if is_modular_fix:
+                    try:
+                        cid_sources.append(fix_files_by_cid[cid].read_text(encoding="utf-8"))
+                    except Exception:
+                        pass
+                else:
+                    if healed_source:
+                        cid_sources.append(healed_source)
+                    elif raw_source:
+                        cid_sources.append(raw_source)
+                    elif shard_data_path and shard_data_path.is_file():
+                        try:
+                            cid_sources.append(shard_data_path.read_text(encoding="utf-8"))
+                        except Exception:
+                            pass
+
+                for t in tpls:
+                    gen_c = t.get("generator_code") or t.get("generate_py") or ""
+                    if gen_c and gen_c not in cid_sources:
+                        cid_sources.append(gen_c)
+
+                cid_ast_funcs: Dict[str, Union[ast.FunctionDef, ast.AsyncFunctionDef]] = {}
+                for src_txt in cid_sources:
+                    try:
+                        parsed_tree = ast.parse(src_txt)
+                        for ast_node in ast.walk(parsed_tree):
+                            if isinstance(ast_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                                cid_ast_funcs[ast_node.name] = ast_node
+                    except Exception:
+                        pass
+
+                cid_clean = cid.lower().replace("-", "_")
+                cid_compact = cid.lower().replace("-", "")
+                cid_candidate_funcs: Set[str] = set()
+
+                for t in tpls:
+                    g_fn = t.get("gen_fn_name")
+                    if g_fn and g_fn in cid_ast_funcs:
+                        cid_candidate_funcs.add(g_fn)
+                        w_node = cid_ast_funcs[g_fn]
+                        for b_stmt in w_node.body:
+                            for sub in ast.walk(b_stmt):
+                                if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name):
+                                    if sub.func.id in cid_ast_funcs:
+                                        cid_candidate_funcs.add(sub.func.id)
+
+                for fname, fnode in cid_ast_funcs.items():
+                    if _fn_declares_arch(fnode):
+                        if cid_clean in fname.lower() or cid_compact in fname.lower():
+                            cid_candidate_funcs.add(fname)
+                        elif is_modular_fix or len(target_cids) == 1:
+                            cid_candidate_funcs.add(fname)
+
+                checked_fn_names: Set[str] = set()
+                for func_name in sorted(cid_candidate_funcs):
+                    if func_name in checked_fn_names:
+                        continue
+                    checked_fn_names.add(func_name)
+                    fn_node = cid_ast_funcs.get(func_name)
+                    if fn_node and _fn_declares_arch(fn_node):
+                        if not _fn_uses_arch_in_body(fn_node):
+                            m3_errors.append(
+                                f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}': la función generadora '{func_name}' recibe el parámetro 'arch' pero nunca lo utiliza en su cuerpo, produciendo salidas idénticas en los 4 arquetipos. Ramifica con 'if arch == 1 / elif arch == 2 / elif arch == 3 / else' para variar el problema matemático por arquetipo."
+                            )
+
+                # Verificación 3 — Detección de Evasión Trivial y Clones Matemáticos Puros (seed=100 & seed=101)
+                # Cuando strict y eff_min_arch >= 4 y len(tpls) >= 4, evalúa que las tuplas produzcan
+                # al menos 2 salidas matemáticas distintas (correct, vars) para la misma semilla.
+                if eff_min_arch >= 4 and len(tpls) >= 4:
+                    def _eval_tuple_output(t_idx: int, seed_val: int) -> Optional[Tuple[str, str]]:
+                        c_call = gen_callables[t_idx] if t_idx < len(gen_callables) else None
+                        if callable(c_call):
+                            try:
+                                import random
+                                from engine.sandbox import call_with_timeout, _LazyNPRNG
+                                rng = random.Random(seed_val)
+                                try:
+                                    rng.np = _LazyNPRNG(seed_val)
+                                except Exception:
+                                    pass
+                                res = call_with_timeout(
+                                    c_call,
+                                    args=(rng,),
+                                    timeout=0.4,
+                                    seed=seed_val,
+                                )
+                                if isinstance(res, dict):
+                                    c_v = str(res.get("correct", ""))
+                                    v_d = res.get("vars", {})
+                                    v_s = json.dumps(v_d, sort_keys=True, default=str) if isinstance(v_d, dict) else str(v_d)
+                                    return (c_v, v_s)
+                                elif isinstance(res, (tuple, list)) and len(res) >= 1 and isinstance(res[0], dict):
+                                    v_d = res[0]
+                                    v_s = json.dumps(v_d, sort_keys=True, default=str)
+                                    return ("", v_s)
+                            except Exception:
+                                pass
+
+                        gen_c = tpls[t_idx].get("generator_code") or tpls[t_idx].get("generate_py") or ""
+                        if gen_c:
+                            try:
+                                from engine.sandbox import run_code_in_env
+                                res = run_code_in_env(gen_c, "generate", seed=seed_val, timeout=0.5)
+                                if isinstance(res, dict):
+                                    c_v = str(res.get("correct", ""))
+                                    v_d = res.get("vars", {})
+                                    v_s = json.dumps(v_d, sort_keys=True, default=str) if isinstance(v_d, dict) else str(v_d)
+                                    return (c_v, v_s)
+                            except Exception:
+                                pass
+                        return None
+
+                    outs_100 = [_eval_tuple_output(i, 100) for i in range(len(tpls))]
+                    valid_100 = [o for o in outs_100 if o is not None]
+                    if len(valid_100) == len(tpls) and len(set(valid_100)) < 2:
+                        outs_101 = [_eval_tuple_output(i, 101) for i in range(len(tpls))]
+                        valid_101 = [o for o in outs_101 if o is not None]
+                        if len(valid_101) == len(tpls) and len(set(valid_101)) < 2:
+                            m3_errors.append(
+                                f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}': las {len(tpls)} tuplas generan salidas matemáticas idénticas (mismo 'correct' y 'vars' en la misma semilla). Los {eff_min_arch} arquetipos deben producir al menos 2 variantes matemáticas distintas (1=Directo, 2=Inverso, 3=Perturbación, 4=Frontera); ramifica con 'if arch == 1 / elif arch == 2 ...' para variar el cálculo numérico o analítico."
+                            )
 
     if m3_errors:
         is_clean = False

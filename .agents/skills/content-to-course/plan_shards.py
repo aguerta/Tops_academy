@@ -29,7 +29,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 # [REVERT TO 2A]: Cambiar DEFAULT_COMPS_PER_SHARD = 3 para volver al Caso 2A (C=3, T=3)
 # =============================================================================
 DEFAULT_COMPS_PER_SHARD: int = 2
-DEFAULT_MAX_WAVE_SIZE: int = 50
+DEFAULT_MAX_WAVE_SIZE: int = 100 
 
 
 def _atomic_write_json(target_path: Path, data: Any) -> None:
