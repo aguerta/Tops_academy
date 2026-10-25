@@ -28,7 +28,7 @@ import re
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Set, Union
 
 # Safe stdout encoding on Windows
 if hasattr(sys.stdout, "reconfigure"):
@@ -735,10 +735,86 @@ class PipelineRunner:
         if not compile_shard_script.is_file():
             compile_shard_script = skill_dir / "compile_shard.py"
 
+        # Cargar pre_shard_manifest.json si existe para compilación incremental
+        pre_shard_manifest_p = shards_dir / "pre_shard_manifest.json"
+        if not pre_shard_manifest_p.is_file():
+            pre_shard_manifest_p = self.work_dir / "pre_shard_manifest.json"
+
+        shard_to_cids: Dict[str, List[str]] = {}
+        if pre_shard_manifest_p.is_file():
+            try:
+                sm_data = json.loads(pre_shard_manifest_p.read_text(encoding="utf-8"))
+                shards_info = sm_data.get("shards", [])
+                if isinstance(shards_info, list):
+                    for s in shards_info:
+                        s_id = s.get("shard_id") or "shard_01"
+                        c_ids = s.get("competency_ids") or []
+                        if not c_ids and "competencies" in s:
+                            c_ids = [c.get("id") for c in s["competencies"] if isinstance(c, dict) and "id" in c]
+                        for cid in c_ids:
+                            if cid:
+                                shard_to_cids.setdefault(s_id, []).append(cid)
+                elif isinstance(shards_info, dict):
+                    for s_id, comps in shards_info.items():
+                        if isinstance(comps, list):
+                            for c in comps:
+                                cid = c.get("id") if isinstance(c, dict) else str(c)
+                                if cid:
+                                    shard_to_cids.setdefault(s_id, []).append(cid)
+            except Exception as e:
+                logger.warning("Error reading pre_shard_manifest.json in run_stage_templates: %s", e)
+
+        for sf in sorted(shards_dir.glob("shard_*.json")):
+            try:
+                sdata = json.loads(sf.read_text(encoding="utf-8"))
+                s_id = sdata.get("shard_id", sf.stem)
+                for cid in sdata.get("competency_ids", []):
+                    if cid and s_id not in shard_to_cids:
+                        shard_to_cids.setdefault(s_id, []).append(cid)
+                if "competencies" in sdata and isinstance(sdata["competencies"], list):
+                    for c in sdata["competencies"]:
+                        cid = c.get("id") if isinstance(c, dict) else str(c)
+                        if cid and s_id not in shard_to_cids:
+                            shard_to_cids.setdefault(s_id, []).append(cid)
+            except Exception:
+                pass
+
         if shard_data_files and (compile_shard_mod or compile_shard_script.is_file()):
             print(f"  [*] Compiling {len(shard_data_files)} pending shard data files...")
+            cta_mtime = cta_file.stat().st_mtime if cta_file.is_file() else 0.0
             for s_data_p in shard_data_files:
                 shard_id = re.sub(r"_data$", "", s_data_p.stem)
+                cids = shard_to_cids.get(shard_id, [])
+                if cids:
+                    all_up_to_date = True
+                    s_mtime = s_data_p.stat().st_mtime
+                    for cid in cids:
+                        cid_json = templates_dir / f"{cid}.json"
+                        if not cid_json.is_file() or cid_json.stat().st_size == 0:
+                            all_up_to_date = False
+                            break
+                        cid_mtime = cid_json.stat().st_mtime
+                        if cid_mtime < s_mtime or cid_mtime < cta_mtime:
+                            all_up_to_date = False
+                            break
+                        shard_fixes_candidates = [
+                            shards_dir / "shard_fixes" / f"{cid}.py",
+                            self.work_dir / "shard_fixes" / f"{cid}.py",
+                            shards_dir / "shard_fixes" / f"{cid.lower()}.py",
+                            self.work_dir / "shard_fixes" / f"{cid.lower()}.py",
+                        ]
+                        has_newer_fix = False
+                        for fix_p in shard_fixes_candidates:
+                            if fix_p.is_file() and cid_mtime < fix_p.stat().st_mtime:
+                                has_newer_fix = True
+                                break
+                        if has_newer_fix:
+                            all_up_to_date = False
+                            break
+                    if all_up_to_date:
+                        print(f"  [i] Skipping compilation for {s_data_p.name} (templates up-to-date).")
+                        continue
+
                 if compile_shard_mod and hasattr(compile_shard_mod, "compile_shard"):
                     ok, errs = compile_shard_mod.compile_shard(self.work_dir, shard_id=shard_id, strict=True)
                     if not ok:
@@ -754,6 +830,65 @@ class PipelineRunner:
             )
 
         is_valid, errors = check_templates_file_or_dir(templates_dir, cta_path=cta_file)
+
+        # Build errors_by_cid mapping
+        errors_by_cid: Dict[str, List[str]] = {}
+        known_cids: Set[str] = set()
+        try:
+            cta_obj = json.loads(cta_file.read_text(encoding="utf-8"))
+            for c in cta_obj.get("competencies", []):
+                if isinstance(c, dict) and "id" in c:
+                    known_cids.add(c["id"])
+        except Exception:
+            pass
+        for tf in templates_dir.glob("*.json"):
+            known_cids.add(tf.stem)
+
+        for err in errors:
+            err_str = str(err)
+            matched = set()
+            if hasattr(err, "competency") and getattr(err, "competency") in known_cids:
+                matched.add(getattr(err, "competency"))
+            for cid in known_cids:
+                if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(cid)}(?![A-Za-z0-9_-])", err_str):
+                    matched.add(cid)
+            for m in re.finditer(r"\b(?:C|H|Hab)-\d+\b", err_str):
+                cand_cid = m.group(0)
+                if cand_cid in known_cids:
+                    matched.add(cand_cid)
+
+            for cid in matched:
+                errors_by_cid.setdefault(cid, []).append(err_str)
+
+        total_t = 0
+        for tf in templates_dir.glob("*.json"):
+            try:
+                t_data = json.loads(tf.read_text(encoding="utf-8"))
+                if isinstance(t_data, list):
+                    total_t += len(t_data)
+                elif isinstance(t_data, dict):
+                    if "templates" in t_data and isinstance(t_data["templates"], list):
+                        total_t += len(t_data["templates"])
+                    else:
+                        total_t += 1
+            except Exception:
+                pass
+        total_s = total_t * 50
+
+        reports_dir = self.work_dir / "reports"
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        report_file = reports_dir / "templates_report.json"
+        report_data = {
+            "status": "PASS" if is_valid else "FAIL",
+            "total_templates": total_t,
+            "total_seeds_run": total_s,
+            "errors": [str(e) for e in errors],
+            "warnings": [],
+            "errors_by_cid": errors_by_cid,
+            "failed_competencies": sorted(errors_by_cid.keys()),
+        }
+        report_file.write_text(json.dumps(report_data, indent=2, ensure_ascii=False), encoding="utf-8")
+
         if not is_valid:
             print("\n[ERROR] Templates validation failed:", file=sys.stderr)
             for err in errors[:10]:

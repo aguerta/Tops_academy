@@ -1613,10 +1613,73 @@ def build_dispatch(
             try:
                 tr = json.loads(templates_report_file.read_text(encoding="utf-8"))
                 for res in tr.get("results", []):
-                    if res.get("status") == "fail":
+                    if res.get("status") in ("fail", "FAIL"):
                         cid = res.get("cid") or res.get("competency_id")
                         if cid:
-                            failing_targets.setdefault(cid, {})["template_errors"] = res.get("errors", [])
+                            failing_targets.setdefault(cid, {}).setdefault("template_errors", []).extend(res.get("errors", []))
+                            failing_targets.setdefault(cid, {}).setdefault("errors", []).extend(res.get("errors", []))
+                for comp_item in tr.get("competencies", []):
+                    if isinstance(comp_item, dict) and comp_item.get("status") in ("fail", "FAIL"):
+                        cid = comp_item.get("cid") or comp_item.get("id") or comp_item.get("competency_id")
+                        if cid:
+                            failing_targets.setdefault(cid, {}).setdefault("template_errors", []).extend(comp_item.get("errors", []))
+                            failing_targets.setdefault(cid, {}).setdefault("errors", []).extend(comp_item.get("errors", []))
+                if isinstance(tr.get("errors_by_cid"), dict):
+                    for cid, err_list in tr["errors_by_cid"].items():
+                        if err_list:
+                            failing_targets.setdefault(cid, {}).setdefault("template_errors", []).extend(err_list)
+                            failing_targets.setdefault(cid, {}).setdefault("errors", []).extend(err_list)
+                fc_data = tr.get("failed_competencies")
+                if isinstance(fc_data, dict):
+                    for cid, c_data in fc_data.items():
+                        c_errs = []
+                        if isinstance(c_data, dict):
+                            c_errs = c_data.get("errors", [])
+                        elif isinstance(c_data, list):
+                            c_errs = c_data
+                        if c_errs:
+                            failing_targets.setdefault(cid, {}).setdefault("template_errors", []).extend(c_errs)
+                            failing_targets.setdefault(cid, {}).setdefault("errors", []).extend(c_errs)
+                        else:
+                            failing_targets.setdefault(cid, {})
+                elif isinstance(fc_data, list):
+                    for cid in fc_data:
+                        if isinstance(cid, str):
+                            failing_targets.setdefault(cid, {})
+
+                flat_errors = tr.get("errors", [])
+                if isinstance(flat_errors, list):
+                    for err in flat_errors:
+                        err_str = str(err)
+                        matched_cids = set()
+                        for known_cid in shard_map.keys():
+                            if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(known_cid)}(?![A-Za-z0-9_-])", err_str):
+                                matched_cids.add(known_cid)
+                        for m in re.finditer(r"\b(?:C|H|Hab)-\d+\b", err_str):
+                            cand_cid = m.group(0)
+                            if cand_cid in shard_map:
+                                matched_cids.add(cand_cid)
+                        for cid in matched_cids:
+                            t_entry = failing_targets.setdefault(cid, {})
+                            errs_list = t_entry.setdefault("template_errors", [])
+                            if err_str not in errs_list:
+                                errs_list.append(err_str)
+                            all_errs = t_entry.setdefault("errors", [])
+                            if err_str not in all_errs:
+                                all_errs.append(err_str)
+
+                # Clean and deduplicate errors per target
+                for cid, t_entry in failing_targets.items():
+                    for k in ("template_errors", "errors"):
+                        if k in t_entry and isinstance(t_entry[k], list):
+                            seen_e = set()
+                            dedup_e = []
+                            for e in t_entry[k]:
+                                s_e = str(e)
+                                if s_e not in seen_e:
+                                    seen_e.add(s_e)
+                                    dedup_e.append(s_e)
+                            t_entry[k] = dedup_e
             except Exception as e:
                 logger.warning("Error reading templates_report.json: %s", e)
 
@@ -1670,21 +1733,44 @@ def build_dispatch(
 
         # 4. Filter by requested ids (supporting both competency IDs like 'Hab-02' and shard IDs like 'shard_02')
         if ids is not None:
-            expanded_ids: Set[str] = set()
-            for raw_id in ids:
-                rid = str(raw_id).strip()
+            raw_list = [ids] if isinstance(ids, (str, int)) else ids
+            flattened_ids: List[str] = [
+                part.strip()
+                for raw in raw_list
+                for part in str(raw).split(",")
+                if part.strip()
+            ]
+            seen_rids: Set[str] = set()
+            unique_flattened_ids: List[str] = []
+            for rid in flattened_ids:
+                if rid not in seen_rids:
+                    seen_rids.add(rid)
+                    unique_flattened_ids.append(rid)
+
+            expanded_ids: List[str] = []
+            for rid in unique_flattened_ids:
                 if rid in shard_to_comps:
-                    expanded_ids.update(shard_to_comps[rid])
+                    for c in shard_to_comps[rid]:
+                        if c not in expanded_ids:
+                            expanded_ids.append(c)
                 else:
-                    expanded_ids.add(rid)
-            failing_targets = {cid: data for cid, data in failing_targets.items() if cid in expanded_ids}
+                    if rid not in expanded_ids:
+                        expanded_ids.append(rid)
+
+            ordered_failing: Dict[str, Any] = {}
             for cid in expanded_ids:
-                if cid not in failing_targets:
+                if cid in failing_targets:
+                    t_diag = failing_targets[cid]
+                    if t_diag.get("template_errors") or t_diag.get("errors"):
+                        t_diag.pop("manual_request", None)
+                    ordered_failing[cid] = t_diag
+                else:
                     s_id = shard_map.get(cid, "shard_01")
                     diag_info: Dict[str, Any] = {"manual_request": True}
                     if s_id in shard_attempt_diagnostics:
                         diag_info["attempt_diagnostics"] = shard_attempt_diagnostics[s_id]
-                    failing_targets[cid] = diag_info
+                    ordered_failing[cid] = diag_info
+            failing_targets = ordered_failing
 
         shard_manifest_rel = (
             f"{work_rel}/shards/pre_shard_manifest.json"
@@ -1696,6 +1782,8 @@ def build_dispatch(
 
         items_dir = work / "dispatch" / "items"
         items_dir.mkdir(parents=True, exist_ok=True)
+        prompts_repair_dir = work / "prompts" / "repair"
+        prompts_repair_dir.mkdir(parents=True, exist_ok=True)
         item_files: List[str] = []
         cleared_attempt_files: List[str] = []
 
@@ -1789,6 +1877,11 @@ def build_dispatch(
                 done_signal=f"DONE: {out_json}",
             )
             diag_str = json.dumps(diag, indent=2, ensure_ascii=False)
+            error_bullets = ""
+            active_errors = diag.get("template_errors") or diag.get("errors") or []
+            if active_errors:
+                error_bullets = "### Errores Diagnosticados en Templates:\n" + "\n".join(f"- `{e}`" for e in active_errors[:20]) + "\n\n"
+
             prompt_text = (
                 f"# Asignación de Tarea: Targeted Repair Engineer `{cid}` (C2C v3.21 Load Inversion)\n\n"
                 f"{scope_header}\n\n"
@@ -1800,6 +1893,7 @@ def build_dispatch(
                 f"- **Módulo de Parche Quirúrgico:** `{shard_fix_path}`\n"
                 f"- **Circuit Breaker Reset:** Se han limpiado automáticamente los contadores previos en `.check_attempts/`.\n\n"
                 f"## 2. DIAGNÓSTICO DEL FALLO\n"
+                f"{error_bullets}"
                 f"```json\n{diag_str}\n```\n\n"
                 f"## 3. INSTRUCCIONES DE REPARACIÓN\n"
                 f"1. Corrige la tupla de `{cid}` en `{out_py}` usando quirúrgicamente `replace_file_content`, o escribe el parche modular en `{shard_fix_path}`.\n"
@@ -1810,8 +1904,14 @@ def build_dispatch(
                 f"3. Sigue todas las directivas de tu System Prompt `c2c_repair` y finaliza con: `DONE: {out_json}`.\n"
             )
             safe_cid = re.sub(r"[^\w-]", "_", str(cid))
+            cid_norm = re.sub(r"[^\w]", "", str(cid)).lower()
             item_file = items_dir / f"repair_{idx:02d}.json"
             cid_item_file = items_dir / f"repair_{safe_cid}.json"
+            items_cid_norm_file = items_dir / f"repair_{cid_norm}.json"
+            prompts_cid_file = prompts_repair_dir / f"repair_{cid_norm}.json"
+            prompts_safe_file = prompts_repair_dir / f"repair_{safe_cid}.json"
+            prompts_idx_file = prompts_repair_dir / f"repair_{idx:02d}.json"
+
             item_data = {
                 "TypeName": spec["type_name"],
                 "Role": f"Repair Engineer {cid}",
@@ -1828,12 +1928,16 @@ def build_dispatch(
             item_json_str = json.dumps(item_data, indent=2, ensure_ascii=False)
             item_file.write_text(item_json_str, encoding="utf-8")
             cid_item_file.write_text(item_json_str, encoding="utf-8")
+            items_cid_norm_file.write_text(item_json_str, encoding="utf-8")
+            prompts_cid_file.write_text(item_json_str, encoding="utf-8")
+            prompts_safe_file.write_text(item_json_str, encoding="utf-8")
+            prompts_idx_file.write_text(item_json_str, encoding="utf-8")
 
             if use_pointer:
                 extra = f"[SCOPE-LOCK] Fix {cid} in `{out_py}` or write `{shard_fix_path}`, compile with `compile_shard.py`."
                 pointer_prompt = make_pointer_prompt(
                     role_name=f"Repair Engineer {cid}",
-                    work_order_rel=f"{work_rel}/dispatch/items/{item_file.name}",
+                    work_order_rel=f"{work_rel}/prompts/repair/{prompts_cid_file.name}",
                     done_signal=f"DONE: {out_json}",
                     extra_instructions=extra,
                 )
@@ -1848,9 +1952,11 @@ def build_dispatch(
 
             subagents.append(sub_item)
             dispatched_ids.append(cid)
-            item_files.append(item_file.resolve().as_posix())
+            item_files.append(prompts_cid_file.resolve().as_posix())
+            if item_file.resolve().as_posix() not in item_files:
+                item_files.append(item_file.resolve().as_posix())
 
-    payload = {"Subagents": subagents}
+    payload = {"Subagents": subagents, "item_files": item_files}
 
     snap = snapshot_work_dir(work)
     snap_file = dispatch_dir / f"{role}_snapshot.json"
@@ -1862,6 +1968,7 @@ def build_dispatch(
         "role": role,
         "dispatched_at": datetime.now(timezone.utc).isoformat(),
         "subagents_count": len(subagents),
+        "item_files": item_files,
         "Subagents": subagents,
     }
     audit_file.write_text(json.dumps(audit_payload, indent=2, ensure_ascii=False), encoding="utf-8")
