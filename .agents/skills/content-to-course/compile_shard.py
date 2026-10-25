@@ -22,6 +22,7 @@ import re
 import sys
 import textwrap
 import traceback
+import types
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
@@ -57,18 +58,40 @@ def _atomic_write_json(target_path: Path, data: Any) -> None:
                     pass
 
 
-def heal_shard_source_file(py_path: Path) -> bool:
-    """Uses Python's tokenize module to inspect and heal non-raw string tokens and control characters.
+def count_distinct_shard_error_hunks(
+    raw_errors: List[Any],
+    targets: Optional[List[Path]] = None,
+    shard_py: Optional[Union[str, Path]] = None,
+) -> int:
+    """Helper re-exported from check_templates for counting deduplicated error hunks."""
+    from check_templates import count_distinct_shard_error_hunks as _count_hunks
+    return _count_hunks(raw_errors, targets=targets, shard_py=shard_py)
 
-    Heals unescaped LaTeX prefixes and ASCII control characters in py_path before importing.
-    Returns True if the file was modified and rewritten, False otherwise.
+
+def check_ast_rf_triple_braces(source_text: str) -> List[str]:
+    """Check for rf'...' or fr'...' strings containing '{{{' which corrupts KaTeX braces."""
+    warnings = []
+    for m in re.finditer(r"(?i)\b(rf|fr)(['\"]{1,3})([\s\S]*?)\2", source_text):
+        if "{{{" in m.group(3):
+            snippet = m.group(0)[:60] + ("..." if len(m.group(0)) > 60 else "")
+            warnings.append(
+                f"[!] Warning: Se detectó {m.group(1)}{m.group(2)}...{m.group(2)} conteniendo '{{{{{{' ({snippet}). "
+                "Recomendación: Utilice raw strings r\"...\" con tokens @var@ para evitar la corrupción de llaves KaTeX."
+            )
+    return warnings
+
+
+def heal_shard_source_text(source_text: str) -> Tuple[bool, str]:
+    """Uses Python's tokenize module to inspect and heal non-raw string tokens and control characters in-memory.
+
+    Heals unescaped LaTeX prefixes and ASCII control characters without modifying files on disk.
+    Returns (modified, healed_text).
     """
-    if not py_path.is_file():
-        return False
+    if not source_text:
+        return False, source_text
     try:
         import io, tokenize
         from check_templates import heal_control_chars_in_str, COMBINED_LATEX
-        source_text = py_path.read_text(encoding="utf-8")
         clean_source = heal_control_chars_in_str(source_text)
         modified = (clean_source != source_text)
         tokens = list(tokenize.tokenize(io.BytesIO(clean_source.encode("utf-8")).readline))
@@ -82,28 +105,45 @@ def heal_shard_source_file(py_path: Path) -> bool:
                     new_body = heal_control_chars_in_str(body)
                     if not is_raw:
                         new_body = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", new_body)
+                    if "$" in new_body:
+                        _bs = "\\" if is_raw else "\\\\"
+                        new_body = re.sub(r"\\implies\b", f"{_bs}Rightarrow", new_body)
+                        new_body = re.sub(r"\\iff\b", f"{_bs}Leftrightarrow", new_body)
+                        new_body = re.sub(r"(?<!\\)\b(hat|bar|tilde|vec|dot|ddot|frac|dfrac|tfrac|sqrt|mathcal|mathbb|mathbf|boldsymbol|operatorname)\s*\{", rf"{_bs}\1{{", new_body)
+                        if new_body.count("$$") == 1 and new_body.replace("$$", "").count("$") == 1:
+                            new_body = new_body.replace("$$", "$")
                     if new_body != body:
                         modified = True
                         new_tokens.append(tokenize.TokenInfo(t.type, f"{prefix}{q_open}{new_body}{q_close}", t.start, t.end, t.line))
                         continue
             new_tokens.append(t)
         if not modified:
-            return False
+            return False, source_text
         rebuilt_text = tokenize.untokenize(new_tokens).decode("utf-8")
-        py_path.write_text(rebuilt_text, encoding="utf-8")
-        return True
+        return True, rebuilt_text
     except Exception:
         try:
             from check_templates import heal_control_chars_in_str, COMBINED_LATEX
-            source_text = py_path.read_text(encoding="utf-8")
             healed = heal_control_chars_in_str(source_text)
             healed = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", healed)
-            if healed != source_text:
-                py_path.write_text(healed, encoding="utf-8")
-                return True
+            return (healed != source_text), healed
         except Exception:
-            pass
+            return False, source_text
+
+
+def heal_shard_source_file(py_path: Path) -> bool:
+    """Uses Python's tokenize module to inspect and heal non-raw string tokens and control characters.
+
+    Heals unescaped LaTeX prefixes and ASCII control characters in py_path before importing.
+    Returns True if the file was modified and rewritten, False otherwise.
+    """
+    if not py_path.is_file():
         return False
+    source_text = py_path.read_text(encoding="utf-8")
+    modified, healed = heal_shard_source_text(source_text)
+    if modified:
+        py_path.write_text(healed, encoding="utf-8")
+    return modified
 
 
 def _format_socratic_step(text: str) -> str:
@@ -192,9 +232,12 @@ class ShardDataLineLocator:
     - Source snippet extraction for replace_file_content
     """
 
-    def __init__(self, file_path: Union[str, Path]):
+    def __init__(self, file_path: Union[str, Path], source_text: Optional[str] = None):
         self.file_path = Path(file_path).resolve()
-        self.source_text = self.file_path.read_text(encoding="utf-8") if self.file_path.is_file() else ""
+        if source_text is not None:
+            self.source_text = source_text
+        else:
+            self.source_text = self.file_path.read_text(encoding="utf-8") if self.file_path.is_file() else ""
         self.lines = self.source_text.splitlines()
         self.syntax_error: Optional[str] = None
         self.syntax_error_details: Optional[Dict[str, Any]] = None
@@ -339,15 +382,15 @@ class ShardDataLineLocator:
         return info
 
     def get_tuple_info(self, idx_or_cid: Union[int, str]) -> Optional[Dict[str, Any]]:
-        idx = self.competency_to_tuple_idx.get(idx_or_cid, idx_or_cid) if isinstance(idx_or_cid, str) else idx_or_cid
-        if 0 <= idx < len(self.tuples):
+        idx = self.competency_to_tuple_idx.get(idx_or_cid) if isinstance(idx_or_cid, str) else idx_or_cid
+        if idx is not None and isinstance(idx, int) and 0 <= idx < len(self.tuples):
             return self.tuples[idx]
         return None
 
     def get_tuple_snippet(self, idx_or_cid: Union[int, str]) -> Tuple[int, int, str]:
         """Returns (start_line, end_line, snippet_text) for a tuple."""
-        idx = self.competency_to_tuple_idx.get(idx_or_cid, idx_or_cid) if isinstance(idx_or_cid, str) else idx_or_cid
-        if 0 <= idx < len(self.tuples):
+        idx = self.competency_to_tuple_idx.get(idx_or_cid) if isinstance(idx_or_cid, str) else idx_or_cid
+        if idx is not None and isinstance(idx, int) and 0 <= idx < len(self.tuples):
             t = self.tuples[idx]
             s = t["start_line"]
             e = t["end_line"]
@@ -389,11 +432,11 @@ class ShardDataLineLocator:
                     preamble_lines.append(line)
 
         # Include constant lines
-        for cname, (s, e) in self.constants.items():
+        for cname, (s, e) in sorted(self.constants.items(), key=lambda x: x[1][0]):
             preamble_lines.extend(self.lines[s - 1 : e])
 
-        # Include helper function lines
-        for hname in self.helper_functions:
+        # Include helper function lines in ascending line order
+        for hname in sorted(self.helper_functions, key=lambda k: self.functions[k][0]):
             s, e = self.functions[hname]
             preamble_lines.extend(self.lines[s - 1 : e])
 
@@ -415,9 +458,14 @@ def extract_function_code(
     """
     raw_src = ""
     orig_name = getattr(fn_or_str, "__name__", fn_name_hint or "")
-    if callable(fn_or_str):
+    if fn_or_str is None or (isinstance(fn_or_str, str) and not fn_or_str.strip()):
+        if target_name == "verify":
+            raw_src = "def verify(instance):\n    return True"
+        else:
+            raw_src = f"def {target_name}(rng):\n    return {{}}"
+    elif callable(fn_or_str):
         try:
-            raw_src = textwrap.dedent(inspect.getsource(fn_or_str))
+            raw_src = textwrap.dedent("\n".join(locator.lines[locator.functions[orig_name][0] - 1 : locator.functions[orig_name][1]])) if (locator and orig_name in locator.functions) else textwrap.dedent(inspect.getsource(fn_or_str))
         except Exception:
             if locator and orig_name in locator.functions:
                 s, e = locator.functions[orig_name]
@@ -454,18 +502,40 @@ def build_adapted_mc7_generator(
     cid: str,
     cta_distractors: List[Dict[str, Any]],
 ) -> str:
-    """Wraps an MC7 generator function to reliably provide 6 non-colliding distractors.
+    """Wraps an MC7 generator function to reliably provide 6 non-colliding distractors with DRY rationale inheritance.
 
-    Ensures that if generate_params returns 'options' without 'distractors' (as in prompt_shard_author.md),
-    distractors are cleanly extracted and expanded to 6 without duplicates or correct-answer collisions.
+    Supports distractor items returned by author as:
+    1. Full dict: {"value": ..., "distractor_id": ..., "error_rationale": ...}
+    2. Compact dict: {"value": ..., "distractor_id": ...} or {"id": ..., "value": ...}
+    3. 2-tuple: ("D-XX-01", val) or (val, "D-XX-01")
+    4. 3-tuple: ("D-XX-01", val, rationale)
+    5. String / scalar: val (distractor_id and rationale populated by position from cta_distractors)
     """
-    d_repr = repr([
-        {
-            "id": d.get("id", f"D-{cid}-{idx+1:02d}"),
-            "wrong_belief": d.get("wrong_belief") or d.get("manifestation") or "Estimación o procedimiento alternativo",
-        }
-        for idx, d in enumerate(cta_distractors)
-    ])
+    from check_templates import _strip_giveaway_prefix, _wrap_bare_latex_in_rationale
+
+    clean_declared = []
+    for idx, d in enumerate(cta_distractors):
+        did = d.get("id", f"D-{cid}-{idx+1:02d}")
+        rem = d.get("remediation_hint") or ""
+        wb = d.get("wrong_belief") or d.get("manifestation") or ""
+        om = d.get("omitted_step") or ""
+        if rem:
+            rat = rem
+        elif wb and om:
+            rat = f"{wb.rstrip('.')}. Se debe considerar: {om.rstrip('.')}."
+        elif wb:
+            rat = wb
+        elif om:
+            rat = f"Error procedimental: {om}."
+        else:
+            rat = f"Procedimiento analítico alternativo para {cid}."
+        clean_rat = _wrap_bare_latex_in_rationale(_strip_giveaway_prefix(str(rat)))
+        clean_declared.append({
+            "id": did,
+            "rationale": clean_rat,
+        })
+
+    d_repr = repr(clean_declared)
 
     wrapper = f"""{base_gen_code}
 
@@ -473,8 +543,21 @@ _c2c_orig_generate = generate_params
 
 def generate_params(rng):
     res = _c2c_orig_generate(rng)
-    if not isinstance(res, dict):
+    if isinstance(res, (tuple, list)):
+        if len(res) >= 3:
+            v_map = res[0] if isinstance(res[0], dict) else {{"val": res[0]}}
+            res = {{"vars": v_map, "correct": str(res[1]), "distractors": res[2]}}
+        elif len(res) == 2:
+            v_map = res[0] if isinstance(res[0], dict) else {{"val": res[0]}}
+            res = {{"vars": v_map, "correct": str(res[1]), "distractors": []}}
+        else:
+            return res
+    elif not isinstance(res, dict):
         return res
+
+    declared_list = {d_repr}
+    declared_map = {{d["id"]: d["rationale"] for d in declared_list}}
+    declared_ids = set(declared_map.keys())
 
     # Synchronize options items (both 'value' and 'content')
     opts = res.get("options")
@@ -486,53 +569,126 @@ def generate_params(rng):
                 elif "content" in opt and "value" not in opt:
                     opt["value"] = opt["content"]
 
-    # Extract distractors from options if absent
-    dists = res.get("distractors")
-    if dists is None and isinstance(opts, list):
-        dists = [dict(opt) for opt in opts if not opt.get("is_correct")]
-        res["distractors"] = dists
-    elif dists is None:
-        dists = []
-        res["distractors"] = dists
+    # Extract distractors from options or distractors
+    dists_raw = res.get("distractors")
+    if dists_raw is None and isinstance(opts, list):
+        dists_raw = [dict(opt) for opt in opts if isinstance(opt, dict) and not opt.get("is_correct")]
+    elif dists_raw is None:
+        dists_raw = []
 
     correct_val = str(res.get("correct", "")).strip()
-    existing_vals = set()
+    if not correct_val and isinstance(opts, list):
+        for opt in opts:
+            if isinstance(opt, dict) and opt.get("is_correct"):
+                correct_val = str(opt.get("value") or opt.get("content", "")).strip()
+                res["correct"] = correct_val
+                break
+
+    used_values = set()
     if correct_val:
-        existing_vals.add(correct_val)
-    for d in dists:
-        v = str(d.get("value", "")).strip()
-        if v:
-            existing_vals.add(v)
+        used_values.add(correct_val)
+
+    normalized_dists = []
+    used_ids = set()
+
+    for idx, d in enumerate(dists_raw):
+        val = ""
+        did = None
+        rat = None
+        if isinstance(d, dict):
+            val = str(d.get("value") if "value" in d else (d.get("content") if "content" in d else d.get("ans", ""))).strip()
+            did = d.get("distractor_id") or d.get("id") or d.get("did")
+            rat = d.get("error_rationale") or d.get("rationale") or d.get("hint")
+        elif isinstance(d, (tuple, list)):
+            if len(d) >= 3:
+                e0, e1 = str(d[0]).strip(), str(d[1]).strip()
+                norm_e0 = e0.replace("_", "-")
+                norm_e1 = e1.replace("_", "-")
+                if e0.startswith(("D-", "D_")) or norm_e0 in declared_ids:
+                    did, val, rat = norm_e0, e1, str(d[2]).strip()
+                elif e1.startswith(("D-", "D_")) or norm_e1 in declared_ids:
+                    val, did, rat = e0, norm_e1, str(d[2]).strip()
+                else:
+                    val, did, rat = e0, e1, str(d[2]).strip()
+            elif len(d) == 2:
+                e0, e1 = str(d[0]).strip(), str(d[1]).strip()
+                norm_e0 = e0.replace("_", "-")
+                norm_e1 = e1.replace("_", "-")
+                if e0.startswith(("D-", "D_")) or norm_e0 in declared_ids:
+                    did, val = norm_e0, e1
+                elif e1.startswith(("D-", "D_")) or norm_e1 in declared_ids:
+                    val, did = e0, norm_e1
+                else:
+                    val = e0
+            elif len(d) == 1:
+                val = str(d[0]).strip()
+        elif isinstance(d, (str, int, float)):
+            val = str(d).strip()
+
+        # Infer did by position from declared_list if absent
+        if not did:
+            for cand_d in declared_list:
+                if cand_d["id"] not in used_ids:
+                    did = cand_d["id"]
+                    break
+            if not did:
+                did = f"D-{cid}-{{len(normalized_dists)+1:02d}}"
+
+        used_ids.add(did)
+
+        # Infer rationale if absent, empty or placeholder
+        if not rat or str(rat).strip() in ("", "None", "placeholder", "N/A", "error", "distractor"):
+            rat = declared_map.get(did)
+            if not rat:
+                cand_idx = len(normalized_dists)
+                if cand_idx < len(declared_list):
+                    rat = declared_list[cand_idx]["rationale"]
+                else:
+                    rat = "Procedimiento cuantitativo o analítico alternativo."
+        else:
+            rat = str(rat)
+
+        if val:
+            used_values.add(val)
+            normalized_dists.append({{
+                "value": val,
+                "content": val,
+                "distractor_id": did,
+                "error_rationale": rat,
+                "is_correct": False,
+            }})
 
     # Ensure at least 6 distinct distractors for MC7 compliance
-    if len(dists) < 6:
-        declared_list = {d_repr}
-        used_ids = set(d.get("distractor_id") for d in dists if d.get("distractor_id"))
+    if len(normalized_dists) < 6:
         avail_dids = [d for d in declared_list if d.get("id") not in used_ids]
 
         # Extract numeric anchor from correct_val if available
         base_num = 1.0
         pfx, sfx = "", ""
-        m_num = None
-        for token in correct_val.replace("$", " ").split():
-            clean_tok = token.strip("=")
+        m_num = False
+        _v_map = res.get("vars") if isinstance(res.get("vars"), dict) else {{}}
+        _resolved_c = correct_val
+        for _vk, _vv in _v_map.items():
+            _resolved_c = _resolved_c.replace("@" + str(_vk) + "@", str(_vv))
+        for token in _resolved_c.replace("$", " ").split():
+            clean_tok = token.strip("=").strip()
             try:
                 base_num = float(clean_tok)
-                idx_tok = correct_val.find(token)
-                pfx = correct_val[:idx_tok]
-                sfx = correct_val[idx_tok + len(token):]
+                idx_tok = _resolved_c.find(token)
+                pfx = _resolved_c[:idx_tok]
+                sfx = _resolved_c[idx_tok + len(token):]
                 m_num = True
                 break
             except ValueError:
                 continue
 
-        needed = 6 - len(dists)
+        needed = 6 - len(normalized_dists)
         multipliers = [1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, 2.1, 0.45, 1.85, 0.15]
         m_idx = 0
         for i in range(needed):
-            did_obj = avail_dids[i] if i < len(avail_dids) else {{"id": f"D-{cid}-" + str(len(dists)+1).zfill(2), "wrong_belief": "Error analítico alternativo"}}
+            did_obj = avail_dids[i] if i < len(avail_dids) else {{"id": f"D-{cid}-" + str(len(normalized_dists)+1).zfill(2), "rationale": "Procedimiento analítico alternativo"}}
             did = did_obj.get("id")
-            rat = did_obj.get("wrong_belief") or "Concepción alternativa pedagógica"
+            rat = did_obj.get("rationale") or "Concepción alternativa pedagógica"
 
             cand_val = ""
             while m_idx < len(multipliers):
@@ -542,23 +698,34 @@ def generate_params(rng):
                     new_val_num = round(base_num * mult, 3)
                     cand = f"{{pfx}}{{new_val_num}}{{sfx}}"
                 else:
-                    cand = f"Opción alterna {{len(dists)+1}}: {{correct_val}}"
-                if cand not in existing_vals:
+                    cand = f"Opción alterna {{len(normalized_dists)+1}}: {{correct_val}}"
+                if cand not in used_values:
                     cand_val = cand
-                    existing_vals.add(cand)
+                    used_values.add(cand)
                     break
 
             if not cand_val:
-                cand_val = f"{{pfx}}{{round(base_num + (i + 1) * 0.137, 3)}}{{sfx}}" if m_num else f"Variante {{len(dists)+1}}"
-                existing_vals.add(cand_val)
+                cand_val = f"{{pfx}}{{round(base_num + (i + 1) * 0.137, 3)}}{{sfx}}" if m_num else f"Variante {{len(normalized_dists)+1}}"
+                used_values.add(cand_val)
 
-            dists.append({{
+            normalized_dists.append({{
                 "value": cand_val,
                 "content": cand_val,
                 "distractor_id": did,
                 "error_rationale": rat,
+                "is_correct": False,
             }})
+            used_ids.add(did)
 
+    res["distractors"] = normalized_dists
+
+    # Construct complete options list with 1 correct + 6 distractors
+    correct_opt = {{
+        "value": correct_val,
+        "content": correct_val,
+        "is_correct": True,
+    }}
+    res["options"] = [correct_opt] + normalized_dists
     return res
 
 generate = generate_params
@@ -612,12 +779,121 @@ def generate_rich_stem_variants(stem: str) -> List[str]:
     return variants
 
 
+def discover_fix_files(fixes_dir: Optional[Path], expected_cids: List[str]) -> Tuple[Dict[str, Path], List[Path]]:
+    """Discovers and maps shard fix files to competency IDs with case-insensitive and delimiter-agnostic normalization.
+    
+    Matches Hab-03, Hab_03, hab-03, hab_03, T-Hab-03, and hab03 to Hab-03.
+    Returns (fix_files_by_cid, all_relevant_fix_files).
+    """
+    fix_files_by_cid: Dict[str, Path] = {}
+    relevant_files: List[Path] = []
+    if not fixes_dir or not fixes_dir.is_dir():
+        return fix_files_by_cid, relevant_files
+
+    all_fix_files = sorted(fixes_dir.glob("*.py"))
+    for fix_p in all_fix_files:
+        stem = fix_p.stem
+        norm_stem = re.sub(r"[^a-zA-Z0-9]", "", stem).lower()
+        matched = False
+        for ecid in expected_cids:
+            norm_ecid = re.sub(r"[^a-zA-Z0-9]", "", ecid).lower()
+            if (
+                stem == ecid
+                or stem == ecid.replace("-", "_")
+                or stem.lower() == ecid.lower()
+                or stem.replace("_", "-").lower() == ecid.lower()
+                or norm_stem == norm_ecid
+                or norm_stem == f"t{norm_ecid}"
+            ):
+                fix_files_by_cid[ecid] = fix_p
+                if fix_p not in relevant_files:
+                    relevant_files.append(fix_p)
+                matched = True
+                break
+        if not matched:
+            norm_stem_cid = stem.replace("_", "-")
+            fix_files_by_cid[norm_stem_cid] = fix_p
+            if fix_p not in relevant_files:
+                relevant_files.append(fix_p)
+
+    return fix_files_by_cid, relevant_files
+
+
+def infer_work_dir(
+    explicit_work: Union[str, Path] = "work",
+    shard_id: Optional[str] = None,
+) -> Path:
+    """Infers work directory if default 'work' is missing from CWD.
+
+    Searches for:
+    1. Active lockfiles: courses/*/.c2c_subagent_lock.json or courses/*/work/.c2c_subagent_lock.json with active=true.
+    2. Most recent courses/*/work directory containing shards/{shard_id}_data.py or shards/pre_shard_manifest.json.
+    Returns inferred Path, or Path(explicit_work) if no course match found.
+    """
+    target = Path(explicit_work)
+    if (target / "shards" / "pre_shard_manifest.json").is_file() or (target / "pre_shard_manifest.json").is_file():
+        return target
+
+    cwd = Path.cwd()
+    courses_dir = cwd / "courses"
+    if not courses_dir.is_dir():
+        return target
+
+    norm_s_id = (shard_id or "").lower().strip()
+    candidate_works: List[Tuple[float, Path]] = []
+
+    for c_dir in sorted(courses_dir.iterdir()):
+        if not c_dir.is_dir():
+            continue
+        lock_paths = [
+            c_dir / ".c2c_subagent_lock.json",
+            c_dir / "work" / ".c2c_subagent_lock.json",
+        ]
+        is_active = False
+        for lp in lock_paths:
+            if lp.is_file():
+                try:
+                    ldata = json.loads(lp.read_text(encoding="utf-8"))
+                    if isinstance(ldata, dict) and ldata.get("active") is True:
+                        is_active = True
+                        break
+                except Exception:
+                    pass
+
+        w_cand = c_dir / "work"
+        if w_cand.is_dir():
+            has_manifest = (w_cand / "shards" / "pre_shard_manifest.json").is_file() or (w_cand / "pre_shard_manifest.json").is_file()
+            has_shard = (w_cand / "shards" / f"{norm_s_id}_data.py").is_file() if norm_s_id else False
+
+            if is_active and (has_manifest or has_shard):
+                return w_cand
+
+            if has_shard or has_manifest:
+                mtime = 0.0
+                if has_shard:
+                    mtime = (w_cand / "shards" / f"{norm_s_id}_data.py").stat().st_mtime
+                elif has_manifest:
+                    m_p = (w_cand / "shards" / "pre_shard_manifest.json") if (w_cand / "shards" / "pre_shard_manifest.json").is_file() else (w_cand / "pre_shard_manifest.json")
+                    mtime = m_p.stat().st_mtime
+                candidate_works.append((mtime, w_cand))
+
+    if candidate_works:
+        candidate_works.sort(key=lambda x: x[0], reverse=True)
+        return candidate_works[0][1]
+
+    return target
+
+
 def compile_shard(
     work_dir_or_path: Union[str, Path],
     shard_id: Optional[str] = None,
     strict: bool = True,
     seeds: int = 50,
     output_dir: Optional[Union[str, Path]] = None,
+    output_path: Optional[Union[str, Path]] = None,
+    cta_path: Optional[Union[str, Path]] = None,
+    manifest_path: Optional[Union[str, Path]] = None,
+    min_archetypes: Optional[int] = None,
     **kwargs,
 ) -> Tuple[bool, List[str]]:
     """Compiles shard data into canonical template JSON files with strict verification.
@@ -626,7 +902,26 @@ def compile_shard(
     - compile_shard("work", "shard_01", strict=True, seeds=50)
     - compile_shard("work/shards/shard_01_data.py", output_dir="work/templates")
     """
+    output_path = output_path or kwargs.get("output")
+    cta_path = cta_path or kwargs.get("cta")
+    manifest_path = manifest_path or kwargs.get("manifest")
+    min_archetypes = min_archetypes if min_archetypes is not None else kwargs.get("min_archetypes")
+
     target_p = Path(work_dir_or_path).resolve()
+    # In-memory inference when default "work" does not have manifest
+    if not target_p.name.endswith(".py"):
+        if str(work_dir_or_path) in ("work", "./work", ".\\work") or target_p == (Path.cwd() / "work").resolve():
+            if not (target_p / "shards" / "pre_shard_manifest.json").is_file() and not (target_p / "pre_shard_manifest.json").is_file():
+                inferred = infer_work_dir(target_p, shard_id=shard_id)
+                if inferred != target_p:
+                    target_p = inferred.resolve()
+
+    # Guarantee sys.modules and linecache safety across multiple compiles in same process
+    import linecache
+    linecache.clearcache()
+    for k in list(sys.modules.keys()):
+        if k.startswith("c2c_fix_mod_") or k.startswith("c2c_shard_mod_"):
+            sys.modules.pop(k, None)
 
     # Determine if target_p is a shard data file or a work directory
     if target_p.name.endswith(".py"):
@@ -645,8 +940,11 @@ def compile_shard(
         shards_dir = work_p / "shards"
         shard_data_path = None
 
+    receipt_p = Path(output_path).resolve() if output_path and str(output_path).lower().endswith(".json") else None
     if output_dir:
         templates_dir = Path(output_dir).resolve()
+    elif output_path and not receipt_p:
+        templates_dir = Path(output_path).resolve()
     else:
         templates_dir = work_p / "templates"
     templates_dir.mkdir(parents=True, exist_ok=True)
@@ -657,55 +955,54 @@ def compile_shard(
         return False, [err_msg]
 
     norm_shard_id = shard_id.lower().strip()
-
-    # Bounded compilation counter [COMPILE n/6]
     att_dir = work_p / ".check_attempts"
-    att_dir.mkdir(parents=True, exist_ok=True)
-    compile_att_file = att_dir / f"compile_{norm_shard_id}.json"
-    compile_count = 0
-    if compile_att_file.is_file():
-        try:
-            compile_count = json.loads(compile_att_file.read_text(encoding="utf-8")).get("count", 0)
-        except Exception:
-            compile_count = 0
+    pass_marker = att_dir / f"pass_{norm_shard_id}.json"
 
-    compile_count += 1
-    try:
-        tmp_f = compile_att_file.with_name(f".{compile_att_file.name}.tmp.{uuid.uuid4().hex[:8]}")
-        tmp_f.write_text(json.dumps({"count": compile_count}), encoding="utf-8")
-        os.replace(tmp_f, compile_att_file)
-    except Exception:
-        pass
+    def _cleanup_stale_pass_marker():
+        if pass_marker.is_file():
+            try:
+                pass_marker.unlink()
+            except Exception:
+                pass
 
-    print(f"[COMPILE {compile_count}/6] Compilando shard '{shard_id}'...")
+    # 1. Verify pre_shard_manifest.json (resolving --manifest pre_cta_manifest.json fallback cleanly)
+    def _find_pre_shard_manifest() -> Optional[Path]:
+        for cand in (shards_dir / "pre_shard_manifest.json", work_p / "pre_shard_manifest.json"):
+            if cand.is_file():
+                return cand.resolve()
+        return None
 
-    def _fail(msg: str) -> Tuple[bool, List[str]]:
-        res_msg = msg
-        if compile_count >= 6:
-            terminal_stop = f"\n[-] [COMPILE {compile_count}/6] Límite de compilaciones alcanzado para shard '{shard_id}'. STOP, send_message the Director."
-            res_msg = res_msg + terminal_stop
-            print(terminal_stop, file=sys.stderr)
-        print(msg, file=sys.stderr)
-        return False, [res_msg]
-
-    if compile_count > 6:
-        return _fail(f"[-] [COMPILE {compile_count}/6] Límite de compilaciones alcanzado para shard '{shard_id}'. STOP, send_message the Director.")
-
-
-    # 1. Verify pre_shard_manifest.json (Strict: ZERO Fallbacks)
-    manifest_p = shards_dir / "pre_shard_manifest.json"
-    if not manifest_p.is_file():
-        if (work_p / "pre_shard_manifest.json").is_file():
-            manifest_p = work_p / "pre_shard_manifest.json"
-        else:
+    if manifest_path and Path(manifest_path).is_file():
+        manifest_p = Path(manifest_path).resolve()
+    else:
+        found_m = _find_pre_shard_manifest()
+        if not found_m:
+            _cleanup_stale_pass_marker()
             print("BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
             sys.exit(2)
+        manifest_p = found_m
 
     try:
         manifest_data = json.loads(manifest_p.read_text(encoding="utf-8"))
     except Exception as e:
+        _cleanup_stale_pass_marker()
         print(f"BLOCKER:: pre_shard_manifest.json corrupto o ilegible: {e}", file=sys.stderr)
         sys.exit(2)
+
+    if not isinstance(manifest_data, dict) or "shards" not in manifest_data:
+        fallback_m = _find_pre_shard_manifest()
+        if fallback_m and fallback_m != manifest_p:
+            try:
+                manifest_data = json.loads(fallback_m.read_text(encoding="utf-8"))
+                manifest_p = fallback_m
+            except Exception as e:
+                _cleanup_stale_pass_marker()
+                print(f"BLOCKER:: pre_shard_manifest.json corrupto o ilegible: {e}", file=sys.stderr)
+                sys.exit(2)
+        elif not fallback_m:
+            _cleanup_stale_pass_marker()
+            print("BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
+            sys.exit(2)
 
     # Locate shard entry
     shard_entry = None
@@ -716,12 +1013,31 @@ def compile_shard(
             break
 
     if not shard_entry:
+        _cleanup_stale_pass_marker()
         err_msg = f"ERROR: Shard '{shard_id}' no encontrado en pre_shard_manifest.json."
-        return _fail(err_msg)
+        print(err_msg, file=sys.stderr)
+        return False, [err_msg]
 
     expected_cids: List[str] = shard_entry.get("competency_ids", [])
     if not expected_cids and "competencies" in shard_entry:
         expected_cids = [c["id"] for c in shard_entry["competencies"] if isinstance(c, dict) and "id" in c]
+
+    eff_min_arch = 1
+    if min_archetypes is not None:
+        eff_min_arch = int(min_archetypes)
+    elif isinstance(shard_entry, dict) and shard_entry.get("min_archetypes"):
+        eff_min_arch = int(shard_entry["min_archetypes"])
+    elif isinstance(manifest_data, dict) and manifest_data.get("min_archetypes"):
+        eff_min_arch = int(manifest_data["min_archetypes"])
+
+    # Locate shard_fixes directory
+    fixes_dir = shards_dir / "shard_fixes"
+    if not fixes_dir.is_dir() and (work_p / "shards" / "shard_fixes").is_dir():
+        fixes_dir = work_p / "shards" / "shard_fixes"
+
+    # Discover relevant fix files for hashing and modular splicing
+    fix_files_by_cid, relevant_fix_files = discover_fix_files(fixes_dir, expected_cids)
+    has_all_fixes = bool(expected_cids and all(ecid in fix_files_by_cid for ecid in expected_cids))
 
     # Locate shard data path if not provided
     if not shard_data_path or not shard_data_path.is_file():
@@ -733,53 +1049,292 @@ def compile_shard(
             if candidate.is_file():
                 shard_data_path = candidate
             else:
-                err_msg = f"ERROR: No existe el archivo de datos del shard: {candidate}"
-                return _fail(err_msg)
+                if not has_all_fixes:
+                    _cleanup_stale_pass_marker()
+                    err_msg = f"ERROR: No existe el archivo de datos del shard: {candidate}"
+                    print(err_msg, file=sys.stderr)
+                    return False, [err_msg]
+                shard_data_path = candidate
 
-    # Pre-heal unescaped LaTeX prefixes and ASCII control characters in shard_XX_data.py before parsing and importing
-    heal_shard_source_file(shard_data_path)
+    # Compute source_sha256 over shard_data_path (if exists) + relevant fix files
+    hasher = hashlib.sha256()
+    if shard_data_path and shard_data_path.is_file():
+        hasher.update(shard_data_path.read_bytes())
+    for rf in sorted(relevant_fix_files, key=lambda p: p.name):
+        hasher.update(f"\n--FIX:{rf.name}--\n".encode("utf-8"))
+        hasher.update(rf.read_bytes())
+    source_sha256 = hasher.hexdigest()
 
-    # 2. AST Line Locator & Syntax Verification
-    locator = ShardDataLineLocator(shard_data_path)
-    if locator.syntax_error:
-        print(f"FAIL: Error sintáctico en {shard_data_path.name}:", file=sys.stderr)
-        return _fail(locator.syntax_error)
+    # Bounded compilation counter & unified stateful circuit breaker (.check_attempts/compile_{norm_shard_id}.json)
+    att_dir.mkdir(parents=True, exist_ok=True)
+    compile_att_file = att_dir / f"compile_{norm_shard_id}.json"
 
-    # 3. Load shard_XX_data.py module dynamically
-    try:
-        mod_name = f"c2c_shard_mod_{norm_shard_id}_{uuid.uuid4().hex[:6]}"
-        spec = importlib.util.spec_from_file_location(mod_name, str(shard_data_path))
-        if spec is None or spec.loader is None:
-            raise ImportError(f"No se pudo cargar el spec de {shard_data_path}")
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-    except Exception as e:
-        tb = traceback.format_exc()
-        err_msg = f"FAIL: Excepción al ejecutar {shard_data_path.name}:\n{tb}"
-        return _fail(err_msg)
+    state: Dict[str, Any] = {
+        "distinct_compiles": 0,
+        "same_error_streak": 0,
+        "last_source_sha256": "",
+        "last_err_hash": "",
+        "last_errors": [],
+        "error_count": 0,
+        "has_syntax_error": False,
+    }
+    if compile_att_file.is_file():
+        try:
+            loaded_state = json.loads(compile_att_file.read_text(encoding="utf-8"))
+            if isinstance(loaded_state, dict):
+                if "distinct_compiles" in loaded_state:
+                    state.update(loaded_state)
+                elif "count" in loaded_state:
+                    state["distinct_compiles"] = loaded_state.get("count", 0)
+        except Exception:
+            pass
 
-    raw_templates = getattr(mod, "TEMPLATES", None)
-    if raw_templates is None or not isinstance(raw_templates, (list, tuple)):
+    # Idempotent [NO-CHANGE] Re-Run check: do not increment counter or streak on identical source
+    if (
+        state.get("last_source_sha256") == source_sha256
+        and state.get("last_errors")
+    ):
+        cached_errors = state["last_errors"]
+        no_change_prefix = "[NO-CHANGE: código idéntico al intento previo; edita el archivo antes de recompilar]"
+        prefixed_errors = []
+        for e in cached_errors:
+            if no_change_prefix not in e:
+                prefixed_errors.append(f"{no_change_prefix}\n{e}")
+            else:
+                prefixed_errors.append(e)
+        print(prefixed_errors[0], file=sys.stderr)
+        return False, prefixed_errors
+
+    # Distinct compile increment
+    distinct_compiles = state.get("distinct_compiles", 0) + 1
+    state["distinct_compiles"] = distinct_compiles
+    state["last_source_sha256"] = source_sha256
+
+    print(f"[COMPILE {distinct_compiles}/10] Compilando shard '{shard_id}'...")
+
+    def _fail(msg: str, has_syntax_error: bool = False, error_count: int = 1) -> Tuple[bool, List[str]]:
+        from check_templates import normalize_error_string_for_hash
+        normalized_errs = sorted([normalize_error_string_for_hash(msg)])
+        err_hash = hashlib.sha256("\n".join(normalized_errs).encode("utf-8")).hexdigest()
+
+        if state.get("last_err_hash") == err_hash:
+            same_error_streak = state.get("same_error_streak", 0) + 1
+        else:
+            same_error_streak = 1
+        state["same_error_streak"] = same_error_streak
+        state["last_err_hash"] = err_hash
+        state["error_count"] = error_count
+        state["has_syntax_error"] = bool(has_syntax_error)
+
+        res_msg = msg
+        if same_error_streak >= 3:
+            terminal_stop = (
+                f"\n[-] [CIRCUIT BREAKER HALT: 3 fallos consecutivos idénticos para shard '{shard_id}']. "
+                f"STOP, send_message the Director."
+            )
+            res_msg = res_msg + terminal_stop
+            print(terminal_stop, file=sys.stderr)
+
+        _cleanup_stale_pass_marker()
+
+        if receipt_p:
+            try:
+                import time
+                r_data = {}
+                if receipt_p.is_file():
+                    try:
+                        r_data = json.loads(receipt_p.read_text(encoding="utf-8"))
+                    except Exception:
+                        r_data = {}
+                r_data["shard_id"] = shard_id
+                r_data["compiled_status"] = "FAIL"
+                r_data["compilation_errors"] = [res_msg]
+                r_data["error_count"] = error_count
+                r_data["has_syntax_error"] = bool(has_syntax_error)
+                r_data["compiled_at"] = time.time()
+                _atomic_write_json(receipt_p, r_data)
+            except Exception:
+                pass
+
+        state["last_errors"] = [res_msg]
+        _atomic_write_json(compile_att_file, state)
+        print(msg, file=sys.stderr)
+        return False, [res_msg]
+
+    # Dual Calibrated Halt Threshold: distinct_compiles > 10
+    if distinct_compiles > 10:
+        halt_msg = (
+            f"[-] [CIRCUIT BREAKER HALT: Límite de 10 compilaciones distintas alcanzado para shard '{shard_id}']. "
+            f"STOP, send_message the Director."
+        )
+        return _fail(halt_msg, has_syntax_error=False, error_count=1)
+
+    # In-memory healing of shard_XX_data.py (Zero-Disk-Mutation: source file on disk is NEVER modified)
+    raw_source = shard_data_path.read_text(encoding="utf-8") if shard_data_path.is_file() else ""
+    if raw_source:
+        rf_warnings = check_ast_rf_triple_braces(raw_source)
+        for w in rf_warnings:
+            print(w, file=sys.stderr)
+        _, healed_source = heal_shard_source_text(raw_source)
+    else:
+        healed_source = ""
+
+    # Staged copy under .check_attempts/_staged/ for debugging without mutating source
+    if healed_source:
+        staged_dir = att_dir / "_staged"
+        staged_dir.mkdir(parents=True, exist_ok=True)
+        staged_p = staged_dir / f"{norm_shard_id}_data.py"
+        try:
+            staged_p.write_text(healed_source, encoding="utf-8")
+        except Exception:
+            pass
+
+    # 2. AST Line Locator & Syntax Verification (evaluated on in-memory healed source)
+    locator = ShardDataLineLocator(shard_data_path, source_text=healed_source)
+    skip_base_module = False
+    if raw_source and locator.syntax_error:
+        if has_all_fixes:
+            print(
+                f"[!] Warning: {shard_data_path.name} contiene error sintáctico, pero el 100% de las competencias "
+                f"({expected_cids}) están cubiertas por fijaciones en shard_fixes/. Omitiendo {shard_data_path.name}.",
+                file=sys.stderr,
+            )
+            skip_base_module = True
+        else:
+            print(f"FAIL: Error sintáctico en {shard_data_path.name}:", file=sys.stderr)
+            return _fail(locator.syntax_error, has_syntax_error=True, error_count=1)
+
+    # 3. Load shard module dynamically from in-memory string
+    mod_name = f"c2c_shard_mod_{norm_shard_id}_{uuid.uuid4().hex[:6]}"
+    mod = types.ModuleType(mod_name)
+    mod.__file__ = str(shard_data_path)
+    if healed_source and not skip_base_module:
+        try:
+            code_obj = compile(healed_source, str(shard_data_path), "exec")
+            sys.modules[mod_name] = mod
+            exec(code_obj, mod.__dict__)
+        except Exception as e:
+            if has_all_fixes:
+                print(
+                    f"[!] Warning: Excepción al ejecutar {shard_data_path.name}, pero el 100% de las competencias "
+                    f"están cubiertas por shard_fixes/. Omitiendo {shard_data_path.name}.",
+                    file=sys.stderr,
+                )
+                skip_base_module = True
+            else:
+                tb = traceback.format_exc()
+                err_msg = f"FAIL: Excepción al ejecutar {shard_data_path.name}:\n{tb}"
+                return _fail(err_msg, has_syntax_error=isinstance(e, SyntaxError), error_count=1)
+
+    base_templates = [] if skip_base_module else (getattr(mod, "TEMPLATES", None) or [])
+    from check_templates import heal_control_chars_in_obj
+    base_templates = heal_control_chars_in_obj(base_templates)
+
+    # Map tuples to their origin file and line locator
+    tuple_records: List[Dict[str, Any]] = []
+    for orig_idx, t in enumerate(base_templates):
+        tuple_records.append({
+            "tuple": t,
+            "file_path": shard_data_path,
+            "locator": locator,
+            "orig_idx": orig_idx,
+        })
+
+    # Splice fix files from shards/shard_fixes/<CID>.py
+    known_types = {"multiple_choice", "multiple_choice_7_options", "fill_in_the_blank", "multiple_select", "open_ended"}
+
+    for cid_fix, fix_path in fix_files_by_cid.items():
+        if not fix_path.is_file():
+            continue
+        try:
+            fix_raw_text = fix_path.read_text(encoding="utf-8")
+            rf_w = check_ast_rf_triple_braces(fix_raw_text)
+            for w in rf_w:
+                print(w, file=sys.stderr)
+            _, healed_fix_text = heal_shard_source_text(fix_raw_text)
+            fix_loc = ShardDataLineLocator(fix_path, source_text=healed_fix_text)
+            if fix_loc.syntax_error:
+                return _fail(
+                    f"FAIL: Error sintáctico en shard_fixes/{fix_path.name}:\n{fix_loc.syntax_error}",
+                    has_syntax_error=True,
+                    error_count=1,
+                )
+
+            fix_mod_name = f"c2c_fix_mod_{cid_fix.replace('-', '_')}_{uuid.uuid4().hex[:6]}"
+            fix_mod = types.ModuleType(fix_mod_name)
+            fix_mod.__file__ = str(fix_path)
+            fix_code_obj = compile(healed_fix_text, str(fix_path), "exec")
+            sys.modules[fix_mod_name] = fix_mod
+            exec(fix_code_obj, fix_mod.__dict__)
+
+            fix_templates = getattr(fix_mod, "TEMPLATES", None)
+            if fix_templates and isinstance(fix_templates, (list, tuple)):
+                fix_templates = heal_control_chars_in_obj(fix_templates)
+
+                new_records = []
+                replaced = False
+                for rec in tuple_records:
+                    t_cand = rec["tuple"]
+                    t_cid = None
+                    if len(t_cand) >= 3 and str(t_cand[2]).lower().strip() in known_types:
+                        t_cid = str(t_cand[1]).strip()
+                    elif len(t_cand) >= 3 and str(t_cand[1]).lower().strip() in known_types:
+                        t_cid = str(t_cand[0]).strip()
+                    else:
+                        t_cid = str(t_cand[0]).strip()
+
+                    if t_cid == cid_fix or t_cid.replace("-", "_") == cid_fix.replace("-", "_"):
+                        if not replaced:
+                            for fix_idx, ft in enumerate(fix_templates):
+                                new_records.append({
+                                    "tuple": ft,
+                                    "file_path": fix_path,
+                                    "locator": fix_loc,
+                                    "orig_idx": fix_idx,
+                                })
+                            replaced = True
+                    else:
+                        new_records.append(rec)
+
+                if not replaced:
+                    for fix_idx, ft in enumerate(fix_templates):
+                        new_records.append({
+                            "tuple": ft,
+                            "file_path": fix_path,
+                            "locator": fix_loc,
+                            "orig_idx": fix_idx,
+                        })
+
+                tuple_records = new_records
+        except Exception as e:
+            tb = traceback.format_exc()
+            return _fail(
+                f"FAIL: Excepción al cargar shard_fixes/{fix_path.name}:\n{tb}",
+                has_syntax_error=isinstance(e, SyntaxError),
+                error_count=1,
+            )
+
+    raw_templates = [rec["tuple"] for rec in tuple_records]
+    if not raw_templates:
         err_msg = f"FAIL: {shard_data_path.name} no define la lista 'TEMPLATES = [...]'."
         return _fail(err_msg)
-    from check_templates import heal_control_chars_in_obj
-    raw_templates = heal_control_chars_in_obj(raw_templates)
 
     # 4. Identify competencies and verify parity
-    known_types = {"multiple_choice", "multiple_choice_7_options", "fill_in_the_blank", "multiple_select", "open_ended"}
     found_cids = []
-
-    for t_idx, t in enumerate(raw_templates):
+    for rec_idx, rec in enumerate(tuple_records):
+        t = rec["tuple"]
+        curr_loc = rec["locator"]
+        curr_p = rec["file_path"]
+        orig_idx = rec["orig_idx"]
         if not isinstance(t, (list, tuple)) or len(t) < 9:
-            s_t, e_t, snip = locator.get_tuple_snippet(t_idx)
+            s_t, e_t, snip = curr_loc.get_tuple_snippet(orig_idx)
             err_msg = (
-                f"FAIL: La tupla en índice {t_idx} tiene {len(t) if isinstance(t, (list, tuple)) else 0} elementos (se requieren 9 posicionales).\n"
-                f"  Ubicación: Líneas {s_t}..{e_t} en {shard_data_path.name}\n"
+                f"FAIL: La tupla en índice {orig_idx} tiene {len(t) if isinstance(t, (list, tuple)) else 0} elementos (se requieren 9 posicionales).\n"
+                f"  Ubicación: Líneas {s_t}..{e_t} en {curr_p.name}\n"
                 f"{snip}"
             )
             return _fail(err_msg)
 
-        # Check tuple format: Form B (pos 0 = tpl_id, pos 1 = cid) vs Form A (pos 0 = cid, pos 1 = qtype)
         if len(t) >= 3 and str(t[2]).lower().strip() in known_types:
             c_candidate = str(t[1]).strip()
         elif len(t) >= 3 and str(t[1]).lower().strip() in known_types:
@@ -802,18 +1357,40 @@ def compile_shard(
         err_msg = f"FAIL: Paridad de competencias violada en {shard_data_path.name}: " + " | ".join(err_parts)
         return _fail(err_msg)
 
-
     from check_templates import auto_heal_template_data, check_templates_file_or_dir
 
+    if cta_path and Path(cta_path).is_file():
+        cta_p = Path(cta_path).resolve()
+    else:
+        cta_file_candidate = work_p / "cta.json"
+        cta_p = cta_file_candidate if cta_file_candidate.is_file() else None
+
     cta_comp_map = {c["id"]: c for c in shard_entry.get("competencies", []) if isinstance(c, dict) and "id" in c}
+    if cta_p and cta_p.is_file():
+        try:
+            cta_data = json.loads(cta_p.read_text(encoding="utf-8"))
+            for c in cta_data.get("competencies", []):
+                if isinstance(c, dict) and "id" in c:
+                    cid_key = c["id"]
+                    if cid_key not in cta_comp_map or not cta_comp_map[cid_key].get("distractors"):
+                        cta_comp_map[cid_key] = c
+                    elif c.get("distractors") and not cta_comp_map[cid_key].get("distractors"):
+                        cta_comp_map[cid_key]["distractors"] = c["distractors"]
+        except Exception:
+            pass
 
     # 5. Compile tuples into canonical JSON dictionaries grouped by competency
     templates_by_cid: Dict[str, List[Dict[str, Any]]] = {}
+    gen_callables_by_cid: Dict[str, List[Any]] = {}
 
-    for t_idx, t in enumerate(raw_templates):
+    for t_idx, rec in enumerate(tuple_records):
+        t = rec["tuple"]
+        curr_loc = rec["locator"]
+        curr_p = rec["file_path"]
+        orig_idx = rec["orig_idx"]
+
         # Determine format
         if len(t) >= 3 and str(t[2]).lower().strip() in known_types:
-            # Form B: (tpl_id, cid, qtype, gen_fn, ver_fn, diff_bloom, stems, hints, sol)
             tpl_id = str(t[0]).strip()
             cid = str(t[1]).strip()
             qtype = str(t[2]).strip().lower()
@@ -827,7 +1404,6 @@ def compile_shard(
             target_misc = []
             src_ref = {"doc": "manifest.pdf", "page": 1, "quote": ""}
         else:
-            # Form A: (cid, qtype, stem_es, gen_fn, ver_fn, exp_es, target_kc, target_misc, src_ref[, hints])
             cid = str(t[0]).strip()
             qtype = str(t[1]).strip().lower()
             stems_raw = t[2]
@@ -841,7 +1417,6 @@ def compile_shard(
             hints_raw = list(t[9]) if len(t) >= 10 and isinstance(t[9], (list, tuple)) else []
             tpl_id = f"T-{cid}" if not cid.startswith("T-") else cid
 
-            # Normalize source reference
             if isinstance(src_ref_raw, (list, tuple)) and len(src_ref_raw) >= 3:
                 src_ref = {"doc": str(src_ref_raw[0]), "page": int(src_ref_raw[1]), "quote": str(src_ref_raw[2])}
             elif isinstance(src_ref_raw, dict):
@@ -876,13 +1451,13 @@ def compile_shard(
         else:
             interaction_type = qtype
 
-        # Extract functions
-        tuple_info = locator.get_tuple_info(cid) or {}
-        gen_fn_name = tuple_info.get("gen_fn_name")
-        ver_fn_name = tuple_info.get("ver_fn_name")
+        # Extract functions using originating file locator
+        tuple_info = curr_loc.get_tuple_info(orig_idx) or curr_loc.get_tuple_info(cid) or {}
+        gen_fn_name = tuple_info.get("gen_fn_name") or getattr(gen_raw, "__name__", None)
+        ver_fn_name = tuple_info.get("ver_fn_name") or getattr(ver_raw, "__name__", None)
 
-        gen_code = extract_function_code(gen_raw, "generate_params", locator=locator, fn_name_hint=gen_fn_name)
-        ver_code = extract_function_code(ver_raw, "verify", locator=locator, fn_name_hint=ver_fn_name)
+        gen_code = extract_function_code(gen_raw, "generate_params", locator=curr_loc, fn_name_hint=gen_fn_name)
+        ver_code = extract_function_code(ver_raw, "verify", locator=curr_loc, fn_name_hint=ver_fn_name)
 
         # Retrieve CTA distractors for this competency and strip giveaway prefixes
         cta_comp = cta_comp_map.get(cid, {})
@@ -902,7 +1477,6 @@ def compile_shard(
         # If MC7, apply robust generator adaptation to guarantee 6 disjoint distractors
         if interaction_type == "multiple_choice_7_options":
             gen_code = build_adapted_mc7_generator(gen_code, cid, clean_cta_distractors)
-            # Sync target_misc with cta distractors if sparse
             if len(target_misc) < 6 and clean_cta_distractors:
                 declared_ids = [d["id"] for d in clean_cta_distractors if isinstance(d, dict) and "id" in d]
                 for did in declared_ids:
@@ -922,14 +1496,12 @@ def compile_shard(
             stem_es = str(stems_raw)
             stem_variants = generate_rich_stem_variants(stem_es)
 
-        # Normalize hints: use provided hints or synthesize 3 contextualized Socratic hints
+        # Normalize hints
         if isinstance(hints_raw, (list, tuple)) and len(hints_raw) >= 3 and all(str(h).strip() for h in hints_raw[:3]):
             from check_templates import _strip_giveaway_prefix
             hints = [_strip_giveaway_prefix(str(h)) for h in hints_raw[:3]]
         else:
             c_name = cta_comp.get("name") or cta_comp.get("competency_name") or cid
-            c_desc = cta_comp.get("description_latex") or cta_comp.get("description") or ""
-
             d0 = clean_cta_distractors[0] if len(clean_cta_distractors) > 0 and isinstance(clean_cta_distractors[0], dict) else {}
             d1 = clean_cta_distractors[1] if len(clean_cta_distractors) > 1 and isinstance(clean_cta_distractors[1], dict) else {}
             omitted0 = d0.get("omitted_step") or d0.get("wrong_belief") or ""
@@ -949,21 +1521,48 @@ def compile_shard(
                 hint3 = f"Verifique la consistencia lógica y matemática de la solución obtenida para {c_name} contrastándola con el comportamiento límite."
             hints = [hint1, hint2, hint3]
 
-        # Determine declared vars from generator callable or ast
+        # Determine declared vars from generator callable (with timeout guard) or AST
         declared_vars: Set[str] = set()
         if callable(gen_raw):
             try:
                 import random
-                sample_res = gen_raw(random.Random(42))
+                from engine.sandbox import call_with_timeout
+                sample_res = call_with_timeout(
+                    gen_raw,
+                    args=(random.Random(42),),
+                    timeout=0.4,
+                    seed=42,
+                )
                 if isinstance(sample_res, dict) and "vars" in sample_res and isinstance(sample_res["vars"], dict):
                     declared_vars = set(str(k) for k in sample_res["vars"].keys())
+                elif isinstance(sample_res, (tuple, list)) and len(sample_res) >= 1 and isinstance(sample_res[0], dict):
+                    declared_vars = set(str(k) for k in sample_res[0].keys())
             except Exception:
                 pass
         if not declared_vars and gen_code:
-            m_vars = re.search(r"['\"]vars['\"]\s*:\s*\{([^}]+)\}", gen_code)
-            if m_vars:
-                var_names = re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", m_vars.group(1))
-                declared_vars = set(var_names)
+            try:
+                _gtree = ast.parse(gen_code)
+                for _gnode in ast.walk(_gtree):
+                    if isinstance(_gnode, ast.Dict):
+                        for _gk, _gv in zip(_gnode.keys, _gnode.values):
+                            if isinstance(_gk, ast.Constant) and _gk.value == "vars":
+                                if isinstance(_gv, ast.Dict):
+                                    declared_vars.update(
+                                        str(k.value) for k in _gv.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)
+                                    )
+                                elif isinstance(_gv, ast.Name):
+                                    _vname = _gv.id
+                                    for _anode in ast.walk(_gtree):
+                                        if isinstance(_anode, ast.Assign) and isinstance(_anode.value, ast.Dict):
+                                            if any(isinstance(t, ast.Name) and t.id == _vname for t in _anode.targets):
+                                                declared_vars.update(
+                                                    str(k.value) for k in _anode.value.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)
+                                                )
+            except Exception:
+                m_vars = re.search(r"['\"]vars['\"]\s*:\s*\{([^}]+)\}", gen_code)
+                if m_vars:
+                    var_names = re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", m_vars.group(1))
+                    declared_vars = set(var_names)
 
         # Normalize non-variable double curly braces {{token}} -> {token} before R-20 validation
         stem_es = normalize_double_braces(stem_es, declared_vars)
@@ -979,6 +1578,7 @@ def compile_shard(
         canonical_dict: Dict[str, Any] = {
             "template_id": tpl_id,
             "competency_id": cid,
+            "gen_fn_name": gen_fn_name,
             "question_type": qtype,
             "stem_es": stem_es,
             "stem_variants": stem_variants,
@@ -999,6 +1599,7 @@ def compile_shard(
             "solution": healed_solution,
             "distractor_ids": target_misc,
             "hints": hints,
+            "source_file": curr_p.name,
         }
 
         # Apply mechanical auto-healing
@@ -1006,16 +1607,24 @@ def compile_shard(
         canonical_dict = heal_control_chars_in_obj(canonical_dict)
 
         templates_by_cid.setdefault(cid, []).append(canonical_dict)
+        gen_callables_by_cid.setdefault(cid, []).append(gen_raw)
 
     # 6. Write templates atomically grouped by competency
     compiled_paths: List[Path] = []
     for cid, tpls in templates_by_cid.items():
+        if len(tpls) > 1:
+            base_id = f"T-{cid}" if not cid.startswith("T-") else cid
+            for idx, tpl in enumerate(tpls, start=1):
+                cur_id = tpl.get("id") or base_id
+                if cur_id == base_id or any(tpls[j].get("id") == cur_id for j in range(len(tpls)) if j != idx - 1):
+                    unique_id = f"{base_id}-{idx:02d}"
+                    tpl["id"] = unique_id
+                    tpl["template_id"] = unique_id
+
         out_json_path = templates_dir / f"{cid}.json"
         if len(tpls) == 1:
-            # Single template schema structure with wrapped object compatibility
             payload = tpls[0]
         else:
-            # Multi-template container structure
             payload = {
                 "competency_id": cid,
                 "templates": tpls,
@@ -1024,29 +1633,260 @@ def compile_shard(
         compiled_paths.append(out_json_path)
 
     # 7. Execute Strict Validation with check_templates (isolated by shard_id)
-    cta_file_candidate = work_p / "cta.json"
-    cta_p = cta_file_candidate if cta_file_candidate.is_file() else None
-
     is_clean, raw_errors = check_templates_file_or_dir(
         target_path=compiled_paths,
         cta_path=cta_p,
         num_dry_run_seeds=seeds,
         strict=strict,
         auto_fix=True,
-        shard_py=shard_data_path,
+        shard_py=(staged_p if (healed_source and staged_p.is_file()) else shard_data_path),
         shard_id=norm_shard_id,
+        from_compile_shard=True,
     )
 
+    # Milestone 3 4-Archetype Enforcement Gate [M3-ARCHETYPES]
+    m3_errors: List[str] = []
+    if strict and eff_min_arch > 1:
+        target_cids = expected_cids if expected_cids else list(templates_by_cid.keys())
+        shard_data_name = shard_data_path.name if shard_data_path else f"{norm_shard_id}_data.py"
+
+        def _fn_declares_arch(fn_node: Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> bool:
+            all_args = getattr(fn_node.args, "posonlyargs", []) + fn_node.args.args + getattr(fn_node.args, "kwonlyargs", [])
+            return any(a.arg == "arch" for a in all_args)
+
+        def _fn_uses_arch_in_body(fn_node: Union[ast.FunctionDef, ast.AsyncFunctionDef]) -> bool:
+            for b_stmt in fn_node.body:
+                for sub in ast.walk(b_stmt):
+                    if isinstance(sub, ast.Name) and sub.id == "arch" and isinstance(sub.ctx, ast.Load):
+                        # Filter out dummy loads like _ = arch or dummy = arch or unused = arch
+                        if isinstance(b_stmt, ast.Assign):
+                            if any(isinstance(tgt, ast.Name) and tgt.id in ("_", "dummy", "unused") for tgt in b_stmt.targets):
+                                continue
+                        # Filter out bare statement expressions like `arch` or `arch == arch`
+                        if isinstance(b_stmt, ast.Expr):
+                            if isinstance(b_stmt.value, ast.Name) and b_stmt.value.id == "arch":
+                                continue
+                            if isinstance(b_stmt.value, ast.Compare):
+                                if isinstance(b_stmt.value.left, ast.Name) and b_stmt.value.left.id == "arch":
+                                    if any(isinstance(comp, ast.Name) and comp.id == "arch" for comp in b_stmt.value.comparators):
+                                        continue
+                        return True
+            return False
+
+        for cid in target_cids:
+            tpls = templates_by_cid.get(cid, [])
+            gen_callables = gen_callables_by_cid.get(cid, [])
+            is_modular_fix = bool(cid in fix_files_by_cid and fix_files_by_cid[cid].is_file())
+            source_name = fix_files_by_cid[cid].name if is_modular_fix else shard_data_name
+
+            if len(tpls) < eff_min_arch:
+                m3_errors.append(
+                    f"{cid}.json ({source_name}): [M3-ARCHETYPES] La competencia '{cid}' define solo {len(tpls)} tupla(s) en TEMPLATES, pero Milestone 3 exige mínimo {eff_min_arch} arquetipos disjuntos por competencia (1. Directo, 2. Inverso, 3. Perturbación, 4. Frontera). Nota: poner múltiples stem_variants dentro de 1 sola tupla NO cuenta como 4 arquetipos; agrega las {eff_min_arch - len(tpls)} tuplas faltantes para '{cid}' en TEMPLATES usando un helper parametrizado def _gen_{cid.lower().replace('-', '_')}(rng, arch) + 4 wrappers gen_1..4."
+                )
+            else:
+                # Verificación 1 — Enunciados (stem_es) distintos por arquetipo & detección de clones
+                distinct_stems = {t.get("stem_es", "").strip() for t in tpls if t.get("stem_es", "").strip()}
+                norm_gen_codes = {
+                    re.sub(r"def\s+gen_[a-zA-Z0-9_]+_\d+\s*\(", "def _gen_wrapper_(", t.get("generator_code", "").strip())
+                    for t in tpls
+                }
+
+                if len(distinct_stems) < min(eff_min_arch, 2) and len(norm_gen_codes) < min(eff_min_arch, 2):
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Las {len(tpls)} tuplas de '{cid}' en TEMPLATES son clones idénticos (mismo stem y mismo generador). Cada uno de los {eff_min_arch} arquetipos debe tener su propio enunciado y wrapper/generador (ej. gen_1..4)."
+                    )
+                elif len(tpls) >= 2 and len(distinct_stems) < min(eff_min_arch, len(tpls)):
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}' repite el mismo enunciado (stem_es) entre sus tuplas ({len(distinct_stems)} enunciados únicos de {len(tpls)} tuplas). Cada arquetipo (1=Directo, 2=Inverso, 3=Perturbación, 4=Frontera) debe tener su propia lista de enunciados distinta."
+                    )
+                elif len(norm_gen_codes) < min(eff_min_arch, 2):
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Las {len(tpls)} tuplas de '{cid}' en TEMPLATES son clones idénticos (mismo stem y mismo generador). Cada uno de los {eff_min_arch} arquetipos debe tener su propio enunciado y wrapper/generador (ej. gen_1..4)."
+                    )
+
+                # Verificación 2 — AST analysis de la fuente efectiva de esta competencia
+                # Si la competencia fue sobrescrita por shard_fixes/<CID>.py, se aísla el código modular
+                # evitando falsos positivos producidos por funciones obsoletas del shard base.
+                cid_sources: List[str] = []
+                if is_modular_fix:
+                    try:
+                        cid_sources.append(fix_files_by_cid[cid].read_text(encoding="utf-8"))
+                    except Exception:
+                        pass
+                else:
+                    if healed_source:
+                        cid_sources.append(healed_source)
+                    elif raw_source:
+                        cid_sources.append(raw_source)
+                    elif shard_data_path and shard_data_path.is_file():
+                        try:
+                            cid_sources.append(shard_data_path.read_text(encoding="utf-8"))
+                        except Exception:
+                            pass
+
+                for t in tpls:
+                    gen_c = t.get("generator_code") or t.get("generate_py") or ""
+                    if gen_c and gen_c not in cid_sources:
+                        cid_sources.append(gen_c)
+
+                cid_ast_funcs: Dict[str, Union[ast.FunctionDef, ast.AsyncFunctionDef]] = {}
+                for src_txt in cid_sources:
+                    try:
+                        parsed_tree = ast.parse(src_txt)
+                        for ast_node in ast.walk(parsed_tree):
+                            if isinstance(ast_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                                cid_ast_funcs[ast_node.name] = ast_node
+                    except Exception:
+                        pass
+
+                cid_clean = cid.lower().replace("-", "_")
+                cid_compact = cid.lower().replace("-", "")
+                cid_candidate_funcs: Set[str] = set()
+
+                for t in tpls:
+                    g_fn = t.get("gen_fn_name")
+                    if g_fn and g_fn in cid_ast_funcs:
+                        cid_candidate_funcs.add(g_fn)
+                        w_node = cid_ast_funcs[g_fn]
+                        for b_stmt in w_node.body:
+                            for sub in ast.walk(b_stmt):
+                                if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name):
+                                    if sub.func.id in cid_ast_funcs:
+                                        cid_candidate_funcs.add(sub.func.id)
+
+                for fname, fnode in cid_ast_funcs.items():
+                    if _fn_declares_arch(fnode):
+                        if cid_clean in fname.lower() or cid_compact in fname.lower():
+                            cid_candidate_funcs.add(fname)
+                        elif is_modular_fix or len(target_cids) == 1:
+                            cid_candidate_funcs.add(fname)
+
+                checked_fn_names: Set[str] = set()
+                for func_name in sorted(cid_candidate_funcs):
+                    if func_name in checked_fn_names:
+                        continue
+                    checked_fn_names.add(func_name)
+                    fn_node = cid_ast_funcs.get(func_name)
+                    if fn_node and _fn_declares_arch(fn_node):
+                        if not _fn_uses_arch_in_body(fn_node):
+                            m3_errors.append(
+                                f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}': la función generadora '{func_name}' recibe el parámetro 'arch' pero nunca lo utiliza en su cuerpo, produciendo salidas idénticas en los 4 arquetipos. Ramifica con 'if arch == 1 / elif arch == 2 / elif arch == 3 / else' para variar el problema matemático por arquetipo."
+                            )
+
+                # Verificación 3 — Detección de Evasión Trivial y Clones Matemáticos Puros (seed=100 & seed=101)
+                # Cuando strict y eff_min_arch >= 4 y len(tpls) >= 4, evalúa que las tuplas produzcan
+                # al menos 2 salidas matemáticas distintas (correct, vars) para la misma semilla.
+                if eff_min_arch >= 4 and len(tpls) >= 4:
+                    def _eval_tuple_output(t_idx: int, seed_val: int) -> Optional[Tuple[str, str]]:
+                        c_call = gen_callables[t_idx] if t_idx < len(gen_callables) else None
+                        if callable(c_call):
+                            try:
+                                import random
+                                from engine.sandbox import call_with_timeout, _LazyNPRNG
+                                rng = random.Random(seed_val)
+                                try:
+                                    rng.np = _LazyNPRNG(seed_val)
+                                except Exception:
+                                    pass
+                                res = call_with_timeout(
+                                    c_call,
+                                    args=(rng,),
+                                    timeout=0.4,
+                                    seed=seed_val,
+                                )
+                                if isinstance(res, dict):
+                                    c_v = str(res.get("correct", ""))
+                                    v_d = res.get("vars", {})
+                                    v_s = json.dumps(v_d, sort_keys=True, default=str) if isinstance(v_d, dict) else str(v_d)
+                                    return (c_v, v_s)
+                                elif isinstance(res, (tuple, list)) and len(res) >= 1 and isinstance(res[0], dict):
+                                    v_d = res[0]
+                                    v_s = json.dumps(v_d, sort_keys=True, default=str)
+                                    return ("", v_s)
+                            except Exception:
+                                pass
+
+                        gen_c = tpls[t_idx].get("generator_code") or tpls[t_idx].get("generate_py") or ""
+                        if gen_c:
+                            try:
+                                from engine.sandbox import run_code_in_env
+                                res = run_code_in_env(gen_c, "generate", seed=seed_val, timeout=0.5)
+                                if isinstance(res, dict):
+                                    c_v = str(res.get("correct", ""))
+                                    v_d = res.get("vars", {})
+                                    v_s = json.dumps(v_d, sort_keys=True, default=str) if isinstance(v_d, dict) else str(v_d)
+                                    return (c_v, v_s)
+                            except Exception:
+                                pass
+                        return None
+
+                    outs_100 = [_eval_tuple_output(i, 100) for i in range(len(tpls))]
+                    valid_100 = [o for o in outs_100 if o is not None]
+                    if len(valid_100) == len(tpls) and len(set(valid_100)) < 2:
+                        outs_101 = [_eval_tuple_output(i, 101) for i in range(len(tpls))]
+                        valid_101 = [o for o in outs_101 if o is not None]
+                        if len(valid_101) == len(tpls) and len(set(valid_101)) < 2:
+                            m3_errors.append(
+                                f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}': las {len(tpls)} tuplas generan salidas matemáticas idénticas (mismo 'correct' y 'vars' en la misma semilla). Los {eff_min_arch} arquetipos deben producir al menos 2 variantes matemáticas distintas (1=Directo, 2=Inverso, 3=Perturbación, 4=Frontera); ramifica con 'if arch == 1 / elif arch == 2 ...' para variar el cálculo numérico o analítico."
+                            )
+
+    if m3_errors:
+        is_clean = False
+        raw_errors = m3_errors + list(raw_errors)
+
     if not is_clean:
-        from check_templates import render_compact_aggregated_errors
+        from check_templates import render_compact_aggregated_errors, count_distinct_shard_error_hunks
+        error_count = count_distinct_shard_error_hunks(
+            raw_errors, targets=compiled_paths, shard_py=shard_data_path
+        )
         compact_report = render_compact_aggregated_errors(
             raw_errors, targets=compiled_paths, shard_py=shard_data_path, max_output_lines=28
         )
-        if compile_count >= 6:
-            terminal_stop = f"\n[-] [COMPILE {compile_count}/6] Límite de compilaciones alcanzado para shard '{shard_id}'. STOP, send_message the Director."
+        from check_templates import normalize_error_string_for_hash
+        normalized_errs = sorted([normalize_error_string_for_hash(str(e)) for e in raw_errors])
+        err_hash = hashlib.sha256("\n".join(normalized_errs).encode("utf-8")).hexdigest()
+
+        if state.get("last_err_hash") == err_hash:
+            same_error_streak = state.get("same_error_streak", 0) + 1
+        else:
+            same_error_streak = 1
+        state["same_error_streak"] = same_error_streak
+        state["last_err_hash"] = err_hash
+        state["error_count"] = error_count
+        state["has_syntax_error"] = False
+
+        _cleanup_stale_pass_marker()
+
+        if receipt_p:
+            try:
+                import time
+                r_data = {}
+                if receipt_p.is_file():
+                    try:
+                        r_data = json.loads(receipt_p.read_text(encoding="utf-8"))
+                    except Exception:
+                        r_data = {}
+                r_data["shard_id"] = shard_id
+                r_data["compiled_status"] = "FAIL"
+                r_data["compilation_errors"] = [compact_report]
+                r_data["error_count"] = error_count
+                r_data["has_syntax_error"] = False
+                r_data["compiled_at"] = time.time()
+                _atomic_write_json(receipt_p, r_data)
+            except Exception:
+                pass
+
+        if same_error_streak >= 3:
+            terminal_stop = (
+                f"\n[-] [CIRCUIT BREAKER HALT: 3 fallos consecutivos idénticos para shard '{shard_id}']. "
+                f"STOP, send_message the Director."
+            )
             compact_report = compact_report + terminal_stop
             print(terminal_stop, file=sys.stderr)
-        print(f"\n[-] FAIL: {len(raw_errors)} errores detectados al compilar {shard_id}:\n{compact_report}", file=sys.stderr)
+
+        print(f"\n[-] FAIL: {len(raw_errors)} errores detectados ({error_count} errores consolidados) al compilar {shard_id}:\n{compact_report}", file=sys.stderr)
+        state["last_errors"] = [compact_report]
+        _atomic_write_json(compile_att_file, state)
         return False, [compact_report]
 
     # Clear compilation attempts on success (pass clears the halt)
@@ -1056,7 +1896,36 @@ def compile_shard(
         except Exception:
             pass
 
-    print(f"[+] PASS: Shard '{shard_id}' compilado exitosamente ({len(compiled_paths)} plantillas, {seeds} semillas dry-run validadas).")
+    import time
+    pass_marker = att_dir / f"pass_{norm_shard_id}.json"
+    pass_payload = {
+        "shard_id": shard_id,
+        "status": "PASS",
+        "source_sha256": source_sha256,
+        "template_counts": {cid: len(tpls) for cid, tpls in templates_by_cid.items()},
+        "timestamp": time.time(),
+    }
+    _atomic_write_json(pass_marker, pass_payload)
+
+    if receipt_p:
+        try:
+            r_data = {}
+            if receipt_p.is_file():
+                try:
+                    r_data = json.loads(receipt_p.read_text(encoding="utf-8"))
+                except Exception:
+                    r_data = {}
+            r_data["shard_id"] = shard_id
+            r_data["compiled_status"] = "PASS"
+            r_data["compiled_templates"] = [p.as_posix() for p in compiled_paths]
+            r_data["compiled_at"] = time.time()
+            _atomic_write_json(receipt_p, r_data)
+        except Exception:
+            pass
+
+    total_archetypes = sum(len(tpls) for tpls in templates_by_cid.values())
+    written_files_str = ", ".join(p.as_posix() for p in compiled_paths)
+    print(f"[+] PASS: Shard '{shard_id}' compilado exitosamente ({len(compiled_paths)} competencias, {total_archetypes} plantillas/arquetipos en [{written_files_str}], {seeds} semillas dry-run validadas). STOP: No ejecutes más herramientas y emite tu señal DONE.")
     return True, []
 
 
@@ -1065,6 +1934,7 @@ def compile_shard_file(
     output_dir: Optional[Union[str, Path]] = None,
     strict: bool = True,
     seeds: int = 50,
+    min_archetypes: Optional[int] = None,
     **kwargs,
 ) -> Tuple[bool, List[str]]:
     """Helper for run.py pipeline stage 3 compatibility."""
@@ -1074,6 +1944,8 @@ def compile_shard_file(
         strict=strict,
         seeds=seeds,
         output_dir=output_dir,
+        min_archetypes=min_archetypes if min_archetypes is not None else kwargs.get("min_archetypes"),
+        **kwargs,
     )
 
 
@@ -1090,13 +1962,23 @@ def main():
     parser.add_argument("--strict", action="store_true", default=True, help="Enforce strict validation (default: True)")
     parser.add_argument("--no-strict", dest="strict", action="store_false", help="Bypass strict validation")
     parser.add_argument("--seeds", type=int, default=50, help="Number of dry-run seeds (default: 50)")
+    parser.add_argument("--min-archetypes", dest="min_archetypes", type=int, default=None, help="Minimum disjoint archetypes (tuples) required per competency in TEMPLATES (e.g. 4 for Milestone 3)")
     args = parser.parse_args()
 
     work_or_path = args.input_path or args.shard_data_path or args.work
     s_id = args.shard
+    receipt_path = None
     eff_out_dir = args.output_dir
-    if not eff_out_dir and args.output_path and not str(args.output_path).lower().endswith(".json"):
-        eff_out_dir = args.output_path
+    if args.output_path:
+        if str(args.output_path).lower().endswith(".json"):
+            receipt_path = args.output_path
+        elif not eff_out_dir:
+            eff_out_dir = args.output_path
+
+    if work_or_path == "work" and not (Path("work/shards/pre_shard_manifest.json").is_file() or Path("work/pre_shard_manifest.json").is_file()):
+        inferred = infer_work_dir(work_or_path, shard_id=s_id)
+        if inferred != Path(work_or_path):
+            work_or_path = str(inferred)
 
     success, _ = compile_shard(
         work_dir_or_path=work_or_path,
@@ -1104,6 +1986,10 @@ def main():
         strict=args.strict,
         seeds=args.seeds,
         output_dir=eff_out_dir,
+        output_path=receipt_path,
+        cta_path=args.cta,
+        manifest_path=args.manifest,
+        min_archetypes=args.min_archetypes,
     )
     sys.exit(0 if success else 1)
 

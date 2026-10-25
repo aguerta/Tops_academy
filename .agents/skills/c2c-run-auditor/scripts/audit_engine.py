@@ -217,11 +217,48 @@ class TranscriptParser:
         seen_cids = set()
         subagents = []
 
-        # 1. Pre-build CID metadata mapping from manage_subagents & invoke_subagent
+        # 1. Pre-build CID metadata mapping from invoke_subagent tool calls & manage_subagents output
         cid_meta: Dict[str, Dict[str, Any]] = {}
+        pending_invokes: List[Dict[str, str]] = []
         for rec in records:
+            for tc in rec.get("tool_calls", []) or []:
+                if not isinstance(tc, dict):
+                    continue
+                tname = tc.get("function", {}).get("name") if "function" in tc else tc.get("name", "")
+                if tname == "invoke_subagent":
+                    args = tc.get("function", {}).get("arguments") if "function" in tc else tc.get("args", {})
+                    if isinstance(args, str):
+                        try:
+                            args = json.loads(args)
+                        except Exception:
+                            args = {}
+                    if isinstance(args, dict):
+                        role_val = str(args.get("Role", "") or "").strip(' "\'')
+                        type_val = str(args.get("TypeName", "") or "").strip(' "\'')
+                        if role_val or type_val:
+                            pending_invokes.append({
+                                "role": role_val,
+                                "type_name": type_val,
+                            })
+                        for sub in args.get("Subagents", []) or []:
+                            if isinstance(sub, dict):
+                                pending_invokes.append({
+                                    "role": str(sub.get("Role", "") or "").strip(' "\''),
+                                    "type_name": str(sub.get("TypeName", "") or "").strip(' "\''),
+                                })
+
             content = rec.get("content", "")
-            if "active subagent" in content or "Created the following subagents" in content:
+            if "Created the following subagent" in content:
+                cids_created = re.findall(r'"conversationId":\s*"([^"]+)"', content)
+                for cid in cids_created:
+                    if pending_invokes:
+                        inv = pending_invokes.pop(0)
+                        cid_meta[cid] = {
+                            "role": inv.get("role") or cid_meta.get(cid, {}).get("role"),
+                            "type_name": inv.get("type_name") or cid_meta.get(cid, {}).get("type_name"),
+                        }
+
+            if "active subagent" in content or "Created the following subagent" in content:
                 m_json = re.search(r"(\[\s*\{.*?\}\s*\])", content, re.DOTALL)
                 if m_json:
                     try:
@@ -229,16 +266,17 @@ class TranscriptParser:
                         for item in arr:
                             cid = item.get("conversationId")
                             if cid:
+                                prev = cid_meta.get(cid, {})
                                 cid_meta[cid] = {
-                                    "role": item.get("role"),
-                                    "type_name": item.get("type")
+                                    "role": str(item.get("role") or prev.get("role") or "").strip(' "\''),
+                                    "type_name": str(item.get("type") or prev.get("type_name") or "").strip(' "\''),
                                 }
                     except Exception:
                         pass
 
         for rec in records:
             content = rec.get("content", "")
-            if "Created the following subagents" in content or "conversationId" in content:
+            if "Created the following subagent" in content or "conversationId" in content:
                 # Find all UUIDs in content
                 cids = re.findall(r'"conversationId":\s*"([^"]+)"', content)
                 if not cids:
@@ -266,19 +304,35 @@ class TranscriptParser:
                                     prompt_preview = p0[:300]
                                     m_asig = re.search(r"#\s*Asignaci[oó]n de Tarea para\s+([^\n\r\\#]+)", p0)
                                     m_inst = re.search(r"Instrucciones para\s+([^\n\r\\#]+)", p0)
+                                    m_rep = re.search(r"prompts[/\\]repair[/\\]repair_([a-zA-Z0-9_\-]+)\.json", p0, re.IGNORECASE)
+                                    m_you_shard = re.search(r"You are Shard Author\s+(?:for\s+)?(shard_\d+|\d+)", p0, re.IGNORECASE)
+                                    m_you_judge = re.search(r"(?:You are\s+)?(Blind Judge\s*\d*)", p0, re.IGNORECASE)
                                     if m_asig:
-                                        role = m_asig.group(1).strip()
+                                        role = m_asig.group(1).strip(' "\'')
                                     elif m_inst:
-                                        role = m_inst.group(1).strip()
+                                        role = m_inst.group(1).strip(' "\'')
+                                    elif m_rep:
+                                        role = f"Repair Engineer ({m_rep.group(1).upper()})"
+                                        type_name = "c2c_repair"
+                                    elif m_you_shard:
+                                        s_num = m_you_shard.group(1).lower()
+                                        s_num = s_num if s_num.startswith("shard_") else f"shard_{s_num.zfill(2)}"
+                                        role = f"Shard Author {s_num}"
+                                        type_name = "c2c_shard_author"
+                                        shard_id = s_num
+                                    elif m_you_judge:
+                                        role = m_you_judge.group(1).strip(' "\'')
+                                        type_name = "c2c_judge"
                                     elif "Task:" in p0:
-                                        role = p0.split("Task:")[1].split("\n")[0].strip()[:40]
+                                        role = p0.split("Task:")[1].split("\n")[0].strip(' "\'')[:40]
                                     elif "Role:" in p0:
-                                        role = p0.split("Role:")[1].split("\n")[0].strip()[:40]
+                                        role = p0.split("Role:")[1].split("\n")[0].strip(' "\'')[:40]
 
                                     # Detect shard
-                                    sm = re.search(r"shard_(\d+)", role.lower()) or re.search(r"shard_(\d+)", p0.lower()) or re.search(r"shard\s+(\d+)", role.lower())
-                                    if sm:
-                                        shard_id = f"shard_{sm.group(1).zfill(2)}"
+                                    if not shard_id:
+                                        sm = re.search(r"shard_(\d+)", role.lower()) or re.search(r"shard_(\d+)", p0.lower()) or re.search(r"shard\s+(\d+)", role.lower())
+                                        if sm:
+                                            shard_id = f"shard_{sm.group(1).zfill(2)}"
                         except Exception:
                             pass
 
@@ -297,6 +351,8 @@ class TranscriptParser:
                     type_lower = type_name.lower()
                     if "vision" in role_lower or "handout" in role_lower or "vision" in type_lower:
                         category = "vision"
+                    elif "repair" in role_lower or "repair" in type_lower or "prompts/repair" in prompt_preview.lower():
+                        category = "repair"
                     elif (
                         "mapper" in role_lower
                         or "cta section" in role_lower
@@ -311,8 +367,10 @@ class TranscriptParser:
                         category = "cta_harmonizer"
                     elif "direct cta" in role_lower or "cta architect" in role_lower or "cta-direct" in type_lower or "cta" in type_lower:
                         category = "cta_harmonizer"
-                    elif "author" in role_lower or "shard" in role_lower or "author" in type_lower:
+                    elif shard_id or "author" in role_lower or "shard" in role_lower or "author" in type_lower:
                         category = "author"
+                        if role == "Subagent" and shard_id:
+                            role = f"Shard Author {shard_id}"
                     elif "judge" in role_lower or "judge" in type_lower:
                         category = "judge"
                     elif "repair" in role_lower or "repair" in type_lower:
@@ -2728,6 +2786,18 @@ def main():
             run_traceback_audit(conv_id, run_dir, work_dir=resolved_wdir)
         except Exception as ex:
             print(f"[!] Warning: Traceback Deep-Dive failed: {ex}")
+
+        try:
+            _scripts_dir = Path(__file__).parent.resolve()
+            if str(_scripts_dir) not in sys.path:
+                sys.path.insert(0, str(_scripts_dir))
+            from shard_timing_profiler import profile_conversation_shards, generate_markdown_table
+            print("[*] Running multi-shard timing & bottleneck profiling...")
+            prof = profile_conversation_shards(conv_id, run_dir)
+            md_table = generate_markdown_table(prof)
+            (run_dir / "shard_timing_decomposition.md").write_text(md_table, encoding="utf-8")
+        except Exception as ex:
+            print(f"[!] Warning: Shard timing profiling failed: {ex}")
 
     print(f"\n[+] Deep Forensic Audit Complete!")
     print(f"    - Wall-Clock Time: {audit_result['summary']['wall_clock_minutes']} min (Speedup: {audit_result['summary']['parallel_speedup_factor']}x)")

@@ -1,0 +1,22 @@
+# Stream 1E Forensic Audit Progress (`audit_1e`)
+
+- [x] Step 1: Read `DISPATCH.md`, baseline git status (`ORIGINAL_REQUEST.md`), implementer handoff, and improver handoff.
+- [x] Step 2: Boundary Integrity & Cleanliness Check.
+  - Checked `git status --short`.
+  - Verified no unauthorized files modified by Stream 1E.
+  - Verified zero temporary helper scripts or scratch files left behind.
+- [x] Step 3: Forensic Line-by-Line Code & Spec Verification.
+  - Verified `ingest.py` (zero-raster ingest, `render_pages` flag, `input_files`, empty dir avoidance, `seen_slugs` duplicate collision, NFC Unicode normalization).
+  - Verified `prepare.py` (`input_files=sources` direct pass, `render_pages=False` default, `existing_competencies_outline` delta enrichment).
+  - Verified `compile_cta.py` (`count_evaluated_fields` denominator, continuous ID numbering, `existing_competency_ids` prerequisite filtering).
+  - Verified `check_cta.py` (`check_prerequisites_dag` with `allowed_prereq_ids`, `validate_cta_rules` delta extraction, `check_cta_file` alias).
+  - Verified `cta_merge.py` (`normalize_orphan_math` Rules 0c, 4b, 5b; `sanitize_competency_math` recording `severity="healed"`; `parse_next_ids_by_prefix`; `merge_cta_parts` continuous IDs; `apply_harmonize` delta prerequisites and dictionary candidates).
+- [x] Step 4: Test Suite Forensic Verification.
+  - Inspected `tests/test_fast_ingest_and_cta_append.py`: verified 13 tests, 0 fake mocks, 0 weakened assertions, 0 skips.
+- [x] Step 5: Independent Execution of Test Suites.
+  - `tests/test_fast_ingest_and_cta_append.py`: 13/13 passed.
+  - Stream regression suite: 74 passed, 2 skipped (unrelated pre-existing skips) in 8.81s.
+  - Secondary regression suite: 96 passed in 12.84s.
+- [x] Step 6: Documentation and Verdict Dispatch.
+  - Formulate binary verdict: `PASS`.
+  - Issue handoff report and send `PASS::` notification to Orchestrator.

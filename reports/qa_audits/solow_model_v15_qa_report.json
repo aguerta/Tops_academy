@@ -1,75 +1,74 @@
 {
   "course_metadata": {
     "course_id": "solow_model_v15",
-    "unit_title": "Dominio del Modelo de Crecimiento de Solow",
-    "detected_objective": "Modelar, resolver e interpretar rigurosamente la dinámica de acumulación de capital, transición temporal, estabilidad global y equilibrios de estado uniforme en el modelo neoclásico de crecimiento de Solow (1956), analizando tecnologías Cobb-Douglas y CES, condiciones de no arbitraje en precios de factores, progreso técnico neutral, efectos de política fiscal y equilibrios múltiples con trampas de pobreza demográfica.",
+    "unit_title": "Solow Model V15",
+    "detected_objective": "Dominio y aplicación analítica integral del modelo neoclásico de crecimiento de Solow (1956), abarcando supuestos de tecnología neoclásica, formas intensivas, ley de acumulación, estabilidad de línea de fase, resolución analítica de Bernoulli, tecnología CES, arbitraje de activos, precios factoriales, progreso técnico neutral, política fiscal y trampas demográficas de pobreza.",
     "total_competencies": 15,
     "total_questions": 360,
-    "question_types_distribution": {
-      "multiple_choice_7_options": 360
-    },
     "platform_status": "ELIMINADO",
     "deleted_at": "2026-10-20 13:26:24"
   },
   "dimension_scores": {
     "architecture_granularity": {
-      "score": 4.0,
+      "score": 3.9,
       "max": 4.0,
-      "feedback": "Excelente arquitectura curricular modular de 15 micro-competencias altamente atómicas que abarcan con precisión el modelo de crecimiento de Solow (1956). Presenta una distribución balanceada de carga cognitiva: 3 Hechos (20.0%), 6 Conceptos (40.0%) y 6 Habilidades cuantitativas y analíticas (40.0%). El Grafo Acíclico Dirigido (DAG) de prerrequisitos está 100% formalizado a partir de los nodos raíz axiomáticos C-01 y H-03, sin ciclos ni redundancias circulares. La densidad por competencia oscila entre 20 y 30 reactivos independientes (con 30 preguntas para competencias complejas como EDO de Bernoulli, estática comparativa, tecnologías CES, progreso técnico y política fiscal), superando con creces el umbral mínimo regulatorio de 3 problemas por unidad."
+      "feedback": "Excelente granularidad y atomicidad curricular. Las 15 micro-competencias descomponen con precisión analítica el artículo fundacional de Solow (1956). El grafo acíclico dirigido (DAG) modela adecuadamente las dependencias secuenciales a partir de dos nodos raíz teóricos bien justificados (C-01 para la función de producción y H-03 para la ecuación de arbitraje de activos). La distribución cognitiva está balanceada con rigor (3 Hechos / 20%, 6 Conceptos / 40%, 6 Habilidades / 40%), cumpliendo con los estándares de Mastery Learning. Leve observación de 0.1 pt por la redundancia de paralelismo entre Hab-02 y Hab-03 que podría integrarse en una secuencia más continua."
     },
     "assessment_quality": {
-      "score": 5.0,
+      "score": 3.8,
       "max": 5.0,
-      "feedback": "Excepcional calidad psicométrica y diseño de reactivos. Banco exhaustivo de 360 preguntas en formato de opción múltiple de 7 alternativas (A-G), reduciendo la probabilidad de acierto por azar al 14.3%. Se evaluaron 2,160 distractores con una cobertura del 100.0% de rationales diagnósticos explícitos (error_rationale), modelando con rigor los conceptos erróneos característicos de la literatura macroeconómica (confusiones de dimensionalidad per cápita vs agregada, omisión de dilución demográfica, inversiones de signos en la EDO, ignorancia del término cruzado en tecnologías CES, violación de la regla de no arbitraje de activos, y atribución indebida de efectos de crecimiento permanente a la tasa de ahorro). Cero distractores delatores (telltale = 0), sin autoconfesiones de error, y cero fugas de respuestas (answer leaks)."
+      "feedback": "Los distractores poseen una calidad psicométrica y diagnóstica sobresaliente: 2160 distractores con cobertura de 100% de rationales específicos que capturan con exactitud los conceptos erróneos frecuentes de la literatura neoclásica (Euler, dilución demográfica, rendimientos crecientes espurios, confusión nivel vs tasa). Ausencia absoluta de answer leaks o frases delatoras en texto visible. Sin embargo, se aplica una deducción severa de 1.2 pts debido a la concentración tipológica absoluta (100% de reactivos en multiple_choice_7_options) y la monotonía arquetípica: las 20 a 30 preguntas de cada competencia derivan de un único arquetipo paramétrico idéntico donde solo se permutan números o sectores, induciendo una alta mecanización y fatiga rutinaria en el estudiante."
     },
     "scaffolding_hints": {
-      "score": 5.0,
+      "score": 4.6,
       "max": 5.0,
-      "feedback": "Andamiaje socrático y retroalimentación formativa de excelencia. El 100% de los reactivos (360/360) incorpora exactamente 3 pistas progresivas escalonadas bajo el modelo pedagógico socrático: Pista 1 (Marco Conceptual e identidades fundamentales) -> Pista 2 (Estrategia Procedimental y regla analítica) -> Pista 3 (Operación paso a paso y verificación de signos/límites). Cada reactivo cuenta con una solución detallada completa (detailed_solution) que demuestra el paso a paso algebraico e invalida formalmente los desvíos conceptuales. Cero residuos de f-strings no interpolados con modificadores de formato, cero variables de plantilla no resueltas de sufijo crudo y cero textos genéricos."
+      "feedback": "Andamiaje pedagógico de alto nivel. La totalidad de los 360 reactivos cuenta con exactamente 3 pistas progresivas estructuradas en el gradiente socrático normativo (Conceptual -> Procedimental -> Operativa/Cálculo), sin regalar la respuesta ni recurrir a 'stub hints' o códigos crudos de prerrequisitos. Las soluciones detalladas son analíticamente rigurosas e incorporan advertencias explícitas sobre ideas preconcebidas erróneas (misconception warnings). Deducción menor de 0.4 pts debido a la presencia de residuos de tokens de plantilla ({k0} y {36}) en las soluciones detalladas de la competencia H-02, lo que entorpece la legibilidad del cálculo paso a paso."
     },
     "instructional_alignment": {
       "score": 4.0,
       "max": 4.0,
-      "feedback": "Alineación instruccional impecable y congruencia semántica absoluta entre los objetivos declarados, el corpus teórico de Solow (1956) y los ítems de evaluación. El curso cubre exhaustivamente las dimensiones analíticas del modelo: homogeneidad y teorema de Euler, función intensiva, ecuación diferencial fundamental, estabilidad global por análisis de fases, linealización canónica de Bernoulli, estática comparativa de la regla de oro, colapso de Harrod-Domar bajo Leontief, condición de umbral en familias CES, arbitraje de activos y precios factoriales, progreso técnico Hicks-neutral y equilibrios múltiples con trampa malthusiana. Alineado fuertemente con los niveles taxonómicos de Bloom de Aplicación y Análisis. Cero preguntas huérfanas y cero contaminación inter-dominio."
+      "feedback": "Alineación instruccional impecable. Congruencia semántica absoluta entre los objetivos de aprendizaje declarados, la base conceptual macroeconómica y los reactivos evaluativos. Cero preguntas huérfanas y cero contaminación cruzada inter-dominio. El énfasis cognitivo reside firmemente en los niveles de Aplicación y Análisis de la taxonomía de Bloom (derivación matemática de leyes de movimiento, linealización de Bernoulli, análisis de estabilidad local y umbrales de bifurcación de equilibrios múltiples)."
     },
     "technical_ergonomics": {
-      "score": 2.0,
+      "score": 1.6,
       "max": 2.0,
-      "feedback": "Ergonomía técnica y compilabilidad KaTeX óptimas. Cero llaves desbalanceadas, cero delimitadores triples espurios ($$$), cero dobles llaves residuales ({{...}}), cero delimitadores abiertos sin cierre y cero fragmentos de LaTeX huérfanos en texto plano. La notación matemática de derivadas temporales (\\dot{k}, \\dot{K}, \\dot{L}, \\dot{r}, \\dot{p}), segundas derivadas parciales (\\phi''(k), F_{KK}, F_{LL}) y cocientes de precios factoriales (w/p, q/p) está formalmente compilada y estructurada para un renderizado visual perfecto en frontend."
+      "feedback": "Formulación matemática en KaTeX con delimitadores correctamente balanceados ($ y $$) y compilación limpia sin colapso de renderizado ni triples delimitadores ($$$). No obstante, se deducen 0.4 pts por dos anomalías técnicas: (1) Omitir diacríticos (tildes) de forma sistemática en el texto en español de las opciones de la micro-competencia C-06 ('dotacion', 'demografico', 'perturbacion', 'economia', etc.), y (2) La fuga de llaves espurias no interpoladas ({k0}) en las explicaciones de H-02."
     }
   },
   "penalties_applied": [],
-  "final_score": 20.0,
-  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
-  "remediation_actions": [
-    "Aprobación técnica e instruccional definitiva para despliegue y producción inmediata en la plataforma interactiva Top's Academy.",
-    "Mantener la suite de linters deterministas estáticos en el pipeline de CI/CD para preservar de forma continua la cobertura del 100% de rationales diagnósticos y el andamiaje de 3 pistas escalonadas.",
-    "Recomendación de pulido editorial en detailed_solution de H-02: En reactivos como Q-H02-071 y Q-H02-072, sustituir el residuo literal '{k0}' en la expresión de dilución '\\lambda {k0} = 0.02 \\times {k0} = 1.62' por el valor numérico evaluado o la notación simbólica formal '\\lambda k = 0.02 \\times 81 = 1.62'.",
-    "Recomendación ortográfica menor: Normalizar la presencia de tildes ortográficas en vocablos técnicos en español dentro de las opciones de distractores de la competencia C-06 ('dotación', 'demográfico', 'inversión') para lograr la más estricta homogeneidad editorial."
-  ],
+  "final_score": 17.9,
+  "quality_tier": "EXCELENTE (17.0 - 20.0)",
   "discovered_lint_rules": [
     {
-      "rule_id": "uninterpolated_math_placeholder_linter",
-      "severity": "medium",
-      "description": "Detecta variables o identificadores de plantilla sin interpolar encerrados en llaves literales dentro de expresiones matemáticas en KaTeX (ej. '\\lambda {k0} = 0.02 \\times {k0} = 1.62') originados por doble escape de llaves en generadores de texto o f-strings, que eluden los linters de sintaxis KaTeX por ser sintaxis válida de agrupamiento pero representan residuos de variables no sustituidas.",
-      "regex_pattern": "(?:\\\\times|\\+|-|=)\\s*\\{([a-zA-Z][a-zA-Z0-9_]*0)\\}|(?<=[^\\\\])\\{([a-zA-Z][a-zA-Z0-9_]*0)\\}",
-      "evidence_items": [
-        "Q-H02-071",
-        "Q-H02-072"
-      ]
+      "rule_id": "template_token_or_uninterpolated_variable_leak",
+      "severity": "MEDIUM",
+      "target_field": "detailed_solution",
+      "description": "Detecta residuos de variables de plantilla f-string no interpoladas (ej. '{k0}', '{param}', '{36}') dentro de fórmulas KaTeX en soluciones o pistas. Ocurre cuando se escapan llaves de forma redundante ({{k0}}) o se omite formatear la variable numérica.",
+      "regex_pattern": "(?<!\\\\)\\{[a-zA-Z_][a-zA-Z0-9_]*\\}(?!\\s*\\^|_)",
+      "impact": "Exhibe nombres de variables internas en lugar de valores numéricos en la explicación para el estudiante."
     },
     {
-      "rule_id": "spanish_orthographic_tildes_linter",
-      "severity": "low",
-      "description": "Detecta omisión de tildes ortográficas en vocablos técnicos en español dentro de las opciones de respuesta y distractores (ej. 'dotacion' por 'dotación', 'demografico' por 'demográfico', 'inversion' por 'inversión', 'economias' por 'economías') para garantizar la excelencia estilística y ortográfica profesional en el frontend.",
-      "regex_pattern": "\\b(?:dotacion|demografico|inversion|economias|perturbacion|espontaneamente|adicion|graduales)\\b",
-      "evidence_items": [
-        "Q-C06-341",
-        "Q-C06-342"
-      ]
+      "rule_id": "archetype_monotony_and_typological_homogeneity",
+      "severity": "HIGH",
+      "target_field": "type, stem",
+      "description": "Evalúa la homogeneidad tipológica y la monotonía de arquetipos dentro de cada banco de preguntas. Si el 100% de los reactivos pertenecen a un único tipo (ej. multiple_choice_7_options) y la similitud estructural del stem supera el 85% entre ítems de la misma micro-competencia, se alerta riesgo de mecanización del aprendizaje.",
+      "heuristic": "typological_entropy == 0.0 AND intra_competency_stem_similarity > 0.85",
+      "impact": "Fomenta la resolución mecánica por reconocimiento de patrones superficiales en lugar del dominio cognitivo profundo."
+    },
+    {
+      "rule_id": "spanish_diacritics_stripping_or_omission",
+      "severity": "LOW",
+      "target_field": "options.content, stem",
+      "description": "Identifica la pérdida sistemática de tildes ortográficas en cadenas de texto en español ('demografico', 'dotacion', 'economia', 'adicion') producida por des-acentuación agresiva en pipelines de normalización ASCII.",
+      "regex_pattern": "\\b(demografico|dotacion|inversion|economia|perturbacion|espontaneamente|adicion|relacion|multiplicidad)\\b",
+      "impact": "Degrada la ergonomía textual y la calidad formal del contenido en la plataforma."
     }
   ],
-  "platform_status": "ELIMINADO",
-  "deleted_at": "2026-10-20 13:26:24",
-  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+  "remediation_actions": [
+    "Diversificar la tipología de ítems incorporando reactivos de selección múltiple (multiple_select) y respuesta numérica calculada (fill_in_the_blank) para romper la monotonía del 100% multiple_choice_7_options.",
+    "Introducir variedad de arquetipos dentro de cada micro-competencia (e.g., reactivos de interpretación gráfica de diagramas de fase, problemas de deducción inversa y detección de falacias conceptuales) para prevenir la mecanización del estudiante.",
+    "Corregir la plantilla de generación de la competencia H-02 para asegurar que '{k0}' se interpole con el valor numérico del capital inicial en lugar de quedar como residuo textual en detailed_solution.",
+    "Restaurar los acentos ortográficos en el texto de las opciones de la micro-competencia C-06 ('Equilibrios Múltiples y la Trampa de Pobreza Demográfica').",
+    "Integrar en el suite de linters estáticos de la plataforma las tres nuevas reglas identificadas: 'template_token_or_uninterpolated_variable_leak', 'archetype_monotony_and_typological_homogeneity' y 'spanish_diacritics_stripping_or_omission'."
+  ]
 }

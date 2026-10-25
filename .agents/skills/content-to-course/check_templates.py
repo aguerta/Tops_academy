@@ -44,6 +44,7 @@ from engine.diversity import evaluate_competency_diversity, mask_stem_numbers
 from engine.invariants import check_instance_invariants, validate_katex_syntax
 from engine.instantiate import instantiate_competency, competency_seed_base
 from engine.sandbox import (
+    call_with_timeout,
     execute_sandbox_batch,
     validate_code_ast,
     check_latex_escape_corruption,
@@ -248,6 +249,41 @@ def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, A
         }
 
     err_str = str(err)
+    if "[M3-ARCHETYPES]" in err_str:
+        rule_tag = "M3-ARCHETYPES"
+        m_cid = (
+            re.search(r"competencia\s+'([^']+)'", err_str, re.IGNORECASE)
+            or re.search(r"tuplas\s+de\s+'([^']+)'", err_str, re.IGNORECASE)
+            or re.search(r"^([A-Za-z0-9_-]+)\.json", err_str)
+        )
+        comp = m_cid.group(1).strip() if m_cid else ""
+        tpl = f"T-{comp}" if comp else ""
+        field_name = "TEMPLATES"
+        m_cause_m3 = re.search(r"\[M3-ARCHETYPES\]\s*(.+?)(?:\s*Nota:|\Z)", err_str)
+        cause = m_cause_m3.group(1).strip() if m_cause_m3 else err_str.splitlines()[0]
+        if "clones idénticos" in err_str:
+            action = (
+                f"Cada uno de los arquetipos de '{comp}' debe tener su propio enunciado y wrapper/generador disjunto (gen_1..4)."
+                if comp else "Diversificar enunciados y generadores de cada arquetipo."
+            )
+        else:
+            action = (
+                f"Agregar tuplas faltantes para '{comp}' en TEMPLATES usando helper parametrizado def _gen_{comp.lower().replace('-', '_')}(rng, arch) + 4 wrappers gen_1..4."
+                if comp else "Agregar tuplas de arquetipos faltantes en TEMPLATES usando helper parametrizado."
+            )
+        snippet = f"TEMPLATES[{comp}]" if comp else "TEMPLATES"
+        return {
+            "rule_tag": rule_tag,
+            "competency": comp,
+            "template": tpl,
+            "field_name": field_name,
+            "snippet": snippet,
+            "cause": cause,
+            "action": action,
+            "lines": [],
+            "file_path": None,
+        }
+
     m_rule = re.search(r"^\[-\]\s*\[([^\]]+)\]", err_str, re.MULTILINE)
     m_loc = re.search(r"UBICACI[ÓO]N:\s*Competencia:\s*'([^']*)',\s*Plantilla:\s*'([^']*)'.*?Campo:\s*'([^']*)'", err_str)
     m_lines = re.search(r"L[íi]neas?:\s*([0-9,\s]+)", err_str)
@@ -399,9 +435,37 @@ def _heal_code_control_chars(code_str: str) -> str:
         return code_str
 
 
+def normalize_error_string_for_hash(text: str) -> str:
+    """Normalize volatile elements in error messages (hex addresses, module uuids, temp paths, timestamps, CRLF) for deterministic hashing."""
+    if not isinstance(text, str):
+        text = str(text)
+    # Normalize CRLF and backslashes
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = text.replace("\\", "/")
+    # Strip memory addresses
+    text = re.sub(r"at 0x[0-9a-fA-F]+", "at 0xHEX", text)
+    # Strip ephemeral module names generated with random UUIDs
+    text = re.sub(r"c2c_(?:shard|fix)_mod_[a-zA-Z0-9_-]+_[0-9a-fA-F]{6,8}", "c2c_mod", text)
+    # Strip timestamps (ISO, RFC, or common date formats)
+    text = re.sub(r"\b\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?\b", "<TIMESTAMP>", text)
+    # Strip temp paths and staging paths
+    text = re.sub(r"(?:[A-Za-z]:)?/[^\s:]*?/(?:\.?tmp|temp|\.check_attempts/_staged)[^\s:]*", "<TEMP_PATH>", text, flags=re.IGNORECASE)
+    # Strip ephemeral tmp file names
+    text = re.sub(r"\.[a-zA-Z0-9_-]+\.tmp\.\d+_[0-9a-fA-F]+", "<TMP_FILE>", text)
+    return text.strip()
+
+
 def _extract_template_placeholders(text: str) -> Set[str]:
     """Extract template variable placeholders {var} or {var:spec} excluding LaTeX macro arguments like \\text{x}, \\begin{env}, \\dot{k}."""
     placeholders: Set[str] = set()
+    if not isinstance(text, str) or not text:
+        return placeholders
+
+    # 1. PrairieLearn tokens: @var@ or @var:fmt@
+    for m in re.finditer(r"@([a-zA-Z_][a-zA-Z0-9_]*)(?::([^@\s{}]+))?@", text):
+        placeholders.add(m.group(1))
+
+    # 2. Python-style {var} tokens
     for m in re.finditer(r"(?<!\{)\{([a-zA-Z_][a-zA-Z0-9_]*)(?::([^}]+))?\}(?!\})", text):
         var_name = m.group(1)
         fmt_spec = m.group(2)
@@ -452,11 +516,202 @@ _GIVEAWAY_PREFIX_STR_RE = re.compile(
 )
 
 
+def _scan_latex_balanced_span(text: str, start: int) -> int:
+    """Starting at start (index of backslash of LaTeX command), scans forward balancing nested braces."""
+    n = len(text)
+    if start >= n or text[start] != "\\":
+        return start
+
+    pos = start + 1
+    while pos < n and text[pos].isalpha():
+        pos += 1
+
+    # Loop over arguments, subscripts, superscripts, or attached math symbols
+    while pos < n:
+        if text[pos] == "{":
+            depth = 1
+            pos += 1
+            while pos < n and depth > 0:
+                if text[pos] == "{":
+                    depth += 1
+                elif text[pos] == "}":
+                    depth -= 1
+                elif text[pos] == "\\" and pos + 1 < n and text[pos + 1] in "{}":
+                    pos += 1
+                pos += 1
+            if depth > 0:
+                break
+        elif text[pos] in ("_", "^"):
+            pos += 1
+            if pos < n and text[pos] == "{":
+                depth = 1
+                pos += 1
+                while pos < n and depth > 0:
+                    if text[pos] == "{":
+                        depth += 1
+                    elif text[pos] == "}":
+                        depth -= 1
+                    elif text[pos] == "\\" and pos + 1 < n and text[pos + 1] in "{}":
+                        pos += 1
+                    pos += 1
+                if depth > 0:
+                    break
+            elif pos < n and text[pos] == "\\":
+                pos += 1
+                while pos < n and text[pos].isalpha():
+                    pos += 1
+            elif pos < n and (text[pos].isalnum() or text[pos] in "+-"):
+                pos += 1
+            else:
+                pos -= 1
+                break
+        elif text[pos] == "\\":
+            cand_pos = pos + 1
+            while cand_pos < n and text[cand_pos].isalpha():
+                cand_pos += 1
+            if cand_pos > pos + 1:
+                pos = cand_pos
+            else:
+                break
+        else:
+            break
+
+    # Optional relational operator or equals: e.g. \beta = 0 or \le 0.05
+    rel_m = re.match(r"^\s*(?:=|<|>|\\le|\\ge|\\neq|\\approx)\s*", text[pos:])
+    if rel_m:
+        rel_end = pos + rel_m.end()
+        rhs_pos = rel_end
+        while rhs_pos < n and text[rhs_pos] not in ",;.$)":
+            if text[rhs_pos] == "{":
+                depth = 1
+                rhs_pos += 1
+                while rhs_pos < n and depth > 0:
+                    if text[rhs_pos] == "{":
+                        depth += 1
+                    elif text[rhs_pos] == "}":
+                        depth -= 1
+                    rhs_pos += 1
+                if depth > 0:
+                    break
+            elif text[rhs_pos].isspace() and (rhs_pos + 1 >= n or not (text[rhs_pos + 1].isalnum() or text[rhs_pos + 1] in "\\+-/*")):
+                break
+            else:
+                rhs_pos += 1
+        if rhs_pos > rel_end:
+            pos = rhs_pos
+
+    return pos
+
+
+def _wrap_bare_latex_in_rationale(text: str) -> str:
+    """Wraps bare or orphan LaTeX expressions in $...$ within rationale strings.
+
+    Leaves existing $...$ and $$...$$ blocks intact.
+    Detects LaTeX commands (e.g. \\frac, \\beta, \\hat, \\sigma, \\times) and math symbols
+    that appear without $ delimiters and encloses them safely in KaTeX inline math,
+    robustly balancing arbitrarily nested braces in subscripts and superscripts.
+    """
+    if not isinstance(text, str) or not text.strip():
+        return text if isinstance(text, str) else ""
+
+    text = heal_control_chars_in_str(text)
+
+    # 1. Identify existing math spans: $...$ or $$...$$
+    math_spans = []
+    for m in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$\n]*?\$", text):
+        math_spans.append((m.start(), m.end()))
+
+    def is_in_math(pos: int) -> bool:
+        return any(s <= pos < e for s, e in math_spans)
+
+    # 2. Find bare LaTeX command sequences scanning balanced nested braces
+    matches = []
+    cmd_iter = re.finditer(r"\\[a-zA-Z]+", text)
+    curr_end = 0
+    for m in cmd_iter:
+        if m.start() < curr_end:
+            continue
+        if is_in_math(m.start()):
+            continue
+        span_end = _scan_latex_balanced_span(text, m.start())
+        if span_end > m.start():
+            matches.append((m.start(), span_end, text[m.start():span_end]))
+            curr_end = span_end
+
+    if not matches:
+        return text
+
+    out_parts = []
+    last_idx = 0
+    for start, end, s in matches:
+        if start < last_idx:
+            continue
+        out_parts.append(text[last_idx:start])
+        clean_s = s.rstrip(".,;")
+        trailing = s[len(clean_s):]
+        out_parts.append(f"${clean_s}${trailing}")
+        last_idx = end
+    out_parts.append(text[last_idx:])
+
+    return "".join(out_parts)
+
+
 def _strip_giveaway_prefix(text: str) -> str:
     cleaned = _GIVEAWAY_PREFIX_RE.sub("", text).strip()
     if cleaned:
         cleaned = cleaned[0].upper() + cleaned[1:]
     return cleaned
+
+
+def _build_distractor_lookup_from_cta(
+    cta_comp: Optional[Dict[str, Any]] = None,
+    target_cid: Optional[str] = None,
+) -> Dict[str, str]:
+    """Extract clean KaTeX-wrapped giveaway-free rationales keyed by distractor_id from CTA context."""
+    distractor_lookup: Dict[str, str] = {}
+    if not cta_comp or not isinstance(cta_comp, dict):
+        return distractor_lookup
+
+    def _extract_rat(d: Dict[str, Any]) -> str:
+        wb = d.get("wrong_belief") or d.get("manifestation") or ""
+        om = d.get("omitted_step") or ""
+        rem = d.get("remediation_hint") or ""
+        if wb and om:
+            rat = f"{wb.rstrip('.')}. Se debe considerar: {om.rstrip('.')}."
+        elif wb:
+            rat = wb
+        elif rem:
+            rat = rem
+        elif om:
+            rat = f"Error procedimental: {om}."
+        else:
+            rat = d.get("name") or ""
+        if rat:
+            return _wrap_bare_latex_in_rationale(_strip_giveaway_prefix(str(rat)))
+        return ""
+
+    if isinstance(cta_comp.get("distractors"), list):
+        for d in cta_comp["distractors"]:
+            if isinstance(d, dict) and d.get("id"):
+                r = _extract_rat(d)
+                if r:
+                    distractor_lookup[str(d["id"])] = r
+    elif isinstance(cta_comp.get("competencies"), list):
+        for c in cta_comp["competencies"]:
+            if not target_cid or c.get("id") == target_cid:
+                for d in c.get("distractors", []):
+                    if isinstance(d, dict) and d.get("id"):
+                        r = _extract_rat(d)
+                        if r:
+                            distractor_lookup[str(d["id"])] = r
+    elif all(isinstance(v, dict) for v in cta_comp.values()):
+        for did, d in cta_comp.items():
+            if isinstance(d, dict):
+                r = _extract_rat(d)
+                if r:
+                    distractor_lookup[str(did)] = r
+
+    return distractor_lookup
 
 
 def auto_heal_template_data(
@@ -467,36 +722,15 @@ def auto_heal_template_data(
     1. Restores corrupted ASCII control chars in text (single backslash) and code (AST safe).
     2. Auto-exports local variables computed in generate(rng) into 'vars' dict
        when referenced as {var_name} in stem, stem_variants, hints, or solution.
-    3. Populates missing error_rationale in multiple_select incorrect options from cta_comp distractors.
+    3. Populates missing error_rationale in multiple_select and multiple_choice_7_options from cta_comp distractors.
     4. Strips obvious R-18 giveaway prefixes from rationales and options.
     """
     modified = False
     fixes: List[str] = []
 
     # Build distractor lookup from cta_comp / cta_data
-    distractor_lookup: Dict[str, str] = {}
-    if cta_comp and isinstance(cta_comp, dict):
-        if isinstance(cta_comp.get("distractors"), list):
-            for d in cta_comp["distractors"]:
-                if isinstance(d, dict) and d.get("id"):
-                    rationale = d.get("wrong_belief") or d.get("remediation_hint") or d.get("name") or ""
-                    if rationale:
-                        distractor_lookup[str(d["id"])] = _strip_giveaway_prefix(str(rationale))
-        elif isinstance(cta_comp.get("competencies"), list):
-            target_cid = data.get("competency_id") if isinstance(data, dict) else None
-            for c in cta_comp["competencies"]:
-                if not target_cid or c.get("id") == target_cid:
-                    for d in c.get("distractors", []):
-                        if isinstance(d, dict) and d.get("id"):
-                            rationale = d.get("wrong_belief") or d.get("remediation_hint") or d.get("name") or ""
-                            if rationale:
-                                distractor_lookup[str(d["id"])] = _strip_giveaway_prefix(str(rationale))
-        elif all(isinstance(v, dict) for v in cta_comp.values()):
-            for did, d in cta_comp.items():
-                if isinstance(d, dict):
-                    rationale = d.get("wrong_belief") or d.get("remediation_hint") or d.get("name") or ""
-                    if rationale:
-                        distractor_lookup[str(did)] = _strip_giveaway_prefix(str(rationale))
+    target_cid = data.get("competency_id") if isinstance(data, dict) else None
+    distractor_lookup: Dict[str, str] = _build_distractor_lookup_from_cta(cta_comp, target_cid=target_cid)
 
     templates_list: List[Dict[str, Any]] = []
     if isinstance(data, dict):
@@ -572,99 +806,133 @@ def auto_heal_template_data(
 
                     missing_vars = (referenced_vars & assigned_locals) - {"rng"}
                     if missing_vars:
-                        # Case 2A: 'vars': { ... } is returned as a dict literal in return statement
-                        m_vars_dict = re.search(r"(['\"]vars['\"]\s*:\s*\{)([^}]*)(\})", gen_py)
-                        if m_vars_dict:
-                            vars_body = m_vars_dict.group(2)
-                            existing_keys = set(re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", vars_body))
+                        # AST-safe helper to convert (lineno, col_offset) to character index in gen_py
+                        gp_lines = gen_py.splitlines(keepends=True)
+                        line_offsets = [0]
+                        for _ln in gp_lines:
+                            line_offsets.append(line_offsets[-1] + len(_ln))
+
+                        def _ast_pos_to_idx(lineno: int, col_offset: int) -> int:
+                            line_str = gp_lines[lineno - 1]
+                            byte_prefix = line_str.encode("utf-8")[:col_offset]
+                            return line_offsets[lineno - 1] + len(byte_prefix.decode("utf-8", errors="replace"))
+
+                        def _inject_into_ast_dict(dict_node: ast.Dict, extra_existing: Optional[Set[str]] = None, label: str = "vars") -> bool:
+                            existing_keys = {
+                                k.value for k in dict_node.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)
+                            }
+                            if extra_existing:
+                                existing_keys |= extra_existing
                             missing_export = sorted(missing_vars - existing_keys)
-                            if missing_export:
-                                add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
-                                if vars_body.strip():
-                                    sep = " " if vars_body.rstrip().endswith(",") else ", "
-                                else:
-                                    sep = ""
-                                new_vars_segment = f"{m_vars_dict.group(1)}{vars_body}{sep}{add_pairs}{m_vars_dict.group(3)}"
-                                new_gp = gen_py[:m_vars_dict.start()] + new_vars_segment + gen_py[m_vars_dict.end():]
-                                try:
-                                    ast.parse(new_gp)
-                                    tpl["generate_py"] = new_gp
-                                    gen_py = new_gp
-                                    modified = True
-                                    fixes.append(f"{tid}.generate_py: auto-exported {missing_export} into 'vars'")
-                                except Exception:
-                                    pass
-                        else:
-                            # Case 2B: 'vars': var_name where var_name is an assigned dict (e.g. vars_dict = {...})
-                            m_vars_var = re.search(r"['\"]vars['\"]\s*:\s*([a-zA-Z_][a-zA-Z0-9_]*)", gen_py)
-                            if m_vars_var:
-                                vname = m_vars_var.group(1)
-                                m_assign = re.search(rf"(\b{re.escape(vname)}\s*=\s*\{{)([^}}]*)(\}})", gen_py)
-                                if m_assign:
-                                    vbody = m_assign.group(2)
-                                    existing_keys = set(re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", vbody))
-                                    missing_export = sorted(missing_vars - existing_keys)
-                                    if missing_export:
-                                        add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
-                                        sep = " " if vbody.rstrip().endswith(",") else (", " if vbody.strip() else "")
-                                        new_vseg = f"{m_assign.group(1)}{vbody}{sep}{add_pairs}{m_assign.group(3)}"
-                                        new_gp = gen_py[:m_assign.start()] + new_vseg + gen_py[m_assign.end():]
-                                        try:
-                                            ast.parse(new_gp)
-                                            tpl["generate_py"] = new_gp
-                                            gen_py = new_gp
-                                            modified = True
-                                            fixes.append(f"{tid}.generate_py: auto-exported {missing_export} into '{vname}'")
-                                        except Exception:
-                                            pass
+                            if not missing_export:
+                                return True
+                            if dict_node.end_lineno is None or dict_node.end_col_offset is None:
+                                return False
+                            end_idx = _ast_pos_to_idx(dict_node.end_lineno, dict_node.end_col_offset)
+                            # Locate the exact closing '}' of this ast.Dict
+                            close_brace_idx = end_idx - 1
+                            if close_brace_idx < 0 or close_brace_idx >= len(gen_py) or gen_py[close_brace_idx] != "}":
+                                return False
+                            start_idx = _ast_pos_to_idx(dict_node.lineno, dict_node.col_offset)
+                            inner_body = gen_py[start_idx + 1:close_brace_idx]
+                            add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
+                            if inner_body.strip():
+                                sep = " " if inner_body.rstrip().endswith(",") else ", "
                             else:
-                                # Case 2C: 'vars' key is completely missing from return { ... }
-                                m_ret = re.search(r"(\breturn\s*\{)(.*)", gen_py, re.DOTALL)
-                                if m_ret:
-                                    missing_export = sorted(missing_vars)
-                                    if missing_export:
-                                        add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
-                                        inject_str = f"\n        'vars': {{{add_pairs}}},"
-                                        new_gp = gen_py[:m_ret.start(1) + len(m_ret.group(1))] + inject_str + gen_py[m_ret.start(1) + len(m_ret.group(1)):]
-                                        try:
-                                            ast.parse(new_gp)
-                                            tpl["generate_py"] = new_gp
-                                            gen_py = new_gp
-                                            modified = True
-                                            fixes.append(f"{tid}.generate_py: injected missing 'vars' dict with {missing_export}")
-                                        except Exception:
-                                            pass
+                                sep = ""
+                            new_gp = gen_py[:close_brace_idx] + f"{sep}{add_pairs}" + gen_py[close_brace_idx:]
+                            try:
+                                ast.parse(new_gp)
+                                tpl["generate_py"] = new_gp
+                                nonlocal modified
+                                modified = True
+                                fixes.append(f"{tid}.generate_py: auto-exported {missing_export} into '{label}'")
+                                return True
+                            except Exception:
+                                return False
+
+                        # Locate 'vars' entry in AST Dicts (handling both inline dict and assigned dict variable)
+                        vars_val_node = None
+                        for dnode in ast.walk(tree):
+                            if isinstance(dnode, ast.Dict):
+                                for dk, dv in zip(dnode.keys, dnode.values):
+                                    if isinstance(dk, ast.Constant) and dk.value == "vars" and dv is not None:
+                                        vars_val_node = dv
+                                        break
+                            if vars_val_node is not None:
+                                break
+
+                        if isinstance(vars_val_node, ast.Dict):
+                            # Case 2A: 'vars': { ... } inline dict literal (f-string / nested-brace safe via AST)
+                            _inject_into_ast_dict(vars_val_node, label="vars")
+                        elif isinstance(vars_val_node, ast.Name):
+                            # Case 2B: 'vars': var_name where var_name = { ... } (never splits inside f"{b:.1f}")
+                            vname = vars_val_node.id
+                            target_dict_node: Optional[ast.Dict] = None
+                            subscript_keys: Set[str] = set()
+                            for anode in ast.walk(tree):
+                                if isinstance(anode, ast.Assign):
+                                    for tgt in anode.targets:
+                                        if isinstance(tgt, ast.Name) and tgt.id == vname and isinstance(anode.value, ast.Dict):
+                                            target_dict_node = anode.value
+                                        elif (
+                                            isinstance(tgt, ast.Subscript)
+                                            and isinstance(tgt.value, ast.Name)
+                                            and tgt.value.id == vname
+                                            and isinstance(tgt.slice, ast.Constant)
+                                            and isinstance(tgt.slice.value, str)
+                                        ):
+                                            subscript_keys.add(tgt.slice.value)
+                            if target_dict_node is not None:
+                                _inject_into_ast_dict(target_dict_node, extra_existing=subscript_keys, label=vname)
+                        elif vars_val_node is None:
+                            # Case 2C: 'vars' key is completely missing from return { ... }
+                            m_ret = re.search(r"(\breturn\s*\{)(.*)", gen_py, re.DOTALL)
+                            if m_ret:
+                                missing_export = sorted(missing_vars)
+                                if missing_export:
+                                    add_pairs = ", ".join(f"'{v}': {v}" for v in missing_export)
+                                    inject_str = f"\n        'vars': {{{add_pairs}}},"
+                                    new_gp = gen_py[:m_ret.start(1) + len(m_ret.group(1))] + inject_str + gen_py[m_ret.start(1) + len(m_ret.group(1)):]
+                                    try:
+                                        ast.parse(new_gp)
+                                        tpl["generate_py"] = new_gp
+                                        gen_py = new_gp
+                                        modified = True
+                                        fixes.append(f"{tid}.generate_py: injected missing 'vars' dict with {missing_export}")
+                                    except Exception:
+                                        pass
                 except Exception:
                     pass
 
-        # 3. Auto-fill missing error_rationale in multiple_select from CTA distractor lookup
-        if tpl.get("interaction_type") == "multiple_select" and distractor_lookup and isinstance(tpl.get("generate_py"), str):
+        # 3. Auto-fill missing error_rationale in multiple_select and multiple_choice_7_options from CTA distractor lookup
+        if tpl.get("interaction_type") in ("multiple_select", "multiple_choice_7_options", "multiple_choice") and distractor_lookup and isinstance(tpl.get("generate_py"), str):
             gp = tpl["generate_py"]
             for did, rat in distractor_lookup.items():
                 safe_rat = rat.replace("\\", "\\\\").replace("'", "\\'")
 
                 # Pattern 1: distractor_id followed by error_rationale: None or "" or ''
-                p1 = rf"(['\"]distractor_id['\"]\s*:\s*['\"]{re.escape(did)}['\"]\s*,\s*['\"]error_rationale['\"]\s*:\s*)(None|['\"]['\"])"
-                new_gp = re.sub(p1, rf"\1'{safe_rat}'", gp)
+                p1 = rf"(['\"](?:distractor_id|id)['\"]\s*:\s*['\"]{re.escape(did)}['\"]\s*,\s*['\"]error_rationale['\"]\s*:\s*)(None|['\"]['\"])"
+                new_gp = re.sub(p1, lambda m: f"{m.group(1)}'{safe_rat}'", gp)
 
                 # Pattern 2: error_rationale: None or "" or '' followed by distractor_id
-                p2 = rf"(['\"]error_rationale['\"]\s*:\s*)(None|['\"]['\"])(\s*,\s*['\"]distractor_id['\"]\s*:\s*['\"]{re.escape(did)}['\"])"
-                new_gp = re.sub(p2, rf"\1'{safe_rat}'\3", new_gp)
+                p2 = rf"(['\"]error_rationale['\"]\s*:\s*)(None|['\"]['\"])(\s*,\s*['\"](?:distractor_id|id)['\"]\s*:\s*['\"]{re.escape(did)}['\"])"
+                new_gp = re.sub(p2, lambda m: f"{m.group(1)}'{safe_rat}'{m.group(3)}", new_gp)
 
                 # Pattern 3: option dict contains distractor_id, but error_rationale is missing entirely
                 def _inject_missing_rat(m: re.Match) -> str:
                     d_str = m.group(0)
-                    if "error_rationale" not in d_str:
+                    if "error_rationale" not in d_str and "'rationale'" not in d_str and '"rationale"' not in d_str:
                         return re.sub(
-                            rf"(['\"]distractor_id['\"]\s*:\s*['\"]{re.escape(did)}['\"])",
-                            rf"\1, 'error_rationale': '{safe_rat}'",
+                            rf"(['\"](?:distractor_id|id)['\"]\s*:\s*['\"]{re.escape(did)}['\"])",
+                            lambda m2: f"{m2.group(1)}, 'error_rationale': '{safe_rat}'",
                             d_str,
                             count=1,
                         )
                     return d_str
 
                 new_gp = re.sub(
-                    rf"\{{[^{{}}]*['\"]distractor_id['\"]\s*:\s*['\"]{re.escape(did)}['\"][^{{}}]*\}}",
+                    rf"\{{[^{{}}]*['\"](?:distractor_id|id)['\"]\s*:\s*['\"]{re.escape(did)}['\"][^{{}}]*\}}",
                     _inject_missing_rat,
                     new_gp,
                 )
@@ -679,28 +947,36 @@ def auto_heal_template_data(
                         pass
             tpl["generate_py"] = gp
 
-        # 4. Strip R-18 giveaway prefixes from distractor_archetypes and options
+        # 4. Strip R-18 giveaway prefixes and wrap bare LaTeX in distractor_archetypes and options
         if "distractor_archetypes" in tpl and isinstance(tpl["distractor_archetypes"], list):
             for da in tpl["distractor_archetypes"]:
                 if isinstance(da, dict):
                     for rkey in ("rationale", "manifestation", "description"):
                         if isinstance(da.get(rkey), str):
                             old_r = da[rkey]
-                            new_r = _strip_giveaway_prefix(old_r)
+                            new_r = _wrap_bare_latex_in_rationale(_strip_giveaway_prefix(old_r))
                             if new_r != old_r:
                                 da[rkey] = new_r
                                 modified = True
-                                fixes.append(f"{tid}.distractor_archetypes: stripped giveaway prefix from {rkey}")
+                                fixes.append(f"{tid}.distractor_archetypes: sanitized {rkey}")
 
         if "options" in tpl and isinstance(tpl["options"], list):
             for opt in tpl["options"]:
-                if isinstance(opt, dict) and isinstance(opt.get("error_rationale"), str):
-                    old_r = opt["error_rationale"]
-                    new_r = _strip_giveaway_prefix(old_r)
-                    if new_r != old_r:
-                        opt["error_rationale"] = new_r
-                        modified = True
-                        fixes.append(f"{tid}.options: stripped giveaway prefix from error_rationale")
+                if isinstance(opt, dict) and not opt.get("is_correct"):
+                    did = opt.get("distractor_id") or opt.get("id")
+                    cur_rat = opt.get("error_rationale")
+                    if not cur_rat or str(cur_rat).strip() in ("", "None", "placeholder", "N/A", "error", "distractor"):
+                        if did and did in distractor_lookup:
+                            opt["error_rationale"] = distractor_lookup[did]
+                            modified = True
+                            fixes.append(f"{tid}.options: auto-populated error_rationale for {did} from CTA")
+                    elif isinstance(cur_rat, str):
+                        old_r = cur_rat
+                        new_r = _wrap_bare_latex_in_rationale(_strip_giveaway_prefix(old_r))
+                        if new_r != old_r:
+                            opt["error_rationale"] = new_r
+                            modified = True
+                            fixes.append(f"{tid}.options: sanitized error_rationale")
 
         if isinstance(tpl.get("generate_py"), str):
             gp_curr = tpl["generate_py"]
@@ -746,6 +1022,54 @@ def auto_heal_template_file(
     return modified, fixes
 
 
+def check_ast_rf_triple_braces(source_text: str) -> List[str]:
+    """Check for rf'...' or fr'...' strings containing '{{{' which corrupts KaTeX braces."""
+    warnings = []
+    if not source_text or not isinstance(source_text, str):
+        return warnings
+    for m in re.finditer(r"(?i)\b(rf|fr)(['\"]{1,3})([\s\S]*?)\2", source_text):
+        if "{{{" in m.group(3):
+            snippet = m.group(0)[:60] + ("..." if len(m.group(0)) > 60 else "")
+            warnings.append(
+                f"[!] Warning: Se detectó {m.group(1)}{m.group(2)}...{m.group(2)} conteniendo '{{{{{{' ({snippet}). "
+                "Recomendación: Utilice raw strings r\"...\" con tokens @var@ para evitar la corrupción de llaves KaTeX."
+            )
+    return warnings
+
+
+def check_unrendered_placeholders_in_instance(
+    instance: Dict[str, Any],
+    variables: Dict[str, Any],
+) -> List[str]:
+    """Reject unresolved PrairieLearn @var@ and uninterpolated {key} in vars or bare {ident} outside legitimate LaTeX."""
+    from engine.invariants import check_unrendered_placeholders
+    errs = []
+    fields = [
+        ("stem", instance.get("stem")),
+        ("solution", instance.get("solution") or instance.get("explanation") or instance.get("detailed_solution")),
+        ("common_misconception_warning", instance.get("common_misconception_warning") or instance.get("misconception_warning")),
+    ]
+    for idx, h in enumerate(instance.get("hints", []) or []):
+        fields.append((f"hint {idx + 1}", h))
+    for idx, opt in enumerate(instance.get("options", []) or []):
+        if isinstance(opt, dict):
+            fields.append((f"option {idx + 1} content", opt.get("content")))
+            fields.append((f"option {idx + 1} error_rationale", opt.get("error_rationale")))
+    ca = instance.get("correct_answer")
+    if isinstance(ca, str):
+        fields.append(("correct_answer", ca))
+    elif isinstance(ca, dict):
+        for k, v in ca.items():
+            if isinstance(v, str):
+                fields.append((f"correct_answer.{k}", v))
+
+    for ctx, text in fields:
+        if not isinstance(text, str) or not text:
+            continue
+        errs.extend(check_unrendered_placeholders(text, ctx, variables=variables))
+    return list(dict.fromkeys(errs))
+
+
 def _format_dry_failure(
     competency_id: str = "UNKNOWN",
     tpl_id: str = "UNKNOWN",
@@ -785,7 +1109,7 @@ def _format_dry_failure(
             gen_fn = env.get("generate")
             if gen_fn:
                 try:
-                    res = gen_fn(rng)
+                    res = call_with_timeout(gen_fn, args=(rng,), timeout=0.4, seed=failing_seed)
                     if isinstance(res, dict) and "vars" in res and isinstance(res["vars"], dict):
                         if not extracted_params:
                             extracted_params = {k: v for k, v in res["vars"].items()}
@@ -795,7 +1119,7 @@ def _format_dry_failure(
                         exec(cc_compiled, cc_env)
                         ver_fn = cc_env.get("verify")
                         if ver_fn:
-                            cc_res = ver_fn(res)
+                            cc_res = call_with_timeout(ver_fn, args=(res,), timeout=0.4, seed=failing_seed)
                             if cc_res is False:
                                 raise AssertionError("cross_check verification returned False")
                 except Exception as run_e:
@@ -828,14 +1152,37 @@ def _format_dry_failure(
     if exc is not None and exc.__traceback__ is not None:
         tb_frames = traceback.extract_tb(exc.__traceback__)
 
-    # Fallback if no traceback frames: create a frame for generate_py
-    if not tb_frames:
-        tb_frames = [traceback.FrameSummary("<sandbox>", 1, "generate", line="")]
+    # Strip internal frames (compile_shard.py, check_templates.py, engine/)
+    clean_frames = []
+    for fr in tb_frames:
+        fn = str(fr.filename).replace("\\", "/").lower()
+        if any(skip in fn for skip in ("check_templates.py", "compile_shard.py", "engine/sandbox.py", "engine/assemble.py")):
+            continue
+        if fr.name in ("_format_dry_failure", "execute_sandbox_batch", "check_single_template"):
+            continue
+        clean_frames.append(fr)
+    if not clean_frames and tb_frames:
+        clean_frames = [tb_frames[-1]]
+    if not clean_frames:
+        clean_frames = [traceback.FrameSummary("<sandbox>", 1, "generate", line="")]
 
-    last_frames = tb_frames[-3:] if len(tb_frames) >= 3 else tb_frames
+    last_frames = clean_frames[-3:] if len(clean_frames) >= 3 else clean_frames
 
-    # Map frames to shard_XX_data.py source lines if shard_py is available
+    # Map frames to shard_XX_data.py or modular shard_fixes/<CID>.py source lines
     shard_obj = Path(shard_py).resolve() if shard_py and Path(shard_py).is_file() else None
+    fix_obj = None
+    if shard_py:
+        sp = Path(shard_py).resolve()
+        shards_dir = sp.parent if sp.parent.name == "shards" else sp.parent / "shards"
+        fixes_dir = shards_dir / "shard_fixes"
+        if fixes_dir.is_dir():
+            for f in fixes_dir.glob("*.py"):
+                if f.stem in (competency_id, competency_id.replace("-", "_")):
+                    fix_obj = f
+                    break
+    if fix_obj:
+        shard_obj = fix_obj
+
     locator = None
     if shard_obj and ShardDataLineLocator:
         try:
@@ -849,7 +1196,7 @@ def _format_dry_failure(
         fr_name = fr.name
         fr_line = fr.line or ""
 
-        mapped_file = shard_obj.name if shard_obj else fr.filename
+        mapped_file = f"shard_fixes/{shard_obj.name}" if (fix_obj and shard_obj) else (shard_obj.name if shard_obj else fr.filename)
         mapped_lineno = fr_lineno
         mapped_code = fr_line
 
@@ -875,7 +1222,7 @@ def _format_dry_failure(
             f"      File \"{mapped_file}\", line {mapped_lineno}, in {fr_name}\n        {mapped_code}"
         )
 
-    shard_label = shard_obj.name if shard_obj else "shard_XX_data.py"
+    shard_label = f"shard_fixes/{shard_obj.name}" if (fix_obj and shard_obj) else (shard_obj.name if shard_obj else "shard_XX_data.py")
     report_lines = [
         f"[-] [TPL-DRY: FALLO EN EJECUCIÓN DRY-RUN]",
         f"    Competencia: {competency_id} | Plantilla: {tpl_id}",
@@ -892,22 +1239,18 @@ def _format_dry_failure(
     return formatted_msg
 
 
-def render_compact_aggregated_errors(
+def build_compact_diagnostic_groups(
     errors: List[Union[str, DiagnosticError]],
     targets: Optional[List[Path]] = None,
-    max_output_lines: int = 28,
     shard_py: Optional[Union[str, Path]] = None,
-) -> str:
-    """Render canonical LLM-optimized single-line aggregated error output grouped by rule (< 30 lines)."""
-    if not errors:
-        return ""
+) -> Tuple[Dict[str, Dict[Tuple[str, str], Dict[Tuple[str, str], List[int]]]], int]:
+    """Group diagnostic errors canonicalized by rule_tag, file_path/shard_ref, and cause/action.
 
-    has_cb = any("CIRCUIT BREAKER" in str(e) for e in errors)
-    header = (
-        f"FAIL: CIRCUIT BREAKER TRIPPED ({len(errors)} errores en templates):"
-        if has_cb
-        else f"FAIL: {len(errors)} validaciones fallidas en templates:"
-    )
+    Returns:
+        (grouped_dict, total_items_count)
+    """
+    if not errors:
+        return {}, 0
 
     # Build or lookup ShardDataLineLocator
     locators_by_path: Dict[str, Any] = {}
@@ -949,23 +1292,60 @@ def render_compact_aggregated_errors(
         fpath = rec["file_path"]
         if not fpath and rec["competency"]:
             cid = rec["competency"]
-            cand1 = Path("work/templates") / f"{cid}.json"
-            cand2 = Path("templates") / f"{cid}.json"
-            if cand1.is_file():
-                fpath = str(cand1.as_posix())
-            elif cand2.is_file():
-                fpath = str(cand2.as_posix())
-            elif targets:
+            # Prioritize matching target path first
+            matched_target: Optional[Path] = None
+            if targets:
                 for t in targets:
-                    if t.stem == cid or cid in t.stem:
-                        fpath = str(t.as_posix())
+                    t_path = Path(t)
+                    if t_path.is_file() and (t_path.stem == cid or cid in t_path.stem):
+                        matched_target = t_path
                         break
-            if not fpath:
-                fpath = f"work/templates/{cid}.json"
+                    elif t_path.is_dir() and (t_path / f"{cid}.json").is_file():
+                        matched_target = t_path / f"{cid}.json"
+                        break
+                    elif t_path.stem == cid:
+                        matched_target = t_path
+                        break
+            if matched_target:
+                try:
+                    fpath = matched_target.resolve().relative_to(Path.cwd().resolve()).as_posix()
+                except Exception:
+                    fpath = matched_target.as_posix()
+            else:
+                cand1 = Path("work/templates") / f"{cid}.json"
+                cand2 = Path("templates") / f"{cid}.json"
+                if cand1.is_file():
+                    fpath = str(cand1.as_posix())
+                elif cand2.is_file():
+                    fpath = str(cand2.as_posix())
+                elif targets and targets[0].parent:
+                    cand_t = targets[0].parent / f"{cid}.json"
+                    try:
+                        fpath = cand_t.resolve().relative_to(Path.cwd().resolve()).as_posix()
+                    except Exception:
+                        fpath = cand_t.as_posix()
+                elif targets:
+                    try:
+                        fpath = Path(targets[0]).resolve().relative_to(Path.cwd().resolve()).as_posix()
+                    except Exception:
+                        fpath = str(targets[0].as_posix())
+                else:
+                    fpath = f"work/templates/{cid}.json"
         elif not fpath and targets:
-            fpath = str(targets[0].as_posix())
+            try:
+                fpath = Path(targets[0]).resolve().relative_to(Path.cwd().resolve()).as_posix()
+            except Exception:
+                fpath = str(targets[0].as_posix())
         else:
             fpath = fpath or "work/templates"
+
+        if fpath:
+            try:
+                p_fpath = Path(fpath)
+                if p_fpath.is_absolute() and p_fpath.is_relative_to(Path.cwd()):
+                    fpath = p_fpath.relative_to(Path.cwd()).as_posix()
+            except Exception:
+                pass
 
         rec["file_path"] = fpath
 
@@ -1024,13 +1404,60 @@ def render_compact_aggregated_errors(
 
         grouped[rtag][(fp, s_ref)][(scause, sact)].extend(r["lines"])
 
+    total_items = sum(len(err_map) for file_map in grouped.values() for err_map in file_map.values())
+    return grouped, total_items
+
+
+def count_distinct_shard_error_hunks(
+    raw_errors: List[Union[str, DiagnosticError]],
+    targets: Optional[List[Path]] = None,
+    shard_py: Optional[Union[str, Path]] = None,
+) -> int:
+    """Count the number of deduplicated/consolidated diagnostic hunks.
+
+    Guarantees >= 1 when raw_errors is not empty, representing distinct logical issues
+    rather than per-seed duplicates.
+    """
+    if not raw_errors:
+        return 0
+    _, total_items = build_compact_diagnostic_groups(raw_errors, targets=targets, shard_py=shard_py)
+    return max(1, total_items)
+
+
+def render_compact_aggregated_errors(
+    errors: List[Union[str, DiagnosticError]],
+    targets: Optional[List[Path]] = None,
+    max_output_lines: int = 28,
+    shard_py: Optional[Union[str, Path]] = None,
+) -> str:
+    """Render canonical LLM-optimized single-line aggregated error output grouped by rule (< 30 lines)."""
+    if not errors:
+        return ""
+
+    has_cb = any("CIRCUIT BREAKER" in str(e) for e in errors)
+    header = (
+        f"FAIL: CIRCUIT BREAKER TRIPPED ({len(errors)} errores en templates):"
+        if has_cb
+        else f"FAIL: {len(errors)} validaciones fallidas en templates:"
+    )
+
+    grouped, total_items = build_compact_diagnostic_groups(errors, targets=targets, shard_py=shard_py)
+    hunk_count = max(1, total_items)
+
+    if hunk_count < 6:
+        directive_line = f"[UMBRAL < 6 ({hunk_count}/5 errores)]: Usa edit_file (replace_file_content) quirúrgico en las líneas indicadas; PROHIBIDO write_file completo."
+    else:
+        directive_line = f"[UMBRAL >= 6 ({hunk_count} errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True) completo."
+
     out_lines = [header, ""]
     truncated = False
     total_rendered_items = 0
-    total_items = sum(len(err_map) for file_map in grouped.values() for err_map in file_map.values())
+
+    # Reserve room for truncation message (1 line) and directive_line (1 line)
+    line_limit = max(2, max_output_lines - 3)
 
     for rtag, file_map in grouped.items():
-        if len(out_lines) >= max_output_lines - 2:
+        if len(out_lines) >= line_limit:
             truncated = True
             break
         m_rid = re.match(r"^([A-Za-z0-9_-]+)", rtag)
@@ -1038,11 +1465,11 @@ def render_compact_aggregated_errors(
         out_lines.append(f"[-] [{rtag}]")
 
         for (fp, s_ref), err_map in file_map.items():
-            if len(out_lines) >= max_output_lines - 2:
+            if len(out_lines) >= line_limit:
                 truncated = True
                 break
             for (cause, act), l_list in err_map.items():
-                if len(out_lines) >= max_output_lines - 2:
+                if len(out_lines) >= line_limit:
                     truncated = True
                     break
                 uniq_lines = sorted(set(l_list))
@@ -1059,14 +1486,25 @@ def render_compact_aggregated_errors(
                 total_rendered_items += 1
         out_lines.append("")
 
-    if truncated:
+    if truncated or total_rendered_items < total_items:
         remaining = total_items - total_rendered_items
-        out_lines.append(f"  ... y {remaining} diagnósticos adicionales consolidados.")
+        if remaining > 0:
+            out_lines.append(f"  ... y {remaining} diagnósticos adicionales consolidados.")
+
+    out_lines.append(directive_line)
 
     res_str = "\n".join(out_lines).strip()
     res_lines = res_str.splitlines()
-    if len(res_lines) >= max_output_lines:
-        res_lines = res_lines[:max_output_lines - 1] + [f"  ... ({len(errors)} errores totales consolidados en formato compacto < 30 líneas)."]
+    if len(res_lines) > max_output_lines:
+        if max_output_lines >= 3:
+            res_lines = res_lines[:max_output_lines - 2] + [
+                f"  ... ({len(errors)} errores totales consolidados en formato compacto < 30 líneas).",
+                directive_line,
+            ]
+        elif max_output_lines == 2:
+            res_lines = [res_lines[0], directive_line]
+        else:
+            res_lines = [directive_line]
         res_str = "\n".join(res_lines)
     return res_str
 
@@ -1203,13 +1641,60 @@ def format_invariant_error_diagnostic(
         return format_diagnostic_error("R-20: SINTAXIS / LLAVES", cid, tpl_id, q_id, field_name, snippet, cause, actions)
 
     # Case F: Unbalanced curly braces in LaTeX math expression
-    if "Unbalanced curly braces in LaTeX math expression" in inv_clean:
-        m_ctx = re.search(r"in ([^:]+):\s*'(.*)'", inv_clean)
-        field_name = m_ctx.group(1).strip() if m_ctx else "math expression"
-        snippet = m_ctx.group(2) if m_ctx else "{ o }"
-        cause = f"Llaves curvas '{{' y '}}' desbalanceadas dentro de la fórmula LaTeX en '{field_name}': '{snippet}'."
+    if "Unbalanced curly braces in LaTeX math expression" in inv_clean or ("LaTeX math expression in" in inv_clean and "unbalanced braces" in inv_clean) or "unbalanced braces" in inv_clean.lower():
+        m_field = re.search(r"in\s+([^:]+?)(?::|\s+has\s+unbalanced)", inv_clean, re.IGNORECASE)
+        raw_field = m_field.group(1).strip() if m_field else "math expression"
+
+        # Check if option error_rationale or content
+        m_opt = re.search(r"option\s+(\d+)\s*(error_rationale|content)?", raw_field, re.IGNORECASE)
+        field_name = raw_field
+        if m_opt:
+            opt_num = int(m_opt.group(1))
+            opt_idx = opt_num - 1 if opt_num >= 1 else opt_num
+            opt_type = m_opt.group(2).lower() if m_opt.group(2) else ("error_rationale" if "rationale" in raw_field.lower() else "content")
+            field_name = f"options[{opt_idx}].{opt_type}"
+            did_found = None
+            if q_obj and isinstance(q_obj, dict):
+                opts = q_obj.get("options", [])
+                if 0 <= opt_idx < len(opts):
+                    did_found = opts[opt_idx].get("distractor_id") or opts[opt_idx].get("id")
+            if not did_found:
+                m_did = re.search(r"\b(D-[A-Za-z0-9_-]+)\b", inv_clean)
+                if m_did:
+                    did_found = m_did.group(1)
+            if did_found:
+                field_name = f"{field_name} (distractor {did_found})"
+        elif "stem" in raw_field.lower():
+            field_name = "stem"
+        elif "solution" in raw_field.lower() or "explanation" in raw_field.lower():
+            field_name = "solution"
+
+        # Extract snippet
+        m_snip = re.search(r"['\"]([^'\"]*)['\"]", inv_clean)
+        if not m_snip:
+            m_snip = re.search(r":\s*(\$?[^$]+\$?.*)", inv_clean)
+        snippet = m_snip.group(1).strip() if m_snip else "{ o }"
+
+        # Analyze balance and patterns
+        open_c = snippet.count("{")
+        close_c = snippet.count("}")
+        pattern_notes = []
+        if "_}{" in snippet or "^}{" in snippet:
+            pattern_notes.append("patrón invertido '_}{' o '^}{'")
+        if open_c != close_c:
+            pattern_notes.append(f"open={open_c} vs close={close_c}")
+
+        pattern_str = f" ({', '.join(pattern_notes)})" if pattern_notes else ""
+        cause = f"Llaves '{{' y '}}' desbalanceadas{pattern_str} dentro de la fórmula LaTeX en '{field_name}': '{snippet}'."
+
+        action_detail = (
+            f"Faltan {open_c - close_c} llave(s) de cierre '}}'." if open_c > close_c else
+            f"Sobran {close_c - open_c} llave(s) de cierre '}}'." if close_c > open_c else
+            "Revisar el orden de apertura y cierre de llaves '{' y '}'."
+        )
         actions = [
-            "Contar y balancear las llaves '{' y '}' en la expresión LaTeX.",
+            f"Balancear las llaves en '{field_name}' ({action_detail}).",
+            "Verificar que subíndices y superíndices sigan la sintaxis KaTeX '_{sub}' o '^{sup}' y no '_}{' o '^}{'.",
             "Si se usaron llaves literales escapadas '\\{', asegurar que la barra invertida esté presente.",
             "Revisar macros de LaTeX con múltiples argumentos como \\frac{a}{b} donde falte una llave de cierre.",
         ]
@@ -1555,15 +2040,22 @@ def format_parity_error(
         ]
         return format_diagnostic_error("R-17: RATIONALE GENÉRICO / PLACEHOLDER", cid, tpl_id, item_id, field_name, snippet, cause, actions)
 
-    # Rule R-15
-    if rule_id == "R-15":
-        cause = "La longitud de la respuesta correcta difiere significativamente del rango de los distractores (fuera de 0.80x - 1.20x), constituyendo una pista visual."
+    # Rule R-15 and Rule R-16: Option Length Parity
+    if rule_id in ("R-15", "R-16"):
+        correct_opt = next((opt for opt in q.get("options", []) if opt.get("is_correct")), None)
+        distractor_opts = [opt for opt in q.get("options", []) if not opt.get("is_correct")]
+        L_c = len(str(correct_opt.get("content", "")).strip()) if correct_opt else 0
+        dist_lens = [len(str(d.get("content", "")).strip()) for d in distractor_opts]
+        L_d = sum(dist_lens) / len(dist_lens) if dist_lens else 1.0
+        ratio = L_c / L_d if L_d > 0 else 1.0
+        details_str = f"len(correct)={L_c} vs avg(distractors)={L_d:.1f} (ratio={ratio:.2f}x, rango permitido=[0.65x, 1.35x]). Longitudes distractores: {dist_lens}"
+        cause = f"Disparidad de longitud en opciones: {details_str}."
         actions = [
             "Calibrar la longitud de la respuesta correcta o de los distractores para que tengan una extensión homogénea.",
             "Homogeneizar el nivel de detalle y formato matemático entre todas las opciones.",
-            "Asegurar que 0.80 * min(len(D)) <= len(correct) <= 1.20 * max(len(D)).",
+            "Asegurar que 0.65 * avg(len(D)) <= len(correct) <= 1.35 * avg(len(D)).",
         ]
-        return format_diagnostic_error("R-15: EQUILIBRIO DE LONGITUD", cid, tpl_id, item_id, "options", msg, cause, actions)
+        return format_diagnostic_error("R-16: EQUILIBRIO DE LONGITUD DE OPCIONES", cid, tpl_id, item_id, "options", details_str, cause, actions)
 
     # Rule S-01
     if rule_id == "S-01":
@@ -1890,7 +2382,7 @@ def check_single_template(
             generate_py=generate_py,
             seeds=seeds,
             cross_check_py=cross_check_py,
-            timeout_per_item=2.0,
+            timeout_per_item=0.8,
         )
     except Exception as e:
         errors.append(format_diagnostic_error(
@@ -1956,6 +2448,17 @@ def check_single_template(
             raw_asm_failures.setdefault(str(e), []).append(f"seed={seed_val}")
             continue
 
+        # Validate unrendered placeholders
+        pl_errs = check_unrendered_placeholders_in_instance(assembled_q, gen_res.get("vars", {}))
+        for ple in pl_errs:
+            canon_key = get_canonical_invariant_key(ple)
+            seed_tag = f"seed={seed_val}"
+            if canon_key not in raw_inv_failures:
+                raw_inv_failures[canon_key] = (ple, [seed_tag], assembled_q)
+            else:
+                if seed_tag not in raw_inv_failures[canon_key][1]:
+                    raw_inv_failures[canon_key][1].append(seed_tag)
+
         # Invariant check (Accumulate all failures: NO break)
         is_valid, inv_errors = check_instance_invariants(assembled_q, interaction_type)
         if not is_valid:
@@ -1964,10 +2467,12 @@ def check_single_template(
                 if has_collision and "Duplicate option content detected" in inv_err:
                     continue
                 canon_key = get_canonical_invariant_key(inv_err)
+                seed_tag = f"seed={seed_val}"
                 if canon_key not in raw_inv_failures:
-                    raw_inv_failures[canon_key] = (inv_err, [f"seed={seed_val}"])
+                    raw_inv_failures[canon_key] = (inv_err, [seed_tag], assembled_q)
                 else:
-                    raw_inv_failures[canon_key][1].append(f"seed={seed_val}")
+                    if seed_tag not in raw_inv_failures[canon_key][1]:
+                        raw_inv_failures[canon_key][1].append(seed_tag)
 
     # Consolidate assembly failures
     for asm_err, seed_list in raw_asm_failures.items():
@@ -1987,13 +2492,13 @@ def check_single_template(
         ))
 
     # Consolidate invariant failures (including TPL-D4 collisions and duplicates across seeds)
-    for canon_key, (rep_inv_err, seed_list) in raw_inv_failures.items():
+    for canon_key, (rep_inv_err, seed_list, sample_q) in raw_inv_failures.items():
         errors.append(format_invariant_error_diagnostic(
             cid=competency_id,
             tpl_id=tpl_id,
             q_id=seed_list,
             inv_err=rep_inv_err,
-            q_obj=None,
+            q_obj=sample_q,
         ))
 
     # 5. Rule TPL-VAR: Early variability and parametric capacity validation
@@ -2016,13 +2521,16 @@ def check_single_template(
     # b) Verify stem contains at least one placeholder {var} or stem_variants is present
     stem = template.get("stem", "")
     stem_variants = template.get("stem_variants")
-    has_placeholder = bool(re.search(r"\{[A-Za-z0-9_]+(?::[^{}]+)?\}", stem))
+    has_placeholder = bool(
+        re.search(r"\{[A-Za-z0-9_]+(?::[^{}]+)?\}", stem)
+        or re.search(r"@[A-Za-z_][A-Za-z0-9_]*(?::[^@\s{}]+)?@", stem)
+    )
     has_variants = bool(stem_variants and len(stem_variants) > 0)
     if not (has_placeholder or has_variants):
         errors.append(format_diagnostic_error(
             "TPL-VAR: DIVERSIDAD DE REACTIVOS", competency_id, tpl_id, "template", "stem / stem_variants",
             f"stem: '{stem[:60]}...'",
-            f"TPL-VAR violation in '{tpl_id}': stem must contain at least one placeholder '{{var}}' or 'stem_variants' must be present.",
+            f"TPL-VAR violation in '{tpl_id}': stem must contain at least one placeholder '{{var}}' or '@var@' or 'stem_variants' must be present.",
             [
                 "Insertar al menos un placeholder dinámico como '{a}' o '{x}' en el campo 'stem'.",
                 "O proveer una lista de 3 a 5 formulaciones alternativas en 'stem_variants'.",
@@ -2176,18 +2684,18 @@ def check_competency_diversity(
                 canon_key = get_canonical_invariant_key(inv_err)
                 sig = (t_id, canon_key)
                 if sig not in comp_inv_failures:
-                    comp_inv_failures[sig] = (inv_err, [q_id])
+                    comp_inv_failures[sig] = (inv_err, [q_id], q)
                 else:
                     comp_inv_failures[sig][1].append(q_id)
 
-    for (t_id, canon_key), (rep_err, q_ids) in comp_inv_failures.items():
+    for (t_id, canon_key), (rep_err, q_ids, sample_q) in comp_inv_failures.items():
         unique_q_ids = list(dict.fromkeys(q_ids))
         errors.append(format_invariant_error_diagnostic(
             cid=cid,
             tpl_id=t_id,
             q_id=unique_q_ids,
             inv_err=rep_err,
-            q_obj=None,
+            q_obj=sample_q,
         ))
 
     div_stats = comp_res.get("diversity_stats", {})
@@ -2297,6 +2805,7 @@ def check_templates_file_or_dir(
     auto_fix: bool = True,
     shard_py: Optional[Union[str, Path]] = None,
     shard_id: Optional[str] = None,
+    from_compile_shard: bool = False,
 ) -> Tuple[bool, List[str]]:
     """Validate all templates in file(s) or directory against CTA with production contract parity."""
     # warm_up_sandbox()  # Omit blind warmup: in-process execution is already instant
@@ -2427,9 +2936,10 @@ def check_templates_file_or_dir(
     referenced_distractors_by_comp: Dict[str, Set[str]] = {cid: set() for cid in cta_distractors_by_comp}
     templates_by_comp: Dict[str, List[Dict[str, Any]]] = {}
     processed_comp_ids: Set[str] = set()
+    errors_by_comp: Dict[str, List[str]] = {}
 
     if len(template_files) > 1:
-        max_workers = min(16, (os.cpu_count() or 4) * 2, len(template_files))
+        max_workers = min(4, os.cpu_count() or 4, len(template_files))
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_file = {
                 executor.submit(
@@ -2447,6 +2957,8 @@ def check_templates_file_or_dir(
                 errors.extend(file_errs)
                 if comp_id:
                     processed_comp_ids.add(comp_id)
+                    if file_errs:
+                        errors_by_comp.setdefault(comp_id, []).extend(file_errs)
                     templates_by_comp.setdefault(comp_id, []).extend(tpls)
                     if comp_id in referenced_distractors_by_comp:
                         referenced_distractors_by_comp[comp_id].update(ref_dids)
@@ -2462,6 +2974,8 @@ def check_templates_file_or_dir(
             errors.extend(file_errs)
             if comp_id:
                 processed_comp_ids.add(comp_id)
+                if file_errs:
+                    errors_by_comp.setdefault(comp_id, []).extend(file_errs)
                 templates_by_comp.setdefault(comp_id, []).extend(tpls)
                 if comp_id in referenced_distractors_by_comp:
                     referenced_distractors_by_comp[comp_id].update(ref_dids)
@@ -2474,7 +2988,7 @@ def check_templates_file_or_dir(
             referenced_set = referenced_distractors_by_comp.get(cid, set())
             uncovered = declared_set - referenced_set
             if uncovered:
-                errors.append(format_diagnostic_error(
+                err_diag = format_diagnostic_error(
                     rule_tag="TPL-D3: COBERTURA COMPLETA DE DISTRACTORES",
                     competency=cid,
                     template="[Todas las plantillas de la competencia]",
@@ -2487,7 +3001,9 @@ def check_templates_file_or_dir(
                         "O crear plantillas adicionales que ejerciten los conceptos erróneos representados por estos distractores.",
                         "Asegurar que el 100% de los distractores de cta.json tengan al menos una plantilla que los emplee.",
                     ],
-                ))
+                )
+                errors.append(err_diag)
+                errors_by_comp.setdefault(cid, []).append(err_diag)
 
     # Rule TPL-VAR (Competency Diversity Gate) & Isomorphic Contract Parity Check
     if cta_data and "competencies" in cta_data:
@@ -2522,14 +3038,46 @@ def check_templates_file_or_dir(
 
         sorted_comps = sorted(comps_to_check)
         if len(sorted_comps) > 1:
-            max_workers = min(16, (os.cpu_count() or 4) * 2, len(sorted_comps))
+            max_workers = min(4, os.cpu_count() or 4, len(sorted_comps))
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                comp_futures = [executor.submit(_evaluate_comp_diversity_and_parity, cid) for cid in sorted_comps]
+                comp_futures = {executor.submit(_evaluate_comp_diversity_and_parity, cid): cid for cid in sorted_comps}
                 for fut in comp_futures:
-                    errors.extend(fut.result())
+                    cid = comp_futures[fut]
+                    c_errs = fut.result()
+                    errors.extend(c_errs)
+                    if c_errs:
+                        errors_by_comp.setdefault(cid, []).extend(c_errs)
         else:
             for cid in sorted_comps:
-                errors.extend(_evaluate_comp_diversity_and_parity(cid))
+                c_errs = _evaluate_comp_diversity_and_parity(cid)
+                errors.extend(c_errs)
+                if c_errs:
+                    errors_by_comp.setdefault(cid, []).extend(c_errs)
+
+    # Associate any global or unassociated errors with relevant competencies
+    for err in errors:
+        for cid in processed_comp_ids:
+            if err in errors_by_comp.get(cid, []):
+                continue
+            err_norm = err.replace("\\", "/")
+            cid_pat = re.compile(rf"\b{re.escape(cid)}\b", re.IGNORECASE)
+            if (
+                f"'{cid}'" in err
+                or f'"{cid}"' in err
+                or f"[{cid}]" in err
+                or f"({cid})" in err
+                or f"/{cid}.json" in err_norm
+                or err_norm.endswith(f"/{cid}.json")
+                or err_norm.startswith(f"{cid}.json")
+                or bool(cid_pat.search(err))
+            ):
+                errors_by_comp.setdefault(cid, []).append(err)
+
+    if len(processed_comp_ids) == 1 and errors:
+        only_cid = next(iter(processed_comp_ids))
+        for err in errors:
+            if err not in errors_by_comp.get(only_cid, []):
+                errors_by_comp.setdefault(only_cid, []).append(err)
 
     is_clean = (len(errors) == 0)
 
@@ -2589,10 +3137,11 @@ def check_templates_file_or_dir(
 
             cb_file = att_path / f"circuit_breaker_{scope_key}.json"
             legacy_cb_file = att_path / "circuit_breaker.json"
+            err_hash = None
 
             if not is_clean:
                 # Compute deterministic error fingerprint
-                normalized_errs = sorted([re.sub(r"at 0x[0-9a-fA-F]+", "", e.strip()) for e in errors])
+                normalized_errs = sorted([normalize_error_string_for_hash(e) for e in errors])
                 err_hash = hashlib.sha256("\n".join(normalized_errs).encode("utf-8")).hexdigest()
 
                 cb_data = {"consecutive_count": 1, "last_hash": err_hash, "history": []}
@@ -2641,15 +3190,27 @@ def check_templates_file_or_dir(
 
             # Per-competency budget halt tracking with shard isolation and stateful SHA-256 circuit breaker
             for cid in processed_comp_ids:
+                cid_errs = errors_by_comp.get(cid, [])
+                cid_is_clean = (len(cid_errs) == 0)
+
+                if len(processed_comp_ids) == 1 and err_hash:
+                    cid_err_hash = err_hash
+                elif cid_errs:
+                    cid_norm = sorted([normalize_error_string_for_hash(e) for e in cid_errs])
+                    cid_err_hash = hashlib.sha256("\n".join(cid_norm).encode("utf-8")).hexdigest()
+                else:
+                    cid_err_hash = None
+
                 att_fname = f"{shard_id}_{cid}.json" if shard_id else f"{cid}.json"
                 f_att = att_path / att_fname
-                att_data = {"attempts": 0, "last_hash": None, "halted": False}
+                att_data = {"attempts": 0, "last_hash": None, "last_err_hash": None, "halted": False}
                 if f_att.is_file():
                     try:
                         loaded = json.loads(f_att.read_text(encoding="utf-8"))
                         if isinstance(loaded, dict):
                             att_data["attempts"] = loaded.get("attempts", 0)
                             att_data["last_hash"] = loaded.get("last_hash")
+                            att_data["last_err_hash"] = loaded.get("last_err_hash")
                             att_data["halted"] = bool(loaded.get("halted", False))
                     except Exception:
                         pass
@@ -2670,24 +3231,30 @@ def check_templates_file_or_dir(
 
                 comp_hash = hashlib.sha256(comp_source_text.encode("utf-8")).hexdigest()
                 last_hash = att_data.get("last_hash")
+                last_err_hash = att_data.get("last_err_hash")
                 was_halted = att_data.get("halted", False)
                 hash_changed = (last_hash is not None and last_hash != comp_hash)
+                err_changed = (cid_err_hash is not None and last_err_hash is not None and last_err_hash != cid_err_hash)
 
-                if hash_changed:
+                if hash_changed or (from_compile_shard and err_changed):
                     # Changed hash is re-evaluated; clear previous halt and reset attempts
                     att_data["attempts"] = 0
                     att_data["halted"] = False
                     was_halted = False
 
-                if is_clean:
-                    # Pass clears the halt
-                    if f_att.is_file():
-                        try:
-                            f_att.unlink()
-                        except Exception:
-                            pass
+                if cid_is_clean:
+                    # Pass clears the halt and deletes any attempt files for this competency
+                    targets_to_unlink = [f_att, att_path / f"{cid}.json"]
+                    if shard_id:
+                        targets_to_unlink.append(att_path / f"{shard_id}_{cid}.json")
+                    for target_file in targets_to_unlink:
+                        if target_file.is_file():
+                            try:
+                                target_file.unlink()
+                            except Exception:
+                                pass
                 else:
-                    if was_halted and not hash_changed:
+                    if was_halted and not hash_changed and not err_changed:
                         terminal_msg = (
                             f"[!] BUDGET HALT on competency '{cid}': Repeat failure with unchanged SHA-256 source hash ({comp_hash[:10]}). "
                             f"STOP, send_message the Director."
@@ -2696,13 +3263,15 @@ def check_templates_file_or_dir(
                     else:
                         att_data["attempts"] = att_data.get("attempts", 0) + 1
                         att_data["last_hash"] = comp_hash
+                        att_data["last_err_hash"] = cid_err_hash
                         if att_data["attempts"] >= 3:
-                            att_data["halted"] = True
-                            terminal_msg = (
-                                f"[!] BUDGET HALT on competency '{cid}': Exceeded {att_data['attempts']} validation cycles with identical source hash ({comp_hash[:10]}). "
-                                f"STOP, send_message the Director."
-                            )
-                            errors.append(terminal_msg)
+                            if not (from_compile_shard and err_changed):
+                                att_data["halted"] = True
+                                terminal_msg = (
+                                    f"[!] BUDGET HALT on competency '{cid}': Exceeded {att_data['attempts']} validation cycles with identical source hash ({comp_hash[:10]}). "
+                                    f"STOP, send_message the Director."
+                                )
+                                errors.append(terminal_msg)
                         _safe_write_text(f_att, json.dumps(att_data, indent=2, ensure_ascii=False))
         except Exception:
             pass

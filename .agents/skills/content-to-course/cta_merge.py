@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import heapq
 import json
 import logging
 import re
@@ -25,6 +26,16 @@ try:
     from .check_cta import JsonLineLocator, check_cta_katex, check_prerequisites_dag, validate_cta_rules
 except ImportError:
     from check_cta import JsonLineLocator, check_cta_katex, check_prerequisites_dag, validate_cta_rules
+
+# Import patch recording from patch_ledger
+try:
+    from .patch_ledger import record_patch
+except ImportError:
+    try:
+        from patch_ledger import record_patch
+    except ImportError:
+        def record_patch(*args: Any, **kwargs: Any) -> Any:
+            pass
 
 
 logger = logging.getLogger("cta_merge")
@@ -51,6 +62,48 @@ def jaccard_similarity(tokens_a: Set[str], tokens_b: Set[str]) -> float:
     intersection = len(tokens_a & tokens_b)
     union = len(tokens_a | tokens_b)
     return intersection / union if union > 0 else 0.0
+
+
+def parse_next_ids_by_prefix(delta_info: Optional[Dict[str, Any]]) -> Dict[str, int]:
+    """Parse next sequential starting counts from delta_manifest or manifest['delta'].
+
+    Returns {'H': next_h, 'C': next_c, 'Hab': next_hab}.
+    Default is 1 for all prefixes (meaning count starts at 0).
+    """
+    res = {"H": 1, "C": 1, "Hab": 1}
+    if not isinstance(delta_info, dict):
+        return res
+
+    def _extract_num(v: Any) -> int:
+        if isinstance(v, (int, float)):
+            return int(v)
+        m = re.search(r"\d+", str(v))
+        return int(m.group(0)) if m else 1
+
+    def _update(k: str, val: int) -> None:
+        clean_k = k.rstrip("-").capitalize()
+        if clean_k in ("Fact", "H"):
+            res["H"] = max(res["H"], val)
+        elif clean_k in ("Concept", "C"):
+            res["C"] = max(res["C"], val)
+        elif clean_k in ("Skill", "Hab"):
+            res["Hab"] = max(res["Hab"], val)
+
+    for field_name in (
+        "next_numbers_by_prefix",
+        "next_ids_by_prefix",
+        "next_ids_by_category",
+        "max_numbers_by_prefix",
+    ):
+        data = delta_info.get(field_name)
+        if isinstance(data, dict):
+            for k, v in data.items():
+                num = _extract_num(v)
+                if field_name == "max_numbers_by_prefix":
+                    num += 1
+                _update(k, num)
+
+    return res
 
 
 def extract_evidence_keys(evidence_list: Optional[List[Dict[str, Any]]]) -> Set[Tuple[str, str]]:
@@ -106,7 +159,236 @@ def auto_balance_math_delimiters(text: str) -> str:
     return text
 
 
-def normalize_orphan_math(text: str) -> str:
+LATEX_CMD_NAMES = (
+    r"frac|dfrac|tfrac|cfrac|sqrt|sum|prod|int|oint|lim|infty|partial|nabla|"
+    r"alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|vartheta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|varphi|chi|psi|omega|"
+    r"Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Upsilon|Phi|Psi|Omega|"
+    r"cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|simeq|propto|in|notin|subset|subseteq|cup|cap|forall|exists|"
+    r"Rightarrow|implies|iff|Leftrightarrow|to|rightarrow|leftarrow|xrightarrow|"
+    r"hat|bar|tilde|vec|dot|ddot|mathcal|mathbb|mathbf|boldsymbol|text|operatorname|left|right|begin|end|"
+    r"quad|qquad|ln|log|exp|det|dim|ker|min|max|sup|inf"
+)
+LATEX_CMD_RE = re.compile(rf"\\(?:{LATEX_CMD_NAMES})(?![a-zA-Z])")
+
+MATH_NAMES = {
+    "frac", "dfrac", "tfrac", "cfrac", "sqrt", "sum", "prod", "int", "oint", "lim", "infty",
+    "partial", "nabla", "alpha", "beta", "gamma", "delta", "epsilon", "varepsilon", "zeta",
+    "eta", "theta", "vartheta", "iota", "kappa", "lambda", "mu", "nu", "xi", "pi", "rho",
+    "sigma", "tau", "upsilon", "phi", "varphi", "chi", "psi", "omega",
+    "gamma", "delta", "theta", "lambda", "xi", "pi", "sigma", "upsilon", "phi", "psi", "omega",
+    "cdot", "times", "div", "pm", "mp", "leq", "geq", "neq", "approx", "equiv", "sim",
+    "simeq", "propto", "in", "notin", "subset", "subseteq", "cup", "cap", "forall", "exists",
+    "to", "rightarrow", "leftarrow", "xrightarrow", "hat", "bar", "tilde", "vec", "dot", "ddot",
+    "text", "operatorname", "left", "right", "begin", "end", "exp", "log", "ln", "max", "min",
+    "sup", "inf", "det", "dim", "ker", "cov", "var", "plim", "arg", "mse", "tr", "diag", "normal",
+    "mathcal", "mathbb", "mathbf", "boldsymbol",
+}
+
+COMMON_SPANISH_PROSE_WORDS = {
+    "y", "e", "o", "u", "a",
+    "que", "para", "cuando", "donde", "porque", "como", "cual", "cuales", "quien",
+    "el", "la", "los", "las", "un", "una", "unos", "unas", "al", "del", "lo",
+    "de", "en", "con", "por", "sin", "sobre", "tras", "entre", "hacia", "desde", "hasta",
+    "este", "esta", "estos", "estas", "ese", "esa", "esos", "esas", "aquel", "aquella",
+    "su", "sus", "mi", "mis", "tu", "tus", "nuestro", "nuestra",
+    "se", "me", "te", "nos", "os", "le", "les",
+    "es", "son", "era", "eran", "fue", "fueron", "sea", "sean", "ser", "estar", "estan", "están",
+    "asume", "asumiendo", "confunde", "confundiendo", "olvida", "olvidando", "omite", "omitiendo",
+    "aplica", "aplicando", "calcula", "calculando", "cree", "creyendo", "divide", "multiplica",
+    "suma", "resta", "iguala", "sustituye", "despeja", "aproxima",
+    "error", "paso", "caso", "valor", "teorema", "definicion", "definición", "formula", "fórmula",
+    "estimador", "varianza", "media", "muestra", "poblacion", "población", "distribucion", "distribución",
+    "limite", "límite", "convergencia", "hipotesis", "hipótesis", "parametro", "parámetro",
+    "condicion", "condición", "resultado", "sesgo", "consistencia", "asintotica", "asintótica",
+    "pero", "aunque", "sino", "mas", "más", "menos", "bien", "mal", "tambien", "también",
+    "no", "si", "sí", "ya", "muy", "vez", "veces", "lugar", "forma", "modo", "tipo",
+    "todo", "toda", "todos", "todas", "cada", "otro", "otra", "otros", "otras",
+    "afirma", "obtiene", "concluye", "establece", "demuestra", "cumple", "verifica",
+}
+
+
+def auto_wrap_bare_latex_in_cta_field(text: str) -> str:
+    """Auto-wraps bare/orphaned LaTeX commands outside $...$ or $$...$$ into $...$ blocks."""
+    if not isinstance(text, str) or not text:
+        return text
+
+    if text.count("{") != text.count("}"):
+        return text
+
+    if not LATEX_CMD_RE.search(text):
+        return text
+
+    clean_dollars = text.replace(r"\$", "")
+    if "$" not in clean_dollars:
+        stripped = text.strip()
+        words = re.findall(r"\b[a-zA-Z\u00C0-\u017F]{2,}\b", stripped)
+        non_math = [w.lower() for w in words if w.lower() not in MATH_NAMES]
+        has_prose = any(w in COMMON_SPANISH_PROSE_WORDS for w in non_math) or len(non_math) >= 3
+        if not has_prose:
+            if stripped.endswith((".", ",", ";", ":", "?", "!")):
+                punct = stripped[-1]
+                core = stripped[:-1].rstrip()
+                return f"${core}${punct}"
+            return f"${stripped}$"
+
+    def _wrap_segment(segment: str) -> str:
+        pos = 0
+        res = []
+        n = len(segment)
+        while pos < n:
+            m = LATEX_CMD_RE.search(segment, pos)
+            if not m:
+                res.append(segment[pos:])
+                break
+
+            cmd_start = m.start()
+            math_start = cmd_start
+            operator_consumed = False
+            while math_start > pos:
+                prev_char = segment[math_start - 1]
+                if prev_char in " \t":
+                    peek = segment[pos:math_start - 1].rstrip()
+                    if peek and peek[-1] in "+-*/=<>~^_(":
+                        math_start = len(peek)
+                        operator_consumed = True
+                        continue
+                    m_tok = re.search(r"([a-zA-Z0-9_]+)$", peek)
+                    if m_tok:
+                        w = m_tok.group(1).lower()
+                        if w in MATH_NAMES or (operator_consumed and len(w) <= 2 and w not in COMMON_SPANISH_PROSE_WORDS and not w.isdigit()):
+                            math_start = pos + m_tok.start()
+                            operator_consumed = False
+                            continue
+                    break
+                elif prev_char in "+-*/=<>~^_(\'":
+                    math_start -= 1
+                    operator_consumed = True
+                elif prev_char.isalnum():
+                    w_start = math_start - 1
+                    while w_start > pos and segment[w_start - 1].isalnum():
+                        w_start -= 1
+                    word = segment[w_start:math_start].lower()
+                    if word in COMMON_SPANISH_PROSE_WORDS or word in ("y", "e", "o", "u", "a") or len(word) >= 4:
+                        break
+                    math_start = w_start
+                else:
+                    break
+
+            res.append(segment[pos:math_start])
+            math_end = m.end()
+
+            def _consume_braces(p: int) -> int:
+                idx = p
+                while idx < n and segment[idx] in " \t":
+                    idx += 1
+                if idx < n and segment[idx] in "{[":
+                    open_c = segment[idx]
+                    close_c = "}" if open_c == "{" else "]"
+                    depth = 1
+                    idx += 1
+                    while idx < n and depth > 0:
+                        if segment[idx] == open_c:
+                            depth += 1
+                        elif segment[idx] == close_c:
+                            depth -= 1
+                        idx += 1
+                    return idx
+                return p
+
+            math_end = _consume_braces(math_end)
+            delim_stack = []
+
+            while math_end < n:
+                ch = segment[math_end]
+                if ch in " \t":
+                    peek_p = math_end
+                    while peek_p < n and segment[peek_p] in " \t":
+                        peek_p += 1
+                    if peek_p < n:
+                        next_ch = segment[peek_p]
+                        if next_ch in "+-*/=<>~^_{[(|\\":
+                            math_end = peek_p
+                            continue
+                        elif next_ch.isalnum():
+                            w_end = peek_p
+                            while w_end < n and segment[w_end].isalnum():
+                                w_end += 1
+                            raw_word = segment[peek_p:w_end]
+                            word = raw_word.lower()
+                            is_prose = word in COMMON_SPANISH_PROSE_WORDS and (len(word) > 1 or raw_word.islower())
+                            if is_prose and not delim_stack:
+                                break
+                            if word in MATH_NAMES or len(word) <= 2 or word.isdigit() or bool(delim_stack):
+                                math_end = peek_p
+                                continue
+                    break
+                elif ch == "\\":
+                    m_any_cmd = re.match(r"\\[a-zA-Z]+|\\[,;:! ]", segment[math_end:])
+                    if m_any_cmd:
+                        math_end += len(m_any_cmd.group(0))
+                        math_end = _consume_braces(math_end)
+                        continue
+                    else:
+                        break
+                elif ch in "{[":
+                    math_end = _consume_braces(math_end)
+                elif ch == "(":
+                    delim_stack.append("(")
+                    math_end += 1
+                elif ch == ")":
+                    if delim_stack and delim_stack[-1] == "(":
+                        delim_stack.pop()
+                    math_end += 1
+                elif ch in "+-*/=<>~^_]|\'":
+                    math_end += 1
+                elif ch == ",":
+                    if delim_stack:
+                        math_end += 1
+                    else:
+                        break
+                elif ch in ".;:?!":
+                    if delim_stack:
+                        math_end += 1
+                    elif math_end + 1 == n or segment[math_end + 1] in " \t\n":
+                        break
+                    else:
+                        math_end += 1
+                elif ch.isalnum():
+                    w_end = math_end
+                    while w_end < n and segment[w_end].isalnum():
+                        w_end += 1
+                    raw_word = segment[math_end:w_end]
+                    word = raw_word.lower()
+                    is_prose = (
+                        (word in COMMON_SPANISH_PROSE_WORDS and (len(word) > 1 or raw_word.islower()))
+                        or (len(word) >= 4 and word not in MATH_NAMES)
+                    )
+                    if not delim_stack and is_prose:
+                        break
+                    math_end = w_end
+                else:
+                    break
+
+            math_chunk = segment[math_start:math_end].strip()
+            trailing_punct = ""
+            if math_chunk.endswith((".", ",", ";", ":", "?", "!")):
+                trailing_punct = math_chunk[-1]
+                math_chunk = math_chunk[:-1].rstrip()
+
+            if math_chunk:
+                res.append(f"${math_chunk}${trailing_punct}")
+            pos = math_end
+
+        return "".join(res)
+
+    parts = re.split(r"(\$\$.*?\$\$|\$.*?\$)", text, flags=re.DOTALL)
+    for i in range(0, len(parts), 2):
+        if parts[i]:
+            parts[i] = _wrap_segment(parts[i])
+    return "".join(parts)
+
+
+def normalize_orphan_math(text: str, wrap_bare_equations: bool = True) -> str:
     """Normalizes orphaned/unescaped LaTeX expressions like dot{w} -> $\\dot{w}$, bar{k} -> $\\bar{k}$ outside $...$."""
     if not isinstance(text, str) or not text:
         return text
@@ -137,6 +419,8 @@ def normalize_orphan_math(text: str) -> str:
     )
 
     text = auto_balance_math_delimiters(text)
+    if wrap_bare_equations:
+        text = auto_wrap_bare_latex_in_cta_field(text)
 
     def _apply_outside_math(s: str, fn) -> str:
         parts = re.split(r"(\$\$.*?\$\$|\$.*?\$)", s, flags=re.DOTALL)
@@ -144,6 +428,16 @@ def normalize_orphan_math(text: str) -> str:
             if parts[i]:
                 parts[i] = fn(parts[i])
         return "".join(parts)
+
+    # 0c. \operatorname{plim}_{n \to \infty} or \operatorname{...} operators (BEFORE \infty or symbol conversion)
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"\\operatorname\{[a-zA-Z0-9_* ]+\}(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9*+]+))*",
+            lambda m: f"${m.group(0)}$",
+            c,
+        )
+    )
 
     # 1. \dot{w} -> $\dot{w}$, \bar{k} -> $\bar{k}$, etc. (with backslash, plus optional sub/superscripts)
     text = _apply_outside_math(
@@ -209,8 +503,22 @@ def normalize_orphan_math(text: str) -> str:
     text = _apply_outside_math(
         text,
         lambda c: re.sub(
-            r"\\(alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega|partial|int|sum|prod|infty|times|cdot|approx|leq|geq|neq)\b",
+            r"(?<![\\{_^\$])\\(alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega|partial|int|sum|prod|infty|times|cdot|approx|leq|geq|neq)\b(?![}_^\$])",
             r"$\\\1$",
+            c,
+        )
+    )
+
+    # 4b. Parenthesized matrix transpose / inverse expressions: (Z'X)^{-1}, X'Z(Z'Z)^{-1}Z'X, (X'X)^{-1}X'y
+    text = _apply_outside_math(
+        text,
+        lambda c: re.sub(
+            r"(?<!\$)(?:(?<=\s)|(?<=^)|(?<=[(\"'«]))"
+            r"([a-zA-Z0-9\\\'_]*(?:\([a-zA-Z0-9\\\'_\+\*\- ]+\)|[a-zA-Z0-9\\\'_])+"
+            r"(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9\*\\+]+))+"
+            r"(?:\([a-zA-Z0-9\\\'_\+\*\- ]+\)|[a-zA-Z0-9\\\'_])*)"
+            r"(?!\$)",
+            lambda m: f"${m.group(1)}$",
             c,
         )
     )
@@ -225,11 +533,11 @@ def normalize_orphan_math(text: str) -> str:
         )
     )
 
-    # 5b. Raw subscript or superscript with braces or asterisk: k_{t+1}, k^*, r^*
+    # 5b. Raw subscript or superscript with braces or asterisk: k_{t+1}, k^*, r^*, Q_{zx}^{-1}
     text = _apply_outside_math(
         text,
         lambda c: re.sub(
-            r"(?<!\$)\b([a-zA-Z0-9\\]+[_^](?:\{[a-zA-Z0-9_+\-*./]+\}|\*))(?!\$)",
+            r"(?<!\$)\b([a-zA-Z0-9\\]+(?:[_^](?:\{[a-zA-Z0-9_+\-*./]+\}|[a-zA-Z0-9*+]+))+)(?!\$)",
             r"$\1$",
             c,
         )
@@ -238,15 +546,33 @@ def normalize_orphan_math(text: str) -> str:
     return auto_balance_math_delimiters(text)
 
 
-def sanitize_competency_math(comp: Dict[str, Any]) -> None:
+def sanitize_competency_math(comp: Dict[str, Any], record_patches: bool = True) -> None:
     """Recursively normalizes orphan math expressions in competency fields and distractors."""
+    cid = comp.get("id", "comp")
     for field in ("name", "description_latex", "description"):
         val = comp.get(field)
         if isinstance(val, str):
-            comp[field] = normalize_orphan_math(val)
+            new_val = normalize_orphan_math(val)
+            if new_val != val:
+                comp[field] = new_val
+                if record_patches:
+                    try:
+                        record_patch(
+                            stage="cta",
+                            layer="L2",
+                            rule_id="NORMALIZE_ORPHAN_MATH",
+                            scope=f"{cid}.{field}",
+                            before=val,
+                            after=new_val,
+                            severity="healed",
+                            reason="Lossless normalization of orphan LaTeX math delimiters/braces",
+                        )
+                    except Exception:
+                        pass
 
     for d in comp.get("distractors", []):
         if isinstance(d, dict):
+            did = d.get("id", "dist")
             for d_field in (
                 "name",
                 "manifestation",
@@ -258,7 +584,23 @@ def sanitize_competency_math(comp: Dict[str, Any]) -> None:
             ):
                 d_val = d.get(d_field)
                 if isinstance(d_val, str):
-                    d[d_field] = normalize_orphan_math(d_val)
+                    new_d_val = normalize_orphan_math(d_val)
+                    if new_d_val != d_val:
+                        d[d_field] = new_d_val
+                        if record_patches:
+                            try:
+                                record_patch(
+                                    stage="cta",
+                                    layer="L2",
+                                    rule_id="NORMALIZE_ORPHAN_MATH",
+                                    scope=f"{did}.{d_field}",
+                                    before=d_val,
+                                    after=new_d_val,
+                                    severity="healed",
+                                    reason="Lossless normalization of orphan LaTeX math in distractor",
+                                )
+                            except Exception:
+                                pass
 
 
 def find_duplicate_candidates(competencies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -490,6 +832,7 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
                 m = re.search(r"\d+", str(p_val))
                 page_int = int(m.group(0)) if m else 0
 
+            c["_part_key"] = stem
             c["_sort_key"] = (sp_idx, f_idx, page_int, orig_idx)
             combined_competencies.append(c)
 
@@ -498,22 +841,123 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
 
     # Deterministic sort by (subpart_index, file_index, page, orig_idx)
     combined_competencies.sort(key=lambda c: c["_sort_key"])
+
+    # Stable Topological Sort intra-part (before renumbering IDs)
+    # If competency A depends on B within the same subpart, B must appear before A.
+    parts_order: List[str] = []
+    comps_by_part: Dict[str, List[Dict[str, Any]]] = {}
     for c in combined_competencies:
-        c.pop("_sort_key", None)
+        pk = c.get("_part_key", "")
+        if pk not in comps_by_part:
+            parts_order.append(pk)
+            comps_by_part[pk] = []
+        comps_by_part[pk].append(c)
+
+    reordered_competencies: List[Dict[str, Any]] = []
+    for pk in parts_order:
+        part_comps = comps_by_part[pk]
+        if len(part_comps) <= 1:
+            reordered_competencies.extend(part_comps)
+            continue
+
+        local_id_to_indices: Dict[str, List[int]] = {}
+        for idx, c in enumerate(part_comps):
+            cid = c.get("id")
+            if cid:
+                local_id_to_indices.setdefault(cid, []).append(idx)
+
+        in_degree = {i: 0 for i in range(len(part_comps))}
+        adj: Dict[int, List[int]] = {i: [] for i in range(len(part_comps))}
+
+        pk_nums = re.findall(r"\d+", pk)
+        pk_alias = f"part_{int(pk_nums[0]):02d}" if pk_nums else pk
+
+        for idx, c in enumerate(part_comps):
+            prereqs = c.get("prerequisites", [])
+            for p in prereqs:
+                target_id = p
+                if ":" in p:
+                    prefix_p, bare_id = p.split(":", 1)
+                    if prefix_p in (pk, pk_alias):
+                        target_id = bare_id
+                    else:
+                        continue  # External cross-part prerequisite
+                if target_id in local_id_to_indices:
+                    for dep_idx in local_id_to_indices[target_id]:
+                        if dep_idx != idx:
+                            adj[dep_idx].append(idx)
+                            in_degree[idx] += 1
+
+        ready = [i for i, deg in in_degree.items() if deg == 0]
+        heapq.heapify(ready)
+        visited_indices: List[int] = []
+        visited_set: Set[int] = set()
+
+        while ready:
+            curr = heapq.heappop(ready)
+            visited_indices.append(curr)
+            visited_set.add(curr)
+            for neighbor in adj[curr]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    heapq.heappush(ready, neighbor)
+
+        # Fallback for cycles: append unvisited nodes in their original relative sort order
+        if len(visited_indices) < len(part_comps):
+            logger.warning(
+                "Cycle detected in intra-part prerequisites for %s; appending %d unvisited nodes in deterministic sort order",
+                pk, len(part_comps) - len(visited_indices),
+            )
+            for i in range(len(part_comps)):
+                if i not in visited_set:
+                    visited_indices.append(i)
+
+        reordered_competencies.extend([part_comps[i] for i in visited_indices])
+
+    combined_competencies = reordered_competencies
 
     # Sanitize and normalize orphan LaTeX math in all competencies and distractors
     for comp in combined_competencies:
         sanitize_competency_math(comp)
 
-    # Renumber canonical sequential IDs per category
-    fact_count = 0
-    concept_count = 0
-    skill_count = 0
+    # Renumber canonical sequential IDs per category with append delta support
+    delta_info = (
+        manifest_data.get("delta")
+        or manifest_data.get("existing_course")
+        or manifest_data.get("delta_manifest")
+    )
+    if not delta_info and (work_path / "delta_manifest.json").is_file():
+        try:
+            delta_info = json.loads((work_path / "delta_manifest.json").read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    existing_comp_ids: Set[str] = set()
+    if delta_info and isinstance(delta_info, dict):
+        existing_comp_ids.update(delta_info.get("existing_competency_ids", []))
+        for item in delta_info.get("existing_competencies_outline", []):
+            if isinstance(item, dict) and "id" in item:
+                existing_comp_ids.add(item["id"])
+        for item in delta_info.get("competencies", []):
+            if isinstance(item, dict) and "id" in item:
+                existing_comp_ids.add(item["id"])
+    if isinstance(manifest_data.get("existing_competency_ids"), list):
+        existing_comp_ids.update(manifest_data.get("existing_competency_ids", []))
+
+    next_counts = parse_next_ids_by_prefix(delta_info)
+    fact_count = max(0, next_counts["H"] - 1)
+    concept_count = max(0, next_counts["C"] - 1)
+    skill_count = max(0, next_counts["Hab"] - 1)
 
     comp_id_map: Dict[str, str] = {}
+    comp_id_map_by_part: Dict[str, Dict[str, str]] = {}
     dist_id_map: Dict[str, str] = {}
 
     for comp in combined_competencies:
+        part_key = comp.get("_part_key", "")
+        pk_nums = re.findall(r"\d+", part_key) if part_key else []
+        pk_alias = f"part_{int(pk_nums[0]):02d}" if pk_nums else part_key
+
         old_cid = comp.get("id", "")
         ctype = comp.get("type", "").lower()
 
@@ -535,7 +979,14 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
             prefix = f"H{fact_count:02d}"
 
         if old_cid:
-            comp_id_map[old_cid] = new_cid
+            if part_key:
+                comp_id_map_by_part.setdefault(part_key, {})[old_cid] = new_cid
+                comp_id_map[f"{part_key}:{old_cid}"] = new_cid
+                if pk_alias and pk_alias != part_key:
+                    comp_id_map_by_part.setdefault(pk_alias, {})[old_cid] = new_cid
+                    comp_id_map[f"{pk_alias}:{old_cid}"] = new_cid
+            if old_cid not in comp_id_map:
+                comp_id_map[old_cid] = new_cid
         comp["id"] = new_cid
 
         distractors = comp.get("distractors", [])
@@ -544,17 +995,79 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
             new_did = f"D-{prefix}-{d_idx:02d}"
             if old_did:
                 dist_id_map[old_did] = new_did
+                if part_key:
+                    dist_id_map[f"{part_key}:{old_did}"] = new_did
+                    if pk_alias and pk_alias != part_key:
+                        dist_id_map[f"{pk_alias}:{old_did}"] = new_did
             dist["id"] = new_did
 
-    # Rewrite prerequisites across all competencies
+    # Rewrite prerequisites across all competencies with scoped part mapping
     for comp in combined_competencies:
+        part_key = comp.get("_part_key", "")
+        pk_nums = re.findall(r"\d+", part_key) if part_key else []
+        pk_alias = f"part_{int(pk_nums[0]):02d}" if pk_nums else part_key
+
         prereqs = comp.get("prerequisites", [])
         new_prereqs: List[str] = []
         for p in prereqs:
-            mapped = comp_id_map.get(p, p)
+            # 1. Explicit prefixes: base course prefix (e.g. "base:C-01") or explicit part prefix (e.g. "part_01:C-01")
+            if ":" in p:
+                prefix_p, bare_id = p.split(":", 1)
+                prefix_lower = prefix_p.strip().lower()
+                if prefix_lower in ("existing", "base", "course", "delta"):
+                    mapped = bare_id
+                elif p in comp_id_map:
+                    mapped = comp_id_map[p]
+                elif prefix_p in (part_key, pk_alias) and bare_id in comp_id_map_by_part.get(part_key, {}):
+                    mapped = comp_id_map_by_part[part_key][bare_id]
+                else:
+                    mapped = comp_id_map.get(p, p)
+            # 2. Local scope within subpart
+            elif part_key and p in comp_id_map_by_part.get(part_key, {}):
+                mapped = comp_id_map_by_part[part_key][p]
+            elif pk_alias and p in comp_id_map_by_part.get(pk_alias, {}):
+                mapped = comp_id_map_by_part[pk_alias][p]
+            # 3. Existing base course scope (preserve base course prerequisites without cross-part collision)
+            elif p in existing_comp_ids:
+                mapped = p
+            # 4. Global fallback
+            else:
+                mapped = comp_id_map.get(p, p)
+
             if mapped not in new_prereqs and mapped != comp["id"]:
                 new_prereqs.append(mapped)
         comp["prerequisites"] = new_prereqs
+
+    # Strict Backward-Only Enforcement (pos[prereq] < pos[comp])
+    comp_pos = {c["id"]: idx for idx, c in enumerate(combined_competencies)}
+    for idx, comp in enumerate(combined_competencies):
+        filtered_prereqs: List[str] = []
+        for p in comp.get("prerequisites", []):
+            if p == comp["id"]:
+                continue
+            if p in comp_pos:
+                if comp_pos[p] < idx:
+                    if p not in filtered_prereqs:
+                        filtered_prereqs.append(p)
+                else:
+                    logger.warning(
+                        "Dropping forward prerequisite %s for competency %s (pos %d >= %d)",
+                        p, comp["id"], comp_pos[p], idx,
+                    )
+            elif existing_comp_ids and p in existing_comp_ids:
+                # Prerequisites outside newly combined competencies from existing base course
+                if p not in filtered_prereqs:
+                    filtered_prereqs.append(p)
+            else:
+                # Prerequisites outside newly combined competencies (e.g. delta/base course)
+                if p not in filtered_prereqs:
+                    filtered_prereqs.append(p)
+        comp["prerequisites"] = filtered_prereqs
+
+    # Guarantee removal of temporary internal keys (_part_key, _sort_key) from all competencies
+    for comp in combined_competencies:
+        comp.pop("_part_key", None)
+        comp.pop("_sort_key", None)
 
     # Detect duplicate candidates
     duplicate_candidates = find_duplicate_candidates(combined_competencies)
@@ -563,6 +1076,7 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
     id_map_payload = {
         "competencies": comp_id_map,
         "distractors": dist_id_map,
+        "by_part": comp_id_map_by_part,
     }
 
     draft_payload = {
@@ -683,13 +1197,30 @@ def apply_harmonize(
     candidates_data = json.loads(candidates_file.read_text(encoding="utf-8"))
     harmonize_data = json.loads(harmonize_file.read_text(encoding="utf-8"))
 
+    # Load delta manifest or manifest['delta'] for append mode if present
+    delta_info = None
+    man_file = Path(manifest_path).resolve() if manifest_path else work_path / "pre_cta_manifest.json"
+    if man_file.is_file():
+        try:
+            m_tmp = json.loads(man_file.read_text(encoding="utf-8"))
+            delta_info = m_tmp.get("delta") or m_tmp.get("existing_course")
+        except Exception:
+            pass
+    if not delta_info and (work_path / "delta_manifest.json").is_file():
+        try:
+            delta_info = json.loads((work_path / "delta_manifest.json").read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    existing_competency_ids: Set[str] = set(delta_info.get("existing_competency_ids", [])) if delta_info else set()
+
     orig_order: List[str] = cta_order_data.get("order", [])
     competencies: List[Dict[str, Any]] = cta_draft.get("competencies", [])
 
     # Index allowed duplicate candidate pairs (normalized as sorted tuples)
     allowed_candidates_set: Set[Tuple[str, str]] = set()
     candidate_lookup: Dict[Tuple[str, str], Dict[str, Any]] = {}
-    for cand in candidates_data:
+    candidates_list = candidates_data if isinstance(candidates_data, list) else (candidates_data.get("candidates", []) if isinstance(candidates_data, dict) else [])
+    for cand in candidates_list:
         p = cand.get("pair", [])
         if len(p) == 2:
             key = tuple(sorted([p[0], p[1]]))
@@ -904,6 +1435,11 @@ def apply_harmonize(
 
         for req in reqs:
             if req not in current_order_map:
+                if req in existing_competency_ids:
+                    # Valid prerequisite from base course in append mode
+                    if req not in comp_prereqs:
+                        comp_prereqs.append(req)
+                    continue
                 raise ValueError(
                     f"add_prerequisites failed: Prerequisite '{req}' for '{cid}' not found."
                 )
@@ -927,7 +1463,8 @@ def apply_harmonize(
         })
 
     # 5. Validate DAG acyclicity
-    dag_errors = check_prerequisites_dag(competencies)
+    check_nodes = [{"id": x, "prerequisites": []} for x in existing_competency_ids] + competencies
+    dag_errors = check_prerequisites_dag(check_nodes)
     if dag_errors:
         raise ValueError(f"Prerequisite DAG validation failed: {dag_errors}")
 
@@ -954,6 +1491,15 @@ def apply_harmonize(
     manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
 
     valid, rule_errors = validate_cta_rules(cta_draft, manifest_data)
+    if not valid and existing_competency_ids:
+        filtered_errors = []
+        for err in rule_errors:
+            m = re.match(r"Competency '([^']+)' references non-existent prerequisite '([^']+)'.", err)
+            if m and m.group(2) in existing_competency_ids:
+                continue
+            filtered_errors.append(err)
+        rule_errors = filtered_errors
+        valid = (len(rule_errors) == 0)
     if not valid:
         raise ValueError(f"validate_cta_rules failed with errors: {rule_errors}")
 

@@ -1402,7 +1402,7 @@ class TestTplVarAndStemVariants:
             num_dry_run_seeds=50,
         )
         assert any(
-            "TPL-VAR violation in 'TPL-NO-PLACEHOLDER': stem must contain at least one placeholder '{var}' or 'stem_variants' must be present." in e
+            "TPL-VAR violation in 'TPL-NO-PLACEHOLDER': stem must contain at least one placeholder '{var}' or '@var@' or 'stem_variants' must be present." in e
             for e in errs
         )
 

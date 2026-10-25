@@ -1,0 +1,24 @@
+# PROGRESS: Stream 2B — Forensic Code Audit (`audit_2b`)
+
+- [x] Pre-Flight Initialization & Briefing (`BRIEFING.md`)
+- [x] Boundary Integrity Check (`git status --short`, file inspection, zero temporary files)
+  - Confirmed: 8 assigned files modified/created; `subagent_types.json` untouched (pre-dates Stream 2B); 0 temporary files in workspace root.
+- [x] Byte Budget Verification (`system_prompts/lean/*.md` `<= 5,120` bytes)
+  - `prompt_blind_judge.md`: 2,498 bytes (<= 5,120 B)
+  - `prompt_cta_architect.md`: 3,416 bytes (<= 5,120 B)
+  - `prompt_cta_harmonizer.md`: 1,717 bytes (<= 5,120 B)
+  - `prompt_repair.md`: 1,658 bytes (<= 5,120 B)
+  - `prompt_shard_author.md`: 4,622 bytes (<= 4,750 B target met; 498 B headroom)
+- [x] Forensic Code Inspection of 8 boundary files:
+  - [x] `prompt_shard_author.md` (Full + Lean): raw strings `r"..."`, `@var@`/`@var:fmt@`, 0 `rf"`/`{{{`, 3–5 `stem_variants`, `TPL-VAR`, `R-16 [0.65, 1.35]`, `shard_fixes/<CID>.py`, `ArtifactMetadata` ban, `compile_shard.py` read ban.
+  - [x] `prompt_cta_architect.md` (Full + Lean): `ArtifactMetadata` ban, `--append` delta rules, `standard` granularity relative density, inline math `$ ... $`.
+  - [x] `prompt_blind_judge.md` (Full + Lean): harmonized pointer mode (2-turn pointer vs 1-turn inline), `ArtifactMetadata` ban, analytical solving.
+  - [x] `SKILL.md` v3.3: `--stage bootstrap`, `--director-id`, Silent Reactive Barrier Protocol, weighted waves (`1 Hab/shard`), Director diet, lockfile release, zero `corpus.md`.
+  - [x] `tests/test_prompts_contract_alignment.py`: zero stubs, zero mocks, real assertions (`check_single_template` on 50 seeds with `assert errors == []`).
+- [x] Independent Test Execution (Pytest via virtual environment):
+  - 44/44 target prompt & course tests passed (100%)
+  - 88/88 related regression tests passed (100%)
+  - 33/33 skill tests passed (100%)
+  - Total: 165/165 passed
+- [x] Synthesis of Audit Findings & Final Decision in `handoff.md`
+- [ ] Notification to Orchestrator via `send_message` (`PASS:: stream_2b_audit | ...`)

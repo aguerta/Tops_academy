@@ -13,7 +13,7 @@ import re
 import zlib
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from engine.assemble import assemble_question, format_template_string
+from engine.assemble import assemble_question, format_template_string, sanitize_katex_syntax
 from engine.diversity import evaluate_competency_diversity
 from engine.invariants import check_instance_invariants
 from engine.sandbox import (
@@ -105,6 +105,11 @@ def instantiate_template(
 
         for item in batch_results:
             if not item.get("success"):
+                err_txt = str(item.get("error", ""))
+                if "SandboxTimeoutError" in err_txt:
+                    raise SandboxTimeoutError(
+                        f"Template {template.get('id', 'UNKNOWN')} timed out during instantiation: {err_txt}"
+                    )
                 continue
 
             gen_res = item["result"]
@@ -121,7 +126,7 @@ def instantiate_template(
             if stem_variants and len(stem_variants) > 0:
                 var_idx = (item["seed"] % len(stem_variants)) if item.get("seed") is not None else 0
                 raw_stem = stem_variants[var_idx]
-            rendered_stem = format_template_string(raw_stem, variables)
+            rendered_stem = sanitize_katex_syntax(format_template_string(raw_stem, variables))
             norm_stem = re.sub(r"\s+", " ", rendered_stem.strip())
             if norm_stem in seen_stems:
                 continue
@@ -141,7 +146,7 @@ def instantiate_template(
                 continue
 
             # 4. Invariant validation on candidate
-            is_valid, errors = check_instance_invariants(candidate_q, interaction_type)
+            is_valid, errors = check_instance_invariants(candidate_q, interaction_type, variables=variables)
             if not is_valid:
                 continue
 

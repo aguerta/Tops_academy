@@ -14,18 +14,29 @@ Builds standardized question JSON objects complying with the practice platform s
 import json
 import random
 import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+
+try:
+    from engine.invariants import validate_katex_syntax
+except ImportError:
+    from .invariants import validate_katex_syntax
+
+_PL_TOKEN_PATTERN = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)(?::([^@\s{}]+))?@")
 
 
 OPTION_LETTERS = ["A", "B", "C", "D", "E", "F", "G"]
 
 
 _LATEX_SYMBOL_MACROS = {
-    "dot", "ddot", "hat", "bar", "tilde", "vec", "acute", "grave", "check",
+    "dot", "ddot", "dddot", "ddddot", "hat", "bar", "tilde", "vec", "acute", "grave", "check",
     "breve", "mathring", "widehat", "widetilde", "widecheck", "overline",
     "underline", "mathbf", "boldsymbol", "bm", "mathit", "mathrm", "mathcal",
-    "mathbb", "mathfrak", "mathsf", "mathtt", "text", "textbf", "textit",
-    "textrm", "operatorname", "begin", "end",
+    "mathbb", "mathfrak", "mathsf", "mathtt", "mathscr", "symbf", "text", "textbf", "textit",
+    "textrm", "textsf", "texttt", "textsc", "operatorname", "begin", "end",
+    "xrightarrow", "xleftarrow", "xleftrightarrow", "xLeftarrow", "xRightarrow", "xLeftrightarrow",
+    "xhookleftarrow", "xhookrightarrow", "xmapsto", "xtwoheadleftarrow", "xtwoheadrightarrow",
+    "xrightharpoondown", "xrightharpoonup", "xleftharpoondown", "xleftharpoonup",
+    "substack", "prescript", "pmod", "pod",
 }
 
 _LATEX_VALUE_MACROS_1ARG = {
@@ -41,6 +52,32 @@ _GIVEAWAY_PREFIX_RE = re.compile(
     r"^(?:Inversión de roles|Omisión de límites|Asumiendo erróneamente|Confusión de conceptos|Falsa generalización|Error de signo):\s*",
     re.IGNORECASE,
 )
+
+
+def _safe_format_value(val: Any, fmt_spec: Optional[str]) -> str:
+    """Safely format value with format specifier, coercing types without runtime crashes."""
+    if not fmt_spec:
+        return str(val)
+    try:
+        return format(val, fmt_spec)
+    except (ValueError, TypeError):
+        pass
+
+    # Try converting to float if format spec looks like float (.2f, .3e, .4g, etc.)
+    try:
+        return format(float(val), fmt_spec)
+    except (ValueError, TypeError):
+        pass
+
+    # Try converting to int if format spec looks like integer (d, b, x, etc.) or float without fractional part
+    try:
+        f_val = float(val)
+        if abs(f_val - round(f_val)) < 1e-9:
+            return format(int(round(f_val)), fmt_spec)
+    except (ValueError, TypeError):
+        pass
+
+    return str(val)
 
 
 def _strip_giveaway_prefix(text: str) -> str:
@@ -92,6 +129,18 @@ def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
         return template_str
 
     result = template_str
+    has_pl_tokens = bool(_PL_TOKEN_PATTERN.search(template_str))
+
+    # Phase 0 priority pass: Orthogonal PrairieLearn @var@ / @var:fmt@ token interpolation
+    def _pl_replacer(m: re.Match) -> str:
+        key = m.group(1)
+        fmt_spec = m.group(2)
+        if key in variables:
+            val = variables[key]
+            return _safe_format_value(val, fmt_spec)
+        return m.group(0)
+
+    result = _PL_TOKEN_PATTERN.sub(_pl_replacer, result)
     for k, v in variables.items():
         pattern = re.compile(rf"\{{{re.escape(k)}(?::([^{{}}]+))?\}}")
         math_spans = [m_s.span() for m_s in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", result)]
@@ -100,16 +149,7 @@ def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
 
         def _replacer(m: re.Match, key: str = k, val: Any = v) -> str:
             fmt_spec = m.group(1)
-            if fmt_spec:
-                try:
-                    val_str = format(val, fmt_spec)
-                except (ValueError, TypeError):
-                    try:
-                        val_str = format(float(val), fmt_spec)
-                    except (ValueError, TypeError):
-                        val_str = str(val)
-            else:
-                val_str = str(val)
+            val_str = _safe_format_value(val, fmt_spec)
 
             start = m.start()
             end = m.end()
@@ -119,15 +159,19 @@ def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
             is_escaped_open = prefix.endswith("{") and suffix.startswith("}")
 
             # Course-agnostic short variable / sub-superscript base protection inside math blocks:
-            # e.g. ${k}^*$, ${r}_t$, or escaped $\{k\}$
+            # e.g. ${k}^*$, ${r}_t$, or escaped $\{k\}$ (odd number of backslashes before {)
+            prefix_stripped = prefix.rstrip()
+            num_trailing_slashes = len(prefix_stripped) - len(prefix_stripped.rstrip("\\"))
+            is_escaped_literal_brace = (num_trailing_slashes % 2 == 1)
+
             if not is_escaped_open and not fmt_spec and is_in_math_span(start):
-                if suffix.lstrip().startswith(("^", "_")) or prefix.rstrip().endswith("\\"):
+                if suffix.lstrip().startswith(("^", "_")) or is_escaped_literal_brace:
                     return m.group(0)
 
             # Case 1: Inside double braces {{k}}
             if is_escaped_open:
                 outer_prefix = prefix[:-1].rstrip()
-                macro_m = re.search(r"\\([a-zA-Z]+)(\[[^\]]*\])?\s*$", outer_prefix)
+                macro_m = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?\s*$", outer_prefix)
                 if macro_m and macro_m.group(1) in _LATEX_SYMBOL_MACROS and not fmt_spec and "_" not in key:
                     return m.group(0)
                 return val_str
@@ -135,10 +179,12 @@ def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
             prefix_stripped = prefix.rstrip()
 
             # Case 2: Preceded directly by a LaTeX macro \cmd or \cmd[...]
-            macro_m = re.search(r"\\([a-zA-Z]+)(\[[^\]]*\])?\s*$", prefix_stripped)
+            macro_m = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?\s*$", prefix_stripped)
             if macro_m:
                 macro_name = macro_m.group(1)
                 if macro_name in _LATEX_VALUE_MACROS_1ARG or macro_name in _LATEX_VALUE_MACROS_2ARG:
+                    if has_pl_tokens and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
+                        return m.group(0)
                     return f"{{{val_str}}}"
                 if not fmt_spec and "_" not in key:
                     return m.group(0)
@@ -147,12 +193,16 @@ def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
             # Case 3: Second argument of a 2-argument value macro e.g. \frac{...}{k}
             is_second_arg, has_symbolic = _inspect_second_arg_of_value_macro(prefix_stripped, key)
             if is_second_arg:
+                if has_pl_tokens and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
+                    return m.group(0)
                 if has_symbolic and not fmt_spec and "_" not in key:
                     return m.group(0)
                 return f"{{{val_str}}}"
 
             # Case 4: Superscript ^{k} or subscript _{k}
             if prefix_stripped.endswith("^") or prefix_stripped.endswith("_"):
+                if has_pl_tokens and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
+                    return m.group(0)
                 return f"{{{val_str}}}"
 
             return val_str
@@ -164,6 +214,11 @@ def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
             result = re.sub(rf"\b{re.escape(k)}\b", lambda _, val=str(v): val, result)
 
     return result
+
+
+def render_template(template_str: str, variables: Dict[str, Any]) -> str:
+    r"""Render template string with variables, supporting both PrairieLearn @var@ and legacy {var} syntax."""
+    return format_template_string(template_str, variables)
 
 
 def sanitize_katex_syntax(text: str) -> str:
@@ -236,32 +291,51 @@ def sanitize_katex_syntax(text: str) -> str:
     text = nested_fix.sub(r"\1}", text)
 
     # 2. Auto-repair \frac missing numerator closing brace when numerator has an inner 1-arg macro or script
-    frac_inner_fix = re.compile(
-        r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{[^{}]*(?:\\[a-zA-Z]+|[_^])\s*\{[^{}]*\}[^{}\\]*)\{"
-    )
-    text = frac_inner_fix.sub(r"\1}{", text)
+    # ONLY executed when opening braces exceed closing braces, preventing corruption of balanced expressions.
+    if text.count("{") > text.count("}"):
+        orig_text = text
+        frac_inner_fix = re.compile(
+            r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{[^{}]*(?:\\[a-zA-Z]+|[_^])\s*\{[^{}]*\}[^{}\\_^]*)\{"
+        )
+        cand_inner = frac_inner_fix.sub(r"\1}{", text)
+        if "_}{" in cand_inner or "^}{" in cand_inner or cand_inner.count("{") < cand_inner.count("}"):
+            cand_inner = orig_text
+        text = cand_inner
 
     # Simple \frac{a{b} where numerator has no macros or scripts
-    frac_simple_fix = re.compile(
-        r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{[^{}\\^_]+)\{([^{}]+\})"
-    )
-    text = frac_simple_fix.sub(r"\1}{\2", text)
+    if text.count("{") > text.count("}"):
+        orig_text = text
+        frac_simple_fix = re.compile(
+            r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{[^{}\\^_]+)\{([^{}]+\})"
+        )
+        cand_simple = frac_simple_fix.sub(r"\1}{\2", text)
+        if "_}{" in cand_simple or "^}{" in cand_simple or cand_simple.count("{") < cand_simple.count("}"):
+            cand_simple = orig_text
+        text = cand_simple
 
     # 3. Auto-repair \frac missing denominator closing brace when denominator ends with an inner braced group
     if text.count("{") > text.count("}"):
+        orig_text = text
         frac_den_fix = re.compile(
             r"(\\(?:frac|dfrac|tfrac|cfrac)\s*\{(?:[^{}]|\{[^{}]*\})*\}\s*\{[^{}]*(?:\\[a-zA-Z]+|[_^])\s*\{[^{}]*\})"
             r"(?!\s*\})(?=\s*(?:[$=<>,.;:)\]|]|\\(?:le|ge|neq|approx|implies|iff)\b|$))"
         )
-        text = frac_den_fix.sub(r"\1}", text)
+        cand_den = frac_den_fix.sub(r"\1}", text)
+        if cand_den.count("{") < cand_den.count("}"):
+            cand_den = orig_text
+        text = cand_den
 
     # 4. Auto-repair superscript/subscript missing outer closing brace after inner macro
     if text.count("{") > text.count("}"):
+        orig_text = text
         script_outer_fix = re.compile(
             r"([_^]\s*\{[^{}]*\\[a-zA-Z]+(?:\s*\{[^{}]*\})+)"
             r"(?!\s*\})(?=\s*(?:[$=<>,.;:)\]|]|\\(?:le|ge|neq|approx|implies|iff)\b|$))"
         )
-        text = script_outer_fix.sub(r"\1}", text)
+        cand_script = script_outer_fix.sub(r"\1}", text)
+        if cand_script.count("{") < cand_script.count("}"):
+            cand_script = orig_text
+        text = cand_script
 
     # 5. Auto-repair unbraced numeric denominator after \frac{num}: \frac{s}3 -> \frac{s}{3}
     frac_unbraced_den = re.compile(
@@ -270,6 +344,122 @@ def sanitize_katex_syntax(text: str) -> str:
     text = frac_unbraced_den.sub(r"\1{\2}", text)
 
     return text
+
+
+_GENERIC_RATIONALE_PATTERNS = re.compile(
+    r"^(?:"
+    r"static|"
+    r"dummy.*|"
+    r"placeholder.*|"
+    r"none|"
+    r"null|"
+    r"n/a|"
+    r"distractor(?:\s+derivado.*)?\.?|"
+    r"incorrect[oa]\.?|"
+    r"opci[oó]n\s+(?:incorrecta|inv[aá]lida.*)\.?"
+    r")$",
+    re.IGNORECASE,
+)
+
+
+def _is_generic_placeholder(text: str) -> bool:
+    """Return True if text is empty or a generic boilerplate placeholder."""
+    if not text or not str(text).strip():
+        return True
+    cleaned = str(text).strip()
+    return bool(_GENERIC_RATIONALE_PATTERNS.match(cleaned))
+
+
+def _format_and_sanitize_candidate(
+    candidate: str,
+    variables: Optional[Dict[str, Any]] = None,
+    is_cta: bool = False,
+) -> str:
+    """Strip giveaway prefixes, interpolate template variables, and sanitize KaTeX syntax."""
+    if not candidate or not isinstance(candidate, str):
+        return ""
+    clean = _strip_giveaway_prefix(candidate)
+    if variables:
+        if is_cta:
+            vars_to_use = {
+                k: v for k, v in variables.items()
+                if len(k) > 2 or k.endswith(("_val", "_num", "_str", "_res"))
+            }
+        else:
+            vars_to_use = variables
+        formatted = format_template_string(clean, vars_to_use)
+    else:
+        formatted = clean
+    return sanitize_katex_syntax(formatted)
+
+
+def _is_katex_valid(
+    text: str,
+    variables: Optional[Dict[str, Any]] = None,
+    is_cta: bool = False,
+) -> bool:
+    """Check if KaTeX in text is syntactically balanced and valid after optional formatting and sanitization."""
+    if not text or not isinstance(text, str):
+        return False
+    final_text = _format_and_sanitize_candidate(text, variables=variables, is_cta=is_cta)
+    allow_tmpl = (variables is None)
+    errors = validate_katex_syntax(final_text, "distractor_rationale", allow_template_vars=allow_tmpl)
+    return len(errors) == 0
+
+
+def _resolve_distractor_rationale(
+    d_dict: Dict[str, Any],
+    d_id: Optional[str],
+    cta_distractors_map: Optional[Dict[str, Any]],
+    default_fallback: str,
+    variables: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Resolve error_rationale for a distractor option cleanly and safely.
+    
+    1. If the author provides an explicit, non-generic error_rationale (or rationale),
+       preserve it directly, verifying KaTeX syntax after formatting/sanitization.
+    2. If absent, generic, or invalid KaTeX, inherit from cta_distractors_map,
+       verifying KaTeX syntax and falling back safely if manifestation has broken KaTeX.
+    3. If neither is available, use default_fallback.
+    4. Validates validate_katex_syntax on the final string.
+    """
+    raw_rat = d_dict.get("error_rationale")
+    if raw_rat is None or (isinstance(raw_rat, str) and not raw_rat.strip()):
+        raw_rat = d_dict.get("rationale")
+
+    author_rat = str(raw_rat).strip() if raw_rat is not None else ""
+
+    # Priority 1: Explicit author rationale (if not generic placeholder and KaTeX valid)
+    if author_rat and not _is_generic_placeholder(author_rat):
+        if _is_katex_valid(author_rat, variables=variables, is_cta=False):
+            return _format_and_sanitize_candidate(author_rat, variables=variables, is_cta=False)
+
+    # Priority 2: DRY inheritance from cta_distractors_map
+    if cta_distractors_map and d_id and d_id in cta_distractors_map:
+        d_entry = cta_distractors_map[d_id]
+        if isinstance(d_entry, dict):
+            # Check manifestation first, but ONLY if its KaTeX syntax is valid
+            manifestation = d_entry.get("manifestation")
+            if manifestation and isinstance(manifestation, str) and manifestation.strip():
+                if _is_katex_valid(manifestation.strip(), variables=variables, is_cta=True):
+                    return _format_and_sanitize_candidate(manifestation.strip(), variables=variables, is_cta=True)
+
+            # Fallback to wrong_belief, omitted_step, remediation_hint
+            for field in ("wrong_belief", "omitted_step", "remediation_hint"):
+                val = d_entry.get(field)
+                if val and isinstance(val, str) and val.strip():
+                    if _is_katex_valid(val.strip(), variables=variables, is_cta=True):
+                        return _format_and_sanitize_candidate(val.strip(), variables=variables, is_cta=True)
+
+    # Priority 3: Fallback to author_rat if non-empty and valid KaTeX
+    if author_rat and _is_katex_valid(author_rat, variables=variables, is_cta=False):
+        return _format_and_sanitize_candidate(author_rat, variables=variables, is_cta=False)
+
+    # Priority 4: Safe default fallback
+    fallback_res = _format_and_sanitize_candidate(default_fallback, variables=variables, is_cta=False)
+    if not _is_katex_valid(fallback_res, variables=None, is_cta=False):
+        fallback_res = _strip_giveaway_prefix(default_fallback).replace("$", "")
+    return fallback_res
 
 
 def calibrate_option_lengths(
@@ -297,6 +487,56 @@ def calibrate_option_lengths(
     # If correct is shorter than lower bound, we can homogenize syntax if needed
     # but never alter math content
     return correct_text, distractors
+
+
+def compute_option_length_metrics(
+    correct_text: str,
+    distractors: Union[Sequence[str], Sequence[Dict[str, Any]]],
+    min_ratio: float = 0.65,
+    max_ratio: float = 1.35,
+) -> Dict[str, Any]:
+    """Compute character length metrics for MC options to diagnose anti-giveaway R-16 compliance.
+    
+    Returns:
+        correct_len: Length of correct option text.
+        distractor_lens: List of distractor text lengths.
+        avg_distractor_len: Average length of distractors.
+        ratio: correct_len / avg_distractor_len.
+        is_within_bounds: True if min_ratio <= ratio <= max_ratio.
+        summary_str: Human-readable diagnostic string.
+    """
+    correct_len = len(correct_text) if isinstance(correct_text, str) else len(str(correct_text or ""))
+    distractor_lens: List[int] = []
+    for d in distractors:
+        if isinstance(d, dict):
+            raw_text = d.get("content")
+            if raw_text is None or raw_text == "":
+                raw_text = d.get("value")
+            if raw_text is None or raw_text == "":
+                raw_text = d.get("text", "")
+            d_val = str(raw_text)
+        else:
+            d_val = str(d if d is not None else "")
+        distractor_lens.append(len(d_val))
+
+    avg_distractor_len = (sum(distractor_lens) / len(distractor_lens)) if distractor_lens else 0.0
+    ratio = (correct_len / avg_distractor_len) if avg_distractor_len > 0 else 1.0
+    is_within_bounds = (min_ratio <= ratio <= max_ratio) if avg_distractor_len > 0 else True
+
+    status_str = "PASS" if is_within_bounds else "FAIL"
+    summary_str = (
+        f"correct_len={correct_len}, avg_distractor_len={avg_distractor_len:.1f}, "
+        f"ratio={ratio:.2f} (bounds: [{min_ratio:.2f}, {max_ratio:.2f}]) - {status_str}"
+    )
+
+    return {
+        "correct_len": correct_len,
+        "distractor_lens": distractor_lens,
+        "avg_distractor_len": round(avg_distractor_len, 4),
+        "ratio": round(ratio, 4),
+        "is_within_bounds": is_within_bounds,
+        "summary_str": summary_str,
+    }
 
 
 def assemble_question(
@@ -328,7 +568,13 @@ def assemble_question(
         stem_raw = stem_variants[var_idx]
     stem = sanitize_katex_syntax(format_template_string(stem_raw, variables))
     raw_hints = template.get("hints", [])
-    hints = [sanitize_katex_syntax(format_template_string(h, variables)) for h in raw_hints]
+    hints = []
+    for h in raw_hints:
+        if isinstance(h, dict):
+            h_text = h.get("text") or h.get("content") or str(h)
+        else:
+            h_text = str(h)
+        hints.append(sanitize_katex_syntax(format_template_string(h_text, variables)))
     raw_solution = template.get("detailed_solution") or template.get("solution", "")
     detailed_solution = sanitize_katex_syntax(format_template_string(raw_solution, variables))
 
@@ -385,6 +631,8 @@ def assemble_question(
         common_misconception_warning = sanitize_katex_syntax(
             format_template_string(clean_warning, cta_vars)
         )
+        if validate_katex_syntax(common_misconception_warning, "common_misconception_warning", allow_template_vars=False):
+            common_misconception_warning = "Verifique cuidadosamente los supuestos y cálculos antes de seleccionar su respuesta."
         assembled["common_misconception_warning"] = common_misconception_warning
         assembled["misconception_warning"] = common_misconception_warning
 
@@ -412,19 +660,14 @@ def assemble_question(
             d_raw = str(d.get("value", "")).strip()
             d_val = sanitize_katex_syntax(format_template_string(d_raw, variables))
             d_id = d.get("distractor_id")
-            rationale = d.get("error_rationale") or d.get("rationale") or "Distractor derivado de error de procedimiento o misconception"
-            if cta_distractors_map and d_id in cta_distractors_map:
-                d_entry = cta_distractors_map[d_id]
-                rationale = (
-                    d_entry.get("manifestation")
-                    or d_entry.get("wrong_belief")
-                    or d_entry.get("omitted_step")
-                    or rationale
-                )
+            default_fb = "Distractor derivado de error de procedimiento o misconception"
+            rationale = _resolve_distractor_rationale(
+                d, d_id, cta_distractors_map, default_fb, variables=variables
+            )
             if isinstance(rationale, str):
-                clean_rat = _strip_giveaway_prefix(rationale)
-                cta_vars = {k: v for k, v in variables.items() if len(k) > 2 or k.endswith(("_val", "_num", "_str", "_res"))} if (cta_distractors_map and d_id in cta_distractors_map) else variables
-                rationale = sanitize_katex_syntax(format_template_string(clean_rat, cta_vars))
+                errs = validate_katex_syntax(rationale, "distractor_rationale", allow_template_vars=False)
+                if errs:
+                    rationale = sanitize_katex_syntax(default_fb)
             
             items_to_shuffle.append({
                 "content": d_val,
@@ -468,7 +711,29 @@ def assemble_question(
             ans_val = gen_result.get("value", "")
 
         str_val = str(ans_val).strip()
-        equivalents = gen_result.get("equivalents") or gen_result.get("accepted_equivalents", [str_val])
+        str_val = sanitize_katex_syntax(format_template_string(str_val, variables))
+
+        raw_canonical = gen_result.get("canonical_algebraic")
+        if raw_canonical is not None:
+            canonical_val = sanitize_katex_syntax(format_template_string(str(raw_canonical).strip(), variables)) if isinstance(raw_canonical, str) else str(raw_canonical)
+        else:
+            canonical_val = str_val
+        raw_equivalents = gen_result.get("accepted_equivalents")
+        if raw_equivalents is None:
+            raw_equivalents = gen_result.get("equivalents")
+        if raw_equivalents is None:
+            raw_equivalents = [str_val]
+
+        equivalents = []
+        for eq in raw_equivalents:
+            if isinstance(eq, (int, float)):
+                formatted_eq = str(eq)
+            elif isinstance(eq, str):
+                formatted_eq = sanitize_katex_syntax(format_template_string(eq.strip(), variables))
+            else:
+                formatted_eq = str(eq)
+            if formatted_eq not in equivalents:
+                equivalents.append(formatted_eq)
         if str_val not in equivalents:
             equivalents = [str_val] + list(equivalents)
 
@@ -483,7 +748,7 @@ def assemble_question(
         assembled["options"] = []
         assembled["correct_answer"] = {
             "value": str_val,
-            "canonical_algebraic": str_val,
+            "canonical_algebraic": canonical_val,
             "accepted_equivalents": equivalents,
             "tolerance": tolerance,
         }
@@ -500,28 +765,34 @@ def assemble_question(
         correct_letters = []
         for idx, opt in enumerate(shuffled_options):
             letter = OPTION_LETTERS[idx]
-            is_correct = bool(opt.get("correct", opt.get("is_correct", False)))
-            rationale = opt.get("rationale", opt.get("error_rationale"))
+            is_correct = bool(opt.get("is_correct") if "is_correct" in opt else opt.get("correct", False))
             d_id = opt.get("distractor_id")
 
             if not is_correct:
-                if not rationale or not str(rationale).strip():
-                    if cta_distractors_map and d_id and d_id in cta_distractors_map:
-                        rationale = (
-                            cta_distractors_map[d_id].get("manifestation")
-                            or cta_distractors_map[d_id].get("remediation_hint")
-                        )
-                    if not rationale or not str(rationale).strip():
-                        rationale = "Opción inválida derivada de una concepción errónea del concepto o propiedad."
+                default_fb = "Opción inválida derivada de una concepción errónea del concepto o propiedad."
+                rationale = _resolve_distractor_rationale(
+                    opt, d_id, cta_distractors_map, default_fb, variables=variables
+                )
+                if isinstance(rationale, str):
+                    errs = validate_katex_syntax(rationale, "distractor_rationale", allow_template_vars=False)
+                    if errs:
+                        rationale = sanitize_katex_syntax(default_fb)
             else:
-                if not rationale:
+                raw_rat = opt.get("error_rationale")
+                if raw_rat is None or raw_rat == "":
+                    raw_rat = opt.get("rationale")
+                if raw_rat:
+                    cand_correct = _format_and_sanitize_candidate(str(raw_rat), variables=variables, is_cta=False)
+                    errs = validate_katex_syntax(cand_correct, "correct_rationale", allow_template_vars=False)
+                    rationale = cand_correct if not errs else None
+                else:
                     rationale = None
-
-            if isinstance(rationale, str):
-                clean_ms_rat = _strip_giveaway_prefix(rationale)
-                cta_vars = {k: v for k, v in variables.items() if len(k) > 2 or k.endswith(("_val", "_num", "_str", "_res"))} if (cta_distractors_map and d_id in cta_distractors_map) else variables
-                rationale = sanitize_katex_syntax(format_template_string(clean_ms_rat, cta_vars))
-            raw_opt_content = str(opt.get("text", opt.get("content", "")))
+            raw_opt_content = opt.get("content")
+            if raw_opt_content is None or raw_opt_content == "":
+                raw_opt_content = opt.get("value")
+            if raw_opt_content is None or raw_opt_content == "":
+                raw_opt_content = opt.get("text", "")
+            raw_opt_content = str(raw_opt_content)
             opt_content = sanitize_katex_syntax(format_template_string(raw_opt_content, variables))
 
             opt_entry = {

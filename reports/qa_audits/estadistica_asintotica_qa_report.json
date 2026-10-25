@@ -1,0 +1,168 @@
+{
+  "course_metadata": {
+    "course_id": "estadistica_asintotica",
+    "unit_title": "Estadística Asintótica (Teoría Asintótica y Econometría de Muestras Grandes)",
+    "detected_objective": "Dominio y aplicación analítica integral de la teoría asintótica econométrica y de muestras grandes: convergencia en probabilidad y en media cuadrática; límites de probabilidad y álgebra de Slutsky; leyes débiles (Khinchine, Chebychev) y leyes fuertes (Kolmogorov, Markov); convergencia en distribución y dispositivo de Cramér-Wold; teoremas centrales del límite (Lindeberg-Lévy, Lindeberg-Feller, condición de Liapunov); consistencia asintótica y normalidad del estimador MCO bajo condiciones de regularidad de Grenander; estimación consistente de la varianza residual s2 y matriz de covarianza asintótica; método Delta univariado y multivariado para transformaciones no lineales; eficiencia asintótica y ordenamiento matricial de Loewner; endogeneidad, condiciones de validez y relevancia de instrumentos; estimación canónica por Variables Instrumentales y MC2E con preservación de residuos estructurales; contraste de especificación de Hausman y regresión aumentada de Wu; sesgo de atenuación y contaminación multivariada por error de medición; metodología de gemelos con efectos fijos y dobles diferencias instrumentadas; y órdenes de magnitud estocástica O(n^delta) y o(n^delta) de Mann-Wald.",
+    "total_competencies": 28,
+    "total_questions": 660,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 660
+    },
+    "platform_status": "ELIMINADO",
+    "evaluator": "Course QA Auditor — Top's Academy",
+    "evaluation_date": "2026-10-25",
+    "deleted_at": "2026-10-25 11:12:47"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 3.8,
+      "max": 4.0,
+      "feedback": "Excelente arquitectura curricular modular con 28 micro-competencias de alta granularidad analítica. El curso presenta un balance cognitivo riguroso en la tríada del aprendizaje: 6 Hechos [Fact] (21.4%), 12 Conceptos [Concept] (42.9%) y 10 Habilidades [Skill] (35.7%). El modelado mediante Grafo Acíclico Dirigido (DAG) define formalmente las rutas de aprendizaje con 2 nodos raíz axiomáticos fundacionales (C-01: 'Consistencia Asintótica de MCO' y C-07: 'Convergencia en Probabilidad y Media Cuadrática') y 26 competencias con prerrequisitos explícitos sin ciclos. La densidad poblacional es sobresaliente y uniforme (20 reactivos por Hecho/Concepto y 30 por Habilidad, totalizando 660 reactivos, promedio 23.6 reactivos/competencia), garantizando profundidad según Mastery Learning. Se aplica una deducción menor (-0.2 pt) debido a una ligera inversión pedagógica en el subgrafo inicial: C-01 se declara como raíz sin prerrequisitos a pesar de utilizar el Teorema de Slutsky y límites en probabilidad formalizados en C-07 y Hab-08."
+    },
+    "assessment_quality": {
+      "score": 3.5,
+      "max": 5.0,
+      "feedback": "Evaluación antiazar robusta (100% reactivos con 7 alternativas A-G, reduciendo la probabilidad de acierto por azar al 14.28%) y excelencia en distractores diagnósticos: 3,960 distractores con cobertura del 100.0% de rationales específicos (error_rationale) que modelan con precisión matemática conceptos erróneos de la literatura econométrica (confusión entre consistencia e insesgadez finita, inversión de orden de Loewner, empleo de residuos proyectados en lugar de estructurales en MC2E, atenuación vs contaminación multivariada, y violación de supuestos de Slutsky). Cero distractores delatores (telltale = 0) y cero fugas de respuestas. No obstante, se aplica una penalización sustancial (-1.5 pts) por dos factores críticos: (1) Ausencia total de variedad tipológica: 100% de los reactivos son de opción múltiple (0% multiple_select, 0% fill-in-the-blank / numéricos); y (2) Severa escasez de diversidad de arquetipos por competencia (1 solo arquetipo repetido 20 a 30 veces) con pseudo-parametrización cosmética en competencias conceptuales (donde variar K y n en el enunciado no altera la deducción analítica ni la respuesta), generando un alto riesgo de mecanización o reconocimiento superficial de patrones por parte del estudiante."
+    },
+    "scaffolding_hints": {
+      "score": 4.3,
+      "max": 5.0,
+      "feedback": "Andamiaje formativo de gran calidad pedagógica en los 660 reactivos. Se supera de manera definitiva el defecto de versiones previas (cero pistas stub, cero palabras sueltas y cero códigos de prerrequisito). El 100% de los reactivos cuenta con exactamente 3 pistas progresivas estructuradas en jerarquía socrática: Pista 1 (Fundamento Conceptual) -> Pista 2 (Estrategia Analítica / Procedimental) -> Pista 3 (Guía Operativa / Verificación de Cálculo). Las soluciones detalladas son completas, matemáticamente rigurosas e incorporan advertencias explícitas de ideas erróneas frecuentes (misconception warnings), tales como la invalidez de Gauss-Markov con errores no gaussianos, la distorsión de varianzas por residuos proyectados en MC2E o la persistencia asintótica del sesgo de atenuación. Se aplica una deducción moderada (-0.7 pts) debido a que la clonación de arquetipos dentro de cada competencia causa que las pistas y soluciones de los 20-30 reactivos de dicha competencia compartan una redacción casi idéntica, reduciendo el andamiaje adaptativo ante diferentes facetas del concepto."
+    },
+    "instructional_alignment": {
+      "score": 3.9,
+      "max": 4.0,
+      "feedback": "Alineación instruccional impecable y profunda congruencia semántica con el estándar de econometría avanzada (Greene, Hayashi, Wooldridge). Todos los objetivos declarados en el programa están exhaustivamente cubiertos por los reactivos: convergencia estocástica, leyes de grandes números, teoremas centrales del límite, estimadores MCO y MC2E, método Delta, contrastes de Hausman, sesgo por error de medición y órdenes de magnitud. El banco exhibe un fuerte anclaje en niveles taxonómicos de Bloom de Comprensión, Aplicación y Análisis. Se registra un 0% de preguntas huérfanas (660/660 vinculadas a micro-competencias activas) y ausencia total de contaminación inter-dominio. Deducción marginal (-0.1 pt) por la redundancia de items que evalúan exactamente la misma proposición teórica con variaciones mínimas de parámetros."
+    },
+    "technical_ergonomics": {
+      "score": 2.0,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica y compilabilidad KaTeX impecables. La telemetría determinista certifica: 0 llaves desbalanceadas, 0 delimitadores triples ($$$), 0 dobles llaves espurias ({{...}}), 0 delimitadores abiertos y 0 expresiones LaTeX en texto plano sin delimitar. La notación matricial (boldface \\mathbf{X}, \\boldsymbol{\\beta}, \\mathbf{Q}^{-1}), límites estocásticos (\\text{plim}, \\xrightarrow{d}, \\xrightarrow{p}, \\stackrel{a}{\\sim}) y operadores matemáticos se renderizan fluidamente sin colapso del parser en el frontend de Top's Academy. Prosa académica rigurosa en español neutro."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 17.5,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "remediation_actions": [
+    "Aprobación oficial para despliegue en producción en la plataforma Top's Academy, certificada en Tier EXCELENTE con nota 17.5 / 20.0.",
+    "Diversificación de Arquetipos de Reactivos (Mitigación de Mecanización): En la próxima iteración curricular, diseñar al menos 3 arquetipos conceptuales y contextuales distintos por competencia en lugar de un único arquetipo clonado paramétricamente 20-30 veces. Introducir escenarios de interpretación de salidas de software econométrico (Stata/R), análisis de contraejemplos y preguntas de diagnóstico sobre supuestos violados.",
+    "Ampliación Taxonómica de Formatos de Ítem: Romper el monocultivo de opción múltiple de 7 alternativas (MC7) incorporando reactivos de selección múltiple (multiple_select con penalización por falsos positivos) y reactivos de respuesta numérica/cálculo directo (fill-in-the-blank) en las competencias de Habilidad (Hab-01 a Hab-10).",
+    "Ajuste de Precedencia en el DAG Curricular: Declarar formalmente la competencia C-07 ('Convergencia en Probabilidad y Media Cuadrática') o Hab-08 ('Álgebra de Plims y Slutsky') como prerrequisito directo de C-01 ('Consistencia Asintótica de MCO'), resolviendo la inversión pedagógica de utilizar operadores de convergencia en probabilidad antes de su definición formal.",
+    "Limpieza de Cláusulas Sintéticas de Relleno: Revisar el generador de distractores para suprimir cláusulas léxicas accesorias concatenadas mecánicamente (ej. ', en la formulación matricial considerada', ', para la muestra de datos observada') cuando no aporten contexto semántico real."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "pseudo_parametric_theoretical_clone_linter",
+      "severity": "medium",
+      "description": "Detecta reactivos en competencias conceptuales o fácticas donde se inyectan variables numéricas (como K = 2, n = 300, x_ik = i^3) en el enunciado que no tienen ningún impacto analítico o computacional en la respuesta correcta ni en los distractores. Este patrón crea una falsa apariencia de variabilidad mientras induce mecanización y memorización superficial en el estudiante.",
+      "regex_pattern": "(?:K\\s*=\\s*\\d+|n\\s*=\\s*\\d+|tamaño\\s+de\\s+muestra\\s+n\\s*=\\s*\\d+)",
+      "affected_competencies": [
+        "C-01",
+        "H-01",
+        "C-02",
+        "C-03",
+        "C-04",
+        "H-02"
+      ],
+      "evidence_items": [
+        "Q-C01-001",
+        "Q-C01-002",
+        "Q-H01-021",
+        "Q-H01-022",
+        "Q-C02-041",
+        "Q-C02-042"
+      ],
+      "proposed_detection_logic": "En competencias de tipo 'Fact' o 'Concept', comparar la distancia de Levenshtein o Jaccard entre las opciones correctas de distintos reactivos. Si la similitud textual de las opciones correctas normalizadas es superior al 95% y la fórmula/respuesta no depende de los números parametrizados en el stem, marcar como 'pseudo-parametric theoretical clone'."
+    },
+    {
+      "rule_id": "archetype_entropy_linter",
+      "severity": "medium",
+      "description": "Evalúa el nivel de entropía y diversidad de arquetipos dentro del banco de cada competencia. Detecta si una competencia con 20 o 30 reactivos repite exactamente la misma plantilla de problema (arquetipo único) con solo variación de parámetros numéricos, provocando que el estudiante resuelva el banco por mecanización heurística tras responder los primeros 2 o 3 ítems.",
+      "regex_pattern": "stem_template_cluster_ratio > 0.85",
+      "affected_competencies": [
+        "C-01",
+        "H-01",
+        "C-02",
+        "Hab-01",
+        "Hab-02",
+        "C-03",
+        "C-04",
+        "H-02",
+        "Hab-03",
+        "C-05",
+        "Hab-04",
+        "H-03",
+        "C-06",
+        "Hab-05",
+        "Hab-06",
+        "C-07",
+        "Hab-07",
+        "H-04",
+        "C-08",
+        "C-09",
+        "Hab-08",
+        "C-10",
+        "Hab-09",
+        "H-05",
+        "C-11",
+        "Hab-10",
+        "C-12",
+        "H-06"
+      ],
+      "evidence_items": [
+        "Q-Hab01-061",
+        "Q-Hab01-062",
+        "Q-Hab05-301",
+        "Q-Hab05-302",
+        "Q-Hab06-331",
+        "Q-Hab06-332",
+        "Q-Hab10-591",
+        "Q-Hab10-592"
+      ],
+      "proposed_detection_logic": "Calcular la matriz de similitud de cadenas (usando TF-IDF o difflib) entre todos los stems de una misma competencia tras enmascarar números y nombres de variables. Si el tamaño del cluster principal supera el 85% del total de reactivos de la competencia, disparar 'low archetype entropy warning'."
+    },
+    {
+      "rule_id": "item_typology_diversity_linter",
+      "severity": "low",
+      "description": "Monitorea la heterogeneidad de formatos de evaluación en cursos con más de 100 reactivos. Advierte sobre 'monocultivo tipológico' cuando el 100% de los reactivos se implementa exclusivamente en una sola modalidad (ej. multiple_choice_7_options), contraviniendo las directrices de OSCQR y Quality Matters que recomiendan combinar ítems de opción simple, selección múltiple y respuestas construidas o numéricas.",
+      "regex_pattern": "count(type == 'multiple_choice_7_options') / total_questions == 1.0",
+      "affected_competencies": [
+        "ALL"
+      ],
+      "evidence_items": [
+        "660 items in multiple_choice_7_options"
+      ],
+      "proposed_detection_logic": "Flag curso si question_types_distribution contiene únicamente 1 clave y total_questions >= 100, recomendando un piso mínimo del 10% de reactivos de tipología complementaria (multiple_select o fill_in_the_blank)."
+    },
+    {
+      "rule_id": "synthetic_clause_padding_linter",
+      "severity": "low",
+      "description": "Detecta cláusulas sintéticas accesorias de relleno añadidas al final de los distractores por algoritmos de perturbación textual para variar la longitud del texto o forzar unicidad sintáctica.",
+      "regex_pattern": "(?:,\\s*en\\s+la\\s+formulación\\s+matricial\\s+considerada|,\\s*para\\s+la\\s+muestra\\s+de\\s+datos\\s+observada|,\\s*en\\s+el\\s+marco\\s+de\\s+la\\s+especificación|,\\s*según\\s+los\\s+supuestos\\s+clásicos\\s+del\\s+modelo)\\.?$",
+      "affected_competencies": [
+        "C-04",
+        "Hab-09",
+        "H-05",
+        "C-11",
+        "C-12",
+        "H-06"
+      ],
+      "evidence_items": [
+        "Q-C04-141 (opt E)",
+        "Q-C04-142 (opt D, E)",
+        "Q-Hab09-521 (opt B)",
+        "Q-Hab09-522 (opt B, C, D, E, F, G)",
+        "Q-H05-551 (opt G)",
+        "Q-H05-552 (opt F)",
+        "Q-C11-571 (opt B)",
+        "Q-C11-572 (opt A)",
+        "Q-C12-621 (opt D)",
+        "Q-C12-622 (opt A)"
+      ],
+      "proposed_detection_logic": "Escanear el corpus de opciones de distractores con regex para patrones conocidos de frases de relleno genéricas que terminan la oración sin aportar contenido técnico específico."
+    }
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-25 11:12:47",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}

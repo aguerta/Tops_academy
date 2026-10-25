@@ -23,9 +23,22 @@ if str(_skills_root) not in sys.path:
 
 from engine.invariants import validate_katex_syntax
 
+LATEX_CMD_NAMES = (
+    r"frac|dfrac|tfrac|cfrac|sqrt|sum|prod|int|oint|lim|infty|partial|nabla|"
+    r"alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|vartheta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|varphi|chi|psi|omega|"
+    r"Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Upsilon|Phi|Psi|Omega|"
+    r"cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|simeq|propto|in|notin|subset|subseteq|cup|cap|forall|exists|"
+    r"Rightarrow|implies|iff|Leftrightarrow|to|rightarrow|leftarrow|xrightarrow|"
+    r"hat|bar|tilde|vec|dot|ddot|mathcal|mathbb|mathbf|boldsymbol|text|operatorname|left|right|begin|end|"
+    r"quad|qquad|ln|log|exp|det|dim|ker|min|max|sup|inf"
+)
+LATEX_CMD_RE = re.compile(rf"\\(?:{LATEX_CMD_NAMES})(?![a-zA-Z])")
+
 RAW_LATEX_PATTERNS = [
     # 1. Backslashed LaTeX macros (unambiguous LaTeX)
-    r"\\(?:dot|ddot|bar|hat|tilde|vec|frac|dfrac|tfrac|cfrac|sqrt|alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega|partial|int|sum|prod|infty|times|cdot|approx|leq|geq|neq)\b",
+    rf"\\(?:{LATEX_CMD_NAMES})(?![a-zA-Z])",
+
+
     # 2. LaTeX commands without backslash: MUST have immediate '{' (no whitespace) with concise math argument
     r"(?<!\\)\b(?:dot|ddot|bar|hat|tilde|vec)\{[a-zA-Z0-9_+\-*^./]{1,4}\}",
     r"(?<!\\)\b(?:frac|dfrac|tfrac|cfrac|sqrt)\{[a-zA-Z0-9_+\-*^./]+\}",
@@ -167,18 +180,22 @@ def validate_cta_schema(
     return errors
 
 
-def check_prerequisites_dag(competencies: List[Dict[str, Any]]) -> List[str]:
+def check_prerequisites_dag(
+    competencies: List[Dict[str, Any]],
+    allowed_prereq_ids: Optional[Set[str]] = None,
+) -> List[str]:
     """Ensure prerequisite references exist and form an acyclic graph."""
     errors = []
     comp_ids = {c["id"] for c in competencies}
+    valid_ids = comp_ids | (allowed_prereq_ids or set())
 
     adj: Dict[str, List[str]] = {cid: [] for cid in comp_ids}
     for comp in competencies:
         cid = comp["id"]
         for prereq in comp.get("prerequisites", []):
-            if prereq not in comp_ids:
+            if prereq not in valid_ids:
                 errors.append(f"Competency '{cid}' references non-existent prerequisite '{prereq}'.")
-            else:
+            elif prereq in comp_ids:
                 adj[cid].append(prereq)
 
     # Cycle detection using DFS
@@ -686,8 +703,15 @@ def validate_cta_rules(
     )
     errors.extend(comp_errors)
 
-    # 3. Prerequisites DAG check
-    dag_errors = check_prerequisites_dag(competencies)
+    # 3. Prerequisites DAG check (respecting base competencies in --append mode)
+    delta_info = None
+    if manifest_data and isinstance(manifest_data, dict):
+        delta_info = manifest_data.get("delta") or manifest_data.get("existing_course")
+    existing_comp_ids: Set[str] = set()
+    if isinstance(delta_info, dict):
+        existing_comp_ids = set(delta_info.get("existing_competency_ids", []))
+
+    dag_errors = check_prerequisites_dag(competencies, allowed_prereq_ids=existing_comp_ids)
     errors.extend(dag_errors)
 
     # 4. KaTeX syntax validation
@@ -767,3 +791,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# Public alias for pipeline compatibility
+check_cta_file = validate_cta_rules

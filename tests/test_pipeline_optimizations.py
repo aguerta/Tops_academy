@@ -103,9 +103,13 @@ def test_cta_schema_supports_session_and_unit_index():
 
 def test_tpl_var_rejects_empty_vars():
     """Verify that check_single_template rejects templates generating empty vars."""
-    cta_path = SKILL_DIR.parent.parent.parent / "courses" / "solow_model" / "work" / "cta.json"
+    cta_path = SKILL_DIR / "courses" / "solow_model" / "work" / "cta.json"
     if not cta_path.exists():
-        pytest.skip("Solow CTA not found")
+        alt_cta = SKILL_DIR.parent.parent / "courses" / "solow_growth_model.json"
+        if alt_cta.exists():
+            cta_path = alt_cta
+        else:
+            pytest.skip("Solow CTA not found")
 
     bad_template = {
         "id": "T-BAD-01",
@@ -185,9 +189,19 @@ def test_stem_variants_selection_and_diversity():
 
 def test_plan_shards_dsl_reference_and_k_cap(tmp_path):
     """Verify that plan_shards embeds DSL reference and supports up to K=8 shards."""
-    cta_source = SKILL_DIR.parent.parent.parent / "courses" / "solow_model" / "work" / "cta.json"
+    cta_source = SKILL_DIR / "courses" / "solow_model" / "work" / "cta.json"
     if not cta_source.exists():
-        pytest.skip("Solow CTA not found")
+        alt_cta = SKILL_DIR.parent.parent / "courses" / "solow_growth_model.json"
+        if alt_cta.exists():
+            cta_source = alt_cta
+        else:
+            pytest.skip("Solow CTA not found")
+
+    (tmp_path / "pre_cta_manifest.json").write_text(json.dumps({
+        "course_id": "solow_model",
+        "cta_mode": "direct",
+        "documents": [{"name": "solow1956.pdf", "path": "content/Solow_model/solow1956.pdf", "total_pages": 20}],
+    }), encoding="utf-8")
 
     res = plan_shards(cta_path=cta_source, output_dir=tmp_path / "shards", k=8)
     assert res["total_shards"] <= 8

@@ -373,6 +373,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         <FeedbackToast
           isCorrect={isCorrect}
           question={currentQuestion}
+          selectedOption={selectedOption}
+          selectedMultiOptions={selectedMultiOptions}
           onRedo={handleRedo}
           isExhausted={isExhausted}
           wrongAttemptsCount={wrongAttemptsCount}

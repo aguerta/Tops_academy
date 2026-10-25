@@ -117,7 +117,7 @@
   {
     "cid": "a53e6af1",
     "folder": "20261019_223720_practica_parcial_saul_standard_coarse_a53e6af1",
-    "title": "Práctica Parcial Saúl Standard Coarse v1",
+    "title": "Pr\u00e1ctica Parcial Sa\u00fal Standard Coarse v1",
     "type": "Coarse Zero-Intervention (13 comps, 320 Qs)",
     "source": "Auditoria De Curso Con Agente",
     "total_wall_seconds": 1970.0,
@@ -232,7 +232,7 @@
   {
     "cid": "f9b9d459",
     "folder": "20261019_223715_practica_parcial_saul_standard_f9b9d459",
-    "title": "Práctica Parcial Saúl Standard",
+    "title": "Pr\u00e1ctica Parcial Sa\u00fal Standard",
     "type": "Standard Sweet-Spot (65 comps, 1,590 Qs)",
     "source": "Auditoria De Curso Con Agente",
     "total_wall_seconds": 3853.0,
@@ -347,7 +347,7 @@
   {
     "cid": "afb5aa18",
     "folder": "20261019_223707_practica_parcial_saul_standard_coarse_v2_afb5aa18",
-    "title": "Práctica Parcial Saúl Standard Coarse v2",
+    "title": "Pr\u00e1ctica Parcial Sa\u00fal Standard Coarse v2",
     "type": "Coarse Friction Paradox (14 comps, 370 Qs)",
     "source": "Auditoria De Curso Con Agente",
     "total_wall_seconds": 3602.0,
@@ -462,7 +462,7 @@
   {
     "cid": "acdc402d",
     "folder": "20261019_223729_practica_parcial_saul_acdc402d",
-    "title": "Práctica Parcial Saúl Fine / Masivo",
+    "title": "Pr\u00e1ctica Parcial Sa\u00fal Fine / Masivo",
     "type": "Fine Masivo Stress-Test (118 comps, 2,850 Qs)",
     "source": "Auditoria De Curso Con Agente",
     "total_wall_seconds": 5139.0,
@@ -577,7 +577,7 @@
   {
     "cid": "876ad3df",
     "folder": "20261017_063549_pde_saul_1_876ad3df",
-    "title": "PDE Saúl 1",
+    "title": "PDE Sa\u00fal 1",
     "type": "Standard Small (16 comps, 380 Qs)",
     "source": "Master Forensic Synthesis (7 Runs)",
     "total_wall_seconds": 3352.0,
@@ -685,7 +685,7 @@
   {
     "cid": "0f573810",
     "folder": "20261017_063550_estadistica_regresion_0f573810",
-    "title": "Estadística Regresión",
+    "title": "Estad\u00edstica Regresi\u00f3n",
     "type": "Standard Medium (43 comps, 1,050 Qs)",
     "source": "Master Forensic Synthesis (7 Runs)",
     "total_wall_seconds": 21961.0,
@@ -800,7 +800,7 @@
   {
     "cid": "9ed41fb3",
     "folder": "20261017_063551_practica_parcial_saul_9ed41fb3",
-    "title": "Práctica Parcial Saúl (Truncado 404)",
+    "title": "Pr\u00e1ctica Parcial Sa\u00fal (Truncado 404)",
     "type": "Stage 1 Incomplete (18 comps)",
     "source": "Master Forensic Synthesis (7 Runs)",
     "total_wall_seconds": 233.0,
@@ -1318,9 +1318,9 @@
   {
     "cid": "b9316152",
     "folder": "20261023_085806_econometria_violaciones_supuestos_b9316152",
-    "title": "Violaciones de Supuestos Econométricos",
+    "title": "Violaciones de Supuestos Econom\u00e9tricos",
     "type": "Standard Direct (14 comps, 360 Qs)",
-    "source": "Curso de Violaciones de Supuestos Econométricos",
+    "source": "Curso de Violaciones de Supuestos Econom\u00e9tricos",
     "total_wall_seconds": 2437.0,
     "total_wall_minutes": 40.62,
     "competencies": 14,
@@ -1433,7 +1433,7 @@
   {
     "cid": "d52ee475",
     "folder": "20261023_085813_estadistica_asintotica_d52ee475",
-    "title": "Estadística Asintótica",
+    "title": "Estad\u00edstica Asint\u00f3tica",
     "type": "Standard High-Density MapReduce (28 comps, 660 Qs)",
     "source": "Asymptotic Statistics Course Generation",
     "total_wall_seconds": 1613.0,
@@ -1542,6 +1542,121 @@
         "wall_seconds": 40.0,
         "wall_minutes": 0.67,
         "percentage_of_total": 2.48
+      }
+    }
+  },
+  {
+    "cid": "ab30cf91",
+    "folder": "20261023_163854_asyntotic_estatistics_v2_ab30cf91",
+    "title": "Estad\u00edstica Asint\u00f3tica v2",
+    "type": "Standard High-Density MapReduce (32 comps, 740 Qs)",
+    "source": "Asymptotic Statistics Course Generation",
+    "total_wall_seconds": 3930.0,
+    "total_wall_minutes": 65.5,
+    "competencies": 32,
+    "questions": 740,
+    "total_tokens": 129061781,
+    "active_tokens": 8897854,
+    "turns": 1041,
+    "subagents": 24,
+    "tool_errors": 128,
+    "stages_breakdown": {
+      "prepare": {
+        "idx": "00",
+        "wall_seconds": 9.9,
+        "wall_minutes": 0.16,
+        "percentage_of_total": 0.25,
+        "recorded_at": "2026-10-23T20:23:53.029396+00:00"
+      },
+      "cta": {
+        "idx": "01",
+        "wall_seconds": 879.7,
+        "wall_minutes": 14.66,
+        "percentage_of_total": 22.38,
+        "recorded_at": "2026-10-23T20:38:32.714611+00:00"
+      },
+      "shard": {
+        "idx": "02",
+        "wall_seconds": 11.2,
+        "wall_minutes": 0.19,
+        "percentage_of_total": 0.29,
+        "recorded_at": "2026-10-23T20:38:43.940545+00:00"
+      },
+      "templates": {
+        "idx": "03",
+        "wall_seconds": 2422.2,
+        "wall_minutes": 40.37,
+        "percentage_of_total": 61.63,
+        "recorded_at": "2026-10-23T21:19:06.146562+00:00"
+      },
+      "build": {
+        "idx": "04",
+        "wall_seconds": 26.2,
+        "wall_minutes": 0.44,
+        "percentage_of_total": 0.67,
+        "recorded_at": "2026-10-23T21:19:32.368554+00:00"
+      },
+      "verify": {
+        "idx": "05",
+        "wall_seconds": 12.1,
+        "wall_minutes": 0.2,
+        "percentage_of_total": 0.31,
+        "recorded_at": "2026-10-23T21:19:44.468773+00:00"
+      },
+      "judge_compare": {
+        "idx": "05b",
+        "wall_seconds": 491.5,
+        "wall_minutes": 8.19,
+        "percentage_of_total": 12.51,
+        "recorded_at": "2026-10-23T21:27:55.935396+00:00"
+      },
+      "publish": {
+        "idx": "06",
+        "wall_seconds": 9.8,
+        "wall_minutes": 0.16,
+        "percentage_of_total": 0.25,
+        "recorded_at": "2026-10-23T21:28:05.760591+00:00"
+      }
+    },
+    "five_stages_breakdown": {
+      "initialization": {
+        "wall_seconds": 9.9,
+        "wall_minutes": 0.16,
+        "percentage_of_total": 0.25,
+        "target_sla_minutes": 1.0,
+        "actual_observed_range_minutes": "1.2 min (72.0s)",
+        "sla_status": "SLIGHTLY_ABOVE (1.2 min observed vs 1.0 min target, 61.9% improvement)"
+      },
+      "cta": {
+        "wall_seconds": 879.7,
+        "wall_minutes": 14.66,
+        "percentage_of_total": 22.38
+      },
+      "charts": {
+        "wall_seconds": 11.2,
+        "wall_minutes": 0.19,
+        "percentage_of_total": 0.29
+      },
+      "plan": {
+        "wall_seconds": 2952.0,
+        "wall_minutes": 49.2,
+        "percentage_of_total": 75.11,
+        "sub_stages": {
+          "templates_stage_03_wall_seconds": 2422.2,
+          "build_stage_04_wall_seconds": 26.2,
+          "verify_stage_05_wall_seconds": 12.1,
+          "judge_compare_stage_05b_wall_seconds": 491.5
+        }
+      },
+      "publish": {
+        "wall_seconds": 9.8,
+        "wall_minutes": 0.16,
+        "percentage_of_total": 0.25
+      },
+      "unassigned_overhead": {
+        "wall_seconds": 77.3,
+        "wall_minutes": 1.29,
+        "percentage_of_total": 1.97
       }
     }
   }

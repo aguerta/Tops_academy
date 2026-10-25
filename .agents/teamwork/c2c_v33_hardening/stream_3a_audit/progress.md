@@ -1,0 +1,27 @@
+# PROGRESS: Stream 3A — Victory Gate Forensic Auditor (`audit_3a`)
+
+- [x] Read DISPATCH.md, ORIGINAL_REQUEST.md, GATE_STATUS.md, impl/handoff.md, impr/handoff.md
+- [x] 1. Repository & Boundary Hygiene Check (`git status`, lockfiles, hooks)
+  - Verified 0 stray scratch `.py` scripts.
+  - Verified 0 active `.c2c_subagent_lock.json` lockfiles.
+  - Verified `.agents/hooks.template.json` exists and is valid JSON (`"command": "python skills/content-to-course/c2c_hook_guard.py"`).
+  - Verified `.agents/hooks.json` does NOT exist (reserved for Orchestrator activation).
+  - Verified git status / diff boundaries strictly match baseline + approved Tier A escalation.
+- [x] 2. Forensic Inspection of `subagent_types.json` and sync with `dispatch.py`
+  - Exact match confirmed programmatically against `dispatch.get_type_definitions(lean=False)`.
+  - 4 subagent types (`c2c_cta_architect`, `c2c_shard_author`, `c2c_judge`, `c2c_repair`), 91,503 bytes.
+  - Critical contracts confirmed: `@var@`, `shard_fixes`, `compile_shard.py` ban, `ArtifactMetadata` ban, coherent Blind Judge pointer mode.
+- [x] 3. Line-by-line Forensic Audit of `tests/test_forensic_replay_ab30cf91.py` (Vectors 1..8)
+  - 100% genuine code, zero fake mocks, zero conditional skips on V1..V8.
+  - All 8 vectors audited: V1 (bootstrap zero-raster), V2 (orphan math zero false rejection), V3 (--append continuous IDs & DAG), V4 (weighted sharding M7.4 1 Hab/shard wave 1), V5 (KaTeX @var@ & placeholder hard block), V6 (zero disk mutation, shard_fixes, circuit breaker trip & reset), V7 (dual hook guard & 108-turn watchdog), V8 (CRC32 option shuffle & coherent judge pointer).
+  - Independent execution: 8 passed in 3.30s (< 10s SLA).
+- [x] 4. Certification Report Verification (`CERTIFICACION_HARDENING_C2C_V33.md`)
+  - Verified 100% coverage of Bottlenecks #1..#13.
+  - Verified 100% coverage of `ab30cf91` Error Categories 01..12.
+  - Verified relative density formula for `granularity: standard` (3–5 comps per 5–10 pages).
+  - Verified R-16 validation bounds `[0.65x, 1.35x]` and author target `[0.80x, 1.20x]`.
+  - Verified exact match of test suite metrics.
+- [x] 5. Independent Test Execution (dedicated suite + full repo `pytest tests -q`)
+  - Dedicated suite: 8 passed in 3.30s.
+  - Full repo: 724 passed, 2 skipped, 0 failed in 63.48s.
+- [x] 6. Handoff creation and Binary Verdict dispatch via `send_message`

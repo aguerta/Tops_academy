@@ -1,0 +1,2992 @@
+{
+  "course_id": "saul_control_optimo",
+  "filename": "saul_control_optimo.json",
+  "title": "Saul Control Optimo",
+  "description": "Dominio y aplicación analítica integral de Saul Control Optimo",
+  "total_competencies": 15,
+  "total_questions": 350,
+  "question_types_distribution": {
+    "multiple_choice_7_options": 350
+  },
+  "questions_per_competency": {
+    "C-01": 20,
+    "H-01": 20,
+    "C-02": 20,
+    "H-02": 20,
+    "C-03": 20,
+    "Hab-01": 30,
+    "C-04": 20,
+    "H-03": 20,
+    "Hab-02": 30,
+    "C-05": 20,
+    "Hab-03": 30,
+    "C-06": 20,
+    "Hab-04": 30,
+    "C-07": 20,
+    "Hab-05": 30
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (conteo de KaTeX roto, distractores delatores, pistas faltantes, placeholders f-string y distribución de Bloom) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts de prueba exploratorios en Python. Aplica el Adaptive Semantic Loop y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 1.86,
+    "hard_penalties_precalculated": []
+  },
+  "audit_telemetry": {
+    "course_id": "saul_control_optimo",
+    "title": "Saul Control Optimo",
+    "total_competencies": 15,
+    "total_questions": 350,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 15,
+        "category_distribution": {
+          "Fact": 3,
+          "Concept": 7,
+          "Skill": 5,
+          "Other": 0
+        },
+        "competencies_missing_prerequisites_count": 1,
+        "underpopulated_competencies_count": 0,
+        "underpopulated_competencies": [],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 20,
+        "max_questions_per_comp": 30
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 2100,
+        "distractors_with_rationale_count": 2100,
+        "rationale_coverage_pct": 100.0,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 0,
+        "zero_hints_items": [],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 0,
+        "missing_solutions_count": 0
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 0,
+        "unclosed_braces_items": [],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 0,
+        "template_variable_residue_items": []
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 0,
+        "blind_string_replacement_items": []
+      }
+    },
+    "hard_penalties": [],
+    "risk_score": 1.86,
+    "risk_clusters": {
+      "katex_issues": [],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [
+        "Q-Hab01-101",
+        "Q-Hab01-102",
+        "Q-Hab01-103",
+        "Q-Hab01-104",
+        "Q-Hab01-105",
+        "Q-Hab01-106",
+        "Q-Hab01-107",
+        "Q-Hab01-108",
+        "Q-C06-251",
+        "Q-C06-252",
+        "Q-C06-253",
+        "Q-C06-254",
+        "Q-C06-255"
+      ],
+      "template_residues": [],
+      "blind_replacements": []
+    },
+    "all_issues": [
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-Hab01-101",
+        "competency_id": "Hab-01",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-Hab01-102",
+        "competency_id": "Hab-01",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-Hab01-103",
+        "competency_id": "Hab-01",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-Hab01-104",
+        "competency_id": "Hab-01",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-Hab01-105",
+        "competency_id": "Hab-01",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-Hab01-106",
+        "competency_id": "Hab-01",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-Hab01-107",
+        "competency_id": "Hab-01",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-Hab01-108",
+        "competency_id": "Hab-01",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-C06-251",
+        "competency_id": "C-06",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-03'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-C06-252",
+        "competency_id": "C-06",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-03'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-C06-253",
+        "competency_id": "C-06",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-03'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-C06-254",
+        "competency_id": "C-06",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-03'",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-C06-255",
+        "competency_id": "C-06",
+        "message": "Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-03'",
+        "snippet": null
+      }
+    ],
+    "issues_by_item": {
+      "Q-Hab01-101": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+      ],
+      "Q-Hab01-102": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+      ],
+      "Q-Hab01-103": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+      ],
+      "Q-Hab01-104": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+      ],
+      "Q-Hab01-105": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+      ],
+      "Q-Hab01-106": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+      ],
+      "Q-Hab01-107": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+      ],
+      "Q-Hab01-108": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+      ],
+      "Q-C06-251": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-03'"
+      ],
+      "Q-C06-252": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-03'"
+      ],
+      "Q-C06-253": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-03'"
+      ],
+      "Q-C06-254": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-03'"
+      ],
+      "Q-C06-255": [
+        "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-03'"
+      ]
+    }
+  },
+  "competencies": [
+    {
+      "id": "C-01",
+      "name": "Funcional y Trayectorias Admisibles en Tiempo Continuo",
+      "category": "Concept",
+      "description": "Un funcional $V[y] = \\int_{t_0}^T F(t, y(t), y'(t)) dt$ es una aplicación cuyo dominio es un conjunto de curvas o trayectorias admisibles $y(t) \\in C^1[t_0, T]$ y cuyo codominio es la recta real $\\mathbb{R}$, evaluando el valor acumulado de cada arco continuo entre puntos de frontera prefijados.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "H-01",
+      "name": "Clasificación de Funcionales de Lagrange, Mayer y Bolza",
+      "category": "Fact",
+      "description": "Identificación canónica de los tres formatos estándar de problemas variacionales: Problema de Lagrange $V[y] = \\int_0^T F[t, y(t), y'(t)]dt$, Problema de Mayer $V[y] = G(T, y(T))$ y Problema de Bolza $V[y] = \\int_0^T F[t, y(t), y'(t)]dt + G(T, y(T))$.",
+      "prerequisites": [
+        "C-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-02",
+      "name": "Ecuación de Euler en el Problema Básico Variacional",
+      "category": "Concept",
+      "description": "Condición necesaria de primer orden para que una trayectoria suave $x^*(t)$ proporcione un extremo local al funcional $J(x) = \\int_{t_0}^{t_1} F(x, \\dot{x}, t)dt$: $F_x - \\frac{d}{dt}F_{\\dot{x}} = 0$, que al desarrollarse adopta la forma diferencial de segundo orden $F_x - F_{x\\dot{x}}\\dot{x} - F_{\\dot{x}\\dot{x}}\\ddot{x} - F_{\\dot{x}t} = 0$.",
+      "prerequisites": [
+        "C-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "H-02",
+      "name": "Condición de Segundo Orden de Legendre",
+      "category": "Fact",
+      "description": "Condición necesaria local de segundo orden para extremales del problema básico: para que $x^*(t)$ sea un máximo local se exige $F_{\\dot{x}\\dot{x}}[x^*(t), \\dot{x}^*(t), t] \\le 0$ para todo $t \\in [t_0, t_1]$, y para que sea un mínimo local se exige $F_{\\dot{x}\\dot{x}}[x^*(t), \\dot{x}^*(t), t] \\ge 0$ para todo $t \\in [t_0, t_1]$.",
+      "prerequisites": [
+        "C-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-03",
+      "name": "Condiciones de Suficiencia Global y Hessiano de F",
+      "category": "Concept",
+      "description": "Si la función integrando $F(x, \\dot{x}, t)$ es cóncava (respectivamente convexa) en $(x, \\dot{x})$ para cada $t \\in [t_0, t_1]$, toda trayectoria $x^*(t)$ que satisfaga la ecuación de Euler y las condiciones de frontera es un máximo (o mínimo) global; dicha propiedad se comprueba mediante la matriz hessiana $H_F = \\begin{bmatrix} F_{xx} & F_{x\\dot{x}} \\\\ F_{\\dot{x}x} & F_{\\dot{x}\\dot{x}} \\end{bmatrix}$ semidefinida negativa o positiva.",
+      "prerequisites": [
+        "C-02",
+        "H-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-01",
+      "name": "Resolución del Problema Básico Variacional con Extremos Fijos",
+      "category": "Skill",
+      "description": "Deducción y solución analítica de trayectorias óptimas en problemas básicos de cálculo variacional mediante la formulación de la ecuación de Euler, integración diferencial con constantes $c_1, c_2$, fijación por extremos prescritos $x(t_0)=x_0$ y $x(t_1)=x_1$, y validación con Legendre y suficiencia.",
+      "prerequisites": [
+        "C-02",
+        "H-02",
+        "C-03"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-04",
+      "name": "Casos Particulares de la Ecuación de Euler",
+      "category": "Concept",
+      "description": "Reducciones analíticas de la ecuación de Euler según la ausencia explícita de variables en el integrando: si $F$ no depende de $x$, se obtiene la primera integral $F_{\\dot{x}} = c$; si $F$ no depende de $\\dot{x}$, se obtiene la relación finita $F_x = 0$; y si $F$ es autónomo (no depende explícitamente de $t$), rige la conservación de Beltrami $F - \\dot{x}F_{\\dot{x}} = C$.",
+      "prerequisites": [
+        "C-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "H-03",
+      "name": "Identidad de Beltrami para Funcionales Autónomos",
+      "category": "Fact",
+      "description": "Primera integral fundamental del cálculo de variaciones: para funcionales donde el integrando no depende explícitamente del tiempo ($\\frac{\\partial F}{\\partial t} = 0$), se conserva a lo largo de toda trayectoria extremal la cantidad $F(x, \\dot{x}) - \\dot{x}\\frac{\\partial F}{\\partial \\dot{x}} = C$.",
+      "prerequisites": [
+        "C-04"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-02",
+      "name": "Integración de Extremos Usando Primeras Integrales de Euler",
+      "category": "Skill",
+      "description": "Resolución expedita de problemas variacionales mediante la identificación y aplicación directa de primeras integrales ($F_{\\dot{x}} = c$ y $F - \\dot{x}F_{\\dot{x}} = C$), reduciendo la EDO de segundo orden a primer orden para obtener trayectorias analíticas mediante cuadraturas.",
+      "prerequisites": [
+        "C-04",
+        "H-03",
+        "Hab-01"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-05",
+      "name": "Condición de Transversalidad para Estado Final Libre",
+      "category": "Concept",
+      "description": "En problemas variacionales con horizonte temporal fijo $t_1$ pero estado terminal no restringido ($x(t_1) = \\text{libre}$), la condición de frontera natural o transversalidad exige anular la derivada parcial respecto a la velocidad en el instante terminal: $\\left. \\frac{\\partial F}{\\partial \\dot{x}} \\right|_{t=t_1} = 0$.",
+      "prerequisites": [
+        "C-02",
+        "Hab-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-03",
+      "name": "Optimización Variacional con Estado Final Libre",
+      "category": "Skill",
+      "description": "Procedimiento integral para determinar la trayectoria extremal y el nivel óptimo terminal $x^*(t_1)$ resolviendo la ecuación de Euler acoplada a la condición inicial fija $x(t_0)=x_0$ y la condición de transversalidad terminal $F_{\\dot{x}}|_{t=t_1} = 0$.",
+      "prerequisites": [
+        "C-05",
+        "Hab-01"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-06",
+      "name": "Condición de Transversalidad para Instante Final Libre",
+      "category": "Concept",
+      "description": "En problemas de optimización variacional donde el estado terminal está prefijado $x(t_1) = x_1$ pero el instante final es libre ($t_1 = \\text{libre}$), la condición de transversalidad exige la anulación del valor hamiltoniano en la frontera móvil: $\\left. [F - \\dot{x} F_{\\dot{x}}] \\right|_{t=t_1} = 0$.",
+      "prerequisites": [
+        "C-02",
+        "H-03",
+        "Hab-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-04",
+      "name": "Optimización Dinámica con Tiempo Terminal Libre",
+      "category": "Skill",
+      "description": "Cálculo acoplado de la trayectoria óptima $x^*(t)$ y del horizonte temporal óptimo $t_1^*$ mediante la resolución simultánea de la ecuación de Euler, la condición de contorno terminal $x(t_1)=x_1$ y la condición de transversalidad $[F - \\dot{x}F_{\\dot{x}}]|_{t=t_1} = 0$.",
+      "prerequisites": [
+        "C-06",
+        "Hab-01"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-07",
+      "name": "Modelado del Monopolio Dinámico de Evans",
+      "category": "Concept",
+      "description": "Estructuración económica de un monopolista donde la demanda de mercado depende tanto del precio actual $p(t)$ como de la tendencia o expectativa de variación del precio $\\dot{p}(t)$: $q = a - bp(t) + h\\dot{p}(t)$ ($a,b>0, h \\ne 0$), con costos cuadráticos $C(q) = \\alpha q^2 + \\beta q + \\gamma$, para formular el funcional de beneficios a maximizar $\\int_{t_0}^{t_1} [pq(p, \\dot{p}) - C(q)]dt$.",
+      "prerequisites": [
+        "C-01",
+        "C-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-05",
+      "name": "Optimización del Tradeoff Inflación-Desempleo y Trayectoria Óptima",
+      "category": "Skill",
+      "description": "Formulación variacional y resolución del problema de política monetaria óptima de desinflación (Taylor 1989): sustitución de Phillips y expectativas en el costo social $\\lambda(\\pi, \\dot{\\pi}) = (\\frac{\\dot{\\pi}}{\\beta j})^2 + \\alpha(\\frac{\\dot{\\pi}}{j}+\\pi)^2$, deducción de la EDO de Euler para $\\pi(t)$, obtención de las raíces $r = \\pm \\frac{\\beta j \\sqrt{\\alpha}}{\\sqrt{1+\\beta^2\\alpha}}$ y cálculo de la senda óptima con contornos $\\pi(0)=\\pi_0, \\pi(T)=0$.",
+      "prerequisites": [
+        "C-02",
+        "Hab-01"
+      ],
+      "question_count": 30
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-C01-001",
+      "competency_id": "C-01",
+      "competency_name": "Funcional y Trayectorias Admisibles en Tiempo Continuo",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Verifique la consistencia del modelo y obtenga: Considere el funcional $V[y] = \\int_{0}^{5} (2 y(t) + 5 \\dot{y}(t)^2) dt$ con extremos $y(0) = 5$ e $y(5) = 14$. Identifique el dominio canónico y las restricciones de frontera del espacio admisible:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$V: C^1[0, 5] \\\\to \\\\mathbb{R}$ con curvas libres donde $y(0) \\ne 5$ o $y(5) \\ne 14$",
+          "is_correct": false,
+          "error_rationale": "Si una trayectoria no interseca los puntos de frontera inicial y terminal fijados en el planteamiento, queda excluida del espacio admisible.",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$V: \\\\mathbb{R} \\\\to C^1[0, 5]$ asignando una trayectoria continua a cada número escalar",
+          "is_correct": false,
+          "error_rationale": "El funcional asigna un número escalar representativo del costo o beneficio acumulado a cada trayectoria candidata, no una función a un número.",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\max_y F(t, y)$ aplicando optimización estática puntual sin considerar la derivada $\\dot{y}$",
+          "is_correct": false,
+          "error_rationale": "En optimización dinámica, la decisión en un punto altera la posición futura mediante la velocidad $\\dot{y}(t)$, impidiendo optimizar cada instante por separado.",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$V: C^0[0, 5] \\\\to \\\\mathbb{R}$ admitiendo curvas discontinuas sin derivada en el dominio",
+          "is_correct": false,
+          "error_rationale": "Para poder calcular la integral del funcional que incluye la velocidad $\\dot{y}(t)$, la curva debe admitir derivada en casi todo el intervalo.",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$V: [0, 5] \\\\to \\\\mathbb{R}$ evaluando un escalar en cada instante temporal $t$ separado",
+          "is_correct": false,
+          "error_rationale": "Un funcional no evalúa puntualmente un instante temporal $t$, sino que cuantifica el desempeño de toda la curva admisible entre los extremos de tiempo.",
+          "distractor_id": "D-C01-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$V[y] = F(0, 5, \\dot{y}_0)$ igualando el funcional al valor del integrando inicial",
+          "is_correct": false,
+          "error_rationale": "El funcional acumula los aportes diferenciales $F dt$ sobre toda la duración del proceso dinámico y no se restringe a la etapa de partida.",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$V: C^1[0, 5] \\\\to \\\\mathbb{R}$ con trayectoria fija en $y(0)=5$ e $y(5)=14$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Funcional y Trayectorias Admisibles en Tiempo Continuo: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Funcional y Trayectorias Admisibles en Tiempo Continuo, asegurando considerar adecuadamente: pensar que un funcional asigna un valor escalar a cada instante de tiempo individual $t$ en lugar de evaluar una trayectoria completa $y(t)$.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Funcional y Trayectorias Admisibles en Tiempo Continuo y evalúe posibles desvíos al considerar: creer que las trayectorias admisibles pueden ser funciones discontinuas arbitrarias sin diferenciabilidad."
+      ],
+      "detailed_solution": "Un funcional $V[y]$ asigna un escalar real a trayectorias $y(t) \\in C^1[0, 5]$ con extremos fijos $y(0)=5$ e $y(5)=14$."
+    },
+    {
+      "id": "Q-C01-002",
+      "competency_id": "C-01",
+      "competency_name": "Funcional y Trayectorias Admisibles en Tiempo Continuo",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Procediendo conforme al marco teórico correspondiente, deduzca: Considere el funcional $V[y] = \\int_{0}^{8} (4 y(t) + 6 \\dot{y}(t)^2) dt$ con extremos $y(0) = 1$ e $y(8) = 13$. Identifique el dominio canónico y las restricciones de frontera del espacio admisible:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\max_y F(t, y)$ aplicando optimización estática puntual sin considerar la derivada $\\dot{y}$",
+          "is_correct": false,
+          "error_rationale": "En optimización dinámica, la decisión en un punto altera la posición futura mediante la velocidad $\\dot{y}(t)$, impidiendo optimizar cada instante por separado.",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$V: C^1[0, 8] \\\\to \\\\mathbb{R}$ con trayectoria fija en $y(0)=1$ e $y(8)=13$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$V: \\\\mathbb{R} \\\\to C^1[0, 8]$ asignando una trayectoria continua a cada número escalar",
+          "is_correct": false,
+          "error_rationale": "El funcional asigna un número escalar representativo del costo o beneficio acumulado a cada trayectoria candidata, no una función a un número.",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$V: C^0[0, 8] \\\\to \\\\mathbb{R}$ admitiendo curvas discontinuas sin derivada en el dominio",
+          "is_correct": false,
+          "error_rationale": "Para poder calcular la integral del funcional que incluye la velocidad $\\dot{y}(t)$, la curva debe admitir derivada en casi todo el intervalo.",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$V[y] = F(0, 1, \\dot{y}_0)$ igualando el funcional al valor del integrando inicial",
+          "is_correct": false,
+          "error_rationale": "El funcional acumula los aportes diferenciales $F dt$ sobre toda la duración del proceso dinámico y no se restringe a la etapa de partida.",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$V: C^1[0, 8] \\\\to \\\\mathbb{R}$ con curvas libres donde $y(0) \\ne 1$ o $y(8) \\ne 13$",
+          "is_correct": false,
+          "error_rationale": "Si una trayectoria no interseca los puntos de frontera inicial y terminal fijados en el planteamiento, queda excluida del espacio admisible.",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$V: [0, 8] \\\\to \\\\mathbb{R}$ evaluando un escalar en cada instante temporal $t$ separado",
+          "is_correct": false,
+          "error_rationale": "Un funcional no evalúa puntualmente un instante temporal $t$, sino que cuantifica el desempeño de toda la curva admisible entre los extremos de tiempo.",
+          "distractor_id": "D-C01-01"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Funcional y Trayectorias Admisibles en Tiempo Continuo: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Funcional y Trayectorias Admisibles en Tiempo Continuo, asegurando considerar adecuadamente: pensar que un funcional asigna un valor escalar a cada instante de tiempo individual $t$ en lugar de evaluar una trayectoria completa $y(t)$.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Funcional y Trayectorias Admisibles en Tiempo Continuo y evalúe posibles desvíos al considerar: creer que las trayectorias admisibles pueden ser funciones discontinuas arbitrarias sin diferenciabilidad."
+      ],
+      "detailed_solution": "Un funcional $V[y]$ asigna un escalar real a trayectorias $y(t) \\in C^1[0, 8]$ con extremos fijos $y(0)=1$ e $y(8)=13$."
+    },
+    {
+      "id": "Q-H01-021",
+      "competency_id": "H-01",
+      "competency_name": "Clasificación de Funcionales de Lagrange, Mayer y Bolza",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Analice la formulación operativa y deduzca: Considere el funcional $V[y] = \\int_0^{4} (2 y(t)^2 + 2 \\dot{y}(t)^2) dt + 4 y(4)^2$. ¿A qué formato canónico de optimización dinámica corresponde este problema?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Problema de Lagrange: integrando el flujo respecto a la variable de estado $\\int F dy$ sin $dt$",
+          "is_correct": false,
+          "error_rationale": "El diferencial de integración en la formulación de Lagrange es el tiempo $dt$, sumando las contribuciones instantáneas en $[0, T]$.",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Problema de Bolza irreducible: aun cuando la función de pago terminal es idénticamente nula",
+          "is_correct": false,
+          "error_rationale": "Sin una función de pago terminal explícita, el problema de optimización pertenece por definición a la clase de Lagrange.",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Problema de Bolza: funcional compuesto exclusivamente por una función de valor terminal pura",
+          "is_correct": false,
+          "error_rationale": "Bolza combina ambos componentes: la acumulación continua de flujo en el intervalo y el pago o penalidad terminal en el instante final.",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Problema de Mayer: sumando una integral continua intermedia junto a la función terminal dada",
+          "is_correct": false,
+          "error_rationale": "Cualquier adición de un operador integral en la función objetivo transforma la estructura en un problema de tipo Bolza.",
+          "distractor_id": "D-H01-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Problema de Bolza: combina flujo integral $\\int_0^{4} F dt$ y pago terminal $G(4, y(4))$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Problema de Mayer: evaluando la función terminal en la derivada temporal $G(4, \\dot{y}(4))$",
+          "is_correct": false,
+          "error_rationale": "La función terminal de Mayer evalúa el estado alcanzado al final del proceso y no la tasa instantánea de cambio con la que se arriba.",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Problema de Mayer: funcional definido únicamente por la integral de flujo continuo en tiempo",
+          "is_correct": false,
+          "error_rationale": "El problema de Lagrange acumula valores a lo largo del trayecto continuo, mientras que Mayer solo remunera la posición al cierre del horizonte.",
+          "distractor_id": "D-H01-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Clasificación de Funcionales de Lagrange, Mayer y Bolza: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Clasificación de Funcionales de Lagrange, Mayer y Bolza, asegurando considerar adecuadamente: clasificar un funcional compuesto exclusivamente por una integral definida $\\int_0^T F dt$ como un problema de Mayer.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Clasificación de Funcionales de Lagrange, Mayer y Bolza y evalúe posibles desvíos al considerar: creer que el problema de Bolza contiene únicamente una función de valor terminal sin término integral acumulativo."
+      ],
+      "detailed_solution": "El funcional contiene una integral de flujo continuo y un término terminal en $t=4$, definiendo un problema de Bolza."
+    },
+    {
+      "id": "Q-H01-022",
+      "competency_id": "H-01",
+      "competency_name": "Clasificación de Funcionales de Lagrange, Mayer y Bolza",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Verifique la consistencia del modelo y obtenga: Considere el funcional $V[y] = \\int_0^{2} (4 y(t)^2 + 8 \\dot{y}(t)^2) dt + 7 y(2)^2$. ¿A qué formato canónico de optimización dinámica corresponde este problema?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Problema de Lagrange: integrando el flujo respecto a la variable de estado $\\int F dy$ sin $dt$",
+          "is_correct": false,
+          "error_rationale": "El diferencial de integración en la formulación de Lagrange es el tiempo $dt$, sumando las contribuciones instantáneas en $[0, T]$.",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Problema de Bolza: funcional compuesto exclusivamente por una función de valor terminal pura",
+          "is_correct": false,
+          "error_rationale": "Bolza combina ambos componentes: la acumulación continua de flujo en el intervalo y el pago o penalidad terminal en el instante final.",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Problema de Bolza irreducible: aun cuando la función de pago terminal es idénticamente nula",
+          "is_correct": false,
+          "error_rationale": "Sin una función de pago terminal explícita, el problema de optimización pertenece por definición a la clase de Lagrange.",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Problema de Mayer: funcional definido únicamente por la integral de flujo continuo en tiempo",
+          "is_correct": false,
+          "error_rationale": "El problema de Lagrange acumula valores a lo largo del trayecto continuo, mientras que Mayer solo remunera la posición al cierre del horizonte.",
+          "distractor_id": "D-H01-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Problema de Bolza: combina flujo integral $\\int_0^{2} F dt$ y pago terminal $G(2, y(2))$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Problema de Mayer: evaluando la función terminal en la derivada temporal $G(2, \\dot{y}(2))$",
+          "is_correct": false,
+          "error_rationale": "La función terminal de Mayer evalúa el estado alcanzado al final del proceso y no la tasa instantánea de cambio con la que se arriba.",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Problema de Mayer: sumando una integral continua intermedia junto a la función terminal dada",
+          "is_correct": false,
+          "error_rationale": "Cualquier adición de un operador integral en la función objetivo transforma la estructura en un problema de tipo Bolza.",
+          "distractor_id": "D-H01-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Clasificación de Funcionales de Lagrange, Mayer y Bolza: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Clasificación de Funcionales de Lagrange, Mayer y Bolza, asegurando considerar adecuadamente: clasificar un funcional compuesto exclusivamente por una integral definida $\\int_0^T F dt$ como un problema de Mayer.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Clasificación de Funcionales de Lagrange, Mayer y Bolza y evalúe posibles desvíos al considerar: creer que el problema de Bolza contiene únicamente una función de valor terminal sin término integral acumulativo."
+      ],
+      "detailed_solution": "El funcional contiene una integral de flujo continuo y un término terminal en $t=2$, definiendo un problema de Bolza."
+    },
+    {
+      "id": "Q-C02-041",
+      "competency_id": "C-02",
+      "competency_name": "Ecuación de Euler en el Problema Básico Variacional",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Con arreglo a las definiciones operativas del sistema, verifique: Para el funcional con integrando $F(x, \\dot{x}) = \\\\frac{2}{2}\\dot{x}^2 + 4 x \\dot{x} + \\\\frac{16}{2} x^2$, determine la aceleración extremal $\\ddot{x}^*$ en $(x, \\dot{x}) = (7, 3)$ mediante la ecuación de Euler:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\ddot{x}^* = -0.75$",
+          "is_correct": false,
+          "error_rationale": "Euler es el análogo a igualar la primera derivada a cero; se requieren condiciones de curvatura (segundo orden o concavidad/convexidad) para calificar el extremo.",
+          "distractor_id": "D-C02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\ddot{x}^* = -68.0$",
+          "is_correct": false,
+          "error_rationale": "Al aplicar el lema fundamental del cálculo de variaciones, el término $\\int F_{\\dot{x}}\\dot{\\eta}dt$ se integra por partes produciendo $-\\int \\frac{d}{dt}(F_{\\dot{x}})\\eta dt$.",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\ddot{x}^* = 0.0$",
+          "is_correct": false,
+          "error_rationale": "La aceleración $\\ddot{x}$ ingresa a través de la diferenciación de la velocidad en la regla de la cadena, haciendo que la EDO sea de segundo orden.",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\ddot{x}^* = -3.5$",
+          "is_correct": false,
+          "error_rationale": "La integración por partes se efectúa sobre la función cuya variación está derivada en el tiempo ($\\dot{\\eta}$), transfiriendo el operador $\\frac{d}{dt}$ a $F_{\\dot{x}}$.",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\ddot{x}^* = -6.0$",
+          "is_correct": false,
+          "error_rationale": "Despreciar el impacto del nivel del estado $F_x$ solo es lícito en casos particulares donde la función objetivo no contiene la posición $x$.",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\ddot{x}^* = 62.0$",
+          "is_correct": false,
+          "error_rationale": "Dado que $x(t)$ y $\\dot{x}(t)$ varían en el tiempo a lo largo de la trayectoria, la derivada temporal total debe incluir todas las dependencias intermedias.",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\ddot{x}^* = 56$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde la ecuación de Euler $F_x - \\\\frac{d}{dt}F_{\\dot{x}} = 0$.",
+        "Calcule $F_x$ y $F_{\\dot{x}}$ tratando $x$ y $\\dot{x}$ como variables independientes.",
+        "Aplique la derivada temporal total a $F_{\\dot{x}}$ usando la regla de la cadena."
+      ],
+      "detailed_solution": "De la condición de Euler $F_x - \\\\frac{d}{dt}F_{\\dot{x}} = 0$, obtenemos $a \\ddot{x} - c x = 0 \\\\Rightarrow \\ddot{x}^* = \\\\frac{16}{2} \\cdot 7 = 56$."
+    },
+    {
+      "id": "Q-C02-042",
+      "competency_id": "C-02",
+      "competency_name": "Ecuación de Euler en el Problema Básico Variacional",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Efectuando el análisis formal respectivo, precise: Para el funcional con integrando $F(x, \\dot{x}) = \\\\frac{5}{2}\\dot{x}^2 + 6 x \\dot{x} + \\\\frac{40}{2} x^2$, determine la aceleración extremal $\\ddot{x}^*$ en $(x, \\dot{x}) = (4, 4)$ mediante la ecuación de Euler:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\ddot{x}^* = -4.8$",
+          "is_correct": false,
+          "error_rationale": "Despreciar el impacto del nivel del estado $F_x$ solo es lícito en casos particulares donde la función objetivo no contiene la posición $x$.",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\ddot{x}^* = 36.8$",
+          "is_correct": false,
+          "error_rationale": "Dado que $x(t)$ y $\\dot{x}(t)$ varían en el tiempo a lo largo de la trayectoria, la derivada temporal total debe incluir todas las dependencias intermedias.",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\ddot{x}^* = -19.33$",
+          "is_correct": false,
+          "error_rationale": "La integración por partes se efectúa sobre la función cuya variación está derivada en el tiempo ($\\dot{\\eta}$), transfiriendo el operador $\\frac{d}{dt}$ a $F_{\\dot{x}}$.",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\ddot{x}^* = -41.6$",
+          "is_correct": false,
+          "error_rationale": "Al aplicar el lema fundamental del cálculo de variaciones, el término $\\int F_{\\dot{x}}\\dot{\\eta}dt$ se integra por partes produciendo $-\\int \\frac{d}{dt}(F_{\\dot{x}})\\eta dt$.",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\ddot{x}^* = 32$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\ddot{x}^* = 0.0$",
+          "is_correct": false,
+          "error_rationale": "La aceleración $\\ddot{x}$ ingresa a través de la diferenciación de la velocidad en la regla de la cadena, haciendo que la EDO sea de segundo orden.",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\ddot{x}^* = -0.6$",
+          "is_correct": false,
+          "error_rationale": "Euler es el análogo a igualar la primera derivada a cero; se requieren condiciones de curvatura (segundo orden o concavidad/convexidad) para calificar el extremo.",
+          "distractor_id": "D-C02-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Recuerde la ecuación de Euler $F_x - \\\\frac{d}{dt}F_{\\dot{x}} = 0$.",
+        "Calcule $F_x$ y $F_{\\dot{x}}$ tratando $x$ y $\\dot{x}$ como variables independientes.",
+        "Aplique la derivada temporal total a $F_{\\dot{x}}$ usando la regla de la cadena."
+      ],
+      "detailed_solution": "De la condición de Euler $F_x - \\\\frac{d}{dt}F_{\\dot{x}} = 0$, obtenemos $a \\ddot{x} - c x = 0 \\\\Rightarrow \\ddot{x}^* = \\\\frac{40}{5} \\cdot 4 = 32$."
+    },
+    {
+      "id": "Q-H02-061",
+      "competency_id": "H-02",
+      "competency_name": "Condición de Segundo Orden de Legendre",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Al examinar detenidamente las condiciones de frontera, resuelva: Para el funcional con $F(x, \\dot{x}) = \\\\frac{11}{2}\\dot{x}^2 + \\\\frac{4}{6}\\dot{x}^3 + 7 x \\dot{x} + \\\\frac{36}{2}x^2$, calcule el valor de la condición de segundo orden de Legendre $F_{\\dot{x}\\dot{x}}$ en $\\dot{x} = 6$ para certificar un mínimo local:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$L^* = -35$",
+          "is_correct": false,
+          "error_rationale": "De modo análogo al cálculo diferencial elemental donde $f''(x) \\le 0$ caracteriza un máximo, la segunda derivada respecto a la velocidad debe ser no positiva.",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$L^* = 42.5$",
+          "is_correct": false,
+          "error_rationale": "Legendre solo comprueba la curvatura en la dirección de la velocidad; si la interacción cruzada con la posición es desfavorable, el punto puede no ser extremo.",
+          "distractor_id": "D-H02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$L^* = 4$",
+          "is_correct": false,
+          "error_rationale": "La segunda variación del funcional solo contiene términos cuadráticos en $\\eta$ y $\\dot{\\eta}$, dependiendo exclusivamente de derivadas segundas.",
+          "distractor_id": "D-H02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$L^* = 1211$",
+          "is_correct": false,
+          "error_rationale": "Legendre analiza el coeficiente principal de la segunda variación de la integral, que corresponde al término cuadrático en $\\dot{\\eta}$, es decir $F_{\\dot{x}\\dot{x}}$.",
+          "distractor_id": "D-H02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$L^* = 11$",
+          "is_correct": false,
+          "error_rationale": "Si en algún instante intermedio del intervalo la segunda derivada $F_{\\dot{x}\\dot{x}}$ cambia de signo, la trayectoria deja de calificar como extremal.",
+          "distractor_id": "D-H02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$L^* = 36$",
+          "is_correct": false,
+          "error_rationale": "Legendre aísla variaciones de alta frecuencia concentradas en la derivada $\\dot{x}$, por lo que la derivada determinante es $F_{\\dot{x}\\dot{x}}$.",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$L^* = 35$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "La condición de Legendre analiza la segunda derivada parcial respecto a la velocidad $F_{\\dot{x}\\dot{x}}$.",
+        "Para un mínimo local se requiere $F_{\\dot{x}\\dot{x}} \\ge 0$, y para un máximo local $F_{\\dot{x}\\dot{x}} \\le 0$.",
+        "Diferencie dos veces el integrando $F$ exclusivamente respecto a $\\dot{x}$."
+      ],
+      "detailed_solution": "La condición de Legendre evalúa la segunda derivada respecto a la velocidad: $F_{\\dot{x}\\dot{x}} = 11 + 4 \\dot{x}$. En $\\dot{x} = 6$, $L^* = 35$."
+    },
+    {
+      "id": "Q-H02-062",
+      "competency_id": "H-02",
+      "competency_name": "Condición de Segundo Orden de Legendre",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Con arreglo a las definiciones operativas del sistema, verifique: Para el funcional con $F(x, \\dot{x}) = \\\\frac{33}{2}\\dot{x}^2 + \\\\frac{3}{6}\\dot{x}^3 + 7 x \\dot{x} + \\\\frac{28}{2}x^2$, calcule el valor de la condición de segundo orden de Legendre $F_{\\dot{x}\\dot{x}}$ en $\\dot{x} = 3$ para certificar un mínimo local:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$L^* = 49.5$",
+          "is_correct": false,
+          "error_rationale": "Legendre solo comprueba la curvatura en la dirección de la velocidad; si la interacción cruzada con la posición es desfavorable, el punto puede no ser extremo.",
+          "distractor_id": "D-H02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$L^* = 28$",
+          "is_correct": false,
+          "error_rationale": "Legendre aísla variaciones de alta frecuencia concentradas en la derivada $\\dot{x}$, por lo que la derivada determinante es $F_{\\dot{x}\\dot{x}}$.",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$L^* = 42$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$L^* = 33$",
+          "is_correct": false,
+          "error_rationale": "Si en algún instante intermedio del intervalo la segunda derivada $F_{\\dot{x}\\dot{x}}$ cambia de signo, la trayectoria deja de calificar como extremal.",
+          "distractor_id": "D-H02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$L^* = 3$",
+          "is_correct": false,
+          "error_rationale": "La segunda variación del funcional solo contiene términos cuadráticos en $\\eta$ y $\\dot{\\eta}$, dependiendo exclusivamente de derivadas segundas.",
+          "distractor_id": "D-H02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$L^* = -42$",
+          "is_correct": false,
+          "error_rationale": "De modo análogo al cálculo diferencial elemental donde $f''(x) \\le 0$ caracteriza un máximo, la segunda derivada respecto a la velocidad debe ser no positiva.",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$L^* = 1127$",
+          "is_correct": false,
+          "error_rationale": "Legendre analiza el coeficiente principal de la segunda variación de la integral, que corresponde al término cuadrático en $\\dot{\\eta}$, es decir $F_{\\dot{x}\\dot{x}}$.",
+          "distractor_id": "D-H02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "La condición de Legendre analiza la segunda derivada parcial respecto a la velocidad $F_{\\dot{x}\\dot{x}}$.",
+        "Para un mínimo local se requiere $F_{\\dot{x}\\dot{x}} \\ge 0$, y para un máximo local $F_{\\dot{x}\\dot{x}} \\le 0$.",
+        "Diferencie dos veces el integrando $F$ exclusivamente respecto a $\\dot{x}$."
+      ],
+      "detailed_solution": "La condición de Legendre evalúa la segunda derivada respecto a la velocidad: $F_{\\dot{x}\\dot{x}} = 33 + 3 \\dot{x}$. En $\\dot{x} = 3$, $L^* = 42$."
+    },
+    {
+      "id": "Q-C03-081",
+      "competency_id": "C-03",
+      "competency_name": "Condiciones de Suficiencia Global y Hessiano de F",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Para el modelo formulado a continuación, evalúe: Considere el integrando $F(x, \\dot{x}, t) = -\\\\frac{17}{2}x^2 - 6 x \\dot{x} - \\\\frac{23}{2}\\dot{x}^2 + 21 t x$. ¿Qué garantiza la matriz Hessiana $H_F$ sobre la trayectoria extremal?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$F_{xx} = -17 < 0 \\\\text{ y } \\det(H_F) = 355 > 0 \\\\Rightarrow F \\\\text{ es cóncava estricta (máximo global)}$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\det(H_F) = 0 \\\\Rightarrow \\\\text{el criterio de suficiencia queda inconcluso aun si } F_{xx} \\le 0$",
+          "is_correct": false,
+          "error_rationale": "La convexidad o concavidad no estricta (semidefinida) es plenamente suficiente para demostrar que la solución de Euler es un extremo global.",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$H_F \\in \\\\mathbb{R}^{3 \\\\times 3} \\\\text{ incluyendo derivadas respecto al tiempo } t \\\\Rightarrow \\\\text{máximo global}$",
+          "is_correct": false,
+          "error_rationale": "El tiempo $t$ es el índice de acumulación temporal y no una variable de elección del estado; el Hessiano de suficiencia es estrictamente $2 \\times 2$.",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$F(x, \\dot{x}, t) \\\\text{ cóncava globalmente} \\\\Rightarrow \\\\text{la trayectoria extremal define un mínimo global}$",
+          "is_correct": false,
+          "error_rationale": "La concavidad garantiza cotas superiores y máximos globales; para acotar inferiormente y asegurar mínimos globales la función debe ser convexa.",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$F_{xx} = 17 > 0 \\\\text{ junto con } \\det(H_F) < 0 \\\\Rightarrow \\\\text{matriz definida positiva}$",
+          "is_correct": false,
+          "error_rationale": "Un determinante negativo indica que los autovalores tienen signos opuestos, correspondiendo a un punto de ensilladura o matriz indefinida.",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$F_{\\dot{x}\\dot{x}} = -23 < 0 \\\\Rightarrow \\\\text{suficiencia global sin necesidad de evaluar } F_{xx}$",
+          "is_correct": false,
+          "error_rationale": "La curvatura multivariada exige evaluar la interacción de todas las segundas derivadas; el signo de una sola derivada diagonal no garantiza convexidad conjunta.",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$F_{xx} = -17 < 0 \\\\text{ y } \\det(H_F) < 0 \\\\Rightarrow \\\\text{criterio de concavidad estricta para máximo}$",
+          "is_correct": false,
+          "error_rationale": "El determinante de una matriz $2 \\times 2$ definida negativa es el producto de dos autovalores estrictamente negativos, por lo que resulta siempre positivo.",
+          "distractor_id": "D-C03-01"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Condiciones de Suficiencia Global y Hessiano de F: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Condiciones de Suficiencia Global y Hessiano de F, asegurando considerar adecuadamente: afirmar que para concavidad estricta tanto el menor $F_{xx}$ como el determinante $\\det(H_F)$ deben ser estrictamente negativos.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Condiciones de Suficiencia Global y Hessiano de F y evalúe posibles desvíos al considerar: exigir que el integrando $F(x, \\dot{x}, t)$ sea una función cóncava para garantizar que la trayectoria extremal constituya un mínimo global."
+      ],
+      "detailed_solution": "La matriz hessiana es $H_F = \\\\begin{bmatrix} -17 & -6 \\\\ -6 & -23 \\end{bmatrix}$. Como $F_{xx} = -17 < 0$ y $\\det(H_F) = 17 \\cdot 23 - (6)^2 = 355 > 0$, $H_F$ es definida negativa, lo que garantiza un máximo global."
+    },
+    {
+      "id": "Q-C03-082",
+      "competency_id": "C-03",
+      "competency_name": "Condiciones de Suficiencia Global y Hessiano de F",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el contexto formal planteado, analice con rigor: Considere el integrando $F(x, \\dot{x}, t) = -\\\\frac{15}{2}x^2 - 4 x \\dot{x} - \\\\frac{16}{2}\\dot{x}^2 + 18 t x$. ¿Qué garantiza la matriz Hessiana $H_F$ sobre la trayectoria extremal?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$F_{xx} = 15 > 0 \\\\text{ junto con } \\det(H_F) < 0 \\\\Rightarrow \\\\text{matriz definida positiva}$",
+          "is_correct": false,
+          "error_rationale": "Un determinante negativo indica que los autovalores tienen signos opuestos, correspondiendo a un punto de ensilladura o matriz indefinida.",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$H_F \\in \\\\mathbb{R}^{3 \\\\times 3} \\\\text{ incluyendo derivadas respecto al tiempo } t \\\\Rightarrow \\\\text{máximo global}$",
+          "is_correct": false,
+          "error_rationale": "El tiempo $t$ es el índice de acumulación temporal y no una variable de elección del estado; el Hessiano de suficiencia es estrictamente $2 \\times 2$.",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$F(x, \\dot{x}, t) \\\\text{ cóncava globalmente} \\\\Rightarrow \\\\text{la trayectoria extremal define un mínimo global}$",
+          "is_correct": false,
+          "error_rationale": "La concavidad garantiza cotas superiores y máximos globales; para acotar inferiormente y asegurar mínimos globales la función debe ser convexa.",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\det(H_F) = 0 \\\\Rightarrow \\\\text{el criterio de suficiencia queda inconcluso aun si } F_{xx} \\le 0$",
+          "is_correct": false,
+          "error_rationale": "La convexidad o concavidad no estricta (semidefinida) es plenamente suficiente para demostrar que la solución de Euler es un extremo global.",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$F_{xx} = -15 < 0 \\\\text{ y } \\det(H_F) < 0 \\\\Rightarrow \\\\text{criterio de concavidad estricta para máximo}$",
+          "is_correct": false,
+          "error_rationale": "El determinante de una matriz $2 \\times 2$ definida negativa es el producto de dos autovalores estrictamente negativos, por lo que resulta siempre positivo.",
+          "distractor_id": "D-C03-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$F_{\\dot{x}\\dot{x}} = -16 < 0 \\\\Rightarrow \\\\text{suficiencia global sin necesidad de evaluar } F_{xx}$",
+          "is_correct": false,
+          "error_rationale": "La curvatura multivariada exige evaluar la interacción de todas las segundas derivadas; el signo de una sola derivada diagonal no garantiza convexidad conjunta.",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$F_{xx} = -15 < 0 \\\\text{ y } \\det(H_F) = 224 > 0 \\\\Rightarrow F \\\\text{ es cóncava estricta (máximo global)}$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Condiciones de Suficiencia Global y Hessiano de F: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Condiciones de Suficiencia Global y Hessiano de F, asegurando considerar adecuadamente: afirmar que para concavidad estricta tanto el menor $F_{xx}$ como el determinante $\\det(H_F)$ deben ser estrictamente negativos.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Condiciones de Suficiencia Global y Hessiano de F y evalúe posibles desvíos al considerar: exigir que el integrando $F(x, \\dot{x}, t)$ sea una función cóncava para garantizar que la trayectoria extremal constituya un mínimo global."
+      ],
+      "detailed_solution": "La matriz hessiana es $H_F = \\\\begin{bmatrix} -15 & -4 \\\\ -4 & -16 \\end{bmatrix}$. Como $F_{xx} = -15 < 0$ y $\\det(H_F) = 15 \\cdot 16 - (4)^2 = 224 > 0$, $H_F$ es definida negativa, lo que garantiza un máximo global."
+    },
+    {
+      "id": "Q-Hab01-101",
+      "competency_id": "Hab-01",
+      "competency_name": "Resolución del Problema Básico Variacional con Extremos Fijos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Aplicando las identidades teóricas pertinentes, evalúe: Considere el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$ con condiciones de frontera $x(0) = 34$ y $x(1) = 19$. Aplicando la ecuación de Euler $\\ddot{x} - x = 0$, determine el valor de la constante de integración $c_1$ en la solución $x(t) = c_1 e^{-t} + c_2 e^t$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$c_1 = 34.125$",
+          "is_correct": false,
+          "error_rationale": "La ecuación diferencial lineal de segundo orden con raíces simples $\\pm 1$ se resuelve como combinación lineal de exponenciales independientes.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$c_1 = 31.351$",
+          "is_correct": false,
+          "error_rationale": "Un error en el coeficiente diferencial altera los autovalores y raíces de la ecuación diferencial, invalidando la trayectoria resultante.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$c_1 = 26.625$",
+          "is_correct": false,
+          "error_rationale": "Un problema con condiciones de contorno fijas requiere explicitar numéricamente las constantes de integración para individualizar la trayectoria.",
+          "distractor_id": "D-Hab01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$c_1 = 23.279$",
+          "is_correct": false,
+          "error_rationale": "Hallar un punto estacionario mediante Euler no garantiza optimalidad; se debe contrastar el signo de las derivadas segundas.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$c_1 = 31.238$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$c_1 = 15.744$",
+          "is_correct": false,
+          "error_rationale": "La integral de $t dt$ introduce un factor $\\frac{1}{2}$, transformando el denominador de $2a$ en $4a$ en el término cuadrático de la trayectoria.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$c_1 = 7.115$",
+          "is_correct": false,
+          "error_rationale": "No se pueden inferir las constantes por separado; debe plantearse el sistema $2 \\times 2$ para despejar unívocamente $c_1 = 0$ y $c_2 = 1$.",
+          "distractor_id": "D-Hab01-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "C-02",
+        "H-02",
+        "C-03"
+      ],
+      "detailed_solution": "Para el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$, la ecuación de Euler es $\\ddot{x} - x = 0$ con raíces características $m = \\pm 1$ y solución $x(t) = c_1 e^{-t} + c_2 e^t$. Con $x(0) = c_1 + c_2 = 34$ y $x(1) = c_1 e^{-1} + c_2 e = 19$, resolviendo el sistema lineal simultáneo se obtiene $c_1 = \\\\frac{e \\cdot 34 - 19}{e - e^{-1}} = 31.238$."
+    },
+    {
+      "id": "Q-Hab01-102",
+      "competency_id": "Hab-01",
+      "competency_name": "Resolución del Problema Básico Variacional con Extremos Fijos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Al examinar detenidamente las condiciones de frontera, resuelva: Considere el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$ con condiciones de frontera $x(0) = 31$ y $x(1) = 6$. Aplicando la ecuación de Euler $\\ddot{x} - x = 0$, determine el valor de la constante de integración $c_1$ en la solución $x(t) = c_1 e^{-t} + c_2 e^t$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$c_1 = 16.775$",
+          "is_correct": false,
+          "error_rationale": "La integral de $t dt$ introduce un factor $\\frac{1}{2}$, transformando el denominador de $2a$ en $4a$ en el término cuadrático de la trayectoria.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$c_1 = 30.872$",
+          "is_correct": false,
+          "error_rationale": "Hallar un punto estacionario mediante Euler no garantiza optimalidad; se debe contrastar el signo de las derivadas segundas.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$c_1 = 31.125$",
+          "is_correct": false,
+          "error_rationale": "La ecuación diferencial lineal de segundo orden con raíces simples $\\pm 1$ se resuelve como combinación lineal de exponenciales independientes.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$c_1 = 2.332$",
+          "is_correct": false,
+          "error_rationale": "No se pueden inferir las constantes por separado; debe plantearse el sistema $2 \\times 2$ para despejar unívocamente $c_1 = 0$ y $c_2 = 1$.",
+          "distractor_id": "D-Hab01-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$c_1 = 33.299$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$c_1 = 31.522$",
+          "is_correct": false,
+          "error_rationale": "Un error en el coeficiente diferencial altera los autovalores y raíces de la ecuación diferencial, invalidando la trayectoria resultante.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$c_1 = 18.625$",
+          "is_correct": false,
+          "error_rationale": "Un problema con condiciones de contorno fijas requiere explicitar numéricamente las constantes de integración para individualizar la trayectoria.",
+          "distractor_id": "D-Hab01-02"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "C-02",
+        "H-02",
+        "C-03"
+      ],
+      "detailed_solution": "Para el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$, la ecuación de Euler es $\\ddot{x} - x = 0$ con raíces características $m = \\pm 1$ y solución $x(t) = c_1 e^{-t} + c_2 e^t$. Con $x(0) = c_1 + c_2 = 31$ y $x(1) = c_1 e^{-1} + c_2 e = 6$, resolviendo el sistema lineal simultáneo se obtiene $c_1 = \\\\frac{e \\cdot 31 - 6}{e - e^{-1}} = 33.299$."
+    },
+    {
+      "id": "Q-C04-131",
+      "competency_id": "C-04",
+      "competency_name": "Casos Particulares de la Ecuación de Euler",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A la luz de los supuestos del modelo, identifique el valor de: Considere el integrando $F(t, \\dot{x}) = \\\\frac{13}{2} t \\dot{x}^2 + 14 \\dot{x}$, donde $F_x = 0$. ¿Cuál es la reducción analítica de la ecuación de Euler?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$F_x = 0 \\\\Rightarrow x(t) = 5 \\\\text{ curva rígida compatible con cualesquiera extremos prescritos}$",
+          "is_correct": false,
+          "error_rationale": "Una relación algebraica fija no posee grados de libertad para forzar la curva a través de puntos predeterminados independientes.",
+          "distractor_id": "D-C04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$F_{\\dot{x}} = c \\\\Rightarrow \\dot{x} = 5 \\\\text{ constante numérica desacoplada de la dinámica de } x(t)$",
+          "is_correct": false,
+          "error_rationale": "La primera integral reduce el orden de dos a uno, pero continúa siendo una relación diferencial entre la posición y el tiempo.",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\\\frac{\\partial F}{\\partial t} \\\\neq 0 \\\\Rightarrow F - \\dot{x}F_{\\dot{x}} = C \\\\text{ conservación de Beltrami válida}$",
+          "is_correct": false,
+          "error_rationale": "Si el tiempo aparece de forma explícita en el integrando, la derivada total de la cantidad es $\\frac{d}{dt}(F - \\dot{x}F_{\\dot{x}}) = \\frac{\\partial F}{\\partial t} \\ne 0$.",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$F_x = 0 \\\\Rightarrow \\\\frac{d}{dt}F_{\\dot{x}} = 0 \\\\Rightarrow F_{\\dot{x}} = 13 t \\dot{x} + 14 = c \\\\Rightarrow \\dot{x}(t) \\\\text{ variable}$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$F_x = 0 \\\\Rightarrow \\dot{x} = 0 \\\\Rightarrow x(t) = 5 \\\\text{ constante fija para todo } t \\in [t_0, t_1]$",
+          "is_correct": false,
+          "error_rationale": "La derivada constante implica que la velocidad $\\dot{x}$ es fija o predecible, no que el estado no se desplace en el tiempo.",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$F_{\\dot{x}} = 0 \\\\Rightarrow \\ddot{x} + 13 x = 0 \\\\text{ ecuación diferencial de segundo orden estándar}$",
+          "is_correct": false,
+          "error_rationale": "Sin la derivada temporal, el problema pierde su naturaleza diferencial y se resuelve puntualmente en cada instante como un óptimo estático.",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\\\frac{d}{dt}(F - \\dot{x}F_{\\dot{x}}) = F_x \\dot{x} = 13 \\dot{x} \\\\text{ sin cancelarse la aceleración } \\ddot{x}$",
+          "is_correct": false,
+          "error_rationale": "La identidad de Beltrami se fundamenta en la anulación mutua entre $\\dot{x}\\frac{d}{dt}F_{\\dot{x}}$ y $\\dot{x}F_x$ gracias a la dinámica de Euler.",
+          "distractor_id": "D-C04-05"
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Casos Particulares de la Ecuación de Euler: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Casos Particulares de la Ecuación de Euler, asegurando considerar adecuadamente: creer que si el integrando no depende de $x$, la trayectoria óptima debe ser necesariamente una constante fija $x(t) = k$.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Casos Particulares de la Ecuación de Euler y evalúe posibles desvíos al considerar: pensar que si el integrando no contiene $\\dot{x}$, el problema genera una ecuación diferencial ordinaria de segundo orden estándar."
+      ],
+      "detailed_solution": "Como $F$ no depende de $x$ ($F_x = 0$), la ecuación de Euler se reduce a $\\\\frac{d}{dt}F_{\\dot{x}} = 0$, obteniéndose la primera integral $F_{\\dot{x}} = 13 t \\dot{x} + 14 = c$."
+    },
+    {
+      "id": "Q-C04-132",
+      "competency_id": "C-04",
+      "competency_name": "Casos Particulares de la Ecuación de Euler",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A partir del marco de análisis cuantitativo, encuentre: Considere el integrando $F(t, \\dot{x}) = \\\\frac{9}{2} t \\dot{x}^2 + 6 \\dot{x}$, donde $F_x = 0$. ¿Cuál es la reducción analítica de la ecuación de Euler?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$F_x = 0 \\\\Rightarrow \\dot{x} = 0 \\\\Rightarrow x(t) = 1 \\\\text{ constante fija para todo } t \\in [t_0, t_1]$",
+          "is_correct": false,
+          "error_rationale": "La derivada constante implica que la velocidad $\\dot{x}$ es fija o predecible, no que el estado no se desplace en el tiempo.",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\\\frac{d}{dt}(F - \\dot{x}F_{\\dot{x}}) = F_x \\dot{x} = 9 \\dot{x} \\\\text{ sin cancelarse la aceleración } \\ddot{x}$",
+          "is_correct": false,
+          "error_rationale": "La identidad de Beltrami se fundamenta en la anulación mutua entre $\\dot{x}\\frac{d}{dt}F_{\\dot{x}}$ y $\\dot{x}F_x$ gracias a la dinámica de Euler.",
+          "distractor_id": "D-C04-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\\\frac{\\partial F}{\\partial t} \\\\neq 0 \\\\Rightarrow F - \\dot{x}F_{\\dot{x}} = C \\\\text{ conservación de Beltrami válida}$",
+          "is_correct": false,
+          "error_rationale": "Si el tiempo aparece de forma explícita en el integrando, la derivada total de la cantidad es $\\frac{d}{dt}(F - \\dot{x}F_{\\dot{x}}) = \\frac{\\partial F}{\\partial t} \\ne 0$.",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$F_{\\dot{x}} = c \\\\Rightarrow \\dot{x} = 9 \\\\text{ constante numérica desacoplada de la dinámica de } x(t)$",
+          "is_correct": false,
+          "error_rationale": "La primera integral reduce el orden de dos a uno, pero continúa siendo una relación diferencial entre la posición y el tiempo.",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$F_x = 0 \\\\Rightarrow \\\\frac{d}{dt}F_{\\dot{x}} = 0 \\\\Rightarrow F_{\\dot{x}} = 9 t \\dot{x} + 6 = c \\\\Rightarrow \\dot{x}(t) \\\\text{ variable}$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$F_{\\dot{x}} = 0 \\\\Rightarrow \\ddot{x} + 9 x = 0 \\\\text{ ecuación diferencial de segundo orden estándar}$",
+          "is_correct": false,
+          "error_rationale": "Sin la derivada temporal, el problema pierde su naturaleza diferencial y se resuelve puntualmente en cada instante como un óptimo estático.",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$F_x = 0 \\\\Rightarrow x(t) = 1 \\\\text{ curva rígida compatible con cualesquiera extremos prescritos}$",
+          "is_correct": false,
+          "error_rationale": "Una relación algebraica fija no posee grados de libertad para forzar la curva a través de puntos predeterminados independientes.",
+          "distractor_id": "D-C04-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Casos Particulares de la Ecuación de Euler: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Casos Particulares de la Ecuación de Euler, asegurando considerar adecuadamente: creer que si el integrando no depende de $x$, la trayectoria óptima debe ser necesariamente una constante fija $x(t) = k$.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Casos Particulares de la Ecuación de Euler y evalúe posibles desvíos al considerar: pensar que si el integrando no contiene $\\dot{x}$, el problema genera una ecuación diferencial ordinaria de segundo orden estándar."
+      ],
+      "detailed_solution": "Como $F$ no depende de $x$ ($F_x = 0$), la ecuación de Euler se reduce a $\\\\frac{d}{dt}F_{\\dot{x}} = 0$, obteniéndose la primera integral $F_{\\dot{x}} = 9 t \\dot{x} + 6 = c$."
+    },
+    {
+      "id": "Q-H03-151",
+      "competency_id": "H-03",
+      "competency_name": "Identidad de Beltrami para Funcionales Autónomos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Realizando las deducciones matemáticas pertinentes, calcule: Para un funcional autónomo con integrando $F(x, \\dot{x})$ en el intervalo $[0, 29]$ y constante primera $C = 37$, la identidad de Beltrami establece que:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$F - \\ddot{x} F_{\\dot{x}} = 37$",
+          "is_correct": false,
+          "error_rationale": "La magnitud $F - \\dot{x}F_{\\dot{x}}$ es dimensionalmente homogénea y reduce el orden diferencial del problema al involucrar solo $\\dot{x}$.",
+          "distractor_id": "D-H03-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$F_x = 0 \\\\text{ con } C = 37$",
+          "is_correct": false,
+          "error_rationale": "Autonomía significa invarianza temporal ante traslaciones en $t$, permitiendo dependencias funcionales arbitrarias en la posición $x$ y velocidad $\\dot{x}$.",
+          "distractor_id": "D-H03-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$F - \\dot{x} F_{x} = 37$",
+          "is_correct": false,
+          "error_rationale": "El momento canónico generalizado es $p = F_{\\dot{x}}$; por ende la cantidad conservada vincula $\\dot{x}F_{\\dot{x}}$ y no la derivada respecto a la posición.",
+          "distractor_id": "D-H03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$F = 37 \\quad (\\\\forall t)$",
+          "is_correct": false,
+          "error_rationale": "Salvo casos triviales, $F$ cambia continuamente de valor a lo largo de la curva; la integral primera es la estructura combinada hamiltoniana.",
+          "distractor_id": "D-H03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$F - \\dot{x} F_{\\dot{x}} = 37$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$F - \\dot{x} F_{\\dot{x}} = 0$",
+          "is_correct": false,
+          "error_rationale": "Solo en problemas con tiempo terminal libre la condición de transversalidad fija $C = 0$; en extremos fijos $C$ adopta cualquier magnitud real.",
+          "distractor_id": "D-H03-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$F + \\dot{x} F_{\\dot{x}} = 37$",
+          "is_correct": false,
+          "error_rationale": "La transformación de Legendre que define la energía o Hamiltoniano conservado $-H = F - \\dot{x}F_{\\dot{x}}$ contiene obligatoriamente un signo negativo.",
+          "distractor_id": "D-H03-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Identifique si el integrando depende explícitamente de la variable temporal $t$.",
+        "Aplique la transformación variacional de Legendre $F - \\dot{x} F_{\\dot{x}} = C$.",
+        "Verifique que la derivada involucrada corresponda a la velocidad y no a la posición."
+      ],
+      "detailed_solution": "Como $\\\\frac{\\partial F}{\\partial t} = 0$, la primera integral de Beltrami es $F - \\dot{x} F_{\\dot{x}} = C$."
+    },
+    {
+      "id": "Q-H03-152",
+      "competency_id": "H-03",
+      "competency_name": "Identidad de Beltrami para Funcionales Autónomos",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Teniendo en consideración los fundamentos del equilibrio, determine: Para un funcional autónomo con integrando $F(x, \\dot{x})$ en el intervalo $[0, 43]$ y constante primera $C = 35$, la identidad de Beltrami establece que:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$F_x = 0 \\\\text{ con } C = 35$",
+          "is_correct": false,
+          "error_rationale": "Autonomía significa invarianza temporal ante traslaciones en $t$, permitiendo dependencias funcionales arbitrarias en la posición $x$ y velocidad $\\dot{x}$.",
+          "distractor_id": "D-H03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$F - \\ddot{x} F_{\\dot{x}} = 35$",
+          "is_correct": false,
+          "error_rationale": "La magnitud $F - \\dot{x}F_{\\dot{x}}$ es dimensionalmente homogénea y reduce el orden diferencial del problema al involucrar solo $\\dot{x}$.",
+          "distractor_id": "D-H03-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$F - \\dot{x} F_{\\dot{x}} = 35$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$F = 35 \\quad (\\\\forall t)$",
+          "is_correct": false,
+          "error_rationale": "Salvo casos triviales, $F$ cambia continuamente de valor a lo largo de la curva; la integral primera es la estructura combinada hamiltoniana.",
+          "distractor_id": "D-H03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$F + \\dot{x} F_{\\dot{x}} = 35$",
+          "is_correct": false,
+          "error_rationale": "La transformación de Legendre que define la energía o Hamiltoniano conservado $-H = F - \\dot{x}F_{\\dot{x}}$ contiene obligatoriamente un signo negativo.",
+          "distractor_id": "D-H03-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$F - \\dot{x} F_{\\dot{x}} = 0$",
+          "is_correct": false,
+          "error_rationale": "Solo en problemas con tiempo terminal libre la condición de transversalidad fija $C = 0$; en extremos fijos $C$ adopta cualquier magnitud real.",
+          "distractor_id": "D-H03-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$F - \\dot{x} F_{x} = 35$",
+          "is_correct": false,
+          "error_rationale": "El momento canónico generalizado es $p = F_{\\dot{x}}$; por ende la cantidad conservada vincula $\\dot{x}F_{\\dot{x}}$ y no la derivada respecto a la posición.",
+          "distractor_id": "D-H03-02"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Identifique si el integrando depende explícitamente de la variable temporal $t$.",
+        "Aplique la transformación variacional de Legendre $F - \\dot{x} F_{\\dot{x}} = C$.",
+        "Verifique que la derivada involucrada corresponda a la velocidad y no a la posición."
+      ],
+      "detailed_solution": "Como $\\\\frac{\\partial F}{\\partial t} = 0$, la primera integral de Beltrami es $F - \\dot{x} F_{\\dot{x}} = C$."
+    },
+    {
+      "id": "Q-Hab02-171",
+      "competency_id": "Hab-02",
+      "competency_name": "Integración de Extremos Usando Primeras Integrales de Euler",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere el siguiente planteamiento formal: Considere el funcional $J[x] = \\int_{0}^{7} (4 t^2 + 4 \\dot{x}^2) dt$ con extremos $x(0) = 17$ y $x(7) = 80$. Aplicando la primera integral $F_{\\dot{x}} = c$, la velocidad constante extremal $\\dot{x}(t)$ es:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{x}(t) = 11$",
+          "is_correct": false,
+          "error_rationale": "Cuando la optimización produce una curva rígida sin constantes de integración, las condiciones de frontera deben coincidir estrictamente con los puntos de la curva.",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{x}(t) = 8$",
+          "is_correct": false,
+          "error_rationale": "Al restar un término negativo $(-6x\\dot{x}^2)$ la operación se convierte en adición, cambiando el signo a $+3x\\dot{x}^2$.",
+          "distractor_id": "D-Hab02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{x}(t) = 9$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{x}(t) = 18$",
+          "is_correct": false,
+          "error_rationale": "Una ecuación de segundo orden reducida a primer orden requiere dos constantes totales para ajustarse a las dos condiciones de contorno.",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{x}(t) = 12$",
+          "is_correct": false,
+          "error_rationale": "En el cálculo variacional, las derivadas parciales de $F$ se computan tratando a cada argumento de forma desacoplada.",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{x}(t) = 16$",
+          "is_correct": false,
+          "error_rationale": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{x}(t) = 13$",
+          "is_correct": false,
+          "error_rationale": "El carácter de óptimo depende de la curvatura del funcional y no de si la trayectoria tiene pendiente o posición negativa.",
+          "distractor_id": "D-Hab02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Integración de Extremos Usando Primeras Integrales de Euler: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Integración de Extremos Usando Primeras Integrales de Euler, asegurando considerar adecuadamente: integración lineal de la velocidad constante obtenida de la primera integral.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Integración de Extremos Usando Primeras Integrales de Euler y evalúe posibles desvíos al considerar: comprobación de compatibilidad entre la curva rígida y las condiciones de contorno."
+      ],
+      "detailed_solution": "Al ser $F_x = 0$, la primera integral es $F_{\\dot{x}} = 2 4 \\dot{x} = c \\\\Rightarrow \\dot{x}(t) = c_1$. Con $x(t) = c_1 t + 17$ y $x(7) = 80$, se obtiene $c_1 = \\\\frac{80 - 17}{7} = 9$."
+    },
+    {
+      "id": "Q-Hab02-172",
+      "competency_id": "Hab-02",
+      "competency_name": "Integración de Extremos Usando Primeras Integrales de Euler",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "A partir de las condiciones analíticas dadas, determine: Considere el funcional $J[x] = \\int_{0}^{5} (2 t^2 + 4 \\dot{x}^2) dt$ con extremos $x(0) = 28$ y $x(5) = 43$. Aplicando la primera integral $F_{\\dot{x}} = c$, la velocidad constante extremal $\\dot{x}(t)$ es:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{x}(t) = 5$",
+          "is_correct": false,
+          "error_rationale": "Cuando la optimización produce una curva rígida sin constantes de integración, las condiciones de frontera deben coincidir estrictamente con los puntos de la curva.",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{x}(t) = 8$",
+          "is_correct": false,
+          "error_rationale": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{x}(t) = 10$",
+          "is_correct": false,
+          "error_rationale": "En el cálculo variacional, las derivadas parciales de $F$ se computan tratando a cada argumento de forma desacoplada.",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{x}(t) = 7$",
+          "is_correct": false,
+          "error_rationale": "El carácter de óptimo depende de la curvatura del funcional y no de si la trayectoria tiene pendiente o posición negativa.",
+          "distractor_id": "D-Hab02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{x}(t) = 6$",
+          "is_correct": false,
+          "error_rationale": "Una ecuación de segundo orden reducida a primer orden requiere dos constantes totales para ajustarse a las dos condiciones de contorno.",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{x}(t) = 3$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{x}(t) = 2$",
+          "is_correct": false,
+          "error_rationale": "Al restar un término negativo $(-6x\\dot{x}^2)$ la operación se convierte en adición, cambiando el signo a $+3x\\dot{x}^2$.",
+          "distractor_id": "D-Hab02-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Integración de Extremos Usando Primeras Integrales de Euler: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Integración de Extremos Usando Primeras Integrales de Euler, asegurando considerar adecuadamente: integración lineal de la velocidad constante obtenida de la primera integral.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Integración de Extremos Usando Primeras Integrales de Euler y evalúe posibles desvíos al considerar: comprobación de compatibilidad entre la curva rígida y las condiciones de contorno."
+      ],
+      "detailed_solution": "Al ser $F_x = 0$, la primera integral es $F_{\\dot{x}} = 2 4 \\dot{x} = c \\\\Rightarrow \\dot{x}(t) = c_1$. Con $x(t) = c_1 t + 28$ y $x(5) = 43$, se obtiene $c_1 = \\\\frac{43 - 28}{5} = 3$."
+    },
+    {
+      "id": "Q-C05-201",
+      "competency_id": "C-05",
+      "competency_name": "Condición de Transversalidad para Estado Final Libre",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "De acuerdo con los postulados fundamentales del sistema, verifique: Para un funcional variacional con horizonte fijo $t_1 = 45$ y estado terminal no restringido ($x(45)$ libre) en $[0, 45]$, la condición de transversalidad exige:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\left. [F - \\dot{x}F_{\\dot{x}}] \\\\right|_{t=45} = 0$",
+          "is_correct": false,
+          "error_rationale": "Mover la frontera verticalmente genera el término de momento $F_{\\dot{x}}$, mientras que moverla horizontalmente en el tiempo genera el término hamiltoniano.",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\left. F_{\\dot{x}} \\\\right|_{t=45} > 0$",
+          "is_correct": false,
+          "error_rationale": "Sin restricciones de desigualdad en la cota final, la condición de estacionariedad obliga a que la pendiente de la primera variación sea cero.",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\left. F_{\\dot{x}} \\\\right|_{t=0} = 0$",
+          "is_correct": false,
+          "error_rationale": "La transversalidad suple la ausencia de fijación de contorno exactamente en el borde donde la variación $\\eta(t_1)$ es arbitraria.",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\left. x(t) \\\\right|_{t=45} = 0$",
+          "is_correct": false,
+          "error_rationale": "Libre implica que el sistema optimiza la altura terminal a conveniencia, lo que se traduce matemáticamente en la anulación del momento $F_{\\dot{x}}$ en $t_1$.",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\left. [F_x - \\\\frac{d}{dt}F_{\\dot{x}}] \\\\right|_{t=45} \\ne 0$",
+          "is_correct": false,
+          "error_rationale": "La condición de transversalidad solo aporta una ecuación de contorno en el extremo; la trayectoria interna sigue gobernada por Euler.",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\left. F_{x} \\\\right|_{t=45} = 0$",
+          "is_correct": false,
+          "error_rationale": "El factor que acompaña a la variación libre en los límites de integración por partes es el momento conjugado $F_{\\dot{x}}$, no $F_x$.",
+          "distractor_id": "D-C05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\left. F_{\\dot{x}} \\\\right|_{t=45} = 0$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Un estado final libre implica que la variación $\\eta(t_1)$ es arbitraria en el instante terminal.",
+        "Al anular el término de frontera integrado por partes, el factor asociado $F_{\\dot{x}}$ debe anularse en $t_1$.",
+        "La ecuación de Euler sigue rigiendo en el interior; la transversalidad aporta únicamente la condición de contorno."
+      ],
+      "detailed_solution": "Con tiempo $t_1$ fijo y estado libre, la variación de frontera exige $\\left. F_{\\dot{x}} \\\\right|_{t=t_1} = 0$."
+    },
+    {
+      "id": "Q-C05-202",
+      "competency_id": "C-05",
+      "competency_name": "Condición de Transversalidad para Estado Final Libre",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Bajo los parámetros establecidos, calcule el valor exacto: Para un funcional variacional con horizonte fijo $t_1 = 48$ y estado terminal no restringido ($x(48)$ libre) en $[5, 48]$, la condición de transversalidad exige:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\left. x(t) \\\\right|_{t=48} = 0$",
+          "is_correct": false,
+          "error_rationale": "Libre implica que el sistema optimiza la altura terminal a conveniencia, lo que se traduce matemáticamente en la anulación del momento $F_{\\dot{x}}$ en $t_1$.",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\left. [F - \\dot{x}F_{\\dot{x}}] \\\\right|_{t=48} = 0$",
+          "is_correct": false,
+          "error_rationale": "Mover la frontera verticalmente genera el término de momento $F_{\\dot{x}}$, mientras que moverla horizontalmente en el tiempo genera el término hamiltoniano.",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\left. F_{\\dot{x}} \\\\right|_{t=48} = 0$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\left. F_{\\dot{x}} \\\\right|_{t=5} = 0$",
+          "is_correct": false,
+          "error_rationale": "La transversalidad suple la ausencia de fijación de contorno exactamente en el borde donde la variación $\\eta(t_1)$ es arbitraria.",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\left. [F_x - \\\\frac{d}{dt}F_{\\dot{x}}] \\\\right|_{t=48} \\ne 0$",
+          "is_correct": false,
+          "error_rationale": "La condición de transversalidad solo aporta una ecuación de contorno en el extremo; la trayectoria interna sigue gobernada por Euler.",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\left. F_{\\dot{x}} \\\\right|_{t=48} > 0$",
+          "is_correct": false,
+          "error_rationale": "Sin restricciones de desigualdad en la cota final, la condición de estacionariedad obliga a que la pendiente de la primera variación sea cero.",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\left. F_{x} \\\\right|_{t=48} = 0$",
+          "is_correct": false,
+          "error_rationale": "El factor que acompaña a la variación libre en los límites de integración por partes es el momento conjugado $F_{\\dot{x}}$, no $F_x$.",
+          "distractor_id": "D-C05-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Un estado final libre implica que la variación $\\eta(t_1)$ es arbitraria en el instante terminal.",
+        "Al anular el término de frontera integrado por partes, el factor asociado $F_{\\dot{x}}$ debe anularse en $t_1$.",
+        "La ecuación de Euler sigue rigiendo en el interior; la transversalidad aporta únicamente la condición de contorno."
+      ],
+      "detailed_solution": "Con tiempo $t_1$ fijo y estado libre, la variación de frontera exige $\\left. F_{\\dot{x}} \\\\right|_{t=t_1} = 0$."
+    },
+    {
+      "id": "Q-Hab03-221",
+      "competency_id": "Hab-03",
+      "competency_name": "Optimización Variacional con Estado Final Libre",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Desde la perspectiva analítica correspondiente, compute: Considere el problema de cálculo de variaciones $\\min \\int_0^{5} [2 t \\dot{x} + 1 \\dot{x}^2]\\,dt$ con condición inicial fija $x(0) = 50$ y estado terminal $x(5)$ libre. Determine el valor del estado extremal final $x^*(5)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$x^*(5) = 47.5$",
+          "is_correct": false,
+          "error_rationale": "La solución óptima queda incompleta si no se especifica el estado terminal que el sistema dinámico eligió libremente alcanzar.",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$x^*(5) = 25.0$",
+          "is_correct": false,
+          "error_rationale": "La suficiencia global se deriva de la curvatura del integrando en todo el espacio y abarca tanto problemas con extremos fijos como libres.",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$x^*(5) = 0.0$",
+          "is_correct": false,
+          "error_rationale": "Al integrar una variable lineal con coeficiente fraccionario se debe multiplicar el denominador por el nuevo exponente 2.",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$x^*(5) = 50.0$",
+          "is_correct": false,
+          "error_rationale": "La transversalidad sustituye la condición de contorno ausente en el extremo terminal y debe evaluarse obligatoriamente en $t=2$.",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$x^*(5) = 62.5$",
+          "is_correct": false,
+          "error_rationale": "El término $t\\dot{x}$ tiene grado uno en $\\dot{x}$, por lo que al derivarlo dos veces respecto a la velocidad se anula por completo.",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$x^*(5) = 37.5$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$x^*(5) = 162.5$",
+          "is_correct": false,
+          "error_rationale": "Cada constante atiende a una exigencia distinta: una ancla el origen espacial y la otra calibra la inclinación óptima de llegada.",
+          "distractor_id": "D-Hab03-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Optimización Variacional con Estado Final Libre: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Optimización Variacional con Estado Final Libre, asegurando considerar adecuadamente: evaluación rigurosa de la condición de transversalidad en el instante de frontera terminal $t=2$.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Optimización Variacional con Estado Final Libre y evalúe posibles desvíos al considerar: integración de los coeficientes fraccionarios en la ecuación de velocidad."
+      ],
+      "detailed_solution": "Por la ecuación de Euler con $F_x=0$, el momento conjugado es constante: $F_{\\dot{x}} = 2 t + 2(1)\\dot{x} = c$. Al ser $x(5)$ libre, la transversalidad exige $\\left. F_{\\dot{x}} \\\\right|_{t=5} = 0 \\\\Rightarrow c = 0$. Luego $\\dot{x}(t) = -\\\\frac{2 t}{2(1)}$. Integrando con $x(0) = 50$ se obtiene $x^*(t) = 50 - \\\\frac{2 t^2}{4(1)}$, por lo que $x^*(5) = 37.5$."
+    },
+    {
+      "id": "Q-Hab03-222",
+      "competency_id": "Hab-03",
+      "competency_name": "Optimización Variacional con Estado Final Libre",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Atendiendo a la relación funcional planteada, halle: Considere el problema de cálculo de variaciones $\\min \\int_0^{2} [6 t \\dot{x} + 1 \\dot{x}^2]\\,dt$ con condición inicial fija $x(0) = 31$ y estado terminal $x(2)$ libre. Determine el valor del estado extremal final $x^*(2)$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$x^*(2) = 56.0$",
+          "is_correct": false,
+          "error_rationale": "Cada constante atiende a una exigencia distinta: una ancla el origen espacial y la otra calibra la inclinación óptima de llegada.",
+          "distractor_id": "D-Hab03-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$x^*(2) = 7.0$",
+          "is_correct": false,
+          "error_rationale": "Al integrar una variable lineal con coeficiente fraccionario se debe multiplicar el denominador por el nuevo exponente 2.",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$x^*(2) = 31.0$",
+          "is_correct": false,
+          "error_rationale": "La transversalidad sustituye la condición de contorno ausente en el extremo terminal y debe evaluarse obligatoriamente en $t=2$.",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$x^*(2) = 19.0$",
+          "is_correct": false,
+          "error_rationale": "La suficiencia global se deriva de la curvatura del integrando en todo el espacio y abarca tanto problemas con extremos fijos como libres.",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$x^*(2) = 28.0$",
+          "is_correct": false,
+          "error_rationale": "La solución óptima queda incompleta si no se especifica el estado terminal que el sistema dinámico eligió libremente alcanzar.",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$x^*(2) = 37.0$",
+          "is_correct": false,
+          "error_rationale": "El término $t\\dot{x}$ tiene grado uno en $\\dot{x}$, por lo que al derivarlo dos veces respecto a la velocidad se anula por completo.",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$x^*(2) = 25.0$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Optimización Variacional con Estado Final Libre: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Optimización Variacional con Estado Final Libre, asegurando considerar adecuadamente: evaluación rigurosa de la condición de transversalidad en el instante de frontera terminal $t=2$.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Optimización Variacional con Estado Final Libre y evalúe posibles desvíos al considerar: integración de los coeficientes fraccionarios en la ecuación de velocidad."
+      ],
+      "detailed_solution": "Por la ecuación de Euler con $F_x=0$, el momento conjugado es constante: $F_{\\dot{x}} = 6 t + 2(1)\\dot{x} = c$. Al ser $x(2)$ libre, la transversalidad exige $\\left. F_{\\dot{x}} \\\\right|_{t=2} = 0 \\\\Rightarrow c = 0$. Luego $\\dot{x}(t) = -\\\\frac{6 t}{2(1)}$. Integrando con $x(0) = 31$ se obtiene $x^*(t) = 31 - \\\\frac{6 t^2}{4(1)}$, por lo que $x^*(2) = 25.0$."
+    },
+    {
+      "id": "Q-C06-251",
+      "competency_id": "C-06",
+      "competency_name": "Condición de Transversalidad para Instante Final Libre",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En un problema variacional con tiempo final libre $t_1$ y estado final fijo $x(t_1) = 88$, ¿cuál es la condición de transversalidad en $t = t_1$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\left. [F - \\dot{x}F_{\\dot{x}}] \\\\right|_t = 0, \\\\forall t$",
+          "is_correct": false,
+          "error_rationale": "La transversalidad es una condición de contorno de frontera y no una identidad diferencial en todo el intervalo si hay dependencia temporal explícita.",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\left. F_{\\dot{x}} \\\\right|_{t=t_1} = 0$",
+          "is_correct": false,
+          "error_rationale": "Variar el extremo horizontal temporal introduce la variación del límite integral mediante la regla de Leibniz, originando $F - \\dot{x}F_{\\dot{x}}$.",
+          "distractor_id": "D-C06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\left. t_1 \\\\right. = -\\sqrt{192} < 0$",
+          "is_correct": false,
+          "error_rationale": "Una integral temporal con límite final menor al inicial invierte el sentido físico del proceso dinámico y carece de validez.",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\left. [F - \\ddot{x}F_{\\dot{x}}] \\\\right|_{t=t_1} = 0$",
+          "is_correct": false,
+          "error_rationale": "El diferencial de posición inducido por el desplazamiento temporal $dt_1$ se relaciona mediante la pendiente $\\dot{x} = \\frac{dx}{dt}$.",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\left. [F - \\dot{x}F_{\\dot{x}}] \\\\right|_{t=t_1} = 0$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\left. [F + \\dot{x}F_{\\dot{x}}] \\\\right|_{t=t_1} = 0$",
+          "is_correct": false,
+          "error_rationale": "La formulación correcta de la energía terminal requiere el signo negativo para equilibrar la tasa de variación temporal del límite superior.",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\left. x(t_1) \\\\right. \\\\neq 88$",
+          "is_correct": false,
+          "error_rationale": "Tener tiempo libre significa elegir el momento óptimo para llegar a un destino previamente fijado, manteniendo la exigencia sobre el estado final.",
+          "distractor_id": "D-C06-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "C-02",
+        "H-03",
+        "Hab-01"
+      ],
+      "detailed_solution": "$\\\\text{Para } t_1 \\\\text{ libre con } x(t_1)=88\\\\text{, la transversalidad exige } [F - \\dot{x}F_{\\dot{x}}]|_{t=t_1} = 0$"
+    },
+    {
+      "id": "Q-C06-252",
+      "competency_id": "C-06",
+      "competency_name": "Condición de Transversalidad para Instante Final Libre",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Considere el siguiente planteamiento formal: En un problema variacional con tiempo final libre $t_1$ y estado final fijo $x(t_1) = 39$, ¿cuál es la condición de transversalidad en $t = t_1$?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\left. [F + \\dot{x}F_{\\dot{x}}] \\\\right|_{t=t_1} = 0$",
+          "is_correct": false,
+          "error_rationale": "La formulación correcta de la energía terminal requiere el signo negativo para equilibrar la tasa de variación temporal del límite superior.",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\left. [F - \\dot{x}F_{\\dot{x}}] \\\\right|_t = 0, \\\\forall t$",
+          "is_correct": false,
+          "error_rationale": "La transversalidad es una condición de contorno de frontera y no una identidad diferencial en todo el intervalo si hay dependencia temporal explícita.",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\left. t_1 \\\\right. = -\\sqrt{89} < 0$",
+          "is_correct": false,
+          "error_rationale": "Una integral temporal con límite final menor al inicial invierte el sentido físico del proceso dinámico y carece de validez.",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\left. [F - \\ddot{x}F_{\\dot{x}}] \\\\right|_{t=t_1} = 0$",
+          "is_correct": false,
+          "error_rationale": "El diferencial de posición inducido por el desplazamiento temporal $dt_1$ se relaciona mediante la pendiente $\\dot{x} = \\frac{dx}{dt}$.",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\left. [F - \\dot{x}F_{\\dot{x}}] \\\\right|_{t=t_1} = 0$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\left. x(t_1) \\\\right. \\\\neq 39$",
+          "is_correct": false,
+          "error_rationale": "Tener tiempo libre significa elegir el momento óptimo para llegar a un destino previamente fijado, manteniendo la exigencia sobre el estado final.",
+          "distractor_id": "D-C06-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\left. F_{\\dot{x}} \\\\right|_{t=t_1} = 0$",
+          "is_correct": false,
+          "error_rationale": "Variar el extremo horizontal temporal introduce la variación del límite integral mediante la regla de Leibniz, originando $F - \\dot{x}F_{\\dot{x}}$.",
+          "distractor_id": "D-C06-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "C-02",
+        "H-03",
+        "Hab-01"
+      ],
+      "detailed_solution": "$\\\\text{Para } t_1 \\\\text{ libre con } x(t_1)=39\\\\text{, la transversalidad exige } [F - \\dot{x}F_{\\dot{x}}]|_{t=t_1} = 0$"
+    },
+    {
+      "id": "Q-Hab04-271",
+      "competency_id": "Hab-04",
+      "competency_name": "Optimización Dinámica con Tiempo Terminal Libre",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "En el marco de referencia correspondiente, establezca: Considere el problema de optimización dinámica con horizonte libre $\\min_{x, t_1} \\int_0^{t_1} [6 \\dot{x}^2 + 5 x]\\,dt$, con condiciones $x(0) = 0$ y $x(t_1) = 17$. Aplicando la ecuación de Euler y la condición de transversalidad en $t_1$, determine el tiempo terminal óptimo $t_1^*$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$t_1^* = 9.033$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$t_1^* = 4.517$",
+          "is_correct": false,
+          "error_rationale": "La derivada parcial de $3\\dot{x}^2$ respecto a la velocidad es $6\\dot{x}$, por lo que el producto resta $6\\dot{x}^2$, dejando un término neto en $-3\\dot{x}^2$.",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$t_1^* = 6.8$",
+          "is_correct": false,
+          "error_rationale": "El horizonte temporal y las constantes de integración forman un sistema no lineal simultáneo que debe resolverse en estrecho acoplamiento.",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$t_1^* = 11.063$",
+          "is_correct": false,
+          "error_rationale": "La transversalidad es una condición sobre toda la función de estado y sus derivadas evaluadas en el límite superior.",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$t_1^* = 6.387$",
+          "is_correct": false,
+          "error_rationale": "Al integrar el término lineal $\\frac{t}{6}$ se multiplica el denominador por dos, obteniendo $\\frac{t^2}{12}$.",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$t_1^* = 12.775$",
+          "is_correct": false,
+          "error_rationale": "Verificar la convexidad global asegura que no se haya obtenido un punto de ensilladura o un costo maximal en la frontera móvil.",
+          "distractor_id": "D-Hab04-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$t_1^* = -9.033$",
+          "is_correct": false,
+          "error_rationale": "Las soluciones con tiempo negativo violan la direccionalidad del proceso dinámico en tiempo continuo y deben ser descartadas.",
+          "distractor_id": "D-Hab04-04"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Optimización Dinámica con Tiempo Terminal Libre: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Optimización Dinámica con Tiempo Terminal Libre, asegurando considerar adecuadamente: cálculo correcto de la expresión hamiltoniana $F - \\dot{x}F_{\\dot{x}}$ antes de evaluar en $t_1$.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Optimización Dinámica con Tiempo Terminal Libre y evalúe posibles desvíos al considerar: acoplamiento algebraico simultáneo entre la ecuación de transversalidad terminal y la condición de estado terminal."
+      ],
+      "detailed_solution": "De Euler: $\\ddot{x} = \\\\frac{5}{2(6)} \\\\Rightarrow x(t) = \\\\frac{5}{4(6)}t^2 + c_1 t$. Transversalidad $[F - \\dot{x}F_{\\dot{x}}]_{t_1} = 0 \\\\Rightarrow c_1 = 0$. De $x(t_1) = 17 \\\\Rightarrow t_1^* = \\sqrt{\\\\frac{4(6)(17)}{5}} = 9.033$."
+    },
+    {
+      "id": "Q-Hab04-272",
+      "competency_id": "Hab-04",
+      "competency_name": "Optimización Dinámica con Tiempo Terminal Libre",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Evalúe la expresión y determine la cantidad buscada: Considere el problema de optimización dinámica con horizonte libre $\\min_{x, t_1} \\int_0^{t_1} [8 \\dot{x}^2 + 2 x]\\,dt$, con condiciones $x(0) = 0$ y $x(t_1) = 5$. Aplicando la ecuación de Euler y la condición de transversalidad en $t_1$, determine el tiempo terminal óptimo $t_1^*$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$t_1^* = 6.325$",
+          "is_correct": false,
+          "error_rationale": "Al integrar el término lineal $\\frac{t}{6}$ se multiplica el denominador por dos, obteniendo $\\frac{t^2}{12}$.",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$t_1^* = 5.0$",
+          "is_correct": false,
+          "error_rationale": "El horizonte temporal y las constantes de integración forman un sistema no lineal simultáneo que debe resolverse en estrecho acoplamiento.",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$t_1^* = -8.944$",
+          "is_correct": false,
+          "error_rationale": "Las soluciones con tiempo negativo violan la direccionalidad del proceso dinámico en tiempo continuo y deben ser descartadas.",
+          "distractor_id": "D-Hab04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$t_1^* = 10.954$",
+          "is_correct": false,
+          "error_rationale": "La transversalidad es una condición sobre toda la función de estado y sus derivadas evaluadas en el límite superior.",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$t_1^* = 8.944$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$t_1^* = 4.472$",
+          "is_correct": false,
+          "error_rationale": "La derivada parcial de $3\\dot{x}^2$ respecto a la velocidad es $6\\dot{x}$, por lo que el producto resta $6\\dot{x}^2$, dejando un término neto en $-3\\dot{x}^2$.",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$t_1^* = 12.649$",
+          "is_correct": false,
+          "error_rationale": "Verificar la convexidad global asegura que no se haya obtenido un punto de ensilladura o un costo maximal en la frontera móvil.",
+          "distractor_id": "D-Hab04-06"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Optimización Dinámica con Tiempo Terminal Libre: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Optimización Dinámica con Tiempo Terminal Libre, asegurando considerar adecuadamente: cálculo correcto de la expresión hamiltoniana $F - \\dot{x}F_{\\dot{x}}$ antes de evaluar en $t_1$.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Optimización Dinámica con Tiempo Terminal Libre y evalúe posibles desvíos al considerar: acoplamiento algebraico simultáneo entre la ecuación de transversalidad terminal y la condición de estado terminal."
+      ],
+      "detailed_solution": "De Euler: $\\ddot{x} = \\\\frac{2}{2(8)} \\\\Rightarrow x(t) = \\\\frac{2}{4(8)}t^2 + c_1 t$. Transversalidad $[F - \\dot{x}F_{\\dot{x}}]_{t_1} = 0 \\\\Rightarrow c_1 = 0$. De $x(t_1) = 5 \\\\Rightarrow t_1^* = \\sqrt{\\\\frac{4(8)(5)}{2}} = 8.944$."
+    },
+    {
+      "id": "Q-C07-301",
+      "competency_id": "C-07",
+      "competency_name": "Modelado del Monopolio Dinámico de Evans",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Identifique la proposición matemáticamente válida sabiendo que: En la teoría del monopolio dinámico de Evans con parámetros $a=80$, $b=9$ y $h=3$, ¿cuál de las siguientes afirmaciones describe correctamente su estructura canónica?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La función de costos de producción es estrictamente lineal $C(q) = 3 q$",
+          "is_correct": false,
+          "error_rationale": "La convexidad cuadrática en los costos es esencial para acotar la velocidad óptima de ajuste del precio y evitar soluciones degeneradas.",
+          "distractor_id": "D-C07-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El parámetro $3$ cuantifica el costo marginal de almacenamiento",
+          "is_correct": false,
+          "error_rationale": "La estructura de costos está gobernada por $\\alpha, \\beta, \\gamma$; el parámetro $h$ modela exclusivamente la reacción especulativa de la demanda.",
+          "distractor_id": "D-C07-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "La demanda incorpora expectativas de precio: $q = 80 - 9p + 3\\dot{p}$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La variable de estado dinámico a optimizar es la cantidad $q(t)$",
+          "is_correct": false,
+          "error_rationale": "El monopolista selecciona la senda de precios $p(t)$ en el mercado, quedando la cantidad determinada por la función de demanda resultante.",
+          "distractor_id": "D-C07-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "La demanda depende solo del precio presente: $q = 80 - 9p$",
+          "is_correct": false,
+          "error_rationale": "Si la demanda no dependiera de $\\dot{p}$, el problema se desacoplaría en una sucesión de optimizaciones estáticas independientes en cada instante.",
+          "distractor_id": "D-C07-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "El beneficio instantáneo se maximiza como $\\pi(t) = C(q) - pq$",
+          "is_correct": false,
+          "error_rationale": "Para maximizar utilidades, los ingresos deben entrar con signo positivo y los costos de producción deben deducirse en el integrando.",
+          "distractor_id": "D-C07-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "El flujo de beneficios se descuenta con un factor exponencial $e^{-8 t}$",
+          "is_correct": false,
+          "error_rationale": "Para facilitar la resolución analítica de la EDO de Euler se asume una tasa de descuento nula, ponderando por igual todos los períodos.",
+          "distractor_id": "D-C07-06"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Modelado del Monopolio Dinámico de Evans: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Modelado del Monopolio Dinámico de Evans, asegurando considerar adecuadamente: modelar la demanda del monopolio dinámico como $q = a - bp(t)$ omitiendo el término dependiente de la tasa de cambio del precio $\\dot{p}(t)$.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Modelado del Monopolio Dinámico de Evans y evalúe posibles desvíos al considerar: afirmar que el parámetro $h$ representa el costo marginal o de almacenamiento de la empresa."
+      ],
+      "detailed_solution": "$\\\\text{En Evans, la demanda especulativa incorpora la tendencia: } q = 80 - 9p + 3\\dot{p}$"
+    },
+    {
+      "id": "Q-C07-302",
+      "competency_id": "C-07",
+      "competency_name": "Modelado del Monopolio Dinámico de Evans",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Dada la caracterización analítica descrita, halle: En la teoría del monopolio dinámico de Evans con parámetros $a=76$, $b=4$ y $h=8$, ¿cuál de las siguientes afirmaciones describe correctamente su estructura canónica?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "La variable de estado dinámico a optimizar es la cantidad $q(t)$",
+          "is_correct": false,
+          "error_rationale": "El monopolista selecciona la senda de precios $p(t)$ en el mercado, quedando la cantidad determinada por la función de demanda resultante.",
+          "distractor_id": "D-C07-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "El parámetro $8$ cuantifica el costo marginal de almacenamiento",
+          "is_correct": false,
+          "error_rationale": "La estructura de costos está gobernada por $\\alpha, \\beta, \\gamma$; el parámetro $h$ modela exclusivamente la reacción especulativa de la demanda.",
+          "distractor_id": "D-C07-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "El flujo de beneficios se descuenta con un factor exponencial $e^{-5 t}$",
+          "is_correct": false,
+          "error_rationale": "Para facilitar la resolución analítica de la EDO de Euler se asume una tasa de descuento nula, ponderando por igual todos los períodos.",
+          "distractor_id": "D-C07-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "La demanda incorpora expectativas de precio: $q = 76 - 4p + 8\\dot{p}$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "El beneficio instantáneo se maximiza como $\\pi(t) = C(q) - pq$",
+          "is_correct": false,
+          "error_rationale": "Para maximizar utilidades, los ingresos deben entrar con signo positivo y los costos de producción deben deducirse en el integrando.",
+          "distractor_id": "D-C07-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "La función de costos de producción es estrictamente lineal $C(q) = 3 q$",
+          "is_correct": false,
+          "error_rationale": "La convexidad cuadrática en los costos es esencial para acotar la velocidad óptima de ajuste del precio y evitar soluciones degeneradas.",
+          "distractor_id": "D-C07-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "La demanda depende solo del precio presente: $q = 76 - 4p$",
+          "is_correct": false,
+          "error_rationale": "Si la demanda no dependiera de $\\dot{p}$, el problema se desacoplaría en una sucesión de optimizaciones estáticas independientes en cada instante.",
+          "distractor_id": "D-C07-01"
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Modelado del Monopolio Dinámico de Evans: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Modelado del Monopolio Dinámico de Evans, asegurando considerar adecuadamente: modelar la demanda del monopolio dinámico como $q = a - bp(t)$ omitiendo el término dependiente de la tasa de cambio del precio $\\dot{p}(t)$.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Modelado del Monopolio Dinámico de Evans y evalúe posibles desvíos al considerar: afirmar que el parámetro $h$ representa el costo marginal o de almacenamiento de la empresa."
+      ],
+      "detailed_solution": "$\\\\text{En Evans, la demanda especulativa incorpora la tendencia: } q = 76 - 4p + 8\\dot{p}$"
+    },
+    {
+      "id": "Q-Hab05-321",
+      "competency_id": "Hab-05",
+      "competency_name": "Optimización del Tradeoff Inflación-Desempleo y Trayectoria Óptima",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Sustentando la solución en los principios teóricos, halle: En el modelo de desinflación óptima de Taylor (1989), con costo social $\\lambda(\\pi, \\dot{\\pi}) = (\\\\frac{\\dot{\\pi}}{\\\\beta j})^2 + \\\\alpha(\\\\frac{\\dot{\\pi}}{j}+\\pi)^2$, donde $\\\\alpha = 5$, $\\\\beta = 2$ y $j = 10$, calcule la raíz característica positiva $r$ de la trayectoria extremal:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$r = 10.0$",
+          "is_correct": false,
+          "error_rationale": "Solo en un horizonte infinito se descartan las raíces inestables por acotamiento; con tiempo finito la convergencia terminal fija ambas constantes.",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$r = 0.102$",
+          "is_correct": false,
+          "error_rationale": "Si ambas constantes fueran nulas, la inflación inicial sería cero, violando la premisa del problema de desinflar desde una tasa inicial $\\pi_0 \\ne 0$.",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$r = 4.762$",
+          "is_correct": false,
+          "error_rationale": "Al despejar $r = \\sqrt{r^2}$ se debe aplicar el operador radical tanto al numerador ($\\sqrt{\\alpha}$) como al denominador $(\\sqrt{1+\\beta^2\\alpha})$.",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$r = 10.127$",
+          "is_correct": false,
+          "error_rationale": "Un signo positivo produciría oscilaciones trigonométricas de inflación en vez de una trayectoria suave monótona hacia la estabilidad.",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$r = 2.13$",
+          "is_correct": false,
+          "error_rationale": "Dado que $\\alpha, \\beta, j > 0$, la segunda derivada es estrictamente positiva, garantizando que la política hallada minimiza las pérdidas sociales.",
+          "distractor_id": "D-Hab05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$r = 9.759$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$r = 4.88$",
+          "is_correct": false,
+          "error_rationale": "El factor $j$ divide a la tasa de variación $\\dot{\\pi}$ y no a la inflación esperada $\\pi$.",
+          "distractor_id": "D-Hab05-01"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Optimización del Tradeoff Inflación-Desempleo y Trayectoria Óptima: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Optimización del Tradeoff Inflación-Desempleo y Trayectoria Óptima, asegurando considerar adecuadamente: despeje algebraico correcto del nivel de precios $p$ a partir de la ecuación de expectativas adaptativas.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Optimización del Tradeoff Inflación-Desempleo y Trayectoria Óptima y evalúe posibles desvíos al considerar: cálculo de la raíz cuadrada en la solución de la ecuación cuadrática característica para $r$."
+      ],
+      "detailed_solution": "$r = \\\\frac{\\\\beta j \\sqrt{\\\\alpha}}{\\sqrt{1 + \\\\beta^2 \\\\alpha}} = \\\\frac{(2)(10)\\sqrt{5}}{\\sqrt{1 + (2)^2(5)}} = 9.759$"
+    },
+    {
+      "id": "Q-Hab05-322",
+      "competency_id": "Hab-05",
+      "competency_name": "Optimización del Tradeoff Inflación-Desempleo y Trayectoria Óptima",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "stem": "Siguiendo el procedimiento analítico estándar, calcule: En el modelo de desinflación óptima de Taylor (1989), con costo social $\\lambda(\\pi, \\dot{\\pi}) = (\\\\frac{\\dot{\\pi}}{\\\\beta j})^2 + \\\\alpha(\\\\frac{\\dot{\\pi}}{j}+\\pi)^2$, donde $\\\\alpha = 11$, $\\\\beta = 11$ y $j = 8$, calcule la raíz característica positiva $r$ de la trayectoria extremal:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$r = 0.827$, según los supuestos clásicos del modelo.",
+          "is_correct": false,
+          "error_rationale": "Al despejar $r = \\sqrt{r^2}$ se debe aplicar el operador radical tanto al numerador ($\\sqrt{\\alpha}$) como al denominador $(\\sqrt{1+\\beta^2\\alpha})$.",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$r = 7.997$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$r = 0.727$",
+          "is_correct": false,
+          "error_rationale": "El factor $j$ divide a la tasa de variación $\\dot{\\pi}$ y no a la inflación esperada $\\pi$.",
+          "distractor_id": "D-Hab05-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$r = 0.125$",
+          "is_correct": false,
+          "error_rationale": "Si ambas constantes fueran nulas, la inflación inicial sería cero, violando la premisa del problema de desinflar desde una tasa inicial $\\pi_0 \\ne 0$.",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$r = 8.002$",
+          "is_correct": false,
+          "error_rationale": "Un signo positivo produciría oscilaciones trigonométricas de inflación en vez de una trayectoria suave monótona hacia la estabilidad.",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$r = 8.0$",
+          "is_correct": false,
+          "error_rationale": "Solo en un horizonte infinito se descartan las raíces inestables por acotamiento; con tiempo finito la convergencia terminal fija ambas constantes.",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$r = 0.219$",
+          "is_correct": false,
+          "error_rationale": "Dado que $\\alpha, \\beta, j > 0$, la segunda derivada es estrictamente positiva, garantizando que la política hallada minimiza las pérdidas sociales.",
+          "distractor_id": "D-Hab05-04"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "Identifique la estructura conceptual de Optimización del Tradeoff Inflación-Desempleo y Trayectoria Óptima: analice las relaciones formales y condiciones teóricas del modelo.",
+        "Revise el procedimiento analítico paso a paso para Optimización del Tradeoff Inflación-Desempleo y Trayectoria Óptima, asegurando considerar adecuadamente: despeje algebraico correcto del nivel de precios $p$ a partir de la ecuación de expectativas adaptativas.",
+        "Antes de concluir, compruebe la consistencia dimensional del resultado de Optimización del Tradeoff Inflación-Desempleo y Trayectoria Óptima y evalúe posibles desvíos al considerar: cálculo de la raíz cuadrada en la solución de la ecuación cuadrática característica para $r$."
+      ],
+      "detailed_solution": "$r = \\\\frac{\\\\beta j \\sqrt{\\\\alpha}}{\\sqrt{1 + \\\\beta^2 \\\\alpha}} = \\\\frac{(11)(8)\\sqrt{11}}{\\sqrt{1 + (11)^2(11)}} = 7.997$"
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [
+      {
+        "id": "Q-Hab01-101",
+        "competency_id": "Hab-01",
+        "stem": "Aplicando las identidades teóricas pertinentes, evalúe: Considere el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$ con condiciones de frontera $x(0) = 34$ y $x(1) = 19$. Aplicando la ecuación de Euler $\\ddot{x} - x = 0$, determine el valor de la constante de integración $c_1$ en la solución $x(t) = c_1 e^{-t} + c_2 e^t$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$c_1 = 34.125$",
+            "is_correct": false,
+            "error_rationale": "La ecuación diferencial lineal de segundo orden con raíces simples $\\pm 1$ se resuelve como combinación lineal de exponenciales independientes.",
+            "distractor_id": "D-Hab01-01"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$c_1 = 31.351$",
+            "is_correct": false,
+            "error_rationale": "Un error en el coeficiente diferencial altera los autovalores y raíces de la ecuación diferencial, invalidando la trayectoria resultante.",
+            "distractor_id": "D-Hab01-05"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$c_1 = 26.625$",
+            "is_correct": false,
+            "error_rationale": "Un problema con condiciones de contorno fijas requiere explicitar numéricamente las constantes de integración para individualizar la trayectoria.",
+            "distractor_id": "D-Hab01-02"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$c_1 = 23.279$",
+            "is_correct": false,
+            "error_rationale": "Hallar un punto estacionario mediante Euler no garantiza optimalidad; se debe contrastar el signo de las derivadas segundas.",
+            "distractor_id": "D-Hab01-04"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$c_1 = 31.238$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$c_1 = 15.744$",
+            "is_correct": false,
+            "error_rationale": "La integral de $t dt$ introduce un factor $\\frac{1}{2}$, transformando el denominador de $2a$ en $4a$ en el término cuadrático de la trayectoria.",
+            "distractor_id": "D-Hab01-06"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$c_1 = 7.115$",
+            "is_correct": false,
+            "error_rationale": "No se pueden inferir las constantes por separado; debe plantearse el sistema $2 \\times 2$ para despejar unívocamente $c_1 = 0$ y $c_2 = 1$.",
+            "distractor_id": "D-Hab01-03"
+          }
+        ],
+        "hints": [
+          "C-02",
+          "H-02",
+          "C-03"
+        ],
+        "detailed_solution": "Para el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$, la ecuación de Euler es $\\ddot{x} - x = 0$ con raíces características $m = \\pm 1$ y solución $x(t) = c_1 e^{-t} + c_2 e^t$. Con $x(0) = c_1 + c_2 = 34$ y $x(1) = c_1 e^{-1} + c_2 e = 19$, resolviendo el sistema lineal simultáneo se obtiene $c_1 = \\\\frac{e \\cdot 34 - 19}{e - e^{-1}} = 31.238$.",
+        "detected_issues": [
+          "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-102",
+        "competency_id": "Hab-01",
+        "stem": "Al examinar detenidamente las condiciones de frontera, resuelva: Considere el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$ con condiciones de frontera $x(0) = 31$ y $x(1) = 6$. Aplicando la ecuación de Euler $\\ddot{x} - x = 0$, determine el valor de la constante de integración $c_1$ en la solución $x(t) = c_1 e^{-t} + c_2 e^t$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$c_1 = 16.775$",
+            "is_correct": false,
+            "error_rationale": "La integral de $t dt$ introduce un factor $\\frac{1}{2}$, transformando el denominador de $2a$ en $4a$ en el término cuadrático de la trayectoria.",
+            "distractor_id": "D-Hab01-06"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$c_1 = 30.872$",
+            "is_correct": false,
+            "error_rationale": "Hallar un punto estacionario mediante Euler no garantiza optimalidad; se debe contrastar el signo de las derivadas segundas.",
+            "distractor_id": "D-Hab01-04"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$c_1 = 31.125$",
+            "is_correct": false,
+            "error_rationale": "La ecuación diferencial lineal de segundo orden con raíces simples $\\pm 1$ se resuelve como combinación lineal de exponenciales independientes.",
+            "distractor_id": "D-Hab01-01"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$c_1 = 2.332$",
+            "is_correct": false,
+            "error_rationale": "No se pueden inferir las constantes por separado; debe plantearse el sistema $2 \\times 2$ para despejar unívocamente $c_1 = 0$ y $c_2 = 1$.",
+            "distractor_id": "D-Hab01-03"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$c_1 = 33.299$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$c_1 = 31.522$",
+            "is_correct": false,
+            "error_rationale": "Un error en el coeficiente diferencial altera los autovalores y raíces de la ecuación diferencial, invalidando la trayectoria resultante.",
+            "distractor_id": "D-Hab01-05"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$c_1 = 18.625$",
+            "is_correct": false,
+            "error_rationale": "Un problema con condiciones de contorno fijas requiere explicitar numéricamente las constantes de integración para individualizar la trayectoria.",
+            "distractor_id": "D-Hab01-02"
+          }
+        ],
+        "hints": [
+          "C-02",
+          "H-02",
+          "C-03"
+        ],
+        "detailed_solution": "Para el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$, la ecuación de Euler es $\\ddot{x} - x = 0$ con raíces características $m = \\pm 1$ y solución $x(t) = c_1 e^{-t} + c_2 e^t$. Con $x(0) = c_1 + c_2 = 31$ y $x(1) = c_1 e^{-1} + c_2 e = 6$, resolviendo el sistema lineal simultáneo se obtiene $c_1 = \\\\frac{e \\cdot 31 - 6}{e - e^{-1}} = 33.299$.",
+        "detected_issues": [
+          "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-103",
+        "competency_id": "Hab-01",
+        "stem": "Con arreglo a las definiciones operativas del sistema, verifique: Considere el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$ con condiciones de frontera $x(0) = 24$ y $x(1) = 14$. Aplicando la ecuación de Euler $\\ddot{x} - x = 0$, determine el valor de la constante de integración $c_1$ en la solución $x(t) = c_1 e^{-t} + c_2 e^t$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$c_1 = 21.807$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$c_1 = 11.025$",
+            "is_correct": false,
+            "error_rationale": "La integral de $t dt$ introduce un factor $\\frac{1}{2}$, transformando el denominador de $2a$ en $4a$ en el término cuadrático de la trayectoria.",
+            "distractor_id": "D-Hab01-06"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$c_1 = 22.015$",
+            "is_correct": false,
+            "error_rationale": "Un error en el coeficiente diferencial altera los autovalores y raíces de la ecuación diferencial, invalidando la trayectoria resultante.",
+            "distractor_id": "D-Hab01-05"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$c_1 = 5.275$",
+            "is_correct": false,
+            "error_rationale": "No se pueden inferir las constantes por separado; debe plantearse el sistema $2 \\times 2$ para despejar unívocamente $c_1 = 0$ y $c_2 = 1$.",
+            "distractor_id": "D-Hab01-03"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$c_1 = 15.969$",
+            "is_correct": false,
+            "error_rationale": "Hallar un punto estacionario mediante Euler no garantiza optimalidad; se debe contrastar el signo de las derivadas segundas.",
+            "distractor_id": "D-Hab01-04"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$c_1 = 19.125$",
+            "is_correct": false,
+            "error_rationale": "Un problema con condiciones de contorno fijas requiere explicitar numéricamente las constantes de integración para individualizar la trayectoria.",
+            "distractor_id": "D-Hab01-02"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$c_1 = 24.125$",
+            "is_correct": false,
+            "error_rationale": "La ecuación diferencial lineal de segundo orden con raíces simples $\\pm 1$ se resuelve como combinación lineal de exponenciales independientes.",
+            "distractor_id": "D-Hab01-01"
+          }
+        ],
+        "hints": [
+          "C-02",
+          "H-02",
+          "C-03"
+        ],
+        "detailed_solution": "Para el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$, la ecuación de Euler es $\\ddot{x} - x = 0$ con raíces características $m = \\pm 1$ y solución $x(t) = c_1 e^{-t} + c_2 e^t$. Con $x(0) = c_1 + c_2 = 24$ y $x(1) = c_1 e^{-1} + c_2 e = 14$, resolviendo el sistema lineal simultáneo se obtiene $c_1 = \\\\frac{e \\cdot 24 - 14}{e - e^{-1}} = 21.807$.",
+        "detected_issues": [
+          "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-104",
+        "competency_id": "Hab-01",
+        "stem": "Efectuando el análisis formal respectivo, precise: Considere el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$ con condiciones de frontera $x(0) = 21$ y $x(1) = 17$. Aplicando la ecuación de Euler $\\ddot{x} - x = 0$, determine el valor de la constante de integración $c_1$ en la solución $x(t) = c_1 e^{-t} + c_2 e^t$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$c_1 = 21.125$",
+            "is_correct": false,
+            "error_rationale": "La ecuación diferencial lineal de segundo orden con raíces simples $\\pm 1$ se resuelve como combinación lineal de exponenciales independientes.",
+            "distractor_id": "D-Hab01-01"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$c_1 = 8.652$",
+            "is_correct": false,
+            "error_rationale": "La integral de $t dt$ introduce un factor $\\frac{1}{2}$, transformando el denominador de $2a$ en $4a$ en el término cuadrático de la trayectoria.",
+            "distractor_id": "D-Hab01-06"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$c_1 = 9.946$",
+            "is_correct": false,
+            "error_rationale": "Hallar un punto estacionario mediante Euler no garantiza optimalidad; se debe contrastar el signo de las derivadas segundas.",
+            "distractor_id": "D-Hab01-04"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$c_1 = 19.125$",
+            "is_correct": false,
+            "error_rationale": "Un problema con condiciones de contorno fijas requiere explicitar numéricamente las constantes de integración para individualizar la trayectoria.",
+            "distractor_id": "D-Hab01-02"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$c_1 = 6.379$",
+            "is_correct": false,
+            "error_rationale": "No se pueden inferir las constantes por separado; debe plantearse el sistema $2 \\times 2$ para despejar unívocamente $c_1 = 0$ y $c_2 = 1$.",
+            "distractor_id": "D-Hab01-03"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$c_1 = 18.051$",
+            "is_correct": false,
+            "error_rationale": "Un error en el coeficiente diferencial altera los autovalores y raíces de la ecuación diferencial, invalidando la trayectoria resultante.",
+            "distractor_id": "D-Hab01-05"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$c_1 = 17.054$",
+            "is_correct": true,
+            "error_rationale": null
+          }
+        ],
+        "hints": [
+          "C-02",
+          "H-02",
+          "C-03"
+        ],
+        "detailed_solution": "Para el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$, la ecuación de Euler es $\\ddot{x} - x = 0$ con raíces características $m = \\pm 1$ y solución $x(t) = c_1 e^{-t} + c_2 e^t$. Con $x(0) = c_1 + c_2 = 21$ y $x(1) = c_1 e^{-1} + c_2 e = 17$, resolviendo el sistema lineal simultáneo se obtiene $c_1 = \\\\frac{e \\cdot 21 - 17}{e - e^{-1}} = 17.054$.",
+        "detected_issues": [
+          "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-105",
+        "competency_id": "Hab-01",
+        "stem": "Desde la perspectiva analítica correspondiente, compute: Considere el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$ con condiciones de frontera $x(0) = 20$ y $x(1) = 22$. Aplicando la ecuación de Euler $\\ddot{x} - x = 0$, determine el valor de la constante de integración $c_1$ en la solución $x(t) = c_1 e^{-t} + c_2 e^t$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$c_1 = 15.697$",
+            "is_correct": false,
+            "error_rationale": "Un error en el coeficiente diferencial altera los autovalores y raíces de la ecuación diferencial, invalidando la trayectoria resultante.",
+            "distractor_id": "D-Hab01-05"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$c_1 = 21.125$",
+            "is_correct": false,
+            "error_rationale": "Un problema con condiciones de contorno fijas requiere explicitar numéricamente las constantes de integración para individualizar la trayectoria.",
+            "distractor_id": "D-Hab01-02"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$c_1 = 7.017$",
+            "is_correct": false,
+            "error_rationale": "La integral de $t dt$ introduce un factor $\\frac{1}{2}$, transformando el denominador de $2a$ en $4a$ en el término cuadrático de la trayectoria.",
+            "distractor_id": "D-Hab01-06"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$c_1 = 8.218$",
+            "is_correct": false,
+            "error_rationale": "No se pueden inferir las constantes por separado; debe plantearse el sistema $2 \\times 2$ para despejar unívocamente $c_1 = 0$ y $c_2 = 1$.",
+            "distractor_id": "D-Hab01-03"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$c_1 = 20.125$",
+            "is_correct": false,
+            "error_rationale": "La ecuación diferencial lineal de segundo orden con raíces simples $\\pm 1$ se resuelve como combinación lineal de exponenciales independientes.",
+            "distractor_id": "D-Hab01-01"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$c_1 = 4.535$",
+            "is_correct": false,
+            "error_rationale": "Hallar un punto estacionario mediante Euler no garantiza optimalidad; se debe contrastar el signo de las derivadas segundas.",
+            "distractor_id": "D-Hab01-04"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$c_1 = 13.777$",
+            "is_correct": true,
+            "error_rationale": null
+          }
+        ],
+        "hints": [
+          "C-02",
+          "H-02",
+          "C-03"
+        ],
+        "detailed_solution": "Para el problema variacional $\\min \\int_0^1 (\\dot{x}^2 + x^2)\\,dt$, la ecuación de Euler es $\\ddot{x} - x = 0$ con raíces características $m = \\pm 1$ y solución $x(t) = c_1 e^{-t} + c_2 e^t$. Con $x(0) = c_1 + c_2 = 20$ y $x(1) = c_1 e^{-1} + c_2 e = 22$, resolviendo el sistema lineal simultáneo se obtiene $c_1 = \\\\frac{e \\cdot 20 - 22}{e - e^{-1}} = 13.777$.",
+        "detected_issues": [
+          "[WARNING] Pistas deficientes detectadas (no socráticas): ID de competencia 'C-02', ID de competencia 'H-02'"
+        ]
+      }
+    ],
+    "template_residues": [],
+    "blind_replacements": []
+  }
+}

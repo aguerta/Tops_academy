@@ -1,0 +1,118 @@
+{
+  "course_metadata": {
+    "course_id": "econometria_violaciones_supuestos",
+    "unit_title": "Econometría: Violaciones de Supuestos del Modelo Lineal General",
+    "detected_objective": "Dominio y aplicación analítica integral de las violaciones a los supuestos clásicos del Modelo Lineal General: teorema de Gauss-Markov y propiedad BLUE; naturaleza, consecuencias, contrastes diagnósticos (White, Breusch-Pagan, Glejser) y métodos de corrección (Huber-White robusto, MCG/WLS) de la heterocedasticidad; naturaleza temporal, consecuencias y diagnóstico (Durbin-Watson, Breusch-Godfrey) de la autocorrelación; contraste de estabilidad paramétrica y quiebres estructurales (prueba de Chow, variables dummy e interacciones); evaluación de multicolinealidad mediante Factor de Inflación de Varianza (VIF); contraste de normalidad de perturbaciones mediante el estadístico de Jarque-Bera; endogeneidad por omisión de variables relevantes y deducción analítica de la dirección del sesgo; error de medición clásico y factor de sesgo de atenuación; contrastes de exogeneidad de Hausman y Durbin-Wu-Hausman; y estimación consistente por Variables Instrumentales y Mínimos Cuadrados en Dos Etapas (MC2E / 2SLS) con corrección de varianzas estructurales.",
+    "total_competencies": 14,
+    "total_questions": 360,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 360
+    },
+    "platform_status": "ELIMINADO",
+    "evaluator": "Course QA Auditor — Top's Academy",
+    "evaluation_date": "2026-10-25",
+    "deleted_at": "2026-10-25 11:12:46"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 3.8,
+      "max": 4.0,
+      "feedback": "Arquitectura modular coherente y bien delimitada compuesta por 14 micro-competencias temáticas sobre violaciones de supuestos econométricos. El modelado de dependencias mediante Grafo Acíclico Dirigido (DAG) es consistente, con una única raíz axiomática formal (C-01: Supuestos del MLG y BLUE) de la que derivan ramificaciones lógicas hacia heterocedasticidad (C-02 a C-04), autocorrelación (C-05 a C-06), quiebre estructural (C-07 a C-08), multicolinealidad (C-09), normalidad (C-10) y endogeneidad/VI (C-11 a C-14). El balance cognitivo entre Conceptos (6 competencias, 42.86%) y Habilidades (8 competencias, 57.14%) es robusto para un curso de econometría intermedia-avanzada. La densidad poblacional es sobresaliente (20 reactivos para Conceptos y 30 para Habilidades, totalizando 360 preguntas), superando holgadamente el criterio de Mastery Learning. Se descuentan 0.2 pts debido a la ausencia total de micro-competencias de nivel Hecho [Fact] (0%), omitiendo el andamiaje explícito de nomenclatura base o valores de tablas estadísticas como unidades discretas."
+    },
+    "assessment_quality": {
+      "score": 2.7,
+      "max": 5.0,
+      "feedback": "La dimensión de evaluación presenta fortalezas psicométricas en su cobertura de rationales (100.0% en 2,160 distractores) y el diseño antiazar de 7 alternativas (probabilidad de acierto aleatorio del 14.28%). No obstante, sufre deducciones severas (-2.3 pts) por cuatro fallas críticas descubiertas en el Loop de Verificación Semántica: 1) Metainformación delatora / Answer leaks visibles en las opciones de C-12 (ej. '(confusión con la proporción ruido a señal)', '(asume consistencia asintótica con N -> \\infty)', '(definición errónea como cociente de ruidos)', '(omisión de la varianza total en divisor)', '(inversión errónea del signo del parámetro)' y '(sesgo clásico de atenuación hacia cero)' en la respuesta correcta), filtrando el diagnóstico pedagógico directamente en el texto que visualiza el estudiante; 2) Residuos de plantilla sin interpolar en enunciados: 20 reactivos en C-01 contienen '${dep_var}_i', '{reg1}_i' y '{reg2}_i' crudos, y reactivos en C-02 contienen '${var_dependiente}_i', '{var_escala}_i' y '{var_control}_i'; 3) Monotonía de arquetipos y mecanización extrema del estudiante: dentro de C-01, C-02, C-05, C-06, C-13 y C-14, las 20 a 30 preguntas son permutaciones idénticas de las mismas 7 opciones teóricas variando únicamente el prefijo del enunciado o el sector económico de fantasía; 4) Nula variedad tipológica (100% MC 7-opciones, sin ítems multiple_select ni fill-in-the-blank)."
+    },
+    "scaffolding_hints": {
+      "score": 4.2,
+      "max": 5.0,
+      "feedback": "Excelente cobertura global de andamiaje: el 100% de los reactivos (360/360) cuenta con exactamente 3 pistas progresivas escalonadas (Conceptual -> Procedimental -> Operativa/Decisión) y una solución detallada con deducciones formales y explicaciones conceptuales. Los errores de concepto comunes (como atribuir sesgo a la heterocedasticidad o confundir los grados de libertad en Breusch-Godfrey) son abordados rigurosamente en las soluciones. Se aplica una deducción de -0.8 pts debido a: 1) Falta de dinamismo adaptativo en las pistas: las 3 pistas se repiten de forma idéntica en todos los reactivos de una misma competencia sin incorporar los valores numéricos o variables particulares del ejercicio en cuestión; 2) Ausencia de un bloque formal y visible de 'Advertencia de Concepción Errónea' (misconception warning) demarcado de forma independiente en la solución detallada."
+    },
+    "instructional_alignment": {
+      "score": 3.6,
+      "max": 4.0,
+      "feedback": "Alta congruencia semántica y curricular con el dominio teórico de la econometría de regresión clásica (Wooldridge, Greene, Gujarati). Cero preguntas huérfanas (0 items detectados) y cero contaminación interdominio; cada uno de los 360 reactivos mapea con fidelidad a los supuestos de Gauss-Markov, contrastes de heterocedasticidad, autocorrelación, estabilidad de Chow, multicolinealidad, normalidad y endogeneidad por variables instrumentales. Se aplica una deducción de -0.4 pts debido a que la excesiva mecanización paramétrica en varias competencias reduce el nivel cognitivo efectivo de Bloom: reactivos diseñados nominalmente para 'Análisis' y 'Evaluación' se resuelven mediante mero reconocimiento superficial de plantillas repetidas."
+    },
+    "technical_ergonomics": {
+      "score": 1.4,
+      "max": 2.0,
+      "feedback": "Las fórmulas matemáticas compilan en KaTeX sin delimitadores rotos ni desbalanceos de llaves. No obstante, se aplica una deducción de -0.6 pts por deficiencias de ergonomía técnica y ortografía: 1) Uso incorrecto del comando '\\hat' sobre identificadores multicarácter sin escape de texto (ej. '\\hat{credito}', '\\hat{flujo_caja}', '\\hat{visitas_prenatal}') en C-13 y C-14, lo que provoca que KaTeX acentúe solo la primera letra e italicice el resto de la palabra como producto algebraico; 2) Inserción de sintaxis de variables de plantilla crudas dentro de bloques de ecuaciones en dólares (ej. '${dep_var}_i = \\beta_0 + ...$' y '${var_dependiente}_i = ...$'); 3) Omisión sistemática de tildes y caracteres ortográficos en español en los enunciados y soluciones de C-07 y C-08 ('econometrico', 'regresion', 'termino', 'Cual', 'formulacion', 'estadistico', 'hipotesis', 'parametros', 'identicos', 'regimenes'); 4) Discordancia de género gramatical en opciones de C-11 ('distorsión sistemática positivo')."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 15.7,
+  "quality_tier": "ACEPTABLE (14.0 - 16.9 pts)",
+  "remediation_actions": [
+    "Aprobación condicionada a remediación técnica previa: El curso califica en Tier ACEPTABLE (15.7 / 20.0). Se requiere resolver las observaciones críticas antes de su certificación final para producción sin restricciones.",
+    "Remediación Urgente de Fugas de Metainformación (C-12 y C-11): Eliminar inmediatamente los textos delatores entre paréntesis en las opciones de C-12 (ej. '(confusión con la proporción ruido a señal)', '(asume consistencia...)', '(definición errónea...)', '(sesgo clásico...)') y las explicaciones de error en C-11 ('omitiendo dividir la covarianza...'). Las opciones deben mostrar únicamente la cifra analítica y la afirmación sustantiva, reservando los diagnósticos exclusivamente para 'error_rationale'.",
+    "Limpieza de Residuos de Plantilla (C-01 y C-02): Corregir el script generador para sustituir las variables de plantilla no interpoladas '${dep_var}', '{reg1}', '{reg2}' en Q-C01-001 a Q-C01-020 por nombres económicos reales (ej. 'Gasto_Luz', 'Ingreso', 'Tarifa'), y '${var_dependiente}', '{var_escala}', '{var_control}' en Q-C02-021 a Q-C02-040 por variables sectoriales concretas.",
+    "Diversificación de Arquetipos de Pregunta: Rediseñar al menos el 50% de los reactivos de C-01, C-02, C-05, C-06, C-13 y C-14 para incorporar arquetipos alternativos: interpretación de salidas de software econométrico (tablas Stata/R), lectura de gráficos residuales, cálculo numérico directo de estadísticos de prueba ($LM$, $DW$, $F_{chow}$), y preguntas de selección múltiple (multiple_select) con penalización de distractores.",
+    "Corrección Tipográfica KaTeX y Ortografía en Español: Sustituir '\\hat{variable}' por '\\widehat{\\text{variable}}' en C-13 y C-14; restaurar las tildes ortográficas ausentes en C-07 y C-08; y corregir la discordancia gramatical en C-11 ('distorsión sistemática positiva')."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "parenthetical_distractor_telltale_linter",
+      "severity": "high",
+      "description": "Detecta opciones visibles para el estudiante que contienen explicaciones delatoras entre paréntesis sobre por qué la opción es incorrecta o correcta (ej. '(confusión con...)', '(definición errónea...)', '(omisión de...)', '(asume consistencia...)', '(sesgo clásico...)'), lo que filtra la respuesta correcta por eliminación directa de metadatos.",
+      "regex_pattern": "\\((?:confusión|asume|definición errónea|omisión|inversión errónea|sesgo clásico|cálculo incorrecto)[^)]*\\)",
+      "evidence_items": [
+        "Q-C12-281",
+        "Q-C12-282"
+      ]
+    },
+    {
+      "rule_id": "generalized_template_residue_linter",
+      "severity": "high",
+      "description": "Extiende la detección de residuos de plantilla para capturar placeholders no interpolados de nombres de variables como '{reg\\d+}', '{var_[a-z_]+}', '${[a-z_]+}' en stems y opciones que escaparon al linter de dep_var.",
+      "regex_pattern": "(?:\\$\\{[a-zA-Z_]+\\}|\\{(?:var_[a-zA-Z_]+|reg\\d+|dep_var)\\})",
+      "evidence_items": [
+        "Q-C01-001",
+        "Q-C01-002",
+        "Q-C02-021",
+        "Q-C02-022"
+      ]
+    },
+    {
+      "rule_id": "multiletter_hat_in_katex_linter",
+      "severity": "medium",
+      "description": "Detecta el uso del acento LaTeX '\\hat' aplicado a cadenas de texto o identificadores multicarácter sin '\\widehat' o sin bloque '\\text{}', produciendo artefactos visuales donde solo el primer glifo recibe el acento y el resto queda en cursiva matemática de producto.",
+      "regex_pattern": "\\\\hat\\{[a-zA-Z_]{2,}\\}",
+      "evidence_items": [
+        "Q-C13-301",
+        "Q-C13-302",
+        "Q-C14-331",
+        "Q-C14-332"
+      ]
+    },
+    {
+      "rule_id": "systematic_unaccented_spanish_corpus_linter",
+      "severity": "medium",
+      "description": "Identifica reactivos o bloques de contenido en español donde palabras académicas de uso mandatorio con tilde han perdido sistemáticamente la acentuación ortográfica debido a procesos de generación o decodificación ASCII.",
+      "regex_pattern": "\\b(econometrico|regresion|termino|Cual|formulacion|estadistico|hipotesis|parametros|identicos|regimenes)\\b",
+      "evidence_items": [
+        "Q-C07-151",
+        "Q-C07-152",
+        "Q-C08-181",
+        "Q-C08-182"
+      ]
+    },
+    {
+      "rule_id": "archetype_permutation_monotony_linter",
+      "severity": "medium",
+      "description": "Evalúa el grado de similitud léxica y estructural entre reactivos de una misma micro-competencia, alertando cuando más del 70% de las preguntas de un banco comparten el mismo conjunto de opciones permutadas, forzando la mecanización del alumno.",
+      "regex_pattern": "jaccard_similarity(item_options, competency_options) > 0.90",
+      "evidence_items": [
+        "Q-C01-001",
+        "Q-C01-002",
+        "Q-C02-021",
+        "Q-C02-022",
+        "Q-C05-101",
+        "Q-C05-102"
+      ]
+    }
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-25 11:12:46",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}

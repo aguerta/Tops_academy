@@ -1,0 +1,82 @@
+{
+  "course_metadata": {
+    "course_id": "asyntotic_estatistics_v2",
+    "unit_title": "Asyntotic Estatistics V2",
+    "detected_objective": "Dominio analítico y aplicación formal de la teoría asintótica econométrica en grandes muestras: consistencia, leyes de grandes números, teoremas del límite central, método delta multivariado, endogeneidad, estimación por variables instrumentales (VI/2SLS), contraste de especificación de Hausman y corrección por error de medición.",
+    "total_competencies": 32,
+    "total_questions": 740,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-10-25 11:12:46"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.8,
+      "max": 4.0,
+      "feedback": "Micro-competencias atómicas con formulación analítica precisa y balance cognitivo sólido (6 Hechos [18.8%], 16 Conceptos [50.0%], 10 Habilidades [31.2%]). Sin embargo, presenta una inversión curricular topológica severa: las competencias de aplicación econométrica (posiciones 1 a 16) tienen como prerrequisitos a las competencias fundamentales de estadística matemática (posiciones 17 a 32), forzando al estudiante a enfrentar conceptos avanzados de MCO, VI y 2SLS antes de formalizar la convergencia en probabilidad, la ley de grandes números o el TLC."
+    },
+    "assessment_quality": {
+      "score": 3.2,
+      "max": 5.0,
+      "feedback": "Excelente calidad diagnóstica de distractores con 100% de cobertura en error_rationale (4,440/4,440) y cero answer leaks. No obstante, sufre de nula variedad tipológica (100% de los 740 ítems son MC-7, sin reactivos de selección múltiple ni fill-in-the-blank) y baja diversidad de arquetipos por competencia (cada competencia clona 20 o 30 veces un único problema paramétrico alternando 18 prefijos rotativos, induciendo rápida mecanización del alumno)."
+    },
+    "scaffolding_hints": {
+      "score": 3.5,
+      "max": 5.0,
+      "feedback": "Todos los reactivos cuentan con 3 pistas socráticas escalonadas en lenguaje natural (Conceptual -> Procedimental -> Operativa/Cálculo), sin stub hints ni códigos crudos de prerrequisitos. Se deduce puntaje por la invariabilidad de las pistas entre ítems hermanos de la misma micro-competencia, la ausencia de advertencias explícitas de ideas preconcebidas erróneas (misconception warnings) en detailed_solution, y la presencia de residuos f-string sin interpolar en varias soluciones."
+    },
+    "instructional_alignment": {
+      "score": 3.8,
+      "max": 4.0,
+      "feedback": "Extraordinario rigor conceptual y alineación con la econometría teórica de posgrado (Greene, Hayashi, Wooldridge). Fuerte anclaje en niveles Bloom de Análisis y Aplicación analítica. Cero preguntas huérfanas (los 740 ítems mapean a competencias válidas con bancos de 20 a 30 ejercicios por competencia). Leve descuento por la desconexión secuencial lineal entre teoría fundacional y aplicación práctica."
+    },
+    "technical_ergonomics": {
+      "score": 1.4,
+      "max": 2.0,
+      "feedback": "Sintaxis KaTeX mayoritariamente balanceada y compilable sin triples dólares ($$$). Sin embargo, se identificaron defectos técnicos de interpolación: presencia de residuos literales de f-strings en detailed_solution ({delta22}, {sigma2}, {beta1}, {beta2}, {sig11}, {sig22}) e interpolación algebraica defectuosa de números negativos que genera expresiones con doble signo menos (|X_n - -4| y \\sqrt{n}(\\hat{\\theta}_n - -3))."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 14.7,
+  "quality_tier": "ACEPTABLE (14-16)",
+  "remediation_actions": [
+    "Reordenamiento Curricular Topológico: Reestructurar el índice secuencial de competencias para ubicar las bases estocásticas (H-04 a Hab-10: convergencia en probabilidad, media cuadrática, Slutsky, TLC, método delta, órdenes O/o) en el Bloque Inicial (competencias 1 a 16) y las aplicaciones econométricas (H-01 a C-08: MCO, VI, 2SLS, Hausman, errores de medición) en el Bloque Avanzado (competencias 17 a 32).",
+    "Corrección de Residuos de Interpolación en Detailed Solutions: Reparar los templates de generación para evaluar debidamente los placeholders {delta22} en C-03 (Q-C03-141/142), {sigma2} en C-13 (Q-C13-551/552), y {beta1}, {beta2}, {sig11}, {sig22} en Hab-09 (Q-Hab09-621/622).",
+    "Normalización de Signos Algebraicos: Implementar una función auxiliar de formato algebraico que convierta sustracciones de valores negativos como 'x - -4' en 'x + 4' o 'x - (-4)' en C-11, C-12 y C-14.",
+    "Diversificación Tipológica de Reactivos: Introducir formatos complementarios como 'multiple_select' (para verificación simultánea de condiciones de regularidad como Grenander o supuestos de Khinchine) y 'fill_in_the_blank' numéricos (para cálculo de límites de probabilidad y varianzas asintóticas), reduciendo el monopolio absoluto de reactivos MC-7.",
+    "Ruptura de la Monotonía de Arquetipos Paramétricos: Enriquecer cada competencia con al menos 2 o 3 arquetipos cualitativos, conceptuales o de interpretación gráfica/matricial independientes para mitigar la mecanización predictiva del estudiante.",
+    "Incorporación de Misconception Warnings en Soluciones: Añadir un acápite explícito 'Advertencia de Error Común' en detailed_solution que contraste la solución analítica con los sesgos y trampas conceptuales presentes en los distractores principales."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "LINT-FSTRING-MATH-LATEX-DETECTOR",
+      "severity": "CRITICAL",
+      "description": "Detecta identificadores de plantillas Python residuales entre llaves simples dentro de bloques matemáticos LaTeX (ej. '{sigma2}', '{delta22}', '{beta1}'). Los linters de KaTeX los ignoran porque las llaves simples son sintácticamente válidas para agrupar tokens en LaTeX, permitiendo que variables no interpoladas se rendericen de forma defectuosa al usuario.",
+      "trigger_pattern": "\\$[^$]*\\{[a-zA-Z0-9_]{3,}\\}[^$]*\\$",
+      "remediation": "Validar que cualquier subcadena '{token}' dentro de strings de salida no coincida con el nombre de variables locales o parámetros de plantillas."
+    },
+    {
+      "rule_id": "LINT-DOUBLE-MINUS-INTERPOLATION",
+      "severity": "WARNING",
+      "description": "Detecta artefactos de interpolación cruda donde un valor negativo es insertado directamente tras un signo menos (ej. 'x - -4' o '\\theta - -3'), produciendo expresiones matemáticas tipográficamente inapropiadas.",
+      "trigger_pattern": "(?:-|\\b)\\s*-\\s*\\d+",
+      "remediation": "Encapsular la interpolación de sustracciones en un helper que transforme 'a - (-b)' en 'a + b' o 'a - (b)' según el contexto matemático."
+    },
+    {
+      "rule_id": "LINT-CURRICULAR-TOPOLOGICAL-SEQUENCE",
+      "severity": "HIGH",
+      "description": "Detecta cursos donde el orden de presentación lineal (índice 0 a N-1) viola el ordenamiento topológico del DAG de prerrequisitos, ubicando módulos avanzados antes de sus prerrequisitos fundamentales.",
+      "trigger_pattern": "competencies[i].prerequisites contains competency with index j > i",
+      "remediation": "Ejecutar una ordenación topológica canónica sobre el array de competencias antes de persistir o publicar el curso en la plataforma."
+    },
+    {
+      "rule_id": "LINT-ITEM-ARCHETYPE-CLONING-RATIO",
+      "severity": "MEDIUM",
+      "description": "Calcula el ratio de similitud estructural entre ítems de un mismo banco. Si más del 80% de las preguntas de una competencia provienen de una única plantilla paramétrica con idénticos distractores y sólo sustitución numérica / rotación de prefijos, emite alerta de riesgo de mecanización cognitiva.",
+      "trigger_pattern": "unique_distractor_id_sets_per_competency == 1 and total_questions_per_competency >= 15",
+      "remediation": "Exigir un mínimo de 3 arquetipos pedagógicos disímiles por banco de competencia cuando la población de ítems sea mayor o igual a 15."
+    }
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-10-25 11:12:46",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}

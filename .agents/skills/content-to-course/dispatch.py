@@ -36,6 +36,41 @@ logger = logging.getLogger("dispatch")
 SKILL_DIR = Path(__file__).parent.resolve()
 
 
+def _resolve_repo_python_and_env() -> Tuple[str, str, str]:
+    """Resolves repo root, python executable, and compile command prefix.
+
+    Returns:
+        (repo_root_posix, python_exe_posix, cmd_prefix)
+    """
+    repo_root = SKILL_DIR.parents[2].resolve()
+    if sys.platform == "win32":
+        venv_py = repo_root / ".venv" / "Scripts" / "python.exe"
+    else:
+        venv_py = repo_root / ".venv" / "bin" / "python"
+
+    if venv_py.is_file():
+        py_exe = venv_py.resolve().as_posix()
+    else:
+        py_exe = Path(sys.executable).resolve().as_posix()
+
+    repo_posix = repo_root.as_posix()
+    if sys.platform == "win32":
+        cmd_prefix = f'& "{py_exe}"'
+    else:
+        cmd_prefix = f'"{py_exe}"'
+    return repo_posix, py_exe, cmd_prefix
+
+
+def _clean_str(val: Any) -> str:
+    """Sanitizes strings from CTA/manifest data, eliminating None, null, undefined, and empty values."""
+    if val is None:
+        return ""
+    s = str(val).strip()
+    if s.lower() in ("none", "null", "undefined"):
+        return ""
+    return s
+
+
 def load_system_prompt(name_or_path: Union[str, Path], lean: bool = False) -> str:
     """Loads a system prompt markdown file.
     
@@ -125,12 +160,12 @@ def make_pointer_prompt(
     w_rel = item_file_rel or work_order_rel
     parts = [
         f"You are {r_name}.",
-        f"Your work order is `{w_rel}`. Read it first with `view_file`, then follow your system prompt.",
+        f"Work order: `{w_rel}`. Read with `view_file`.",
     ]
     if extra_instructions:
         parts.append(extra_instructions)
     if done_signal:
-        parts.append(f"Finalize strictly with: `{done_signal}`.")
+        parts.append(f"{done_signal}." if not done_signal.endswith(".") else done_signal)
     prompt_str = " ".join(parts)
     return prompt_str
 
@@ -155,10 +190,13 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/cta.md",
             "work/cta_parts/**",
             "work/cta/**",
+            "work/cta_fixes/**",
+            "work/cta_parts/cta_fixes/**",
         ],
         "forbidden": [
             "engine/*",
             "SKILL.md",
+            "tests/**",
             "scripts Python auxiliares en scratch/",
         ],
         "turn_budget": 20,
@@ -182,10 +220,13 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/cta.md",
             "work/cta_parts/**",
             "work/cta/**",
+            "work/cta_fixes/**",
+            "work/cta_parts/cta_fixes/**",
         ],
         "forbidden": [
             "engine/*",
             "SKILL.md",
+            "tests/**",
             "scripts Python auxiliares en scratch/",
         ],
         "turn_budget": 20,
@@ -200,15 +241,17 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/shards/pre_shard_manifest.json",
             "work/shards/*_data.py",
             "work/templates/*.json",
-            ".agents/skills/content-to-course/compile_shard.py",
             "work/cta.json",
         ],
         "write": [
             "work/shards/*_data.py",
             "work/shards/*.json",
             "work/templates/*.json",
+            "work/shards/shard_fixes/<CID>.py",
         ],
         "forbidden": [
+            "tests/**",
+            ".agents/skills/content-to-course/compile_shard.py",
             "scratch/**",
             "work/scratch/**",
             "engine/*",
@@ -255,15 +298,17 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/reports/templates_report.json",
             "work/judge_report.json",
             "work/templates/*.json",
-            ".agents/skills/content-to-course/compile_shard.py",
             "work/cta.json",
         ],
         "write": [
             "work/shards/*_data.py",
             "work/shards/*.json",
             "work/templates/*.json",
+            "work/shards/shard_fixes/<CID>.py",
         ],
         "forbidden": [
+            "tests/**",
+            ".agents/skills/content-to-course/compile_shard.py",
             "engine/*",
             "SKILL.md",
             ".agents/skills/content-to-course/check_templates.py",
@@ -287,10 +332,13 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/cta_parts/cta_part_*.json",
             "work/cta/cta_shard_*_data.py",
             "work/cta/cta_shard_*.json",
+            "work/cta_fixes/**",
+            "work/cta_parts/cta_fixes/**",
         ],
         "forbidden": [
             "código fuente",
             "SKILL.md",
+            "tests/**",
         ],
         "turn_budget": 15,
     },
@@ -432,18 +480,18 @@ def generate_define_subagent_specs(work_dir: Union[str, Path], lean: bool = Fals
 def dispatch_cta(
     work_dir: Union[str, Path],
     mode: Optional[str] = None,
-    pointer: bool = False,
+    pointer: bool = True,
 ) -> Dict[str, Any]:
     """Generates dispatch payload and individual item files for CTA Architect (Load Inversion v3.21).
     
     Exige pre_cta_manifest.json o ingestion_manifest.json (cero fallbacks; si no existe, lanza BLOCKER).
     En modo direct y mapreduce: genera ítems concisos (< 2,500 caracteres) en work/dispatch/items/cta_XX.json
     sin duplicar el system prompt, inyectando tabla de documentos, rangos físicos 1..N y contrato compile_cta.py.
-    When pointer=True, generates ultra-compact (~200 B) pointer prompts in the ready-made Subagents array.
+    When pointer=True (default), generates ultra-compact (~350-500 B) pointer prompts in the ready-made Subagents array.
     """
     work = Path(work_dir).resolve()
     work_rel = get_work_rel(work)
-    use_pointer = pointer or os.getenv("C2C_POINTER_PROMPTS", "").lower() in ("1", "true", "yes")
+    use_pointer = pointer if pointer is not None else (os.getenv("C2C_POINTER_PROMPTS", "1").lower() in ("1", "true", "yes"))
     manifest_path = work / "pre_cta_manifest.json"
     if not manifest_path.is_file():
         alt_m = work / "ingestion_manifest.json"
@@ -459,6 +507,36 @@ def dispatch_cta(
     granularity = manifest_data.get("granularity", "standard")
     manifest_rel = f"{work_rel}/ingestion_manifest.json" if (work / "ingestion_manifest.json").is_file() else f"{work_rel}/pre_cta_manifest.json"
 
+    # Append Delta context detection
+    delta_manifest_path = work / "delta_manifest.json"
+    delta_info: Dict[str, Any] = {}
+    if delta_manifest_path.is_file():
+        try:
+            delta_info = json.loads(delta_manifest_path.read_text(encoding="utf-8"))
+        except Exception as e:
+            logger.warning("Could not load delta_manifest.json: %s", e)
+    elif isinstance(manifest_data.get("delta"), dict):
+        delta_info = manifest_data["delta"]
+
+    next_ids_by_prefix = delta_info.get("next_ids_by_prefix", {})
+    existing_comps_outline = delta_info.get("existing_competencies_outline", [])
+    delta_block = ""
+    if delta_info:
+        delta_lines = [
+            "",
+            "## APPEND DELTA MODE: COMPETENCIAS BASE EXISTENTES Y SECUENCIA DE IDs",
+            "> [!IMPORTANT]",
+            f"> - **Secuencia de inicio para IDs nuevos:** `{next_ids_by_prefix}`",
+            "> - **PROHIBIDO reiniciar la numeración en 01 o duplicar competencias base.**",
+            "> - **Competencias existentes en el curso base (NO DUPLICAR):**",
+        ]
+        for c in existing_comps_outline:
+            cid = c.get("id", "")
+            ctype = c.get("type", "")
+            cname = c.get("name", "")
+            delta_lines.append(f">   * `{cid}` ({ctype}): {cname}")
+        delta_block = "\n".join(delta_lines)
+
     total_physical_pages = manifest_data.get("total_pages")
     if total_physical_pages is None:
         raw_files = manifest_data.get("documents") or manifest_data.get("files") or []
@@ -466,6 +544,8 @@ def dispatch_cta(
 
     items_dir = work / "dispatch" / "items"
     items_dir.mkdir(parents=True, exist_ok=True)
+
+    _, _, cmd_prefix = _resolve_repo_python_and_env()
 
     subagents: List[Dict[str, Any]] = []
     item_files: List[str] = []
@@ -527,12 +607,13 @@ def dispatch_cta(
                 f"| `{doc_name}` | `{doc_path}` | `{c_type}` | **`{s_p}..{e_p}`** | {total_p} | `{t_ref}` |",
             ])
 
-            compile_cmd = f"python .agents/skills/content-to-course/compile_cta.py --input {out_py} --output {json_target} --manifest {manifest_rel} --part {subpart_id}"
+            compile_cmd = f"{cmd_prefix} .agents/skills/content-to-course/compile_cta.py --input {out_py} --output {json_target} --manifest {manifest_rel} --part {subpart_id}"
             read_paths = list(dict.fromkeys([manifest_rel, doc_path, t_ref]))
+            cta_fix_target = f"{work_rel}/cta_parts/cta_fixes/<CID>.py" if "cta_parts" in out_py else f"{work_rel}/cta_fixes/<CID>.py"
             scope_header = build_scope_header(
                 role="cta-map",
                 read_paths=read_paths,
-                write_paths=[out_py, json_target],
+                write_paths=[out_py, json_target, cta_fix_target],
                 done_signal=f"DONE: {json_target}",
             )
 
@@ -548,6 +629,11 @@ def dispatch_cta(
                 f"- **Total Physical Pages:** {total_physical_pages}",
                 f"- **Archivo Python de Salida:** `{out_py}`",
                 f"- **Destino JSON Final:** `{json_target}`",
+            ]
+            if delta_block:
+                prompt_lines.append(delta_block)
+
+            prompt_lines.extend([
                 "",
                 "## 2. DOCUMENTO ASIGNADO A ESTA SUBPARTE Y RANGO DE PÁGINAS (1..N)",
                 subpart_table,
@@ -563,9 +649,9 @@ def dispatch_cta(
                 f"   ```bash",
                 f"   {compile_cmd}",
                 f"   ```",
-                f"4. Si el compilador reporta errores, corrígelos quirúrgicamente con `replace_file_content` sobre `{out_py}`.",
+                f"4. Si el compilador reporta < 6 errores (1..5 errores), corrígelos OBLIGATORIAMENTE de forma quirúrgica con edit_file (replace_file_content) sobre {out_py} en 1 turno paralelo (PROHIBIDO write_file completo cuando hay < 6 errores). Si reporta >= 6 errores, usa cta_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True).",
                 f"5. Sigue estrictamente todas las reglas de tu System Prompt `c2c_cta_architect` y finaliza con: `DONE: {json_target}`.",
-            ]
+            ])
             prompt_full = "\n".join(prompt_lines)
 
             item_file = items_dir / f"cta_{idx:02d}.json"
@@ -579,14 +665,24 @@ def dispatch_cta(
                 "subpart_id": subpart_id,
                 "output_python": out_py,
                 "output_json": json_target,
+                "compile_command": compile_cmd,
             }
+            if delta_info:
+                item_data["delta_context"] = {
+                    "next_ids_by_prefix": next_ids_by_prefix,
+                    "existing_competencies_outline": existing_comps_outline,
+                }
             item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
             if use_pointer:
+                extra = f"[SCOPE-LOCK] Write `{out_py}`, compile with `compile_cta.py`."
+                if delta_info:
+                    extra += f" Delta mode: start at {next_ids_by_prefix}."
                 pointer_prompt = make_pointer_prompt(
-                    role_name=f"Cognitive Task Analysis Architect {subpart_id}",
+                    role_name=f"CTA Architect {subpart_id}",
                     work_order_rel=f"{work_rel}/dispatch/items/{item_file.name}",
                     done_signal=f"DONE: {json_target}",
+                    extra_instructions=extra,
                 )
                 subagent_item = {
                     "TypeName": "c2c_cta_architect",
@@ -654,11 +750,11 @@ def dispatch_cta(
                 table_lines.append(f"| `{r[0]}` | **`{r[3]}`** | {r[4]} | `{r[5]}` |")
             doc_table_str = "\n".join(table_lines)
 
-        compile_cmd = f"python .agents/skills/content-to-course/compile_cta.py --input {out_target} --output {json_target} --manifest {manifest_rel}"
+        compile_cmd = f"{cmd_prefix} .agents/skills/content-to-course/compile_cta.py --input {out_target} --output {json_target} --manifest {manifest_rel}"
         scope_header = build_scope_header(
             role="cta",
             read_paths=[manifest_rel, "content/**"],
-            write_paths=[out_target, json_target, f"{work_rel}/cta.md"],
+            write_paths=[out_target, json_target, f"{work_rel}/cta.md", f"{work_rel}/cta_fixes/<CID>.py"],
             done_signal=f"DONE: {json_target}",
         )
 
@@ -674,6 +770,11 @@ def dispatch_cta(
             f"- **Total Physical Pages:** {total_physical_pages}",
             f"- **Archivo Python de Salida:** `{out_target}`",
             f"- **Destino JSON Final:** `{json_target}`",
+        ]
+        if delta_block:
+            prompt_lines.append(delta_block)
+
+        prompt_lines.extend([
             "",
             "## 2. DOCUMENTOS ASIGNADOS Y RANGOS DE PÁGINAS FÍSICAS (1..N)",
             doc_table_str,
@@ -689,9 +790,9 @@ def dispatch_cta(
             f"   ```bash",
             f"   {compile_cmd}",
             f"   ```",
-            f"4. Si el compilador reporta errores, corrígelos quirúrgicamente con `replace_file_content` sobre `{out_target}`.",
+            f"4. Si el compilador reporta < 6 errores (1..5 errores), corrígelos OBLIGATORIAMENTE de forma quirúrgica con edit_file (replace_file_content) sobre {out_target} en 1 turno paralelo (PROHIBIDO write_file completo cuando hay < 6 errores). Si reporta >= 6 errores, usa cta_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True).",
             f"5. Sigue estrictamente todas las reglas de tu System Prompt `c2c_cta_architect` y finaliza con: `DONE: {json_target}`.",
-        ]
+        ])
         prompt_full = "\n".join(prompt_lines)
 
         item_file = items_dir / "cta_01.json"
@@ -704,14 +805,24 @@ def dispatch_cta(
             "work_order": prompt_full,
             "output_python": out_target,
             "output_json": json_target,
+            "compile_command": compile_cmd,
         }
+        if delta_info:
+            item_data["delta_context"] = {
+                "next_ids_by_prefix": next_ids_by_prefix,
+                "existing_competencies_outline": existing_comps_outline,
+            }
         item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
         if use_pointer:
+            extra = f"[SCOPE-LOCK] Write `{out_target}`, compile with `compile_cta.py`."
+            if delta_info:
+                extra += f" Delta mode: start at {next_ids_by_prefix}."
             pointer_prompt = make_pointer_prompt(
                 role_name="Cognitive Task Analysis Architect",
                 work_order_rel=f"{work_rel}/dispatch/items/{item_file.name}",
                 done_signal=f"DONE: {json_target}",
+                extra_instructions=extra,
             )
             subagents = [{
                 "TypeName": "c2c_cta_architect",
@@ -736,22 +847,30 @@ def dispatch_cta(
     }
     cta_audit_file.write_text(json.dumps(cta_audit, indent=2, ensure_ascii=False), encoding="utf-8")
 
+    cta_orders_file = dispatch_dir / "cta_work_orders.json"
+    cta_orders_file.write_text(json.dumps(cta_audit, indent=2, ensure_ascii=False), encoding="utf-8")
+
     return {"Subagents": subagents, "item_files": item_files}
 
 
-def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[str, Any]:
+def dispatch_authors(
+    work_dir: Union[str, Path],
+    pointer: bool = True,
+    wave_index: Optional[int] = None,
+    ids: Optional[Union[str, List[Union[str, int]]]] = None,
+) -> Dict[str, Any]:
     """Generates dispatch payload and individual item files for Shard Authors (Load Inversion v3.21).
     
     Exige work/shards/pre_shard_manifest.json y work/pre_cta_manifest.json (cero fallbacks).
     NO pre-siembra JSON en work/templates/ ni bundles en work/shards/bundles/.
     Inyecta especificación Turn-0 completa de competencias y 6 distractores (D-XX-01..06)
     directamente en el prompt conciso del autor, permitiendo autoría autónoma sin lectura de cta.json.
-    When pointer=True, generates ultra-compact (~200 B) pointer prompts in the ready-made Subagents array,
+    When pointer=True (default), generates ultra-compact (~350-500 B) pointer prompts in the ready-made Subagents array,
     ordered heaviest unit first (Swift-Dispatch SLA).
     """
     work = Path(work_dir).resolve()
     work_rel = get_work_rel(work)
-    use_pointer = pointer or os.getenv("C2C_POINTER_PROMPTS", "").lower() in ("1", "true", "yes")
+    use_pointer = pointer if pointer is not None else (os.getenv("C2C_POINTER_PROMPTS", "1").lower() in ("1", "true", "yes"))
 
     shard_manifest_path = work / "shards" / "pre_shard_manifest.json"
     if not shard_manifest_path.is_file():
@@ -771,7 +890,12 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
             logger.error(err_msg)
             raise FileNotFoundError(err_msg)
 
-    manifest_rel = f"{work_rel}/ingestion_manifest.json" if (work / "ingestion_manifest.json").is_file() else f"{work_rel}/pre_cta_manifest.json"
+    shard_manifest_rel = (
+        f"{work_rel}/shards/pre_shard_manifest.json"
+        if (work / "shards" / "pre_shard_manifest.json").is_file()
+        else f"{work_rel}/pre_shard_manifest.json"
+    )
+    manifest_rel = shard_manifest_rel
     cta_rel = f"{work_rel}/cta.json"
 
     cta_file = work / "cta.json"
@@ -805,16 +929,46 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
     if isinstance(docs, list):
         for d in docs:
             if isinstance(d, dict):
-                dn = d.get("doc_name") or d.get("name") or d.get("doc")
-                dp = d.get("path") or d.get("file") or dn
+                dn = _clean_str(d.get("doc_name") or d.get("name") or d.get("doc"))
+                dp = _clean_str(d.get("path") or d.get("file") or dn)
+                if dp:
+                    dp = dp.replace("\\", "/")
                 if dn:
                     doc_paths_by_name[dn] = dp
     elif isinstance(docs, dict):
         for dn, dinfo in docs.items():
             if isinstance(dinfo, dict):
-                doc_paths_by_name[dn] = dinfo.get("path") or dn
+                dp = _clean_str(dinfo.get("path") or dn)
+                if dp:
+                    dp = dp.replace("\\", "/")
+                doc_paths_by_name[dn] = dp
 
     shard_manifest_data = json.loads(shard_manifest_path.read_text(encoding="utf-8"))
+    manifest_dirty = False
+    if isinstance(shard_manifest_data, dict):
+        if "min_archetypes" not in shard_manifest_data:
+            shard_manifest_data["min_archetypes"] = 4
+            manifest_dirty = True
+        raw_shards = shard_manifest_data.get("shards")
+        if isinstance(raw_shards, list):
+            for s_item in raw_shards:
+                if isinstance(s_item, dict) and "min_archetypes" not in s_item:
+                    s_item["min_archetypes"] = 4
+                    manifest_dirty = True
+        elif isinstance(raw_shards, dict):
+            for s_key, s_val in raw_shards.items():
+                if isinstance(s_val, dict) and "min_archetypes" not in s_val:
+                    s_val["min_archetypes"] = 4
+                    manifest_dirty = True
+        if manifest_dirty:
+            try:
+                shard_manifest_path.write_text(
+                    json.dumps(shard_manifest_data, indent=2, ensure_ascii=False),
+                    encoding="utf-8",
+                )
+            except Exception as e:
+                logger.warning("Could not persist min_archetypes to %s: %s", shard_manifest_path, e)
+
     manifest_comps_by_id: Dict[str, Dict[str, Any]] = {}
     shards_raw = shard_manifest_data.get("shards", [])
     if isinstance(shards_raw, dict):
@@ -828,6 +982,17 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
                         manifest_comps_by_id[c["id"]] = c
     else:
         shard_list = []
+
+    # Filter by wave_index if specified
+    if wave_index is not None:
+        shard_list = [s for s in shard_list if s.get("wave_index") == wave_index]
+
+    if ids is not None:
+        ids_set = {str(i) for i in ([ids] if isinstance(ids, (str, int)) else ids)}
+        shard_list = [
+            s for s in shard_list
+            if str(s.get("shard_id")) in ids_set or any(str(cid) in ids_set for cid in (s.get("competency_ids") or []))
+        ]
 
     # Swift-Dispatch SLA: Sort shards heaviest unit first
     def _shard_weight(shard: Dict[str, Any]) -> int:
@@ -849,6 +1014,8 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
     items_dir = work / "dispatch" / "items"
     items_dir.mkdir(parents=True, exist_ok=True)
 
+    _, _, cmd_prefix = _resolve_repo_python_and_env()
+
     subagents: List[Dict[str, Any]] = []
     item_files: List[str] = []
 
@@ -869,7 +1036,7 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
 
         for cid in c_ids:
             c_obj = cta_comps_by_id.get(cid) or manifest_comps_by_id.get(cid, {})
-            c_name = c_obj.get("name", cid)
+            c_name = _clean_str(c_obj.get("name")) or cid
             raw_type = str(c_obj.get("type", "knowledge")).lower()
             if raw_type in ("skill", "habilidad", "hab"):
                 comp_type = "skill"
@@ -878,7 +1045,7 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
                 comp_type = "knowledge"
                 quota = 20
 
-            desc_latex = c_obj.get("description_latex") or c_obj.get("description") or "(Definición pedagógica según fuentes del curso)"
+            desc_latex = _clean_str(c_obj.get("description_latex") or c_obj.get("description")) or "(Definición pedagógica según fuentes del curso)"
 
             # Evidence
             ev_list = []
@@ -888,10 +1055,11 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
             if isinstance(raw_ev, list):
                 for ev in raw_ev:
                     if isinstance(ev, dict):
-                        doc = ev.get("doc") or ev.get("document") or ""
-                        sec = ev.get("section_heading") or ev.get("section") or ""
+                        doc = _clean_str(ev.get("doc") or ev.get("document"))
+                        sec = _clean_str(ev.get("section_heading") or ev.get("section"))
                         page = ev.get("page") or ev.get("page_or_slide") or ev.get("slide") or 1
-                        resolved_doc = doc_paths_by_name.get(doc, doc)
+                        raw_resolved = doc_paths_by_name.get(doc, doc) if doc else ""
+                        resolved_doc = raw_resolved.replace("\\", "/") if raw_resolved else ""
                         if resolved_doc:
                             source_doc_set.add(resolved_doc)
                         ev_desc = f"`{resolved_doc or doc}` (pág. {page}" + (f", sección: '{sec}'" if sec else "") + ")"
@@ -901,15 +1069,27 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
             # 6 Distractors D-XX-01..06
             raw_distractors = c_obj.get("distractors", [])
             d_lines = []
+            correct_belief = _clean_str(c_obj.get("correct_belief") or c_obj.get("canonical_formula"))
+            if not correct_belief and isinstance(raw_distractors, list) and raw_distractors:
+                first_d = raw_distractors[0]
+                if isinstance(first_d, dict):
+                    correct_belief = _clean_str(first_d.get("correct_belief"))
+
             if isinstance(raw_distractors, list):
                 for d in raw_distractors:
                     if isinstance(d, dict):
-                        did = d.get("id") or "D-XX"
-                        dname = d.get("name") or did
-                        dw = d.get("wrong_belief") or d.get("rationale") or "Creencia errónea no especificada"
-                        d_omit = d.get("omitted_step") or "N/A"
-                        d_warn = d.get("common_misconception_warning")
+                        did = _clean_str(d.get("id")) or "D-XX"
+                        dname = _clean_str(d.get("name")) or did
+                        dw = _clean_str(d.get("wrong_belief") or d.get("rationale")) or "Creencia errónea no especificada"
+                        d_omit = _clean_str(d.get("omitted_step")) or "N/A"
+                        d_manif = _clean_str(d.get("manifestation"))
+                        d_hint = _clean_str(d.get("remediation_hint"))
+                        d_warn = _clean_str(d.get("common_misconception_warning"))
                         line_entry = f"    - **`{did}`** (`{dname}`): Creencia errónea: *\"{dw}\"* | Paso omitido: `{d_omit}`"
+                        if d_manif:
+                            line_entry += f" | Manifestación: *\"{d_manif}\"*"
+                        if d_hint:
+                            line_entry += f" | Remediation Hint: *\"{d_hint}\"*"
                         if d_warn:
                             line_entry += f" | Advertencia: *\"{d_warn}\"*"
                         d_lines.append(line_entry)
@@ -917,11 +1097,13 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
                 d_lines.append("    - *(Distractores no provistos en manifiesto; sintetizar 6 distractores canónicos D-XX-01..06)*")
             distractors_block = "\n".join(d_lines)
 
+            cb_line = f"- **Modelo/Fórmula Correcta Canónica (correct_belief):** {correct_belief}\n" if correct_belief else ""
             block = (
                 f"### Competencia: `{cid}`\n"
                 f"- **Tipo:** `{comp_type}` (Cuota requerida: **{quota}** reactivos)\n"
                 f"- **Nombre:** {c_name}\n"
                 f"- **Descripción (LaTeX):** {desc_latex}\n"
+                f"{cb_line}"
                 f"- **Evidencia Fuente:** {ev_str}\n"
                 f"- **6 Distractores Canónicos (D-XX-01..06):**\n"
                 f"{distractors_block}"
@@ -931,9 +1113,11 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
         source_doc_list = sorted(source_doc_set) if source_doc_set else ["content/**"]
         scope_header = build_scope_header(
             role="author",
-            read_paths=source_doc_list + [".agents/skills/content-to-course/compile_shard.py"],
-            write_paths=[out_py, target_json],
+            read_paths=source_doc_list,
+            write_paths=[out_py, target_json, f"{work_rel}/shards/shard_fixes/<CID>.py"],
             forbidden_paths=[
+                "tests/**",
+                ".agents/skills/content-to-course/compile_shard.py",
                 "scratch/**",
                 "work/scratch/**",
                 "engine/*",
@@ -946,7 +1130,7 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
             done_signal=f"DONE: {target_json}",
         )
 
-        compile_cmd = f"python .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --cta {cta_rel} --manifest {manifest_rel}"
+        compile_cmd = f"{cmd_prefix} .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes 4"
 
         prompt_lines = [
             f"# Asignación de Tarea: Shard Exercise Author `{s_id}` (C2C v3.21 Load Inversion)",
@@ -969,18 +1153,23 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
             "\n\n".join(comp_blocks),
             "",
             "## 3. INSTRUCCIONES DE EJECUCIÓN",
-            f"1. Escribe ÚNICAMENTE las funciones generadoras/verificadoras y la lista de tuplas en `{out_py}` (`TEMPLATES = [...]`).",
-            f"2. Utiliza estrictamente los 6 distractores canónicos definidos arriba para cada competencia.",
-            f"3. Ejecuta la compilación oficial determinista:",
+            f"0. **AUTOSUFICIENCIA TURN-0 (CERO LECTURA INNECESARIA DE PDFs):** La Sección 2 de esta orden ya contiene el 100% de las definiciones, fórmulas canónicas (correct_belief), manifestaciones de error (manifestation) y distractores de cta.json. NO abras ni leas los documentos fuente de content/ en Turno 1; empieza directamente escribiendo {s_id}_data.py.",
+            f"1. Escribe en `{out_py}` (`TEMPLATES = [...]`) las funciones generadoras y tuplas de plantillas de forma concisa (<= 80-110 líneas por competencia, <= 180-220 líneas totales por shard, funciones gen_* concisas de ~15 líneas).",
+            f"2. **4 Arquetipos Disjuntos OBLIGATORIOS por Competencia (`[M3-ARCHETYPES]`):** DEBES cubrir los 4 arquetipos disjuntos definiendo **4 tuplas en `TEMPLATES` por cada competencia asignada** (1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite). Emitir 1 sola tupla por competencia o poner 4 `stem_variants` dentro de 1 tupla es rechazado con `FAIL: [M3-ARCHETYPES]`. Para mantener el archivo compacto (~55-75 líneas/competencia), usa un helper parametrizado `def _gen_<cid>(rng, arch):` + 4 wrappers `def gen_<cid>_1(rng): return _gen_<cid>(rng, 1)` (1..4) y tuplas de 9 elementos con `[]` en `target_misconceptions` (donde `compile_shard.py` los hereda automáticamente desde `cta.json`). Utiliza el formato DRY compacto de distractores en `gen_*(rng)`: tuplas `(\"D-XX-01\", f\"...\")` o dicts `{{\"distractor_id\": \"D-XX-01\", \"value\": f\"...\"}}` sin repetir los 6 párrafos de `error_rationale` (donde `compile_shard.py` los hereda automáticamente desde `cta.json`).",
+            f"3. **[TPL-VAR Obligatorio]:** Cada `gen_*(rng)` DEBE tener espacio paramétrico >= 500 combinaciones (`rng.randint` amplios, NUNCA listas pequeñas `rng.choice`) para producir >= 30 instancias únicas (`Hab-*`) o >= 20 (`C-*`/`H-*`) en 50 semillas.",
+            f"4. **[R-18 / R-15 / R-20 Obligatorio]:** Usa siempre `r\"...\"` con `@var@` (PROHIBIDO `rf\"...\"`, `\\implies` -> usa `\\Rightarrow`, o `hat{{\\theta}}` sin barra). En `distractors`, `\"value\"` es visible al estudiante (ecuación limpia `r\"$\\text{{Avar}} = @d1@$\"` o afirmación declarativa neutra con longitud homogénea `0.80x-1.20x` respecto a `correct`; PROHIBIDO usar gerundios/giveaways como `'omitiendo'`, `'confundiendo'`, `'asumiendo'`, `'erróneamente'`, `'espuria'`, `'olvidando'` en `\"value\"`). Coloca la explicación del error exclusivamente en `\"error_rationale\"`.",
+            f"5. Compila deterministamente:",
             f"   ```bash",
             f"   {compile_cmd}",
             f"   ```",
-            f"4. Si el compilador reporta errores con línea exacta, corrígelos quirúrgicamente con `replace_file_content` sobre `{out_py}`.",
-            f"5. Sigue todas las directivas de tu System Prompt `c2c_shard_author` y finaliza estrictamente con: `DONE: {target_json}`.",
+            f"6. Si reporta < 6 errores (1..5 errores), corrígelos OBLIGATORIAMENTE de forma quirúrgica con edit_file (replace_file_content) sobre las líneas exactas de {out_py}; si reporta >= 6 errores, escribe en {work_rel}/shards/shard_fixes/<CID>.py (1-2 comps) o reescribe con write_file. Para < 6 errores, NO reescribas todo el archivo desde cero con `write_file`.",
+            f"7. **[Corte Inmediato Post-PASS]:** Al obtener `PASS`, cesa inmediatamente toda edición y finaliza estrictamente con: `DONE: {target_json}`.",
         ])
         prompt_full = "\n".join(prompt_lines)
 
-        item_file = items_dir / f"author_{idx:02d}.json"
+        m_snum = re.search(r"(\d+)$", str(s_id))
+        s_num_str = f"{int(m_snum.group(1)):02d}" if m_snum else f"{idx:02d}"
+        item_file = items_dir / f"author_{s_num_str}.json"
         item_data = {
             "TypeName": "c2c_shard_author",
             "Role": f"Shard Author {s_id}",
@@ -997,10 +1186,12 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
         item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
         if use_pointer:
+            extra = f"[SCOPE-LOCK] Write `{out_py}`, compile with `compile_shard.py`."
             pointer_prompt = make_pointer_prompt(
                 role_name=f"Shard Author {s_id}",
                 work_order_rel=f"{work_rel}/dispatch/items/{item_file.name}",
                 done_signal=f"DONE: {target_json}",
+                extra_instructions=extra,
             )
             subagent_item = {
                 "TypeName": "c2c_shard_author",
@@ -1035,19 +1226,21 @@ def dispatch_authors(work_dir: Union[str, Path], pointer: bool = False) -> Dict[
 
 def dispatch_judges(
     work_dir: Union[str, Path],
-    pointer: bool = False,
+    pointer: bool = True,
     max_items_per_judge: int = 12,
+    ready_only: bool = False,
+    ids: Optional[Union[str, List[Union[str, int]]]] = None,
 ) -> Dict[str, Any]:
     """Generates dispatch payload and individual item files for Blind Judges (Load Inversion v3.21).
     
     Zero-Warmup In-Prompt payload: inyecta los ítems del batch (question_id, question_type, stem_es, options)
     directamente dentro del Prompt sin duplicar el system prompt.
-    When pointer=True, generates ultra-compact (~200 B) pointer prompts in the ready-made Subagents array,
+    When pointer=True (default), generates ultra-compact (~200 B) pointer prompts in the ready-made Subagents array,
     enforcing native batch slicing <= 12 items per judge (Swift-Dispatch SLA).
     """
     work = Path(work_dir).resolve()
     work_rel = get_work_rel(work)
-    use_pointer = pointer or os.getenv("C2C_POINTER_PROMPTS", "").lower() in ("1", "true", "yes")
+    use_pointer = pointer if pointer is not None else (os.getenv("C2C_POINTER_PROMPTS", "1").lower() in ("1", "true", "yes"))
 
     # Native Batch Slicing: ensure batches are sliced at <= max_items_per_judge (default 12)
     unsplit = work / "verification" / "judge_batch.json"
@@ -1159,10 +1352,30 @@ def dispatch_judges(
         j_tag = f"judge_{j_id}"
         out_target = f"{work_rel}/verification/judge_responses_{j_id}.json"
         alt_out_target = f"{work_rel}/judges/{j_tag}.json"
+        item_filename = f"judge_{idx:02d}.json"
+        item_file_rel = f"{work_rel}/dispatch/items/{item_filename}"
+
+        if use_pointer:
+            read_paths = [item_file_rel]
+            protocol_directives = [
+                f"- **Lee únicamente tu lote asignado con `view_file`:** `{item_file_rel}`.",
+                f"- **PROHIBIDO leer cualquier archivo del curso, templates, shards o ground truth distinto de este lote asignado `{item_file_rel}`.**",
+                "- **NO EJECUTES `run_command`:** Resuelve analíticamente desde primeros principios.",
+                "- **Completa tu tarea en 1 SOLO TURNO** escribiendo directamente el archivo de respuestas con `write_to_file`.",
+                f"- Sigue estrictamente todas las reglas de tu System Prompt `c2c_judge` y finaliza con: `DONE: {out_target}`.",
+            ]
+        else:
+            read_paths = ["Items inyectados en este prompt"]
+            protocol_directives = [
+                "- **NO EJECUTES `view_file` para leer el lote:** Todos los reactivos ya están inyectados abajo.",
+                "- **NO EJECUTES `run_command`:** Resuelve analíticamente desde primeros principios.",
+                "- **Completa tu tarea en 1 SOLO TURNO** escribiendo directamente el archivo de respuestas con `write_to_file`.",
+                f"- Sigue estrictamente todas las reglas de tu System Prompt `c2c_judge` y finaliza con: `DONE: {out_target}`.",
+            ]
 
         scope_header = build_scope_header(
             role="judge",
-            read_paths=["Items inyectados en este prompt"],
+            read_paths=read_paths,
             write_paths=[out_target, alt_out_target, f"{work_rel}/judge_responses_{j_id}.json"],
             forbidden_paths=[
                 "judge_ground_truth.json",
@@ -1185,19 +1398,18 @@ def dispatch_judges(
             f"- **Judge ID:** `{j_tag}`",
             f"- **Lote Asignado:** `{bf.name}`",
             f"- **Ruta de Salida Obligatoria:** `{out_target}` (o `{alt_out_target}`)",
-            f"- **NO EJECUTES `view_file` para leer el lote:** Todos los reactivos ya están inyectados abajo.",
-            f"- **NO EJECUTES `run_command`:** Resuelve analíticamente desde primeros principios.",
-            f"- **Completa tu tarea en 1 SOLO TURNO** escribiendo directamente el archivo de respuestas con `write_to_file`.",
-            f"- Sigue estrictamente todas las reglas de tu System Prompt `c2c_judge` y finaliza con: `DONE: {out_target}`.",
+        ]
+        prompt_lines.extend(protocol_directives)
+        prompt_lines.extend([
             "",
             "## 2. ÍTEMS A EVALUAR (ZERO-WARMUP IN-PROMPT PAYLOAD)",
             "```json",
             items_json_str,
             "```",
-        ]
+        ])
         prompt_full = "\n".join(prompt_lines)
 
-        item_file = items_dir / f"judge_{idx:02d}.json"
+        item_file = items_dir / item_filename
         item_data = {
             "TypeName": "c2c_judge",
             "Role": f"Blind Judge {j_id}",
@@ -1207,15 +1419,18 @@ def dispatch_judges(
             "items_count": len(items_payload),
             "output_target": out_target,
             "Prompt": prompt_full,
+            "work_order": prompt_full,
             "items": items_payload,
         }
         item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
         if use_pointer:
+            extra = f"[SCOPE-LOCK] Write `{out_target}`."
             pointer_prompt = make_pointer_prompt(
                 role_name=f"Blind Judge {j_id}",
-                work_order_rel=f"{work_rel}/dispatch/items/{item_file.name}",
+                work_order_rel=item_file_rel,
                 done_signal=f"DONE: {out_target}",
+                extra_instructions=extra,
             )
             subagent_item = {
                 "TypeName": "c2c_judge",
@@ -1253,10 +1468,11 @@ def build_dispatch(
     work_dir: Union[str, Path],
     ids: Optional[List[Union[str, int]]] = None,
     ready_only: bool = False,
-    pointer: bool = False,
+    pointer: bool = True,
+    wave_index: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Generates invoke_subagent payload with strict SCOPE-LOCK for the given role."""
-    use_pointer = pointer or os.getenv("C2C_POINTER_PROMPTS", "").lower() in ("1", "true", "yes")
+    use_pointer = pointer if pointer is not None else (os.getenv("C2C_POINTER_PROMPTS", "1").lower() in ("1", "true", "yes"))
 
     if role in ("vision", "vision-legacy"):
         raise ValueError(f"Stages 'vision' and 'vision-legacy' have been removed in C2C v3.2. Use Direct PDF Ingestion instead.")
@@ -1266,10 +1482,10 @@ def build_dispatch(
         return dispatch_cta(work_dir, mode=mode, pointer=use_pointer)
 
     if role in ("author", "authors", "c2c_shard_author"):
-        return dispatch_authors(work_dir, pointer=use_pointer)
+        return dispatch_authors(work_dir, pointer=use_pointer, wave_index=wave_index)
 
     if role in ("judge", "judges", "c2c_judge"):
-        return dispatch_judges(work_dir, pointer=use_pointer)
+        return dispatch_judges(work_dir, pointer=use_pointer, ready_only=ready_only)
 
     if role not in ROLE_SPECS:
         raise ValueError(f"Unknown role: '{role}'. Available roles: {list(ROLE_SPECS.keys())}")
@@ -1294,13 +1510,15 @@ def build_dispatch(
 
     dispatched_ids: List[str] = state.get("dispatched", {}).get(role, [])
     subagents: List[Dict[str, Any]] = []
+    item_files: List[str] = []
 
     # CTA-REDUCE
     if role == "cta-reduce":
         shard_jsons = sorted(list((work / "cta_parts").glob("*.json")) + list((work / "cta").glob("cta_shard_*.json")))
         shard_json_rel_list = [f"{work_rel}/{p.relative_to(work).as_posix()}" for p in shard_jsons] if shard_jsons else [f"{work_rel}/cta_parts/*.json"]
         shard_json_lines = "\n".join(f"- `{p}`" for p in shard_json_rel_list)
-        compile_cmd = f"python .agents/skills/content-to-course/cta_merge.py --work \"{work.resolve().as_posix()}\""
+        _, _, cmd_prefix = _resolve_repo_python_and_env()
+        compile_cmd = f"{cmd_prefix} .agents/skills/content-to-course/cta_merge.py --work \"{work.resolve().as_posix()}\""
 
         scope_header = build_scope_header(
             role="cta-reduce",
@@ -1334,37 +1552,22 @@ def build_dispatch(
         items_dir.mkdir(parents=True, exist_ok=True)
         item_file = items_dir / "cta_harmonize_01.json"
         item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        item_files.append(item_file.resolve().as_posix())
 
     # REPAIR
     elif role == "repair":
         templates_report_file = work / "reports" / "templates_report.json"
         judge_report_file = work / "judge_report.json"
+        attempts_dir = work / ".check_attempts"
+        templates_dir = work / "templates"
         failing_targets: Dict[str, Dict[str, Any]] = {}
 
-        if templates_report_file.is_file():
-            try:
-                tr = json.loads(templates_report_file.read_text(encoding="utf-8"))
-                for res in tr.get("results", []):
-                    if res.get("status") == "fail":
-                        cid = res.get("cid") or res.get("competency_id")
-                        if cid:
-                            failing_targets.setdefault(cid, {})["template_errors"] = res.get("errors", [])
-            except Exception as e:
-                logger.warning("Error reading templates_report.json: %s", e)
-
-        if judge_report_file.is_file():
-            try:
-                jr = json.loads(judge_report_file.read_text(encoding="utf-8"))
-                for disc in jr.get("disagreements", []) or jr.get("discordances", []):
-                    cid = disc.get("cid") or disc.get("competency_id")
-                    if cid:
-                        failing_targets.setdefault(cid, {})["judge_disagreement"] = disc
-            except Exception as e:
-                logger.warning("Error reading judge_report.json: %s", e)
-
-        # Fix comp_to_shard resolution: read pre_shard_manifest.json FIRST, fallback to shard_*.json
+        # 1. Build comp_to_shard and shard_to_comps mapping FIRST
         shard_map: Dict[str, str] = {}
+        shard_to_comps: Dict[str, List[str]] = {}
         pre_shard_manifest = work / "shards" / "pre_shard_manifest.json"
+        if not pre_shard_manifest.is_file():
+            pre_shard_manifest = work / "pre_shard_manifest.json"
         if pre_shard_manifest.is_file():
             try:
                 sm_data = json.loads(pre_shard_manifest.read_text(encoding="utf-8"))
@@ -1378,6 +1581,7 @@ def build_dispatch(
                         for cid in c_ids:
                             if cid:
                                 shard_map[cid] = s_id
+                                shard_to_comps.setdefault(s_id, []).append(cid)
                 elif isinstance(shards_info, dict):
                     for s_id, comps in shards_info.items():
                         if isinstance(comps, list):
@@ -1385,6 +1589,7 @@ def build_dispatch(
                                 cid = c.get("id") if isinstance(c, dict) else str(c)
                                 if cid:
                                     shard_map[cid] = s_id
+                                    shard_to_comps.setdefault(s_id, []).append(cid)
             except Exception as e:
                 logger.warning("Error reading pre_shard_manifest.json in repair: %s", e)
 
@@ -1395,44 +1600,278 @@ def build_dispatch(
                 for cid in sdata.get("competency_ids", []):
                     if cid and cid not in shard_map:
                         shard_map[cid] = s_id
+                        shard_to_comps.setdefault(s_id, []).append(cid)
                 if "competencies" in sdata and isinstance(sdata["competencies"], list):
                     for c in sdata["competencies"]:
                         cid = c.get("id") if isinstance(c, dict) else str(c)
                         if cid and cid not in shard_map:
                             shard_map[cid] = s_id
+                            shard_to_comps.setdefault(s_id, []).append(cid)
             except Exception:
                 pass
 
+        # 2. Collect failures from templates_report.json and judge_report.json
+        if templates_report_file.is_file():
+            try:
+                tr = json.loads(templates_report_file.read_text(encoding="utf-8"))
+                for res in tr.get("results", []):
+                    if res.get("status") in ("fail", "FAIL"):
+                        cid = res.get("cid") or res.get("competency_id")
+                        if cid:
+                            failing_targets.setdefault(cid, {}).setdefault("template_errors", []).extend(res.get("errors", []))
+                            failing_targets.setdefault(cid, {}).setdefault("errors", []).extend(res.get("errors", []))
+                for comp_item in tr.get("competencies", []):
+                    if isinstance(comp_item, dict) and comp_item.get("status") in ("fail", "FAIL"):
+                        cid = comp_item.get("cid") or comp_item.get("id") or comp_item.get("competency_id")
+                        if cid:
+                            failing_targets.setdefault(cid, {}).setdefault("template_errors", []).extend(comp_item.get("errors", []))
+                            failing_targets.setdefault(cid, {}).setdefault("errors", []).extend(comp_item.get("errors", []))
+                if isinstance(tr.get("errors_by_cid"), dict):
+                    for cid, err_list in tr["errors_by_cid"].items():
+                        if err_list:
+                            failing_targets.setdefault(cid, {}).setdefault("template_errors", []).extend(err_list)
+                            failing_targets.setdefault(cid, {}).setdefault("errors", []).extend(err_list)
+                fc_data = tr.get("failed_competencies")
+                if isinstance(fc_data, dict):
+                    for cid, c_data in fc_data.items():
+                        c_errs = []
+                        if isinstance(c_data, dict):
+                            c_errs = c_data.get("errors", [])
+                        elif isinstance(c_data, list):
+                            c_errs = c_data
+                        if c_errs:
+                            failing_targets.setdefault(cid, {}).setdefault("template_errors", []).extend(c_errs)
+                            failing_targets.setdefault(cid, {}).setdefault("errors", []).extend(c_errs)
+                        else:
+                            failing_targets.setdefault(cid, {})
+                elif isinstance(fc_data, list):
+                    for cid in fc_data:
+                        if isinstance(cid, str):
+                            failing_targets.setdefault(cid, {})
+
+                flat_errors = tr.get("errors", [])
+                if isinstance(flat_errors, list):
+                    for err in flat_errors:
+                        err_str = str(err)
+                        matched_cids = set()
+                        for known_cid in shard_map.keys():
+                            if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(known_cid)}(?![A-Za-z0-9_-])", err_str):
+                                matched_cids.add(known_cid)
+                        for m in re.finditer(r"\b(?:C|H|Hab)-\d+\b", err_str):
+                            cand_cid = m.group(0)
+                            if cand_cid in shard_map:
+                                matched_cids.add(cand_cid)
+                        for cid in matched_cids:
+                            t_entry = failing_targets.setdefault(cid, {})
+                            errs_list = t_entry.setdefault("template_errors", [])
+                            if err_str not in errs_list:
+                                errs_list.append(err_str)
+                            all_errs = t_entry.setdefault("errors", [])
+                            if err_str not in all_errs:
+                                all_errs.append(err_str)
+
+                # Clean and deduplicate errors per target
+                for cid, t_entry in failing_targets.items():
+                    for k in ("template_errors", "errors"):
+                        if k in t_entry and isinstance(t_entry[k], list):
+                            seen_e = set()
+                            dedup_e = []
+                            for e in t_entry[k]:
+                                s_e = str(e)
+                                if s_e not in seen_e:
+                                    seen_e.add(s_e)
+                                    dedup_e.append(s_e)
+                            t_entry[k] = dedup_e
+            except Exception as e:
+                logger.warning("Error reading templates_report.json: %s", e)
+
+        if judge_report_file.is_file():
+            try:
+                jr = json.loads(judge_report_file.read_text(encoding="utf-8"))
+                for disc in jr.get("disagreements", []) or jr.get("discordances", []):
+                    cid = disc.get("cid") or disc.get("competency_id")
+                    if cid:
+                        failing_targets.setdefault(cid, {})["judge_disagreement"] = disc
+            except Exception as e:
+                logger.warning("Error reading judge_report.json: %s", e)
+
+        # 3. Also detect circuit-broken or failing shards from .check_attempts/ and missing work/templates/<cid>.json
+        shard_attempt_diagnostics: Dict[str, Dict[str, Any]] = {}
+        if attempts_dir.is_dir():
+            for att_f in sorted(attempts_dir.glob("*.json")):
+                try:
+                    adata = json.loads(att_f.read_text(encoding="utf-8"))
+                    if not isinstance(adata, dict):
+                        continue
+                    fname = att_f.stem
+                    matched_s_id: Optional[str] = None
+                    for cand_s_id in shard_to_comps:
+                        if cand_s_id in fname:
+                            matched_s_id = cand_s_id
+                            break
+                    if matched_s_id:
+                        streak = adata.get("same_error_streak", 0)
+                        compiles = adata.get("distinct_compiles", adata.get("attempt_count", 0))
+                        last_errs = adata.get("last_errors") or adata.get("errors") or []
+                        is_cb = fname.startswith("circuit_breaker") or streak >= 3 or compiles > 10 or "CIRCUIT BREAKER" in str(last_errs)
+                        diag_entry = shard_attempt_diagnostics.setdefault(matched_s_id, {})
+                        if is_cb:
+                            diag_entry["circuit_broken"] = True
+                        if last_errs:
+                            diag_entry["compiler_last_errors"] = last_errs
+                        diag_entry["same_error_streak"] = max(diag_entry.get("same_error_streak", 0), streak)
+                except Exception:
+                    pass
+
+        for cid, s_id in shard_map.items():
+            tpl_ok = (templates_dir / f"{cid}.json").is_file()
+            s_diag = shard_attempt_diagnostics.get(s_id, {})
+            if not tpl_ok or s_diag.get("circuit_broken"):
+                target_diag = failing_targets.setdefault(cid, {})
+                if not tpl_ok:
+                    target_diag["missing_compiled_template"] = f"work/templates/{cid}.json"
+                if s_diag:
+                    target_diag["attempt_diagnostics"] = s_diag
+
+        # 4. Filter by requested ids (supporting both competency IDs like 'Hab-02' and shard IDs like 'shard_02')
         if ids is not None:
-            ids_str = {str(i) for i in ids}
-            failing_targets = {cid: data for cid, data in failing_targets.items() if cid in ids_str}
+            raw_list = [ids] if isinstance(ids, (str, int)) else ids
+            flattened_ids: List[str] = [
+                part.strip()
+                for raw in raw_list
+                for part in str(raw).split(",")
+                if part.strip()
+            ]
+            seen_rids: Set[str] = set()
+            unique_flattened_ids: List[str] = []
+            for rid in flattened_ids:
+                if rid not in seen_rids:
+                    seen_rids.add(rid)
+                    unique_flattened_ids.append(rid)
 
-        if not failing_targets and ids:
-            for cid in ids:
-                failing_targets[str(cid)] = {"manual_request": True}
+            expanded_ids: List[str] = []
+            for rid in unique_flattened_ids:
+                if rid in shard_to_comps:
+                    for c in shard_to_comps[rid]:
+                        if c not in expanded_ids:
+                            expanded_ids.append(c)
+                else:
+                    if rid not in expanded_ids:
+                        expanded_ids.append(rid)
 
-        manifest_rel = f"{work_rel}/ingestion_manifest.json" if (work / "ingestion_manifest.json").is_file() else f"{work_rel}/pre_cta_manifest.json"
+            ordered_failing: Dict[str, Any] = {}
+            for cid in expanded_ids:
+                if cid in failing_targets:
+                    t_diag = failing_targets[cid]
+                    if t_diag.get("template_errors") or t_diag.get("errors"):
+                        t_diag.pop("manual_request", None)
+                    ordered_failing[cid] = t_diag
+                else:
+                    s_id = shard_map.get(cid, "shard_01")
+                    diag_info: Dict[str, Any] = {"manual_request": True}
+                    if s_id in shard_attempt_diagnostics:
+                        diag_info["attempt_diagnostics"] = shard_attempt_diagnostics[s_id]
+                    ordered_failing[cid] = diag_info
+            failing_targets = ordered_failing
+
+        shard_manifest_rel = (
+            f"{work_rel}/shards/pre_shard_manifest.json"
+            if (work / "shards" / "pre_shard_manifest.json").is_file()
+            else f"{work_rel}/pre_shard_manifest.json"
+        )
+        manifest_rel = shard_manifest_rel
         cta_rel = f"{work_rel}/cta.json"
 
         items_dir = work / "dispatch" / "items"
         items_dir.mkdir(parents=True, exist_ok=True)
+        prompts_repair_dir = work / "prompts" / "repair"
+        prompts_repair_dir.mkdir(parents=True, exist_ok=True)
         item_files: List[str] = []
+        cleared_attempt_files: List[str] = []
 
+        _, _, cmd_prefix = _resolve_repo_python_and_env()
         for idx, (cid, diag) in enumerate(failing_targets.items(), start=1):
             shard_id = shard_map.get(cid, "shard_01")
+
+            # Auto-reset sticky circuit breaker / attempt state in .check_attempts/ for this shard & cid
+            try:
+                if attempts_dir.is_dir():
+                    norm_s_id = re.sub(r"[^\w]", "_", str(shard_id))
+                    dash_s_id = str(shard_id).replace("_", "-")
+                    norm_cid = re.sub(r"[^\w]", "_", str(cid))
+                    dash_cid = str(cid).replace("_", "-")
+                    targets_to_clear = [
+                        attempts_dir / f"pass_{shard_id}.json",
+                        attempts_dir / f"pass_{norm_s_id}.json",
+                        attempts_dir / f"pass_{dash_s_id}.json",
+                        attempts_dir / f"pass_{cid}.json",
+                        attempts_dir / f"pass_{norm_cid}.json",
+                        attempts_dir / f"pass_{dash_cid}.json",
+                        attempts_dir / f"pass_comp_{cid}.json",
+                        attempts_dir / f"pass_comp_{norm_cid}.json",
+                        attempts_dir / f"pass_comp_{dash_cid}.json",
+                        attempts_dir / f"pass_{shard_id}_{cid}.json",
+                        attempts_dir / f"pass_{shard_id}_{norm_cid}.json",
+                    ]
+                    for p_file in targets_to_clear:
+                        try:
+                            if p_file.is_file():
+                                p_file.unlink()
+                                if p_file.name not in cleared_attempt_files:
+                                    cleared_attempt_files.append(p_file.name)
+                        except Exception as e:
+                            logger.warning("Could not remove pass file %s: %s", p_file, e)
+
+                    try:
+                        f_list = list(attempts_dir.glob("*.json"))
+                    except Exception as e:
+                        logger.warning("Could not list attempt files in %s: %s", attempts_dir, e)
+                        f_list = []
+
+                    for att_f in f_list:
+                        stem = att_f.stem
+                        if (
+                            norm_s_id in stem
+                            or dash_s_id in stem
+                            or norm_cid in stem
+                            or dash_cid in stem
+                            or shard_id in stem
+                            or cid in stem
+                            or stem.startswith(f"pass_{shard_id}")
+                            or stem.startswith(f"pass_{norm_s_id}")
+                            or stem.startswith(f"pass_{dash_s_id}")
+                            or stem.startswith(f"pass_{cid}")
+                            or stem.startswith(f"pass_{norm_cid}")
+                            or stem.startswith(f"pass_{dash_cid}")
+                        ):
+                            try:
+                                if att_f.is_file():
+                                    att_f.unlink()
+                                    if att_f.name not in cleared_attempt_files:
+                                        cleared_attempt_files.append(att_f.name)
+                            except Exception as e:
+                                logger.warning("Could not remove sticky attempt file %s: %s", att_f, e)
+            except Exception as e:
+                logger.warning("Error accessing .check_attempts dir: %s", e)
+
             out_py = f"{work_rel}/shards/{shard_id}_data.py"
             out_json = f"{work_rel}/shards/{shard_id}.json"
+            shard_fix_path = f"{work_rel}/shards/shard_fixes/{cid}.py"
             compile_cmd = (
-                f"python .agents/skills/content-to-course/compile_shard.py "
+                f"{cmd_prefix} .agents/skills/content-to-course/compile_shard.py "
                 f"--input {out_py} --output {out_json} --cta {cta_rel} --manifest {manifest_rel}"
             )
             scope_header = build_scope_header(
                 role="repair",
                 read_paths=[out_py, f"{work_rel}/templates/{cid}.json", cta_rel],
-                write_paths=[out_py, out_json],
+                write_paths=[out_py, out_json, shard_fix_path, f"{work_rel}/shards/shard_fixes/<CID>.py"],
                 forbidden_paths=[
+                    ".agents/skills/content-to-course/compile_shard.py",
+                    "scratch/**",
+                    "work/scratch/**",
                     "engine/*",
                     "SKILL.md",
+                    ".check_attempts/**",
                     ".agents/skills/content-to-course/check_templates.py",
                     ".agents/skills/content-to-course/check_cta.py",
                     "src/validator/**",
@@ -1440,6 +1879,11 @@ def build_dispatch(
                 done_signal=f"DONE: {out_json}",
             )
             diag_str = json.dumps(diag, indent=2, ensure_ascii=False)
+            error_bullets = ""
+            active_errors = diag.get("template_errors") or diag.get("errors") or []
+            if active_errors:
+                error_bullets = "### Errores Diagnosticados en Templates:\n" + "\n".join(f"- `{e}`" for e in active_errors[:20]) + "\n\n"
+
             prompt_text = (
                 f"# Asignación de Tarea: Targeted Repair Engineer `{cid}` (C2C v3.21 Load Inversion)\n\n"
                 f"{scope_header}\n\n"
@@ -1447,18 +1891,29 @@ def build_dispatch(
                 f"- **Competencia Afectada:** `{cid}`\n"
                 f"- **Shard Asociado:** `{shard_id}`\n"
                 f"- **Archivo Python Objetivo:** `{out_py}`\n"
-                f"- **Destino JSON Final:** `{out_json}`\n\n"
+                f"- **Destino JSON Final:** `{out_json}`\n"
+                f"- **Módulo de Parche Quirúrgico:** `{shard_fix_path}`\n"
+                f"- **Circuit Breaker Reset:** Se han limpiado automáticamente los contadores previos en `.check_attempts/`.\n\n"
                 f"## 2. DIAGNÓSTICO DEL FALLO\n"
+                f"{error_bullets}"
                 f"```json\n{diag_str}\n```\n\n"
                 f"## 3. INSTRUCCIONES DE REPARACIÓN\n"
-                f"1. Corrige la tupla de `{cid}` en `{out_py}` usando quirúrgicamente `replace_file_content`.\n"
+                f"1. Corrige la tupla de `{cid}` en `{out_py}` usando quirúrgicamente `replace_file_content`, o escribe el parche modular en `{shard_fix_path}`.\n"
                 f"2. Compila y certifica la corrección ejecutando:\n"
                 f"   ```bash\n"
                 f"   {compile_cmd}\n"
                 f"   ```\n"
                 f"3. Sigue todas las directivas de tu System Prompt `c2c_repair` y finaliza con: `DONE: {out_json}`.\n"
             )
+            safe_cid = re.sub(r"[^\w-]", "_", str(cid))
+            cid_norm = re.sub(r"[^\w]", "", str(cid)).lower()
             item_file = items_dir / f"repair_{idx:02d}.json"
+            cid_item_file = items_dir / f"repair_{safe_cid}.json"
+            items_cid_norm_file = items_dir / f"repair_{cid_norm}.json"
+            prompts_cid_file = prompts_repair_dir / f"repair_{cid_norm}.json"
+            prompts_safe_file = prompts_repair_dir / f"repair_{safe_cid}.json"
+            prompts_idx_file = prompts_repair_dir / f"repair_{idx:02d}.json"
+
             item_data = {
                 "TypeName": spec["type_name"],
                 "Role": f"Repair Engineer {cid}",
@@ -1472,13 +1927,21 @@ def build_dispatch(
                 "Prompt": prompt_text,
                 "work_order": prompt_text,
             }
-            item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
+            item_json_str = json.dumps(item_data, indent=2, ensure_ascii=False)
+            item_file.write_text(item_json_str, encoding="utf-8")
+            cid_item_file.write_text(item_json_str, encoding="utf-8")
+            items_cid_norm_file.write_text(item_json_str, encoding="utf-8")
+            prompts_cid_file.write_text(item_json_str, encoding="utf-8")
+            prompts_safe_file.write_text(item_json_str, encoding="utf-8")
+            prompts_idx_file.write_text(item_json_str, encoding="utf-8")
 
             if use_pointer:
+                extra = f"[SCOPE-LOCK] Fix {cid} in `{out_py}` or write `{shard_fix_path}`, compile with `compile_shard.py`."
                 pointer_prompt = make_pointer_prompt(
                     role_name=f"Repair Engineer {cid}",
-                    work_order_rel=f"{work_rel}/dispatch/items/{item_file.name}",
+                    work_order_rel=f"{work_rel}/prompts/repair/{prompts_cid_file.name}",
                     done_signal=f"DONE: {out_json}",
+                    extra_instructions=extra,
                 )
                 sub_item = {
                     "TypeName": spec["type_name"],
@@ -1491,9 +1954,11 @@ def build_dispatch(
 
             subagents.append(sub_item)
             dispatched_ids.append(cid)
-            item_files.append(item_file.resolve().as_posix())
+            item_files.append(prompts_cid_file.resolve().as_posix())
+            if item_file.resolve().as_posix() not in item_files:
+                item_files.append(item_file.resolve().as_posix())
 
-    payload = {"Subagents": subagents}
+    payload = {"Subagents": subagents, "item_files": item_files}
 
     snap = snapshot_work_dir(work)
     snap_file = dispatch_dir / f"{role}_snapshot.json"
@@ -1505,6 +1970,7 @@ def build_dispatch(
         "role": role,
         "dispatched_at": datetime.now(timezone.utc).isoformat(),
         "subagents_count": len(subagents),
+        "item_files": item_files,
         "Subagents": subagents,
     }
     audit_file.write_text(json.dumps(audit_payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -1657,6 +2123,11 @@ def scope_check(
 
 def main() -> None:
     """CLI utility for subagent dispatch and scope checking."""
+    # Backward-compatible fallback: if invoked as `dispatch.py --role <role> ...` without subcommand, route to `build`
+    if len(sys.argv) > 1 and sys.argv[1].startswith("--"):
+        if any(arg == "--role" or arg.startswith("--role=") for arg in sys.argv[1:]):
+            sys.argv = [sys.argv[0], "build"] + sys.argv[1:]
+
     parser = argparse.ArgumentParser(description="Subagent Scope-Lock & Dispatch Generator (C2C v3.2)")
     subparsers = parser.add_subparsers(dest="action", required=True)
 
@@ -1665,8 +2136,10 @@ def main() -> None:
     disp.add_argument("--role", required=True, choices=list(ROLE_SPECS.keys()), help="Subagent role")
     disp.add_argument("--work-dir", required=True, help="Course working directory")
     disp.add_argument("--ready-only", action="store_true", help="Dispatch only ready sections")
-    disp.add_argument("--ids", nargs="*", help="Optional specific IDs to dispatch")
-    disp.add_argument("--pointer", action="store_true", help="Generate pointer-prompt work orders referencing disk JSON")
+    disp.add_argument("--ids", "--failed-cid", nargs="*", dest="ids", help="Optional specific IDs to dispatch")
+    disp.add_argument("--wave", "--wave-index", type=int, default=None, dest="wave", help="Wave index for author dispatch")
+    disp.add_argument("--pointer", action="store_true", default=True, help="Generate pointer-prompt work orders referencing disk JSON (default: True)")
+    disp.add_argument("--no-pointer", action="store_false", dest="pointer", help="Disable pointer-prompt work orders")
 
     # check subcommand
     chk = subparsers.add_parser("check", help="Run scope violation check")
@@ -1682,24 +2155,31 @@ def main() -> None:
     dc = subparsers.add_parser("dispatch-cta", help="Dispatch CTA Architect using pre_cta_manifest.json")
     dc.add_argument("--work-dir", required=True, help="Course working directory")
     dc.add_argument("--mode", default=None, help="CTA mode: direct or mapreduce")
-    dc.add_argument("--pointer", action="store_true", help="Generate pointer-prompt work orders referencing disk JSON")
+    dc.add_argument("--pointer", action="store_true", default=True, help="Generate pointer-prompt work orders (default: True)")
+    dc.add_argument("--no-pointer", action="store_false", dest="pointer", help="Disable pointer-prompt work orders")
 
     # dispatch-authors subcommand
     da = subparsers.add_parser("dispatch-authors", help="Dispatch Shard Authors using pre_shard_manifest.json")
     da.add_argument("--work-dir", required=True, help="Course working directory")
-    da.add_argument("--pointer", action="store_true", help="Generate pointer-prompt work orders referencing disk JSON")
+    da.add_argument("--wave", "--wave-index", type=int, default=None, dest="wave", help="Wave index to filter author dispatch")
+    da.add_argument("--ids", nargs="*", default=None, help="Optional specific shard or competency IDs to filter author dispatch")
+    da.add_argument("--pointer", action="store_true", default=True, help="Generate pointer-prompt work orders (default: True)")
+    da.add_argument("--no-pointer", action="store_false", dest="pointer", help="Disable pointer-prompt work orders")
 
     # dispatch-judges subcommand
     dj = subparsers.add_parser("dispatch-judges", help="Dispatch Blind Judges with Zero-Warmup in-prompt payload")
     dj.add_argument("--work-dir", required=True, help="Course working directory")
-    dj.add_argument("--pointer", action="store_true", help="Generate pointer-prompt work orders referencing disk JSON")
+    dj.add_argument("--pointer", action="store_true", default=True, help="Generate pointer-prompt work orders (default: True)")
+    dj.add_argument("--no-pointer", action="store_false", dest="pointer", help="Disable pointer-prompt work orders")
+    dj.add_argument("--ready-only", action="store_true", default=False, help="Dispatch only ready evaluated items")
     dj.add_argument("--max-items-per-judge", type=int, default=12, help="Maximum items per judge batch (default: 12)")
 
     # dispatch-repair subcommand
     dr = subparsers.add_parser("dispatch-repair", help="Dispatch Targeted Repair Engineers")
     dr.add_argument("--work-dir", required=True, help="Course working directory")
-    dr.add_argument("--ids", nargs="*", help="Optional specific IDs to repair")
-    dr.add_argument("--pointer", action="store_true", help="Generate pointer-prompt work orders referencing disk JSON")
+    dr.add_argument("--ids", "--failed-cid", nargs="*", dest="ids", help="Optional specific IDs to repair")
+    dr.add_argument("--pointer", action="store_true", default=True, help="Generate pointer-prompt work orders (default: True)")
+    dr.add_argument("--no-pointer", action="store_false", dest="pointer", help="Disable pointer-prompt work orders")
 
     # checkpoint subcommand
     cp = subparsers.add_parser("checkpoint", help="Record stage checkpoint in state.json")
@@ -1727,11 +2207,11 @@ def main() -> None:
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "dispatch-authors":
-        res = dispatch_authors(args.work_dir, pointer=args.pointer)
+        res = dispatch_authors(args.work_dir, pointer=args.pointer, wave_index=args.wave, ids=args.ids)
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "dispatch-judges":
-        res = dispatch_judges(args.work_dir, pointer=args.pointer, max_items_per_judge=args.max_items_per_judge)
+        res = dispatch_judges(args.work_dir, pointer=args.pointer, max_items_per_judge=args.max_items_per_judge, ready_only=args.ready_only)
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "dispatch-repair":
@@ -1759,6 +2239,7 @@ def main() -> None:
             ids=args.ids,
             ready_only=args.ready_only,
             pointer=args.pointer,
+            wave_index=args.wave,
         )
         print(json.dumps(payload, indent=2, ensure_ascii=False))
 

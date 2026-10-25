@@ -205,6 +205,8 @@ def ingest_course(
     cta_mode: str = "direct",
     dpi: int = 150,
     order_override: Optional[Union[str, List[str], Sequence[str]]] = None,
+    render_pages: bool = True,
+    input_files: Optional[Sequence[Union[str, Path]]] = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """Stage 0 Ingestion: Zero-Waste PDF page rendering and central pre_cta_manifest.json generation.
@@ -244,7 +246,20 @@ def ingest_course(
 
     # Discover target files
     target_files: List[Path] = []
-    if in_path.is_dir():
+    if input_files is not None:
+        for p in input_files:
+            cand = Path(p).resolve()
+            if cand.is_file():
+                target_files.append(cand)
+            elif cand.is_dir():
+                for root, _, files in os.walk(cand):
+                    for f in files:
+                        ext = Path(f).suffix.lower()
+                        if ext in PDF_EXTENSIONS or ext in IMAGE_EXTENSIONS or ext in TEX_EXTENSIONS:
+                            target_files.append(Path(root) / f)
+            else:
+                raise FileNotFoundError(f"Input file does not exist: {cand}")
+    elif in_path.is_dir():
         for root, _, files in os.walk(in_path):
             for f in files:
                 ext = Path(f).suffix.lower()
@@ -256,16 +271,16 @@ def ingest_course(
         raise FileNotFoundError(f"Input path does not exist: {in_path}")
 
     if order_override:
-        order_list = [Path(x).name.lower() for x in order_override] if isinstance(order_override, (list, tuple)) else [str(order_override).lower()]
+        norm_order_list = [unicodedata.normalize("NFC", Path(x).name.lower()) for x in order_override] if isinstance(order_override, (list, tuple)) else [unicodedata.normalize("NFC", str(order_override).lower())]
 
         def sort_key(f: Path):
-            fname = f.name.lower()
-            fstem = f.stem.lower()
+            fname = unicodedata.normalize("NFC", f.name.lower())
+            fstem = unicodedata.normalize("NFC", f.stem.lower())
             try:
-                return (0, order_list.index(fname))
+                return (0, norm_order_list.index(fname))
             except ValueError:
                 try:
-                    return (0, order_list.index(fstem))
+                    return (0, norm_order_list.index(fstem))
                 except ValueError:
                     return (1, natural_sort_key(f))
 
@@ -276,13 +291,20 @@ def ingest_course(
     files_manifest: List[Dict[str, Any]] = []
     subparts_manifest: List[Dict[str, Any]] = []
     total_pages_sum = 0
+    seen_slugs: Dict[str, int] = {}
 
     for file_idx, fpath in enumerate(target_files):
         ext = fpath.suffix.lower()
         doc_name = fpath.name
-        doc_slug = slugify_doc_name(doc_name)
+        base_slug = slugify_doc_name(doc_name)
+        if base_slug in seen_slugs:
+            seen_slugs[base_slug] += 1
+            doc_slug = f"{base_slug}_{seen_slugs[base_slug]}"
+        else:
+            seen_slugs[base_slug] = 1
+            doc_slug = base_slug
+
         out_doc_dir = pages_dir / doc_slug
-        out_doc_dir.mkdir(parents=True, exist_ok=True)
 
         size_bytes = fpath.stat().st_size
         file_type = "pdf" if ext in PDF_EXTENSIONS else ("tex" if ext in TEX_EXTENSIONS else "image")
@@ -291,18 +313,22 @@ def ingest_course(
         if file_type == "pdf":
             doc = pymupdf.open(fpath)
             num_pages = len(doc)
-            zoom = dpi / 72.0
-            matrix = pymupdf.Matrix(zoom, zoom)
-            for p_idx in range(num_pages):
-                page_num = p_idx + 1
-                page = doc[p_idx]
-                pix = page.get_pixmap(matrix=matrix)
-                img_path = out_doc_dir / f"page_{page_num:03d}.png"
-                pix.save(str(img_path))
+            if render_pages:
+                out_doc_dir.mkdir(parents=True, exist_ok=True)
+                zoom = dpi / 72.0
+                matrix = pymupdf.Matrix(zoom, zoom)
+                for p_idx in range(num_pages):
+                    page_num = p_idx + 1
+                    page = doc[p_idx]
+                    pix = page.get_pixmap(matrix=matrix)
+                    img_path = out_doc_dir / f"page_{page_num:03d}.png"
+                    pix.save(str(img_path))
             doc.close()
         elif file_type == "image":
+            out_doc_dir.mkdir(parents=True, exist_ok=True)
             num_pages = ingest_image_file(fpath, out_doc_dir)
         elif file_type == "tex":
+            out_doc_dir.mkdir(parents=True, exist_ok=True)
             num_pages = ingest_tex_file(fpath, out_doc_dir)
 
         total_pages_sum += num_pages
@@ -361,6 +387,8 @@ def main():
     parser.add_argument("--course-id", default=None, help="Optional course ID")
     parser.add_argument("--cta-mode", choices=["direct", "mapreduce"], default="direct", help="CTA execution mode")
     parser.add_argument("--dpi", type=int, default=150, help="DPI for PDF page rendering (default 150)")
+    parser.add_argument("--render-pages", dest="render_pages", action="store_true", default=False, help="Render PDF pages to PNG (default False)")
+    parser.add_argument("--no-render-pages", dest="render_pages", action="store_false", help="Do not render PDF pages to PNG")
     args = parser.parse_args()
 
     manifest = ingest_course(
@@ -369,6 +397,7 @@ def main():
         course_id=args.course_id,
         cta_mode=args.cta_mode,
         dpi=args.dpi,
+        render_pages=args.render_pages,
     )
     print(f"[+] Ingestion complete: {manifest['total_files']} files, {manifest['total_pages']} pages processed.")
     print(f"[+] Manifest written to: {Path(args.output_dir) / 'pre_cta_manifest.json'} (cta_mode={manifest['cta_mode']})")

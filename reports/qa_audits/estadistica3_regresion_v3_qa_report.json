@@ -3,89 +3,75 @@
     "course_id": "estadistica3_regresion_v3",
     "unit_title": "Estadística III: Econometría y Modelo de Regresión Lineal",
     "detected_objective": "Dominar la especificación matemática, estimación MCO en notación matricial, propiedades estadísticas y asintóticas de Gauss-Markov, álgebra geométrica de proyecciones, descomposición ANOVA de sumas de cuadrados, inferencia de hipótesis lineales y diagnóstico econométrico integral.",
-    "total_competencies": 16,
-    "total_questions": 390,
+    "total_competencies": 26,
+    "total_questions": 630,
     "platform_status": "ELIMINADO",
-    "deleted_at": "2026-10-17 00:24:26"
+    "deleted_at": "2026-10-25 11:12:47"
   },
   "dimension_scores": {
     "architecture_granularity": {
-      "score": 3.8,
+      "score": 3.3,
       "max": 4.0,
-      "feedback": "Descomposición curricular ejemplar en 16 micro-competencias atómicas con balance cognitivo armónico entre Hechos (4), Conceptos (5) y Habilidades (7). Todas las unidades cuentan con objetivos de dominio al 100% y descripciones matemáticas exhaustivas. Margen de mejora menor: ausencia de macro-módulos temáticos agrupadores y falta de modelado explícito de prerrequisitos en formato DAG en los metadatos raíz (las 16 competencias poseen prerequisites = [])."
+      "feedback": "Excelente granularidad y delimitación atómica de 26 micro-competencias con un balance cognitivo ejemplar (5 Hechos / 19.2%, 10 Conceptos / 38.5%, 11 Habilidades / 42.3%). Sin embargo, presenta una deficiencia severa en el modelado formal del grafo acíclico dirigido (DAG): 22 de las 26 micro-competencias (84.6%) tienen la lista de prerrequisitos vacía ([]). Habilidades nucleares y complejas como Hab-01 (Derivación MCO), Hab-03 (Estimación de s^2 vía traza de M), Hab-04 (Inferencia t y F), Hab-06 (Algoritmo matricial completo) y Hab-07 (Modelos con y sin intercepto) carecen de dependencias explícitas hacia sus hechos y conceptos fundacionales."
     },
     "assessment_quality": {
-      "score": 4.8,
+      "score": 4.0,
       "max": 5.0,
-      "feedback": "Banco masivo de 390 reactivos con balance entre 142 de opción múltiple de 7 alternativas (MC7), 124 de llenado de espacios en blanco (FIB) y 124 de selección múltiple (MS). El 100% de los distractores (852 en MC7 y 341 en MS) cuenta con rationales diagnósticos específicos de error. Cero fugas de respuestas (Answer Leaks). Excelente énfasis en análisis y aplicación (67.4% en niveles superiores de Bloom). Observación menor: duplicación paramétrica en distractores dentro de la misma competencia."
+      "feedback": "Sólida variedad tipológica formal a nivel de banco global (382 opciones múltiples de 7 alternativas, 124 fill-in-the-blank y 124 multiple_select). Cobertura del 100% en error_rationale diagnósticos (2633 distractores evaluados). No obstante, se evidencia una fuerte mecanización intramodular en las preguntas de 7 opciones: casi todas las preguntas dentro de una misma micro-competencia responden a 1 o 2 arquetipos únicos clonados paramétricamente variando solo n o p con distractores idénticos. Adicionalmente, se detectaron residuos de variables de plantilla de desarrollo en enunciados de preguntas como '$R_{var_idx}^2$' en Q-C09-151 y Q-C09-152."
     },
     "scaffolding_hints": {
-      "score": 4.8,
+      "score": 3.4,
       "max": 5.0,
-      "feedback": "Andamiaje socrático sobresaliente según estándares de Mastery Learning. El 100% de los reactivos (390/390) cuenta con exactamente 3 pistas escalonadas (conceptual -> procedimental -> operativa) y advertencias preventivas de conceptos erróneos ('misconception_warning'). Las soluciones son analíticamente rigurosas, aunque en 40 reactivos la solución detallada presenta variables de plantilla f-string no interpoladas ({r2_val:.4f}, {src_val:.2f}, {s2:.4f}, {t_val:.2f}, {f_val:.2f}, {r2_adj:.4f}) que restan precisión al cálculo final mostrado."
+      "feedback": "Cobertura cuantitativa completa (100% de los reactivos cuentan con 3 pistas progresivas y soluciones detalladas con advertencia de ideas preconcebidas). En las primeras 16 micro-competencias (H-01 a Hab-07), el andamiaje es socrático y fluido. Sin embargo, en las últimas 10 micro-competencias (C-06 a Hab-11) se observa una degradación pedagógica crítica debida a un macro de generación rígido: la Pista 1 es un boilerplate vacío ('Identifique la estructura conceptual de {Nombre}: analice...'), mientras que las Pistas 2 y 3 inyectan afirmaciones erróneas de los distractores bajo una redacción confusa ('asegurando considerar adecuadamente: E(beta) != beta' en heterocedasticidad o 'hausman modelo_mco modelo_iv'). Además, se identificaron residuos de variables en soluciones de Q-C10-191 y Q-C10-192 ('\\frac{50}{var_total}')."
     },
     "instructional_alignment": {
       "score": 4.0,
       "max": 4.0,
-      "feedback": "Alineación semántica perfecta entre los fundamentos teóricos declarados y las evaluaciones prácticas. Cero preguntas huérfanas y nula contaminación cruzada de otros dominios econométricos. Cobertura taxonómica de Bloom enfocada preponderantemente en habilidades cognitivas de orden superior (33.8% Analizar, 33.6% Aplicar, 20.0% Comprender, 12.6% Recordar)."
+      "feedback": "Alineación instruccional impecable. Congruencia semántica absoluta entre el dominio econométrico declarado, los corpus teóricos y los 630 reactivos. Cero preguntas huérfanas (orphan_questions_count = 0) y nula contaminación cruzada inter-dominio. Progresión taxonómica de Bloom perfectamente articulada entre niveles de Recuerdo/Comprensión en Hechos, Análisis en Conceptos, y Aplicación operativa rigurosa en Habilidades."
     },
     "technical_ergonomics": {
-      "score": 1.0,
+      "score": 1.6,
       "max": 2.0,
-      "feedback": "Notación matemática rigurosa en álgebra lineal y econometría teórica. Sin embargo, una auditoría sintáctica profunda revela que 161 reactivos (41.3% del curso) presentan llaves no cerradas en expresiones LaTeX (principalmente '\\hat{\\boldsymbol{\\beta}', '\\hat{\\mathbf{u}', '\\hat{\\mathbf{Y}', '\\frac{\\text{SRC}{\\text{STC}', '\\sqrt{c_{jj}'), además de 40 reactivos con marcadores f-string no evaluados en soluciones detalladas, lo cual provoca fallas severas de renderizado en frontend (KaTeX parse errors)."
+      "feedback": "El linter KaTeX reporta cero delimitadores desbalanceados, cero triples dólares y cero llaves dobles. Las expresiones algebraicas y matrices son legibles y visualmente atractivas. Se deduce puntuación debido a la presencia de identificadores snake_case de Python no escapados dentro de entornos matemáticos KaTeX ('$R_{var_idx}^2$' en Q-C09-151/152 y '\\frac{...}{var_total}' en Q-C10-191/192), donde el guión bajo no escapado altera la compilación tipográfica, así como el uso innecesario de delimitadores matemáticos '$\\text{...}$' envolviendo texto plano en español dentro de los error_rationales."
     }
   },
   "penalties_applied": [],
-  "final_score": 18.4,
-  "quality_tier": "EXCELENTE (17-20)",
+  "final_score": 16.3,
+  "quality_tier": "ACEPTABLE (14-16)",
+  "remediation_actions": [
+    "Reconstruir y completar el grafo acíclico dirigido (DAG) de prerrequisitos para las 22 micro-competencias desconectadas (por ejemplo, asignar H-01 y C-01 como prerrequisitos de Hab-01; H-03 y C-01 a Hab-03; Hab-03 y Hab-01 a Hab-04; H-01 y Hab-01 a Hab-06; C-05 a Hab-07).",
+    "Reescribir el andamiaje de pistas en las micro-competencias C-06 a Hab-11 para erradicar las plantillas formulaicas y eliminar la inyección ambigua de distractores como premisas analíticas en Pista 2 y Pista 3, reemplazándolas con preguntas socráticas genuinas.",
+    "Eliminar los residuos de variables de plantilla en las preguntas Q-C09-151, Q-C09-152 ('$R_{var_idx}^2$' -> '$R_2^2$' o '$R_3^2$') y en las soluciones detalladas de Q-C10-191 y Q-C10-192 ('\\frac{50}{var_total}' -> '\\frac{50}{58}').",
+    "Diversificar los arquetipos de problemas dentro de los bloques de opción múltiple de 7 alternativas para evitar la mecanización del estudiante ante patrones visuales idénticos de respuesta.",
+    "Ajustar las advertencias de errores conceptuales (misconception_warning) en los reactivos fill_in_the_blank, reemplazando frases genéricas como 'seleccionar su respuesta' por advertencias específicas a errores de cálculo o manipulación algebraica."
+  ],
   "discovered_lint_rules": [
     {
-      "rule_id": "KATEX_UNCLOSED_NESTED_COMMAND_BRACE",
-      "dimension": "technical_ergonomics",
-      "severity": "critical",
-      "description": "Detección de comandos anidados de formateo matemático (\\hat{\\boldsymbol{...}, \\hat{\\mathbf{...}) donde se omite la llave de cierre exterior antes de delimitadores o símbolos adyacentes, generando un colapso en KaTeX.",
-      "regex_pattern": "\\\\hat\\{\\\\(?:boldsymbol|mathbf)\\{[a-zA-Z]+(?=[)=+\\s\\',])",
-      "sample_snippet": "\\hat{\\boldsymbol{\\beta} = (\\mathbf{X}'\\mathbf{X})^{-1}\\mathbf{X}'\\mathbf{y}",
-      "affected_items_count": 161
+      "rule_id": "formulaic_boilerplate_hint_template_linter",
+      "severity": "HIGH",
+      "description": "Detecta pistas progresivas generadas mediante macros formulaicos rígidos que interpolan mecánicamente el nombre de la micro-competencia ('Identifique la estructura conceptual de {comp_name}...') sin aportar andamiaje cognitivo específico.",
+      "remediation": "Requerir que la Pista 1 contenga una pregunta socrática o referencia conceptual contextualizada directamente a las variables o parámetros del enunciado específico."
     },
     {
-      "rule_id": "KATEX_MALFORMED_FRAC_DROPPED_NUMERATOR_BRACE",
-      "dimension": "technical_ergonomics",
-      "severity": "critical",
-      "description": "Detección de comandos de fracción \\frac donde se omite la llave de cierre del numerador, generando una sintaxis rota \\frac{num{den} que falla en compilación.",
-      "regex_pattern": "\\\\frac\\{[^{}\\n]+\\{[^{}\\n]+\\}",
-      "sample_snippet": "\\frac{\\text{SRC}{\\text{STC}",
-      "affected_items_count": 35
+      "rule_id": "distractor_leak_in_hints_linter",
+      "severity": "CRITICAL",
+      "description": "Detecta pistas que inyectan fórmulas erróneas o premisas falsas provenientes de distractores bajo frases equívocas como 'asegurando considerar adecuadamente: {distractor_snippet}', desorientando al estudiante.",
+      "remediation": "Excluir fragmentos de distractores de las pistas procedimentales, o enmarcalos explícitamente como advertencias de trampa ('Cuidado con asumir erróneamente que...')."
     },
     {
-      "rule_id": "SCAFFOLDING_UNINTERPOLATED_FSTRING_LITERAL",
-      "dimension": "scaffolding_hints",
-      "severity": "warning",
-      "description": "Detección de marcadores literales de formato Python ({var:.Nf}) no interpolados dentro de soluciones detalladas o pistas pedagógicas por omisión del prefijo f o llamada a .format().",
-      "regex_pattern": "\\{[a-zA-Z_][a-zA-Z0-9_]*:[0-9]*\\.[0-9]+[fge]\\}",
-      "sample_snippet": "$R^2 = \\frac{240.0}{380.0} = {r2_val:.4f}$",
-      "affected_items_count": 40
+      "rule_id": "unexpanded_python_identifier_in_latex_linter",
+      "severity": "MEDIUM",
+      "description": "Detecta identificadores snake_case de Python (ej. 'var_idx', 'var_total', 'param_name') dentro de delimitadores KaTeX ('$...$' o '$$...$$') que no fueron sustituidos por valores numéricos o símbolos LaTeX válidos.",
+      "remediation": "Validar sintácticamente que ninguna expresión matemática contenga secuencias alfanuméricas con guiones bajos que no pertenezcan a macros de KaTeX o variables indexadas formalmente."
     },
     {
-      "rule_id": "ARCHITECTURE_EMPTY_DAG_PREREQUISITES",
-      "dimension": "architecture_granularity",
-      "severity": "minor",
-      "description": "Detección de cursos con topología plana donde el 100% de las micro-competencias carece de prerrequisitos declarados (prerequisites = []), impidiendo el modelado de grafos acíclicos dirigidos (DAG) para navegación adaptativa.",
-      "regex_pattern": null,
-      "sample_snippet": "\"prerequisites\": []",
-      "affected_items_count": 16
+      "rule_id": "fill_in_the_blank_misconception_leak_linter",
+      "severity": "LOW",
+      "description": "Detecta advertencias de ideas preconcebidas (misconception_warning) en ítems fill_in_the_blank que hacen referencia a acciones de opción múltiple ('antes de seleccionar su respuesta') o que emplean texto genérico de relleno.",
+      "remediation": "Validar concordancia entre interaction_type y el léxico del misconception_warning."
     }
   ],
-  "remediation_actions": [
-    "Cerrar llaves LaTeX en comandos anidados: sustituir '\\hat{\\boldsymbol{\\beta}' por '\\hat{\\boldsymbol{\\beta}}' (198 casos), '\\hat{\\mathbf{u}' por '\\hat{\\mathbf{u}}' (102 casos), y '\\hat{\\mathbf{Y}' por '\\hat{\\mathbf{Y}}' (63 casos) a través de stems, soluciones y opciones.",
-    "Corregir la sintaxis de fracciones en expresiones ANOVA: reemplazar '\\frac{\\text{SRC}{\\text{STC}' y '\\frac{\\text{SEC}{\\text{STC}' por '\\frac{\\text{SRC}}{\\text{STC}}' y '\\frac{\\text{SEC}}{\\text{STC}}' (28 casos).",
-    "Completar llaves faltantes en subíndices y raíces cuadradas: corregir '\\sqrt{c_{jj}' a '\\sqrt{c_{jj}}', 't_{\\text{crit}' a 't_{\\text{crit}}', 'F_{\\text{crit}' a 'F_{\\text{crit}}', y 'R_{\\text{raw}^2' a 'R_{\\text{raw}}^2'.",
-    "Resolver las 40 instancias de placeholders literales de f-string en soluciones detalladas ({r2_val:.4f}, {src_val:.2f}, {s2:.4f}, {t_val:.2f}, {f_val:.2f}, {r2_adj:.4f}), interpolando el valor numérico correspondiente.",
-    "Corregir el cierre de fracción en Q-Hab02-118 y reactivos análogos de modelos recíprocos: '\\frac{500}{\\text{Q}$$' por '$$\\text{CMe} = 30 + \\frac{500}{\\text{Q}}$$' o '\\frac{500}{Q}'.",
-    "Formalizar en el esquema raíz del curso una jerarquía modular (macro-módulos temáticos) y un grafo de prerrequisitos (DAG) entre competencias para optimizar la navegación adaptativa en Mastery Learning.",
-    "Aumentar la variabilidad sintáctica de distractores en preguntas generadas paramétricamente para evitar fatiga por patrones predecibles."
-  ],
   "platform_status": "ELIMINADO",
-  "deleted_at": "2026-10-17 00:24:26",
+  "deleted_at": "2026-10-25 11:12:47",
   "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

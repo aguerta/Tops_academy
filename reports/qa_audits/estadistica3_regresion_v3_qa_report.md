@@ -1,222 +1,268 @@
-# Informe de Auditoría Técnico-Pedagógica de Calidad Instruccional
+# Informe de Auditoría de Calidad Pedagógica, Psicométrica y Técnica
+
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-10-25 10:12:03**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
 
 **Estado en Plataforma:** ELIMINADO  
-**Fecha de Eliminación:** 2026-10-17 00:24:26  
-**Fecha de Eliminación:** Nulo  
-**Curso:** Estadística III: Econometría y Modelo de Regresión Lineal (`estadistica3_regresion_v3`)  
-**Fecha de Auditoría:** 12 de Octubre, 2026  
-**Auditor:** Agente de Aseguramiento de Calidad Instruccional (QA Evaluator)  
-**Marco Normativo:** Quality Matters (QM), OSCQR & Mastery Learning Framework  
-**Puntaje Final Consolidado:** **18.4 / 20.0**  
-**Nivel de Calidad (Quality Tier):** **EXCELENTE (17.0 - 20.0 pts)** — *Aprobado para Producción con Remediaciones Técnicas Prioritarias*
+**Fecha de Eliminación:** 2026-10-25 11:12:47  
+**Fecha de Eliminación:** 2026-10-25 10:12:03  
+**Curso Auditado:** `estadistica3_regresion_v3`  
+**Título del Curso:** Estadística III: Econometría y Modelo de Regresión Lineal  
+**Auditor Oficial:** Course QA Auditor — Top's Academy  
+**Fecha de Auditoría:** 25 de Octubre de 2026  
+**Estándares de Referencia:** Quality Matters (QM), OSCQR Rubric, Mastery Learning & Bloom Revised Taxonomy  
 
 ---
 
-## 1. Resumen Ejecutivo del Veredicto
+## 1. Resumen Ejecutivo y Ficha Técnica
 
-El curso **"Estadística III: Econometría y Modelo de Regresión Lineal (v3)"** (`estadistica3_regresion_v3`) demuestra un estándar técnico y pedagógico de nivel universitario avanzado sobresaliente. Su diseño curricular exhibe una estructura matemática rigurosa, un banco evaluativo amplio y diversificado de 390 reactivos, y un sistema de andamiaje socrático exhaustivo que cumple con las mejores prácticas de Mastery Learning.
+| Métrica / Dimensión | Valor / Resultado |
+| :--- | :--- |
+| **Identificador del Curso** | `estadistica3_regresion_v3` |
+| **Total de Micro-Competencias** | 26 competencias |
+| **Banco Total de Reactivos** | 630 preguntas |
+| **Distribución de Reactivos** | Opción Múltiple (7 alt): 382 (60.6%) \| Fill-in-the-Blank: 124 (19.7%) \| Multiple Select: 124 (19.7%) |
+| **Cobertura de `error_rationale`** | 100.0% (2,633 / 2,633 distractores evaluados) |
+| **Cobertura de Pistas Progresivas** | 100.0% (630 / 630 reactivos con exactamente 3 pistas) |
+| **Preguntas Huérfanas Detectadas** | 0 (0.0%) |
+| **Penalizaciones Duras Aplicadas** | 0.0 puntos |
+| **Puntaje Final Consolidado** | **16.3 / 20.0 puntos** |
+| **Quality Tier** | **ACEPTABLE (14.0 - 16.9 pts)** |
+| **Dictamen de Certificación** | **Aprobado con observaciones.** Requiere pulido sintáctico en fórmulas y remediación pedagógica en el andamiaje de las últimas 10 micro-competencias antes de migrar a producción de alta escala. |
 
-A diferencia de las primeras versiones legacy, en esta versión se corrigieron los delimitadores exteriores y los triples delimitadores detectados con anterioridad. Sin embargo, una auditoría forense profunda revela **451 inconsistencias de sintaxis LaTeX interna** (llaves no cerradas en comandos anidados que afectan a 161 preguntas) y **40 instancias de placeholders de plantillas f-string no interpolados** en las soluciones detalladas. Estas deficiencias técnicas degradan la Dimensión 5 (Ergonomía Técnica a 1.0 / 2.0) y la Dimensión 3 (a 4.8 / 5.0), situando la nota final en **18.4 / 20.0**, manteniéndose sólidamente en el rango **EXCELENTE**.
+### Balance de Puntuación por Dimensiones Normativas
 
-### Matriz de Evaluación por Dimensiones
+```
+Dimensión 1: Arquitectura y Granularidad        [████████████████░░░░]  3.3 / 4.0 pts
+Dimensión 2: Calidad de Evaluación y Reactivos  [████████████████░░░░]  4.0 / 5.0 pts
+Dimensión 3: Andamiaje y Pistas Progresivas     [█████████████░░░░░░░]  3.4 / 5.0 pts
+Dimensión 4: Alineación Instruccional           [████████████████████]  4.0 / 4.0 pts
+Dimensión 5: Accesibilidad y KaTeX              [████████████████░░░░]  1.6 / 2.0 pts
+--------------------------------------------------------------------------------------
+PUNTAJE FINAL CONSOLIDADO:                                              16.3 / 20.0 pts
+```
 
-| Dimensión Evaluada | Puntaje | Máximo | Cumplimiento | Diagnóstico Sintético |
-| :--- | :---: | :---: | :---: | :--- |
-| **1. Arquitectura y Granularidad** | **3.8** | 4.0 | 95.0% | 16 micro-competencias atómicas con balance equilibrado (4 Hechos, 5 Conceptos, 7 Habilidades). Carga cognitiva óptima; falta DAG explícito en metadatos raíz. |
-| **2. Calidad de Evaluación y Reactivos** | **4.8** | 5.0 | 96.0% | 390 reactivos (142 MC7, 124 FIB, 124 MS). 100% de distractores con rationales diagnósticos específicos (852 MC7 + 341 MS). Cero fugas de respuesta. |
-| **3. Andamiaje y Pistas Progresivas** | **4.8** | 5.0 | 96.0% | 100% de reactivos con exactamente 3 pistas progresivas escalonadas y advertencias de conceptos erróneos. Deducción leve por 40 soluciones con tokens f-string. |
-| **4. Alineación Instruccional** | **4.0** | 4.0 | 100.0% | Congruencia semántica absoluta entre teoría y práctica. Cero preguntas huérfanas. 67.4% de reactivos en niveles superiores de Bloom (Analizar y Aplicar). |
-| **5. Accesibilidad y Ergonomía Técnica** | **1.0** | 2.0 | 50.0% | Notación econométrica rigurosa. Delimitadores exteriores limpios, pero 161 reactivos poseen llaves internas no cerradas en KaTeX (`\hat{\boldsymbol{\beta}`, etc.). |
-| **Subtotal Rúbrica** | **18.4** | 20.0 | 92.0% | - |
-| **Penalizaciones Duras** | **-0.0** | - | - | Sin penalizaciones aplicables (banco $\ge 3$, cero reactivos con hints = 0, cero huérfanas). |
-| **TOTAL CONSOLIDADO** | **18.4** | **20.0** | **92.0%** | **Nivel EXCELENTE (17.0 - 20.0 pts)** |
+---
+
+## 2. Evaluación Detallada por Dimensiones
+
+### Dimensión 1: Arquitectura y Granularidad (Calificación: 3.3 / 4.0)
+
+#### 1.1 Atomicidad y Carga Cognitiva
+El diseño curricular del curso demuestra una excelente estructuración temática. Se identifican 26 micro-competencias perfectamente delimitadas, organizadas en una secuencia didáctica natural:
+1. **Fundamentos y Álgebra Matricial del MRLC** (`H-01`, `C-01`, `Hab-01`, `H-02`, `C-02`, `Hab-02`).
+2. **Geometría de Proyecciones, ANOVA e Inferencia Clásica** (`H-03`, `C-03`, `Hab-03`, `Hab-04`, `H-04`, `C-04`, `Hab-05`, `Hab-06`).
+3. **Casos Especiales y Modelos Restringidos** (`C-05`, `Hab-07`).
+4. **Violación de Supuestos Clásicos y Diagnóstico Avanzado** (`C-06`, `Hab-08`, `C-07`, `Hab-09`, `C-08`, `Hab-10`, `C-09`, `H-05`, `C-10`, `Hab-11`).
+
+La distribución por tipos de conocimiento cumple los más altos estándares pedagógicos:
+- **Hechos [Fact]**: 5 micro-competencias (19.2%) — Formulación canónica matricial, ponderadores $k_i$, proyectores ortogonales, contrastes lineales de Wald, momentos teóricos de normalidad.
+- **Conceptos [Concept]**: 10 micro-competencias (38.5%) — Supuestos de Gauss-Markov, insesgadez/eficiencia BLUE, descomposición ANOVA centrado, saturación dimensional ($n=k$), distorsiones de $R^2$ sin constante, heterocedasticidad, autocorrelación, quiebre estructural, multicolinealidad y endogeneidad.
+- **Habilidades [Skill]**: 11 micro-competencias (42.3%) — Derivación de ecuaciones normales, formas funcionales, traza de matriz aniquiladora para $s^2$, contrastes $t$ y $F$, diagnóstico EViews, álgebra manual $2 \times 2$, estimación sin intercepto, tests de White/Breusch-Pagan, Durbin-Watson/Breusch-Godfrey, test de Chow y diagnóstico de endogeneidad por Durbin-Wu-Hausman / 2SLS.
+
+#### 1.2 Modelado de Grafo Acíclico Dirigido (DAG) — Hallazgo Crítico
+A pesar de la excelente jerarquía conceptual implícita, el modelado formal de dependencias (`prerequisites`) en el JSON presenta una falla estructural mayor:
+- **22 de las 26 micro-competencias (84.6%) tienen `prerequisites: []` vacío.**
+- Únicamente 4 competencias procedimentales declaran prerrequisitos:
+  - `Hab-08` depende de `C-06`
+  - `Hab-09` depende de `C-07`
+  - `Hab-10` depende de `C-08`
+  - `Hab-11` depende de `C-10`
+- **Impacto psicométrico:** Competencias de extrema complejidad algorítmica y teórica como `Hab-01` (Derivación analítica de MCO), `Hab-03` (Estimador $s^2$ vía traza de $\mathbf{M}$), `Hab-04` (Inferencia finita $t$ y $F$), `Hab-06` (Cálculo matricial completo de proyecciones y sumas de cuadrados) y `Hab-07` (Modelos con y sin intercepto) figuran como nodos huérfanos de prerrequisitos, impidiendo que el motor de Mastery Learning active rutas de remediación adaptativa automáticas cuando el estudiante falla una habilidad de cálculo que depende de hechos algebraicos previos.
+
+---
+
+### Dimensión 2: Calidad de Evaluación y Reactivos (Calificación: 4.0 / 5.0)
+
+#### 2.1 Variedad Tipológica de Ítems
+El curso ofrece una adecuada diversidad de formatos a nivel de banco global:
+- **Opción Múltiple con 7 Alternativas (`multiple_choice_7_options`)**: 382 reactivos (60.6%). Formato de alta discriminación que minimiza el impacto del acierto por azar ($p = 1/7 \approx 14.3\%$).
+- **Respuesta Abierta Numérica / Expresión Algebraica (`fill_in_the_blank`)**: 124 reactivos (19.7%). Exige cálculo operativo genuino (determinantes, coeficientes MCO escalares, valores de traza, etc.).
+- **Selección Múltiple (`multiple_select`)**: 124 reactivos (19.7%). Evalúa análisis multidimensional y verificación simultánea de propiedades algebraicas.
+
+#### 2.2 Rigor Psicométrico y Cobertura de Rationale Diagnóstico
+- Se auditaron 2,633 distractores a través de todo el banco, registrando una **cobertura del 100.0% con `error_rationale` diagnóstico**.
+- Cada distractor modela un error conceptual real documentado en la literatura econométrica clásica (Greene, Wooldridge, Gujarati, Johnston):
+  - Confusión entre linealidad en variables vs. linealidad en parámetros.
+  - Creencia errónea de que $\mathbf{X}'\mathbf{e} = \mathbf{0}$ demuestra exogeneidad poblacional.
+  - Asumir que la normalidad es requisito indispensable para la eficiencia BLUE de Gauss-Markov.
+  - Distorsión de $R^2$ centrada al suprimir el término constante.
+  - Falsa creencia de que multicolinealidad o heterocedasticidad generan sesgo en las estimaciones puntuales de MCO.
+
+#### 2.3 Diversidad de Arquetipos vs. Riesgo de Mecanización
+Durante el Semantic Verification Loop se detectó una debilidad en la diversidad interna de las preguntas de 7 opciones:
+- Dentro de una misma micro-competencia, los reactivos de opción múltiple son en su mayoría **variaciones paramétricas mecánicas de un único o dos arquetipos base**.
+- Por ejemplo, en `H-01`, prácticamente todos los ítems de selección única utilizan la misma plantilla de distractores para el orden de matrices ($\mathbf{y}$ fila, $\boldsymbol{\varepsilon}$ escalar, $\mathbf{X}$ sin columna de unos, $\mathbf{X}'\boldsymbol{\beta}$ invertido), limitándose a cambiar los valores numéricos de $n$ y $p$ ($n=80$ vs $n=260$).
+- En las competencias avanzadas (`C-06` a `Hab-11`), los enunciados inician con fórmulas rígidas de plantilla ("En el marco de referencia correspondiente, establezca: ...", "Evalúe la expresión y determine la cantidad buscada: ...", "Considerando las ecuaciones fundamentales del régimen, obtenga: ...").
+- **Efecto Pedagógico:** En sesiones prolongadas de práctica adaptativa, el estudiante puede desarrollar fatiga cognitiva o identificar heurísticas superficiales para resolver el ítem sin procesar a fondo el enunciado.
+
+#### 2.4 Answer Leaks e Integridad de Ítems
+- Cero fugas directas de la clave en los textos visibles de las preguntas.
+- Se detectaron dos casos aislados de **residuos de variables de desarrollo** en los enunciados:
+  - En `Q-C09-151` y `Q-C09-152`: El enunciado exhibe `$R_{var_idx}^2 = 0.82$` en lugar de `$R_2^2 = 0.82$` o `$R_3^2 = 0.82$`.
+
+---
+
+### Dimensión 3: Andamiaje y Pistas Progresivas (Calificación: 3.4 / 5.0)
+
+#### 3.1 Cobertura Cuantitativa
+- Todos los 630 reactivos poseen exactamente 3 pistas progresivas escalonadas (`zero_hints_count = 0`, `insufficient_hints_count = 0`).
+- No existen pistas vacías ni pistas rudimentarias con códigos de prerrequisitos (ej. `['C-02', 'H-01']`).
+
+#### 3.2 Asimetría Pedagógica: H-01 a Hab-07 vs. C-06 a Hab-11
+La auditoría semántica reveló una marcada disparidad cualitativa en el andamiaje a lo largo del curso:
+1. **Bloque Inicial (`H-01` a `Hab-07`)**:
+   El andamiaje socrático es de primer nivel. Las pistas guían fluidamente el razonamiento:
+   - *Pista 1 (Conceptual)*: Recuerda la propiedad o definición clave (ej. definición de ponderadores $k_i$ o proyección ortogonal).
+   - *Pista 2 (Procedimental)*: Ilustra el paso algebraico intermedio (ej. sustitución de $X_i = x_i + \bar{X}$).
+   - *Pista 3 (Operativa)*: Detalla la regla de cálculo final (ej. $\sum k_i^2 = 1 / \sum x_i^2$).
+2. **Bloque Avanzado (`C-06` a `Hab-11`) — Hallazgo Crítico**:
+   En las últimas 10 micro-competencias se implementó un macro rígido y automatizado para generar las pistas, produciendo dos anomalías pedagógicas severas:
+   - **Pista 1 es una pseudo-pista vacía**: Repite mecánicamente:  
+     `"Identifique la estructura conceptual de {Nombre_Competencia}: analice las relaciones formales y condiciones teóricas del modelo."`  
+     Esta pista no ofrece ningún andamiaje socrático específico al problema del estudiante.
+   - **Pistas 2 y 3 inyectan distractores con redacción ambigua**:  
+     El generador extrajo fragmentos de distractores e intentó redactarlos como advertencias, pero utilizó construcciones afirmativas equívocas como `"asegurando considerar adecuadamente: {snippet}"`.
+     - En `Q-C06-001` (Heterocedasticidad): La Pista 2 indica:  
+       `"...asegurando considerar adecuadamente: $E(\hat{\boldsymbol{\beta}}_{\text{MCO}}) \neq \boldsymbol{\beta}$."`  
+       *¡Esto es falso! MCO sigue siendo insesgado bajo heterocedasticidad.* Un estudiante confundido interpretará que la pista le dice que MCO es sesgado.
+     - En `Q-Hab11-211` (Hausman): La Pista 2 indica:  
+       `"...asegurando considerar adecuadamente: $\text{hausman modelo\_mco modelo\_iv}$."`  
+       *Este es el orden erróneo de software que produce matrices negativas y falla en Stata.*
+     - En `Q-Hab08-021` (Test de White): La Pista 3 indica:  
+       `"...evalúe posibles desvíos al considerar: $LM \sim \chi^2(n-k)$."`  
+       *Los grados de libertad correctos son $p$ restricciones, no $n-k$.*
+
+#### 3.3 Calidad de la Solución Detallada y Misconception Warnings
+- Las soluciones detalladas (`detailed_solution`) son sumamente extensas, matemáticamente rigurosas y justifican cada paso de inferencia.
+- Se detectó un residuo de plantilla en la solución de `Q-C10-191` y `Q-C10-192`:
+  $$\lambda = \frac{\text{Var}(x^*)}{\text{Var}(x^*) + \text{Var}(u)} = \frac{50}{50 + 8} = \frac{50}{var\_total} = 0.862 < 1$$
+  Donde `var_total` quedó como identificador crudo en lugar de $58$.
+- En los reactivos `fill_in_the_blank`, la advertencia de misconception reza genéricamente: `"Verifique cuidadosamente los supuestos y cálculos antes de seleccionar su respuesta."`, utilizando el verbo "seleccionar" en un reactivo donde el usuario ingresa un valor numérico escrito.
+
+---
+
+### Dimensión 4: Alineación Instruccional (Calificación: 4.0 / 4.0)
+
+#### 4.1 Congruencia Semántica y Dominio Teórico
+La alineación temática del curso es ejemplar:
+- **Cero preguntas huérfanas (`orphan_questions_count = 0`)**: Los 630 ítems mapean directamente con los descriptores de sus 26 competencias.
+- **Cero contaminación cruzada**: No existen reactivos de otros dominios de la econometría o de la estadística elemental (como bioestadística o probabilidad básica) inyectados artificialmente.
+- Cada concepto enseñado en la teoría (Hat matrix $\mathbf{P}$, matriz aniquiladora $\mathbf{M}$, matriz centradora $\mathbf{M}^0$, grados de libertad de sumas centradas, contrastes lineales restringidos $\mathbf{R}\boldsymbol{\beta} = \mathbf{r}$, tests de Chow, White, Breusch-Pagan, Breusch-Godfrey, Durbin-Watson, VIF, Jarque-Bera y Durbin-Wu-Hausman) es evaluado rigurosamente en su correspondiente unidad.
+
+#### 4.2 Taxonomía de Bloom
+El curso mantiene una progresión cognitiva coherente:
+- **Remember / Understand**: Anclado en las micro-competencias de tipo `Fact` y definiciones conceptuales basales.
+- **Understand / Analyze**: Dominante en las competencias de tipo `Concept` (evaluación de quiebres estructurales, pérdida de eficiencia y propiedades asintóticas).
+- **Apply / Analyze**: Plasmado en las 11 competencias de tipo `Skill`, donde los reactivos `fill_in_the_blank` demandan ejecución analítica y cálculo algebraico paso a paso.
+
+---
+
+### Dimensión 5: Accesibilidad y Ergonomía Técnica / KaTeX (Calificación: 1.6 / 2.0)
+
+#### 5.1 Telemetría y Balance Sintáctico de KaTeX
+El escaneo determinista reporta métricas técnicas de base impecables:
+- Delimitadores desbalanceados: 0
+- Triples dólares (`$$$`): 0
+- Llaves dobles espurias (`{{...}}`): 0
+- Expresiones huérfanas en texto plano: 0
+- Las matrices algebraicas ($\mathbf{X}'\mathbf{X}$, inversas, vectores de proyección) compilan de forma limpia y legible.
+
+#### 5.2 Anomalías Técnicas Detectadas
+1. **Identificadores snake_case de Python no escapados en modo matemático**:
+   - En `Q-C09-151` y `Q-C09-152`: `$R_{var_idx}^2 = 0.82$`
+   - En `Q-C10-191` y `Q-C10-192`: `\frac{50}{var_total}`
+   - *Efecto tipográfico:* El guión bajo `_` en KaTeX activa el modo subíndice. Al no estar en bloque de texto ni escapado (`\_`), renderiza tipográficamente como $R_{var_{idx}}^2$ y $\frac{50}{var_{total}}$, exponiendo la sintaxis interna del código generador.
+2. **Encapsulamiento innecesario en `error_rationale`**:
+   - En múltiples reactivos de las competencias `C-06` a `Hab-11`, los rationales están innecesariamente envueltos en delimitadores matemáticos con `\text{...}`, por ejemplo:  
+     `"error_rationale": "$\\text{Descartar los coeficientes MCO alegando sesgo en lugar de ineficiencia}$"`  
+     Si bien KaTeX lo compila sin colapsar, genera sobrecarga sintáctica y rompe la consistencia con las primeras 16 micro-competencias donde el texto explicativo se almacena en texto plano limpio.
+
+---
+
+## 3. Auditoría de Penalizaciones Duras Automáticas
+
+De acuerdo con el estándar normativo de Top's Academy, se auditaron las tres condiciones de penalización dura:
+
+| Criterio de Penalización | Condición Auditada | Hallazgo | Penalización |
+| :--- | :--- | :--- | :---: |
+| **Banco < 3 ítems** | Mínimo 3 problemas reales e independientes por micro-competencia. | Todas las competencias poseen entre 20 y 30 ítems (Mín: 20, Máx: 30). | **0.0 pts** |
+| **Pistas Faltantes** | -1.0 pt por cada reactivo con `hints = 0`. | 630 de 630 reactivos poseen exactamente 3 pistas progresivas. | **0.0 pts** |
+| **Preguntas Huérfanas Críticas** | -2.0 pts por conceptos evaluados no enseñados o contaminación cruzada. | 0 preguntas huérfanas detectadas; alineación 100% estricta con el dominio econométrico. | **0.0 pts** |
+| **TOTAL PENALIZACIONES DURAS** | | | **0.0 pts** |
+
+---
+
+## 4. Nuevas Reglas de Linting Descubiertas (`discovered_lint_rules`)
+
+A partir del Semantic Verification Loop ejecutado sobre este curso, se formalizan cuatro nuevas reglas que deben incorporarse a los motores estáticos de validación (`c2c-linter` y `course-qa-evaluator`):
+
+### 1. `formulaic_boilerplate_hint_template_linter` (Severidad: ALTA)
+- **Patrón Detectado:** Pistas que reutilizan una plantilla fija interpolando exclusivamente el nombre de la micro-competencia (`"Identifique la estructura conceptual de {comp_name}: analice las relaciones formales..."`).
+- **Defecto:** La Pista 1 no provee andamiaje cognitivo real; actúa como mero texto de relleno.
+- **Regla Propuesta:** Alertar si más del 25% de las preguntas de un curso comparten una estructura de plantilla gramatical idéntica en `hints[0]` con sólo variación de la entidad temática.
+
+### 2. `distractor_leak_in_hints_linter` (Severidad: CRÍTICA)
+- **Patrón Detectado:** Pistas procedimentales (`hints[1]` o `hints[2]`) que extraen fórmulas erróneas de los distractores y las presentan con redacciones afirmativas ambiguas como `"asegurando considerar adecuadamente: {distractor_snippet}"`.
+- **Defecto:** Desorienta al estudiante al inducirlo a considerar como válido un error conceptual (ej. $LM \sim \chi^2(n-k)$ o $E(\hat{\beta}) \neq \beta$).
+- **Regla Propuesta:** Prohibir la inclusión de fragmentos textuales idénticos a los distractores falsos en las pistas progresivas, a menos que estén precedidos explícitamente por un marcador de advertencia de error (ej. `"Evite el error común de asumir que..."`).
+
+### 3. `unexpanded_python_identifier_in_latex_linter` (Severidad: MEDIA)
+- **Patrón Detectado:** Identificadores con nomenclatura `snake_case` de Python (ej. `var_idx`, `var_total`, `sample_size`, `param_k`) ubicados dentro de delimitadores KaTeX `$ ... $` o `$$ ... $$`.
+- **Defecto:** Fuga de metainformación de programación y distorsión tipográfica por interpretación errónea del guión bajo `_`.
+- **Regla Propuesta:** Escanear fórmulas KaTeX con regex `\b[a-z]+_[a-z0-9_]+\b` para capturar identificadores no sustituidos antes de la compilación del JSON final.
+
+### 4. `fill_in_the_blank_misconception_leak_linter` (Severidad: BAJA)
+- **Patrón Detectado:** Textos de `misconception_warning` en preguntas de tipo `fill_in_the_blank` que hacen referencia a "seleccionar la opción correcta" o que utilizan advertencias genéricas indistintas del contenido.
+- **Defecto:** Incoherencia de interfaz de usuario entre el modo de interacción (cálculo de respuesta escrita) y el feedback correctivo.
+- **Regla Propuesta:** Validar concordancia léxica entre `interaction_type == 'fill_in_the_blank'` y la ausencia de verbos de selección ("seleccionar", "marcar", "elegir entre las opciones").
+
+---
+
+## 5. Plan de Remediación Curricular
+
+Para promover el curso del Tier **ACEPTABLE (16.3)** al Tier **EXCELENTE (18.5+)**, se establece el siguiente plan de acción estructurado por prioridad:
 
 ```mermaid
-xychart-beta
-    title "Desempeño por Dimensión Normativa (estadistica3_regresion_v3)"
-    x-axis ["Arquitectura (4.0)", "Evaluación (5.0)", "Andamiaje (5.0)", "Alineación (4.0)", "Ergonomía (2.0)"]
-    y-axis "Calificación Obtenida" 0 --> 5
-    bar [3.8, 4.8, 4.8, 4.0, 1.0]
+flowchart TD
+    subgraph P1["Prioridad 1: Inmediata (Hotfix)"]
+        A1["Reescribir pistas en C-06 a Hab-11 erradicando la inyección ambigua de distractores"]
+        A2["Reemplazar $R_{var_idx}^2$ por $R_2^2$ en Q-C09-151/152"]
+        A3["Sustituir var_total por 58 en solución de Q-C10-191/192"]
+    end
+
+    subgraph P2["Prioridad 2: Arquitectura Curricular"]
+        B1["Modelar el grafo DAG completo de prerrequisitos para las 22 competencias desconectadas"]
+        B2["Enlazar Hab-01 -> H-01 + C-01"]
+        B3["Enlazar Hab-03 -> H-03 + C-01"]
+        B4["Enlazar Hab-04 -> Hab-03 + Hab-01"]
+        B5["Enlazar Hab-06 -> H-01 + Hab-01"]
+        B6["Enlazar Hab-07 -> C-05"]
+    end
+
+    subgraph P3["Prioridad 3: Psicométrica y Diversidad"]
+        C1["Diversificar arquetipos de preguntas de 7 opciones dentro de cada micro-competencia"]
+        C2["Personalizar misconception_warnings en fill_in_the_blank eliminando el léxico de selección"]
+    end
+
+    P1 --> P2 --> P3
 ```
 
----
+### Tabla de Acciones Correctivas
 
-## 2. Auditoría Detallada por Dimensiones
-
-### Dimensión 1: Arquitectura y Granularidad (3.8 / 4.0 pts)
-
-* **Estructura Atómica y Balance Cognitivo:** El curso está modelado sobre 16 micro-competencias independientes con meta de dominio (`mastery_target = 100%`):
-  * **Hechos [Fact] (4 competencias, 25.0%):**
-    * `H-01`: Especificación Matricial y Dimensionalidad del Modelo Lineal General ($\mathbf{y} = \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\varepsilon}$).
-    * `H-02`: Álgebra de Ponderadores $k_i$ y Representación Lineal del Estimador ($\hat{\beta}_2 = \sum k_i Y_i$).
-    * `H-03`: Álgebra de Proyecciones: Hat Matrix $\mathbf{P}$, Aniquiladora $\mathbf{M}$ y Matriz Centradora $\mathbf{M}^0$.
-    * `H-04`: Formulación Matricial de Restricciones Lineales Generales $\mathbf{R}\boldsymbol{\beta} = \mathbf{r}$.
-  * **Conceptos [Concept] (5 competencias, 31.25%):**
-    * `C-01`: Supuestos Clásicos de Gauss-Markov y Ortogonalidad Regresor-Error ($E[\mathbf{X}'\boldsymbol{\varepsilon}] = \mathbf{0}$).
-    * `C-02`: Propiedades de MCO: Insesgadez, Teorema de Gauss-Markov (BLUE) y Consistencia.
-    * `C-03`: Descomposición Ortogonal de Sumas de Cuadrados (ANOVA) y Coeficiente $R^2$.
-    * `C-04`: Teorema de Saturación Muestral ($n = k$) e Inferencia en Formas Cuadráticas.
-    * `C-05`: Sensibilidad de la Bondad de Ajuste $R^2$ y $R^2$ Ajustado con y sin Intercepto.
-  * **Habilidades [Skill] (7 competencias, 43.75%):**
-    * `Hab-01`: Derivación Matricial del Estimador MCO y Ecuaciones Normales ($\mathbf{X}'\mathbf{X}\hat{\boldsymbol{\beta}} = \mathbf{X}'\mathbf{y}$).
-    * `Hab-02`: Transformación e Interpretación de Formas Funcionales No Lineales (Lin-Log, Log-Lin, Log-Log, Cuadrática, Recíproca).
-    * `Hab-03`: Estimación Insesgada de la Varianza del Error $s^2$ mediante la Traza de $\mathbf{M}$.
-    * `Hab-04`: Inferencia Estadística en Muestras Finitas: Contrastes $t$-Student y $F$-Fisher.
-    * `Hab-05`: Diagnóstico e Interpretación Econométrica de Salidas EViews.
-    * `Hab-06`: Algoritmo de Cálculo Matricial Completo en Muestras Reducidas.
-    * `Hab-07`: Contraste Empírico de Modelos con/sin Intercepto y Predicción Condicional Puntual.
-* **Carga Cognitiva y Secuenciación:** La progresión desde la representación matricial y el cálculo vectorial hacia las propiedades de proyección, inferencia multivariante y diagnóstico empírico es impecable.
-* **Área de Oportunidad:** Los metadatos raíz del curso presentan las 16 competencias en una lista plana; carecen de un grafo acíclico dirigido (DAG) explícito de prerrequisitos y de macro-módulos temáticos de agrupación.
+| Prioridad | Componente Afectado | Acción Requerida | Esfuerzo Estimado |
+| :---: | :--- | :--- | :---: |
+| **P1** | `C-06` a `Hab-11` (`hints`) | Reescribir las Pistas 1, 2 y 3 de las 10 micro-competencias avanzadas para eliminar el boilerplate vacío y suprimir la inyección engañosa de distractores. | 4 horas |
+| **P1** | `Q-C09-151`, `Q-C09-152` | Corregir la variable en el stem: sustituir `$R_{var_idx}^2$` por la notación econométrica correcta `$R_2^2$` / `$R_3^2$`. | 15 mins |
+| **P1** | `Q-C10-191`, `Q-C10-192` | Corregir la fórmula en `detailed_solution`: sustituir `var_total` por el valor aritmético evaluado `58` / `29`. | 15 mins |
+| **P2** | `competencies` (`prerequisites`) | Poblar las dependencias jerárquicas explícitas en las 22 micro-competencias que actualmente tienen `prerequisites: []`. | 2 horas |
+| **P3** | `multiple_choice_7_options` | Crear 2 arquetipos adicionales por competencia en lugar de clonar un solo problema 14 veces variando únicamente $n$. | 6 horas |
+| **P3** | `fill_in_the_blank` (`misconception_warning`) | Reemplazar "Verifique cuidadosamente los supuestos y cálculos antes de seleccionar su respuesta" por advertencias directas a errores aritméticos típicos. | 1 hora |
 
 ---
 
-### Dimensión 2: Calidad de Evaluación y Reactivos (4.8 / 5.0 pts)
+## 6. Conclusión y Veredicto Final
 
-* **Volumen y Cobertura:** 390 reactivos en total (promedio de 24.4 reactivos por competencia; 20 por Hecho/Concepto y 30 por Habilidad). Cumple holgadamente el criterio de suficiencia formativa.
-* **Diversidad de Formatos Psicométricos:**
-  * `multiple_choice_7_options`: 142 preguntas (36.4%), con 7 alternativas exhaustivas que reducen la probabilidad de acierto por azar al $14.28\%$.
-  * `fill_in_the_blank`: 124 preguntas (31.8%), que exigen cálculo numérico independiente, con configuración de tolerancias y valores equivalentes aceptados.
-  * `multiple_select`: 124 preguntas (31.8%), demandando evaluación simultánea de múltiples propiedades matriciales y teoremas.
-* **Calidad Diagnóstica de Distractores:**
-  * En las 142 preguntas MC7: 852 distractores evaluados, **100%** con `error_rationale` formativo explícito.
-  * En las 124 preguntas MS: 341 opciones incorrectas, **100%** con `error_rationale` diagnóstico.
-  * Cero distractores triviales o inverosímiles; todos capturan fallas analíticas reales (e.g., confusión entre varianza muestral y poblacional, inversión de grados de libertad en contrastes $F$, mala interpretación de semielasticidades en modelos log-lin).
-* **Ausencia de Fugas de Respuesta (Answer Leaks):**
-  * Se auditó el texto de los stems de los 124 reactivos FIB y 142 MC7: cero fugas literales o metainformación delatora detectadas.
-* **Oportunidad de Mejora:** Dentro de ciertas micro-habilidades, los enunciados y distractores siguen una plantilla paramétrica repetitiva donde solo varían los valores numéricos.
+El curso **`estadistica3_regresion_v3`** constituye una obra de gran envergadura académica, cubriendo con rigor matemático superior la teoría y la práctica de la econometría clásica y moderna a lo largo de 26 micro-competencias y 630 reactivos de evaluación interactiva.
 
----
-
-### Dimensión 3: Andamiaje y Pistas Progresivas (4.8 / 5.0 pts)
-
-* **Arquitectura de Pistas Escalonadas:**
-  * **100% de cumplimiento en presencia de pistas (390/390 reactivos):** Cada uno cuenta con exactamente 3 pistas escalonadas.
-  * **Gradiente Cognitivo Socrático:**
-    * *Pista 1 (Marco Conceptual):* Introduce el teorema, supuesto o propiedad matricial relevante.
-    * *Pista 2 (Estrategia Procedimental):* Desglosa la formulación algebraica o paso de despeje.
-    * *Pista 3 (Guía Operativa):* Proporciona la estructura exacta de cálculo sin regalar la cifra definitiva antes de que el estudiante complete el paso.
-* **Advertencia de Conceptos Erróneos (Misconception Warnings):**
-  * 390 de 390 reactivos (100%) incorporan un campo `misconception_warning` / `common_misconception_warning` que previene confusiones habituales (ej., confundir $\sum e_i = 0$ en modelos sin constante, o asociar causalidad a un $R^2$ elevado).
-* **Soluciones Detalladas:**
-  * 390 de 390 reactivos (100%) presentan una `detailed_solution` completa.
-* **Deficiencia Detectada:**
-  * En **40 reactivos**, la solución detallada contiene marcadores f-string literales no interpolados (`{r2_val:.4f}`, `{src_val:.2f}`, `{t_val:.2f}`), como en `Q-C03-161..164`, `Q-C03-169..176`, y `Q-Hab05-291..295`. Esto degrada el feedback final al mostrar una variable de código en lugar del número procesado.
-
----
-
-### Dimensión 4: Alineación Instruccional (4.0 / 4.0 pts)
-
-* **Congruencia Curricular:** Total correspondencia entre la teoría econométrica declarada y los problemas planteados.
-* **Taxonomía de Bloom:**
-  * **Analyze (Analizar):** 132 preguntas (33.8%)
-  * **Apply (Aplicar):** 131 preguntas (33.6%)
-  * **Understand (Comprender):** 78 preguntas (20.0%)
-  * **Remember (Recordar):** 49 preguntas (12.6%)
-  * **67.4%** de las evaluaciones se concentran en habilidades de orden superior (análisis matricial, contrastes de hipótesis y diagnósticos empíricos).
-* **Preguntas Huérfanas:** Cero (0) preguntas huérfanas. No hay contaminación temática de series de tiempo no estacionarias, vectores autorregresivos (VAR), datos de panel ni modelos de elección discreta.
-
----
-
-### Dimensión 5: Accesibilidad y Ergonomía Técnica / KaTeX (1.0 / 2.0 pts)
-
-* **Notación Matemática Formal:** Notación en álgebra lineal rigurosa ($\mathbf{X} \in \mathbb{R}^{n \times K}$, $\mathbf{P} = \mathbf{X}(\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}'$).
-* **Resolución de Errores Externos:** Los delimitadores exteriores triples (`$$$`) y delimitadores abiertos de versiones tempranas fueron eliminados en esta entrega.
-* **Hallazgos Forenses Críticos (Sintaxis KaTeX Interna):**
-  Una inspección sintáctica profunda de balance de llaves `{}` dentro del modo matemático reveló que **161 reactivos (41.3% del banco)** contienen errores de sintaxis que provocan fallas de renderizado en frontend (parse errors en KaTeX):
-  1. **Estimadores y matrices con comandos anidados sin llave de cierre exterior:**
-     * `\hat{\boldsymbol{\beta}` en lugar de `\hat{\boldsymbol{\beta}}`: **198 instancias**.
-     * `\hat{\mathbf{u}` en lugar de `\hat{\mathbf{u}}`: **102 instancias**.
-     * `\hat{\mathbf{Y}` en lugar de `\hat{\mathbf{Y}}`: **63 instancias**.
-     * `\bar{\hat{y}` en lugar de `\bar{\hat{y}}`: **6 instancias**.
-  2. **Fracciones con grupos abiertos:**
-     * `\frac{\text{SRC}{\text{STC}` en lugar de `\frac{\text{SRC}}{\text{STC}}`: **28 instancias**.
-     * `k_i = \frac{X_i - \bar{X}{60}` en lugar de `k_i = \frac{X_i - \bar{X}}{60}`: **7 instancias**.
-     * `\text{CMe} = 30 + \frac{500}{\text{Q}$$` en lugar de `\text{CMe} = 30 + \frac{500}{\text{Q}}$$`: presente en `Q-Hab02-118` y reactivos conexos.
-  3. **Subíndices y raíces cuadradas con llaves faltantes:**
-     * Subíndices críticos: `t_{\text{crit}` (5 casos), `F_{\text{crit}` (5 casos), `R_{\text{raw}^2` (4 casos).
-     * Radicales: `\sqrt{c_{jj}` (5 casos) y `\sqrt{s^2 c_{` (5 casos).
-  4. **Marcadores f-string residuales en soluciones:**
-     * 40 soluciones detalladas con cadenas literales `{r2_val:.4f}`, `{src_val:.2f}`, `{t_val:.2f}`.
-
----
-
-## 3. Verificación de Penalizaciones Duras (Hard Deductions)
-
-| Criterio Normativo | Condición Detectada | Deducción |
-| :--- | :--- | :---: |
-| **Banco < 3 ejercicios por competencia** | Mínimo en el curso: 20 reactivos (cumplimiento superávit) | **0.0 pts** |
-| **Reactivos con hints = 0** | 0 reactivos sin pistas (390 de 390 tienen 3 pistas) | **0.0 pts** |
-| **Pregunta huérfana crítica** | 0 preguntas huérfanas o ajenas al corpus temático | **0.0 pts** |
-| **Total Penalizaciones Duras** | - | **0.0 pts** |
-
----
-
-## 4. Registro Forense de Incidencias Técnicas
-
-### 4.1. Patrones de Sintaxis KaTeX Afectados
-
-```text
-1. Comando Estimador Beta MCO:
-   Texto Actual:   \hat{\boldsymbol{\beta} = (\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}'\mathbf{y}
-   Texto Corregido: \hat{\boldsymbol{\beta}} = (\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}'\mathbf{y}
-   Afectación:     198 ocurrencias en stems, opciones y soluciones de Hab-01, H-01, C-02.
-
-2. Comando Vector Residual u:
-   Texto Actual:   \hat{\mathbf{u}'\hat{\mathbf{u} = \mathbf{u}'\mathbf{M}\mathbf{u}
-   Texto Corregido: \hat{\mathbf{u}}'\hat{\mathbf{u}} = \mathbf{u}'\mathbf{M}\mathbf{u}
-   Afectación:     102 ocurrencias en Hab-03, H-03, C-04.
-
-3. Comando Vector Ajustado Y:
-   Texto Actual:   \hat{\mathbf{Y} = \mathbf{P}\mathbf{Y}
-   Texto Corregido: \hat{\mathbf{Y}} = \mathbf{P}\mathbf{Y}
-   Afectación:     63 ocurrencias en Hab-06, H-03.
-
-4. Descomposición ANOVA de R^2:
-   Texto Actual:   R^2 = 1 - \frac{\text{SRC}{\text{STC}
-   Texto Corregido: R^2 = 1 - \frac{\text{SRC}}{\text{STC}}
-   Afectación:     28 ocurrencias en C-03, C-05.
-
-5. Modelo de Costo Medio Recíproco:
-   Texto Actual:   $$\text{CMe} = 30 + \frac{500}{\text{Q}$$
-   Texto Corregido: $$\text{CMe} = 30 + \frac{500}{\text{Q}}$$  (o \frac{500}{Q})
-   Afectación:     Q-Hab02-118 y variantes paramétricas en Hab-02.
-
-6. Marcadores f-string Literales no Evaluados:
-   Texto Actual:   $R^2 = \frac{240.0}{380.0} = {r2_val:.4f}$
-   Texto Corregido: $R^2 = \frac{240.0}{380.0} = 0.6316$
-   Afectación:     40 reactivos en C-03 (161-176) y Hab-05 (291-295).
-```
-
----
-
-## 5. Reglas de Linting Descubiertas (Loop de Auto-Mejora del Motor)
-
-Durante el análisis cualitativo y forense de los *risk clusters* y muestras estratificadas del curso, se identificaron y formalizaron cuatro nuevas reglas de validación estática para ser incorporadas en el motor determinista de linters (`course-qa-evaluator`):
-
-| ID de Regla | Dimensión | Severidad | Descripción del Vicio y Patrón Detectado | Muestra Afectada |
-| :--- | :--- | :---: | :--- | :--- |
-| `KATEX_UNCLOSED_NESTED_COMMAND_BRACE` | Accesibilidad y KaTeX | **Critical** | Omisión sistemática de llave de cierre en comandos anidados (`\hat{\boldsymbol{...}`, `\hat{\mathbf{...}`) antes de delimitadores (`=`, `)`, `+`, `'`). <br>`Regex:` `\\hat\{\\(?:boldsymbol\|mathbf)\{[a-zA-Z]+(?=[)=+\s\',])` | `\hat{\boldsymbol{\beta} = (\mathbf{X}'\mathbf{X})^{-1}\mathbf{X}'\mathbf{y}` (161 reactivos) |
-| `KATEX_MALFORMED_FRAC_DROPPED_NUMERATOR_BRACE` | Accesibilidad y KaTeX | **Critical** | Supresión de la llave de cierre del numerador en `\frac{num}{den}`, generando la sintaxis malformada `\frac{num{den}` que aborta la compilación de KaTeX. <br>`Regex:` `\\frac\{[^{}\n]+\{[^{}\n]+\}` | `\frac{\text{SRC}{\text{STC}` (35 reactivos) |
-| `SCAFFOLDING_UNINTERPOLATED_FSTRING_LITERAL` | Andamiaje y Pistas | **Warning** | Presencia de tokens de formateo literal de Python (`{var:.Nf}`) en campos de texto de soluciones detalladas o pistas por omisión de interpolación de plantillas. <br>`Regex:` `\{[a-zA-Z_][a-zA-Z0-9_]*:[0-9]*\.[0-9]+[fge]\}` | `$R^2 = \frac{240.0}{380.0} = {r2_val:.4f}$` (40 reactivos) |
-| `ARCHITECTURE_EMPTY_DAG_PREREQUISITES` | Arquitectura y Granularidad | **Minor** | Cursos con topología plana donde el 100% de las micro-competencias declara `prerequisites = []`, imposibilitando la inferencia de grafos acíclicos dirigidos (DAG) en Mastery Learning. | `"prerequisites": []` (16 de 16 competencias) |
-
----
-
-## 6. Plan de Remediación Prioritario
-
-1. **Remediación Inmediata de Frontend (Prioridad Alta):**
-   * Ejecutar un script de reemplazo sintáctico regular sobre `courses/estadistica3_regresion_v3.json` para cerrar las llaves en los 6 comandos clave (`\hat{\boldsymbol{\beta}}`, `\hat{\mathbf{u}}`, `\hat{\mathbf{Y}}`, `\bar{\hat{y}}`, `\frac{\text{SRC}}{\text{STC}}`, `\sqrt{c_{jj}}`).
-   * Evaluar e interpolar numéricamente los 40 placeholders de f-string en las soluciones de `Q-C03-161..176` y `Q-Hab05-291..295`.
-   * *Impacto proyectado:* Con estas dos correcciones, la Dimensión 5 ascenderá a **2.0 / 2.0** y la Dimensión 3 a **5.0 / 5.0**, elevando la calificación consolidada a **19.6 / 20.0**.
-
-2. **Arquitectura Curricular Avanzada (Prioridad Media):**
-   * Formalizar en el objeto raíz del archivo JSON la estructura de 4 macro-módulos temáticos:
-     * *Módulo I:* Álgebra Matricial y Estimación MCO (`H-01`, `C-01`, `Hab-01`, `H-02`, `C-02`).
-     * *Módulo II:* Álgebra de Proyecciones y ANOVA (`H-03`, `C-03`, `Hab-03`, `C-04`).
-     * *Módulo III:* Inferencia Estadística y Restricciones Lineales (`Hab-04`, `H-04`, `Hab-06`).
-     * *Módulo IV:* Especificación, Diagnóstico Empírico y Modelos sin Constante (`Hab-02`, `Hab-05`, `C-05`, `Hab-07`).
-   * Declarar un grafo de dependencias de prerrequisitos (DAG) entre competencias para habilitar el motor adaptativo de Mastery Learning.
-
-3. **Diversificación Psicométrica (Prioridad Baja):**
-   * Ampliar la variedad textual de los distractores en preguntas generadas paramétricamente dentro del mismo shard, evitando que los estudiantes identifiquen patrones sintácticos fijos.
-
+La presente auditoría otorga una calificación de **16.3 / 20.0 puntos**, ubicando al curso en la categoría **ACEPTABLE (14.0 - 16.9 pts)**. Se aprueba su utilización provisional en plataforma, condicionando su certificación final de excelencia a la ejecución del plan de remediación en el andamiaje de pistas de las competencias `C-06` a `Hab-11`, la formalización del grafo DAG de prerrequisitos y la corrección de los residuos de variables en fórmulas matemáticas.

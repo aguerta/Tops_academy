@@ -1,89 +1,103 @@
 {
   "course_metadata": {
     "course_id": "practica_parcial_saul_standard_coarse_v2",
-    "unit_title": "Práctica Parcial Saúl: Ecuaciones en Derivadas Parciales y Sistemas Dinámicos en Economía",
-    "detected_objective": "Dominio y aplicación analítica integral de la resolución de ecuaciones en derivadas parciales cuasilineales de primer orden mediante el método de Lagrange y curvas características, modelado económico con homogeneidad de Euler, dualidad microeconómica, precios espaciales con costos de transporte, y análisis cualitativo y cuantitativo de sistemas dinámicos continuos lineales y no lineales 2D (isoclinas, linealización jacobiana, autovalores y estabilidad local).",
+    "unit_title": "Practica Parcial Saul Standard Coarse V2",
+    "detected_objective": "Dominio y aplicación analítica integral de Ecuaciones en Derivadas Parciales (EDPs) y Sistemas Dinámicos Continuos 2D en Economía y Finanzas",
     "total_competencies": 14,
     "total_questions": 370,
     "platform_status": "ELIMINADO",
-    "deleted_at": "2026-10-20 13:26:21"
+    "deletion_timestamp": "2026-10-20 13:26:21",
+    "deleted_at": "2026-10-25 11:12:48"
   },
   "dimension_scores": {
     "architecture_granularity": {
-      "score": 3.2,
+      "score": 2.2,
       "max": 4.0,
-      "feedback": "Descomposición curricular de 14 competencias con 370 reactivos de alta profundidad. Sin embargo, se identifican dos deficiencias estructurales en la arquitectura modular: 1) Desbalance taxonómico: carece por completo de micro-competencias de Hechos [Fact] (0 Hechos, 5 Conceptos [35.7%], 9 Habilidades [64.3%]), sobrecargando la entrada cognitiva del estudiante; 2) Grafo DAG de prerrequisitos desconectado y desalineado: 7 de las 14 competencias tienen 'prerequisites': []. Específicamente, Hab-01 y Hab-07 carecen de prerrequisitos pese a requerir bases de C-03 y C-04/C-05; y habilidades de EDPs (Hab-03 y Hab-05) declaran como prerrequisito a C-05 (estabilidad de EDOs 2x2) en lugar de C-03 (fundamentos de EDPs), mientras que Hab-02 declara a Hab-09 en vez de C-01."
+      "feedback": "Definición conceptual y matemática sólida de las micro-competencias, pero arquitectura DAG severamente deficiente: el 50% de las competencias (7 de 14) carecen de prerrequisitos declarados (Hab-01, C-01, C-02, C-03, C-04, Hab-07, C-05 actúan como nodos huérfanos de entrada). Existen aristas de dependencia espurias e ilógicas entre dominios teóricos disjuntos (ej. Hab-02 de optimización y EDP de Euler depende de Hab-09 de isoclinas en EDOs; Hab-03 de precios espaciales depende de C-05 de estabilidad matricial 2x2). Desbalance cognitivo absoluto en la taxonomía (0 Hechos, 5 Conceptos, 9 Habilidades)."
     },
     "assessment_quality": {
-      "score": 4.2,
+      "score": 1.5,
       "max": 5.0,
-      "feedback": "Banco masivo de 370 reactivos con 2220 distractores evaluados al 100% de cobertura diagnóstica con 'error_rationale' de alta precisión conceptual y psicométrica. Cero fugas de respuesta ('Answer Leaks') y cero distractores delatores ('telltale distractors'). Los problemas evalúan destreza operativa y deducción matemática formal en niveles superiores de Bloom. Deducción aplicada debido a: 1) Ausencia total de diversidad psicométrica: el 100% de los reactivos es de opción múltiple de 7 alternativas (multiple_choice_7_options), omitiendo reactivos de selección múltiple (multiple_select) o respuesta construida (fill_in_the_blank); 2) Estructura paramétrica altamente repetitiva con prefijos mecánicos en los enunciados."
+      "feedback": "Nivel Crítico por Answer Leaks masivos y metainformación delatora en el texto visible de las opciones. En reactivos de Hab-07, las alternativas inician con etiquetas autodescriptivas delatando la clave ('Trayectoria exacta:' vs 'Desplazamiento erróneo en autovalores:', 'Inversión de signo en el estado estacionario:'). En Hab-08, las opciones se autoincriminan con rótulos diagnósticos ('Punto de reposo espurio', 'Desacoplamiento erróneo', 'Inversión de signos', 'Equilibrio estacionario'). En Hab-01, Hab-03 y Hab-04 los distractores contienen cláusulas explícitas que anuncian su propio error ('que genera la trayectoria errónea', 'se afirma erróneamente que', 'lo que produce la solución errónea', 'solución particular espuria', 'omitiendo la corrección cuadrática'). Nula variedad tipológica (100% multiple_choice_7_options) y un único arquetipo paramétrico por micro-competencia, induciendo mecanización psicométrica inmediata."
     },
     "scaffolding_hints": {
-      "score": 4.0,
+      "score": 2.8,
       "max": 5.0,
-      "feedback": "Cumplimiento del 100% en andamiaje socrático con exactamente 3 pistas progresivas por reactivo (1110 pistas en total) estructuradas en progresión cognitiva rigurosa: Pista 1 (Conceptual) -> Pista 2 (Procedimental) -> Pista 3 (Operativa/Cálculo). Todas las preguntas contienen soluciones detalladas completas con demostraciones analíticas. Se reduce puntuación debido a residuos de plantillas en soluciones detalladas: presencia de marcadores literales de una sola llave sin interpolar ({b}, {c}, {a}, {d}) en Hab-05 y Hab-09 (ej. '${b} \\frac{dx}{x} - 3 \\frac{dy}{y} = 0$', '{a}x + 4y + -68 = 0'), así como matrices en Hab-08 con variables no evaluadas (\\beta, j_{12}) que deterioran la retroalimentación al estudiante."
+      "feedback": "Cada reactivo cuenta con 3 pistas ordenadas según la progresión socrática (Conceptual -> Procedimental -> Operativa). Sin embargo, las pistas son cadenas estáticas idénticas para los 30 reactivos de cada competencia, sin adaptación al caso numérico particular del estudiante. Se detectaron placeholders de plantillas sin resolver en las soluciones detalladas: residuos literales '{b}' y '{c}' en Hab-05 (Q-Hab05-181, Q-Hab05-182), y '{a}' y '{d}' en Hab-09 (Q-Hab09-321, Q-Hab09-322). En Hab-07 el autovector v_2 conserva el símbolo literal no instanciado '(1, -k)^T' y la solución concluye con la fórmula genérica sin sustituir valores. Las advertencias de ideas preconcebidas (misconception warnings) faltan en la mayoría de las competencias."
     },
     "instructional_alignment": {
-      "score": 4.0,
+      "score": 3.2,
       "max": 4.0,
-      "feedback": "Alineación semántica y temática absoluta entre los objetivos declarados de la práctica parcial de economía matemática y los reactivos diseñados. Cero preguntas huérfanas y nula contaminación cruzada inter-dominio. Cobertura completa del temario de EDPs cuasilineales, teorema de Euler en dualidad, dinámica de precios con fletes, sistemas IS-LM, modelo de Goodwin, autovalores y diagramas de fase, con concentración predominante en niveles de Aplicación (Bloom 3) y Análisis (Bloom 4)."
+      "feedback": "Excelente alineación de dominio teórico con métodos cuantitativos avanzados en economía (curvas características de Lagrange, teoremas de Euler, dualidad microeconómica, estabilidad de sistemas IS-LM, modelo de Goodwin, variedades estables en puntos silla). Cero preguntas huérfanas (los 370 reactivos mapean a competencias declaradas) y anclaje adecuado en niveles Bloom de Aplicación y Análisis. La calificación no alcanza el rango excelente debido a la desconexión curricular introducida por las relaciones de prerrequisito erróneas en el grafo y la monotonía de clonación paramétrica."
     },
     "technical_ergonomics": {
-      "score": 1.4,
+      "score": 1.1,
       "max": 2.0,
-      "feedback": "Expresiones matemáticas formalmente compilables en KaTeX con delimitadores balanceados, sin triples delimitadores ni desbordes estructurales. No obstante, se detectan vicios ergonómicos sistemáticos en la notación: 1) Concatenación cruda de signos aritméticos (+ -) sin normalizar (ej. '1x + 1y + -8', '12x + -6y + -78'); 2) Coeficientes unitarios redundantes no simplificados ('1x', '1y'); 3) Fuga de identificadores de plantilla en modo matemático ({a}, {b}, {c}, {d}) que KaTeX interpreta como agrupaciones de caracteres y renderiza como letras en lugar de los coeficientes numéricos reales calculados."
+      "feedback": "El código KaTeX compila sin fallos catastróficos ni delimitadores triples ($$$). No obstante, presenta defectos notables de ergonomía algebraica por concatenación no depurada de coeficientes negativos en plantillas: colisiones de signos '+ -8', '+ -11y + -8', '+ -68', '+ -6y + -78', '+ -1y'; coeficientes unitarios redundantes no higienizados ('1x', '1y', 'e^{1t}'); y presencia de caracteres literales '{a}', '{b}', '{c}', '{d}' dentro de entornos matemáticos en soluciones detalladas."
     }
   },
   "penalties_applied": [],
-  "final_score": 16.8,
-  "quality_tier": "ACEPTABLE (14.0 - 16.9 pts)",
+  "final_score": 10.8,
+  "quality_tier": "CRÍTICO (0.0 - 10.9)",
+  "remediation_actions": [
+    "REINGENIERÍA TOTAL DE DISTRACTORES (Prioridad 1): Eliminar de raíz todas las etiquetas delatoras en los encabezados de las opciones ('Trayectoria exacta:', 'Desplazamiento erróneo:', 'Punto de reposo espurio:') y erradicar las cláusulas auto-delatoras ('que genera la trayectoria errónea', 'se afirma erróneamente que', 'solución particular espuria'). Los distractores deben formularse como afirmaciones plausibles y neutrales que reflejen el resultado del error de cálculo o concepción del estudiante.",
+    "DEPURACIÓN DE RESIDUOS DE PLANTILLAS EN SOLUCIONES: Corregir las plantillas de generación para eliminar los residuos literales '{a}', '{b}', '{c}', '{d}' en Hab-05 y Hab-09, e instanciar adecuadamente los parámetros de autovectores en Hab-07 (reemplazando '(1, -k)^T' por el valor numérico específico).",
+    "LIMPIEZA DE ERGONOMÍA KaTeX Y ÁLGEBRA: Implementar formateadores algebraicos estrictos para monomios que transformen '+ -c' en '- c', omitan el coeficiente '1' en variables ('1x' -> 'x', '1y' -> 'y') y limpien exponentes unitarios ('e^{1t}' -> 'e^t').",
+    "DIVERSIFICACIÓN TIPOLÓGICA Y MULTI-ARQUETIPO: Romper la monotonía del 100% de opción múltiple de 7 alternativas. Introducir reactivos de respuesta numérica/fill-in-the-blank, selección múltiple y al menos 3 arquetipos por competencia (problemas inversos, detección de errores, interpretación gráfica en el plano de fase).",
+    "REESTRUCTURACIÓN DEL GRAFO DE PRERREQUSITOS (DAG): Conectar las 7 competencias raíz huérfanas con sus fundamentos teóricos (C-03 como prerrequisito de Hab-01 y Hab-05; C-05 como prerrequisito de Hab-07) y suprimir las dependencias espurias inter-dominio (Hab-02 -> Hab-09, Hab-03 -> C-05).",
+    "DINAMIZACIÓN DE PISTAS Y MISCONCEPTION WARNINGS: Personalizar la Pista 3 de cálculo operativo para que guíe con los valores numéricos concretos de la instancia del alumno e incorporar explícitamente advertencias de concepciones erróneas en todas las soluciones detalladas."
+  ],
   "discovered_lint_rules": [
     {
-      "rule_id": "KATEX_SINGLE_BRACE_TEMPLATE_RESIDUE",
-      "dimension": "technical_ergonomics",
-      "severity": "warning",
-      "description": "Detección de variables de plantilla de una sola llave ({a}, {b}, {c}, {d}) dentro de expresiones KaTeX ($...$ o $$...$$) no sustituidas por el motor de plantillas, que renderizan como texto matemático literal en lugar de los valores numéricos correspondientes.",
-      "regex_pattern": "(?<=\\$)[^$]*\\{[a-zA-Z]\\}(?=[^$]*\\$)",
-      "sample_snippet": "${b} \\frac{dx}{x} - 3 \\frac{dy}{y} = 0$",
-      "affected_items_count": 60
+      "rule_id": "TELLTALE_OPTION_PREFIX_LABEL",
+      "name": "Detección de Etiquetas Autodescriptivas en Opciones",
+      "severity": "CRITICAL",
+      "description": "Detecta opciones que inician con prefijos diagnósticos que delatan la respuesta correcta ('Trayectoria exacta:', 'Solución analítica correcta:') o describen la naturaleza del error en distractores ('Desplazamiento erróneo...', 'Inversión de signo...', 'Constantes calculadas sin descontar...', 'Punto de reposo espurio:').",
+      "regex_pattern": "(?i)^(trayectoria\\s+exacta|solución\\s+(exacta|correcta)|desplazamiento\\s+erróneo|inversión\\s+de\\s+signo|constantes\\s+calculadas\\s+sin|punto\\s+de\\s+reposo\\s+espurio|desacoplamiento\\s+erróneo|formulación\\s+secular)",
+      "target_field": "options[].content"
     },
     {
-      "rule_id": "ARITHMETIC_UNNORMALIZED_SIGN_CONCATENATION",
-      "dimension": "technical_ergonomics",
-      "severity": "minor",
-      "description": "Detección de concatenación cruda de operadores aritméticos (+ - o - -) y coeficientes unitarios no simplificados (1x, 1y) generados por sustitución paramétrica directa f'{a}x + {b}y + {c}' sin normalización matemática.",
-      "regex_pattern": "(?:[+\\-]\\s*[+\\-]\\s*\\d+|\\b1[a-zA-Z]\\b)",
-      "sample_snippet": "\\dot{x} = 1x + 1y + -8",
-      "affected_items_count": 60
+      "rule_id": "SELF_INCRIMINATING_DISTRACTOR_TEXT",
+      "name": "Detección de Distractores con Cláusulas Autodelatoras",
+      "severity": "CRITICAL",
+      "description": "Detecta distractores cuyo cuerpo de texto argumenta explícitamente en contra de sí mismo usando lenguaje metainformativo delator ('que genera la trayectoria errónea', 'se afirma erróneamente que', 'lo que produce la solución errónea', 'se sostiene erróneamente que', 'solución particular espuria', 'sin realizar la inversión analítica requerida', 'ignorando la evolución', 'prescindiendo del signo negativo').",
+      "regex_pattern": "(?i)(trayectoria\\s+errónea|se\\s+afirma\\s+erróneamente|produce\\s+la\\s+solución\\s+errónea|se\\s+sostiene\\s+erróneamente|solución\\s+particular\\s+espuria|sin\\s+realizar\\s+la\\s+inversión\\s+analítica|ignorando\\s+la\\s+evolución|prescindiendo\\s+del\\s+signo\\s+negativo|omitiendo\\s+la\\s+corrección\\s+cuadrática)",
+      "target_field": "options[].content"
     },
     {
-      "rule_id": "DAG_DISCONNECTED_OR_MISALIGNED_PREREQUISITES",
-      "dimension": "architecture_granularity",
-      "severity": "warning",
-      "description": "Detección de competencias de habilidad (Skill) sin prerrequisitos declarados (prerequisites = []) cuando existen conceptos fundacionales afines en el curso, o con dependencias cruzadas semánticamente incongruentes entre subdominios matemáticos.",
-      "regex_pattern": null,
-      "sample_snippet": "\"Hab-01\": {\"prerequisites\": []}, \"Hab-03\": {\"prerequisites\": [\"C-05\"]}",
-      "affected_items_count": 7
+      "rule_id": "UNESCAPED_LATEX_BRACE_VARIABLE_RESIDUE",
+      "name": "Detección de Parámetros de Plantilla Escapados como Brackets LaTeX",
+      "severity": "HIGH",
+      "description": "Detecta cadenas del tipo '{a}', '{b}', '{c}', '{d}' o variables de un solo carácter entre llaves simples dentro de texto o expresiones LaTeX que no corresponden a macros estándar y evidencian f-strings mal formateadas (doble llave '{{b}}' en Python que resultó en literal '{b}').",
+      "regex_pattern": "(?<!\\\\)\\{[a-z]\\}(?![a-z])",
+      "target_field": "detailed_solution, stem, hints"
     },
     {
-      "rule_id": "ASSESSMENT_ZERO_ITEM_TYPE_DIVERSITY",
-      "dimension": "assessment_quality",
-      "severity": "minor",
-      "description": "Detección de cursos con 0% de diversidad psicométrica donde el 100% de las preguntas corresponde a una única tipología (ej. multiple_choice_7_options), omitiendo opciones de selección múltiple (multiple_select) o completación numérica (fill_in_the_blank).",
-      "regex_pattern": null,
-      "sample_snippet": "\"question_types_distribution\": {\"multiple_choice_7_options\": 370}",
-      "affected_items_count": 370
+      "rule_id": "UNFORMATTED_NEGATIVE_SIGN_COLLISION",
+      "name": "Colisión de Signos Aritméticos por Concatenación Negativa",
+      "severity": "MEDIUM",
+      "description": "Detecta artefactos de formateo algebraico defectuoso donde un coeficiente negativo es precedido directamente por el operador de adición ('+ -' o '+ -\\d+'), produciendo expresiones como '+ -8' o '+ -11y'.",
+      "regex_pattern": "\\+\\s*-\\s*\\d+",
+      "target_field": "stem, options[].content, detailed_solution"
+    },
+    {
+      "rule_id": "REDUNDANT_UNIT_ALGEBRAIC_COEFFICIENT",
+      "name": "Coeficientes Unitarios Redundantes en Expresiones Matemáticas",
+      "severity": "LOW",
+      "description": "Detecta la presencia de '1x', '1y', 'e^{1t}' en expresiones algebraicas que denotan falta de sanitización de plantillas paramétricas.",
+      "regex_pattern": "(?<![0-9a-zA-Z])1[a-zA-Z]|e\\^\\{1[a-zA-Z]\\}",
+      "target_field": "stem, options[].content, detailed_solution"
+    },
+    {
+      "rule_id": "SEMANTIC_DAG_ORPHAN_ROOT_THRESHOLD",
+      "name": "Umbral de Competencias Raíz sin Prerrequisitos en Cursos Avanzados",
+      "severity": "MEDIUM",
+      "description": "Alerta cuando más del 30% de las micro-competencias de un curso especializado carecen de prerrequisitos declarados en el grafo DAG, impidiendo un andamiaje adaptativo de maestría.",
+      "metric_threshold": "competencies_missing_prerequisites_count / total_competencies > 0.30",
+      "target_field": "competencies[].prerequisites"
     }
   ],
-  "remediation_actions": [
-    "Normalizar el motor de renderizado de expresiones algebraicas para eliminar concatenaciones de signos (+ -68 -> - 68) y simplificar coeficientes unitarios (1x -> x) en los enunciados y soluciones de Hab-09.",
-    "Corregir los templates paramétricos en Hab-05 y Hab-09 eliminando las llaves simples sin interpolar ({b}, {c}, {a}, {d}) en las soluciones detalladas e inyectando los valores escalares calculados.",
-    "Reestructurar el grafo acíclico dirigido (DAG) de prerrequisitos: conectar Hab-01 y Hab-05 con C-03; conectar Hab-02 con C-01 y C-03; reasignar Hab-03 a C-03; y anclar Hab-07 a C-04 y C-05.",
-    "Diversificar el banco evaluativo incorporando reactivos de respuesta construida (fill_in_the_blank) para el cálculo de autovalores y equilibrios, así como reactivos de selección múltiple (multiple_select) para propiedades cualitativas.",
-    "Integrar competencias atómicas de Hechos [Fact] (ej. definiciones canónicas de orden, grado y tipos de puntos fijos) para nivelar la pirámide cognitiva curricular."
-  ],
   "platform_status": "ELIMINADO",
-  "deleted_at": "2026-10-20 13:26:21",
+  "deleted_at": "2026-10-25 11:12:48",
   "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

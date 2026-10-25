@@ -274,6 +274,7 @@ class SubagentTreeResolver:
     def discover_subagents(root_steps: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
         subagents: Dict[str, Dict[str, Any]] = {}
 
+        pending_invokes: List[Dict[str, str]] = []
         for step in root_steps:
             stype = step.get("type")
             content = step.get("content", "")
@@ -288,20 +289,31 @@ class SubagentTreeResolver:
                         try: args = json.loads(args)
                         except Exception: pass
                     if isinstance(args, dict):
+                        role_val = str(args.get("Role", "unknown") or "unknown").strip(' "\'')
+                        type_val = str(args.get("TypeName", "unknown") or "unknown").strip(' "\'')
+                        if role_val != "unknown" or type_val != "unknown":
+                            pending_invokes.append({
+                                "role": role_val,
+                                "type": type_val,
+                            })
                         for sub in args.get("Subagents", []):
                             if isinstance(sub, dict):
-                                role = sub.get("Role", "Subagent")
-                                t_name = sub.get("TypeName", "generic")
-                                prompt = sub.get("Prompt", "")
-                            # Map candidate
-                            # The result will arrive in the corresponding tool response
+                                pending_invokes.append({
+                                    "role": str(sub.get("Role", "unknown") or "unknown").strip(' "\''),
+                                    "type": str(sub.get("TypeName", "unknown") or "unknown").strip(' "\''),
+                                })
 
             # 2. From tool result content of invoke_subagent
-            if "Created the following subagents:" in content or "conversationId" in content:
+            if "Created the following subagent" in content or "conversationId" in content:
                 uuid_matches = re.findall(r'"conversationId":\s*"([a-f0-9\-]{36})"', content)
                 for cid in uuid_matches:
+                    inv = pending_invokes.pop(0) if ("Created the following subagent" in content and pending_invokes) else {}
                     if cid not in subagents:
-                        subagents[cid] = {"conversation_id": cid, "role": "unknown", "type": "unknown"}
+                        subagents[cid] = {
+                            "conversation_id": cid,
+                            "role": inv.get("role", "unknown"),
+                            "type": inv.get("type", "unknown"),
+                        }
 
             # 3. From manage_subagents list output
             if '"conversationId":' in content and '"role":' in content:
@@ -331,11 +343,18 @@ class SubagentTreeResolver:
             r_str = f"{info.get('role', '')} {info.get('type', '')}"
             for s in first_steps:
                 c = f"{r_str} {s.get('content', '')}"
+                m_rep = re.search(r"(?:Repair Engineer\s+([A-Za-z0-9_\-]+)|prompts[/\\]repair[/\\]repair_([a-zA-Z0-9_\-]+)\.json)", c, re.IGNORECASE)
                 m_part = re.search(r"(?:part_|cta_|CTA Architect\s*\(?part_|CTA Architect\s+)(\d+)", c, re.IGNORECASE)
                 m_shard = re.search(r"(?:shard_|Shard Author shard_|Author Shard\s+|Shard\s+)(\d+)", c, re.IGNORECASE)
                 m_judge = re.search(r"(?:Judge\s+|judge_batch_|judge_responses_|judge_)(\d+)", c, re.IGNORECASE)
 
-                if m_part:
+                if m_rep or "c2c_repair" in r_str.lower() or "repair engineer" in r_str.lower():
+                    rep_id = (m_rep.group(1) or m_rep.group(2)).upper() if m_rep else cid[:6]
+                    base_role = info.get("role") if "repair engineer" in str(info.get("role", "")).lower() else f"Repair Engineer {rep_id}"
+                    info["role"] = f"{base_role} ({cid[:6]})"
+                    info["stage"] = "3b_repair"
+                    break
+                elif m_part:
                     part_num = int(m_part.group(1))
                     info["role"] = f"CTA Architect (part_{part_num:02d})"
                     info["stage"] = "1b_cta"
@@ -1091,6 +1110,7 @@ def run_traceback_audit(
 
     cta_map: Dict[str, Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]] = {}
     shards_map: Dict[str, Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]] = {}
+    repairs_map: Dict[str, Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]] = {}
     judges_map: Dict[str, Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]] = {}
 
     for cid, info in subagents.items():
@@ -1104,7 +1124,9 @@ def run_traceback_audit(
         all_agent_turns[role] = s_turns
 
         role_l = role.lower()
-        if "cta" in role_l or "part_" in role_l or "architect" in role_l or "harmonizer" in role_l:
+        if "repair" in role_l:
+            repairs_map[role] = (s_steps, s_turns)
+        elif "cta" in role_l or "part_" in role_l or "architect" in role_l or "harmonizer" in role_l:
             cta_map[role] = (s_steps, s_turns)
         elif "shard" in role_l or "author" in role_l:
             shards_map[role] = (s_steps, s_turns)
@@ -1120,10 +1142,12 @@ def run_traceback_audit(
         for c_role, (c_steps, c_turns) in sorted(cta_map.items()):
             cta_data[c_role] = ForensicsEngine.audit_cta_architect(c_steps, c_turns)
 
-    # 4. Analyze Shard Authors (dynamic N instances)
+    # 4. Analyze Shard Authors (dynamic N instances) & Repair Engineers
     shards_data = {}
     for sname, (s_steps, s_turns) in sorted(shards_map.items()):
         shards_data[sname] = ForensicsEngine.audit_shard_author(sname, s_steps, s_turns)
+    for rname, (r_steps, r_turns) in sorted(repairs_map.items()):
+        shards_data[rname] = ForensicsEngine.audit_shard_author(rname, r_steps, r_turns)
 
     # 5. Analyze Blind Judges (dynamic K instances)
     judges_data = ForensicsEngine.audit_blind_judges(judges_map)

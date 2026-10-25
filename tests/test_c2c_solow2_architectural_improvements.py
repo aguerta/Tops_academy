@@ -610,9 +610,9 @@ TEMPLATES = [
 
         # 2. Author creates shard_01_data.py with valid 9-element tuples
         shard_data = '''
-def gen_c01(rng):
-    tc = rng.randint(250, 350)
-    delta = rng.randint(150, 450)
+def _gen_c01(rng, arch=1):
+    tc = rng.randint(250, 350) if arch == 1 else (rng.randint(70, 180) if arch == 2 else (rng.randint(300, 400) if arch == 3 else rng.randint(200, 280)))
+    delta = rng.randint(150, 450) if arch == 1 else (rng.randint(100, 300) if arch == 2 else (rng.randint(500, 900) if arch == 3 else rng.randint(800, 1500)))
     th = tc + delta
     ans_val = round(1.0 - (tc / th), 3)
 
@@ -630,6 +630,11 @@ def gen_c01(rng):
         "distractors": distractors
     }
 
+def gen_c01_1(rng): return _gen_c01(rng, 1)
+def gen_c01_2(rng): return _gen_c01(rng, 2)
+def gen_c01_3(rng): return _gen_c01(rng, 3)
+def gen_c01_4(rng): return _gen_c01(rng, 4)
+
 def ver_c01(res):
     v = res.get("vars", {})
     expected = round(1.0 - (v["tc"] / v["th"]), 3)
@@ -640,13 +645,46 @@ TEMPLATES = [
         "C-01",
         "multiple_choice",
         r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$. Determine el rendimiento térmico:",
-        gen_c01,
+        gen_c01_1,
         ver_c01,
         r"Por el teorema de Carnot, el rendimiento es $\\eta = 1 - \\frac{T_C}{T_H} = {ans}$.",
-        "Eficiencia de Carnot",
+        "Eficiencia de Carnot 1",
         ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"],
-        ("solow.pdf", 1, "Cita")
-    )
+        ("solow.pdf", 1, "Cita 1")
+    ),
+    (
+        "C-01",
+        "multiple_choice",
+        r"En un ciclo térmico reversible con focos a temperaturas $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$, halle el rendimiento térmico:",
+        gen_c01_2,
+        ver_c01,
+        r"Por el teorema de Carnot, el rendimiento es $\\eta = 1 - \\frac{T_C}{T_H} = {ans}$.",
+        "Eficiencia de Carnot 2",
+        ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"],
+        ("solow.pdf", 1, "Cita 2")
+    ),
+    (
+        "C-01",
+        "multiple_choice",
+        r"Considere una máquina de Carnot entre temperaturas $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$. Determine su rendimiento:",
+        gen_c01_3,
+        ver_c01,
+        r"Por el teorema de Carnot, el rendimiento es $\\eta = 1 - \\frac{T_C}{T_H} = {ans}$.",
+        "Eficiencia de Carnot 3",
+        ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"],
+        ("solow.pdf", 1, "Cita 3")
+    ),
+    (
+        "C-01",
+        "multiple_choice",
+        r"Dados dos focos térmicos a temperaturas $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$, calcule la eficiencia de Carnot:",
+        gen_c01_4,
+        ver_c01,
+        r"Por el teorema de Carnot, el rendimiento es $\\eta = 1 - \\frac{T_C}{T_H} = {ans}$.",
+        "Eficiencia de Carnot 4",
+        ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"],
+        ("solow.pdf", 1, "Cita 4")
+    ),
 ]
 '''
         (shards_dir / "shard_01_data.py").write_text(shard_data, encoding="utf-8")
@@ -1166,7 +1204,7 @@ TEMPLATES = [
             ],
         }), encoding="utf-8")
 
-        direct_res = dispatch_cta(self.work_dir, mode="direct")
+        direct_res = dispatch_cta(self.work_dir, mode="direct", pointer=False)
         self.assertEqual(len(direct_res["Subagents"]), 1)
         self.assertEqual(len(direct_res["item_files"]), 1)
 

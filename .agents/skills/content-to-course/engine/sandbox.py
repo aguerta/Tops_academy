@@ -11,6 +11,7 @@ import ast
 import json
 import os
 import sys
+import threading
 import time
 import traceback
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -19,6 +20,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 class SecurityViolationError(Exception):
     """Raised when code violates sandbox security policies."""
     pass
+
+
+SandboxSecurityError = SecurityViolationError
 
 
 class SandboxExecutionError(Exception):
@@ -394,6 +398,79 @@ def build_sandbox_globals() -> Dict[str, Any]:
     return env
 
 
+def call_with_timeout(
+    func: Any,
+    args: tuple = (),
+    kwargs: Optional[dict] = None,
+    timeout: Optional[float] = 0.5,
+    seed: Optional[int] = None,
+    max_user_steps: int = 250_000,
+) -> Any:
+    """Invoke a callable with a per-thread sys.settrace wall-clock and CPU-time guard."""
+    if kwargs is None:
+        kwargs = {}
+    prev_trace = sys.gettrace()
+    use_tracer = (timeout is not None and timeout > 0) or (max_user_steps and max_user_steps > 0)
+    if use_tracer:
+        timeout_val = float(timeout) if (timeout is not None and timeout > 0) else None
+        has_thread_time = hasattr(time, "thread_time")
+        cpu_start = time.thread_time() if has_thread_time else 0.0
+        wall_start = time.perf_counter()
+
+        total_steps = [0]
+        user_steps = [0]
+        target_code = getattr(func, "__code__", None)
+        target_filename = getattr(target_code, "co_filename", None)
+
+        def _timeout_tracer(frame, event, arg):
+            total_steps[0] += 1
+            f_code = frame.f_code
+            fn = f_code.co_filename
+            if (
+                f_code is target_code
+                or (target_filename and fn == target_filename)
+                or fn in ("<sandbox>", "<generate_py>", "<cross_check_py>")
+            ):
+                user_steps[0] += 1
+                if max_user_steps and timeout_val is None and user_steps[0] > max_user_steps:
+                    seed_suffix = f" (seed={seed})" if seed is not None else ""
+                    raise SandboxTimeoutError(
+                        f"Infinite loop guard triggered after {max_user_steps} steps{seed_suffix}"
+                    )
+
+            if timeout_val is not None and (total_steps[0] & 63) == 0:
+                seed_suffix = f" (seed={seed})" if seed is not None else ""
+                if threading.active_count() > 1 and has_thread_time:
+                    wall_limit = max(timeout_val * 4.0, 2.5)
+                    if (time.thread_time() - cpu_start) > timeout_val or (time.perf_counter() - wall_start) > wall_limit:
+                        raise SandboxTimeoutError(
+                            f"Template execution timed out after {timeout}s{seed_suffix}"
+                        )
+                else:
+                    if (time.perf_counter() - wall_start) > timeout_val:
+                        raise SandboxTimeoutError(
+                            f"Template execution timed out after {timeout}s{seed_suffix}"
+                        )
+
+            if prev_trace is not None:
+                prev_trace(frame, event, arg)
+            return _timeout_tracer
+
+        sys.settrace(_timeout_tracer)
+
+    try:
+        return func(*args, **kwargs)
+    finally:
+        if use_tracer:
+            try:
+                sys.settrace(prev_trace)
+            except Exception:
+                try:
+                    sys.settrace(None)
+                except Exception:
+                    pass
+
+
 def run_code_in_env(
     code_str: str,
     func_name: str,
@@ -426,35 +503,20 @@ def run_code_in_env(
     if kwargs is None:
         kwargs = {}
 
-    prev_trace = sys.gettrace()
-    use_tracer = timeout is not None and timeout > 0
-    if use_tracer:
-        deadline = time.perf_counter() + float(timeout)
-        step_counter = [0]
-
-        def _timeout_tracer(frame, event, arg):
-            step_counter[0] += 1
-            if (step_counter[0] & 63) == 0 and time.perf_counter() > deadline:
-                raise SandboxTimeoutError(
-                    f"Template execution timed out after {timeout}s (seed={seed})"
-                )
-            if prev_trace is not None:
-                prev_trace(frame, event, arg)
-            return _timeout_tracer
-
-        sys.settrace(_timeout_tracer)
-
+    call_args = (rng,) if ("rng" not in kwargs and len(args) == 0) else args
     try:
-        if "rng" not in kwargs and len(args) == 0:
-            return func(rng, **kwargs)
-        return func(*args, **kwargs)
+        return call_with_timeout(
+            func,
+            args=call_args,
+            kwargs=kwargs,
+            timeout=timeout,
+            seed=seed,
+            max_user_steps=250_000 if (timeout is not None and timeout > 0) else 0,
+        )
     except (SecurityViolationError, SandboxTimeoutError, SandboxExecutionError):
         raise
     except Exception as e:
         raise SandboxExecutionError(f"{type(e).__name__}: {e}") from e
-    finally:
-        if use_tracer:
-            sys.settrace(prev_trace)
 
 
 def execute_template_code(
@@ -471,7 +533,12 @@ def execute_template_code(
 
     gen_res = run_code_in_env(generate_py, "generate", seed=seed, timeout=timeout)
     if cross_check_py:
-        cc_res = run_code_in_env(cross_check_py, "verify", args=(gen_res,), seed=seed, timeout=timeout)
+        import copy
+        try:
+            ver_arg = copy.deepcopy(gen_res)
+        except Exception:
+            ver_arg = serialize_for_json(gen_res)
+        cc_res = run_code_in_env(cross_check_py, "verify", args=(ver_arg,), seed=seed, timeout=timeout)
         if cc_res is False:
             raise SandboxExecutionError("cross_check verification returned False")
     return serialize_for_json(gen_res)
@@ -486,7 +553,12 @@ def execute_verifier_code(
 ) -> bool:
     """Execute verifier/cross-check code strictly in-process."""
     validate_code_ast(verifier_py)
-    res = run_code_in_env(verifier_py, "verify", args=(generated_result,), seed=seed, timeout=timeout)
+    import copy
+    try:
+        ver_arg = copy.deepcopy(generated_result)
+    except Exception:
+        ver_arg = serialize_for_json(generated_result)
+    res = run_code_in_env(verifier_py, "verify", args=(ver_arg,), seed=seed, timeout=timeout)
     return bool(res)
 
 
@@ -503,36 +575,133 @@ def execute_sandbox_batch(
     timeout_per_item: float = 2.0,
     isolated: bool = False,
     use_subprocess: bool = False,
+    timeout_sec: Optional[float] = None,
 ) -> List[Dict[str, Any]]:
-    """Execute a batch of seeds strictly in-process via the fast-path."""
-    validate_code_ast(generate_py)
+    """Execute a batch of seeds strictly in-process via pre-compiled AST/bytecode fast-path."""
+    if timeout_sec is not None:
+        timeout_per_item = timeout_sec
+    if not seeds:
+        return []
+
+    # 1. Validate AST and compile generate_py once before the seeds loop
+    try:
+        validate_code_ast(generate_py)
+        gen_compiled = compile(generate_py, "<sandbox>", "exec")
+    except (SecurityViolationError, SandboxExecutionError):
+        raise
+    except SyntaxError as e:
+        return [{
+            "seed": seeds[0],
+            "success": False,
+            "ok": False,
+            "error": f"SyntaxError: {e}",
+            "stage": "generate",
+        }]
+
+    # 2. Validate AST and compile cross_check_py once before the seeds loop (deferred reporting)
+    ver_compiled = None
+    ver_syntax_err: Optional[SyntaxError] = None
+    ver_sec_err: Optional[Exception] = None
     if cross_check_py:
-        validate_code_ast(cross_check_py)
+        try:
+            validate_code_ast(cross_check_py)
+            ver_compiled = compile(cross_check_py, "<sandbox>", "exec")
+        except (SecurityViolationError, SandboxSecurityError) as e:
+            ver_sec_err = e
+        except SyntaxError as e:
+            ver_syntax_err = e
 
     results = []
+    timeout_count = 0
+    last_timeout_err = ""
+    import random
+
     for s in seeds:
+        if timeout_count >= 2:
+            results.append({
+                "seed": s,
+                "success": False,
+                "ok": False,
+                "error": last_timeout_err or f"SandboxTimeoutError: Batch aborted after repeated timeouts (seed={s})",
+            })
+            continue
+
         try:
-            gen_res = run_code_in_env(generate_py, "generate", seed=s, timeout=timeout_per_item)
+            random.seed(s)
+            rng = random.Random(s)
+            rng.np = _LazyNPRNG(s)
+
+            gen_env = build_sandbox_globals()
+            exec(gen_compiled, gen_env)
+
+            if "generate" not in gen_env:
+                raise SandboxExecutionError("Function 'generate' was not defined in template code.")
+
+            gen_fn = gen_env["generate"]
+            gen_res = call_with_timeout(
+                gen_fn,
+                args=(rng,),
+                timeout=timeout_per_item,
+                seed=s,
+            )
+
             if cross_check_py:
-                cc_res = run_code_in_env(cross_check_py, "verify", args=(gen_res,), seed=s, timeout=timeout_per_item)
+                if ver_sec_err is not None:
+                    raise ver_sec_err
+                if ver_syntax_err is not None:
+                    raise ver_syntax_err
+
+                ver_env = build_sandbox_globals()
+                exec(ver_compiled, ver_env)
+
+                if "verify" not in ver_env:
+                    raise SandboxExecutionError("Function 'verify' was not defined in template code.")
+
+                ver_fn = ver_env["verify"]
+                import copy
+                try:
+                    ver_arg = copy.deepcopy(gen_res)
+                except Exception:
+                    ver_arg = serialize_for_json(gen_res)
+                cc_res = call_with_timeout(
+                    ver_fn,
+                    args=(ver_arg,),
+                    timeout=timeout_per_item,
+                    seed=s,
+                )
                 if cc_res is False:
                     results.append({
                         "seed": s,
                         "success": False,
+                        "ok": False,
                         "error": "cross_check verification returned False",
+                        "stage": "verify",
                     })
                     continue
+
             results.append({
                 "seed": s,
                 "success": True,
+                "ok": True,
                 "result": serialize_for_json(gen_res),
+            })
+        except SandboxTimeoutError as te:
+            timeout_count += 1
+            last_timeout_err = f"SandboxTimeoutError: {str(te)}"
+            results.append({
+                "seed": s,
+                "success": False,
+                "ok": False,
+                "error": last_timeout_err,
             })
         except Exception as e:
             results.append({
                 "seed": s,
                 "success": False,
+                "ok": False,
                 "error": f"{type(e).__name__}: {str(e)}",
             })
+
     return results
 
 

@@ -1,0 +1,27 @@
+# Progress: Stream 1A — Implementer (`impl_1a`)
+
+- [x] **Step 0: Pre-Flight Sanity Check & Briefing** (`BRIEFING.md` created; 0 blockers).
+- [x] **Task 1: PrairieLearn `@var@` / `@var:fmt@` Token Interpolation & R-16 Helper (`engine/assemble.py`)**
+  - Priority Phase 0 pass matching `@([A-Za-z_][A-Za-z0-9_]*)(?::([^@\s{}]+))?@`.
+  - Format specifications supported (`.2f`, `+.3f`, `.4g`, `d`, etc.) with float/str fallback.
+  - Zero corruption of KaTeX curly braces.
+  - 1-character variable names (`@k@`, `@n@`, `@r@`, `@x@`) supported without colliding with LaTeX math.
+  - `compute_option_length_metrics()` implemented for R-16 character length diagnostics.
+  - `render_template` exported and aliased to `format_template_string`.
+- [x] **Task 2: Full Question-Type Coverage in `assemble_question` (`engine/assemble.py`)**
+  - `fill_in_the_blank`: `correct_answer.value`, `canonical_algebraic`, and `accepted_equivalents` interpolated and KaTeX-sanitized.
+  - `multiple_select`: `content`/`value` and `error_rationale` interpolated and KaTeX-sanitized.
+- [x] **Task 3: Hard Anti-Unrendered-Placeholder Invariant (`engine/invariants.py`)**
+  - `_LATEX_ARG_MACROS` defined and used for strict LaTeX command verification.
+  - `check_unrendered_placeholders` implemented and exported.
+  - Rejects unresolved `@ident@` / `@ident:fmt@`.
+  - Rejects uninterpolated `{key}` when `key in variables` or standalone in prose, while cleanly preserving legitimate LaTeX (`\frac{delta}{n}`, `x_{delta}`, `\text{delta}`, `\mathbf{I}_{k}`, `\sum_{i=1}^{n}`, `\begin{matrix}`, `\operatorname{plim}`).
+  - Wired into `validate_katex_syntax(..., variables=...)`.
+  - `check_instance_invariants` updated to accept `variables` and check FIB answer fields.
+- [x] **Task 4: Wire `vars` awareness in `engine/instantiate.py`**
+  - `instantiate_template` passes `variables=variables` to `check_instance_invariants`.
+- [x] **Task 5: Test Suite `tests/test_katex_prairielearn_tokens.py`**
+  - Created 9 tests covering nested KaTeX PrairieLearn tokens, single-letter variables, FIB, MS, rejection of unresolved tokens, legacy curly brace compatibility, option length metrics, and instantiate_template invariant enforcement.
+- [x] **Task 6: Pytest Suite Run & Verification**
+  - 82/82 tests passed across `test_katex_prairielearn_tokens.py`, `test_latex_engine.py`, `test_engine_invariants_adversarial.py`, and `test_c2c_validator_prescriptive.py`.
+- [x] **Task 7: Final Handoff (`handoff.md`) & Send Message**
