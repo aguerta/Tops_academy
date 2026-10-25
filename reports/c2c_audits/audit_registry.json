@@ -1709,5 +1709,188 @@
       "output_tokens_per_question": 0.0
     },
     "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261025_015026_gavilano_pre_parcial_aad42579",
+    "timestamp": "2026-10-25T06:50:26.961548+00:00",
+    "course_id": "gavilano_pre_parcial",
+    "course_title": "Gavilano Pre Parcial",
+    "conversation_id": "aad42579-ddbc-49fa-963f-3a9347391b05",
+    "workload": {
+      "source_files_count": 10,
+      "pages_or_slides": 246,
+      "input_mb": 10.05,
+      "competencies": 127,
+      "questions": 2950,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 2844.0,
+      "agent_compute_seconds": 32439.0,
+      "speedup": 11.41,
+      "total_tokens": 60325789,
+      "total_active_tokens": 15487713,
+      "input_tokens": 10797598,
+      "output_tokens": 4116669,
+      "cache_read_tokens": 44838076,
+      "total_turns": 1272,
+      "subagents_count": 115,
+      "tool_errors": 246,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 565.0,
+      "stage_3_max_wall": 609.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (254/254 REACTIVOS)",
+        "batch_items_count": 254,
+        "initial_errors_count": 2,
+        "repair_iterations": 2,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 22 Blind Judges evaluaron el lote estratificado de 254 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (254/254) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 254/254 acuerdos (`100.0% agreement rate`, `0 discrepancias`).",
+          "2. **Verificación Determinista Previa (`--stage verify`)**: Detectó 2 error(es) léxico/estructural(es) corregido(s) antes del arbitraje ciego."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 245226.8,
+      "active_tokens_per_page": 62958.2,
+      "tokens_per_input_kb": 5863.8,
+      "tokens_per_competency": 475006.2,
+      "active_tokens_per_competency": 121950.5,
+      "author_tokens_per_competency": 92629.7,
+      "tokens_per_question": 20449.4,
+      "active_tokens_per_question": 5250.1,
+      "seconds_per_page": 11.56,
+      "seconds_per_question": 0.96,
+      "questions_per_minute": 62.24,
+      "agent_seconds_per_question": 11.0,
+      "output_tokens_per_question": 1409.5
+    },
+    "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261025_015039_asyntotic_estatistics_v7_f4672681",
+    "timestamp": "2026-10-25T06:50:39.740493+00:00",
+    "course_id": "asyntotic_estatistics_v7",
+    "course_title": "Asyntotic Estatistics V7",
+    "conversation_id": "f4672681-99d9-4dd9-a5ad-a4e3f7600995",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 52,
+      "input_mb": 3.44,
+      "competencies": 32,
+      "questions": 710,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1896.0,
+      "agent_compute_seconds": 10479.0,
+      "speedup": 5.53,
+      "total_tokens": 21625641,
+      "total_active_tokens": 4975558,
+      "input_tokens": 3222680,
+      "output_tokens": 1180298,
+      "cache_read_tokens": 16650083,
+      "total_turns": 370,
+      "subagents_count": 28,
+      "tool_errors": 56,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 585.0,
+      "stage_3_max_wall": 854.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (64/64 REACTIVOS)",
+        "batch_items_count": 64,
+        "initial_errors_count": 2,
+        "repair_iterations": 2,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 6 Blind Judges evaluaron el lote estratificado de 64 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (64/64) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 64/64 acuerdos (`100.0% agreement rate`, `0 discrepancias`).",
+          "2. **Verificación Determinista Previa (`--stage verify`)**: Detectó 2 error(es) léxico/estructural(es) corregido(s) antes del arbitraje ciego."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 415877.7,
+      "active_tokens_per_page": 95683.8,
+      "tokens_per_input_kb": 6139.2,
+      "tokens_per_competency": 675801.3,
+      "active_tokens_per_competency": 155486.2,
+      "author_tokens_per_competency": 109271.1,
+      "tokens_per_question": 30458.6,
+      "active_tokens_per_question": 7007.8,
+      "seconds_per_page": 36.46,
+      "seconds_per_question": 2.67,
+      "questions_per_minute": 22.47,
+      "agent_seconds_per_question": 14.76,
+      "output_tokens_per_question": 1697.8
+    },
+    "bottlenecks_count": 3
+  },
+  {
+    "run_id": "20261025_102611_saul_control_optimo_06bccddf",
+    "timestamp": "2026-10-25T15:26:11.600899+00:00",
+    "course_id": "saul_control_optimo",
+    "course_title": "Saul Control Optimo",
+    "conversation_id": "06bccddf-dce8-4875-8383-6cbba4e42f84",
+    "workload": {
+      "source_files_count": 1,
+      "pages_or_slides": 32,
+      "input_mb": 1.59,
+      "competencies": 15,
+      "questions": 350,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1340.0,
+      "agent_compute_seconds": 5221.0,
+      "speedup": 3.9,
+      "total_tokens": 9267386,
+      "total_active_tokens": 2208012,
+      "input_tokens": 1426821,
+      "output_tokens": 555194,
+      "cache_read_tokens": 7059374,
+      "total_turns": 185,
+      "subagents_count": 14,
+      "tool_errors": 29,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 379.0,
+      "stage_3_max_wall": 423.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (30/30 REACTIVOS)",
+        "batch_items_count": 30,
+        "initial_errors_count": 1,
+        "repair_iterations": 2,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 3 Blind Judges evaluaron el lote estratificado de 30 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (30/30) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 30/30 acuerdos (`100.0% agreement rate`, `0 discrepancias`).",
+          "2. **Verificación Determinista Previa (`--stage verify`)**: Detectó 1 error(es) léxico/estructural(es) corregido(s) antes del arbitraje ciego."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 289605.8,
+      "active_tokens_per_page": 69000.4,
+      "tokens_per_input_kb": 5696.5,
+      "tokens_per_competency": 617825.7,
+      "active_tokens_per_competency": 147200.8,
+      "author_tokens_per_competency": 104354.6,
+      "tokens_per_question": 26478.2,
+      "active_tokens_per_question": 6308.6,
+      "seconds_per_page": 41.88,
+      "seconds_per_question": 3.83,
+      "questions_per_minute": 15.67,
+      "agent_seconds_per_question": 14.92,
+      "output_tokens_per_question": 1638.7
+    },
+    "bottlenecks_count": 1
   }
 ]

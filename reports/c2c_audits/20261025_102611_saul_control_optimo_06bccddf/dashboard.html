@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>C2C Architectural Forensic Dashboard - saul_control_optimo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); padding: 24px; line-height: 1.5; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { font-size: 1.5rem; color: var(--accent); }
+    .header .meta { color: var(--text-muted); font-size: 0.85rem; }
+    .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .kpi-card .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-card .val { font-size: 1.6rem; font-weight: bold; color: var(--text); margin-top: 4px; }
+    .kpi-card .sub { font-size: 0.75rem; color: var(--accent-green); margin-top: 2px; }
+    .section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .section h2 { font-size: 1.1rem; color: var(--accent); margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-high { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); }
+    .badge-med { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }
+    .badge-ok { background: rgba(74, 222, 128, 0.2); color: var(--accent-green); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>C2C Architectural Forensic Telemetry</h1>
+      <div class="meta">Saul Control Optimo (<code>saul_control_optimo</code>) | Conv: <code>06bccddf-dce...</code></div>
+    </div>
+    <div class="meta">Audit Date: 2026-10-25T15:26:11 UTC</div>
+  </div>
+
+  <div class="grid-kpi">
+    <div class="kpi-card">
+      <div class="label">Wall-Clock Time</div>
+      <div class="val">22.33 min</div>
+      <div class="sub">1340.0s elapsed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Parallel Speedup</div>
+      <div class="val">3.9x</div>
+      <div class="sub">87.02m compute time</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Total Tokens</div>
+      <div class="val">9,267,386</div>
+      <div class="sub">Active: 2,208,012 | Cache: 7,059,374</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Tokens / Question</div>
+      <div class="val">26,478.2</div>
+      <div class="sub">350 questions generated</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Seconds / Question</div>
+      <div class="val">3.83s</div>
+      <div class="sub">15.67 questions/min</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Supervisor Interventions</div>
+      <div class="val">0</div>
+      <div class="sub">0.0m spent repairing</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Stage 3: Shard Question Authoring & Competency Metrics</h2>
+    <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
+      Critical Straggler: <strong>Shard Author shard_06</strong> (423.0s | +111.0s vs median) |
+      Avg Tokens / Competency: <strong>104,354.6</strong>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Shard ID</th>
+          <th>Competencias</th>
+          <th>Comps</th>
+          <th>Tokens In</th>
+          <th>Tokens Out</th>
+          <th>Active Tokens</th>
+          <th>Tokens / Comp</th>
+          <th>Turns</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Shard Author shard_06</strong></td>
+          <td><code>C-03, C-04</code></td>
+          <td>2</td>
+          <td>150,410</td>
+          <td>62,483</td>
+          <td><strong>212,893</strong></td>
+          <td><strong>106,446.5</strong></td>
+          <td>18</td>
+          <td><strong>423.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_07</strong></td>
+          <td><code>C-06, C-07</code></td>
+          <td>2</td>
+          <td>162,636</td>
+          <td>46,871</td>
+          <td><strong>209,507</strong></td>
+          <td><strong>104,753.5</strong></td>
+          <td>16</td>
+          <td><strong>323.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_08</strong></td>
+          <td><code>C-01, H-01</code></td>
+          <td>2</td>
+          <td>99,568</td>
+          <td>46,214</td>
+          <td><strong>145,782</strong></td>
+          <td><strong>72,891.0</strong></td>
+          <td>12</td>
+          <td><strong>312.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_09</strong></td>
+          <td><code>C-02, H-02</code></td>
+          <td>2</td>
+          <td>128,626</td>
+          <td>55,551</td>
+          <td><strong>184,177</strong></td>
+          <td><strong>92,088.5</strong></td>
+          <td>10</td>
+          <td><strong>369.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_10</strong></td>
+          <td><code>H-03, C-05</code></td>
+          <td>2</td>
+          <td>138,254</td>
+          <td>51,861</td>
+          <td><strong>190,115</strong></td>
+          <td><strong>95,057.5</strong></td>
+          <td>10</td>
+          <td><strong>358.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_01</strong></td>
+          <td><code>Hab-01</code></td>
+          <td>1</td>
+          <td>86,261</td>
+          <td>38,977</td>
+          <td><strong>125,238</strong></td>
+          <td><strong>125,238.0</strong></td>
+          <td>10</td>
+          <td><strong>270.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_02</strong></td>
+          <td><code>Hab-02</code></td>
+          <td>1</td>
+          <td>101,973</td>
+          <td>38,667</td>
+          <td><strong>140,640</strong></td>
+          <td><strong>140,640.0</strong></td>
+          <td>17</td>
+          <td><strong>306.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_03</strong></td>
+          <td><code>Hab-03</code></td>
+          <td>1</td>
+          <td>77,921</td>
+          <td>29,240</td>
+          <td><strong>107,161</strong></td>
+          <td><strong>107,161.0</strong></td>
+          <td>11</td>
+          <td><strong>202.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_04</strong></td>
+          <td><code>Hab-04</code></td>
+          <td>1</td>
+          <td>83,590</td>
+          <td>37,172</td>
+          <td><strong>120,762</strong></td>
+          <td><strong>120,762.0</strong></td>
+          <td>10</td>
+          <td><strong>222.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_05</strong></td>
+          <td><code>Hab-05</code></td>
+          <td>1</td>
+          <td>92,348</td>
+          <td>36,696</td>
+          <td><strong>129,044</strong></td>
+          <td><strong>129,044.0</strong></td>
+          <td>8</td>
+          <td><strong>263.0s</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Blind Judges & Psychometric Verification</h2>
+    <div style="margin-bottom: 12px; font-size: 0.9rem;">
+      <span class="badge badge-ok">✅ 100% ACUERDO AL PRIMER INTENTO (30/30 REACTIVOS)</span>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+      Los 3 Blind Judges evaluaron el lote estratificado de 30 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (30/30) con 0 discrepancias frente al ground truth.
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Lote Estratificado</th>
+          <th>Primer Intento</th>
+          <th>Auto-Repair Iterations</th>
+          <th>Supervisor Fixes</th>
+          <th>Status Final</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>30 reactivos</strong></td>
+          <td><span class="badge badge-ok">PASSED</span></td>
+          <td>2 iteraciones</td>
+          <td><strong>0 fixes</strong></td>
+          <td><span class="badge badge-ok">CERTIFICADO</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top: 14px; font-size: 0.85rem;">
+      <strong>Acciones Correctivas Tomadas:</strong>
+      <ul style="margin-left: 20px; margin-top: 6px; color: var(--text-muted);">
+        <li>1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 30/30 acuerdos (`100.0% agreement rate`, `0 discrepancias`).</li><li>2. **Verificación Determinista Previa (`--stage verify`)**: Detectó 1 error(es) léxico/estructural(es) corregido(s) antes del arbitraje ciego.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Orchestrator Manual Interventions (Supervisor Repair Anti-Pattern)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Target File</th>
+          <th>Action Type</th>
+          <th>Root Cause / Snippet</th>
+          <th>Tool</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>
