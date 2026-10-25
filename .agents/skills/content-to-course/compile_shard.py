@@ -58,6 +58,16 @@ def _atomic_write_json(target_path: Path, data: Any) -> None:
                     pass
 
 
+def count_distinct_shard_error_hunks(
+    raw_errors: List[Any],
+    targets: Optional[List[Path]] = None,
+    shard_py: Optional[Union[str, Path]] = None,
+) -> int:
+    """Helper re-exported from check_templates for counting deduplicated error hunks."""
+    from check_templates import count_distinct_shard_error_hunks as _count_hunks
+    return _count_hunks(raw_errors, targets=targets, shard_py=shard_py)
+
+
 def check_ast_rf_triple_braces(source_text: str) -> List[str]:
     """Check for rf'...' or fr'...' strings containing '{{{' which corrupts KaTeX braces."""
     warnings = []
@@ -422,11 +432,11 @@ class ShardDataLineLocator:
                     preamble_lines.append(line)
 
         # Include constant lines
-        for cname, (s, e) in self.constants.items():
+        for cname, (s, e) in sorted(self.constants.items(), key=lambda x: x[1][0]):
             preamble_lines.extend(self.lines[s - 1 : e])
 
-        # Include helper function lines
-        for hname in self.helper_functions:
+        # Include helper function lines in ascending line order
+        for hname in sorted(self.helper_functions, key=lambda k: self.functions[k][0]):
             s, e = self.functions[hname]
             preamble_lines.extend(self.lines[s - 1 : e])
 
@@ -448,7 +458,12 @@ def extract_function_code(
     """
     raw_src = ""
     orig_name = getattr(fn_or_str, "__name__", fn_name_hint or "")
-    if callable(fn_or_str):
+    if fn_or_str is None or (isinstance(fn_or_str, str) and not fn_or_str.strip()):
+        if target_name == "verify":
+            raw_src = "def verify(instance):\n    return True"
+        else:
+            raw_src = f"def {target_name}(rng):\n    return {{}}"
+    elif callable(fn_or_str):
         try:
             raw_src = textwrap.dedent("\n".join(locator.lines[locator.functions[orig_name][0] - 1 : locator.functions[orig_name][1]])) if (locator and orig_name in locator.functions) else textwrap.dedent(inspect.getsource(fn_or_str))
         except Exception:
@@ -878,6 +893,7 @@ def compile_shard(
     output_path: Optional[Union[str, Path]] = None,
     cta_path: Optional[Union[str, Path]] = None,
     manifest_path: Optional[Union[str, Path]] = None,
+    min_archetypes: Optional[int] = None,
     **kwargs,
 ) -> Tuple[bool, List[str]]:
     """Compiles shard data into canonical template JSON files with strict verification.
@@ -889,6 +905,7 @@ def compile_shard(
     output_path = output_path or kwargs.get("output")
     cta_path = cta_path or kwargs.get("cta")
     manifest_path = manifest_path or kwargs.get("manifest")
+    min_archetypes = min_archetypes if min_archetypes is not None else kwargs.get("min_archetypes")
 
     target_p = Path(work_dir_or_path).resolve()
     # In-memory inference when default "work" does not have manifest
@@ -1004,6 +1021,14 @@ def compile_shard(
     if not expected_cids and "competencies" in shard_entry:
         expected_cids = [c["id"] for c in shard_entry["competencies"] if isinstance(c, dict) and "id" in c]
 
+    eff_min_arch = 1
+    if min_archetypes is not None:
+        eff_min_arch = int(min_archetypes)
+    elif isinstance(shard_entry, dict) and shard_entry.get("min_archetypes"):
+        eff_min_arch = int(shard_entry["min_archetypes"])
+    elif isinstance(manifest_data, dict) and manifest_data.get("min_archetypes"):
+        eff_min_arch = int(manifest_data["min_archetypes"])
+
     # Locate shard_fixes directory
     fixes_dir = shards_dir / "shard_fixes"
     if not fixes_dir.is_dir() and (work_p / "shards" / "shard_fixes").is_dir():
@@ -1049,6 +1074,8 @@ def compile_shard(
         "last_source_sha256": "",
         "last_err_hash": "",
         "last_errors": [],
+        "error_count": 0,
+        "has_syntax_error": False,
     }
     if compile_att_file.is_file():
         try:
@@ -1084,7 +1111,7 @@ def compile_shard(
 
     print(f"[COMPILE {distinct_compiles}/10] Compilando shard '{shard_id}'...")
 
-    def _fail(msg: str) -> Tuple[bool, List[str]]:
+    def _fail(msg: str, has_syntax_error: bool = False, error_count: int = 1) -> Tuple[bool, List[str]]:
         from check_templates import normalize_error_string_for_hash
         normalized_errs = sorted([normalize_error_string_for_hash(msg)])
         err_hash = hashlib.sha256("\n".join(normalized_errs).encode("utf-8")).hexdigest()
@@ -1095,6 +1122,8 @@ def compile_shard(
             same_error_streak = 1
         state["same_error_streak"] = same_error_streak
         state["last_err_hash"] = err_hash
+        state["error_count"] = error_count
+        state["has_syntax_error"] = bool(has_syntax_error)
 
         res_msg = msg
         if same_error_streak >= 3:
@@ -1119,6 +1148,8 @@ def compile_shard(
                 r_data["shard_id"] = shard_id
                 r_data["compiled_status"] = "FAIL"
                 r_data["compilation_errors"] = [res_msg]
+                r_data["error_count"] = error_count
+                r_data["has_syntax_error"] = bool(has_syntax_error)
                 r_data["compiled_at"] = time.time()
                 _atomic_write_json(receipt_p, r_data)
             except Exception:
@@ -1135,7 +1166,7 @@ def compile_shard(
             f"[-] [CIRCUIT BREAKER HALT: Límite de 10 compilaciones distintas alcanzado para shard '{shard_id}']. "
             f"STOP, send_message the Director."
         )
-        return _fail(halt_msg)
+        return _fail(halt_msg, has_syntax_error=False, error_count=1)
 
     # In-memory healing of shard_XX_data.py (Zero-Disk-Mutation: source file on disk is NEVER modified)
     raw_source = shard_data_path.read_text(encoding="utf-8") if shard_data_path.is_file() else ""
@@ -1170,7 +1201,7 @@ def compile_shard(
             skip_base_module = True
         else:
             print(f"FAIL: Error sintáctico en {shard_data_path.name}:", file=sys.stderr)
-            return _fail(locator.syntax_error)
+            return _fail(locator.syntax_error, has_syntax_error=True, error_count=1)
 
     # 3. Load shard module dynamically from in-memory string
     mod_name = f"c2c_shard_mod_{norm_shard_id}_{uuid.uuid4().hex[:6]}"
@@ -1192,7 +1223,7 @@ def compile_shard(
             else:
                 tb = traceback.format_exc()
                 err_msg = f"FAIL: Excepción al ejecutar {shard_data_path.name}:\n{tb}"
-                return _fail(err_msg)
+                return _fail(err_msg, has_syntax_error=isinstance(e, SyntaxError), error_count=1)
 
     base_templates = [] if skip_base_module else (getattr(mod, "TEMPLATES", None) or [])
     from check_templates import heal_control_chars_in_obj
@@ -1222,7 +1253,11 @@ def compile_shard(
             _, healed_fix_text = heal_shard_source_text(fix_raw_text)
             fix_loc = ShardDataLineLocator(fix_path, source_text=healed_fix_text)
             if fix_loc.syntax_error:
-                return _fail(f"FAIL: Error sintáctico en shard_fixes/{fix_path.name}:\n{fix_loc.syntax_error}")
+                return _fail(
+                    f"FAIL: Error sintáctico en shard_fixes/{fix_path.name}:\n{fix_loc.syntax_error}",
+                    has_syntax_error=True,
+                    error_count=1,
+                )
 
             fix_mod_name = f"c2c_fix_mod_{cid_fix.replace('-', '_')}_{uuid.uuid4().hex[:6]}"
             fix_mod = types.ModuleType(fix_mod_name)
@@ -1272,7 +1307,11 @@ def compile_shard(
                 tuple_records = new_records
         except Exception as e:
             tb = traceback.format_exc()
-            return _fail(f"FAIL: Excepción al cargar shard_fixes/{fix_path.name}:\n{tb}")
+            return _fail(
+                f"FAIL: Excepción al cargar shard_fixes/{fix_path.name}:\n{tb}",
+                has_syntax_error=isinstance(e, SyntaxError),
+                error_count=1,
+            )
 
     raw_templates = [rec["tuple"] for rec in tuple_records]
     if not raw_templates:
@@ -1601,8 +1640,33 @@ def compile_shard(
         from_compile_shard=True,
     )
 
+    # Milestone 3 4-Archetype Enforcement Gate [M3-ARCHETYPES]
+    m3_errors: List[str] = []
+    if strict and eff_min_arch > 1:
+        target_cids = expected_cids if expected_cids else list(templates_by_cid.keys())
+        shard_data_name = shard_data_path.name if shard_data_path else f"{norm_shard_id}_data.py"
+        for cid in target_cids:
+            tpls = templates_by_cid.get(cid, [])
+            if len(tpls) < eff_min_arch:
+                m3_errors.append(
+                    f"{cid}.json ({shard_data_name}): [M3-ARCHETYPES] La competencia '{cid}' define solo {len(tpls)} tupla(s) en TEMPLATES, pero Milestone 3 exige mínimo {eff_min_arch} arquetipos disjuntos por competencia (1. Directo, 2. Inverso, 3. Perturbación, 4. Frontera). Nota: poner múltiples stem_variants dentro de 1 sola tupla NO cuenta como 4 arquetipos; agrega las {eff_min_arch - len(tpls)} tuplas faltantes para '{cid}' en TEMPLATES usando un helper parametrizado def _gen_{cid.lower().replace('-', '_')}(rng, arch) + 4 wrappers gen_1..4."
+                )
+            else:
+                distinct_tuples = {(t.get("stem_es", "").strip(), t.get("generator_code", "").strip()) for t in tpls}
+                if len(distinct_tuples) < min(eff_min_arch, 2):
+                    m3_errors.append(
+                        f"{cid}.json ({shard_data_name}): [M3-ARCHETYPES] Las {len(tpls)} tuplas de '{cid}' en TEMPLATES son clones idénticos (mismo stem y mismo generador). Cada uno de los {eff_min_arch} arquetipos debe tener su propio enunciado y wrapper/generador (ej. gen_1..4)."
+                    )
+
+    if m3_errors:
+        is_clean = False
+        raw_errors = m3_errors + list(raw_errors)
+
     if not is_clean:
-        from check_templates import render_compact_aggregated_errors
+        from check_templates import render_compact_aggregated_errors, count_distinct_shard_error_hunks
+        error_count = count_distinct_shard_error_hunks(
+            raw_errors, targets=compiled_paths, shard_py=shard_data_path
+        )
         compact_report = render_compact_aggregated_errors(
             raw_errors, targets=compiled_paths, shard_py=shard_data_path, max_output_lines=28
         )
@@ -1616,6 +1680,8 @@ def compile_shard(
             same_error_streak = 1
         state["same_error_streak"] = same_error_streak
         state["last_err_hash"] = err_hash
+        state["error_count"] = error_count
+        state["has_syntax_error"] = False
 
         _cleanup_stale_pass_marker()
 
@@ -1631,6 +1697,8 @@ def compile_shard(
                 r_data["shard_id"] = shard_id
                 r_data["compiled_status"] = "FAIL"
                 r_data["compilation_errors"] = [compact_report]
+                r_data["error_count"] = error_count
+                r_data["has_syntax_error"] = False
                 r_data["compiled_at"] = time.time()
                 _atomic_write_json(receipt_p, r_data)
             except Exception:
@@ -1644,7 +1712,7 @@ def compile_shard(
             compact_report = compact_report + terminal_stop
             print(terminal_stop, file=sys.stderr)
 
-        print(f"\n[-] FAIL: {len(raw_errors)} errores detectados al compilar {shard_id}:\n{compact_report}", file=sys.stderr)
+        print(f"\n[-] FAIL: {len(raw_errors)} errores detectados ({error_count} errores consolidados) al compilar {shard_id}:\n{compact_report}", file=sys.stderr)
         state["last_errors"] = [compact_report]
         _atomic_write_json(compile_att_file, state)
         return False, [compact_report]
@@ -1694,6 +1762,7 @@ def compile_shard_file(
     output_dir: Optional[Union[str, Path]] = None,
     strict: bool = True,
     seeds: int = 50,
+    min_archetypes: Optional[int] = None,
     **kwargs,
 ) -> Tuple[bool, List[str]]:
     """Helper for run.py pipeline stage 3 compatibility."""
@@ -1703,6 +1772,7 @@ def compile_shard_file(
         strict=strict,
         seeds=seeds,
         output_dir=output_dir,
+        min_archetypes=min_archetypes if min_archetypes is not None else kwargs.get("min_archetypes"),
         **kwargs,
     )
 
@@ -1720,6 +1790,7 @@ def main():
     parser.add_argument("--strict", action="store_true", default=True, help="Enforce strict validation (default: True)")
     parser.add_argument("--no-strict", dest="strict", action="store_false", help="Bypass strict validation")
     parser.add_argument("--seeds", type=int, default=50, help="Number of dry-run seeds (default: 50)")
+    parser.add_argument("--min-archetypes", dest="min_archetypes", type=int, default=None, help="Minimum disjoint archetypes (tuples) required per competency in TEMPLATES (e.g. 4 for Milestone 3)")
     args = parser.parse_args()
 
     work_or_path = args.input_path or args.shard_data_path or args.work
@@ -1746,6 +1817,7 @@ def main():
         output_path=receipt_path,
         cta_path=args.cta,
         manifest_path=args.manifest,
+        min_archetypes=args.min_archetypes,
     )
     sys.exit(0 if success else 1)
 

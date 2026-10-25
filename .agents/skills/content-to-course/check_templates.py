@@ -249,6 +249,41 @@ def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, A
         }
 
     err_str = str(err)
+    if "[M3-ARCHETYPES]" in err_str:
+        rule_tag = "M3-ARCHETYPES"
+        m_cid = (
+            re.search(r"competencia\s+'([^']+)'", err_str, re.IGNORECASE)
+            or re.search(r"tuplas\s+de\s+'([^']+)'", err_str, re.IGNORECASE)
+            or re.search(r"^([A-Za-z0-9_-]+)\.json", err_str)
+        )
+        comp = m_cid.group(1).strip() if m_cid else ""
+        tpl = f"T-{comp}" if comp else ""
+        field_name = "TEMPLATES"
+        m_cause_m3 = re.search(r"\[M3-ARCHETYPES\]\s*(.+?)(?:\s*Nota:|\Z)", err_str)
+        cause = m_cause_m3.group(1).strip() if m_cause_m3 else err_str.splitlines()[0]
+        if "clones idénticos" in err_str:
+            action = (
+                f"Cada uno de los arquetipos de '{comp}' debe tener su propio enunciado y wrapper/generador disjunto (gen_1..4)."
+                if comp else "Diversificar enunciados y generadores de cada arquetipo."
+            )
+        else:
+            action = (
+                f"Agregar tuplas faltantes para '{comp}' en TEMPLATES usando helper parametrizado def _gen_{comp.lower().replace('-', '_')}(rng, arch) + 4 wrappers gen_1..4."
+                if comp else "Agregar tuplas de arquetipos faltantes en TEMPLATES usando helper parametrizado."
+            )
+        snippet = f"TEMPLATES[{comp}]" if comp else "TEMPLATES"
+        return {
+            "rule_tag": rule_tag,
+            "competency": comp,
+            "template": tpl,
+            "field_name": field_name,
+            "snippet": snippet,
+            "cause": cause,
+            "action": action,
+            "lines": [],
+            "file_path": None,
+        }
+
     m_rule = re.search(r"^\[-\]\s*\[([^\]]+)\]", err_str, re.MULTILINE)
     m_loc = re.search(r"UBICACI[ÓO]N:\s*Competencia:\s*'([^']*)',\s*Plantilla:\s*'([^']*)'.*?Campo:\s*'([^']*)'", err_str)
     m_lines = re.search(r"L[íi]neas?:\s*([0-9,\s]+)", err_str)
@@ -1204,22 +1239,18 @@ def _format_dry_failure(
     return formatted_msg
 
 
-def render_compact_aggregated_errors(
+def build_compact_diagnostic_groups(
     errors: List[Union[str, DiagnosticError]],
     targets: Optional[List[Path]] = None,
-    max_output_lines: int = 28,
     shard_py: Optional[Union[str, Path]] = None,
-) -> str:
-    """Render canonical LLM-optimized single-line aggregated error output grouped by rule (< 30 lines)."""
-    if not errors:
-        return ""
+) -> Tuple[Dict[str, Dict[Tuple[str, str], Dict[Tuple[str, str], List[int]]]], int]:
+    """Group diagnostic errors canonicalized by rule_tag, file_path/shard_ref, and cause/action.
 
-    has_cb = any("CIRCUIT BREAKER" in str(e) for e in errors)
-    header = (
-        f"FAIL: CIRCUIT BREAKER TRIPPED ({len(errors)} errores en templates):"
-        if has_cb
-        else f"FAIL: {len(errors)} validaciones fallidas en templates:"
-    )
+    Returns:
+        (grouped_dict, total_items_count)
+    """
+    if not errors:
+        return {}, 0
 
     # Build or lookup ShardDataLineLocator
     locators_by_path: Dict[str, Any] = {}
@@ -1287,6 +1318,12 @@ def render_compact_aggregated_errors(
                     fpath = str(cand1.as_posix())
                 elif cand2.is_file():
                     fpath = str(cand2.as_posix())
+                elif targets and targets[0].parent:
+                    cand_t = targets[0].parent / f"{cid}.json"
+                    try:
+                        fpath = cand_t.resolve().relative_to(Path.cwd().resolve()).as_posix()
+                    except Exception:
+                        fpath = cand_t.as_posix()
                 elif targets:
                     try:
                         fpath = Path(targets[0]).resolve().relative_to(Path.cwd().resolve()).as_posix()
@@ -1367,13 +1404,60 @@ def render_compact_aggregated_errors(
 
         grouped[rtag][(fp, s_ref)][(scause, sact)].extend(r["lines"])
 
+    total_items = sum(len(err_map) for file_map in grouped.values() for err_map in file_map.values())
+    return grouped, total_items
+
+
+def count_distinct_shard_error_hunks(
+    raw_errors: List[Union[str, DiagnosticError]],
+    targets: Optional[List[Path]] = None,
+    shard_py: Optional[Union[str, Path]] = None,
+) -> int:
+    """Count the number of deduplicated/consolidated diagnostic hunks.
+
+    Guarantees >= 1 when raw_errors is not empty, representing distinct logical issues
+    rather than per-seed duplicates.
+    """
+    if not raw_errors:
+        return 0
+    _, total_items = build_compact_diagnostic_groups(raw_errors, targets=targets, shard_py=shard_py)
+    return max(1, total_items)
+
+
+def render_compact_aggregated_errors(
+    errors: List[Union[str, DiagnosticError]],
+    targets: Optional[List[Path]] = None,
+    max_output_lines: int = 28,
+    shard_py: Optional[Union[str, Path]] = None,
+) -> str:
+    """Render canonical LLM-optimized single-line aggregated error output grouped by rule (< 30 lines)."""
+    if not errors:
+        return ""
+
+    has_cb = any("CIRCUIT BREAKER" in str(e) for e in errors)
+    header = (
+        f"FAIL: CIRCUIT BREAKER TRIPPED ({len(errors)} errores en templates):"
+        if has_cb
+        else f"FAIL: {len(errors)} validaciones fallidas en templates:"
+    )
+
+    grouped, total_items = build_compact_diagnostic_groups(errors, targets=targets, shard_py=shard_py)
+    hunk_count = max(1, total_items)
+
+    if hunk_count < 6:
+        directive_line = f"[UMBRAL < 6 ({hunk_count}/5 errores)]: Usa edit_file (replace_file_content) quirúrgico en las líneas indicadas; PROHIBIDO write_file completo."
+    else:
+        directive_line = f"[UMBRAL >= 6 ({hunk_count} errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True) completo."
+
     out_lines = [header, ""]
     truncated = False
     total_rendered_items = 0
-    total_items = sum(len(err_map) for file_map in grouped.values() for err_map in file_map.values())
+
+    # Reserve room for truncation message (1 line) and directive_line (1 line)
+    line_limit = max(2, max_output_lines - 3)
 
     for rtag, file_map in grouped.items():
-        if len(out_lines) >= max_output_lines - 2:
+        if len(out_lines) >= line_limit:
             truncated = True
             break
         m_rid = re.match(r"^([A-Za-z0-9_-]+)", rtag)
@@ -1381,11 +1465,11 @@ def render_compact_aggregated_errors(
         out_lines.append(f"[-] [{rtag}]")
 
         for (fp, s_ref), err_map in file_map.items():
-            if len(out_lines) >= max_output_lines - 2:
+            if len(out_lines) >= line_limit:
                 truncated = True
                 break
             for (cause, act), l_list in err_map.items():
-                if len(out_lines) >= max_output_lines - 2:
+                if len(out_lines) >= line_limit:
                     truncated = True
                     break
                 uniq_lines = sorted(set(l_list))
@@ -1402,14 +1486,25 @@ def render_compact_aggregated_errors(
                 total_rendered_items += 1
         out_lines.append("")
 
-    if truncated:
+    if truncated or total_rendered_items < total_items:
         remaining = total_items - total_rendered_items
-        out_lines.append(f"  ... y {remaining} diagnósticos adicionales consolidados.")
+        if remaining > 0:
+            out_lines.append(f"  ... y {remaining} diagnósticos adicionales consolidados.")
+
+    out_lines.append(directive_line)
 
     res_str = "\n".join(out_lines).strip()
     res_lines = res_str.splitlines()
-    if len(res_lines) >= max_output_lines:
-        res_lines = res_lines[:max_output_lines - 1] + [f"  ... ({len(errors)} errores totales consolidados en formato compacto < 30 líneas)."]
+    if len(res_lines) > max_output_lines:
+        if max_output_lines >= 3:
+            res_lines = res_lines[:max_output_lines - 2] + [
+                f"  ... ({len(errors)} errores totales consolidados en formato compacto < 30 líneas).",
+                directive_line,
+            ]
+        elif max_output_lines == 2:
+            res_lines = [res_lines[0], directive_line]
+        else:
+            res_lines = [directive_line]
         res_str = "\n".join(res_lines)
     return res_str
 
