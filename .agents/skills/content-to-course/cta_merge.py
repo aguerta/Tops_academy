@@ -212,6 +212,9 @@ def auto_wrap_bare_latex_in_cta_field(text: str) -> str:
     if not isinstance(text, str) or not text:
         return text
 
+    if text.count("{") != text.count("}"):
+        return text
+
     if not LATEX_CMD_RE.search(text):
         return text
 
@@ -240,22 +243,26 @@ def auto_wrap_bare_latex_in_cta_field(text: str) -> str:
 
             cmd_start = m.start()
             math_start = cmd_start
+            operator_consumed = False
             while math_start > pos:
                 prev_char = segment[math_start - 1]
                 if prev_char in " \t":
                     peek = segment[pos:math_start - 1].rstrip()
                     if peek and peek[-1] in "+-*/=<>~^_(":
                         math_start = len(peek)
+                        operator_consumed = True
                         continue
                     m_tok = re.search(r"([a-zA-Z0-9_]+)$", peek)
                     if m_tok:
                         w = m_tok.group(1).lower()
-                        if w in MATH_NAMES or (len(w) <= 2 and w not in COMMON_SPANISH_PROSE_WORDS and not w.isdigit()):
+                        if w in MATH_NAMES or (operator_consumed and len(w) <= 2 and w not in COMMON_SPANISH_PROSE_WORDS and not w.isdigit()):
                             math_start = pos + m_tok.start()
+                            operator_consumed = False
                             continue
                     break
                 elif prev_char in "+-*/=<>~^_(\'":
                     math_start -= 1
+                    operator_consumed = True
                 elif prev_char.isalnum():
                     w_start = math_start - 1
                     while w_start > pos and segment[w_start - 1].isalnum():
@@ -545,8 +552,7 @@ def sanitize_competency_math(comp: Dict[str, Any], record_patches: bool = True) 
     for field in ("name", "description_latex", "description"):
         val = comp.get(field)
         if isinstance(val, str):
-            new_val = auto_wrap_bare_latex_in_cta_field(val)
-            new_val = normalize_orphan_math(new_val)
+            new_val = normalize_orphan_math(val)
             if new_val != val:
                 comp[field] = new_val
                 if record_patches:
@@ -578,8 +584,7 @@ def sanitize_competency_math(comp: Dict[str, Any], record_patches: bool = True) 
             ):
                 d_val = d.get(d_field)
                 if isinstance(d_val, str):
-                    new_d_val = auto_wrap_bare_latex_in_cta_field(d_val)
-                    new_d_val = normalize_orphan_math(new_d_val)
+                    new_d_val = normalize_orphan_math(d_val)
                     if new_d_val != d_val:
                         d[d_field] = new_d_val
                         if record_patches:

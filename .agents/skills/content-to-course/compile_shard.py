@@ -910,10 +910,11 @@ def compile_shard(
     target_p = Path(work_dir_or_path).resolve()
     # In-memory inference when default "work" does not have manifest
     if not target_p.name.endswith(".py"):
-        if not (target_p / "shards" / "pre_shard_manifest.json").is_file() and not (target_p / "pre_shard_manifest.json").is_file():
-            inferred = infer_work_dir(target_p, shard_id=shard_id)
-            if inferred != target_p:
-                target_p = inferred.resolve()
+        if str(work_dir_or_path) in ("work", "./work", ".\\work") or target_p == (Path.cwd() / "work").resolve():
+            if not (target_p / "shards" / "pre_shard_manifest.json").is_file() and not (target_p / "pre_shard_manifest.json").is_file():
+                inferred = infer_work_dir(target_p, shard_id=shard_id)
+                if inferred != target_p:
+                    target_p = inferred.resolve()
 
     # Guarantee sys.modules and linecache safety across multiple compiles in same process
     import linecache

@@ -1130,7 +1130,7 @@ def dispatch_authors(
             done_signal=f"DONE: {target_json}",
         )
 
-        compile_cmd = f"{cmd_prefix} .agents/skills/content-to-course/compile_shard.py {out_py} --work {work_rel} --shard {s_id} --strict --min-archetypes 4"
+        compile_cmd = f"{cmd_prefix} .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes 4"
 
         prompt_lines = [
             f"# Asignación de Tarea: Shard Exercise Author `{s_id}` (C2C v3.21 Load Inversion)",
@@ -1510,6 +1510,7 @@ def build_dispatch(
 
     dispatched_ids: List[str] = state.get("dispatched", {}).get(role, [])
     subagents: List[Dict[str, Any]] = []
+    item_files: List[str] = []
 
     # CTA-REDUCE
     if role == "cta-reduce":
@@ -1551,6 +1552,7 @@ def build_dispatch(
         items_dir.mkdir(parents=True, exist_ok=True)
         item_file = items_dir / "cta_harmonize_01.json"
         item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
+        item_files.append(item_file.resolve().as_posix())
 
     # REPAIR
     elif role == "repair":

@@ -673,15 +673,15 @@ def _build_distractor_lookup_from_cta(
         return distractor_lookup
 
     def _extract_rat(d: Dict[str, Any]) -> str:
-        rem = d.get("remediation_hint") or ""
         wb = d.get("wrong_belief") or d.get("manifestation") or ""
         om = d.get("omitted_step") or ""
-        if rem:
-            rat = rem
-        elif wb and om:
+        rem = d.get("remediation_hint") or ""
+        if wb and om:
             rat = f"{wb.rstrip('.')}. Se debe considerar: {om.rstrip('.')}."
         elif wb:
             rat = wb
+        elif rem:
+            rat = rem
         elif om:
             rat = f"Error procedimental: {om}."
         else:
