@@ -158,7 +158,229 @@ def auto_balance_math_delimiters(text: str) -> str:
     return text
 
 
-def normalize_orphan_math(text: str) -> str:
+LATEX_CMD_NAMES = (
+    r"frac|dfrac|tfrac|cfrac|sqrt|sum|prod|int|oint|lim|infty|partial|nabla|"
+    r"alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|vartheta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|varphi|chi|psi|omega|"
+    r"Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Upsilon|Phi|Psi|Omega|"
+    r"cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|simeq|propto|in|notin|subset|subseteq|cup|cap|forall|exists|"
+    r"Rightarrow|implies|iff|Leftrightarrow|to|rightarrow|leftarrow|xrightarrow|"
+    r"hat|bar|tilde|vec|dot|ddot|mathcal|mathbb|mathbf|boldsymbol|text|operatorname|left|right|begin|end|"
+    r"quad|qquad|ln|log|exp|det|dim|ker|min|max|sup|inf"
+)
+LATEX_CMD_RE = re.compile(rf"\\(?:{LATEX_CMD_NAMES})(?![a-zA-Z])")
+
+MATH_NAMES = {
+    "frac", "dfrac", "tfrac", "cfrac", "sqrt", "sum", "prod", "int", "oint", "lim", "infty",
+    "partial", "nabla", "alpha", "beta", "gamma", "delta", "epsilon", "varepsilon", "zeta",
+    "eta", "theta", "vartheta", "iota", "kappa", "lambda", "mu", "nu", "xi", "pi", "rho",
+    "sigma", "tau", "upsilon", "phi", "varphi", "chi", "psi", "omega",
+    "gamma", "delta", "theta", "lambda", "xi", "pi", "sigma", "upsilon", "phi", "psi", "omega",
+    "cdot", "times", "div", "pm", "mp", "leq", "geq", "neq", "approx", "equiv", "sim",
+    "simeq", "propto", "in", "notin", "subset", "subseteq", "cup", "cap", "forall", "exists",
+    "to", "rightarrow", "leftarrow", "xrightarrow", "hat", "bar", "tilde", "vec", "dot", "ddot",
+    "text", "operatorname", "left", "right", "begin", "end", "exp", "log", "ln", "max", "min",
+    "sup", "inf", "det", "dim", "ker", "cov", "var", "plim", "arg", "mse", "tr", "diag", "normal",
+    "mathcal", "mathbb", "mathbf", "boldsymbol",
+}
+
+COMMON_SPANISH_PROSE_WORDS = {
+    "y", "e", "o", "u", "a",
+    "que", "para", "cuando", "donde", "porque", "como", "cual", "cuales", "quien",
+    "el", "la", "los", "las", "un", "una", "unos", "unas", "al", "del", "lo",
+    "de", "en", "con", "por", "sin", "sobre", "tras", "entre", "hacia", "desde", "hasta",
+    "este", "esta", "estos", "estas", "ese", "esa", "esos", "esas", "aquel", "aquella",
+    "su", "sus", "mi", "mis", "tu", "tus", "nuestro", "nuestra",
+    "se", "me", "te", "nos", "os", "le", "les",
+    "es", "son", "era", "eran", "fue", "fueron", "sea", "sean", "ser", "estar", "estan", "están",
+    "asume", "asumiendo", "confunde", "confundiendo", "olvida", "olvidando", "omite", "omitiendo",
+    "aplica", "aplicando", "calcula", "calculando", "cree", "creyendo", "divide", "multiplica",
+    "suma", "resta", "iguala", "sustituye", "despeja", "aproxima",
+    "error", "paso", "caso", "valor", "teorema", "definicion", "definición", "formula", "fórmula",
+    "estimador", "varianza", "media", "muestra", "poblacion", "población", "distribucion", "distribución",
+    "limite", "límite", "convergencia", "hipotesis", "hipótesis", "parametro", "parámetro",
+    "condicion", "condición", "resultado", "sesgo", "consistencia", "asintotica", "asintótica",
+    "pero", "aunque", "sino", "mas", "más", "menos", "bien", "mal", "tambien", "también",
+    "no", "si", "sí", "ya", "muy", "vez", "veces", "lugar", "forma", "modo", "tipo",
+    "todo", "toda", "todos", "todas", "cada", "otro", "otra", "otros", "otras",
+    "afirma", "obtiene", "concluye", "establece", "demuestra", "cumple", "verifica",
+}
+
+
+def auto_wrap_bare_latex_in_cta_field(text: str) -> str:
+    """Auto-wraps bare/orphaned LaTeX commands outside $...$ or $$...$$ into $...$ blocks."""
+    if not isinstance(text, str) or not text:
+        return text
+
+    if not LATEX_CMD_RE.search(text):
+        return text
+
+    clean_dollars = text.replace(r"\$", "")
+    if "$" not in clean_dollars:
+        stripped = text.strip()
+        words = re.findall(r"\b[a-zA-Z\u00C0-\u017F]{2,}\b", stripped)
+        non_math = [w.lower() for w in words if w.lower() not in MATH_NAMES]
+        has_prose = any(w in COMMON_SPANISH_PROSE_WORDS for w in non_math) or len(non_math) >= 3
+        if not has_prose:
+            if stripped.endswith((".", ",", ";", ":", "?", "!")):
+                punct = stripped[-1]
+                core = stripped[:-1].rstrip()
+                return f"${core}${punct}"
+            return f"${stripped}$"
+
+    def _wrap_segment(segment: str) -> str:
+        pos = 0
+        res = []
+        n = len(segment)
+        while pos < n:
+            m = LATEX_CMD_RE.search(segment, pos)
+            if not m:
+                res.append(segment[pos:])
+                break
+
+            cmd_start = m.start()
+            math_start = cmd_start
+            while math_start > pos:
+                prev_char = segment[math_start - 1]
+                if prev_char in " \t":
+                    peek = segment[pos:math_start - 1].rstrip()
+                    if peek and peek[-1] in "+-*/=<>~^_(":
+                        math_start = len(peek)
+                        continue
+                    m_tok = re.search(r"([a-zA-Z0-9_]+)$", peek)
+                    if m_tok:
+                        w = m_tok.group(1).lower()
+                        if w in MATH_NAMES or (len(w) <= 2 and w not in COMMON_SPANISH_PROSE_WORDS and not w.isdigit()):
+                            math_start = pos + m_tok.start()
+                            continue
+                    break
+                elif prev_char in "+-*/=<>~^_(\'":
+                    math_start -= 1
+                elif prev_char.isalnum():
+                    w_start = math_start - 1
+                    while w_start > pos and segment[w_start - 1].isalnum():
+                        w_start -= 1
+                    word = segment[w_start:math_start].lower()
+                    if word in COMMON_SPANISH_PROSE_WORDS or word in ("y", "e", "o", "u", "a") or len(word) >= 4:
+                        break
+                    math_start = w_start
+                else:
+                    break
+
+            res.append(segment[pos:math_start])
+            math_end = m.end()
+
+            def _consume_braces(p: int) -> int:
+                idx = p
+                while idx < n and segment[idx] in " \t":
+                    idx += 1
+                if idx < n and segment[idx] in "{[":
+                    open_c = segment[idx]
+                    close_c = "}" if open_c == "{" else "]"
+                    depth = 1
+                    idx += 1
+                    while idx < n and depth > 0:
+                        if segment[idx] == open_c:
+                            depth += 1
+                        elif segment[idx] == close_c:
+                            depth -= 1
+                        idx += 1
+                    return idx
+                return p
+
+            math_end = _consume_braces(math_end)
+            delim_stack = []
+
+            while math_end < n:
+                ch = segment[math_end]
+                if ch in " \t":
+                    peek_p = math_end
+                    while peek_p < n and segment[peek_p] in " \t":
+                        peek_p += 1
+                    if peek_p < n:
+                        next_ch = segment[peek_p]
+                        if next_ch in "+-*/=<>~^_{[(|\\":
+                            math_end = peek_p
+                            continue
+                        elif next_ch.isalnum():
+                            w_end = peek_p
+                            while w_end < n and segment[w_end].isalnum():
+                                w_end += 1
+                            raw_word = segment[peek_p:w_end]
+                            word = raw_word.lower()
+                            is_prose = word in COMMON_SPANISH_PROSE_WORDS and (len(word) > 1 or raw_word.islower())
+                            if is_prose and not delim_stack:
+                                break
+                            if word in MATH_NAMES or len(word) <= 2 or word.isdigit() or bool(delim_stack):
+                                math_end = peek_p
+                                continue
+                    break
+                elif ch == "\\":
+                    m_any_cmd = re.match(r"\\[a-zA-Z]+|\\[,;:! ]", segment[math_end:])
+                    if m_any_cmd:
+                        math_end += len(m_any_cmd.group(0))
+                        math_end = _consume_braces(math_end)
+                        continue
+                    else:
+                        break
+                elif ch in "{[":
+                    math_end = _consume_braces(math_end)
+                elif ch == "(":
+                    delim_stack.append("(")
+                    math_end += 1
+                elif ch == ")":
+                    if delim_stack and delim_stack[-1] == "(":
+                        delim_stack.pop()
+                    math_end += 1
+                elif ch in "+-*/=<>~^_]|\'":
+                    math_end += 1
+                elif ch == ",":
+                    if delim_stack:
+                        math_end += 1
+                    else:
+                        break
+                elif ch in ".;:?!":
+                    if delim_stack:
+                        math_end += 1
+                    elif math_end + 1 == n or segment[math_end + 1] in " \t\n":
+                        break
+                    else:
+                        math_end += 1
+                elif ch.isalnum():
+                    w_end = math_end
+                    while w_end < n and segment[w_end].isalnum():
+                        w_end += 1
+                    raw_word = segment[math_end:w_end]
+                    word = raw_word.lower()
+                    is_prose = (
+                        (word in COMMON_SPANISH_PROSE_WORDS and (len(word) > 1 or raw_word.islower()))
+                        or (len(word) >= 4 and word not in MATH_NAMES)
+                    )
+                    if not delim_stack and is_prose:
+                        break
+                    math_end = w_end
+                else:
+                    break
+
+            math_chunk = segment[math_start:math_end].strip()
+            trailing_punct = ""
+            if math_chunk.endswith((".", ",", ";", ":", "?", "!")):
+                trailing_punct = math_chunk[-1]
+                math_chunk = math_chunk[:-1].rstrip()
+
+            if math_chunk:
+                res.append(f"${math_chunk}${trailing_punct}")
+            pos = math_end
+
+        return "".join(res)
+
+    parts = re.split(r"(\$\$.*?\$\$|\$.*?\$)", text, flags=re.DOTALL)
+    for i in range(0, len(parts), 2):
+        if parts[i]:
+            parts[i] = _wrap_segment(parts[i])
+    return "".join(parts)
+
+
+def normalize_orphan_math(text: str, wrap_bare_equations: bool = True) -> str:
     """Normalizes orphaned/unescaped LaTeX expressions like dot{w} -> $\\dot{w}$, bar{k} -> $\\bar{k}$ outside $...$."""
     if not isinstance(text, str) or not text:
         return text
@@ -189,6 +411,8 @@ def normalize_orphan_math(text: str) -> str:
     )
 
     text = auto_balance_math_delimiters(text)
+    if wrap_bare_equations:
+        text = auto_wrap_bare_latex_in_cta_field(text)
 
     def _apply_outside_math(s: str, fn) -> str:
         parts = re.split(r"(\$\$.*?\$\$|\$.*?\$)", s, flags=re.DOTALL)
@@ -271,7 +495,7 @@ def normalize_orphan_math(text: str) -> str:
     text = _apply_outside_math(
         text,
         lambda c: re.sub(
-            r"\\(alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega|partial|int|sum|prod|infty|times|cdot|approx|leq|geq|neq)\b",
+            r"(?<![\\{_^\$])\\(alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega|partial|int|sum|prod|infty|times|cdot|approx|leq|geq|neq)\b(?![}_^\$])",
             r"$\\\1$",
             c,
         )
@@ -320,7 +544,8 @@ def sanitize_competency_math(comp: Dict[str, Any], record_patches: bool = True) 
     for field in ("name", "description_latex", "description"):
         val = comp.get(field)
         if isinstance(val, str):
-            new_val = normalize_orphan_math(val)
+            new_val = auto_wrap_bare_latex_in_cta_field(val)
+            new_val = normalize_orphan_math(new_val)
             if new_val != val:
                 comp[field] = new_val
                 if record_patches:
@@ -352,7 +577,8 @@ def sanitize_competency_math(comp: Dict[str, Any], record_patches: bool = True) 
             ):
                 d_val = d.get(d_field)
                 if isinstance(d_val, str):
-                    new_d_val = normalize_orphan_math(d_val)
+                    new_d_val = auto_wrap_bare_latex_in_cta_field(d_val)
+                    new_d_val = normalize_orphan_math(new_d_val)
                     if new_d_val != d_val:
                         d[d_field] = new_d_val
                         if record_patches:

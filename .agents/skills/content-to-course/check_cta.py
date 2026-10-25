@@ -23,9 +23,22 @@ if str(_skills_root) not in sys.path:
 
 from engine.invariants import validate_katex_syntax
 
+LATEX_CMD_NAMES = (
+    r"frac|dfrac|tfrac|cfrac|sqrt|sum|prod|int|oint|lim|infty|partial|nabla|"
+    r"alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|vartheta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|varphi|chi|psi|omega|"
+    r"Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Upsilon|Phi|Psi|Omega|"
+    r"cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|simeq|propto|in|notin|subset|subseteq|cup|cap|forall|exists|"
+    r"Rightarrow|implies|iff|Leftrightarrow|to|rightarrow|leftarrow|xrightarrow|"
+    r"hat|bar|tilde|vec|dot|ddot|mathcal|mathbb|mathbf|boldsymbol|text|operatorname|left|right|begin|end|"
+    r"quad|qquad|ln|log|exp|det|dim|ker|min|max|sup|inf"
+)
+LATEX_CMD_RE = re.compile(rf"\\(?:{LATEX_CMD_NAMES})(?![a-zA-Z])")
+
 RAW_LATEX_PATTERNS = [
     # 1. Backslashed LaTeX macros (unambiguous LaTeX)
-    r"\\(?:dot|ddot|bar|hat|tilde|vec|frac|dfrac|tfrac|cfrac|sqrt|alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Phi|Psi|Omega|partial|int|sum|prod|infty|times|cdot|approx|leq|geq|neq)\b",
+    rf"\\(?:{LATEX_CMD_NAMES})(?![a-zA-Z])",
+
+
     # 2. LaTeX commands without backslash: MUST have immediate '{' (no whitespace) with concise math argument
     r"(?<!\\)\b(?:dot|ddot|bar|hat|tilde|vec)\{[a-zA-Z0-9_+\-*^./]{1,4}\}",
     r"(?<!\\)\b(?:frac|dfrac|tfrac|cfrac|sqrt)\{[a-zA-Z0-9_+\-*^./]+\}",

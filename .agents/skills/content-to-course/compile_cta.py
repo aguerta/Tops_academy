@@ -26,6 +26,7 @@ import importlib.util
 import io
 import json
 import logging
+import hashlib
 import tokenize
 import re
 import sys
@@ -53,6 +54,7 @@ from cta_merge import (
     render_cta_md,
     sanitize_competency_math,
     normalize_orphan_math,
+    auto_wrap_bare_latex_in_cta_field,
     auto_balance_math_delimiters,
     parse_next_ids_by_prefix,
 )
@@ -78,14 +80,17 @@ logger = logging.getLogger("compile_cta")
 
 
 class CtaDataLineLocator:
-    """Indexes cta_data.py source code to locate exact line numbers of competencies and distractors."""
+    """Indexes cta_data.py source code to locate exact line numbers of competencies, distractors and subfields."""
 
     def __init__(self, source_text: str):
         self.source_text = source_text
         self.lines = source_text.splitlines()
         self.comp_lines: Dict[str, int] = {}
+        self.competency_lines: Dict[str, Tuple[int, int]] = {}
+        self.element_lines: Dict[str, Dict[Union[int, str], Tuple[int, int]]] = {}
+        self.distractor_lines: Dict[str, Tuple[int, int]] = {}
+        self.distractor_field_lines: Dict[str, Dict[Union[int, str], Tuple[int, int]]] = {}
         self.comp_tuple_indices: Dict[int, int] = {}
-        self.distractor_lines: Dict[str, int] = {}
         self._index_source()
 
     def _index_source(self) -> None:
@@ -117,13 +122,16 @@ class CtaDataLineLocator:
                     if not isinstance(c_node, (ast.List, ast.Tuple)):
                         continue
                     global_c_idx += 1
-                    c_line = getattr(c_node, "lineno", 1)
+                    c_start = getattr(c_node, "lineno", 1)
+                    c_end = getattr(c_node, "end_lineno", c_start)
+
                     raw_t = ""
                     if len(c_node.elts) > 0 and isinstance(c_node.elts[0], ast.Constant) and isinstance(c_node.elts[0].value, str):
                         raw_t = c_node.elts[0].value.strip().lower()
 
                     is_6_format = (len(c_node.elts) == 6 and raw_t not in type_prefix_map)
                     d_elts: List[Any] = []
+                    field_names_map: Dict[int, List[str]] = {}
 
                     if is_6_format:
                         title_str = str(c_node.elts[0].value).strip() if isinstance(c_node.elts[0], ast.Constant) else ""
@@ -144,6 +152,14 @@ class CtaDataLineLocator:
                             type_counts[prefix] = type_counts.get(prefix, 0) + 1
                             cid = f"{prefix}-{type_counts[prefix]:02d}"
 
+                        field_names_map = {
+                            0: ["name", "title"],
+                            1: ["description_latex", "description"],
+                            2: ["prerequisites"],
+                            3: ["evidence", "doc", "page"],
+                            4: ["misconceptions"],
+                            5: ["distractors"],
+                        }
                         if len(c_node.elts) > 5 and isinstance(c_node.elts[5], (ast.List, ast.Tuple)):
                             d_elts = c_node.elts[5].elts
                     else:
@@ -158,30 +174,100 @@ class CtaDataLineLocator:
                         if not cid:
                             cid = f"{prefix}-{type_counts[prefix]:02d}"
 
-                        if len(c_node.elts) > 8 and isinstance(c_node.elts[8], (ast.List, ast.Tuple)):
-                            d_elts = c_node.elts[8].elts
-                        elif len(c_node.elts) == 6 and isinstance(c_node.elts[5], (ast.List, ast.Tuple)):
-                            d_elts = c_node.elts[5].elts
-                        elif len(c_node.elts) == 7 and isinstance(c_node.elts[6], (ast.List, ast.Tuple)):
-                            d_elts = c_node.elts[6].elts
-                        elif len(c_node.elts) == 8 and isinstance(c_node.elts[7], (ast.List, ast.Tuple)):
-                            d_elts = c_node.elts[7].elts
+                        if len(c_node.elts) >= 9:
+                            field_names_map = {
+                                0: ["type"],
+                                1: ["id"],
+                                2: ["name"],
+                                3: ["description_latex", "description"],
+                                4: ["bloom"],
+                                5: ["doc", "evidence"],
+                                6: ["page", "evidence"],
+                                7: ["prerequisites"],
+                                8: ["distractors"],
+                            }
+                            if isinstance(c_node.elts[8], (ast.List, ast.Tuple)):
+                                d_elts = c_node.elts[8].elts
+                        elif len(c_node.elts) == 8:
+                            field_names_map = {
+                                0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
+                                4: ["bloom"], 5: ["doc", "evidence"], 6: ["page", "evidence"], 7: ["distractors"],
+                            }
+                            if isinstance(c_node.elts[7], (ast.List, ast.Tuple)):
+                                d_elts = c_node.elts[7].elts
+                        elif len(c_node.elts) == 7:
+                            field_names_map = {
+                                0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
+                                4: ["bloom"], 5: ["page", "evidence"], 6: ["distractors"],
+                            }
+                            if isinstance(c_node.elts[6], (ast.List, ast.Tuple)):
+                                d_elts = c_node.elts[6].elts
+                        elif len(c_node.elts) == 6:
+                            field_names_map = {
+                                0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
+                                4: ["bloom"], 5: ["distractors"],
+                            }
+                            if isinstance(c_node.elts[5], (ast.List, ast.Tuple)):
+                                d_elts = c_node.elts[5].elts
 
-                    self.comp_lines[cid] = c_line
-                    self.comp_lines[cid.replace("-", "")] = c_line
-                    self.comp_tuple_indices[global_c_idx] = c_line
                     cid_clean = cid.replace("-", "")
+                    self.comp_lines[cid] = c_start
+                    self.comp_lines[cid_clean] = c_start
+                    self.competency_lines[cid] = (c_start, c_end)
+                    self.competency_lines[cid_clean] = (c_start, c_end)
+                    self.comp_tuple_indices[global_c_idx] = c_start
+
+                    # Index competency elements
+                    cid_elts: Dict[Union[int, str], Tuple[int, int]] = {}
+                    for e_idx, e_node in enumerate(c_node.elts):
+                        e_start = getattr(e_node, "lineno", c_start)
+                        e_end = getattr(e_node, "end_lineno", e_start)
+                        cid_elts[e_idx] = (e_start, e_end)
+                        if e_idx in field_names_map:
+                            for fn in field_names_map[e_idx]:
+                                cid_elts[fn] = (e_start, e_end)
+
+                    self.element_lines[cid] = cid_elts
+                    self.element_lines[cid_clean] = cid_elts
+
+                    # Index distractors and subfields
+                    distractor_subfields = {
+                        0: ["name", "title"],
+                        1: ["wrong_belief"],
+                        2: ["correct_belief"],
+                        3: ["manifestation"],
+                        4: ["remediation_hint", "hint"],
+                        5: ["omitted_step"],
+                    }
 
                     for d_idx, d_node in enumerate(d_elts, start=1):
-                        d_line = getattr(d_node, "lineno", c_line)
-                        did = f"D-{cid_clean}-{d_idx:02d}"
-                        self.distractor_lines[did] = d_line
-                        self.distractor_lines[f"D-{cid}-{d_idx:02d}"] = d_line
-                        if isinstance(d_node, (ast.List, ast.Tuple)) and len(d_node.elts) > 0:
-                            if isinstance(d_node.elts[0], ast.Constant) and d_node.elts[0].value:
+                        d_start = getattr(d_node, "lineno", c_start)
+                        d_end = getattr(d_node, "end_lineno", d_start)
+                        did_hyphen = f"D-{cid}-{d_idx:02d}"
+                        did_clean = f"D-{cid_clean}-{d_idx:02d}"
+
+                        self.distractor_lines[did_hyphen] = (d_start, d_end)
+                        self.distractor_lines[did_clean] = (d_start, d_end)
+
+                        d_fields: Dict[Union[int, str], Tuple[int, int]] = {}
+                        if isinstance(d_node, (ast.List, ast.Tuple)):
+                            for s_idx, s_node in enumerate(d_node.elts):
+                                s_start = getattr(s_node, "lineno", d_start)
+                                s_end = getattr(s_node, "end_lineno", s_start)
+                                d_fields[s_idx] = (s_start, s_end)
+                                if s_idx in distractor_subfields:
+                                    for sfn in distractor_subfields[s_idx]:
+                                        d_fields[sfn] = (s_start, s_end)
+
+                            if len(d_node.elts) > 0 and isinstance(d_node.elts[0], ast.Constant) and d_node.elts[0].value:
                                 d_name = str(d_node.elts[0].value).strip()
                                 if d_name:
-                                    self.distractor_lines[d_name] = d_line
+                                    self.distractor_lines[d_name] = (d_start, d_end)
+                                    self.distractor_field_lines[d_name] = d_fields
+
+                        self.distractor_field_lines[did_hyphen] = d_fields
+                        self.distractor_field_lines[did_clean] = d_fields
+
         except Exception:
             pass
 
@@ -197,6 +283,9 @@ class CtaDataLineLocator:
                 if cid not in self.comp_lines:
                     self.comp_lines[cid] = line_idx
                     self.comp_lines[cid.replace("-", "")] = line_idx
+                    if cid not in self.competency_lines:
+                        self.competency_lines[cid] = (line_idx, line_idx)
+                        self.competency_lines[cid.replace("-", "")] = (line_idx, line_idx)
 
         id_pattern = re.compile(r'["\'](H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)["\']')
         for line_idx, line in enumerate(self.lines, start=1):
@@ -205,17 +294,45 @@ class CtaDataLineLocator:
                 if cid not in self.comp_lines:
                     self.comp_lines[cid] = line_idx
                     self.comp_lines[cid.replace("-", "")] = line_idx
+                    if cid not in self.competency_lines:
+                        self.competency_lines[cid] = (line_idx, line_idx)
+                        self.competency_lines[cid.replace("-", "")] = (line_idx, line_idx)
 
-    def get_comp_line(self, comp_id: str) -> Optional[int]:
-        if comp_id in self.distractor_lines:
-            return self.distractor_lines[comp_id]
-        if comp_id in self.comp_lines:
-            return self.comp_lines[comp_id]
-        clean_id = comp_id.replace("-", "")
-        if clean_id in self.comp_lines:
-            return self.comp_lines[clean_id]
+    def get_range(self, item_id: str, field_name: Optional[str] = None) -> Optional[Tuple[int, int]]:
+        if not item_id:
+            return None
+        # Check distractor field lines
+        if item_id in self.distractor_field_lines:
+            if field_name and field_name in self.distractor_field_lines[item_id]:
+                return self.distractor_field_lines[item_id][field_name]
+            if item_id in self.distractor_lines:
+                return self.distractor_lines[item_id]
+
+        if item_id in self.distractor_lines:
+            return self.distractor_lines[item_id]
+
+        # Check competency element lines
+        if item_id in self.element_lines:
+            if field_name and field_name in self.element_lines[item_id]:
+                return self.element_lines[item_id][field_name]
+            if item_id in self.competency_lines:
+                return self.competency_lines[item_id]
+
+        if item_id in self.competency_lines:
+            return self.competency_lines[item_id]
+
+        clean_id = item_id.replace("-", "")
+        if clean_id in self.element_lines:
+            if field_name and field_name in self.element_lines[clean_id]:
+                return self.element_lines[clean_id][field_name]
+            if clean_id in self.competency_lines:
+                return self.competency_lines[clean_id]
+
+        if clean_id in self.competency_lines:
+            return self.competency_lines[clean_id]
+
         # Distractor ID decomposition fallback, e.g. D-Hab01-02 -> Hab-01
-        m_did = re.match(r"^D-([A-Za-z]+)(\d+)(?:-(\d+))?$", comp_id)
+        m_did = re.match(r"^D-([A-Za-z]+)(\d+)(?:-(\d+))?$", item_id)
         if m_did:
             prefix, comp_num, dist_idx = m_did.groups()
             cid_hyphen = f"{prefix}-{comp_num}"
@@ -223,21 +340,131 @@ class CtaDataLineLocator:
                 try_did = f"D-{prefix}{comp_num}-{int(dist_idx):02d}"
                 if try_did in self.distractor_lines:
                     return self.distractor_lines[try_did]
-            if cid_hyphen in self.comp_lines:
-                return self.comp_lines[cid_hyphen]
-            if f"{prefix}{comp_num}" in self.comp_lines:
-                return self.comp_lines[f"{prefix}{comp_num}"]
+            if cid_hyphen in self.competency_lines:
+                return self.competency_lines[cid_hyphen]
+            if f"{prefix}{comp_num}" in self.competency_lines:
+                return self.competency_lines[f"{prefix}{comp_num}"]
+
+        if item_id in self.comp_lines:
+            ln = self.comp_lines[item_id]
+            return (ln, ln)
+        if clean_id in self.comp_lines:
+            ln = self.comp_lines[clean_id]
+            return (ln, ln)
+
         return None
 
-    def get_line(self, item_id: str) -> Optional[int]:
-        return self.get_comp_line(item_id)
+    def get_line(self, item_id: str, field_name: Optional[str] = None) -> Optional[int]:
+        rng = self.get_range(item_id, field_name)
+        if rng:
+            return rng[0]
+        if item_id in self.distractor_lines:
+            val = self.distractor_lines[item_id]
+            return val[0] if isinstance(val, tuple) else val
+        if item_id in self.comp_lines:
+            return self.comp_lines[item_id]
+        return None
+
+    def get_lines(self, item_id: str, field_name: Optional[str] = None) -> List[int]:
+        ln = self.get_line(item_id, field_name)
+        return [ln] if ln is not None else []
+
+    def get_comp_line(self, comp_id: str) -> Optional[int]:
+        return self.get_line(comp_id)
 
     def find_field_line(self, comp_id: str, snippet: str) -> Optional[int]:
-        base_line = self.get_comp_line(comp_id) or 1
+        base_line = self.get_line(comp_id) or 1
         for l_num in range(base_line, min(len(self.lines) + 1, base_line + 80)):
             if snippet in self.lines[l_num - 1]:
                 return l_num
         return base_line
+
+    def resolve_error_location(self, err_msg: str, cid: Optional[str] = None) -> Tuple[int, int, str]:
+        """Resolves (start_line, end_line, snippet) for a given CTA error message against the Python source file."""
+        m_did = re.search(r"\b(D-[A-Za-z0-9_-]+)\b", err_msg)
+        did = m_did.group(1) if m_did else None
+
+        m_cid = re.search(r"\b(H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+|H\d+|C\d+|Hab\d+)\b", err_msg, re.IGNORECASE)
+        found_cid = m_cid.group(1) if m_cid else cid
+
+        field_match = None
+        for fld in (
+            "manifestation", "remediation_hint", "wrong_belief", "correct_belief",
+            "omitted_step", "description_latex", "description", "name", "evidence",
+            "page", "prerequisites", "bloom", "session", "type"
+        ):
+            if re.search(rf"\b{fld}\b", err_msg, re.IGNORECASE) or f"'{fld}'" in err_msg:
+                field_match = fld
+                break
+
+        target_range = None
+        if did:
+            target_range = self.get_range(did, field_match)
+            if not target_range:
+                did_norm = re.sub(r"^D-([A-Za-z]+)-?(\d+)-?(\d+)$", r"D-\1\2-\3", did)
+                target_range = self.get_range(did_norm, field_match)
+
+        if not target_range and found_cid:
+            target_range = self.get_range(found_cid, field_match)
+
+        if not target_range:
+            m_line = re.search(r"\[(?:.+:)?L[íi]nea\s+(\d+)\]", err_msg)
+            if m_line:
+                ln = int(m_line.group(1))
+                target_range = (ln, ln)
+            else:
+                target_range = (1, min(len(self.lines), 5))
+
+        start_line, end_line = target_range
+        snip_start = max(1, start_line - 1)
+        snip_end = min(len(self.lines), max(end_line + 1, snip_start + 2))
+        snippet_lines = [f"  L{idx}: {self.lines[idx - 1]}" for idx in range(snip_start, snip_end + 1)]
+        snippet = "\n".join(snippet_lines)
+        return start_line, end_line, snippet
+
+
+def discover_cta_fix_files(
+    work_p: Union[str, Path],
+    target_py: Union[str, Path],
+    expected_cids: Optional[List[str]] = None,
+) -> List[Path]:
+    """Discovers modular cta_fixes/<CID>.py override files across standard fix folders."""
+    work_path = Path(work_p).resolve()
+    target_path = Path(target_py).resolve()
+
+    candidate_dirs = [
+        target_path.parent / "cta_fixes",
+        work_path / "cta_fixes",
+        work_path / "cta_parts" / "cta_fixes",
+    ]
+
+    seen_stems: Set[str] = set()
+    fix_files: List[Path] = []
+
+    norm_expected = None
+    if expected_cids:
+        norm_expected = set()
+        for cid in expected_cids:
+            norm_expected.add(cid.lower())
+            norm_expected.add(cid.replace("-", "").lower())
+
+    for fdir in candidate_dirs:
+        if not fdir.is_dir():
+            continue
+        for fpath in sorted(fdir.glob("*.py")):
+            if not fpath.is_file():
+                continue
+            stem = fpath.stem.lower()
+            stem_clean = stem.replace("-", "")
+            if norm_expected:
+                if stem not in norm_expected and stem_clean not in norm_expected:
+                    continue
+            if stem not in seen_stems and stem_clean not in seen_stems:
+                seen_stems.add(stem)
+                seen_stems.add(stem_clean)
+                fix_files.append(fpath)
+
+    return sorted(fix_files, key=lambda p: p.name)
 
 
 LATEX_PREFIX_PATTERNS = [
@@ -334,15 +561,15 @@ def heal_string_token(token_str: str) -> str:
         new_body = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", new_body)
 
     # L2: Semantic KaTeX repairs inside string token
-    if "$" in new_body or has_latex or "{{" in new_body:
+    if "$" in new_body or "{{" in new_body:
         # {{x}} -> {x}
         new_body = re.sub(r"\{\{([a-zA-Z0-9_+\-*./^]+)\}\}", r"{\1}", new_body)
         # Single line $$ -> $
         if "\n" not in new_body and "$$" in new_body:
             new_body = re.sub(r"(?<!\\)\$\$([^\n]+?)(?<!\\)\$\$", r"$\1$", new_body)
-        # Normalize orphan math and balance odd $
-        if has_latex or "$" in new_body:
-            new_body = normalize_orphan_math(new_body)
+        # Balance odd $ delimiters
+        if "$" in new_body:
+            new_body = auto_balance_math_delimiters(new_body)
 
     if new_body != body or new_prefix != prefix:
         return f"{new_prefix}{q_open}{new_body}{q_close}"
@@ -1022,6 +1249,37 @@ def compile_cta(
     source_lines = source_text.splitlines()
     locator = CtaDataLineLocator(source_text)
 
+    # Determine is_part and target_id
+    if is_part is None:
+        is_part = bool(
+            (output_json_name and "part" in output_json_name.lower())
+            or ("parts" in data_file.parent.name.lower())
+            or ("part" in data_file.stem.lower())
+        )
+
+    if is_part:
+        m_part = re.search(r"part_?\d+", data_file.stem, re.IGNORECASE)
+        target_id = m_part.group(0).lower() if m_part else data_file.stem
+    else:
+        target_id = "cta_data"
+
+    # Discover modular fix files and calculate source_sha256
+    relevant_fix_files = discover_cta_fix_files(work_dir, data_file)
+    hasher = hashlib.sha256()
+    if data_file.is_file():
+        hasher.update(data_file.read_bytes())
+    for rf in relevant_fix_files:
+        hasher.update(f"\n--FIX:{rf.name}--\n".encode("utf-8"))
+        hasher.update(rf.read_bytes())
+    source_sha256 = hasher.hexdigest()
+
+    attempts_dir = work_dir / ".check_attempts"
+    attempts_dir.mkdir(parents=True, exist_ok=True)
+    compile_att_file = attempts_dir / f"compile_cta_{target_id}.json"
+    alt_compile_att_file = attempts_dir / f"compile_{target_id}.json"
+    pass_file = attempts_dir / f"pass_cta_{target_id}.json"
+    alt_pass_file = attempts_dir / f"pass_{target_id}.json"
+
     # 1. Dynamically load module
     try:
         mod = load_cta_data_module(data_file)
@@ -1049,6 +1307,46 @@ def compile_cta(
                 f"{snip}"
             )
 
+        for pf in (pass_file, alt_pass_file):
+            if pf.is_file():
+                try:
+                    pf.unlink()
+                except Exception:
+                    pass
+
+        state = {
+            "distinct_compiles": 0,
+            "same_error_streak": 0,
+            "last_source_sha256": "",
+            "last_err_hash": "",
+            "last_errors": [],
+            "error_count": 1,
+            "has_syntax_error": True,
+        }
+        for cf in (compile_att_file, alt_compile_att_file):
+            if cf.is_file():
+                try:
+                    loaded_state = json.loads(cf.read_text(encoding="utf-8"))
+                    if isinstance(loaded_state, dict):
+                        state.update(loaded_state)
+                        break
+                except Exception:
+                    pass
+        state["distinct_compiles"] = state.get("distinct_compiles", 0) + 1
+        state["last_source_sha256"] = source_sha256
+        state["error_count"] = 1
+        state["has_syntax_error"] = True
+        err_hash = hashlib.sha256(err_msg.encode("utf-8")).hexdigest()
+        if state.get("last_err_hash") == err_hash:
+            state["same_error_streak"] = state.get("same_error_streak", 0) + 1
+        else:
+            state["same_error_streak"] = 1
+        state["last_err_hash"] = err_hash
+        state["last_errors"] = [err_msg]
+        state_json = json.dumps(state, indent=2, ensure_ascii=False)
+        compile_att_file.write_text(state_json, encoding="utf-8")
+        alt_compile_att_file.write_text(state_json, encoding="utf-8")
+
         return False, {}, [err_msg], elapsed
 
     competencies = getattr(mod, "COMPETENCIES", None)
@@ -1060,41 +1358,45 @@ def compile_cta(
     competencies = heal_control_chars_in_obj(competencies)
 
     # L4: Support splicing override files from cta_fixes/<ID>.py
-    fixes_dir = work_dir / "cta_fixes"
-    if not fixes_dir.is_dir() and (data_file.parent / "cta_fixes").is_dir():
-        fixes_dir = data_file.parent / "cta_fixes"
-    if fixes_dir.is_dir():
-        for fix_file in sorted(fixes_dir.glob("*.py")):
-            if fix_file.is_file():
-                try:
-                    fix_mod = load_cta_data_module(fix_file)
-                    override_c = getattr(fix_mod, "COMPETENCY", None)
-                    if override_c is None:
-                        cand_l = getattr(fix_mod, "COMPETENCIES", [])
-                        if cand_l:
-                            override_c = cand_l[0]
-                    if override_c and isinstance(override_c, (list, tuple)):
-                        target_id = override_c[1] if len(override_c) > 1 else fix_file.stem
-                        new_comps = []
-                        for c in competencies:
-                            cid = c[1] if isinstance(c, (list, tuple)) and len(c) > 1 else ""
-                            if cid == target_id or fix_file.stem == cid:
-                                new_comps.append(override_c)
-                            else:
-                                new_comps.append(c)
+    if relevant_fix_files:
+        for fix_file in relevant_fix_files:
+            try:
+                fix_mod = load_cta_data_module(fix_file)
+                override_c = getattr(fix_mod, "COMPETENCY", None)
+                if override_c is None:
+                    cand_l = getattr(fix_mod, "COMPETENCIES", [])
+                    if cand_l:
+                        override_c = cand_l[0]
+                if override_c and isinstance(override_c, (list, tuple)):
+                    target_cid = str(override_c[1]).strip() if len(override_c) > 1 else fix_file.stem
+                    new_comps = []
+                    matched = False
+                    for c in competencies:
+                        cid = str(c[1]).strip() if isinstance(c, (list, tuple)) and len(c) > 1 else ""
+                        if (
+                            cid == target_cid
+                            or cid.replace("-", "") == target_cid.replace("-", "")
+                            or fix_file.stem.lower() == cid.lower()
+                            or fix_file.stem.replace("-", "").lower() == cid.replace("-", "").lower()
+                        ):
+                            new_comps.append(override_c)
+                            matched = True
+                        else:
+                            new_comps.append(c)
+                    if matched:
                         competencies = new_comps
                         record_patch(
                             stage="cta",
                             layer="L4",
                             rule_id="OVERRIDE_SPLICE",
-                            scope=str(target_id),
+                            scope=str(target_cid),
                             before="original",
                             after="override",
                             severity="healed",
                             reason=f"Spliced override file {fix_file.name}",
                         )
-                except Exception as e:
-                    logger.warning("Failed to splice override file %s: %s", fix_file.name, e)
+            except Exception as e:
+                logger.warning("Failed to splice override file %s: %s", fix_file.name, e)
 
     # Anti-Overwrite Guard: protect against accidental write_to_file(Overwrite=True) shrinking >=10 comps to <6
     if len(competencies) >= 10:
@@ -1197,32 +1499,27 @@ def compile_cta(
     if manifest_data:
         cta_dict = auto_normalize_page_numbers(cta_dict, manifest_data, work_dir=work_dir)
 
-    # 4. Validate with platform rules using in-memory JsonLineLocator
+    # Tier-0 Auto-Heal: losslessly sanitize competency and distractor KaTeX math before validation
+    for comp in cta_dict.get("competencies", []):
+        sanitize_competency_math(comp, record_patches=True)
+
+    # 4. Validate with platform rules using CtaDataLineLocator
     target_json_name = output_json_name or "cta.json"
     target_json_path = work_dir / target_json_name
-    json_str = json.dumps(cta_dict, indent=2, ensure_ascii=False)
-    json_locator = JsonLineLocator(json_str)
-
-    if is_part is None:
-        is_part = bool(
-            (output_json_name and "part" in output_json_name.lower())
-            or ("parts" in data_file.parent.name.lower())
-            or ("part" in data_file.stem.lower())
-        )
 
     if is_part:
         is_valid, validation_errors = check_cta_part(
             data=cta_dict,
             manifest_data=manifest_data,
             file_path=target_json_path,
-            locator=json_locator,
+            locator=locator,
         )
     else:
         is_valid, validation_errors = validate_cta_rules(
             cta_data=cta_dict,
             manifest_data=manifest_data,
             file_path=target_json_path,
-            locator=json_locator,
+            locator=locator,
         )
 
     if not is_valid and existing_comp_ids:
@@ -1284,21 +1581,19 @@ def compile_cta(
             cta_dict = auto_normalize_page_numbers(cta_dict, manifest_data, force_clamp=True, work_dir=work_dir)
 
         # Re-validate after L5
-        json_str = json.dumps(cta_dict, indent=2, ensure_ascii=False)
-        json_locator = JsonLineLocator(json_str)
         if is_part:
             is_valid, validation_errors = check_cta_part(
                 data=cta_dict,
                 manifest_data=manifest_data,
                 file_path=target_json_path,
-                locator=json_locator,
+                locator=locator,
             )
         else:
             is_valid, validation_errors = validate_cta_rules(
                 cta_data=cta_dict,
                 manifest_data=manifest_data,
                 file_path=target_json_path,
-                locator=json_locator,
+                locator=locator,
             )
 
         if not is_valid and existing_comp_ids:
@@ -1347,8 +1642,9 @@ def compile_cta(
     if alert:
         logger.warning("PATCH_LEDGER_ALERT: %s", alert_msg)
 
-    # 5. Format errors with line numbers mapped to cta_data.py
+    # 5. Format errors with line numbers mapped to python source file
     mapped_errors: List[str] = []
+    py_name = data_file.name
     if not is_valid:
         for err in validation_errors:
             found_line = None
@@ -1358,12 +1654,54 @@ def compile_cta(
                 if l_num:
                     found_line = l_num
                     break
-            line_info = f" [cta_data.py:Línea {found_line}]" if found_line else ""
+            line_info = f" [{py_name}:Línea {found_line}]" if found_line and f"[{py_name}:Línea" not in err else ""
             mapped_errors.append(f"{err}{line_info}")
 
     elapsed_ms = (time.perf_counter() - t0) * 1000.0
 
     if not is_valid:
+        for pf in (pass_file, alt_pass_file):
+            if pf.is_file():
+                try:
+                    pf.unlink()
+                except Exception:
+                    pass
+        state = {
+            "distinct_compiles": 0,
+            "same_error_streak": 0,
+            "last_source_sha256": "",
+            "last_err_hash": "",
+            "last_errors": [],
+            "error_count": 0,
+            "has_syntax_error": False,
+        }
+        for cf in (compile_att_file, alt_compile_att_file):
+            if cf.is_file():
+                try:
+                    loaded_state = json.loads(cf.read_text(encoding="utf-8"))
+                    if isinstance(loaded_state, dict):
+                        state.update(loaded_state)
+                        break
+                except Exception:
+                    pass
+        state["distinct_compiles"] = state.get("distinct_compiles", 0) + 1
+        state["last_source_sha256"] = source_sha256
+        unique_errs = list(dict.fromkeys(mapped_errors or validation_errors))
+        state["error_count"] = len(unique_errs)
+        state["has_syntax_error"] = any(
+            "syntax" in e.lower() or "indentation" in e.lower() for e in unique_errs
+        )
+        err_hash = hashlib.sha256("\n".join(sorted(unique_errs)).encode("utf-8")).hexdigest()
+        if state.get("last_err_hash") == err_hash:
+            state["same_error_streak"] = state.get("same_error_streak", 0) + 1
+        else:
+            state["same_error_streak"] = 1
+        state["last_err_hash"] = err_hash
+        state["last_errors"] = unique_errs[:20]
+        state_json = json.dumps(state, indent=2, ensure_ascii=False)
+        compile_att_file.write_text(state_json, encoding="utf-8")
+        alt_compile_att_file.write_text(state_json, encoding="utf-8")
+
         return False, cta_dict, mapped_errors, elapsed_ms
 
     # 6. Write target JSON and MD
@@ -1372,6 +1710,22 @@ def compile_cta(
     target_md_path = work_dir / target_md_name
     rendered_md = render_cta_md(cta_dict)
     target_md_path.write_text(rendered_md, encoding="utf-8")
+
+    for cf in (compile_att_file, alt_compile_att_file):
+        if cf.is_file():
+            try:
+                cf.unlink()
+            except Exception:
+                pass
+    pass_data = {
+        "target_id": target_id,
+        "status": "PASS",
+        "source_sha256": source_sha256,
+        "competency_count": len(compiled_comps),
+    }
+    pass_json = json.dumps(pass_data, indent=2, ensure_ascii=False)
+    pass_file.write_text(pass_json, encoding="utf-8")
+    alt_pass_file.write_text(pass_json, encoding="utf-8")
 
     return True, cta_dict, [], elapsed_ms
 
@@ -1506,6 +1860,7 @@ def render_compact_cta_errors(
     errors: List[str],
     data_filename: str = "cta_data.py",
     source_lines: Optional[List[str]] = None,
+    locator: Optional[Any] = None,
     consolidated: bool = False,
     write_pack: bool = True,
     work_dir: Optional[Union[str, Path]] = None,
@@ -1514,12 +1869,14 @@ def render_compact_cta_errors(
 ) -> str:
     """Renders single-line aggregated errors grouped by rule for compile_cta.py, with exact line snippets.
 
-    - When consolidated=False (legacy mode): collapses into < 25 lines.
-    - When consolidated=True (L4 repair pack): unthrottles all error groups, removes snippet and ID caps,
-      groups errors by competency with exact lines and suggested replacements, and writes work/cta_repair_pack.json.
+    - When consolidated=False (legacy mode): collapses into compact output with dynamic threshold directive.
+    - When consolidated=True (L4 repair pack): unthrottles all error groups, groups errors by competency with
+      exact lines & suggested replacements, writes isolated repair pack with error_count, and outputs dynamic directives.
     """
     if not errors:
         return ""
+
+    py_name = Path(data_filename).name
 
     if source_lines is None:
         cand_p = Path(data_filename)
@@ -1534,12 +1891,48 @@ def render_compact_cta_errors(
             except Exception:
                 pass
 
+    if locator is None and source_lines is not None:
+        try:
+            locator = CtaDataLineLocator("\n".join(source_lines))
+        except Exception:
+            locator = None
+
+    unique_errors = list(dict.fromkeys(errors))
+    error_count = len(unique_errors)
+    has_syntax_error = any("syntax" in e.lower() or "indentation" in e.lower() for e in unique_errors)
+
+    if 1 <= error_count < 6 and not has_syntax_error:
+        threshold_directive = (
+            f"[UMBRAL OFICIAL < 6 ERRORES ({error_count}/5)]: Usa OBLIGATORIAMENTE edit_file "
+            f"(replace_file_content) quirúrgico en 1 turno paralelo sobre las líneas exactas de '{py_name}' "
+            f"indicadas arriba. PROHIBIDO reescribir todo el archivo con write_file (PROHIBIDO usar 'write_to_file' con Overwrite=True)."
+        )
+    else:
+        threshold_directive = (
+            f"[UMBRAL OFICIAL >= 6 ERRORES ({error_count})]: Si los errores se concentran en 1-2 competencias, "
+            f"escribe el reemplazo modular en 'cta_fixes/<CID>.py' con write_file(Overwrite=True); "
+            f"si abarcan >= 3 competencias, reescribe '{py_name}' en 1 sola llamada write_file(Overwrite=True)."
+        )
+
     if consolidated:
         comp_errors: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        seen_line_ranges: List[Tuple[int, int, str]] = []
+
         for raw_err in errors:
             rule_tag, short_rule, cause, action = categorize_cta_error(raw_err)
-            m_line = re.search(r"\[(?:.+:)?L[íi]nea\s+(\d+)\]", raw_err)
-            line_num = int(m_line.group(1)) if m_line else None
+
+            if locator and hasattr(locator, "resolve_error_location"):
+                start_l, end_l, snip = locator.resolve_error_location(raw_err)
+                line_str = f"L{start_l}" if start_l == end_l else f"L{start_l}-L{end_l}"
+                line_num = start_l
+                if snip and (start_l, end_l, snip) not in seen_line_ranges:
+                    seen_line_ranges.append((start_l, end_l, snip))
+            else:
+                m_line = re.search(r"\[(?:.+:)?L[íi]nea\s+(\d+)\]", raw_err)
+                line_num = int(m_line.group(1)) if m_line else None
+                line_str = f"L{line_num}" if line_num else "L?"
+                start_l = line_num or 1
+                end_l = start_l
 
             m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", raw_err)
             item_id = m_id.group(1) if m_id else "GENERAL"
@@ -1568,6 +1961,9 @@ def render_compact_cta_errors(
                 "rule": short_rule,
                 "rule_tag": rule_tag,
                 "line": line_num,
+                "line_str": line_str,
+                "start_line": start_l,
+                "end_line": end_l,
                 "cause": cause,
                 "action": action,
                 "suggested_replacement": suggested,
@@ -1575,7 +1971,7 @@ def render_compact_cta_errors(
             })
 
         out_lines = [
-            f"[CONSOLIDATED ERROR PACK] CTA compilation failed ({len(errors)} errors) [{data_filename}]:",
+            f"[CONSOLIDATED ERROR PACK] CTA compilation failed ({len(errors)} errors) [{py_name}]:",
             "Emitting ALL errors unthrottled grouped by competency with exact lines & suggested replacements.",
             "",
         ]
@@ -1583,57 +1979,82 @@ def render_compact_cta_errors(
         for comp_id, err_list in sorted(comp_errors.items()):
             out_lines.append(f"=== Competency: {comp_id} ({len(err_list)} errors) ===")
             for item in err_list:
-                line_str = f"L{item['line']}" if item["line"] else "L?"
+                l_str = item.get("line_str") or (f"L{item['line']}" if item["line"] else "L?")
                 sug_str = f" | Suggested Fix: {item['suggested_replacement']}" if item["suggested_replacement"] else ""
                 out_lines.append(
-                    f"  • [{item['rule']}] {data_filename}:{line_str} ({item['item_id']}) -> {item['cause']}{sug_str}"
+                    f"  • [{item['rule']}] {py_name}:{l_str} ({item['item_id']}) -> {item['cause']}{sug_str}"
                 )
             out_lines.append("")
 
-        if source_lines:
+        if seen_line_ranges:
+            out_lines.append("CONTEXTO EXACTO (ALL Offending Lines):")
+            for sl, el, snip in seen_line_ranges:
+                out_lines.append(f"  --- {py_name} (StartLine={sl}, EndLine={el}) ---")
+                out_lines.append(snip)
+            out_lines.append("")
+        elif source_lines:
             all_lines = sorted(set(item["line"] for err_list in comp_errors.values() for item in err_list if item["line"]))
             if all_lines:
                 out_lines.append("CONTEXTO EXACTO (ALL Offending Lines):")
                 for ln in all_lines:
                     start_l, end_l, snip = get_source_line_snippet(source_lines, ln, radius=1)
-                    out_lines.append(f"  --- {data_filename} (StartLine={start_l}, EndLine={end_l}) ---")
+                    out_lines.append(f"  --- {py_name} (StartLine={start_l}, EndLine={end_l}) ---")
                     out_lines.append(snip)
                 out_lines.append("")
 
-        out_lines.append("ACTION REQUIRED (ONE TURN CONSOLIDATED REPAIR):")
-        out_lines.append("  1. Resolve all errors above in ONE turn using parallel write_to_file calls to 'cta_fixes/<ID>.py' (or rewrite whole part in ONE write_to_file).")
-        out_lines.append("  2. Full repair pack saved to work/cta_repair_pack.json.")
-        out_lines.append("  3. Re-execute: python compile_cta.py")
+        out_lines.append("ACTION REQUIRED:")
+        out_lines.append(f"  {threshold_directive}")
+        out_lines.append(f"  2. Re-execute: python compile_cta.py")
 
         if write_pack:
+            target_work = Path(work_dir) if work_dir else Path("work")
             if output_repair_pack:
                 pack_file = Path(output_repair_pack)
-                pack_file.parent.mkdir(parents=True, exist_ok=True)
             else:
-                target_work = Path(work_dir) if work_dir else Path("work")
-                target_work.mkdir(parents=True, exist_ok=True)
-                pack_file = target_work / "cta_repair_pack.json"
+                m_part = re.search(r"part_?\d+", py_name, re.IGNORECASE)
+                if m_part:
+                    part_id = m_part.group(0).lower()
+                    cand_parent = Path(data_filename).parent
+                    if cand_parent.name in ("cta_parts", "cta"):
+                        pack_file = cand_parent / f"{part_id}_repair_pack.json"
+                    elif (target_work / "cta_parts").is_dir():
+                        pack_file = target_work / "cta_parts" / f"{part_id}_repair_pack.json"
+                    else:
+                        pack_file = target_work / f"{part_id}_repair_pack.json"
+                else:
+                    pack_file = target_work / "cta_repair_pack.json"
+
+            pack_file.parent.mkdir(parents=True, exist_ok=True)
             try:
                 pack_data = {
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "total_errors": len(errors),
-                    "data_filename": data_filename,
+                    "error_count": error_count,
+                    "data_filename": py_name,
                     "errors_by_competency": comp_errors,
                 }
                 pack_file.write_text(json.dumps(pack_data, indent=2, ensure_ascii=False), encoding="utf-8")
             except Exception as e:
-                logger.warning("Could not write cta_repair_pack.json: %s", e)
+                logger.warning("Could not write %s: %s", pack_file.name, e)
 
         return "\n".join(out_lines).strip()
 
     grouped: Dict[str, Dict[Tuple[str, str, str], Dict[str, Any]]] = defaultdict(
-        lambda: defaultdict(lambda: {"lines": [], "items": []})
+        lambda: defaultdict(lambda: {"lines": [], "items": [], "ranges": []})
     )
 
     for raw_err in errors:
         rule_tag, short_rule, cause, action = categorize_cta_error(raw_err)
-        m_line = re.search(r"\[(?:.+:)?L[íi]nea\s+(\d+)\]", raw_err)
-        line_num = int(m_line.group(1)) if m_line else None
+        if locator and hasattr(locator, "resolve_error_location"):
+            start_l, end_l, snip = locator.resolve_error_location(raw_err)
+            line_num = start_l
+            line_str = f"L{start_l}" if start_l == end_l else f"L{start_l}-L{end_l}"
+            rng = (start_l, end_l, snip)
+        else:
+            m_line = re.search(r"\[(?:.+:)?L[íi]nea\s+(\d+)\]", raw_err)
+            line_num = int(m_line.group(1)) if m_line else None
+            line_str = f"L{line_num}" if line_num else ""
+            rng = None
 
         m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", raw_err)
         item_id = m_id.group(1) if m_id else ""
@@ -1641,13 +2062,16 @@ def render_compact_cta_errors(
         key = (short_rule, cause, action)
         if line_num:
             grouped[rule_tag][key]["lines"].append(line_num)
+        if line_str:
+            grouped[rule_tag][key].setdefault("line_strs", []).append(line_str)
         if item_id:
             grouped[rule_tag][key]["items"].append(item_id)
+        if rng:
+            grouped[rule_tag][key]["ranges"].append(rng)
 
-    out_lines = [f"[ERROR] CTA compilation failed ({len(errors)} errors) [{data_filename}]:", ""]
+    out_lines = [f"[ERROR] CTA compilation failed ({len(errors)} errors) [{py_name}]:", ""]
     snippet_lines_to_show: List[int] = []
 
-    # Target: total rendered lines strictly < 25 lines. Footer is ~5 lines, header is 2 lines.
     max_group_lines = 8 if source_lines else 12
     rendered_groups = 0
     omitted_groups = 0
@@ -1662,10 +2086,17 @@ def render_compact_cta_errors(
                 omitted_groups += 1
                 continue
             rendered_groups += 1
+            line_strs = [x for x in dict.fromkeys(rec.get("line_strs", [])) if x]
             uniq_lines = sorted(set(rec["lines"]))
             uniq_ids = [x for x in dict.fromkeys(rec["items"]) if x]
             if uniq_lines:
                 snippet_lines_to_show.extend(uniq_lines[:2])
+            if line_strs:
+                if len(line_strs) > 5:
+                    lines_str = f":{line_strs[0]}-{line_strs[-1]} ({len(line_strs)} líneas)"
+                else:
+                    lines_str = f":{','.join(line_strs)}"
+            elif uniq_lines:
                 if len(uniq_lines) > 5:
                     lines_str = f":L{uniq_lines[0]}-{uniq_lines[-1]} ({len(uniq_lines)} líneas)"
                 else:
@@ -1681,7 +2112,7 @@ def render_compact_cta_errors(
                 ids_str = ""
 
             out_lines.append(
-                f"  • [{short_rule}] {data_filename}{lines_str}{ids_str} -> Causa: {cause} | Acción: {action}"
+                f"  • [{short_rule}] {py_name}{lines_str}{ids_str} -> Causa: {cause} | Acción: {action}"
             )
         out_lines.append("")
 
@@ -1693,27 +2124,22 @@ def render_compact_cta_errors(
         out_lines.append("CONTEXTO EXACTO PARA replace_file_content (NO uses view_file ni write_to_file Overwrite):")
         for ln in sorted(set(snippet_lines_to_show))[:2]:
             start_l, end_l, snip = get_source_line_snippet(source_lines, ln, radius=1)
-            out_lines.append(f"  --- {data_filename} (StartLine={start_l}, EndLine={end_l}) ---")
+            out_lines.append(f"  --- {py_name} (StartLine={start_l}, EndLine={end_l}) ---")
             out_lines.append(snip)
         out_lines.append("")
 
     out_lines.append("ACTION REQUIRED:")
-    out_lines.append(
-        f"  1. Usa EXCLUSIVAMENTE 'replace_file_content' en {data_filename} sobre las líneas indicadas arriba."
-    )
-    out_lines.append(
-        f"  2. PROHIBIDO usar 'write_to_file' con Overwrite=True sobre {data_filename} (destruiría las competencias ya escritas)."
-    )
+    out_lines.append(f"  {threshold_directive}")
     has_backup = any(".cta_data.py.bak" in err for err in errors) or (
         Path(data_filename).parent / ".cta_data.py.bak"
     ).is_file()
     if has_backup:
         out_lines.append(
-            f"  3. Existe un backup '.cta_data.py.bak'. Si {data_filename} quedó corrupto o truncado, puedes restaurarlo."
+            f"  2. Existe un backup '.cta_data.py.bak'. Si {py_name} quedó corrupto o truncado, puedes restaurarlo."
         )
-        out_lines.append(f"  4. Re-ejecuta: python compile_cta.py")
-    else:
         out_lines.append(f"  3. Re-ejecuta: python compile_cta.py")
+    else:
+        out_lines.append(f"  2. Re-ejecuta: python compile_cta.py")
 
     rendered_text = "\n".join(out_lines).strip()
     res_lines = rendered_text.splitlines()
@@ -1815,10 +2241,17 @@ def main() -> None:
                 source_lines = data_path.read_text(encoding="utf-8").splitlines()
             except Exception:
                 pass
+        locator = None
+        if source_lines:
+            try:
+                locator = CtaDataLineLocator("\n".join(source_lines))
+            except Exception:
+                pass
         compact_msg = render_compact_cta_errors(
             errors,
-            data_filename=data_path.name,
+            data_filename=str(data_path),
             source_lines=source_lines,
+            locator=locator,
             consolidated=True,
             work_dir=work_dir,
         )
