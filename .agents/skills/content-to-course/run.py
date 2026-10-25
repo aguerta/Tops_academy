@@ -1385,10 +1385,11 @@ class PipelineRunner:
         types_list = get_type_definitions()
         # Persist definitions to disk for guaranteed non-truncated access
         types_json = json.dumps(types_list, indent=2, ensure_ascii=False)
+        types_bytes = types_json.replace("\r\n", "\n").encode("utf-8")
         if hasattr(self, "work_dir") and self.work_dir:
             self.work_dir.mkdir(parents=True, exist_ok=True)
-            (self.work_dir / "subagent_types.json").write_text(types_json, encoding="utf-8")
-        (skill_dir / "subagent_types.json").write_text(types_json, encoding="utf-8")
+            (self.work_dir / "subagent_types.json").write_bytes(types_bytes)
+        (skill_dir / "subagent_types.json").write_bytes(types_bytes)
 
         # Guardar y listar rutas individuales en work/dispatch/types/<type_name>.json
         types_dir = self.work_dir / "dispatch" / "types"
@@ -1405,7 +1406,7 @@ class PipelineRunner:
         print("    Rutas individuales (lectura paralela con view_file en 1 turno sin truncamiento):")
         for t in types_list:
             t_file = types_dir / f"{t['name']}.json"
-            t_file.write_text(json.dumps(t, indent=2, ensure_ascii=False), encoding="utf-8")
+            t_file.write_bytes(json.dumps(t, indent=2, ensure_ascii=False).replace("\r\n", "\n").encode("utf-8"))
             print(f"      * {t_file.resolve()} (write={t['enable_write_tools']})")
         print("=" * 70)
         for t in types_list:
