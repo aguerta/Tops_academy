@@ -22,7 +22,8 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
   - `<work_dir>/shards/shard_fixes/<CID>.py` (módulo de parche quirúrgico aislado por competencia)
 - **PROHIBIDO:**
   - 🚫 **PROHIBIDO pasar `ArtifactMetadata` a `write_file` o `edit_file`:** Los archivos de trabajo no son artefactos del cerebro.
-  - 🚫 **PROHIBIDO leer `compile_shard.py`, `check_templates.py`, `src/validator/*` o `engine/*`:** Toda regla y contrato está documentado en este System Prompt y en tu work order.
+  - 🚫 **PROHIBIDO leer `tests/**`, `compile_shard.py`, `check_templates.py`, `src/validator/*` o `engine/*`:** Toda regla y contrato está documentado en este System Prompt y en tu work order.
+  - 🚫 **PROHIBIDO ejecutar `git log` o listar recursivamente con `Get-ChildItem -Recurse` sobre `courses/`.**
   - 🚫 **PROHIBIDO crear o usar archivos en `scratch/**`:** Todo el código reside exclusivamente en `<work_dir>/shards/<shard_id>_data.py` o `<work_dir>/shards/shard_fixes/<CID>.py`.
   - 🚫 **PROHIBIDO modificar código fuera de la competencia asignada:** No alteres tuplas de competencias que compilaron exitosamente.
   - 🚫 **PROHIBIDO ejecutar `python -c` inline en PowerShell:** Todos los comandos de compilación deben invocar scripts directamente.
@@ -39,9 +40,9 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
    - `[R-16]` (Paridad de longitud): longitud de `correct` fuera del rango `[0.80, 1.20]` respecto a distractores.
    - `[TPL-DRY]`: variable `@var@` en el enunciado u opciones que no existe en el diccionario `vars`.
    - `[TPL-VAR]`: espacio paramétrico colapsado (`param_space < 500`) o instancias insuficientes.
-2. **Estrategia Quirúrgica:**
-   - **Ediciones Menores (`<= 15` líneas):** Usa `edit_file` (o `replace_file_content`) directamente sobre las líneas afectadas en `<work_dir>/shards/<shard_id>_data.py`.
-   - **Anulación Modular (`> 15` líneas):** Escribe el bloque completo de la competencia corregida en `<work_dir>/shards/shard_fixes/<CID>.py` usando `write_file(Overwrite=True)`. El compilador `compile_shard.py` detecta e integra automáticamente `shard_fixes/<CID>.py` en memoria durante la compilación.
+2. **Estrategia Quirúrgica y Umbral Oficial < 6 Errores:**
+   - **Errores < 6 (1..5 errores, sin SyntaxError):** Uso **OBLIGATORIO** de `edit_file` (o `replace_file_content`) quirúrgico en 1 turno paralelo directamente sobre las líneas afectadas `StartLine..EndLine` en `<work_dir>/shards/<shard_id>_data.py`. Queda prohibido reescribir todo el archivo desde cero con `write_file`.
+   - **Errores >= 6:** Escribe el bloque completo de la competencia corregida en `<work_dir>/shards/shard_fixes/<CID>.py` usando `write_file(Overwrite=True)` (si está acotado a 1–2 competencias) o reescribe con `write_file` (si es sistémico en >= 3 competencias o SyntaxError). El compilador `compile_shard.py` detecta e integra automáticamente `shard_fixes/<CID>.py` en memoria durante la compilación.
 
 ### B. Reparación Específica de `[R-20]` y `error_rationale`
 - **Para reparar `[R-20]`:** Revisa minuciosamente que cada apertura `{` tenga su cierre `}` correspondiente y cada `$ ... $` esté perfectamente delimitado. En opciones y distractores, encierra cualquier texto explicativo en `\text{...}` si está dentro de `$`.
@@ -57,7 +58,7 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
 
 Ejecuta el comando exacto indicado en tu work order:
 ```bash
-python .agents/skills/content-to-course/compile_shard.py --input <work>/shards/<shard_id>_data.py --output <work>/shards/<shard_id>.json --cta <work>/cta.json --manifest <work>/pre_cta_manifest.json
+python .agents/skills/content-to-course/compile_shard.py --input <work>/shards/<shard_id>_data.py --output <work>/shards/<shard_id>.json --cta <work>/cta.json --manifest <work>/shards/pre_shard_manifest.json
 ```
 
 ---

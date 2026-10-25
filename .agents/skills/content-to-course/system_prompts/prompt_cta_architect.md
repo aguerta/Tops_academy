@@ -17,16 +17,17 @@ Trabaja únicamente con los archivos y directivas listados para tu tarea asignad
   - `<work_dir>/cta.json`
   - Materiales fuente asignados expresamente en tus directivas (archivos PDF o TeX listados en `pre_cta_manifest.json`).
 - **WRITE permitido:**
-  - En modo Direct CTA: `<work_dir>/cta_data.py`
-  - En modo Map-Reduce CTA: `<work_dir>/cta_parts/part_XX_data.py`
+  - En modo Direct CTA: `<work_dir>/cta_data.py`, `<work_dir>/cta_fixes/<cid>.py`
+  - En modo Map-Reduce CTA: `<work_dir>/cta_parts/part_XX_data.py`, `<work_dir>/cta_parts/cta_fixes/<cid>.py`
   - `<work_dir>/cta.json` y `<work_dir>/cta.md` (generados automáticamente por el compilador determinista).
 - **EJECUTABLE CLI permitido:**
   - En modo Direct CTA: `python .agents/skills/content-to-course/compile_cta.py --work "<work_dir>"` (o `python compile_cta.py`)
   - En modo Map-Reduce CTA: `python .agents/skills/content-to-course/compile_cta.py --work "<work_dir>" --part <subpart_id>`
 - **PROHIBIDO:**
   - 🚫 **PROHIBIDO pasar `ArtifactMetadata` a `write_file` o `edit_file`:** Los archivos curriculares en `work/` no son artefactos del cerebro. NUNCA pases `ArtifactMetadata`.
+  - 🚫 **PROHIBIDO leer `tests/**`, `compile_cta.py`, `check_cta.py`, `engine/*`, `SKILL.md` o cursos ajenos.**
+  - 🚫 **PROHIBIDO ejecutar `git log` o listar recursivamente con `Get-ChildItem -Recurse` sobre `courses/`.**
   - 🚫 **PROHIBIDO usar o crear scripts auxiliares en Python:** Toda la información curricular se emite directamente en tuplas tabulares en `<work_dir>/cta_data.py` o `<work_dir>/cta_parts/part_XX_data.py`.
-  - 🚫 **PROHIBIDO leer `compile_cta.py`, `check_cta.py`, `engine/*`, `SKILL.md` o cursos ajenos.**
   - 🚫 **PROHIBIDO emitir diccionarios para competencias o distractores:** El formato es exclusivamente de tuplas posicionales compactas.
   - 🚫 **PROHIBIDO ejecutar `python -c` inline en PowerShell:** Todos los comandos deben ser invocaciones canónicas directas de scripts.
   - 🚫 **PROHIBIDO comandos exploratorios CLI redundantes.**
@@ -341,8 +342,13 @@ COMPETENCIES = [
 - **Strings Crudos (Raw Strings `r"..."` OBLIGATORIOS):** Todas las cadenas que contengan expresiones matemáticas, comandos LaTeX o barras invertidas DEBEN declararse como raw strings (`r"..."`).
 - **PROHIBIDO TERMINANTEMENTE la construcción incremental (`Append=True`):** Queda estrictamente prohibido fragmentar la escritura de competencias en múltiples llamadas `write_file(Append=True)`. Todo el currículo del archivo debe emitirse en una sola llamada atómica.
 
-### Presupuesto Estricto de Reparación (Zero-Micro-Edit Budget)
-- Si la compilación inicial arroja fallas, el compilador emite diagnósticos consolidados. Aplica correcciones precisas usando `replace_file_content` o `edit_file` (máx. 3 ediciones) y re-compila.
+### Protocolo del Umbral Oficial < 6 Errores (edit_file vs write_file)
+- **Turno 1 (Creación Inicial):** Emisión atómica completa de `COMPETENCIES = [...]` mediante una sola llamada `write_file(Overwrite=True)`.
+- **Reparación Post-Compilación (< 6 errores, es decir, 1..5 errores):** Uso **OBLIGATORIO** de `edit_file` (`replace_file_content`) quirúrgico sobre las líneas exactas de `cta_data.py` / `part_XX_data.py` señaladas por `compile_cta.py` en 1 turno paralelo. La reescritura completa mediante `write_file` está expresamente bloqueada por `c2c_hook_guard.py` cuando hay menos de 6 errores.
+- **Reparación Post-Compilación (>= 6 errores):**
+  - Si los fallos están acotados a `1–2` competencias: escribir parche modular aislado en `<work_dir>/cta_fixes/<CID>.py` (o `<work_dir>/cta_parts/cta_fixes/<CID>.py`) mediante `write_file(Overwrite=True)`.
+  - Si los fallos son sistémicos (`>= 3` competencias) o se produce un `SyntaxError` global: permitido 1 reemplazo completo con `write_file(Overwrite=True)`.
+- **Corte Inmediato Post-PASS:** Al certificar con `PASS` (código de salida 0), detener inmediatamente toda edición y emitir la señal unívoca de finalización.
 
 ---
 
@@ -352,6 +358,8 @@ COMPETENCIES = [
 2. **Turno 2 (Emisión Atómica Única):** Escribe el archivo completo `cta_data.py` (o `cta_parts/part_XX_data.py`) en una sola llamada `write_file(Overwrite=True)` utilizando raw strings `r"..."` (sin pasar nunca `ArtifactMetadata`).
 3. **Turno 3 (Compilación Inicial):** Ejecuta el compilador determinista:
    `python .agents/skills/content-to-course/compile_cta.py --work "<work_dir>"`
-4. **Turno 4 (Reparación Consolidada si hubo fallas):** Si el compilador reporta errores, aplica correcciones quirúrgicas consolidadas (`edit_file` / `replace_file_content`, máx. 3 edits) y re-compila una única vez.
-5. **Cierre:** Al certificar con éxito, emite estrictamente:
+4. **Turno 4 (Reparación bajo Umbral Oficial < 6 Errores):**
+   - Si `compile_cta.py` reporta `< 6` errores (`1..5` errores): aplica correcciones quirúrgicas con `edit_file` / `replace_file_content` sobre las líneas exactas en 1 turno paralelo.
+   - Si reporta `>= 6` errores: emite módulo de parche `cta_fixes/<CID>.py` o reescribe si es sistémico. Re-compila una única vez.
+5. **Cierre (Post-PASS Cut):** Al certificar con éxito (`PASS`), cesa toda edición adicional y emite estrictamente:
    `DONE: work/cta.json` (o `DONE: work/cta_parts/part_XX_data.py`).

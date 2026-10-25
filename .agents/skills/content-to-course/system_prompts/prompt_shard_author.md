@@ -20,7 +20,8 @@ Trabaja únicamente con los archivos autorizados para tu shard:
   - `<work_dir>/templates/<cid>.json` (generado y actualizado automáticamente al compilar con `compile_shard.py`)
 - **PROHIBIDO:**
   - 🚫 **PROHIBIDO pasar `ArtifactMetadata` a `write_file` o `edit_file`:** Los archivos de trabajo no son artefactos del cerebro.
-  - 🚫 **PROHIBIDO leer `.agents/skills/content-to-course/compile_shard.py`, `check_templates.py`, `src/validator/*` o `engine/*`:** Toda regla, contrato y esquema está completamente documentado en este System Prompt y en tu work order. El motor interno y compiladores están estrictamente aislados. Los workers ÚNICAMENTE ejecutan `compile_shard.py` vía `run_command` usando su `compile_cmd` asignado; tienen terminantemente denegado leerlo con `view_file` o `read_file` (bloqueado por `c2c_hook_guard.py`).
+  - 🚫 **PROHIBIDO leer `tests/**`, `.agents/skills/content-to-course/compile_shard.py`, `check_templates.py`, `src/validator/*` o `engine/*`:** Toda regla, contrato y esquema está completamente documentado en este System Prompt y en tu work order. El motor interno y compiladores están estrictamente aislados. Los workers ÚNICAMENTE ejecutan `compile_shard.py` vía `run_command` usando su `compile_cmd` asignado; tienen terminantemente denegado leerlo con `view_file` o `read_file` (bloqueado por `c2c_hook_guard.py`).
+  - 🚫 **PROHIBIDO ejecutar `git log` o listar recursivamente con `Get-ChildItem -Recurse` sobre `courses/`.**
   - 🚫 **PROHIBIDO leer otros `shard_*_data.py`:** Cada subagente de shard trabaja de forma 100% aislada e independiente sobre su propio shard asignado. PROHIBIDO intentar leer archivos de otros shards en paralelo.
   - 🚫 **PROHIBIDO crear o usar archivos en `scratch/**`:** Todo el código y tuplas residen exclusivamente en `<work_dir>/shards/<shard_id>_data.py` o `<work_dir>/shards/shard_fixes/<cid>.py`.
   - 🚫 **PROHIBIDO borrar o modificar `.check_attempts/`:** Este directorio mantiene el registro forense de intentos de compilación.
@@ -39,7 +40,8 @@ Si no existe `<work_dir>/shards/pre_shard_manifest.json`, el subagente DEBE dete
 Bajo el **Milestone 3** de Top's Academy, la autoría evoluciona de la antigua especificación de 1 tupla paramétrica por competencia hacia **4 arquetipos disjuntos por competencia** (1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite) para garantizar cobertura psicométrica profunda (Deep Mastery) y anti-memorización.
 
 ### Reglas de Cobertura y Dimensionamiento (Estándar Clean-Room `shard_08`):
-- **4 Arquetipos Disjuntos por Competencia:** Cada competencia asignada define sus generadores y tuplas cubriendo los 4 arquetipos disjuntos (o 1 tupla por competencia en casos de evaluación atómica básica). Cada arquetipo define su generador `gen_<cid>_*(rng)` y verificador `ver_<cid>_*(res)` usando aritmética numérica simple en Python (`round(...)`) — **prohibido** derivar álgebra simbólica extensa en el `thinking` block o explorar otros cursos (`courses/`).
+- **4 Arquetipos Disjuntos por Competencia (`[M3-ARCHETYPES]`):** CADA competencia asignada DEBE definir mínimo 4 tuplas en `TEMPLATES` (los 4 arquetipos disjuntos: 1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite), validado por `compile_shard.py` (`[M3-ARCHETYPES]`). **PROHIBIDO emitir 1 sola tupla por competencia o meter 4 `stem_variants` dentro de 1 sola tupla; `compile_shard.py` rechazará con `FAIL: [M3-ARCHETYPES]` cualquier competencia con `< 4` tuplas en `TEMPLATES`.** Cada arquetipo define su generador `gen_<cid>_*(rng)` y verificador `ver_<cid>_*(res)` usando aritmética numérica simple en Python (`round(...)`) — **prohibido** derivar álgebra simbólica extensa en el `thinking` block o explorar otros cursos (`courses/`).
+- **Dimensionamiento Compacto Clean-Room Anti-Bloat:** Mantén cada archivo en **`<= 80–110` líneas por competencia (`<= 180–220` líneas totales por shard)**. Cada función generadora `gen_*` debe ser **ultra-concisa (~12–18 líneas)** utilizando tuplas DRY de 2 elementos `("D-XX-01", r"$@d1@$")`. Queda terminantemente prohibido repetir párrafos de `error_rationale` o ensayos extensos dentro de `\text{...}`.
 - **Formato DRY Compacto de Distractores en `gen_*(rng)`:** Para evitar la repetición masiva de diccionarios con párrafos explicativos de `error_rationale` a lo largo de los 4 arquetipos por competencia, el compilador `compile_shard.py` implementa herencia DRY automática desde `cta.json`:
   - En la lista `distractors` devuelta por `gen_*(rng)`, es suficiente retornar tuplas compactas de 2 elementos `("D-XX-01", r"$\eta = @d1@$")` o diccionarios compactos `{"distractor_id": "D-XX-01", "value": r"$\eta = @d1@$"}` sin incluir `"error_rationale"`.
   - `compile_shard.py` poblará automáticamente cada `error_rationale` desde `cta.json` (`remediation_hint` o `wrong_belief` + `omitted_step`).
@@ -232,14 +234,16 @@ Para variables matemáticas de una letra (`$r$`, `$k$`, `$y$`, `$s$`, `$n$`, `$g
 
 ## 4. Dos Ejemplos Completos de Tuplas de Dominios Diferentes
 
-### Ejemplo 1: Dominio de Física / Termodinámica (Competencia `H-01`, `multiple_choice`)
+### Ejemplo 1: Dominio de Física / Termodinámica (Competencia `H-01`, `multiple_choice` — Patrón Compacto de 4 Arquetipos)
 
 ```python
 # work/shards/shard_01_data.py
 import math
 
-def gen_h01(rng):
-    # Generador estocástico para H-01 (Eficiencia de Carnot)
+def gen_h01(rng): return gen_h01_1(rng)
+
+def _gen_h01(rng, arch=1):
+    # Generador estocástico compartido para H-01 (4 arquetipos disjuntos)
     tc = rng.randint(250, 350)
     delta = rng.randint(150, 450)
     th = tc + delta
@@ -269,32 +273,31 @@ def gen_h01(rng):
         "distractors": distractors
     }
 
+def gen_h01_1(rng): return _gen_h01(rng, 1)
+def gen_h01_2(rng): return _gen_h01(rng, 2)
+def gen_h01_3(rng): return _gen_h01(rng, 3)
+def gen_h01_4(rng): return _gen_h01(rng, 4)
+def ver_ok(res): return True
 def ver_h01(res):
     v = res.get("vars", {})
-    expected = round(1.0 - (v["tc"] / v["th"]), 3)
-    return v.get("ans") == expected
+    return v.get("ans") == round(1.0 - (v.get("tc", 0) / v.get("th", 1)), 3)
+
+d_ids_h01 = ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"]
+stems_h01 = [
+    r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Determine el rendimiento térmico:",
+    r"Considere un ciclo reversible de Carnot con reservorios térmicos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Calcule la eficiencia máxima teórica $\eta$:",
+    r"Para una máquina térmica ideal operando bajo el ciclo de Carnot entre focos térmicos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, halle el rendimiento $\eta$:",
+]
 
 TEMPLATES = [
-    (
-        "H-01",
-        "multiple_choice",
-        [
-            r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Determine el rendimiento térmico:",
-            r"Considere un ciclo reversible de Carnot con reservorios térmicos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Calcule la eficiencia máxima teórica $\eta$:",
-            r"Para una máquina térmica ideal operando bajo el ciclo de Carnot entre focos térmicos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, halle el rendimiento $\eta$:",
-        ],
-        gen_h01,
-        ver_h01,
-        r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.",
-        "Eficiencia de Carnot",
-        ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"],
-        ("termodinamica_clausius.pdf", 8, "El rendimiento de Carnot depende exclusivamente de las temperaturas de los focos."),
-        [
-            "Identifique la relación fundamental que vincula el rendimiento teórico de Carnot con las temperaturas de los focos.",
-            "Considere el cociente entre la temperatura del foco frío y la del foco caliente en escala Kelvin.",
-            "Compruebe que el rendimiento resultante sea adimensional y estrictamente menor que la unidad."
-        ]
-    )
+    # 1. Arquetipo Directo / Frontal
+    ("H-01", "multiple_choice", stems_h01, gen_h01_1, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", d_ids_h01, ("termodinamica_clausius.pdf", 8, "Carnot")),
+    # 2. Arquetipo Inverso / Diagnóstico ([] en pos 7 y sin hints: auto-heredado de cta.json)
+    ("H-01", "multiple_choice", stems_h01, gen_h01_2, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
+    # 3. Arquetipo Perturbación / Estática Comparativa
+    ("H-01", "multiple_choice", stems_h01, gen_h01_3, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
+    # 4. Arquetipo Frontera / Casos Límite
+    ("H-01", "multiple_choice", stems_h01, gen_h01_4, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
 ]
 ```
 
@@ -368,21 +371,20 @@ TEMPLATES += [
 
 ---
 
-## 5. Protocolo Híbrido de Escritura y Anulación Modular (`shard_fixes/`)
+## 5. Protocolo Híbrido de Escritura y Umbral Oficial < 6 Errores (`shard_fixes/`)
 
-### Creación Inicial y Flujo de Trabajo
-1. **Creación Turno 1:** Utiliza `write_file(Overwrite=True)` para escribir `<work_dir>/shards/<shard_id>_data.py` con constantes, funciones y la lista `TEMPLATES = [...]`.
-2. **Correcciones Quirúrgicas Menores (`<= 15` líneas):** Utiliza `edit_file` (o `replace_file_content`) sobre las líneas exactas señaladas en el reporte del compilador.
-3. **Anulación Modular (`> 15` líneas o `c2c_repair`):** Cuando una violación de `[TPL-DRY]`, `[TPL-VAR]`, `[R-16]` o `[R-20]` requiera reescribir una competencia completa, o cuando actúes como subagente `c2c_repair`:
-   - Escribe EXCLUSIVAMENTE el bloque de esa competencia corregida en `<work_dir>/shards/shard_fixes/<CID>.py` utilizando `write_file(Overwrite=True)`.
-   - El compilador `compile_shard.py` detecta e integra automáticamente `shard_fixes/<CID>.py` en memoria durante la compilación, sin arriesgar desalineaciones en archivos extensos.
-   - Si se expande en lotes, se puede usar `Append=True` o modular files.
+### Protocolo Oficial de Creación y Reparación (< 6 Errores vs >= 6 Errores)
+1. **Creación Turno 1:** Utiliza `write_file(Overwrite=True)` para escribir `<work_dir>/shards/<shard_id>_data.py` con constantes, funciones y la lista `TEMPLATES = [...]` (PROHIBIDO el uso de `Append=True` en la creación de plantillas).
+2. **Reparación bajo Umbral < 6 Errores (1..5 errores, sin SyntaxError):** Uso **OBLIGATORIO** de `edit_file` (`replace_file_content`) quirúrgico en 1 turno paralelo sobre las líneas exactas `StartLine..EndLine` señaladas por `compile_shard.py`. Queda **TERMINANTEMENTE PROHIBIDO** reescribir todo el archivo desde cero con `write_file`.
+3. **Reparación bajo >= 6 Errores:**
+   - **Acotados a 1–2 competencias:** Escribe exclusivamente el bloque modular aislado en `<work_dir>/shards/shard_fixes/<CID>.py` con `write_file(Overwrite=True)`. El compilador `compile_shard.py` detecta e integra automáticamente `shard_fixes/<CID>.py` en memoria durante la compilación.
+   - **Sistémicos (>= 3 competencias) o SyntaxError:** Permitido `write_file(Overwrite=True)` atómico completo sobre `<work_dir>/shards/<shard_id>_data.py` o anulación modular vía `shard_fixes/<CID>.py`.
 
 ### Diagnósticos Mapeados a Líneas con `edit_file` / `replace_file_content`
 Al ejecutar:
 `python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard shard_XX --strict`
 
-El compilador reportará diagnósticos de validación mapeados con precisión milimétrica a tupla y líneas en `<work_dir>/shards/<shard_id>_data.py`. Debes corregirlos usando `edit_file` o `replace_file_content` sobre esas líneas exactas (`StartLine..EndLine`), o emitiendo el reemplazo en `shard_fixes/<CID>.py`.
+El compilador reportará diagnósticos de validación mapeados con precisión milimétrica a tupla y líneas en `<work_dir>/shards/<shard_id>_data.py`. Para < 6 errores, debes corregirlos obligatoriamente usando `edit_file` o `replace_file_content` sobre esas líneas exactas (`StartLine..EndLine`).
 
 ---
 
@@ -407,6 +409,8 @@ Bajo la arquitectura Load Inversion, las reglas de introspección son estrictas 
 2. **Turno 2:** Escribe `<work_dir>/shards/<shard_id>_data.py` con las funciones y la lista `TEMPLATES = [...]` usando `write_file(Overwrite=True)`.
 3. **Turno 3:** Compila ejecutando la orden exacta recibida:
    `python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard <shard_id> --strict`
-4. **Si reporta errores:** Corrige quirúrgicamente con `edit_file` sobre las líneas exactas señaladas (o escribe en `work/shards/shard_fixes/<CID>.py`) y re-compila.
+4. **Si reporta errores:**
+   - Si reporta `< 6` errores (`1..5` errores, sin `SyntaxError`): corrígelos OBLIGATORIAMENTE de forma quirúrgica con `edit_file` (`replace_file_content`) sobre las líneas exactas señaladas en 1 turno paralelo (PROHIBIDO reescribir con `write_file`).
+   - Si reporta `>= 6` errores: escribe el bloque modular en `work/shards/shard_fixes/<CID>.py` (1–2 competencias) o reescribe con `write_file` si es sistémico.
 5. **Cierre (Corte Inmediato Post-PASS):** Al obtener `PASS` (código de salida 0 y marcador de aprobación), cesa inmediatamente toda edición adicional en archivos Python o JSON y finaliza estrictamente con:
    `DONE: <work_dir>/shards/<shard_id>_data.py`

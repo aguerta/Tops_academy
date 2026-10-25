@@ -6,12 +6,14 @@ Your assigned materials, page ranges, and target outputs are specified in your w
 
 ## 0. SCOPE-LOCK & AUTHORIZED FILES
 - **READ permitted:** Course source materials, `<work_dir>/pre_cta_manifest.json`, `<work_dir>/delta_manifest.json`
-- **WRITE permitted:** `<work_dir>/cta_data.py` or `<work_dir>/cta_parts/<part_id>_data.py`, `<work_dir>/cta.json`
+- **WRITE permitted:** `<work_dir>/cta_data.py` or `<work_dir>/cta_parts/<part_id>_data.py`, `<work_dir>/cta_fixes/<cid>.py`, `<work_dir>/cta_parts/cta_fixes/<cid>.py`, `<work_dir>/cta.json`
 - **PROHIBITED:**
   - 🚫 NEVER pass `ArtifactMetadata` to `write_file` or `edit_file`
-  - 🚫 Reading `engine/*` or `SKILL.md`
+  - 🚫 Reading `engine/*`, `SKILL.md`, or `tests/**`
+  - 🚫 Running `git log` or `Get-ChildItem -Recurse` on `courses/`
   - 🚫 Creating scripts in `scratch/**` or using `python -c` in PowerShell
-  - 🚫 Incremental micro-edits; write entire module in ONE atomic `write_file(Overwrite=True)`
+  - 🚫 Incremental creation with Append=True (Turn 1 creation must be ONE atomic `write_file(Overwrite=True)`)
+  - 🚫 Post-compile full write_file rewrite when errors < 6 (1..5 errors MUST use surgical `edit_file` / `replace_file_content`)
 
 ## 1. THE KNOWLEDGE TRIAD & GRANULARITY DENSITY
 - **Facts [H]:** Concrete terminology, formulas, identities. Bloom: Remember/Understand.
@@ -52,8 +54,9 @@ Each competency is a 9-element tuple in `COMPETENCIES = [...]`:
 )
 ```
 
-## 4. EXECUTION CYCLE
-1. Write full competency module in ONE atomic `write_file(Overwrite=True)` (without `ArtifactMetadata`).
-2. Compile: `python .agents/skills/content-to-course/compile_cta.py --work "<work_dir>"`
-3. If compile reports errors, resolve in one repair pass.
-4. Finalize strictly with: `DONE: <output_json>`.
+## 4. EXECUTION CYCLE (< 6 ERRORS PROTOCOL)
+1. **Turn 1 (Initial Creation):** Emit full `COMPETENCIES = [...]` in ONE atomic `write_file(Overwrite=True)` (without `ArtifactMetadata`).
+2. **Compile:** `python .agents/skills/content-to-course/compile_cta.py --work "<work_dir>"`.
+3. **Post-Compile Repair (< 6 errors, i.e., 1..5 errors):** Mandatory surgical `edit_file` (`replace_file_content`) in 1 parallel turn on the exact Python lines reported by `compile_cta.py` (`write_file` is blocked by hook guard when errors < 6).
+4. **Post-Compile Repair (>= 6 errors):** Write modular override `cta_fixes/<CID>.py` via `write_file(Overwrite=True)` (if localized to 1–2 competencies) or 1 full `write_file(Overwrite=True)` (if systemic across >= 3 competencies or `SyntaxError`).
+5. **Post-PASS Cut:** Upon `PASS`, stop all edits immediately and output `DONE: <output_json>`.

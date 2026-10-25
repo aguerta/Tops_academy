@@ -190,10 +190,13 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/cta.md",
             "work/cta_parts/**",
             "work/cta/**",
+            "work/cta_fixes/**",
+            "work/cta_parts/cta_fixes/**",
         ],
         "forbidden": [
             "engine/*",
             "SKILL.md",
+            "tests/**",
             "scripts Python auxiliares en scratch/",
         ],
         "turn_budget": 20,
@@ -217,10 +220,13 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/cta.md",
             "work/cta_parts/**",
             "work/cta/**",
+            "work/cta_fixes/**",
+            "work/cta_parts/cta_fixes/**",
         ],
         "forbidden": [
             "engine/*",
             "SKILL.md",
+            "tests/**",
             "scripts Python auxiliares en scratch/",
         ],
         "turn_budget": 20,
@@ -244,6 +250,7 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/shards/shard_fixes/<CID>.py",
         ],
         "forbidden": [
+            "tests/**",
             ".agents/skills/content-to-course/compile_shard.py",
             "scratch/**",
             "work/scratch/**",
@@ -300,6 +307,7 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/shards/shard_fixes/<CID>.py",
         ],
         "forbidden": [
+            "tests/**",
             ".agents/skills/content-to-course/compile_shard.py",
             "engine/*",
             "SKILL.md",
@@ -324,10 +332,13 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/cta_parts/cta_part_*.json",
             "work/cta/cta_shard_*_data.py",
             "work/cta/cta_shard_*.json",
+            "work/cta_fixes/**",
+            "work/cta_parts/cta_fixes/**",
         ],
         "forbidden": [
             "código fuente",
             "SKILL.md",
+            "tests/**",
         ],
         "turn_budget": 15,
     },
@@ -598,10 +609,11 @@ def dispatch_cta(
 
             compile_cmd = f"{cmd_prefix} .agents/skills/content-to-course/compile_cta.py --input {out_py} --output {json_target} --manifest {manifest_rel} --part {subpart_id}"
             read_paths = list(dict.fromkeys([manifest_rel, doc_path, t_ref]))
+            cta_fix_target = f"{work_rel}/cta_parts/cta_fixes/<CID>.py" if "cta_parts" in out_py else f"{work_rel}/cta_fixes/<CID>.py"
             scope_header = build_scope_header(
                 role="cta-map",
                 read_paths=read_paths,
-                write_paths=[out_py, json_target],
+                write_paths=[out_py, json_target, cta_fix_target],
                 done_signal=f"DONE: {json_target}",
             )
 
@@ -637,7 +649,7 @@ def dispatch_cta(
                 f"   ```bash",
                 f"   {compile_cmd}",
                 f"   ```",
-                f"4. Si el compilador reporta errores, corrígelos quirúrgicamente con `replace_file_content` sobre `{out_py}`.",
+                f"4. Si el compilador reporta < 6 errores (1..5 errores), corrígelos OBLIGATORIAMENTE de forma quirúrgica con edit_file (replace_file_content) sobre {out_py} en 1 turno paralelo (PROHIBIDO write_file completo cuando hay < 6 errores). Si reporta >= 6 errores, usa cta_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True).",
                 f"5. Sigue estrictamente todas las reglas de tu System Prompt `c2c_cta_architect` y finaliza con: `DONE: {json_target}`.",
             ])
             prompt_full = "\n".join(prompt_lines)
@@ -742,7 +754,7 @@ def dispatch_cta(
         scope_header = build_scope_header(
             role="cta",
             read_paths=[manifest_rel, "content/**"],
-            write_paths=[out_target, json_target, f"{work_rel}/cta.md"],
+            write_paths=[out_target, json_target, f"{work_rel}/cta.md", f"{work_rel}/cta_fixes/<CID>.py"],
             done_signal=f"DONE: {json_target}",
         )
 
@@ -778,7 +790,7 @@ def dispatch_cta(
             f"   ```bash",
             f"   {compile_cmd}",
             f"   ```",
-            f"4. Si el compilador reporta errores, corrígelos quirúrgicamente con `replace_file_content` sobre `{out_target}`.",
+            f"4. Si el compilador reporta < 6 errores (1..5 errores), corrígelos OBLIGATORIAMENTE de forma quirúrgica con edit_file (replace_file_content) sobre {out_target} en 1 turno paralelo (PROHIBIDO write_file completo cuando hay < 6 errores). Si reporta >= 6 errores, usa cta_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True).",
             f"5. Sigue estrictamente todas las reglas de tu System Prompt `c2c_cta_architect` y finaliza con: `DONE: {json_target}`.",
         ])
         prompt_full = "\n".join(prompt_lines)
@@ -932,6 +944,31 @@ def dispatch_authors(
                 doc_paths_by_name[dn] = dp
 
     shard_manifest_data = json.loads(shard_manifest_path.read_text(encoding="utf-8"))
+    manifest_dirty = False
+    if isinstance(shard_manifest_data, dict):
+        if "min_archetypes" not in shard_manifest_data:
+            shard_manifest_data["min_archetypes"] = 4
+            manifest_dirty = True
+        raw_shards = shard_manifest_data.get("shards")
+        if isinstance(raw_shards, list):
+            for s_item in raw_shards:
+                if isinstance(s_item, dict) and "min_archetypes" not in s_item:
+                    s_item["min_archetypes"] = 4
+                    manifest_dirty = True
+        elif isinstance(raw_shards, dict):
+            for s_key, s_val in raw_shards.items():
+                if isinstance(s_val, dict) and "min_archetypes" not in s_val:
+                    s_val["min_archetypes"] = 4
+                    manifest_dirty = True
+        if manifest_dirty:
+            try:
+                shard_manifest_path.write_text(
+                    json.dumps(shard_manifest_data, indent=2, ensure_ascii=False),
+                    encoding="utf-8",
+                )
+            except Exception as e:
+                logger.warning("Could not persist min_archetypes to %s: %s", shard_manifest_path, e)
+
     manifest_comps_by_id: Dict[str, Dict[str, Any]] = {}
     shards_raw = shard_manifest_data.get("shards", [])
     if isinstance(shards_raw, dict):
@@ -1079,6 +1116,7 @@ def dispatch_authors(
             read_paths=source_doc_list,
             write_paths=[out_py, target_json, f"{work_rel}/shards/shard_fixes/<CID>.py"],
             forbidden_paths=[
+                "tests/**",
                 ".agents/skills/content-to-course/compile_shard.py",
                 "scratch/**",
                 "work/scratch/**",
@@ -1092,7 +1130,7 @@ def dispatch_authors(
             done_signal=f"DONE: {target_json}",
         )
 
-        compile_cmd = f"{cmd_prefix} .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --cta {cta_rel} --manifest {manifest_rel}"
+        compile_cmd = f"{cmd_prefix} .agents/skills/content-to-course/compile_shard.py {out_py} --work {work_rel} --shard {s_id} --strict --min-archetypes 4"
 
         prompt_lines = [
             f"# Asignación de Tarea: Shard Exercise Author `{s_id}` (C2C v3.21 Load Inversion)",
@@ -1116,15 +1154,15 @@ def dispatch_authors(
             "",
             "## 3. INSTRUCCIONES DE EJECUCIÓN",
             f"0. **AUTOSUFICIENCIA TURN-0 (CERO LECTURA INNECESARIA DE PDFs):** La Sección 2 de esta orden ya contiene el 100% de las definiciones, fórmulas canónicas (correct_belief), manifestaciones de error (manifestation) y distractores de cta.json. NO abras ni leas los documentos fuente de content/ en Turno 1; empieza directamente escribiendo {s_id}_data.py.",
-            f"1. Escribe en `{out_py}` (`TEMPLATES = [...]`) las funciones generadoras y tuplas de plantillas de forma concisa (<= 150-250 líneas por competencia, estándar Clean-Room `shard_08`).",
-            f"2. Para CADA competencia asignada: cubre los 4 arquetipos disjuntos (1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite) y el 100% de los 6 distractores (`D-XX-01..06`). Utiliza el formato DRY compacto de distractores en `gen_*(rng)`: tuplas `(\"D-XX-01\", f\"...\")` o dicts `{{\"distractor_id\": \"D-XX-01\", \"value\": f\"...\"}}` sin repetir los 6 párrafos de `error_rationale` (donde `compile_shard.py` los hereda automáticamente desde `cta.json`).",
+            f"1. Escribe en `{out_py}` (`TEMPLATES = [...]`) las funciones generadoras y tuplas de plantillas de forma concisa (<= 80-110 líneas por competencia, <= 180-220 líneas totales por shard, funciones gen_* concisas de ~15 líneas).",
+            f"2. **4 Arquetipos Disjuntos OBLIGATORIOS por Competencia (`[M3-ARCHETYPES]`):** DEBES cubrir los 4 arquetipos disjuntos definiendo **4 tuplas en `TEMPLATES` por cada competencia asignada** (1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite). Emitir 1 sola tupla por competencia o poner 4 `stem_variants` dentro de 1 tupla es rechazado con `FAIL: [M3-ARCHETYPES]`. Para mantener el archivo compacto (~55-75 líneas/competencia), usa un helper parametrizado `def _gen_<cid>(rng, arch):` + 4 wrappers `def gen_<cid>_1(rng): return _gen_<cid>(rng, 1)` (1..4) y tuplas de 9 elementos con `[]` en `target_misconceptions` (donde `compile_shard.py` los hereda automáticamente desde `cta.json`). Utiliza el formato DRY compacto de distractores en `gen_*(rng)`: tuplas `(\"D-XX-01\", f\"...\")` o dicts `{{\"distractor_id\": \"D-XX-01\", \"value\": f\"...\"}}` sin repetir los 6 párrafos de `error_rationale` (donde `compile_shard.py` los hereda automáticamente desde `cta.json`).",
             f"3. **[TPL-VAR Obligatorio]:** Cada `gen_*(rng)` DEBE tener espacio paramétrico >= 500 combinaciones (`rng.randint` amplios, NUNCA listas pequeñas `rng.choice`) para producir >= 30 instancias únicas (`Hab-*`) o >= 20 (`C-*`/`H-*`) en 50 semillas.",
             f"4. **[R-18 / R-15 / R-20 Obligatorio]:** Usa siempre `r\"...\"` con `@var@` (PROHIBIDO `rf\"...\"`, `\\implies` -> usa `\\Rightarrow`, o `hat{{\\theta}}` sin barra). En `distractors`, `\"value\"` es visible al estudiante (ecuación limpia `r\"$\\text{{Avar}} = @d1@$\"` o afirmación declarativa neutra con longitud homogénea `0.80x-1.20x` respecto a `correct`; PROHIBIDO usar gerundios/giveaways como `'omitiendo'`, `'confundiendo'`, `'asumiendo'`, `'erróneamente'`, `'espuria'`, `'olvidando'` en `\"value\"`). Coloca la explicación del error exclusivamente en `\"error_rationale\"`.",
             f"5. Compila deterministamente:",
             f"   ```bash",
             f"   {compile_cmd}",
             f"   ```",
-            f"6. Si reporta errores con línea exacta, corrígelos quirúrgicamente con `edit_file` (`replace_file_content`) sobre `{out_py}` (o en `{work_rel}/shards/shard_fixes/<CID>.py` si > 15 líneas). NO reescribas todo el archivo desde cero con `write_file`.",
+            f"6. Si reporta < 6 errores (1..5 errores), corrígelos OBLIGATORIAMENTE de forma quirúrgica con edit_file (replace_file_content) sobre las líneas exactas de {out_py}; si reporta >= 6 errores, escribe en {work_rel}/shards/shard_fixes/<CID>.py (1-2 comps) o reescribe con write_file. Para < 6 errores, NO reescribas todo el archivo desde cero con `write_file`.",
             f"7. **[Corte Inmediato Post-PASS]:** Al obtener `PASS`, cesa inmediatamente toda edición y finaliza estrictamente con: `DONE: {target_json}`.",
         ])
         prompt_full = "\n".join(prompt_lines)

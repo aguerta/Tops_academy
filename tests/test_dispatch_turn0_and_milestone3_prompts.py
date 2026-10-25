@@ -35,7 +35,7 @@ SKILL_DIR = Path(__file__).resolve().parent.parent / ".agents" / "skills" / "con
 if str(SKILL_DIR) not in sys.path:
     sys.path.insert(0, str(SKILL_DIR))
 
-from dispatch import dispatch_authors, dispatch_repair
+from dispatch import ROLE_SPECS, dispatch_authors, dispatch_cta, dispatch_repair
 
 
 class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
@@ -127,8 +127,13 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         self.assertIn("formato DRY compacto de distractores", prompt)
         self.assertIn("hereda automáticamente desde `cta.json`", prompt)
 
-        # 5. Surgical edit_file requirement and Post-PASS cut
+        # 5. Compact Clean-Room sizing, Surgical edit_file requirement and Post-PASS cut
+        self.assertIn("<= 80-110 líneas por competencia", prompt)
+        self.assertIn("<= 180-220 líneas totales por shard", prompt)
+        self.assertIn("< 6 errores (1..5 errores)", prompt)
+        self.assertIn("shard_fixes/<CID>.py", prompt)
         self.assertIn("NO reescribas todo el archivo desde cero con `write_file`", prompt)
+        self.assertIn("tests/**", prompt)
         self.assertIn("Corte Inmediato Post-PASS", prompt)
         self.assertIn("DONE: work/shards/shard_01.json", prompt)
 
@@ -478,6 +483,217 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         full_prompt = res_full["Subagents"][0]["Prompt"]
         self.assertIn("Asignación de Tarea: Shard Exercise Author", full_prompt)
         self.assertIn("Hab-01", full_prompt)
+
+    # =========================================================================
+    # 9. Stream 1D: CTA Dispatch, Authors Dispatch, and ROLE_SPECS
+    # =========================================================================
+    def test_dispatch_cta_injects_official_threshold_and_cta_fixes(self) -> None:
+        """dispatch_cta (direct and mapreduce) injects official < 6 errors threshold and cta_fixes paths."""
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "macro_m3_test",
+            "documents": [
+                {"name": "capitulo_01.pdf", "path": "content/capitulo_01.pdf", "total_pages": 15, "valid_page_range": [1, 15]}
+            ],
+            "granularity": "standard",
+        }), encoding="utf-8")
+
+        # 1. Direct mode
+        res_direct = dispatch_cta(self.work_dir, mode="direct", pointer=False)
+        self.assertEqual(len(res_direct["Subagents"]), 1)
+        direct_prompt = res_direct["Subagents"][0]["Prompt"]
+        self.assertIn("cta_fixes/<CID>.py", direct_prompt)
+        self.assertIn("< 6 errores (1..5 errores)", direct_prompt)
+        self.assertIn("edit_file (replace_file_content)", direct_prompt)
+        self.assertIn("PROHIBIDO write_file completo cuando hay < 6 errores", direct_prompt)
+        self.assertIn("cta_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True)", direct_prompt)
+
+        # 2. MapReduce mode
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "macro_m3_test",
+            "documents": [
+                {"name": "capitulo_01.pdf", "path": "content/capitulo_01.pdf", "total_pages": 15, "valid_page_range": [1, 15]}
+            ],
+            "subparts": [
+                {
+                    "subpart_id": "part_01",
+                    "doc": "capitulo_01.pdf",
+                    "path": "content/capitulo_01.pdf",
+                    "page_range": [1, 15],
+                    "total_pages": 15,
+                }
+            ],
+            "granularity": "standard",
+        }), encoding="utf-8")
+
+        res_map = dispatch_cta(self.work_dir, mode="mapreduce", pointer=False)
+        self.assertEqual(len(res_map["Subagents"]), 1)
+        map_prompt = res_map["Subagents"][0]["Prompt"]
+        self.assertIn("cta_parts/cta_fixes/<CID>.py", map_prompt)
+        self.assertIn("< 6 errores (1..5 errores)", map_prompt)
+        self.assertIn("edit_file (replace_file_content)", map_prompt)
+        self.assertIn("PROHIBIDO write_file completo cuando hay < 6 errores", map_prompt)
+
+    def test_role_specs_contains_cta_fixes_and_forbidden_tests(self) -> None:
+        """ROLE_SPECS includes cta_fixes in write paths and tests/** in forbidden paths."""
+        # CTA write paths
+        for role_key in ("cta", "cta-direct", "cta-map"):
+            self.assertIn(role_key, ROLE_SPECS)
+            write_paths = ROLE_SPECS[role_key]["write"]
+            self.assertIn("work/cta_fixes/**", write_paths, f"work/cta_fixes/** missing in {role_key}.write")
+            self.assertIn("work/cta_parts/cta_fixes/**", write_paths, f"work/cta_parts/cta_fixes/** missing in {role_key}.write")
+
+        # Forbidden tests/**
+        for role_key in ("cta", "cta-direct", "cta-map", "author", "repair"):
+            self.assertIn(role_key, ROLE_SPECS)
+            forbidden = ROLE_SPECS[role_key]["forbidden"]
+            self.assertIn("tests/**", forbidden, f"tests/** missing in {role_key}.forbidden")
+
+    # =========================================================================
+    # 10. Stream 1D: System Prompts Official Threshold, Clean-Room & Headroom
+    # =========================================================================
+    def test_stream_1d_prompts_document_official_threshold_clean_room_and_manifests(self) -> None:
+        """All Full and Lean system prompts document the official < 6 errors threshold, clean-room sizing, and size limits."""
+        full_cta = (self.prompts_dir / "prompt_cta_architect.md").read_text(encoding="utf-8")
+        lean_cta = (self.lean_dir / "prompt_cta_architect.md").read_text(encoding="utf-8")
+        full_author = (self.prompts_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
+        lean_author = (self.lean_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
+        full_repair = (self.prompts_dir / "prompt_repair.md").read_text(encoding="utf-8")
+        lean_repair = (self.lean_dir / "prompt_repair.md").read_text(encoding="utf-8")
+
+        # 1. CTA Architect Prompts (Full + Lean)
+        self.assertIn("cta_fixes/<cid>.py", full_cta)
+        self.assertIn("tests/**", full_cta)
+        self.assertIn("git log", full_cta)
+        self.assertIn("Get-ChildItem -Recurse", full_cta)
+        self.assertIn("< 6", full_cta)
+        self.assertIn("1..5", full_cta)
+        self.assertIn("edit_file", full_cta)
+        self.assertIn("c2c_hook_guard.py", full_cta)
+
+        self.assertIn("cta_fixes/<cid>.py", lean_cta)
+        self.assertIn("tests/**", lean_cta)
+        self.assertIn("< 6", lean_cta)
+        self.assertIn("1..5", lean_cta)
+        self.assertIn("edit_file", lean_cta)
+        # Verify lean CTA no longer forbids edit_file
+        self.assertNotIn("Incremental micro-edits; write entire module in ONE atomic write_file", lean_cta)
+
+        # 2. Shard Author Prompts (Full + Lean)
+        self.assertIn("tests/**", full_author)
+        self.assertIn("git log", full_author)
+        self.assertIn("Get-ChildItem -Recurse", full_author)
+        self.assertIn("<= 80–110", full_author)
+        self.assertIn("<= 180–220", full_author)
+        self.assertIn("< 6", full_author)
+        self.assertIn("1..5", full_author)
+        self.assertIn("edit_file", full_author)
+        self.assertIn("shard_fixes/<CID>.py", full_author)
+
+        self.assertIn("tests/**", lean_author)
+        self.assertIn("git log", lean_author)
+        self.assertIn("Get-ChildItem -Recurse", lean_author)
+        self.assertIn("<= 80–110", lean_author)
+        self.assertIn("<= 180–220", lean_author)
+        self.assertIn("< 6", lean_author)
+        self.assertIn("1..5", lean_author)
+        self.assertIn("edit_file", lean_author)
+        self.assertIn("shard_fixes/<CID>.py", lean_author)
+
+        # 3. Repair Prompts (Full + Lean)
+        self.assertIn("tests/**", full_repair)
+        self.assertIn("git log", full_repair)
+        self.assertIn("Get-ChildItem -Recurse", full_repair)
+        self.assertIn("< 6", full_repair)
+        self.assertIn("1..5", full_repair)
+        self.assertIn("edit_file", full_repair)
+        self.assertIn("pre_shard_manifest.json", full_repair)
+        self.assertNotIn("pre_cta_manifest.json", full_repair)
+
+        self.assertIn("tests/**", lean_repair)
+        self.assertIn("git log", lean_repair)
+        self.assertIn("Get-ChildItem -Recurse", lean_repair)
+        self.assertIn("< 6", lean_repair)
+        self.assertIn("1..5", lean_repair)
+        self.assertIn("edit_file", lean_repair)
+        self.assertIn("pre_shard_manifest.json", lean_repair)
+        self.assertNotIn("pre_cta_manifest.json", lean_repair)
+
+        # 4. Strict File Size Headroom
+        lean_author_size = (self.lean_dir / "prompt_shard_author.md").stat().st_size
+        self.assertLessEqual(lean_author_size, 4750, f"lean/prompt_shard_author.md size {lean_author_size} exceeds 4,750 B!")
+
+        for lfile in self.lean_dir.glob("*.md"):
+            lsize = lfile.stat().st_size
+            self.assertLessEqual(lsize, 5000, f"Lean prompt {lfile.name} size {lsize} exceeds 5,000 B!")
+
+    # =========================================================================
+    # 11. Stream 1D Improver: Milestone 3 Anti-1-Tuple Hardening & Dispatch Stamping
+    # =========================================================================
+    def test_stream_1d_improver_milestone3_archetypes_and_dispatch_hardening(self) -> None:
+        """Improver hardening: prompt_shard_author eliminates 1-tuple escape hatch, lean author has 4 archetypes pattern <= 4750B, dispatch stamps min_archetypes=4."""
+        full_author = (self.prompts_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
+        lean_author = (self.lean_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
+
+        # 1. Full prompt: No permissive escape hatch, documents [M3-ARCHETYPES] and _gen_h01(rng, arch)
+        self.assertNotIn("o 1 tupla por competencia", full_author)
+        self.assertIn("[M3-ARCHETYPES]", full_author)
+        self.assertIn("FAIL: [M3-ARCHETYPES]", full_author)
+        self.assertIn("_gen_h01(rng, arch", full_author)
+        self.assertIn("gen_h01_1", full_author)
+        self.assertIn("gen_h01_2", full_author)
+        self.assertIn("gen_h01_3", full_author)
+        self.assertIn("gen_h01_4", full_author)
+        self.assertIn("ver_ok", full_author)
+
+        # 2. Lean prompt: Documents [M3-ARCHETYPES], shows 4 tuples and wrappers gen_h01_1..4, and <= 4,750 bytes
+        self.assertIn("[M3-ARCHETYPES]", lean_author)
+        self.assertIn("_gen_h01", lean_author)
+        self.assertIn("gen_h01_1", lean_author)
+        self.assertIn("gen_h01_2", lean_author)
+        self.assertIn("gen_h01_3", lean_author)
+        self.assertIn("gen_h01_4", lean_author)
+        self.assertIn("ver_ok", lean_author)
+        lean_author_size = (self.lean_dir / "prompt_shard_author.md").stat().st_size
+        self.assertLessEqual(lean_author_size, 4750, f"lean/prompt_shard_author.md size {lean_author_size} exceeds 4,750 B!")
+
+        # 3. dispatch_authors: includes --min-archetypes 4 in compile_cmd, mentions [M3-ARCHETYPES], stamps min_archetypes=4 in pre_shard_manifest.json
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "macro_m3_test",
+            "documents": [{"name": "doc.pdf", "path": "content/doc.pdf"}],
+        }), encoding="utf-8")
+        (self.work_dir / "cta.json").write_text(json.dumps({
+            "course_id": "macro_m3_test",
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "type": "knowledge",
+                    "name": "Comp 1",
+                    "distractors": [{"id": "D-01", "name": "d1"}],
+                }
+            ],
+        }), encoding="utf-8")
+        shards_dir = self.work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+        manifest_p = shards_dir / "pre_shard_manifest.json"
+        manifest_p.write_text(json.dumps({
+            "shards": [{"shard_id": "shard_01", "competency_ids": ["C-01"]}],
+        }), encoding="utf-8")
+
+        res = dispatch_authors(self.work_dir, pointer=False)
+        self.assertEqual(len(res["Subagents"]), 1)
+        subagent = res["Subagents"][0]
+        prompt = subagent["Prompt"]
+
+        # compile_cmd in prompt and item contains --min-archetypes 4
+        self.assertIn("--min-archetypes 4", prompt)
+        self.assertIn("--min-archetypes 4", subagent["compile_command"])
+        self.assertIn("[M3-ARCHETYPES]", prompt)
+        self.assertIn("4 arquetipos disjuntos", prompt)
+
+        # pre_shard_manifest.json stamped on disk with "min_archetypes": 4
+        stamped_manifest = json.loads(manifest_p.read_text(encoding="utf-8"))
+        self.assertEqual(stamped_manifest.get("min_archetypes"), 4)
+        self.assertEqual(stamped_manifest["shards"][0].get("min_archetypes"), 4)
 
 
 if __name__ == "__main__":
