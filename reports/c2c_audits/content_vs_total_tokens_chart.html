@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Econometría C2C: Tokens de Contenido vs. Tokens Totales de Corrida</title>
+  <title>Econometría C2C: Tokens de Contenido vs. Tokens Totales y Tiempo</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
     .chart-tooltip {
@@ -23,127 +23,134 @@
         <div>
           <div class="flex items-center gap-2">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-              Econometría No Lineal C2C v3.3
+              Econometría Dual C2C v3.3
             </span>
-            <span class="text-xs text-[var(--muted-foreground)]">Dataset de 6 Cursos Auditados</span>
+            <span class="text-xs text-[var(--muted-foreground)]">Dataset de 6 Cursos Auditados (Incluye V2 Reciente)</span>
           </div>
           <h1 class="text-2xl font-bold tracking-tight text-[var(--foreground)] mt-2">
-            Tokens de Entrada de Contenido vs. Tokens Totales de la Corrida
+            Tokens de Entrada vs. Tokens Totales y Tiempo Utilizado
           </h1>
           <p class="text-sm text-[var(--muted-foreground)] mt-1">
-            Validación empírica de <strong class="text-emerald-400">Rendimientos Marginales Decrecientes</strong> y economías de escala impulsadas por el Context Caching y la saturación modular del DAG.
+            Validación econométrica de <strong class="text-emerald-400">Rendimientos Decrecientes</strong> en tokens y <strong class="text-sky-400">Invariancia de Tiempo de Pared</strong> impulsada por el Speedup Concurrente.
           </p>
         </div>
 
-        <!-- Controls: Model Selector & Token Mode -->
-        <div class="flex flex-col sm:flex-row items-end sm:items-center gap-2">
-          <!-- Regression Model Selector -->
-          <div class="flex items-center gap-1 bg-[var(--background)] p-1 rounded-xl border border-[var(--border)]">
-            <button id="btn-model-log" onclick="setModel('logarithmic')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-emerald-400 font-bold shadow-xs">
-              Logarítmico (R²=97.9%)
-            </button>
-            <button id="btn-model-pow" onclick="setModel('power')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-              Potencial (R²=96.8%)
-            </button>
-            <button id="btn-model-lin" onclick="setModel('linear')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-              Lineal (R²=95.0%)
-            </button>
-          </div>
-
-          <!-- Token Type Selector -->
-          <div class="flex items-center gap-1 bg-[var(--background)] p-1 rounded-xl border border-[var(--border)]">
-            <button id="btn-mode-act" onclick="setMode('active')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs">
-              Input Activo
-            </button>
-            <button id="btn-mode-cache" onclick="setMode('cache')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-              +Caché
-            </button>
-          </div>
+        <!-- Global Input Mode Selector -->
+        <div class="flex items-center gap-1 bg-[var(--background)] p-1.5 rounded-xl border border-[var(--border)]">
+          <span class="text-xs text-[var(--muted-foreground)] px-2">Entrada:</span>
+          <button id="btn-mode-act" onclick="setMode('active')" class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs">
+            Input Activo
+          </button>
+          <button id="btn-mode-cache" onclick="setMode('cache')" class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            +Context Cache
+          </button>
         </div>
       </div>
 
-      <!-- Econometric Comparison Banner -->
+      <!-- Top Metric Cards Grid -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
         <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
-          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Modelo Seleccionado</div>
-          <div class="text-lg font-bold text-emerald-400 mt-1 truncate" id="kpi-model-name">Logarítmico (Semi-Log)</div>
-          <div class="text-xs text-[var(--muted-foreground)] mt-0.5" id="kpi-model-formula">y = a·ln(x) + b</div>
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">R² Logarítmico (Tokens)</div>
+          <div class="text-2xl font-bold text-emerald-400 mt-1">97.88%</div>
+          <div class="text-xs text-emerald-400 mt-0.5">RMSE 2.91M (-35% vs lineal)</div>
         </div>
 
         <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
-          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Bondad de Ajuste (R²)</div>
-          <div class="text-2xl font-bold text-emerald-500 mt-1" id="kpi-r2">97.88%</div>
-          <div class="text-xs text-emerald-400 mt-0.5" id="kpi-r2-note">+2.9% vs Modelo Lineal</div>
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Mediana Tiempo de Pared</div>
+          <div class="text-2xl font-bold text-sky-400 mt-1">28.1 min</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">Invariante (22m a 47m)</div>
         </div>
 
         <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
-          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Error Cuadrático Medio (RMSE)</div>
-          <div class="text-2xl font-bold text-indigo-400 mt-1" id="kpi-rmse">2.91 M</div>
-          <div class="text-xs text-indigo-300 mt-0.5" id="kpi-rmse-note">-35.0% de error vs lineal (4.47M)</div>
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Speedup Récord (V2)</div>
+          <div class="text-2xl font-bold text-indigo-400 mt-1">17.70x</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">112 subagentes concurrentes</div>
         </div>
 
         <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
-          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Elasticidad de Escala</div>
-          <div class="text-2xl font-bold text-sky-400 mt-1" id="kpi-elasticity">&eta; = 0.764</div>
-          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">Sublineal (rendimientos decrecientes)</div>
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Throughput Máximo</div>
+          <div class="text-2xl font-bold text-purple-400 mt-1">94.5 QPM</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">2,770 preguntas en 29.3 min</div>
         </div>
       </div>
     </div>
 
-    <!-- Main Chart: Scatter Plot & Curved Fit Line -->
+    <!-- Chart 1: Tokens vs Total Tokens (with Model Selector) -->
     <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <h2 class="text-lg font-semibold text-[var(--foreground)]" id="chart-title">
-            Curva Logarítmica de Expansión de Cómputo (Semi-Log Fit)
+          <h2 class="text-lg font-semibold text-[var(--foreground)]" id="chart1-title">
+            1. Tokens de Entrada de Contenido vs. Tokens Totales de la Corrida
           </h2>
           <p class="text-xs text-[var(--muted-foreground)]">
-            Eje X: Tokens de Entrada en Contenido (etapa CTA) | Eje Y: Gran Total de Tokens de la Corrida (Millones)
+            Curva empírica de expansión y saturación de cuota facturable (Millones de Tokens).
           </p>
         </div>
-        <div class="flex items-center gap-4 text-xs">
-          <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full bg-indigo-500 inline-block"></span>
-            <span class="text-[var(--muted-foreground)]">Cursos Observados</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block ring-2 ring-emerald-500/30"></span>
-            <span class="text-emerald-400 font-medium">Último Realizado (V2)</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-4 h-0.5 bg-emerald-500 inline-block"></span>
-            <span class="text-emerald-400 font-medium" id="legend-curve">Curva Logarítmica</span>
-          </div>
+        <div class="flex items-center gap-1 bg-[var(--background)] p-1 rounded-xl border border-[var(--border)]">
+          <button id="btn-model-log" onclick="setModel('logarithmic')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-[var(--card)] text-emerald-400 shadow-xs">
+            Logarítmico (R²=97.9%)
+          </button>
+          <button id="btn-model-pow" onclick="setModel('power')" class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Potencial (R²=96.8%)
+          </button>
+          <button id="btn-model-lin" onclick="setModel('linear')" class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Lineal (R²=95.0%)
+          </button>
         </div>
       </div>
 
-      <div class="relative w-full overflow-hidden" style="height: 420px;" id="scatter-container">
-        <svg id="scatter-svg" class="w-full h-full"></svg>
-        <div id="scatter-tooltip" class="chart-tooltip bg-slate-900 text-white text-xs p-3 rounded-xl shadow-2xl border border-slate-700 pointer-events-none"></div>
+      <div class="relative w-full overflow-hidden" style="height: 380px;" id="scatter1-container">
+        <svg id="scatter1-svg" class="w-full h-full"></svg>
+        <div id="scatter1-tooltip" class="chart-tooltip bg-slate-900 text-white text-xs p-3 rounded-xl shadow-2xl border border-slate-700 pointer-events-none"></div>
       </div>
     </div>
 
-    <!-- Comparative Table: Observed vs Predicted by Models -->
-    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+    <!-- Chart 2: Tokens de Entrada vs. Tiempo Total Utilizado -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <h2 class="text-lg font-semibold text-[var(--foreground)]">Comparación de Modelos: Observado vs. Predicho</h2>
-          <p class="text-xs text-[var(--muted-foreground)]">Evidencia empírica de cómo el modelo logarítmico reduce los errores de sobreestimación</p>
+          <h2 class="text-lg font-semibold text-[var(--foreground)]">
+            2. Tokens de Entrada de Contenido vs. Tiempo Total Utilizado
+          </h2>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            Compara el <strong class="text-sky-400">Tiempo de Pared Real</strong> (espera del usuario) frente al <strong class="text-indigo-400">Tiempo de Cómputo Acumulado</strong> (horas de subagentes).
+          </p>
+        </div>
+        <div class="flex items-center gap-1 bg-[var(--background)] p-1 rounded-xl border border-[var(--border)]">
+          <button id="btn-time-wall" onclick="setTimeMetric('wall')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-[var(--card)] text-sky-400 shadow-xs">
+            Tiempo de Pared (Minutos)
+          </button>
+          <button id="btn-time-comp" onclick="setTimeMetric('compute')" class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Cómputo Total (Horas)
+          </button>
+          <button id="btn-time-both" onclick="setTimeMetric('both')" class="px-2.5 py-1 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Vista Dual (Pared + Cómputo)
+          </button>
         </div>
       </div>
 
+      <div class="relative w-full overflow-hidden" style="height: 380px;" id="scatter2-container">
+        <svg id="scatter2-svg" class="w-full h-full"></svg>
+        <div id="scatter2-tooltip" class="chart-tooltip bg-slate-900 text-white text-xs p-3 rounded-xl shadow-2xl border border-slate-700 pointer-events-none"></div>
+      </div>
+    </div>
+
+    <!-- Comparative Table -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden">
+      <h2 class="text-lg font-semibold text-[var(--foreground)] mb-3">Matriz Econométrica Integral de Rendimiento y Tiempo</h2>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left border-collapse">
           <thead>
             <tr class="border-b border-[var(--border)] text-[var(--muted-foreground)] font-medium bg-[var(--background)]/50">
               <th class="py-2.5 px-3">Curso</th>
+              <th class="py-2.5 px-3">Material Base</th>
               <th class="py-2.5 px-3 text-right">Input Contenido</th>
-              <th class="py-2.5 px-3 text-right font-bold text-white">Y Observado Real</th>
-              <th class="py-2.5 px-3 text-right text-emerald-400 font-bold bg-emerald-500/10">Predicción Logarítmica</th>
-              <th class="py-2.5 px-3 text-right text-sky-400">Predicción Potencial</th>
-              <th class="py-2.5 px-3 text-right text-rose-400">Predicción Lineal</th>
-              <th class="py-2.5 px-3 text-right">Multiplicador Expansión</th>
+              <th class="py-2.5 px-3 text-right text-indigo-400 font-bold">Total Tokens</th>
+              <th class="py-2.5 px-3 text-right text-sky-400 font-bold bg-sky-500/10">Tiempo Pared (Min)</th>
+              <th class="py-2.5 px-3 text-right text-purple-400">Cómputo Agentes (h)</th>
+              <th class="py-2.5 px-3 text-right text-emerald-400 font-bold">Speedup</th>
               <th class="py-2.5 px-3 text-right">Preguntas</th>
+              <th class="py-2.5 px-3 text-right">Throughput</th>
             </tr>
           </thead>
           <tbody id="table-body" class="divide-y divide-[var(--border)]">
@@ -160,245 +167,155 @@
       {
         id: "saul_control_optimo",
         name: "Saul Control Óptimo",
-        folder: "content/saul_post_parcial",
         files: 1,
         pages: 32,
         mb: 1.59,
         questions: 350,
-        speedup: 3.9,
         content_input_active: 117667,
-        content_input_cache: 115381,
         content_input_total: 233048,
         run_total_tokens: 9267386,
         run_active_tokens: 2208012,
-        mult_active: 78.8,
-        mult_cache: 39.8,
+        wall_minutes: 22.33,
+        compute_minutes: 64.68,
+        speedup: 3.90,
+        qpm: 15.67,
         is_latest: false
       },
       {
         id: "asyntotic_estatistics_v7",
         name: "Asymptotic Stats v7",
-        folder: "content/estadistica_asintotica",
         files: 2,
         pages: 52,
         mb: 3.44,
         questions: 710,
-        speedup: 5.53,
         content_input_active: 287404,
-        content_input_cache: 549795,
         content_input_total: 837199,
         run_total_tokens: 21625641,
         run_active_tokens: 4975558,
-        mult_active: 75.2,
-        mult_cache: 25.8,
+        wall_minutes: 31.60,
+        compute_minutes: 174.65,
+        speedup: 5.53,
+        qpm: 22.47,
         is_latest: false
       },
       {
         id: "saul_pre_parcial",
         name: "Saul Pre Parcial",
-        folder: "content/practica_parcial_saul",
         files: 7,
         pages: 103,
         mb: 10.39,
         questions: 1520,
-        speedup: 12.77,
         content_input_active: 757540,
-        content_input_cache: 2236518,
         content_input_total: 2994058,
         run_total_tokens: 43709660,
         run_active_tokens: 9139649,
-        mult_active: 57.7,
-        mult_cache: 14.6,
+        wall_minutes: 26.15,
+        compute_minutes: 333.88,
+        speedup: 12.77,
+        qpm: 58.13,
         is_latest: false
       },
       {
         id: "estadistica_3_pre_parcial",
         name: "Estadística 3 v1",
-        folder: "content/estadistica3_Cano",
         files: 8,
         pages: 141,
         mb: 6.19,
         questions: 2190,
-        speedup: 16.37,
         content_input_active: 924543,
-        content_input_cache: 1782345,
         content_input_total: 2706888,
         run_total_tokens: 50598043,
         run_active_tokens: 12061356,
-        mult_active: 54.7,
-        mult_cache: 18.7,
+        wall_minutes: 26.92,
+        compute_minutes: 440.62,
+        speedup: 16.37,
+        qpm: 81.36,
         is_latest: false
       },
       {
         id: "gavilano_pre_parcial",
         name: "Gavilano Pre Parcial",
-        folder: "content/gavilano",
         files: 10,
         pages: 246,
         mb: 10.05,
         questions: 2950,
-        speedup: 11.41,
         content_input_active: 1198688,
-        content_input_cache: 3144834,
         content_input_total: 4343522,
         run_total_tokens: 60325789,
         run_active_tokens: 15487713,
-        mult_active: 50.3,
-        mult_cache: 13.9,
+        wall_minutes: 47.40,
+        compute_minutes: 540.65,
+        speedup: 11.41,
+        qpm: 62.24,
         is_latest: false
       },
       {
         id: "estadistica_3_pre_parcial_v2",
         name: "Estadística 3 v2 (NUEVO)",
-        folder: "content/estadistica3_Cano",
         files: 12,
         pages: 122,
         mb: 6.86,
         questions: 2770,
-        speedup: 17.7,
         content_input_active: 1554251,
-        content_input_cache: 3553237,
         content_input_total: 5107488,
         run_total_tokens: 64205555,
         run_active_tokens: 15500666,
-        mult_active: 41.3,
-        mult_cache: 12.6,
+        wall_minutes: 29.32,
+        compute_minutes: 518.95,
+        speedup: 17.70,
+        qpm: 94.49,
         is_latest: true
       }
     ];
 
-    let currentModel = 'logarithmic'; // 'logarithmic', 'power', 'linear'
-    let currentMode = 'active';        // 'active', 'cache'
+    let currentModel = 'logarithmic';
+    let currentMode = 'active';
+    let currentTimeMetric = 'wall'; // 'wall', 'compute', 'both'
 
-    function setModel(model) {
-      currentModel = model;
-      ['log', 'pow', 'lin'].forEach(m => {
-        const key = m === 'log' ? 'logarithmic' : m === 'pow' ? 'power' : 'linear';
-        const btn = document.getElementById(`btn-model-${m}`);
-        if (key === model) {
-          btn.className = "px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-[var(--card)] text-emerald-400 shadow-xs";
-        } else {
-          btn.className = "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
-        }
+    function setModel(m) {
+      currentModel = m;
+      ['log', 'pow', 'lin'].forEach(id => {
+        const key = id === 'log' ? 'logarithmic' : id === 'pow' ? 'power' : 'linear';
+        document.getElementById(`btn-model-${id}`).className = key === m 
+          ? "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-[var(--card)] text-emerald-400 shadow-xs"
+          : "px-2.5 py-1 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
       });
-      updateStats();
-      renderChart();
+      renderChart1();
     }
 
-    function setMode(mode) {
-      currentMode = mode;
-      document.getElementById('btn-mode-act').className = mode === 'active' 
-        ? "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
-        : "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
-      document.getElementById('btn-mode-cache').className = mode === 'cache'
-        ? "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
-        : "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
-      
-      updateStats();
-      renderChart();
+    function setMode(m) {
+      currentMode = m;
+      document.getElementById('btn-mode-act').className = m === 'active' 
+        ? "px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+        : "px-2.5 py-1 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+      document.getElementById('btn-mode-cache').className = m === 'cache'
+        ? "px-2.5 py-1 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+        : "px-2.5 py-1 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+      renderChart1();
+      renderChart2();
       renderTable();
+    }
+
+    function setTimeMetric(tm) {
+      currentTimeMetric = tm;
+      ['wall', 'comp', 'both'].forEach(id => {
+        const key = id === 'wall' ? 'wall' : id === 'comp' ? 'compute' : 'both';
+        document.getElementById(`btn-time-${id}`).className = key === tm 
+          ? "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-[var(--card)] text-sky-400 shadow-xs"
+          : "px-2.5 py-1 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+      });
+      renderChart2();
     }
 
     function getX(d) {
       return currentMode === 'active' ? d.content_input_active : d.content_input_total;
     }
 
-    // Regressions computation
-    function computeRegressions() {
-      const n = DATASET.length;
-      const x = DATASET.map(getX);
-      const y = DATASET.map(d => d.run_total_tokens);
-      
-      const meanX = x.reduce((a, b) => a + b, 0) / n;
-      const meanY = y.reduce((a, b) => a + b, 0) / n;
-      const ssTot = y.reduce((acc, yi) => acc + Math.pow(yi - meanY, 2), 0);
-      
-      // 1. Linear: y = a + b*x
-      let covXY = 0, varX = 0;
-      for (let i = 0; i < n; i++) {
-        covXY += (x[i] - meanX) * (y[i] - meanY);
-        varX += Math.pow(x[i] - meanX, 2);
-      }
-      const slopeLin = covXY / varX;
-      const interceptLin = meanY - slopeLin * meanX;
-      const predLin = x.map(xi => interceptLin + slopeLin * xi);
-      const ssResLin = y.reduce((acc, yi, i) => acc + Math.pow(yi - predLin[i], 2), 0);
-      const r2Lin = 1 - ssResLin / ssTot;
-      const rmseLin = Math.sqrt(ssResLin / n);
-
-      // 2. Logarithmic: y = a + b * ln(x)
-      const lnx = x.map(xi => Math.log(xi));
-      const meanLnX = lnx.reduce((a, b) => a + b, 0) / n;
-      let covLnY = 0, varLnX = 0;
-      for (let i = 0; i < n; i++) {
-        covLnY += (lnx[i] - meanLnX) * (y[i] - meanY);
-        varLnX += Math.pow(lnx[i] - meanLnX, 2);
-      }
-      const slopeLog = covLnY / varLnX;
-      const interceptLog = meanY - slopeLog * meanLnX;
-      const predLog = x.map(xi => interceptLog + slopeLog * Math.log(xi));
-      const ssResLog = y.reduce((acc, yi, i) => acc + Math.pow(yi - predLog[i], 2), 0);
-      const r2Log = 1 - ssResLog / ssTot;
-      const rmseLog = Math.sqrt(ssResLog / n);
-
-      // 3. Power: ln(y) = ln(a) + b * ln(x) => y = a * x^b
-      const lny = y.map(yi => Math.log(yi));
-      const meanLnY = lny.reduce((a, b) => a + b, 0) / n;
-      let covLnLn = 0;
-      for (let i = 0; i < n; i++) {
-        covLnLn += (lnx[i] - meanLnX) * (lny[i] - meanLnY);
-      }
-      const betaPow = covLnLn / varLnX;
-      const lnAPow = meanLnY - betaPow * meanLnX;
-      const alphaPow = Math.exp(lnAPow);
-      const predPow = x.map(xi => alphaPow * Math.pow(xi, betaPow));
-      const ssResPow = y.reduce((acc, yi, i) => acc + Math.pow(yi - predPow[i], 2), 0);
-      const r2Pow = 1 - ssResPow / ssTot;
-      const rmsePow = Math.sqrt(ssResPow / n);
-
-      return {
-        linear: { slope: slopeLin, intercept: interceptLin, r2: r2Lin, rmse: rmseLin, pred: predLin },
-        logarithmic: { slope: slopeLog, intercept: interceptLog, r2: r2Log, rmse: rmseLog, pred: predLog },
-        power: { alpha: alphaPow, beta: betaPow, r2: r2Pow, rmse: rmsePow, pred: predPow }
-      };
-    }
-
-    function updateStats() {
-      const reg = computeRegressions();
-      if (currentModel === 'logarithmic') {
-        document.getElementById('kpi-model-name').innerText = "Logarítmico (Semi-Log)";
-        document.getElementById('kpi-model-formula').innerText = `y = ${(reg.logarithmic.slope/1e6).toFixed(2)}M · ln(x) - ${Math.abs(reg.logarithmic.intercept/1e6).toFixed(2)}M`;
-        document.getElementById('kpi-r2').innerText = (reg.logarithmic.r2 * 100).toFixed(2) + '%';
-        document.getElementById('kpi-r2-note').innerText = `+${((reg.logarithmic.r2 - reg.linear.r2)*100).toFixed(1)}% vs Modelo Lineal`;
-        document.getElementById('kpi-rmse').innerText = (reg.logarithmic.rmse / 1e6).toFixed(2) + ' M';
-        document.getElementById('kpi-rmse-note').innerText = "-35.0% error vs lineal (4.47M)";
-        document.getElementById('chart-title').innerText = "Curva Logarítmica de Expansión de Cómputo (Semi-Log Fit)";
-        document.getElementById('legend-curve').innerText = "Curva Logarítmica";
-      } else if (currentModel === 'power') {
-        document.getElementById('kpi-model-name').innerText = "Potencial (Log-Log)";
-        document.getElementById('kpi-model-formula').innerText = `y = ${reg.power.alpha.toFixed(1)} · x^${reg.power.beta.toFixed(3)}`;
-        document.getElementById('kpi-r2').innerText = (reg.power.r2 * 100).toFixed(2) + '%';
-        document.getElementById('kpi-r2-note').innerText = `+${((reg.power.r2 - reg.linear.r2)*100).toFixed(1)}% vs Modelo Lineal`;
-        document.getElementById('kpi-rmse').innerText = (reg.power.rmse / 1e6).toFixed(2) + ' M';
-        document.getElementById('kpi-rmse-note').innerText = "-20.2% error vs lineal (4.47M)";
-        document.getElementById('chart-title').innerText = "Curva Potencial Sublineal (Power Law Fit)";
-        document.getElementById('legend-curve').innerText = "Curva Potencial";
-      } else {
-        document.getElementById('kpi-model-name').innerText = "Modelo Lineal";
-        document.getElementById('kpi-model-formula').innerText = `y = ${reg.linear.slope.toFixed(2)}x + ${(reg.linear.intercept/1e6).toFixed(2)}M`;
-        document.getElementById('kpi-r2').innerText = (reg.linear.r2 * 100).toFixed(2) + '%';
-        document.getElementById('kpi-r2-note').innerText = "Sobreestima en extremos";
-        document.getElementById('kpi-rmse').innerText = (reg.linear.rmse / 1e6).toFixed(2) + ' M';
-        document.getElementById('kpi-rmse-note').innerText = "Error cuadrático superior";
-        document.getElementById('chart-title').innerText = "Recta de Tendencia Lineal (Linear Fit)";
-        document.getElementById('legend-curve').innerText = "Recta Lineal";
-      }
-    }
-
-    function renderChart() {
-      const svg = document.getElementById('scatter-svg');
+    // Chart 1: Tokens vs Total Tokens
+    function renderChart1() {
+      const svg = document.getElementById('scatter1-svg');
       const width = svg.clientWidth || 950;
-      const height = 420;
+      const height = 380;
       const pad = { top: 30, right: 70, bottom: 50, left: 80 };
       const plotW = width - pad.left - pad.right;
       const plotH = height - pad.top - pad.bottom;
@@ -406,87 +323,75 @@
       const maxX = currentMode === 'active' ? 1800000 : 6000000;
       const maxY = 75000000;
       
-      const reg = computeRegressions();
+      const n = DATASET.length;
+      const x = DATASET.map(getX);
+      const y = DATASET.map(d => d.run_total_tokens);
+      const meanX = x.reduce((a, b) => a + b, 0) / n;
+      const meanY = y.reduce((a, b) => a + b, 0) / n;
       
       let html = '';
       
-      // Grid lines & labels (Y Axis)
+      // Y Grid
       for (let i = 0; i <= 5; i++) {
         const valY = (maxY / 5) * i;
-        const y = pad.top + plotH * (1 - valY / maxY);
-        html += `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="currentColor" stroke-opacity="0.08" />`;
-        html += `<text x="${pad.left - 10}" y="${y + 4}" fill="currentColor" opacity="0.5" font-size="10" text-anchor="end">${(valY / 1e6).toFixed(0)}M</text>`;
+        const yPos = pad.top + plotH * (1 - valY / maxY);
+        html += `<line x1="${pad.left}" y1="${yPos}" x2="${width - pad.right}" y2="${yPos}" stroke="currentColor" stroke-opacity="0.08" />`;
+        html += `<text x="${pad.left - 10}" y="${yPos + 4}" fill="currentColor" opacity="0.5" font-size="10" text-anchor="end">${(valY / 1e6).toFixed(0)}M</text>`;
       }
       
-      // Grid lines & labels (X Axis)
-      const xSteps = 6;
-      for (let i = 0; i <= xSteps; i++) {
-        const valX = (maxX / xSteps) * i;
-        const x = pad.left + plotW * (valX / maxX);
-        html += `<line x1="${x}" y1="${pad.top}" x2="${x}" y2="${height - pad.bottom}" stroke="currentColor" stroke-opacity="0.08" />`;
+      // X Grid
+      for (let i = 0; i <= 6; i++) {
+        const valX = (maxX / 6) * i;
+        const xPos = pad.left + plotW * (valX / maxX);
+        html += `<line x1="${xPos}" y1="${pad.top}" x2="${xPos}" y2="${height - pad.bottom}" stroke="currentColor" stroke-opacity="0.08" />`;
         const labelX = currentMode === 'active' ? (valX / 1000).toFixed(0) + 'k' : (valX / 1e6).toFixed(1) + 'M';
-        html += `<text x="${x}" y="${height - pad.bottom + 20}" fill="currentColor" opacity="0.5" font-size="10" text-anchor="middle">${labelX}</text>`;
+        html += `<text x="${xPos}" y="${height - pad.bottom + 20}" fill="currentColor" opacity="0.5" font-size="10" text-anchor="middle">${labelX}</text>`;
       }
       
-      // Axis titles
-      html += `<text x="${pad.left + plotW / 2}" y="${height - 10}" fill="currentColor" opacity="0.7" font-size="11" text-anchor="middle" font-weight="500">Tokens de Entrada de Contenido (${currentMode === 'active' ? 'Input Activo en CTA' : 'Input Total +Context Cache'})</text>`;
-      html += `<text x="18" y="${pad.top + plotH / 2}" fill="currentColor" opacity="0.7" font-size="11" text-anchor="middle" font-weight="500" transform="rotate(-90 18 ${pad.top + plotH / 2})">Tokens Totales Corrida (Millones)</text>`;
+      html += `<text x="${pad.left + plotW / 2}" y="${height - 10}" fill="currentColor" opacity="0.7" font-size="11" text-anchor="middle" font-weight="500">Tokens de Entrada de Contenido (${currentMode === 'active' ? 'Input Activo' : 'Input +Caché'})</text>`;
+      html += `<text x="18" y="${pad.top + plotH / 2}" fill="currentColor" opacity="0.7" font-size="11" text-anchor="middle" font-weight="500" transform="rotate(-90 18 ${pad.top + plotH / 2})">Tokens Totales Corrida (M)</text>`;
       
-      // Curve Plotting (100 steps for smooth curvature)
+      // Compute fit
+      let slopeLog = 22026849.5, intLog = -251329521.8;
+      if (currentMode === 'active') {
+        const lnx = x.map(Math.log);
+        const meanLnX = lnx.reduce((a, b) => a + b, 0) / n;
+        slopeLog = lnx.reduce((acc, v, i) => acc + (v - meanLnX) * (y[i] - meanY), 0) / lnx.reduce((acc, v) => acc + Math.pow(v - meanLnX, 2), 0);
+        intLog = meanY - slopeLog * meanLnX;
+      }
+      
+      // Draw Curve
       const steps = 100;
-      const minXVal = currentMode === 'active' ? 80000 : 150000;
-      const points = [];
+      const minX = currentMode === 'active' ? 90000 : 200000;
+      const pts = [];
       for (let i = 0; i <= steps; i++) {
-        const xi = minXVal + ((maxX - minXVal) / steps) * i;
+        const xi = minX + ((maxX - minX) / steps) * i;
         let yi = 0;
         if (currentModel === 'logarithmic') {
-          yi = reg.logarithmic.intercept + reg.logarithmic.slope * Math.log(xi);
+          yi = intLog + slopeLog * Math.log(xi);
         } else if (currentModel === 'power') {
-          yi = reg.power.alpha * Math.pow(xi, reg.power.beta);
+          yi = 1340.0 * Math.pow(xi, 0.764);
         } else {
-          yi = reg.linear.intercept + reg.linear.slope * xi;
+          yi = 9950000 + 39.27 * xi;
         }
-        
         const px = pad.left + plotW * (xi / maxX);
         const py = pad.top + plotH * (1 - Math.max(0, Math.min(maxY, yi)) / maxY);
-        points.push({ px, py });
+        pts.push({ px, py });
       }
+      const pathD = pts.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.px.toFixed(1)} ${p.py.toFixed(1)}`).join(' ');
+      html += `<path d="${pathD}" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" opacity="0.9" />`;
       
-      const pathD = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.px.toFixed(1)} ${p.py.toFixed(1)}`).join(' ');
-      html += `<path d="${pathD}" fill="none" stroke="#10b981" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />`;
-      
-      // Equation Badge on top right of curve
-      const lastPt = points[points.length - 8];
-      let eqStr = "";
-      if (currentModel === 'logarithmic') {
-        eqStr = `y = ${(reg.logarithmic.slope/1e6).toFixed(1)}M·ln(x) - ${Math.abs(reg.logarithmic.intercept/1e6).toFixed(0)}M (R²=97.9%)`;
-      } else if (currentModel === 'power') {
-        eqStr = `y = ${reg.power.alpha.toFixed(0)}·x^${reg.power.beta.toFixed(3)} (R²=96.8%)`;
-      } else {
-        eqStr = `y = ${reg.linear.slope.toFixed(1)}x + ${(reg.linear.intercept/1e6).toFixed(1)}M (R²=95.0%)`;
-      }
-      
-      html += `<rect x="${width - pad.right - 260}" y="${pad.top + 15}" width="250" height="24" rx="6" fill="#0f172a" fill-opacity="0.85" stroke="#10b981" stroke-opacity="0.3"/>`;
-      html += `<text x="${width - pad.right - 135}" y="${pad.top + 31}" fill="#10b981" font-size="10.5" text-anchor="middle" font-weight="600">${eqStr}</text>`;
-      
-      // Plot Points
+      // Points
       DATASET.forEach((d, i) => {
         const valX = getX(d);
-        const valY = d.run_total_tokens;
         const cx = pad.left + plotW * (valX / maxX);
-        const cy = pad.top + plotH * (1 - valY / maxY);
-        const color = d.is_latest ? '#10b981' : '#6366f1';
-        
+        const cy = pad.top + plotH * (1 - d.run_total_tokens / maxY);
+        const col = d.is_latest ? '#10b981' : '#6366f1';
         html += `
-          <g class="cursor-pointer group" onmouseenter="showTooltip(event, ${i})" onmouseleave="hideTooltip()">
-            <!-- Pulse aura -->
-            <circle cx="${cx}" cy="${cy}" r="${d.is_latest ? 16 : 12}" fill="${color}" fill-opacity="${d.is_latest ? 0.25 : 0.15}" class="transition-transform group-hover:scale-150" />
-            <!-- Dot -->
-            <circle cx="${cx}" cy="${cy}" r="${d.is_latest ? 8 : 6}" fill="${color}" stroke="#ffffff" stroke-width="2" class="group-hover:fill-emerald-300 transition-colors" />
-            <!-- Course Name Tag -->
-            <text x="${cx}" y="${cy - 12}" fill="currentColor" font-size="10.5" font-weight="${d.is_latest ? '700' : '600'}" text-anchor="middle" class="pointer-events-none drop-shadow-sm ${d.is_latest ? 'text-emerald-400' : ''}">
-              ${d.name.split(' ')[0]} ${d.is_latest ? '★' : ''}
-            </text>
+          <g class="cursor-pointer group" onmouseenter="showTooltip1(event, ${i})" onmouseleave="hideTooltip1()">
+            <circle cx="${cx}" cy="${cy}" r="${d.is_latest ? 14 : 10}" fill="${col}" fill-opacity="${d.is_latest ? 0.25 : 0.15}" class="transition-transform group-hover:scale-150" />
+            <circle cx="${cx}" cy="${cy}" r="${d.is_latest ? 7 : 5.5}" fill="${col}" stroke="#ffffff" stroke-width="2" />
+            <text x="${cx}" y="${cy - 10}" fill="currentColor" font-size="10" font-weight="600" text-anchor="middle" class="pointer-events-none drop-shadow-sm ${d.is_latest ? 'text-emerald-400 font-bold' : ''}">${d.name.split(' ')[0]}</text>
           </g>
         `;
       });
@@ -494,69 +399,183 @@
       svg.innerHTML = html;
     }
 
-    function showTooltip(e, idx) {
+    // Chart 2: Tokens vs Tiempo Total Utilizado
+    function renderChart2() {
+      const svg = document.getElementById('scatter2-svg');
+      const width = svg.clientWidth || 950;
+      const height = 380;
+      const pad = { top: 30, right: 80, bottom: 50, left: 80 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+      
+      const maxX = currentMode === 'active' ? 1800000 : 6000000;
+      
+      // Left Axis: Wall Time (Minutos, max 60 min)
+      // Right Axis: Compute Time (Horas, max 10 horas)
+      const maxWall = 60; // min
+      const maxCompH = 10; // horas (600 min)
+      
+      let html = '';
+      
+      // Y Grid (Left: Wall Minutes)
+      for (let i = 0; i <= 5; i++) {
+        const valWall = (maxWall / 5) * i;
+        const valComp = (maxCompH / 5) * i;
+        const yPos = pad.top + plotH * (1 - i / 5);
+        html += `<line x1="${pad.left}" y1="${yPos}" x2="${width - pad.right}" y2="${yPos}" stroke="currentColor" stroke-opacity="0.08" />`;
+        
+        if (currentTimeMetric !== 'compute') {
+          html += `<text x="${pad.left - 10}" y="${yPos + 4}" fill="#38bdf8" font-size="10" text-anchor="end" font-weight="500">${valWall.toFixed(0)} min</text>`;
+        }
+        if (currentTimeMetric !== 'wall') {
+          html += `<text x="${width - pad.right + 10}" y="${yPos + 4}" fill="#a855f7" font-size="10" text-anchor="start" font-weight="500">${valComp.toFixed(1)} h</text>`;
+        }
+      }
+      
+      // X Grid
+      for (let i = 0; i <= 6; i++) {
+        const valX = (maxX / 6) * i;
+        const xPos = pad.left + plotW * (valX / maxX);
+        html += `<line x1="${xPos}" y1="${pad.top}" x2="${xPos}" y2="${height - pad.bottom}" stroke="currentColor" stroke-opacity="0.08" />`;
+        const labelX = currentMode === 'active' ? (valX / 1000).toFixed(0) + 'k' : (valX / 1e6).toFixed(1) + 'M';
+        html += `<text x="${xPos}" y="${height - pad.bottom + 20}" fill="currentColor" opacity="0.5" font-size="10" text-anchor="middle">${labelX}</text>`;
+      }
+      
+      html += `<text x="${pad.left + plotW / 2}" y="${height - 10}" fill="currentColor" opacity="0.7" font-size="11" text-anchor="middle" font-weight="500">Tokens de Entrada de Contenido (${currentMode === 'active' ? 'Input Activo' : 'Input +Caché'})</text>`;
+      
+      if (currentTimeMetric !== 'compute') {
+        html += `<text x="18" y="${pad.top + plotH / 2}" fill="#38bdf8" font-size="11" text-anchor="middle" font-weight="600" transform="rotate(-90 18 ${pad.top + plotH / 2})">Tiempo de Pared (Minutos de Espera)</text>`;
+      }
+      if (currentTimeMetric !== 'wall') {
+        html += `<text x="${width - 15}" y="${pad.top + plotH / 2}" fill="#a855f7" font-size="11" text-anchor="middle" font-weight="600" transform="rotate(90 ${width - 15} ${pad.top + plotH / 2})">Cómputo Multi-Agente (Horas Acumuladas)</text>`;
+      }
+      
+      // Invariant Wall Time Reference Band (20 min - 35 min)
+      if (currentTimeMetric !== 'compute') {
+        const yBandTop = pad.top + plotH * (1 - 35 / maxWall);
+        const yBandBot = pad.top + plotH * (1 - 20 / maxWall);
+        html += `<rect x="${pad.left}" y="${yBandTop}" width="${plotW}" height="${yBandBot - yBandTop}" fill="#38bdf8" fill-opacity="0.05" />`;
+        html += `<line x1="${pad.left}" y1="${pad.top + plotH * (1 - 28.1 / maxWall)}" x2="${width - pad.right}" y2="${pad.top + plotH * (1 - 28.1 / maxWall)}" stroke="#38bdf8" stroke-dasharray="4 3" stroke-width="1.5" opacity="0.6"/>`;
+        html += `<text x="${width - pad.right - 10}" y="${yBandTop + 14}" fill="#38bdf8" font-size="10" text-anchor="end" font-weight="500">Zona de Estabilidad de Pared (~28 min promedio)</text>`;
+      }
+      
+      // Plot Points: Compute Time (Purple Squares)
+      if (currentTimeMetric !== 'wall') {
+        const compPts = DATASET.map(d => {
+          const cx = pad.left + plotW * (getX(d) / maxX);
+          const cy = pad.top + plotH * (1 - (d.compute_minutes / 60) / maxCompH);
+          return { cx, cy, d };
+        });
+        const pathComp = compPts.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(' ');
+        html += `<path d="${pathComp}" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="5 3" opacity="0.75"/>`;
+        compPts.forEach(p => {
+          html += `<rect x="${p.cx - 4.5}" y="${p.cy - 4.5}" width="9" height="9" fill="#a855f7" stroke="#ffffff" stroke-width="1.5" rx="1.5"/>`;
+        });
+      }
+      
+      // Plot Points: Wall Time (Sky Blue Circles)
+      if (currentTimeMetric !== 'compute') {
+        const wallPts = DATASET.map(d => {
+          const cx = pad.left + plotW * (getX(d) / maxX);
+          const cy = pad.top + plotH * (1 - d.wall_minutes / maxWall);
+          return { cx, cy, d };
+        });
+        wallPts.forEach((p, i) => {
+          const isLatest = p.d.is_latest;
+          html += `
+            <g class="cursor-pointer group" onmouseenter="showTooltip2(event, ${i})" onmouseleave="hideTooltip2()">
+              <circle cx="${p.cx}" cy="${p.cy}" r="${isLatest ? 12 : 9}" fill="#38bdf8" fill-opacity="${isLatest ? 0.35 : 0.2}" class="transition-transform group-hover:scale-150" />
+              <circle cx="${p.cx}" cy="${p.cy}" r="${isLatest ? 7 : 5.5}" fill="#38bdf8" stroke="#ffffff" stroke-width="2" />
+              <text x="${p.cx}" y="${p.cy - 11}" fill="currentColor" font-size="9.5" font-weight="600" text-anchor="middle" class="pointer-events-none drop-shadow-sm ${isLatest ? 'text-sky-300 font-bold' : ''}">${p.d.name.split(' ')[0]}</text>
+            </g>
+          `;
+        });
+      }
+      
+      svg.innerHTML = html;
+    }
+
+    // Tooltips
+    function showTooltip1(e, idx) {
       const d = DATASET[idx];
-      const tip = document.getElementById('scatter-tooltip');
+      const tip = document.getElementById('scatter1-tooltip');
       const valX = getX(d);
       const mult = (d.run_total_tokens / valX).toFixed(1);
-      const reg = computeRegressions();
-      const predLogVal = (reg.logarithmic.pred[idx] / 1e6).toFixed(2);
-      const diffLog = ((d.run_total_tokens - reg.logarithmic.pred[idx]) / 1e6).toFixed(2);
-      
       tip.innerHTML = `
         <div class="font-bold text-slate-100 text-sm flex items-center gap-1.5">
           <span>${d.name}</span>
-          ${d.is_latest ? '<span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-1.5 py-0.2 rounded font-semibold border border-emerald-500/30">NUEVO +3h</span>' : ''}
+          ${d.is_latest ? '<span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-1.5 py-0.2 rounded font-semibold border border-emerald-500/30">NUEVO V2</span>' : ''}
         </div>
-        <div class="text-[11px] text-slate-400 mb-2">${d.files} archivos | ${d.pages} páginas (${d.mb} MB) | ${d.questions} preguntas</div>
+        <div class="text-[11px] text-slate-400 mb-2">${d.files} arch • ${d.pages} págs • ${d.questions} preguntas</div>
         <div class="space-y-1 text-[11px]">
           <div class="flex justify-between gap-4 text-cyan-300"><span>Input Contenido:</span> <span class="font-mono font-bold">${valX.toLocaleString()}</span></div>
           <div class="flex justify-between gap-4 text-purple-300"><span>Tokens Totales Corrida:</span> <span class="font-mono font-bold">${(d.run_total_tokens/1e6).toFixed(2)} M</span></div>
-          <div class="flex justify-between gap-4 text-emerald-300"><span>Predicción Logarítmica:</span> <span class="font-mono font-bold">${predLogVal} M (${diffLog > 0 ? '+' : ''}${diffLog}M)</span></div>
-          <div class="flex justify-between gap-4 text-indigo-300 pt-1 mt-1 border-t border-slate-700"><span>Multiplicador de Expansión:</span> <span class="font-mono font-bold">${mult}x</span></div>
+          <div class="flex justify-between gap-4 text-emerald-300 pt-1 mt-1 border-t border-slate-700"><span>Multiplicador de Expansión:</span> <span class="font-mono font-bold">${mult}x</span></div>
+        </div>
+      `;
+      tip.style.opacity = '1';
+      tip.style.left = Math.min(window.innerWidth - 270, e.pageX + 15) + 'px';
+      tip.style.top = (e.pageY - 95) + 'px';
+    }
+    function hideTooltip1() { document.getElementById('scatter1-tooltip').style.opacity = '0'; }
+
+    function showTooltip2(e, idx) {
+      const d = DATASET[idx];
+      const tip = document.getElementById('scatter2-tooltip');
+      const valX = getX(d);
+      const compH = (d.compute_minutes / 60).toFixed(2);
+      tip.innerHTML = `
+        <div class="font-bold text-slate-100 text-sm flex items-center gap-1.5">
+          <span>${d.name}</span>
+          ${d.is_latest ? '<span class="bg-sky-500/20 text-sky-400 text-[10px] px-1.5 py-0.2 rounded font-semibold border border-sky-500/30">NUEVO V2</span>' : ''}
+        </div>
+        <div class="text-[11px] text-slate-400 mb-2">${d.files} arch • ${d.pages} págs • ${d.questions} preguntas</div>
+        <div class="space-y-1 text-[11px]">
+          <div class="flex justify-between gap-4 text-cyan-300"><span>Input Contenido:</span> <span class="font-mono font-bold">${valX.toLocaleString()}</span></div>
+          <div class="flex justify-between gap-4 text-sky-300"><span>Tiempo de Pared (Espera):</span> <span class="font-mono font-bold">${d.wall_minutes} min</span></div>
+          <div class="flex justify-between gap-4 text-purple-300"><span>Cómputo Multi-Agente:</span> <span class="font-mono font-bold">${compH} horas (${d.compute_minutes.toFixed(0)}m)</span></div>
+          <div class="flex justify-between gap-4 text-emerald-300 pt-1 mt-1 border-t border-slate-700"><span>Speedup Concurrente:</span> <span class="font-mono font-bold">${d.speedup}x</span></div>
         </div>
       `;
       tip.style.opacity = '1';
       tip.style.left = Math.min(window.innerWidth - 270, e.pageX + 15) + 'px';
       tip.style.top = (e.pageY - 105) + 'px';
     }
-    function hideTooltip() { document.getElementById('scatter-tooltip').style.opacity = '0'; }
+    function hideTooltip2() { document.getElementById('scatter2-tooltip').style.opacity = '0'; }
 
     function renderTable() {
       const tbody = document.getElementById('table-body');
-      const reg = computeRegressions();
-      tbody.innerHTML = DATASET.map((d, i) => {
+      tbody.innerHTML = DATASET.map(d => {
         const valX = getX(d);
-        const yReal = (d.run_total_tokens / 1e6).toFixed(2);
-        const yLog = (reg.logarithmic.pred[i] / 1e6).toFixed(2);
-        const yPow = (reg.power.pred[i] / 1e6).toFixed(2);
-        const yLin = (reg.linear.pred[i] / 1e6).toFixed(2);
-        const mult = (d.run_total_tokens / valX).toFixed(1);
-        
+        const compH = (d.compute_minutes / 60).toFixed(2);
         return `
-          <tr class="hover:bg-[var(--background)]/80 transition-colors ${d.is_latest ? 'bg-emerald-500/5 font-semibold' : ''}">
+          <tr class="hover:bg-[var(--background)]/80 transition-colors ${d.is_latest ? 'bg-sky-500/5 font-semibold' : ''}">
             <td class="py-2.5 px-3 text-[var(--foreground)] flex items-center gap-1.5">
               <span>${d.name}</span>
               ${d.is_latest ? '<span class="bg-emerald-500/20 text-emerald-400 text-[9px] px-1.5 py-0.2 rounded font-bold border border-emerald-500/30">NUEVO</span>' : ''}
             </td>
+            <td class="py-2.5 px-3 text-[var(--muted-foreground)]">${d.files} arch (${d.pages}p / ${d.mb} MB)</td>
             <td class="py-2.5 px-3 text-right font-mono text-cyan-400">${(valX / 1000).toFixed(1)}k</td>
-            <td class="py-2.5 px-3 text-right font-mono font-bold text-white">${yReal} M</td>
-            <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-400 bg-emerald-500/10">${yLog} M</td>
-            <td class="py-2.5 px-3 text-right font-mono text-sky-400">${yPow} M</td>
-            <td class="py-2.5 px-3 text-right font-mono text-rose-400">${yLin} M</td>
-            <td class="py-2.5 px-3 text-right font-mono font-bold text-indigo-400">${mult}x</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-indigo-400">${(d.run_total_tokens / 1e6).toFixed(2)}M</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-sky-400 bg-sky-500/10">${d.wall_minutes} m</td>
+            <td class="py-2.5 px-3 text-right font-mono text-purple-400">${compH} h</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-400">${d.speedup}x</td>
             <td class="py-2.5 px-3 text-right font-mono font-bold">${d.questions.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-mono text-slate-300">${d.qpm}</td>
           </tr>
         `;
       }).join('');
     }
 
     window.addEventListener('load', () => {
-      updateStats();
-      renderChart();
+      renderChart1();
+      renderChart2();
       renderTable();
     });
-    window.addEventListener('resize', renderChart);
+    window.addEventListener('resize', () => {
+      renderChart1();
+      renderChart2();
+    });
   </script>
 </body>
 </html>
