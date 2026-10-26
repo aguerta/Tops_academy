@@ -42,6 +42,7 @@ sample_content/*
 
 # 6. Artefactos de Testing, Screenshots e Imágenes (Zero-Bloat)
 tests/e2e/screenshots/
+audit_screenshots/
 *.png
 *.jpg
 *.jpeg
