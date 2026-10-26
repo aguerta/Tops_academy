@@ -2014,5 +2014,66 @@
       "output_tokens_per_question": 1450.5
     },
     "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261026_015938_estadistica_3_pre_parcial_v2_857d5b79",
+    "timestamp": "2026-10-26T06:59:38.587389+00:00",
+    "course_id": "estadistica_3_pre_parcial_v2",
+    "course_title": "Estadistica 3 Pre Parcial V2",
+    "conversation_id": "857d5b79-79a1-4b2f-aaed-9e5c9f6511d5",
+    "workload": {
+      "source_files_count": 12,
+      "pages_or_slides": 122,
+      "input_mb": 6.86,
+      "competencies": 118,
+      "questions": 2770,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1759.0,
+      "agent_compute_seconds": 31128.0,
+      "speedup": 17.7,
+      "total_tokens": 64205555,
+      "total_active_tokens": 15500666,
+      "input_tokens": 11013868,
+      "output_tokens": 3820377,
+      "cache_read_tokens": 48704889,
+      "total_turns": 1388,
+      "subagents_count": 112,
+      "tool_errors": 258,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 428.0,
+      "stage_3_max_wall": 430.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (236/236 REACTIVOS)",
+        "batch_items_count": 236,
+        "initial_errors_count": 2,
+        "repair_iterations": 2,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 20 Blind Judges evaluaron el lote estratificado de 236 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (236/236) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 236/236 acuerdos (`100.0% agreement rate`, `0 discrepancias`).",
+          "2. **Verificación Determinista Previa (`--stage verify`)**: Detectó 2 error(es) léxico/estructural(es) corregido(s) antes del arbitraje ciego."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 526275.0,
+      "active_tokens_per_page": 127054.6,
+      "tokens_per_input_kb": 9140.8,
+      "tokens_per_competency": 544114.9,
+      "active_tokens_per_competency": 131361.6,
+      "author_tokens_per_competency": 96753.2,
+      "tokens_per_question": 23178.9,
+      "active_tokens_per_question": 5595.9,
+      "seconds_per_page": 14.42,
+      "seconds_per_question": 0.64,
+      "questions_per_minute": 94.49,
+      "agent_seconds_per_question": 11.24,
+      "output_tokens_per_question": 1395.1
+    },
+    "bottlenecks_count": 2
   }
 ]

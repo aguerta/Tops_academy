@@ -1,0 +1,827 @@
+{
+  "batch_type": "judge",
+  "batch_index": 2,
+  "count": 10,
+  "subagents": [
+    {
+      "conversation_id": "8324686a-b8b6-4a3e-8233-8876c09ba510",
+      "label": "Blind Judge 11",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:16:33+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:16:33+00:00",
+      "duration_seconds": 68.0,
+      "duration_minutes": 1.13,
+      "turns_count": 4,
+      "input_tokens": 50525,
+      "output_tokens": 9742,
+      "cache_read_tokens": 63742,
+      "thinking_tokens": 1512,
+      "active_tokens": 60267,
+      "total_tokens": 124009,
+      "thinking_chars": 6054,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10720,
+          "output_tokens": 421,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:30Z",
+          "input_tokens": 28297,
+          "output_tokens": 9108,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:16:30Z",
+          "input_tokens": 9167,
+          "output_tokens": 176,
+          "cache_read_tokens": 28314,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:33Z",
+          "input_tokens": 2341,
+          "output_tokens": 37,
+          "cache_read_tokens": 35428,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 321,
+      "spawn_time": "2026-10-26T06:15:16Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "f0c23e01-ddf9-45e5-a4d7-29f4d602568c",
+      "label": "Blind Judge 12",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:16:48+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:16:48+00:00",
+      "duration_seconds": 83.0,
+      "duration_minutes": 1.38,
+      "turns_count": 4,
+      "input_tokens": 52623,
+      "output_tokens": 11982,
+      "cache_read_tokens": 65658,
+      "thinking_tokens": 2299,
+      "active_tokens": 64605,
+      "total_tokens": 130263,
+      "thinking_chars": 9199,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10719,
+          "output_tokens": 387,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:30Z",
+          "input_tokens": 28140,
+          "output_tokens": 11333,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:16:44Z",
+          "input_tokens": 11387,
+          "output_tokens": 212,
+          "cache_read_tokens": 28162,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:48Z",
+          "input_tokens": 2377,
+          "output_tokens": 50,
+          "cache_read_tokens": 37496,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 322,
+      "spawn_time": "2026-10-26T06:15:17Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "c802affe-1ac2-42fc-888d-32512a26c193",
+      "label": "Blind Judge 13",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:16:32+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:16:32+00:00",
+      "duration_seconds": 67.0,
+      "duration_minutes": 1.12,
+      "turns_count": 5,
+      "input_tokens": 55217,
+      "output_tokens": 8860,
+      "cache_read_tokens": 103895,
+      "thinking_tokens": 1283,
+      "active_tokens": 64077,
+      "total_tokens": 167972,
+      "thinking_chars": 5135,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 4,
+      "tool_calls_by_name": {
+        "view_file": 2,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 2,
+          "created_at": "2026-10-26T06:15:30Z",
+          "input_tokens": 10711,
+          "output_tokens": 721,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 4,
+          "created_at": "2026-10-26T06:15:37Z",
+          "input_tokens": 29350,
+          "output_tokens": 157,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 6,
+          "created_at": "2026-10-26T06:15:40Z",
+          "input_tokens": 5012,
+          "output_tokens": 7768,
+          "cache_read_tokens": 29356,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 8,
+          "created_at": "2026-10-26T06:16:29Z",
+          "input_tokens": 7832,
+          "output_tokens": 147,
+          "cache_read_tokens": 34380,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 10,
+          "created_at": "2026-10-26T06:16:32Z",
+          "input_tokens": 2312,
+          "output_tokens": 67,
+          "cache_read_tokens": 40159,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 323,
+      "spawn_time": "2026-10-26T06:15:18Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "b131c108-e5e3-41e8-992f-1dc48788b73c",
+      "label": "Blind Judge 14",
+      "start_time": "2026-10-26T06:15:26+00:00",
+      "end_time": "2026-10-26T06:17:04+00:00",
+      "start_iso": "2026-10-26T06:15:26+00:00",
+      "end_iso": "2026-10-26T06:17:04+00:00",
+      "duration_seconds": 98.0,
+      "duration_minutes": 1.63,
+      "turns_count": 5,
+      "input_tokens": 94381,
+      "output_tokens": 12467,
+      "cache_read_tokens": 72711,
+      "thinking_tokens": 1888,
+      "active_tokens": 106848,
+      "total_tokens": 179559,
+      "thinking_chars": 7555,
+      "thinking_turns_count": 3,
+      "error_thinking_traces": [],
+      "tool_calls_count": 4,
+      "tool_calls_by_name": {
+        "view_file": 2,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:26Z",
+          "input_tokens": 10719,
+          "output_tokens": 572,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 4,
+          "created_at": "2026-10-26T06:15:35Z",
+          "input_tokens": 28940,
+          "output_tokens": 1400,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 6,
+          "created_at": "2026-10-26T06:15:47Z",
+          "input_tokens": 6550,
+          "output_tokens": 10239,
+          "cache_read_tokens": 28950,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 8,
+          "created_at": "2026-10-26T06:17:00Z",
+          "input_tokens": 45815,
+          "output_tokens": 191,
+          "cache_read_tokens": 0,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 10,
+          "created_at": "2026-10-26T06:17:04Z",
+          "input_tokens": 2357,
+          "output_tokens": 65,
+          "cache_read_tokens": 43761,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 324,
+      "spawn_time": "2026-10-26T06:15:19Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "7455439a-2122-4e5c-85cf-44200dea2425",
+      "label": "Blind Judge 15",
+      "start_time": "2026-10-26T06:15:26+00:00",
+      "end_time": "2026-10-26T06:16:37+00:00",
+      "start_iso": "2026-10-26T06:15:26+00:00",
+      "end_iso": "2026-10-26T06:16:37+00:00",
+      "duration_seconds": 71.0,
+      "duration_minutes": 1.18,
+      "turns_count": 5,
+      "input_tokens": 55934,
+      "output_tokens": 9780,
+      "cache_read_tokens": 103848,
+      "thinking_tokens": 1693,
+      "active_tokens": 65714,
+      "total_tokens": 169562,
+      "thinking_chars": 6778,
+      "thinking_turns_count": 3,
+      "error_thinking_traces": [],
+      "tool_calls_count": 4,
+      "tool_calls_by_name": {
+        "view_file": 2,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:26Z",
+          "input_tokens": 10716,
+          "output_tokens": 437,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:30Z",
+          "input_tokens": 28663,
+          "output_tokens": 569,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:15:37Z",
+          "input_tokens": 5623,
+          "output_tokens": 8552,
+          "cache_read_tokens": 28671,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:34Z",
+          "input_tokens": 8614,
+          "output_tokens": 153,
+          "cache_read_tokens": 34308,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-26T06:16:37Z",
+          "input_tokens": 2318,
+          "output_tokens": 69,
+          "cache_read_tokens": 40869,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 325,
+      "spawn_time": "2026-10-26T06:15:20Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "2899debf-512b-440c-9bb7-f93f3278e225",
+      "label": "Blind Judge 16",
+      "start_time": "2026-10-26T06:15:26+00:00",
+      "end_time": "2026-10-26T06:16:41+00:00",
+      "start_iso": "2026-10-26T06:15:26+00:00",
+      "end_iso": "2026-10-26T06:16:41+00:00",
+      "duration_seconds": 75.0,
+      "duration_minutes": 1.25,
+      "turns_count": 4,
+      "input_tokens": 53273,
+      "output_tokens": 12137,
+      "cache_read_tokens": 66958,
+      "thinking_tokens": 2942,
+      "active_tokens": 65410,
+      "total_tokens": 132368,
+      "thinking_chars": 11771,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:26Z",
+          "input_tokens": 10716,
+          "output_tokens": 451,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:30Z",
+          "input_tokens": 28721,
+          "output_tokens": 11472,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:16:36Z",
+          "input_tokens": 11526,
+          "output_tokens": 144,
+          "cache_read_tokens": 28743,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:41Z",
+          "input_tokens": 2310,
+          "output_tokens": 70,
+          "cache_read_tokens": 38215,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 326,
+      "spawn_time": "2026-10-26T06:15:21Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "66c6c7c6-b5a6-4eda-a637-ecf7ab806202",
+      "label": "Blind Judge 17",
+      "start_time": "2026-10-26T06:15:26+00:00",
+      "end_time": "2026-10-26T06:16:44+00:00",
+      "start_iso": "2026-10-26T06:15:26+00:00",
+      "end_iso": "2026-10-26T06:16:44+00:00",
+      "duration_seconds": 78.0,
+      "duration_minutes": 1.3,
+      "turns_count": 5,
+      "input_tokens": 55442,
+      "output_tokens": 9862,
+      "cache_read_tokens": 102667,
+      "thinking_tokens": 1420,
+      "active_tokens": 65304,
+      "total_tokens": 167971,
+      "thinking_chars": 5685,
+      "thinking_turns_count": 3,
+      "error_thinking_traces": [],
+      "tool_calls_count": 4,
+      "tool_calls_by_name": {
+        "view_file": 2,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 2,
+          "created_at": "2026-10-26T06:15:30Z",
+          "input_tokens": 10714,
+          "output_tokens": 390,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 4,
+          "created_at": "2026-10-26T06:15:35Z",
+          "input_tokens": 28653,
+          "output_tokens": 622,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 6,
+          "created_at": "2026-10-26T06:15:42Z",
+          "input_tokens": 5061,
+          "output_tokens": 8531,
+          "cache_read_tokens": 28659,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 8,
+          "created_at": "2026-10-26T06:16:35Z",
+          "input_tokens": 8593,
+          "output_tokens": 256,
+          "cache_read_tokens": 33734,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 10,
+          "created_at": "2026-10-26T06:16:44Z",
+          "input_tokens": 2421,
+          "output_tokens": 63,
+          "cache_read_tokens": 40274,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 327,
+      "spawn_time": "2026-10-26T06:15:22Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "d1e59077-49f0-4277-9020-750274af0df1",
+      "label": "Blind Judge 18",
+      "start_time": "2026-10-26T06:15:26+00:00",
+      "end_time": "2026-10-26T06:19:46+00:00",
+      "start_iso": "2026-10-26T06:15:26+00:00",
+      "end_iso": "2026-10-26T06:19:46+00:00",
+      "duration_seconds": 260.0,
+      "duration_minutes": 4.33,
+      "turns_count": 4,
+      "input_tokens": 76803,
+      "output_tokens": 35901,
+      "cache_read_tokens": 90471,
+      "thinking_tokens": 6366,
+      "active_tokens": 112704,
+      "total_tokens": 203175,
+      "thinking_chars": 25469,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:26Z",
+          "input_tokens": 10717,
+          "output_tokens": 693,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:32Z",
+          "input_tokens": 28737,
+          "output_tokens": 34926,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:19:41Z",
+          "input_tokens": 34951,
+          "output_tokens": 230,
+          "cache_read_tokens": 28788,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:19:46Z",
+          "input_tokens": 2398,
+          "output_tokens": 52,
+          "cache_read_tokens": 61683,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 328,
+      "spawn_time": "2026-10-26T06:15:23Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "971c21b7-0d6a-4f94-8da1-ef24e93881c3",
+      "label": "Blind Judge 19",
+      "start_time": "2026-10-26T06:15:26+00:00",
+      "end_time": "2026-10-26T06:16:34+00:00",
+      "start_iso": "2026-10-26T06:15:26+00:00",
+      "end_iso": "2026-10-26T06:16:34+00:00",
+      "duration_seconds": 68.0,
+      "duration_minutes": 1.13,
+      "turns_count": 4,
+      "input_tokens": 49999,
+      "output_tokens": 9065,
+      "cache_read_tokens": 63486,
+      "thinking_tokens": 1391,
+      "active_tokens": 59064,
+      "total_tokens": 122550,
+      "thinking_chars": 5568,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:26Z",
+          "input_tokens": 10718,
+          "output_tokens": 612,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:32Z",
+          "input_tokens": 28665,
+          "output_tokens": 8119,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:16:19Z",
+          "input_tokens": 8181,
+          "output_tokens": 270,
+          "cache_read_tokens": 28679,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:34Z",
+          "input_tokens": 2435,
+          "output_tokens": 64,
+          "cache_read_tokens": 34807,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 329,
+      "spawn_time": "2026-10-26T06:15:24Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "f228688c-97df-403c-ad73-48a5112f8e73",
+      "label": "Blind Judge 20",
+      "start_time": "2026-10-26T06:15:27+00:00",
+      "end_time": "2026-10-26T06:16:51+00:00",
+      "start_iso": "2026-10-26T06:15:27+00:00",
+      "end_iso": "2026-10-26T06:16:51+00:00",
+      "duration_seconds": 84.0,
+      "duration_minutes": 1.4,
+      "turns_count": 5,
+      "input_tokens": 54637,
+      "output_tokens": 10964,
+      "cache_read_tokens": 99596,
+      "thinking_tokens": 2041,
+      "active_tokens": 65601,
+      "total_tokens": 165197,
+      "thinking_chars": 8165,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 4,
+      "tool_calls_by_name": {
+        "view_file": 2,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:27Z",
+          "input_tokens": 10717,
+          "output_tokens": 495,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:32Z",
+          "input_tokens": 28617,
+          "output_tokens": 127,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:15:35Z",
+          "input_tokens": 2803,
+          "output_tokens": 10100,
+          "cache_read_tokens": 28616,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:47Z",
+          "input_tokens": 10157,
+          "output_tokens": 178,
+          "cache_read_tokens": 31438,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-26T06:16:51Z",
+          "input_tokens": 2343,
+          "output_tokens": 64,
+          "cache_read_tokens": 39542,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 330,
+      "spawn_time": "2026-10-26T06:15:24Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    }
+  ]
+}

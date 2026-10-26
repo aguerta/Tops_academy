@@ -1,0 +1,807 @@
+{
+  "batch_type": "judge",
+  "batch_index": 1,
+  "count": 10,
+  "subagents": [
+    {
+      "conversation_id": "c2af606e-a4f0-432a-b3ec-8fff020ac416",
+      "label": "Blind Judge 01",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:16:36+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:16:36+00:00",
+      "duration_seconds": 71.0,
+      "duration_minutes": 1.18,
+      "turns_count": 4,
+      "input_tokens": 51369,
+      "output_tokens": 9713,
+      "cache_read_tokens": 65611,
+      "thinking_tokens": 1769,
+      "active_tokens": 61082,
+      "total_tokens": 126693,
+      "thinking_chars": 7079,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10711,
+          "output_tokens": 501,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:30Z",
+          "input_tokens": 29286,
+          "output_tokens": 9000,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:16:27Z",
+          "input_tokens": 9060,
+          "output_tokens": 147,
+          "cache_read_tokens": 29302,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:36Z",
+          "input_tokens": 2312,
+          "output_tokens": 65,
+          "cache_read_tokens": 36309,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 311,
+      "spawn_time": "2026-10-26T06:15:07Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "385e935a-dac3-4f43-94fd-bd234f7e480d",
+      "label": "Blind Judge 02",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:16:43+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:16:43+00:00",
+      "duration_seconds": 78.0,
+      "duration_minutes": 1.3,
+      "turns_count": 5,
+      "input_tokens": 56945,
+      "output_tokens": 11257,
+      "cache_read_tokens": 104201,
+      "thinking_tokens": 2602,
+      "active_tokens": 68202,
+      "total_tokens": 172403,
+      "thinking_chars": 10413,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 4,
+      "tool_calls_by_name": {
+        "view_file": 2,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10714,
+          "output_tokens": 456,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:30Z",
+          "input_tokens": 28914,
+          "output_tokens": 172,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:15:34Z",
+          "input_tokens": 4528,
+          "output_tokens": 10347,
+          "cache_read_tokens": 28919,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:39Z",
+          "input_tokens": 10405,
+          "output_tokens": 219,
+          "cache_read_tokens": 33465,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-26T06:16:43Z",
+          "input_tokens": 2384,
+          "output_tokens": 63,
+          "cache_read_tokens": 41817,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 312,
+      "spawn_time": "2026-10-26T06:15:08Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "553275f1-a4b6-4860-a3e6-96be4656bc46",
+      "label": "Blind Judge 03",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:18:22+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:18:22+00:00",
+      "duration_seconds": 177.0,
+      "duration_minutes": 2.95,
+      "turns_count": 4,
+      "input_tokens": 63935,
+      "output_tokens": 23970,
+      "cache_read_tokens": 76645,
+      "thinking_tokens": 5064,
+      "active_tokens": 87905,
+      "total_tokens": 164550,
+      "thinking_chars": 20256,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10718,
+          "output_tokens": 613,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 4,
+          "created_at": "2026-10-26T06:15:35Z",
+          "input_tokens": 27720,
+          "output_tokens": 23144,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 6,
+          "created_at": "2026-10-26T06:18:18Z",
+          "input_tokens": 23180,
+          "output_tokens": 150,
+          "cache_read_tokens": 27760,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 8,
+          "created_at": "2026-10-26T06:18:22Z",
+          "input_tokens": 2317,
+          "output_tokens": 63,
+          "cache_read_tokens": 48885,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 313,
+      "spawn_time": "2026-10-26T06:15:09Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "bfcebc75-7611-4b32-8822-905104191007",
+      "label": "Blind Judge 04",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:17:00+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:17:00+00:00",
+      "duration_seconds": 95.0,
+      "duration_minutes": 1.58,
+      "turns_count": 4,
+      "input_tokens": 54957,
+      "output_tokens": 14940,
+      "cache_read_tokens": 67591,
+      "thinking_tokens": 2863,
+      "active_tokens": 69897,
+      "total_tokens": 137488,
+      "thinking_chars": 11453,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10715,
+          "output_tokens": 542,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:31Z",
+          "input_tokens": 27697,
+          "output_tokens": 14148,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:16:56Z",
+          "input_tokens": 14197,
+          "output_tokens": 182,
+          "cache_read_tokens": 27724,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:17:00Z",
+          "input_tokens": 2348,
+          "output_tokens": 68,
+          "cache_read_tokens": 39867,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 314,
+      "spawn_time": "2026-10-26T06:15:10Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "2d3714d3-a382-4733-bef8-3ff44c081f72",
+      "label": "Blind Judge 05",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:16:39+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:16:39+00:00",
+      "duration_seconds": 74.0,
+      "duration_minutes": 1.23,
+      "turns_count": 4,
+      "input_tokens": 49794,
+      "output_tokens": 9222,
+      "cache_read_tokens": 63018,
+      "thinking_tokens": 1653,
+      "active_tokens": 59016,
+      "total_tokens": 122034,
+      "thinking_chars": 6615,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10716,
+          "output_tokens": 578,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:31Z",
+          "input_tokens": 28271,
+          "output_tokens": 8438,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:16:33Z",
+          "input_tokens": 8499,
+          "output_tokens": 143,
+          "cache_read_tokens": 28286,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:39Z",
+          "input_tokens": 2308,
+          "output_tokens": 63,
+          "cache_read_tokens": 34732,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 315,
+      "spawn_time": "2026-10-26T06:15:11Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "f78016a1-2066-4429-a09e-a185b0b90dc3",
+      "label": "Blind Judge 06",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:16:41+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:16:41+00:00",
+      "duration_seconds": 76.0,
+      "duration_minutes": 1.27,
+      "turns_count": 4,
+      "input_tokens": 51414,
+      "output_tokens": 10790,
+      "cache_read_tokens": 64582,
+      "thinking_tokens": 1742,
+      "active_tokens": 62204,
+      "total_tokens": 126786,
+      "thinking_chars": 6971,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10719,
+          "output_tokens": 498,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:30Z",
+          "input_tokens": 28218,
+          "output_tokens": 10104,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:16:36Z",
+          "input_tokens": 10161,
+          "output_tokens": 151,
+          "cache_read_tokens": 28237,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:41Z",
+          "input_tokens": 2316,
+          "output_tokens": 37,
+          "cache_read_tokens": 36345,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 316,
+      "spawn_time": "2026-10-26T06:15:12Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "6769fed8-58ee-4c0f-8101-f2307a0a20bc",
+      "label": "Blind Judge 07",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:16:21+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:16:21+00:00",
+      "duration_seconds": 56.0,
+      "duration_minutes": 0.93,
+      "turns_count": 5,
+      "input_tokens": 57744,
+      "output_tokens": 8649,
+      "cache_read_tokens": 107963,
+      "thinking_tokens": 1207,
+      "active_tokens": 66393,
+      "total_tokens": 174356,
+      "thinking_chars": 4829,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 4,
+      "tool_calls_by_name": {
+        "view_file": 2,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10714,
+          "output_tokens": 529,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:31Z",
+          "input_tokens": 28356,
+          "output_tokens": 170,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:15:34Z",
+          "input_tokens": 8561,
+          "output_tokens": 7695,
+          "cache_read_tokens": 28371,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:18Z",
+          "input_tokens": 7760,
+          "output_tokens": 187,
+          "cache_read_tokens": 36943,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-26T06:16:21Z",
+          "input_tokens": 2353,
+          "output_tokens": 68,
+          "cache_read_tokens": 42649,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 317,
+      "spawn_time": "2026-10-26T06:15:13Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "2f151ed4-7c1f-4e33-8119-bd204c331020",
+      "label": "Blind Judge 08",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:16:44+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:16:44+00:00",
+      "duration_seconds": 79.0,
+      "duration_minutes": 1.32,
+      "turns_count": 4,
+      "input_tokens": 51489,
+      "output_tokens": 10992,
+      "cache_read_tokens": 64614,
+      "thinking_tokens": 1863,
+      "active_tokens": 62481,
+      "total_tokens": 127095,
+      "thinking_chars": 7455,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10718,
+          "output_tokens": 629,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:31Z",
+          "input_tokens": 28253,
+          "output_tokens": 10066,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:16:39Z",
+          "input_tokens": 10123,
+          "output_tokens": 230,
+          "cache_read_tokens": 28272,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:44Z",
+          "input_tokens": 2395,
+          "output_tokens": 67,
+          "cache_read_tokens": 36342,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 318,
+      "spawn_time": "2026-10-26T06:15:14Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "4bfcfe4f-09fa-4e00-9b1e-0b5739e6d9cf",
+      "label": "Blind Judge 09",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:16:47+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:16:47+00:00",
+      "duration_seconds": 82.0,
+      "duration_minutes": 1.37,
+      "turns_count": 4,
+      "input_tokens": 53670,
+      "output_tokens": 11977,
+      "cache_read_tokens": 67991,
+      "thinking_tokens": 2098,
+      "active_tokens": 65647,
+      "total_tokens": 133638,
+      "thinking_chars": 8397,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 3,
+      "tool_calls_by_name": {
+        "view_file": 1,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10712,
+          "output_tokens": 598,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:30Z",
+          "input_tokens": 29395,
+          "output_tokens": 11159,
+          "cache_read_tokens": 0,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:16:42Z",
+          "input_tokens": 11215,
+          "output_tokens": 182,
+          "cache_read_tokens": 29415,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:47Z",
+          "input_tokens": 2348,
+          "output_tokens": 38,
+          "cache_read_tokens": 38576,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 319,
+      "spawn_time": "2026-10-26T06:15:15Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    },
+    {
+      "conversation_id": "14ef9392-5e50-4c5d-bb0c-7157afc26efd",
+      "label": "Blind Judge 10",
+      "start_time": "2026-10-26T06:15:25+00:00",
+      "end_time": "2026-10-26T06:16:41+00:00",
+      "start_iso": "2026-10-26T06:15:25+00:00",
+      "end_iso": "2026-10-26T06:16:41+00:00",
+      "duration_seconds": 76.0,
+      "duration_minutes": 1.27,
+      "turns_count": 5,
+      "input_tokens": 56435,
+      "output_tokens": 11559,
+      "cache_read_tokens": 103508,
+      "thinking_tokens": 1771,
+      "active_tokens": 67994,
+      "total_tokens": 171502,
+      "thinking_chars": 7087,
+      "thinking_turns_count": 2,
+      "error_thinking_traces": [],
+      "tool_calls_count": 4,
+      "tool_calls_by_name": {
+        "view_file": 2,
+        "write_file": 1,
+        "send_message": 1
+      },
+      "tool_errors_count": 0,
+      "failed_commands": [],
+      "steps": [
+        {
+          "step_index": 1,
+          "created_at": "2026-10-26T06:15:25Z",
+          "input_tokens": 10714,
+          "output_tokens": 539,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 3,
+          "created_at": "2026-10-26T06:15:30Z",
+          "input_tokens": 29404,
+          "output_tokens": 160,
+          "cache_read_tokens": 0,
+          "tools": [
+            "view_file"
+          ]
+        },
+        {
+          "step_index": 5,
+          "created_at": "2026-10-26T06:15:34Z",
+          "input_tokens": 3301,
+          "output_tokens": 10649,
+          "cache_read_tokens": 29405,
+          "tools": [
+            "write_file"
+          ]
+        },
+        {
+          "step_index": 7,
+          "created_at": "2026-10-26T06:16:37Z",
+          "input_tokens": 10705,
+          "output_tokens": 145,
+          "cache_read_tokens": 32726,
+          "tools": [
+            "send_message"
+          ]
+        },
+        {
+          "step_index": 9,
+          "created_at": "2026-10-26T06:16:41Z",
+          "input_tokens": 2311,
+          "output_tokens": 66,
+          "cache_read_tokens": 41377,
+          "tools": []
+        }
+      ],
+      "from_v3_telemetry_snapshot": true,
+      "category": "judge",
+      "shard_id": null,
+      "spawn_step": 320,
+      "spawn_time": "2026-10-26T06:15:15Z",
+      "model": "inherit",
+      "competencies": [],
+      "competencies_count": 0,
+      "tokens_per_competency": 0.0
+    }
+  ]
+}
