@@ -12,6 +12,10 @@ import re
 from typing import Optional
 from .models import ValidationError
 
+# Precompiled regex patterns for zero-copy in-place token matching
+RE_ALPHA = re.compile(r"[a-zA-Z]+")
+RE_ALNUM = re.compile(r"[a-zA-Z0-9]+")
+
 # Comprehensive catalog of LaTeX commands starting with characters
 # that form valid JSON control escapes (b, f, n, r, t) or non-standard escapes (v, 0)
 LATEX_CONTROL_PREFIXES: dict[str, set[str]] = {
@@ -236,31 +240,31 @@ def scan_lexical(raw_text: str, consolidate: bool = False) -> list[ValidationErr
                 ))
                 break
 
-            after_bs = raw_text[bs_end:]
-            word_m = re.match(r"^[a-zA-Z]+", after_bs)
+            # Only inspect command word if run_len could be an over-escape (>= 4) or compact row break (>= 6)
+            if (run_len >= 4 and run_len % 4 == 0) or (run_len >= 6 and run_len % 4 == 2):
+                word_m = RE_ALPHA.match(raw_text, bs_end)
+                if word_m and run_len % 4 == 0:
+                    # Rule R-23: Over-escaped LaTeX command (e.g. \\\\cmd, \\\\\\\\cmd).
+                    # In JSON, 4k backslashes decode to 2k backslashes in memory, rendering as
+                    # KaTeX linebreak(s) + bare command name text without a backslash.
+                    cmd_word = word_m.group(0)
+                    line, col = get_line_col(raw_text, esc_pos)
+                    errors.append(ValidationError(
+                        rule_id="R-23",
+                        code="ERR_LATEX_OVERESCAPE",
+                        message=f"Over-escaped LaTeX command '\\\\\\\\{cmd_word}' at line {line}, col {col} evaluates to '\\\\{cmd_word}' (linebreak + literal text in KaTeX). Must be encoded as '\\\\{cmd_word}' in JSON",
+                        line=line,
+                        col=col,
+                    ))
+                    pos = word_m.end()
+                    continue
 
-            if word_m and run_len >= 4 and run_len % 4 == 0:
-                # Rule R-23: Over-escaped LaTeX command (e.g. \\\\cmd, \\\\\\\\cmd).
-                # In JSON, 4k backslashes decode to 2k backslashes in memory, rendering as
-                # KaTeX linebreak(s) + bare command name text without a backslash.
-                cmd_word = word_m.group(0)
-                line, col = get_line_col(raw_text, esc_pos)
-                errors.append(ValidationError(
-                    rule_id="R-23",
-                    code="ERR_LATEX_OVERESCAPE",
-                    message=f"Over-escaped LaTeX command '\\\\\\\\{cmd_word}' at line {line}, col {col} evaluates to '\\\\{cmd_word}' (linebreak + literal text in KaTeX). Must be encoded as '\\\\{cmd_word}' in JSON",
-                    line=line,
-                    col=col,
-                ))
-                pos = bs_end + word_m.end()
-                continue
-
-            if word_m and run_len >= 6 and run_len % 4 == 2:
-                # Compact matrix/cases row break immediately followed by a command without space:
-                # e.g. \\\\\\frac (6 raw backslashes) decodes to \\\frac in memory (\\ linebreak + \frac command).
-                # All backslashes are valid JSON escaped pairs (\\). Consume them cleanly.
-                pos = bs_end
-                continue
+                if word_m and run_len >= 6 and run_len % 4 == 2:
+                    # Compact matrix/cases row break immediately followed by a command without space:
+                    # e.g. \\\\\\frac (6 raw backslashes) decodes to \\\frac in memory (\\ linebreak + \frac command).
+                    # All backslashes are valid JSON escaped pairs (\\). Consume them cleanly.
+                    pos = bs_end
+                    continue
 
             pos += 1
             next_ch = raw_text[pos]
@@ -294,7 +298,7 @@ def scan_lexical(raw_text: str, consolidate: bool = False) -> list[ValidationErr
 
             # Check if next_ch is one of b, f, n, r, t, v, 0
             if next_ch in LATEX_CONTROL_PREFIXES:
-                word_match = re.match(r"^[a-zA-Z]+", raw_text[pos:])
+                word_match = RE_ALPHA.match(raw_text, pos)
                 if word_match:
                     word = word_match.group(0)
                     known_commands = LATEX_CONTROL_PREFIXES[next_ch]
@@ -339,7 +343,7 @@ def scan_lexical(raw_text: str, consolidate: bool = False) -> list[ValidationErr
 
                 # If next_ch is 'v' or '0', it's not a standard JSON escape -> Rule R-02
                 line, col = get_line_col(raw_text, esc_pos)
-                word_match = re.match(r"^[a-zA-Z0-9]+", raw_text[pos:])
+                word_match = RE_ALNUM.match(raw_text, pos)
                 token = word_match.group(0) if word_match else next_ch
                 seq = "\\" + token
                 errors.append(ValidationError(
@@ -354,7 +358,7 @@ def scan_lexical(raw_text: str, consolidate: bool = False) -> list[ValidationErr
 
             # next_ch is NOT in ('"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u', 'v', '0')
             # This is an invalid JSON escape: R-02!
-            word_match = re.match(r"^[a-zA-Z]+", raw_text[pos:])
+            word_match = RE_ALPHA.match(raw_text, pos)
             if word_match:
                 token = word_match.group(0)
                 seq = "\\" + token

@@ -210,12 +210,8 @@ def test_real_published_courses_zero_r23_errors(course_filename: str) -> None:
 
     raw_text = course_path.read_text(encoding="utf-8")
 
-    # Pass 1: scan_lexical
-    lex_errors = scan_lexical(raw_text)
-    r23_lex = [e for e in lex_errors if e.rule_id == "R-23"]
-    assert len(r23_lex) == 0, f"{course_filename} has lexical R-23 errors: {r23_lex}"
-
-    # Pass 2: validate_course_content with strict=True
+    # End-to-end course validation: validate_course_content runs Pass 1 (scan_lexical)
+    # followed by Pass 2/3 (extended quality and strict rules in memory) with strict=True.
     result = validate_course_content(raw_text, strict=True)
     r23_all = [e for e in result.errors if e.rule_id == "R-23"]
     assert len(r23_all) == 0, f"{course_filename} has R-23 errors: {r23_all}"
