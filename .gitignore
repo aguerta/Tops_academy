@@ -57,6 +57,9 @@ audit_screenshots/
 
 # 7. Scratch y Archivos Temporales de Desarrollo
 scratch/
+.cache/
+platform/.cache/
+audit_screenshots/
 report_*.json
 *.tmp
 *.temp
