@@ -207,7 +207,7 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 | **Milestone 8: Repetición Espaciada (SRS) y Blind Mode** | Motor de Sesión | **Combate el decaimiento de memoria (Curva de Ebbinghaus).** Decaimiento temporal, refreshers a 1-4-14-45 días y sesiones a ciegas. | 2 a 3 d | 🔁 **Cierre de Ciclo de Pericia** |
 | **Milestone 9: Jerarquía de Contenido (PPT $\to$ Core/Subtemas)** | Curricular / Schema | **Organización natural en torno a la fuente real.** Contenido PPT $\to$ [Glosario + Núcleo] + Subtemas $\to$ Quizzes de subtema + Challenge PPT. | 2 a 3 d | 🏛️ **Arquitectura Curricular** |
 | **Milestone 10: QA Rubric v2.0 Deep Mastery** | Auditoría QA | **Certificación integral de rigor.** Linters deterministas activos; falta penalización automática por monocultivo MC7 y multimodalidad. | 1 a 2 d | 📋 **Parcial (Linters activos / Penalizaciones pendientes)** |
-| **Milestone 11: Carga Rápida de Cursos (Manifest, Prefetch y Caché)** | Frontend / Servidor | **Elimina el cuello de botella de 43 MB y 17s en la biblioteca.** Manifest <10 KB inline, caché mtime+size, IndexedDB + ETag, prefetch idle/hover y Web Worker. | 2 a 3 d | ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** |
+| **Milestone 11: Carga Rápida de Cursos (Manifest, Prefetch y Caché)** | Frontend / Servidor | **Elimina el cuello de botella de 43 MB y 17s en la biblioteca.** Manifest <10 KB inline (2.5 KB), caché mtime+size, IndexedDB + ETag, prefetch idle/hover. | 2 a 3 d | ✅ **Completado (Implementado y verificado 2026-10-26)** |
 | **Milestone 12: Resiliencia ante Suspensión de la Laptop (Restauración de Sesión)** | Frontend / Servidor | **Preserva el estado de práctica ante sleep del SO y cortes HMR.** Restauración desde `sessionStorage`, banner de reconexión, `/healthz` y modo estudio `npm run study`. | 1 a 2 d | ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** |
 | *Opcional A: Pipeline Performance Daemon en RAM / SSD* | Infraestructura | *Acelera subprocesos locales, complementando el pool lazy.* | *3 a 4 h* | ⏳ **Opcional / Secundario** |
 | *Opcional B: Empaquetado Nativo con Capacitor* | Distribución | *Generación de APK para tiendas de aplicaciones.* | *4 a 6 h* | ⏳ **Opcional / Backlog** |
@@ -581,7 +581,7 @@ El nuevo diseño del Milestone 6 se estructura en dos modalidades complementaria
 ---
 
 ### Milestone 11: Carga Rápida de Cursos (Manifest, Prefetch y Caché)
-* **Estado:** ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** (especificado como Frente B del plan de remediación; postergado para concentrar el esfuerzo inmediato exclusivamente en ergonomía visual y split view).
+* **Estado:** ✅ **Completado (Implementado y verificado 2026-10-26)** (Frente B completado: manifest SLIM de 2.5 KB [reducción 99.995%], carga en 0 ms en 1er frame vía script inline, caché mtime+size warm <15 ms, IndexedDB en cliente y prefetch en segundo plano).
 * **Diagnóstico Medido (Causa Raíz de Rendimiento):**
   - **Sobrecarga de Red y Disco:** Los 7 cursos ocupan 51.9 MB en disco. Una solicitud a `GET /api/courses.json` devuelve una respuesta de **43 MB en ~17.4–17.9 segundos**.
   - **Ejecución Redundante en Cada Petición:** `getCourseList()` en `courseServer.cjs` (y en el middleware de Vite) lee del disco, aplica regex de control, ejecuta `JSON.parse` y valida los 7 cursos completos en *cada* solicitud, inyectando el campo `data` con la totalidad del contenido curricular en la lista de la biblioteca (que solo requiere título, descripción y contadores).
