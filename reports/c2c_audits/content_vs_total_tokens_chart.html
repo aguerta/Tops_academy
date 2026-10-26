@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Relación entre Tokens de Entrada de Contenido y Tokens Totales de la Corrida</title>
+  <title>Econometría C2C: Tokens de Contenido vs. Tokens Totales de Corrida</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
     .chart-tooltip {
@@ -23,63 +23,79 @@
         <div>
           <div class="flex items-center gap-2">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-              C2C v3.3 Econometría Actualizada (+3h)
+              Econometría No Lineal C2C v3.3
             </span>
-            <span class="text-xs text-[var(--muted-foreground)]">6 Cursos Instanciados (Incluye V2 Reciente)</span>
+            <span class="text-xs text-[var(--muted-foreground)]">Dataset de 6 Cursos Auditados</span>
           </div>
           <h1 class="text-2xl font-bold tracking-tight text-[var(--foreground)] mt-2">
             Tokens de Entrada de Contenido vs. Tokens Totales de la Corrida
           </h1>
           <p class="text-sm text-[var(--muted-foreground)] mt-1">
-            Análisis econométrico de dispersión y curva de expansión de cómputo multi-agente incorporando la última corrida masiva: <span class="font-semibold text-indigo-400">estadistica_3_pre_parcial_v2</span> (112 subagentes, 2,770 reactivos).
+            Validación empírica de <strong class="text-emerald-400">Rendimientos Marginales Decrecientes</strong> y economías de escala impulsadas por el Context Caching y la saturación modular del DAG.
           </p>
         </div>
 
-        <!-- Mode Toggle -->
-        <div class="flex items-center gap-2 bg-[var(--background)] p-1.5 rounded-xl border border-[var(--border)]">
-          <button id="btn-active" onclick="setMode('active')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs">
-            Input Activo (Neto)
-          </button>
-          <button id="btn-cache" onclick="setMode('cache')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-            Input Bruto (+Caché)
-          </button>
+        <!-- Controls: Model Selector & Token Mode -->
+        <div class="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+          <!-- Regression Model Selector -->
+          <div class="flex items-center gap-1 bg-[var(--background)] p-1 rounded-xl border border-[var(--border)]">
+            <button id="btn-model-log" onclick="setModel('logarithmic')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-emerald-400 font-bold shadow-xs">
+              Logarítmico (R²=97.9%)
+            </button>
+            <button id="btn-model-pow" onclick="setModel('power')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+              Potencial (R²=96.8%)
+            </button>
+            <button id="btn-model-lin" onclick="setModel('linear')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+              Lineal (R²=95.0%)
+            </button>
+          </div>
+
+          <!-- Token Type Selector -->
+          <div class="flex items-center gap-1 bg-[var(--background)] p-1 rounded-xl border border-[var(--border)]">
+            <button id="btn-mode-act" onclick="setMode('active')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs">
+              Input Activo
+            </button>
+            <button id="btn-mode-cache" onclick="setMode('cache')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+              +Caché
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Regression Stats Banner -->
+      <!-- Econometric Comparison Banner -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
         <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
-          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Correlación de Pearson (R)</div>
-          <div class="text-2xl font-bold text-emerald-500 mt-1" id="kpi-r">0.9746</div>
-          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">Fuerte consistencia longitudinal</div>
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Modelo Seleccionado</div>
+          <div class="text-lg font-bold text-emerald-400 mt-1 truncate" id="kpi-model-name">Logarítmico (Semi-Log)</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-0.5" id="kpi-model-formula">y = a·ln(x) + b</div>
         </div>
 
         <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
           <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Bondad de Ajuste (R²)</div>
-          <div class="text-2xl font-bold text-emerald-500 mt-1" id="kpi-r2">94.98%</div>
-          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">Varianza explicada por el corpus</div>
+          <div class="text-2xl font-bold text-emerald-500 mt-1" id="kpi-r2">97.88%</div>
+          <div class="text-xs text-emerald-400 mt-0.5" id="kpi-r2-note">+2.9% vs Modelo Lineal</div>
         </div>
 
         <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
-          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Multiplicador Marginal (Slope)</div>
-          <div class="text-2xl font-bold text-indigo-500 mt-1" id="kpi-slope">39.27x</div>
-          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">Expansión marginal de cómputo</div>
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Error Cuadrático Medio (RMSE)</div>
+          <div class="text-2xl font-bold text-indigo-400 mt-1" id="kpi-rmse">2.91 M</div>
+          <div class="text-xs text-indigo-300 mt-0.5" id="kpi-rmse-note">-35.0% de error vs lineal (4.47M)</div>
         </div>
 
         <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
-          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Carga Fija Base (Intercepto)</div>
-          <div class="text-2xl font-bold text-[var(--foreground)] mt-1" id="kpi-intercept">9.95 M</div>
-          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">Overhead base de orquestación</div>
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Elasticidad de Escala</div>
+          <div class="text-2xl font-bold text-sky-400 mt-1" id="kpi-elasticity">&eta; = 0.764</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">Sublineal (rendimientos decrecientes)</div>
         </div>
       </div>
     </div>
 
-    <!-- Main Chart: Scatter Plot & Regression Line -->
+    <!-- Main Chart: Scatter Plot & Curved Fit Line -->
     <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div>
-          <h2 class="text-lg font-semibold text-[var(--foreground)]">
-            Diagrama de Dispersión y Curva de Expansión de Cómputo (6 Cursos)
+          <h2 class="text-lg font-semibold text-[var(--foreground)]" id="chart-title">
+            Curva Logarítmica de Expansión de Cómputo (Semi-Log Fit)
           </h2>
           <p class="text-xs text-[var(--muted-foreground)]">
             Eje X: Tokens de Entrada en Contenido (etapa CTA) | Eje Y: Gran Total de Tokens de la Corrida (Millones)
@@ -96,52 +112,38 @@
           </div>
           <div class="flex items-center gap-1.5">
             <span class="w-4 h-0.5 bg-emerald-500 inline-block"></span>
-            <span class="text-[var(--muted-foreground)]">Línea de Tendencia</span>
+            <span class="text-emerald-400 font-medium" id="legend-curve">Curva Logarítmica</span>
           </div>
         </div>
       </div>
 
-      <div class="relative w-full overflow-hidden" style="height: 400px;" id="scatter-container">
+      <div class="relative w-full overflow-hidden" style="height: 420px;" id="scatter-container">
         <svg id="scatter-svg" class="w-full h-full"></svg>
         <div id="scatter-tooltip" class="chart-tooltip bg-slate-900 text-white text-xs p-3 rounded-xl shadow-2xl border border-slate-700 pointer-events-none"></div>
       </div>
     </div>
 
-    <!-- Comparative Multiplier Cards -->
-    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-      <div class="flex items-center justify-between mb-4">
+    <!-- Comparative Table: Observed vs Predicted by Models -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div>
-          <h2 class="text-lg font-semibold text-[var(--foreground)]">
-            Secuencia Longitudinal de Cursos: Progresión de Escala y Multiplicadores
-          </h2>
-          <p class="text-xs text-[var(--muted-foreground)]">
-            Observa cómo el multiplicador de expansión decae de 78.8x a 41.3x demostrando claras economías de escala en el context caching.
-          </p>
+          <h2 class="text-lg font-semibold text-[var(--foreground)]">Comparación de Modelos: Observado vs. Predicho</h2>
+          <p class="text-xs text-[var(--muted-foreground)]">Evidencia empírica de cómo el modelo logarítmico reduce los errores de sobreestimación</p>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" id="cards-container">
-        <!-- Rendered dynamically -->
-      </div>
-    </div>
-
-    <!-- Detailed Dataset Table -->
-    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden">
-      <h2 class="text-lg font-semibold text-[var(--foreground)] mb-3">Matriz Econométrica de los 6 Cursos Auditados</h2>
       <div class="overflow-x-auto">
         <table class="w-full text-xs text-left border-collapse">
           <thead>
             <tr class="border-b border-[var(--border)] text-[var(--muted-foreground)] font-medium bg-[var(--background)]/50">
               <th class="py-2.5 px-3">Curso</th>
-              <th class="py-2.5 px-3">Material Base</th>
-              <th class="py-2.5 px-3 text-right">Input Contenido (Activo)</th>
-              <th class="py-2.5 px-3 text-right">Input Contenido (+Caché)</th>
-              <th class="py-2.5 px-3 text-right font-bold text-indigo-400">Total Tokens Corrida</th>
-              <th class="py-2.5 px-3 text-right">Tokens Activos Corrida</th>
-              <th class="py-2.5 px-3 text-right font-bold text-emerald-400">Multiplicador (Activo)</th>
-              <th class="py-2.5 px-3 text-right">Multiplicador (Bruto)</th>
+              <th class="py-2.5 px-3 text-right">Input Contenido</th>
+              <th class="py-2.5 px-3 text-right font-bold text-white">Y Observado Real</th>
+              <th class="py-2.5 px-3 text-right text-emerald-400 font-bold bg-emerald-500/10">Predicción Logarítmica</th>
+              <th class="py-2.5 px-3 text-right text-sky-400">Predicción Potencial</th>
+              <th class="py-2.5 px-3 text-right text-rose-400">Predicción Lineal</th>
+              <th class="py-2.5 px-3 text-right">Multiplicador Expansión</th>
               <th class="py-2.5 px-3 text-right">Preguntas</th>
-              <th class="py-2.5 px-3 text-right">Speedup</th>
             </tr>
           </thead>
           <tbody id="table-body" class="divide-y divide-[var(--border)]">
@@ -265,20 +267,35 @@
       }
     ];
 
-    let currentMode = 'active'; // 'active' or 'cache'
+    let currentModel = 'logarithmic'; // 'logarithmic', 'power', 'linear'
+    let currentMode = 'active';        // 'active', 'cache'
+
+    function setModel(model) {
+      currentModel = model;
+      ['log', 'pow', 'lin'].forEach(m => {
+        const key = m === 'log' ? 'logarithmic' : m === 'pow' ? 'power' : 'linear';
+        const btn = document.getElementById(`btn-model-${m}`);
+        if (key === model) {
+          btn.className = "px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-[var(--card)] text-emerald-400 shadow-xs";
+        } else {
+          btn.className = "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+        }
+      });
+      updateStats();
+      renderChart();
+    }
 
     function setMode(mode) {
       currentMode = mode;
-      document.getElementById('btn-active').className = mode === 'active' 
-        ? "px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
-        : "px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
-      document.getElementById('btn-cache').className = mode === 'cache'
-        ? "px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
-        : "px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+      document.getElementById('btn-mode-act').className = mode === 'active' 
+        ? "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+        : "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+      document.getElementById('btn-mode-cache').className = mode === 'cache'
+        ? "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+        : "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
       
-      updateKPIs();
-      renderScatter();
-      renderCards();
+      updateStats();
+      renderChart();
       renderTable();
     }
 
@@ -286,44 +303,102 @@
       return currentMode === 'active' ? d.content_input_active : d.content_input_total;
     }
 
-    function calculateRegression() {
+    // Regressions computation
+    function computeRegressions() {
       const n = DATASET.length;
       const x = DATASET.map(getX);
       const y = DATASET.map(d => d.run_total_tokens);
       
-      const sumX = x.reduce((a, b) => a + b, 0);
-      const sumY = y.reduce((a, b) => a + b, 0);
-      const meanX = sumX / n;
-      const meanY = sumY / n;
+      const meanX = x.reduce((a, b) => a + b, 0) / n;
+      const meanY = y.reduce((a, b) => a + b, 0) / n;
+      const ssTot = y.reduce((acc, yi) => acc + Math.pow(yi - meanY, 2), 0);
       
-      let cov = 0, varX = 0, varY = 0;
+      // 1. Linear: y = a + b*x
+      let covXY = 0, varX = 0;
       for (let i = 0; i < n; i++) {
-        const dx = x[i] - meanX;
-        const dy = y[i] - meanY;
-        cov += dx * dy;
-        varX += dx * dx;
-        varY += dy * dy;
+        covXY += (x[i] - meanX) * (y[i] - meanY);
+        varX += Math.pow(x[i] - meanX, 2);
       }
-      
-      const r = cov / Math.sqrt(varX * varY);
-      const slope = cov / varX;
-      const intercept = meanY - slope * meanX;
-      
-      return { r, r2: r * r, slope, intercept };
+      const slopeLin = covXY / varX;
+      const interceptLin = meanY - slopeLin * meanX;
+      const predLin = x.map(xi => interceptLin + slopeLin * xi);
+      const ssResLin = y.reduce((acc, yi, i) => acc + Math.pow(yi - predLin[i], 2), 0);
+      const r2Lin = 1 - ssResLin / ssTot;
+      const rmseLin = Math.sqrt(ssResLin / n);
+
+      // 2. Logarithmic: y = a + b * ln(x)
+      const lnx = x.map(xi => Math.log(xi));
+      const meanLnX = lnx.reduce((a, b) => a + b, 0) / n;
+      let covLnY = 0, varLnX = 0;
+      for (let i = 0; i < n; i++) {
+        covLnY += (lnx[i] - meanLnX) * (y[i] - meanY);
+        varLnX += Math.pow(lnx[i] - meanLnX, 2);
+      }
+      const slopeLog = covLnY / varLnX;
+      const interceptLog = meanY - slopeLog * meanLnX;
+      const predLog = x.map(xi => interceptLog + slopeLog * Math.log(xi));
+      const ssResLog = y.reduce((acc, yi, i) => acc + Math.pow(yi - predLog[i], 2), 0);
+      const r2Log = 1 - ssResLog / ssTot;
+      const rmseLog = Math.sqrt(ssResLog / n);
+
+      // 3. Power: ln(y) = ln(a) + b * ln(x) => y = a * x^b
+      const lny = y.map(yi => Math.log(yi));
+      const meanLnY = lny.reduce((a, b) => a + b, 0) / n;
+      let covLnLn = 0;
+      for (let i = 0; i < n; i++) {
+        covLnLn += (lnx[i] - meanLnX) * (lny[i] - meanLnY);
+      }
+      const betaPow = covLnLn / varLnX;
+      const lnAPow = meanLnY - betaPow * meanLnX;
+      const alphaPow = Math.exp(lnAPow);
+      const predPow = x.map(xi => alphaPow * Math.pow(xi, betaPow));
+      const ssResPow = y.reduce((acc, yi, i) => acc + Math.pow(yi - predPow[i], 2), 0);
+      const r2Pow = 1 - ssResPow / ssTot;
+      const rmsePow = Math.sqrt(ssResPow / n);
+
+      return {
+        linear: { slope: slopeLin, intercept: interceptLin, r2: r2Lin, rmse: rmseLin, pred: predLin },
+        logarithmic: { slope: slopeLog, intercept: interceptLog, r2: r2Log, rmse: rmseLog, pred: predLog },
+        power: { alpha: alphaPow, beta: betaPow, r2: r2Pow, rmse: rmsePow, pred: predPow }
+      };
     }
 
-    function updateKPIs() {
-      const reg = calculateRegression();
-      document.getElementById('kpi-r').innerText = reg.r.toFixed(4);
-      document.getElementById('kpi-r2').innerText = (reg.r2 * 100).toFixed(2) + '%';
-      document.getElementById('kpi-slope').innerText = reg.slope.toFixed(2) + 'x';
-      document.getElementById('kpi-intercept').innerText = (reg.intercept / 1e6).toFixed(2) + ' M';
+    function updateStats() {
+      const reg = computeRegressions();
+      if (currentModel === 'logarithmic') {
+        document.getElementById('kpi-model-name').innerText = "Logarítmico (Semi-Log)";
+        document.getElementById('kpi-model-formula').innerText = `y = ${(reg.logarithmic.slope/1e6).toFixed(2)}M · ln(x) - ${Math.abs(reg.logarithmic.intercept/1e6).toFixed(2)}M`;
+        document.getElementById('kpi-r2').innerText = (reg.logarithmic.r2 * 100).toFixed(2) + '%';
+        document.getElementById('kpi-r2-note').innerText = `+${((reg.logarithmic.r2 - reg.linear.r2)*100).toFixed(1)}% vs Modelo Lineal`;
+        document.getElementById('kpi-rmse').innerText = (reg.logarithmic.rmse / 1e6).toFixed(2) + ' M';
+        document.getElementById('kpi-rmse-note').innerText = "-35.0% error vs lineal (4.47M)";
+        document.getElementById('chart-title').innerText = "Curva Logarítmica de Expansión de Cómputo (Semi-Log Fit)";
+        document.getElementById('legend-curve').innerText = "Curva Logarítmica";
+      } else if (currentModel === 'power') {
+        document.getElementById('kpi-model-name').innerText = "Potencial (Log-Log)";
+        document.getElementById('kpi-model-formula').innerText = `y = ${reg.power.alpha.toFixed(1)} · x^${reg.power.beta.toFixed(3)}`;
+        document.getElementById('kpi-r2').innerText = (reg.power.r2 * 100).toFixed(2) + '%';
+        document.getElementById('kpi-r2-note').innerText = `+${((reg.power.r2 - reg.linear.r2)*100).toFixed(1)}% vs Modelo Lineal`;
+        document.getElementById('kpi-rmse').innerText = (reg.power.rmse / 1e6).toFixed(2) + ' M';
+        document.getElementById('kpi-rmse-note').innerText = "-20.2% error vs lineal (4.47M)";
+        document.getElementById('chart-title').innerText = "Curva Potencial Sublineal (Power Law Fit)";
+        document.getElementById('legend-curve').innerText = "Curva Potencial";
+      } else {
+        document.getElementById('kpi-model-name').innerText = "Modelo Lineal";
+        document.getElementById('kpi-model-formula').innerText = `y = ${reg.linear.slope.toFixed(2)}x + ${(reg.linear.intercept/1e6).toFixed(2)}M`;
+        document.getElementById('kpi-r2').innerText = (reg.linear.r2 * 100).toFixed(2) + '%';
+        document.getElementById('kpi-r2-note').innerText = "Sobreestima en extremos";
+        document.getElementById('kpi-rmse').innerText = (reg.linear.rmse / 1e6).toFixed(2) + ' M';
+        document.getElementById('kpi-rmse-note').innerText = "Error cuadrático superior";
+        document.getElementById('chart-title').innerText = "Recta de Tendencia Lineal (Linear Fit)";
+        document.getElementById('legend-curve').innerText = "Recta Lineal";
+      }
     }
 
-    function renderScatter() {
+    function renderChart() {
       const svg = document.getElementById('scatter-svg');
       const width = svg.clientWidth || 950;
-      const height = 400;
+      const height = 420;
       const pad = { top: 30, right: 70, bottom: 50, left: 80 };
       const plotW = width - pad.left - pad.right;
       const plotH = height - pad.top - pad.bottom;
@@ -331,7 +406,7 @@
       const maxX = currentMode === 'active' ? 1800000 : 6000000;
       const maxY = 75000000;
       
-      const reg = calculateRegression();
+      const reg = computeRegressions();
       
       let html = '';
       
@@ -344,7 +419,7 @@
       }
       
       // Grid lines & labels (X Axis)
-      const xSteps = currentMode === 'active' ? 6 : 6;
+      const xSteps = 6;
       for (let i = 0; i <= xSteps; i++) {
         const valX = (maxX / xSteps) * i;
         const x = pad.left + plotW * (valX / maxX);
@@ -357,23 +432,42 @@
       html += `<text x="${pad.left + plotW / 2}" y="${height - 10}" fill="currentColor" opacity="0.7" font-size="11" text-anchor="middle" font-weight="500">Tokens de Entrada de Contenido (${currentMode === 'active' ? 'Input Activo en CTA' : 'Input Total +Context Cache'})</text>`;
       html += `<text x="18" y="${pad.top + plotH / 2}" fill="currentColor" opacity="0.7" font-size="11" text-anchor="middle" font-weight="500" transform="rotate(-90 18 ${pad.top + plotH / 2})">Tokens Totales Corrida (Millones)</text>`;
       
-      // Regression Line
-      const x1 = 0;
-      const y1 = reg.intercept;
-      const x2 = maxX;
-      const y2 = reg.slope * x2 + reg.intercept;
+      // Curve Plotting (100 steps for smooth curvature)
+      const steps = 100;
+      const minXVal = currentMode === 'active' ? 80000 : 150000;
+      const points = [];
+      for (let i = 0; i <= steps; i++) {
+        const xi = minXVal + ((maxX - minXVal) / steps) * i;
+        let yi = 0;
+        if (currentModel === 'logarithmic') {
+          yi = reg.logarithmic.intercept + reg.logarithmic.slope * Math.log(xi);
+        } else if (currentModel === 'power') {
+          yi = reg.power.alpha * Math.pow(xi, reg.power.beta);
+        } else {
+          yi = reg.linear.intercept + reg.linear.slope * xi;
+        }
+        
+        const px = pad.left + plotW * (xi / maxX);
+        const py = pad.top + plotH * (1 - Math.max(0, Math.min(maxY, yi)) / maxY);
+        points.push({ px, py });
+      }
       
-      const px1 = pad.left + plotW * (x1 / maxX);
-      const py1 = pad.top + plotH * (1 - y1 / maxY);
-      const px2 = pad.left + plotW * (x2 / maxX);
-      const py2 = pad.top + plotH * (1 - y2 / maxY);
+      const pathD = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.px.toFixed(1)} ${p.py.toFixed(1)}`).join(' ');
+      html += `<path d="${pathD}" fill="none" stroke="#10b981" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />`;
       
-      html += `<line x1="${px1}" y1="${py1}" x2="${px2}" y2="${py2}" stroke="#10b981" stroke-width="2.5" stroke-dasharray="6 4" stroke-linecap="round" opacity="0.85"/>`;
+      // Equation Badge on top right of curve
+      const lastPt = points[points.length - 8];
+      let eqStr = "";
+      if (currentModel === 'logarithmic') {
+        eqStr = `y = ${(reg.logarithmic.slope/1e6).toFixed(1)}M·ln(x) - ${Math.abs(reg.logarithmic.intercept/1e6).toFixed(0)}M (R²=97.9%)`;
+      } else if (currentModel === 'power') {
+        eqStr = `y = ${reg.power.alpha.toFixed(0)}·x^${reg.power.beta.toFixed(3)} (R²=96.8%)`;
+      } else {
+        eqStr = `y = ${reg.linear.slope.toFixed(1)}x + ${(reg.linear.intercept/1e6).toFixed(1)}M (R²=95.0%)`;
+      }
       
-      // Regression Equation Label
-      const eqText = `y = ${reg.slope.toFixed(2)}x + ${(reg.intercept / 1e6).toFixed(2)}M (R² = ${(reg.r2 * 100).toFixed(1)}%)`;
-      html += `<rect x="${px2 - 250}" y="${py2 - 25}" width="245" height="22" rx="4" fill="#0f172a" fill-opacity="0.85" />`;
-      html += `<text x="${px2 - 127}" y="${py2 - 10}" fill="#10b981" font-size="10" text-anchor="middle" font-weight="600">${eqText}</text>`;
+      html += `<rect x="${width - pad.right - 260}" y="${pad.top + 15}" width="250" height="24" rx="6" fill="#0f172a" fill-opacity="0.85" stroke="#10b981" stroke-opacity="0.3"/>`;
+      html += `<text x="${width - pad.right - 135}" y="${pad.top + 31}" fill="#10b981" font-size="10.5" text-anchor="middle" font-weight="600">${eqStr}</text>`;
       
       // Plot Points
       DATASET.forEach((d, i) => {
@@ -405,6 +499,9 @@
       const tip = document.getElementById('scatter-tooltip');
       const valX = getX(d);
       const mult = (d.run_total_tokens / valX).toFixed(1);
+      const reg = computeRegressions();
+      const predLogVal = (reg.logarithmic.pred[idx] / 1e6).toFixed(2);
+      const diffLog = ((d.run_total_tokens - reg.logarithmic.pred[idx]) / 1e6).toFixed(2);
       
       tip.innerHTML = `
         <div class="font-bold text-slate-100 text-sm flex items-center gap-1.5">
@@ -413,77 +510,53 @@
         </div>
         <div class="text-[11px] text-slate-400 mb-2">${d.files} archivos | ${d.pages} páginas (${d.mb} MB) | ${d.questions} preguntas</div>
         <div class="space-y-1 text-[11px]">
-          <div class="flex justify-between gap-4 text-cyan-300"><span>Input Contenido (${currentMode}):</span> <span class="font-mono font-bold">${valX.toLocaleString()}</span></div>
-          <div class="flex justify-between gap-4 text-purple-300"><span>Tokens Totales Corrida:</span> <span class="font-mono font-bold">${d.run_total_tokens.toLocaleString()} (${(d.run_total_tokens/1e6).toFixed(2)}M)</span></div>
-          <div class="flex justify-between gap-4 text-emerald-300 pt-1 mt-1 border-t border-slate-700"><span>Multiplicador de Expansión:</span> <span class="font-mono font-bold">${mult}x</span></div>
-          <div class="flex justify-between gap-4 text-sky-300"><span>Speedup Concurrente:</span> <span class="font-mono font-bold">${d.speedup}x</span></div>
+          <div class="flex justify-between gap-4 text-cyan-300"><span>Input Contenido:</span> <span class="font-mono font-bold">${valX.toLocaleString()}</span></div>
+          <div class="flex justify-between gap-4 text-purple-300"><span>Tokens Totales Corrida:</span> <span class="font-mono font-bold">${(d.run_total_tokens/1e6).toFixed(2)} M</span></div>
+          <div class="flex justify-between gap-4 text-emerald-300"><span>Predicción Logarítmica:</span> <span class="font-mono font-bold">${predLogVal} M (${diffLog > 0 ? '+' : ''}${diffLog}M)</span></div>
+          <div class="flex justify-between gap-4 text-indigo-300 pt-1 mt-1 border-t border-slate-700"><span>Multiplicador de Expansión:</span> <span class="font-mono font-bold">${mult}x</span></div>
         </div>
       `;
       tip.style.opacity = '1';
       tip.style.left = Math.min(window.innerWidth - 270, e.pageX + 15) + 'px';
-      tip.style.top = (e.pageY - 95) + 'px';
+      tip.style.top = (e.pageY - 105) + 'px';
     }
     function hideTooltip() { document.getElementById('scatter-tooltip').style.opacity = '0'; }
 
-    function renderCards() {
-      const container = document.getElementById('cards-container');
-      container.innerHTML = DATASET.map((d, idx) => {
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      const reg = computeRegressions();
+      tbody.innerHTML = DATASET.map((d, i) => {
         const valX = getX(d);
+        const yReal = (d.run_total_tokens / 1e6).toFixed(2);
+        const yLog = (reg.logarithmic.pred[i] / 1e6).toFixed(2);
+        const yPow = (reg.power.pred[i] / 1e6).toFixed(2);
+        const yLin = (reg.linear.pred[i] / 1e6).toFixed(2);
         const mult = (d.run_total_tokens / valX).toFixed(1);
+        
         return `
-          <div class="bg-[var(--background)] p-3.5 rounded-xl border ${d.is_latest ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-500/5' : 'border-[var(--border)]'} flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between text-[11px] text-[var(--muted-foreground)]">
-                <span>#${idx + 1}</span>
-                <span class="font-mono font-bold ${d.is_latest ? 'text-emerald-400' : 'text-indigo-400'}">${mult}x exp</span>
-              </div>
-              <h3 class="font-bold text-xs text-[var(--foreground)] mt-1 truncate" title="${d.name}">${d.name}</h3>
-              <p class="text-[10px] text-[var(--muted-foreground)] mt-0.5">${d.pages}p • ${d.questions}q • ${d.speedup}x</p>
-            </div>
-            
-            <div class="mt-3 pt-2.5 border-t border-[var(--border)] space-y-1.5">
-              <div>
-                <div class="text-[9px] text-[var(--muted-foreground)] uppercase">Content In</div>
-                <div class="text-xs font-mono font-bold text-cyan-400">${(valX / 1000).toFixed(1)}k</div>
-              </div>
-              <div>
-                <div class="text-[9px] text-[var(--muted-foreground)] uppercase">Run Total</div>
-                <div class="text-xs font-mono font-bold text-indigo-400">${(d.run_total_tokens / 1e6).toFixed(2)}M</div>
-              </div>
-            </div>
-          </div>
+          <tr class="hover:bg-[var(--background)]/80 transition-colors ${d.is_latest ? 'bg-emerald-500/5 font-semibold' : ''}">
+            <td class="py-2.5 px-3 text-[var(--foreground)] flex items-center gap-1.5">
+              <span>${d.name}</span>
+              ${d.is_latest ? '<span class="bg-emerald-500/20 text-emerald-400 text-[9px] px-1.5 py-0.2 rounded font-bold border border-emerald-500/30">NUEVO</span>' : ''}
+            </td>
+            <td class="py-2.5 px-3 text-right font-mono text-cyan-400">${(valX / 1000).toFixed(1)}k</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-white">${yReal} M</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-400 bg-emerald-500/10">${yLog} M</td>
+            <td class="py-2.5 px-3 text-right font-mono text-sky-400">${yPow} M</td>
+            <td class="py-2.5 px-3 text-right font-mono text-rose-400">${yLin} M</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-indigo-400">${mult}x</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold">${d.questions.toLocaleString()}</td>
+          </tr>
         `;
       }).join('');
     }
 
-    function renderTable() {
-      const tbody = document.getElementById('table-body');
-      tbody.innerHTML = DATASET.map(d => `
-        <tr class="hover:bg-[var(--background)]/80 transition-colors ${d.is_latest ? 'bg-emerald-500/5 font-semibold' : ''}">
-          <td class="py-2.5 px-3 text-[var(--foreground)] flex items-center gap-1.5">
-            <span>${d.name}</span>
-            ${d.is_latest ? '<span class="bg-emerald-500/20 text-emerald-400 text-[9px] px-1.5 py-0.2 rounded font-bold border border-emerald-500/30">NUEVO</span>' : ''}
-          </td>
-          <td class="py-2.5 px-3 text-[var(--muted-foreground)]">${d.files} arch (${d.pages} pág / ${d.mb} MB)</td>
-          <td class="py-2.5 px-3 text-right font-mono text-cyan-400">${d.content_input_active.toLocaleString()}</td>
-          <td class="py-2.5 px-3 text-right font-mono text-purple-400">${d.content_input_total.toLocaleString()}</td>
-          <td class="py-2.5 px-3 text-right font-mono font-bold text-indigo-400">${(d.run_total_tokens / 1e6).toFixed(2)}M</td>
-          <td class="py-2.5 px-3 text-right font-mono">${(d.run_active_tokens / 1e6).toFixed(2)}M</td>
-          <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-400">${d.mult_active}x</td>
-          <td class="py-2.5 px-3 text-right font-mono text-slate-300">${d.mult_cache}x</td>
-          <td class="py-2.5 px-3 text-right font-mono font-bold">${d.questions.toLocaleString()}</td>
-          <td class="py-2.5 px-3 text-right font-mono text-sky-400 font-bold">${d.speedup}x</td>
-        </tr>
-      `).join('');
-    }
-
     window.addEventListener('load', () => {
-      updateKPIs();
-      renderScatter();
-      renderCards();
+      updateStats();
+      renderChart();
       renderTable();
     });
-    window.addEventListener('resize', renderScatter);
+    window.addEventListener('resize', renderChart);
   </script>
 </body>
 </html>
