@@ -1,0 +1,68 @@
+{
+  "course_metadata": {
+    "course_id": "saul_pre_parcial",
+    "unit_title": "Saul Pre Parcial",
+    "detected_objective": "Dominio y aplicación analítica integral de sistemas dinámicos continuos, ecuaciones en derivadas parciales en economía, análisis espectral, estabilidad local y teoría del equilibrio macroeconómico y microeconómico.",
+    "total_competencies": 63,
+    "total_questions": 1520
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 3.8,
+      "max": 4.0,
+      "feedback": "Excelente arquitectura curricular con 63 micro-competencias atómicas perfectamente delimitadas y balance cognitivo homogéneo entre Hechos (17, 27%), Conceptos (20, 32%) y Habilidades (26, 41%). El modelado de prerrequisitos en grafo acíclico dirigido (DAG) estructura rutas de aprendizaje progresivas desde principios teóricos elementales hasta linealización avanzada de Lotka-Volterra e IS-LM. Deducción menor (-0.2 pts) por 13 hechos basales con dependencias vacías que podrían beneficiarse de encadenamiento secuencial explícito."
+    },
+    "assessment_quality": {
+      "score": 4.5,
+      "max": 5.0,
+      "feedback": "Excepcional cobertura diagnóstica con 100% de rationales pedagógicos en los 9,120 distractores evaluados (6 distractores por ítem en formato MC7). Ausencia absoluta de fugas de respuesta (Answer Leaks), distractores delatores o clonaciones espurias. Los distractores modelan errores conceptuales auténticos de la literatura matemática (inversión de derivadas, confusión de signos, omisión de términos autónomos). Deducción menor (-0.5 pts) debido a la concentración exclusiva en opción múltiple de 7 alternativas (MC7), sin inclusión complementaria de ítems de selección múltiple (MS) o fill-in-the-blank (FIB)."
+    },
+    "scaffolding_hints": {
+      "score": 4.0,
+      "max": 5.0,
+      "feedback": "El 98.3% del banco (1,494 reactivos) cuenta con andamiaje socrático de 3 niveles en prosa fluida (Conceptual -> Procedimental -> Consistencia dimensional). Sin embargo, se identificó un cluster aislado de 26 reactivos (1.7%) en las competencias Hab-05, C-04, H-04 y Hab-18 con pistas deficientes tipo stub keywords o etiquetas snake_case (e.g. ['Microeconomia', 'Hotelling', 'Dualidad'] o ['Sistemas_lineales', 'Autovalores_reales', 'Trayectorias']). Se aplica la deducción estipulada en la rúbrica de -1.0 pt por pistas deficientes aisladas."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación instruccional impecable (4.0/4.0). Congruencia semántica absoluta entre el título, descripción formal de cada competencia y el conjunto de 20 a 30 reactivos asociados. Cero preguntas huérfanas, sin contaminación cruzada inter-dominio y con riguroso énfasis en niveles taxonómicos superiores de Bloom (Aplicación y Análisis cualitativo)."
+    },
+    "technical_ergonomics": {
+      "score": 1.7,
+      "max": 2.0,
+      "feedback": "Sintaxis KaTeX limpia y compilable al 100%: cero delimitadores desbalanceados, cero triples delimitadores y notación matemática formal preservada. El análisis semántico confirma que las advertencias del linter sobre '{pmatrix}', '{bmatrix}' y '{p}' corresponden a macros y entornos estándar válidos de LaTeX (falsos positivos del detector determinista). Se aplica una deducción menor (-0.3 pts) por colisiones tipográficas de dobles signos menos ('--56', '--126', '--25') detectadas en las soluciones de 16 reactivos de la competencia Hab-21."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 18.0,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "remediation_actions": [
+    "Reescribir las pistas tipo stub keywords en los 26 reactivos de Hab-05, C-04, H-04 y Hab-18, transformándolas en andamiaje socrático progresivo de 3 pasos en prosa fluida.",
+    "Normalizar las colisiones de signos algebraicos en los 16 reactivos de la competencia Hab-21, reemplazando expresiones como '--56' por '+56' o '56' en las soluciones analíticas.",
+    "Diversificar la tipología de reactivos en futuras versiones, integrando ítems de respuesta múltiple (MS) y completamiento numérico (FIB) para enriquecer la experiencia evaluativa.",
+    "Encadenar los 13 hechos basales de nivel inicial en el grafo de prerrequisitos para establecer una secuencia de entrada totalmente conectada."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "exclude_latex_matrix_environments_from_template_linter",
+      "target_linter": "uninterpolated_math_variable_linter",
+      "pattern_description": "Excluir entornos estándar de matrices LaTeX (pmatrix, bmatrix, vmatrix, Vmatrix, matrix, array, cases, aligned) del regex de detección de variables de plantilla sin interpolar.",
+      "regex_patch": "r'(?<!\\\\begin\\{)(?<!\\\\end\\{)\\{([a-zA-Z_][a-zA-Z0-9_]*)\\}(?!\\$)'",
+      "rationale": "Evita más de 480 falsos positivos en cursos cuantitativos avanzados donde \\begin{pmatrix} o \\begin{bmatrix} son macros canónicas de KaTeX."
+    },
+    {
+      "rule_id": "exclude_latex_accents_from_template_linter",
+      "target_linter": "uninterpolated_math_variable_linter",
+      "pattern_description": "Excluir acentos matemáticos estándar de un solo carácter como \\bar{p}, \\dot{p}, \\hat{p}, \\tilde{p}, \\vec{x} del chequeo de variables f-string.",
+      "regex_patch": "r'(?<!\\\\bar)(?<!\\\\dot)(?<!\\\\hat)(?<!\\\\tilde)(?<!\\\\vec)\\{([a-zA-Z])\\}'",
+      "rationale": "Evita falsos positivos en notación temporal macroeconómica (e.g. \\dot{p}_t, \\bar{p}_t)."
+    },
+    {
+      "rule_id": "auto_simplify_algebraic_double_negatives",
+      "target_linter": "algebraic_sign_collision_linter",
+      "pattern_description": "Detección y simplificación automática de colisiones de signos negativos ('--' -> '+') en f-strings de soluciones generadas.",
+      "regex_patch": "r'--\\s*(\\d+)'",
+      "rationale": "Corrige anomalías estéticas en matrices y vectores cuando el valor sustituido es un escalar negativo que colisiona con el operador de resta algebraico."
+    }
+  ]
+}
