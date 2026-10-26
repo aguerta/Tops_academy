@@ -82,10 +82,10 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
                     </span>
                   )}
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-ka-text-primary mt-1 break-words [overflow-wrap:anywhere] [&_.katex]:max-w-full [&_.katex]:overflow-x-auto [&_.katex]:overflow-y-hidden [&_span.inline-block]:max-w-full">
+                <h3 className="text-base sm:text-lg font-bold text-ka-text-primary mt-1 break-words [overflow-wrap:anywhere]">
                   <MathText text={unit.name} inline />
                 </h3>
-                <div className="text-xs text-ka-text-secondary mt-1 break-words [overflow-wrap:anywhere] [&_.katex]:max-w-full [&_.katex]:overflow-x-auto [&_.katex]:overflow-y-hidden [&_span.inline-block]:max-w-full">
+                <div className="text-xs text-ka-text-secondary mt-1 break-words [overflow-wrap:anywhere]">
                   <MathText text={unit.description} />
                 </div>
 

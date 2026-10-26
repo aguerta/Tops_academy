@@ -41,6 +41,20 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [results, setResults] = useState<QuestionResult[]>([]);
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const mainRef = useRef<HTMLElement | null>(null);
+
+  const resetScroll = () => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  };
+
+  useEffect(() => {
+    resetScroll();
+  }, [currentIndex]);
 
   const clearAutoAdvanceTimer = () => {
     if (autoAdvanceTimerRef.current) {
@@ -55,8 +69,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   if (!currentQuestion || total === 0) {
     return (
       <div
-        className="h-dvh-safe bg-slate-50 flex flex-col items-center justify-center p-6 text-center w-full"
-        style={{ minHeight: '100dvh' }}
+        className="h-dvh-safe h-screen h-dvh bg-slate-50 flex flex-col items-center justify-center p-6 text-center w-full overflow-hidden"
+        style={{ height: '100dvh', maxHeight: '100dvh' }}
       >
         <div className="w-16 h-16 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-2xl mb-4 shadow-sm">
           ⚠️
@@ -193,6 +207,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     setFillBlankValue('');
     setIsChecked(false);
     setIsCorrect(null);
+    resetScroll();
   };
 
   const handleRetry = () => {
@@ -203,10 +218,12 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     if (currentQuestion.type === 'multiple_choice_7_options') {
       setSelectedOption(null);
     }
+    resetScroll();
   };
 
   const handleNext = (overrideIsCorrect?: boolean) => {
     clearAutoAdvanceTimer();
+    resetScroll();
     const correctVal = overrideIsCorrect !== undefined ? overrideIsCorrect : isCorrect === true;
     let newResults = results;
     const existingIdx = results.findIndex((r) => r.questionId === currentQuestion.id);
@@ -247,6 +264,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   const handleSkip = () => {
     clearAutoAdvanceTimer();
+    resetScroll();
     const newResults = [
       ...results,
       {
@@ -321,8 +339,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   return (
     <div
       data-testid="practice-session"
-      className="h-dvh-safe bg-white flex flex-col justify-between w-full overflow-x-hidden"
-      style={{ minHeight: '100dvh' }}
+      className="h-screen h-dvh h-dvh-safe bg-white flex flex-col overflow-hidden w-full relative"
+      style={{ height: '100dvh', maxHeight: '100dvh' }}
     >
       {/* Top Header */}
       <header className="h-16 [@media(max-height:850px)]:h-12 border-b border-ka-border-subtle px-4 sm:px-6 flex items-center justify-between shrink-0">
@@ -344,6 +362,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           <button
             onClick={() => {
               clearAutoAdvanceTimer();
+              resetScroll();
               onRestart();
             }}
             data-testid="restart-session-btn"
@@ -360,7 +379,10 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       </header>
 
       {/* Main Question Surface */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20">
+      <main
+        ref={mainRef}
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
+      >
         <QuestionCard
           question={currentQuestion}
           selectedOption={selectedOption}
@@ -390,8 +412,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         />
       )}
 
-      {/* Fixed Bottom Action & Progress Bar */}
-      <footer className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-ka-border-card px-4 sm:px-8 flex items-center justify-between z-20 shadow-sm shrink-0">
+      {/* Bottom Action & Progress Bar (in normal flex flow) */}
+      <footer className="h-14 sm:h-16 [@media(max-height:850px)]:h-12 bg-white border-t border-ka-border-card px-4 sm:px-8 flex items-center justify-between z-20 shadow-sm shrink-0">
         {/* Left Side: Counter & Progress Indicator Dots */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <span className="text-base sm:text-lg text-slate-400 shrink-0" aria-hidden="true">🔄</span>
@@ -500,7 +522,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
               data-testid="next-question-btn"
               onClick={() => handleNext(false)}
               aria-label="Next question"
-              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm font-bold rounded shadow-md transition-colors flex items-center gap-2 cursor-pointer"
+              className="px-4 sm:px-6 py-1.5 sm:py-2 [@media(min-height:851px)]:sm:py-2.5 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm font-bold rounded shadow-md transition-colors flex items-center gap-2 cursor-pointer"
             >
               <span>Next question</span>
               <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-blue-700/60 text-white rounded font-mono border border-blue-400/30" aria-hidden="true">↵ Enter</kbd>
@@ -510,7 +532,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
               data-testid="next-question-btn"
               onClick={() => handleNext(true)}
               aria-label="Next question"
-              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm font-bold rounded shadow-md transition-colors flex items-center gap-2 cursor-pointer"
+              className="px-4 sm:px-6 py-1.5 sm:py-2 [@media(min-height:851px)]:sm:py-2.5 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm font-bold rounded shadow-md transition-colors flex items-center gap-2 cursor-pointer"
             >
               <span>Next question</span>
               <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-blue-700/60 text-white rounded font-mono border border-blue-400/30" aria-hidden="true">↵ Enter</kbd>
@@ -521,7 +543,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
                 data-testid="quick-redo-btn"
                 onClick={handleRedo}
                 aria-label="Quick redo: clear input and re-attempt question"
-                className="px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold rounded border border-slate-300 transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold rounded border border-slate-300 transition-colors flex items-center gap-1.5 cursor-pointer"
                 title="Clear input and re-attempt question"
               >
                 <span aria-hidden="true">↺</span>
@@ -531,7 +553,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
                 data-testid="check-btn"
                 onClick={handleRetry}
                 aria-label="Try again"
-                className="px-4 sm:px-6 py-2 sm:py-2.5 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm font-bold rounded shadow-md transition-colors cursor-pointer flex items-center gap-2"
+                className="px-4 sm:px-6 py-1.5 sm:py-2 [@media(min-height:851px)]:sm:py-2.5 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm font-bold rounded shadow-md transition-colors cursor-pointer flex items-center gap-2"
               >
                 <span>Try again</span>
                 <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-blue-700/60 text-white rounded font-mono border border-blue-400/30" aria-hidden="true">↵ Enter</kbd>
@@ -543,7 +565,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
               disabled={!hasAnswer}
               onClick={() => handleCheck(true)}
               aria-label="Check answer"
-              className={`px-4 sm:px-6 py-2 sm:py-2.5 text-sm font-bold rounded transition-colors flex items-center gap-2 ${
+              className={`px-4 sm:px-6 py-1.5 sm:py-2 [@media(min-height:851px)]:sm:py-2.5 text-sm font-bold rounded transition-colors flex items-center gap-2 ${
                 hasAnswer
                   ? 'bg-ka-blue hover:bg-ka-blue-hover text-white cursor-pointer shadow-md'
                   : 'bg-slate-300 text-white cursor-not-allowed'

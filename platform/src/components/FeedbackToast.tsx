@@ -102,7 +102,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
                 <span className="w-5 h-5 rounded-full bg-ka-green-badge text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5" aria-hidden="true">
                   ✓
                 </span>
-                <div className="text-sm text-slate-800 font-medium min-w-0 flex-1 overflow-x-auto">
+                <div className="text-sm text-slate-800 font-medium min-w-0 flex-1">
                   <MathText text={opt.content} inline />
                 </div>
               </div>
@@ -123,7 +123,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
                 <span className="w-5 h-5 rounded-full bg-ka-green-badge text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5" aria-hidden="true">
                   ✓
                 </span>
-                <div className="text-sm text-slate-800 font-medium min-w-0 flex-1 overflow-x-auto">
+                <div className="text-sm text-slate-800 font-medium min-w-0 flex-1">
                   <MathText text={opt.content} inline />
                 </div>
               </div>
@@ -153,7 +153,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
             <span className="w-5 h-5 rounded-full bg-ka-green-badge text-white flex items-center justify-center font-bold text-xs flex-shrink-0" aria-hidden="true">
               ✓
             </span>
-            <div className="text-sm font-semibold text-slate-800 min-w-0 flex-1 overflow-x-auto">
+            <div className="text-sm font-semibold text-slate-800 min-w-0 flex-1">
               <MathText text={`$${ansText}$`} inline />
             </div>
           </div>
@@ -184,9 +184,6 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
           }
           .feedback-toast-root .katex {
             max-width: 100% !important;
-            overflow-x: auto !important;
-            overflow-y: hidden !important;
-            vertical-align: middle;
           }
           .feedback-toast-root pre,
           .feedback-toast-root code {
@@ -198,7 +195,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
               position: fixed !important;
               left: 0.75rem !important;
               right: 0.75rem !important;
-              bottom: 5rem !important;
+              bottom: 4.5rem !important;
               max-width: 36rem !important;
               margin-left: auto !important;
               margin-right: auto !important;
@@ -218,6 +215,18 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
               min-height: 0 !important;
               max-height: calc(45dvh - 6.5rem) !important;
               overflow-y: auto !important;
+            }
+          }
+          @media (max-height: 650px) {
+            .feedback-toast-root {
+              max-height: 40dvh !important;
+              bottom: 4.25rem !important;
+            }
+            .feedback-toast-scroll {
+              max-height: calc(40dvh - 2.25rem) !important;
+            }
+            .feedback-toast-sol-scroll {
+              max-height: calc(40dvh - 5.5rem) !important;
             }
           }
         `}</style>
@@ -274,7 +283,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
                 Diagnostic feedback on your selection:
               </span>
               {diagnosticRationales.map((item, idx) => (
-                <div key={idx} className="leading-relaxed text-slate-800 min-w-0 break-words overflow-x-auto">
+                <div key={idx} className="leading-relaxed text-slate-800 min-w-0 break-words">
                   <MathText text={item.rationale} />
                 </div>
               ))}
@@ -293,13 +302,13 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
                 <span className="font-bold text-slate-800 uppercase tracking-wider text-[11px] block mb-1">
                   Step-by-step solution:
                 </span>
-                <div data-testid="solution-content" className="bg-slate-50 p-3 rounded-lg leading-relaxed text-slate-800 min-w-0 break-words overflow-x-auto">
+                <div data-testid="solution-content" className="bg-slate-50 p-3 rounded-lg leading-relaxed text-slate-800 min-w-0 break-words">
                   <MathText text={resolvedSolution} />
                 </div>
               </div>
 
               {resolvedMisconception && (
-                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 min-w-0 break-words overflow-x-auto">
+                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 min-w-0 break-words">
                   <span className="font-bold block mb-0.5">Common Misconception:</span>
                   <MathText text={resolvedMisconception} />
                 </div>
@@ -330,9 +339,6 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
         }
         .feedback-toast-root .katex {
           max-width: 100% !important;
-          overflow-x: auto !important;
-          overflow-y: hidden !important;
-          vertical-align: middle;
         }
         .feedback-toast-root pre,
         .feedback-toast-root code {
@@ -344,7 +350,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
             position: fixed !important;
             left: 0.75rem !important;
             right: 0.75rem !important;
-            bottom: 5rem !important;
+            bottom: 4.5rem !important;
             max-width: 36rem !important;
             margin-left: auto !important;
             margin-right: auto !important;
@@ -364,6 +370,18 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
             min-height: 0 !important;
             max-height: calc(45dvh - 6.5rem) !important;
             overflow-y: auto !important;
+          }
+        }
+        @media (max-height: 650px) {
+          .feedback-toast-root {
+            max-height: 40dvh !important;
+            bottom: 4.25rem !important;
+          }
+          .feedback-toast-scroll {
+            max-height: calc(40dvh - 2.25rem) !important;
+          }
+          .feedback-toast-sol-scroll {
+            max-height: calc(40dvh - 5.5rem) !important;
           }
         }
       `}</style>
@@ -411,13 +429,13 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
             <span className="font-bold text-slate-800 uppercase tracking-wider text-[11px] block mb-1">
               Step-by-step solution:
             </span>
-            <div data-testid="solution-content" className="bg-slate-50 p-3 rounded-lg leading-relaxed min-w-0 break-words overflow-x-auto">
+            <div data-testid="solution-content" className="bg-slate-50 p-3 rounded-lg leading-relaxed min-w-0 break-words">
               <MathText text={resolvedSolution} />
             </div>
           </div>
 
           {resolvedMisconception && (
-            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 min-w-0 break-words overflow-x-auto">
+            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 min-w-0 break-words">
               <span className="font-bold block mb-0.5">Common Misconception:</span>
               <MathText text={resolvedMisconception} />
             </div>

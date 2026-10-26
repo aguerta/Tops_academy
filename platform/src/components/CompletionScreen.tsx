@@ -88,7 +88,7 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
       {/* Top Header */}
       <header className="h-16 bg-white border-b border-ka-border-card px-4 sm:px-6 flex items-center justify-between gap-3 min-w-0 shrink-0">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <span className="text-sm font-bold text-ka-text-primary truncate block min-w-0 [&_.katex]:max-w-full">
+          <span className="text-sm font-bold text-ka-text-primary truncate block min-w-0">
             <MathText text={competency ? competency.name : course.title} inline />
           </span>
         </div>
@@ -148,7 +148,7 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
               </div>
               <div className="flex justify-between items-center pt-1 border-t border-slate-200 min-w-0">
                 <span className="text-slate-500 shrink-0">Target Competency:</span>
-                <span className="font-bold truncate inline-block max-w-[140px] text-right min-w-0 align-bottom [&_.katex]:max-w-full">
+                <span className="font-bold truncate inline-block max-w-[140px] text-right min-w-0 align-bottom">
                   {competency ? <MathText text={competency.name} inline /> : 'All Units'}
                 </span>
               </div>

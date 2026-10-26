@@ -70,7 +70,7 @@ export const MathText: React.FC<MathTextProps> = ({ text, className = '', inline
         return (
           <span
             key={index}
-            className={displayMode ? 'block my-2 overflow-x-auto text-center' : 'inline-block mx-0.5'}
+            className={displayMode ? 'block my-2 overflow-x-auto text-center' : 'inline mx-0.5'}
             dangerouslySetInnerHTML={{ __html: html }}
           />
         );

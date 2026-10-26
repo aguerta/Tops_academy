@@ -41,7 +41,7 @@ export const CourseChallenge: React.FC<CourseChallengeProps> = ({
         >
           ←
         </button>
-        <div className="text-xs sm:text-sm font-bold text-ka-text-primary uppercase tracking-wider truncate text-center min-w-0 px-2 flex-1 [&_.katex]:max-w-full">
+        <div className="text-xs sm:text-sm font-bold text-ka-text-primary uppercase tracking-wider truncate text-center min-w-0 px-2 flex-1">
           COURSE CHALLENGE • {course.title}
         </div>
         <div className="w-9 shrink-0" />

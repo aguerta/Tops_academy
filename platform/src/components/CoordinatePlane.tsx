@@ -159,8 +159,18 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = ({ graph, classNa
   return (
     <div
       data-testid="graph-container"
-      className={`inline-block my-2 sm:my-4 p-2 bg-white rounded-lg border border-ka-border-card shadow-sm max-w-full ${className}`}
+      className={`inline-block my-1 sm:my-2 p-1.5 sm:p-2 bg-white rounded-lg border border-ka-border-card shadow-sm max-w-full ${className}`}
     >
+      <style>{`
+        .coordinate-plane {
+          max-height: min(30dvh, 260px);
+        }
+        @media (max-height: 650px) {
+          .coordinate-plane {
+            max-height: 24dvh !important;
+          }
+        }
+      `}</style>
       <svg
         data-testid="coordinate-plane"
         role="img"
@@ -169,7 +179,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = ({ graph, classNa
         width={width}
         height={height}
         viewBox={`0 0 ${width} ${height}`}
-        style={{ maxHeight: '30dvh', aspectRatio: `${width} / ${height}` }}
+        style={{ aspectRatio: `${width} / ${height}` }}
       >
         <defs>
           <marker

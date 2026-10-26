@@ -42,7 +42,7 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
         >
           ←
         </button>
-        <h1 className="text-sm sm:text-lg font-bold text-ka-text-primary text-center truncate min-w-0 px-2 flex-1 [&_.katex]:max-w-full">
+        <h1 className="text-sm sm:text-lg font-bold text-ka-text-primary text-center truncate min-w-0 px-2 flex-1">
           <MathText text={competency.name} inline />
         </h1>
         <div className="w-9 shrink-0 text-right text-xs text-ka-blue font-semibold cursor-pointer">
@@ -55,7 +55,7 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
         {/* Info Banner */}
         <div className="w-full max-w-2xl mb-4 bg-white border border-ka-border-card rounded-lg p-3 text-xs text-ka-text-secondary flex items-center gap-2 shadow-sm min-w-0">
           <span className="text-ka-blue font-bold text-sm shrink-0">ⓘ</span>
-          <span className="min-w-0 break-words [overflow-wrap:anywhere] [&_.katex]:max-w-full [&_.katex]:overflow-x-auto [&_.katex]:overflow-y-hidden [&_span.inline-block]:max-w-full">
+          <span className="min-w-0 break-words [overflow-wrap:anywhere]">
             Practice session for <strong><MathText text={competency.name} inline /></strong> ({competency.category}).
             Complete questions to earn mastery points!
           </span>
