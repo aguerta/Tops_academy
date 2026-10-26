@@ -296,7 +296,7 @@ export const App: React.FC = () => {
               fetchCourses();
             }}
           />
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 min-w-0 overflow-y-auto pt-14 lg:pt-0">
             <CourseOverview
               course={activeCourse}
               mastery={mastery}
@@ -365,7 +365,7 @@ export const App: React.FC = () => {
               fetchCourses();
             }}
           />
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 min-w-0 overflow-y-auto pt-14 lg:pt-0">
             <CourseChallenge
               course={activeCourse}
               totalQuestions={Math.min(30, activeCourse.questions.length)}
