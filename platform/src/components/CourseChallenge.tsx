@@ -29,30 +29,32 @@ export const CourseChallenge: React.FC<CourseChallengeProps> = ({
   }, [onStart]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
+    <div className="min-h-screen min-h-[100dvh] bg-slate-50 flex flex-col justify-between overflow-x-hidden">
       {/* Top Header */}
-      <header className="h-16 bg-white border-b border-ka-border-card px-6 flex items-center justify-between">
+      <header className="h-16 bg-white border-b border-ka-border-card px-4 sm:px-6 flex items-center justify-between gap-2 shrink-0">
         <button
+          type="button"
+          aria-label="Back to Course Overview"
           onClick={onBack}
-          className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-ka-text-secondary text-lg transition-colors"
+          className="w-9 h-9 shrink-0 rounded-full hover:bg-slate-100 flex items-center justify-center text-ka-text-secondary text-lg transition-colors"
           title="Back to Course Overview"
         >
           ←
         </button>
-        <div className="text-sm font-bold text-ka-text-primary uppercase tracking-wider">
+        <div className="text-xs sm:text-sm font-bold text-ka-text-primary uppercase tracking-wider truncate text-center min-w-0 px-2 flex-1 [&_.katex]:max-w-full">
           COURSE CHALLENGE • {course.title}
         </div>
-        <div className="w-9" />
+        <div className="w-9 shrink-0" />
       </header>
 
       {/* Main Challenge Hero Container */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="w-full max-w-2xl bg-ka-blue rounded-xl p-8 sm:p-12 text-center text-white relative overflow-hidden shadow-xl flex flex-col items-center justify-between min-h-[420px]">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 min-w-0">
+        <div className="w-full max-w-2xl bg-ka-blue rounded-xl p-6 sm:p-10 text-center text-white relative overflow-hidden shadow-xl flex flex-col items-center justify-between min-h-[340px] sm:min-h-[400px] min-w-0">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight break-words [overflow-wrap:anywhere]">
               Ready for a challenge?
             </h1>
-            <p className="text-base sm:text-lg text-blue-100 mt-3 font-medium max-w-md mx-auto leading-relaxed">
+            <p className="text-sm sm:text-lg text-blue-100 mt-3 font-medium max-w-md mx-auto leading-relaxed break-words">
               Test yourself on the skills in this course and earn mastery points for what you
               already know!
             </p>
@@ -91,18 +93,21 @@ export const CourseChallenge: React.FC<CourseChallengeProps> = ({
       </div>
 
       {/* Bottom Footer Bar */}
-      <footer className="h-20 bg-white border-t border-ka-border-card px-8 flex items-center justify-between">
+      <footer className="h-16 sm:h-20 bg-white border-t border-ka-border-card px-4 sm:px-8 flex items-center justify-between gap-4 shrink-0">
         <button
+          type="button"
+          aria-label="Back to Course Overview"
           onClick={onBack}
-          className="w-10 h-10 rounded-full border border-ka-border-card hover:bg-slate-50 flex items-center justify-center text-ka-text-secondary text-base transition-colors"
+          className="w-10 h-10 rounded-full border border-ka-border-card hover:bg-slate-50 flex items-center justify-center text-ka-text-secondary text-base transition-colors shrink-0"
         >
           ←
         </button>
 
         <button
+          type="button"
           data-testid="start-challenge-btn"
           onClick={onStart}
-          className="px-8 py-3 bg-ka-blue hover:bg-ka-blue-hover text-white text-base font-bold rounded shadow-md transition-colors"
+          className="px-6 sm:px-8 py-2.5 sm:py-3 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm sm:text-base font-bold rounded shadow-md transition-colors shrink-0"
         >
           Let's go
         </button>

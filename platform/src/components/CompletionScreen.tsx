@@ -84,33 +84,34 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
       : null;
 
   return (
-    <div data-testid="completion-screen" className="min-h-screen bg-slate-50 flex flex-col justify-between">
+    <div data-testid="completion-screen" className="min-h-screen min-h-[100dvh] bg-slate-50 flex flex-col justify-between overflow-x-hidden">
       {/* Top Header */}
-      <header className="h-16 bg-white border-b border-ka-border-card px-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-ka-text-primary">
+      <header className="h-16 bg-white border-b border-ka-border-card px-4 sm:px-6 flex items-center justify-between gap-3 min-w-0 shrink-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className="text-sm font-bold text-ka-text-primary truncate block min-w-0 [&_.katex]:max-w-full">
             <MathText text={competency ? competency.name : course.title} inline />
           </span>
         </div>
         <button
+          type="button"
           onClick={onUpNext}
-          className="text-xs font-semibold text-ka-blue hover:text-ka-blue-hover"
+          className="text-xs font-semibold text-ka-blue hover:text-ka-blue-hover shrink-0"
         >
           Back to course
         </button>
       </header>
 
       {/* Main Celebratory Blue Hero Container */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-4xl bg-ka-blue rounded-2xl p-8 sm:p-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 min-w-0">
+        <div className="w-full max-w-4xl bg-ka-blue rounded-2xl p-6 sm:p-10 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 relative overflow-hidden min-w-0">
           {/* Left Hero Content: Thumbs-up illustration + score */}
-          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+          <div className="flex flex-col items-center md:items-start text-center md:text-left min-w-0">
             {/* Line-art Thumbs-up Icon with radiating lines */}
             <div className="w-20 h-20 mb-4 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-4xl shadow-inner">
               👍
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight break-words [overflow-wrap:anywhere]">
               {titlePrefix}
             </h1>
             <p className="text-xl sm:text-2xl font-bold text-blue-100 mt-2">
@@ -122,7 +123,7 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
           </div>
 
           {/* Right Hero Card: Summary & Level Up */}
-          <div className="w-full md:w-80 bg-white text-ka-text-primary rounded-xl p-6 shadow-2xl flex flex-col gap-3">
+          <div className="w-full max-w-md md:max-w-none md:w-80 bg-white text-ka-text-primary rounded-xl p-5 sm:p-6 shadow-2xl flex flex-col gap-3 min-w-0 shrink-0">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ka-blue">
               <span>🎓</span>
               <span>Mastery Summary</span>
@@ -145,9 +146,9 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
                   {total > 0 ? Math.round((score / total) * 100) : 0}%
                 </span>
               </div>
-              <div className="flex justify-between pt-1 border-t border-slate-200">
-                <span className="text-slate-500">Target Competency:</span>
-                <span className="font-bold truncate max-w-[140px]">
+              <div className="flex justify-between items-center pt-1 border-t border-slate-200 min-w-0">
+                <span className="text-slate-500 shrink-0">Target Competency:</span>
+                <span className="font-bold truncate inline-block max-w-[140px] text-right min-w-0 align-bottom [&_.katex]:max-w-full">
                   {competency ? <MathText text={competency.name} inline /> : 'All Units'}
                 </span>
               </div>
@@ -161,28 +162,30 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
       </div>
 
       {/* Bottom Footer Action Bar */}
-      <footer className="h-20 bg-white border-t border-ka-border-card px-8 flex items-center justify-between">
+      <footer className="h-16 sm:h-20 bg-white border-t border-ka-border-card px-4 sm:px-8 flex items-center justify-between gap-4 shrink-0">
         <button
+          type="button"
           onClick={onTryAgain}
-          className="text-sm font-semibold text-ka-blue hover:text-ka-blue-hover flex items-center gap-2 transition-colors"
+          className="text-sm font-semibold text-ka-blue hover:text-ka-blue-hover flex items-center gap-2 transition-colors shrink-0"
         >
           <span>🔄</span>
           <span>Try again</span>
         </button>
 
-        <a
+        <button
+          type="button"
           role="button"
           onClick={onUpNext}
-          className="px-6 py-2.5 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm font-bold rounded shadow-md transition-colors cursor-pointer inline-block text-center"
+          className="px-4 sm:px-6 py-2.5 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm font-bold rounded shadow-md transition-colors cursor-pointer inline-block text-center truncate max-w-[200px] sm:max-w-xs md:max-w-none shrink-0"
         >
           {nextCompetency ? (
-            <span>
+            <span className="truncate block min-w-0">
               Up next: <MathText text={nextCompetency.name} inline />
             </span>
           ) : (
             'Back to course'
           )}
-        </a>
+        </button>
       </footer>
     </div>
   );
