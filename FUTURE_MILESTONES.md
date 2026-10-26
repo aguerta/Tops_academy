@@ -203,7 +203,7 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 | **Milestone 4: Desacoplamiento KaTeX-Python (PrairieLearn)** | Backend / Pipeline | **Erradica al 100% las colisiones de sintaxis.** Tokens `@var@` activos; falta compilación AST QuickJS y contrato Pydantic. | 1 a 2 d | 🛠️ **Parcial (@var@ activo / AST pendiente)** |
 | **Milestone 5: Entradas Simbólicas Libres (Free Recall)** | Full-Stack | **Trascendencia del reconocimiento pasivo.** MathLive + SymPy para respuestas abiertas y validación de pasos intermedios. | 2 a 3 d | 🧠 **Impacto Cognitivo Máximo** |
 | **Milestone 6: Antigravity Study Harness (Split-View & 1/3–1/2 Viewport)** | Arquitectura UI | **Estación de ultra-aprendizaje en Flow.** Vía Pragmática: Viewport 1/3–1/2 + Pestañas (Hoja en Blanco / Teoría) + Copiar Prompt Socrático. Vía Full: Visor PDF integrado in-app. | 1 a 2 h (Vía Pragmática) / 3 a 5 d (Full) | 👑 **Redefinido: 80/20 Pragmático** |
-| **Milestone 7: Streaming DAG y Pool de Subprocesos** | Infraestructura | **Quiebra la barrera de 15 min en pipeline.** Grafo asíncrono sin barreras bloqueantes y pool persistente de workers SymPy. | 2 a 3 d | ⚡ **Rendimiento Pipeline** |
+| **Milestone 7: Streaming DAG, Pool de Workers y Aceleración de Tests** | Infraestructura | **Quiebra la barrera de 15 min en pipeline y acelera la suite de 1,037 tests de 85s a < 30s.** DAG asíncrono, pre-warming de sandbox y paralelización `pytest-xdist` (12 cores). | 2 a 3 d | ⚡ **Rendimiento Pipeline & CI/CD** |
 | **Milestone 8: Repetición Espaciada (SRS) y Blind Mode** | Motor de Sesión | **Combate el decaimiento de memoria (Curva de Ebbinghaus).** Decaimiento temporal, refreshers a 1-4-14-45 días y sesiones a ciegas. | 2 a 3 d | 🔁 **Cierre de Ciclo de Pericia** |
 | **Milestone 9: Jerarquía de Contenido (PPT $\to$ Core/Subtemas)** | Curricular / Schema | **Organización natural en torno a la fuente real.** Contenido PPT $\to$ [Glosario + Núcleo] + Subtemas $\to$ Quizzes de subtema + Challenge PPT. | 2 a 3 d | 🏛️ **Arquitectura Curricular** |
 | **Milestone 10: QA Rubric v2.0 Deep Mastery** | Auditoría QA | **Certificación integral de rigor.** Linters deterministas activos; falta penalización automática por monocultivo MC7 y multimodalidad. | 1 a 2 d | 📋 **Parcial (Linters activos / Penalizaciones pendientes)** |
@@ -282,6 +282,14 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
        2. ✅ **IMPLEMENTADO:** **Paso de Normalización en Pipeline (`engine/assemble.py` & `compile_shard.py` vía `sanitize_katex_syntax`):** Fase determinista de saneamiento activo que colapsa automáticamente secuencias de sobreescape multibarral (`\\frac`, `\\\\to` $\to$ `\frac`, `\to`) antes de la serialización del curso, traduce macros externas huérfanas (`\centernot\Rightarrow` $\to$ `\nRightarrow`, `\centernot` $\to$ `\not`) y repara contaminaciones de plantilla como `\text{textVar[barx_n] = O(n)}`.
        3. ✅ **IMPLEMENTADO:** **Invariante KaTeX Inline en CI/CD y Compilador (`engine/invariants.py` & `compile_shard.py`):** Comprueba exhaustivamente en tiempo de compilación que ningún bloque matemático delimitado por un solo `$` contenga el comando de salto de línea `\\` fuera de entornos matriciales o sistemas (`matrix`, `cases`, `aligned`, `array`, `split`, `gathered`), garantizando compatibilidad nativa KaTeX en cliente.
        4. ✅ **IMPLEMENTADO:** **Guardián de Admisión en Runtime (`run_platform.py` vía `validate_platform_course` & `repair_platform_course_katex`):** Valida léxica y semánticamente todo curso en Pass 1 (raw JSON) y Pass 4 (campos en memoria), bloqueando o auto-reparando transparentemente en disco secuencias sobreescapadas o macros inválidas `R-23` antes de servirlos a la aplicación web.
+       5. ✅ **IMPLEMENTADO:** **Optimización de Rendimiento $O(1)$ Zero-Copy en Escáner Léxico y Test Suite R-23 (`src/validator/lexical_scanner.py` & `tests/test_katex_overescape_validator_r23.py`):**
+          - **Diagnóstico del Cuello de Botella $O(N^2)$:** Durante el escaneo de cursos masivos como `gavilano_pre_parcial.json` (14.1 MB, 2,950 preguntas y 125,158 barras invertidas), cada barra creaba una rebanada de memoria completa `raw_text[bs_end:]` (promedio de 7 MB por slice), generando **~437 Gigabytes de copias de memoria efímeras** y congelando la prueba por más de 6 minutos. Adicionalmente, el test `test_real_published_courses_zero_r23_errors` duplicaba la pasada léxica ejecutando `scan_lexical` antes de `validate_course_content(strict=True)`.
+          - **Solución Implementada:**
+            * Precompilación de expresiones regulares (`RE_ALPHA = re.compile(r"[a-zA-Z]+")`, `RE_ALNUM = re.compile(r"[a-zA-Z0-9]+")`).
+            * Filtro de escape selectivo: verificación de comando LaTeX únicamente cuando `(run_len >= 4 and run_len % 4 == 0)` o `(run_len >= 6 and run_len % 4 == 2)`, saltando regex en el 99.9% de barras estándar de JSON válido (`run_len == 2`).
+            * Coincidencia in-place de cero copias usando el argumento `pos` (`RE_ALPHA.match(raw_text, bs_end)`), eliminando por completo las rebanadas de memoria.
+            * Eliminación del escaneo redundante en el test, manteniendo la validación de extremo a extremo con `strict=True`.
+          - **Impacto Medido:** Reducción del tiempo de la suite R-23 de **>6 minutos** a **9.16 segundos** (~40x más rápido) con 100% de paridad y 0 regresiones.
 
 ---
 
@@ -429,8 +437,8 @@ El nuevo diseño del Milestone 6 se estructura en dos modalidades complementaria
 
 ---
 
-### Milestone 7: Pipeline Streaming DAG y Pool de Subprocesos (Target: < 15 min)
-* **Objetivo:** Quebrar la barrera de 15 minutos en la compilación de cursos sin relajar los estándares psicométricos.
+### Milestone 7: Pipeline Streaming DAG, Pool de Subprocesos y Aceleración de la Suite de Tests (Target Pipeline: < 15 min / Target Tests: < 30 s)
+* **Objetivo:** Quebrar la barrera de 15 minutos en la compilación de cursos sin relajar los estándares psicométricos, y acelerar la suite completa de pruebas (1,037 tests) de 85.58 s a menos de 30 segundos aprovechando los 12 núcleos del sistema.
 * **Componentes Técnicos:**
   1. **Pipelining Asíncrono por Competencia (Streaming DAG en `dispatch.py`):**
      - Sustituir barreras síncronas por un grafo de eventos: tan pronto como un shard finaliza `templates/C-01.json`, ese archivo entra inmediatamente a validación y juez ciego, solapando el trabajo sin esperar al último subagente (*straggler*).
@@ -442,6 +450,22 @@ El nuevo diseño del Milestone 6 se estructura en dos modalidades complementaria
      - Máximo 1 competencia `Skill` (`Hab-*`) por shard o 2–3 de `Concept`/`Fact`.
   5. **Pre-Filtro Heurístico para Blind Judge en `judge.py`:**
      - Filtro psicométrico determinista previo para reservar llamadas LLM a una muestra estratificada.
+  6. **Aceleración Integral de la Suite de Pruebas (De 85.58 s a < 30 s):**
+     - **Diagnóstico Forense de la Suite Global (1,037 pruebas):**
+       * Tras resolver el sobreescape R-23 ($O(N^2)$ en `scan_lexical`), la suite completa de 54 archivos pasó de colgar (>6 min) a **85.58 s (~1 min 25 s)**.
+       * Aunque ya opera bajo el límite de 1.5 minutos (90 s), el margen es estrecho (4.4 s) y se identifican 3 cuellos de botella remanentes:
+         1. *Cold-Start de bibliotecas científicas con tracer de seguridad activo (`5.74 s` en `test_sandbox_adversarial.py`):* La prueba `test_all_whitelisted_math_libraries` importa `sympy` y `scipy.stats` mientras `sys.settrace` está activo, inspeccionando cada una de las 500k líneas del cargador en cámara lenta.
+         2. *Timeouts intencionales en disyuntores de seguridad (`5.44 s` combinados):* Pruebas como `test_shard_compiler_hardening.py` (2.44 s) y `test_sandbox_adversarial.py` (2.00 s) esperan pasivamente a que expire un `timeout=2.0s` para verificar la detención de bucles infinitos.
+         3. *Sub-utilización de CPU en host multi-core:* Pytest corre secuencialmente en un único hilo, desaprovechando los 12 núcleos lógicos de la máquina.
+     - **Plan de Acción para Reducción a $< 30$ Segundos:**
+       * **Vía A: Paralelización con `pytest-xdist` (Target: ~20–25 s):**
+         - Instalar `pytest-xdist` en el entorno virtual (`pip install pytest-xdist`).
+         - Configurar `addopts = "-n auto --ignore=tests/e2e"` en `pyproject.toml`.
+         - Distribuye los 1,037 tests entre los 12 núcleos lógicos de la CPU, reduciendo el tiempo de ejecución en más del 70%.
+       * **Vía B: Optimizaciones Quirúrgicas Secuenciales (Target: ~68–72 s):**
+         - *Pre-warming del sandbox:* Inyectar `warm_up_sandbox()` al importar `test_sandbox_adversarial.py` para precargar `sympy` y `scipy.stats` en `sys.modules` fuera de `sys.settrace`, reduciendo el test de 5.74 s a **0.25 s** (~5.5 s de ahorro neto).
+         - *Calibración de timeouts locales en tests de circuito:* Ajustar localmente a `0.2s` o `0.5s` el timeout de prueba en tests de bucles infinitos, preservando la garantía del disyuntor y ahorrando ~3.5 s.
+         - *Fixtures de sesión para JSONs de cursos:* Reutilizar la carga en memoria de los 4 cursos reales entre tests de admisión y sanitización, ahorrando ~2.5 s de I/O de disco.
 
 ---
 

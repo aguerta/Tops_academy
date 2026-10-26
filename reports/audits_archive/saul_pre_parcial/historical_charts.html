@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>C2C Historical Benchmark & Unit Economics Evolution</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .chart-tooltip {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-4 sm:p-6 font-sans">
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Header Section -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+              C2C v3.3 Telemetry
+            </span>
+            <span class="text-xs text-[var(--muted-foreground)]">Dataset de 32 Corridas Auditadas</span>
+          </div>
+          <h1 class="text-2xl font-bold tracking-tight text-[var(--foreground)] mt-2">
+            Evolución Longitudinal de Rendimiento y Unit Economics
+          </h1>
+          <p class="text-sm text-[var(--muted-foreground)] mt-1">
+            Trayectoria histórica desde las primeras ejecuciones secuenciales hasta la era masiva multi-agente (Speedup récord de 12.77x).
+          </p>
+        </div>
+        
+        <!-- Controls -->
+        <div class="flex items-center gap-3 bg-[var(--background)] p-1.5 rounded-xl border border-[var(--border)]">
+          <button id="btn-successful" onclick="setFilter('successful')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs">
+            Solo Exitosas (23 runs)
+          </button>
+          <button id="btn-all" onclick="setFilter('all')" class="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Todas las Corridas (32 runs)
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Cards Grid -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Densidad de Tokens / Preg</div>
+          <div class="text-2xl font-bold text-[var(--foreground)] mt-1" id="kpi-tok-preg">28,756</div>
+          <div class="text-xs text-emerald-500 flex items-center gap-1 mt-1 font-medium">
+            <span>↓ 83.5%</span> <span class="text-[var(--muted-foreground)] font-normal">vs pico (174k)</span>
+          </div>
+        </div>
+
+        <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Latencia de Pared / Preg</div>
+          <div class="text-2xl font-bold text-[var(--foreground)] mt-1" id="kpi-sec-preg">1.03 s</div>
+          <div class="text-xs text-emerald-500 flex items-center gap-1 mt-1 font-medium">
+            <span>↓ 97.2%</span> <span class="text-[var(--muted-foreground)] font-normal">vs pico (36.6s)</span>
+          </div>
+        </div>
+
+        <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Tiempo de Pared Total</div>
+          <div class="text-2xl font-bold text-[var(--foreground)] mt-1" id="kpi-wall">26.1 min</div>
+          <div class="text-xs text-emerald-500 flex items-center gap-1 mt-1 font-medium">
+            <span>↓ 92.8%</span> <span class="text-[var(--muted-foreground)] font-normal">vs pico (366 min)</span>
+          </div>
+        </div>
+
+        <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">Speedup Concurrente</div>
+          <div class="text-2xl font-bold text-sky-500 mt-1" id="kpi-speedup">12.77x</div>
+          <div class="text-xs text-sky-400 flex items-center gap-1 mt-1 font-medium">
+            <span>↑ 9.8x</span> <span class="text-[var(--muted-foreground)] font-normal">vs base inicial (1.3x)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 1: Unit Economics (Tokens / Pregunta & Segundos / Pregunta) -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-[var(--foreground)]">
+            1. Evolución de Unit Economics (Tokens y Segundos por Pregunta)
+          </h2>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            Evolución temporal del costo computacional y tiempo de pared normalizados por cada reactivo validado.
+          </p>
+        </div>
+        <div class="flex items-center gap-4 text-xs">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-indigo-500 inline-block"></span>
+            <span class="text-[var(--muted-foreground)]">Tokens / Pregunta (k)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+            <span class="text-[var(--muted-foreground)]">Segundos / Pregunta</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative w-full overflow-hidden" style="height: 340px;" id="chart1-container">
+        <svg id="chart1-svg" class="w-full h-full"></svg>
+        <div id="chart1-tooltip" class="chart-tooltip bg-slate-900 text-white text-xs p-2.5 rounded-lg shadow-xl border border-slate-700 pointer-events-none"></div>
+      </div>
+    </div>
+
+    <!-- Two Columns: Total Wall-Clock Time & Total Tokens -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- Chart 2: Total Wall Time (Minutes) -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-lg font-semibold text-[var(--foreground)]">
+              2. Tiempos Totales de Pared por Corrida
+            </h2>
+            <p class="text-xs text-[var(--muted-foreground)]">
+              Duración real de pared en minutos y aceleración concurrente (Speedup).
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-sm bg-rose-500/80 inline-block"></span>
+              <span class="text-[var(--muted-foreground)]">Pared (minutos)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-sky-400 inline-block"></span>
+              <span class="text-[var(--muted-foreground)]">Speedup (x)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative w-full overflow-hidden" style="height: 300px;" id="chart2-container">
+          <svg id="chart2-svg" class="w-full h-full"></svg>
+          <div id="chart2-tooltip" class="chart-tooltip bg-slate-900 text-white text-xs p-2.5 rounded-lg shadow-xl border border-slate-700 pointer-events-none"></div>
+        </div>
+      </div>
+
+      <!-- Chart 3: Total Tokens per Run (Millions) -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-lg font-semibold text-[var(--foreground)]">
+              3. Tokens Totales por Corrida (Activos vs Caché)
+            </h2>
+            <p class="text-xs text-[var(--muted-foreground)]">
+              Volumen bruto procesado en Millones de tokens con impacto del Context Caching.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-sm bg-cyan-500 inline-block"></span>
+              <span class="text-[var(--muted-foreground)]">Activos (M)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-sm bg-purple-500/40 inline-block"></span>
+              <span class="text-[var(--muted-foreground)]">Caché (M)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative w-full overflow-hidden" style="height: 300px;" id="chart3-container">
+          <svg id="chart3-svg" class="w-full h-full"></svg>
+          <div id="chart3-tooltip" class="chart-tooltip bg-slate-900 text-white text-xs p-2.5 rounded-lg shadow-xl border border-slate-700 pointer-events-none"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Data Table Section -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-[var(--foreground)]">Registro Histórico Detallado</h2>
+          <p class="text-xs text-[var(--muted-foreground)]">Listado cronológico de las 32 ejecuciones auditadas</p>
+        </div>
+        <input type="text" id="table-search" placeholder="Buscar curso o fecha..." oninput="filterTable()" 
+               class="bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-indigo-500 w-48 sm:w-64">
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left border-collapse">
+          <thead>
+            <tr class="border-b border-[var(--border)] text-[var(--muted-foreground)] font-medium bg-[var(--background)]/50">
+              <th class="py-2.5 px-3">Fecha</th>
+              <th class="py-2.5 px-3">Curso</th>
+              <th class="py-2.5 px-3">Conv ID</th>
+              <th class="py-2.5 px-3 text-right">Preguntas</th>
+              <th class="py-2.5 px-3 text-right">Pared (min)</th>
+              <th class="py-2.5 px-3 text-right">Tokens Totales</th>
+              <th class="py-2.5 px-3 text-right">Tok / Preg</th>
+              <th class="py-2.5 px-3 text-right">Seg / Preg</th>
+              <th class="py-2.5 px-3 text-right">QPM</th>
+              <th class="py-2.5 px-3 text-right">Speedup</th>
+            </tr>
+          </thead>
+          <tbody id="table-body" class="divide-y divide-[var(--border)]">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Embedded Historical Dataset
+    const RAW_DATA = [
+      {"index": 1, "date": "2026-10-10 12:00", "course_id": "estadistica3_regresion_v3", "conv_id": "baseline", "questions": 480, "wall_minutes": 60.0, "wall_seconds": 3600.0, "total_tokens": 8645000, "total_tokens_m": 8.65, "active_tokens_m": 8.65, "cache_tokens_m": 0.0, "tokens_per_question": 18010.4, "seconds_per_question": 7.5, "qpm": 8.0, "speedup": 2.0, "success": true},
+      {"index": 2, "date": "2026-10-17 01:33", "course_id": "solow_model", "conv_id": "ab9cdbf6", "questions": 790, "wall_minutes": 80.4, "wall_seconds": 4824.0, "total_tokens": 107300562, "total_tokens_m": 107.3, "active_tokens_m": 35.8, "cache_tokens_m": 71.5, "tokens_per_question": 135823.5, "seconds_per_question": 6.11, "qpm": 9.8, "speedup": 2.57, "success": true},
+      {"index": 3, "date": "2026-10-17 03:49", "course_id": "solow_model", "conv_id": "3a4ba3e1", "questions": 0, "wall_minutes": 0.5, "wall_seconds": 27.0, "total_tokens": 132864, "total_tokens_m": 0.13, "active_tokens_m": 0.13, "cache_tokens_m": 0.0, "tokens_per_question": 0.0, "seconds_per_question": 0.0, "qpm": 0.0, "speedup": 1.0, "success": false},
+      {"index": 4, "date": "2026-10-17 03:49", "course_id": "solow_model", "conv_id": "b258c6b2", "questions": 0, "wall_minutes": 1.4, "wall_seconds": 86.0, "total_tokens": 653847, "total_tokens_m": 0.65, "active_tokens_m": 0.65, "cache_tokens_m": 0.0, "tokens_per_question": 0.0, "seconds_per_question": 0.0, "qpm": 0.0, "speedup": 3.52, "success": false},
+      {"index": 5, "date": "2026-10-17 03:49", "course_id": "solow_model", "conv_id": "236c54b4", "questions": 0, "wall_minutes": 0.8, "wall_seconds": 48.0, "total_tokens": 268780, "total_tokens_m": 0.27, "active_tokens_m": 0.27, "cache_tokens_m": 0.0, "tokens_per_question": 0.0, "seconds_per_question": 0.0, "qpm": 0.0, "speedup": 1.0, "success": false},
+      {"index": 6, "date": "2026-10-17 03:49", "course_id": "solow_model", "conv_id": "b1a6a9dc", "questions": 790, "wall_minutes": 143.2, "wall_seconds": 8595.0, "total_tokens": 48667362, "total_tokens_m": 48.67, "active_tokens_m": 22.4, "cache_tokens_m": 26.27, "tokens_per_question": 61604.3, "seconds_per_question": 10.88, "qpm": 5.5, "speedup": 1.74, "success": true},
+      {"index": 7, "date": "2026-10-17 03:49", "course_id": "solow_model", "conv_id": "e065ef4b", "questions": 0, "wall_minutes": 28.9, "wall_seconds": 1731.0, "total_tokens": 18610255, "total_tokens_m": 18.61, "active_tokens_m": 8.5, "cache_tokens_m": 10.11, "tokens_per_question": 0.0, "seconds_per_question": 0.0, "qpm": 0.0, "speedup": 3.37, "success": false},
+      {"index": 8, "date": "2026-10-17 03:49", "course_id": "solow_model", "conv_id": "f1d88c9d", "questions": 790, "wall_minutes": 76.0, "wall_seconds": 4558.0, "total_tokens": 51065968, "total_tokens_m": 51.07, "active_tokens_m": 21.3, "cache_tokens_m": 29.77, "tokens_per_question": 64640.5, "seconds_per_question": 5.77, "qpm": 10.4, "speedup": 2.88, "success": true},
+      {"index": 9, "date": "2026-10-17 03:49", "course_id": "solow_model", "conv_id": "2d6847f0", "questions": 0, "wall_minutes": 43.5, "wall_seconds": 2609.0, "total_tokens": 30268477, "total_tokens_m": 30.27, "active_tokens_m": 11.2, "cache_tokens_m": 19.07, "tokens_per_question": 0.0, "seconds_per_question": 0.0, "qpm": 0.0, "speedup": 3.45, "success": false},
+      {"index": 10, "date": "2026-10-17 11:35", "course_id": "pde_saul_1", "conv_id": "876ad3df", "questions": 380, "wall_minutes": 55.9, "wall_seconds": 3352.0, "total_tokens": 49363575, "total_tokens_m": 49.36, "active_tokens_m": 15.6, "cache_tokens_m": 33.76, "tokens_per_question": 129904.1, "seconds_per_question": 8.82, "qpm": 6.8, "speedup": 1.93, "success": true},
+      {"index": 11, "date": "2026-10-17 11:35", "course_id": "estadistica_regresion", "conv_id": "0f573810", "questions": 1050, "wall_minutes": 366.0, "wall_seconds": 21961.0, "total_tokens": 86861352, "total_tokens_m": 86.86, "active_tokens_m": 31.4, "cache_tokens_m": 55.46, "tokens_per_question": 82725.1, "seconds_per_question": 20.92, "qpm": 2.9, "speedup": 1.45, "success": true},
+      {"index": 12, "date": "2026-10-17 11:35", "course_id": "practica_parcial_saul", "conv_id": "9ed41fb3", "questions": 0, "wall_minutes": 3.9, "wall_seconds": 233.0, "total_tokens": 10296430, "total_tokens_m": 10.3, "active_tokens_m": 4.1, "cache_tokens_m": 6.2, "tokens_per_question": 0.0, "seconds_per_question": 0.0, "qpm": 0.0, "speedup": 12.11, "success": false},
+      {"index": 13, "date": "2026-10-17 11:35", "course_id": "solow_model", "conv_id": "812bfecd", "questions": 500, "wall_minutes": 48.9, "wall_seconds": 2936.0, "total_tokens": 27699093, "total_tokens_m": 27.7, "active_tokens_m": 12.3, "cache_tokens_m": 15.4, "tokens_per_question": 55398.2, "seconds_per_question": 5.87, "qpm": 10.2, "speedup": 2.46, "success": true},
+      {"index": 14, "date": "2026-10-17 11:35", "course_id": "solow_model_v14", "conv_id": "7818f6af", "questions": 540, "wall_minutes": 329.9, "wall_seconds": 19792.0, "total_tokens": 44765174, "total_tokens_m": 44.77, "active_tokens_m": 18.2, "cache_tokens_m": 26.57, "tokens_per_question": 82898.5, "seconds_per_question": 36.65, "qpm": 1.6, "speedup": 1.3, "success": true},
+      {"index": 15, "date": "2026-10-17 11:35", "course_id": "solow_model", "conv_id": "f2be91cd", "questions": 570, "wall_minutes": 339.9, "wall_seconds": 20393.0, "total_tokens": 59974427, "total_tokens_m": 59.97, "active_tokens_m": 23.1, "cache_tokens_m": 36.87, "tokens_per_question": 105218.3, "seconds_per_question": 35.78, "qpm": 1.7, "speedup": 1.28, "success": true},
+      {"index": 16, "date": "2026-10-17 11:35", "course_id": "solow_model_v13", "conv_id": "18ae4bcc", "questions": 570, "wall_minutes": 61.9, "wall_seconds": 3714.0, "total_tokens": 34966209, "total_tokens_m": 34.97, "active_tokens_m": 14.5, "cache_tokens_m": 20.47, "tokens_per_question": 61344.2, "seconds_per_question": 6.52, "qpm": 9.2, "speedup": 2.24, "success": true},
+      {"index": 17, "date": "2026-10-20 03:37", "course_id": "practica_parcial_saul_standard_coarse_v2", "conv_id": "afb5aa18", "questions": 370, "wall_minutes": 60.0, "wall_seconds": 3602.0, "total_tokens": 59269221, "total_tokens_m": 59.27, "active_tokens_m": 18.9, "cache_tokens_m": 40.37, "tokens_per_question": 160187.1, "seconds_per_question": 9.74, "qpm": 6.2, "speedup": 3.03, "success": true},
+      {"index": 18, "date": "2026-10-20 03:37", "course_id": "practica_parcial_saul_standard", "conv_id": "f9b9d459", "questions": 1590, "wall_minutes": 64.2, "wall_seconds": 3853.0, "total_tokens": 71443646, "total_tokens_m": 71.44, "active_tokens_m": 24.5, "cache_tokens_m": 46.94, "tokens_per_question": 44933.1, "seconds_per_question": 2.42, "qpm": 24.8, "speedup": 3.92, "success": true},
+      {"index": 19, "date": "2026-10-20 03:37", "course_id": "practica_parcial_saul_standard_coarse", "conv_id": "a53e6af1", "questions": 320, "wall_minutes": 32.8, "wall_seconds": 1970.0, "total_tokens": 21128769, "total_tokens_m": 21.13, "active_tokens_m": 8.7, "cache_tokens_m": 12.43, "tokens_per_question": 66027.4, "seconds_per_question": 6.16, "qpm": 9.8, "speedup": 3.33, "success": true},
+      {"index": 20, "date": "2026-10-20 03:37", "course_id": "practica_parcial_saul", "conv_id": "acdc402d", "questions": 2850, "wall_minutes": 85.7, "wall_seconds": 5139.0, "total_tokens": 102715610, "total_tokens_m": 102.72, "active_tokens_m": 34.2, "cache_tokens_m": 68.52, "tokens_per_question": 36040.6, "seconds_per_question": 1.8, "qpm": 33.3, "speedup": 5.17, "success": true},
+      {"index": 21, "date": "2026-10-20 03:37", "course_id": "solow_model_v15", "conv_id": "4ceacf92", "questions": 360, "wall_minutes": 27.1, "wall_seconds": 1626.0, "total_tokens": 22064985, "total_tokens_m": 22.06, "active_tokens_m": 9.4, "cache_tokens_m": 12.66, "tokens_per_question": 61291.6, "seconds_per_question": 4.52, "qpm": 13.3, "speedup": 3.32, "success": true},
+      {"index": 22, "date": "2026-10-23 13:58", "course_id": "econometria_violaciones_supuestos", "conv_id": "b9316152", "questions": 360, "wall_minutes": 40.6, "wall_seconds": 2437.0, "total_tokens": 40828445, "total_tokens_m": 40.83, "active_tokens_m": 14.1, "cache_tokens_m": 26.73, "tokens_per_question": 113412.3, "seconds_per_question": 6.77, "qpm": 8.9, "speedup": 2.87, "success": true},
+      {"index": 23, "date": "2026-10-23 13:58", "course_id": "estadistica_asintotica", "conv_id": "d52ee475", "questions": 660, "wall_minutes": 26.9, "wall_seconds": 1613.0, "total_tokens": 24065386, "total_tokens_m": 24.07, "active_tokens_m": 9.8, "cache_tokens_m": 14.27, "tokens_per_question": 36462.7, "seconds_per_question": 2.44, "qpm": 24.6, "speedup": 4.09, "success": true},
+      {"index": 24, "date": "2026-10-23 21:38", "course_id": "asyntotic_estatistics_v2", "conv_id": "ab30cf91", "questions": 740, "wall_minutes": 65.5, "wall_seconds": 3930.0, "total_tokens": 129061781, "total_tokens_m": 129.06, "active_tokens_m": 38.5, "cache_tokens_m": 90.56, "tokens_per_question": 174407.8, "seconds_per_question": 5.31, "qpm": 11.3, "speedup": 5.03, "success": true},
+      {"index": 25, "date": "2026-10-24 19:55", "course_id": "asyntotic_estatistics_v3", "conv_id": "bb98a610", "questions": 690, "wall_minutes": 66.6, "wall_seconds": 3997.0, "total_tokens": 88080962, "total_tokens_m": 88.08, "active_tokens_m": 26.4, "cache_tokens_m": 61.68, "tokens_per_question": 127653.6, "seconds_per_question": 5.79, "qpm": 10.4, "speedup": 4.75, "success": true},
+      {"index": 26, "date": "2026-10-24 21:37", "course_id": "asyntotic_estatistics_v4", "conv_id": "0b8b5084", "questions": 0, "wall_minutes": 37.7, "wall_seconds": 2264.0, "total_tokens": 57328892, "total_tokens_m": 57.33, "active_tokens_m": 18.2, "cache_tokens_m": 39.13, "tokens_per_question": 0.0, "seconds_per_question": 0.0, "qpm": 0.0, "speedup": 5.04, "success": false},
+      {"index": 27, "date": "2026-10-25 00:52", "course_id": "asyntotic_estatistics_v5", "conv_id": "89cf485b", "questions": 0, "wall_minutes": 52.3, "wall_seconds": 3139.0, "total_tokens": 44473361, "total_tokens_m": 44.47, "active_tokens_m": 15.3, "cache_tokens_m": 29.17, "tokens_per_question": 0.0, "seconds_per_question": 0.0, "qpm": 0.0, "speedup": 3.91, "success": false},
+      {"index": 28, "date": "2026-10-25 03:51", "course_id": "asyntotic_estatistics_v6", "conv_id": "bb374ed7", "questions": 0, "wall_minutes": 41.2, "wall_seconds": 2475.0, "total_tokens": 19506382, "total_tokens_m": 19.51, "active_tokens_m": 8.1, "cache_tokens_m": 11.41, "tokens_per_question": 0.0, "seconds_per_question": 0.0, "qpm": 0.0, "speedup": 3.55, "success": false},
+      {"index": 29, "date": "2026-10-25 06:50", "course_id": "gavilano_pre_parcial", "conv_id": "aad42579", "questions": 2950, "wall_minutes": 47.4, "wall_seconds": 2844.0, "total_tokens": 60325789, "total_tokens_m": 60.33, "active_tokens_m": 15.5, "cache_tokens_m": 44.83, "tokens_per_question": 20449.4, "seconds_per_question": 0.96, "qpm": 62.2, "speedup": 11.41, "success": true},
+      {"index": 30, "date": "2026-10-25 06:50", "course_id": "asyntotic_estatistics_v7", "conv_id": "f4672681", "questions": 710, "wall_minutes": 31.6, "wall_seconds": 1896.0, "total_tokens": 21625641, "total_tokens_m": 21.63, "active_tokens_m": 4.98, "cache_tokens_m": 16.65, "tokens_per_question": 30458.6, "seconds_per_question": 2.67, "qpm": 22.5, "speedup": 5.53, "success": true},
+      {"index": 31, "date": "2026-10-25 15:26", "course_id": "saul_control_optimo", "conv_id": "06bccddf", "questions": 350, "wall_minutes": 22.3, "wall_seconds": 1340.0, "total_tokens": 9267386, "total_tokens_m": 9.27, "active_tokens_m": 2.21, "cache_tokens_m": 7.06, "tokens_per_question": 26478.2, "seconds_per_question": 3.83, "qpm": 15.7, "speedup": 3.9, "success": true},
+      {"index": 32, "date": "2026-10-26 04:21", "course_id": "saul_pre_parcial", "conv_id": "201fa8ef", "questions": 1520, "wall_minutes": 26.1, "wall_seconds": 1569.0, "total_tokens": 43709660, "total_tokens_m": 43.71, "active_tokens_m": 9.14, "cache_tokens_m": 34.57, "tokens_per_question": 28756.4, "seconds_per_question": 1.03, "qpm": 58.1, "speedup": 12.77, "success": true}
+    ];
+
+    let currentFilter = 'successful';
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.getElementById('btn-successful').className = filter === 'successful' 
+        ? "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+        : "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+      document.getElementById('btn-all').className = filter === 'all'
+        ? "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+        : "px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+      renderAll();
+    }
+
+    function getFilteredData() {
+      return currentFilter === 'successful' ? RAW_DATA.filter(d => d.success) : RAW_DATA;
+    }
+
+    function renderAll() {
+      const data = getFilteredData();
+      renderChart1(data);
+      renderChart2(data);
+      renderChart3(data);
+      renderTable(data);
+    }
+
+    // Chart 1: Unit Economics (Tokens / Pregunta & Segundos / Pregunta)
+    function renderChart1(data) {
+      const svg = document.getElementById('chart1-svg');
+      const tooltip = document.getElementById('chart1-tooltip');
+      const width = svg.clientWidth || 800;
+      const height = 340;
+      const pad = { top: 30, right: 60, bottom: 45, left: 60 };
+      
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+      
+      const maxTokQ = Math.max(...data.map(d => d.tokens_per_question), 40000);
+      const maxSecQ = Math.max(...data.map(d => d.seconds_per_question), 10);
+      
+      let html = '';
+      
+      // Target Benchmark Band for Tokens/Pregunta (15k - 35k)
+      const bandTopY = pad.top + plotH * (1 - 35000 / maxTokQ);
+      const bandBottomY = pad.top + plotH * (1 - 15000 / maxTokQ);
+      html += `<rect x="${pad.left}" y="${bandTopY}" width="${plotW}" height="${bandBottomY - bandTopY}" fill="#10b981" fill-opacity="0.08" />`;
+      html += `<text x="${width - pad.right - 5}" y="${bandTopY + 12}" fill="#10b981" font-size="10" text-anchor="end" font-weight="500">Zona Óptima (15k - 35k tok/preg)</text>`;
+      
+      // Grid lines
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.top + (plotH / 4) * i;
+        const valLeft = Math.round((maxTokQ * (1 - i / 4)) / 1000);
+        const valRight = (maxSecQ * (1 - i / 4)).toFixed(1);
+        html += `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="currentColor" stroke-opacity="0.08" stroke-dasharray="3 3"/>`;
+        html += `<text x="${pad.left - 8}" y="${y + 3}" fill="currentColor" opacity="0.5" font-size="10" text-anchor="end">${valLeft}k</text>`;
+        html += `<text x="${width - pad.right + 8}" y="${y + 3}" fill="#f59e0b" font-size="10" text-anchor="start">${valRight}s</text>`;
+      }
+      
+      // Calculate coordinates
+      const pointsTok = [];
+      const pointsSec = [];
+      
+      data.forEach((d, i) => {
+        const x = pad.left + (plotW / (data.length - 1 || 1)) * i;
+        const yTok = pad.top + plotH * (1 - (d.tokens_per_question / maxTokQ));
+        const ySec = pad.top + plotH * (1 - (d.seconds_per_question / maxSecQ));
+        pointsTok.push({ x, y: yTok, d });
+        pointsSec.push({ x, y: ySec, d });
+      });
+      
+      // Polyline for Tokens / Preg
+      const pathTok = pointsTok.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+      html += `<path d="${pathTok}" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+      
+      // Polyline for Sec / Preg
+      const pathSec = pointsSec.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+      html += `<path d="${pathSec}" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 2"/>`;
+      
+      // Dots & Interaction
+      pointsTok.forEach((pt, i) => {
+        const pSec = pointsSec[i];
+        html += `
+          <g class="cursor-pointer group" onmouseenter="showTooltip1(event, ${pt.d.index})" onmouseleave="hideTooltip1()">
+            <line x1="${pt.x}" y1="${pad.top}" x2="${pt.x}" y2="${height - pad.bottom}" stroke="currentColor" stroke-opacity="0" stroke-width="1" class="group-hover:stroke-opacity-30" />
+            <circle cx="${pt.x}" cy="${pt.y}" r="4" fill="#6366f1" stroke="#ffffff" stroke-width="1.5" class="transition-transform group-hover:scale-125"/>
+            <circle cx="${pSec.x}" cy="${pSec.y}" r="3.5" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5" class="transition-transform group-hover:scale-125"/>
+          </g>
+        `;
+      });
+      
+      svg.innerHTML = html;
+    }
+
+    // Chart 2: Total Wall Minutes & Speedup
+    function renderChart2(data) {
+      const svg = document.getElementById('chart2-svg');
+      const width = svg.clientWidth || 400;
+      const height = 300;
+      const pad = { top: 25, right: 45, bottom: 45, left: 45 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+      
+      const maxWall = Math.max(...data.map(d => d.wall_minutes), 60);
+      const maxSp = Math.max(...data.map(d => d.speedup), 14);
+      
+      let html = '';
+      
+      // Grid lines
+      for (let i = 0; i <= 3; i++) {
+        const y = pad.top + (plotH / 3) * i;
+        const valLeft = Math.round(maxWall * (1 - i / 3));
+        const valRight = (maxSp * (1 - i / 3)).toFixed(1);
+        html += `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="currentColor" stroke-opacity="0.08" />`;
+        html += `<text x="${pad.left - 6}" y="${y + 3}" fill="currentColor" opacity="0.5" font-size="9" text-anchor="end">${valLeft}m</text>`;
+        html += `<text x="${width - pad.right + 6}" y="${y + 3}" fill="#38bdf8" font-size="9" text-anchor="start">${valRight}x</text>`;
+      }
+      
+      const barW = Math.max(3, (plotW / data.length) - 4);
+      const pointsSp = [];
+      
+      data.forEach((d, i) => {
+        const x = pad.left + (plotW / data.length) * i + 2;
+        const barH = plotH * (d.wall_minutes / maxWall);
+        const y = pad.top + plotH - barH;
+        
+        // Bar
+        html += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="#f43f5e" fill-opacity="0.75" rx="2" class="cursor-pointer hover:fill-opacity-100 transition-colors" onmouseenter="showTooltip2(event, ${d.index})" onmouseleave="hideTooltip2()"/>`;
+        
+        // Speedup point
+        const spY = pad.top + plotH * (1 - d.speedup / maxSp);
+        pointsSp.push({ x: x + barW / 2, y: spY, d });
+      });
+      
+      // Speedup line
+      const pathSp = pointsSp.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+      html += `<path d="${pathSp}" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+      pointsSp.forEach(pt => {
+        html += `<circle cx="${pt.x}" cy="${pt.y}" r="2.5" fill="#38bdf8" stroke="#ffffff" stroke-width="1"/>`;
+      });
+      
+      svg.innerHTML = html;
+    }
+
+    // Chart 3: Total Tokens (Active vs Cache Stacked Bar)
+    function renderChart3(data) {
+      const svg = document.getElementById('chart3-svg');
+      const width = svg.clientWidth || 400;
+      const height = 300;
+      const pad = { top: 25, right: 25, bottom: 45, left: 45 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+      
+      const maxTok = Math.max(...data.map(d => d.total_tokens_m), 50);
+      
+      let html = '';
+      
+      for (let i = 0; i <= 3; i++) {
+        const y = pad.top + (plotH / 3) * i;
+        const val = Math.round(maxTok * (1 - i / 3));
+        html += `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="currentColor" stroke-opacity="0.08" />`;
+        html += `<text x="${pad.left - 6}" y="${y + 3}" fill="currentColor" opacity="0.5" font-size="9" text-anchor="end">${val}M</text>`;
+      }
+      
+      const barW = Math.max(3, (plotW / data.length) - 4);
+      
+      data.forEach((d, i) => {
+        const x = pad.left + (plotW / data.length) * i + 2;
+        const actH = plotH * (d.active_tokens_m / maxTok);
+        const cacheH = plotH * (d.cache_tokens_m / maxTok);
+        const totalH = actH + cacheH;
+        
+        const yBase = pad.top + plotH;
+        const yAct = yBase - actH;
+        const yCache = yAct - cacheH;
+        
+        // Cache portion (top)
+        html += `<rect x="${x}" y="${yCache}" width="${barW}" height="${cacheH}" fill="#a855f7" fill-opacity="0.4" rx="1"/>`;
+        // Active portion (bottom)
+        html += `<rect x="${x}" y="${yAct}" width="${barW}" height="${actH}" fill="#06b6d4" fill-opacity="0.85" rx="1" class="cursor-pointer hover:opacity-100 transition-opacity" onmouseenter="showTooltip3(event, ${d.index})" onmouseleave="hideTooltip3()"/>`;
+      });
+      
+      svg.innerHTML = html;
+    }
+
+    // Tooltips
+    function showTooltip1(e, idx) {
+      const d = RAW_DATA.find(x => x.index === idx);
+      const tip = document.getElementById('chart1-tooltip');
+      tip.innerHTML = `
+        <div class="font-bold text-slate-100">${d.course_id}</div>
+        <div class="text-[11px] text-slate-400 mb-1">${d.date} (${d.conv_id})</div>
+        <div class="flex justify-between gap-4 text-indigo-300"><span>Tokens/Preg:</span> <span class="font-mono font-bold">${d.tokens_per_question.toLocaleString()}</span></div>
+        <div class="flex justify-between gap-4 text-amber-300"><span>Segundos/Preg:</span> <span class="font-mono font-bold">${d.seconds_per_question}s</span></div>
+        <div class="flex justify-between gap-4 text-emerald-300 mt-1 pt-1 border-t border-slate-700"><span>Throughput:</span> <span class="font-mono font-bold">${d.qpm} QPM</span></div>
+      `;
+      tip.style.opacity = '1';
+      tip.style.left = Math.min(window.innerWidth - 220, e.pageX + 15) + 'px';
+      tip.style.top = (e.pageY - 70) + 'px';
+    }
+    function hideTooltip1() { document.getElementById('chart1-tooltip').style.opacity = '0'; }
+
+    function showTooltip2(e, idx) {
+      const d = RAW_DATA.find(x => x.index === idx);
+      const tip = document.getElementById('chart2-tooltip');
+      tip.innerHTML = `
+        <div class="font-bold text-slate-100">${d.course_id}</div>
+        <div class="text-[11px] text-slate-400 mb-1">${d.date}</div>
+        <div class="flex justify-between gap-4 text-rose-300"><span>Tiempo de Pared:</span> <span class="font-mono font-bold">${d.wall_minutes} min</span></div>
+        <div class="flex justify-between gap-4 text-sky-300"><span>Speedup Concurrente:</span> <span class="font-mono font-bold">${d.speedup}x</span></div>
+      `;
+      tip.style.opacity = '1';
+      tip.style.left = Math.min(window.innerWidth - 220, e.pageX + 15) + 'px';
+      tip.style.top = (e.pageY - 50) + 'px';
+    }
+    function hideTooltip2() { document.getElementById('chart2-tooltip').style.opacity = '0'; }
+
+    function showTooltip3(e, idx) {
+      const d = RAW_DATA.find(x => x.index === idx);
+      const tip = document.getElementById('chart3-tooltip');
+      const cachePct = d.total_tokens_m > 0 ? Math.round((d.cache_tokens_m / d.total_tokens_m) * 100) : 0;
+      tip.innerHTML = `
+        <div class="font-bold text-slate-100">${d.course_id}</div>
+        <div class="text-[11px] text-slate-400 mb-1">${d.date}</div>
+        <div class="flex justify-between gap-4 text-cyan-300"><span>Tokens Activos:</span> <span class="font-mono font-bold">${d.active_tokens_m} M</span></div>
+        <div class="flex justify-between gap-4 text-purple-300"><span>Tokens Caché:</span> <span class="font-mono font-bold">${d.cache_tokens_m} M (${cachePct}%)</span></div>
+        <div class="flex justify-between gap-4 text-slate-200 mt-1 pt-1 border-t border-slate-700"><span>Total Bruto:</span> <span class="font-mono font-bold">${d.total_tokens_m} M</span></div>
+      `;
+      tip.style.opacity = '1';
+      tip.style.left = Math.min(window.innerWidth - 220, e.pageX + 15) + 'px';
+      tip.style.top = (e.pageY - 60) + 'px';
+    }
+    function hideTooltip3() { document.getElementById('chart3-tooltip').style.opacity = '0'; }
+
+    // Table Rendering
+    function renderTable(data) {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = data.slice().reverse().map(d => `
+        <tr class="hover:bg-[var(--background)]/80 transition-colors">
+          <td class="py-2.5 px-3 font-mono text-slate-400">${d.date}</td>
+          <td class="py-2.5 px-3 font-medium text-[var(--foreground)]">${d.course_id}</td>
+          <td class="py-2.5 px-3 font-mono text-[var(--muted-foreground)]">${d.conv_id}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-semibold">${d.questions.toLocaleString()}</td>
+          <td class="py-2.5 px-3 text-right font-mono ${d.wall_minutes > 100 ? 'text-rose-400 font-bold' : ''}">${d.wall_minutes}m</td>
+          <td class="py-2.5 px-3 text-right font-mono">${d.total_tokens_m}M</td>
+          <td class="py-2.5 px-3 text-right font-mono ${d.tokens_per_question > 50000 ? 'text-amber-400' : 'text-emerald-400 font-bold'}">${d.tokens_per_question > 0 ? d.tokens_per_question.toLocaleString() : '-'}</td>
+          <td class="py-2.5 px-3 text-right font-mono ${d.seconds_per_question < 2.0 && d.seconds_per_question > 0 ? 'text-emerald-400 font-bold' : ''}">${d.seconds_per_question > 0 ? d.seconds_per_question + 's' : '-'}</td>
+          <td class="py-2.5 px-3 text-right font-mono text-sky-400 font-bold">${d.qpm > 0 ? d.qpm : '-'}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-bold ${d.speedup > 8.0 ? 'text-emerald-400' : ''}">${d.speedup}x</td>
+        </tr>
+      `).join('');
+    }
+
+    function filterTable() {
+      const q = document.getElementById('table-search').value.toLowerCase();
+      const filtered = getFilteredData().filter(d => 
+        d.course_id.toLowerCase().includes(q) || d.date.toLowerCase().includes(q) || d.conv_id.toLowerCase().includes(q)
+      );
+      renderTable(filtered);
+    }
+
+    // Initial render and window resize handling
+    window.addEventListener('load', renderAll);
+    window.addEventListener('resize', renderAll);
+  </script>
+</body>
+</html>
