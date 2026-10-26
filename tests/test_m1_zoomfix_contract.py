@@ -678,10 +678,6 @@ class TestKaTeXOverflowGuardContract:
         assert "max-width: 100%" in css
         assert ".qc-root .katex" in css
         assert ".qc-options .katex" in css
-        assert "white-space: normal" in css
-        assert ".qc-options .katex .base" in css or ".qc-root .katex .base" in css
-        assert ".qc-options .katex .mord.text" in css or ".qc-root .katex .mord.text" in css
-        assert "overflow-wrap: break-word" in css
 
     def test_toast_katex_guards(self):
         toast = read_stripped(FEEDBACK_TOAST_TSX)
@@ -931,11 +927,7 @@ class TestMathTextProseSplittingContract:
         css = read_stripped(INDEX_CSS)
         assert ".qc-root .katex" in css
         assert ".qc-options .katex" in css
-        assert "white-space: normal" in css
-        assert ".qc-options .katex-html" in css or ".qc-root .katex-html" in css
-        assert ".qc-options .katex .base" in css or ".qc-root .katex .base" in css
-        assert ".qc-options .katex .mord.text" in css or ".qc-root .katex .mord.text" in css
-        assert "overflow-wrap: break-word" in css
+        assert "max-width: 100%" in css
 
     def test_split_math_and_prose_execution(self):
         """Executes splitMathAndProse via Node.js on real formulas from screenshots and courses."""

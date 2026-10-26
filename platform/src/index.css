@@ -124,21 +124,6 @@ body {
 .qc-root .katex,
 .qc-options .katex {
   max-width: 100%;
-  white-space: normal;
-}
-.qc-root .katex-html,
-.qc-options .katex-html {
-  white-space: normal;
-}
-.qc-root .katex .base,
-.qc-options .katex .base {
-  white-space: normal;
-}
-.qc-root .katex .mord.text,
-.qc-options .katex .mord.text {
-  white-space: normal;
-  word-break: normal;
-  overflow-wrap: break-word;
 }
 
 /* Only display block math gets horizontal overflow scroll when wider than container */
