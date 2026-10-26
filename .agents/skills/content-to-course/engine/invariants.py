@@ -180,6 +180,8 @@ def check_unrendered_placeholders(
     errors: List[str] = []
     if not isinstance(text, str):
         return errors
+    if not text.strip():
+        return errors
 
     # 1. Detect unresolved PrairieLearn tokens: @var@ or @var:fmt@
     for m in _PL_TOKEN_PATTERN.finditer(text):
@@ -275,17 +277,20 @@ def validate_katex_syntax(
     errors: List[str] = []
     if not isinstance(text, str):
         return errors
+    if not text.strip():
+        return errors
 
     # 1. Triple dollar delimiters
     if "$$$" in text:
         errors.append(f"Triple dollar delimiter '$$$' detected in {context}.")
 
     # 2. Residual double curly braces (paired template placeholders like {{var}})
-    if re.search(r"\{\{\s*[a-zA-Z0-9_]+\s*\}\}", text) or re.search(r"(?<!\\)\{\{", text):
-        errors.append(f"Residual double curly braces ('{{{{' or '}}}}') detected in {context}.")
+    if not allow_template_vars:
+        if re.search(r"\{\{\s*[a-zA-Z0-9_]+\s*\}\}", text) or re.search(r"(?<!\\)\{\{", text):
+            errors.append(f"Residual double curly braces ('{{{{' or '}}}}') detected in {context}.")
 
-    # 3. Balanced '$' delimiters
-    clean_text = text.replace(r"\$", "")
+    # 3. Balanced '$' delimiters (stripping only odd-backslash escaped dollars \$)
+    clean_text = re.sub(r"(?<!\\)(?:\\\\)*\\\$", "", text)
     if clean_text.count("$$") % 2 != 0:
         errors.append(f"Unbalanced display math delimiter '$$' in {context}.")
     else:
@@ -448,6 +453,47 @@ def validate_katex_syntax(
     # Explicitly permit uppercase set/tuple notation (e.g. {K}, {Y}, {K, L}) in text
     if not (allow_template_vars or context.startswith("stem_variants")):
         errors.extend(check_unrendered_placeholders(text, context, variables=variables))
+
+    # 11. Over-escaped LaTeX commands: \\frac, \\text, \\to, \\alpha, etc. in memory (R-23)
+    # Uses negative lookbehind (?<!\\) and requires an even number of backslashes (\\, \\\\, etc.)
+    # to avoid false positives on matrix row breaks immediately preceding a command (e.g. \\\frac = \\ + \frac).
+    for m_over in re.finditer(r"(?<!\\)(?:\\\\)+([a-zA-Z]+)", text):
+        cmd_name = m_over.group(1)
+        errors.append(
+            f"Over-escaped LaTeX command '\\\\{cmd_name}' detected in {context} (R-23). "
+            f"Use single backslash '\\{cmd_name}' in memory."
+        )
+
+    # 12. Forbidden linebreak '\\' inside inline math '$...$' outside matrix/cases environment (R-23)
+    no_disp = re.sub(r"\$\$[\s\S]*?\$\$", "", re.sub(r"(?<!\\)(?:\\\\)*\\\$", "", text))
+    env_cleaner = re.compile(
+        r"\\begin\s*\{+\s*((?:[a-zA-Z]*matrix|cases|aligned|array|split|gathered)\*?)\s*\}+"
+        r"((?:(?!\\begin)[\s\S])*?)"
+        r"\\end\s*\{+\s*\1\s*\}+"
+    )
+    for m_inl in re.finditer(r"\$([^\$]+)\$", no_disp):
+        inner_no_env = m_inl.group(1)
+        # Iteratively strip innermost environments first to safely support nested environments
+        for _ in range(10):
+            inner_no_env, n_replaced = env_cleaner.subn("", inner_no_env)
+            if n_replaced == 0:
+                break
+        if re.search(r"\\\\(?![a-zA-Z])", inner_no_env):
+            errors.append(
+                f"Forbidden linebreak '\\\\' inside inline math '$...$' outside matrix/cases environment in {context} (R-23)."
+            )
+
+    # 13. Unsupported macros (\centernot) and unescaped underscores in \text{...} (R-23)
+    if re.search(r"\\centernot\b", text):
+        errors.append(
+            f"Unsupported LaTeX macro '\\centernot' detected in {context} (R-23); "
+            f"use '\\nRightarrow', '\\nrightarrow', or '\\not'."
+        )
+    for m_txt in re.finditer(r"\\text\s*\{([^{}$]*)\}", text):
+        if re.search(r"(?<!\\)_", m_txt.group(1)):
+            errors.append(
+                f"Unescaped underscore '_' inside '\\text{{{m_txt.group(1)}}}' in {context} causes KaTeX ParseError."
+            )
 
     return errors
 

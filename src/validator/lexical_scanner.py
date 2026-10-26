@@ -219,8 +219,13 @@ def scan_lexical(raw_text: str, consolidate: bool = False) -> list[ValidationErr
         # Handle backslash escapes
         if ch == "\\":
             esc_pos = pos
-            pos += 1
-            if pos >= n:
+            # Count the full run of consecutive backslashes starting at esc_pos
+            bs_end = pos
+            while bs_end < n and raw_text[bs_end] == "\\":
+                bs_end += 1
+            run_len = bs_end - pos
+
+            if bs_end >= n:
                 line, col = get_line_col(raw_text, esc_pos)
                 errors.append(ValidationError(
                     rule_id="R-01",
@@ -231,6 +236,33 @@ def scan_lexical(raw_text: str, consolidate: bool = False) -> list[ValidationErr
                 ))
                 break
 
+            after_bs = raw_text[bs_end:]
+            word_m = re.match(r"^[a-zA-Z]+", after_bs)
+
+            if word_m and run_len >= 4 and run_len % 4 == 0:
+                # Rule R-23: Over-escaped LaTeX command (e.g. \\\\cmd, \\\\\\\\cmd).
+                # In JSON, 4k backslashes decode to 2k backslashes in memory, rendering as
+                # KaTeX linebreak(s) + bare command name text without a backslash.
+                cmd_word = word_m.group(0)
+                line, col = get_line_col(raw_text, esc_pos)
+                errors.append(ValidationError(
+                    rule_id="R-23",
+                    code="ERR_LATEX_OVERESCAPE",
+                    message=f"Over-escaped LaTeX command '\\\\\\\\{cmd_word}' at line {line}, col {col} evaluates to '\\\\{cmd_word}' (linebreak + literal text in KaTeX). Must be encoded as '\\\\{cmd_word}' in JSON",
+                    line=line,
+                    col=col,
+                ))
+                pos = bs_end + word_m.end()
+                continue
+
+            if word_m and run_len >= 6 and run_len % 4 == 2:
+                # Compact matrix/cases row break immediately followed by a command without space:
+                # e.g. \\\\\\frac (6 raw backslashes) decodes to \\\frac in memory (\\ linebreak + \frac command).
+                # All backslashes are valid JSON escaped pairs (\\). Consume them cleanly.
+                pos = bs_end
+                continue
+
+            pos += 1
             next_ch = raw_text[pos]
 
             if next_ch == "\\":

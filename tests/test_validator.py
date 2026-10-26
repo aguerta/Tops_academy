@@ -683,7 +683,7 @@ class TestExtendedQualityRules:
         r"""Nested braces in \\frac numerator (e.g. \\frac{\\dot{K}}{K}) must not flag denominator {K} as unreplaced var."""
         course = copy.deepcopy(base_valid_course)
         q = course["questions"][0]
-        q["stem"] = r"Evalúe $\\frac{\\dot{K}}{K} - \\frac{\\dot{L}}{L}$ y $\\left.\\frac{d\\dot{k}}{dk}\\right|_{k=\\bar{k}} < 0$."
+        q["stem"] = r"Evalúe $\frac{\dot{K}}{K} - \frac{\dot{L}}{L}$ y $\left.\frac{d\dot{k}}{dk}\right|_{k=\bar{k}} < 0$."
         res = validate_course_content(json.dumps(course))
         assert res.is_valid, f"Nested fraction numerator should pass R-20, got: {res.errors}"
 

@@ -38,12 +38,140 @@ mimetypes.add_type("image/svg+xml", ".svg")
 mimetypes.add_type("font/woff2", ".woff2")
 
 
+def repair_platform_course_katex(content: str) -> tuple[str, int]:
+    """Repair over-escaped KaTeX commands and unsupported macros in raw course JSON string.
+
+    Punto 4 del Protocolo de Protección Definitivo (R-23):
+    - Colapsa secuencias de sobreescape en JSON crudo (\\\\frac -> \\frac) preservando
+      los saltos de fila legítimos en matrices (\\\\ seguidos de espacio, dígito, signo, corchete o salto de línea).
+    - Mapea macros KaTeX no soportadas como \\centernot\\Rightarrow -> \\nRightarrow y \\centernot -> \\not.
+    - Repara contaminaciones de plantilla \\text{textVar[barx_n] = O(n)} -> \\text{Var}[\\bar{x}_n] = O(n).
+    - Repara saltos de línea '\\\\' ilegales en modo inline '$ ... $' fuera de entornos matriciales.
+    """
+    if not isinstance(content, str) or not content:
+        return content, 0
+
+    total_fixes = 0
+
+    # 1. Colapso de comandos LaTeX adyacentes a salto de matriz sin espacio (\\[6]cmd -> \\ \cmd)
+    content, count = re.subn(r"(?<!\\)\\{6}([a-zA-Z]+)", r"\\\\\\\\ \\\\\1", content)
+    total_fixes += count
+
+    # Colapso de comandos LaTeX sobreescapados con 4 barras o más (\\\\\\\\([a-zA-Z]+) -> \\\\\1)
+    while True:
+        content, count = re.subn(r"\\\\\\\\([a-zA-Z]+)", r"\\\\\1", content)
+        total_fixes += count
+        if count == 0:
+            break
+
+    # 2. Traducción de macros KaTeX no soportadas (\centernot)
+    content, count = re.subn(r"\\+centernot\s*\\+(?:Rightarrow|implies)\b", r"\\\\nRightarrow", content)
+    total_fixes += count
+    content, count = re.subn(r"\\+centernot\s*\\+(?:Leftarrow|impliedby)\b", r"\\\\nLeftarrow", content)
+    total_fixes += count
+    content, count = re.subn(r"\\+centernot\s*\\+(?:Leftrightarrow|iff)\b", r"\\\\nLeftrightarrow", content)
+    total_fixes += count
+    content, count = re.subn(r"\\+centernot\s*\\+(?:rightarrow|to)\b", r"\\\\nrightarrow", content)
+    total_fixes += count
+    content, count = re.subn(r"\\+centernot\s*\\+(?:leftarrow|gets)\b", r"\\\\nleftarrow", content)
+    total_fixes += count
+    content, count = re.subn(r"\\+centernot\s*\\+leftrightarrow\b", r"\\\\nleftrightarrow", content)
+    total_fixes += count
+    content, count = re.subn(r"\\+centernot\b", r"\\\\not", content)
+    total_fixes += count
+
+    # 3. Reparación de contaminaciones de plantilla \text{textVar[barx_n] = O(n)}
+    content, count = re.subn(
+        r"\\+text\s*\{\s*text(Var|Cov|Corr|E)\s*\[\s*bar([a-zA-Z0-9]+)_([a-zA-Z0-9]+)\s*\]\s*=\s*([^{}]+?)\s*\}",
+        r"\\\\text{\1}[\\\\bar{\2}_\3] = \4",
+        content,
+    )
+    total_fixes += count
+
+    content, count = re.subn(
+        r"\\+text\{\s*textVar\[barx_n\]\s*=\s*O\(n\)\s*\}",
+        r"\\\\text{Var}[\\\\bar{x}_n] = O(n)",
+        content,
+    )
+    total_fixes += count
+
+    # 4. Reparación de saltos de línea '\\' ilegales en modo inline '$ ... $' fuera de entornos matriciales
+    parts = re.split(r"(\$\$[\s\S]*?\$\$)", content)
+    new_parts = []
+    inline_fixes = 0
+    for i, part in enumerate(parts):
+        if i % 2 == 1:
+            new_parts.append(part)
+            continue
+
+        def _replace_inline(match: re.Match) -> str:
+            nonlocal inline_fixes
+            block = match.group(1)
+            env_pattern = r"(\\+begin\{(?:[a-zA-Z]*matrix|cases|aligned|array|split|gathered)\*?\}[\s\S]*?\\+end\{(?:[a-zA-Z]*matrix|cases|aligned|array|split|gathered)\*?\})"
+            sub_parts = re.split(env_pattern, block)
+            repaired_sub = []
+            for j, sub in enumerate(sub_parts):
+                if j % 2 == 1:
+                    repaired_sub.append(sub)
+                else:
+                    def _sub_break(m: re.Match) -> str:
+                        nonlocal inline_fixes
+                        inline_fixes += 1
+                        return " "
+
+                    fixed = re.sub(r"\\{4,}(?:\s*\[[^\]]*\])?\s*", _sub_break, sub)
+                    repaired_sub.append(fixed)
+            return "$" + "".join(repaired_sub) + "$"
+
+        new_part = re.sub(r"\$([^\$]+?)\$", _replace_inline, part)
+        new_parts.append(new_part)
+
+    content = "".join(new_parts)
+    total_fixes += inline_fixes
+
+    return content, total_fixes
+
+
+def _check_katex_invariants(text: str, context_label: str) -> tuple[bool, str | None]:
+    """Check a single in-memory string for KaTeX overescape and illegal inline line breaks."""
+    if not isinstance(text, str) or not text:
+        return True, None
+
+    mem_overescape = re.search(r"\\\\([a-zA-Z]+)", text)
+    if mem_overescape:
+        return False, f"Contains over-escaped LaTeX command '\\\\{mem_overescape.group(1)}' in {context_label} (R-23)"
+
+    without_display = re.sub(r"\$\$[\s\S]*?\$\$", "", text)
+    for m_inline in re.finditer(r"\$([^\$]+?)\$", without_display):
+        inline_block = m_inline.group(1)
+        outside_env = inline_block
+        while True:
+            stripped = re.sub(
+                r"\\begin\{(?:[a-zA-Z]*matrix|cases|aligned|array|split|gathered)\*?\}[\s\S]*?\\end\{(?:[a-zA-Z]*matrix|cases|aligned|array|split|gathered)\*?\}",
+                "",
+                outside_env,
+            )
+            if stripped == outside_env:
+                break
+            outside_env = stripped
+        if re.search(r"\\\\", outside_env):
+            return False, f"Contains invalid line break '\\\\' inside inline math outside environment in {context_label} (R-23)"
+    return True, None
+
+
 def validate_platform_course(content: str) -> tuple[bool, dict | str]:
     """Validate a course JSON string for platform runtime compatibility."""
-    # Pass 1: Raw lexical check for corrupted LaTeX escapes / silent control characters
+    # Pass 1: Raw lexical check for corrupted LaTeX escapes / silent control characters / KaTeX overescape (R-23)
     control_char_regex = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
     if control_char_regex.search(content):
         return False, "Contains unescaped control characters or corrupted LaTeX escapes"
+
+    overescape_match = re.search(r"\\\\\\\\([a-zA-Z]+)", content)
+    if overescape_match:
+        return False, f"Contains over-escaped LaTeX command sequence '\\\\\\\\{overescape_match.group(1)}' (R-23)"
+
+    if re.search(r"\\\\centernot\b", content):
+        return False, "Contains unsupported KaTeX macro '\\\\centernot' (R-23)"
 
     # Pass 2: JSON Syntax check
     try:
@@ -71,7 +199,27 @@ def validate_platform_course(content: str) -> tuple[bool, dict | str]:
     if not isinstance(questions, list) or len(questions) == 0:
         return False, "Course must specify non-empty 'questions' array"
 
-    # Pass 4: Question type validity
+    # Pass 4: Question type validity and in-memory KaTeX formatting invariants (R-23)
+    # Check course-level textual metadata
+    for key, label in (("title", "course title"), ("course_title", "course title"), ("description", "course description")):
+        val = data.get(key)
+        if isinstance(val, str):
+            ok, err = _check_katex_invariants(val, label)
+            if not ok:
+                return False, err
+
+    # Check competencies (name, description, statement)
+    for c in competencies:
+        if isinstance(c, dict):
+            c_id = c.get("id", "unknown")
+            for c_key in ("name", "description", "statement"):
+                val = c.get(c_key)
+                if isinstance(val, str):
+                    ok, err = _check_katex_invariants(val, f"competency '{c_id}' ({c_key})")
+                    if not ok:
+                        return False, err
+
+    # Check questions
     valid_types = {"multiple_choice_7_options", "multiple_select", "fill_in_the_blank"}
     for q in questions:
         if not isinstance(q, dict):
@@ -79,6 +227,60 @@ def validate_platform_course(content: str) -> tuple[bool, dict | str]:
         q_type = q.get("type") or q.get("interaction_type")
         if q_type not in valid_types:
             return False, f"Invalid question type '{q_type}'"
+
+        q_id = q.get("id", "unknown")
+
+        for key in ("stem", "detailed_solution", "solution", "explanation", "common_misconception_warning", "misconception_warning"):
+            val = q.get(key)
+            if isinstance(val, str):
+                ok, err = _check_katex_invariants(val, f"question '{q_id}' ({key})")
+                if not ok:
+                    return False, err
+
+        hints = q.get("hints")
+        if isinstance(hints, list):
+            for idx, h in enumerate(hints):
+                if isinstance(h, str):
+                    ok, err = _check_katex_invariants(h, f"question '{q_id}' (hints[{idx}])")
+                    if not ok:
+                        return False, err
+
+        options = q.get("options")
+        if isinstance(options, list):
+            for opt_idx, opt in enumerate(options):
+                if isinstance(opt, dict):
+                    opt_id = opt.get("id", str(opt_idx))
+                    for opt_key in ("content", "error_rationale", "feedback", "rationale"):
+                        val = opt.get(opt_key)
+                        if isinstance(val, str):
+                            ok, err = _check_katex_invariants(val, f"question '{q_id}' (option '{opt_id}' {opt_key})")
+                            if not ok:
+                                return False, err
+
+        # fill_in_the_blank specific correct_answer validation
+        ca = q.get("correct_answer")
+        if isinstance(ca, str):
+            ok, err = _check_katex_invariants(ca, f"question '{q_id}' (correct_answer)")
+            if not ok:
+                return False, err
+        elif isinstance(ca, dict):
+            for ca_key in ("value", "expression", "canonical_algebraic", "formula", "explanation"):
+                val = ca.get(ca_key)
+                if isinstance(val, str):
+                    ok, err = _check_katex_invariants(val, f"question '{q_id}' (correct_answer.{ca_key})")
+                    if not ok:
+                        return False, err
+            equivs = ca.get("accepted_equivalents")
+            if isinstance(equivs, list):
+                for eq_idx, eq in enumerate(equivs):
+                    if isinstance(eq, str):
+                        ok, err = _check_katex_invariants(eq, f"question '{q_id}' (correct_answer.accepted_equivalents[{eq_idx}])")
+                        if not ok:
+                            return False, err
+            elif isinstance(equivs, str):
+                ok, err = _check_katex_invariants(equivs, f"question '{q_id}' (correct_answer.accepted_equivalents)")
+                if not ok:
+                    return False, err
 
     return True, data
 
@@ -97,6 +299,19 @@ def scan_courses() -> list[dict]:
         try:
             content = f.read_text(encoding="utf-8")
             is_valid, payload = validate_platform_course(content)
+
+            # Auto-repair KaTeX over-escape or unsupported macros on runtime admission (R-23)
+            if not is_valid and isinstance(payload, str) and "R-23" in payload:
+                repaired_content, fixes = repair_platform_course_katex(content)
+                if fixes > 0:
+                    re_valid, re_payload = validate_platform_course(repaired_content)
+                    if re_valid and isinstance(re_payload, dict):
+                        try:
+                            f.write_text(repaired_content, encoding="utf-8")
+                        except Exception:
+                            pass
+                        content = repaired_content
+                        is_valid, payload = re_valid, re_payload
 
             if is_valid and isinstance(payload, dict):
                 results.append({
@@ -406,4 +621,3 @@ if __name__ == "__main__":
         sys.exit(0 if success else 1)
     else:
         run(port=args.port, host=args.host)
-

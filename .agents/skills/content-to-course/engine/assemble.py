@@ -224,6 +224,9 @@ def render_template(template_str: str, variables: Dict[str, Any]) -> str:
 def sanitize_katex_syntax(text: str) -> str:
     r"""Sanitize KaTeX syntax by fixing f-string artifacts, unclosed nested macros, and delimiter issues.
     
+    - Collapses overescaped LaTeX commands (e.g. \\frac, \\text -> \frac, \text) preserving matrix breaks (R-23).
+    - Maps unsupported external KaTeX macros (\centernot -> \nRightarrow, \not, etc.).
+    - Repairs \text{..._...} contamination and escapes unescaped underscores in plain \text blocks.
     - Replaces '$$$' with '$$'
     - Normalizes residual paired double curly braces from f-strings '{{x}}' -> '{x}'
       without altering legitimate nested KaTeX syntax like \\frac{\\dot{r}}{r} or k^{\\frac{1}{3}}.
@@ -232,6 +235,51 @@ def sanitize_katex_syntax(text: str) -> str:
     """
     if not isinstance(text, str):
         return text
+
+    # 0a. Deterministic collapse of overescaped LaTeX commands (R-23)
+    # - Even number of slashes (2, 4, 6, ...) before a command name:
+    #   Overescaped command from JSON/f-string serialization -> collapse to single backslash \cmd.
+    # - Odd number of slashes >= 3 before a command name (e.g. \\\frac):
+    #   Matrix/cases row break (\\) immediately preceding a command (\frac) -> preserve row break
+    #   and command separated by space (\\ \frac) so KaTeX renders rows correctly and validator passes.
+    # - Single backslash (\cmd) is untouched.
+    # - Row breaks before non-letters (e.g. \\[4pt], \\ -1, \\ 3, \\\n) are untouched.
+    def _collapse_overescaped_slashes(match: re.Match) -> str:
+        slashes = match.group(1)
+        cmd = match.group(2)
+        n = len(slashes)
+        if n % 2 == 0:
+            return f"\\{cmd}"
+        elif n >= 3:
+            return f"\\\\ \\{cmd}"
+        else:
+            return f"\\{cmd}"
+
+    text = re.sub(r"(\\+)([a-zA-Z]+)", _collapse_overescaped_slashes, text)
+
+    # 0b. Deterministic mapping of unsupported external KaTeX macros (\centernot)
+    text = re.sub(r"\\centernot\s*\\(?:Rightarrow|implies)\b", r"\\nRightarrow", text)
+    text = re.sub(r"\\centernot\s*\\(?:Leftarrow|impliedby)\b", r"\\nLeftarrow", text)
+    text = re.sub(r"\\centernot\s*\\(?:Leftrightarrow|iff)\b", r"\\nLeftrightarrow", text)
+    text = re.sub(r"\\centernot\s*\\(?:rightarrow|to)\b", r"\\nrightarrow", text)
+    text = re.sub(r"\\centernot\s*\\(?:leftarrow|gets)\b", r"\\nleftarrow", text)
+    text = re.sub(r"\\centernot\s*\\leftrightarrow\b", r"\\nleftrightarrow", text)
+    text = re.sub(r"\\centernot\b", r"\\not", text)
+
+    # 0c. Deterministic repair of \text{..._...} contamination
+    text = re.sub(
+        r"\\text\s*\{\s*text(Var|Cov|Corr|E)\s*\[\s*bar([a-zA-Z0-9]+)_([a-zA-Z0-9]+)\s*\]\s*=\s*([^{}]+?)\s*\}",
+        r"\\text{\1}[\\bar{\2}_{\3}] = \4",
+        text,
+    )
+
+    def _escape_text_underscores(match: re.Match) -> str:
+        inner = match.group(1)
+        # Escape any unescaped underscore (?<!\\)_ without duplicating already escaped \_
+        fixed_inner = re.sub(r"(?<!\\)_", r"\\_", inner)
+        return f"\\text{{{fixed_inner}}}"
+
+    text = re.sub(r"\\text\s*\{([^{}$]*)\}", _escape_text_underscores, text)
 
     # Replace '$$$' with '$$'
     while "$$$" in text:

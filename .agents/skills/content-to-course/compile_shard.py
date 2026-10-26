@@ -105,10 +105,13 @@ def heal_shard_source_text(source_text: str) -> Tuple[bool, str]:
                     new_body = heal_control_chars_in_str(body)
                     if not is_raw:
                         new_body = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", new_body)
+                    else:
+                        new_body = re.sub(r"(?<!\\)(?:\\\\)+([a-zA-Z]+)", r"\\\1", new_body)
                     if "$" in new_body:
-                        _bs = "\\" if is_raw else "\\\\"
-                        new_body = re.sub(r"\\implies\b", f"{_bs}Rightarrow", new_body)
-                        new_body = re.sub(r"\\iff\b", f"{_bs}Leftrightarrow", new_body)
+                        _bs = r"\\" if is_raw else r"\\\\"
+                        new_body = re.sub(r"(?<!\\)\\+centernot\s*\{?\s*\\+(?:Rightarrow|implies)\b\s*\}?", f"{_bs}nRightarrow", new_body)
+                        new_body = re.sub(r"(?<!\\)\\+implies\b", f"{_bs}Rightarrow", new_body)
+                        new_body = re.sub(r"(?<!\\)\\+iff\b", f"{_bs}Leftrightarrow", new_body)
                         new_body = re.sub(r"(?<!\\)\b(hat|bar|tilde|vec|dot|ddot|frac|dfrac|tfrac|sqrt|mathcal|mathbb|mathbf|boldsymbol|operatorname)\s*\{", rf"{_bs}\1{{", new_body)
                         if new_body.count("$$") == 1 and new_body.replace("$$", "").count("$") == 1:
                             new_body = new_body.replace("$$", "$")
@@ -125,7 +128,9 @@ def heal_shard_source_text(source_text: str) -> Tuple[bool, str]:
         try:
             from check_templates import heal_control_chars_in_str, COMBINED_LATEX
             healed = heal_control_chars_in_str(source_text)
-            healed = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", healed)
+            has_raw = bool(re.search(r'\br["\']', source_text, re.IGNORECASE))
+            if not has_raw:
+                healed = re.sub(rf"(?<!\\)\\({COMBINED_LATEX})", r"\\\\\1", healed)
             return (healed != source_text), healed
         except Exception:
             return False, source_text

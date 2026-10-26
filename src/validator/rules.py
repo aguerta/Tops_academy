@@ -18,6 +18,7 @@ Extended Quality Rules:
 - R-19: Answer Leak Prevention in Fill-in-the-Blank (ERR_ANSWER_LEAK)
 - R-20: LaTeX Syntax, Delimiters, Double Braces, and Unreplaced Template Vars (ERR_LATEX_SYNTAX)
 - R-22: Mandatory Diagnostic Error Rationale in Multiple Select (ERR_MS_MISSING_RATIONALE)
+- R-23: KaTeX Over-escape, Unsupported Macros, and Inline Linebreak (ERR_LATEX_OVERESCAPE, ERR_LATEX_INLINE_NEWLINE, ERR_LATEX_UNSUPPORTED_MACRO)
 Strict Mode Rules:
 - S-01: Step-by-step solution required (ERR_STRICT_MISSING_SOLUTION)
 - S-02: Misconception warning required (ERR_STRICT_MISSING_MISCONCEPTION)
@@ -413,7 +414,7 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
             ))
 
         # 2. Número par y balanceado de delimitadores '$' y '$$'
-        clean_text = text.replace(r"\$", "")
+        clean_text = re.sub(r"(?<!\\)(?:\\\\)*\\\$", "", text)
         if clean_text.count("$$") % 2 != 0:
             text_errors.append(ValidationError(
                 rule_id="R-20",
@@ -765,6 +766,65 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
             report_unclosed_delims(delim_stack)
             delim_stack.clear()
 
+        # 11. Rule R-23: Over-escaped LaTeX commands in memory (\\frac, \\text, etc.)
+        for m in re.finditer(r"(?<!\\)(?:\\\\)+([a-zA-Z]+)", text):
+            cmd_word = m.group(1)
+            raw_match = m.group(0)
+            num_slashes = len(raw_match) - len(cmd_word)
+            slashes_str = "\\" * num_slashes
+            text_errors.append(ValidationError(
+                rule_id="R-23",
+                code="ERR_LATEX_OVERESCAPE",
+                message=f"Question '{q_id}' in {field_desc}: Over-escaped LaTeX command '{slashes_str}{cmd_word}' detected in memory (renders as linebreak + literal '{cmd_word}' in KaTeX)",
+                item_id=q_id,
+            ))
+
+        # 12. Rule R-23: Forbidden linebreak inside inline math ($...$) outside matrix/cases
+        text_no_escaped_dollars = re.sub(r"(?<!\\)(?:\\\\)*\\\$", "", text)
+        no_disp = re.sub(r"\$\$[\s\S]*?\$\$", "", text_no_escaped_dollars)
+        ENV_INNERMOST = re.compile(
+            r"\\begin\s*\{+\s*([a-zA-Z]*matrix|cases|aligned|alignedat|array|split|gathered|gather|align)\*?\}*"
+            r"(?:(?!\\begin)[\s\S])*?"
+            r"\\end\s*\{+\s*\1\*?\}*"
+        )
+        for m_inl in re.finditer(r"\$([^\$]+)\$", no_disp):
+            inner = m_inl.group(1)
+            # Iteratively strip multiline/matrix environments from innermost to outermost
+            while True:
+                inner_stripped, count = ENV_INNERMOST.subn(" ", inner)
+                if count == 0:
+                    break
+                inner = inner_stripped
+
+            # Strip over-escaped commands to avoid duplicate reporting (already reported as ERR_LATEX_OVERESCAPE)
+            inner_no_overescape = re.sub(r"(?<!\\)(?:\\\\)+[a-zA-Z]+", "", inner)
+            # Check for illegal inline linebreak '\\'
+            if re.search(r"\\\\(?![a-zA-Z])", inner_no_overescape):
+                text_errors.append(ValidationError(
+                    rule_id="R-23",
+                    code="ERR_LATEX_INLINE_NEWLINE",
+                    message=f"Question '{q_id}' in {field_desc}: Forbidden linebreak '\\\\' inside inline math '$...$' outside matrix/cases environment",
+                    item_id=q_id,
+                ))
+
+        # 13. Rule R-23 / R-20: Unsupported macros (\centernot) and unescaped underscore in \text{...}
+        if re.search(r"\\centernot\b", text):
+            text_errors.append(ValidationError(
+                rule_id="R-23",
+                code="ERR_LATEX_UNSUPPORTED_MACRO",
+                message=f"Question '{q_id}' in {field_desc}: Unsupported LaTeX package macro '\\centernot' detected in KaTeX web bundle (use '\\nRightarrow', '\\nrightarrow', or '\\not')",
+                item_id=q_id,
+            ))
+
+        for m_txt in re.finditer(r"\\text\s*\{([^{}$]*)\}", text):
+            if re.search(r"(?<!\\)_", m_txt.group(1)):
+                text_errors.append(ValidationError(
+                    rule_id="R-20",
+                    code="ERR_LATEX_SYNTAX",
+                    message=f"Question '{q_id}' in {field_desc}: Unescaped underscore '_' inside '\\text{{{m_txt.group(1)}}}' causes KaTeX ParseError",
+                    item_id=q_id,
+                ))
+
         return text_errors
 
     # --- Rule R-20: Root Course Metadata ---
@@ -917,6 +977,20 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                                 message=f"Question '{q_id}': Option '{opt_id}' in multiple_select contains a generic placeholder 'error_rationale': '{rationale}'",
                                 item_id=q_id
                             ))
+
+        # --- Rule R-20 / R-23: LaTeX Quality & Over-escape Safeguards on correct_answer ---
+        if itype == "fill_in_the_blank" and q.get("correct_answer") is not None:
+            def _check_ans_recursive(obj: Any, path: str) -> None:
+                if isinstance(obj, str):
+                    errors.extend(check_latex_and_templates(obj, q_id, path))
+                elif isinstance(obj, list):
+                    for idx, item in enumerate(obj):
+                        _check_ans_recursive(item, f"{path}[{idx}]")
+                elif isinstance(obj, dict):
+                    for key, val in obj.items():
+                        _check_ans_recursive(val, f"{path}.{key}")
+
+            _check_ans_recursive(q["correct_answer"], "correct_answer")
 
         # --- Rule R-19: Answer Leak in fill_in_the_blank ---
         if itype == "fill_in_the_blank":
