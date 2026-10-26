@@ -1,0 +1,51 @@
+{
+  "course_metadata": {
+    "course_id": "estadistica_3_pre_parcial_v2",
+    "unit_title": "Estadistica 3 Pre Parcial V2",
+    "detected_objective": "Dominio avanzado de Inferencia Asintótica, Estimadores MCO, Variables Instrumentales, MCG y Modelos de Elección Discreta",
+    "total_competencies": 118,
+    "total_questions": 2770
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 3.5,
+      "max": 4.0,
+      "feedback": "Excelente modularidad atómica con 118 competencias y distribución equilibrada (27 Hechos, 50 Conceptos, 41 Habilidades). Todas las competencias cuentan con entre 20 y 30 reactivos, sin subpoblación. 34 competencias funcionan como nodos raíz fundacionales del grafo pedagógico."
+    },
+    "assessment_quality": {
+      "score": 4.8,
+      "max": 5.0,
+      "feedback": "Excepcional calidad psicométrica. Se evaluaron 16,620 distractores en ítems MC7 con una cobertura de rationales diagnósticos del 100.0%. Cero distractores delatores, cero fugas de claves y cero monocultivo paramétrico."
+    },
+    "scaffolding_hints": {
+      "score": 4.8,
+      "max": 5.0,
+      "feedback": "Andamiaje socrático robusto. Cero reactivos con pistas faltantes (0 zero-hints). Progresión estructurada de 3 a 5 pistas escalonadas (Conceptual -> Procedimental -> Operativa) con advertencias explícitas de ideas erróneas (misconception warnings) en cada solución."
+    },
+    "instructional_alignment": {
+      "score": 3.9,
+      "max": 4.0,
+      "feedback": "Alineación rigurosa con el corpus teórico de econometría y estadística matemática de nivel universitario. Cero reactivos huérfanos y estricta correspondencia entre objetivos y evaluaciones."
+    },
+    "technical_ergonomics": {
+      "score": 1.8,
+      "max": 2.0,
+      "feedback": "Excelente formateo matemático en KaTeX. Cero delimitadores abiertos, cero triples dólares y delimitadores balanceados. Las advertencias de f-strings en fórmulas corresponden a falsos positivos del linter estático sobre macros LaTeX válidas como \\text{Sesgo} y \\text{MCO}."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 18.8,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "discovered_lint_rules": [
+    {
+      "rule_id": "LINTER-FALSE-POSITIVE-LATEX-MACRO",
+      "target_linter": "uninterpolated_math_variable_linter",
+      "description": "El linter confunde macros de texto en modo matemático (\\text{Sesgo}, \\text{MCO}, \\text{Cov}) con variables de plantilla Python no interpoladas.",
+      "recommendation": "Agregar negative lookbehind (?<!\\\\text)(?<!\\\\mathrm)(?<!\\\\operatorname)(?<!\\\\mathbf) antes de la captura de llaves {([A-Za-z0-9_]+)}."
+    }
+  ],
+  "remediation_actions": [
+    "Aprobar el curso para publicación inmediata en producción.",
+    "Actualizar el linter estático standardized_audit_engine.py con la regla de exclusión de macros LaTeX \\text{}."
+  ]
+}
