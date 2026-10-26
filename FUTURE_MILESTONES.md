@@ -207,6 +207,8 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 | **Milestone 8: Repetición Espaciada (SRS) y Blind Mode** | Motor de Sesión | **Combate el decaimiento de memoria (Curva de Ebbinghaus).** Decaimiento temporal, refreshers a 1-4-14-45 días y sesiones a ciegas. | 2 a 3 d | 🔁 **Cierre de Ciclo de Pericia** |
 | **Milestone 9: Jerarquía de Contenido (PPT $\to$ Core/Subtemas)** | Curricular / Schema | **Organización natural en torno a la fuente real.** Contenido PPT $\to$ [Glosario + Núcleo] + Subtemas $\to$ Quizzes de subtema + Challenge PPT. | 2 a 3 d | 🏛️ **Arquitectura Curricular** |
 | **Milestone 10: QA Rubric v2.0 Deep Mastery** | Auditoría QA | **Certificación integral de rigor.** Linters deterministas activos; falta penalización automática por monocultivo MC7 y multimodalidad. | 1 a 2 d | 📋 **Parcial (Linters activos / Penalizaciones pendientes)** |
+| **Milestone 11: Carga Rápida de Cursos (Manifest, Prefetch y Caché)** | Frontend / Servidor | **Elimina el cuello de botella de 43 MB y 17s en la biblioteca.** Manifest <10 KB inline, caché mtime+size, IndexedDB + ETag, prefetch idle/hover y Web Worker. | 2 a 3 d | ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** |
+| **Milestone 12: Resiliencia ante Suspensión de la Laptop (Restauración de Sesión)** | Frontend / Servidor | **Preserva el estado de práctica ante sleep del SO y cortes HMR.** Restauración desde `sessionStorage`, banner de reconexión, `/healthz` y modo estudio `npm run study`. | 1 a 2 d | ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** |
 | *Opcional A: Pipeline Performance Daemon en RAM / SSD* | Infraestructura | *Acelera subprocesos locales, complementando el pool lazy.* | *3 a 4 h* | ⏳ **Opcional / Secundario** |
 | *Opcional B: Empaquetado Nativo con Capacitor* | Distribución | *Generación de APK para tiendas de aplicaciones.* | *4 a 6 h* | ⏳ **Opcional / Backlog** |
 
@@ -575,6 +577,83 @@ El nuevo diseño del Milestone 6 se estructura en dos modalidades complementaria
   1. **Penalización Dura por Monocultivo (hasta -3.0 pts):** Linter determinista que compute la entropía de tipos de reactivo y aplique deducción automática en `hard_penalties` si el 100% es opción múltiple.
   2. **Exigencia de Diversidad Multimodal ($\ge 20\%$):** Requisito de contar con al menos 20% de preguntas en formatos alternativos para certificar en Tier "Excelente".
   3. **Formalización de Linters Psicométricos:** Consolidación permanente de linters de entropía de arquetipos ($\ge 4$ variedades), distractor cloning, syntax residual y andamiaje socrático.
+
+---
+
+### Milestone 11: Carga Rápida de Cursos (Manifest, Prefetch y Caché)
+* **Estado:** ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** (especificado como Frente B del plan de remediación; postergado para concentrar el esfuerzo inmediato exclusivamente en ergonomía visual y split view).
+* **Diagnóstico Medido (Causa Raíz de Rendimiento):**
+  - **Sobrecarga de Red y Disco:** Los 7 cursos ocupan 51.9 MB en disco. Una solicitud a `GET /api/courses.json` devuelve una respuesta de **43 MB en ~17.4–17.9 segundos**.
+  - **Ejecución Redundante en Cada Petición:** `getCourseList()` en `courseServer.cjs` (y en el middleware de Vite) lee del disco, aplica regex de control, ejecuta `JSON.parse` y valida los 7 cursos completos en *cada* solicitud, inyectando el campo `data` con la totalidad del contenido curricular en la lista de la biblioteca (que solo requiere título, descripción y contadores).
+  - **Apertura Lenta de Cursos:** `GET /api/courses/:id` re-escanea y re-parsea todos los cursos en disco (~733 ms para un curso de 1.3 MB).
+  - **Cero Caché y Build Duplicado:** Sin encabezados `ETag`, sin respuestas HTTP 304 Not Modified, sin compresión gzip/brotli en respuestas de API; build estático emite cada curso 3 veces de forma redundante y en formato *pretty-printed*.
+  - **Re-fetch Innecesario:** `App.tsx` re-solicita la lista completa de cursos de 43 MB cada vez que el usuario vuelve a la biblioteca desde un curso.
+* **Arquitectura Técnica Propuesta:**
+  1. **Course Manifest Slim e Inlining en HTML:**
+     - Contrato `GET /api/courses(.json)` que devuelve un manifiesto liviano (< 10 KB, sin campo `data`): `{ generated_at, courses: [{ id, filename, title, description, status, total_competencies, total_questions, bytes, etag }] }`.
+     - Inyección del manifiesto inline en `/` reemplazando `<!--COURSE_MANIFEST-->` en `index.html` con `<script id="course-manifest" type="application/json">...</script>` para pintar la biblioteca en el primer frame (0 ms de espera de red).
+  2. **Índice con Caché Persistente por `mtime + size` (`courseIndex.cjs`):**
+     - Cálculo en segundo plano al arrancar el servidor y persistencia en `platform/.cache/course_index.json` (directorio ignorado por git; sin escrituras en `courses/` ni `content/`).
+     - Validación pesada y parsing únicamente cuando cambian los metadatos del archivo en disco. Mapa directo `id -> filename` para servir cursos individuales sin escanear el resto.
+  3. **Entrega de Cursos con ETag, Compresión y HTTP 304:**
+     - `GET /api/courses/:id(.json)` entrega el curso individual con `ETag`, `Cache-Control`, compresión gzip nivel rápido o brotli, y respuesta inmediata `304 Not Modified` ante cabecera `If-None-Match`.
+  4. **Frontend Inteligente (Prefetch, IndexedDB y Web Worker):**
+     - Renderizado inmediato de la biblioteca mediante manifest inline; prefetch en segundo plano con `requestIdleCallback` (baja prioridad, uno a uno).
+     - Elevación a prioridad alta mediante eventos `pointerenter`, `focus` y `touchstart` sobre la tarjeta del curso.
+     - Almacenamiento en caché en memoria + `IndexedDB` indexado por `ETag`.
+     - Parseo JSON y normalización de preguntas (`normalizeQuestion`) delegado a un Web Worker (`courseParse.worker.ts`), manteniendo el hilo principal a 60 fps.
+     - Esqueleto de carga con barra de progreso si el usuario abre un curso antes de completar el prefetch.
+     - Retorno a la biblioteca sin re-petición de red.
+  5. **Optimización de Build Estático y Code-Splitting:**
+     - Manifiesto slim + cursos individuales minificados; code-split mediante `React.lazy` para `PracticeSession`, `CompletionScreen` y `CourseChallenge`.
+* **Descomposición de Streams de Trabajo:**
+  - **P1 Server (`platform/server/courseServer.cjs`, `platform/server/courseIndex.cjs`):** Servidor con índice caché, manifest slim, compresión gzip/br, ETag/304 e inyección en HTML.
+  - **P2 Vite (`platform/vite.config.ts`):** Middleware de desarrollo y bundling optimizado con manifiesto slim minificado sin duplicación.
+  - **P3 Frontend (`platform/src/App.tsx`, `platform/src/utils/courseLoader.ts`, `platform/src/workers/courseParse.worker.ts`):** Manifiesto inline, prefetch idle/hover, IndexedDB, worker y esqueletos.
+  - **2D Tests (`tests/test_course_api_manifest.py`):** Pruebas de contrato y rendimiento del servidor de manifiesto.
+* **Metas de Rendimiento Cuantitativas:**
+  - Manifiesto en caliente: **< 100 ms** (frío: < 1 s sin bloquear la UI).
+  - Pintura de tarjetas en biblioteca: **≤ 100 ms** desde recepción de HTML (**≤ 300 ms** bajo emulación de CPU lenta 4×).
+  - Apertura de curso prefetched: **≤ 300 ms** con 0 peticiones de red al hacer click.
+  - Apertura en frío: **≤ 1.2 s** con esqueleto y parseo no bloqueante en Web Worker.
+* **Criterios de Aceptación (AC-19 a AC-25):**
+  - **AC-19:** `/api/courses` responde manifest < 50 KB (sin `data`) en < 100 ms caliente y < 1 s frío.
+  - **AC-20:** Biblioteca pinta tarjetas en ≤ 100 ms (≤ 300 ms con 4× CPU throttling) vía manifest inline.
+  - **AC-21:** Curso prefetched abre en ≤ 300 ms y 0 peticiones; en frío ≤ 1.2 s con esqueleto.
+  - **AC-22:** `/api/courses/:id` no escanea otros cursos, soporta `ETag`, `304` y compresión.
+  - **AC-23:** Volver a biblioteca no re-emite petición de lista de cursos.
+  - **AC-24:** Build estático no duplica cursos ni los emite en formato pretty-printed.
+  - **AC-25:** Cursos corruptos se marcan con `status: "error"` sin tumbar ni degradar el servicio de los demás.
+
+---
+
+### Milestone 12: Resiliencia ante Suspensión de la Laptop (Restauración de Sesión)
+* **Estado:** ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** (especificado como Frente C del plan de remediación; postergado para preservar la estabilidad de la sesión actual de estudio).
+* **Diagnóstico Medido (Causa Raíz de Desconexión y Pérdida de Estado):**
+  - **Comportamiento HMR de Vite ante Suspensión:** No existe código custom en Tops Academy que reinicie el servidor Node. Al suspender la laptop en modo `npm run dev`, la conexión WebSocket de HMR de Vite se interrumpe. Al despertar el sistema, el cliente Vite detecta la reconexión y fuerza un `location.reload()` completo de la ventana del navegador.
+  - **Fragilidad del Estado en Memoria:** El estado de la práctica (curso activo, unidad, tipo de sesión, preguntas barajadas, índice actual, respuestas marcadas e historial de aciertos) reside únicamente en la memoria volátil de React. Solo los niveles de maestría se persisten en `localStorage` (`masteryStorage.ts`). En consecuencia, la recarga forzada tras suspensión devuelve al usuario a la biblioteca perdiendo el progreso del quiz.
+  - **Agravamiento por Carga Pesada:** Al reiniciar la página tras la suspensión, la aplicación re-solicita la lista completa de cursos (43 MB, 17 s), dando la falsa impresión de que el servidor "se cayó o tarda en responder".
+  - **Acción Diagnóstica con el Usuario:** Confirmar si el comando ejecutado habitualmente es `npm run dev`, `npm run server` o `vite preview`, y si en la consola de herramientas de desarrollo (F12) se observa el mensaje `[vite] server connection lost`.
+* **Cambios Técnicos de Arquitectura:**
+  1. **Persistencia y Restauración de Sesión en `sessionStorage` (`sessionStore.ts`):**
+     - Almacenamiento continuo del estado de la práctica en `sessionStorage` bajo un esquema con versión (`v1`): `{ schema_version, current_view, course_id, unit_index, session_type, question_ids, current_index, results, answers, course_etag }`.
+     - Al cargar la página, si existe una sesión válida no expirada, la aplicación restaura inmediatamente la vista de práctica en la pregunta exacta donde se encontraba el estudiante (sin pantalla intermedia de biblioteca ni parpadeos).
+     - La sesión se invalida de forma limpia únicamente al finalizar el ejercicio, al pulsar "Quit", o si el curso cambió de versión (`ETag` diferente).
+  2. **Reconciliación Silenciosa sin Re-descarga:**
+     - Detección de eventos de ciclo de vida (`visibilitychange`, `pageshow`, evento `online`).
+     - Al despertar tras suspensión, el frontend no vuelve a descargar el curso activo si el `ETag` coincide; únicamente reconcilia el manifiesto liviano.
+  3. **Reconexión con Backoff Exponencial y Banner no Intrusivo:**
+     - Si el proceso del servidor aún está reanudando interfaces de red, el frontend ejecuta reintentos con backoff exponencial y muestra un banner flotante discreto ("Reconectando…") sin pantalla blanca ni recargas destructivas.
+  4. **Endurecimiento del Servidor y Endpoint `/healthz` (`courseServer.cjs`):**
+     - Registro explícito de errores `EADDRINUSE` y manejo defensivo de `uncaughtException` / `unhandledRejection` para evitar caídas del proceso ante peticiones malformadas.
+     - Endpoint ligero `GET /healthz` que reporte uptime, timestamp de inicio, PID y versión del índice, facilitando auditoría en caliente.
+  5. **Modo Estudio Dedicado (`npm run study`):**
+     - Script en `package.json`: `"study": "vite build && node server/courseServer.cjs"` que arranca la aplicación en producción local sin WebSocket de HMR ni recargas automáticas por suspensión de laptop. Sin agregar nuevas dependencias npm.
+* **Criterios de Aceptación (AC-28 a AC-31):**
+  - **AC-28:** Tras `page.reload()` a mitad de sesión (p. ej. pregunta 3 de 4 con 2 respuestas), la aplicación restaura la misma pregunta, los resultados previos y la vista de práctica sin pasar por la biblioteca.
+  - **AC-29:** Tras un reload, la biblioteca y el curso activo se restauran sin volver a descargar archivos de curso con el mismo `ETag` (0 descargas de curso; únicamente el manifest).
+  - **AC-30:** Si el servidor se detiene unos segundos y reanuda, el frontend reintenta con backoff, muestra banner "Reconectando…" y se recupera sin recargar manualmente ni perder la sesión.
+  - **AC-31:** Endpoint `/healthz` responde con uptime y versión; excepciones no controladas en peticiones no tumban el servidor; script `npm run study` opera sin HMR.
 
 ---
 
