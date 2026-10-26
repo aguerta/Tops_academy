@@ -100,6 +100,13 @@ export interface CourseSummary {
   total_competencies?: number;
   total_questions?: number;
   data?: Course;
+  bytes?: number;
+  etag?: string;
+}
+
+export interface CourseManifest {
+  generated_at: string;
+  courses: CourseSummary[];
 }
 
 export type MasteryTier =

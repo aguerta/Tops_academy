@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Course,
   CourseSummary,
@@ -9,6 +9,12 @@ import {
 import { loadCourseMastery, updateCompetencyScore, updateCourseChallengeCompleted } from './utils/masteryStorage';
 import { buildInterleavedSessionQuestions } from './utils/sessionShuffler';
 import { normalizeQuestion } from './utils/questionUtils';
+import {
+  loadManifest,
+  loadCourse,
+  prefetchCourses,
+  prefetchCourse,
+} from './utils/courseLoader';
 import { Sidebar } from './components/Sidebar';
 import { CourseOverview } from './components/CourseOverview';
 import { PreExerciseModal } from './components/PreExerciseModal';
@@ -25,9 +31,27 @@ type ViewMode =
   | 'completed'
   | 'challenge';
 
+// Instant manifest detection for 0ms initial render
+const getInitialManifest = (): CourseSummary[] | null => {
+  if (typeof document !== 'undefined') {
+    const el = document.getElementById('course-manifest');
+    if (el && el.textContent) {
+      try {
+        const parsed = JSON.parse(el.textContent.trim());
+        if (parsed && Array.isArray(parsed.courses)) {
+          return parsed.courses as CourseSummary[];
+        }
+      } catch {}
+    }
+  }
+  return null;
+};
+
 export const App: React.FC = () => {
-  const [courses, setCourses] = useState<CourseSummary[]>([]);
-  const [loadingCourses, setLoadingCourses] = useState(true);
+  const initialCourses = getInitialManifest();
+  const [courses, setCourses] = useState<CourseSummary[]>(initialCourses || []);
+  const [loadingCourses, setLoadingCourses] = useState(initialCourses === null);
+  const [loadingCourseId, setLoadingCourseId] = useState<string | null>(null);
 
   const [activeCourse, setActiveCourse] = useState<Course | null>(null);
   const [mastery, setMastery] = useState<CourseMasteryRecord | null>(null);
@@ -43,89 +67,47 @@ export const App: React.FC = () => {
   const [sessionTotal, setSessionTotal] = useState(0);
   const [sessionKey, setSessionKey] = useState(0);
 
-  // Fetch courses from server API or static bundle
-  const fetchCourses = useCallback(async () => {
-    try {
-      setLoadingCourses(true);
-      const rawBase = import.meta.env.BASE_URL || './';
-      const base = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
-      const candidates = [
-        `${base}/api/courses.json`,
-        `${base}/api/courses`,
-        '/api/courses.json',
-        '/api/courses',
-      ];
-
-      let loaded = false;
-      for (const url of candidates) {
-        try {
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && Array.isArray(data.courses)) {
-              setCourses(data.courses);
-              loaded = true;
-              break;
-            }
-          }
-        } catch {
-          // Continue to next candidate
-        }
-      }
-
-      if (!loaded) {
-        setCourses([]);
-      }
-    } catch (err) {
-      console.error('Failed to fetch courses', err);
-    } finally {
-      setLoadingCourses(false);
-    }
-  }, []);
-
+  // Load manifest instantly (0 ms if inline, or fallback fetch) and start idle prefetch
   useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
+    let isMounted = true;
+    loadManifest()
+      .then((manifest) => {
+        if (!isMounted) return;
+        setCourses(manifest.courses);
+        setLoadingCourses(false);
+        prefetchCourses(manifest.courses);
+      })
+      .catch((err) => {
+        console.error('Failed to load course manifest', err);
+        if (isMounted) setLoadingCourses(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const selectCourse = async (summary: CourseSummary) => {
     if (summary.status === 'error') return;
 
-    let fullCourse: Course | null = summary.data || null;
-
-    if (!fullCourse) {
-      const rawBase = import.meta.env.BASE_URL || './';
-      const base = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
-      const encodedId = encodeURIComponent(summary.id);
-      const candidates = [
-        `${base}/api/courses/${encodedId}.json`,
-        `${base}/api/courses/${encodedId}`,
-        `/api/courses/${encodedId}.json`,
-        `/api/courses/${encodedId}`,
-      ];
-
-      for (const url of candidates) {
-        try {
-          const res = await fetch(url);
-          if (res.ok) {
-            fullCourse = await res.json();
-            break;
-          }
-        } catch {
-          // Continue to next candidate
-        }
+    try {
+      setLoadingCourseId(summary.id);
+      const fullCourse = await loadCourse(summary);
+      if (fullCourse) {
+        const normalizedCourse: Course = {
+          ...fullCourse,
+          questions: (fullCourse.questions || []).map(normalizeQuestion),
+        };
+        setActiveCourse(normalizedCourse);
+        const m = loadCourseMastery(normalizedCourse);
+        setMastery(m);
+        setSelectedUnitIndex(0);
+        setViewMode('overview');
       }
-    }
-
-    if (fullCourse) {
-      const normalizedCourse: Course = {
-        ...fullCourse,
-        questions: (fullCourse.questions || []).map(normalizeQuestion),
-      };
-      setActiveCourse(normalizedCourse);
-      const m = loadCourseMastery(normalizedCourse);
-      setMastery(m);
-      setSelectedUnitIndex(0);
-      setViewMode('overview');
+    } catch (err) {
+      console.error(`Failed to load course ${summary.id}:`, err);
+    } finally {
+      setLoadingCourseId(null);
     }
   };
 
@@ -277,6 +259,8 @@ export const App: React.FC = () => {
           courses={courses}
           loading={loadingCourses}
           onSelectCourse={selectCourse}
+          onPrefetch={(id) => prefetchCourse(id)}
+          loadingCourseId={loadingCourseId}
         />
       )}
 
@@ -292,8 +276,8 @@ export const App: React.FC = () => {
             }}
             onSelectCourseChallenge={handleOpenCourseChallenge}
             onBackToLibrary={() => {
+              setActiveCourse(null);
               setViewMode('library');
-              fetchCourses();
             }}
           />
           <main className="flex-1 min-w-0 overflow-y-auto pt-14 lg:pt-0">
@@ -361,8 +345,8 @@ export const App: React.FC = () => {
             }}
             onSelectCourseChallenge={() => {}}
             onBackToLibrary={() => {
+              setActiveCourse(null);
               setViewMode('library');
-              fetchCourses();
             }}
           />
           <main className="flex-1 min-w-0 overflow-y-auto pt-14 lg:pt-0">

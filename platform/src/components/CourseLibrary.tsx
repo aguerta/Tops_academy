@@ -7,12 +7,16 @@ interface CourseLibraryProps {
   courses: CourseSummary[];
   loading: boolean;
   onSelectCourse: (course: CourseSummary) => void;
+  onPrefetch?: (id: string) => void;
+  loadingCourseId?: string | null;
 }
 
 export const CourseLibrary: React.FC<CourseLibraryProps> = ({
   courses,
   loading,
   onSelectCourse,
+  onPrefetch,
+  loadingCourseId,
 }) => {
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 overflow-x-hidden">
@@ -84,12 +88,16 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
             const record = getCourseMasteryRecord(courseId);
             const isCompleted = isCourseCompleted(courseId, c.total_competencies);
             const masteryPercent = record?.mastery_points || 0;
+            const isLoadingThis = loadingCourseId === c.id;
 
             return (
               <div
                 key={c.id}
                 data-testid="course-card"
                 onClick={() => onSelectCourse(c)}
+                onPointerEnter={() => onPrefetch?.(c.id)}
+                onFocus={() => onPrefetch?.(c.id)}
+                onTouchStart={() => onPrefetch?.(c.id)}
                 className={`cursor-pointer min-w-0 p-4 bg-white rounded-xl border shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${
                   isCompleted
                     ? 'border-emerald-300 ring-2 ring-emerald-100 hover:border-emerald-500'
@@ -136,15 +144,30 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                 <div className="mt-2 pt-1.5 border-t border-ka-border-subtle flex items-center justify-between min-w-0">
                   <button
                     type="button"
-                    onClick={() => onSelectCourse(c)}
+                    disabled={isLoadingThis}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectCourse(c);
+                    }}
                     className={`w-full py-2 px-3 text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors text-center flex items-center justify-center gap-1.5 min-w-0 ${
-                      isCompleted
+                      isLoadingThis
+                        ? 'bg-ka-blue/70 cursor-wait'
+                        : isCompleted
                         ? 'bg-emerald-600 hover:bg-emerald-700'
                         : 'bg-ka-blue hover:bg-ka-blue-hover'
                     }`}
                   >
-                    {isCompleted && <span className="shrink-0">✓</span>}
-                    <span className="truncate block min-w-0"><MathText text={c.title} inline /></span>
+                    {isLoadingThis ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                        <span className="truncate block min-w-0">Cargando...</span>
+                      </>
+                    ) : (
+                      <>
+                        {isCompleted && <span className="shrink-0">✓</span>}
+                        <span className="truncate block min-w-0"><MathText text={c.title} inline /></span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
