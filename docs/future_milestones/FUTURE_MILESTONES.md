@@ -2,9 +2,10 @@
 ## Elevando la Vara: Del Paradigma Cerrado al "Antigravity Study Harness", Práctica Deliberada, Intuición Experta (*The Expert Myth*) y Ultra-Aprendizaje
 
 > **Documento Estratégico, Psicométrico y de Arquitectura de Sistemas End-to-End**  
-> **Fecha de Actualización:** Octubre 2026 (Branch: `optimizaciones_test` / Post-C2C v3.4–v3.5)  
+> **Fecha de Actualización:** 2026-10-26 (Branch: `main` = `optimizaciones_test` / Post-C2C v3.4–v3.5; Milestones 1, 2a y núcleo del 11 cerrados)  
 > **Áreas del Ecosistema:** Plataforma Web (`React 18 + Vite + TypeScript`), UI Multi-Panel (Split-View Harness), Pipeline Multi-Agente C2C (`Google Antigravity SDK`), Motor Determinista (`engine/`), Evaluador de Calidad (`course-qa-evaluator`) y Marco Neurocognitivo de Adquisición de Pericia (*The Expert Myth Framework*).  
 > **Ubicación Canónica:** [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md) *(espejo en [`docs/future_milestones/FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md))*.
+> **Milestones Cerrados:** [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md) *(espejo en `docs/future_milestones/MILESTONES_COMPLETED.md`)*. Este archivo conserva lo **pendiente o en curso** y el conocimiento técnico y tribal.
 
 ---
 
@@ -110,8 +111,41 @@ flowchart TD
 La frontera entre Python y TypeScript es el archivo `courses/<course_id>.json` (tipado en [`platform/src/types.ts`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/types.ts) y en `schemas/course.schema.json`). En esta frontera emergen 4 tensiones estructurales:
 1. **La Colisión de Escapado LaTeX:** Una omisión en Python de raw strings convierte comandos como `\tau` o `\beta` en caracteres de control (`\t`, `\b`). Si [`courseServer.cjs`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/server/courseServer.cjs) los detecta, bloquea el curso.
 2. **Discrepancia del Motor de Evaluación (SymPy vs RegExp):** En backend, Python verifica equivalencias complejas con CAS (`SymPy`); en cliente, el frontend requiere heurísticas ligeras o un endpoint evaluador.
-3. **Sobrecarga de Viewport por MC7:** 7 alternativas apiladas verticalmente en laptops de 13"-14" saturan la pantalla y exigen zoom out continuo.
+3. **Sobrecarga de Viewport por MC7:** 7 alternativas apiladas verticalmente en laptops de 13"-14" saturan la pantalla y exigen zoom out continuo. ✅ **Resuelto por el Milestone 1** (ver `MILESTONES_COMPLETED.md`).
 4. **Desajuste de Granularidad (Unidad Plana vs. PPT Real):** Tratar cada micro-competencia como una unidad independiente satura al alumno con quizzes y unit tests redundantes y rompe la jerarquía pedagógica natural.
+
+### 2.2. Conocimiento Tribal de la Plataforma: Carga de Cursos, Caché y Ergonomía
+
+> Registrado el 2026-10-26, tras cerrar los Milestones 1 y 11 (núcleo). Cada dato está marcado como **medido** (con cifra) o **hipótesis** (sin medir en navegador).
+
+**a) ¿Cuándo empieza a cargarse un curso: al pulsar o antes?** Antes. Al abrir la plataforma, la biblioteca se pinta con el manifest inline (≈ 2.5 KB, sin red) y `prefetchCourses` encola todos los cursos válidos para descargarlos **en segundo plano**, uno a uno, con `requestIdleCallback`. Pasar el cursor, enfocar o tocar una tarjeta (`pointerenter` / `focus` / `touchstart`) le da prioridad inmediata a ese curso. Cada curso queda en una caché en memoria y en IndexedDB (`tops_academy_cache`, almacén `courses`, validada por `ETag`). Si el usuario pulsa antes de que la cola llegue a ese curso, la carga ocurre en el momento del clic.
+
+**b) ¿Al pulsar se carga todo el sistema o solo ese curso?** Solo ese curso. La petición es `GET /api/courses/<id>.json`; los demás no se tocan. Antes del Frente B (Milestone 11) sí se descargaba un monolito de ≈ 60 MB con todos los cursos.
+
+**c) Qué cuesta abrir un curso grande (medido en la PC de desarrollo, ASUS TUF F15):**
+
+| Curso | Preguntas | Archivo | Servidor (gzip) | `JSON.parse` + `normalizeQuestion` (Node) |
+| :--- | :---: | :---: | :---: | :---: |
+| `saul_control_optimo` | 350 | ≈ 1.7 MB | 109 KB en ≈ 10 ms | ≈ 5 ms |
+| `estadistica_3_pre_parcial_v2` | 2,770 | ≈ 13.9 MB | — | ≈ 33 ms |
+| `gavilano_pre_parcial` | 2,950 | ≈ 14.1 MB | 912 KB en ≈ 66 ms | ≈ 36 ms |
+
+**d) Corrección de una estimación previa.** Se había estimado que abrir Gavilano o Estadística v2 costaba 1.5–2.5 s de parseo y normalización local. **La medición lo refuta:** parsear y normalizar ≈ 3,000 preguntas toma ≈ 35 ms, y el servidor entrega el curso en ≈ 66 ms. Como extrapolación (no medida), incluso una laptop 5–10× más lenta tardaría ≈ 0.2–0.4 s. Por tanto, la lentitud que el usuario percibe al abrir un curso pesado **no se explica por el parseo ni por el servidor**, y la idea de «normalización diferida por unidad» ahorraría ≈ 3–7 ms: no justifica su complejidad hasta que una medición diga lo contrario.
+
+**e) Sospechosos reales (hipótesis ordenadas; ninguna medida aún en navegador):**
+1. `loadCourse` hace `await saveToIndexedDB(...)` **antes** de devolver el curso en la ruta de red (`courseLoader.ts`): abrir espera el *structured clone* y la escritura de ≈ 14 MB en IndexedDB. Arreglo barato: no esperar la escritura (fire-and-forget).
+2. El prefetch en segundo plano también clona y escribe cursos de 14 MB en el hilo principal mientras el usuario interactúa (jank justo al pulsar).
+3. Render de la vista tras abrir (Overview con ≈ 127 competencias, `loadCourseMastery`, `MasteryGrid`) en el hilo principal.
+4. En `npm run dev` las peticiones pasan por el middleware de Vite y no por `courseServer.cjs` (confirmar con qué comando se levanta en la laptop lenta).
+5. Equipo más lento (14" a 150%), no comparable con la PC de desarrollo.
+
+**f) Cómo comprobar que la caché funciona.** Abrir un curso, volver a la biblioteca y reabrirlo: debe ser casi instantáneo y el panel *Network* no debe mostrar ninguna petición a `/api/courses/<id>`. El contenido persistido se ve en DevTools → *Application* → *IndexedDB* → `tops_academy_cache` → `courses`. Para medir de verdad: marcar con `performance.mark` el clic, la descarga, el parseo y el primer pintado (propuesto en el Milestone 11b).
+
+**g) Lecciones de ergonomía que no se deben olvidar (Milestone 1):**
+- **No forzar `white-space: normal` sobre KaTeX:** rompe subíndices, superíndices y relaciones. Para que una frase larga envuelva, sacarla de `\text{}` hacia texto normal (`splitMathAndProse` en `MathText.tsx`).
+- **Headless Chromium oculta las scrollbars** (`--hide-scrollbars`): en las pruebas usar `ignoreDefaultArgs: ['--hide-scrollbars']`, o el ancho útil real queda enmascarado.
+- **Aritmética de anchos a 150% en laptop de 14":** split 50% ≈ 640 px CSS − 15 px de scrollbar − 32 px de padding ≈ 586–593 px útiles (de ahí el umbral de 2 columnas en 480 px). La biblioteca ve `innerWidth` ≈ 1265 px, no 1280 (de ahí el breakpoint de 3 columnas en 1000 px).
+- **Referencia que no debe regresar:** ASUS TUF F15 de 15.6" a 125% (1536 × 740).
 
 ---
 
@@ -172,6 +206,10 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
    - `ClonedDistractorValueLinter`, `ParentheticalTelltaleLinter`, `UninterpolatedMathVariableLinter` y `ScaffoldingHintsLinter` (bloqueo de stubs no socráticos).
 7. ✅ **Cursos Masivos Certificados en Producción (Commits `c0246cd`, `b52c6d6`, `c739c47`):**
    - `gavilano_pre_parcial` (127 competencias), `saul_control_optimo` (15 competencias), `asymptotic_statistics_v7` (32 competencias) y `solow_growth_model`.
+8. ✅ **Ergonomía Web en Laptops, Tablets y Móvil (Milestones 1 y 2a — certificado por el usuario 2026-10-26):**
+   - Container queries (2 columnas desde 480 px), footer en flujo, scroll reseteado por pregunta, biblioteca de 3 columnas (≥ 1000 px), KaTeX inline sin scrollbars y prosa de `\text{}` fuera de KaTeX. Detalle en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md).
+9. ✅ **Núcleo de Carga Rápida de Cursos (Milestone 11 — commits `41435c5`, `b73a5ee`, `2051b8b`):**
+   - Manifest de 2.5 KB (antes ≈ 60 MB), índice con caché `mtime + size`, `ETag`/`304`/gzip, manifest inline, IndexedDB y prefetch idle/hover. Conocimiento asociado en §2.2.
 
 ---
 
@@ -186,28 +224,35 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
    - MathLive + SymPy para respuestas abiertas y validación de derivaciones intermedias.
 5. 🎯 **Motor de Decaimiento de Memoria y Repetición Espaciada (Milestone 8):**
    - Curva de Ebbinghaus en `masteryStorage.ts`, refreshers a 1-4-14-45 días y **Modo Blind Recognition** (sesiones sin etiquetas).
-6. 🎯 **Ergonomía de Laptops y Study Harness (Milestones 1 y 6):**
-   - Grid responsivo de 2 columnas en `QuestionCard.tsx` para eliminar zoom out en portátiles, y Split-View multi-panel sincronizado con `source_anchor`.
+6. 🎯 **Study Harness (Milestone 6): faltan el gating socrático y la «hoja en blanco» previa:**
+   - La ergonomía y el Split-View ya están entregados (Milestone 1). Pendiente: botón socrático que solo aparece cuando el estudiante agotó los intentos, pantalla previa «¿ya lo has intentado?» sin opciones a la vista, pestañas Hoja en Blanco / Ficha Teórica y la certificación oficial del usuario (§6.6).
 7. 🎯 **Arquitectura Jerárquica de Contenido PPT (Milestone 9):**
    - Módulos de Contenido (PPT) con Glosario, Núcleo Conceptual, Quizzes por subtema y Challenge integrador de PPT.
+8. 🎯 **Apertura instantánea de cursos pesados (Milestone 11b):**
+   - La lentitud percibida al abrir Gavilano / Estadística v2 no se explica por servidor ni parseo (≈ 0.1 s medido, §2.2); falta diagnóstico en navegador, quitar el `await` de IndexedDB del camino de apertura e indicador de progreso.
+9. 🎯 **Deuda de pruebas de ergonomía (Milestone 1-T):**
+   - La matriz E2E no reproduce aún los escenarios certificados a mano (125%/150%, tablets, AC-CORE medido por código).
+10. ⏳ **Resiliencia ante suspensión de la laptop (Milestone 12):** fuera de alcance por decisión del usuario.
 
 ---
 
 ## 6. Matriz Maestra de Priorización de Ingeniería
 
+> Los milestones **completados y certificados** (1, 2a y núcleo del 11) viven en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md). Esta matriz lista solo lo abierto.
+
 | Hito / Milestone | Área | Impacto Cognitivo y Operativo | Esfuerzo Estimado | Estado de Ejecución |
 | :--- | :--- | :--- | :---: | :---: |
-| **Milestone 1: Web Ergonomía para Laptops (Zoom-Fix)** | Frontend / UX | **Elimina la fricción visual inmediata.** Grid de 2 columnas para 7 opciones en laptops de 13"-14" y split view 50%, eliminando la necesidad de zoom out. | 2 a 4 h | ✅ **Completado y verificado (matriz 7 viewports, Gate 3 PASS)** |
-| **Milestone 2: PWA Móvil y Modo Offline** | Frontend / PWA | **Habilita el estudio ubicuo.** Standalone app en iOS/Android, safe areas y precaching de fuentes KaTeX. | 1 a 2 h | 🚀 **Quick Win #2** |
+| **Milestone 2: PWA Instalable y Modo Offline** | Frontend / PWA | **Habilita el estudio ubicuo e instalable.** `vite-plugin-pwa`, manifest con iconos, safe areas y precaching de fuentes KaTeX. *(La usabilidad móvil ya está cerrada: Milestone 2a.)* | 1 a 2 h | 🚀 **Quick Win #2 (pendiente)** |
 | **Milestone 3: Anti-Overfitting y Variedad de Plantillas** | Pipeline & QA | **Destruye la automatización sintáctica.** 4 arquetipos disjuntos (`[M3-ARCHETYPES]`) en pipeline y linter de entropía en QA. | 2 a 3 h (Auditor) | 🛠️ **Pipeline: Hecho / Auditor: Falta contar $\ge 4$** |
 | **Milestone 4: Desacoplamiento KaTeX-Python (PrairieLearn)** | Backend / Pipeline | **Erradica al 100% las colisiones de sintaxis.** Tokens `@var@` activos; falta compilación AST QuickJS y contrato Pydantic. | 1 a 2 d | 🛠️ **Parcial (@var@ activo / AST pendiente)** |
 | **Milestone 5: Entradas Simbólicas Libres (Free Recall)** | Full-Stack | **Trascendencia del reconocimiento pasivo.** MathLive + SymPy para respuestas abiertas y validación de pasos intermedios. | 2 a 3 d | 🧠 **Impacto Cognitivo Máximo** |
-| **Milestone 6: Antigravity Study Harness (Split-View & 1/3–1/2 Viewport)** | Arquitectura UI | **Estación de ultra-aprendizaje en Flow.** Vía Pragmática: Viewport 1/3–1/2 + Pestañas (Hoja en Blanco / Teoría) + Copiar Prompt Socrático. Vía Full: Visor PDF integrado in-app. | 1 a 2 h (Vía Pragmática) / 3 a 5 d (Full) | 👑 **Redefinido: 80/20 Pragmático** |
+| **Milestone 6: Antigravity Study Harness (Split-View & 1/3–1/2 Viewport)** | Arquitectura UI | **Estación de ultra-aprendizaje en Flow.** Vía Pragmática: Viewport 1/3–1/2 + Pestañas (Hoja en Blanco / Teoría) + Copiar Prompt Socrático. Vía Full: Visor PDF integrado in-app. | 1 a 2 h (Vía Pragmática) / 3 a 5 d (Full) | 🛠️ **En progreso: pasos 1–2 hechos; falta gating socrático + hoja en blanco; pendiente certificación del usuario** |
 | **Milestone 7: Streaming DAG, Pool de Workers y Aceleración de Tests** | Infraestructura | **Quiebra la barrera de 15 min en pipeline y acelera la suite de 1,037 tests de 85s a < 30s.** DAG asíncrono, pre-warming de sandbox y paralelización `pytest-xdist` (12 cores). | 2 a 3 d | ⚡ **Rendimiento Pipeline & CI/CD** |
 | **Milestone 8: Repetición Espaciada (SRS) y Blind Mode** | Motor de Sesión | **Combate el decaimiento de memoria (Curva de Ebbinghaus).** Decaimiento temporal, refreshers a 1-4-14-45 días y sesiones a ciegas. | 2 a 3 d | 🔁 **Cierre de Ciclo de Pericia** |
 | **Milestone 9: Jerarquía de Contenido (PPT $\to$ Core/Subtemas)** | Curricular / Schema | **Organización natural en torno a la fuente real.** Contenido PPT $\to$ [Glosario + Núcleo] + Subtemas $\to$ Quizzes de subtema + Challenge PPT. | 2 a 3 d | 🏛️ **Arquitectura Curricular** |
 | **Milestone 10: QA Rubric v2.0 Deep Mastery** | Auditoría QA | **Certificación integral de rigor.** Linters deterministas activos; falta penalización automática por monocultivo MC7 y multimodalidad. | 1 a 2 d | 📋 **Parcial (Linters activos / Penalizaciones pendientes)** |
-| **Milestone 11: Carga Rápida de Cursos (Manifest, Prefetch y Caché)** | Frontend / Servidor | **Elimina el cuello de botella de 43 MB y 17s en la biblioteca.** Manifest <10 KB inline (2.5 KB), caché mtime+size, IndexedDB + ETag, prefetch idle/hover. | 2 a 3 d | ✅ **Completado (Implementado y verificado 2026-10-26)** |
+| **Milestone 11b: Apertura Instantánea de Cursos Pesados** | Frontend | **Cierra la lentitud percibida al abrir Gavilano / Estadística v2.** Diagnóstico en navegador, quitar el `await` de IndexedDB del camino de apertura, indicador de progreso y política de prefetch; worker solo si se mide bloqueo. | 0.5 a 1 d | ⏳ **Pendiente (servidor + parseo medidos ≈ 0.1 s)** |
+| **Milestone 1-T: Deuda de Pruebas de Ergonomía** | QA / E2E | **Convierte la certificación manual en regresión automática.** Matriz 125%/150%, tablets y AC-CORE medido por código. | 2 a 4 h | ⏳ **Pendiente** |
 | **Milestone 12: Resiliencia ante Suspensión de la Laptop (Restauración de Sesión)** | Frontend / Servidor | **Preserva el estado de práctica ante sleep del SO y cortes HMR.** Restauración desde `sessionStorage`, banner de reconexión, `/healthz` y modo estudio `npm run study`. | 1 a 2 d | ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** |
 | *Opcional A: Pipeline Performance Daemon en RAM / SSD* | Infraestructura | *Acelera subprocesos locales, complementando el pool lazy.* | *3 a 4 h* | ⏳ **Opcional / Secundario** |
 | *Opcional B: Empaquetado Nativo con Capacitor* | Distribución | *Generación de APK para tiendas de aplicaciones.* | *4 a 6 h* | ⏳ **Opcional / Backlog** |
@@ -216,63 +261,21 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 
 ## 7. Especificación Técnica Detallada de los Milestones
 
-### Milestone 1: Web Ergonomía para Laptops y Split View 50% (Zoom-Fix)
-* **Estado:** ✅ **Completado y verificado (matriz 7 viewports, Gate 3 PASS)** (implementación técnica completada por Streams 1A–1E; verificación visual en matriz de navegadores asignada a Stream 2B).
-* **Objetivo Crítico:** Resolver integralmente la adaptabilidad y ergonomía cognitiva tanto en laptops compactas (13"-14", resoluciones 1366×768 o 1440×900) como en escenarios de **Split View al 50% de ancho** (pantalla dividida con visor de PDF, notas o asistente socrático), donde las 7 opciones (MC7) previamente provocaban desborde vertical forzando al usuario a realizar zoom out continuo en el navegador.
-* **Requisito de Arquitectura Split-View (50% de ancho de pantalla):**
-  - **Superación de Media Queries rígidas:** En split view al 50%, los anchos efectivos de la ventana del navegador oscilan entre 683 px y 960 px. Por consiguiente, una media query tradicional de escritorio (`min-width: 1024px`) **nunca se activa**. La arquitectura se basa en **Container Queries nativas** (ancho del contenedor `.qc-root`), `max-height` condicional y flexbox/grid defensivos sin dependencias npm externas.
-  - **Sidebar Desacoplado:** El sidebar fijo `w-64` (que a 683 px consumía el 37% de la pantalla) se transforma en Drawer off-canvas para viewports `< 1024px`, concediendo el 100% del ancho al contenido principal.
-  - Plan de ejecución: [`plan.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/teamwork/m1_zoomfix_split50/plan.md).
-* **Matriz de Viewports y Alturas Obligatoria:**
-  - `683 × 768`: Laptop 1366 split view 50% — Enunciado y 7 opciones caben en pantalla sin scroll vertical de página ni scroll horizontal (`scrollWidth <= innerWidth`); header colapsa a `h-12` por regla `@media(max-height:850px)`.
-  - `720 × 900`: Laptop 1440 split view 50% — Grid de 2 columnas holgado, layout fluido, header `h-16`, cero fricción visual.
-  - `800 × 900`: Monitor 1600 split view 50% — Distribución equilibrada 4+3 en 2 columnas, amplio espacio vertical.
-  - `960 × 1080`: Pantalla Full HD 1920 split view 50% — Vista split óptima con altura completa de 1080 px y renderizado holgado.
-  - `1366 × 768`: Laptop estándar completa — 2 columnas en MC7, header `h-12` (`height <= 850px`), sin zoom out requerido.
-  - `1440 × 900`: Laptop widescreen completa — Aprovechamiento total del espacio horizontal y vertical con header `h-16`.
-  - `390 × 844`: Móvil portrait — 1 columna determinista ($< 600\text{ px}$ en contenedor), dots compactados a indicador textual `n of N`, cero desborde horizontal.
-  - **Comportamiento por Alturas:** En alturas bajas ($\le 850\text{ px}$, como 768 px y 844 px), convergen simultáneamente: colapso de header a `h-12` (ahorro de 16 px), Bottom Sheet en `FeedbackToast` (`max-h-[45dvh]`), contención de `CoordinatePlane` (`max-h-[30dvh]`) y variables fluidas `clamp()` indexadas a `vh`. En alturas estándar y altas (900 px y 1080 px), todos los módulos conservan su amplitud nominal sin comprimir elementos.
-* **Componentes Técnicos Implementados:**
-  1. **Grid Inteligente de 2 Columnas con Container Queries y Soporte 3–9 Opciones ([`QuestionCard.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/QuestionCard.tsx), [`index.css`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/index.css) - Stream 1A):**
-     - Contenedor con `container-type: inline-size; container-name: qc;` (`.qc-root`).
-     - Para reactivos MC7 (`multiple_choice_7_options`) y selección múltiple (`multiple_select`): regla `@container qc (min-width: 600px)` que activa 2 columnas con orden columna-primero (`grid-auto-flow: column; grid-template-rows: repeat(var(--qc-rows, var(--rows, 4)), auto); grid-template-columns: repeat(2, minmax(0, 1fr));`).
-     - **Cálculo Dinámico de Filas ($3$ a $9$ opciones):** `--qc-rows` y `--rows` computadas dinámicamente mediante `Math.max(1, Math.ceil(optionsCount / 2))` inyectadas inline:
-       - 3–4 opciones: 2 filas (2 columnas: 2+1 o 2+2).
-       - 5–6 opciones: 3 filas (2 columnas: 3+2 o 3+3).
-       - 7–8 opciones: 4 filas (2 columnas: 4+3 [MC7 estándar A–D izq, E–G der] o 4+4).
-       - 9 opciones: 5 filas (2 columnas: 5+4).
-     - **Letras y Badges:** Soporte predeterminado mediante array `OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']` con fallback algorítmico a `String.fromCharCode(65 + idx)`.
-     - Fallback natural a 1 columna en anchos de contenedor $< 600\text{ px}$ (móviles o paneles ultra-estrechos).
-     - Tipografía y espaciados elásticos: `--qc-gap: clamp(0.375rem, 1vh, 0.75rem);`, `--qc-pad: clamp(0.5rem, 1.5vh, 0.875rem);`, `--qc-font: clamp(0.875rem, 1.5vh, 1.125rem);`, `--qc-badge: clamp(1.5rem, 3.2vh, 2rem);`.
-     - Scroll vertical interno contenido (`.qc-options-scroll`) para enunciados excepcionalmente largos (`max-height: calc(100dvh - var(--qc-chrome, 14rem))`), preservando header y footer fijos.
-     - **Blindaje KaTeX contra Fórmulas Anchas:** `.katex-display, .qc-root .katex, .qc-options .katex { display: inline-block; max-width: 100%; overflow-x: auto; overflow-y: hidden; vertical-align: middle; scrollbar-width: thin; }` y envoltura `.qc-root span.inline-block, .qc-options span.inline-block { max-width: 100%; }` con `min-w-0` defensivo en flex items para prevenir desborde horizontal de columnas ante expresiones algebraicas extensas.
-     - **Accesibilidad y Testabilidad:** Semántica ARIA con `role="radiogroup"` (`aria-label="Answer options"`) en MCQ y `role="group"` (`aria-label="Multiple choice options"`) en selección múltiple; estados `aria-pressed={isSelected}`; foco accesible con `focus-visible:ring-2 focus-visible:ring-ka-blue` y `focus-within:ring-2`; preservación íntegra de `data-testid` (`question-card`, `option-*`, `multiselect-option`, `fill-blank-input`, `hints-toggle`).
-  2. **Sidebar Drawer Off-Canvas y App Shell Accesible ([`Sidebar.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/Sidebar.tsx), [`App.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/App.tsx) - Stream 1B):**
-     - Sidebar off-canvas en viewports $< 1024\text{ px}$ con botón flotante accesible (`data-testid="sidebar-toggle"`, `top-3 left-4 z-40`, visible en `lg:hidden`) con `aria-expanded`, `aria-controls="sidebar-drawer"` y `aria-label="Open navigation menu"`.
-     - Backdrop con overlay oscuro (`bg-black/40 z-40`), cierre automático con tecla `Escape`, click fuera, redimensionamiento $\ge 1024\text{ px}$ o selección de unidad / Course Challenge.
-     - **Accesibilidad WCAG 2.1 AA:** Focus trap bidireccional cíclico (`Tab` / `Shift+Tab`), restauración automática de foco al toggle button tras el cierre, body scroll lock con compensación de ancho de scrollbar para prevenir saltos de layout, y `overscroll-contain`.
-     - Ancho adaptativo en escritorio: `w-56` (1024–1279 px) y `w-64` ($\ge 1280\text{ px}$).
-     - Padding superior compensatorio `pt-14 lg:pt-0` y `min-w-0` en los `<main>` de `App.tsx` para evitar solapamientos y desbordes flexbox.
-  3. **Bottom Sheet Toast y SVG Responsivo ([`FeedbackToast.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/FeedbackToast.tsx), [`CoordinatePlane.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CoordinatePlane.tsx) - Stream 1C):**
-     - `FeedbackToast`: en $< 1024\text{ px}$ o altura $\le 850\text{ px}$, opera como Bottom Sheet deslizable (`fixed z-30 bottom-20 inset-x-3 sm:inset-x-6 max-w-xl mx-auto max-h-[45dvh]`).
-     - Posicionamiento exacto a `bottom-20` (80 px), garantizando una separación limpia de 16 px sobre el footer compacto de 64 px de `PracticeSession`, sin obstruir jamás los botones de acción (`Skip`, `Check`, `Try again`, `Next question`).
-     - Scroll interno propio independiente para retroalimentación diagnóstica y soluciones paso a paso, con contención anti-desborde para código y expresiones KaTeX (`.feedback-toast-root pre, code { max-width: 100% !important; overflow-x: auto !important; }`).
-     - Accesibilidad de retroalimentación: botones con `aria-label="Quick redo"`, `aria-label="Close feedback"` y etiquetas descriptivas con `aria-hidden="true"` en glifos decorativos.
-     - `CoordinatePlane`: SVG responsivo con `viewBox`, `w-full max-w-[340px] max-h-[30dvh] h-auto`, `aspectRatio: width/height`, `role="img"` y `aria-label` descriptivo paramétrico (`from x=${xMin} to ${xMax}, y=${yMin} to ${yMax}`), evitando que planos cartesianos fuercen scroll vertical en pantallas de baja altura.
-  4. **Practice Session Shell Ergonómico ([`PracticeSession.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/PracticeSession.tsx) - Stream 1D):**
-     - Sustitución de `min-h-screen`/`100vh` por `.h-dvh-safe` y estilo dinámico `minHeight: '100dvh'`, eliminando scroll fantasma en navegadores móviles.
-     - Header compacto: colapsa a `h-12` (48 px) en alturas $\le 850\text{ px}` (`[@media(max-height:850px)]:h-12`), recuperando 16 px verticales.
-     - Footer compacto: reducido a `h-16` (64 px) con padding elástico `px-4 sm:px-8`.
-     - Padding compensatorio en `<main>`: ajustado a `pb-20` (80 px), recuperando 32 px de altura útil para reactivos sin solapar el footer fijo.
-     - Indicador de progreso responsivo: en $< 520\text{ px}$ los dots colapsan a indicador textual (`n of N`) con `role="status"`, evitando colisiones en el pie de página; en $\ge 520\text{ px}$, dots con `flex-wrap` y `aria-label` individual por reactivo.
-     - Blindaje `overflow-x-hidden` global preservando al 100% la lógica de estado, temporizadores y navegación por teclado (`Enter`).
-  5. **Adaptabilidad Global de Vistas y Blindaje KaTeX ([`CourseOverview.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseOverview.tsx), [`CourseLibrary.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseLibrary.tsx), [`MasteryGrid.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/MasteryGrid.tsx), [`MasteryLegend.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/MasteryLegend.tsx), [`PreExerciseModal.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/PreExerciseModal.tsx), [`CompletionScreen.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CompletionScreen.tsx), [`CourseChallenge.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseChallenge.tsx) - Stream 1E):**
-     - Reconfiguración de grids a `sm:grid-cols-2 xl:grid-cols-3` (activo a 683 px donde `sm:` 640 px aplica pero `md:` 768 px no).
-     - Contención KaTeX estricta (`[&_.katex]:max-w-full [&_.katex]:overflow-x-auto`) y `min-w-0` en flex items para evitar que títulos o fórmulas largas fuercen scroll horizontal (`scrollWidth <= innerWidth`).
-     - Truncamiento funcional en spans (`block min-w-0` / `inline-block align-bottom min-w-0`), soporte de `100dvh` y `shrink-0` en encabezados y pies de página de modales y pantallas de cierre.
+### Milestone 1-T: Deuda de Pruebas de Ergonomía (Matriz 125%/150%, Tablets y AC-CORE por Código)
+* **Estado:** ⏳ **Pendiente.** El Milestone 1 está certificado por el usuario de forma manual; las pruebas automáticas aún no reproducen sus escenarios reales.
+* **Brecha verificada (2026-10-26):** `tests/e2e_m1_viewport_matrix.mjs` conserva los 7 viewports originales (683 × 768 … 390 × 844, `deviceScaleFactor: 1`); no incluye 1280 × 590, 610 × 590, 1536 × 740, 1265 × 590 ni tablets, y no mide AC-CORE por código. Los 97 contratos de `tests/test_m1_zoomfix_contract.py` son estáticos (inspeccionan texto de CSS/TSX).
+* **Entregables:**
+  1. Ampliar la matriz con: 1280 × 590 y 610 × 590 (laptop 14" a 150%), 1536 × 740 (TUF a 125%, línea base), 1265 × 590 (biblioteca) y tablets 834 × 1194, 1194 × 834, 1024 × 1366, 1366 × 1024.
+  2. **AC-CORE medido por código** en `scrollTop = 0`: el `bottom` del enunciado, de las 7 opciones y de `[data-testid="hints-toggle"]` debe ser ≤ `top` del footer y ≤ `innerHeight`; `document.scrollingElement.scrollHeight <= innerHeight`.
+  3. Cero scrollers horizontales dentro de enunciado y opciones, y `scrollWidth <= clientWidth` en cada opción, con las fuentes KaTeX cargando y ya cargadas.
+  4. Biblioteca: 3 columnas con ≥ 1000 px (incluye 1265) y 2 entre 560 y 999 px.
+  5. Casos reales de prosa dentro de `\text{}` (por ejemplo `$P = 169 \text{ porque los compradores no toleran postergar su compra}$`) y una prueba de regresión que impida volver a forzar `white-space: normal` sobre KaTeX.
+  6. Chromium con `ignoreDefaultArgs: ['--hide-scrollbars']` y reutilización de `.agents/teamwork/m1_zoomfix_split50/generate_audit_screenshots.mjs` (200 capturas, 50 por curso) como auditoría visual.
+
 ---
 
-### Milestone 2: Configuración PWA Móvil
+### Milestone 2: PWA Instalable y Modo Offline (Configuración PWA Móvil)
+* **Estado:** ⏳ **Pendiente.** La parte de *usabilidad móvil* (responsive, drawer, columna única) ya se completó y quedó registrada como Milestone 2a en `MILESTONES_COMPLETED.md`; lo que falta es lo propiamente PWA (a 2026-10-26 el repositorio no tiene `vite-plugin-pwa`, ni `<link rel="manifest">`, ni service worker).
 * **Objetivo:** Experiencia nativa en smartphones Android e iOS para estudio ubicuo.
 * **Componentes:**
   - `vite-plugin-pwa` con precaching de fuentes KaTeX y bundles JS.
@@ -350,6 +353,7 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 ---
 
 ### Milestone 6: "Antigravity Study Harness" (Multi-Panel Split-View & Viewport 1/3–1/2 Adaptativo)
+* **Estado:** 🛠️ **En progreso, sin certificación oficial del usuario.** La Vía Pragmática lleva los pasos 1–2 (ergonomía y Split-View) entregados; el paso 3 (pestañas, botón socrático) no se ha iniciado y hay requisitos nuevos bloqueantes (§6.6).
 * **Objetivo:** Transformar la plataforma en una estación de trabajo de ultra-aprendizaje en flow, conectando preguntas interactivas con el material de origen y tutoría socrática por IA, optimizada para la realidad operativa de un único mantenedor con recursos y suscripciones estándar (Plan Pro).
 
 ```mermaid
@@ -477,6 +481,23 @@ El nuevo diseño del Milestone 6 se estructura en dos modalidades complementaria
 4. **Paso 4 — Verificación Determinista y Certificación:**
    - Ejecutar suite de pruebas con Vitest y build estático de Vite (`npm run build`) para garantizar cero regresiones.
 
+#### 6.6. Estado Real y Requisitos Nuevos para la Certificación Oficial (2026-10-26)
+
+**Avance de la Vía Pragmática (verificado en el código):**
+
+| Paso | Estado | Evidencia |
+| :--- | :---: | :--- |
+| 1. Refactor responsivo (drawer, footer compacto, toast como bottom sheet) | ✅ | Entregado con el Milestone 1 (ver `MILESTONES_COMPLETED.md`) |
+| 2. Contenedores y KaTeX líquido, grid de 2 columnas | ✅ | Container query a 480 px; el KaTeX inline fluye (el enfoque `overflow-x-auto` de este paso fue sustituido por envoltura natural) |
+| 3. Micro-Harness (Hoja en Blanco, Ficha Teórica, Prompt Socrático) | ❌ | `platform/src` no contiene pestañas, scratchpad ni generador de prompt (búsqueda del 2026-10-26) |
+| 4. Verificación y certificación | 🟡 | Build, contratos y E2E de layout; falta la certificación oficial del usuario |
+
+**Requisitos nuevos definidos por el usuario (2026-10-26), bloqueantes para certificar:**
+1. **Botón socrático con compuerta estricta.** «Copiar Prompt Socrático» no se muestra de entrada: solo aparece cuando el estudiante *ya literalmente ha intentado todo*. Gancho disponible: `PracticeSession.tsx` ya mantiene `wrongAttemptsCount` e `isExhausted`. **[D]** Falta definir la condición exacta (por ejemplo, intentos agotados más pistas consultadas).
+2. **Pantalla previa en blanco («Blank-First»).** En lugar de mostrar de frente las opciones, se presenta una pantalla en blanco que pregunta «¿Ya lo has intentado? ¿Entiendes más o menos de qué va tu idea?», para que el propio estudiante tome conciencia de su ignorancia y de hasta dónde llega frente a una pregunta **sin respuestas múltiples a la vista**; solo después se revelan las opciones. **[D]** Falta definir si el enunciado permanece visible y si se registra la autoevaluación.
+3. **Choque deliberado con AC-CORE.** AC-CORE (Milestone 1) exige las opciones visibles en el primer frame; la pantalla en blanco lo cambia a propósito. Debe ser un **modo explícito** y la matriz E2E (Milestone 1-T) debe cubrir ambos modos: las pruebas actuales asumen opciones visibles.
+4. **Relación con otros hitos.** Es la versión sin MathLive de los puntos 1 (evocación libre) y 7 (andamiaje diferido) de §1.1; no sustituye al Milestone 5.
+
 ---
 
 ### Milestone 7: Pipeline Streaming DAG, Pool de Subprocesos y Aceleración de la Suite de Tests (Target Pipeline: < 15 min / Target Tests: < 30 s)
@@ -580,50 +601,22 @@ El nuevo diseño del Milestone 6 se estructura en dos modalidades complementaria
 
 ---
 
-### Milestone 11: Carga Rápida de Cursos (Manifest, Prefetch y Caché)
-* **Estado:** ✅ **Completado (Implementado y verificado 2026-10-26)** (Frente B completado: manifest SLIM de 2.5 KB [reducción 99.995%], carga en 0 ms en 1er frame vía script inline, caché mtime+size warm <15 ms, IndexedDB en cliente y prefetch en segundo plano).
-* **Diagnóstico Medido (Causa Raíz de Rendimiento):**
-  - **Sobrecarga de Red y Disco:** Los 7 cursos ocupan 51.9 MB en disco. Una solicitud a `GET /api/courses.json` devuelve una respuesta de **43 MB en ~17.4–17.9 segundos**.
-  - **Ejecución Redundante en Cada Petición:** `getCourseList()` en `courseServer.cjs` (y en el middleware de Vite) lee del disco, aplica regex de control, ejecuta `JSON.parse` y valida los 7 cursos completos en *cada* solicitud, inyectando el campo `data` con la totalidad del contenido curricular en la lista de la biblioteca (que solo requiere título, descripción y contadores).
-  - **Apertura Lenta de Cursos:** `GET /api/courses/:id` re-escanea y re-parsea todos los cursos en disco (~733 ms para un curso de 1.3 MB).
-  - **Cero Caché y Build Duplicado:** Sin encabezados `ETag`, sin respuestas HTTP 304 Not Modified, sin compresión gzip/brotli en respuestas de API; build estático emite cada curso 3 veces de forma redundante y en formato *pretty-printed*.
-  - **Re-fetch Innecesario:** `App.tsx` re-solicita la lista completa de cursos de 43 MB cada vez que el usuario vuelve a la biblioteca desde un curso.
-* **Arquitectura Técnica Propuesta:**
-  1. **Course Manifest Slim e Inlining en HTML:**
-     - Contrato `GET /api/courses(.json)` que devuelve un manifiesto liviano (< 10 KB, sin campo `data`): `{ generated_at, courses: [{ id, filename, title, description, status, total_competencies, total_questions, bytes, etag }] }`.
-     - Inyección del manifiesto inline en `/` reemplazando `<!--COURSE_MANIFEST-->` en `index.html` con `<script id="course-manifest" type="application/json">...</script>` para pintar la biblioteca en el primer frame (0 ms de espera de red).
-  2. **Índice con Caché Persistente por `mtime + size` (`courseIndex.cjs`):**
-     - Cálculo en segundo plano al arrancar el servidor y persistencia en `platform/.cache/course_index.json` (directorio ignorado por git; sin escrituras en `courses/` ni `content/`).
-     - Validación pesada y parsing únicamente cuando cambian los metadatos del archivo en disco. Mapa directo `id -> filename` para servir cursos individuales sin escanear el resto.
-  3. **Entrega de Cursos con ETag, Compresión y HTTP 304:**
-     - `GET /api/courses/:id(.json)` entrega el curso individual con `ETag`, `Cache-Control`, compresión gzip nivel rápido o brotli, y respuesta inmediata `304 Not Modified` ante cabecera `If-None-Match`.
-  4. **Frontend Inteligente (Prefetch, IndexedDB y Web Worker):**
-     - Renderizado inmediato de la biblioteca mediante manifest inline; prefetch en segundo plano con `requestIdleCallback` (baja prioridad, uno a uno).
-     - Elevación a prioridad alta mediante eventos `pointerenter`, `focus` y `touchstart` sobre la tarjeta del curso.
-     - Almacenamiento en caché en memoria + `IndexedDB` indexado por `ETag`.
-     - Parseo JSON y normalización de preguntas (`normalizeQuestion`) delegado a un Web Worker (`courseParse.worker.ts`), manteniendo el hilo principal a 60 fps.
-     - Esqueleto de carga con barra de progreso si el usuario abre un curso antes de completar el prefetch.
-     - Retorno a la biblioteca sin re-petición de red.
-  5. **Optimización de Build Estático y Code-Splitting:**
-     - Manifiesto slim + cursos individuales minificados; code-split mediante `React.lazy` para `PracticeSession`, `CompletionScreen` y `CourseChallenge`.
-* **Descomposición de Streams de Trabajo:**
-  - **P1 Server (`platform/server/courseServer.cjs`, `platform/server/courseIndex.cjs`):** Servidor con índice caché, manifest slim, compresión gzip/br, ETag/304 e inyección en HTML.
-  - **P2 Vite (`platform/vite.config.ts`):** Middleware de desarrollo y bundling optimizado con manifiesto slim minificado sin duplicación.
-  - **P3 Frontend (`platform/src/App.tsx`, `platform/src/utils/courseLoader.ts`, `platform/src/workers/courseParse.worker.ts`):** Manifiesto inline, prefetch idle/hover, IndexedDB, worker y esqueletos.
-  - **2D Tests (`tests/test_course_api_manifest.py`):** Pruebas de contrato y rendimiento del servidor de manifiesto.
-* **Metas de Rendimiento Cuantitativas:**
-  - Manifiesto en caliente: **< 100 ms** (frío: < 1 s sin bloquear la UI).
-  - Pintura de tarjetas en biblioteca: **≤ 100 ms** desde recepción de HTML (**≤ 300 ms** bajo emulación de CPU lenta 4×).
-  - Apertura de curso prefetched: **≤ 300 ms** con 0 peticiones de red al hacer click.
-  - Apertura en frío: **≤ 1.2 s** con esqueleto y parseo no bloqueante en Web Worker.
-* **Criterios de Aceptación (AC-19 a AC-25):**
-  - **AC-19:** `/api/courses` responde manifest < 50 KB (sin `data`) en < 100 ms caliente y < 1 s frío.
-  - **AC-20:** Biblioteca pinta tarjetas en ≤ 100 ms (≤ 300 ms con 4× CPU throttling) vía manifest inline.
-  - **AC-21:** Curso prefetched abre en ≤ 300 ms y 0 peticiones; en frío ≤ 1.2 s con esqueleto.
-  - **AC-22:** `/api/courses/:id` no escanea otros cursos, soporta `ETag`, `304` y compresión.
-  - **AC-23:** Volver a biblioteca no re-emite petición de lista de cursos.
-  - **AC-24:** Build estático no duplica cursos ni los emite en formato pretty-printed.
-  - **AC-25:** Cursos corruptos se marcan con `status: "error"` sin tumbar ni degradar el servicio de los demás.
+### Milestone 11b: Apertura Instantánea de Cursos Pesados (Diagnóstico en Navegador y Ajustes de Carga)
+* **Estado:** ⏳ **Pendiente.** Nace del Milestone 11 (núcleo cerrado en `MILESTONES_COMPLETED.md`). El usuario percibe que abrir un curso pesado «se demora una buena parte del tiempo»; el servidor y el parseo miden ≈ 0.1 s en total (§2.2), así que el cuello de botella está en otro lado y **primero hay que medirlo**.
+* **Entregables, por orden de costo/beneficio:**
+  1. **Instrumentación:** `performance.mark` en el clic, fin de descarga, fin de parseo y primer pintado de la vista del curso; resultados legibles desde la consola de la laptop de 14".
+  2. **Quitar el `await saveToIndexedDB(...)` del camino de apertura** en `courseLoader.ts` (escribir en segundo plano) y hacer que el prefetch escriba en IndexedDB solo en tiempo ocioso.
+  3. **Política de prefetch:** pausar la cola mientras el usuario abre un curso o está practicando; no competir por el hilo principal con clones de 14 MB.
+  4. **Indicador de progreso por tarjeta** (la prop `loadingCourseId` ya existe; falta mostrar el avance real de la descarga).
+  5. **Web Worker de parseo** (`courseParse.worker.ts`) **solo si** la instrumentación demuestra un bloqueo del hilo principal > 50 ms.
+  6. **Code-splitting** con `React.lazy` para `PracticeSession`, `CompletionScreen` y `CourseChallenge` (bundle actual ≈ 1,177 KB).
+  7. **E2E de rendimiento** `tests/e2e_course_loading_perf.mjs` con `Emulation.setCPUThrottlingRate(4)`, que además mide AC-20 y AC-23, hoy sin medición automatizada.
+* **Descartado por la evidencia:** la normalización diferida por unidad (ahorra ≈ 3–7 ms medidos).
+* **Criterios de aceptación pendientes (heredados del Milestone 11):**
+  - **AC-20:** biblioteca pintada en ≤ 100 ms desde que llega el HTML (≤ 300 ms con CPU 4× más lenta).
+  - **AC-21:** curso con prefetch abre en ≤ 300 ms con 0 peticiones; en frío ≤ 1.2 s con esqueleto.
+  - **AC-23:** volver a la biblioteca no repite la petición de la lista.
+  - **AC-24 (resto):** eliminar la segunda copia por curso del build estático si ninguna ruta del frontend la usa.
 
 ---
 
@@ -632,7 +625,7 @@ El nuevo diseño del Milestone 6 se estructura en dos modalidades complementaria
 * **Diagnóstico Medido (Causa Raíz de Desconexión y Pérdida de Estado):**
   - **Comportamiento HMR de Vite ante Suspensión:** No existe código custom en Tops Academy que reinicie el servidor Node. Al suspender la laptop en modo `npm run dev`, la conexión WebSocket de HMR de Vite se interrumpe. Al despertar el sistema, el cliente Vite detecta la reconexión y fuerza un `location.reload()` completo de la ventana del navegador.
   - **Fragilidad del Estado en Memoria:** El estado de la práctica (curso activo, unidad, tipo de sesión, preguntas barajadas, índice actual, respuestas marcadas e historial de aciertos) reside únicamente en la memoria volátil de React. Solo los niveles de maestría se persisten en `localStorage` (`masteryStorage.ts`). En consecuencia, la recarga forzada tras suspensión devuelve al usuario a la biblioteca perdiendo el progreso del quiz.
-  - **Agravamiento por Carga Pesada:** Al reiniciar la página tras la suspensión, la aplicación re-solicita la lista completa de cursos (43 MB, 17 s), dando la falsa impresión de que el servidor "se cayó o tarda en responder".
+  - **Agravamiento por Carga Pesada:** Al reiniciar la página tras la suspensión, la aplicación re-solicita la lista completa de cursos (43 MB, 17 s), dando la falsa impresión de que el servidor "se cayó o tarda en responder". *(Mitigado desde el Milestone 11: el manifest pesa 2.5 KB y la reapertura de cursos usa la caché de IndexedDB.)*
   - **Acción Diagnóstica con el Usuario:** Confirmar si el comando ejecutado habitualmente es `npm run dev`, `npm run server` o `vite preview`, y si en la consola de herramientas de desarrollo (F12) se observa el mensaje `[vite] server connection lost`.
 * **Cambios Técnicos de Arquitectura:**
   1. **Persistencia y Restauración de Sesión en `sessionStorage` (`sessionStore.ts`):**
