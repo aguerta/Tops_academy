@@ -120,7 +120,67 @@ Se evaluó el comportamiento del componente `MathText` en el contexto real del n
 8. **Invarianza de API:**
    - La firma de props (`text: string`, `className?: string`, `inline?: boolean`) se mantiene 100% idéntica.
 
-### D. Verificación Final de Compilación
+### D. Verificación Final de Compilación (Fase Previa)
 - `npx tsc --noEmit` en `platform/`: **Exit code 0** (0 errores de tipos).
 - `npm run build` en `platform/`: **Exit code 0** (compilación limpia con Vite v6.4.4).
 - `git diff`: **0 archivos modificados fuera de la frontera exclusiva** (`platform/src/components/MathText.tsx`, `platform/index.html`, `stream_1F/handoff.md`).
+
+---
+
+## 5. Remediation Task — Frente A: KaTeX \text{} Long Prose Wrapping
+
+### A. Diagnóstico del Problema Visual
+En cursos como `gavilano_pre_parcial.json`, `asyntotic_estatistics_v7.json`, `estadistica_3_pre_parcial.json`:
+- Las opciones de respuesta contenían prosa explicativa dentro del delimitador inline math `$...$`, como por ejemplo:
+  - `$P = 169 \text{ porque los compradores no toleran postergar su compra}$`
+  - `$y_i = \hat{\beta}_0 + \hat{\beta}_1 x_i + \varepsilon_i \text{ con estimadores muestrales}$`
+  - `$\text{plim}_{n \to \infty} \left(\frac{X'X}{6772}\right) = Q \text{ con todos } \lambda_j > 0 \text{ y } \det(Q) > 0$`
+- KaTeX convierte los espacios dentro de `\text{...}` en `\u00a0` (`&nbsp;` non-breaking spaces) y aplica `white-space: nowrap` en sus elementos `.katex-html` y `.katex .base`.
+- Esto causaba que la fórmula y la explicación en español formaran una sola línea indivisible de 450px a 700px de ancho. En las tarjetas de opciones de 2 columnas (~260px-320px), el texto desbordaba la tarjeta, solapando la columna contigua y cortándose en el extremo derecho.
+
+### B. Solución Implementada en `platform/src/components/MathText.tsx`
+1. **Función auxiliar pura `splitMathAndProse(latex: string)`:**
+   - Emplea un algoritmo con balanceo recursivo de llaves para localizar bloques `\text{...}` y `\mbox{...}`.
+   - Si el contenido interior `innerContent` contiene espacios en blanco (`/\s/.test(...)`) o tiene longitud mayor a 15 caracteres (prosa):
+     - El contenido matemático anterior se limpia de barras invertidas terminales (`replace(/[\\~]+$/, '')`) y se emite como `{ type: 'inline-math', content: cleanedMath }`.
+     - El contenido en prosa se emite como `{ type: 'text', content: innerContent }`, preservando espacios limítrofes si existían en la fuente LaTeX.
+   - Si el contenido interior no contiene espacios y es corto (p. ej. `\text{plim}`, `\text{max}`, `\text{Var}`), se preserva dentro del bloque matemático para que KaTeX lo renderice en tipografía romana de operador matemático.
+2. **Integración en el parser:**
+   - En el loop de procesamiento de `inline-math` (`$...$`), el contenido se fragmenta con `splitMathAndProse(rawInlineMath)` antes de agregar las sub-partes a la lista final de renderizado.
+3. **Mapeo de elementos DOM:**
+   - Cada parte de tipo `text` se renderiza como `<span key={index} className="inline break-words">{part.content}</span>`.
+   - Para las partes `inline-math`, se ejecuta `katex.renderToString` con `displayMode: false` y se neutraliza cualquier `\u00a0` residual mediante `html.replace(/\u00a0/g, ' ')`, renderizándose en `<span key={index} className="inline mx-0.5" dangerouslySetInnerHTML={{ __html: html }} />`.
+
+### C. Solución CSS en `platform/src/index.css`
+Se reforzaron las reglas CSS de contención en `.qc-root` y `.qc-options`:
+```css
+.qc-root .katex,
+.qc-options .katex {
+  max-width: 100%;
+  white-space: normal;
+}
+.qc-root .katex-html,
+.qc-options .katex-html {
+  white-space: normal;
+}
+.qc-root .katex .base,
+.qc-options .katex .base {
+  white-space: normal;
+}
+.qc-root .katex .mord.text,
+.qc-options .katex .mord.text {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+```
+
+### D. Verificación y Resultados de Pruebas
+1. **Pruebas de Contrato en `tests/test_m1_zoomfix_contract.py`:**
+   - Se incorporó la clase `TestMathTextProseSplittingContract` validando el contrato estático de `MathText.tsx`, las reglas de `index.css` y la ejecución en tiempo real de `splitMathAndProse` vía Node.js para los 4 casos de las capturas y operadores romanos (`\text{plim}`, `\text{Var}`).
+   - Ejecución: `.\pytest.cmd -q tests/test_m1_zoomfix_contract.py` -> **97 passed in 0.67s (100% PASS)**.
+2. **Compilación de Producción:**
+   - Ejecución: `npm run build` en `platform/` -> **Exit code 0** (tsc + vite build en 18.46s).
+3. **Suite E2E de Matriz de Viewports:**
+   - Ejecución: `node tests/e2e_m1_viewport_matrix.mjs` -> **100% PASS en los 7 viewports** (683×768, 720×900, 800×900, 960×1080, 1366×768, 1440×900, 390×844) verificando que las opciones distribuyen en 4+3 columna-primero, los botones de acción no quedan ocultos y no existe ningún desborde horizontal (`scrollWidth <= clientWidth`).
+

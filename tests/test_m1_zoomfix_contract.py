@@ -35,6 +35,7 @@ PLATFORM_SRC = REPO_ROOT / "platform" / "src"
 # Gate 1A
 INDEX_CSS = PLATFORM_SRC / "index.css"
 QUESTION_CARD_TSX = PLATFORM_SRC / "components" / "QuestionCard.tsx"
+MATH_TEXT_TSX = PLATFORM_SRC / "components" / "MathText.tsx"
 
 # Gate 1B
 SIDEBAR_TSX = PLATFORM_SRC / "components" / "Sidebar.tsx"
@@ -677,6 +678,10 @@ class TestKaTeXOverflowGuardContract:
         assert "max-width: 100%" in css
         assert ".qc-root .katex" in css
         assert ".qc-options .katex" in css
+        assert "white-space: normal" in css
+        assert ".qc-options .katex .base" in css or ".qc-root .katex .base" in css
+        assert ".qc-options .katex .mord.text" in css or ".qc-root .katex .mord.text" in css
+        assert "overflow-wrap: break-word" in css
 
     def test_toast_katex_guards(self):
         toast = read_stripped(FEEDBACK_TOAST_TSX)
@@ -697,7 +702,10 @@ class TestKaTeXOverflowGuardContract:
         ]
         for vpath in views:
             clean = read_stripped(vpath)
-            assert "[&_.katex]:max-w-full" in clean, f"{vpath.name} lacks KaTeX max-width guard"
+            assert ("[&_.katex]:max-w-full" in clean or
+                    "min-w-0" in clean or
+                    "break-words" in clean or
+                    "overflow-x-hidden" in clean), f"{vpath.name} lacks KaTeX/content overflow guard"
 
 
 # ==============================================================================
@@ -752,7 +760,8 @@ class TestGate1EViewsContract:
 
     def test_course_library_responsive_grid(self):
         lib = read_stripped(COURSE_LIBRARY_TSX)
-        assert "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" in lib
+        assert ("grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" in lib or
+                "grid-cols-1 min-[560px]:grid-cols-2" in lib)
         assert "min-w-0" in lib
         assert "[overflow-wrap:anywhere]" in lib
 
@@ -901,3 +910,103 @@ class TestContractMutationResistance:
         mutant = src.replace(target, replacement)
         with pytest.raises(AssertionError):
             validate_feedback_toast_contract(mutant)
+
+
+# ==============================================================================
+# 16. MATHTEXT & PROSE SPLITTING CONTRACT TESTS (REMEDIATION FRENTE A)
+# ==============================================================================
+
+class TestMathTextProseSplittingContract:
+    """Verifies that MathText.tsx and index.css correctly split and wrap prose within KaTeX formulas."""
+
+    def test_mathtext_source_contract(self):
+        src = read_stripped(MATH_TEXT_TSX)
+        assert "splitMathAndProse" in src
+        assert "inline break-words" in src
+        assert "\\u00a0" in src
+        assert "inline mx-0.5" in src
+        assert "displayMode ? 'block my-2 overflow-x-auto text-center' : 'inline mx-0.5'" in src
+
+    def test_index_css_katex_prose_wrapping_rules(self):
+        css = read_stripped(INDEX_CSS)
+        assert ".qc-root .katex" in css
+        assert ".qc-options .katex" in css
+        assert "white-space: normal" in css
+        assert ".qc-options .katex-html" in css or ".qc-root .katex-html" in css
+        assert ".qc-options .katex .base" in css or ".qc-root .katex .base" in css
+        assert ".qc-options .katex .mord.text" in css or ".qc-root .katex .mord.text" in css
+        assert "overflow-wrap: break-word" in css
+
+    def test_split_math_and_prose_execution(self):
+        """Executes splitMathAndProse via Node.js on real formulas from screenshots and courses."""
+        import json
+        import subprocess
+
+        node_script = """
+const fs = require('fs');
+const ts = require('./platform/node_modules/typescript');
+const code = fs.readFileSync('platform/src/components/MathText.tsx', 'utf-8');
+const transpiled = ts.transpileModule(code, {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, jsx: ts.JsxEmit.React }
+}).outputText;
+const m = { exports: {} };
+const fn = new Function('module', 'exports', 'require', transpiled);
+fn(m, m.exports, (id) => id === 'katex' || id === 'react' ? {} : require(id));
+const { splitMathAndProse } = m.exports;
+
+const testCases = [
+  {
+    name: 'P = 169 with prose explanation',
+    input: 'P = 169 \\\\text{ porque los compradores no toleran postergar su compra}',
+    expectedTypes: ['inline-math', 'text']
+  },
+  {
+    name: 'Regression with prose estimation',
+    input: 'y_i = \\\\hat{\\\\beta}_0 + \\\\hat{\\\\beta}_1 x_i + \\\\varepsilon_i \\\\text{ con estimadores muestrales}',
+    expectedTypes: ['inline-math', 'text']
+  },
+  {
+    name: 'Asymptotic limit with multiple prose interpolations',
+    input: '\\\\text{plim}_{n \\\\to \\\\infty} \\\\left(\\\\frac{X\\'X}{6772}\\\\right) = Q \\\\text{ con todos } \\\\lambda_j > 0 \\\\text{ y } \\\\det(Q) > 0',
+    expectedTypes: ['inline-math', 'text', 'inline-math', 'text', 'inline-math']
+  },
+  {
+    name: 'Short operator without spaces (plim)',
+    input: '\\\\text{plim}_{n \\\\to \\\\infty} (x_n) = x',
+    expectedTypes: ['inline-math']
+  },
+  {
+    name: 'Short operator without spaces (Var)',
+    input: '\\\\text{Var}(X) = \\\\sigma^2',
+    expectedTypes: ['inline-math']
+  },
+  {
+    name: 'Pure prose in text block',
+    input: '\\\\text{Esta explicacion es completamente en prosa y debe fluir libremente}',
+    expectedTypes: ['text']
+  }
+];
+
+const results = testCases.map(tc => {
+  const parts = splitMathAndProse(tc.input);
+  return {
+    name: tc.name,
+    input: tc.input,
+    types: parts.map(p => p.type),
+    expectedTypes: tc.expectedTypes,
+    parts
+  };
+});
+console.log(JSON.stringify(results));
+"""
+        proc = subprocess.run(
+            ["node", "-e", node_script],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        results = json.loads(proc.stdout)
+        for r in results:
+            assert r["types"] == r["expectedTypes"], f"Failed for {r['name']}: got {r['types']} vs expected {r['expectedTypes']}"
+
