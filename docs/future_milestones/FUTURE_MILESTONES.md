@@ -197,7 +197,7 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 
 | Hito / Milestone | Área | Impacto Cognitivo y Operativo | Esfuerzo Estimado | Estado de Ejecución |
 | :--- | :--- | :--- | :---: | :---: |
-| **Milestone 1: Web Ergonomía para Laptops (Zoom-Fix)** | Frontend / UX | **Elimina la fricción visual inmediata.** Grid de 2 columnas para 7 opciones en laptops de 13"-14", eliminando la necesidad de zoom out. | 2 a 4 h | 🎯 **Prioridad Inmediata** |
+| **Milestone 1: Web Ergonomía para Laptops (Zoom-Fix)** | Frontend / UX | **Elimina la fricción visual inmediata.** Grid de 2 columnas para 7 opciones en laptops de 13"-14" y split view 50%, eliminando la necesidad de zoom out. | 2 a 4 h | ✅ **Completado y verificado (matriz 7 viewports, Gate 3 PASS)** |
 | **Milestone 2: PWA Móvil y Modo Offline** | Frontend / PWA | **Habilita el estudio ubicuo.** Standalone app en iOS/Android, safe areas y precaching de fuentes KaTeX. | 1 a 2 h | 🚀 **Quick Win #2** |
 | **Milestone 3: Anti-Overfitting y Variedad de Plantillas** | Pipeline & QA | **Destruye la automatización sintáctica.** 4 arquetipos disjuntos (`[M3-ARCHETYPES]`) en pipeline y linter de entropía en QA. | 2 a 3 h (Auditor) | 🛠️ **Pipeline: Hecho / Auditor: Falta contar $\ge 4$** |
 | **Milestone 4: Desacoplamiento KaTeX-Python (PrairieLearn)** | Backend / Pipeline | **Erradica al 100% las colisiones de sintaxis.** Tokens `@var@` activos; falta compilación AST QuickJS y contrato Pydantic. | 1 a 2 d | 🛠️ **Parcial (@var@ activo / AST pendiente)** |
@@ -214,20 +214,60 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 
 ## 7. Especificación Técnica Detallada de los Milestones
 
-### Milestone 1: Web Ergonomía para Laptops (Zoom-Fix)
-* **Objetivo Crítico:** Resolver el problema de adaptabilidad donde las 7 opciones (MC7) se desbordan verticalmente en computadoras portátiles (13"-14", resoluciones 1366x768 o 1440x900) obligando al usuario a hacer zoom out continuo en el navegador.
-* **Componentes Técnicos:**
-  1. **Grid Inteligente de 2 Columnas ([`QuestionCard.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/QuestionCard.tsx)):**
-     - En pantallas de escritorio medianas o laptops con altura reducida (`max-height: 850px` y `min-width: 1024px`), las 7 alternativas se organizan automáticamente en 2 columnas equilibradas (4 en columna izquierda, 3 en columna derecha), garantizando que todo el reactivo quepa en una sola pantalla sin scroll.
-  2. **Contenedor Elástico con `clamp()` y Scroll Suave:**
-     - Espaciados y tipografías elásticas usando unidades dinámicas (`clamp(0.875rem, 1.5vh, 1.125rem)`) para padding de opciones y enunciados.
-     - Scroll interno contenido en el bloque de opciones si el enunciado es excepcionalmente largo, manteniendo fijos el encabezado y el botón de comprobación.
-  3. **Refactorización Mobile-First:**
-     - Drawer desplegable para [`Sidebar.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/Sidebar.tsx) con botón hamburguesa.
-     - [`FeedbackToast.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/FeedbackToast.tsx) transformado en Bottom Sheet deslizable con scroll propio.
-     - SVG responsive en [`CoordinatePlane.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CoordinatePlane.tsx) (`viewBox` + `max-w-[340px]`).
-     - Viewports dinámicos (`100dvh`) para mitigar el teclado virtual en preguntas de texto.
-
+### Milestone 1: Web Ergonomía para Laptops y Split View 50% (Zoom-Fix)
+* **Estado:** ✅ **Completado y verificado (matriz 7 viewports, Gate 3 PASS)** (implementación técnica completada por Streams 1A–1E; verificación visual en matriz de navegadores asignada a Stream 2B).
+* **Objetivo Crítico:** Resolver integralmente la adaptabilidad y ergonomía cognitiva tanto en laptops compactas (13"-14", resoluciones 1366×768 o 1440×900) como en escenarios de **Split View al 50% de ancho** (pantalla dividida con visor de PDF, notas o asistente socrático), donde las 7 opciones (MC7) previamente provocaban desborde vertical forzando al usuario a realizar zoom out continuo en el navegador.
+* **Requisito de Arquitectura Split-View (50% de ancho de pantalla):**
+  - **Superación de Media Queries rígidas:** En split view al 50%, los anchos efectivos de la ventana del navegador oscilan entre 683 px y 960 px. Por consiguiente, una media query tradicional de escritorio (`min-width: 1024px`) **nunca se activa**. La arquitectura se basa en **Container Queries nativas** (ancho del contenedor `.qc-root`), `max-height` condicional y flexbox/grid defensivos sin dependencias npm externas.
+  - **Sidebar Desacoplado:** El sidebar fijo `w-64` (que a 683 px consumía el 37% de la pantalla) se transforma en Drawer off-canvas para viewports `< 1024px`, concediendo el 100% del ancho al contenido principal.
+  - Plan de ejecución: [`plan.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/teamwork/m1_zoomfix_split50/plan.md).
+* **Matriz de Viewports y Alturas Obligatoria:**
+  - `683 × 768`: Laptop 1366 split view 50% — Enunciado y 7 opciones caben en pantalla sin scroll vertical de página ni scroll horizontal (`scrollWidth <= innerWidth`); header colapsa a `h-12` por regla `@media(max-height:850px)`.
+  - `720 × 900`: Laptop 1440 split view 50% — Grid de 2 columnas holgado, layout fluido, header `h-16`, cero fricción visual.
+  - `800 × 900`: Monitor 1600 split view 50% — Distribución equilibrada 4+3 en 2 columnas, amplio espacio vertical.
+  - `960 × 1080`: Pantalla Full HD 1920 split view 50% — Vista split óptima con altura completa de 1080 px y renderizado holgado.
+  - `1366 × 768`: Laptop estándar completa — 2 columnas en MC7, header `h-12` (`height <= 850px`), sin zoom out requerido.
+  - `1440 × 900`: Laptop widescreen completa — Aprovechamiento total del espacio horizontal y vertical con header `h-16`.
+  - `390 × 844`: Móvil portrait — 1 columna determinista ($< 600\text{ px}$ en contenedor), dots compactados a indicador textual `n of N`, cero desborde horizontal.
+  - **Comportamiento por Alturas:** En alturas bajas ($\le 850\text{ px}$, como 768 px y 844 px), convergen simultáneamente: colapso de header a `h-12` (ahorro de 16 px), Bottom Sheet en `FeedbackToast` (`max-h-[45dvh]`), contención de `CoordinatePlane` (`max-h-[30dvh]`) y variables fluidas `clamp()` indexadas a `vh`. En alturas estándar y altas (900 px y 1080 px), todos los módulos conservan su amplitud nominal sin comprimir elementos.
+* **Componentes Técnicos Implementados:**
+  1. **Grid Inteligente de 2 Columnas con Container Queries y Soporte 3–9 Opciones ([`QuestionCard.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/QuestionCard.tsx), [`index.css`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/index.css) - Stream 1A):**
+     - Contenedor con `container-type: inline-size; container-name: qc;` (`.qc-root`).
+     - Para reactivos MC7 (`multiple_choice_7_options`) y selección múltiple (`multiple_select`): regla `@container qc (min-width: 600px)` que activa 2 columnas con orden columna-primero (`grid-auto-flow: column; grid-template-rows: repeat(var(--qc-rows, var(--rows, 4)), auto); grid-template-columns: repeat(2, minmax(0, 1fr));`).
+     - **Cálculo Dinámico de Filas ($3$ a $9$ opciones):** `--qc-rows` y `--rows` computadas dinámicamente mediante `Math.max(1, Math.ceil(optionsCount / 2))` inyectadas inline:
+       - 3–4 opciones: 2 filas (2 columnas: 2+1 o 2+2).
+       - 5–6 opciones: 3 filas (2 columnas: 3+2 o 3+3).
+       - 7–8 opciones: 4 filas (2 columnas: 4+3 [MC7 estándar A–D izq, E–G der] o 4+4).
+       - 9 opciones: 5 filas (2 columnas: 5+4).
+     - **Letras y Badges:** Soporte predeterminado mediante array `OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']` con fallback algorítmico a `String.fromCharCode(65 + idx)`.
+     - Fallback natural a 1 columna en anchos de contenedor $< 600\text{ px}$ (móviles o paneles ultra-estrechos).
+     - Tipografía y espaciados elásticos: `--qc-gap: clamp(0.375rem, 1vh, 0.75rem);`, `--qc-pad: clamp(0.5rem, 1.5vh, 0.875rem);`, `--qc-font: clamp(0.875rem, 1.5vh, 1.125rem);`, `--qc-badge: clamp(1.5rem, 3.2vh, 2rem);`.
+     - Scroll vertical interno contenido (`.qc-options-scroll`) para enunciados excepcionalmente largos (`max-height: calc(100dvh - var(--qc-chrome, 14rem))`), preservando header y footer fijos.
+     - **Blindaje KaTeX contra Fórmulas Anchas:** `.katex-display, .qc-root .katex, .qc-options .katex { display: inline-block; max-width: 100%; overflow-x: auto; overflow-y: hidden; vertical-align: middle; scrollbar-width: thin; }` y envoltura `.qc-root span.inline-block, .qc-options span.inline-block { max-width: 100%; }` con `min-w-0` defensivo en flex items para prevenir desborde horizontal de columnas ante expresiones algebraicas extensas.
+     - **Accesibilidad y Testabilidad:** Semántica ARIA con `role="radiogroup"` (`aria-label="Answer options"`) en MCQ y `role="group"` (`aria-label="Multiple choice options"`) en selección múltiple; estados `aria-pressed={isSelected}`; foco accesible con `focus-visible:ring-2 focus-visible:ring-ka-blue` y `focus-within:ring-2`; preservación íntegra de `data-testid` (`question-card`, `option-*`, `multiselect-option`, `fill-blank-input`, `hints-toggle`).
+  2. **Sidebar Drawer Off-Canvas y App Shell Accesible ([`Sidebar.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/Sidebar.tsx), [`App.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/App.tsx) - Stream 1B):**
+     - Sidebar off-canvas en viewports $< 1024\text{ px}$ con botón flotante accesible (`data-testid="sidebar-toggle"`, `top-3 left-4 z-40`, visible en `lg:hidden`) con `aria-expanded`, `aria-controls="sidebar-drawer"` y `aria-label="Open navigation menu"`.
+     - Backdrop con overlay oscuro (`bg-black/40 z-40`), cierre automático con tecla `Escape`, click fuera, redimensionamiento $\ge 1024\text{ px}$ o selección de unidad / Course Challenge.
+     - **Accesibilidad WCAG 2.1 AA:** Focus trap bidireccional cíclico (`Tab` / `Shift+Tab`), restauración automática de foco al toggle button tras el cierre, body scroll lock con compensación de ancho de scrollbar para prevenir saltos de layout, y `overscroll-contain`.
+     - Ancho adaptativo en escritorio: `w-56` (1024–1279 px) y `w-64` ($\ge 1280\text{ px}$).
+     - Padding superior compensatorio `pt-14 lg:pt-0` y `min-w-0` en los `<main>` de `App.tsx` para evitar solapamientos y desbordes flexbox.
+  3. **Bottom Sheet Toast y SVG Responsivo ([`FeedbackToast.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/FeedbackToast.tsx), [`CoordinatePlane.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CoordinatePlane.tsx) - Stream 1C):**
+     - `FeedbackToast`: en $< 1024\text{ px}$ o altura $\le 850\text{ px}$, opera como Bottom Sheet deslizable (`fixed z-30 bottom-20 inset-x-3 sm:inset-x-6 max-w-xl mx-auto max-h-[45dvh]`).
+     - Posicionamiento exacto a `bottom-20` (80 px), garantizando una separación limpia de 16 px sobre el footer compacto de 64 px de `PracticeSession`, sin obstruir jamás los botones de acción (`Skip`, `Check`, `Try again`, `Next question`).
+     - Scroll interno propio independiente para retroalimentación diagnóstica y soluciones paso a paso, con contención anti-desborde para código y expresiones KaTeX (`.feedback-toast-root pre, code { max-width: 100% !important; overflow-x: auto !important; }`).
+     - Accesibilidad de retroalimentación: botones con `aria-label="Quick redo"`, `aria-label="Close feedback"` y etiquetas descriptivas con `aria-hidden="true"` en glifos decorativos.
+     - `CoordinatePlane`: SVG responsivo con `viewBox`, `w-full max-w-[340px] max-h-[30dvh] h-auto`, `aspectRatio: width/height`, `role="img"` y `aria-label` descriptivo paramétrico (`from x=${xMin} to ${xMax}, y=${yMin} to ${yMax}`), evitando que planos cartesianos fuercen scroll vertical en pantallas de baja altura.
+  4. **Practice Session Shell Ergonómico ([`PracticeSession.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/PracticeSession.tsx) - Stream 1D):**
+     - Sustitución de `min-h-screen`/`100vh` por `.h-dvh-safe` y estilo dinámico `minHeight: '100dvh'`, eliminando scroll fantasma en navegadores móviles.
+     - Header compacto: colapsa a `h-12` (48 px) en alturas $\le 850\text{ px}` (`[@media(max-height:850px)]:h-12`), recuperando 16 px verticales.
+     - Footer compacto: reducido a `h-16` (64 px) con padding elástico `px-4 sm:px-8`.
+     - Padding compensatorio en `<main>`: ajustado a `pb-20` (80 px), recuperando 32 px de altura útil para reactivos sin solapar el footer fijo.
+     - Indicador de progreso responsivo: en $< 520\text{ px}$ los dots colapsan a indicador textual (`n of N`) con `role="status"`, evitando colisiones en el pie de página; en $\ge 520\text{ px}$, dots con `flex-wrap` y `aria-label` individual por reactivo.
+     - Blindaje `overflow-x-hidden` global preservando al 100% la lógica de estado, temporizadores y navegación por teclado (`Enter`).
+  5. **Adaptabilidad Global de Vistas y Blindaje KaTeX ([`CourseOverview.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseOverview.tsx), [`CourseLibrary.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseLibrary.tsx), [`MasteryGrid.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/MasteryGrid.tsx), [`MasteryLegend.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/MasteryLegend.tsx), [`PreExerciseModal.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/PreExerciseModal.tsx), [`CompletionScreen.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CompletionScreen.tsx), [`CourseChallenge.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseChallenge.tsx) - Stream 1E):**
+     - Reconfiguración de grids a `sm:grid-cols-2 xl:grid-cols-3` (activo a 683 px donde `sm:` 640 px aplica pero `md:` 768 px no).
+     - Contención KaTeX estricta (`[&_.katex]:max-w-full [&_.katex]:overflow-x-auto`) y `min-w-0` en flex items para evitar que títulos o fórmulas largas fuercen scroll horizontal (`scrollWidth <= innerWidth`).
+     - Truncamiento funcional en spans (`block min-w-0` / `inline-block align-bottom min-w-0`), soporte de `100dvh` y `shrink-0` en encabezados y pies de página de modales y pantallas de cierre.
 ---
 
 ### Milestone 2: Configuración PWA Móvil
