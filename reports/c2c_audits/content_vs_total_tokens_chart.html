@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Relación entre Tokens de Entrada de Contenido y Tokens Totales de la Corrida</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .chart-tooltip {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-4 sm:p-6 font-sans">
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Header Section -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+              Econometría de Tokens C2C v3.3
+            </span>
+            <span class="text-xs text-[var(--muted-foreground)]">Últimos 5 Cursos Instanciados</span>
+          </div>
+          <h1 class="text-2xl font-bold tracking-tight text-[var(--foreground)] mt-2">
+            Tokens de Entrada de Contenido vs. Tokens Totales de la Corrida
+          </h1>
+          <p class="text-sm text-[var(--muted-foreground)] mt-1">
+            Análisis econométrico de dispersión y recta de regresión lineal empírica entre el material base ingerido y el volumen total de cómputo multi-agente.
+          </p>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="flex items-center gap-2 bg-[var(--background)] p-1.5 rounded-xl border border-[var(--border)]">
+          <button id="btn-active" onclick="setMode('active')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs">
+            Input Activo (Neto)
+          </button>
+          <button id="btn-cache" onclick="setMode('cache')" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+            Input Bruto (+Caché)
+          </button>
+        </div>
+      </div>
+
+      <!-- Regression Stats Banner -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+        <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Correlación de Pearson (R)</div>
+          <div class="text-2xl font-bold text-emerald-500 mt-1" id="kpi-r">0.9946</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">Correlación casi perfecta</div>
+        </div>
+
+        <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Bondad de Ajuste (R²)</div>
+          <div class="text-2xl font-bold text-emerald-500 mt-1" id="kpi-r2">98.92%</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">Varianza explicada por el corpus</div>
+        </div>
+
+        <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Multiplicador Marginal (Slope)</div>
+          <div class="text-2xl font-bold text-indigo-500 mt-1" id="kpi-slope">46.83x</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">Tokens totales por token de input</div>
+        </div>
+
+        <div class="bg-[var(--background)] p-4 rounded-xl border border-[var(--border)]">
+          <div class="text-xs font-medium text-[var(--muted-foreground)] uppercase">Carga Base Mínima (Intercepto)</div>
+          <div class="text-2xl font-bold text-[var(--foreground)] mt-1" id="kpi-intercept">6.33 M</div>
+          <div class="text-xs text-[var(--muted-foreground)] mt-0.5">Overhead fijo de orquestación</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Chart: Scatter Plot & Regression Line -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-[var(--foreground)]">
+            Diagrama de Dispersión y Curva de Expansión de Cómputo
+          </h2>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            Eje X: Tokens de Entrada en Contenido (etapa CTA) | Eje Y: Gran Total de Tokens de la Corrida
+          </p>
+        </div>
+        <div class="flex items-center gap-4 text-xs">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-indigo-500 inline-block"></span>
+            <span class="text-[var(--muted-foreground)]">Cursos Observados</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-4 h-0.5 bg-emerald-500 inline-block"></span>
+            <span class="text-[var(--muted-foreground)]">Línea de Regresión</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative w-full overflow-hidden" style="height: 380px;" id="scatter-container">
+        <svg id="scatter-svg" class="w-full h-full"></svg>
+        <div id="scatter-tooltip" class="chart-tooltip bg-slate-900 text-white text-xs p-3 rounded-xl shadow-2xl border border-slate-700 pointer-events-none"></div>
+      </div>
+    </div>
+
+    <!-- Comparative Multiplier Bar Chart -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-[var(--foreground)]">
+            Comparativa de Cursos: Tokens de Entrada de Contenido vs. Tokens Totales
+          </h2>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            Desglose individual ordenado por escala de contenido (material base).
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4" id="cards-container">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Detailed Dataset Table -->
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm overflow-hidden">
+      <h2 class="text-lg font-semibold text-[var(--foreground)] mb-3">Matriz Econométrica Detallada</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left border-collapse">
+          <thead>
+            <tr class="border-b border-[var(--border)] text-[var(--muted-foreground)] font-medium bg-[var(--background)]/50">
+              <th class="py-2.5 px-3">Curso</th>
+              <th class="py-2.5 px-3">Material Base</th>
+              <th class="py-2.5 px-3 text-right">Input Contenido (Activo)</th>
+              <th class="py-2.5 px-3 text-right">Input Contenido (+Caché)</th>
+              <th class="py-2.5 px-3 text-right font-bold text-indigo-400">Total Tokens Corrida</th>
+              <th class="py-2.5 px-3 text-right">Tokens Activos Corrida</th>
+              <th class="py-2.5 px-3 text-right">Multiplicador (Activo)</th>
+              <th class="py-2.5 px-3 text-right">Multiplicador (Bruto)</th>
+              <th class="py-2.5 px-3 text-right">Preguntas</th>
+            </tr>
+          </thead>
+          <tbody id="table-body" class="divide-y divide-[var(--border)]">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const DATASET = [
+      {
+        id: "saul_control_optimo",
+        name: "Saul Control Óptimo",
+        folder: "content/saul_post_parcial",
+        files: 1,
+        pages: 32,
+        mb: 1.59,
+        questions: 350,
+        content_input_active: 117667,
+        content_input_cache: 115381,
+        content_input_total: 233048,
+        run_total_tokens: 9267386,
+        run_active_tokens: 2208012,
+        mult_active: 78.8,
+        mult_cache: 39.8
+      },
+      {
+        id: "asyntotic_estatistics_v7",
+        name: "Asymptotic Statistics v7",
+        folder: "content/estadistica_asintotica",
+        files: 2,
+        pages: 52,
+        mb: 3.44,
+        questions: 710,
+        content_input_active: 287404,
+        content_input_cache: 549795,
+        content_input_total: 837199,
+        run_total_tokens: 21625641,
+        run_active_tokens: 4975558,
+        mult_active: 75.2,
+        mult_cache: 25.8
+      },
+      {
+        id: "saul_pre_parcial",
+        name: "Saul Pre Parcial",
+        folder: "content/practica_parcial_saul",
+        files: 7,
+        pages: 103,
+        mb: 10.39,
+        questions: 1520,
+        content_input_active: 757540,
+        content_input_cache: 2236518,
+        content_input_total: 2994058,
+        run_total_tokens: 43709660,
+        run_active_tokens: 9139649,
+        mult_active: 57.7,
+        mult_cache: 14.6
+      },
+      {
+        id: "estadistica_3_pre_parcial",
+        name: "Estadística 3 Pre Parcial",
+        folder: "content/estadistica3_Cano",
+        files: 8,
+        pages: 141,
+        mb: 6.19,
+        questions: 2190,
+        content_input_active: 924543,
+        content_input_cache: 1782345,
+        content_input_total: 2706888,
+        run_total_tokens: 50598043,
+        run_active_tokens: 12061356,
+        mult_active: 54.7,
+        mult_cache: 18.7
+      },
+      {
+        id: "gavilano_pre_parcial",
+        name: "Gavilano Pre Parcial",
+        folder: "content/gavilano",
+        files: 10,
+        pages: 246,
+        mb: 10.05,
+        questions: 2950,
+        content_input_active: 1198688,
+        content_input_cache: 3144834,
+        content_input_total: 4343522,
+        run_total_tokens: 60325789,
+        run_active_tokens: 15487713,
+        mult_active: 50.3,
+        mult_cache: 13.9
+      }
+    ];
+
+    let currentMode = 'active'; // 'active' or 'cache'
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btn-active').className = mode === 'active' 
+        ? "px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+        : "px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+      document.getElementById('btn-cache').className = mode === 'cache'
+        ? "px-3 py-1.5 rounded-lg text-xs font-medium transition-all bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+        : "px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)]";
+      
+      updateKPIs();
+      renderScatter();
+      renderCards();
+      renderTable();
+    }
+
+    function getX(d) {
+      return currentMode === 'active' ? d.content_input_active : d.content_input_total;
+    }
+
+    function calculateRegression() {
+      const n = DATASET.length;
+      const x = DATASET.map(getX);
+      const y = DATASET.map(d => d.run_total_tokens);
+      
+      const sumX = x.reduce((a, b) => a + b, 0);
+      const sumY = y.reduce((a, b) => a + b, 0);
+      const meanX = sumX / n;
+      const meanY = sumY / n;
+      
+      let cov = 0, varX = 0, varY = 0;
+      for (let i = 0; i < n; i++) {
+        const dx = x[i] - meanX;
+        const dy = y[i] - meanY;
+        cov += dx * dy;
+        varX += dx * dx;
+        varY += dy * dy;
+      }
+      
+      const r = cov / Math.sqrt(varX * varY);
+      const slope = cov / varX;
+      const intercept = meanY - slope * meanX;
+      
+      return { r, r2: r * r, slope, intercept };
+    }
+
+    function updateKPIs() {
+      const reg = calculateRegression();
+      document.getElementById('kpi-r').innerText = reg.r.toFixed(4);
+      document.getElementById('kpi-r2').innerText = (reg.r2 * 100).toFixed(2) + '%';
+      document.getElementById('kpi-slope').innerText = reg.slope.toFixed(2) + 'x';
+      document.getElementById('kpi-intercept').innerText = (reg.intercept / 1e6).toFixed(2) + ' M';
+    }
+
+    function renderScatter() {
+      const svg = document.getElementById('scatter-svg');
+      const width = svg.clientWidth || 900;
+      const height = 380;
+      const pad = { top: 30, right: 60, bottom: 50, left: 75 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+      
+      const maxX = currentMode === 'active' ? 1400000 : 5000000;
+      const maxY = 70000000;
+      
+      const reg = calculateRegression();
+      
+      let html = '';
+      
+      // Grid lines & labels (Y Axis)
+      for (let i = 0; i <= 5; i++) {
+        const valY = (maxY / 5) * i;
+        const y = pad.top + plotH * (1 - valY / maxY);
+        html += `<line x1="${pad.left}" y1="${y}" x2="${width - pad.right}" y2="${y}" stroke="currentColor" stroke-opacity="0.08" />`;
+        html += `<text x="${pad.left - 10}" y="${y + 4}" fill="currentColor" opacity="0.5" font-size="10" text-anchor="end">${(valY / 1e6).toFixed(0)}M</text>`;
+      }
+      
+      // Grid lines & labels (X Axis)
+      const xSteps = currentMode === 'active' ? 7 : 5;
+      for (let i = 0; i <= xSteps; i++) {
+        const valX = (maxX / xSteps) * i;
+        const x = pad.left + plotW * (valX / maxX);
+        html += `<line x1="${x}" y1="${pad.top}" x2="${x}" y2="${height - pad.bottom}" stroke="currentColor" stroke-opacity="0.08" />`;
+        const labelX = currentMode === 'active' ? (valX / 1000).toFixed(0) + 'k' : (valX / 1e6).toFixed(1) + 'M';
+        html += `<text x="${x}" y="${height - pad.bottom + 20}" fill="currentColor" opacity="0.5" font-size="10" text-anchor="middle">${labelX}</text>`;
+      }
+      
+      // Axis titles
+      html += `<text x="${pad.left + plotW / 2}" y="${height - 10}" fill="currentColor" opacity="0.7" font-size="11" text-anchor="middle" font-weight="500">Tokens de Entrada de Contenido (${currentMode === 'active' ? 'Input Activo Neto' : 'Input Total con Context Cache'})</text>`;
+      html += `<text x="15" y="${pad.top + plotH / 2}" fill="currentColor" opacity="0.7" font-size="11" text-anchor="middle" font-weight="500" transform="rotate(-90 15 ${pad.top + plotH / 2})">Tokens Totales Corrida (M)</text>`;
+      
+      // Regression Line
+      const x1 = 0;
+      const y1 = reg.intercept;
+      const x2 = maxX;
+      const y2 = reg.slope * x2 + reg.intercept;
+      
+      const px1 = pad.left + plotW * (x1 / maxX);
+      const py1 = pad.top + plotH * (1 - y1 / maxY);
+      const px2 = pad.left + plotW * (x2 / maxX);
+      const py2 = pad.top + plotH * (1 - y2 / maxY);
+      
+      html += `<line x1="${px1}" y1="${py1}" x2="${px2}" y2="${py2}" stroke="#10b981" stroke-width="2.5" stroke-dasharray="6 4" stroke-linecap="round" opacity="0.85"/>`;
+      
+      // Regression Equation Label
+      const eqText = `y = ${reg.slope.toFixed(2)}x + ${(reg.intercept / 1e6).toFixed(2)}M (R² = ${(reg.r2 * 100).toFixed(1)}%)`;
+      html += `<rect x="${px2 - 240}" y="${py2 - 25}" width="235" height="22" rx="4" fill="#0f172a" fill-opacity="0.8" />`;
+      html += `<text x="${px2 - 122}" y="${py2 - 10}" fill="#10b981" font-size="10" text-anchor="middle" font-weight="600">${eqText}</text>`;
+      
+      // Plot Points
+      DATASET.forEach((d, i) => {
+        const valX = getX(d);
+        const valY = d.run_total_tokens;
+        const cx = pad.left + plotW * (valX / maxX);
+        const cy = pad.top + plotH * (1 - valY / maxY);
+        
+        html += `
+          <g class="cursor-pointer group" onmouseenter="showTooltip(event, ${i})" onmouseleave="hideTooltip()">
+            <!-- Pulse aura -->
+            <circle cx="${cx}" cy="${cy}" r="12" fill="#6366f1" fill-opacity="0.15" class="transition-transform group-hover:scale-150" />
+            <!-- Dot -->
+            <circle cx="${cx}" cy="${cy}" r="6.5" fill="#6366f1" stroke="#ffffff" stroke-width="2" class="group-hover:fill-indigo-400 transition-colors" />
+            <!-- Course Name Tag -->
+            <text x="${cx}" y="${cy - 12}" fill="currentColor" font-size="10.5" font-weight="600" text-anchor="middle" class="pointer-events-none drop-shadow-sm">${d.name.split(' ')[0]}</text>
+          </g>
+        `;
+      });
+      
+      svg.innerHTML = html;
+    }
+
+    function showTooltip(e, idx) {
+      const d = DATASET[idx];
+      const tip = document.getElementById('scatter-tooltip');
+      const valX = getX(d);
+      const mult = (d.run_total_tokens / valX).toFixed(1);
+      
+      tip.innerHTML = `
+        <div class="font-bold text-slate-100 text-sm">${d.name}</div>
+        <div class="text-[11px] text-slate-400 mb-2">${d.files} archivos | ${d.pages} páginas (${d.mb} MB) | ${d.questions} preguntas</div>
+        <div class="space-y-1 text-[11px]">
+          <div class="flex justify-between gap-4 text-cyan-300"><span>Input Contenido (${currentMode}):</span> <span class="font-mono font-bold">${valX.toLocaleString()}</span></div>
+          <div class="flex justify-between gap-4 text-purple-300"><span>Tokens Totales Corrida:</span> <span class="font-mono font-bold">${d.run_total_tokens.toLocaleString()} (${(d.run_total_tokens/1e6).toFixed(2)}M)</span></div>
+          <div class="flex justify-between gap-4 text-emerald-300 pt-1 mt-1 border-t border-slate-700"><span>Multiplicador de Expansión:</span> <span class="font-mono font-bold">${mult}x</span></div>
+        </div>
+      `;
+      tip.style.opacity = '1';
+      tip.style.left = Math.min(window.innerWidth - 260, e.pageX + 15) + 'px';
+      tip.style.top = (e.pageY - 90) + 'px';
+    }
+    function hideTooltip() { document.getElementById('scatter-tooltip').style.opacity = '0'; }
+
+    function renderCards() {
+      const container = document.getElementById('cards-container');
+      container.innerHTML = DATASET.map((d, idx) => {
+        const valX = getX(d);
+        const mult = (d.run_total_tokens / valX).toFixed(1);
+        const isHighlight = d.id === 'estadistica_3_pre_parcial';
+        return `
+          <div class="bg-[var(--background)] p-4 rounded-xl border ${isHighlight ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-[var(--border)]'} flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
+                <span>#${idx + 1}</span>
+                <span class="font-mono font-medium text-emerald-500">${mult}x exp</span>
+              </div>
+              <h3 class="font-bold text-sm text-[var(--foreground)] mt-1 truncate" title="${d.name}">${d.name}</h3>
+              <p class="text-[11px] text-[var(--muted-foreground)] mt-0.5">${d.pages} págs • ${d.questions} preg</p>
+            </div>
+            
+            <div class="mt-4 pt-3 border-t border-[var(--border)] space-y-2">
+              <div>
+                <div class="text-[10px] text-[var(--muted-foreground)] uppercase">Content Input</div>
+                <div class="text-sm font-mono font-bold text-cyan-500">${(valX / 1000).toFixed(1)}k</div>
+              </div>
+              <div>
+                <div class="text-[10px] text-[var(--muted-foreground)] uppercase">Run Total</div>
+                <div class="text-sm font-mono font-bold text-indigo-500">${(d.run_total_tokens / 1e6).toFixed(2)}M</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = DATASET.map(d => {
+        const isLatest = d.id === 'estadistica_3_pre_parcial';
+        return `
+          <tr class="hover:bg-[var(--background)]/80 transition-colors ${isLatest ? 'bg-indigo-500/5 font-semibold' : ''}">
+            <td class="py-2.5 px-3 text-[var(--foreground)]">${d.name} ${isLatest ? '<span class="text-indigo-400 text-[10px] ml-1">(Último #5)</span>' : ''}</td>
+            <td class="py-2.5 px-3 text-[var(--muted-foreground)]">${d.files} arch (${d.pages} pág / ${d.mb} MB)</td>
+            <td class="py-2.5 px-3 text-right font-mono text-cyan-400">${d.content_input_active.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-mono text-purple-400">${d.content_input_total.toLocaleString()}</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-indigo-400">${(d.run_total_tokens / 1e6).toFixed(2)}M</td>
+            <td class="py-2.5 px-3 text-right font-mono">${(d.run_active_tokens / 1e6).toFixed(2)}M</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold text-emerald-400">${d.mult_active}x</td>
+            <td class="py-2.5 px-3 text-right font-mono text-slate-300">${d.mult_cache}x</td>
+            <td class="py-2.5 px-3 text-right font-mono font-bold">${d.questions.toLocaleString()}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.addEventListener('load', () => {
+      updateKPIs();
+      renderScatter();
+      renderCards();
+      renderTable();
+    });
+    window.addEventListener('resize', renderScatter);
+  </script>
+</body>
+</html>
