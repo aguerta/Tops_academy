@@ -39,21 +39,21 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
   const notStartedUnits = totalUnits - completedUnits - inProgressUnits;
 
   return (
-    <div className="flex-1 max-w-5xl mx-auto px-6 py-8">
+    <div className="flex-1 min-w-0 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-xs font-semibold text-ka-blue mb-3">
+      <nav className="flex items-center flex-wrap gap-2 text-xs font-semibold text-ka-blue mb-3 min-w-0">
         <span className="text-base">🏠</span>
         <span className="text-slate-400">·</span>
         <span className="hover:underline cursor-pointer">Math</span>
         <span className="text-slate-400">·</span>
-        <span className="text-slate-600 truncate"><MathText text={course.title} inline /></span>
+        <span className="text-slate-600 truncate block min-w-0 max-w-[200px] sm:max-w-md"><MathText text={course.title} inline /></span>
       </nav>
 
       {/* Course Title Header */}
-      <h1 className="text-3xl font-extrabold text-ka-text-primary tracking-tight">
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-ka-text-primary tracking-tight break-words [overflow-wrap:anywhere]">
         <MathText text={course.title} inline />
       </h1>
-      <div className="text-sm text-ka-text-secondary mt-1 max-w-3xl">
+      <div className="text-sm text-ka-text-secondary mt-1 max-w-3xl break-words [overflow-wrap:anywhere]">
         <MathText text={course.description} />
       </div>
 
@@ -63,6 +63,8 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
           Course mastery: {mastery.mastery_points}%
         </span>
         <button
+          type="button"
+          aria-label="How Course Mastery is calculated"
           onClick={() => setShowTooltip(!showTooltip)}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
@@ -73,7 +75,7 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
         </button>
 
         {showTooltip && (
-          <div className="absolute left-0 top-8 z-30 w-80 p-3 bg-white text-xs text-ka-text-secondary rounded-lg shadow-xl border border-ka-border-card">
+          <div className="absolute left-0 top-8 z-30 w-72 sm:w-80 max-w-[calc(100vw-2rem)] p-3 bg-white text-xs text-ka-text-secondary rounded-lg shadow-xl border border-ka-border-card break-words [overflow-wrap:anywhere]">
             <p className="font-bold text-ka-text-primary mb-1">How Course Mastery is calculated:</p>
             <p>
               Mastery points are earned by practicing skills, passing quizzes, and conquering unit
@@ -88,7 +90,7 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
         data-testid="completion-tracker-summary"
         className="mt-4 p-4 bg-slate-50 rounded-xl border border-ka-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
-        <div>
+        <div className="min-w-0">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
             Unit Completion Status
           </div>
@@ -121,7 +123,7 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
         </div>
 
         {/* Progress Bar */}
-        <div className="sm:w-48 flex flex-col gap-1.5">
+        <div className="w-full sm:w-48 flex flex-col gap-1.5 shrink-0">
           <div className="flex justify-between text-[11px] font-semibold text-slate-500">
             <span>Overall completion</span>
             <span>{totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0}%</span>
@@ -144,8 +146,8 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
 
       {/* Main Units / Competencies Matrix */}
       <div className="mt-6">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <h2 className="text-xl font-bold text-ka-text-primary">Units</h2>
             <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
               {completedUnits} / {totalUnits} Completed
@@ -167,31 +169,33 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
       {/* Course Challenge Summary Card */}
       <div
         data-testid="course-challenge-card"
-        className="mt-8 p-6 bg-white rounded-lg border-2 border-ka-border-card hover:border-ka-blue transition-colors shadow-sm"
+        className="mt-8 p-4 sm:p-6 bg-white rounded-lg border-2 border-ka-border-card hover:border-ka-blue transition-colors shadow-sm min-w-0"
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <span className="text-3xl leading-none">📖</span>
-            <div>
-              <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0">
+          <div className="flex items-start gap-3 min-w-0">
+            <span className="text-3xl leading-none shrink-0">📖</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base font-bold text-ka-text-primary uppercase tracking-wide">
                   COURSE CHALLENGE: {challengePercent}%
                 </h3>
                 {challengeCompleted && (
-                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded">
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded shrink-0">
                     ✓ Completed
                   </span>
                 )}
               </div>
-              <p className="text-sm text-ka-text-secondary mt-1">
+              <p className="text-sm text-ka-text-secondary mt-1 break-words">
                 Test your knowledge of the skills in this course.
               </p>
             </div>
           </div>
 
           <button
+            type="button"
+            aria-label={challengeCompleted ? 'Take Course challenge again' : 'Take Course challenge'}
             onClick={onStartCourseChallenge}
-            className="px-5 py-2.5 bg-ka-blue hover:bg-ka-blue-hover text-white font-semibold text-sm rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto"
+            className="px-5 py-2.5 bg-ka-blue hover:bg-ka-blue-hover text-white font-semibold text-sm rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0"
           >
             {challengeCompleted ? 'Take Course challenge again' : 'Take Course challenge'}
           </button>

@@ -15,17 +15,17 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
   onSelectCourse,
 }) => {
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 overflow-x-hidden">
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 text-ka-blue font-bold text-sm mb-2">
           <span>📚</span>
           <span>Top's Academy Platform</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-ka-text-primary tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-ka-text-primary tracking-tight break-words [overflow-wrap:anywhere]">
           Course Library
         </h1>
-        <p className="text-sm text-ka-text-secondary mt-1 max-w-2xl">
+        <p className="text-sm text-ka-text-secondary mt-1 max-w-2xl break-words">
           Explore and practice competency-based courses loaded directly from your exercise bank.
         </p>
       </div>
@@ -43,7 +43,7 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 min-[560px]:grid-cols-2 min-[1000px]:grid-cols-3 gap-4 sm:gap-6 min-w-0">
           {courses.map((c) => {
             if (c.status === 'error') {
               // Fault-Tolerant Error Isolation Card (AC-02)
@@ -51,28 +51,28 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                 <div
                   key={c.filename || c.id}
                   data-testid="course-error-card"
-                  className="course-error p-6 bg-red-50/50 rounded-xl border-2 border-red-300 shadow-sm flex flex-col justify-between"
+                  className="course-error min-w-0 p-4 bg-red-50/50 rounded-xl border-2 border-red-300 shadow-sm flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="px-2 py-0.5 bg-red-100 text-red-800 text-[11px] font-bold rounded uppercase tracking-wider">
+                      <span className="px-2 py-0.5 bg-red-100 text-red-800 text-[11px] font-bold rounded uppercase tracking-wider shrink-0">
                         Invalid / Corrupted
                       </span>
-                      <span className="text-xs text-red-600 font-mono truncate max-w-[140px]">
+                      <span className="text-xs text-red-600 font-mono truncate max-w-[140px] shrink-0">
                         {c.filename}
                       </span>
                     </div>
 
-                    <h3 className="text-lg font-bold text-red-900 leading-snug">
+                    <h3 className="text-sm sm:text-base font-bold text-red-900 leading-tight break-words [overflow-wrap:anywhere] line-clamp-2">
                       {c.title || c.filename}
                     </h3>
 
-                    <p className="text-xs text-red-700 mt-2 bg-white/70 p-2.5 rounded border border-red-200 font-mono break-words leading-relaxed">
+                    <p className="text-xs text-red-700 mt-1 bg-white/70 p-2 rounded border border-red-200 font-mono break-all leading-snug line-clamp-2">
                       <strong>Error:</strong> {c.error_message || 'Schema or LaTeX escape validation failed.'}
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-red-200 text-[11px] text-red-600 font-medium">
+                  <div className="mt-2.5 pt-2 border-t border-red-200 text-[11px] text-red-600 font-medium">
                     This course cannot be loaded. Other valid courses remain fully functional.
                   </div>
                 </div>
@@ -90,22 +90,22 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                 key={c.id}
                 data-testid="course-card"
                 onClick={() => onSelectCourse(c)}
-                className={`cursor-pointer p-6 bg-white rounded-xl border shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${
+                className={`cursor-pointer min-w-0 p-4 bg-white rounded-xl border shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${
                   isCompleted
                     ? 'border-emerald-300 ring-2 ring-emerald-100 hover:border-emerald-500'
                     : 'border-ka-border-card hover:border-ka-blue'
                 }`}
               >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="px-2 py-0.5 bg-ka-blue-light text-ka-blue text-[11px] font-bold rounded">
+                <div className="min-w-0">
+                  <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <span className="px-2 py-0.5 bg-ka-blue-light text-ka-blue text-[11px] font-bold rounded shrink-0">
                         {c.total_competencies || 0} Units
                       </span>
                       {isCompleted ? (
                         <span
                           data-testid="course-completed-badge"
-                          className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full border border-emerald-300 flex items-center gap-1 shadow-sm"
+                          className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full border border-emerald-300 flex items-center gap-1 shadow-sm shrink-0"
                         >
                           <span>✓</span>
                           <span>Completed</span>
@@ -113,37 +113,38 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                       ) : masteryPercent > 0 ? (
                         <span
                           data-testid="course-progress-badge"
-                          className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[11px] font-bold rounded-full border border-amber-200"
+                          className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[11px] font-bold rounded-full border border-amber-200 shrink-0"
                         >
                           {masteryPercent}% Mastery
                         </span>
                       ) : null}
                     </div>
-                    <span className="text-xs text-slate-400 font-medium">
+                    <span className="text-xs text-slate-400 font-medium shrink-0">
                       {c.total_questions || 0} Questions
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-bold text-ka-text-primary leading-snug hover:text-ka-blue transition-colors">
+                  <h3 className="text-xs sm:text-sm font-bold text-ka-text-primary leading-tight hover:text-ka-blue transition-colors line-clamp-1 break-words [overflow-wrap:anywhere]">
                     <MathText text={c.title} inline />
                   </h3>
 
-                  <div className="text-xs text-ka-text-secondary mt-2 line-clamp-3 leading-relaxed">
+                  <div className="text-xs text-ka-text-secondary mt-0.5 line-clamp-2 leading-tight break-words [overflow-wrap:anywhere]">
                     <MathText text={c.description || 'Interactive practice course.'} />
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-ka-border-subtle flex items-center justify-between">
+                <div className="mt-2 pt-1.5 border-t border-ka-border-subtle flex items-center justify-between min-w-0">
                   <button
+                    type="button"
                     onClick={() => onSelectCourse(c)}
-                    className={`w-full py-2.5 px-4 text-white text-sm font-bold rounded shadow-sm transition-colors text-center flex items-center justify-center gap-1.5 ${
+                    className={`w-full py-2 px-3 text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors text-center flex items-center justify-center gap-1.5 min-w-0 ${
                       isCompleted
                         ? 'bg-emerald-600 hover:bg-emerald-700'
                         : 'bg-ka-blue hover:bg-ka-blue-hover'
                     }`}
                   >
-                    {isCompleted && <span>✓</span>}
-                    <span><MathText text={c.title} inline /></span>
+                    {isCompleted && <span className="shrink-0">✓</span>}
+                    <span className="truncate block min-w-0"><MathText text={c.title} inline /></span>
                   </button>
                 </div>
               </div>

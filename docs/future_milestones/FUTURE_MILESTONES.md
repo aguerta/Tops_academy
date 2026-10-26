@@ -197,7 +197,7 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 
 | Hito / Milestone | Área | Impacto Cognitivo y Operativo | Esfuerzo Estimado | Estado de Ejecución |
 | :--- | :--- | :--- | :---: | :---: |
-| **Milestone 1: Web Ergonomía para Laptops (Zoom-Fix)** | Frontend / UX | **Elimina la fricción visual inmediata.** Grid de 2 columnas para 7 opciones en laptops de 13"-14", eliminando la necesidad de zoom out. | 2 a 4 h | 🎯 **Prioridad Inmediata** |
+| **Milestone 1: Web Ergonomía para Laptops (Zoom-Fix)** | Frontend / UX | **Elimina la fricción visual inmediata.** Grid de 2 columnas para 7 opciones en laptops de 13"-14" y split view 50%, eliminando la necesidad de zoom out. | 2 a 4 h | ✅ **Completado y verificado (matriz 7 viewports, Gate 3 PASS)** |
 | **Milestone 2: PWA Móvil y Modo Offline** | Frontend / PWA | **Habilita el estudio ubicuo.** Standalone app en iOS/Android, safe areas y precaching de fuentes KaTeX. | 1 a 2 h | 🚀 **Quick Win #2** |
 | **Milestone 3: Anti-Overfitting y Variedad de Plantillas** | Pipeline & QA | **Destruye la automatización sintáctica.** 4 arquetipos disjuntos (`[M3-ARCHETYPES]`) en pipeline y linter de entropía en QA. | 2 a 3 h (Auditor) | 🛠️ **Pipeline: Hecho / Auditor: Falta contar $\ge 4$** |
 | **Milestone 4: Desacoplamiento KaTeX-Python (PrairieLearn)** | Backend / Pipeline | **Erradica al 100% las colisiones de sintaxis.** Tokens `@var@` activos; falta compilación AST QuickJS y contrato Pydantic. | 1 a 2 d | 🛠️ **Parcial (@var@ activo / AST pendiente)** |
@@ -207,6 +207,8 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 | **Milestone 8: Repetición Espaciada (SRS) y Blind Mode** | Motor de Sesión | **Combate el decaimiento de memoria (Curva de Ebbinghaus).** Decaimiento temporal, refreshers a 1-4-14-45 días y sesiones a ciegas. | 2 a 3 d | 🔁 **Cierre de Ciclo de Pericia** |
 | **Milestone 9: Jerarquía de Contenido (PPT $\to$ Core/Subtemas)** | Curricular / Schema | **Organización natural en torno a la fuente real.** Contenido PPT $\to$ [Glosario + Núcleo] + Subtemas $\to$ Quizzes de subtema + Challenge PPT. | 2 a 3 d | 🏛️ **Arquitectura Curricular** |
 | **Milestone 10: QA Rubric v2.0 Deep Mastery** | Auditoría QA | **Certificación integral de rigor.** Linters deterministas activos; falta penalización automática por monocultivo MC7 y multimodalidad. | 1 a 2 d | 📋 **Parcial (Linters activos / Penalizaciones pendientes)** |
+| **Milestone 11: Carga Rápida de Cursos (Manifest, Prefetch y Caché)** | Frontend / Servidor | **Elimina el cuello de botella de 43 MB y 17s en la biblioteca.** Manifest <10 KB inline, caché mtime+size, IndexedDB + ETag, prefetch idle/hover y Web Worker. | 2 a 3 d | ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** |
+| **Milestone 12: Resiliencia ante Suspensión de la Laptop (Restauración de Sesión)** | Frontend / Servidor | **Preserva el estado de práctica ante sleep del SO y cortes HMR.** Restauración desde `sessionStorage`, banner de reconexión, `/healthz` y modo estudio `npm run study`. | 1 a 2 d | ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** |
 | *Opcional A: Pipeline Performance Daemon en RAM / SSD* | Infraestructura | *Acelera subprocesos locales, complementando el pool lazy.* | *3 a 4 h* | ⏳ **Opcional / Secundario** |
 | *Opcional B: Empaquetado Nativo con Capacitor* | Distribución | *Generación de APK para tiendas de aplicaciones.* | *4 a 6 h* | ⏳ **Opcional / Backlog** |
 
@@ -214,20 +216,60 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 
 ## 7. Especificación Técnica Detallada de los Milestones
 
-### Milestone 1: Web Ergonomía para Laptops (Zoom-Fix)
-* **Objetivo Crítico:** Resolver el problema de adaptabilidad donde las 7 opciones (MC7) se desbordan verticalmente en computadoras portátiles (13"-14", resoluciones 1366x768 o 1440x900) obligando al usuario a hacer zoom out continuo en el navegador.
-* **Componentes Técnicos:**
-  1. **Grid Inteligente de 2 Columnas ([`QuestionCard.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/QuestionCard.tsx)):**
-     - En pantallas de escritorio medianas o laptops con altura reducida (`max-height: 850px` y `min-width: 1024px`), las 7 alternativas se organizan automáticamente en 2 columnas equilibradas (4 en columna izquierda, 3 en columna derecha), garantizando que todo el reactivo quepa en una sola pantalla sin scroll.
-  2. **Contenedor Elástico con `clamp()` y Scroll Suave:**
-     - Espaciados y tipografías elásticas usando unidades dinámicas (`clamp(0.875rem, 1.5vh, 1.125rem)`) para padding de opciones y enunciados.
-     - Scroll interno contenido en el bloque de opciones si el enunciado es excepcionalmente largo, manteniendo fijos el encabezado y el botón de comprobación.
-  3. **Refactorización Mobile-First:**
-     - Drawer desplegable para [`Sidebar.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/Sidebar.tsx) con botón hamburguesa.
-     - [`FeedbackToast.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/FeedbackToast.tsx) transformado en Bottom Sheet deslizable con scroll propio.
-     - SVG responsive en [`CoordinatePlane.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CoordinatePlane.tsx) (`viewBox` + `max-w-[340px]`).
-     - Viewports dinámicos (`100dvh`) para mitigar el teclado virtual en preguntas de texto.
-
+### Milestone 1: Web Ergonomía para Laptops y Split View 50% (Zoom-Fix)
+* **Estado:** ✅ **Completado y verificado (matriz 7 viewports, Gate 3 PASS)** (implementación técnica completada por Streams 1A–1E; verificación visual en matriz de navegadores asignada a Stream 2B).
+* **Objetivo Crítico:** Resolver integralmente la adaptabilidad y ergonomía cognitiva tanto en laptops compactas (13"-14", resoluciones 1366×768 o 1440×900) como en escenarios de **Split View al 50% de ancho** (pantalla dividida con visor de PDF, notas o asistente socrático), donde las 7 opciones (MC7) previamente provocaban desborde vertical forzando al usuario a realizar zoom out continuo en el navegador.
+* **Requisito de Arquitectura Split-View (50% de ancho de pantalla):**
+  - **Superación de Media Queries rígidas:** En split view al 50%, los anchos efectivos de la ventana del navegador oscilan entre 683 px y 960 px. Por consiguiente, una media query tradicional de escritorio (`min-width: 1024px`) **nunca se activa**. La arquitectura se basa en **Container Queries nativas** (ancho del contenedor `.qc-root`), `max-height` condicional y flexbox/grid defensivos sin dependencias npm externas.
+  - **Sidebar Desacoplado:** El sidebar fijo `w-64` (que a 683 px consumía el 37% de la pantalla) se transforma en Drawer off-canvas para viewports `< 1024px`, concediendo el 100% del ancho al contenido principal.
+  - Plan de ejecución: [`plan.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/teamwork/m1_zoomfix_split50/plan.md).
+* **Matriz de Viewports y Alturas Obligatoria:**
+  - `683 × 768`: Laptop 1366 split view 50% — Enunciado y 7 opciones caben en pantalla sin scroll vertical de página ni scroll horizontal (`scrollWidth <= innerWidth`); header colapsa a `h-12` por regla `@media(max-height:850px)`.
+  - `720 × 900`: Laptop 1440 split view 50% — Grid de 2 columnas holgado, layout fluido, header `h-16`, cero fricción visual.
+  - `800 × 900`: Monitor 1600 split view 50% — Distribución equilibrada 4+3 en 2 columnas, amplio espacio vertical.
+  - `960 × 1080`: Pantalla Full HD 1920 split view 50% — Vista split óptima con altura completa de 1080 px y renderizado holgado.
+  - `1366 × 768`: Laptop estándar completa — 2 columnas en MC7, header `h-12` (`height <= 850px`), sin zoom out requerido.
+  - `1440 × 900`: Laptop widescreen completa — Aprovechamiento total del espacio horizontal y vertical con header `h-16`.
+  - `390 × 844`: Móvil portrait — 1 columna determinista ($< 600\text{ px}$ en contenedor), dots compactados a indicador textual `n of N`, cero desborde horizontal.
+  - **Comportamiento por Alturas:** En alturas bajas ($\le 850\text{ px}$, como 768 px y 844 px), convergen simultáneamente: colapso de header a `h-12` (ahorro de 16 px), Bottom Sheet en `FeedbackToast` (`max-h-[45dvh]`), contención de `CoordinatePlane` (`max-h-[30dvh]`) y variables fluidas `clamp()` indexadas a `vh`. En alturas estándar y altas (900 px y 1080 px), todos los módulos conservan su amplitud nominal sin comprimir elementos.
+* **Componentes Técnicos Implementados:**
+  1. **Grid Inteligente de 2 Columnas con Container Queries y Soporte 3–9 Opciones ([`QuestionCard.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/QuestionCard.tsx), [`index.css`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/index.css) - Stream 1A):**
+     - Contenedor con `container-type: inline-size; container-name: qc;` (`.qc-root`).
+     - Para reactivos MC7 (`multiple_choice_7_options`) y selección múltiple (`multiple_select`): regla `@container qc (min-width: 600px)` que activa 2 columnas con orden columna-primero (`grid-auto-flow: column; grid-template-rows: repeat(var(--qc-rows, var(--rows, 4)), auto); grid-template-columns: repeat(2, minmax(0, 1fr));`).
+     - **Cálculo Dinámico de Filas ($3$ a $9$ opciones):** `--qc-rows` y `--rows` computadas dinámicamente mediante `Math.max(1, Math.ceil(optionsCount / 2))` inyectadas inline:
+       - 3–4 opciones: 2 filas (2 columnas: 2+1 o 2+2).
+       - 5–6 opciones: 3 filas (2 columnas: 3+2 o 3+3).
+       - 7–8 opciones: 4 filas (2 columnas: 4+3 [MC7 estándar A–D izq, E–G der] o 4+4).
+       - 9 opciones: 5 filas (2 columnas: 5+4).
+     - **Letras y Badges:** Soporte predeterminado mediante array `OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']` con fallback algorítmico a `String.fromCharCode(65 + idx)`.
+     - Fallback natural a 1 columna en anchos de contenedor $< 600\text{ px}$ (móviles o paneles ultra-estrechos).
+     - Tipografía y espaciados elásticos: `--qc-gap: clamp(0.375rem, 1vh, 0.75rem);`, `--qc-pad: clamp(0.5rem, 1.5vh, 0.875rem);`, `--qc-font: clamp(0.875rem, 1.5vh, 1.125rem);`, `--qc-badge: clamp(1.5rem, 3.2vh, 2rem);`.
+     - Scroll vertical interno contenido (`.qc-options-scroll`) para enunciados excepcionalmente largos (`max-height: calc(100dvh - var(--qc-chrome, 14rem))`), preservando header y footer fijos.
+     - **Blindaje KaTeX contra Fórmulas Anchas:** `.katex-display, .qc-root .katex, .qc-options .katex { display: inline-block; max-width: 100%; overflow-x: auto; overflow-y: hidden; vertical-align: middle; scrollbar-width: thin; }` y envoltura `.qc-root span.inline-block, .qc-options span.inline-block { max-width: 100%; }` con `min-w-0` defensivo en flex items para prevenir desborde horizontal de columnas ante expresiones algebraicas extensas.
+     - **Accesibilidad y Testabilidad:** Semántica ARIA con `role="radiogroup"` (`aria-label="Answer options"`) en MCQ y `role="group"` (`aria-label="Multiple choice options"`) en selección múltiple; estados `aria-pressed={isSelected}`; foco accesible con `focus-visible:ring-2 focus-visible:ring-ka-blue` y `focus-within:ring-2`; preservación íntegra de `data-testid` (`question-card`, `option-*`, `multiselect-option`, `fill-blank-input`, `hints-toggle`).
+  2. **Sidebar Drawer Off-Canvas y App Shell Accesible ([`Sidebar.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/Sidebar.tsx), [`App.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/App.tsx) - Stream 1B):**
+     - Sidebar off-canvas en viewports $< 1024\text{ px}$ con botón flotante accesible (`data-testid="sidebar-toggle"`, `top-3 left-4 z-40`, visible en `lg:hidden`) con `aria-expanded`, `aria-controls="sidebar-drawer"` y `aria-label="Open navigation menu"`.
+     - Backdrop con overlay oscuro (`bg-black/40 z-40`), cierre automático con tecla `Escape`, click fuera, redimensionamiento $\ge 1024\text{ px}$ o selección de unidad / Course Challenge.
+     - **Accesibilidad WCAG 2.1 AA:** Focus trap bidireccional cíclico (`Tab` / `Shift+Tab`), restauración automática de foco al toggle button tras el cierre, body scroll lock con compensación de ancho de scrollbar para prevenir saltos de layout, y `overscroll-contain`.
+     - Ancho adaptativo en escritorio: `w-56` (1024–1279 px) y `w-64` ($\ge 1280\text{ px}$).
+     - Padding superior compensatorio `pt-14 lg:pt-0` y `min-w-0` en los `<main>` de `App.tsx` para evitar solapamientos y desbordes flexbox.
+  3. **Bottom Sheet Toast y SVG Responsivo ([`FeedbackToast.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/FeedbackToast.tsx), [`CoordinatePlane.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CoordinatePlane.tsx) - Stream 1C):**
+     - `FeedbackToast`: en $< 1024\text{ px}$ o altura $\le 850\text{ px}$, opera como Bottom Sheet deslizable (`fixed z-30 bottom-20 inset-x-3 sm:inset-x-6 max-w-xl mx-auto max-h-[45dvh]`).
+     - Posicionamiento exacto a `bottom-20` (80 px), garantizando una separación limpia de 16 px sobre el footer compacto de 64 px de `PracticeSession`, sin obstruir jamás los botones de acción (`Skip`, `Check`, `Try again`, `Next question`).
+     - Scroll interno propio independiente para retroalimentación diagnóstica y soluciones paso a paso, con contención anti-desborde para código y expresiones KaTeX (`.feedback-toast-root pre, code { max-width: 100% !important; overflow-x: auto !important; }`).
+     - Accesibilidad de retroalimentación: botones con `aria-label="Quick redo"`, `aria-label="Close feedback"` y etiquetas descriptivas con `aria-hidden="true"` en glifos decorativos.
+     - `CoordinatePlane`: SVG responsivo con `viewBox`, `w-full max-w-[340px] max-h-[30dvh] h-auto`, `aspectRatio: width/height`, `role="img"` y `aria-label` descriptivo paramétrico (`from x=${xMin} to ${xMax}, y=${yMin} to ${yMax}`), evitando que planos cartesianos fuercen scroll vertical en pantallas de baja altura.
+  4. **Practice Session Shell Ergonómico ([`PracticeSession.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/PracticeSession.tsx) - Stream 1D):**
+     - Sustitución de `min-h-screen`/`100vh` por `.h-dvh-safe` y estilo dinámico `minHeight: '100dvh'`, eliminando scroll fantasma en navegadores móviles.
+     - Header compacto: colapsa a `h-12` (48 px) en alturas $\le 850\text{ px}` (`[@media(max-height:850px)]:h-12`), recuperando 16 px verticales.
+     - Footer compacto: reducido a `h-16` (64 px) con padding elástico `px-4 sm:px-8`.
+     - Padding compensatorio en `<main>`: ajustado a `pb-20` (80 px), recuperando 32 px de altura útil para reactivos sin solapar el footer fijo.
+     - Indicador de progreso responsivo: en $< 520\text{ px}$ los dots colapsan a indicador textual (`n of N`) con `role="status"`, evitando colisiones en el pie de página; en $\ge 520\text{ px}$, dots con `flex-wrap` y `aria-label` individual por reactivo.
+     - Blindaje `overflow-x-hidden` global preservando al 100% la lógica de estado, temporizadores y navegación por teclado (`Enter`).
+  5. **Adaptabilidad Global de Vistas y Blindaje KaTeX ([`CourseOverview.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseOverview.tsx), [`CourseLibrary.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseLibrary.tsx), [`MasteryGrid.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/MasteryGrid.tsx), [`MasteryLegend.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/MasteryLegend.tsx), [`PreExerciseModal.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/PreExerciseModal.tsx), [`CompletionScreen.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CompletionScreen.tsx), [`CourseChallenge.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseChallenge.tsx) - Stream 1E):**
+     - Reconfiguración de grids a `sm:grid-cols-2 xl:grid-cols-3` (activo a 683 px donde `sm:` 640 px aplica pero `md:` 768 px no).
+     - Contención KaTeX estricta (`[&_.katex]:max-w-full [&_.katex]:overflow-x-auto`) y `min-w-0` en flex items para evitar que títulos o fórmulas largas fuercen scroll horizontal (`scrollWidth <= innerWidth`).
+     - Truncamiento funcional en spans (`block min-w-0` / `inline-block align-bottom min-w-0`), soporte de `100dvh` y `shrink-0` en encabezados y pies de página de modales y pantallas de cierre.
 ---
 
 ### Milestone 2: Configuración PWA Móvil
@@ -535,6 +577,83 @@ El nuevo diseño del Milestone 6 se estructura en dos modalidades complementaria
   1. **Penalización Dura por Monocultivo (hasta -3.0 pts):** Linter determinista que compute la entropía de tipos de reactivo y aplique deducción automática en `hard_penalties` si el 100% es opción múltiple.
   2. **Exigencia de Diversidad Multimodal ($\ge 20\%$):** Requisito de contar con al menos 20% de preguntas en formatos alternativos para certificar en Tier "Excelente".
   3. **Formalización de Linters Psicométricos:** Consolidación permanente de linters de entropía de arquetipos ($\ge 4$ variedades), distractor cloning, syntax residual y andamiaje socrático.
+
+---
+
+### Milestone 11: Carga Rápida de Cursos (Manifest, Prefetch y Caché)
+* **Estado:** ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** (especificado como Frente B del plan de remediación; postergado para concentrar el esfuerzo inmediato exclusivamente en ergonomía visual y split view).
+* **Diagnóstico Medido (Causa Raíz de Rendimiento):**
+  - **Sobrecarga de Red y Disco:** Los 7 cursos ocupan 51.9 MB en disco. Una solicitud a `GET /api/courses.json` devuelve una respuesta de **43 MB en ~17.4–17.9 segundos**.
+  - **Ejecución Redundante en Cada Petición:** `getCourseList()` en `courseServer.cjs` (y en el middleware de Vite) lee del disco, aplica regex de control, ejecuta `JSON.parse` y valida los 7 cursos completos en *cada* solicitud, inyectando el campo `data` con la totalidad del contenido curricular en la lista de la biblioteca (que solo requiere título, descripción y contadores).
+  - **Apertura Lenta de Cursos:** `GET /api/courses/:id` re-escanea y re-parsea todos los cursos en disco (~733 ms para un curso de 1.3 MB).
+  - **Cero Caché y Build Duplicado:** Sin encabezados `ETag`, sin respuestas HTTP 304 Not Modified, sin compresión gzip/brotli en respuestas de API; build estático emite cada curso 3 veces de forma redundante y en formato *pretty-printed*.
+  - **Re-fetch Innecesario:** `App.tsx` re-solicita la lista completa de cursos de 43 MB cada vez que el usuario vuelve a la biblioteca desde un curso.
+* **Arquitectura Técnica Propuesta:**
+  1. **Course Manifest Slim e Inlining en HTML:**
+     - Contrato `GET /api/courses(.json)` que devuelve un manifiesto liviano (< 10 KB, sin campo `data`): `{ generated_at, courses: [{ id, filename, title, description, status, total_competencies, total_questions, bytes, etag }] }`.
+     - Inyección del manifiesto inline en `/` reemplazando `<!--COURSE_MANIFEST-->` en `index.html` con `<script id="course-manifest" type="application/json">...</script>` para pintar la biblioteca en el primer frame (0 ms de espera de red).
+  2. **Índice con Caché Persistente por `mtime + size` (`courseIndex.cjs`):**
+     - Cálculo en segundo plano al arrancar el servidor y persistencia en `platform/.cache/course_index.json` (directorio ignorado por git; sin escrituras en `courses/` ni `content/`).
+     - Validación pesada y parsing únicamente cuando cambian los metadatos del archivo en disco. Mapa directo `id -> filename` para servir cursos individuales sin escanear el resto.
+  3. **Entrega de Cursos con ETag, Compresión y HTTP 304:**
+     - `GET /api/courses/:id(.json)` entrega el curso individual con `ETag`, `Cache-Control`, compresión gzip nivel rápido o brotli, y respuesta inmediata `304 Not Modified` ante cabecera `If-None-Match`.
+  4. **Frontend Inteligente (Prefetch, IndexedDB y Web Worker):**
+     - Renderizado inmediato de la biblioteca mediante manifest inline; prefetch en segundo plano con `requestIdleCallback` (baja prioridad, uno a uno).
+     - Elevación a prioridad alta mediante eventos `pointerenter`, `focus` y `touchstart` sobre la tarjeta del curso.
+     - Almacenamiento en caché en memoria + `IndexedDB` indexado por `ETag`.
+     - Parseo JSON y normalización de preguntas (`normalizeQuestion`) delegado a un Web Worker (`courseParse.worker.ts`), manteniendo el hilo principal a 60 fps.
+     - Esqueleto de carga con barra de progreso si el usuario abre un curso antes de completar el prefetch.
+     - Retorno a la biblioteca sin re-petición de red.
+  5. **Optimización de Build Estático y Code-Splitting:**
+     - Manifiesto slim + cursos individuales minificados; code-split mediante `React.lazy` para `PracticeSession`, `CompletionScreen` y `CourseChallenge`.
+* **Descomposición de Streams de Trabajo:**
+  - **P1 Server (`platform/server/courseServer.cjs`, `platform/server/courseIndex.cjs`):** Servidor con índice caché, manifest slim, compresión gzip/br, ETag/304 e inyección en HTML.
+  - **P2 Vite (`platform/vite.config.ts`):** Middleware de desarrollo y bundling optimizado con manifiesto slim minificado sin duplicación.
+  - **P3 Frontend (`platform/src/App.tsx`, `platform/src/utils/courseLoader.ts`, `platform/src/workers/courseParse.worker.ts`):** Manifiesto inline, prefetch idle/hover, IndexedDB, worker y esqueletos.
+  - **2D Tests (`tests/test_course_api_manifest.py`):** Pruebas de contrato y rendimiento del servidor de manifiesto.
+* **Metas de Rendimiento Cuantitativas:**
+  - Manifiesto en caliente: **< 100 ms** (frío: < 1 s sin bloquear la UI).
+  - Pintura de tarjetas en biblioteca: **≤ 100 ms** desde recepción de HTML (**≤ 300 ms** bajo emulación de CPU lenta 4×).
+  - Apertura de curso prefetched: **≤ 300 ms** con 0 peticiones de red al hacer click.
+  - Apertura en frío: **≤ 1.2 s** con esqueleto y parseo no bloqueante en Web Worker.
+* **Criterios de Aceptación (AC-19 a AC-25):**
+  - **AC-19:** `/api/courses` responde manifest < 50 KB (sin `data`) en < 100 ms caliente y < 1 s frío.
+  - **AC-20:** Biblioteca pinta tarjetas en ≤ 100 ms (≤ 300 ms con 4× CPU throttling) vía manifest inline.
+  - **AC-21:** Curso prefetched abre en ≤ 300 ms y 0 peticiones; en frío ≤ 1.2 s con esqueleto.
+  - **AC-22:** `/api/courses/:id` no escanea otros cursos, soporta `ETag`, `304` y compresión.
+  - **AC-23:** Volver a biblioteca no re-emite petición de lista de cursos.
+  - **AC-24:** Build estático no duplica cursos ni los emite en formato pretty-printed.
+  - **AC-25:** Cursos corruptos se marcan con `status: "error"` sin tumbar ni degradar el servicio de los demás.
+
+---
+
+### Milestone 12: Resiliencia ante Suspensión de la Laptop (Restauración de Sesión)
+* **Estado:** ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** (especificado como Frente C del plan de remediación; postergado para preservar la estabilidad de la sesión actual de estudio).
+* **Diagnóstico Medido (Causa Raíz de Desconexión y Pérdida de Estado):**
+  - **Comportamiento HMR de Vite ante Suspensión:** No existe código custom en Tops Academy que reinicie el servidor Node. Al suspender la laptop en modo `npm run dev`, la conexión WebSocket de HMR de Vite se interrumpe. Al despertar el sistema, el cliente Vite detecta la reconexión y fuerza un `location.reload()` completo de la ventana del navegador.
+  - **Fragilidad del Estado en Memoria:** El estado de la práctica (curso activo, unidad, tipo de sesión, preguntas barajadas, índice actual, respuestas marcadas e historial de aciertos) reside únicamente en la memoria volátil de React. Solo los niveles de maestría se persisten en `localStorage` (`masteryStorage.ts`). En consecuencia, la recarga forzada tras suspensión devuelve al usuario a la biblioteca perdiendo el progreso del quiz.
+  - **Agravamiento por Carga Pesada:** Al reiniciar la página tras la suspensión, la aplicación re-solicita la lista completa de cursos (43 MB, 17 s), dando la falsa impresión de que el servidor "se cayó o tarda en responder".
+  - **Acción Diagnóstica con el Usuario:** Confirmar si el comando ejecutado habitualmente es `npm run dev`, `npm run server` o `vite preview`, y si en la consola de herramientas de desarrollo (F12) se observa el mensaje `[vite] server connection lost`.
+* **Cambios Técnicos de Arquitectura:**
+  1. **Persistencia y Restauración de Sesión en `sessionStorage` (`sessionStore.ts`):**
+     - Almacenamiento continuo del estado de la práctica en `sessionStorage` bajo un esquema con versión (`v1`): `{ schema_version, current_view, course_id, unit_index, session_type, question_ids, current_index, results, answers, course_etag }`.
+     - Al cargar la página, si existe una sesión válida no expirada, la aplicación restaura inmediatamente la vista de práctica en la pregunta exacta donde se encontraba el estudiante (sin pantalla intermedia de biblioteca ni parpadeos).
+     - La sesión se invalida de forma limpia únicamente al finalizar el ejercicio, al pulsar "Quit", o si el curso cambió de versión (`ETag` diferente).
+  2. **Reconciliación Silenciosa sin Re-descarga:**
+     - Detección de eventos de ciclo de vida (`visibilitychange`, `pageshow`, evento `online`).
+     - Al despertar tras suspensión, el frontend no vuelve a descargar el curso activo si el `ETag` coincide; únicamente reconcilia el manifiesto liviano.
+  3. **Reconexión con Backoff Exponencial y Banner no Intrusivo:**
+     - Si el proceso del servidor aún está reanudando interfaces de red, el frontend ejecuta reintentos con backoff exponencial y muestra un banner flotante discreto ("Reconectando…") sin pantalla blanca ni recargas destructivas.
+  4. **Endurecimiento del Servidor y Endpoint `/healthz` (`courseServer.cjs`):**
+     - Registro explícito de errores `EADDRINUSE` y manejo defensivo de `uncaughtException` / `unhandledRejection` para evitar caídas del proceso ante peticiones malformadas.
+     - Endpoint ligero `GET /healthz` que reporte uptime, timestamp de inicio, PID y versión del índice, facilitando auditoría en caliente.
+  5. **Modo Estudio Dedicado (`npm run study`):**
+     - Script en `package.json`: `"study": "vite build && node server/courseServer.cjs"` que arranca la aplicación en producción local sin WebSocket de HMR ni recargas automáticas por suspensión de laptop. Sin agregar nuevas dependencias npm.
+* **Criterios de Aceptación (AC-28 a AC-31):**
+  - **AC-28:** Tras `page.reload()` a mitad de sesión (p. ej. pregunta 3 de 4 con 2 respuestas), la aplicación restaura la misma pregunta, los resultados previos y la vista de práctica sin pasar por la biblioteca.
+  - **AC-29:** Tras un reload, la biblioteca y el curso activo se restauran sin volver a descargar archivos de curso con el mismo `ETag` (0 descargas de curso; únicamente el manifest).
+  - **AC-30:** Si el servidor se detiene unos segundos y reanuda, el frontend reintenta con backoff, muestra banner "Reconectando…" y se recupera sin recargar manualmente ni perder la sesión.
+  - **AC-31:** Endpoint `/healthz` responde con uptime y versión; excepciones no controladas en peticiones no tumban el servidor; script `npm run study` opera sin HMR.
 
 ---
 

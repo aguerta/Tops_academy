@@ -30,42 +30,44 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
   }, [onStart]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
+    <div className="min-h-screen min-h-[100dvh] bg-slate-50 flex flex-col justify-between overflow-x-hidden">
       {/* Top Header Bar */}
-      <header className="h-16 bg-white border-b border-ka-border-card px-6 flex items-center justify-between">
+      <header className="h-16 bg-white border-b border-ka-border-card px-4 sm:px-6 flex items-center justify-between gap-2 shrink-0">
         <button
+          type="button"
+          aria-label="Back to Course Overview"
           onClick={onBack}
-          className="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-ka-text-secondary text-lg transition-colors"
+          className="w-9 h-9 shrink-0 rounded-full hover:bg-slate-100 flex items-center justify-center text-ka-text-secondary text-lg transition-colors"
           title="Back to Course Overview"
         >
           ←
         </button>
-        <h1 className="text-lg font-bold text-ka-text-primary text-center">
+        <h1 className="text-sm sm:text-lg font-bold text-ka-text-primary text-center truncate min-w-0 px-2 flex-1">
           <MathText text={competency.name} inline />
         </h1>
-        <div className="w-9 text-right text-xs text-ka-blue font-semibold cursor-pointer">
+        <div className="w-9 shrink-0 text-right text-xs text-ka-blue font-semibold cursor-pointer">
           Share
         </div>
       </header>
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 min-w-0">
         {/* Info Banner */}
-        <div className="w-full max-w-2xl mb-4 bg-white border border-ka-border-card rounded-lg p-3 text-xs text-ka-text-secondary flex items-center gap-2 shadow-sm">
-          <span className="text-ka-blue font-bold text-sm">ⓘ</span>
-          <span>
+        <div className="w-full max-w-2xl mb-4 bg-white border border-ka-border-card rounded-lg p-3 text-xs text-ka-text-secondary flex items-center gap-2 shadow-sm min-w-0">
+          <span className="text-ka-blue font-bold text-sm shrink-0">ⓘ</span>
+          <span className="min-w-0 break-words [overflow-wrap:anywhere]">
             Practice session for <strong><MathText text={competency.name} inline /></strong> ({competency.category}).
             Complete questions to earn mastery points!
           </span>
         </div>
 
         {/* Blue Hero Panel (#1865f2) */}
-        <div className="w-full max-w-2xl bg-ka-blue rounded-xl p-8 sm:p-12 text-center text-white relative overflow-hidden shadow-lg flex flex-col items-center justify-between min-h-[380px]">
-          <div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+        <div className="w-full max-w-2xl bg-ka-blue rounded-xl p-6 sm:p-10 text-center text-white relative overflow-hidden shadow-lg flex flex-col items-center justify-between min-h-[320px] sm:min-h-[380px] min-w-0">
+          <div className="min-w-0">
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight break-words">
               Ready to practice?
             </h2>
-            <p className="text-lg sm:text-xl text-blue-100 mt-2 font-medium">
+            <p className="text-base sm:text-xl text-blue-100 mt-2 font-medium break-words">
               Okay, show us what you can do!
             </p>
             <div className="mt-5 inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold tracking-wide">
@@ -74,7 +76,7 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
           </div>
 
           {/* Polygon Mascot Illustrations with smiling eyes */}
-          <div className="mt-8 flex items-end justify-center gap-4">
+          <div className="mt-6 sm:mt-8 flex items-end justify-center gap-3 sm:gap-4 max-w-full overflow-hidden">
             {/* Mascot 1: Navy/Indigo angled polygon */}
             <svg width="84" height="84" viewBox="0 0 100 100" className="drop-shadow-md">
               <polygon points="15,85 85,85 95,30 50,10 5,40" fill="#1e3a8a" />
@@ -118,18 +120,21 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
       </div>
 
       {/* Bottom Footer Bar */}
-      <footer className="h-20 bg-white border-t border-ka-border-card px-8 flex items-center justify-between">
+      <footer className="h-16 sm:h-20 bg-white border-t border-ka-border-card px-4 sm:px-8 flex items-center justify-between gap-4 shrink-0">
         <button
+          type="button"
+          aria-label="Back to Course Overview"
           onClick={onBack}
-          className="w-10 h-10 rounded-full border border-ka-border-card hover:bg-slate-50 flex items-center justify-center text-ka-text-secondary text-base transition-colors"
+          className="w-10 h-10 rounded-full border border-ka-border-card hover:bg-slate-50 flex items-center justify-center text-ka-text-secondary text-base transition-colors shrink-0"
         >
           ←
         </button>
 
         <button
+          type="button"
           data-testid="start-practice-btn"
           onClick={onStart}
-          className="px-8 py-3 bg-ka-blue hover:bg-ka-blue-hover text-white text-base font-bold rounded shadow-md transition-colors"
+          className="px-6 sm:px-8 py-2.5 sm:py-3 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm sm:text-base font-bold rounded shadow-md transition-colors shrink-0"
         >
           Let's go
         </button>

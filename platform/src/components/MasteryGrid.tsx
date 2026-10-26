@@ -38,7 +38,7 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
           <div
             key={unit.id}
             data-testid={`competency-block-${unit.id}`}
-            className={`p-5 bg-white rounded-lg border border-ka-border-card shadow-sm hover:shadow-md transition-shadow border-l-4 ${
+            className={`p-4 sm:p-5 bg-white rounded-lg border border-ka-border-card shadow-sm hover:shadow-md transition-shadow border-l-4 min-w-0 ${
               isCompleted
                 ? 'border-l-emerald-500'
                 : isInProgress
@@ -46,11 +46,11 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
                 : 'border-l-slate-300'
             }`}
           >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">
               {/* Unit Info */}
-              <div className="flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 min-w-0 flex-wrap">
                     <span>Unit {idx + 1}</span>
                     <span>•</span>
                     <span>{unit.category}</span>
@@ -82,10 +82,10 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
                     </span>
                   )}
                 </div>
-                <h3 className="text-lg font-bold text-ka-text-primary mt-1">
+                <h3 className="text-base sm:text-lg font-bold text-ka-text-primary mt-1 break-words [overflow-wrap:anywhere]">
                   <MathText text={unit.name} inline />
                 </h3>
-                <div className="text-xs text-ka-text-secondary mt-1">
+                <div className="text-xs text-ka-text-secondary mt-1 break-words [overflow-wrap:anywhere]">
                   <MathText text={unit.description} />
                 </div>
 
@@ -121,21 +121,23 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
               </div>
 
               {/* Assessment & Practice Triggers */}
-              <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-ka-border-subtle">
+              <div className="flex flex-wrap items-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-ka-border-subtle shrink-0">
                 {/* Competency Mastery Block / Practice Trigger */}
                 <button
+                  type="button"
                   data-testid={`competency-${unit.id}`}
                   onClick={() => onStartPractice(unit)}
-                  className="px-4 py-2 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm font-semibold rounded shadow-sm flex items-center gap-2 transition-colors"
+                  className="px-4 py-2 bg-ka-blue hover:bg-ka-blue-hover text-white text-sm font-semibold rounded shadow-sm flex items-center gap-2 transition-colors shrink-0"
                 >
                   <span>Practice</span>
                 </button>
 
                 {/* Quiz Trigger */}
                 <button
+                  type="button"
                   data-testid={`quiz-marker-${unit.id}`}
                   onClick={() => onStartQuiz(unit)}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded border border-slate-200 flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded border border-slate-200 flex items-center gap-1.5 transition-colors shrink-0"
                 >
                   <span className="text-amber-500">⚡</span>
                   <span>Quiz {idx + 1}</span>
@@ -143,9 +145,10 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
 
                 {/* Unit Test Trigger */}
                 <button
+                  type="button"
                   data-testid={`unit-test-marker-${unit.id}`}
                   onClick={() => onStartUnitTest(unit)}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded border border-slate-200 flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded border border-slate-200 flex items-center gap-1.5 transition-colors shrink-0"
                 >
                   <span className="text-purple-600">★</span>
                   <span>Unit test</span>

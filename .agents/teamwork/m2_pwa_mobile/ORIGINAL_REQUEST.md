@@ -1,0 +1,1 @@
+Analiza el Milestone 2 (PWA Móvil) de FUTURE_MILESTONES.md, chequea el comentario ("¿Cuánto tomaría implementar esto?") y crea /plan para /flash-triad-orchestrator enfocado en lograr el milestone 2. Indicar en tiempo cuánto tomaría implementar.
