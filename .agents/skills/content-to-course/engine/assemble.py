@@ -331,12 +331,18 @@ def sanitize_katex_syntax(text: str) -> str:
 
 
     # 1. Auto-close unclosed nested accent/style/sqrt macros: \hat{\boldsymbol{\beta} -> \hat{\boldsymbol{\beta}}
-    outer_macros = r"(?:hat|bar|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|widecheck|overline|underline|sqrt)"
-    inner_macros = r"(?:boldsymbol|mathbf|bm|mathit|mathrm|mathbb|mathcal|text|textbf|symbf|hat|bar|tilde|vec|dot|ddot)"
-    nested_fix = re.compile(
-        rf"(\\(?:{outer_macros})\s*\{{\s*\\(?:{inner_macros})\s*\{{[^{{}}]*\}})(?!\s*\}})"
-    )
-    text = nested_fix.sub(r"\1}", text)
+    # ONLY executed when opening braces exceed closing braces, preventing corruption of balanced expressions.
+    if text.count("{") > text.count("}"):
+        orig_text = text
+        outer_macros = r"(?:hat|bar|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|widecheck|overline|underline|sqrt)"
+        inner_macros = r"(?:boldsymbol|mathbf|bm|mathit|mathrm|mathbb|mathcal|text|textbf|symbf|hat|bar|tilde|vec|dot|ddot)"
+        nested_fix = re.compile(
+            rf"(\\(?:{outer_macros})\s*\{{\s*\\(?:{inner_macros})\s*\{{[^{{}}]*\}})(?!\s*\}})"
+        )
+        cand_nested = nested_fix.sub(r"\1}", text)
+        if cand_nested.count("{") < cand_nested.count("}"):
+            cand_nested = orig_text
+        text = cand_nested
 
     # 2. Auto-repair \frac missing numerator closing brace when numerator has an inner 1-arg macro or script
     # ONLY executed when opening braces exceed closing braces, preventing corruption of balanced expressions.
