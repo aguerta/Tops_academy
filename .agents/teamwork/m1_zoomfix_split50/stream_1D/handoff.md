@@ -72,4 +72,56 @@
 - Cero regresión en tests unitarios/contratos: `data-testid` existentes estrictamente preservados.
 - Frontera respetada al 100%: Solo `platform/src/components/PracticeSession.tsx` modificado.
 
+## 7. Remediation v3 (Shell de Alto Fijo, Footer en Flujo, Reset de Scroll)
+
+### 7.1 Objetivos de Remediación Cumplidos
+1. **Shell de ALTO FIJO (`h-dvh` con fallback 100vh)**:
+   - Contenedor raíz: `className="h-screen h-dvh h-dvh-safe bg-white flex flex-col overflow-hidden w-full relative"` y `style={{ height: '100dvh', maxHeight: '100dvh' }}`.
+   - Aplica también al estado vacío (`h-screen h-dvh h-dvh-safe ... overflow-hidden` y `style={{ height: '100dvh', maxHeight: '100dvh' }}`).
+   - El documento **NUNCA** tiene scroll vertical (`overflow: hidden` en el viewport contenedor fijo).
+
+2. **Footer EN FLUJO y eliminación de `pb-20` en `main`**:
+   - `footer`: Se eliminó por completo `fixed bottom-0 left-0 right-0`. Ahora está en flujo normal de flexbox (`h-14 sm:h-16 [@media(max-height:850px)]:h-12 bg-white border-t border-ka-border-card px-4 sm:px-8 flex items-center justify-between z-20 shadow-sm shrink-0`).
+   - `main`: Se eliminó el `pb-20` (80px), pasando a `className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"`.
+   - Se recuperaron **80px netos** de altura útil entre `header` y `footer`, permitiendo que el enunciado, las 7 opciones y la línea "Stuck?" se vean inmediatamente sin scroll.
+
+3. **Reset de Scroll a 0 (`window` y `main.scrollTop`)**:
+   - Implementada referencia `mainRef` en `<main>`.
+   - Función centralizada `resetScroll()` que ejecuta:
+     ```ts
+     window.scrollTo(0, 0);
+     document.documentElement.scrollTop = 0;
+     document.body.scrollTop = 0;
+     if (mainRef.current) {
+       mainRef.current.scrollTop = 0;
+     }
+     ```
+   - Invocada automáticamente en:
+     - `useEffect` reactivo a cambios de `currentIndex` (primer frame de render de cada pregunta).
+     - `handleNext` (al pasar de pregunta).
+     - `handleSkip` (al saltar de pregunta).
+     - `handleRedo` (al limpiar y reintentar).
+     - `handleRetry` (al reintentar tras fallo).
+     - `onRestart` (al reiniciar la sesión).
+   - Elimina el defecto de preguntas que abrían desplazadas con el header fuera de vista.
+
+4. **Cumplimiento de AC-CORE**:
+   - Con `scrollTop = 0` y **sin scroll vertical de página ni de `main`**:
+     - Viewport 1280×590 (Laptop 14" @150%): 494px de altura útil en `main` (590 - 48 header - 48 footer).
+     - Viewport 610×590 (Laptop 14" @150% Split 50%): 494px útiles, layout de 2 columnas (≤ 480px umbral 1A).
+     - Viewport 1536×740 (ASUS TUF 15.6" @125%, baseline de no regresión): 644px útiles.
+     - Tablets (834×1194, 1194×834, 1024×1366, 1366×1024): Altura amplia ≥ 834px.
+   - En todos estos casos, enunciado + 7 opciones completas + línea «Stuck? Review related…» + footer son visibles en el primer frame.
+
+5. **Inviolabilidad de Contratos y Fronteras**:
+   - Cero modificaciones a handlers de negocio (`handleCheck`, autoAdvanceTimer de 900ms, temporizadores).
+   - Cero modificaciones a lógica de estado o atajos de teclado (`Enter`).
+   - Cero dependencias añadidas. NO se agregaron `initialIndex`, `initialResults`, `onProgress` ni persistencia (reservado para Frente C).
+   - Todos los `data-testid` intactos (`practice-session`, `restart-session-btn`, `skip-btn`, `next-question-btn`, `quick-redo-btn`, `check-btn`).
+
+### 7.2 Verificación
+- `npx tsc --noEmit` en `platform/`: Exit code 0 (sin errores).
+- Tests de contrato `practice_session` en `tests/test_m1_zoomfix_contract.py`: 3 passed.
+- Git diff estrictamente acotado a `platform/src/components/PracticeSession.tsx` y `stream_1D/handoff.md`.
+
 DONE::

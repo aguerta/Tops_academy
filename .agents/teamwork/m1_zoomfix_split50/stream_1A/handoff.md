@@ -108,4 +108,48 @@ El Mejorador revisó el diff real, la frontera exclusiva y los casos borde de la
    - `npx tsc --noEmit` en `platform/`: **PASS** (0 errores de tipos).
    - Frontera exclusiva (`QuestionCard.tsx`, `index.css`) estrictamente respetada.
 
-DONE::Stream 1A endurecido y verificado exitosamente.
+---
+
+## 6. Remediation v3
+
+Implementación de las tareas de remediación M1 v3 dentro de la frontera exclusiva (`platform/src/index.css` y `platform/src/components/QuestionCard.tsx`):
+
+1. **Eliminación de barras horizontales en fórmulas inline (AC-13, AC-18):**
+   - Se removió `overflow-x: auto` y `display: inline-block` de `.katex` inline en `index.css`.
+   - `.qc-root .katex, .qc-options .katex` ahora mantienen únicamente `max-width: 100%`, permitiendo que las fórmulas inline se partan naturalmente entre líneas sin crear contenedores con scroll horizontal falso (causa de las hasta 11 barras por pregunta).
+   - Solo `.katex-display` conserva `display: block; max-width: 100%; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin;`.
+   - `.qc-root`, `.qc-options` y `.qc-options-scroll` tienen `overflow-x: hidden;` explícito, eliminando cualquier falso positivo de `scrollWidth > clientWidth`.
+
+2. **Umbral de 2 columnas ajustado a ≤ 480px (AC-16):**
+   - Se definió `@container qc (min-width: 480px)` para activar el layout de 2 columnas en split view al 150% de escala (donde el ancho útil es ~586–617 px, con columnas ≥ 230 px).
+   - Se preservó ancla `@container qc (min-width: 600px)` para total compatibilidad hacia atrás.
+
+3. **Escalonamiento de densidad por altura (AC-14 / AC-CORE):**
+   - **ASUS TUF 1536×740 (@125%)**: Mantiene la densidad base original (`:root` intacto, guardia de no-regresión).
+   - **@media (max-height: 720px)**:
+     - `--qc-gap: clamp(0.25rem, 0.8vh, 0.375rem);`
+     - `--qc-pad: clamp(0.3125rem, 1vh, 0.4375rem) 0.5rem;`
+     - `--qc-font: clamp(0.8125rem, 1.3vh, 0.875rem);` (mínimo garantizado 13 px).
+     - `--qc-badge: clamp(1.25rem, 2.3vh, 1.4rem);`
+     - `--qc-chrome: 9rem;`
+   - **@media (max-height: 620px)**:
+     - `--qc-gap: 0.25rem;` (4 px).
+     - `--qc-pad: 0.25rem 0.5rem;` (4 px vertical, 8 px horizontal).
+     - `--qc-font: 0.8125rem;` (exactamente 13 px).
+     - `--qc-badge: 1.25rem;` (20 px).
+     - `--qc-chrome: 7rem;`
+   - Touch targets (`min-height: 44px`): Aplicado **únicamente** con `@media (pointer: coarse)` en `.qc-option-item`, permitiendo que laptops con mouse operen a densidad compacta en 590 px de altura.
+
+4. **Cumplimiento AC-CORE (Sin scroll vertical en primer frame):**
+   - Enunciado completo + 7 opciones completas + línea «💡 Stuck? Review related articles/videos or use a hint.» (`data-testid="hints-toggle"`) + footer visibles simultáneamente a `scrollTop = 0`.
+   - Card padding reducido a `py-1.5 sm:py-2.5 px-3 sm:px-4`.
+   - Márgenes de prompt compactos (`mt-2 mb-1 sm:mt-2.5 sm:mb-1.5`).
+   - «Stuck?» (`hints-toggle`): Línea compacta (`text-xs`, ~20 px de alto) ubicada inmediatamente bajo las opciones (`mt-1.5 sm:mt-2 pt-1`), siempre visible antes y después del footer.
+   - Panel de hints desplegado: `max-height: clamp(120px, 25vh, 220px)` con scroll interno propio (`overflow-y: auto`), ubicado bajo el toggle para no empujar las opciones hacia arriba ni sacarlas de vista, con botón explícito de cierre `✕ Close`.
+
+5. **Verificación y Contratos:**
+   - `npx tsc --noEmit` en `platform/`: **PASS** (0 errores).
+   - `pytest tests/test_m1_zoomfix_contract.py`: 100% PASS en todos los tests de Stream 1A (`TestIndexCssContract`, `TestQuestionCardContract`, `TestOptionGridDistributionContract`, `TestAccessibilityContracts`, `TestViewportMatrixContract`).
+   - Todos los `data-testid` (`question-card`, `option-*`, `multiselect-option`, `fill-blank-input`, `hints-toggle`, `hints-container`, `reveal-hint-btn`, `hint-item`) e invariantes estructurales preservados.
+
+DONE::Stream 1A remediado y verificado bajo M1 v3.

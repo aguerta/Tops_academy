@@ -110,4 +110,45 @@
 - `npm run build` en `platform/`: **EXIT 0** (1101 módulos transformados, 7.23s, 0 errores).
 - Frontera de escritura 100% respetada: solo `FeedbackToast.tsx`, `CoordinatePlane.tsx` y `handoff.md`.
 
-DONE:: Stream 1C Mejorador completado exitosamente.
+---
+
+## 6. Remediation v3 (Ergonomía 125%/150%, KaTeX Inline Wrap & Footer en Flujo)
+
+### A. Tarea 1: Erradicación de `overflow-x:auto` en KaTeX Inline (AC-13, AC-18)
+- **Eliminación en CSS**: Se removió `overflow-x: auto !important` y `overflow-y: hidden !important` de la regla `.feedback-toast-root .katex`. Se conservó únicamente `max-width: 100% !important;` para contención sin forzar barras de desplazamiento.
+- **Display math preservado**: Únicamente `.feedback-toast-root .katex-display` conserva `overflow-x: auto !important; overflow-y: hidden !important` para fórmulas de bloque independientes.
+- **Eliminación en wrappers Tailwind**: Se removieron las clases utilitarias `overflow-x-auto` de:
+  - Contenedores de texto de opciones en `renderCorrectAnswer` (MC7, Multiple Select, Fill-in-the-blank).
+  - Bloques de diagnóstico en `error-rationale-box`.
+  - Contenedores de solución paso a paso en `solution-content`.
+  - Bloques de conceptos erróneos en `misconception_warning`.
+- **Comportamiento obtenido**: Las fórmulas KaTeX inline ahora se parten naturalmente en múltiples líneas con `break-words min-w-0`, eliminando el 100% de los scrollers horizontales parásitos dentro del toast.
+
+### B. Tarea 2: Reposicionamiento del Toast ante Footer en Flujo (AC-CORE, AC-14)
+- **Desacoplamiento del flujo**: El footer de `PracticeSession` pasa a estar en flujo (`h-16 shrink-0` sin `fixed` ni `pb-20`, implementado por Stream 1D). Para garantizar que el toast **NO empuje las 7 opciones ni altere el flujo del shell**, el toast se mantiene con `position: fixed` como bottom sheet superpuesto.
+- **Ajuste de elevación**:
+  - En `< 1024px` o `max-height: 850px`: `bottom: 4.5rem !important;` (72px). Dado que el footer mide 64px (`h-16`), el toast queda a 8px sobre el borde superior del footer, garantizando que los botones `Skip`, `Check` y `Next question` permanezcan 100% accesibles y nunca tapados.
+  - En pantallas con altura reducida (`max-height: 650px`, ej. 1280×590 y 610×590 a 150% de escala):
+    - `bottom: 4.25rem !important;` (68px).
+    - `max-height: 40dvh !important;` (en 590px, son 236px de altura máxima).
+    - `feedback-toast-scroll`: `max-height: calc(40dvh - 2.25rem) !important;`.
+    - `feedback-toast-sol-scroll`: `max-height: calc(40dvh - 5.5rem) !important;`.
+- **Scroll propio estricto**: Todo el contenido explicativo y la solución expandible hacen scroll únicamente dentro de `feedback-toast-scroll` / `feedback-toast-sol-scroll`, manteniendo la página principal y el shell con cero scroll.
+
+### C. Tarea 3: CoordinatePlane para AC-CORE en Pantallas Bajas
+- **Optimización de espacio vertical**:
+  - Contenedor `graph-container` optimizado a `my-1 sm:my-2 p-1.5 sm:p-2`, recuperando entre 10 y 14 px de altura libre en todas las resoluciones.
+  - El SVG conserva `viewBox={`0 0 ${width} ${height}`}`, `role="img"` y `aria-label`.
+- **Densidad por altura (max-h-[30dvh] & max-h-[24dvh])**:
+  - Regla base: `max-height: min(30dvh, 260px)` con `aspectRatio: width / height`.
+  - Regla compacta `@media (max-height: 650px)`: `max-height: 24dvh !important;`.
+  - En 1280×590 y 610×590 (150% de escala): el gráfico escala a ~141px de altura, dejando más de 300px libres en el shell para que el enunciado, las 7 opciones completas, la línea «💡 Stuck? Review related articles/videos or use a hint.» y el footer se muestren en el primer frame sin scroll vertical.
+  - En 1536×740 (ASUS TUF 125% baseline): `@media (max-height: 650px)` no aplica, manteniéndose en `30dvh` (222px) con cero regresión visual.
+  - En tablets (834×1194 portrait y 1194×834 landscape): el gráfico se acota a un máximo de 260px, luciendo nítido y balanceado con los controles táctiles.
+
+### D. Verificación Técnica
+- `npx tsc --noEmit` en `platform/`: **EXIT 0** (0 errores).
+- `pytest -q tests/test_m1_zoomfix_contract.py -k "CoordinatePlane or FeedbackToast"`: **6 passed** (100% verde).
+- Frontera respetada: solo `FeedbackToast.tsx` y `CoordinatePlane.tsx`.
+
+DONE:: Remediation v3 completada exitosamente.

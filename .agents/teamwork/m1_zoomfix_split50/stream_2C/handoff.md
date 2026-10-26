@@ -102,3 +102,36 @@
 - `pytest tests/test_m1_zoomfix_contract.py`: **PASSED** (94 passed).
 - `npm run build` en `platform/`: **PASS** (1101 módulos transformados en 7.77s, 0 errores).
 
+---
+
+## 6. Remediation v3 - Task 1: Registro de Milestones 11 y 12 (Frentes B y C)
+
+**Fecha:** 2026-10-26  
+**Contexto:** El usuario aprobó ejecutar exclusivamente el Frente A del plan de remediación M1 v3 (`remediation_plan.md`). Conforme a la directriz, los Frentes B (Carga de Cursos) y C (Resiliencia ante Suspensión) han sido formalmente desacoplados e inscritos como Milestones pendientes en la hoja de ruta a largo plazo.
+
+### A. Modificaciones en la Matriz Maestra de Priorización de Ingeniería (§6)
+- Se agregaron dos nuevas filas numeradas consecutivamente tras el Milestone 10:
+  - **Milestone 11: Carga Rápida de Cursos (Manifest, Prefetch y Caché):** Área Frontend / Servidor, esfuerzo 2 a 3 d, estado `⏳ Pendiente (diferido por decisión del usuario 2026-10-26)`.
+  - **Milestone 12: Resiliencia ante Suspensión de la Laptop (Restauración de Sesión):** Área Frontend / Servidor, esfuerzo 1 a 2 d, estado `⏳ Pendiente (diferido por decisión del usuario 2026-10-26)`.
+
+### B. Especificación Detallada en §7
+- **Milestone 11 (Frente B):**
+  - *Diagnóstico Medido:* 51.9 MB en disco para 7 cursos; `GET /api/courses.json` devuelve 43 MB en 17–18 s porque `getCourseList()` lee, valida con regex, parsea con JSON y valida los 7 cursos completos en cada petición e incluye el payload `data`; `GET /api/courses/:id` repite el escaneo completo (~733 ms); build estático emite cada curso 3 veces pretty-printed; `App.tsx` re-pide la lista al regresar a la biblioteca.
+  - *Arquitectura:* Manifest liviano (<10 KB, sin `data`) inline en `index.html` (0 ms de espera de red); índice con caché persistente por `mtime+size` en `platform/.cache/course_index.json`; detalle por id con `ETag`, `304 Not Modified` y compresión gzip/brotli; prefetch en idle y prioritario en hover/focus/touch; caché dual en memoria + IndexedDB por `ETag`; parseo JSON y normalización en Web Worker; esqueletos con barra de progreso; code-splitting con `React.lazy`.
+  - *Streams:* P1 Server (`courseServer.cjs`, `courseIndex.cjs`), P2 Vite (`vite.config.ts`), P3 Frontend (`App.tsx`, `courseLoader.ts`, `courseParse.worker.ts`), 2D Tests (`test_course_api_manifest.py`).
+  - *Metas Cuantitativas:* Manifest en caliente <100 ms (frío <1 s); render de tarjetas en biblioteca ≤100 ms (≤300 ms con 4× CPU throttle); apertura de curso prefetched ≤300 ms (0 peticiones); apertura en frío ≤1.2 s.
+  - *Criterios de Aceptación:* AC-19 a AC-25.
+- **Milestone 12 (Frente C):**
+  - *Diagnóstico:* No hay código propio de reinicio; en `npm run dev` Vite recarga la ventana al reestablecer el WebSocket de HMR tras suspensión del SO; el estado de práctica vive únicamente en memoria de React (solo maestría en `localStorage`); reload gatilla re-descarga de 43 MB; protocolo de diagnóstico con usuario (confirmar comando y mensaje `[vite] server connection lost`).
+  - *Cambios de Arquitectura:* `sessionStorage` con esquema versionado (`v1`) que restaura la práctica en la pregunta exacta; reconciliación silenciosa en `visibilitychange`/`pageshow`/`online` sin re-descargar cursos con idéntico `ETag`; reintentos con backoff exponencial y banner flotante "Reconectando…"; endpoint `/healthz`; endurecimiento de servidor (`EADDRINUSE`, `uncaughtException`); script dedicado `npm run study` (build + server sin HMR, 0 dependencias nuevas).
+  - *Criterios de Aceptación:* AC-28 a AC-31.
+
+### C. Aislamiento y No-Regresión
+- La especificación de Milestone 1 en §6 y §7 se mantuvo **100% intacta** (será actualizada en la Tarea 2 tras finalizar 1A–1F).
+- Milestones 2 al 10 y secciones 8 y 9 permanecen inalteradas.
+- Paridad byte a byte perfecta entre `FUTURE_MILESTONES.md` y `docs/future_milestones/FUTURE_MILESTONES.md` (exactamente 81,724 bytes, UTF-8 LF sin BOM).
+
+### D. Verificación
+- `.\pytest.cmd -q tests/test_platform_katex_admission_guard.py -k byte_parity`: **PASSED (1 passed)**.
+
+
