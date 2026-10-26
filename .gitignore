@@ -40,8 +40,19 @@ content/*
 sample_content/*
 !sample_content/README.md
 
-# 6. Artefactos de Testing y Screenshots E2E
+# 6. Artefactos de Testing, Screenshots e Imágenes (Zero-Bloat)
 tests/e2e/screenshots/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ico
+*.bmp
+*.tiff
+*.tif
+*.svg
+*.avif
 
 # 7. Scratch y Archivos Temporales de Desarrollo
 scratch/
