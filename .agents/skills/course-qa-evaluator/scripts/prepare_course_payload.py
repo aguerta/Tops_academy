@@ -3,7 +3,8 @@
 
 Helper script for the course-qa-evaluator skill.
 Discovers published courses and prepares enriched audit payloads powered by
-the StandardizedAuditEngine (Google Antigravity SDK Hybrid Multi-Agent pattern).
+the StandardizedAuditEngine (Google Antigravity SDK Hybrid Multi-Agent pattern +
+Path-to-Mastery v2.0 cognitive & platform-aware linter suite).
 """
 from __future__ import annotations
 
@@ -95,14 +96,17 @@ def summarize_course(course_entry: dict) -> dict:
                 "id": q.get("id"),
                 "competency_id": cid,
                 "competency_name": comp_info.get("name", ""),
+                "category": comp_info.get("category", ""),
                 "type": q.get("interaction_type") or q.get("type"),
                 "difficulty": q.get("difficulty"),
+                "bloom": q.get("bloom_taxonomy_level") or q.get("bloom"),
                 "stem": q.get("stem"),
                 "options": q.get("options"),
                 "correct_answer": q.get("correct_answer"),
                 "hints_count": len(q.get("hints", [])),
                 "hints": q.get("hints"),
-                "detailed_solution": q.get("detailed_solution"),
+                "detailed_solution": q.get("detailed_solution") or q.get("solution"),
+                "misconception_warning": q.get("misconception_warning") or q.get("common_misconception_warning"),
             })
 
     # 3. Select targeted anomaly samples from Risk Clusters for direct quotation
@@ -113,15 +117,38 @@ def summarize_course(course_entry: dict) -> dict:
         for qid in item_ids[:5]:
             q_item = q_by_id.get(qid)
             if q_item:
+                risk_cluster_samples[cluster_name] = {  # type: ignore[assignment]
+                    "items": []
+                } if not isinstance(risk_cluster_samples[cluster_name], list) else risk_cluster_samples[cluster_name]
                 risk_cluster_samples[cluster_name].append({
                     "id": qid,
                     "competency_id": q_item.get("competency_id"),
                     "stem": q_item.get("stem"),
                     "options": q_item.get("options"),
                     "hints": q_item.get("hints"),
-                    "detailed_solution": q_item.get("detailed_solution"),
+                    "detailed_solution": q_item.get("detailed_solution") or q_item.get("solution"),
+                    "misconception_warning": q_item.get("misconception_warning") or q_item.get("common_misconception_warning"),
                     "detected_issues": telemetry.get("issues_by_item", {}).get(qid, []),
                 })
+
+    # 4. Ingest Stage-5 Blind Judge verification report if available in courses/<id>/work/
+    cid_slug = str(course_entry.get("id") or "")
+    judge_audit: dict = {"available": False}
+    if cid_slug:
+        j_cand = COURSES_DIR / cid_slug / "work" / "judge_report.json"
+        if j_cand.is_file():
+            try:
+                j_raw = json.loads(j_cand.read_text(encoding="utf-8"))
+                judge_audit = {
+                    "available": True,
+                    "total_items_judged": j_raw.get("total_items", 0),
+                    "agreed_items": j_raw.get("agreed_items", 0),
+                    "agreement_rate": j_raw.get("agreement_rate", 1.0),
+                    "unrepaired_disagreements_count": len(j_raw.get("disagreements", [])),
+                    "unrepaired_disagreements": j_raw.get("disagreements", [])[:10],
+                }
+            except Exception:
+                pass
 
     return {
         "course_id": course_entry.get("id"),
@@ -132,9 +159,11 @@ def summarize_course(course_entry: dict) -> dict:
         "total_questions": len(questions),
         "question_types_distribution": types_count,
         "questions_per_competency": {cid: len(ql) for cid, ql in q_by_comp.items()},
+        "stage5_judge_audit": judge_audit,
         "evaluator_guidance": {
-            "instruction": "Toda la telemetría métrica estática (conteo de KaTeX roto, distractores delatores, pistas faltantes, placeholders f-string y distribución de Bloom) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts de prueba exploratorios en Python. Aplica el Adaptive Semantic Loop y redacta directamente los reportes JSON y Markdown.",
+            "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0 y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
             "risk_score": telemetry.get("risk_score", 0.0),
+            "mastery_path_readiness": telemetry.get("mastery_path_readiness", {}),
             "hard_penalties_precalculated": telemetry.get("hard_penalties", []),
         },
         "audit_telemetry": telemetry,
@@ -197,7 +226,6 @@ def main():
             sys.exit(1)
         target_courses = matched
     else:
-        # Default behavior: list and exit
         print(f"Discovered {len(courses)} course(s). Use --course-id <id> or --all.")
         return
 
@@ -206,7 +234,8 @@ def main():
         cid = c.get("id")
         out_file = REPORTS_DIR / f"{cid}_payload.json"
         out_file.write_text(json.dumps(pkg, indent=2, ensure_ascii=False), encoding="utf-8")
-        print(f"Prepared enriched payload: {out_file.name} ({pkg['total_questions']} questions, {pkg['total_competencies']} comps, risk_score={pkg['evaluator_guidance']['risk_score']})")
+        mpri = pkg.get("evaluator_guidance", {}).get("mastery_path_readiness", {}).get("mpri_score", "N/A")
+        print(f"Prepared enriched payload: {out_file.name} ({pkg['total_questions']} questions, {pkg['total_competencies']} comps, risk_score={pkg['evaluator_guidance']['risk_score']}, MPRI={mpri}/100)")
 
 
 if __name__ == "__main__":

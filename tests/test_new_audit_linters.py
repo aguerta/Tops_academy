@@ -18,6 +18,13 @@ from standardized_audit_engine import (
     ParentheticalTelltaleLinter,
     ArchetypeEntropyLinter,
     UninterpolatedMathVariableLinter,
+    ZPDProgressionCalibrationLinter,
+    RetrievalModalityDiversityLinter,
+    SocraticScaffoldingIntegrityLinter,
+    DiagnosticRationaleAlignmentLinter,
+    AntiGamingPsychometricLinter,
+    DAGMasteryTopologyLinter,
+    KaTeXFrontendErgonomicsLinter,
 )
 
 
@@ -139,3 +146,206 @@ def test_full_audit_integration():
     assert "parenthetical_telltale_linter" in report["dimension_summaries"]
     assert "archetype_entropy_linter" in report["dimension_summaries"]
     assert "uninterpolated_math_variable_linter" in report["dimension_summaries"]
+    assert "mastery_path_readiness" in report
+    assert report["mastery_path_readiness"]["mpri_score"] >= 85.0
+
+
+def test_path_to_mastery_v2_linters():
+    # 1. ZPD collapse + Skill lower-order Bloom
+    zpd_qs = [
+        {"id": f"Q-{i}", "competency_id": "Hab-01", "difficulty": "medium", "bloom_taxonomy_level": "Understand", "stem": f"Item {i}"}
+        for i in range(10)
+    ]
+    zpd_issues = []
+    zpd_sum = ZPDProgressionCalibrationLinter().run(
+        {"competencies": [{"id": "Hab-01", "category": "Skill"}], "questions": zpd_qs},
+        zpd_issues,
+    )
+    assert zpd_sum["zpd_dead_competencies_count"] == 1
+    assert zpd_sum["skill_higher_bloom_pct"] == 0.0
+
+    # 2. Socratic hint poisoning & boilerplate + v3 'content' option key
+    soc_issues = []
+    soc_sum = SocraticScaffoldingIntegrityLinter().run(
+        {
+            "questions": [
+                {
+                    "id": "Q-SOC-1",
+                    "competency_id": "Hab-01",
+                    "options": [
+                        {"content": "$256$", "is_correct": True},
+                        {"content": "$135$", "is_correct": False},
+                    ],
+                    "hints": [
+                        "Identifique la estructura conceptual de ECM: analice las relaciones formales y condiciones teóricas del modelo.",
+                        "Revise el procedimiento analítico paso a paso para ECM, asegurando considerar adecuadamente: omitir el cuadrado del sesgo.",
+                        "Antes de concluir, compruebe la consistencia dimensional del resultado de ECM.",
+                    ],
+                }
+            ]
+        },
+        soc_issues,
+    )
+    assert soc_sum["poisoned_hints_items_count"] == 1
+    assert any(iss.severity == "critical" for iss in soc_issues)
+
+    # 3. Magic-multiplier fake numerical distractors
+    diag_issues = []
+    diag_sum = DiagnosticRationaleAlignmentLinter().run(
+        {
+            "questions": [
+                {
+                    "id": "Q-MAG-1",
+                    "competency_id": "Hab-01",
+                    "options": [
+                        {"content": "$10.0$", "is_correct": True},
+                        {"content": "$13.33$", "is_correct": False, "error_rationale": "R1"},
+                        {"content": "$6.67$", "is_correct": False, "error_rationale": "R2"},
+                        {"content": "$16.67$", "is_correct": False, "error_rationale": "R3"},
+                        {"content": "$3.33$", "is_correct": False, "error_rationale": "R4"},
+                    ],
+                }
+            ]
+        },
+        diag_issues,
+    )
+    assert diag_sum["magic_multiplier_distractor_items_count"] == 1
+
+    # 4. Anti-gaming: vacuous quantifier, [R-15] length padding, cross-domain prefix, memorizable answers
+    ag_qs = []
+    for i in range(16):
+        ag_qs.append({
+            "id": f"Q-AG-{i}",
+            "competency_id": "C-02",
+            "stem": "Al examinar detenidamente las condiciones de frontera, resuelva: defina plim.",
+            "options": [
+                {
+                    "content": "$\\lim_{n \\to \\infty} P(|X_n - 7| \\le 0.13) = 1$ válido para todo margen $\\varepsilon > 0$",
+                    "is_correct": True,
+                },
+                {
+                    "content": "$X_n = 7$, para los parámetros bajo análisis",
+                    "is_correct": False,
+                },
+            ],
+        })
+    ag_issues = []
+    ag_sum = AntiGamingPsychometricLinter().run(
+        {"title": "Estadística Asintótica", "competencies": [{"id": "C-02"}], "questions": ag_qs},
+        ag_issues,
+    )
+    assert ag_sum["memorizable_competencies_count"] == 1
+    assert ag_sum["vacuous_quantifier_items_count"] == 16
+    assert ag_sum["length_padded_items_count"] == 16
+    assert ag_sum["cross_domain_prefix_items_count"] == 16
+
+    # 5. DAG topology inversion & isolated island
+    dag_issues = []
+    dag_sum = DAGMasteryTopologyLinter().run(
+        {
+            "competencies": [
+                {"id": "Hab-01", "category": "Skill", "prerequisites": ["C-01"]},
+                {"id": "C-01", "category": "Concept", "prerequisites": []},
+                {"id": "H-99", "category": "Fact", "prerequisites": []},
+            ]
+        },
+        dag_issues,
+    )
+    assert dag_sum["inverted_prerequisite_edges_count"] == 1
+    assert dag_sum["isolated_competencies_count"] == 1
+
+    # 6. KaTeX frontend ergonomics: full-sentence \text{...} & raw $theta_hat$
+    erg_issues = []
+    erg_sum = KaTeXFrontendErgonomicsLinter().run(
+        {
+            "questions": [
+                {
+                    "id": "Q-ERG-1",
+                    "competency_id": "C-01",
+                    "stem": "Evalúe el estimador $theta_hat$ bajo muestreo aleatorio.",
+                    "options": [
+                        {
+                            "content": "$\\text{La teoría asintótica exige que el proceso generador poblacional converja uniformemente}$",
+                            "is_correct": False,
+                        }
+                    ],
+                }
+            ]
+        },
+        erg_issues,
+    )
+    assert erg_sum["prose_in_katex_text_items_count"] == 1
+    assert erg_sum["raw_identifier_math_items_count"] == 1
+
+
+def test_discovered_v2_self_improvement_rules():
+    """Verify newly learned rules from Argon/Flash v2 audit loop:
+    symbolic LaTeX hint poisoning, bound constant in forall, stuttered [R-15] padding, and disjoint subgraphs.
+    """
+    from standardized_audit_engine import (
+        SocraticScaffoldingIntegrityLinter,
+        AntiGamingPsychometricLinter,
+        DAGMasteryTopologyLinter,
+    )
+
+    soc_issues = []
+    soc_sum = SocraticScaffoldingIntegrityLinter().run(
+        {
+            "questions": [
+                {
+                    "id": "Q-SYM-1",
+                    "competency_id": "H-03",
+                    "hints": [
+                        "Identifique la estructura conceptual de ECM: analice las relaciones formales.",
+                        "Revise el procedimiento analítico paso a paso para ECM, asegurando considerar adecuadamente: $\\operatorname{ECM}(\\hat{\\theta}) = \\operatorname{Var}(\\hat{\\theta})$.",
+                        "Antes de concluir, compruebe la consistencia dimensional del resultado de ECM.",
+                    ],
+                    "options": [{"content": "$\\operatorname{Var} + \\operatorname{Sesgo}^2$", "is_correct": True}],
+                }
+            ]
+        },
+        soc_issues,
+    )
+    assert soc_sum["poisoned_hints_items_count"] == 1
+
+    ag_issues = []
+    ag_sum = AntiGamingPsychometricLinter().run(
+        {
+            "title": "Estadística 3",
+            "competencies": [{"id": "C-10"}],
+            "questions": [
+                {
+                    "id": "Q-BND-1",
+                    "competency_id": "C-10",
+                    "stem": "Determine la propiedad asintótica.",
+                    "options": [
+                        {
+                            "content": "Válido para todo $\\epsilon = 0.02 > 0$, bajo las hipótesis del modelo, bajo las hipótesis del modelo.",
+                            "is_correct": True,
+                        }
+                    ],
+                }
+            ],
+        },
+        ag_issues,
+    )
+    assert ag_sum["vacuous_quantifier_items_count"] == 1
+    assert ag_sum["length_padded_items_count"] == 1
+
+    dag_issues = []
+    dag_sum = DAGMasteryTopologyLinter().run(
+        {
+            "competencies": [
+                {"id": "A-1", "prerequisites": []},
+                {"id": "A-2", "prerequisites": ["A-1"]},
+                {"id": "B-1", "prerequisites": []},
+                {"id": "B-2", "prerequisites": ["B-1"]},
+                {"id": "ISLAND-1", "prerequisites": []},
+            ]
+        },
+        dag_issues,
+    )
+    assert dag_sum["multi_node_subgraphs_count"] == 2
+    assert dag_sum["connected_components_count"] == 3
+    assert any("sub-grafos" in iss.message for iss in dag_issues)
+
