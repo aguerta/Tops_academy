@@ -1,0 +1,257 @@
+{
+  "course_id": "estadistica_3_s9_vdirect",
+  "audit_version": "2.0-path-to-mastery",
+  "total_questions": 620,
+  "total_competencies": 27,
+  "course_metadata": {
+    "course_id": "estadistica_3_s9_vdirect",
+    "unit_title": "Estadistica 3 S9 Vdirect",
+    "detected_objective": "Dominio y aplicación analítica integral de Estadistica 3 S9 Vdirect (Semana 9: Muestras Aleatorias, Estimadores Puntuales, Criterio ECM, Convergencia en Probabilidad, Desigualdades de Markov/Chebyshev/Jensen/Cauchy-Schwarz, Teorema Central del Límite de Lindeberg-Lévy, CMT y Método Delta Univariado)",
+    "total_competencies": 27,
+    "total_questions": 620,
+    "audit_timestamp": "2026-10-31T13:25:00-05:00",
+    "source_c2c_conversation_id": "592de77b-afd9-4fae-8744-4ef0be7212f4",
+    "stage5_judge_summary": {
+      "total_items_judged": 54,
+      "sampling_rate_pct": 8.71,
+      "agreed_items": 54,
+      "agreement_rate": 1.0,
+      "unrepaired_disagreements_count": 0
+    }
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.5,
+      "max": 4.0,
+      "feedback": "Topologia DAG estructuralmente limpia (0 ciclos, profundidad 4, 0 islas, 27 competencias con 20-30 items), pero colapso total del ZPD adaptativo (620/620 reactivos hardcodeados en difficulty='medium', 27/27 competencias muertas en calibrateByMasteryDifficulty) y omision curricular de nodos propios para LGN Debil/Fuerte, Convergencia Casi Segura y Teorema de Slutsky."
+    },
+    "assessment_quality": {
+      "score": 1.9,
+      "max": 5.0,
+      "feedback": "Tope Critico activado: monocultivo pasivo 100% MC7 (0% FIB y 0% MS en los 240 reactivos de Habilidad [Hab]), exploit de memorizacion visual de 1 unica respuesta invariante en 20 items de H-03 y H-04, distractores generados con multiplicadores porcentuales arbitrarios (1.5x, 0.75x, 1.15x, 0.93x en Q-C03-246, Q-H10-181, Q-H10-183) y coletillas burocraticas [R-15] asimetricas o tartamudeadas en Q-Hab01-381, Q-Hab02-412 y Q-Hab05-501."
+    },
+    "scaffolding_hints": {
+      "score": 1.0,
+      "max": 5.0,
+      "feedback": "Tope Critico severo (0.8-1.5): sabotaje sistematico del salvavidas de 3 strikes en PracticeSession.tsx. El 100% (620/620) usa plantillas Mad-Libs vacias en Pista 1 e inyecta el error conceptual D-01 en Pista 2 bajo 'asegurando considerar adecuadamente: [misconception]' (280/620 capturados por regex literal y 620/620 confirmados semanticamente). En FeedbackToast.tsx, 94.35% de error_rationale son reciclados (210/3720 unicos), con desconexiones escalares vs matrices k x k (Q-Hab01-381) y eco literal de formulas falsas sin refutacion (Q-H04-061, Q-C01-201)."
+    },
+    "instructional_alignment": {
+      "score": 2.2,
+      "max": 4.0,
+      "feedback": "Aunque las derivaciones matematicas en detailed_solution son exactas (54/54 acuerdos en el Juez Ciego Etapa 5, muestreo 8.71%), compile_shard.py aplano el 100% (620/620) a bloom_taxonomy_level='Understand' (0.0% Apply/Analyze/Evaluate en 240 items Hab), inyecto 60 prefijos roboticos de crecimiento de Solow y EDP ('condiciones de frontera', 'ecuaciones fundamentales del regimen') y salto de Unidad 27 a Unidad 42 omitiendo LGN y Slutsky."
+    },
+    "technical_ergonomics": {
+      "score": 0.9,
+      "max": 2.0,
+      "feedback": "Cero llaves rotas o signos $ desbalanceados, pero 80 reactivos (12.9%) envuelven oraciones completas en prosa dentro de $\\text{...}$ provocando desborde horizontal movil (Q-C06-301, Q-C09-361), 60 reactivos (9.7%) filtran variables crudas de codigo en pistas ($theta_hat$, $Y_bar$, $sigma^2$, g'(theta), op(1) en Q-Hab01-395, Q-Hab03-441, Q-Hab08-606) y el titulo permanece como slug crudo ('Estadistica 3 S9 Vdirect')."
+    }
+  },
+  "dimensions": {
+    "D1_arquitectura_curricular_dag": {
+      "score": 2.5,
+      "max_score": 4.0,
+      "mapped_rubric_dimension": "architecture_granularity",
+      "summary": "DAG acíclico limpio de profundidad 4 (`H-01` raíz única, 0 aristas invertidas, 0 islas), pero colapso 100% ZPD (`easy=0, medium=620, hard=0`) que neutraliza `calibrateByMasteryDifficulty()` en las 27 competencias y ausencia de nodos para LGN (Khinchin/Kolmogorov), convergencia casi segura y Teorema de Slutsky."
+    },
+    "D2_alineacion_pedagogica_zpd": {
+      "score": 2.2,
+      "max_score": 4.0,
+      "mapped_rubric_dimension": "instructional_alignment",
+      "summary": "Fórmulas y soluciones analíticas correctas (`54/54` acuerdo en Juez Ciego sobre `8.71%` del banco), pero `compile_shard.py` sobrescribió los niveles CTA (`Apply`/`Analyze`/`Evaluate`) con `100% Understand` (`0/240` en `[Hab]`) e inyectó `60` prefijos espurios de modelos de Solow y ecuaciones diferenciales."
+    },
+    "D3_rigor_psicometrico_antigaming": {
+      "score": 1.9,
+      "max_score": 5.0,
+      "mapped_rubric_dimension": "assessment_quality",
+      "summary": "Monocultivo `100% MC7` (`0% FIB`, `0% MS`), exploit de memorización de 1 sola respuesta en `H-03` y `H-04` (`20` ítems c/u con $n$ decorativo), distractores por perturbación porcentual fija (`0.84x..1.18x` en `H-10`/`H-09`, `0.5x..2.0x` en `C-03`) y relleno burocrático `[R-15]` duplicado/asimétrico."
+    },
+    "D4_andamiaje_socratico_feedback": {
+      "score": 1.0,
+      "max_score": 5.0,
+      "mapped_rubric_dimension": "scaffolding_hints",
+      "summary": "Envenenamiento anti-socrático universal (`45.16%` regex literal, `100%` semántico en `620/620` ítems) que induce errores en `hints[1]` y `hints[2]` durante los Strikes 1-2, combinado con `94.35%` de `error_rationale` reciclados (`210/3720` únicos), racionalizaciones matriciales $k \\times k$ en cálculos escalares (`Q-Hab01-381`) y fórmulas falsas repetidas sin refutar (`Q-H04-061`, `Q-C01-201`)."
+    },
+    "D5_integridad_tecnica_ux": {
+      "score": 0.9,
+      "max_score": 2.0,
+      "mapped_rubric_dimension": "technical_ergonomics",
+      "summary": "Delimitadores KaTeX balanceados (`0` errores fatales de compilación), pero `80` reactivos con prosa extensa dentro de `$\\text{...}$` (`nowrap` overflow), `60` reactivos con identificadores Python crudos (`$theta_hat$`, `$Y_bar$`, `g'(theta)`), operadores entre llaves `{plim}`/`{ECM}` y metadatos sin curar (`Estadistica 3 S9 Vdirect`)."
+    }
+  },
+  "penalties_applied": [
+    {
+      "rule": "socratic_hint_poisoning",
+      "deduction": 1.5,
+      "reason": "280 reactivos (45.16%) activan el detector determinista de envenenamiento anti-socrático y la inspección forense confirma que 620/620 (100%) inyectan D-01.misconception en hints[1] bajo 'asegurando considerar adecuadamente: [error/distractor]' (ej. Q-H03-041, Q-H04-061, Q-H10-181, Q-Hab02-412, Q-Hab08-591)."
+    },
+    {
+      "rule": "answer_memorization_exploit",
+      "deduction": 1.0,
+      "reason": "2 competencias (H-03 y H-04, -0.5 pts c/u) permiten alcanzar 'Mastered (100)' por memorización visual pura: exactamente 1 respuesta correcta única invariante a través de los 20 reactivos de cada competencia mientras el tamaño muestral n varía de forma vacua en el enunciado."
+    }
+  ],
+  "hard_penalties_applied": [
+    {
+      "rule": "socratic_hint_poisoning",
+      "deduction": 1.5,
+      "affected_items_count": 280,
+      "semantic_confirmed_count": 620,
+      "evidence_items": [
+        "Q-H03-041",
+        "Q-H04-061",
+        "Q-H10-181",
+        "Q-Hab02-412",
+        "Q-Hab08-591"
+      ]
+    },
+    {
+      "rule": "answer_memorization_exploit",
+      "deduction": 1.0,
+      "affected_competencies": [
+        "H-03",
+        "H-04"
+      ],
+      "unique_correct_answers_per_20_items": 1,
+      "evidence_items": [
+        "Q-H03-041",
+        "Q-H03-060",
+        "Q-H04-061",
+        "Q-H04-080"
+      ]
+    }
+  ],
+  "raw_subtotal": 8.5,
+  "raw_dimension_subtotal": 8.5,
+  "total_deduction": 2.5,
+  "final_score": 6.0,
+  "total_score": 6.0,
+  "max_score": 20.0,
+  "quality_tier": "CRÍTICO (0.0 - 10.9 pts) — RECHAZADO PARA ESTUDIO AUTÓNOMO",
+  "grade": "RECHAZADO ( Crítico )",
+  "mastery_path_readiness": {
+    "mpri_score": 35.94,
+    "mpri_max": 100.0,
+    "mpri_tier": "MASTERY-HOSTILE (0-39): Sabotaje Cognitivo / Colapso de Andamiaje Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 0.0,
+        "max": 20.0
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 3.55,
+        "max": 20.0
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 6.23,
+        "max": 25.0
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 10.61,
+        "max": 15.0
+      },
+      "dag_and_interleaving_topology": {
+        "score": 10.0,
+        "max": 10.0
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 5.55,
+        "max": 10.0
+      }
+    }
+  },
+  "critical_defects": [
+    {
+      "defect_id": "DEF-01",
+      "severity": "BLOCKER",
+      "root_cause": "compile_shard.py",
+      "title": "Envenenamiento Anti-Socrático Universal en Pistas 2 y 3 (620/620 reactivos)",
+      "impact": "Destruye el mecanismo de 3 strikes en PracticeSession.tsx induciendo al estudiante en Strike 1/2 a aplicar fórmulas falsas (ECM = Var en Q-H03-041; Z_n con factor n en lugar de sqrt(n) en Q-H10-181) u omitir elevar al cuadrado 1/n y g'(theta) (Q-Hab02-412, Q-Hab08-591)."
+    },
+    {
+      "defect_id": "DEF-02",
+      "severity": "BLOCKER",
+      "root_cause": "compile_shard.py",
+      "title": "Colapso 100% de Calibración Adaptativa ZPD y Taxonomía de Bloom",
+      "impact": "Los 620 reactivos tienen difficulty='medium' y bloom_taxonomy_level='Understand', dejando easy=0 y hard=0 en las 27 competencias e inutilizando calibrateByMasteryDifficulty() en sessionShuffler.ts desde Not started (0) hasta Mastered (100)."
+    },
+    {
+      "defect_id": "DEF-03",
+      "severity": "CRITICAL",
+      "root_cause": "compile_shard.py + shard_authoring",
+      "title": "Monocultivo Pasivo 100% MC7 y Exploit de Memorización Visual en H-03 y H-04",
+      "impact": "Cero evocación activa (FIB=0%, MS=0%) en 240 reactivos de habilidad [Hab-01..08]; además, H-03 y H-04 repiten exactamente 1 cadena correcta idéntica en sus 20 reactivos variando n de forma decorativa."
+    },
+    {
+      "defect_id": "DEF-04",
+      "severity": "CRITICAL",
+      "root_cause": "compile_shard.py + cta_rationale_mapping",
+      "title": "Desconexión Diagnóstica en FeedbackToast (94.35% reciclaje, matrices k x k en escalares, multiplicadores mágicos y eco de errores)",
+      "impact": "En Q-Hab01-381 un error aritmético escalar recibe una lección sobre matrices k x k de productos exteriores; en Q-H10-181/183 perturbaciones 1.15x reciben racionales de multiplicar por n; en Q-H04-061 y Q-C01-201 el error_rationale repite literalmente la fórmula falsa sin refutarla."
+    },
+    {
+      "defect_id": "DEF-05",
+      "severity": "HIGH",
+      "root_cause": "compile_shard.py",
+      "title": "Contaminación de Dominio (Solow/EDP), Relleno [R-15] Tartamudeado y Degradación Ergonómica KaTeX",
+      "impact": "60 enunciados con prefijos de crecimiento económico/EDP, sufijos burocráticos duplicados ('bajo las hipótesis del modelo, bajo las hipótesis del modelo.' en Q-Hab02-412 y Q-Hab05-501), 80 ítems con prosa en $\\text{...}$ y 60 ítems con variables Python crudas ($theta_hat$, $Y_bar$)."
+    }
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "symbolic_latex_anti_socratic_hint_poisoning",
+      "severity": "critical",
+      "regex_pattern": "(?:asegurando considerar adecuadamente|evalúe posibles desvíos al considerar):\\s*\\$",
+      "description": "Detecta pistas anti-socráticas donde compile_shard.py inyecta directamente una fórmula simbólica falsa (D-01.misconception o D-02.misconception en LaTeX) precedida por una instrucción afirmativa, cubriendo los 340 reactivos adicionales que escapan al matcher literal cuando las opciones instancian valores numéricos.",
+      "evidence_items": [
+        "Q-H01-001",
+        "Q-H08-156",
+        "Q-H10-181",
+        "Q-C06-301",
+        "Q-C07-321"
+      ]
+    },
+    {
+      "rule_id": "echoed_misconception_error_rationale",
+      "severity": "critical",
+      "regex_pattern": "^\\$(?:\\\\text\\{[^$]{15,}\\}|\\|X_n\\(\\\\omega\\)\\s*-\\s*c\\|\\s*<\\s*\\\\varepsilon.*)\\$$",
+      "description": "Detecta distractores cuyo error_rationale fue poblado erróneamente con la misma fórmula falsa de option.content o con el enunciado crudo del mito sin refutación pedagógica.",
+      "evidence_items": [
+        "Q-H04-061",
+        "Q-C01-201",
+        "Q-C01-202",
+        "Q-C08-341"
+      ]
+    },
+    {
+      "rule_id": "extended_and_stuttered_r15_length_padding",
+      "severity": "warning",
+      "regex_pattern": ",\\s*(?:según los supuestos clásicos del modelo|bajo las hipótesis del modelo|para la muestra de datos observada|de acuerdo con la teoría econométrica|en la formulación matricial considerada|en el contexto del contraste analizado|en el marco de la especificación)(?:,\\s*(?:según los supuestos clásicos del modelo|bajo las hipótesis del modelo|para la muestra de datos observada|de acuerdo con la teoría econométrica|en la formulación matricial considerada|en el contexto del contraste analizado|en el marco de la especificación))*\\.$",
+      "description": "Amplía el detector [R-15] para capturar las 7 variantes burocráticas hermanas y las colisiones de doble sufijo tartamudeado ('bajo las hipótesis del modelo, bajo las hipótesis del modelo.') inyectadas asimétricamente sobre claves o distractores.",
+      "evidence_items": [
+        "Q-Hab01-381",
+        "Q-Hab02-412",
+        "Q-Hab04-472",
+        "Q-Hab05-501",
+        "Q-Hab08-608"
+      ]
+    },
+    {
+      "rule_id": "fine_grained_percentage_multiplier_distractors",
+      "severity": "warning",
+      "regex_pattern": "^\\$[A-Za-z_\\\\{}^]+\\s*=\\s*-?\\d+(?:\\.\\d+)?\\$$",
+      "description": "Detecta bancos numéricos donde los 6 distractores se generan aplicando perturbaciones porcentuales fijas de malla fina (0.84x, 0.88x, 0.93x, 1.07x, 1.15x, 1.18x) sobre la respuesta correcta mientras el error_rationale declara un error algebraico estructural incompatible (como multiplicar por n en lugar de sqrt(n)).",
+      "evidence_items": [
+        "Q-H10-181",
+        "Q-H10-183",
+        "Q-H09-180"
+      ]
+    }
+  ],
+  "remediation_actions": [
+    "[P0 - BLOCKER | compile_shard.py] Erradicar de inmediato el generador de pistas Mad-Libs/anti-socráticas que concatena 'asegurando considerar adecuadamente: {D-01.misconception}' y 'evalúe posibles desvíos al considerar: {D-02.misconception}' en los 620 reactivos. Reemplazar por 3 niveles socráticos genuinos específicos al arquetipo: (1) propiedad o teorema aplicable sin revelar la clave, (2) planteamiento algebraico intermedio instanciado con los datos del ítem, y (3) verificación de orden estocástico o cota (ej. 1/n^2 vs 1/n, [g'(theta)]^2 > 0).",
+    "[P0 - BLOCKER | compile_shard.py] Restaurar la propagación de bandas ZPD ('easy', 'medium', 'hard' en proporción recomendada 30%/45%/25% por competencia) y preservar los niveles de Bloom diseñados en el CTA ('Remember' en H, 'Understand'/'Analyze' en C, 'Apply'/'Evaluate' en Hab) para reactivar calibrateByMasteryDifficulty() en sessionShuffler.ts.",
+    "[P1 - CRITICAL | Modalidad & Anti-Gaming] Diversificar el banco eliminando el monocultivo 100% MC7: convertir al menos 40-50% de las 8 competencias de Habilidad (Hab-01 a Hab-08) a fill_in_the_blank (cálculo exacto de ECM, Var(Y_bar), cotas de Markov/Chebyshev y varianza asintótica por Método Delta evaluados vía mathEquivalence.ts) e introducir reactivos multiple_select en C-01..C-09 para discriminar hipótesis necesarias vs suficientes. Rediseñar H-03 y H-04 con >= 6 arquetipos distintos para eliminar el exploit de 1 respuesta única.",
+    "[P1 - CRITICAL | Alineación Diagnóstica en FeedbackToast] Prohibir el reciclaje circular de racionales y los multiplicadores porcentuales arbitrarios (0.84x..1.18x en H-09/H-10 y 0.5x..2.0x en C-03). Computar cada distractor numérico mediante la fórmula exacta del error cognitivo (ej. multiplicar por n en Q-H10-183 debe producir Z_n = 200.0, no 11.5), eliminar el distractor intruso matricial k x k de Hab-01 (D-Hab01-05) y reemplazar los error_rationale que repiten literalmente la fórmula falsa en H-04, C-01 y C-08 por refutaciones diagnósticas explícitas.",
+    "[P2 - HIGH | Encuadre Curricular, Relleno [R-15] y Ergonomía KaTeX] Eliminar del compilador todas las listas de prefijos robóticos de Solow/EDP (60 ítems) y las 8 variantes de coletillas burocráticas [R-15] (incluyendo colisiones dobles); extraer la prosa en español fuera de $\\text{...}$ en los 80 ítems afectados; normalizar identificadores crudos ($theta_hat$ -> $\\hat{\\theta}_n$, $Y_bar$ -> $\\bar{Y}_n$, op(1) -> $o_p(1)$, {plim} -> \\operatorname{plim}); curar el título del curso ('Estadística III — Semana 9: Propiedades de Muestras Finitas y Teoría Asintótica') e incorporar micro-competencias dedicadas para LGN Débil/Fuerte, Convergencia Casi Segura y Teorema de Slutsky."
+  ]
+}

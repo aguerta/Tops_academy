@@ -1,0 +1,234 @@
+{
+  "course_id": "estadistica_3_s9_vmapreduce",
+  "audit_version": "Path-to-Mastery v2.0 (QM + OSCQR + Mastery Learning)",
+  "is_deterministic_only": false,
+  "total_competencies": 39,
+  "total_questions": 920,
+  "course_metadata": {
+    "course_id": "estadistica_3_s9_vmapreduce",
+    "unit_title": "Estadística III — Semana 9: Propiedades en Muestras Finitas y Teoría Asintótica (vMapReduce)",
+    "detected_objective": "Dominio y aplicación analítica de insesgadez, eficiencia relativa matricial, descomposición del ECM, desigualdades probabilísticas (Markov, Chebyshev, Jensen, Cauchy-Schwarz), convergencia en probabilidad, media cuadrática ($L^r$), casi segura, en distribución, LGN Débil, Teorema de Mapeo Continuo y Teorema de Slutsky.",
+    "total_competencies": 39,
+    "total_questions": 920,
+    "source_conversation_id": "068a3181-c378-4025-96b3-6f68ba04dfc5",
+    "category_distribution": {
+      "Fact": 5,
+      "Concept": 20,
+      "Skill": 14
+    }
+  },
+  "mastery_path_readiness": {
+    "mpri_score": 39.45,
+    "mpri_max": 100.0,
+    "mpri_tier": "MASTERY-HOSTILE (0-39): Sabotaje Cognitivo / Colapso de Andamiaje Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 0.0,
+        "max": 20.0,
+        "diagnosis": "Colapso total de ZPD: 920/920 reactivos (100%) tienen difficulty='medium' y bloom_taxonomy_level='Understand' (0% Apply+ en los 420 reactivos de Habilidad [Hab]). calibrateByMasteryDifficulty en sessionShuffler.ts opera como no-op en 39/39 competencias."
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 0.0,
+        "max": 20.0,
+        "diagnosis": "Monocultivo 100% MC7 (0% FIB, 0% MS); 14/14 competencias [Hab] evaluadas solo por reconocimiento pasivo; 2 competencias memorizables (C-05 con 1 clave única en 20 ítems; H-01 con 4 claves únicas en 20 ítems); 20 ítems con cuantificador universal vacuo en C-02 (+5 con cuantificador ligado a constante en C-10); 55 ítems con relleno artificial [R-15] (incluyendo firma delatora de cláusula única vs doble en Q-H05-670..680)."
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 13.65,
+        "max": 25.0,
+        "diagnosis": "Distribución trimodal severa: 825/920 (89.67%) usan plantillas Mad-Libs de compilador, 20/920 (2.17%) detectados por regex como envenenados (aunque semánticamente >500 inyectan el error conceptual CTA tras 'asegurando considerar adecuadamente:'), 5/920 (0.54%, Q-C20-871..875) son stubs de una palabra ['C20', 'Teorema-slutsky', 'Asintotica'], y solo 70/920 (7.61%: Hab-08, C-12, C-13) poseen pistas socráticas genuinas."
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 10.89,
+        "max": 15.0,
+        "diagnosis": "Solo 438/5520 (7.93%) rationales son únicos. 9 ítems usan multiplicadores mágicos (0.5x, 0.75x, 1.333x, 1.5x, 2.1x) con rationales teóricos desconectados (Q-Hab08-299..306, Q-H03-513, Q-H05-677..680); ítems como Q-C02-131, Q-Hab03-130 y Q-C05-342 imprimen la fórmula falsa cruda sin refutación como error_rationale en FeedbackToast.tsx."
+      },
+      "dag_and_interleaving_topology": {
+        "score": 8.5,
+        "max": 10.0,
+        "diagnosis": "Sin ciclos dirigidos (profundidad máxima 8, 0 aristas invertidas), pero fracturado en 3 componentes débilmente conexas disjuntas sin fusión MapReduce: isla {C-01} (1 nodo) + Sub-DAG A de Clases_sintetizadas_semana_9.pdf (14 nodos) + Sub-DAG B de EST3_LEC07_26.2_V2.pdf (24 nodos), generando 9 pares de competencias duplicadas."
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 6.41,
+        "max": 10.0,
+        "diagnosis": "Sintaxis KaTeX limpia (0 llaves sin cerrar, 0 '$' desbalanceados, 0 residuos f-string; las 174 alertas sobre {Y} en \\bar{Y}_n y {plim} en \\operatorname{plim} son falsos positivos benignos). Penalizado por 160 ítems (250 opciones/rationales) con oraciones en prosa >=45 caracteres dentro de $\\text{...}$ que rompen el line-wrap móvil, y 92 ítems con prefijos robóticos de Solow/EDP."
+      }
+    }
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.0,
+      "max": 4.0,
+      "feedback": "Tope normativo aplicado por colapso 100% 'medium' en 39/39 competencias (calibrateByMasteryDifficulty inoperante), nodo isla C-01 (in=0, out=0) y fractura MapReduce no fusionada en 3 subgrafos disjuntos (1 + 14 + 24 nodos) con 9 competencias duplicadas y reinicio de Unidad 25 a Unidad 3."
+    },
+    "assessment_quality": {
+      "score": 1.5,
+      "max": 5.0,
+      "feedback": "Rango Crítico (<=2.4) activado por corrupción matemática de cuantificador universal y falacia existencial->universal en C-02 (Q-C02-131..150) y C-10 (Q-C10-561..565), exploit de memorización en C-05 (1 clave única en 20 ítems) y H-01 (4 claves únicas), monocultivo 100% MC7 (0% FIB/MS), distractores por multiplicador arbitrario (9 ítems) y firma delatora de cláusula simple vs doble para evadir [R-15] en Q-H05-670..680."
+    },
+    "scaffolding_hints": {
+      "score": 1.1,
+      "max": 5.0,
+      "feedback": "Tope estricto (0.8 - 1.5) activado por 89.67% de boilerplate Mad-Libs, stubs de etiquetas crudas ['C20', 'Teorema-slutsky', 'Asintotica'] en Q-C20-871..875, envenenamiento anti-socrático en Pista 2 ('asegurando considerar adecuadamente: [fórmula falsa CTA]') y desconexión/eco de fórmulas falsas crudas en FeedbackToast.tsx. Se reconoce el 7.61% (70 ítems en Hab-08, C-12, C-13) con pistas socráticas legítimas."
+    },
+    "instructional_alignment": {
+      "score": 1.5,
+      "max": 4.0,
+      "feedback": "Cobertura temática rigurosa del sílabo de Semana 9, pero degradada por 100% Bloom 'Understand' (0% Apply/Analyze en 420 ítems [Hab]), 92 reactivos con prefijos robóticos contaminados de Solow/EDP ('condiciones de frontera', 'fundamentos del equilibrio') y discordancia matemática irreparada en Stage 5 (T-C-02-02_judge_1) que enseña una implicación lógica falsa."
+    },
+    "technical_ergonomics": {
+      "score": 1.4,
+      "max": 2.0,
+      "feedback": "Cero errores de compilación KaTeX, llaves, signos '$' o variables crudas (las 174 alertas en \\bar{Y}_n son falsos positivos del linter). Deducción de -0.6 pts por 160 ítems (250 instancias) con oraciones completas de prosa envueltas en $\\text{...}$ que impiden el salto de línea (white-space: nowrap) en tarjetas móviles."
+    }
+  },
+  "dimensions": {
+    "D1_arquitectura_curricular_dag": {
+      "score": 2.0,
+      "max_score": 4.0,
+      "cap_applied": "Tope <= 2.5 / 4.0 por ZPD 100% 'medium' + deducción por isla C-01 y 3 componentes MapReduce disjuntas"
+    },
+    "D2_calidad_psicometrica_anti_gaming": {
+      "score": 1.5,
+      "max_score": 5.0,
+      "cap_applied": "Rango Crítico <= 2.4 / 5.0 por corrupción de cuantificadores (C-02, C-10) y memorización visual (C-05, H-01)"
+    },
+    "D3_andamiaje_socratico_remediacion": {
+      "score": 1.1,
+      "max_score": 5.0,
+      "cap_applied": "Tope estricto 0.8 - 1.5 / 5.0 por boilerplate >50% (89.67%) y envenenamiento anti-socrático de Pista 2"
+    },
+    "D4_alineacion_bloom_pureza_dominio": {
+      "score": 1.5,
+      "max_score": 4.0,
+      "cap_applied": "Deducciones por 100% Bloom Understand, 92 prefijos Solow/EDP y discordancia Stage-5 T-C-02-02_judge_1"
+    },
+    "D5_integridad_tecnica_ux": {
+      "score": 1.4,
+      "max_score": 2.0,
+      "cap_applied": "Deducción -0.6 pts por 160 ítems con oraciones en prosa dentro de $\\text{...}$"
+    }
+  },
+  "raw_subtotal": 7.5,
+  "raw_dimension_subtotal": 7.5,
+  "penalties_applied": [
+    {
+      "rule": "vacuous_quantifier_key_corruption",
+      "deduction": 1.0,
+      "reason": "20 reactivos en C-02 (Q-C02-131 a Q-C02-150) sustituyen '\\varepsilon' por un escalar fijo (ej. 0.13 o 0.22) dejando 'válido para todo margen \\varepsilon > 0' matemáticamente vacuo, y en Q-C02-136..150 validan la falacia lógica existencial->universal sobre el veredicto correcto del Blind Judge 04."
+    },
+    {
+      "rule": "answer_memorization_exploit",
+      "deduction": 1.0,
+      "reason": "2 competencias vulnerables a memorización visual sin lectura del enunciado (-0.5 x 2): C-05 tiene exactamente 1 respuesta correcta única en sus 20 reactivos (Q-C05-341..360) y H-01 tiene solo 4 respuestas correctas únicas en sus 20 reactivos (Q-H01-021..040)."
+    }
+  ],
+  "hard_penalties_applied": [
+    {
+      "rule": "vacuous_quantifier_key_corruption",
+      "deduction": -1.0,
+      "affected_items_count": 20,
+      "sample_items": ["Q-C02-131", "Q-C02-136", "Q-C02-150"]
+    },
+    {
+      "rule": "answer_memorization_exploit",
+      "deduction": -1.0,
+      "affected_competencies": ["C-05", "H-01"],
+      "sample_items": ["Q-C05-341", "Q-H01-021"]
+    }
+  ],
+  "total_deduction": 2.0,
+  "final_score": 5.5,
+  "total_score": 5.5,
+  "max_score": 20.0,
+  "quality_tier": "RECHAZADO (Crítico)",
+  "grade": "CRÍTICO (Rechazo Inmediato — Sabotaje Cognitivo / Colapso de Andamiaje Adaptativo)",
+  "stage5_judge_audit": {
+    "total_items_judged": 78,
+    "agreed_items": 77,
+    "agreement_rate": 0.9872,
+    "unrepaired_disagreements_count": 1,
+    "root_cause_of_gate_bypass": "El orquestador aplicó un umbral agregado global (>=95%, aprobando 77/78 = 98.72% con can_retry=false) en lugar de bloquear cualquier plantilla con agreement < 1.0, permitiendo publicar T-C-02-02 (Q-C02-136..150) con clave matemáticamente falsa ('G' en vez de 'C')."
+  },
+  "critical_defects": [
+    {
+      "defect_id": "DEF-01",
+      "severity": "BLOCKER",
+      "title": "Doble corrupción matemática en C-02 y bypass del Blind Judge Stage 5 (T-C-02-02_judge_1)",
+      "evidence_items": ["Q-C02-131", "Q-C02-136", "Q-C02-150", "Q-C10-562"],
+      "summary": "En T-C-02-01 (Q-C02-131..135) se interpola \\varepsilon=0.13 dentro de P(|X_n - 7| <= 0.13) dejando 'para todo margen \\varepsilon > 0' vacuo. En T-C-02-02 (Q-C02-136..150), la premisa solo da convergencia para una banda fija \\varepsilon=0.22; el Blind Judge 04 eligió correctamente 'C' (\\exists \\varepsilon > 0), pero la plantilla exigía 'G' (\\forall \\varepsilon > 0), enseñando una falacia lógica refutable con X_n = 38.10. Adicionalmente, C-10 (Q-C10-561..565) escribe 'para todo \\epsilon = 0.02 > 0'."
+    },
+    {
+      "defect_id": "DEF-02",
+      "severity": "BLOCKER",
+      "title": "Fractura del grafo curricular en 3 sub-DAGs disjuntos sin reducción semántica MapReduce",
+      "evidence_items": ["C-01", "H-01", "C-06", "Hab-01", "C-08", "C-02", "H-05", "C-04", "C-16"],
+      "summary": "Los dos arquitectos CTA paralelos concatenaron sus salidas sin deduplicación ni aristas puente: {C-01} queda aislado (1 nodo), Clases_sintetizadas_semana_9.pdf forma el Sub-DAG A (14 nodos, Unidades 5-25) y EST3_LEC07_26.2_V2.pdf forma el Sub-DAG B (24 nodos, reiniciando a Unidad 3-50), duplicando 9 competencias nucleares."
+    },
+    {
+      "defect_id": "DEF-03",
+      "severity": "CRITICAL",
+      "title": "Colapso total de ZPD (100% medium / 100% Understand) y Monocultivo 100% MC7",
+      "evidence_items": ["Q-C01-001", "Q-Hab01-042", "Q-Hab14-920"],
+      "summary": "Los 920 reactivos declaran difficulty='medium', bloom_taxonomy_level='Understand' y type='multiple_choice_7_options' (0 FIB, 0 MS). calibrateByMasteryDifficulty en sessionShuffler.ts queda anulado en las 39 competencias."
+    },
+    {
+      "defect_id": "DEF-04",
+      "severity": "CRITICAL",
+      "title": "Exploits severos de anti-gaming: memorización visual (C-05, H-01) y firma delatora de cláusula única vs doble (H-05)",
+      "evidence_items": ["Q-C05-341", "Q-C05-342", "Q-H01-021", "Q-H05-670", "Q-H05-677"],
+      "summary": "C-05 repite idéntica cadena correcta en 20/20 ítems. En Q-H05-670..680, para burlar [R-15], opt_a concatena 2 muletillas genéricas, 5 distractores llevan 0 muletillas, y la respuesta correcta queda 100% delatada como la única opción con exactamente 1 muletilla."
+    },
+    {
+      "defect_id": "DEF-05",
+      "severity": "CRITICAL",
+      "title": "Sabotaje del salvavidas socrático (3-Strikes) y fórmulas falsas sin refutar en FeedbackToast",
+      "evidence_items": ["Q-H01-021", "Q-C01-001", "Q-C20-871", "Q-C02-131", "Q-Hab03-130", "Q-Hab08-303"],
+      "summary": "89.67% de pistas son Mad-Libs genéricas donde la Pista 2 inyecta la fórmula falsa del CTA tras 'asegurando considerar adecuadamente:'; Q-C20-871..875 tienen etiquetas crudas ['C20', 'Teorema-slutsky', 'Asintotica']; Q-C02-131 y Q-Hab03-130 muestran enunciados falsos crudos como error_rationale sin refutación."
+    }
+  ],
+  "remediation_actions": [
+    "BLOQUEANTE 1 (Stage 5 & Rigor Matemático): En T-C-02-01 y T-C-10-01 mantener '\\varepsilon' simbólico dentro de P(|X_n - c| > \\varepsilon) cuando esté ligado a 'para todo \\varepsilon > 0'; en T-C-02-02 cambiar la clave esperada a la opción existencial ('C') validada por el Blind Judge 04 o reformular la premisa, e imponer bloqueo duro por plantilla (agreement == 1.0) en Stage 5.",
+    "BLOQUEANTE 2 (Fusión Curricular MapReduce): Ejecutar un paso Reduce de deduplicación semántica sobre los 2 sub-DAGs para fusionar los 9 pares duplicados (ej. H-01+C-06/C-07, Hab-01+C-08, C-02+H-05, C-03+C-12, C-04+C-16) en ~26-28 competencias canónicas conexas y vincular C-01 como prerrequisito motivacional de convergencia en distribución/TCL.",
+    "PRIORIDAD ALTA 3 (Calibración ZPD y Modalidad Activa): Estratificar cada competencia en bandas reales easy (25-30%) / medium (40-50%) / hard (25-30%), elevar los reactivos [Hab] a Bloom 'Apply'/'Analyze' y convertir >=35% de las preguntas de cálculo numérico (ECM, Chebyshev, Jensen, Cauchy-Schwarz, Slutsky) a fill_in_the_blank (FIB) y >=15% de jerarquía asintótica a multiple_select (MS).",
+    "PRIORIDAD ALTA 4 (Erradicación de Anti-Gaming): Parametrizar el límite estocástico en C-05 (ej. soporte {c, c + n^k}) y H-01 para superar >=10 respuestas únicas por competencia, y eliminar todas las muletillas de relleno [R-15] (simples y dobles) en Q-H05-670..680 y en los 55 reactivos afectados.",
+    "PRIORIDAD ALTA 5 (Reconstrucción Socrática y FeedbackToast): Sustituir las 825 cadenas Mad-Libs, las pistas envenenadas y los 5 stubs ['C20', 'Teorema-slutsky', 'Asintotica'] (Q-C20-871..875) por progresiones socráticas de 3 pasos al estilo de Hab-08/C-12; reemplazar multiplicadores arbitrarios (0.5x, 1.5x, 1.333x) por distractores derivados de errores algebraicos reales con rationales específicos y refutativos.",
+    "PRIORIDAD MEDIA 6 (Ergonomía KaTeX y Pureza de Dominio): Extraer las 250 oraciones en prosa fuera de $\\text{...}$ dejando en modo matemático solo símbolos/ecuaciones, eliminar los 92 prefijos de Solow/EDP y excluir comandos LaTeX válidos (\\bar{Y}, \\operatorname{plim}) del regex de variables no interpoladas."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "dag_disconnected_subgraphs_linter",
+      "severity": "critical",
+      "regex_pattern": "GRAPH_TOPOLOGY: weakly_connected_components(competencies_dag) > 1",
+      "description": "Detecta cuando el grafo curricular completo se fractura en múltiples componentes conexas disjuntas (incluso si cada subgrafo tiene nodos con aristas y evade isolated_competencies). Captura concatenaciones MapReduce sin etapa Reduce de fusión semántica.",
+      "evidence_items": ["C-01", "H-01", "H-02", "C-06", "C-20"]
+    },
+    {
+      "rule_id": "bound_constant_in_universal_quantifier_linter",
+      "severity": "critical",
+      "regex_pattern": "(?:para\\s+todo|todo\\s+margen|\\\\forall)\\s+\\$?\\\\eps(?:ilon)?\\s*=\\s*\\d+(?:\\.\\d+)?",
+      "description": "Detecta cuantificadores universales ligados directamente por igualdad a un flotante numérico fijo (ej. 'para todo \\epsilon = 0.04 > 0'), corrompiendo la definición analítica de límite en probabilidad en enunciados y soluciones.",
+      "evidence_items": ["Q-C10-561", "Q-C10-562", "Q-C10-563", "Q-C10-564", "Q-C10-565"]
+    },
+    {
+      "rule_id": "single_vs_double_filler_clause_r15_gaming_linter",
+      "severity": "critical",
+      "regex_pattern": "(?:,\\s*(?:bajo las hip[oó]tesis del modelo|seg[uú]n los supuestos cl[aá]sicos del modelo|para los par[aá]metros bajo an[aá]lisis|en el contexto del contraste analizado|en el marco de la especificaci[oó]n|de acuerdo con la teor[ií]a econom[eé]trica|para la muestra de datos observada|en la formulaci[oó]n matricial considerada)){2}",
+      "description": "Detecta la evasión perversa de [R-15] donde opt_a concatena 2 cláusulas de relleno para superar en longitud a la clave correcta, dejando a la respuesta correcta 100% delatada como la única opción con exactamente 1 cláusula de relleno frente a 5 distractores cortos.",
+      "evidence_items": ["Q-H05-670", "Q-H05-671", "Q-H05-672", "Q-H05-676", "Q-H05-677", "Q-H05-678", "Q-H05-680"]
+    },
+    {
+      "rule_id": "latex_misconception_injected_in_madlibs_hint_linter",
+      "severity": "critical",
+      "regex_pattern": "asegurando considerar adecuadamente:\\s*\\$[^$]+\\$",
+      "description": "Extiende socratic_scaffolding_integrity_linter para capturar pistas Mad-Libs que inyectan una fórmula LaTeX falsa de la columna CTA Misconception tras 'asegurando considerar adecuadamente:', saboteando al alumno en Strike 1/2 aunque la cadena no coincida literalmente en texto plano con una opción.",
+      "evidence_items": ["Q-C01-001", "Q-C02-131", "Q-C04-339", "Q-C05-341", "Q-H05-670"]
+    },
+    {
+      "rule_id": "unrefuted_latex_misconception_as_rationale_linter",
+      "severity": "warning",
+      "regex_pattern": "^\\$(?:\\\\text\\{[^}]+\\}|[^$])+\\$$",
+      "description": "Detecta cuando error_rationale consiste únicamente en una ecuación o proposición falsa envuelta en '$...$' sin ningún verbo ni explicación refutativa en español, haciendo que FeedbackToast muestre una afirmación matemáticamente falsa como si fuera retroalimentación válida.",
+      "evidence_items": ["Q-C02-131", "Q-C02-132", "Q-Hab03-130", "Q-C05-341", "Q-C05-342"]
+    }
+  ]
+}
