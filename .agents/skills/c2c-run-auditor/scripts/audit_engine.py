@@ -1573,8 +1573,13 @@ class ExecutionAuditor:
                         agreement_rate = float(jr_data["agreement_rate"])
                     if "total_items" in jr_data:
                         batch_items = int(jr_data["total_items"])
-                    if "discrepancies" in jr_data and isinstance(jr_data["discrepancies"], list):
-                        discrepancies_count = len(jr_data["discrepancies"])
+                    disc_list = (
+                        jr_data.get("disagreements")
+                        or jr_data.get("discordances")
+                        or jr_data.get("discrepancies")
+                    )
+                    if isinstance(disc_list, list):
+                        discrepancies_count = len(disc_list)
                 except Exception:
                     pass
 

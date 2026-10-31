@@ -316,30 +316,30 @@ def archive_original_files(
             shutil.copy2(src, dst)
 
     # 2. Copy C2C individual original files from run_dir or c2c_dir
-    if run_dir and run_dir.exists():
+    effective_run_dir = run_dir if (run_dir and run_dir.exists()) else None
+    if not effective_run_dir:
+        for d in c2c_dir.iterdir():
+            if d.is_dir() and short_cid in d.name:
+                effective_run_dir = d
+                break
+
+    if effective_run_dir and effective_run_dir.exists():
         run_source_files = [
-            (run_dir / "telemetry.json", archive_dir / "telemetry.json"),
-            (run_dir / "report.md", archive_dir / "telemetry_report.md"),
-            (run_dir / "dashboard.html", archive_dir / "dashboard.html"),
-            (run_dir / f"traceback_deepdive_{short_cid}.json", archive_dir / "traceback_deepdive.json"),
-            (run_dir / f"traceback_deepdive_{short_cid}.md", archive_dir / "traceback_deepdive.md"),
+            (effective_run_dir / "telemetry.json", archive_dir / "telemetry.json"),
+            (effective_run_dir / "report.md", archive_dir / "telemetry_report.md"),
+            (effective_run_dir / "dashboard.html", archive_dir / "dashboard.html"),
+            (effective_run_dir / f"traceback_deepdive_{short_cid}.json", archive_dir / "traceback_deepdive.json"),
+            (effective_run_dir / f"traceback_deepdive_{short_cid}.md", archive_dir / "traceback_deepdive.md"),
+            (effective_run_dir / "shard_timing_profile.json", archive_dir / "shard_timing_profile.json"),
+            (effective_run_dir / "shard_timing_decomposition.md", archive_dir / "shard_timing_decomposition.md"),
+            (effective_run_dir / "agentic_pipeline_audit.md", archive_dir / "agentic_pipeline_audit.md"),
         ]
         for src, dst in run_source_files:
             if src.exists():
                 shutil.copy2(src, dst)
-    else:
-        # Search in c2c_dir for matching run directory
-        for d in c2c_dir.iterdir():
-            if d.is_dir() and short_cid in d.name:
-                for fname, target_name in [
-                    ("telemetry.json", "telemetry.json"),
-                    ("report.md", "telemetry_report.md"),
-                    ("dashboard.html", "dashboard.html"),
-                ]:
-                    src = d / fname
-                    if src.exists():
-                        shutil.copy2(src, archive_dir / target_name)
-                break
+        ag_batches = effective_run_dir / "agentic_batches"
+        if ag_batches.is_dir():
+            shutil.copytree(ag_batches, archive_dir / "agentic_batches", dirs_exist_ok=True)
 
     # Loose traceback deepdives
     loose_md = c2c_dir / f"traceback_deepdive_{short_cid}.md"
@@ -348,6 +348,15 @@ def archive_original_files(
     loose_json = c2c_dir / f"traceback_deepdive_{short_cid}.json"
     if loose_json.exists() and not (archive_dir / "traceback_deepdive.json").exists():
         shutil.copy2(loose_json, archive_dir / "traceback_deepdive.json")
+
+    extra_rows = ""
+    if (archive_dir / "agentic_pipeline_audit.md").exists():
+        extra_rows += f"| [**`agentic_pipeline_audit.md`**](file:///{archive_dir.as_posix()}/agentic_pipeline_audit.md) | Markdown | **Auditoría Agéntica Multi-Agente del Pipeline:** Síntesis forense del clúster de subagentes y puente causal Pipeline-to-Mastery. |\n"
+    if (archive_dir / "shard_timing_decomposition.md").exists():
+        extra_rows += f"| [**`shard_timing_decomposition.md`**](file:///{archive_dir.as_posix()}/shard_timing_decomposition.md) | Markdown | Descomposición determinista de tiempos por shard e identificación de stragglers. |\n"
+    if (archive_dir / "agentic_batches").is_dir():
+        for bf in sorted((archive_dir / "agentic_batches").glob("*.md")):
+            extra_rows += f"| [**`agentic_batches/{bf.name}`**](file:///{archive_dir.as_posix()}/agentic_batches/{bf.name}) | Markdown | Sub-auditoría especializada de clúster agéntico (`{bf.stem}`). |\n"
 
     # Generate or update README.md index in archive
     readme_content = f"""# Repositorio Persistente de Auditorías: {course_id}
@@ -361,11 +370,11 @@ Este directorio consolida el paquete completo y permanente de auditoría del cur
 
 | Documento | Formato | Descripción |
 | :--- | :---: | :--- |
-| [**`merged_quality_and_performance.md`**](file:///{archive_dir.as_posix()}/merged_quality_and_performance.md) | Markdown | **Reporte Consolidado Integral:** Fusión completa y estructural de la auditoría de calidad pedagógica (QM-OSCQR) y la auditoría forense de rendimiento y traceback, con Tabla de Contenidos. |
-| [**`qa_report.md`**](file:///{archive_dir.as_posix()}/qa_report.md) | Markdown | **Auditoría de Calidad Pedagógica:** Análisis cualitativo por 5 dimensiones, andamiaje socrático y verificación semántica de muestras. |
-| [**`qa_report.json`**](file:///{archive_dir.as_posix()}/qa_report.json) | JSON | Dataset estructurado de la evaluación de calidad pedagógica y rúbrica normativa. |
-| [**`qa_payload.json`**](file:///{archive_dir.as_posix()}/qa_payload.json) | JSON | Muestras estratificadas y clusters evaluados por `StandardizedAuditEngine`. |
-| [**`traceback_deepdive.md`**](file:///{archive_dir.as_posix()}/traceback_deepdive.md) | Markdown | **Auditoría Forense Granular de Traceback:** Análisis turno por turno, inferencia vs. herramientas y taxonomía de errores. |
+| [**`merged_quality_and_performance.md`**](file:///{archive_dir.as_posix()}/merged_quality_and_performance.md) | Markdown | **Reporte Consolidado Integral:** Fusión completa y estructural de la auditoría de calidad pedagógica (QM-OSCQR + Path-to-Mastery v2.0) y la auditoría forense de rendimiento y traceback, con Tabla de Contenidos. |
+| [**`qa_report.md`**](file:///{archive_dir.as_posix()}/qa_report.md) | Markdown | **Auditoría de Calidad Pedagógica (Argon):** Análisis cualitativo profundo por 5 dimensiones, MPRI y verificación semántica de muestras. |
+| [**`qa_report.json`**](file:///{archive_dir.as_posix()}/qa_report.json) | JSON | Dataset estructurado de la evaluación de calidad pedagógica y rúbrica normativa Path-to-Mastery v2.0. |
+| [**`qa_payload.json`**](file:///{archive_dir.as_posix()}/qa_payload.json) | JSON | Muestras estratificadas y 16 clusters evaluados por `StandardizedAuditEngine`. |
+{extra_rows}| [**`traceback_deepdive.md`**](file:///{archive_dir.as_posix()}/traceback_deepdive.md) | Markdown | **Auditoría Forense Granular de Traceback:** Análisis turno por turno, inferencia vs. herramientas y taxonomía de errores. |
 | [**`telemetry_report.md`**](file:///{archive_dir.as_posix()}/telemetry_report.md) | Markdown | Informe ejecutivo emitido por `audit_engine.py` con unit economics. |
 | [**`telemetry.json`**](file:///{archive_dir.as_posix()}/telemetry.json) | JSON | Árbol completo de subagentes, consumos de tokens de entrada, salida, caché y desglose de herramientas. |
 | [**`dashboard.html`**](file:///{archive_dir.as_posix()}/dashboard.html) | HTML | Dashboard interactivo visual con líneas de tiempo, gráficos de etapas y distribución de cómputo. |
@@ -409,11 +418,23 @@ def generate_merged_markdown_report(
     tpl_l = dim_sum.get("template_variable_residue_linter", {})
     blind_l = dim_sum.get("blind_string_replacement_linter", {})
 
-    hard_penalties = audit_tel.get("hard_penalties", qa_report.get("penalties_applied", []))
+    hard_penalties = qa_report.get("penalties_applied") or audit_tel.get("hard_penalties", [])
     total_penalty_pts = sum(float(p.get("deduction", 0.0)) for p in hard_penalties if isinstance(p, dict))
     risk_score = audit_tel.get("risk_score", qa_report.get("risk_score", 0.0))
+    mpri_data = qa_report.get("mastery_path_readiness") or audit_tel.get("mastery_path_readiness", {})
+    mpri_score = mpri_data.get("mpri_score", "N/A")
+    mpri_tier = mpri_data.get("mpri_tier", "N/A")
+    mpri_pillars = mpri_data.get("pillars", {})
     all_issues = audit_tel.get("all_issues", [])
     risk_clusters = audit_tel.get("risk_clusters", {})
+
+    zpd_l = dim_sum.get("zpd_progression_linter", {})
+    mod_l = dim_sum.get("retrieval_modality_linter", {})
+    soc_l = dim_sum.get("socratic_scaffolding_integrity_linter", {})
+    diag_l = dim_sum.get("diagnostic_rationale_alignment_linter", {})
+    ag_l = dim_sum.get("anti_gaming_psychometric_linter", {})
+    dag_top_l = dim_sum.get("dag_mastery_topology_linter", {})
+    erg_l = dim_sum.get("katex_frontend_ergonomics_linter", {})
 
     has_semantic_scores = bool(qa_report.get("dimension_scores")) and not qa_report.get("is_deterministic_only", False)
     final_score_str = f"{qa_report.get('final_score')} / 20.0 ({qa_report.get('quality_tier', 'N/A')})" if has_semantic_scores else f"N/A (Modo Headless Determinista — Risk Score: {risk_score})"
@@ -533,7 +554,8 @@ def generate_merged_markdown_report(
 **Fecha de Consolidación:** {today_str}  
 **Identificador del Curso:** `{course_id}`  
 **Conversación Orquestadora Auditada:** [`{conv_id}`](conversation://{conv_id})  
-**Calificación / Risk Score:** **{final_score_str}**  
+**Calificación QM-OSCQR / Risk Score:** **{final_score_str}**  
+**Mastery Path Readiness Index (`MPRI`):** **`{mpri_score} / 100.0` ({mpri_tier})**  
 **Tiempo de Pared Global:** **{wall_min} minutos** | **Cómputo Total de Agentes:** **{comp_min} minutos** | **Speedup:** **{speedup}x**  
 
 ---
@@ -551,6 +573,7 @@ def generate_merged_markdown_report(
   - [7. Distribución Empírica del Tiempo: Inferencia LLM vs. Ejecución de Herramientas](#7-distribución-empírica-del-tiempo-inferencia-llm-vs-ejecución-de-herramientas)
   - [8. Métricas Deterministas de Latencia por Etapa](#8-métricas-deterministas-de-latencia-por-etapa)
   - [9. Taxonomía Consolidada de Errores y Retrabajo](#9-taxonomía-consolidada-de-errores-y-retrabajo)
+  - [10. Paquete Forense Agéntico Completo (Argon QA + Clúster Flash)](#10-paquete-forense-agéntico-completo-argon-qa--clúster-flash)
 
 ---
 
@@ -572,6 +595,20 @@ def generate_merged_markdown_report(
 | **Sustituciones Ciegas bajo Operador** | **{blind_l.get('blind_string_replacement_count', 0)} incidencias** | Patrón `\\dot{{num}}` / `\\ddot{{num}}` |
 | **Penalizaciones Duras Precalculadas** | **-{total_penalty_pts:.1f} puntos** | {len(hard_penalties)} reglas de deducción activadas |
 | **Risk Score Global (0.0 - 100.0)** | **{risk_score}** | {len(all_issues)} issues totales detectados por linters |
+| **Mastery Path Readiness (`MPRI`)** | **`{mpri_score} / 100.0`** | {mpri_tier} |
+
+---
+
+## 1B. Auditoría de Camino al Dominio (`Path-to-Mastery v2.0` — 6 Pilares Cognitivos)
+
+| Pilar de Dominio del Estudiante | Puntaje MPRI | Máximo | Diagnóstico Empírico Determinista |
+| :--- | :---: | :---: | :--- |
+| **1. Progresión Adaptativa ZPD y Bloom** | **{mpri_pillars.get('zpd_adaptive_progression', {}).get('score', 'N/A')}** | 20.0 | Competencias con ZPD colapsado (1 sola banda): `{zpd_l.get('zpd_dead_competencies_count', 0)}/{zpd_l.get('eligible_competencies_evaluated', total_comps)}`; Habilidades en Bloom `Apply+`: `{zpd_l.get('skill_higher_bloom_pct', 0.0)}%` |
+| **2. Modalidad de Evocación y Anti-Gaming** | **{mpri_pillars.get('retrieval_modality_and_anti_gaming', {}).get('score', 'N/A')}** | 20.0 | `MC7={mod_l.get('mc7_share_pct', 0.0)}%`, `FIB={mod_l.get('fib_share_pct', 0.0)}%`, `MS={mod_l.get('ms_share_pct', 0.0)}%`; Comps memorizables: `{ag_l.get('memorizable_competencies_count', 0)}`; Cuantif. vacuos: `{ag_l.get('vacuous_quantifier_items_count', 0)}`; Relleno `[R-15]`: `{ag_l.get('length_padded_items_count', 0)}` |
+| **3. Integridad del Salvavidas Socrático (3-Strikes)** | **{mpri_pillars.get('socratic_scaffolding_lifeline', {}).get('score', 'N/A')}** | 25.0 | Pistas genuinas: `{soc_l.get('genuine_socratic_hints_pct', 0.0)}%`; Boilerplate Mad-Libs: `{soc_l.get('boilerplate_hints_pct', 0.0)}%`; Pistas envenenadas: `{soc_l.get('poisoned_hints_items_count', 0)}` (`{soc_l.get('poisoned_hints_pct', 0.0)}%`) |
+| **4. Alineación Diagnóstica en `FeedbackToast`** | **{mpri_pillars.get('diagnostic_remediation_alignment', {}).get('score', 'N/A')}** | 15.0 | Unicidad global de `error_rationale`: `{diag_l.get('rationale_uniqueness_pct', 0.0)}%` (`{diag_l.get('unique_rationales', 0)}/{diag_l.get('total_rationales', 0)}`); Distractores `1.333x` arbitrarios: `{diag_l.get('magic_multiplier_distractor_items_count', 0)}` |
+| **5. Topología DAG e Interleaving (Quiz/Test)** | **{mpri_pillars.get('dag_and_interleaving_topology', {}).get('score', 'N/A')}** | 10.0 | Ciclos: `{dag_top_l.get('has_cycle', False)}`, Profundidad DAG: `{dag_top_l.get('max_dag_depth', 0)}`, Aristas invertidas: `{dag_top_l.get('inverted_prerequisite_edges_count', 0)}`, Islas: `{dag_top_l.get('isolated_competencies_count', 0)}` |
+| **6. Ergonomía Cognitiva y Pureza de Encuadre** | **{mpri_pillars.get('cognitive_ergonomics_and_framing', {}).get('score', 'N/A')}** | 10.0 | Prosa en `\\text{{...}}`: `{erg_l.get('prose_in_katex_text_items_count', 0)}`, Vars crudas `$theta_hat$`: `{erg_l.get('raw_identifier_math_items_count', 0)}`, Prefijos Solow/EDP ajenos: `{ag_l.get('cross_domain_prefix_items_count', 0)}` |
 """
 
     if has_semantic_scores:
@@ -736,6 +773,18 @@ DISTRIBUCIÓN DEL TIEMPO DE PARED POR SUBAGENTE (INFERENCIA LLM vs TOOLS)
 | Categoría de Error | Ocurrencias | Agentes Afectados | Causa Raíz Técnica y Ejemplo |
 | :--- | :---: | :--- | :--- |
 {tax_table}
+
+---
+
+## 10. Paquete Forense Agéntico Completo (Argon QA + Clúster Flash)
+
+Todos los artefactos originales individuales generados por los auditores especializados se preservan íntegros en [`reports/audits_archive/{course_id}/`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id).as_posix()}/):
+
+- **Auditoría Cualitativa Profunda de Calidad (Gemini 4 Argon):** [`qa_report.md`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'qa_report.md').as_posix()}) | [`qa_report.json`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'qa_report.json').as_posix()})
+- **Informe Maestro Agéntico del Pipeline (Gemini Flash Lead + 3 Subagentes):** [`agentic_pipeline_audit.md`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'agentic_pipeline_audit.md').as_posix()})
+- **Sub-Auditorías del Clúster Agéntico (`agentic_batches/`):** [`agentic_batches/`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'agentic_batches').as_posix()}/)
+- **Dashboard Visual Interactivo:** [`dashboard.html`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'dashboard.html').as_posix()})
+- **Índice Completo del Archivo Persistente:** [`README.md`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'README.md').as_posix()})
 """
     return md
 
