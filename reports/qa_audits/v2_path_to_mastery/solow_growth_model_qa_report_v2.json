@@ -1,0 +1,192 @@
+{
+  "audit_version": "2.0-path-to-mastery",
+  "course_metadata": {
+    "course_id": "solow_growth_model",
+    "unit_title": "El Modelo de Crecimiento Económico de Solow (1956)",
+    "detected_objective": "Comprender, formular y resolver dinámicamente el modelo neoclásico de crecimiento económico de Solow (1956), analizando sus propiedades de estabilidad, implicaciones de precios factoriales, dinámicas de transición y extensiones analíticas.",
+    "total_competencies": 25,
+    "total_questions": 580
+  },
+  "v1_baseline": {
+    "score": 19.8,
+    "max_score": 20.0,
+    "tier": "EXCELENTE (17.0 - 20.0)",
+    "dimensions": {
+      "architecture_granularity": 4.0,
+      "assessment_quality": 4.8,
+      "scaffolding_hints": 5.0,
+      "instructional_alignment": 4.0,
+      "technical_ergonomics": 2.0
+    },
+    "audit_date": "2026-10-25"
+  },
+  "raw_dimension_subtotal": 18.0,
+  "hard_penalties_applied": [],
+  "total_deduction": 0.0,
+  "final_score": 18.0,
+  "max_score": 20.0,
+  "score_delta_v2_minus_v1": -1.8,
+  "grade": "EXCELENTE (TIER PLATINO/ORO)",
+  "quality_tier": "EXCELENTE (17.0 - 20.0)",
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 3.2,
+      "max": 4.0,
+      "feedback": "Topología DAG impecable con profundidad máxima de 9 niveles, raíz axiomática H-01 estricta, cero ciclos, cero aristas invertidas y balance curricular canónico (Hechos: 20%, Conceptos: 48%, Habilidades: 32%). Sin embargo, la auditoría v2 expone una brecha crítica de calibración ZPD invisible en v1: 7 micro-competencias (C-01, Hab-01, C-02, C-03, Hab-03, C-05, C-08) son 'ZPD-dead' (100% reactivos en banda medium), 17 son bi-banda y solo 1 competencia posee las 3 bandas completas (easy/medium/hard), lo que neutraliza la progresión adaptativa de calibrateByMasteryDifficulty en sessionShuffler.ts. Deducción de -0.8 pts."
+    },
+    "assessment_quality": {
+      "score": 4.4,
+      "max": 5.0,
+      "feedback": "Extraordinaria calidad psicométrica multimodal y baluarte anti-gaming: 86.21% del banco exige evocación activa o discriminación conceptual profunda (251 fill-in-the-blank y 249 multiple-select), con solo 13.79% de opción múltiple (80 MC7). Cero competencias con memorización de claves. No obstante, se detectan 20 reactivos (Q-Hab05-321 a Q-Hab05-330 y Q-Hab06-351 a Q-Hab06-360) con metainformación delatora en el texto visible del distractor ('invirtiendo erróneamente', 'omitiendo elevar al cuadrado'), permitiendo descarte por test-wiseness superficial, además de 1 caso de multiplicador sintético y uniformidad en enunciados factuales básicos. Deducción total de -0.6 pts."
+    },
+    "scaffolding_hints": {
+      "score": 4.4,
+      "max": 5.0,
+      "feedback": "Andamiaje socrático de élite en 3 niveles escalonados (Conceptual -> Procedimental -> Operativo) en el 100% de los 580 reactivos, con 0% pistas Mad-Libs boilerplate y 0% envenenamiento conceptual (cero sabotaje del 3-Strikes Safeguard en PracticeSession.tsx). Soluciones paso a paso y advertencias de ideas preconcebidas en todos los reactivos. La deducción (-0.6 pts) obedece al linter de remediación diagnóstica: solo 123 rationales únicos en 1,227 distractores (10.02% de unicidad), lo que implica una tasa de reciclaje estático del 89.98% en FeedbackToast.tsx que no parametriza dinámicamente los valores escalares de cada instancia."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación instruccional y teórica perfecta con las 7 secciones de Robert M. Solow (1956, QJE) y Chiang (Cap. 15). Las 240 preguntas de Habilidad matemática compleja se ubican al 100% en niveles cognitivos superiores de Bloom (Apply y Analyze). Cero preguntas huérfanas, cero contaminación cruzada léxica inter-dominio y rigor analítico formal garantizado."
+    },
+    "technical_ergonomics": {
+      "score": 2.0,
+      "max": 2.0,
+      "feedback": "Ergonomía KaTeX y UI limpia. Compilación matemática 100% libre de llaves desbalanceadas, triples dólares, delimitadores impares, texto largo desbordante en \\text{} o variables de Python crudas. Se verificó que los 127 avisos de uninterpolated_math_variable_linter corresponden a falsos positivos del linter regex sobre comandos legítimos de KaTeX (\\text{APP}, \\text{MPP}, \\frac{...}{L}), sin comprometer el renderizado."
+    }
+  },
+  "mastery_path_readiness": {
+    "mpri_score": 89.77,
+    "mpri_max": 100.0,
+    "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 13.38,
+        "max": 20.0,
+        "status": "GAP_EXPOSED",
+        "description": "Distribución general de dificultad (95 easy, 345 medium, 140 hard) y 100% Bloom superior en Skills, pero 7 competencias están ZPD-dead (1 banda) y 17 son bi-banda; solo 1 micro-competencia ofrece las 3 bandas requeridas para la calibración plena."
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 20.0,
+        "max": 20.0,
+        "status": "PLATFORM_GOLD_STANDARD",
+        "description": "86.21% de generación activa / discriminación múltiple (43.28% FIB, 42.93% MS, 13.79% MC7). 0 competencias memorizables, 0 relleno de longitud, 0 cuantificadores vacuos y 0 competencias de Habilidad con solo reconocimiento pasivo."
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 25.0,
+        "max": 25.0,
+        "status": "PLATFORM_GOLD_STANDARD",
+        "description": "100% de pistas socráticas auténticas y específicas en 3 niveles, 0% boilerplate Mad-Libs sintético, 0% envenenamiento de pistas. El estudiante en Strike 1 y 2 recibe andamiaje genuino para resolver el ejercicio autónomamente."
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 11.39,
+        "max": 15.0,
+        "status": "GAP_EXPOSED",
+        "description": "100% de distractores con error_rationale conceptualmente pertinente, pero con baja unicidad (10.02%, 123 únicas en 1,227 distractores) y 20 distractores con metainformación visible delatora en el contenido de la opción."
+      },
+      "dag_and_interleaving_topology": {
+        "score": 10.0,
+        "max": 10.0,
+        "status": "PLATFORM_GOLD_STANDARD",
+        "description": "DAG acíclico perfecto (profundidad 9), 0 ciclos, 0 dependencias colgantes, 0 competencias aisladas. Cumple estrictamente con el orden topológico para soportar el interleaving de Quizzes (60/40) y Unit Tests (55/45)."
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 10.0,
+        "max": 10.0,
+        "status": "PLATFORM_GOLD_STANDARD",
+        "description": "Cero fallas de KaTeX, cero delimitadores impares, cero desbordamiento de prosa en \\text{}, cero identificadores de código crudos y pureza semántica macroeconómica absoluta."
+      }
+    },
+    "student_journey_verdict": "El estudiante experimenta una trayectoria de aprendizaje rigurosa y auténtica. En PracticeSession.tsx, el 86.21% de los reactivos exige cálculo y evocación activa o juicio estructural profundo. Si comete un error en el Strike 1 o 2, las pistas socráticas no lo sabotean ni le dan respuestas vacías, sino que articulan la transición conceptual y procedimental. No obstante, al alcanzar niveles avanzados de dominio en 15 micro-competencias, el motor calibrateByMasteryDifficulty no encuentra reactivos hard para desafiarlo, mientras que en 20 reactivos de opción múltiple de las habilidades Hab-05 y Hab-06 puede deducir el distractor sin calcular debido a frases delatoras en las opciones."
+  },
+  "v1_vs_v2_forensic_explanation": {
+    "summary": "La auditoría v1 (2026-10-25) otorgó 19.8/20.0 evaluando únicamente métricas estáticas macro: densidad de banco (20-30 ítems), aciclicidad del DAG, cobertura de pistas y KaTeX básico, incurriendo en una ligera complacencia analítica. La auditoría v2 (Path-to-Mastery) somete el curso a la mecánica real del runtime de Top's Academy, revelando una nota de 18.0/20.0 (delta de -1.8 pts) y un MPRI de 89.77/100.",
+    "why_gold_standard_remains": "Solow Growth Model consolida su posición como el 'Gold Standard' de la plataforma porque sus cimientos pedagógicos son genuinos: 4 de los 6 pilares de MPRI obtienen puntaje perfecto (Modality 20/20, Scaffolding 25/25, DAG 10/10, KaTeX 10/10). A diferencia de otros cursos que sufrieron colapsos severos bajo v2 debido a monocultivo MC7 pasivo, pistas Mad-Libs o envenenamiento anti-socrático, Solow implementó desde su origen 86.2% de evocación activa y pistas socráticas reales.",
+    "exact_gaps_exposed_by_v2": [
+      {
+        "gap_id": "GAP-ZPD-CALIBRATION",
+        "dimension": "D1",
+        "v1_assessment": "v1 otorgó 4.0/4.0 porque contó 20-30 preguntas por competencia y balance Fact/Concept/Skill.",
+        "v2_revelation": "v2 analizó la distribución interna de dificultad por competencia frente a calibrateByMasteryDifficulty: 7 competencias son 100% medium (ZPD-dead), 17 son bi-banda y 15 carecen de banda hard, imposibilitando la progresión adaptativa."
+      },
+      {
+        "gap_id": "GAP-TELLTALE-DISTRACTORS",
+        "dimension": "D2",
+        "v1_assessment": "v1 afirmó: 'Ausencia total de pistas delatoras (telltale clues) o fugas de respuesta'.",
+        "v2_revelation": "v2 detectó mediante distractor_integrity_linter 20 reactivos en Hab-05 y Hab-06 donde el generador paramétrico inyectó metainformación evaluativa visible ('invirtiendo erróneamente', 'omitiendo elevar al cuadrado') en el texto de la opción, permitiendo descarte por test-wiseness."
+      },
+      {
+        "gap_id": "GAP-RATIONALE-RECYCLING",
+        "dimension": "D3",
+        "v1_assessment": "v1 otorgó 5.0/5.0 basándose en 100% de cobertura de rationales (1,227/1,227).",
+        "v2_revelation": "v2 midió la entropía de rationales: solo 123 cadenas únicas (10.02% de unicidad), lo que implica que el 89.98% son recicladas de forma estática en FeedbackToast.tsx sin contextualizar los parámetros numéricos específicos."
+      }
+    ]
+  },
+  "critical_defects": [
+    {
+      "defect_id": "DEF-001",
+      "type": "telltale_distractor_visible",
+      "severity": "CRITICAL",
+      "competencies_affected": ["Hab-05", "Hab-06"],
+      "item_count": 20,
+      "sample_items": [
+        "Q-Hab05-321", "Q-Hab05-322", "Q-Hab05-323", "Q-Hab05-324", "Q-Hab05-325",
+        "Q-Hab05-326", "Q-Hab05-327", "Q-Hab05-328", "Q-Hab05-329", "Q-Hab05-330",
+        "Q-Hab06-351", "Q-Hab06-352", "Q-Hab06-353", "Q-Hab06-354", "Q-Hab06-355",
+        "Q-Hab06-356", "Q-Hab06-357", "Q-Hab06-358", "Q-Hab06-359", "Q-Hab06-360"
+      ],
+      "evidence": "En Q-Hab05-321 la opción visible contiene: 'Coeficiente $C^* = 0.2$, invirtiendo erróneamente los roles...'; en Q-Hab06-354 la opción visible contiene: 'Condición $s a^2 < n$, con producto per cápita lineal $y^* = 1 / (1 - a\\sqrt{s/n})$ omitiendo elevar al cuadrado.'",
+      "impact": "El alumno descarta de inmediato la alternativa sin resolver el modelo matemático, vulnerando la discriminación psicométrica."
+    },
+    {
+      "defect_id": "DEF-002",
+      "type": "zpd_dead_competencies",
+      "severity": "HIGH",
+      "competencies_affected": ["C-01", "Hab-01", "C-02", "C-03", "Hab-03", "C-05", "C-08"],
+      "item_count": 160,
+      "sample_items": ["Q-C01-021", "Q-Hab01-041", "Q-C02-081", "Q-C03-121", "Q-Hab03-201", "Q-C05-221", "Q-C08-401"],
+      "evidence": "100% de los reactivos de estas competencias están etiquetados como 'medium'. Cero reactivos 'easy' para andamiaje inicial; cero reactivos 'hard' para consolidación de maestría.",
+      "impact": "Inhabilita la función adaptativa calibrateByMasteryDifficulty en sessionShuffler.ts durante las etapas 'Practicing' y 'Mastered'."
+    },
+    {
+      "defect_id": "DEF-003",
+      "type": "low_rationale_entropy",
+      "severity": "MEDIUM",
+      "competencies_affected": ["ALL"],
+      "item_count": 1227,
+      "sample_items": ["Q-H01-011", "Q-Hab02-085", "Q-Hab04-290"],
+      "evidence": "Solo 123 rationales únicos en 1,227 distractores evaluados (10.02% de unicidad).",
+      "impact": "FeedbackToast.tsx entrega retroalimentación idéntica en distintas instancias paramétricas, restando valor formativo al fallo del estudiante."
+    }
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "LINT_TELLTALE_OPTION_META",
+      "severity": "critical",
+      "regex_pattern": "(?i)\\b(erróneamente|omitiendo|olvidando|confundiendo|invirtiendo)\\b",
+      "description": "Detecta si el texto visible de una opción (distractor) contiene adverbios o gerundios de diagnóstico metacognitivo que revelan al estudiante que dicha opción es incorrecta.",
+      "evidence_items": ["Q-Hab05-321", "Q-Hab05-322", "Q-Hab06-351", "Q-Hab06-354"]
+    },
+    {
+      "rule_id": "LINT_ZPD_TIER_COMPLETENESS",
+      "severity": "warning",
+      "regex_pattern": "N/A (Structural Aggregation)",
+      "description": "Verifica que cada micro-competencia cuente con una distribución tri-banda equilibrada (al menos 15% easy, 50% medium y 20% hard) para garantizar la efectividad de calibrateByMasteryDifficulty en Top's Academy.",
+      "evidence_items": ["C-01", "Hab-01", "C-02", "C-03", "Hab-03", "C-05", "C-08"]
+    },
+    {
+      "rule_id": "LINT_KATEX_COMMAND_BRACE_FALSE_POSITIVE",
+      "severity": "info",
+      "regex_pattern": "\\\\(text|frac|operatorname|sqrt)\\{[A-Za-z0-9_]+\\}",
+      "description": "Regla de exclusión para evitar falsos positivos en uninterpolated_math_variable_linter cuando llaves simples corresponden a argumentos válidos de comandos KaTeX como \\text{APP} o denominadores \\frac{...}{L}.",
+      "evidence_items": ["Q-H01-011", "Q-Hab01-061", "Q-Hab03-215"]
+    }
+  ],
+  "remediation_actions": [
+    "Saneamiento Inmediato de Distractores: Editar los 20 reactivos en Hab-05 y Hab-06 para eliminar las frases 'invirtiendo erróneamente los roles...' y 'omitiendo elevar al cuadrado', sustituyéndolas por formulaciones neutras equivalentes (ej. 'Coeficiente $C^* = 0.2$, derivado de la razón $n/s$' y '$y^* = 1 / (1 - a\\sqrt{s/n})$').",
+    "Calibración ZPD Tri-Banda: Rebalancear y recalibrar la dificultad en las 24 competencias con brechas, introduciendo al menos 3 a 5 reactivos 'hard' analíticamente desafiantes en las 15 competencias deficitarias y 3 reactivos 'easy' de anclaje inicial en las 15 restantes.",
+    "Parametrización Dinámica de Error Rationales: Actualizar el generador paramétrico para que los rationales de FeedbackToast.tsx interpelen directamente las cantidades escalares del ejercicio (ej. 'Al invertir $s/n = 0.15/0.03 = 5.0$ se obtuvo $0.2$, correspondiente a $n/s$').",
+    "Refactorización del Linter de Variables KaTeX: Integrar LINT_KATEX_COMMAND_BRACE_FALSE_POSITIVE en el pipeline de CI/CD para erradicar los 127 falsos positivos de llaves matemáticas legítimas."
+  ]
+}

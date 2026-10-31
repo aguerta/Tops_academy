@@ -1,0 +1,290 @@
+{
+  "course_metadata": {
+    "course_id": "asyntotic_estatistics_v7",
+    "unit_title": "Asyntotic Estatistics V7 (Teoría Asintótica y Econometría de Muestras Grandes)",
+    "detected_objective": "Dominio y aplicación analítica integral de la teoría asintótica econométrica y de muestras grandes: convergencia en probabilidad, convergencia casi segura, convergencia en media r-ésima y en distribución; consistencia y normalidad asintótica del estimador MCO bajo condiciones de Grenander y Lindeberg-Feller; consistencia de la varianza residual y covarianza asintótica; método Delta univariado y multivariado para transformaciones no lineales de parámetros; endogeneidad, identificación y estimación por Variables Instrumentales simples y MC2E con cálculo riguroso de varianzas estructurales; principio de la prueba de Hausman y regresión aumentada de Wu; sesgo de atenuación y contaminación multivariante por error de medición; leyes de grandes números (Khinchine, Chebychev, Kolmogorov); teoremas del límite central (Lindeberg-Lévy, Lindeberg-Feller, Liapounov); teorema de Slutsky y álgebra de límites matriciales; y órdenes de magnitud estocástica O(n^delta) y o(n^delta).",
+    "total_competencies": 32,
+    "total_questions": 710,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 710
+    },
+    "audit_version": "2.0-path-to-mastery",
+    "platform_status": "RECHAZADO / REQUIERE REFACTORIZACIÓN CRÍTICA",
+    "evaluation_date": "2026-10-31",
+    "evaluator": "Course QA Evaluator (Flash High — Path-to-Mastery v2.0)"
+  },
+  "v1_baseline": {
+    "score": 17.8,
+    "tier": "EXCELENTE (17.0 - 20.0 pts)",
+    "evaluation_date": "2026-10-25",
+    "dimensions": {
+      "architecture_granularity": 4.0,
+      "assessment_quality": 4.4,
+      "scaffolding_hints": 3.5,
+      "instructional_alignment": 4.0,
+      "technical_ergonomics": 1.9
+    },
+    "hard_penalties": 0.0
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.5,
+      "max": 4.0,
+      "feedback": "Topología DAG formalmente válida, acíclica y conexa con 2 raíces axiomáticas legítimas (H-01 y H-03, max_depth = 6). Sin embargo, se aplica la deducción obligatoria máxima de -1.5 pts por Colapso Total de Calibración ZPD: el 100% de los reactivos del curso (710/710) están codificados estáticamente en dificultad 'medium' (0 'easy', 0 'hard', zpd_dead_competencies = 32/32). Esto anula por completo la función 'calibrateByMasteryDifficulty' de sessionShuffler.ts, impidiendo el andamiaje adaptativo hacia Mastery Learning y exponiendo a estudiantes novatos a frustración prematura ya avanzados a falta de desafío."
+    },
+    "assessment_quality": {
+      "score": 2.2,
+      "max": 5.0,
+      "feedback": "Severa degradación psicométrica evaluada bajo el motor v2.0. Se penaliza con -2.8 pts debido a: (1) Monocultivo absoluto de reconocimiento pasivo (-1.2 pts), donde el 100% de los reactivos (710/710), incluyendo las 7 competencias de Habilidad cuantitativa [Hab-01 a Hab-07, 210 preguntas], son MC7, permitiendo a los alumnos retro-sustituir o descartar por patrones sin evocación activa ni cálculo generativo (FIB/MS = 0%); (2) Distractores sintéticos por multiplicadores mágicos (-0.8 pts) en 38 reactivos (ej. 1.333x, 0.667x) desconectados de errores algebraicos reales; (3) Relleno burocrático de longitud asimétrico (-0.4 pts) en 41 reactivos (ej. ', en la formulación matricial considerada', ', para la muestra de datos observada') para burlar linters de paridad de longitud; y (4) Desconexión psicométrica entre distractores y conceptos erróneos subyacentes (-0.4 pts)."
+    },
+    "scaffolding_hints": {
+      "score": 1.0,
+      "max": 5.0,
+      "feedback": "Fallo crítico en el andamiaje pedagógico (techo normativo de 1.0 pt por Envenenamiento Anti-Socrático). En el entorno interactivo de PracticeSession.tsx con salvaguarda de 3-Strikes, las pistas son la única línea de vida del alumno. El curso presenta un sabotaje sistemático: (1) 60 reactivos (8.45% del banco, en Hab-06 y Hab-07) contienen Pistas Envenenadas que ordenan al alumno: 'asegurando considerar adecuadamente: [omitir la normalización por 1/n / omitir la verificación de no singularidad...]', induciéndolo directamente a marcar un distractor y consumir sus strikes hacia el bloqueo con 0 puntos; (2) 629 reactivos (88.59%) presentan pistas Mad-Libs boilerplate de compilador ('Identifique la estructura conceptual de {comp}...'); y (3) 9 competencias (28.1%) persisten con stubs de keywords o IDs de competencias ('H-01', 'C-01')."
+    },
+    "instructional_alignment": {
+      "score": 2.3,
+      "max": 4.0,
+      "feedback": "Alineación instruccional profundamente erosionada por artefactos de generación sintética y descalibración taxonómica (-1.7 pts de deducción): (1) Colapso declarativo de Bloom (-0.7 pts), con el 100% de los reactivos (710/710) etiquetados artificialmente como 'Understand', aun en problemas computacionales de derivación analítica de Slutsky o matrices de covarianza MC2E que demandan niveles 'Apply' y 'Analyze'; (2) Contaminación léxica inter-dominio robótica (-0.6 pts) en 72 reactivos, que inyectan cláusulas espurias de macroeconomía/física ('Considerando las ecuaciones fundamentales del régimen', 'Al examinar detenidamente las condiciones de frontera', 'Teniendo en consideración los fundamentos del equilibrio'); y (3) Discordancia no resuelta de Juez Ciego Stage-5 (-0.4 pts) en T-Hab-04-01_judge_1 (disputa no resuelta B vs E en la varianza estructural de MC2E entre normalización n vs n-K)."
+    },
+    "technical_ergonomics": {
+      "score": 1.1,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica deficiente en el renderizado frontend (-0.9 pts): (1) 165 reactivos sufren de abuso de \\text{...} en KaTeX conteniendo oraciones completas de hasta 84 caracteres (ej. '$\\text{MCO solo es asintóticamente eficiente bajo normalidad; MV lo supera con errores Gamma}$'), lo que genera bloques 'white-space: nowrap' que provocan desbordamiento horizontal y rompen el diseño responsivo en interfaces móviles y tarjetas de opciones (-0.5 pts); y (2) 197 reactivos contienen residuos de variables de plantilla sin interpolar en opciones ({plim} crudo sin barra invertida LaTeX), que pasaron desapercibidos en v1 (-0.4 pts)."
+    }
+  },
+  "penalties_applied": [
+    {
+      "rule": "socratic_hint_poisoning",
+      "deduction": 1.5,
+      "reason": "60 reactivos (8.45% del banco total, concentrados en Hab-06 y Hab-07) sufren envenenamiento anti-socrático: la Pista 2 o 3 instruye explícitamente al alumno a 'asegurando considerar adecuadamente' un distractor o misconception crítica, garantizando la quema de intentos y el bloqueo en el 3-Strikes Safeguard de PracticeSession.tsx."
+    },
+    {
+      "rule": "answer_memorization_exploit",
+      "deduction": 2.0,
+      "reason": "4 competencias (H-02, C-05, C-06, C-12) poseen exactamente 1 sola respuesta correcta única a lo largo de sus 20 reactivos, permitiendo alcanzar el estado 'Mastered' mediante memorización visual del string sin leer los enunciados (-0.5 pts por competencia, penalización máxima de -2.0 pts)."
+    }
+  ],
+  "raw_subtotal": 9.1,
+  "total_deduction": 3.5,
+  "final_score": 5.6,
+  "max_score": 20.0,
+  "score_delta_v2_minus_v1": -12.2,
+  "quality_tier": "CRÍTICO (0.0 - 10.9 pts)",
+  "mastery_path_readiness": {
+    "mpri_score": 38.62,
+    "mpri_max": 100.0,
+    "mpri_tier": "MASTERY-HOSTILE (0-39): Sabotaje Cognitivo / Colapso de Andamiaje Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 0.0,
+        "max": 20.0
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 0.0,
+        "max": 20.0
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 13.1,
+        "max": 25.0
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 9.83,
+        "max": 15.0
+      },
+      "dag_and_interleaving_topology": {
+        "score": 10.0,
+        "max": 10.0
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 5.69,
+        "max": 10.0
+      }
+    },
+    "student_journey_verdict": "El trayecto del estudiante a través del motor interactivo de Top's Academy se encuentra completamente quebrado. Al iniciar, el estudiante no recibe calibración ZPD adaptativa (0/20 pts en ZPD) porque el 100% de los reactivos están estancados en 'medium' y 'Understand'. Al enfrentarse a ejercicios cuantitativos de Habilidad, se le evalúa únicamente mediante reconocimiento pasivo MC7 (0/20 pts en Evocación y Anti-Gaming), permitiendo la conjetura aleatoria o el back-solving. Si tropieza y solicita pistas bajo la salvaguarda de 3 intentos (PracticeSession.tsx), el sistema le suministra plantillas Mad-Libs inútiles (88.59%) o derechamente lo envenena cognitivamente (8.45%) ordenándole cometer el error del distractor. Al fallar, FeedbackToast.tsx le arroja rationales desconectados reciclados en un 91.85%. Finalmente, en 4 competencias puede 'gamificar' la plataforma hacia el estado Mastered memorizando un único string visual de respuesta. El curso constituye una ilusión de dominio hostil al aprendizaje real."
+  },
+  "v1_vs_v2_forensic_explanation": {
+    "summary": "El reporte v1 otorgó una calificación inflada y complaciente de 17.8/20.0 (Tier EXCELENTE), mientras que la auditoría Path-to-Mastery v2.0 desnuda un puntaje real de 5.6/20.0 (Tier CRÍTICO, MPRI = 38.62/100.0, Delta = -12.2 pts).",
+    "root_causes_of_v1_blindness": [
+      {
+        "mechanism": "Ceguera de Acceso de Opciones (opt.get('text', '') vs opt['content'])",
+        "description": "El motor v1 intentó evaluar las opciones mediante el atributo 'text', pero en el esquema formal de Top's Academy y en este curso, las opciones están alojadas bajo la clave 'content'. Como consecuencia, v1 evaluó cadenas vacías en los 4,260 distractores, pasando por alto variables sin interpolar ({plim}), oraciones enteras en prosa dentro de KaTeX (165 items), distractores numéricos con multiplicador mágico (38 items) y padding de longitud sintético (41 items)."
+      },
+      {
+        "mechanism": "Invisibilidad de la Calibración ZPD y Motor sessionShuffler.ts",
+        "description": "El auditor v1 únicamente verificó que existieran >= 3 reactivos por competencia. Ignoró que el 100% de los reactivos estaban marcados en dificultad 'medium' y nivel Bloom 'Understand', lo que desactiva por completo la lógica adaptativa de la plataforma Top's Academy ('calibrateByMasteryDifficulty'), colapsando la progresión pedagógica."
+      },
+      {
+        "mechanism": "Tolerancia al Monocultivo de Reconocimiento Pasivo (100% MC7)",
+        "description": "El motor v1 celebró el formato MC7 como 'antiazar' sin ponderar que la ausencia total de ítems FIB (fill_in_the_blank) y MS (multiple_select) anula la evocación activa (retrieval practice) en competencias de habilidad analítica aplicada ([Hab]), habilitando la sustitución inversa."
+      },
+      {
+        "mechanism": "Validación Superficial de Pistas (len(hints) >= 3)",
+        "description": "El linter determinista v1 se conformó con len(hints) == 3. Aunque la inspección semántica v1 detectó stubs en 9 competencias, ignoró que 629 reactivos eran boilerplate Mad-Libs y, lo más grave, no detectó que 60 reactivos envenenan activamente al alumno recomendándole seleccionar el distractor."
+      },
+      {
+        "mechanism": "Omisión de Vulnerabilidades Anti-Gaming (Memorización Visual)",
+        "description": "v1 no computó la entropía de respuestas correctas por competencia, permitiendo que 4 competencias enteras con 20 reactivos cada una tuvieran exactamente 1 sola respuesta correcta textual repetida, permitiendo engañar al sistema sin aprender."
+      }
+    ]
+  },
+  "critical_defects": [
+    {
+      "id": "DEF-01",
+      "severity": "CRITICAL",
+      "category": "Anti-Socratic Scaffolding",
+      "affected_items_count": 60,
+      "sample_items": ["Q-Hab06-531", "Q-Hab06-532", "Q-Hab06-535", "Q-Hab07-661", "Q-Hab07-672"],
+      "description": "Pistas 2 y 3 instruyen explícitamente al alumno a 'asegurando considerar adecuadamente: omitir la normalización por 1/n...', induciendo la selección de distractores y sabotaje del 3-Strikes Safeguard."
+    },
+    {
+      "id": "DEF-02",
+      "severity": "CRITICAL",
+      "category": "Anti-Gaming / Visual Memorization Exploit",
+      "affected_items_count": 80,
+      "sample_items": ["Q-H02-041", "Q-H02-042", "Q-C05-189", "Q-C05-190", "Q-C06-201", "Q-C12-416"],
+      "description": "4 competencias completas (H-02, C-05, C-06, C-12) poseen exactamente 1 texto de respuesta correcta idéntico en sus 20 reactivos, permitiendo alcanzar Mastered sin procesar el contenido."
+    },
+    {
+      "id": "DEF-03",
+      "severity": "HIGH",
+      "category": "ZPD Calibration Collapse",
+      "affected_items_count": 710,
+      "sample_items": ["ALL (710 items)"],
+      "description": "100% de reactivos codificados en 'medium' y 'Understand'. Cero reactivos 'easy' y cero reactivos 'hard', desactivando sessionShuffler.ts."
+    },
+    {
+      "id": "DEF-04",
+      "severity": "HIGH",
+      "category": "Passive Recognition Monoculture",
+      "affected_items_count": 210,
+      "sample_items": ["Q-Hab01-081", "Q-Hab02-151", "Q-Hab03-241", "Q-Hab04-291", "Q-Hab05-341", "Q-Hab06-531", "Q-Hab07-661"],
+      "description": "Cero ítems de generación activa (FIB) o discriminación múltiple (MS) en las 7 micro-competencias cuantitativas de Habilidad."
+    },
+    {
+      "id": "DEF-05",
+      "severity": "HIGH",
+      "category": "KaTeX Prose Wrapping Overflow",
+      "affected_items_count": 165,
+      "sample_items": ["Q-C05-189", "Q-C05-190", "Q-C06-212", "Q-C08-274", "Q-C15-513"],
+      "description": "Oraciones completas de hasta 84 caracteres encerradas en $\\text{...}$, provocando 'white-space: nowrap' y desbordamiento horizontal en pantalla."
+    },
+    {
+      "id": "DEF-06",
+      "severity": "MEDIUM",
+      "category": "Cross-Domain Robotic Prefix Pollution",
+      "affected_items_count": 72,
+      "sample_items": ["Q-H01-011", "Q-Hab02-160", "Q-Hab06-546", "Q-C13-452", "Q-H07-700"],
+      "description": "Inyección de prefijos ajenos al dominio econométrico ('ecuaciones fundamentales del régimen', 'condiciones de frontera', 'fundamentos del equilibrio')."
+    },
+    {
+      "id": "DEF-07",
+      "severity": "MEDIUM",
+      "category": "Uninterpolated Math Residues",
+      "affected_items_count": 197,
+      "sample_items": ["Q-H01-011", "Q-H01-012", "Q-H01-013", "Q-H01-014", "Q-C01-040"],
+      "description": "Opciones con variable de plantilla '{plim}' sin procesar en lugar de macro LaTeX '\\operatorname{plim}'."
+    },
+    {
+      "id": "DEF-08",
+      "severity": "MEDIUM",
+      "category": "Magic Multiplier Distractors & Disconnected Rationales",
+      "affected_items_count": 38,
+      "sample_items": ["Q-Hab02-164", "Q-Hab02-165", "Q-Hab02-166", "Q-Hab03-259", "Q-Hab04-315"],
+      "description": "Distractores numéricos generados por multiplicadores sintéticos (1.333x, 0.667x) acompañados de rationales que explican álgebra de matrices no conformables en problemas escalares."
+    },
+    {
+      "id": "DEF-09",
+      "severity": "LOW",
+      "category": "Stage-5 Blind Judge Discordance",
+      "affected_items_count": 1,
+      "sample_items": ["T-Hab-04-01_judge_1"],
+      "description": "Desacuerdo no resuelto entre el juez ciego y la clave esperada (B vs E) en el cálculo de la varianza consistente en MC2E."
+    }
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "socratic_hint_poisoning_linter",
+      "severity": "critical",
+      "description": "Detecta pistas que instruyen al estudiante a cometer activamente un error o seleccionar un distractor mediante la fórmula 'asegurando considerar adecuadamente: [concepción errónea/distractor]', saboteando el límite de 3 intentos en PracticeSession.tsx.",
+      "regex_pattern": "asegurando\\s+considerar\\s+adecuadamente:\\s*(?:omitir|el\\s+error|un\\s+estimador|la\\s+matriz\\s+no\\s+normalizada|suponer\\s+que)",
+      "evidence_items": [
+        "Q-Hab06-531",
+        "Q-Hab06-532",
+        "Q-Hab06-533",
+        "Q-Hab06-534",
+        "Q-Hab06-535",
+        "Q-Hab07-661",
+        "Q-Hab07-662",
+        "Q-Hab07-672"
+      ]
+    },
+    {
+      "rule_id": "prose_in_katex_linter",
+      "severity": "high",
+      "description": "Detecta opciones donde oraciones completas en prosa (>= 45 caracteres) están encerradas dentro de delimitadores matemáticos KaTeX ($\\text{...}$), lo que impone 'white-space: nowrap' y destruye la responsividad móvil en UI.",
+      "regex_pattern": "\\$\\s*\\\\text\\{[^}]{45,}\\}\\s*\\$",
+      "evidence_items": [
+        "Q-C05-189",
+        "Q-C05-190",
+        "Q-C05-196",
+        "Q-C06-212",
+        "Q-C08-274",
+        "Q-C15-513"
+      ]
+    },
+    {
+      "rule_id": "magic_multiplier_distractor_linter",
+      "severity": "medium",
+      "description": "Identifica distractores numéricos generados mecánicamente mediante factores constantes de escala arbitraria (0.333x, 0.667x, 1.333x, 1.5x, 1.667x) cuyos rationales diagnósticos están completamente desalineados de la operación aritmética real.",
+      "regex_pattern": "abs\\(distractor_val / correct_val - factor\\) < 1e-3 for factor in [0.333, 0.667, 1.333, 1.5, 1.667]",
+      "evidence_items": [
+        "Q-Hab02-164",
+        "Q-Hab02-166",
+        "Q-Hab03-245",
+        "Q-Hab03-259",
+        "Q-Hab04-315"
+      ]
+    },
+    {
+      "rule_id": "cross_domain_prefix_linter",
+      "severity": "medium",
+      "description": "Detecta prefijos en el 'stem' derivados de plantillas sintéticas de dominios ajenos (e.g. equilibrio macroeconómico, condiciones de frontera en EDPs, ecuaciones fundamentales del régimen) inyectados en reactivos de teoría econométrica.",
+      "regex_pattern": "^(?:Considerando las ecuaciones fundamentales del régimen|Al examinar detenidamente las condiciones de frontera|Teniendo en consideración los fundamentos del equilibrio|Con arreglo a las ecuaciones diferenciales del sistema)",
+      "evidence_items": [
+        "Q-H01-011",
+        "Q-Hab02-160",
+        "Q-Hab06-531",
+        "Q-Hab06-546",
+        "Q-H07-700"
+      ]
+    },
+    {
+      "rule_id": "single_word_or_id_hints_linter",
+      "severity": "medium",
+      "description": "Detecta reactivos donde el arreglo de pistas ('hints') contiene elementos que son palabras sueltas (<= 1 palabra o < 20 caracteres) o identificadores de competencias (ej. 'H-01', 'C-02'), violando el principio de andamiaje socrático escalonado a pesar de tener 3 elementos en la lista.",
+      "regex_pattern": "^(?:[A-Za-z]+-\\d{2}|[A-Za-z_]{1,18})$",
+      "evidence_items": [
+        "Q-H01-001",
+        "Q-C01-021",
+        "Q-Hab01-081",
+        "Q-C03-111",
+        "Q-C04-131",
+        "Q-C09-321",
+        "Q-C10-371",
+        "Q-H05-581",
+        "Q-C17-601"
+      ]
+    }
+  ],
+  "remediation_actions": [
+    "BLOQUEO DE DESPLIEGUE EN PRODUCCIÓN: El curso queda en estado RECHAZADO bajo certificación CRÍTICO (5.60 / 20.0, MPRI = 38.62 / 100.0) hasta corregir las deficiencias pedagógicas y técnicas mayores.",
+    "Saneamiento Inmediato de Pistas Envenenadas: Purgar los 60 reactivos en Hab-06 y Hab-07 eliminando cualquier directiva que instruya 'asegurando considerar adecuadamente' un distractor o concepción errónea, reemplazándolas por preguntas socráticas que interroguen la escala de normalización de la matriz de momentos.",
+    "Erradicación del Exploit de Memorización Visual: Diversificar las respuestas correctas en las 4 competencias memorizables (H-02, C-05, C-06, C-12) reescribiendo variantes analíticas y numéricas diversas para que ninguna competencia posea <= 4 claves únicas sobre >= 15 reactivos.",
+    "Calibración ZPD Real Multibanda: Reetiquetar y rediseñar los 710 reactivos en 3 bandas de dificultad genuinas (30% Easy, 50% Medium, 20% Hard) para habilitar la adaptación dinámica de sessionShuffler.ts ('calibrateByMasteryDifficulty') y anclar las 7 Habilidades [Hab] en Bloom Apply/Analyze.",
+    "Diversificación de Modalidades de Evocación: Transformar al menos el 30% de los reactivos de Habilidad [Hab-01 a Hab-07] en formato Fill-in-the-Blank (FIB) evaluados por mathEquivalence.ts y selección múltiple (MS) para quebrar el monocultivo de reconocimiento pasivo MC7.",
+    "Refactorización de KaTeX y Frontend: Extraer el texto en prosa de 165 reactivos fuera de los delimitadores $\\text{...}$ para permitir el ajuste natural de línea en UI responsiva, e interpolar los 197 residuos de {plim} por \\operatorname{plim}.",
+    "Limpieza de Prefijos Interdominio: Eliminar los 72 prefijos robóticos de macroeconomía/física ('ecuaciones fundamentales del régimen', 'condiciones de frontera') restituyendo el registro técnico de la econometría matemática asintótica.",
+    "Alineación Diagnóstica de FeedbackToast: Reemplazar distractores de multiplicador mágico arbitrario por errores algebraicos procedimentales genuinos, enlazando cada distractor a su diagnóstico exacto sin reciclar rationales genéricos."
+  ]
+}

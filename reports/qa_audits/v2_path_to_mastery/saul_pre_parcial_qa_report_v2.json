@@ -1,0 +1,184 @@
+{
+  "course_metadata": {
+    "course_id": "saul_pre_parcial",
+    "unit_title": "Saul Pre Parcial",
+    "detected_objective": "Dominio y aplicación analítica integral de sistemas dinámicos continuos, ecuaciones en derivadas parciales en economía, análisis espectral, estabilidad local y teoría del equilibrio macroeconómico y microeconómico.",
+    "total_competencies": 63,
+    "total_questions": 1520
+  },
+  "audit_version": "2.0-path-to-mastery",
+  "audit_timestamp": "2026-10-31T18:40:00Z",
+  "v1_baseline": {
+    "score": 18.0,
+    "tier": "EXCELENTE (17.0 - 20.0 pts)",
+    "dimensions": {
+      "architecture_granularity": 3.8,
+      "assessment_quality": 4.5,
+      "scaffolding_hints": 4.0,
+      "instructional_alignment": 4.0,
+      "technical_ergonomics": 1.7
+    },
+    "hard_penalties": 0.0
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.4,
+      "max": 4.0,
+      "feedback": "Colapso total de calibración adaptativa ZPD: el 100% de los reactivos (1,520 / 1,520) fueron codificados como dificultad 'medium' (0 'easy', 0 'hard'), desactivando la función calibrateByMasteryDifficulty en las 63 micro-competencias del curso. El grafo DAG es acíclico y tiene profundidad 5, pero presenta 13 hechos basales con prerrequisitos vacíos (-0.2 pts) y desactiva la progresión adaptativa (-1.4 pts)."
+    },
+    "assessment_quality": {
+      "score": 2.5,
+      "max": 5.0,
+      "feedback": "Monocultivo absoluto de reconocimiento pasivo (100% multiple_choice_7_options, 0% FIB, 0% MS) en las 26 micro-competencias de habilidad operativa [Hab] (780 reactivos). Presencia de 39 reactivos con relleno burocrático de longitud para evadir el linter R-15 (e.g. ', para los parámetros bajo análisis'), 12 reactivos con distractores numéricos por multiplicador mágico ('1.333x', '0.667x') y baja entropía de opciones correctas en 6 competencias."
+    },
+    "scaffolding_hints": {
+      "score": 1.2,
+      "max": 5.0,
+      "feedback": "Colapso crítico de andamiaje socrático. El 91.71% del banco (1,394 reactivos) utiliza plantillas sintéticas Mad-Libs de compilador ('Identifique la estructura conceptual de {comp}...') que aportan nula guía al alumno bloqueado. Críticamente, 142 reactivos (9.34% del banco) sufren de Envenenamiento Anti-Socrático (Anti-Socratic Poisoned Hints), donde la Pista 2 instruye al alumno a 'asegurar considerar adecuadamente' la fórmula del distractor incorrecto o concepción errónea, induciendo la quema destructiva de intentos en el 3-Strikes Safeguard de PracticeSession.tsx. Además, persisten 26 reactivos con stub hints snake_case y la unicidad de error_rationale en FeedbackToast es de apenas 10.39%."
+    },
+    "instructional_alignment": {
+      "score": 2.5,
+      "max": 4.0,
+      "feedback": "Colapso declarativo en la taxonomía de Bloom: el 100% de los 1,520 reactivos están etiquetados como 'Understand', incluyendo 780 problemas de cálculo operativo avanzado en 26 competencias de Habilidad [Hab] (e.g. resolución de Cauchy, linealización jacobiana y cálculo de autovalores). Se detectaron 145 enunciados con contaminación léxica inter-dominio por prefijos robóticos ('Teniendo en consideración los fundamentos del equilibrio', 'Al examinar detenidamente las condiciones de frontera') y 2 desacuerdos no reparados de jueces ciegos en la competencia C-14 sobre el orden de sistemas de EDOs."
+    },
+    "technical_ergonomics": {
+      "score": 1.1,
+      "max": 2.0,
+      "feedback": "Severa fricción ergonómica en frontend. 185 reactivos encapsulan oraciones completas en prosa española dentro de KaTeX '$\\text{...}$' (>= 45 caracteres), imponiendo white-space: nowrap que fractura el ajuste de línea y desborda horizontalmente las tarjetas de opciones en dispositivos móviles. 130 reactivos contienen pseudo-matemática con identificadores crudos de Python ('$X_dot$') y persisten 16 colisiones algebraicas de signos negativos ('--56') en la solución detallada de Hab-21."
+    }
+  },
+  "penalties_applied": [
+    {
+      "rule": "socratic_hint_poisoning",
+      "reason": "142 reactivos (9.34% del banco) sufren envenenamiento anti-socrático: la Pista 2/3 instruye al estudiante a 'asegurar considerar adecuadamente' la fórmula del distractor erróneo, saboteando activamente sus 3 intentos en PracticeSession.tsx.",
+      "deduction": 1.5
+    },
+    {
+      "rule": "answer_memorization_exploit",
+      "reason": "6 competencias (H-06, C-06, H-08, C-13, C-16, H-16) presentan <= 4 respuestas correctas únicas en bancos de 20 preguntas (en H-06, C-13, C-16 y H-16 existe 1 sola respuesta correcta textual idéntica para los 20 ítems), permitiendo alcanzar 'Mastered' por memorización visual de patrones.",
+      "deduction": 2.0
+    }
+  ],
+  "raw_subtotal": 9.7,
+  "total_deduction": 3.5,
+  "final_score": 6.2,
+  "max_score": 20.0,
+  "score_delta_v2_minus_v1": -11.8,
+  "quality_tier": "CRÍTICO (0-10.9)",
+  "mastery_path_readiness": {
+    "mpri_score": 39.71,
+    "mpri_max": 100.0,
+    "mpri_tier": "MASTERY-HOSTILE (0-39): Sabotaje Cognitivo / Colapso de Andamiaje Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 0.0,
+        "max": 20.0,
+        "details": "0/63 competencias con calibración multibanda. 100% medium, 100% Understand. calibrateByMasteryDifficulty 100% inoperante."
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 0.0,
+        "max": 20.0,
+        "details": "100% MC7, 0% FIB, 0% MS. 26/26 competencias de habilidad en reconocimiento pasivo. 6 competencias con memorización visual."
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 12.59,
+        "max": 25.0,
+        "details": "91.71% pistas Mad-Libs boilerplate; 9.34% pistas envenenadas (sabotaje 3-strikes); solo 8.29% pistas socráticas genuinas."
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 11.29,
+        "max": 15.0,
+        "details": "100% cobertura de rationales, pero solo 10.39% de unicidad (reciclaje estático cta.json); 12 distractores con multiplicador mágico."
+      },
+      "dag_and_interleaving_topology": {
+        "score": 10.0,
+        "max": 10.0,
+        "details": "Grafo DAG acíclico impecable, orden topológico estricto, profundidad 5, sin islas ni ciclos."
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 5.83,
+        "max": 10.0,
+        "details": "185 reactivos con desbordamiento UI por texto en KaTeX, 130 identificadores crudos de Python, 145 prefijos de dominios ajenos."
+      }
+    },
+    "student_journey_verdict": "El estudiante que interactúa con saul_pre_parcial experimenta una ilusión de maestría profundamente hostil: la plataforma no se adapta a su ritmo (100% medium), sus habilidades operativas se reducen a adivinación o descarte pasivo en opciones MC7, sus pistas en caso de error le ordenan marcar distractores que consumen sus 3 vidas, y puede superar el 10% del curso memorizando una sola cadena de texto repetida 20 veces."
+  },
+  "v1_vs_v2_forensic_explanation": "La divergencia entre v1 (18.0/20.0 - EXCELENTE) y v2 (6.20/20.0 - CRÍTICO, MPRI 39.71) radica en que el auditor v1 operó como un validador puramente estático y complaciente: constató que los delimitadores KaTeX estuvieran balanceados, que el 100% de los distractores tuvieran algún texto en error_rationale, y que las advertencias de linters fueran macros de LaTeX pmatrix. En cambio, Path-to-Mastery v2.0 audita la ejecución interactiva real: expuso que los 1,520 reactivos son 100% medium (anulando sessionShuffler.ts), que 142 pistas envenenan al estudiante guiándolo al distractor ('asegurando considerar adecuadamente: [distractor]'), que 6 competencias se aprueban por memorización visual de 1 sola respuesta invariable, y que el compilador infló el banco de 350 reactivos (saul_control_optimo, MPRI 54.23) a 1,520 degradando masivamente la calidad pedagógica mediante atajos de automatización sintética.",
+  "critical_defects": [
+    {
+      "defect_id": "DEF-01-ZPD-COLLAPSE",
+      "severity": "CRÍTICA",
+      "impact": "1,520 reactivos (100%) clasificados en dificultad 'medium'. Invalida calibrateByMasteryDifficulty en sessionShuffler.ts.",
+      "affected_competencies": ["C-01", "Hab-01", "Hab-02", "H-01", "Hab-03", "Hab-04", "C-02", "H-02", "C-03", "Hab-05", "H-03", "C-04", "Hab-06", "H-04", "C-05", "Hab-07", "H-05", "H-06", "C-06", "Hab-08", "C-07", "Hab-09", "C-08", "Hab-10", "H-07", "C-09", "H-08", "C-10", "Hab-11", "C-11", "Hab-12", "H-09", "Hab-13", "Hab-14", "H-10", "Hab-15", "C-12", "H-11", "C-13", "Hab-16", "H-12", "Hab-17", "C-14", "H-13", "Hab-18", "Hab-19", "Hab-20", "H-14", "Hab-21", "C-15", "Hab-22", "H-15", "C-16", "H-16", "C-17", "H-17", "C-18", "Hab-23", "Hab-24", "C-19", "Hab-25", "C-20", "Hab-26"]
+    },
+    {
+      "defect_id": "DEF-02-ANTI-SOCRATIC-POISONING",
+      "severity": "BLOQUEANTE",
+      "impact": "142 reactivos (9.34% del banco) instruyen en sus pistas a seguir la fórmula del distractor o concepción errónea, induciendo la pérdida de intentos en PracticeSession.tsx.",
+      "sample_items": ["Q-C01-001", "Q-C01-002", "Q-C02-165", "Q-Hab06-294", "Q-Hab07-374", "Q-Hab08-453", "Q-Hab09-502", "Q-Hab09-523", "Q-Hab08-466", "Q-Hab08-472"]
+    },
+    {
+      "defect_id": "DEF-03-ANSWER-MEMORIZATION-EXPLOIT",
+      "severity": "ALTA",
+      "impact": "6 competencias (H-06, C-06, H-08, C-13, C-16, H-16) tienen <= 4 respuestas correctas únicas en bancos de 20 reactivos. En H-06, C-13, C-16 y H-16, el 100% de los reactivos comparte exactamente la misma cadena textual como respuesta correcta.",
+      "affected_competencies": ["H-06", "C-06", "H-08", "C-13", "C-16", "H-16"]
+    },
+    {
+      "defect_id": "DEF-04-PASSIVE-RECOGNITION-MONOCULTURE",
+      "severity": "ALTA",
+      "impact": "100% de los reactivos en formato MC7 (1,520 preguntas), con 0% de fill_in_the_blank y 0% de multiple_select, permitiendo sustitución inversa y descarte pasivo en 780 ejercicios de habilidades matemáticas cuantitativas.",
+      "affected_items_count": 1520
+    },
+    {
+      "defect_id": "DEF-05-BLOOM-UNDERSTAND-COLLAPSE",
+      "severity": "MEDIA",
+      "impact": "1,520 reactivos etiquetados como 'Understand', desalineando por completo las competencias de Habilidad Operativa [Hab] que requieren cálculo y derivación avanzada (Bloom Apply y Analyze).",
+      "affected_items_count": 1520
+    },
+    {
+      "defect_id": "DEF-06-KATEX-PROSE-UI-OVERFLOW",
+      "severity": "MEDIA",
+      "impact": "185 reactivos con oraciones completas en prosa española envueltas en $\\text{...}$, rompiendo el responsive wrap en la UI de opciones móviles.",
+      "sample_items": ["Q-C07-499", "Q-C18-1349", "Q-H08-632", "Q-H08-623", "Q-C13-924", "Q-C18-1350", "Q-C08-539"]
+    },
+    {
+      "defect_id": "DEF-07-LENGTH-PADDING-R15-EVASION",
+      "severity": "MEDIA",
+      "impact": "39 reactivos con relleno burocrático de longitud artificial añadido a distractores para evadir linters estáticos.",
+      "sample_items": ["Q-Hab17-999", "Q-Hab17-1000", "Q-Hab17-1001", "Q-C14-1011", "Q-C14-1016"]
+    }
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "anti_socratic_distractor_injection_linter",
+      "severity": "critical",
+      "regex_pattern": "r'(?i)asegurando\\s+considerar\\s+adecuadamente:\\s*(.+)'",
+      "description": "Detecta pistas que inyectan fórmulas erróneas, distractores o falacias conceptuales bajo directrices afirmativas, saboteando el andamiaje del estudiante y provocando el agotamiento de sus 3 intentos en PracticeSession.tsx.",
+      "evidence_items": ["Q-C01-001", "Q-C01-002", "Q-C02-165", "Q-Hab06-294", "Q-Hab07-374", "Q-Hab08-453", "Q-Hab09-502"]
+    },
+    {
+      "rule_id": "single_answer_invariant_pool_linter",
+      "severity": "critical",
+      "regex_pattern": "r'len(set(c[\"correct_answer_text\"] for c in comp_questions)) <= 1'",
+      "description": "Detecta competencias con >= 15 reactivos donde todas las preguntas comparten un único texto de respuesta correcta invariable, permitiendo resolver la competencia por reconocimiento visual puro sin leer el enunciado.",
+      "evidence_items": ["Q-H06-411", "Q-H06-412", "Q-C13-911", "Q-C13-912", "Q-C16-1261", "Q-H16-1281"]
+    },
+    {
+      "rule_id": "bureaucratic_length_padding_linter",
+      "severity": "warning",
+      "regex_pattern": "r',\\s*(?:para los parámetros bajo análisis|según los supuestos clásicos del modelo|en la formulación matricial considerada|de acuerdo con la teoría econométrica|bajo las hipótesis del modelo)\\.?$'",
+      "description": "Detecta colas sintéticas de relleno burocrático adosadas al final de opciones de respuesta para evadir linters de longitud uniforme (R-15).",
+      "evidence_items": ["Q-Hab17-999", "Q-Hab17-1000", "Q-Hab17-1001", "Q-C14-1011", "Q-C14-1016"]
+    }
+  ],
+  "remediation_actions": [
+    "Depurar y reescribir inmediatamente los 142 reactivos con Envenenamiento Anti-Socrático, eliminando la inyección de distractores en la Pista 2/3 y reemplazándolos por preguntas socráticas que guíen al estudiante hacia la deducción correcta.",
+    "Calibrar las 63 micro-competencias en 3 bandas de dificultad real (30% easy, 40% medium, 30% hard) para habilitar el algoritmo calibrateByMasteryDifficulty en sessionShuffler.ts.",
+    "Eliminar la invariancia de respuestas en H-06, C-06, H-08, C-13, C-16 y H-16, introduciendo variedad paramétrica y preguntas con diferentes estados de equilibrio y dinámicas para erradicar el exploit de memorización visual.",
+    "Diversificar la modalidad de evocación en las 26 competencias de Habilidad [Hab], convirtiendo al menos un 25% de los reactivos a fill_in_the_blank (FIB) numérico/algebraico evaluado por mathEquivalence.ts y un 15% a multiple_select (MS).",
+    "Alinear la taxonomía de Bloom reclasificando los 780 reactivos de Habilidad Operativa [Hab] a 'Apply' y 'Analyze'.",
+    "Extraer la prosa en español contenida dentro de '$\\text{...}$' en los 185 reactivos afectados hacia texto Markdown estándar para evitar desbordamientos horizontales en dispositivos móviles.",
+    "Eliminar las colas de relleno burocrático en los 39 reactivos flagged por evasión de R-15.",
+    "Sustituir los 130 identificadores crudos de Python ('$X_dot$') por notación canónica KaTeX ('$\\dot{X}$')."
+  ]
+}

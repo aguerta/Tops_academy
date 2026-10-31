@@ -1,0 +1,240 @@
+{
+  "course_metadata": {
+    "course_id": "estadistica_3_pre_parcial",
+    "unit_title": "Estadistica 3 Pre Parcial",
+    "detected_objective": "Dominio y aplicación analítica integral de modelos econométricos de regresión lineal simple y múltiple, propiedades algebraicas y estadísticas de MCO (teorema de Gauss-Markov, insesgadez, consistencia y eficiencia BLUE), análisis geométrico de proyección y residuos, inferencia estadística (contrastes t y F, descomposiciones ANOVA), diagnóstico y tratamiento de violaciones a los supuestos clásicos (multicolinealidad, heterocedasticidad, autocorrelación de errores), formas funcionales, quiebres estructurales y endogeneidad.",
+    "total_competencies": 93,
+    "total_questions": 2190
+  },
+  "audit_version": "2.0-path-to-mastery",
+  "v1_baseline": {
+    "score": 16.8,
+    "tier": "ACEPTABLE (14.0 - 16.9 pts)",
+    "dimensions": {
+      "architecture_granularity": 4.0,
+      "assessment_quality": 3.2,
+      "scaffolding_hints": 3.8,
+      "instructional_alignment": 4.0,
+      "technical_ergonomics": 1.8
+    },
+    "score_delta_v2_minus_v1": -11.5
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.3,
+      "max": 4.0,
+      "feedback": "Granularidad curricular formalmente delimitada en 93 micro-competencias (24 Hechos, 36 Conceptos, 33 Habilidades) con una densidad robusta de 20 a 30 reactivos por competencia. Sin embargo, sufre un colapso total de calibración ZPD: el 100% de los 2,190 reactivos está codificado en la banda de dificultad única 'medium' (0 'easy', 0 'hard'), desactivando por completo la función adaptativa calibrateByMasteryDifficulty() en sessionShuffler.ts. Adicionalmente, el grafo DAG contiene 3 competencias isla completamente desconectadas (C-29, H-21, H-22 con in-degree = 0 y out-degree = 0) que no alimentan ni reciben dependencias en la ruta de aprendizaje."
+    },
+    "assessment_quality": {
+      "score": 2.0,
+      "max": 5.0,
+      "feedback": "Severas patologías psicométricas que comprometen la validez de la evaluación formativa. Monocultivo absoluto de selección múltiple (100% MC7, 0% FIB, 0% MS), anulando la evocación activa en las 33 micro-competencias de Habilidad procedimental [Hab]. Detección de 16 reactivos con Phantom Keying en Hab-11 (Q-Hab11-721 a Q-Hab11-736), donde distractores clonan la clave mediante prefijos sintéticos ('Opción alterna 5/6:'). Vulnerabilidad crítica de memorización mecánica en 15 competencias con <= 4 respuestas correctas únicas en 20 reactivos (9 de ellas con 1 sola respuesta correcta única repetida al 100%, como C-04, C-05, C-28 y H-22), permitiendo alcanzar el estado 'Mastered' por reconocimiento visual superficial. Presencia de distractores sintéticos con multiplicadores mágicos (13 reactivos con 0.5x, 1.333x) y 89 reactivos con relleno burocrático asimétrico para eludir linters."
+    },
+    "scaffolding_hints": {
+      "score": 1.0,
+      "max": 5.0,
+      "feedback": "Colapso severo del andamiaje socrático y sabotaje directo de la salvaguarda de 3 intentos (3-Strikes Safeguard en PracticeSession.tsx). El 90.14% del banco (1,974 reactivos) utiliza plantillas Mad-Libs estáticas ('Identifique la estructura conceptual de {comp}...') sin orientación procedimental genuina. De gravedad crítica, 513 reactivos (23.42% del banco) sufren envenenamiento anti-socrático: la Pista 2 o 3 instruye explícitamente al alumno a 'asegurando considerar adecuadamente: [distractor / error conceptual]', induciendo directamente el fallo y el bloqueo con 0 puntos. Además, existe una desconexión diagnóstica masiva en FeedbackToast.tsx (solo 650 rationales únicos para 13,140 distractores, 4.95% de unicidad), donde errores aritméticos reciben párrafos teóricos desalineados (e.g. explicar el signo de la Hessiana ante un error de división por 2)."
+    },
+    "instructional_alignment": {
+      "score": 2.2,
+      "max": 4.0,
+      "feedback": "El dominio temático de econometría está cubierto exhaustivamente, pero la alineación cognitiva está severamente degradada por tres factores: 1) Colapso declarativo de Bloom: el 100% de los reactivos (incluyendo las 33 Habilidades que deberían exigir Apply/Analyze/Evaluate) están registrados en la plataforma como 'Understand'; 2) Contaminación léxica inter-dominio: 214 reactivos incorporan prefijos robóticos ajenos a la econometría ('condiciones de frontera', 'ecuaciones fundamentales del régimen' copiados de plantillas de Solow y EDP); 3) Desacuerdo no reparado del Blind Judge en Stage-5 (ítem T-Hab-27-01_judge_1) debido a ambigüedad matemática entre la versión con ajuste de grados de libertad (n-p)R^2 y la asintótica nR^2 en el test de Breusch-Godfrey."
+    },
+    "technical_ergonomics": {
+      "score": 1.3,
+      "max": 2.0,
+      "feedback": "KaTeX compila formalmente sin delimitadores rotos ni llaves abiertas, pero presenta una grave fricción ergonómica en frontend: 200 reactivos encierran oraciones completas en prosa (hasta 124 caracteres) dentro del entorno matemático '$\\text{...}$' en los rationales y opciones, forzando un comportamiento 'nowrap' que rompe el ajuste de línea responsivo en tarjetas móviles y FeedbackToast. Asimismo, 89 opciones presentan frases de relleno burocrático asimétricas (', para los parámetros bajo análisis') que saturan visualmente la interfaz."
+    }
+  },
+  "penalties_applied": [
+    {
+      "rule": "socratic_hint_poisoning",
+      "reason": "513 reactivos (23.42% del banco total) sufren envenenamiento anti-socrático: la Pista 2 o 3 instruye explícitamente al estudiante a 'considerar adecuadamente' una premisa distractor o un error conceptual falso, saboteando activamente la salvaguarda de 3 intentos en PracticeSession.tsx.",
+      "deduction": 1.5
+    },
+    {
+      "rule": "answer_memorization_exploit",
+      "reason": "15 micro-competencias permiten alcanzar el estado 'Mastered' por memorización visual de patrones (<= 4 respuestas correctas únicas en conjuntos de 20 reactivos, destacando 9 competencias con exactamente 1 única respuesta correcta repetida en el 100% de sus reactivos).",
+      "deduction": 2.0
+    }
+  ],
+  "raw_subtotal": 8.8,
+  "total_deduction": 3.5,
+  "final_score": 5.3,
+  "max_score": 20.0,
+  "score_delta_v2_minus_v1": -11.5,
+  "quality_tier": "CRÍTICO (0.0 - 10.9 pts)",
+  "grade": "F (Rechazado para Despliegue Autónomo sin Refactorización Integral)",
+  "mastery_path_readiness": {
+    "mpri_score": 29.32,
+    "mpri_max": 100.0,
+    "mpri_tier": "MASTERY-HOSTILE (0-39): Sabotaje Cognitivo / Colapso de Andamiaje Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 0.0,
+        "max": 20.0
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 0.0,
+        "max": 20.0
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 10.67,
+        "max": 25.0
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 5.71,
+        "max": 15.0
+      },
+      "dag_and_interleaving_topology": {
+        "score": 5.5,
+        "max": 10.0
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 7.44,
+        "max": 10.0
+      }
+    },
+    "student_journey_verdict": "Experiencia de usuario hostil para el dominio real. Un estudiante novato en Strike 1 recibe pistas boilerplate vacías; en Strike 2, la plataforma le indica adoptar una creencia falsa ('considere adecuadamente: [distractor]'), provocando el Strike 3 y el bloqueo con 0 pts. Si comete un error aritmético, el feedback le diagnostica teoremas matriciales desconectados. Por último, un alumno avanzado puede saltarse el aprendizaje leyendo únicamente la longitud o memorizando una sola cadena de texto que se repite en el 100% de los reactivos de 9 competencias."
+  },
+  "v1_vs_v2_forensic_explanation": {
+    "summary": "La auditoría v1 otorgó 16.8/20.0 (Aceptable) debido a que evaluó el curso mediante métricas estáticas superficiales (cobertura binaria de campos, tasa de compilación KaTeX y ausencia de cadenas vacías), sufriendo de ceguera semántica sobre opt['content']. La auditoría Path-to-Mastery v2.0 simula el viaje psicométrico real del estudiante sobre el runtime de Top's Academy (sessionShuffler.ts, PracticeSession.tsx, FeedbackToast.tsx), descubriendo que el curso desactiva la ZPD al 100%, sabotea el andamiaje socrático con 513 pistas envenenadas, permite gaming por memorización en 15 competencias y recicla distractores mediante Phantom Keying masivo.",
+    "key_shifts": [
+      {
+        "area": "ZPD y Progresión Adaptativa",
+        "v1_assessment": "Puntuación perfecta (4.0/4.0) basada en la división formal Hecho/Concepto/Habilidad y volumen uniforme.",
+        "v2_forensic_reality": "0.0/20 en pilar MPRI. 100% de los reactivos son 'medium', desactivando calibrateByMasteryDifficulty() en sessionShuffler.ts. Cero progresión de novato a experto."
+      },
+      {
+        "area": "Andamiaje Socrático (Pistas)",
+        "v1_assessment": "3.8/5.0 elogiando 'andamiaje progresivo de 3 niveles en el 98.54% del curso' y penalizando solo 32 pistas stub.",
+        "v2_forensic_reality": "1.0/5.0 en D3 y penalización dura de -1.5 pts. 90.14% de pistas son Mad-Libs vacías y 513 reactivos (23.42%) instruyen activamente al alumno a marcar el distractor ('asegurando considerar adecuadamente: [misconception]')."
+      },
+      {
+        "area": "Calidad Diagnóstica de Rationales",
+        "v1_assessment": "100.0% de cobertura elogiada como 'excepcional cobertura diagnóstica'.",
+        "v2_forensic_reality": "5.71/15 en pilar MPRI. Unicidad de solo 4.95% (650 rationales para 13,140 distractores). Distractores con multiplicador mágico (0.5x, 1.333x) reciben explicaciones de matrices o segundas derivadas irrelevantes al cálculo."
+      },
+      {
+        "area": "Anti-Gaming y Entropía de Claves",
+        "v1_assessment": "No evaluado en v1 (ceguera a la distribución de respuestas correctas).",
+        "v2_forensic_reality": "0.0/20 en pilar MPRI y penalización dura de -2.0 pts. 15 competencias memorizables sin leer enunciados; 9 competencias repiten la misma clave exacta en sus 20 ítems."
+      },
+      {
+        "area": "Topología DAG y Nodos Isla",
+        "v1_assessment": "Consideró las 13 competencias sin prerrequisitos como 'axiomas fundacionales canónicos'.",
+        "v2_forensic_reality": "3 competencias (C-29, H-21, H-22) son islas huérfanas con in-degree = 0 y out-degree = 0, rompiendo la secuenciación de Quiz (60/40) y Unit Test (55/45)."
+      },
+      {
+        "area": "Phantom Keying en Hab-11",
+        "v1_assessment": "Identificado como incidente aislado en solo 2 reactivos (-1.5 pts).",
+        "v2_forensic_reality": "16 reactivos clonados (Q-Hab11-721 a Q-Hab11-736) bajo prefijos sintéticos ('Opción alterna 5/6:')."
+      }
+    ]
+  },
+  "critical_defects": [
+    {
+      "id": "DEF-01",
+      "type": "socratic_hint_poisoning",
+      "severity": "CRITICAL",
+      "affected_count": 513,
+      "description": "Pistas que sabotean el límite de 3 intentos en PracticeSession.tsx instruyendo al estudiante a considerar una afirmación conceptualmente falsa correspondiente a un distractor.",
+      "sample_items": ["Q-C02-121", "Q-C02-122", "Q-H01-007", "Q-Hab10-674", "Q-Hab14-1056"]
+    },
+    {
+      "id": "DEF-02",
+      "type": "answer_memorization_exploit",
+      "severity": "CRITICAL",
+      "affected_count": 15,
+      "description": "Micro-competencias con <= 4 claves correctas únicas en 20 reactivos, incluyendo 9 competencias con 1 única clave idéntica en el 100% de los reactivos.",
+      "affected_competencies": ["C-02", "C-03", "H-03", "C-04", "C-05", "H-05", "C-07", "C-11", "C-14", "C-17", "C-19", "H-13", "H-20", "C-28", "H-22"]
+    },
+    {
+      "id": "DEF-03",
+      "type": "zpd_calibration_collapse",
+      "severity": "HIGH",
+      "affected_count": 2190,
+      "description": "Colapso del 100% de las 93 micro-competencias a la banda 'medium', anulando el motor adaptativo calibrateByMasteryDifficulty.",
+      "sample_items": ["GLOBAL (2,190 ítems)"]
+    },
+    {
+      "id": "DEF-04",
+      "type": "phantom_keying_clones",
+      "severity": "HIGH",
+      "affected_count": 16,
+      "description": "Distractores que reproducen el valor de la clave correcta enmascarados bajo etiquetas sintéticas 'Opción alterna 5/6:'.",
+      "sample_items": ["Q-Hab11-721", "Q-Hab11-722", "Q-Hab11-723", "Q-Hab11-724", "Q-Hab11-725", "Q-Hab11-726", "Q-Hab11-727", "Q-Hab11-728", "Q-Hab11-729", "Q-Hab11-730", "Q-Hab11-731", "Q-Hab11-732", "Q-Hab11-733", "Q-Hab11-734", "Q-Hab11-735", "Q-Hab11-736"]
+    },
+    {
+      "id": "DEF-05",
+      "type": "dag_isolated_islands",
+      "severity": "MEDIUM",
+      "affected_count": 3,
+      "description": "Competencias totalmente desconectadas del grafo curricular (in-degree = 0 y out-degree = 0).",
+      "affected_competencies": ["C-29", "H-21", "H-22"]
+    },
+    {
+      "id": "DEF-06",
+      "type": "prose_in_katex_overflow",
+      "severity": "MEDIUM",
+      "affected_count": 200,
+      "description": "Oraciones completas de retroalimentación o distractores encerradas en $\\text{...}$, rompiendo el ajuste de línea responsivo en UI móvil.",
+      "sample_items": ["Q-C02-121", "Q-C02-122", "Q-C02-123", "Q-C04-243", "Q-C30-1839"]
+    },
+    {
+      "id": "DEF-07",
+      "type": "cross_domain_lexical_pollution",
+      "severity": "LOW",
+      "affected_count": 214,
+      "description": "Prefijos sintéticos procedentes de plantillas de macroeconomía/física matemática ('condiciones de frontera', 'ecuaciones fundamentales del régimen') inyectados en reactivos de econometría.",
+      "sample_items": ["Q-Hab06-371", "Q-Hab11-721", "Q-H14-1136", "Q-Hab01-042", "Q-Hab33-2175"]
+    }
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "anti_socratic_hint_poisoning_linter",
+      "severity": "critical",
+      "regex_pattern": "r'asegurando\\s+considerar\\s+adecuadamente:\\s*(.+)'",
+      "description": "Detecta pistas socráticas que inyectan errores conceptuales, falacias o distractores del banco instruyendo al alumno a adoptarlos, saboteando el límite de 3 intentos en PracticeSession.tsx.",
+      "evidence_items": ["Q-C02-121", "Q-C02-122", "Q-H01-007", "Q-Hab10-674", "Q-Hab14-1056"]
+    },
+    {
+      "rule_id": "competency_answer_entropy_linter",
+      "severity": "critical",
+      "regex_pattern": "len(set(q['options'][correct_idx]['content'] for q in comp_questions)) <= 4 and len(comp_questions) >= 15",
+      "description": "Detecta micro-competencias donde la variedad de claves correctas es tan baja (<= 4 strings únicos) que los estudiantes pueden alcanzar el nivel 'Mastered' memorizando la cadena visual sin procesar el enunciado.",
+      "evidence_items": ["C-02", "C-04", "C-05", "C-28", "H-22"]
+    },
+    {
+      "rule_id": "prose_wrapped_in_katex_text_linter",
+      "severity": "warning",
+      "regex_pattern": "r'\\$\\s*\\\\text\\{([^\\}]{45,})\\}\\s*\\$'",
+      "description": "Captura oraciones completas en prosa de más de 45 caracteres envueltas en un único comando \\text{...} dentro de math mode, previniendo el desbordamiento horizontal 'nowrap' en FeedbackToast y tarjetas móviles.",
+      "evidence_items": ["Q-C02-121", "Q-C02-122", "Q-C02-123", "Q-C04-243", "Q-C30-1839"]
+    },
+    {
+      "rule_id": "cross_domain_template_pollution_linter",
+      "severity": "warning",
+      "regex_pattern": "r'(condiciones\\s+de\\s+frontera|ecuaciones\\s+fundamentales\\s+del\\s+r[eé]gimen|equilibrio\\s+estacionario)'",
+      "description": "Detecta la contaminación léxica cruzada cuando plantillas de compilación de cursos de modelos dinámicos/EDP inyectan prefijos irrelevantes en bancos de estadística/econometría.",
+      "evidence_items": ["Q-Hab06-371", "Q-Hab11-721", "Q-H14-1136", "Q-Hab01-042"]
+    },
+    {
+      "rule_id": "option_filler_padding_evasion_linter",
+      "severity": "info",
+      "regex_pattern": "r'(,\\s*para\\s+los\\s+par[aá]metros\\s+bajo\\s+an[aá]lisis|,\\s*de\\s+acuerdo\\s+con\\s+la\\s+teor[ií]a\\s+econom[eé]trica|,\\s*bajo\\s+las\\s+hip[oó]tesis\\s+del\\s+modelo|,\\s*en\\s+la\\s+formulaci[oó]n\\s+matricial\\s+considerada)'",
+      "description": "Identifica cláusulas de relleno burocrático agregadas asimétricamente a distractores numéricos con el único propósito de inflar la longitud y evadir linters de varianza de longitud [R-15].",
+      "evidence_items": ["Q-Hab27-1742", "Q-Hab27-1743", "Q-Hab27-1744", "Q-Hab27-1746", "Q-Hab27-1747"]
+    }
+  ],
+  "remediation_actions": [
+    "Depuración Inmediata de Envenenamiento Anti-Socrático: Refactorizar de raíz las plantillas de compilación para Pistas 2 y 3. Eliminar la inyección de distractores bajo la cláusula 'asegurando considerar adecuadamente:' en los 513 reactivos afectados y reemplazarlos por guías procedimentales socráticas auténticas.",
+    "Diversificación de Claves y Restauración de Entropía: En las 15 micro-competencias vulnerables a memorización mecánica (especialmente las 9 con 1 sola clave), reescribir los generadores paramétricos para variar los parámetros muestrales (n, K, sumas de cuadrados, estadísticos calculados) de modo que cada reactivo posea una clave numérica/algebraica distintiva.",
+    "Restauración de Calibración ZPD: Redistribuir los 2,190 reactivos en las 3 bandas normativas (30% easy para definiciones/reconocimiento inicial, 50% medium para cálculos y contrastes típicos, 20% hard para casos frontera/perturbaciones) y corregir la etiqueta taxonómica de Bloom en las 33 Habilidades [Hab] a 'Apply', 'Analyze' o 'Evaluate'.",
+    "Sustitución de Monocultivo MC7 por Reactivos Multimodales: Convertir al menos 3 a 5 reactivos por micro-competencia de Habilidad operativa a formato Fill-in-the-Blank (FIB, evaluado por mathEquivalence.ts) y Multiple Select (MS) para obligar a la evocación activa genuina.",
+    "Erradicación de Phantom Keying en Hab-11: Eliminar los prefijos 'Opción alterna 5/6:' en los 16 reactivos de Hab-11 (Q-Hab11-721 a 736) y generar distractores basados en falacias algebraicas reales (omisión de transposición, inversión ilícita de factores).",
+    "Reanclaje Topológico del Grafo DAG: Conectar las 3 micro-competencias isla (C-29, H-21, H-22) asignándoles prerrequisitos fundacionales y convirtiéndolas en dependencias de temas avanzados de diagnóstico y quiebres estructurales.",
+    "Saneamiento Ergonómico KaTeX y Descontaminación Léxica: Extraer la prosa en español contenida en $\\text{...}$ en los 200 reactivos detectados para evitar overflow responsivo en UI y purgar los 214 enunciados con prefijos de otros dominios ('condiciones de frontera').",
+    "Resolución del Desacuerdo de Arbitraje en Stage-5: Estandarizar la definición del estadístico LM de Breusch-Godfrey en Hab-27, clarificando explícitamente en el enunciado si se evalúa la aproximación asintótica (n*R^2) o la versión en muestras finitas ((n-p)*R^2) para evitar discrepancias con jueces automáticos."
+  ]
+}

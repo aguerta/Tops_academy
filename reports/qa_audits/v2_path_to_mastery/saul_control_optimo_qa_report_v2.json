@@ -1,0 +1,229 @@
+{
+  "audit_version": "2.0-path-to-mastery",
+  "audit_date": "2026-10-31",
+  "evaluator": "Chief Psychometric & Path-to-Mastery Quality Auditor (Flash High)",
+  "course_metadata": {
+    "course_id": "saul_control_optimo",
+    "unit_title": "Saul Control Optimo (Cálculo de Variaciones y Control Óptimo en Economía)",
+    "detected_objective": "Dominio y aplicación analítica integral del cálculo de variaciones y control óptimo en tiempo continuo para economía: funcionales clásicos (Lagrange, Mayer, Bolza), condición de Euler de primer orden, condición de Legendre de segundo orden, suficiencia global mediante análisis Hessiano, primeras integrales y conservación de Beltrami para sistemas autónomos, condiciones de transversalidad para frontera con estado libre y tiempo libre, y modelos dinámicos macroeconómicos y microeconómicos (Monopolio de Evans y desinflación óptima de Taylor 1989).",
+    "total_competencies": 15,
+    "total_questions": 350,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 350
+    },
+    "difficulty_distribution": {
+      "easy": 0,
+      "medium": 350,
+      "hard": 0
+    },
+    "bloom_distribution": {
+      "Understand": 350
+    }
+  },
+  "v1_baseline": {
+    "score": 18.5,
+    "tier": "EXCELENTE (17.0 - 20.0 pts)",
+    "evaluation_date": "2026-10-25",
+    "dimensions": {
+      "architecture_granularity": 4.0,
+      "assessment_quality": 4.7,
+      "scaffolding_hints": 3.8,
+      "instructional_alignment": 4.0,
+      "technical_ergonomics": 2.0
+    },
+    "penalties": 0.0,
+    "verdict": "APROBADO PARA PRODUCCIÓN (Con Remediación)"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.7,
+      "max": 4.0,
+      "feedback": "Topología DAG impecable (15 micro-competencias, 1 raíz axiomática C-01, profundidad máxima 6, acíclico, conexo, sin dependencias invertidas ni nodos isla). Densidad de 20 a 30 reactivos por nodo. Sin embargo, sufre un COLAPSO TOTAL DE CALIBRACIÓN ZPD: el 100% de los reactivos (350/350 en las 15 competencias) está codificado artificialmente como 'medium'. El algoritmo de progresión adaptativa calibrateByMasteryDifficulty() en sessionShuffler.ts queda 100% paralizado: un estudiante principiante no tiene ítems 'easy' de andamiaje y un estudiante avanzado no tiene reactivos 'hard' de desafío para certificar maestría. Se aplica la deducción normativa obligatoria de -1.3 pts (techo rubricado: 2.5 - 2.8 / 4.0)."
+    },
+    "assessment_quality": {
+      "score": 3.0,
+      "max": 5.0,
+      "feedback": "El formato MC7 reduce la conjetura aleatoria a p = 1/7 (14.3%) y no presenta opciones delatoras parentéticas. No obstante, incurre en tres fallas psicométricas severas de Path-to-Mastery: 1) Monocultivo de reconocimiento pasivo 100% (MC7 = 100%, FIB = 0%, MS = 0%), lo que en las 5 competencias de Habilidad [Hab-01 a Hab-05] permite sustitución inversa y descarte pasivo sin cálculo activo de cuadraturas ni constantes (-1.2 pts); 2) Distractores de longitud asimétrica por relleno sintético (10 reactivos con apéndices como ', para los parámetros bajo análisis' o ', para la muestra de datos observada' introducidos para evadir linters R-15) (-0.4 pts); 3) Distractores sintéticos de multiplicador mágico (1.333x, 0.667x) y desacuerdo latente no resuelto en el Blind Judge Stage-5 (T-Hab-05-02_judge_1, donde r = 8.998 y r = 9.0 distan menos de 0.02%, induciendo discordancia) (-0.4 pts)."
+    },
+    "scaffolding_hints": {
+      "score": 1.8,
+      "max": 5.0,
+      "feedback": "Falla crítica en el sistema de andamiaje socrático del 3-Strikes Safeguard (PracticeSession.tsx): 1) El 90.57% del banco (317 reactivos) utiliza pistas Mad-Libs sintéticas de compilador ('Identifique la estructura conceptual de {comp}: analice las relaciones formales...'); 2) Envenenamiento Anti-Socrático masivo en pistas 2 y 3: la plantilla inyecta 'asegurando considerar adecuadamente: [misconception]', induciendo activamente al estudiante a elegir la opción errónea y quemar sus 3 intentos; 3) 50 reactivos en Hab-01 y C-06 contienen arrays de IDs literales de dependencias (['C-02', 'H-02', 'C-03']); 4) Desconexión diagnóstica severa en FeedbackToast.tsx: solo 90 rationales únicos para 2,100 distractores (4.29% de unicidad), con reciclaje ciego de explicaciones que aluden a objetos inexistentes en el problema (ej. citar c_1=0, c_2=1 en Q-Hab01-101 donde la solución es c_1=31.238, citar integrales de t dt con denominadores 2a->4a en EDOs exponenciales, o citar términos -6x\\dot{x}^2 en Q-Hab02-172 donde el integrando no los contiene). Por regla estricta de la rúbrica (Mad-Libs > 50%), la dimensión queda con techo <= 2.0. Puntaje asignado: 1.8 / 5.0."
+    },
+    "instructional_alignment": {
+      "score": 2.8,
+      "max": 4.0,
+      "feedback": "Gran solidez matemática teórica en la derivación de condiciones de primer y segundo orden (Euler, Legendre, Beltrami, Transversalidad, Evans, Taylor). Sin embargo: 1) Colapso declarativo de Bloom: el 100% de los reactivos (350/350), incluyendo los 150 reactivos de Habilidades operativas complejas [Hab-01 a Hab-05], está etiquetado como 'Understand', con 0% en niveles de Apply, Analyze o Evaluate (-0.7 pts); 2) Contaminación léxica inter-dominio: inyección de jerga econométrica empírica ('para la muestra de datos observada', 'teoría econométrica') en modelos continuos analíticos deterministas (-0.3 pts); 3) Ambigüedad matemática no resuelta en Stage-5 Blind Judge (T-Hab-05-02) (-0.2 pts)."
+    },
+    "technical_ergonomics": {
+      "score": 1.7,
+      "max": 2.0,
+      "feedback": "Sintaxis KaTeX limpia y compilable (cero llaves abiertas, cero dólares triples, cero delimitadores impares). No obstante, se detectan residuos de concatenación de cadenas sin evaluar aritméticamente dentro de las expresiones matemáticas LaTeX de varias plantillas (ej. '$3 25 \\dot{x}^2 - 2x = C$' en vez de '$75\\dot{x}^2 - 2x = C$', '$2 25 \\ddot{x} + 2x = C$' en vez de '$50\\ddot{x} + 2x = C$' en Q-H03-164/Q-H03-165, y '$2 4 \\dot{x}$' en vez de '$8\\dot{x}$' en Q-Hab02-172 y Q-Hab02-173). Penalización de -0.3 pts por fricción de parseo aritmético."
+    }
+  },
+  "dimensions": {
+    "D1_architecture_dag_zpd": 2.7,
+    "D2_psychometrics_modality": 3.0,
+    "D3_scaffolding_remediation": 1.8,
+    "D4_instructional_bloom": 2.8,
+    "D5_technical_ergonomics": 1.7
+  },
+  "raw_dimension_subtotal": 12.0,
+  "hard_penalties_applied": [],
+  "total_deduction": 0.0,
+  "total_score": 12.0,
+  "final_score": 12.0,
+  "max_score": 20.0,
+  "score_delta_v2_minus_v1": -6.5,
+  "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)",
+  "grade": "DEFICIENTE (11.0 - 13.9 pts)",
+  "mastery_path_readiness": {
+    "mpri_score": 54.23,
+    "mpri_max": 100.0,
+    "mpri_tier": "ILLUSION OF MASTERY (40-64): Riesgo de Memorización / Mecanización Superficial",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 0.0,
+        "max": 20.0,
+        "status": "CRITICAL_FAILURE",
+        "description": "100% de reactivos en banda única 'medium'; 0% en 'easy' y 0% en 'hard'. 100% Bloom Understand en Habilidades."
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 9.77,
+        "max": 20.0,
+        "status": "HIGH_VULNERABILITY",
+        "description": "Monocultivo 100% MC7 sin generación activa FIB; distractores de longitud asimétrica por relleno y multiplicadores mágicos."
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 14.13,
+        "max": 25.0,
+        "status": "IMPAIRED",
+        "description": "90.57% boilerplate Mad-Libs; envenenamiento conceptual en pistas 2 y 3; 50 reactivos con códigos de dependencias literales."
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 10.33,
+        "max": 15.0,
+        "status": "POOR_FIDELITY",
+        "description": "Solo 4.29% de rationales únicos (90/2,100); reciclaje de justificaciones con términos inexistentes en los problemas específicos."
+      },
+      "dag_and_interleaving_topology": {
+        "score": 10.0,
+        "max": 10.0,
+        "status": "EXCELLENT",
+        "description": "Grafo DAG óptimo, acíclico, conexo, orden topológico estricto que soporta interleaving 60/40 en Quiz y 55/45 en Unit Test."
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 10.0,
+        "max": 10.0,
+        "status": "EXCELLENT",
+        "description": "Renderizado KaTeX limpio sin fórmulas desbordantes, libre de prefijos invasivos en stems y notación variacional canónica."
+      }
+    },
+    "student_journey_verdict": "Ilusión de Maestría Severa: Un estudiante en Top's Academy no experimenta progresión ZPD (calibrateByMasteryDifficulty paralizado). En las sesiones de práctica, al equivocarse, las pistas socráticas no lo orientan sino que le recitan definiciones estáticas Mad-Libs o le aconsejan 'considerar adecuadamente' el distractor, acelerando el agotamiento de los 3 intentos. En caso de fallo, FeedbackToast le ofrece explicaciones genéricas desconectadas de las ecuaciones concretas. Y al evaluar habilidades operativas complejas, el estudiante puede adivinar o sustituir inversamente las 7 opciones sin realizar evocación activa (FIB)."
+  },
+  "v1_vs_v2_forensic_explanation": "La versión v1 evaluó saul_control_optimo con 18.5/20.0 (Tier EXCELENTE) porque aplicó una auditoría estática superficial orientada a la presencia formal de campos (len(hints)>=3, len(options)==7, 100% rationales poblados, DAG acíclico). Bajo dicho prisma, el curso parecía impecable salvo por 50 pistas con IDs de prerrequisitos. Path-to-Mastery v2.0, en cambio, audita la semántica profunda del viaje del estudiante en el runtime interactivo de la plataforma. Revela que el curso es pedagógicamente DEFICIENTE (12.0/20.0, MPRI 54.23/100.0) debido a: 1) Parálisis total del algoritmo ZPD adaptativo (0/20 en pilar ZPD por mono-banda 100% medium y 100% Bloom Understand); 2) Andamiaje hostil que sabotea el 3-Strikes Safeguard mediante pistas Mad-Libs y envenenamiento inductivo ('asegurando considerar adecuadamente: [misconception]'); 3) Falsa cobertura diagnóstica donde 2,100 distractores comparten apenas 90 rationales estáticos desalineados de las fórmulas concretas; 4) Monocultivo de reconocimiento pasivo (100% MC7) con relleno artificial de longitud.",
+  "critical_defects": [
+    {
+      "id": "DEF-01-ZPD-COLLAPSE",
+      "severity": "CRITICAL",
+      "title": "Colapso Total de Calibración ZPD y Colapso Declarativo de Bloom",
+      "description": "El 100% de los reactivos (350/350) posee difficulty='medium' y bloom_taxonomy_level='Understand'. Paraliza calibrateByMasteryDifficulty() en sessionShuffler.ts e impide evaluar Habilidades procedimentales en Apply/Analyze.",
+      "affected_items_count": 350,
+      "remediation": "Estratificar cada competencia en 25% easy, 50% medium y 25% hard. Re-etiquetar las 150 preguntas de Hab-01 a Hab-05 en Bloom Apply y Analyze."
+    },
+    {
+      "id": "DEF-02-ANTI-SOCRATIC-HINTS",
+      "severity": "CRITICAL",
+      "title": "Envenenamiento Anti-Socrático y Boilerplate Mad-Libs en Pistas",
+      "description": "317 reactivos (90.57%) contienen pistas Mad-Libs estáticas. En pistas 2 y 3, la plantilla inyecta 'asegurando considerar adecuadamente: [misconception]', induciendo al alumno a marcar el distractor y agotar sus 3 intentos en PracticeSession.tsx. Además, 50 reactivos contienen IDs de dependencias.",
+      "affected_items_count": 317,
+      "remediation": "Reescribir las pistas con andamiaje socrático real específico a cada reactivo (Pista 1: Principio rector, Pista 2: Estrategia de cálculo/cuadratura, Pista 3: Paso algebraico clave sin revelar la solución)."
+    },
+    {
+      "id": "DEF-03-RATIONALE-DISCONNECTION",
+      "severity": "HIGH",
+      "title": "Desconexión Diagnóstica y Reciclaje Extremo de Rationales",
+      "description": "2,100 distractores comparten únicamente 90 rationales distintos (4.29% de unicidad). Las explicaciones en FeedbackToast.tsx discuten términos inexistentes en los problemas (matrices 3x3, factores 2a->4a, integrales t dt, o constantes c_1=0 en problemas no homogéneos).",
+      "affected_items_count": 2100,
+      "remediation": "Vincular cada distractor a su error algebraico u operativo específico generado durante la resolución del reactivo."
+    },
+    {
+      "id": "DEF-04-PASSIVE-RECOGNITION-MONOCULTURE",
+      "severity": "HIGH",
+      "title": "Monocultivo 100% Opción Múltiple (MC7) en Competencias de Habilidad",
+      "description": "0% de fill-in-the-blank (FIB) y 0% de multiple select (MS). Permite gaming por descarte y sustitución inversa en problemas de cálculo variacional y control óptimo.",
+      "affected_items_count": 150,
+      "remediation": "Convertir al menos el 30% de los reactivos de Hab-01 a Hab-05 a formato fill_in_the_blank evaluado por mathEquivalence.ts."
+    },
+    {
+      "id": "DEF-05-TEMPLATE-CONCATENATION-MATH",
+      "severity": "MEDIUM",
+      "title": "Residuos de Concatenación de Cadenas Aritméticas en KaTeX",
+      "description": "Plantillas inyectan multiplicadores como texto sin evaluar operaciones aritméticas (ej. '3 25 \\dot{x}^2', '2 25 \\ddot{x}', '2 4 \\dot{x}').",
+      "affected_items_count": 30,
+      "remediation": "Evaluar aritméticamente los productos en los generadores de plantillas antes de interpolar en las cadenas LaTeX."
+    }
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "anti_socratic_misconception_injection_hint_linter",
+      "severity": "critical",
+      "regex_pattern": "(?:asegurando considerar adecuadamente|posibles desv[íi]os al considerar):\\s*",
+      "description": "Detecta pistas que inyectan concepciones erróneas o distractores con frases que inducen al estudiante a considerarlos válidos ('asegurando considerar adecuadamente: [misconception]'), saboteando el límite de 3 intentos en el runtime de práctica.",
+      "evidence_items": [
+        "Q-C01-001",
+        "Q-C03-096",
+        "Q-H03-164",
+        "Q-Hab05-324"
+      ]
+    },
+    {
+      "rule_id": "uncalculated_string_concatenation_in_math_linter",
+      "severity": "warning",
+      "regex_pattern": "\\$(?:[^$]*\\s)?\\d+\\s+\\d+(?:[a-zA-Z\\\\]|$)",
+      "description": "Detecta expresiones matemáticas KaTeX donde productos aritméticos de coeficientes fueron concatenados como cadenas separadas por espacio en lugar de multiplicarse numéricamente (ej. '$3 25 \\dot{x}^2$' en lugar de '$75\\dot{x}^2$').",
+      "evidence_items": [
+        "Q-H03-164",
+        "Q-H03-165",
+        "Q-Hab02-172",
+        "Q-Hab02-173"
+      ]
+    },
+    {
+      "rule_id": "cross_domain_padding_linter",
+      "severity": "warning",
+      "regex_pattern": ",\\s*(?:para la muestra de datos observada|de acuerdo con la teor[íi]a econom[é]trica|en el contexto del contraste analizado|bajo las hip[ó]tesis del modelo|para los par[á]metros bajo an[á]lisis)\\.",
+      "description": "Detecta distractores que incorporan cláusulas burocráticas de relleno importadas de otros dominios (econometría empírica) para inflar artificialmente la longitud de las opciones y burlar linters de varianza de longitud.",
+      "evidence_items": [
+        "Q-Hab05-325",
+        "Q-Hab05-326",
+        "Q-Hab05-331",
+        "Q-Hab05-332",
+        "Q-Hab05-336",
+        "Q-Hab05-337"
+      ]
+    },
+    {
+      "rule_id": "prerequisite_id_as_hint_linter",
+      "severity": "high",
+      "regex_pattern": "^(?:C|H|Hab|Fact|Concept|Skill)-\\d+$",
+      "description": "Detecta reactivos donde el arreglo de pistas ('hints') contiene códigos alfanuméricos de dependencias en lugar de texto socrático orientativo.",
+      "evidence_items": [
+        "Q-Hab01-101",
+        "Q-Hab01-102",
+        "Q-C06-251",
+        "Q-C06-252"
+      ]
+    }
+  ],
+  "remediation_actions": [
+    "Refactorización de Calibración ZPD: Redistribuir los 350 reactivos en 3 bandas de dificultad genuinas (easy: 25%, medium: 50%, hard: 25%) por competencia para desbloquear el algoritmo calibrateByMasteryDifficulty() en sessionShuffler.ts.",
+    "Re-alineación Taxonómica de Bloom: Cambiar la etiqueta taxonómica de los 150 reactivos de Habilidades (Hab-01 a Hab-05) de 'Understand' a 'Apply' (resolución operativa) y 'Analyze' (contraste de condiciones de suficiencia y raíces características).",
+    "Purga de Pistas Mad-Libs y Envenenamiento Anti-Socrático: Regenerar las pistas de los 317 reactivos afectados eliminando la frase saboteadora 'asegurando considerar adecuadamente:' y reemplazando las plantillas estáticas por andamiaje socrático genuino adaptado a los datos numéricos de cada reactivo.",
+    "Remediación de Pistas en Hab-01 y C-06: Sustituir los arrays de códigos de dependencias (['C-02', 'H-02', 'C-03']) por 3 pistas progresivas reales en prosa.",
+    "Diversificación de Modalidades de Evocación: Incorporar al menos un 30% de reactivos de completación numérica/algebraica (fill_in_the_blank) en las competencias de Habilidad (Hab-01 a Hab-05) evaluados por mathEquivalence.ts para erradicar el gaming por sustitución inversa desde las 7 opciones.",
+    "Refactorización Diagnóstica de Rationales en FeedbackToast: Generar explicaciones de error quirúrgicas y contextuales para cada distractor, eliminando el reciclaje del 95.7% de racionalidades estáticas y purgando referencias a variables o términos ajenos al problema.",
+    "Eliminación de Relleno Asimétrico de Longitud: Purgar los apéndices burocráticos (', para la muestra de datos observada', ', para los parámetros bajo análisis') en los distractores de Hab-05, asegurando que la discriminación sea 100% matemática.",
+    "Corrección de Operaciones Aritméticas en KaTeX: Evaluar numéricamente los productos en las plantillas generadoras para evitar expresiones no calculadas como '3 25 \\dot{x}^2' o '2 4 \\dot{x}'."
+  ]
+}

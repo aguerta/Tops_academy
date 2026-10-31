@@ -1,0 +1,193 @@
+{
+  "course_metadata": {
+    "course_id": "estadistica_3_pre_parcial_v2",
+    "unit_title": "Estadistica 3 Pre Parcial V2",
+    "detected_objective": "Dominio y aplicación analítica integral de Inferencia Asintótica, Estimadores MCO, Variables Instrumentales, MCG y Modelos de Elección Discreta",
+    "total_competencies": 118,
+    "total_questions": 2770
+  },
+  "audit_version": "2.0-path-to-mastery",
+  "v1_baseline": {
+    "score": 18.8,
+    "tier": "EXCELENTE (17.0 - 20.0 pts)",
+    "dimensions": {
+      "architecture_granularity": { "score": 3.5, "max": 4.0 },
+      "assessment_quality": { "score": 4.8, "max": 5.0 },
+      "scaffolding_hints": { "score": 4.8, "max": 5.0 },
+      "instructional_alignment": { "score": 3.9, "max": 4.0 },
+      "technical_ergonomics": { "score": 1.8, "max": 2.0 }
+    },
+    "penalties_applied": []
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.2,
+      "max": 4.0,
+      "feedback": "Granularidad atómica formal con 118 micro-competencias bien pobladas (20 a 30 reactivos), pero colapso de topología y calibración ZPD en runtime: (1) Colapso ZPD total con el 100% de reactivos codificados en 'medium' (0 'easy', 0 'hard'), desactivando la función calibrateByMasteryDifficulty en sessionShuffler.ts; (2) 34 competencias carecen de prerrequisitos debido a una concatenación multicapítulo no reconciliada; (3) 11 competencias son islas flotantes completamente aisladas (grado de entrada 0 y grado de salida 0: C-24, C-25, C-27, H-18, Hab-35, C-44, H-26, C-45, C-46, C-47, C-48), que rompen la generación de repasos espaciados e interleaving (60/40 en Quiz y 55/45 en Unit Test); (4) 2 competencias de Habilidad procedimental (Hab-35 y Hab-39) carecen de todo anclaje previo."
+    },
+    "assessment_quality": {
+      "score": 1.8,
+      "max": 5.0,
+      "feedback": "Severo compromiso psicométrico y vulnerabilidad crítica de memorización: (1) Monocultivo total de reconocimiento pasivo (100% MC7, 0% FIB, 0% MS) que evalúa incluso las 41 competencias de Habilidad procedimental mediante mera selección visual; (2) Vulnerabilidad crítica de memorización visual en 19 competencias (<= 4 respuestas únicas en >= 15 reactivos), destacando 14 competencias donde el 100% de los reactivos comparten exactamente la misma clave textual (ej. Hab-10 y Hab-11 con 30 preguntas idénticas en clave); (3) 55 reactivos con distractores numéricos sintéticos derivados de multiplicadores arbitrarios (1.333x, 0.667x); (4) 105 reactivos con relleno burocrático de longitud para burlar [R-15]; (5) 269 reactivos con prefijos robóticos repetitivos."
+    },
+    "scaffolding_hints": {
+      "score": 1.2,
+      "max": 5.0,
+      "feedback": "Techo normativo crítico (<= 1.5) por envenenamiento anti-socrático activo: (1) 529 reactivos (19.10%) contienen pistas envenenadas donde la Pista 2 o 3 instruye explícitamente al estudiante a 'considerar adecuadamente' un distractor o misconception (ej. 'dividir entre n en lugar de n - K'), induciéndolo al fallo en PracticeSession.tsx y consumiendo sus 3 intentos; (2) 2,558 reactivos (92.35%) presentan pistas Mad-Libs genéricas generadas por plantilla sin valor formativo; (3) Tasa de unicidad de error_rationale de apenas 5.17% (860 explicaciones únicas para 16,620 distractores), con un 94.83% de reciclaje estático."
+    },
+    "instructional_alignment": {
+      "score": 2.1,
+      "max": 4.0,
+      "feedback": "Grave desalineación instruccional y taxonómica: (1) Colapso declarativo del 100% de los 2,770 reactivos etiquetados como 'Understand', degradando 1,230 reactivos de 41 micro-competencias de Habilidad analítica que exigen cálculo, derivación y contraste; (2) 269 reactivos contaminados con prefijos procedimentales ajenos o robóticos; (3) 2 discordancias de validación ciega de etapa 5 sin resolver (T-H-09-02_judge_1 y T-Hab-35-02_judge_1)."
+    },
+    "technical_ergonomics": {
+      "score": 1.1,
+      "max": 2.0,
+      "feedback": "Fricción ergonómica y contaminación sintética en la interfaz: (1) 552 reactivos contienen oraciones completas en prosa (>= 45 caracteres) encapsuladas dentro de \\text{...} en KaTeX, forzando white-space: nowrap y provocando desbordamiento horizontal en tarjetas de opciones móviles; (2) 160 reactivos con identificadores crudos de Python ($theta_hat$) en fórmulas KaTeX; (3) 692 reactivos activaron advertencias de variables matemáticas no interpoladas."
+    }
+  },
+  "raw_dimension_subtotal": 8.4,
+  "penalties_applied": [
+    {
+      "rule": "socratic_hint_poisoning",
+      "reason": "529 reactivos (19.10% del banco) instruyen en sus pistas a 'considerar adecuadamente' un distractor o concepción errónea, saboteando directamente la mecánica 3-strikes de PracticeSession.tsx.",
+      "deduction": 1.5
+    },
+    {
+      "rule": "answer_memorization_exploit",
+      "reason": "19 competencias permiten alcanzar 'Mastered' por memorización visual (<= 4 respuestas correctas únicas en >= 15 reactivos), destacando 14 competencias donde los 20-30 reactivos comparten una única respuesta correcta textual idéntica.",
+      "deduction": 2.0
+    }
+  ],
+  "total_deduction": 3.5,
+  "final_score": 4.9,
+  "max_score": 20.0,
+  "score_delta_v2_minus_v1": -13.9,
+  "quality_tier": "CRÍTICO (0.0 - 10.9 pts)",
+  "grade": "CRÍTICO",
+  "mastery_path_readiness": {
+    "mpri_score": 26.58,
+    "mpri_max": 100.0,
+    "mpri_tier": "MASTERY-HOSTILE (0-39): Sabotaje Cognitivo / Colapso de Andamiaje Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 0.0,
+        "max": 20.0,
+        "diagnosis": "100% de reactivos en 'medium' (0 easy, 0 hard). Motor calibrateByMasteryDifficulty 100% inoperativo en las 118 competencias. 0% de preguntas de Habilidad en niveles superiores de Bloom."
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 0.0,
+        "max": 20.0,
+        "diagnosis": "100% MC7 monocultivo sin FIB ni MS. 19 competencias vulnerables a memorización visual inmediata con 14 competencias de clave única idéntica en 100% de reactivos."
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 11.05,
+        "max": 25.0,
+        "diagnosis": "92.35% de pistas Mad-Libs boilerplate de compilador. 19.10% de reactivos con envenenamiento anti-socrático activo."
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 10.24,
+        "max": 15.0,
+        "diagnosis": "Reciclaje masivo del 94.83% de error_rationale estáticos (860 únicos en 16,620 distractores). 55 reactivos con distractores numéricos por multiplicador mágico."
+      },
+      "dag_and_interleaving_topology": {
+        "score": 0.0,
+        "max": 10.0,
+        "diagnosis": "11 competencias isla completamente aisladas (in-degree 0, out-degree 0). 34 nodos raíz sin prerrequisitos por concatenación desarticulada. 2 Habilidades sin prerrequisitos. Interleaving de repaso colapsado."
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 5.29,
+        "max": 10.0,
+        "diagnosis": "552 reactivos con desbordamiento UI por \\text{...} de prosa larga. 160 reactivos con variables crudas $theta_hat$. 269 reactivos con prefijos robóticos."
+      }
+    },
+    "student_journey_verdict": "El estudiante que ingresa a este curso se enfrenta a una experiencia hostil: cuando tropieza en Strike 1 o 2, las pistas lo inducen activamente a marcar el error; cuando logra avanzar, el motor adaptativo no ofrece desafío graduado; en 19 competencias el estudiante descubre rápidamente que basta memorizar una única fórmula para superar 30 ejercicios en segundos; y al intentar realizar repasos en Quiz o Unit Test, las islas desconectadas del grafo bloquean la articulación del conocimiento."
+  },
+  "v1_vs_v2_forensic_explanation": "En v1, el curso obtuvo 18.8/20.0 (segunda nota más alta de la plataforma) debido a linters estáticos ciegos que se limitaban a evaluar la existencia no vacía de campos clave (opt.get('text', ''), len(hints) >= 3, distractor_rationale != None) y la ausencia de subpoblación por competencia. En v2 (Path-to-Mastery), la auditoría semántica y psicométrica profunda desmantela esta ilusión: el curso presenta 529 pistas envenenadas que sabotean el límite de 3 intentos en PracticeSession.tsx, 19 competencias explotables por memorización visual (14 con clave 100% monotemática), colapso total de calibración ZPD (100% medium), 11 islas desconectadas en el DAG curricular, y 100% de monocultivo MC7 pasivo en 41 competencias de habilidad procedimental.",
+  "critical_defects": [
+    {
+      "id": "DEF-01",
+      "type": "socratic_hint_poisoning",
+      "severity": "CRITICAL",
+      "affected_items_count": 529,
+      "sample_items": ["Q-H02-105", "Q-C01-015", "Q-Hab07-386", "Q-Hab20-1299", "Q-Hab38-2436"],
+      "description": "Las pistas de compilador instruyen explícitamente al alumno: 'asegurando considerar adecuadamente: [misconception/distractor]', saboteando sus 3 intentos en la UI interactiva."
+    },
+    {
+      "id": "DEF-02",
+      "type": "answer_memorization_exploit",
+      "severity": "CRITICAL",
+      "affected_competencies_count": 19,
+      "affected_items_count": 470,
+      "sample_competencies": ["Hab-10", "Hab-11", "C-02", "C-20", "H-15", "C-34", "H-22", "H-25", "C-44", "H-26", "C-48", "C-49", "C-50", "H-27"],
+      "description": "14 competencias presentan una única respuesta correcta idéntica en el 100% de sus reactivos (20-30 preguntas), permitiendo alcanzar 'Mastered' en segundos sin procesar los enunciados."
+    },
+    {
+      "id": "DEF-03",
+      "type": "zpd_progression_collapse",
+      "severity": "CRITICAL",
+      "affected_competencies_count": 118,
+      "affected_items_count": 2770,
+      "description": "El 100% de las 118 competencias y 2,770 reactivos están codificados en dificultad 'medium', inutilizando el motor calibrateByMasteryDifficulty en sessionShuffler.ts."
+    },
+    {
+      "id": "DEF-04",
+      "type": "dag_isolated_islands",
+      "severity": "HIGH",
+      "affected_competencies_count": 11,
+      "isolated_nodes": ["C-24", "C-25", "C-27", "H-18", "Hab-35", "C-44", "H-26", "C-45", "C-46", "C-47", "C-48"],
+      "description": "11 competencias flotan con in-degree 0 y out-degree 0, desconectadas del flujo curricular e invisibles para la lógica de repaso interleaving 60/40 y 55/45."
+    },
+    {
+      "id": "DEF-05",
+      "type": "passive_recognition_monoculture",
+      "severity": "HIGH",
+      "affected_competencies_count": 41,
+      "affected_items_count": 1230,
+      "description": "41 competencias de Habilidad procedimental se evalúan 100% mediante opción múltiple MC7 pasiva, con 0% de ejercicios de generación activa FIB o discriminación condicional MS."
+    }
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "ANTI-SOCRATIC-HINT-POISONING",
+      "severity": "critical",
+      "regex_pattern": "r\"asegurando considerar adecuadamente:\\s*(?:[A-Z0-9_\\-]+|confundir|dividir|omitir|creer|\\$[^$]+\\$)\"",
+      "description": "Detecta pistas socráticas que inyectan el texto de un distractor o error conceptual precedido por 'asegurando considerar adecuadamente:', saboteando el andamiaje del estudiante.",
+      "evidence_items": ["Q-H02-105", "Q-C01-015", "Q-Hab07-386", "Q-Hab20-1299", "Q-Hab38-2436", "Q-Hab23-1478"]
+    },
+    {
+      "rule_id": "MONO-ANSWER-COMPETENCY-EXPLOIT",
+      "severity": "critical",
+      "description": "Detecta competencias con >= 15 reactivos donde la cantidad de respuestas correctas canónicas únicas es <= 1 (o <= 4), facilitando la superación por memorización visual.",
+      "evidence_items": ["Hab-10", "Hab-11", "C-02", "C-20", "H-15", "C-34", "H-22", "H-25", "C-44", "H-26", "C-48", "C-49", "C-50", "H-27"]
+    },
+    {
+      "rule_id": "ASYMMETRIC-LENGTH-PADDING-TAIL",
+      "severity": "warning",
+      "regex_pattern": "r\",\\s*(?:bajo las hipótesis del modelo|para los parámetros bajo análisis|para la muestra de datos observada|de acuerdo con la teoría econométrica|en el contexto del contraste analizado|en la formulación matricial considerada)\\.?\"",
+      "description": "Detecta sufijos burocráticos agregados mecánicamente a las opciones para inflar su longitud y evadir la regla [R-15], incluyendo concatenaciones duplicadas.",
+      "evidence_items": ["Q-Hab34-2095", "Q-C35-2154", "Q-C35-2156", "Q-Hab35-2166", "Q-Hab35-2167", "Q-Hab35-2169"]
+    },
+    {
+      "rule_id": "DISCONNECTED-DAG-ISLAND",
+      "severity": "critical",
+      "description": "Detecta competencias con grado de entrada 0 y grado de salida 0 que quedan aisladas de la navegación Up Next y deshabilitan el motor de interleaving en sessionShuffler.ts.",
+      "evidence_items": ["C-24", "C-25", "C-27", "H-18", "Hab-35", "C-44", "H-26", "C-45", "C-46", "C-47", "C-48"]
+    },
+    {
+      "rule_id": "KODING-PROSE-IN-KATEX-OVERFLOW",
+      "severity": "warning",
+      "regex_pattern": "r\"\\$(?:[^\\$]*\\\\text\\{[^\\}]{45,}\\}[^\\$]*)\\$\"",
+      "description": "Detecta oraciones en prosa de más de 45 caracteres envueltas en \\text{...} dentro de delimitadores KaTeX inline, provocando white-space: nowrap y desbordamiento en UI móvil.",
+      "evidence_items": ["Q-H02-104", "Q-H02-105", "Q-C34-2084", "Q-Hab20-1299", "Q-C47-2590"]
+    }
+  ],
+  "remediation_actions": [
+    "REMEDIACIÓN INMEDIATA (Prioridad 1): Depurar y neutralizar las 529 pistas envenenadas eliminando la inyección de distractores precedidos de 'asegurando considerar adecuadamente:' y reemplazándolas por andamiaje socrático procedimental genuino.",
+    "REMEDIACIÓN PSICOMÉTRICA (Prioridad 2): Diversificar las respuestas correctas en las 19 competencias vulnerables a memorización visual, variando valores numéricos, parámetros y formulaciones para que cada competencia cuente con al menos 6-8 respuestas canónicas distintas.",
+    "REMEDIACIÓN TOPOLÓGICA (Prioridad 3): Unificar el grafo DAG conectando las 11 competencias isla a sus fundamentos conceptuales previos y secuencias posteriores, y asignar prerrequisitos formales a las 34 competencias raíz desconectadas tras el merge multicapítulo.",
+    "REMEDIACIÓN ADAPTATIVA ZPD (Prioridad 4): Recalibrar la dificultad de los 2,770 reactivos distribuyéndolos en 3 bandas genuinas (aprox. 25% easy, 50% medium, 25% hard) para activar calibrateByMasteryDifficulty en sessionShuffler.ts, y actualizar los niveles de Bloom a Apply y Analyze en las 41 Habilidades.",
+    "REMEDIACIÓN DE MODALIDAD (Prioridad 5): Convertir al menos el 30% de los reactivos de Habilidades [Hab] a modalidades activas (Fill-In-The-Blank evaluado por mathEquivalence.ts y Multiple-Select de discriminación condicional).",
+    "REMEDIACIÓN ERGONÓMICA (Prioridad 6): Extraer las oraciones en prosa fuera de los bloques \\text{...} en KaTeX para restablecer el ajuste de línea responsivo en tarjetas de opciones móviles, y limpiar los identificadores crudos $theta_hat$."
+  ]
+}

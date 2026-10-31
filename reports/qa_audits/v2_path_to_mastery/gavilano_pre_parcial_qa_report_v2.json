@@ -1,0 +1,217 @@
+{
+  "course_metadata": {
+    "course_id": "gavilano_pre_parcial",
+    "unit_title": "Gavilano Pre Parcial (Organización Industrial y Microeconomía Aplicada)",
+    "detected_objective": "Dominio y aplicación analítica integral de los modelos fundamentales y avanzados de Organización Industrial y Microeconomía: competencia oligopólica (Cournot simétrico y con costos heterogéneos para n firmas, Bertrand homogéneo y diferenciado con sustituibilidad imperfecta, Stackelberg secuencial con inducción hacia atrás, colusión óptima en carteles y pérdida irrecuperable de eficiencia, modelo de Sweezy de curva de demanda quebrada con conjeturas asimétricas y rigidez local de precios, modelo de Hotelling de diferenciación espacial en la ciudad lineal con costos de transporte lineales y cuadráticos, modelo de Salop de ciudad circular con libre entrada y costos fijos, competencia monopolística de Spence-Dixit-Stiglitz con función de utilidad CES), taxonomía de Pigou para discriminación de precios (1er grado o perfecta, 2do grado con screening bajo asimetría informacional y restricciones de incentivos/participación, 3er grado con segmentación de submercados observables y regla de Lerner) y teoría de bienes durables (monopolio intertemporal en venta vs. alquiler, inconsistencia dinámica y conjetura de Coase).",
+    "total_competencies": 127,
+    "total_questions": 2950,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 2950
+    },
+    "audit_version": "2.0-path-to-mastery",
+    "evaluator": "Chief Psychometric & Path-to-Mastery Quality Auditor — Top's Academy",
+    "evaluation_date": "2026-10-31"
+  },
+  "v1_baseline": {
+    "score": 18.5,
+    "tier": "EXCELENTE (17.0 - 20.0 pts)",
+    "dimensions": {
+      "architecture_granularity": { "score": 4.0, "max": 4.0 },
+      "assessment_quality": { "score": 4.8, "max": 5.0 },
+      "scaffolding_hints": { "score": 3.7, "max": 5.0 },
+      "instructional_alignment": { "score": 4.0, "max": 4.0 },
+      "technical_ergonomics": { "score": 2.0, "max": 2.0 }
+    },
+    "hard_penalties": 0.0
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 2.5,
+      "max": 4.0,
+      "feedback": "Topología DAG ejemplar con 127 micro-competencias atómicas (32 Fact, 54 Concept, 41 Skill), 10 nodos raíz temáticos axiomáticos y cero ciclos o aristas invertidas. Sin embargo, sufre un colapso absoluto de calibración ZPD (Zona de Desarrollo Próximo): el 100% de los reactivos (2,950/2,950) y el 100% de las 127 competencias están rígidamente codificadas en dificultad 'medium' (0 'easy', 0 'hard'). Esto neutraliza por completo la función adaptativa 'calibrateByMasteryDifficulty' en sessionShuffler.ts, impidiendo que el motor ofrezca un andamiaje accesible al estudiante principiante o retos de dominio al avanzado. Se aplica la deducción normativa obligatoria de -1.5 pts por colapso ZPD total (techo 2.5/4.0)."
+    },
+    "assessment_quality": {
+      "score": 2.6,
+      "max": 5.0,
+      "feedback": "Severo monocultivo de reconocimiento pasivo (100% MC7, 0% FIB, 0% MS) en las 41 competencias de Habilidad [Skill] (1,230 ejercicios de cálculo procedimental), permitiendo sustitución inversa desde las opciones y vulnerando el principio de evocación activa. Se detecta una grave vulnerabilidad de memorización visual en 14 competencias (<= 4 respuestas correctas únicas en >= 15 ítems), destacando 6 competencias completas (C-15, H-11, H-15, C-31, H-25, C-45) con una única clave correcta repetida en los 20 reactivos, permitiendo alcanzar 'Mastered' sin leer el enunciado. Además, se identifican 91 reactivos con relleno artificial de longitud para evadir R-15 (ej. ', para los parámetros bajo análisis'), 15 reactivos con distractores numéricos por multiplicador mágico (1.333x, 0.667x) y bugs algebraicos en generadores paramétricos (Hab-25: Q-Hab25-2009 y Q-Hab25-2010 resuelven incorrectamente ecuaciones lineales). Deducción: -2.4 pts."
+    },
+    "scaffolding_hints": {
+      "score": 1.2,
+      "max": 5.0,
+      "feedback": "Colapso crítico del andamiaje socrático con sabotaje activo de la mecánica 3-Strikes Safeguard de PracticeSession.tsx. El 93.02% del curso (2,744 reactivos) implementa pistas sintéticas Mad-Libs generadas por compilador ('Identifique la estructura conceptual de...'), aportando información nula al estudiante bloqueado. De forma crítica, 495 reactivos (16.78%) sufren de Envenenamiento Anti-Socrático (Anti-Socratic Hint Poisoning): la Pista 2 o 3 instruye al alumno a 'asegurando considerar adecuadamente: [distractor / omisión / creencia falsa]', induciéndolo a seleccionar la opción incorrecta y quemar sus intentos. En feedback Toast, existe un reciclaje masivo del 95.03% (sólo 880 rationales únicos para 17,700 distractores). Techo normativo estricto aplicado por envenenamiento y Mad-Libs (0.8 - 1.5 pts): 1.2 / 5.0."
+    },
+    "instructional_alignment": {
+      "score": 2.3,
+      "max": 4.0,
+      "feedback": "Colapso declarativo en la taxonomía de Bloom: el 100% de los reactivos (2,950/2,950) —incluyendo los 1,230 problemas de cálculo algebraico de Habilidades [Skill]— están etiquetados de forma estática como 'Understand', ocultando la demanda cognitiva de Aplicación y Análisis. Contaminación léxica inter-dominio severa en 289 enunciados mediante prefijos robóticos inyectados desde generadores macroeconómicos o de física ('Al examinar detenidamente las condiciones de frontera', 'Considerando las ecuaciones fundamentales del régimen' en problemas de duopolio estático de Cournot o discriminación de 3er grado). Desacuerdos no reparados de jueces ciegos en Stage 5 (T-C-53-02 y T-Hab-25-02). Deducción: -1.7 pts."
+    },
+    "technical_ergonomics": {
+      "score": 1.2,
+      "max": 2.0,
+      "feedback": "KaTeX estructuralmente libre de errores sintácticos fatales (0 llaves desbalanceadas, 0 delimitadores $$$ triples), pero con severa fricción ergonómica en frontend móvil: 220 reactivos encierran oraciones completas en prosa (>= 45 caracteres) dentro de KaTeX '$\\text{...}$' forzando white-space: nowrap y rompiendo el ajuste de línea en tarjetas de selección. Adicionalmente, se detectan 121 reactivos con residuos de variables o símbolos matemáticos sin interpolar en opciones y pistas. Deducción: -0.8 pts."
+    }
+  },
+  "raw_subtotal": 9.8,
+  "penalties_applied": [
+    {
+      "rule": "socratic_hint_poisoning",
+      "reason": "495 reactivos (16.78% >= 5% umbral) sufren de envenenamiento anti-socrático: la Pista 2 o 3 instruye al alumno a 'asegurando considerar adecuadamente: [distractor / error / omisión]', saboteando directamente el límite de 3 intentos de PracticeSession.tsx.",
+      "deduction": 1.5
+    },
+    {
+      "rule": "answer_memorization_exploit",
+      "reason": "14 competencias (280 reactivos) presentan <= 4 claves correctas únicas en >= 15 reactivos, destacando 6 competencias (C-15, H-11, H-15, C-31, H-25, C-45) con exactamente 1 única clave correcta repetida en el 100% de sus preguntas, permitiendo alcanzar 'Mastered' por memorización visual ciega.",
+      "deduction": 2.0
+    }
+  ],
+  "total_deduction": 3.5,
+  "final_score": 6.3,
+  "max_score": 20.0,
+  "score_delta_v2_minus_v1": -12.2,
+  "quality_tier": "CRÍTICO (0.0 - 10.9 pts)",
+  "mastery_path_readiness": {
+    "mpri_score": 39.54,
+    "mpri_max": 100.0,
+    "mpri_tier": "MASTERY-HOSTILE (0-39): Sabotaje Cognitivo / Colapso de Andamiaje Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": { "score": 0.0, "max": 20.0 },
+      "retrieval_modality_and_anti_gaming": { "score": 0.0, "max": 20.0 },
+      "socratic_scaffolding_lifeline": { "score": 11.32, "max": 25.0 },
+      "diagnostic_remediation_alignment": { "score": 10.58, "max": 15.0 },
+      "dag_and_interleaving_topology": { "score": 10.0, "max": 10.0 },
+      "cognitive_ergonomics_and_framing": { "score": 7.64, "max": 10.0 }
+    },
+    "student_journey_verdict": "El estudiante que interactúa con este curso experimenta una grave desarticulación formativa: (1) La ausencia total de bandas 'easy' y 'hard' colapsa la calibración ZPD en sessionShuffler.ts; (2) El monocultivo 100% MC7 en 41 Habilidades fomenta la sustitución inversa sin forzar evocación activa numérica; (3) Si el estudiante tropieza y recurre a las pistas socráticas (PracticeSession.tsx), en el 93% de los casos recibe plantillas Mad-Libs vacuas, y en 495 reactivos la pista le instruye activamente a cometer el error del distractor, quemando sus 3 strikes; (4) En 6 competencias puede superar los tests pulsando repetidamente la misma tecla gracias a la nula entropía de claves; (5) En dispositivos móviles, las tarjetas de opciones se desbordan horizontalmente por oraciones completas atrapadas en $\\text{...}$."
+  },
+  "v1_vs_v2_forensic_explanation": {
+    "why_v1_scored_18_5": "La auditoría v1 operaba bajo un modelo estático y superficial de conteo de campos que sufría de un bug de extracción: evaluaba opt.get('text', '') en lugar de opt['content']. Como 'text' no existía en el esquema de Top's Academy, las opciones aparecían como cadenas vacías, imposibilitando la detección de relleno artificial de longitud, desbordamientos de KaTeX en prosa, multiplicadores mágicos o pistas test-wise. Además, v1 validaba únicamente la presencia de len(hints) >= 3 y coverage == 100% sin analizar la semántica ni verificar si las pistas contenían Mad-Libs sintéticos o envenenamiento conceptual. v1 ignoró la ausencia de calibración ZPD, la falta de evocación activa en Habilidades y el exploit de memorización visual.",
+    "why_v2_scores_6_3": "Path-to-Mastery v2.0 simula el viaje interactivo real del estudiante a través del motor de ejecución de la plataforma (sessionShuffler.ts, PracticeSession.tsx, FeedbackToast.tsx, mathEquivalence.ts). Al evaluar el contenido real de 'content', descubre 495 reactivos con pistas envenenadas que sabotean los 3 intentos del alumno (-1.5 pts penalización dura), 14 competencias vulnerables a memorización visual con 6 competencias de clave única constante (-2.0 pts penalización dura), colapso total de ZPD en las 127 competencias (-1.5 pts en D1), monocultivo 100% MC7 (-1.2 pts en D2) y 93% de pistas Mad-Libs (-3.8 pts en D3). La calificación final de 6.3/20.0 y MPRI de 39.54/100 reflejan la realidad pedagógica: el curso es actualmente hostil para el aprendizaje adaptativo autónomo y requiere refactorización de compilador."
+  },
+  "critical_defects": [
+    {
+      "id": "DEF-01",
+      "type": "anti_socratic_hint_poisoning",
+      "severity": "critical",
+      "affected_items_count": 495,
+      "description": "Pistas que inducen al estudiante a seleccionar distractores utilizando la frase 'asegurando considerar adecuadamente: [distractor/error]'.",
+      "evidence": [
+        "Q-C02-085 (Pista 2: 'asegurando considerar adecuadamente: \\frac{\\partial R_i}{\\partial Q_{-i}} > 0 \\implies \\text{Sustitutos estratégicos}')",
+        "Q-Hab41-2901 (Pista 2: 'asegurando considerar adecuadamente: \\text{El monopolista debe diseñar un menú no lineal para que los mercados se autoseleccionen}')",
+        "Q-Hab26-2032 (Pista 2: 'asegurando considerar adecuadamente: omitir la vinculación formal entre la regla de Lerner individual y la comparación analítica...')",
+        "Q-H01-012 (Pista 2: 'asegurando considerar adecuadamente: A_i = \\mathbb{R}_+ \\text{ con variable } p_i')"
+      ]
+    },
+    {
+      "id": "DEF-02",
+      "type": "answer_memorization_exploit_constant_keys",
+      "severity": "critical",
+      "affected_competencies_count": 14,
+      "description": "Competencias con <= 4 claves únicas en 20 reactivos, con 6 competencias que tienen una única clave repetida 20 veces consecutivas.",
+      "evidence": [
+        "C-15 (1 clave única en 20 reactivos)",
+        "H-11 (1 clave única en 20 reactivos)",
+        "H-15 (1 clave única en 20 reactivos)",
+        "C-31 (1 clave única en 20 reactivos)",
+        "H-25 (1 clave única en 20 reactivos)",
+        "C-45 (1 clave única en 20 reactivos)"
+      ]
+    },
+    {
+      "id": "DEF-03",
+      "type": "zpd_calibration_collapse",
+      "severity": "high",
+      "affected_items_count": 2950,
+      "description": "100% de los reactivos codificados en 'medium' y 'Understand', atotando la progresión adaptativa en sessionShuffler.ts.",
+      "evidence": [
+        "127 de 127 competencias sin banda 'easy' ni 'hard'",
+        "1,230 ejercicios de Habilidad [Skill] etiquetados como 'Understand' en lugar de 'Apply'/'Analyze'"
+      ]
+    },
+    {
+      "id": "DEF-04",
+      "type": "generator_arithmetic_corruption",
+      "severity": "high",
+      "affected_items_count": 2,
+      "description": "Bugs en el resolvedor de ecuaciones de plantillas que producen soluciones numéricamente falsas en Hab-25 y causan discordancias en Stage-5 Blind Judges.",
+      "evidence": [
+        "Q-Hab25-2009 (CMg1 = 38 + 43(43) = 1887; CMg2 = 10 + 47*q2 = 1887 => q2* = 39.93, la plantilla afirma falsamente q2* = 38)",
+        "Q-Hab25-2010 (CMg1 = 16 + 44(44) = 1952; CMg2 = 58 + 16*q2 = 1952 => q2* = 118.375, la plantilla afirma falsamente q2* = 30)",
+        "T-Hab-25-02_judge_1 y T-C-53-02_judge_1 (desacuerdos no resueltos de jueces ciegos en Stage 5)"
+      ]
+    },
+    {
+      "id": "DEF-05",
+      "type": "cross_domain_robotic_prefixes",
+      "severity": "medium",
+      "affected_items_count": 289,
+      "description": "Enunciados con prefijos procedentes de plantillas ajenas (física, EDP, crecimiento de Solow) inyectados mecánicamente.",
+      "evidence": [
+        "Q-H01-013 ('Al examinar detenidamente las condiciones de frontera, resuelva: En un oligopolio de Cournot...')",
+        "Q-H01-012 ('Considerando las ecuaciones fundamentales del régimen...')",
+        "Q-C53-2900 ('Considerando las ecuaciones fundamentales del régimen, obtenga...')",
+        "Q-Hab41-2901 ('Teniendo en consideración los fundamentos del equilibrio, determine...')"
+      ]
+    },
+    {
+      "id": "DEF-06",
+      "type": "prose_katex_overflow",
+      "severity": "medium",
+      "affected_items_count": 220,
+      "description": "Oraciones completas en prosa (>= 45 caracteres) envueltas en $\\text{...}$ que provocan desbordamiento horizontal en pantallas móviles.",
+      "evidence": [
+        "Q-C02-085 ($\\text{Bienes sustitutos en consumo} \\Rightarrow \\text{Complementos}$)",
+        "Q-C02-085 ($\\text{Signo de } R'_{2} \\text{ gobernado por } 2P'(Q) - C''_{2}(q_{2})$)",
+        "Q-H02-104",
+        "Q-H18-1249"
+      ]
+    }
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "anti_socratic_hint_poisoning_linter",
+      "severity": "critical",
+      "regex_pattern": "asegurando considerar adecuadamente:\\s*(\\[|\\$|omitir|ignorar)",
+      "description": "Detecta pistas donde se instruye al alumno a considerar como premisa válida un distractor o error conceptual deliberado, induciendo la pérdida de intentos en la plataforma interactiva.",
+      "evidence_items": [
+        "Q-C02-085",
+        "Q-Hab41-2901",
+        "Q-Hab26-2032",
+        "Q-H01-012"
+      ]
+    },
+    {
+      "rule_id": "constant_answer_entropy_linter",
+      "severity": "critical",
+      "regex_pattern": "len(set(correct_answers)) == 1 and len(items) >= 15",
+      "description": "Detecta competencias enteras donde el 100% de los reactivos comparten idéntica letra de respuesta correcta (ej. todas 'A' o todas 'D'), permitiendo gaming por pulsación repetida.",
+      "evidence_items": [
+        "Q-C15-701",
+        "Q-H11-741",
+        "Q-H15-971",
+        "Q-C31-1581",
+        "Q-H25-1741",
+        "Q-C45-2421"
+      ]
+    },
+    {
+      "rule_id": "cross_domain_template_contamination_linter",
+      "severity": "warning",
+      "regex_pattern": "(condiciones de frontera|ecuaciones fundamentales del régimen|teoría econométrica)",
+      "description": "Identifica frases o prefijos robóticos fuera de contexto disciplinar originados por plantillas de compilación cruzadas de otros cursos.",
+      "evidence_items": [
+        "Q-H01-013",
+        "Q-H01-012",
+        "Q-C53-2900",
+        "Q-Hab25-2009"
+      ]
+    }
+  ],
+  "remediation_actions": [
+    "Depuración inmediata de las 495 pistas envenenadas: Reemplazar el patrón 'asegurando considerar adecuadamente: [distractor]' por andamiaje socrático constructivo que advierta sobre el error sin prescribirlo.",
+    "Aleatorización y re-balanceo de claves correctas en las 14 competencias de baja entropía: Barajar la posición de las alternativas para garantizar entropía uniforme (2-3 ocurrencias de cada letra A-G por cada 20 ítems) y eliminar el exploit de memorización.",
+    "Calibración tridimensional ZPD en las 127 competencias: Re-etiquetar el banco asignando 30% easy (fundamentos conceptuales/aritmética simple), 50% medium (procedimientos estándar) y 20% hard (problemas de frontera/estática comparativa no lineal) para activar calibrateByMasteryDifficulty.",
+    "Corrección de los generadores aritméticos en Hab-25: Corregir las fórmulas de igualación de costos marginales en T-Hab-25-02 para que q2* sea exactamente entero y consistente con CMg1(q1*) = CMg2(q2*).",
+    "Conversión tipológica a Active Recall: Transformar al menos el 25% de los reactivos de las 41 competencias de Habilidad [Skill] (mínimo 300 preguntas) a formato Fill-In-The-Blank (FIB) evaluados mediante mathEquivalence.ts.",
+    "Saneamiento ergonómico KaTeX: Extraer las oraciones en prosa de los delimitadores $\\text{...}$ en los 220 reactivos afectados para permitir salto de línea natural y eliminar los 289 prefijos robóticos de enunciado."
+  ]
+}
