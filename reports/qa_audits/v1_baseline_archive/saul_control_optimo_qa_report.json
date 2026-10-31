@@ -1,0 +1,72 @@
+{
+  "course_metadata": {
+    "course_id": "saul_control_optimo",
+    "unit_title": "Saul Control Optimo (Cálculo de Variaciones y Control Óptimo)",
+    "detected_objective": "Dominio y aplicación analítica integral del cálculo de variaciones y control óptimo en tiempo continuo para economía: funcionales clásicos (Lagrange, Mayer, Bolza), condición de Euler de primer orden, condición de Legendre de segundo orden, suficiencia global mediante análisis Hessiano, primeras integrales y conservación de Beltrami para sistemas autónomos, condiciones de transversalidad para frontera con estado libre y tiempo libre, y modelos dinámicos macroeconómicos y microeconómicos (Monopolio de Evans y desinflación óptima de Taylor 1989).",
+    "total_competencies": 15,
+    "total_questions": 350,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 350
+    },
+    "platform_status": "ACTIVO",
+    "evaluator": "Course QA Auditor — Top's Academy",
+    "evaluation_date": "2026-10-25"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Excelente arquitectura curricular modular y granular. El curso estructura 15 micro-competencias con delimitación clara y balance cognitivo riguroso: 3 Hechos [Fact] (20.0%), 7 Conceptos [Concept] (46.7%) y 5 Habilidades [Skill] (33.3%). El Grafo Acíclico Dirigido (DAG) modela de manera impecable la jerarquía de prerrequisitos, partiendo del nodo axiomático raíz C-01 ('Funcional y Trayectorias Admisibles en Tiempo Continuo', sin prerrequisitos) y desplegando dependencias progresivas sin ciclos. Cada competencia cuenta con una densidad sustancial de 20 reactivos (Hechos y Conceptos) a 30 reactivos (Habilidades), acumulando un robusto banco de 350 ítems que garantiza una cobertura exhaustiva según principios de Mastery Learning."
+    },
+    "assessment_quality": {
+      "score": 4.7,
+      "max": 5.0,
+      "feedback": "Calidad psicométrica sobresaliente en diseño de reactivos antiazar. El 100% de los reactivos (350/350) se implementa en formato de opción múltiple de 7 alternativas (A-G), reduciendo la probabilidad de acierto por conjetura a solo 14.3%. Se evaluaron 2,100 distractores con una cobertura del 100.0% de rationales diagnósticos (error_rationale), modelando fielmente conceptos erróneos de la literatura variacional (confusión entre optimización estática y dinámica, omisión de la derivada F_x, errores de integración por partes en el lema fundamental, inversión de signos en la conservación de Beltrami, violación de no-negatividad en tiempo libre t1 y alteración de condiciones de segundo orden). Cero distractores delatores (telltale = 0) y cero fugas de respuestas. Se aplica una deducción menor (-0.3 pt) por homogeneidad en la tipología de reactivos (100% opción múltiple de 7 alternativas, sin inclusión de fill-in-the-blank o multiple select)."
+    },
+    "scaffolding_hints": {
+      "score": 3.8,
+      "max": 5.0,
+      "feedback": "Andamiaje formativo funcional y detallado en la gran mayoría del banco, pero con una falla identificada en el Loop de Verificación Semántica: el 85.7% de los reactivos (300/350 en 13 competencias) posee 3 pistas socráticas escalonadas (Conceptual -> Procedimental -> Operativa/Cálculo) y soluciones detalladas matemáticamente rigurosas con prevención de errores comunes. Sin embargo, en dos competencias completas, Hab-01 ('Resolución del Problema Básico Variacional con Extremos Fijos', 30 reactivos) y C-06 ('Condición de Transversalidad para Instante Final Libre', 20 reactivos), totalizando 50 reactivos (14.3% del banco), el arreglo 'hints' contiene únicamente códigos literales de prerrequisitos (ej. ['C-02', 'H-02', 'C-03'] y ['C-02', 'H-03', 'Hab-01']) en lugar de instrucciones socráticas en prosa. Esto eludió el linter determinista estático (que solo verifica len >= 3) pero constituye un defecto pedagógico real que amerita una deducción de -1.2 pts."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación pedagógica e instruccional perfecta. Existe correspondencia biunívoca absoluta entre los objetivos formativos declarados, las definiciones analíticas y los reactivos de evaluación. El curso cubre el núcleo del cálculo de variaciones clásico y sus extensiones de control óptimo económico (problemas de Bolza/Lagrange, EDOs de Euler de segundo orden, condiciones de Legendre, suficiencia por concavidad/convexidad del Hessiano multivariado, primeras integrales, transversalidad con fronteras móviles, modelo de Evans y política monetaria de Taylor). Se verifica cero preguntas huérfanas y cero contaminación inter-dominio, con un anclaje preponderante en niveles de Aplicación y Análisis de la taxonomía de Bloom."
+    },
+    "technical_ergonomics": {
+      "score": 2.0,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica y compilabilidad KaTeX impecables. Cero llaves desbalanceadas, cero delimitadores triples ($$$), cero dobles llaves espurias ({{...}}) y cero delimitadores abiertos sin cierre. Todas las expresiones matemáticas, matrices bmatrix, derivadas temporales con notación de punto (\\dot{x}, \\ddot{x}), integrales y fracciones se compilan de manera limpia y sin errores de parseo en el motor de renderizado de Top's Academy. Prosa en español académico neutro, fluida y precisa."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 18.5,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "remediation_actions": [
+    "Aprobación formal para despliegue en plataforma interactiva Top's Academy, certificada en Tier EXCELENTE (18.5 / 20.0).",
+    "Remediación de Pistas en Hab-01 y C-06: Regenerar las 3 pistas escalonadas en los 50 reactivos afectados (Q-Hab01-101 a Q-Hab01-130 y Q-C06-251 a Q-C06-270) reemplazando los arrays con códigos de prerrequisitos (['C-02', 'H-02', 'C-03'] y ['C-02', 'H-03', 'Hab-01']) por andamiaje socrático real (Pista 1: Conceptual, Pista 2: Procedimental, Pista 3: Cálculo operativo).",
+    "Incorporación del linter preventivo 'prerequisite_id_as_hint_linter' en la suite de linters deterministas de StandardizedAuditEngine para bloquear futuros pipelines donde se filtren IDs de dependencias en el campo 'hints'.",
+    "Exploración futura de diversificación tipológica de reactivos para complementar el formato MC7 con reactivos numéricos directos (fill-in-the-blank) en etapas avanzadas de maestría."
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "prerequisite_id_as_hint_linter",
+      "severity": "high",
+      "description": "Detecta reactivos donde el arreglo de pistas ('hints') contiene códigos de identificación de competencias o prerrequisitos (ej. 'C-02', 'H-01', 'Hab-03') en lugar de texto explicativo socrático. Evita que arreglos de dependencias sean inyectados por error como andamiaje pedagógico visible al estudiante.",
+      "regex_pattern": "^(?:C|H|Hab|Fact|Concept|Skill)-\\d+$",
+      "affected_items_count": 50,
+      "affected_competencies": [
+        "Hab-01",
+        "C-06"
+      ],
+      "evidence_items": [
+        "Q-Hab01-101",
+        "Q-Hab01-102",
+        "Q-C06-251",
+        "Q-C06-252"
+      ],
+      "proposed_detection_logic": "Flag item if any hint string matches regex r'^(?:C|H|Hab|Fact|Concept|Skill)-\\d+$' or len(hint.strip()) < 15 without alphanumeric whitespace phrases."
+    }
+  ],
+  "platform_status": "ACTIVO"
+}

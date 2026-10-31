@@ -1,0 +1,91 @@
+{
+  "course_metadata": {
+    "course_id": "estadistica_3_pre_parcial",
+    "unit_title": "Estadistica 3 Pre Parcial",
+    "detected_objective": "Dominio y aplicación analítica integral de modelos econométricos de regresión lineal simple y múltiple, propiedades algebraicas y estadísticas de MCO (teorema de Gauss-Markov, insesgadez, consistencia y eficiencia BLUE), análisis geométrico de proyección y residuos, inferencia estadística (contrastes t y F, descomposiciones ANOVA), diagnóstico y tratamiento de violaciones a los supuestos clásicos (multicolinealidad, heterocedasticidad, autocorrelación de errores), formas funcionales, quiebres estructurales y endogeneidad.",
+    "total_competencies": 93,
+    "total_questions": 2190
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Sobresaliente arquitectura curricular con 93 micro-competencias atómicas perfectamente delimitadas y balance cognitivo homogéneo entre Hechos (24, 25.8%), Conceptos (36, 38.7%) y Habilidades (33, 35.5%). Cada competencia cuenta con exactamente entre 20 (Hechos y Conceptos) y 30 reactivos (Habilidades), totalizando 2,190 preguntas sin ninguna competencia subpoblada. El análisis semántico del grafo DAG confirmó que las 13 competencias basales con dependencias vacías corresponden a los puntos de entrada legítimos (nodos raíz) de los módulos temáticos de econometría, articulando rutas de aprendizaje sólidas y coherentes."
+    },
+    "assessment_quality": {
+      "score": 3.2,
+      "max": 5.0,
+      "feedback": "Excepcional cobertura diagnóstica con 100.0% de error_rationales pedagógicos en los 13,140 distractores evaluados (6 distractores por ítem en 2,190 reactivos MC7), capturando errores teóricos auténticos (desigualdad de Jensen en errores estándar, confusión de grados de libertad, inversión de matrices no conmutativas, etc.). Cero fugas de respuesta (Answer Leaks) y cero distractores delatores. Sin embargo, se aplica una deducción de -1.5 pts por presencia de Phantom Keying en la competencia Hab-11 (reactivos Q-Hab11-721 y Q-Hab11-722), donde distractores clonan la respuesta correcta anteponiendo prefijos sintéticos ('Opción alterna 5:', 'Opción alterna 6:'), y una deducción menor de -0.3 pts por monocultivo del formato de opción múltiple de 7 alternativas sin inclusión de ítems multimodales (MS o FIB)."
+    },
+    "scaffolding_hints": {
+      "score": 3.8,
+      "max": 5.0,
+      "feedback": "El 98.54% del curso (2,158 reactivos) cuenta con andamiaje socrático progresivo de 3 niveles en prosa fluida y rigurosa (Conceptual -> Procedimental -> Consistencia dimensional), y el 100% de los reactivos posee soluciones detalladas completas. No obstante, se detectó un cluster aislado de 32 reactivos (1.46%) en las competencias Hab-06, Hab-08, Hab-19 y Hab-20 con pistas deficientes tipo palabras clave aisladas o stub keywords (e.g. ['Mco', 'Insesgadez', 'Gauss-markov'], ['Arch', 'Heterocedasticidad']). Conforme a la rúbrica normativa, se aplica una deducción estipulada de -1.2 pts por pistas deficientes aisladas."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación instruccional impecable (4.0/4.0). Congruencia semántica absoluta entre el título del curso, las descripciones de las 93 micro-competencias y los reactivos asociados. Cero preguntas huérfanas, sin contaminación cruzada inter-dominio y con riguroso énfasis en niveles taxonómicos superiores de Bloom (Aplicación empírica en Habilidades y Análisis deductivo en Conceptos)."
+    },
+    "technical_ergonomics": {
+      "score": 1.8,
+      "max": 2.0,
+      "feedback": "Sintaxis KaTeX completamente limpia y compilable al 100%: cero delimitadores desbalanceados, cero triples delimitadores y notación matemática formal preservada. El Loop de Verificación Semántica demostró que el 100% de las 464 advertencias de variables no interpoladas fueron falsos positivos del linter estático sobre entornos canónicos de matrices KaTeX (\\begin{pmatrix}), subíndices econométricos estándar (_{BP}, _{LB}, _{MCO}, _{White}), macros de texto (\\text{Tol}, \\text{FIV}) y acentos matemáticos (\\hat{u}, \\bar{X}, \\bar{Y}). Deducción menor (-0.2 pts) por ligera redundancia tipográfica en cláusulas de cierre de ciertos distractores numéricos."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 16.8,
+  "quality_tier": "ACEPTABLE (14.0 - 16.9 pts)",
+  "remediation_actions": [
+    "Reescribir los distractores con Phantom Keying en los reactivos Q-Hab11-721 y Q-Hab11-722 de la competencia Hab-11, eliminando los prefijos 'Opción alterna 5:' y 'Opción alterna 6:' y sustituyéndolos por formulaciones algebraicas con errores conceptuales genuinos (e.g. transposición errónea del sándwich de varianza o colapso dimensional incorrecto).",
+    "Transformar las pistas tipo stub keywords en los 32 reactivos de las competencias Hab-06 (Q-Hab06-371 a 378), Hab-08 (Q-Hab08-451 a 458), Hab-19 (Q-Hab19-1301 a 1308) y Hab-20 (Q-Hab20-1331 a 1338), expandiéndolas a prosa socrática progresiva de 3 pasos (Conceptual, Procedimental y Chequeo).",
+    "Diversificar la tipología de reactivos en iteraciones futuras del curso, incorporando ítems de selección múltiple (MS) y completamiento numérico directo (fill-in-the-blank) para reducir la dependencia exclusiva de MC7.",
+    "Refinar las cláusulas de cierre en distractores numéricos para mitigar la repetición de frases estándar como ', para los parámetros bajo análisis' o ', de acuerdo con la teoría econométrica'."
+  ],
+  "remediation_priorities": [
+    {
+      "priority": "HIGH",
+      "competency_id": "Hab-11",
+      "issue_type": "phantom_keying",
+      "affected_items_count": 2,
+      "action": "Eliminar prefijos 'Opción alterna X:' y diferenciar matemáticamente los distractores de la clave en reactivos Q-Hab11-721 y Q-Hab11-722."
+    },
+    {
+      "priority": "MEDIUM",
+      "competency_id": "Hab-06, Hab-08, Hab-19, Hab-20",
+      "issue_type": "stub_hints",
+      "affected_items_count": 32,
+      "action": "Redactar andamiaje socrático completo en prosa de 3 niveles para los 32 reactivos afectados."
+    },
+    {
+      "priority": "LOW",
+      "competency_id": "GLOBAL",
+      "issue_type": "format_monoculture",
+      "affected_items_count": 2190,
+      "action": "Incorporar variedad de reactivos multimodal (MS y FIB) en futuras versiones."
+    }
+  ],
+  "discovered_lint_rules": [
+    {
+      "rule_id": "exclude_latex_matrix_and_text_from_template_linter",
+      "target_linter": "uninterpolated_math_variable_linter",
+      "pattern_description": "Excluir entornos estándar de matrices LaTeX (pmatrix, bmatrix, vmatrix, matrix, array) y comandos de formato de texto o nombres de operadores (\\text{...}, \\operatorname{...}) del regex de detección de variables de plantilla sin interpolar.",
+      "regex_patch": "r'(?<!\\\\begin\\{)(?<!\\\\end\\{)(?<!\\\\text\\{)(?<!\\\\operatorname\\{)\\{([a-zA-Z_][a-zA-Z0-9_]*)\\}(?!\\$)'",
+      "rationale": "Evita más de 200 falsos positivos en cursos avanzados de econometría y álgebra matricial donde \\begin{pmatrix} o \\text{Tol} / \\text{FIV} son sintaxis KaTeX canónica."
+    },
+    {
+      "rule_id": "exclude_econometric_subscripts_from_template_linter",
+      "target_linter": "uninterpolated_math_variable_linter",
+      "pattern_description": "Excluir subíndices compuestos entre llaves inmediatamente precedidos por guion bajo (_{BP}, _{LB}, _{MCO}, _{White}, _{aux}, _{calc}) que representan acrónimos o nombres de contrastes econométricos.",
+      "regex_patch": "r'(?<!_)\\{([A-Z]{2,5}|[a-z]{2,5})\\}'",
+      "rationale": "Evita más de 180 falsos positivos en notación econométrica estandarizada como LM_{BP}, Q_{LB}, \\hat{\\beta}_{MCO} o \\operatorname{se}_{White}."
+    },
+    {
+      "rule_id": "strip_synthetic_prefixes_before_cloned_distractor_check",
+      "target_linter": "cloned_distractor_value_linter",
+      "pattern_description": "Normalizar el contenido de las opciones removiendo prefijos sintéticos artificiales como '^Opción alterna \\d+:\\s*' antes de evaluar la igualdad o distancia de Levenshtein contra la respuesta correcta.",
+      "regex_patch": "re.sub(r'^(Opción alterna \\d+:\\s*|Alternativa \\d+:\\s*)', '', option_content)",
+      "rationale": "Permite al detector de Phantom Keying atrapar clones de la respuesta correcta que fueron ocultados detrás de prefijos sintéticos durante la generación paramétrica de distractores."
+    }
+  ]
+}
