@@ -1,0 +1,53 @@
+{
+  "course_metadata": {
+    "course_id": "saul_control_optimo_vmapreduce2",
+    "unit_title": "Saul Control Optimo vMapReduce2 (Cálculo de Variaciones y Control Óptimo)",
+    "detected_objective": "Dominio y aplicación analítica integral de optimización dinámica y control óptimo en tiempo continuo: funcionales de Lagrange, Mayer y Bolza, ecuaciones de Euler-Lagrange, condición de Legendre, condiciones de transversalidad para frontera y tiempo libre, conservación de Beltrami y modelos de control óptimo.",
+    "total_competencies": 18,
+    "total_questions": 420,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 220,
+      "fill_in_the_blank": 200
+    },
+    "platform_status": "ACTIVO",
+    "evaluator": "Course QA Auditor — Top's Academy",
+    "evaluation_date": "2026-11-01"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Excelente arquitectura curricular modular con granularidad estándar calibrada mediante MapReduce. El curso estructura 18 competencias con estricto balance cognitivo: 5 Hechos [Fact] (27.8%), 7 Conceptos [Concept] (38.9%) y 6 Habilidades [Skill] (33.3%). El Grafo Acíclico Dirigido (DAG) conecta las 18 competencias a partir del nodo raíz axiomático C-01 ('Concepto de funcional y trayectoria admisible en optimización dinámica'), garantizando componentes conexos = 1 y tasa de raíces = 0.055 <= 0.20 sin islas conceptuales huérfanas. Densidad de 20 reactivos por Hecho/Concepto y 30 reactivos por Habilidad, acumulando 420 reactivos en total."
+    },
+    "assessment_quality": {
+      "score": 5.0,
+      "max": 5.0,
+      "feedback": "Calidad psicométrica sobresaliente y balance multimodal de reactivos. Distribución bimodal de alta discriminación: 220 reactivos de opción múltiple con 7 alternativas (MC7, 52.4%) y 200 reactivos numéricos directos de respuesta corta (Fill-In-The-Blank, 47.6%), erradicando la conjetura pasiva y exigiendo computación operativa activa en las habilidades prácticas. Se evaluaron 1,320 distractores con cobertura diagnóstica del 100.0% en error_rationale, modelando confusiones clásicas del cálculo variacional (confusión entre derivada parcial y temporal, inversión de signos en el Lagrangiano, omisión de la velocidad de estado, errores en condiciones de Legendre y transversalidad). Cero distractores delatores (telltale = 0), cero distractores clonados y cero fugas de respuestas."
+    },
+    "scaffolding_hints": {
+      "score": 5.0,
+      "max": 5.0,
+      "feedback": "Andamiaje formativo socrático óptimo y soluciones rigurosas. El 100% de los reactivos (420/420) implementa entre 3 y 5 pistas escalonadas (Conceptual -> Procedimental -> Cálculo Operativo), con 100% de pistas socráticas genuinas (cero pistas genéricas, cero fugas de respuesta en pistas y cero placeholders de f-strings corruptos). Soluciones analíticas completas con derivaciones paso a paso y advertencias explícitas sobre ideas erróneas comunes."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación instruccional y cobertura de la Zona de Desarrollo Próximo (ZPD) impecable. Las 18 competencias cuentan con progresión tri-banda ('easy', 'medium', 'hard') bajo el contrato Form-B (144 easy, 144 medium, 132 hard). Distribución de Bloom anclada fuertemente en niveles cognitivos de orden superior: 134 Apply y 66 Analyze (representando el 66.7% de las preguntas de habilidades prácticas), complementados con 94 Remember y 126 Understand. Cero preguntas huérfanas y 100% de concordancia con la teoría de control óptimo."
+    },
+    "technical_ergonomics": {
+      "score": 1.9,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica y compilabilidad KaTeX de alta calidad. Cero delimitadores desbalanceados, cero triples delimitadores ($$$), cero dobles llaves erróneas ({{...}}) y cero residuos de variables @var@. Deducción mínima de -0.1 pt debido a 20 reactivos con fragmentos matemáticos menores en texto plano fuera de delimitadores $, sin impacto en la legibilidad ni en la ejecución de la plataforma."
+    }
+  },
+  "penalties_applied": [],
+  "final_score": 19.9,
+  "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY",
+  "remediation_actions": [
+    "Certificación plena para despliegue en plataforma interactiva Top's Academy con Nivel PLATINUM (19.9 / 20.0).",
+    "Monitoreo opcional en futuras iteraciones de fragmentos matemáticos menores en texto plano identificados por el linter estático de ergonomía.",
+    "El banco de 420 reactivos y 18 competencias cumple con la totalidad de los estándares Quality Matters, OSCQR y Mastery Learning."
+  ],
+  "discovered_lint_rules": [],
+  "platform_status": "ACTIVO"
+}

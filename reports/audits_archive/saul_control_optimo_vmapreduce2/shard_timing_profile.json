@@ -1,0 +1,590 @@
+{
+  "course_id": "saul_control_optimo_vmapreduce2",
+  "conversation_id": "dbb28c0b-d5dd-4b1d-9d37-da46e9301eb8",
+  "run_dir": "reports\\c2c_audits\\20261101_124508_saul_control_optimo_vmapreduce2_dbb28c0b",
+  "total_shards": 12,
+  "median_wall_time_s": 326.0,
+  "gold_standard_cleanroom": {
+    "shard_id": "shard_07",
+    "label": "Shard Author shard_07",
+    "conversation_id": "2e69541a-a3c3-436c-992b-f729ea383941",
+    "wall_time_s": 253.0,
+    "pre_1st_compile_s": 249.0,
+    "post_1st_compile_s": 15.0,
+    "compile_runs": 1,
+    "compile_fails": 0,
+    "edits_count": 0,
+    "turns_count": 7,
+    "active_tokens": 108064,
+    "thinking_tokens": 6468,
+    "competencies_count": 2,
+    "error_codes": [],
+    "error_snippets": [],
+    "has_micro_loop": false,
+    "micro_loop_reason": "",
+    "cross_course_explorations": [],
+    "first_thinking_snippet": "I'm thinking through how to approach this.   "
+  },
+  "top_5_stragglers": [
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "0fb96004-607a-48a8-a972-1d297068780f",
+      "wall_time_s": 431.0,
+      "pre_1st_compile_s": 294.0,
+      "post_1st_compile_s": 146.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 14,
+      "active_tokens": 169333,
+      "thinking_tokens": 11230,
+      "competencies_count": 2,
+      "error_codes": [
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_08'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   Initial assessment suggests `author_XX.json` contains the complete specification for the task and needs processing to generate `<shard_id>_data.py`. The system seems to forbid reading `pre_shard_manifest.j"
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "04e4f666-8813-4eb5-ac0b-11b8b290dbee",
+      "wall_time_s": 416.0,
+      "pre_1st_compile_s": 227.0,
+      "post_1st_compile_s": 192.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 3,
+      "turns_count": 14,
+      "active_tokens": 189503,
+      "thinking_tokens": 10662,
+      "competencies_count": 1,
+      "error_codes": [
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_03'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial focus is on the work order, specifically authoring a Python file. The file path and commands for reading, writing, and compiling are noted. Need to create `shard_03_data.py` and address any compiler errors.   "
+    },
+    {
+      "shard_id": "shard_11",
+      "label": "Shard Author shard_11",
+      "conversation_id": "cf985661-84a3-497e-aacf-5bc022de3033",
+      "wall_time_s": 397.0,
+      "pre_1st_compile_s": 324.0,
+      "post_1st_compile_s": 80.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 14,
+      "active_tokens": 174258,
+      "thinking_tokens": 10677,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "NameError: name 'ver_c07_1' is not defined\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_11'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial assessment: The task is to author a data file for `shard_11` based on the provided work order. The system prompt specifies the required output path and file name. The goal is to generate the `_data.py` file, according to the `author_11.json` "
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "25bc8294-7d61-4e39-b85c-b9d825f1c56e",
+      "wall_time_s": 394.0,
+      "pre_1st_compile_s": 223.0,
+      "post_1st_compile_s": 176.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 5,
+      "turns_count": 21,
+      "active_tokens": 179052,
+      "thinking_tokens": 9831,
+      "competencies_count": 1,
+      "error_codes": [
+        "[R-19]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "NameError: name 'getattr' is not defined\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_01'...",
+        "[COMPILE 2/10] Compilando shard 'shard_01'...",
+        "[COMPILE 3/10] Compilando shard 'shard_01'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial analysis of the work order indicates a task involving data processing and code compilation. The instructions specify writing a Python file, compiling it, and addressing any compiler-reported errors. The process requires creating a Python file"
+    },
+    {
+      "shard_id": "shard_12",
+      "label": "Shard Author shard_12",
+      "conversation_id": "b9b41862-cbc0-4feb-8f0b-01064cf6c005",
+      "wall_time_s": 371.0,
+      "pre_1st_compile_s": 311.0,
+      "post_1st_compile_s": 66.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 11,
+      "active_tokens": 159957,
+      "thinking_tokens": 9139,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "NameError: name 'ver_h03_1' is not defined\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_12'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial assessment: this subagent is operating under strict constraints, specifically focused on a single work order and prohibited from accessing certain files. This suggests a highly isolated task with defined inputs and outputs. The work order is "
+    }
+  ],
+  "top_5_fastest": [
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "2bca1e3f-89d2-4f47-93bb-2fad4a5f76bc",
+      "wall_time_s": 231.0,
+      "pre_1st_compile_s": 28.0,
+      "post_1st_compile_s": 211.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 96823,
+      "thinking_tokens": 5288,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [
+        "ERROR: No existe el archivo de datos del shard: D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\s"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial work order requires viewing several files. The scope lock defines read and write operations on specific directories and files. The immediate goal is to understand the task by examining these resources.   "
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "2e69541a-a3c3-436c-992b-f729ea383941",
+      "wall_time_s": 253.0,
+      "pre_1st_compile_s": 249.0,
+      "post_1st_compile_s": 15.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 108064,
+      "thinking_tokens": 6468,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "e3c75838-654f-43be-be1d-d14e8ae93f91",
+      "wall_time_s": 264.0,
+      "pre_1st_compile_s": 247.0,
+      "post_1st_compile_s": 18.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 6,
+      "active_tokens": 127132,
+      "thinking_tokens": 9016,
+      "competencies_count": 1,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "2659a7e7-9c41-49bb-9b18-8b1144a92591",
+      "wall_time_s": 269.0,
+      "pre_1st_compile_s": 200.0,
+      "post_1st_compile_s": 72.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 11,
+      "active_tokens": 109484,
+      "thinking_tokens": 7651,
+      "competencies_count": 1,
+      "error_codes": [
+        "[R-18]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_02'...",
+        "[COMPILE 2/10] Compilando shard 'shard_02'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Author data shard 'shard_02' is the target; the work order specifies the relevant input and output paths. The caller is attempting to write to both a data file and a python script within the same directory. The write operation includes a python scrip"
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "32e501df-b861-449d-92e2-a19c1eb77579",
+      "wall_time_s": 313.0,
+      "pre_1st_compile_s": 34.0,
+      "post_1st_compile_s": 281.0,
+      "compile_runs": 5,
+      "compile_fails": 3,
+      "edits_count": 2,
+      "turns_count": 13,
+      "active_tokens": 121551,
+      "thinking_tokens": 6971,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "ERROR: No existe el archivo de datos del shard: D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\s",
+        "[COMPILE 1/10] Compilando shard 'shard_04'...",
+        "[COMPILE 2/10] Compilando shard 'shard_04'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    }
+  ],
+  "all_shards": [
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "0fb96004-607a-48a8-a972-1d297068780f",
+      "wall_time_s": 431.0,
+      "pre_1st_compile_s": 294.0,
+      "post_1st_compile_s": 146.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 14,
+      "active_tokens": 169333,
+      "thinking_tokens": 11230,
+      "competencies_count": 2,
+      "error_codes": [
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_08'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   Initial assessment suggests `author_XX.json` contains the complete specification for the task and needs processing to generate `<shard_id>_data.py`. The system seems to forbid reading `pre_shard_manifest.j"
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "04e4f666-8813-4eb5-ac0b-11b8b290dbee",
+      "wall_time_s": 416.0,
+      "pre_1st_compile_s": 227.0,
+      "post_1st_compile_s": 192.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 3,
+      "turns_count": 14,
+      "active_tokens": 189503,
+      "thinking_tokens": 10662,
+      "competencies_count": 1,
+      "error_codes": [
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_03'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial focus is on the work order, specifically authoring a Python file. The file path and commands for reading, writing, and compiling are noted. Need to create `shard_03_data.py` and address any compiler errors.   "
+    },
+    {
+      "shard_id": "shard_11",
+      "label": "Shard Author shard_11",
+      "conversation_id": "cf985661-84a3-497e-aacf-5bc022de3033",
+      "wall_time_s": 397.0,
+      "pre_1st_compile_s": 324.0,
+      "post_1st_compile_s": 80.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 14,
+      "active_tokens": 174258,
+      "thinking_tokens": 10677,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "NameError: name 'ver_c07_1' is not defined\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_11'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial assessment: The task is to author a data file for `shard_11` based on the provided work order. The system prompt specifies the required output path and file name. The goal is to generate the `_data.py` file, according to the `author_11.json` "
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "25bc8294-7d61-4e39-b85c-b9d825f1c56e",
+      "wall_time_s": 394.0,
+      "pre_1st_compile_s": 223.0,
+      "post_1st_compile_s": 176.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 5,
+      "turns_count": 21,
+      "active_tokens": 179052,
+      "thinking_tokens": 9831,
+      "competencies_count": 1,
+      "error_codes": [
+        "[R-19]",
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "NameError: name 'getattr' is not defined\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_01'...",
+        "[COMPILE 2/10] Compilando shard 'shard_01'...",
+        "[COMPILE 3/10] Compilando shard 'shard_01'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial analysis of the work order indicates a task involving data processing and code compilation. The instructions specify writing a Python file, compiling it, and addressing any compiler-reported errors. The process requires creating a Python file"
+    },
+    {
+      "shard_id": "shard_12",
+      "label": "Shard Author shard_12",
+      "conversation_id": "b9b41862-cbc0-4feb-8f0b-01064cf6c005",
+      "wall_time_s": 371.0,
+      "pre_1st_compile_s": 311.0,
+      "post_1st_compile_s": 66.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 11,
+      "active_tokens": 159957,
+      "thinking_tokens": 9139,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "NameError: name 'ver_h03_1' is not defined\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_12'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial assessment: this subagent is operating under strict constraints, specifically focused on a single work order and prohibited from accessing certain files. This suggests a highly isolated task with defined inputs and outputs. The work order is "
+    },
+    {
+      "shard_id": "shard_10",
+      "label": "Shard Author shard_10",
+      "conversation_id": "2c07e1e7-80e6-4f6c-9f93-3b61dcf298a5",
+      "wall_time_s": 326.0,
+      "pre_1st_compile_s": 228.0,
+      "post_1st_compile_s": 106.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 3,
+      "turns_count": 14,
+      "active_tokens": 134250,
+      "thinking_tokens": 6919,
+      "competencies_count": 2,
+      "error_codes": [
+        "[R-15]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_10'...",
+        "[COMPILE 2/10] Compilando shard 'shard_10'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial task is to process a file and write a Python shard. The target shard name indicates this is shard 10. The compilation step will be used to validate the generated Python code. The compiler output will be the sole source of error information to"
+    },
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "115708b7-f396-41c9-84f6-2de0ab6d60e5",
+      "wall_time_s": 324.0,
+      "pre_1st_compile_s": 243.0,
+      "post_1st_compile_s": 82.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 13,
+      "active_tokens": 126160,
+      "thinking_tokens": 7579,
+      "competencies_count": 1,
+      "error_codes": [
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_06'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   The task involves processing and generating data files with specific constraints on content and structure, including forbidden file accesses and format rules for tuples and templates. The process requires "
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "32e501df-b861-449d-92e2-a19c1eb77579",
+      "wall_time_s": 313.0,
+      "pre_1st_compile_s": 34.0,
+      "post_1st_compile_s": 281.0,
+      "compile_runs": 5,
+      "compile_fails": 3,
+      "edits_count": 2,
+      "turns_count": 13,
+      "active_tokens": 121551,
+      "thinking_tokens": 6971,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "ERROR: No existe el archivo de datos del shard: D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\s",
+        "[COMPILE 1/10] Compilando shard 'shard_04'...",
+        "[COMPILE 2/10] Compilando shard 'shard_04'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "2659a7e7-9c41-49bb-9b18-8b1144a92591",
+      "wall_time_s": 269.0,
+      "pre_1st_compile_s": 200.0,
+      "post_1st_compile_s": 72.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 11,
+      "active_tokens": 109484,
+      "thinking_tokens": 7651,
+      "competencies_count": 1,
+      "error_codes": [
+        "[R-18]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_02'...",
+        "[COMPILE 2/10] Compilando shard 'shard_02'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Author data shard 'shard_02' is the target; the work order specifies the relevant input and output paths. The caller is attempting to write to both a data file and a python script within the same directory. The write operation includes a python scrip"
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "e3c75838-654f-43be-be1d-d14e8ae93f91",
+      "wall_time_s": 264.0,
+      "pre_1st_compile_s": 247.0,
+      "post_1st_compile_s": 18.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 6,
+      "active_tokens": 127132,
+      "thinking_tokens": 9016,
+      "competencies_count": 1,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "2e69541a-a3c3-436c-992b-f729ea383941",
+      "wall_time_s": 253.0,
+      "pre_1st_compile_s": 249.0,
+      "post_1st_compile_s": 15.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 7,
+      "active_tokens": 108064,
+      "thinking_tokens": 6468,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "2bca1e3f-89d2-4f47-93bb-2fad4a5f76bc",
+      "wall_time_s": 231.0,
+      "pre_1st_compile_s": 28.0,
+      "post_1st_compile_s": 211.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 96823,
+      "thinking_tokens": 5288,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [
+        "ERROR: No existe el archivo de datos del shard: D:\\Augusto\\personal_portfolio\\Tops_academy\\courses\\s"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial work order requires viewing several files. The scope lock defines read and write operations on specific directories and files. The immediate goal is to understand the task by examining these resources.   "
+    }
+  ]
+}
