@@ -13,11 +13,12 @@ SKILL_DIR = Path(__file__).parent.parent / ".agents" / "skills" / "content-to-co
 if str(SKILL_DIR) not in sys.path:
     sys.path.insert(0, str(SKILL_DIR))
 
-from check_cta import check_cta_katex, check_cta_part, validate_cta_rules
+from check_cta import check_cta_katex, check_cta_part, check_prerequisites_dag, validate_cta_rules
 from cta_merge import (
     apply_harmonize,
     find_duplicate_candidates,
     merge_cta_parts,
+    prepare_harmonize_from_single_draft,
     render_cta_md,
 )
 
@@ -243,10 +244,10 @@ class TestCTAHarmonizer:
         work_dir = tmp_path / "work"
         work_dir.mkdir(parents=True)
 
-        c1 = make_mock_competency("H-01", "fact", "Hecho 1", session="Sesión 1", page=1)
-        c2 = make_mock_competency("C-01", "concept", "Concepto 1", session="Sesión 1", page=2)
-        c3 = make_mock_competency("C-02", "concept", "Concepto 1 Duplicado", session="Sesión 2", page=2)
-        c4 = make_mock_competency("Hab-01", "skill", "Habilidad 1", session="Sesión 2", page=4)
+        c1 = make_mock_competency("H-01", "fact", "Hecho 1", session="Sesión 1", page=1, prerequisites=[])
+        c2 = make_mock_competency("C-01", "concept", "Concepto 1", session="Sesión 1", page=2, prerequisites=["H-01"])
+        c3 = make_mock_competency("C-02", "concept", "Concepto 1 Duplicado", session="Sesión 2", page=2, prerequisites=["C-01"])
+        c4 = make_mock_competency("Hab-01", "skill", "Habilidad 1", session="Sesión 2", page=4, prerequisites=["C-02"])
 
         competencies = [c1, c2, c3, c4]
         order_list = [c["id"] for c in competencies]
@@ -362,22 +363,27 @@ class TestCTAHarmonizer:
         assert merge_decisions[0]["survivor"] == "C-01"
         assert merge_decisions[0]["absorbed"] == "C-02"
 
-    def test_apply_harmonize_rejects_merge_on_non_candidate(self, setup_work_env: Path):
+    def test_apply_harmonize_allows_merge_on_non_candidate(self, setup_work_env: Path):
         work_dir = setup_work_env
-        # Pair ["H-01", "Hab-01"] is NOT in duplicate_candidates.json
+        # Pair ["H-01", "C-02"] is NOT in duplicate_candidates.json but is allowed by flexible merge
         harmonize_data = {
             "merges": [
                 {
-                    "pair": ["H-01", "Hab-01"],
+                    "pair": ["H-01", "C-02"],
                     "decision": "merge",
-                    "reason": "Invalid merge attempt",
+                    "reason": "Expert merge on non-candidate",
                 }
             ]
         }
         (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_data, indent=2), encoding="utf-8")
 
-        with pytest.raises(ValueError, match="REJECTED: Merge attempted on pair"):
-            apply_harmonize(work_dir)
+        result = apply_harmonize(work_dir)
+        remaining_ids = [c["id"] for c in result["competencies"]]
+        assert "H-01" in remaining_ids
+        assert "C-02" not in remaining_ids
+        report = json.loads((work_dir / "merge_report.json").read_text(encoding="utf-8"))
+        merge_decisions = [d for d in report["decisions"] if d.get("operation") == "merge"]
+        assert any(d.get("survivor") == "H-01" and d.get("absorbed") == "C-02" for d in merge_decisions)
 
     def test_apply_harmonize_no_merge_flag_bypasses_merge(self, setup_work_env: Path):
         work_dir = setup_work_env
@@ -553,8 +559,8 @@ class TestMarkdownRenderingAndSectionalCheck:
         work_dir = tmp_path / "work"
         work_dir.mkdir(parents=True)
 
-        c1 = make_mock_competency("H-01", "fact", "Fact 1", session="Sesión 1", page=1)
-        c2 = make_mock_competency("C-01", "concept", "Concept 1", session="Sesión 1", page=2)
+        c1 = make_mock_competency("H-01", "fact", "Fact 1", session="Sesión 1", page=1, prerequisites=[])
+        c2 = make_mock_competency("C-01", "concept", "Concept 1", session="Sesión 1", page=2, prerequisites=["H-01"])
 
         # Original order was H-01 then C-01
         order_data = {"order": ["H-01", "C-01"], "order_hash": "hash"}
@@ -613,8 +619,8 @@ class TestMarkdownRenderingAndSectionalCheck:
             "title": "CLI Test Course",
             "section_index": 1,
             "competencies": [
-                make_mock_competency("H-01", "fact", "CLI Fact", session="Sesión 1", page=1),
-                make_mock_competency("C-01", "concept", "CLI Concept", session="Sesión 1", page=2),
+                make_mock_competency("H-01", "fact", "CLI Fact", session="Sesión 1", page=1, prerequisites=[]),
+                make_mock_competency("C-01", "concept", "CLI Concept", session="Sesión 1", page=2, prerequisites=["H-01"]),
             ],
         }
         (parts_dir / "cta_part_01.json").write_text(json.dumps(part, indent=2), encoding="utf-8")
@@ -759,4 +765,268 @@ class TestMarkdownRenderingAndSectionalCheck:
         # Each part's page 1 remapped to global page
         assert pages_remapped[0] == 1
         assert pages_remapped[1] == 8  # Part 2 local page 1 is context page 8
+
+
+class TestStream1AContractVerification:
+    """Verifies all architectural contracts introduced in Stream 1A."""
+
+    def test_prepare_harmonize_from_single_draft_direct_and_append(self, tmp_path: Path):
+        """Prepares outline, candidates, and order artifacts from a compiled draft."""
+        work_dir = tmp_path / "work_single"
+        work_dir.mkdir(parents=True)
+
+        c1 = make_mock_competency("H-01", "fact", "Fact Basic", session="S1", page=1, prerequisites=[])
+        c2 = make_mock_competency("C-01", "concept", "Concept Core", session="S1", page=2, prerequisites=["H-01"])
+
+        # Seed cta.json directly
+        draft = {
+            "course_id": "single_draft_course",
+            "title": "Single Draft Course",
+            "macro_competency": "Mastery",
+            "competencies": [c1, c2],
+        }
+        (work_dir / "cta.json").write_text(json.dumps(draft, indent=2), encoding="utf-8")
+
+        res = prepare_harmonize_from_single_draft(work_dir)
+        assert (work_dir / "cta_draft.json").is_file()
+        assert not (work_dir / "cta.json").exists()  # Final cta.json must be unlinked
+        assert (work_dir / "cta_outline.json").is_file()
+        assert (work_dir / "duplicate_candidates.json").is_file()
+        assert (work_dir / "cta_order.json").is_file()
+
+        order_data = json.loads((work_dir / "cta_order.json").read_text(encoding="utf-8"))
+        assert order_data["order"] == ["H-01", "C-01"]
+
+    def test_apply_harmonize_base_course_absorption(self, tmp_path: Path):
+        """Absorbing a delta competency into a base competency drops delta and rewires prerequisites."""
+        work_dir = tmp_path / "work_base_absorb"
+        work_dir.mkdir(parents=True)
+
+        c_delta1 = make_mock_competency("C-02", "concept", "Redundant Delta Concept", session="S1", page=1, prerequisites=["base:C-01"])
+        c_delta2 = make_mock_competency("Hab-01", "skill", "Delta Skill", session="S1", page=2, prerequisites=["C-02"])
+
+        draft = {
+            "course_id": "delta_course",
+            "title": "Delta Course",
+            "competencies": [c_delta1, c_delta2],
+        }
+        (work_dir / "cta_draft.json").write_text(json.dumps(draft, indent=2), encoding="utf-8")
+        (work_dir / "cta_order.json").write_text(json.dumps({"order": ["C-02", "Hab-01"], "order_hash": "h1"}, indent=2), encoding="utf-8")
+        (work_dir / "duplicate_candidates.json").write_text("[]", encoding="utf-8")
+
+        # Manifest with base course
+        manifest = {
+            "course_id": "delta_course",
+            "cta_mode": "direct",
+            "files": [{"file_index": 0, "doc": "lec01.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+            "delta": {
+                "existing_competency_ids": ["C-01", "H-01"],
+            },
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+        # Harmonize directive absorbing delta C-02 into base C-01
+        harmonize_data = {
+            "duplicate_decisions": [
+                {
+                    "keep_id": "C-01",
+                    "drop_id": "C-02",
+                    "decision": "merge",
+                    "reason": "Covered by base course concept",
+                }
+            ]
+        }
+        (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_data, indent=2), encoding="utf-8")
+
+        res = apply_harmonize(work_dir)
+        assert len(res["competencies"]) == 1
+        surviving = res["competencies"][0]
+        assert surviving["id"] == "Hab-01"
+        # Prerequisite was rewired from C-02 to base C-01
+        assert "C-01" in surviving["prerequisites"]
+        assert "C-02" not in surviving["prerequisites"]
+
+    def test_apply_harmonize_flexible_directives_dict_and_alternative_keys(self, tmp_path: Path):
+        """apply_harmonize accepts add_prerequisites as dict and source_id / target_id format."""
+        work_dir = tmp_path / "work_flex"
+        work_dir.mkdir(parents=True)
+
+        c1 = make_mock_competency("H-01", "fact", "Fact Basic", session="S1", page=1, prerequisites=[])
+        c2 = make_mock_competency("C-01", "concept", "Concept Alpha", session="S1", page=2, prerequisites=["H-01"])
+        c3 = make_mock_competency("Hab-01", "skill", "Skill Beta", session="S1", page=3, prerequisites=["C-01"])
+
+        draft = {
+            "course_id": "flex_course",
+            "title": "Flexible Directives Course",
+            "competencies": [c1, c2, c3],
+        }
+        (work_dir / "cta_draft.json").write_text(json.dumps(draft, indent=2), encoding="utf-8")
+        (work_dir / "cta_order.json").write_text(json.dumps({"order": ["H-01", "C-01", "Hab-01"], "order_hash": "h2"}, indent=2), encoding="utf-8")
+        (work_dir / "duplicate_candidates.json").write_text("[]", encoding="utf-8")
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "flex_course",
+            "cta_mode": "direct",
+            "files": [{"file_index": 0, "doc": "lec01.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+        }, indent=2), encoding="utf-8")
+
+        # Using dict format for prerequisite additions
+        harmonize_data = {
+            "add_prerequisites": {
+                "Hab-01": ["H-01"],
+            }
+        }
+        (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_data, indent=2), encoding="utf-8")
+
+        res = apply_harmonize(work_dir)
+        hab = next(c for c in res["competencies"] if c["id"] == "Hab-01")
+        assert "H-01" in hab["prerequisites"]
+        assert "C-01" in hab["prerequisites"]
+
+    def test_dag_validator_connectivity_and_root_ratio(self):
+        """check_prerequisites_dag enforces 1 connected component and root ratio <= 20%."""
+        # 1. Disconnected curriculum
+        c1 = {"id": "C-01", "prerequisites": []}
+        c2 = {"id": "C-02", "prerequisites": []}
+        errs = check_prerequisites_dag([c1, c2])
+        assert any("disconnected" in e.lower() for e in errs)
+        assert any("too many root" in e.lower() for e in errs)
+
+        # 2. Connected curriculum with valid root ratio (1 root out of 5 = 20%)
+        c_connected = [
+            {"id": "H-01", "prerequisites": []},
+            {"id": "C-01", "prerequisites": ["H-01"]},
+            {"id": "C-02", "prerequisites": ["C-01"]},
+            {"id": "Hab-01", "prerequisites": ["C-02"]},
+            {"id": "Hab-02", "prerequisites": ["Hab-01"]},
+        ]
+        assert check_prerequisites_dag(c_connected) == []
+
+        # 3. Append mode connecting through virtual base anchor
+        delta_comps = [
+            {"id": "C-02", "prerequisites": ["Base-01"]},
+            {"id": "Hab-01", "prerequisites": ["Base-02"]},
+        ]
+        # Both delta comps connect to base course competencies; virtual anchor connects them
+        errs_append = check_prerequisites_dag(delta_comps, allowed_prereq_ids={"Base-01", "Base-02"})
+        assert errs_append == []
+
+    def test_apply_harmonize_id1_id2_and_source_target_formats(self, tmp_path: Path):
+        """apply_harmonize supports id1+id2+keep_id and source_id+target_id merge formats."""
+        work_dir = tmp_path / "work_id1_formats"
+        work_dir.mkdir(parents=True)
+
+        c1 = make_mock_competency("H-01", "fact", "Fact Basic", session="S1", page=1, prerequisites=[])
+        c2 = make_mock_competency("C-01", "concept", "Concept Alpha", session="S1", page=2, prerequisites=["H-01"])
+        c3 = make_mock_competency("C-02", "concept", "Concept Alpha Redundant", session="S1", page=2, prerequisites=["H-01"])
+        c4 = make_mock_competency("Hab-01", "skill", "Skill Beta", session="S1", page=3, prerequisites=["C-01"])
+
+        draft = {
+            "course_id": "fmt_course",
+            "title": "Merge Formats Course",
+            "competencies": [c1, c2, c3, c4],
+        }
+        (work_dir / "cta_draft.json").write_text(json.dumps(draft, indent=2), encoding="utf-8")
+        (work_dir / "cta_order.json").write_text(json.dumps({"order": ["H-01", "C-01", "C-02", "Hab-01"], "order_hash": "h3"}, indent=2), encoding="utf-8")
+        (work_dir / "duplicate_candidates.json").write_text("[]", encoding="utf-8")
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "fmt_course",
+            "cta_mode": "direct",
+            "files": [{"file_index": 0, "doc": "lec01.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+        }, indent=2), encoding="utf-8")
+
+        # id1 + id2 + keep_id format in duplicate_decisions
+        harmonize_data = {
+            "duplicate_decisions": [
+                {
+                    "id1": "C-01",
+                    "id2": "C-02",
+                    "keep_id": "C-01",
+                    "decision": "merge",
+                    "reason": "Identical concept",
+                }
+            ]
+        }
+        (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_data, indent=2), encoding="utf-8")
+
+        res = apply_harmonize(work_dir)
+        ids = [c["id"] for c in res["competencies"]]
+        assert "C-01" in ids
+        assert "C-02" not in ids
+        assert len(ids) == 3
+
+    def test_apply_harmonize_prerequisite_additions_and_updates_formats(self, tmp_path: Path):
+        """apply_harmonize supports prerequisite_additions and prerequisite_updates list formats."""
+        work_dir = tmp_path / "work_prereq_fmts"
+        work_dir.mkdir(parents=True)
+
+        c1 = make_mock_competency("H-01", "fact", "Fact Basic", session="S1", page=1, prerequisites=[])
+        c2 = make_mock_competency("C-01", "concept", "Concept Alpha", session="S1", page=2, prerequisites=["H-01"])
+        c3 = make_mock_competency("Hab-01", "skill", "Skill Beta", session="S1", page=3, prerequisites=["C-01"])
+
+        draft = {
+            "course_id": "prereq_course",
+            "title": "Prereq Formats Course",
+            "competencies": [c1, c2, c3],
+        }
+        (work_dir / "cta_draft.json").write_text(json.dumps(draft, indent=2), encoding="utf-8")
+        (work_dir / "cta_order.json").write_text(json.dumps({"order": ["H-01", "C-01", "Hab-01"], "order_hash": "h4"}, indent=2), encoding="utf-8")
+        (work_dir / "duplicate_candidates.json").write_text("[]", encoding="utf-8")
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "prereq_course",
+            "cta_mode": "direct",
+            "files": [{"file_index": 0, "doc": "lec01.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+        }, indent=2), encoding="utf-8")
+
+        # prerequisite_additions format with list of dicts
+        harmonize_data = {
+            "prerequisite_additions": [
+                {
+                    "competency_id": "Hab-01",
+                    "prerequisites": ["H-01"],
+                }
+            ]
+        }
+        (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_data, indent=2), encoding="utf-8")
+
+        res = apply_harmonize(work_dir)
+        hab = next(c for c in res["competencies"] if c["id"] == "Hab-01")
+        assert "H-01" in hab["prerequisites"]
+        assert "C-01" in hab["prerequisites"]
+
+    def test_merge_cta_parts_strictly_never_writes_final_cta_json(self, tmp_path: Path):
+        """merge_cta_parts never produces cta.json/cta.md and unlinks any pre-existing ones."""
+        work_dir = tmp_path / "work_no_final"
+        parts_dir = work_dir / "cta_parts"
+        parts_dir.mkdir(parents=True)
+
+        part1 = {
+            "course_id": "strict_flow",
+            "title": "Strict Flow Course",
+            "competencies": [
+                make_mock_competency("H-01", "fact", "Fact One", session="S1", page=1),
+                make_mock_competency("C-01", "concept", "Concept Two", session="S1", page=2),
+            ],
+        }
+        (parts_dir / "part_01.json").write_text(json.dumps(part1, indent=2), encoding="utf-8")
+        manifest = {
+            "course_id": "strict_flow",
+            "cta_mode": "mapreduce",
+            "files": [{"file_index": 0, "doc": "lec01.pdf", "total_pages": 5, "valid_page_range": [1, 5]}],
+            "subparts": [{"subpart_id": "part_01", "subpart_index": 0, "file_index": 0, "doc": "lec01.pdf"}],
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+        # Pre-seed stale final artifacts
+        stale_json = work_dir / "cta.json"
+        stale_md = work_dir / "cta.md"
+        stale_json.write_text("{\"stale\": true}", encoding="utf-8")
+        stale_md.write_text("# Stale Markdown", encoding="utf-8")
+
+        res = merge_cta_parts(work_dir)
+        assert (work_dir / "cta_draft.json").is_file()
+        assert (work_dir / "cta_outline.json").is_file()
+        assert not (work_dir / "cta.json").exists()
+        assert not (work_dir / "cta.md").exists()
+
+
 

@@ -284,6 +284,40 @@ def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, A
             "file_path": None,
         }
 
+    if "[STEM-DIVERSITY-GATE]" in err_str or "[DIAG-MAGIC-MULT]" in err_str:
+        rule_tag = "STEM-DIVERSITY-GATE" if "[STEM-DIVERSITY-GATE]" in err_str else "DIAG-MAGIC-MULT"
+        m_cid = (
+            re.search(r"competency\s+'([^']+)'", err_str, re.IGNORECASE)
+            or re.search(r"^([A-Za-z0-9_-]+)\.json", err_str)
+        )
+        comp = m_cid.group(1).strip() if m_cid else ""
+        m_tpl = re.search(r"En\s+'([^']+)'", err_str)
+        tpl = m_tpl.group(1).strip() if m_tpl else (f"T-{comp}" if comp else "")
+        m_body = re.search(r"\[(?:STEM-DIVERSITY-GATE|DIAG-MAGIC-MULT)\]\s*(.+)", err_str)
+        body_txt = m_body.group(1).strip() if m_body else err_str
+        if "Provide >=" in body_txt:
+            parts = body_txt.split("Provide >=", 1)
+            cause = f"[{rule_tag}] {parts[0].strip()}"
+            action = f"Provide >= {parts[1].strip()}"
+        elif "Reemplaza los multiplicadores" in body_txt:
+            parts = body_txt.split("Reemplaza los multiplicadores", 1)
+            cause = f"[{rule_tag}] {parts[0].strip()}"
+            action = f"Reemplaza los multiplicadores {parts[1].strip()}"
+        else:
+            cause = f"[{rule_tag}] {body_txt}"
+            action = "Corregir en las líneas indicadas de shard_XX_data.py."
+        return {
+            "rule_tag": rule_tag,
+            "competency": comp,
+            "template": tpl,
+            "field_name": "TEMPLATES",
+            "snippet": tpl or comp,
+            "cause": cause,
+            "action": action,
+            "lines": [],
+            "file_path": None,
+        }
+
     m_rule = re.search(r"^\[-\]\s*\[([^\]]+)\]", err_str, re.MULTILINE)
     m_loc = re.search(r"UBICACI[ÓO]N:\s*Competencia:\s*'([^']*)',\s*Plantilla:\s*'([^']*)'.*?Campo:\s*'([^']*)'", err_str)
     m_lines = re.search(r"L[íi]neas?:\s*([0-9,\s]+)", err_str)
@@ -1396,11 +1430,13 @@ def build_compact_diagnostic_groups(
         fp = r["file_path"]
         s_ref = r.get("shard_ref", "")
         scause = r["cause"]
-        if len(scause) > 95:
-            scause = scause[:92] + "..."
+        max_cause_len = 240 if rtag in ("STEM-DIVERSITY-GATE", "DIAG-MAGIC-MULT") else 95
+        if len(scause) > max_cause_len:
+            scause = scause[:max_cause_len - 3] + "..."
         sact = r["action"]
-        if len(sact) > 85:
-            sact = sact[:82] + "..."
+        max_act_len = 220 if rtag in ("STEM-DIVERSITY-GATE", "DIAG-MAGIC-MULT") else 85
+        if len(sact) > max_act_len:
+            sact = sact[:max_act_len - 3] + "..."
 
         grouped[rtag][(fp, s_ref)][(scause, sact)].extend(r["lines"])
 
@@ -2227,10 +2263,61 @@ def validate_template_schema(data: Dict[str, Any]) -> List[str]:
     """Validate data against template.schema.json."""
     validator = get_compiled_validator("template.schema.json")
     errors = []
+
+    def _leaf_errors(e):
+        """Drill into oneOf/anyOf contexts and return the most relevant concrete sub-errors."""
+        if not e.context:
+            return [e]
+        out = []
+        # Prefer the branch whose root type matches the data (object -> template_item/file, list -> array)
+        by_branch: Dict[int, List[Any]] = {}
+        for sub in e.context:
+            by_branch.setdefault(sub.schema_path[0] if sub.schema_path else 0, []).append(sub)
+        best = min(by_branch.values(), key=lambda subs: sum(1 for s in subs if s.validator == "type" and not list(s.absolute_path)))
+        for sub in best:
+            out.extend(_leaf_errors(sub))
+        return out or [e]
+
     for err in validator.iter_errors(data):
-        loc = " -> ".join(str(p) for p in err.path)
-        errors.append(f"Template schema violation at [{loc}]: {err.message}")
+        for leaf in _leaf_errors(err):
+            loc = " -> ".join(str(p) for p in list(err.path) + list(leaf.path))
+            msg = leaf.message if len(leaf.message) <= 220 else leaf.message[:217] + "..."
+            errors.append(f"Template schema violation at [{loc}]: {msg}")
+    seen = set()
+    errors = [e for e in errors if not (e in seen or seen.add(e))]
     return errors
+
+
+def _is_trivial_cross_check(code_str: str) -> Tuple[bool, str]:
+    """Inspect cross_check_py AST to detect empty or constant/trivial verification scripts."""
+    if not code_str or not code_str.strip():
+        return True, "cross_check_py script is empty or missing"
+    try:
+        tree = ast.parse(code_str)
+    except Exception as e:
+        return True, f"Failed to parse cross_check_py: {e}"
+
+    has_comparison = any(isinstance(node, ast.Compare) for node in ast.walk(tree))
+    has_test_op = any(
+        isinstance(node, (ast.Compare, ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.If, ast.IfExp))
+        for node in ast.walk(tree)
+    )
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "verify":
+            if len(node.body) == 1 and isinstance(node.body[0], ast.Return):
+                ret_val = node.body[0].value
+                if isinstance(ret_val, ast.Constant) and ret_val.value is True:
+                    return True, "verify function trivially returns True without checks"
+
+    if len(tree.body) == 1 and isinstance(tree.body[0], ast.Assign):
+        if isinstance(tree.body[0].value, ast.Constant) and tree.body[0].value.value is True:
+            return True, "cross_check_py assigns result = True constantly"
+
+    if not has_comparison and not has_test_op:
+        return True, "cross_check_py performs no comparisons or variable evaluations"
+
+    return False, ""
 
 
 def check_single_template(
@@ -2240,6 +2327,7 @@ def check_single_template(
     cta_distractors_map: Optional[Dict[str, Dict[str, Any]]] = None,
     num_dry_run_seeds: int = 50,
     shard_py: Optional[Union[str, Path]] = None,
+    strict: bool = True,
 ) -> List[str]:
     """Validate a single template including AST, dry-run, invariants, and TPL rules."""
     errors = []
@@ -2248,6 +2336,39 @@ def check_single_template(
     generate_py = template.get("generate_py", "")
     cross_check_py = template.get("cross_check_py", "")
     distractor_ids = template.get("distractor_ids", [])
+
+    # Strict hint length check (>= 25 characters)
+    if strict:
+        hints_list = template.get("hints", [])
+        if isinstance(hints_list, list):
+            for h_idx, h in enumerate(hints_list):
+                h_text = h.get("text", "") if isinstance(h, dict) else str(h)
+                if len(h_text.strip()) < 25:
+                    errors.append(format_diagnostic_error(
+                        "TPL-HINT: LONGITUD INSUFICIENTE DE PISTA", competency_id, tpl_id, f"hints[{h_idx}]", "hints",
+                        f"'{h_text.strip()}' ({len(h_text.strip())} chars)",
+                        f"La pista {h_idx + 1} en '{tpl_id}' tiene menos de 25 caracteres ({len(h_text.strip())} < 25). Las pistas de andamiaje socrático deben ser formativas y sustanciales.",
+                        [
+                            "Ampliar la pista para ofrecer una orientación conceptual sustancial (mínimo 25 caracteres).",
+                            "Explicar el paso analítico o la fórmula relevante en lugar de frases breves.",
+                            "Revisar las directrices de andamiaje socrático.",
+                        ]
+                    ))
+
+    # Strict non-trivial cross_check_py validation
+    if strict:
+        is_trivial, trivial_msg = _is_trivial_cross_check(cross_check_py)
+        if is_trivial:
+            errors.append(format_diagnostic_error(
+                "TPL-CROSS: VERIFICADOR TRIVIAL", competency_id, tpl_id, tpl_id, "cross_check_py",
+                trivial_msg,
+                f"El script cross_check_py en '{tpl_id}' es vacío o trivial ({trivial_msg}). Debe evaluar operaciones o comparaciones sobre los parámetros o la respuesta generada.",
+                [
+                    "Implementar validaciones matemáticas no triviales en verify(result) comparando variables o relaciones algebraicas.",
+                    "Evitar retornar 'True' constante o scripts vacíos.",
+                    "Verificar que la respuesta generada cumpla las propiedades matemáticas requeridas.",
+                ]
+            ))
 
     # 1. AST Sandbox validation & LaTeX corruption check
     try:
@@ -2428,6 +2549,9 @@ def check_single_template(
     # Check invariants on all generated instances (Full Sweep: NO premature break)
     raw_asm_failures: Dict[str, List[str]] = {}
     raw_inv_failures: Dict[str, Tuple[str, List[str]]] = {}
+    rendered_correct_answers: List[Any] = []
+    distractor_contents_by_slot: Dict[Any, List[str]] = defaultdict(list)
+    distractor_rationales_by_slot: Dict[Any, List[str]] = defaultdict(list)
 
     for idx, item in enumerate(batch_results):
         if not item.get("success"):
@@ -2447,6 +2571,30 @@ def check_single_template(
         except Exception as e:
             raw_asm_failures.setdefault(str(e), []).append(f"seed={seed_val}")
             continue
+
+        # Collect rendered correct answer and distractors for TPL-STATIC-OPT and TPL-DYNAMIC-RATIONALE
+        if interaction_type == "multiple_choice_7_options":
+            correct_opt = next((opt for opt in assembled_q.get("options", []) if opt.get("is_correct")), None)
+            c_val = re.sub(r"\s+", " ", str(correct_opt.get("content", ""))).strip() if correct_opt else ""
+            rendered_correct_answers.append(c_val)
+            for opt in assembled_q.get("options", []):
+                if not opt.get("is_correct"):
+                    slot_key = opt.get("distractor_id") or opt.get("content")
+                    distractor_contents_by_slot[slot_key].append(str(opt.get("content", "")).strip())
+                    distractor_rationales_by_slot[slot_key].append(str(opt.get("error_rationale", "")).strip())
+        elif interaction_type == "fill_in_the_blank":
+            ans_obj = assembled_q.get("correct_answer", {})
+            val = ans_obj.get("value") if isinstance(ans_obj, dict) else assembled_q.get("correct")
+            c_val = re.sub(r"\s+", " ", str(val)).strip()
+            rendered_correct_answers.append(c_val)
+        elif interaction_type == "multiple_select":
+            opt_set = frozenset((re.sub(r"\s+", " ", str(opt.get("content", ""))).strip(), bool(opt.get("is_correct"))) for opt in assembled_q.get("options", []))
+            rendered_correct_answers.append(opt_set)
+            for opt in assembled_q.get("options", []):
+                if not opt.get("is_correct"):
+                    slot_key = opt.get("distractor_id") or opt.get("content")
+                    distractor_contents_by_slot[slot_key].append(str(opt.get("content", "")).strip())
+                    distractor_rationales_by_slot[slot_key].append(str(opt.get("error_rationale", "")).strip())
 
         # Validate unrendered placeholders
         pl_errs = check_unrendered_placeholders_in_instance(assembled_q, gen_res.get("vars", {}))
@@ -2500,6 +2648,91 @@ def check_single_template(
             inv_err=rep_inv_err,
             q_obj=sample_q,
         ))
+
+    # Evaluate [TPL-STATIC-OPT] under strict=True
+    if strict and rendered_correct_answers:
+        N_eval = min(20, len(rendered_correct_answers))
+        eval_answers = rendered_correct_answers[:N_eval]
+        unique_correct = set(eval_answers)
+
+        # Unconditional mono-key blocking: if N >= 2 and len(unique_correct) == 1, ALWAYS reject
+        if N_eval >= 2 and len(unique_correct) == 1:
+            first_ans = list(unique_correct)[0]
+            first_str = str(first_ans)
+            if len(first_str) > 60:
+                first_str = first_str[:57] + "..."
+            errors.append(format_diagnostic_error(
+                "TPL-STATIC-OPT: MONO-CLAVE DETECTADA",
+                competency_id,
+                tpl_id,
+                "dry-run",
+                "correct / vars",
+                f"Clave fija en {N_eval} semillas evaluadas: '{first_str}'",
+                f"[-] [TPL-STATIC-OPT] violation in '{tpl_id}': Mono-clave detected across {N_eval} seeds ({len(unique_correct)} unique correct answers). Templates must generate dynamic correct answers.",
+                [
+                    "Parametrizar las variables en generate_py para que la respuesta correcta varíe dinámicamente entre semillas.",
+                    "Evitar respuestas estáticas o dominios vacíos que produzcan siempre la misma clave.",
+                    "Verificar que vars contenga parámetros que modifiquen el resultado numérico o simbólico.",
+                ]
+            ))
+        elif num_dry_run_seeds >= 15:
+            if interaction_type == "multiple_select":
+                if len(unique_correct) <= 1:
+                    errors.append(format_diagnostic_error(
+                        "TPL-STATIC-OPT: CONJUNTO DE OPCIONES ESTÁTICO",
+                        competency_id,
+                        tpl_id,
+                        "dry-run",
+                        "options",
+                        f"Únicamente {len(unique_correct)} conjunto de opciones generado en {N_eval} semillas.",
+                        f"[-] [TPL-STATIC-OPT] violation in '{tpl_id}': multiple_select template must generate more than 1 distinct set of correct options.",
+                        [
+                            "Parametrizar las opciones o su veracidad en generate_py.",
+                            "Asegurar que la selección de afirmaciones correctas varíe según los parámetros.",
+                        ]
+                    ))
+            else:
+                is_skill_or_hab = any(s in competency_id.lower() for s in ["skill", "hab"]) or (template.get("bloom", "") in ("Apply", "Analyze", "Evaluate", "Create"))
+                min_req = min(10, max(4, N_eval // 2)) if is_skill_or_hab else 4
+                if len(unique_correct) < min_req:
+                    errors.append(format_diagnostic_error(
+                        "TPL-STATIC-OPT: BAJA VARIABILIDAD DE CLAVE",
+                        competency_id,
+                        tpl_id,
+                        "dry-run",
+                        "correct / vars",
+                        f"Únicamente {len(unique_correct)}/{min_req} claves correctas únicas en {N_eval} semillas.",
+                        f"[-] [TPL-STATIC-OPT] violation in '{tpl_id}': Only {len(unique_correct)}/{min_req} unique correct answers generated across {N_eval} seeds. Required threshold is >={min_req}.",
+                        [
+                            "Ampliar los rangos numéricos y combinaciones de parámetros en generate_py.",
+                            "Asegurar que la clave correcta cambie frecuentemente entre semillas.",
+                        ]
+                    ))
+
+    # Evaluate [TPL-DYNAMIC-RATIONALE]
+    if strict and num_dry_run_seeds >= 15:
+        for slot_key, contents_list in distractor_contents_by_slot.items():
+            rats_list = distractor_rationales_by_slot.get(slot_key, [])
+            u_contents = set(contents_list)
+            u_rats = set(rats_list)
+            if len(u_contents) > 1 and len(u_rats) == 1:
+                rat_sample = list(u_rats)[0] if u_rats else "(vacío)"
+                if len(rat_sample) > 60:
+                    rat_sample = rat_sample[:57] + "..."
+                errors.append(format_diagnostic_error(
+                    "TPL-DYNAMIC-RATIONALE: RATIONALE ESTÁTICO EN DISTRACTOR DINÁMICO",
+                    competency_id,
+                    tpl_id,
+                    str(slot_key),
+                    "error_rationale",
+                    f"Distractor '{slot_key}' varía en contenido ({len(u_contents)} variantes) pero tiene error_rationale estático: '{rat_sample}'",
+                    f"[-] [TPL-DYNAMIC-RATIONALE] violation in '{tpl_id}': Distractor '{slot_key}' varies across seeds ({len(u_contents)} unique contents) but its error_rationale remains static. Dynamic distractors must include dynamic rationale explaining the specific misconception with seed parameters.",
+                    [
+                        f"Incluir placeholders como @var@ o {{var}} en el error_rationale del distractor '{slot_key}'.",
+                        "Explicar el error formativo contextualizado con los valores numéricos o simbólicos generados en la semilla.",
+                        "Asegurar que error_rationale varíe dinámicamente cuando el distractor varía.",
+                    ]
+                ))
 
     # 5. Rule TPL-VAR: Early variability and parametric capacity validation
     # a) Verify vars dictionary is not empty across generated results
@@ -2586,6 +2819,8 @@ def check_competency_diversity(
     num_seeds: Optional[int] = None,
     return_questions: bool = False,
     enforce_full_quota: bool = False,
+    strict: bool = True,
+    questions: Optional[List[Dict[str, Any]]] = None,
 ) -> Union[List[str], Tuple[List[str], List[Dict[str, Any]]]]:
     """Verify stem structural diversity at the competency level (build simulation).
     
@@ -2594,7 +2829,7 @@ def check_competency_diversity(
     Returns errors_list (or (errors_list, instantiated_questions) if return_questions=True).
     """
     errors: List[str] = []
-    if not templates:
+    if questions is None and not templates:
         cid = competency.get("id", "UNKNOWN") if isinstance(competency, dict) else str(getattr(competency, "id", "UNKNOWN"))
         errors.append(format_diagnostic_error(
             "TPL-VAR: DIVERSIDAD DE REACTIVOS", cid, "N/A", "N/A", "templates",
@@ -2615,39 +2850,43 @@ def check_competency_diversity(
         cid = getattr(competency, "id", "UNKNOWN")
         ctype = str(getattr(competency, "type", getattr(competency, "category", "concept"))).lower()
 
-    if enforce_full_quota:
-        target_quota = 30 if ctype in ("skill", "hab", "habilidad") else 20
-    elif num_seeds is not None:
-        target_quota = num_seeds
+    if questions is not None:
+        target_quota = len(questions)
+        comp_res = {"questions": questions, "diversity_stats": {}}
     else:
-        target_quota = 30 if ctype in ("skill", "hab", "habilidad") else 20
-        if len(templates) < 3:
-            target_quota = min(target_quota, max(len(templates) * 5, 10))
+        if enforce_full_quota:
+            target_quota = 30 if ctype in ("skill", "hab", "habilidad") else 20
+        elif num_seeds is not None:
+            target_quota = num_seeds
+        else:
+            target_quota = 30 if ctype in ("skill", "hab", "habilidad") else 20
+            if len(templates) < 3:
+                target_quota = min(target_quota, max(len(templates) * 5, 10))
 
-    seed_base = competency_seed_base(cid, 42)
+        seed_base = competency_seed_base(cid, 42)
 
-    try:
-        comp_res = instantiate_competency(
-            competency=competency if isinstance(competency, dict) else None,
-            competency_id=cid,
-            category=ctype,
-            templates=templates,
-            cta_distractors_map=distractor_map,
-            seed_offset_base=seed_base,
-            quota=target_quota,
-        )
-    except Exception as e:
-        errors.append(format_diagnostic_error(
-            "TPL-VAR: DIVERSIDAD DE REACTIVOS", cid, "ALL", "instantiate_competency", "generate_py / vars",
-            f"Fallo al instanciar cuota de diversidad ({target_quota} ítems): {e}",
-            f"[-] TPL-VAR VIOLATION in competency '{cid}': Failed to instantiate diversity quota ({target_quota} items): {e}. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos.",
-            [
-                "Ampliar los rangos de las variables aleatorias en generate_py.",
-                "Agregar 3 a 5 'stem_variants' distintas con placeholders en las plantillas más estrechas.",
-                "Comprobar que generate_py no lance excepciones con ciertas combinaciones de semillas.",
-            ]
-        ))
-        return (errors, []) if return_questions else errors
+        try:
+            comp_res = instantiate_competency(
+                competency=competency if isinstance(competency, dict) else None,
+                competency_id=cid,
+                category=ctype,
+                templates=templates,
+                cta_distractors_map=distractor_map,
+                seed_offset_base=seed_base,
+                quota=target_quota,
+            )
+        except Exception as e:
+            errors.append(format_diagnostic_error(
+                "TPL-VAR: DIVERSIDAD DE REACTIVOS", cid, "ALL", "instantiate_competency", "generate_py / vars",
+                f"Fallo al instanciar cuota de diversidad ({target_quota} ítems): {e}",
+                f"[-] TPL-VAR VIOLATION in competency '{cid}': Failed to instantiate diversity quota ({target_quota} items): {e}. No se pudieron generar los reactivos requeridos debido a colisiones o parámetros estrechos.",
+                [
+                    "Ampliar los rangos de las variables aleatorias en generate_py.",
+                    "Agregar 3 a 5 'stem_variants' distintas con placeholders en las plantillas más estrechas.",
+                    "Comprobar que generate_py no lance excepciones con ciertas combinaciones de semillas.",
+                ]
+            ))
+            return (errors, []) if return_questions else errors
 
     questions = comp_res.get("questions", [])
 
@@ -2703,7 +2942,82 @@ def check_competency_diversity(
     unique_c = div_stats.get("unique_masked", 0)
     total_c = div_stats.get("total", len(questions))
 
-    if div_ratio < 0.5:
+    # Strict pool correct key concentration check
+    if strict and len(questions) >= 20:
+        correct_keys = []
+        for q in questions:
+            q_type = q.get("interaction_type") or q.get("type", "")
+            if q_type == "multiple_choice_7_options":
+                correct_opt = next((opt for opt in q.get("options", []) if opt.get("is_correct")), None)
+                correct_keys.append(re.sub(r"\s+", " ", str(correct_opt.get("content", ""))).strip() if correct_opt else "")
+            elif q_type == "fill_in_the_blank":
+                ans = q.get("correct_answer", {})
+                val = ans.get("value") if isinstance(ans, dict) else q.get("correct")
+                correct_keys.append(re.sub(r"\s+", " ", str(val)).strip())
+            elif q_type == "multiple_select":
+                opt_tuples = frozenset((re.sub(r"\s+", " ", str(opt.get("content", ""))).strip(), bool(opt.get("is_correct"))) for opt in q.get("options", []))
+                correct_keys.append(opt_tuples)
+            else:
+                correct_keys.append(str(q.get("correct", "")).strip())
+
+        from collections import Counter
+        key_counts = Counter(correct_keys)
+        if key_counts:
+            most_common_key, max_cnt = key_counts.most_common(1)[0]
+            pct = max_cnt / len(questions)
+            if pct > 0.20:
+                k_str = str(most_common_key)
+                if len(k_str) > 50:
+                    k_str = k_str[:47] + "..."
+                errors.append(format_diagnostic_error(
+                    rule_tag="TPL-STATIC-OPT: CONCENTRACIÓN EXCESIVA DE CLAVE CORRECTA",
+                    competency=cid,
+                    template="ALL",
+                    item_id="questions",
+                    field_name="correct",
+                    snippet=f"Clave '{k_str}' concentra {max_cnt}/{len(questions)} ({pct*100:.1f}%) > 20.0%",
+                    cause=f"[-] [TPL-STATIC-OPT] violation in competency '{cid}': Single correct key '{k_str}' accounts for {pct*100:.1f}% of instances ({max_cnt}/{len(questions)}), exceeding 20.0% threshold.",
+                    actions=[
+                        "Ampliar la variabilidad de parámetros en las plantillas de la competencia.",
+                        "Evitar que diferentes plantillas colapsen hacia las mismas respuestas correctas.",
+                        "Asegurar una distribución uniforme de claves en el banco de preguntas.",
+                    ],
+                ))
+
+    # Strict distractor rationale uniqueness check
+    if strict:
+        all_rats = []
+        for q in questions:
+            for opt in q.get("options", []):
+                if not opt.get("is_correct"):
+                    r_text = opt.get("error_rationale")
+                    if r_text and str(r_text).strip():
+                        all_rats.append(str(r_text).strip())
+        if len(all_rats) >= 30:
+            unique_rats = set(all_rats)
+            uniqueness_pct = len(unique_rats) / len(all_rats)
+            if uniqueness_pct < 0.35:
+                errors.append(format_diagnostic_error(
+                    rule_tag="TPL-DYNAMIC-RATIONALE: DIVERSIDAD DE RATIONALES INSUFICIENTE",
+                    competency=cid,
+                    template="ALL",
+                    item_id="options",
+                    field_name="error_rationale",
+                    snippet=f"Unicidad de rationales {uniqueness_pct*100:.1f}% < 35.0% ({len(unique_rats)}/{len(all_rats)} únicos)",
+                    cause=f"[-] [TPL-DYNAMIC-RATIONALE] violation in competency '{cid}': Distractor rationale uniqueness ratio {uniqueness_pct*100:.1f}% < 35.0% ({len(unique_rats)}/{len(all_rats)} unique rationales).",
+                    actions=[
+                        "Parametrizar los error_rationale con @var@ en las plantillas para generar explicaciones personalizadas.",
+                        "Evitar repetir explicaciones idénticas entre diferentes distractores y plantillas.",
+                        "Asegurar que cada distractor explique la falacia específica asociada a los datos del reactivo.",
+                    ],
+                ))
+
+    # Calibrated stem diversity evaluation
+    unmasked_stems = [str(q.get("stem", "")).strip() for q in questions if isinstance(q, dict)]
+    unmasked_ratio = len(set(unmasked_stems)) / len(unmasked_stems) if unmasked_stems else 0.0
+    passes_calibrated = (div_ratio >= 0.25 and unmasked_ratio >= 0.85)
+
+    if div_ratio < 0.5 and not passes_calibrated:
         pattern_counts = []
         for tpl in templates:
             t_id = tpl.get("id", "UNKNOWN")
@@ -2744,6 +3058,7 @@ def _validate_single_template_file(
     cta_distractors_map: Dict[str, Dict[str, Any]],
     num_dry_run_seeds: int,
     shard_py: Optional[Union[str, Path]] = None,
+    strict: bool = True,
 ) -> Tuple[List[str], Optional[str], Set[str], List[Dict[str, Any]]]:
     """Validate a single template file and return (errors, comp_id, referenced_distractor_ids, templates_list)."""
     file_errors = []
@@ -2790,6 +3105,7 @@ def _validate_single_template_file(
             cta_distractors_map=cta_distractors_map,
             num_dry_run_seeds=num_dry_run_seeds,
             shard_py=shard_py,
+            strict=strict,
         )
         file_errors.extend(single_errs)
 
@@ -2949,6 +3265,7 @@ def check_templates_file_or_dir(
                     cta_distractors_map,
                     num_dry_run_seeds,
                     shard_py,
+                    strict,
                 ): tf
                 for tf in template_files
             }
@@ -2970,6 +3287,7 @@ def check_templates_file_or_dir(
                 cta_distractors_map,
                 num_dry_run_seeds,
                 shard_py,
+                strict,
             )
             errors.extend(file_errs)
             if comp_id:
@@ -2980,26 +3298,54 @@ def check_templates_file_or_dir(
                 if comp_id in referenced_distractors_by_comp:
                     referenced_distractors_by_comp[comp_id].update(ref_dids)
 
-    # Rule TPL-D3: 100% distractor coverage across templates
+    # Rule TPL-D3: Multimodal distractor coverage across templates
     if cta_distractors_by_comp:
         comps_to_check = list(referenced_distractors_by_comp.keys()) if is_full_dir else list(processed_comp_ids)
         for cid in comps_to_check:
             declared_set = cta_distractors_by_comp.get(cid, set())
             referenced_set = referenced_distractors_by_comp.get(cid, set())
-            uncovered = declared_set - referenced_set
-            if uncovered:
+            c_tpls = templates_by_comp.get(cid, [])
+            has_mc7 = any(t.get("interaction_type") == "multiple_choice_7_options" for t in c_tpls)
+            has_ms = any(t.get("interaction_type") == "multiple_select" for t in c_tpls)
+            is_100_fib = all(t.get("interaction_type") == "fill_in_the_blank" for t in c_tpls) and len(c_tpls) > 0
+
+            tpl_d3_failed = False
+            snippet_msg = ""
+            cause_msg = ""
+            if has_mc7:
+                uncovered = declared_set - referenced_set
+                if uncovered:
+                    tpl_d3_failed = True
+                    snippet_msg = f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})"
+                    cause_msg = "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando (MC7 exige 6/6)."
+            elif has_ms:
+                valid_ref = referenced_set.intersection(declared_set)
+                if len(valid_ref) < 2:
+                    tpl_d3_failed = True
+                    snippet_msg = f"Distractores cubiertos: {sorted(valid_ref)} ({len(valid_ref)}/2 requeridos para MS)"
+                    cause_msg = "Las plantillas multiple_select requieren al menos 2 distractores declarados en cta.json."
+            elif is_100_fib:
+                tpl_d3_failed = False
+            else:
+                uncovered = declared_set - referenced_set
+                if uncovered:
+                    tpl_d3_failed = True
+                    snippet_msg = f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})"
+                    cause_msg = "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando."
+
+            if tpl_d3_failed:
                 err_diag = format_diagnostic_error(
                     rule_tag="TPL-D3: COBERTURA COMPLETA DE DISTRACTORES",
                     competency=cid,
                     template="[Todas las plantillas de la competencia]",
                     item_id="N/A",
                     field_name="distractor_ids",
-                    snippet=f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})",
-                    cause="Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando.",
+                    snippet=snippet_msg,
+                    cause=cause_msg,
                     actions=[
-                        f"Asignar los distractores sin cubrir ({sorted(uncovered)}) en las plantillas existentes de '{cid}'.",
+                        f"Asignar los distractores correspondientes en las plantillas existentes de '{cid}'.",
                         "O crear plantillas adicionales que ejerciten los conceptos erróneos representados por estos distractores.",
-                        "Asegurar que el 100% de los distractores de cta.json tengan al menos una plantilla que los emplee.",
+                        "Asegurar la cobertura de distractores requerida por el contrato psicométrico.",
                     ],
                 )
                 errors.append(err_diag)
@@ -3023,6 +3369,7 @@ def check_templates_file_or_dir(
                 num_seeds=sim_seeds,
                 return_questions=True,
                 enforce_full_quota=(num_dry_run_seeds >= 50),
+                strict=strict,
             )
             c_errors.extend(div_errors)
 

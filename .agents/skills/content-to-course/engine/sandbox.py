@@ -709,23 +709,26 @@ _SANDBOX_WARMED_UP = False
 
 
 def warm_up_sandbox(timeout: float = 60.0) -> bool:
-    """Pre-warm in-process sandbox caches for sympy, numpy, scipy.stats."""
+    """Pre-warm in-process sandbox caches for sympy, numpy, scipy.stats outside sys.settrace."""
     global _SANDBOX_WARMED_UP
     if _SANDBOX_WARMED_UP:
         return True
 
-    code = (
-        "def generate(rng):\n"
-        "    import sympy\n"
-        "    import numpy as np\n"
-        "    import scipy.stats as stats\n"
-        "    return {'vars': {'warmed': True}, 'correct': '1', 'distractors': []}\n"
-    )
-    batch_res = execute_sandbox_batch(code, [42], timeout_per_item=timeout)
-    warmed = bool(
-        batch_res
-        and batch_res[0].get("success")
-        and batch_res[0].get("result", {}).get("vars", {}).get("warmed")
-    )
+    prev_trace = sys.gettrace()
+    if prev_trace is not None:
+        try:
+            sys.settrace(None)
+        except Exception:
+            pass
+    try:
+        import sympy  # noqa: F401
+        import numpy as np  # noqa: F401
+        import scipy.stats as stats  # noqa: F401
+    finally:
+        if prev_trace is not None:
+            try:
+                sys.settrace(prev_trace)
+            except Exception:
+                pass
     _SANDBOX_WARMED_UP = True
-    return warmed
+    return True

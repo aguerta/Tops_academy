@@ -203,12 +203,10 @@ def test_escaped_underscore_in_text_allowed() -> None:
     "asyntotic_estatistics_v7.json",
     "solow_growth_model.json",
 ])
-def test_real_published_courses_zero_r23_errors(course_filename: str) -> None:
+def test_real_published_courses_zero_r23_errors(course_filename: str, real_courses_raw: dict[str, str]) -> None:
     """All 4 published courses must pass scan_lexical and validate_course_content with 0 R-23 errors."""
-    course_path = REPO_ROOT / "courses" / course_filename
-    assert course_path.exists(), f"Course file not found: {course_path}"
-
-    raw_text = course_path.read_text(encoding="utf-8")
+    assert course_filename in real_courses_raw, f"Course file not found: {course_filename}"
+    raw_text = real_courses_raw[course_filename]
 
     # End-to-end course validation: validate_course_content runs Pass 1 (scan_lexical)
     # followed by Pass 2/3 (extended quality and strict rules in memory) with strict=True.
@@ -473,3 +471,97 @@ def test_adversarial_edge_cases_matrices_and_delimiters() -> None:
     }
     dollar_res = check_extended_quality_rules(escaped_dollar)
     assert len([e for e in dollar_res if e.rule_id in ("R-20", "R-23")]) == 0
+
+
+# =============================================================================
+# 6. KaTeX Prose Overflow Rule Separation (R-20 vs R-23 Invariant)
+# =============================================================================
+
+def test_katex_prose_overflow_emits_r20_never_r23() -> None:
+    """KaTeX text macros > 45 chars emit rule_id='R-20' (ERR_KATEX_PROSE_OVERFLOW), never 'R-23'."""
+    data = {
+        "course_id": "test_course",
+        "questions": [
+            {
+                "id": "Q-OVERFLOW",
+                "stem": r"Considere $\text{Este bloque de texto dentro de text supera el límite de cuarenta y cinco caracteres}$ en el modelo.",
+            }
+        ]
+    }
+    errors = check_extended_quality_rules(data)
+
+    # Must be tagged as R-20
+    r20_overflow = [e for e in errors if e.rule_id == "R-20" and e.code == "ERR_KATEX_PROSE_OVERFLOW"]
+    assert len(r20_overflow) == 1
+    assert "[KATEX-PROSE-OVERFLOW]" in r20_overflow[0].message
+    assert r20_overflow[0].item_id == "Q-OVERFLOW"
+
+    # Invariant: Must NEVER be tagged as R-23
+    r23_errors = [e for e in errors if e.rule_id == "R-23"]
+    assert len(r23_errors) == 0, f"Prose overflow must not trigger R-23: {r23_errors}"
+
+
+def test_katex_short_prose_passes_without_r20_or_r23_errors() -> None:
+    """KaTeX text macros <= 45 chars pass without R-20 or R-23 errors."""
+    data = {
+        "course_id": "test_course",
+        "questions": [
+            {
+                "id": "Q-SHORT-TEXT",
+                "stem": r"Considere $\text{Texto válido breve}$ con $\mathrm{identificador}$ en el modelo.",
+            }
+        ]
+    }
+    errors = check_extended_quality_rules(data)
+    assert len([e for e in errors if e.code == "ERR_KATEX_PROSE_OVERFLOW"]) == 0
+    assert len([e for e in errors if e.rule_id == "R-23"]) == 0
+
+
+def test_katex_prose_overflow_with_nested_braces_separation() -> None:
+    """KaTeX text macro > 45 chars with nested braces emits R-20 and NEVER R-23."""
+    data = {
+        "course_id": "test_course",
+        "questions": [
+            {
+                "id": "Q-NESTED-BRACES",
+                "stem": r"Sea el estadístico $\text{valor de $x_{i}$ en el límite asintótico cuando la muestra diverge}$ definido.",
+            }
+        ]
+    }
+    errors = check_extended_quality_rules(data)
+    r20_overflow = [e for e in errors if e.rule_id == "R-20" and e.code == "ERR_KATEX_PROSE_OVERFLOW"]
+    assert len(r20_overflow) == 1
+    assert "[KATEX-PROSE-OVERFLOW]" in r20_overflow[0].message
+    assert r20_overflow[0].details.get("length") == len("valor de $x_{i}$ en el límite asintótico cuando la muestra diverge")
+
+    # Invariant: Never R-23
+    r23_errors = [e for e in errors if e.rule_id == "R-23"]
+    assert len(r23_errors) == 0
+
+
+def test_katex_prose_overflow_boundary_45_vs_46_separation() -> None:
+    """Boundary test: 45 chars passes, 46 chars emits R-20 and NEVER R-23."""
+    # 45 chars passes
+    data_45 = {
+        "course_id": "test_course",
+        "questions": [
+            {"id": "Q-45", "stem": f"$\\text{{{('b' * 45)}}}$"}
+        ]
+    }
+    errs_45 = check_extended_quality_rules(data_45)
+    assert not any(e.code == "ERR_KATEX_PROSE_OVERFLOW" for e in errs_45)
+    assert not any(e.rule_id == "R-23" for e in errs_45)
+
+    # 46 chars emits R-20 and 0 R-23
+    data_46 = {
+        "course_id": "test_course",
+        "questions": [
+            {"id": "Q-46", "stem": f"$\\text{{{('b' * 46)}}}$"}
+        ]
+    }
+    errs_46 = check_extended_quality_rules(data_46)
+    r20_46 = [e for e in errs_46 if e.rule_id == "R-20" and e.code == "ERR_KATEX_PROSE_OVERFLOW"]
+    assert len(r20_46) == 1
+    assert not any(e.rule_id == "R-23" for e in errs_46)
+
+

@@ -1520,6 +1520,7 @@ def compile_cta(
             manifest_data=manifest_data,
             file_path=target_json_path,
             locator=locator,
+            allowed_prereq_ids=existing_comp_ids,
         )
 
     if not is_valid and existing_comp_ids:
@@ -1541,7 +1542,7 @@ def compile_cta(
                 if isinstance(val, str) and val:
                     k_errs = validate_katex_syntax(val, f"{cid}.{fld}")
                     if k_errs:
-                        clean_inner = val.replace("$", "").replace("\\", "").replace("{", "").replace("}", "").strip()
+                        clean_inner = val.replace("$", "").replace("\\", "").replace("{", "").replace("}", "").strip()[:40]
                         degraded_val = f"$\\text{{{clean_inner}}}$"
                         comp[fld] = degraded_val
                         record_patch(
@@ -1562,7 +1563,7 @@ def compile_cta(
                     if isinstance(dval, str) and dval:
                         dk_errs = validate_katex_syntax(dval, f"{did}.{dfld}")
                         if dk_errs:
-                            clean_inner = dval.replace("$", "").replace("\\", "").replace("{", "").replace("}", "").strip()
+                            clean_inner = dval.replace("$", "").replace("\\", "").replace("{", "").replace("}", "").strip()[:40]
                             degraded_dval = f"$\\text{{{clean_inner}}}$"
                             d[dfld] = degraded_dval
                             record_patch(
@@ -1594,6 +1595,7 @@ def compile_cta(
                 manifest_data=manifest_data,
                 file_path=target_json_path,
                 locator=locator,
+                allowed_prereq_ids=existing_comp_ids,
             )
 
         if not is_valid and existing_comp_ids:
@@ -1740,6 +1742,15 @@ def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
         cause = first_line[:120]
         action = "Corregir sintaxis de Python (comilla, paréntesis o delimitador sin cerrar)"
         return rule_tag, short_rule, cause, action
+
+    # KaTeX prose overflow fail-fast (R-23 preventative check)
+    if "KATEX-PROSE-OVERFLOW" in err:
+        return (
+            "KATEX-PROSE-OVERFLOW: TEXTO EN BLOQUE MATEMATICO EXCEDE 45 CARACTERES",
+            "KATEX-PROSE-OVERFLOW",
+            "Bloque \\text{}, \\textrm{} o \\mathrm{} excede 45 caracteres",
+            "Mover el texto en prosa fuera del delimitador '$...$' o acortar a <= 45 caracteres",
+        )
 
     # 1. Corrupted ASCII control characters (unescaped \rho, \frac, \alpha, etc.)
     if "Corrupted ASCII control character" in err:

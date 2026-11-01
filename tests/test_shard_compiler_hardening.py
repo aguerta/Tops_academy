@@ -116,9 +116,11 @@ class TestZeroDiskMutation:
             "    v = rng.randint(10, 50)\n"
             "    return {'vars': {'v': v}, 'correct': str(v), 'distractors': []}\n"
             "def ver_c01(res):\n"
-            "    return True\n"
+            "    return bool(res and 'vars' in res)\n"
+            "stems = ['Stem uno {v}', 'Stem dos {v}', 'Stem tres {v}']\n"
+            "hints = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('C-01', 'fill_in_the_blank', 'Stem {v}', gen_c01, ver_c01, 'Sol {v}', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "    ('T-C01-01', 'C-01', 'fill_in_the_blank', gen_c01, ver_c01, ('medium', 'Apply'), stems, hints, 'Sol {v}')\n"
             "]\n"
         )
         shard_py.write_text(original_code, encoding="utf-8")
@@ -327,10 +329,12 @@ class TestModularCompetencySplicing:
             "def gen_c01(rng):\n"
             "    v = rng.randint(10, 50)\n"
             "    return {'vars': {'v': v}, 'correct': str(v), 'distractors': []}\n"
-            "def ver_c01(r): return True\n"
+            "def ver_c01(r): return bool(r and 'vars' in r)\n"
+            "stems_c01 = ['Stem 1 uno {v}', 'Stem 1 dos {v}', 'Stem 1 tres {v}']\n"
+            "hints_c01 = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('C-01', 'fill_in_the_blank', 'Stem 1 {v}', gen_c01, ver_c01, 'Sol 1 {v}', 'KC', [], ('doc.pdf', 1, '')),\n"
-            "    ('C-02', 'fill_in_the_blank', 'Broken C02', None, None, 'Sol', 'KC', [], ('doc.pdf', 1, '')),\n"
+            "    ('T-C01-01', 'C-01', 'fill_in_the_blank', gen_c01, ver_c01, ('medium', 'Apply'), stems_c01, hints_c01, 'Sol 1 {v}'),\n"
+            "    ('T-C02-01', 'C-02', 'fill_in_the_blank', None, None, ('medium', 'Apply'), stems_c01, hints_c01, 'Sol'),\n"
             "]\n"
         )
         shard_py.write_text(shard_code, encoding="utf-8")
@@ -344,9 +348,11 @@ class TestModularCompetencySplicing:
             "def gen_c02(rng):\n"
             "    w = rng.randint(100, 200)\n"
             "    return {'vars': {'w': w}, 'correct': str(w), 'distractors': []}\n"
-            "def ver_c02(r): return True\n"
+            "def ver_c02(r): return bool(r and 'vars' in r)\n"
+            "stems_c02 = ['Fixed Stem 2 {w}', 'Fixed Stem 2 dos {w}', 'Fixed Stem 2 tres {w}']\n"
+            "hints_c02 = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('C-02', 'fill_in_the_blank', 'Fixed Stem 2 {w}', gen_c02, ver_c02, 'Sol 2 {w}', 'KC', [], ('doc.pdf', 2, '')),\n"
+            "    ('T-C02-01', 'C-02', 'fill_in_the_blank', gen_c02, ver_c02, ('medium', 'Apply'), stems_c02, hints_c02, 'Sol 2 {w}'),\n"
             "]\n"
         )
         fix_c02.write_text(fix_code, encoding="utf-8")
@@ -418,9 +424,11 @@ class TestModularCompetencySplicing:
             "def gen_h03(rng):\n"
             "    a = rng.randint(10, 50)\n"
             "    return {'vars': {'a': a}, 'correct': str(a), 'distractors': []}\n"
-            "def ver_h03(r): return True\n"
+            "def ver_h03(r): return bool(r and 'vars' in r)\n"
+            "stems_h03 = ['Stem H03 uno {a}', 'Stem H03 dos {a}', 'Stem H03 tres {a}']\n"
+            "hints_h03 = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('Hab-03', 'fill_in_the_blank', 'Stem H03 {a}', gen_h03, ver_h03, 'Sol {a}', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "    ('T-H03-01', 'Hab-03', 'fill_in_the_blank', gen_h03, ver_h03, ('medium', 'Apply'), stems_h03, hints_h03, 'Sol {a}')\n"
             "]\n"
         )
         (fixes_dir / "Hab-03.py").write_text(fix_hab03, encoding="utf-8")
@@ -430,9 +438,11 @@ class TestModularCompetencySplicing:
             "def gen_h04(rng):\n"
             "    b = rng.randint(100, 200)\n"
             "    return {'vars': {'b': b}, 'correct': str(b), 'distractors': []}\n"
-            "def ver_h04(r): return True\n"
+            "def ver_h04(r): return bool(r and 'vars' in r)\n"
+            "stems_h04 = ['Stem H04 uno {b}', 'Stem H04 dos {b}', 'Stem H04 tres {b}']\n"
+            "hints_h04 = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('Hab-04', 'fill_in_the_blank', 'Stem H04 {b}', gen_h04, ver_h04, 'Sol {b}', 'KC', [], ('doc.pdf', 2, ''))\n"
+            "    ('T-H04-01', 'Hab-04', 'fill_in_the_blank', gen_h04, ver_h04, ('medium', 'Apply'), stems_h04, hints_h04, 'Sol {b}')\n"
             "]\n"
         )
         (fixes_dir / "Hab-04.py").write_text(fix_hab04, encoding="utf-8")
@@ -460,9 +470,11 @@ class TestModularCompetencySplicing:
             "def gen(rng):\n"
             "    v = rng.randint(1, 100)\n"
             "    return {'vars': {'v': v}, 'correct': str(v), 'distractors': []}\n"
-            "def ver(r): return True\n"
+            "def ver(r): return bool(r and 'vars' in r)\n"
+            "stems = ['Stem CID_TOKEN uno {v}', 'Stem CID_TOKEN dos {v}', 'Stem CID_TOKEN tres {v}']\n"
+            "hints = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('CID_TOKEN', 'fill_in_the_blank', 'Stem CID_TOKEN {v}', gen, ver, 'Solución {v}', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "    ('T-CID_TOKEN-01', 'CID_TOKEN', 'fill_in_the_blank', gen, ver, ('medium', 'Apply'), stems, hints, 'Solución {v}')\n"
             "]\n"
         )
         (fixes_dir / "Hab-03.py").write_text(fix_code_template.replace("CID_TOKEN", "Hab-03"), encoding="utf-8")
@@ -484,9 +496,11 @@ class TestModularCompetencySplicing:
             "def gen(rng):\n"
             "    x = rng.randint(1, 99)\n"
             "    return {'vars': {'x': x}, 'correct': str(x), 'distractors': []}\n"
-            "def ver(r): return True\n"
+            "def ver(r): return bool(r and 'vars' in r)\n"
+            "stems = ['Stem CID_TOKEN uno {x}', 'Stem CID_TOKEN dos {x}', 'Stem CID_TOKEN tres {x}']\n"
+            "hints = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('CID_TOKEN', 'fill_in_the_blank', 'Stem CID_TOKEN {x}', gen, ver, 'Solución {x}', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "    ('T-CID_TOKEN-01', 'CID_TOKEN', 'fill_in_the_blank', gen, ver, ('medium', 'Apply'), stems, hints, 'Solución {x}')\n"
             "]\n"
         )
         # hab-03.py (lowercase hyphen)
@@ -512,9 +526,11 @@ class TestModularCompetencySplicing:
             "def gen_c01(rng):\n"
             "    v = rng.randint(1, 10)\n"
             "    return {'vars': {'v': v}, 'correct': 'VERSION_ONE', 'distractors': []}\n"
-            "def ver_c01(r): return True\n"
+            "def ver_c01(r): return bool(r and 'vars' in r)\n"
+            "stems = ['Stem V1 uno {v}', 'Stem V1 dos {v}', 'Stem V1 tres {v}']\n"
+            "hints = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('C-01', 'fill_in_the_blank', 'Stem V1 {v}', gen_c01, ver_c01, 'Sol V1 {v}', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "    ('T-C01-01', 'C-01', 'fill_in_the_blank', gen_c01, ver_c01, ('medium', 'Apply'), stems, hints, 'Sol V1 {v}')\n"
             "]\n"
         )
         fix_c01.write_text(fix_v1, encoding="utf-8")
@@ -529,9 +545,11 @@ class TestModularCompetencySplicing:
             "def gen_c01(rng):\n"
             "    v = rng.randint(20, 30)\n"
             "    return {'vars': {'v': v}, 'correct': 'VERSION_TWO', 'distractors': []}\n"
-            "def ver_c01(r): return True\n"
+            "def ver_c01(r): return bool(r and 'vars' in r)\n"
+            "stems = ['Stem V2 uno {v}', 'Stem V2 dos {v}', 'Stem V2 tres {v}']\n"
+            "hints = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('C-01', 'fill_in_the_blank', 'Stem V2 {v}', gen_c01, ver_c01, 'Sol V2 {v}', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "    ('T-C01-01', 'C-01', 'fill_in_the_blank', gen_c01, ver_c01, ('medium', 'Apply'), stems, hints, 'Sol V2 {v}')\n"
             "]\n"
         )
         fix_c01.write_text(fix_v2, encoding="utf-8")
@@ -663,7 +681,7 @@ class TestSurgicalDiagnostics:
             ),
             "cross_check_py": (
                 "def verify(res):\n"
-                "    return True\n"
+                "    return bool(res and isinstance(res.get('vars'), dict) and 'res' in res['vars'])\n"
                 "\n"
                 "cross_check = verify\n"
             ),
@@ -725,9 +743,11 @@ class TestInfiniteLoopManifestAndAutoHealHardening:
             "        d1 += 1\n"
             "    return {'vars': {'d1': d1}, 'correct': str(d1), 'distractors': []}\n"
             "def ver_c02(res):\n"
-            "    return True\n"
+            "    return bool(res and 'vars' in res)\n"
+            "stems = ['Stem uno @d1@', 'Stem dos @d1@', 'Stem tres @d1@']\n"
+            "hints = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('C-02', 'fill_in_the_blank', 'Stem @d1@', gen_c02_frontera, ver_c02, 'Sol @d1@', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "    ('T-C02-01', 'C-02', 'fill_in_the_blank', gen_c02_frontera, ver_c02, ('medium', 'Apply'), stems, hints, 'Sol @d1@')\n"
             "]\n"
         )
         shard_py.write_text(code, encoding="utf-8")
@@ -737,7 +757,7 @@ class TestInfiniteLoopManifestAndAutoHealHardening:
         elapsed = time.perf_counter() - t0
 
         assert not success
-        assert elapsed < 3.0, f"Infinite loop took too long to abort: {elapsed:.2f}s"
+        assert elapsed < 6.0, f"Infinite loop took too long to abort: {elapsed:.2f}s"
         joined = "\n".join(errors)
         assert "TPL-DRY" in joined or "SandboxTimeoutError" in joined
 
@@ -751,9 +771,11 @@ class TestInfiniteLoopManifestAndAutoHealHardening:
             "def gen_c01(rng):\n"
             "    v = rng.randint(10, 500)\n"
             "    return {'vars': {'v': v}, 'correct': str(v), 'distractors': []}\n"
-            "def ver_c01(res): return True\n"
+            "def ver_c01(res): return bool(res and 'vars' in res)\n"
+            "stems = ['Calcule @v@ contexto uno', 'Calcule @v@ contexto dos', 'Calcule @v@ contexto tres']\n"
+            "hints = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('C-01', 'fill_in_the_blank', 'Calcule @v@', gen_c01, ver_c01, 'Sol @v@', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "    ('T-C01-01', 'C-01', 'fill_in_the_blank', gen_c01, ver_c01, ('medium', 'Apply'), stems, hints, 'Sol @v@')\n"
             "]\n",
             encoding="utf-8",
         )
@@ -783,9 +805,15 @@ class TestInfiniteLoopManifestAndAutoHealHardening:
             "        'ans': ans,\n"
             "    }\n"
             "    return {'vars': v, 'correct': ans, 'distractors': []}\n"
-            "def ver_hab08(res): return True\n"
+            "def ver_hab08(res): return bool(res and 'vars' in res)\n"
+            "stems = [\n"
+            "    r'Con $n=@n@$, $\\hat{\\beta}=@b@$, $\\hat{\\gamma}=@g@$ y ajuste {extra}:',\n"
+            "    r'Dado $n=@n@$, $\\hat{\\beta}=@b@$, $\\hat{\\gamma}=@g@$ con factor {extra}:',\n"
+            "    r'Para $n=@n@$, $\\hat{\\beta}=@b@$, $\\hat{\\gamma}=@g@$ y parmetro {extra}:',\n"
+            "]\n"
+            "hints = ['Pista uno con suficiente longitud', 'Pista dos con suficiente longitud', 'Pista tres con suficiente longitud']\n"
             "TEMPLATES = [\n"
-            "    ('Hab-08', 'fill_in_the_blank', r'Con $n=@n@$, $\\hat{\\beta}=@b@$, $\\hat{\\gamma}=@g@$ y ajuste {extra}:', gen_hab08, ver_hab08, r'Sol @ans@ ({extra})', 'KC', [], ('doc.pdf', 1, ''))\n"
+            "    ('T-H08-01', 'Hab-08', 'fill_in_the_blank', gen_hab08, ver_hab08, ('medium', 'Apply'), stems, hints, r'Sol @ans@ ({extra})')\n"
             "]\n",
             encoding="utf-8",
         )

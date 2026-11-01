@@ -164,7 +164,10 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         diag_c05 = c05_order.get("diagnostics", {})
         self.assertFalse(diag_c05.get("manual_request", False))
         self.assertIn("C-05 syntax error: missing bracket in generator", diag_c05.get("template_errors", []))
-        self.assertIn("### Errores Diagnosticados en Templates:", c05_order.get("Prompt", ""))
+        self.assertTrue(
+            "### Diagnóstico Consolidado de Fallos y Discordancias:" in c05_order.get("Prompt", "")
+            or "### Errores Diagnosticados en Templates:" in c05_order.get("Prompt", "")
+        )
         self.assertIn("- `C-05 syntax error: missing bracket in generator`", c05_order.get("Prompt", ""))
 
         # Inspect work/prompts/repair/repair_c11.json
@@ -172,7 +175,10 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         diag_c11 = c11_order.get("diagnostics", {})
         self.assertFalse(diag_c11.get("manual_request", False))
         self.assertIn("Division by zero in seed 42 for C-11", diag_c11.get("template_errors", []))
-        self.assertIn("### Errores Diagnosticados en Templates:", c11_order.get("Prompt", ""))
+        self.assertTrue(
+            "### Diagnóstico Consolidado de Fallos y Discordancias:" in c11_order.get("Prompt", "")
+            or "### Errores Diagnosticados en Templates:" in c11_order.get("Prompt", "")
+        )
         self.assertIn("- `Division by zero in seed 42 for C-11`", c11_order.get("Prompt", ""))
 
         # Inspect H-02 (matched via flat errors string)
@@ -180,7 +186,10 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         diag_h02 = h02_order.get("diagnostics", {})
         self.assertFalse(diag_h02.get("manual_request", False))
         self.assertIn("Unexpected invariant violation in H-02: bounds exceeded", diag_h02.get("template_errors", []))
-        self.assertIn("### Errores Diagnosticados en Templates:", h02_order.get("Prompt", ""))
+        self.assertTrue(
+            "### Diagnóstico Consolidado de Fallos y Discordancias:" in h02_order.get("Prompt", "")
+            or "### Errores Diagnosticados en Templates:" in h02_order.get("Prompt", "")
+        )
         self.assertIn("- `Unexpected invariant violation in H-02: bounds exceeded`", h02_order.get("Prompt", ""))
 
     def test_dispatch_repair_deduplicates_ids_preserving_order(self) -> None:

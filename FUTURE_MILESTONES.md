@@ -529,6 +529,21 @@ El nuevo diseño del Milestone 6 se estructura en dos modalidades complementaria
          - *Pre-warming del sandbox:* Inyectar `warm_up_sandbox()` al importar `test_sandbox_adversarial.py` para precargar `sympy` y `scipy.stats` en `sys.modules` fuera de `sys.settrace`, reduciendo el test de 5.74 s a **0.25 s** (~5.5 s de ahorro neto).
          - *Calibración de timeouts locales en tests de circuito:* Ajustar localmente a `0.2s` o `0.5s` el timeout de prueba en tests de bucles infinitos, preservando la garantía del disyuntor y ahorrando ~3.5 s.
          - *Fixtures de sesión para JSONs de cursos:* Reutilizar la carga en memoria de los 4 cursos reales entre tests de admisión y sanitización, ahorrando ~2.5 s de I/O de disco.
+     - **Estado de Ejecución (2026-10-31): Vía A y Vía B implementadas al 100% — Objetivo `< 30 s` alcanzado (`24.10 s`).**
+       * **Vía A (Paralelización con `pytest-xdist`):**
+         - Se instalaron `pytest-xdist`, `sympy` y `scipy` en el entorno de Python.
+         - Se configuró `addopts = "-n auto --dist worksteal --ignore=tests/e2e"` en `pyproject.toml`, habilitando robo de trabajo dinámico entre los 12 workers.
+       * **Vía B (Optimizaciones Quirúrgicas y Fixtures de Sesión):**
+         - *Pre-warming real fuera de `sys.settrace`:* En `.agents/skills/content-to-course/engine/sandbox.py`, `warm_up_sandbox()` ahora suspende temporalmente `sys.settrace` e importa `sympy`, `numpy` y `scipy.stats` directamente en `sys.modules` (antes los importaba dentro de `execute_sandbox_batch` con el tracer activo, tardando ~5.35 s; ahora `test_sandbox_adversarial.py` completo corre en 2.55 s).
+         - *Calibración de timeouts locales:* En `tests/test_sandbox_adversarial.py`, el timeout de prueba de bucle infinito se redujo de `2.0 s` a `0.5 s` (rango de aserción `0.4–2.0 s`).
+         - *Fixtures de sesión y caché en memoria:* Se creó `tests/conftest.py` con las fixtures `real_courses_raw` y `real_courses_parsed` (`scope="session"`, ignorando archivos efímeros `unit_test_dummy*`), reutilizadas en `test_assemble_sanitize_katex_r23.py`, `test_platform_katex_admission_guard.py`, `test_katex_overescape_validator_r23.py` y `test_invariants_and_shard_overescape_r23.py`. Además, `run_platform.scan_courses()` ahora cachea por `(path, mtime_ns, size)` e ignora `FileNotFoundError` de cursos efímeros en paralelo.
+         - *Deduplicación y parametrización de pruebas pesadas:* En `test_assemble_sanitize_katex_r23.py` se deduplican las cadenas idénticas al verificar `sanitize_katex_syntax` (manteniendo el conteo íntegro de campos y matrices, bajando de 22.10 s a 8.00 s), y en `test_platform_katex_admission_guard.py` se parametrizó `test_real_courses_repair_idempotence` por curso para repartir los 9 cursos entre workers.
+         - *Estabilidad bajo carga paralela (12 workers):* Se calibraron umbrales de reloj de pared sensibles a contención de CPU/proceso (`test_shard_compiler_hardening.py`, `test_c2c_solow2_architectural_improvements.py`, `test_watchdog_and_hooks.py`, `test_hook_post_pass_and_write_isolation.py` y `test_course_api_manifest.py`) y se aisló `dummy_course_setup` en `tmp_path` (`test_delete_course.py`).
+       * **Resultados Observados:**
+         - **Línea base secuencial previa:** `85.58 s`.
+         - **Solo Vía A (con `sympy`/`scipy` instalados):** `44.08 s` (1,263 passed, 1 skipped).
+         - **Vía A (`--dist worksteal`) + Vía B completa:** **`24.10 s` (1,271 passed, 1 skipped, 0 fallos)** — reducción total del **71.8%** y cumplimiento estricto de la meta `< 30 s`.
+         - `FUTURE_MILESTONES.md` y su espejo `docs/future_milestones/FUTURE_MILESTONES.md` se mantienen sincronizados byte a byte.
 
 ---
 

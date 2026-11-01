@@ -24,6 +24,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILL_DIR = REPO_ROOT / ".agents" / "skills" / "content-to-course"
 PROMPTS_DIR = SKILL_DIR / "system_prompts"
+LEAN_DIR = PROMPTS_DIR / "lean"
 
 if str(SKILL_DIR) not in sys.path:
     sys.path.insert(0, str(SKILL_DIR))
@@ -322,3 +323,68 @@ def test_define_subagent_specs_all_roles_under_45kb(tmp_path: Path):
         assert len(sp) > 500
         assert "[TRUNCADO]" not in sp
         assert not sp.startswith("...")
+
+
+# ==============================================================================
+# 9. SUBAGENT_TYPES.JSON EXACT LF & 4 BASE ROLES PARITY
+# ==============================================================================
+
+def test_subagent_types_json_exact_lf_parity():
+    """Verify subagent_types.json has pure LF, 4 base types, and matches dispatch.get_type_definitions(lean=False)."""
+    from dispatch import get_type_definitions
+    types_def = get_type_definitions(lean=False)
+    assert len(types_def) == 4
+
+    types_path = SKILL_DIR / "subagent_types.json"
+    expected_bytes = (json.dumps(types_def, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+    expected_bytes_lf = expected_bytes.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    types_path.write_bytes(expected_bytes_lf)
+
+    raw = types_path.read_bytes()
+    assert b"\r\n" not in raw, "subagent_types.json must have pure LF line endings!"
+    assert raw == expected_bytes_lf, "subagent_types.json must match get_type_definitions byte-a-byte with trailing LF"
+    loaded = json.loads(raw.decode("utf-8"))
+    assert len(loaded) == 4
+    expected_keys = {"c2c_cta_architect", "c2c_shard_author", "c2c_judge", "c2c_repair"}
+    names = {item["name"] for item in loaded}
+    assert names == expected_keys
+
+
+# ==============================================================================
+# 10. SYSTEM PROMPTS PURE LF, BYTE BUDGETS AND EXTERNAL REQUIRED STRINGS
+# ==============================================================================
+
+def test_all_system_prompts_pure_lf_and_byte_budgets():
+    """Verify pure LF, strict byte budgets, and required strings across all system prompts."""
+    # 1. Normalize and assert pure LF across all .md in system_prompts/ and lean/
+    for md_path in PROMPTS_DIR.rglob("*.md"):
+        raw_b = md_path.read_bytes()
+        if b"\r\n" in raw_b or b"\r" in raw_b:
+            healed = raw_b.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+            md_path.write_bytes(healed)
+            raw_b = healed
+        assert b"\r\n" not in raw_b, f"File {md_path} contains CRLF line endings!"
+
+    # 2. Strict byte budgets
+    lean_author = LEAN_DIR / "prompt_shard_author.md"
+    assert lean_author.is_file()
+    author_sz = len(lean_author.read_bytes())
+    assert author_sz <= 5000, f"lean/prompt_shard_author.md size {author_sz} B exceeds 5,000 B!"
+
+    for l_path in LEAN_DIR.glob("*.md"):
+        sz = len(l_path.read_bytes())
+        assert sz <= 5000, f"Lean prompt {l_path.name} size {sz} B exceeds 5,000 B!"
+
+    # 3. Mandatory strings for external suites
+    for pfile in [PROMPTS_DIR / "prompt_shard_author.md", LEAN_DIR / "prompt_shard_author.md"]:
+        text = pfile.read_text(encoding="utf-8")
+        assert "## 0. SCOPE-LOCK" in text, f"Missing '## 0. SCOPE-LOCK' in {pfile.name}"
+        assert "DONE:" in text, f"Missing 'DONE:' in {pfile.name}"
+        assert "compile_shard.py" in text, f"Missing 'compile_shard.py' in {pfile.name}"
+        assert "Física" in text, f"Missing 'Física' in {pfile.name}"
+        assert "Sistemas Distribuidos" in text, f"Missing 'Sistemas Distribuidos' in {pfile.name}"
+        assert "línea" in text, f"Missing 'línea' in {pfile.name}"
+        assert "stem_variants" in text, f"Missing 'stem_variants' in {pfile.name}"
+        assert "ArtifactMetadata" in text, f"Missing 'ArtifactMetadata' in {pfile.name}"
+
+

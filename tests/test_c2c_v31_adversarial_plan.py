@@ -411,11 +411,13 @@ class TestC2Cv31AdversarialPlan(unittest.TestCase):
         (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps(pre_cta), encoding="utf-8")
 
         pre_shards = {
+            "min_archetypes": 1,
             "total_shards": 1,
             "total_competencies": 1,
             "shards": [
                 {
                     "shard_id": "shard_01",
+                    "min_archetypes": 1,
                     "shard_index": 1,
                     "competency_ids": ["H-01"],
                     "competencies": [{"id": "H-01", "name": "Eficiencia de Carnot"}],
@@ -453,12 +455,12 @@ def gen_h01(rng):
     ans_val = round(1.0 - (tc / th), 3)
 
     distractors = [
-        {"value": rf"$\\eta = {round(ans_val + 0.10, 3)}$", "distractor_id": "D-H01-01", "error_rationale": "Inversión TH/TC"},
-        {"value": rf"$\\eta = {round(ans_val + 0.20, 3)}$", "distractor_id": "D-H01-02", "error_rationale": "Calor residual"},
-        {"value": rf"$\\eta = {round(ans_val + 0.30, 3)}$", "distractor_id": "D-H01-03", "error_rationale": "Desplazamiento"},
-        {"value": rf"$\\eta = {round(ans_val + 0.40, 3)}$", "distractor_id": "D-H01-04", "error_rationale": "Factor espurio"},
-        {"value": rf"$\\eta = {round(ans_val - 0.10, 3)}$", "distractor_id": "D-H01-05", "error_rationale": "Suma"},
-        {"value": rf"$\\eta = {round(ans_val - 0.20, 3)}$", "distractor_id": "D-H01-06", "error_rationale": "Semidiferencia"},
+        {"value": rf"$\\eta = {round(ans_val + 0.10, 3)}$", "distractor_id": "D-H01-01", "error_rationale": "Inversión errónea en foco caliente @th@ y frío @tc@"},
+        {"value": rf"$\\eta = {round(ans_val + 0.20, 3)}$", "distractor_id": "D-H01-02", "error_rationale": "Calor residual no disipado desde foco @th@"},
+        {"value": rf"$\\eta = {round(ans_val + 0.30, 3)}$", "distractor_id": "D-H01-03", "error_rationale": "Desplazamiento anómalo en temperatura fría @tc@"},
+        {"value": rf"$\\eta = {round(ans_val + 0.40, 3)}$", "distractor_id": "D-H01-04", "error_rationale": "Factor espurio aplicado al foco térmico @th@"},
+        {"value": rf"$\\eta = {round(ans_val - 0.10, 3)}$", "distractor_id": "D-H01-05", "error_rationale": "Suma errónea en lugar de resta con temperatura @tc@"},
+        {"value": rf"$\\eta = {round(ans_val - 0.20, 3)}$", "distractor_id": "D-H01-06", "error_rationale": "Semidiferencia incorrecta entre focos @th@ y @tc@"},
     ]
     return {
         "vars": {"th": th, "tc": tc, "ans": ans_val},
@@ -473,21 +475,38 @@ def ver_h01(res):
 
 TEMPLATES = [
     (
+        "T-H-01",
         "H-01",
         "multiple_choice",
-        r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$. Determine el rendimiento térmico:",
         gen_h01,
         ver_h01,
-        r"Por el teorema de Carnot, el rendimiento es $\\eta = 1 - \\frac{T_C}{T_H} = 1 - \\frac{tc}{th} = {ans}$.",
-        "Eficiencia de Carnot",
-        ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"],
-        ("termodinamica_clausius.pdf", 8, "El rendimiento de Carnot depende exclusivamente de las temperaturas de los focos.")
+        ("medium", "Understand"),
+        [
+            r"Una máquina térmica reversible de Carnot opera entre focos a $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$. Determine el rendimiento térmico:",
+            r"Considere un ciclo reversible de Carnot con focos térmicos $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$. Calcule la eficiencia térmica:",
+            r"Para una máquina de Carnot que transfiere calor entre focos $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$, halle el rendimiento:",
+            r"Evalúe la eficiencia máxima teórica entre reservorios a $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$ mediante Carnot:",
+            r"Estime el rendimiento de una máquina ideal de Carnot entre reservorios térmicos $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Analice el ciclo térmico de Carnot entre dos fuentes con $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$, calculando su rendimiento:",
+            r"Determine el factor de eficiencia de una máquina reversible operando entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Calcule el rendimiento característico de Carnot para un sistema térmico entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Obtenga la eficiencia límite para una máquina reversible entre focos a $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Verifique la cota superior del rendimiento de Carnot para depósitos a $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Halle el valor de la eficiencia térmica ideal entre temperaturas $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Compruebe la razón de rendimiento para la máquina de Carnot entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+        ],
+        [
+            "Recuerde que el rendimiento térmico depende de la relación entre temperaturas.",
+            "Aplique la fórmula de Carnot con las temperaturas dadas para el ciclo.",
+            "Sustituya directamente los valores absolutos en Kelvin para obtener la eficiencia.",
+        ],
+        r"Por el principio de Carnot, el rendimiento es $\\eta = 1 - \\frac{T_C}{T_H} = {ans}$."
     )
 ]
 '''
         (shards_dir / "shard_01_data.py").write_text(shard_code, encoding="utf-8")
 
-        ok, errors = compile_shard.compile_shard(self.work_dir, "shard_01")
+        ok, errors = compile_shard.compile_shard(self.work_dir, "shard_01", min_archetypes=1)
         self.assertTrue(ok, f"compile_shard failed: {errors}")
         self.assertEqual(len(errors), 0)
 
@@ -514,11 +533,13 @@ TEMPLATES = [
         (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps(pre_cta), encoding="utf-8")
 
         pre_shards = {
+            "min_archetypes": 1,
             "total_shards": 1,
             "total_competencies": 1,
             "shards": [
                 {
                     "shard_id": "shard_01",
+                    "min_archetypes": 1,
                     "shard_index": 1,
                     "competency_ids": ["H-01"],
                     "competencies": [{"id": "H-01", "name": "Regla de L'Hopital"}],
@@ -542,7 +563,7 @@ TEMPLATES = [
         }
         (self.work_dir / "cta.json").write_text(json.dumps(cta_data), encoding="utf-8")
 
-        # Shard code with single quotes: L'Hopital, Euler's constant, D'Alembert
+        # Shard code with single quotes: L'Hopital, Napier's constant, D'Alembert
         shard_code = '''
 def gen_h01(rng):
     k = rng.randint(10, 100)
@@ -550,12 +571,12 @@ def gen_h01(rng):
         "vars": {"k": k},
         "correct": rf"$L = {k}$",
         "distractors": [
-            {"value": rf"$L = {k + 1}$", "distractor_id": "D-H01-01", "error_rationale": "Aplicar L'Hopital cuando no es 0/0"},
-            {"value": rf"$L = {k + 2}$", "distractor_id": "D-H01-02", "error_rationale": "Confundir base e con Euler's gamma"},
-            {"value": rf"$L = {k + 3}$", "distractor_id": "D-H01-03", "error_rationale": "Invertir fuerzas en D'Alembert"},
-            {"value": rf"$L = {k + 4}$", "distractor_id": "D-H01-04", "error_rationale": "Hipótesis de Fisher's"},
-            {"value": rf"$L = {k + 5}$", "distractor_id": "D-H01-05", "error_rationale": "Teorema de Cauchy's"},
-            {"value": rf"$L = {k + 6}$", "distractor_id": "D-H01-06", "error_rationale": "Residuo de Lagrange's"},
+            {"value": rf"$L = {k + 1}$", "distractor_id": "D-H01-01", "error_rationale": "Aplicar regla de L'Hopital cuando el parámetro @k@ no es nulo"},
+            {"value": rf"$L = {k + 2}$", "distractor_id": "D-H01-02", "error_rationale": "Confundir la base matemática con constante e y parámetro @k@"},
+            {"value": rf"$L = {k + 3}$", "distractor_id": "D-H01-03", "error_rationale": "Invertir fuerzas dinámicas en el balance de D'Alembert con @k@"},
+            {"value": rf"$L = {k + 4}$", "distractor_id": "D-H01-04", "error_rationale": "Asumir la hipótesis de Fisher's para la variable @k@ dada"},
+            {"value": rf"$L = {k + 5}$", "distractor_id": "D-H01-05", "error_rationale": "Aplicar el teorema de Cauchy's omitiendo la escala @k@"},
+            {"value": rf"$L = {k + 6}$", "distractor_id": "D-H01-06", "error_rationale": "Considerar el residuo de Taylor's sobre el parámetro @k@"},
         ]
     }
 
@@ -564,21 +585,38 @@ def ver_h01(res):
 
 TEMPLATES = [
     (
+        "T-H-01",
         "H-01",
         "multiple_choice",
-        r"Calcule el límite indeterminado aplicando la regla de L'Hopital para parámetro $k = {k}$:",
         gen_h01,
         ver_h01,
-        r"Por la regla de L'Hopital y el teorema de Cauchy's, el resultado es ${k}$.",
-        "Regla de L'Hopital",
-        ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"],
-        ("calculo.pdf", 4, "Regla de L'Hopital")
+        ("easy", "Remember"),
+        [
+            r"Calcule el límite aplicando la regla de L'Hopital para el parámetro $k = {k}$:",
+            r"Determine el límite mediante la regla de L'Hopital con la variable $k = {k}$:",
+            r"Evalúe el valor límite bajo la regla de L'Hopital para el caso $k = {k}$:",
+            r"Halle la solución del límite con la regla de L'Hopital fijando $k = {k}$:",
+            r"Analice el comportamiento límite aplicando la regla de L'Hopital en $k = {k}$:",
+            r"Estime el resultado límite mediante la regla de L'Hopital considerando $k = {k}$:",
+            r"Obtenga el valor asintótico aplicando la regla de L'Hopital para $k = {k}$:",
+            r"Compruebe la convergencia límite usando la regla de L'Hopital con $k = {k}$:",
+            r"Verifique el límite fundamental con la regla de L'Hopital dado $k = {k}$:",
+            r"Examine el cociente límite mediante la regla de L'Hopital para la tasa $k = {k}$:",
+            r"Identifique el límite indeterminado aplicando la regla de L'Hopital en $k = {k}$:",
+            r"Calcule la cota del límite con la regla de L'Hopital para el nivel $k = {k}$:",
+        ],
+        [
+            "Verifique las condiciones para aplicar la regla de L'Hopital de forma directa.",
+            "Diferencie numerador y denominador respecto a la variable principal del problema.",
+            "Sustituya el parámetro k para evaluar la forma analítica de la expresión límite.",
+        ],
+        r"Por la regla de L'Hopital y el teorema de Cauchy's, el resultado es ${k}$."
     )
 ]
 '''
         (shards_dir / "shard_01_data.py").write_text(shard_code, encoding="utf-8")
 
-        ok, errors = compile_shard.compile_shard(self.work_dir, "shard_01")
+        ok, errors = compile_shard.compile_shard(self.work_dir, "shard_01", min_archetypes=1)
         self.assertTrue(ok, f"compile_shard failed on single quotes: {errors}")
         tpl_file = templates_dir / "H-01.json"
         self.assertTrue(tpl_file.is_file(), "Compiled template H-01.json must exist")

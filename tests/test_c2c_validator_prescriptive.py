@@ -21,7 +21,8 @@ if str(_skills_root) not in sys.path:
 
 from check_templates import check_single_template, format_diagnostic_error
 from engine.invariants import check_instance_invariants, validate_katex_syntax
-from course_publisher import CoursePublisher
+from course_publisher import CoursePublisher, PublishQualityGateError
+from validator.models import ValidationResult
 from dispatch import ROLE_SPECS, get_type_definitions, dispatch_authors, dispatch_judges, dispatch_cta
 
 
@@ -296,3 +297,152 @@ class TestDispatchContractsAndEpistemicClosure:
         assert item_cta.exists()
         prompt_cta = json.loads(item_cta.read_text(encoding="utf-8"))["Prompt"]
         assert "compile_cta.py" in prompt_cta or "cta_data.py" in prompt_cta
+
+
+class TestCoursePublisherQualityGateStrict:
+    """Verifies strict vs strict=False behavior of PublishQualityGateError in CoursePublisher."""
+
+    def test_course_publisher_strict_false_bypasses_quality_gate(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        """Under strict=False, quality gate warnings do not raise PublishQualityGateError."""
+        monkeypatch.setattr(
+            "course_publisher._load_run_full_audit",
+            lambda project_root=None: lambda data: {
+                "mpri_score": 50.0,
+                "pillars": {
+                    "zpd_adaptive_progression": {"score": 0.0},
+                    "diagnostic_remediation_alignment": {"score": 5.0},
+                },
+                "diagnostics": {"rationale_uniqueness_pct": 10.0},
+                "hard_penalties": [{"rule": "P_FAIL", "reason": "Failed metric"}],
+                "all_issues": [{"severity": "critical", "message": "Failed critical metric"}],
+                "risk_clusters": {"length_padded_options": ["Q-001"]},
+            },
+        )
+        publisher = CoursePublisher(courses_dir=tmp_path)
+        publisher._run_cli_validator = lambda p, strict=True: True
+        monkeypatch.setattr(
+            "course_publisher.validate_course_content",
+            lambda raw, file_path=None, strict=False: ValidationResult(is_valid=True, file_path=file_path, errors=[]),
+        )
+
+        dummy = {
+            "course_id": "test_relaxed",
+            "course_title": "Relaxed Mode Test Course",
+            "competencies": [{"id": "C-01", "name": "Concept 1"}],
+            "questions": [
+                {
+                    "id": "Q-01",
+                    "competency_id": "C-01",
+                    "stem": "Stem",
+                    "correct_answer": "Ans",
+                    "options": [{"id": "A", "content": "Ans", "is_correct": True}],
+                }
+            ],
+        }
+        res = publisher.publish(dummy, strict=False)
+        assert res.success is True
+
+    def test_course_publisher_strict_true_enforces_gate_and_writes_audit_report(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        """Under strict=True, gate halts publication and writes audit_gate_report.json to work dir."""
+        work_dir = tmp_path / "work"
+        work_dir.mkdir(parents=True)
+        courses_dir = tmp_path / "courses"
+        courses_dir.mkdir(parents=True)
+
+        monkeypatch.setattr(
+            "course_publisher._load_run_full_audit",
+            lambda project_root=None: lambda data: {
+                "mpri_score": 60.0,
+                "pillars": {
+                    "zpd_adaptive_progression": {"score": 10.0},
+                    "diagnostic_remediation_alignment": {"score": 10.0},
+                },
+                "diagnostics": {"rationale_uniqueness_pct": 50.0},
+                "hard_penalties": [],
+                "all_issues": [],
+                "risk_clusters": {},
+            },
+        )
+        publisher = CoursePublisher(courses_dir=courses_dir)
+
+        dummy = {
+            "course_id": "test_strict",
+            "course_title": "Strict Mode Test Course",
+            "competencies": [{"id": "C-01", "name": "Concept 1"}],
+            "questions": [
+                {
+                    "id": f"Q-{i:02d}",
+                    "competency_id": "C-01",
+                    "stem": f"Stem {i} with sufficient context length.",
+                    "correct_answer": "Ans",
+                    "options": [{"id": "A", "content": "Ans", "is_correct": True}],
+                }
+                for i in range(25)
+            ],
+        }
+
+        with pytest.raises(PublishQualityGateError, match="MPRI score below threshold"):
+            publisher.publish(dummy, strict=True, work_dir=work_dir)
+
+        # Audit gate report must be written even when gate rejects
+        gate_report = work_dir / "audit_gate_report.json"
+        assert gate_report.is_file()
+        report_data = json.loads(gate_report.read_text(encoding="utf-8"))
+        assert report_data["mpri_score"] == 60.0
+        assert report_data["gate_passed"] is False
+        assert len(report_data["gate_failures"]) > 0
+
+    def test_course_publisher_strict_true_writes_audit_report_on_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        """Under strict=True, passing audit gate also persists audit_gate_report.json with gate_passed=True."""
+        work_dir = tmp_path / "work"
+        work_dir.mkdir(parents=True)
+        courses_dir = tmp_path / "courses"
+        courses_dir.mkdir(parents=True)
+
+        monkeypatch.setattr(
+            "course_publisher._load_run_full_audit",
+            lambda project_root=None: lambda data: {
+                "mpri_score": 90.0,
+                "pillars": {
+                    "zpd_adaptive_progression": {"score": 20.0},
+                    "diagnostic_remediation_alignment": {"score": 18.0},
+                },
+                "diagnostics": {"rationale_uniqueness_pct": 80.0},
+                "hard_penalties": [],
+                "all_issues": [],
+                "risk_clusters": {},
+            },
+        )
+        publisher = CoursePublisher(courses_dir=courses_dir)
+        publisher._run_cli_validator = lambda p, strict=True: True
+        monkeypatch.setattr(
+            "course_publisher.validate_course_content",
+            lambda raw, file_path=None, strict=False: ValidationResult(is_valid=True, file_path=file_path, errors=[]),
+        )
+
+        dummy = {
+            "course_id": "test_strict_pass",
+            "course_title": "Strict Mode Test Course Pass",
+            "competencies": [{"id": "C-01", "name": "Concept 1"}],
+            "questions": [
+                {
+                    "id": f"Q-{i:02d}",
+                    "competency_id": "C-01",
+                    "stem": f"Stem {i} with sufficient context length.",
+                    "correct_answer": "Ans",
+                    "options": [{"id": "A", "content": "Ans", "is_correct": True}],
+                }
+                for i in range(25)
+            ],
+        }
+
+        res = publisher.publish(dummy, strict=True, work_dir=work_dir)
+        assert res.success is True
+
+        gate_report = work_dir / "audit_gate_report.json"
+        assert gate_report.is_file()
+        report_data = json.loads(gate_report.read_text(encoding="utf-8"))
+        assert report_data["mpri_score"] == 90.0
+        assert report_data["gate_passed"] is True
+        assert report_data["gate_failures"] == []
+

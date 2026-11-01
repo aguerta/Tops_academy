@@ -634,30 +634,35 @@ class TestPlatformScanCoursesAutoRepair:
 class TestRealCoursesAdmission:
     """Verifies all production courses in courses/ pass validate_platform_course 100%."""
 
-    def test_real_courses_pass_validation_100_percent(self):
+    def test_real_courses_pass_validation_100_percent(self, real_courses_raw):
         assert COURSES_DIR.exists(), f"Courses directory not found at {COURSES_DIR}"
-        course_files = sorted(list(COURSES_DIR.glob("*.json")))
-        assert len(course_files) >= 4, f"Expected at least 4 courses, found {len(course_files)}"
+        assert len(real_courses_raw) >= 4, f"Expected at least 4 courses, found {len(real_courses_raw)}"
 
-        for f in course_files:
-            content = f.read_text(encoding="utf-8")
+        for fname, content in real_courses_raw.items():
             is_valid, payload = validate_platform_course(content)
-            assert is_valid is True, f"Real course '{f.name}' failed validate_platform_course: {payload}"
+            assert is_valid is True, f"Real course '{fname}' failed validate_platform_course: {payload}"
             assert isinstance(payload, dict)
             assert len(payload.get("questions", [])) > 0
             assert len(payload.get("competencies", [])) > 0
 
-    def test_real_courses_repair_idempotence(self):
-        """repair_platform_course_katex must be 100% idempotent on all real production courses (fixes == 0)."""
-        assert COURSES_DIR.exists(), f"Courses directory not found at {COURSES_DIR}"
-        course_files = sorted(list(COURSES_DIR.glob("*.json")))
-        assert len(course_files) >= 4, f"Expected at least 4 courses, found {len(course_files)}"
-
-        for f in course_files:
-            content = f.read_text(encoding="utf-8")
-            repaired, fixes = repair_platform_course_katex(content)
-            assert fixes == 0, f"Course '{f.name}' had {fixes} fixes instead of 0"
-            assert repaired == content, f"Course '{f.name}' was modified by repair_platform_course_katex"
+    @pytest.mark.parametrize("course_name", [
+        "asyntotic_estatistics_v7.json",
+        "estadistica_3_pre_parcial.json",
+        "estadistica_3_pre_parcial_v2.json",
+        "estadistica_3_s9_vdirect.json",
+        "estadistica_3_s9_vmapreduce.json",
+        "gavilano_pre_parcial.json",
+        "saul_control_optimo.json",
+        "saul_pre_parcial.json",
+        "solow_growth_model.json",
+    ])
+    def test_real_courses_repair_idempotence(self, course_name, real_courses_raw):
+        """repair_platform_course_katex must be 100% idempotent on each real production course (fixes == 0)."""
+        assert course_name in real_courses_raw, f"Course '{course_name}' not found in courses/"
+        content = real_courses_raw[course_name]
+        repaired, fixes = repair_platform_course_katex(content)
+        assert fixes == 0, f"Course '{course_name}' had {fixes} fixes instead of 0"
+        assert repaired == content, f"Course '{course_name}' was modified by repair_platform_course_katex"
 
 
 # =============================================================================

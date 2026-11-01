@@ -51,9 +51,9 @@ def check_psychometrics(data: dict[str, Any]) -> list[ValidationError]:
         max_d = max(dist_lengths)
         min_d = min(dist_lengths)
 
-        # Track course-level longest / shortest
-        is_longest = (len_c >= max_d)
-        is_shortest = (len_c <= min_d)
+        # Track course-level longest / shortest (strict inequality prevents false positives on symbolic ties)
+        is_longest = (len_c > max_d)
+        is_shortest = (len_c < min_d)
 
         if is_longest:
             longest_count += 1

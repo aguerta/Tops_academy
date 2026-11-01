@@ -14,9 +14,9 @@ Implements:
 - R-04: Answer key presence for fill_in_the_blank (ERR_MISSING_ANSWER)
 Extended Quality Rules:
 - R-17: Formative Rationale without Placeholders (ERR_PLACEHOLDER_RATIONALE)
-- R-18: Confinement of Psychometric Meta-Information (ERR_META_GIVEAWAY)
+- R-18: Confinement of Psychometric Meta-Information, Boilerplate and Padding (ERR_META_GIVEAWAY, ERR_SYNTHETIC_BOILERPLATE, ERR_SYNTHETIC_PAD)
 - R-19: Answer Leak Prevention in Fill-in-the-Blank (ERR_ANSWER_LEAK)
-- R-20: LaTeX Syntax, Delimiters, Double Braces, and Unreplaced Template Vars (ERR_LATEX_SYNTAX)
+- R-20: LaTeX Syntax, Delimiters, Double Braces, Unreplaced Vars, and Prose Overflow (ERR_LATEX_SYNTAX, ERR_KATEX_PROSE_OVERFLOW)
 - R-22: Mandatory Diagnostic Error Rationale in Multiple Select (ERR_MS_MISSING_RATIONALE)
 - R-23: KaTeX Over-escape, Unsupported Macros, and Inline Linebreak (ERR_LATEX_OVERESCAPE, ERR_LATEX_INLINE_NEWLINE, ERR_LATEX_UNSUPPORTED_MACRO)
 Strict Mode Rules:
@@ -333,6 +333,13 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
         re.compile(r"\b(?:descarte|elimine|descarta|elimina)\s+(?:opciones|respuestas)\b", re.IGNORECASE),
     ]
 
+    synthetic_pad_patterns = [
+        re.compile(r"bajo las premisas y condiciones del modelo", re.IGNORECASE),
+        re.compile(r"en el marco de las condiciones establecidas", re.IGNORECASE),
+        re.compile(r"\bopci[oó]n\s+alterna\b", re.IGNORECASE),
+        re.compile(r"\bdistractor\s+homog[eé]neo\b", re.IGNORECASE),
+    ]
+
     antonym_pairs = [
         ("converge", "diverge"),
         ("convergencia", "divergencia"),
@@ -345,6 +352,63 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
         ("positivo", "negativo"),
         ("máximo", "mínimo"),
     ]
+
+    def unwrap_math_text_blocks(text: str) -> str:
+        """Unwraps \\text{...}, \\textrm{...}, \\mathrm{...} from math blocks ($...$ or $$...$$)
+        so that repetitive prose camouflaged in math mode is exposed to boilerplate linters.
+        """
+        math_pattern = re.compile(r"(\$\$[\s\S]*?\$\$|\$[^\$]+?\$)")
+        text_cmd_pattern = re.compile(r"\\(text|textrm|mathrm)\s*\{")
+
+        def unwrap_single_math_block(math_str: str) -> str:
+            delim = "$$" if math_str.startswith("$$") else "$"
+            inner_math = math_str[len(delim):-len(delim)]
+
+            if not text_cmd_pattern.search(inner_math):
+                return math_str
+
+            parts: list[str] = []
+            last_idx = 0
+            while last_idx < len(inner_math):
+                m = text_cmd_pattern.search(inner_math, last_idx)
+                if not m:
+                    rest = inner_math[last_idx:]
+                    if rest.strip():
+                        parts.append(f"{delim}{rest}{delim}")
+                    break
+
+                before = inner_math[last_idx:m.start()]
+                if before.strip():
+                    parts.append(f"{delim}{before}{delim}")
+
+                start = m.end()
+                depth = 1
+                curr = start
+                while curr < len(inner_math) and depth > 0:
+                    if inner_math[curr] == "\\":
+                        curr += 2
+                        continue
+                    if inner_math[curr] == "{":
+                        depth += 1
+                    elif inner_math[curr] == "}":
+                        depth -= 1
+                        if depth == 0:
+                            break
+                    curr += 1
+
+                if depth == 0:
+                    prose = inner_math[start:curr]
+                    parts.append(f" {prose} ")
+                    last_idx = curr + 1
+                else:
+                    rest = inner_math[m.start():]
+                    if rest.strip():
+                        parts.append(f"{delim}{rest}{delim}")
+                    break
+
+            return "".join(parts).strip()
+
+        return math_pattern.sub(lambda m: unwrap_single_math_block(m.group(0)), text)
 
     def check_boilerplate_distractors_local(correct: str | None, dists: list[str]) -> list[str]:
         errs: list[str] = []
@@ -361,9 +425,10 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
         for d in dists:
             if re.search(r"\b(?:distractor|dummy|placeholder)\b", d, re.IGNORECASE):
                 continue
-            if len(re.sub(r"[^a-zA-ZáéíóúñÁÉÍÓÚÑ]", "", re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]*\$", " ", d))) < 10:
+            d_unwrapped = unwrap_math_text_blocks(d)
+            if len(re.sub(r"[^a-zA-ZáéíóúñÁÉÍÓÚÑ]", "", re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]*\$", " ", d_unwrapped))) < 10:
                 continue
-            sk = _skel(d)
+            sk = _skel(d_unwrapped)
             if len(sk) >= 20:
                 counts.setdefault(sk, []).append(d)
         for sk, group in counts.items():
@@ -372,7 +437,8 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                 break
 
         if correct:
-            c_low = correct.lower()
+            c_unwrapped = unwrap_math_text_blocks(correct)
+            c_low = c_unwrapped.lower()
             for w1, w2 in antonym_pairs:
                 has_w1 = bool(re.search(rf"\b{w1}\b", c_low))
                 has_w2 = bool(re.search(rf"\b{w2}\b", c_low))
@@ -380,7 +446,8 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                     c_norm = re.sub(rf"\b{w1}\b", "<SYM>", c_low)
                     c_sk = _skel(c_norm)
                     for d in dists:
-                        d_low = d.lower()
+                        d_unwrapped = unwrap_math_text_blocks(d)
+                        d_low = d_unwrapped.lower()
                         if re.search(rf"\b{w2}\b", d_low):
                             d_norm = re.sub(rf"\b{w2}\b", "<SYM>", d_low)
                             d_sk = _skel(d_norm)
@@ -391,7 +458,8 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                     c_norm = re.sub(rf"\b{w2}\b", "<SYM>", c_low)
                     c_sk = _skel(c_norm)
                     for d in dists:
-                        d_low = d.lower()
+                        d_unwrapped = unwrap_math_text_blocks(d)
+                        d_low = d_unwrapped.lower()
                         if re.search(rf"\b{w1}\b", d_low):
                             d_norm = re.sub(rf"\b{w1}\b", "<SYM>", d_low)
                             d_sk = _skel(d_norm)
@@ -825,6 +893,39 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                     item_id=q_id,
                 ))
 
+        # 14. Rule R-20: [KATEX-PROSE-OVERFLOW] KaTeX text macro length <= 45 chars
+        prose_macro_pattern = re.compile(r"\\(text|textrm|mathrm)\s*\{")
+        for m_prose in prose_macro_pattern.finditer(text):
+            macro_name = m_prose.group(1)
+            start_p = m_prose.end()
+            depth_p = 1
+            curr_p = start_p
+            while curr_p < len(text) and depth_p > 0:
+                if text[curr_p] == "\\":
+                    curr_p += 2
+                    continue
+                if text[curr_p] == "{":
+                    depth_p += 1
+                elif text[curr_p] == "}":
+                    depth_p -= 1
+                    if depth_p == 0:
+                        break
+                curr_p += 1
+            if depth_p == 0:
+                inner_prose = text[start_p:curr_p]
+                if len(inner_prose) > 45:
+                    text_errors.append(ValidationError(
+                        rule_id="R-20",
+                        code="ERR_KATEX_PROSE_OVERFLOW",
+                        message=(
+                            f"Question '{q_id}' in {field_desc}: [KATEX-PROSE-OVERFLOW] "
+                            f"KaTeX text macro '\\{macro_name}' content exceeds 45 characters "
+                            f"({len(inner_prose)} > 45): '{inner_prose[:45]}...'"
+                        ),
+                        item_id=q_id,
+                        details={"macro": macro_name, "length": len(inner_prose), "max_allowed": 45}
+                    ))
+
         return text_errors
 
     # --- Rule R-20: Root Course Metadata ---
@@ -943,6 +1044,24 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                         message=f"Question '{q_id}': Option '{opt_id}' contains psychometric meta-information error giveaway in visible content: '{opt_content[:60]}...'",
                         item_id=q_id
                     ))
+
+                # R-18: Synthetic padding boilerplate phrases (ERR_SYNTHETIC_PAD)
+                if isinstance(opt_content, str):
+                    unwrapped_content = unwrap_math_text_blocks(opt_content)
+                    for pad_pat in synthetic_pad_patterns:
+                        m_pad = pad_pat.search(opt_content) or pad_pat.search(unwrapped_content)
+                        if m_pad:
+                            errors.append(ValidationError(
+                                rule_id="R-18",
+                                code="ERR_SYNTHETIC_PAD",
+                                message=(
+                                    f"Question '{q_id}': Option '{opt_id}' contains forbidden synthetic "
+                                    f"padding boilerplate: '{m_pad.group(0)}'"
+                                ),
+                                item_id=q_id,
+                                details={"phrase": m_pad.group(0), "option_id": opt_id}
+                            ))
+                            break
 
                 # R-17 & R-22: Error rationales on distractors (is_correct is False)
                 if is_correct is False:

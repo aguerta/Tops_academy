@@ -8,9 +8,16 @@ import sys
 from pathlib import Path
 import pytest
 
+_c2c_dir = Path(__file__).resolve().parents[1] / ".agents" / "skills" / "content-to-course"
+if str(_c2c_dir) not in sys.path:
+    sys.path.insert(0, str(_c2c_dir))
+
 _engine_dir = Path(__file__).resolve().parents[1] / ".agents" / "skills" / "course-qa-evaluator" / "scripts"
 if str(_engine_dir) not in sys.path:
     sys.path.insert(0, str(_engine_dir))
+
+from course_publisher import CoursePublisher, PublishQualityGateError
+from validator.models import ValidationResult
 
 from standardized_audit_engine import (
     run_full_audit,
@@ -348,4 +355,169 @@ def test_discovered_v2_self_improvement_rules():
     assert dag_sum["multi_node_subgraphs_count"] == 2
     assert dag_sum["connected_components_count"] == 3
     assert any("sub-grafos" in iss.message for iss in dag_issues)
+
+
+def _make_dummy_course_payload(num_q: int = 25) -> dict:
+    comps = [
+        {"id": f"C-{i:02d}", "name": f"Competency {i}", "category": "Concept", "type": "Concept", "level": "Analyze", "mastery_target": 100}
+        for i in range(1, 4)
+    ]
+    questions = []
+    for i in range(num_q):
+        cid = f"C-{(i % 3) + 1:02d}"
+        qid = f"Q-{i+1:03d}"
+        questions.append({
+            "id": qid,
+            "competency_id": cid,
+            "stem": f"Question stem text for item {qid} with sufficient descriptive wording.",
+            "correct_answer": "Option A is correct",
+            "options": [
+                {"id": "opt_a", "option_id": "A", "content": "Option A is correct", "is_correct": True, "error_rationale": None},
+                {"id": "opt_b", "option_id": "B", "content": "Option B distractor content with sufficient text length", "is_correct": False, "error_rationale": f"Misconception explanation for item {qid} B"},
+                {"id": "opt_c", "option_id": "C", "content": "Option C distractor content with sufficient text length", "is_correct": False, "error_rationale": f"Misconception explanation for item {qid} C"},
+                {"id": "opt_d", "option_id": "D", "content": "Option D distractor content with sufficient text length", "is_correct": False, "error_rationale": f"Misconception explanation for item {qid} D"},
+            ],
+            "bloom_taxonomy_level": "Analyze",
+            "interaction_type": "multiple_choice_7_options",
+            "hints": ["Hint 1 step scaffolding", "Hint 2 check calculations", "Hint 3 dimensional analysis"],
+            "detailed_solution": f"Step by step solution for question {qid}.",
+        })
+    return {
+        "course_id": "gate_test_course",
+        "course_title": "Quality Gate Verification Unit Test Course",
+        "competencies": comps,
+        "questions": questions,
+    }
+
+
+def test_publish_quality_gate_mpri_low(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """PublishQualityGateError is raised when MPRI < 75.0 on banks with >= 20 questions."""
+    monkeypatch.setattr(
+        "course_publisher._load_run_full_audit",
+        lambda project_root=None: lambda data: {
+            "mpri_score": 72.5,
+            "pillars": {
+                "zpd_adaptive_progression": {"score": 20.0},
+                "diagnostic_remediation_alignment": {"score": 15.0},
+            },
+            "diagnostics": {"rationale_uniqueness_pct": 85.0},
+            "hard_penalties": [],
+            "all_issues": [],
+            "risk_clusters": {},
+        },
+    )
+    publisher = CoursePublisher(courses_dir=tmp_path)
+    with pytest.raises(PublishQualityGateError, match="MPRI score below threshold: 72.5 < 75.0"):
+        publisher.publish(_make_dummy_course_payload(25), strict=True)
+
+
+def test_publish_quality_gate_zpd_collapsed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """PublishQualityGateError is raised when ZPD score collapses to 0.0 with >= 6 questions."""
+    monkeypatch.setattr(
+        "course_publisher._load_run_full_audit",
+        lambda project_root=None: lambda data: {
+            "mpri_score": 85.0,
+            "pillars": {
+                "zpd_adaptive_progression": {"score": 0.0},
+                "diagnostic_remediation_alignment": {"score": 15.0},
+            },
+            "diagnostics": {"rationale_uniqueness_pct": 85.0},
+            "hard_penalties": [],
+            "all_issues": [],
+            "risk_clusters": {},
+        },
+    )
+    publisher = CoursePublisher(courses_dir=tmp_path)
+    with pytest.raises(PublishQualityGateError, match="ZPD progression score collapsed: 0.0 <= 0.0"):
+        publisher.publish(_make_dummy_course_payload(10), strict=True)
+
+
+def test_publish_quality_gate_p4_diagnostic_remediation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """PublishQualityGateError is raised on low P4 diagnostic score or static recycling (< 30% uniqueness)."""
+    monkeypatch.setattr(
+        "course_publisher._load_run_full_audit",
+        lambda project_root=None: lambda data: {
+            "mpri_score": 82.0,
+            "pillars": {
+                "zpd_adaptive_progression": {"score": 20.0},
+                "diagnostic_remediation_alignment": {"score": 11.5},
+            },
+            "diagnostics": {"rationale_uniqueness_pct": 24.0},
+            "hard_penalties": [],
+            "all_issues": [],
+            "risk_clusters": {},
+        },
+    )
+    publisher = CoursePublisher(courses_dir=tmp_path)
+    with pytest.raises(PublishQualityGateError, match="Diagnostic remediation deficiency"):
+        publisher.publish(_make_dummy_course_payload(30), strict=True)
+
+
+def test_publish_quality_gate_length_padded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """PublishQualityGateError is raised when options contain length padding artifacts."""
+    monkeypatch.setattr(
+        "course_publisher._load_run_full_audit",
+        lambda project_root=None: lambda data: {
+            "mpri_score": 88.0,
+            "pillars": {
+                "zpd_adaptive_progression": {"score": 20.0},
+                "diagnostic_remediation_alignment": {"score": 15.0},
+            },
+            "diagnostics": {"rationale_uniqueness_pct": 85.0},
+            "hard_penalties": [],
+            "all_issues": [],
+            "risk_clusters": {"length_padded_options": ["Q-001", "Q-002"]},
+        },
+    )
+    publisher = CoursePublisher(courses_dir=tmp_path)
+    with pytest.raises(PublishQualityGateError, match="Length-padded options detected"):
+        publisher.publish(_make_dummy_course_payload(25), strict=True)
+
+
+def test_publish_quality_gate_hard_penalties(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """PublishQualityGateError is raised when hard penalties or critical issues are flagged."""
+    monkeypatch.setattr(
+        "course_publisher._load_run_full_audit",
+        lambda project_root=None: lambda data: {
+            "mpri_score": 88.0,
+            "pillars": {
+                "zpd_adaptive_progression": {"score": 20.0},
+                "diagnostic_remediation_alignment": {"score": 15.0},
+            },
+            "diagnostics": {"rationale_uniqueness_pct": 85.0},
+            "hard_penalties": [{"rule": "P_CRIT", "reason": "Severe pedagogical breach"}],
+            "all_issues": [{"severity": "critical", "message": "Critical formatting defect"}],
+            "risk_clusters": {},
+        },
+    )
+    publisher = CoursePublisher(courses_dir=tmp_path)
+    with pytest.raises(PublishQualityGateError, match="Hard penalties detected"):
+        publisher.publish(_make_dummy_course_payload(25), strict=True)
+
+
+def test_publish_quality_gate_healthy_course_passes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Healthy tri-band course with strong MPRI, ZPD, and dynamic rationales passes the gate."""
+    monkeypatch.setattr(
+        "course_publisher._load_run_full_audit",
+        lambda project_root=None: lambda data: {
+            "mpri_score": 92.5,
+            "pillars": {
+                "zpd_adaptive_progression": {"score": 20.0},
+                "diagnostic_remediation_alignment": {"score": 18.0},
+            },
+            "diagnostics": {"rationale_uniqueness_pct": 94.0},
+            "hard_penalties": [],
+            "all_issues": [],
+            "risk_clusters": {},
+        },
+    )
+    publisher = CoursePublisher(courses_dir=tmp_path)
+    publisher._run_cli_validator = lambda p, strict=True: True
+    monkeypatch.setattr(
+        "course_publisher.validate_course_content",
+        lambda raw, file_path=None, strict=False: ValidationResult(is_valid=True, file_path=file_path, errors=[]),
+    )
+    result = publisher.publish(_make_dummy_course_payload(25), strict=True)
+    assert result.success is True
+
 

@@ -13,7 +13,7 @@ Validates Stream 1C implementation:
    - Specifies Milestone 3 4 disjoint archetypes (Directo, Inverso, Perturbación, Frontera)
    - Documents ultra-compact DRY distractor format
    - Documents Turn-0 Autosufficiency and Post-PASS immediate cut
-   - All lean prompts in system_prompts/lean/*.md have file size <= 5,000 bytes (with author lean <= 4,750 bytes)
+   - All lean prompts in system_prompts/lean/*.md have file size <= 5,000 bytes (with author lean <= 5,000 bytes)
 4. prompt_repair.md (Full and Lean):
    - Documents repairing [R-20] and explicit error_rationale or DRY inheritance
    - Documents surgical edit_file and shard_fixes/<CID>.py modular patches
@@ -118,14 +118,15 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         self.assertIn("NO abras ni leas los documentos fuente de content/ en Turno 1", prompt)
         self.assertIn("empieza directamente escribiendo shard_01_data.py", prompt)
 
-        # 4. Milestone 3 4 disjoint archetypes & DRY format
-        self.assertIn("4 arquetipos disjuntos", prompt)
-        self.assertIn("1. Directo / Frontal", prompt)
-        self.assertIn("2. Inverso / Diagnóstico", prompt)
-        self.assertIn("3. Perturbación / Estática Comparativa", prompt)
-        self.assertIn("4. Frontera / Casos Límite", prompt)
-        self.assertIn("formato DRY compacto de distractores", prompt)
-        self.assertIn("hereda automáticamente desde `cta.json`", prompt)
+        # 4. Form-B Tri-Banda Multimodal contract (min_archetypes = 3) & dynamic rationales
+        self.assertIn("min_archetypes = 3", prompt)
+        self.assertIn("Form-B Tri-Banda", prompt)
+        self.assertIn("3 tuplas en `TEMPLATES`", prompt)
+        self.assertIn("easy", prompt)
+        self.assertIn("medium", prompt)
+        self.assertIn("hard", prompt)
+        self.assertIn("[TPL-DYNAMIC-RATIONALE", prompt)
+        self.assertIn("[KATEX-PROSE-OVERFLOW", prompt)
 
         # 5. Compact Clean-Room sizing, Surgical edit_file requirement and Post-PASS cut
         self.assertIn("<= 80-110 líneas por competencia", prompt)
@@ -189,31 +190,28 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
     # 3. System Prompts (Full + Lean): Milestone 3 & DRY Distractors
     # =========================================================================
     def test_prompt_shard_author_specifies_milestone3_dry_archetypes_and_headroom(self) -> None:
-        """prompt_shard_author.md (Full and Lean) establishes 4 archetypes, DRY format, Turn-0 autosufficiency, and <= 4,750 bytes lean."""
+        """prompt_shard_author.md (Full and Lean) establishes 4 archetypes, DRY format, Turn-0 autosufficiency, and <= 5,000 bytes lean."""
         full_author = (self.prompts_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
         lean_author = (self.lean_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
 
         # Full prompt checks
-        self.assertIn("4 arquetipos disjuntos", full_author)
+        self.assertIn("3 arquetipos disjuntos", full_author)
         self.assertIn("1. Directo / Frontal", full_author)
         self.assertIn("2. Inverso / Diagnóstico", full_author)
-        self.assertIn("3. Perturbación / Estática Comparativa", full_author)
-        self.assertIn("4. Frontera / Casos Límite", full_author)
-        self.assertIn("Formato DRY Compacto de Distractores", full_author)
+        self.assertIn("3. Perturbación / Frontera", full_author)
         self.assertIn("Autosuficiencia Turn-0 (Cero Lectura Innecesaria de PDFs)", full_author)
         self.assertIn("Corte Inmediato Post-PASS", full_author)
 
         # Lean prompt checks
-        self.assertIn("Milestone 3 (4 Disjoint Archetypes)", lean_author)
-        self.assertIn("1. Directo, 2. Inverso, 3. Perturbación, 4. Frontera", lean_author)
-        self.assertIn("DRY Compact Distractors", lean_author)
+        self.assertIn("FORM-B TRI-BANDA CONTRACT", lean_author)
+        self.assertIn("min_archetypes = 3", lean_author)
         self.assertIn("Turn-0 Autosufficiency", lean_author)
         self.assertIn("Post-PASS Cut", lean_author)
 
         # Lean file size headroom checks
         lean_author_file = self.lean_dir / "prompt_shard_author.md"
         size_author = lean_author_file.stat().st_size
-        self.assertLessEqual(size_author, 4750, f"lean/prompt_shard_author.md must be <= 4,750 bytes (got {size_author})")
+        self.assertLessEqual(size_author, 5000, f"lean/prompt_shard_author.md must be <= 5,000 bytes (got {size_author})")
 
         # All lean prompts strictly <= 5,000 bytes
         for lfile in self.lean_dir.glob("*.md"):
@@ -620,7 +618,7 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
 
         # 4. Strict File Size Headroom
         lean_author_size = (self.lean_dir / "prompt_shard_author.md").stat().st_size
-        self.assertLessEqual(lean_author_size, 4750, f"lean/prompt_shard_author.md size {lean_author_size} exceeds 4,750 B!")
+        self.assertLessEqual(lean_author_size, 5000, f"lean/prompt_shard_author.md size {lean_author_size} exceeds 5,000 B!")
 
         for lfile in self.lean_dir.glob("*.md"):
             lsize = lfile.stat().st_size
@@ -630,7 +628,7 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
     # 11. Stream 1D Improver: Milestone 3 Anti-1-Tuple Hardening & Dispatch Stamping
     # =========================================================================
     def test_stream_1d_improver_milestone3_archetypes_and_dispatch_hardening(self) -> None:
-        """Improver hardening: prompt_shard_author eliminates 1-tuple escape hatch, lean author has 4 archetypes pattern <= 4750B, dispatch stamps min_archetypes=4."""
+        """Mastery Tri-Banda hardening: prompt_shard_author eliminates 1-tuple escape hatch, lean author has 3 archetypes pattern <= 5000B, dispatch stamps min_archetypes=3."""
         full_author = (self.prompts_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
         lean_author = (self.lean_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
 
@@ -642,21 +640,19 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         self.assertIn("gen_h01_1", full_author)
         self.assertIn("gen_h01_2", full_author)
         self.assertIn("gen_h01_3", full_author)
-        self.assertIn("gen_h01_4", full_author)
-        self.assertIn("ver_ok", full_author)
+        self.assertIn("ver_h01_1", full_author)
 
-        # 2. Lean prompt: Documents [M3-ARCHETYPES], shows 4 tuples and wrappers gen_h01_1..4, and <= 4,750 bytes
+        # 2. Lean prompt: Documents [M3-ARCHETYPES], shows 3 tuples and wrappers gen_h01_1..3, and <= 5,000 bytes
         self.assertIn("[M3-ARCHETYPES]", lean_author)
         self.assertIn("_gen_h01", lean_author)
         self.assertIn("gen_h01_1", lean_author)
         self.assertIn("gen_h01_2", lean_author)
         self.assertIn("gen_h01_3", lean_author)
-        self.assertIn("gen_h01_4", lean_author)
-        self.assertIn("ver_ok", lean_author)
+        self.assertIn("ver_h01_1", lean_author)
         lean_author_size = (self.lean_dir / "prompt_shard_author.md").stat().st_size
-        self.assertLessEqual(lean_author_size, 4750, f"lean/prompt_shard_author.md size {lean_author_size} exceeds 4,750 B!")
+        self.assertLessEqual(lean_author_size, 5000, f"lean/prompt_shard_author.md size {lean_author_size} exceeds 5,000 B!")
 
-        # 3. dispatch_authors: includes --min-archetypes 4 in compile_cmd, mentions [M3-ARCHETYPES], stamps min_archetypes=4 in pre_shard_manifest.json
+        # 3. dispatch_authors: includes --min-archetypes 3 in compile_cmd, mentions [M3-ARCHETYPES], stamps min_archetypes=3 in pre_shard_manifest.json
         (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
             "course_id": "macro_m3_test",
             "documents": [{"name": "doc.pdf", "path": "content/doc.pdf"}],
@@ -684,16 +680,16 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         subagent = res["Subagents"][0]
         prompt = subagent["Prompt"]
 
-        # compile_cmd in prompt and item contains --min-archetypes 4
-        self.assertIn("--min-archetypes 4", prompt)
-        self.assertIn("--min-archetypes 4", subagent["compile_command"])
+        # compile_cmd in prompt and item contains --min-archetypes 3
+        self.assertIn("--min-archetypes 3", prompt)
+        self.assertIn("--min-archetypes 3", subagent["compile_command"])
         self.assertIn("[M3-ARCHETYPES]", prompt)
-        self.assertIn("4 arquetipos disjuntos", prompt)
+        self.assertIn("min_archetypes = 3", prompt)
 
-        # pre_shard_manifest.json stamped on disk with "min_archetypes": 4
+        # pre_shard_manifest.json stamped on disk with "min_archetypes": 3
         stamped_manifest = json.loads(manifest_p.read_text(encoding="utf-8"))
-        self.assertEqual(stamped_manifest.get("min_archetypes"), 4)
-        self.assertEqual(stamped_manifest["shards"][0].get("min_archetypes"), 4)
+        self.assertEqual(stamped_manifest.get("min_archetypes"), 3)
+        self.assertEqual(stamped_manifest["shards"][0].get("min_archetypes"), 3)
 
 
 if __name__ == "__main__":

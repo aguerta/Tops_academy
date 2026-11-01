@@ -203,36 +203,36 @@ class TestKatexOverescapeSafeguards:
             errors = validate_katex_syntax(expr, "test_underscores")
             assert not errors, f"KaTeX validation failed on escaped underscores in {expr}: {errors}"
 
-    def test_published_courses_matrices_and_all_strings_idempotency(self):
+    def test_published_courses_matrices_and_all_strings_idempotency(self, real_courses_parsed):
         r"""Verify 100% idempotency across all real published courses in courses/*.json.
-        
+
         Ensures zero regressions or unintended alterations on:
         - 180+ real matrix and systems fields (\begin{pmatrix}, \begin{bmatrix}, \begin{matrix}, \begin{cases}).
-        - All 220,000+ string fields across the 4 published courses.
+        - All 220,000+ string fields across the published courses (deduplicated per unique string for speed).
         """
-        courses_dir = Path(__file__).resolve().parents[1] / "courses"
-        course_files = sorted(list(courses_dir.glob("*.json")))
-        assert len(course_files) >= 4, f"Expected at least 4 published courses, found: {[f.name for f in course_files]}"
+        assert len(real_courses_parsed) >= 4, f"Expected at least 4 published courses, found: {list(real_courses_parsed.keys())}"
 
         total_strings = 0
         matrix_fields_count = 0
         diffs: List[str] = []
+        seen_clean: set[str] = set()
 
         matrix_triggers = (r"\begin{pmatrix}", r"\begin{bmatrix}", r"\begin{matrix}", r"\begin{cases}")
 
-        for course_path in course_files:
-            with open(course_path, "r", encoding="utf-8") as fp:
-                data = json.load(fp)
-
+        for course_name, data in real_courses_parsed.items():
             def _traverse(obj: Any, path: str = ""):
                 nonlocal total_strings, matrix_fields_count
                 if isinstance(obj, str):
                     total_strings += 1
                     if any(t in obj for t in matrix_triggers):
                         matrix_fields_count += 1
+                    if obj in seen_clean:
+                        return
                     sanitized = sanitize_katex_syntax(obj)
                     if sanitized != obj:
-                        diffs.append(f"{course_path.name} at {path}: orig={obj[:60]!r} != sanitized={sanitized[:60]!r}")
+                        diffs.append(f"{course_name} at {path}: orig={obj[:60]!r} != sanitized={sanitized[:60]!r}")
+                    else:
+                        seen_clean.add(obj)
                 elif isinstance(obj, list):
                     for idx, item in enumerate(obj):
                         _traverse(item, f"{path}[{idx}]")
@@ -420,3 +420,39 @@ class TestAssembleQuestionSafeguardsIntegration:
             assert not validate_katex_syntax(opt["content"], "ms_content")
             if opt["error_rationale"]:
                 assert not validate_katex_syntax(opt["error_rationale"], "ms_rationale")
+
+
+class TestKatexProseOverflowSafeguards:
+    """Verifies [KATEX-PROSE-OVERFLOW] rule on text/textrm/mathrm macros exceeding 45 characters."""
+
+    def test_short_text_macros_pass(self):
+        """Short macros <= 45 chars pass validation."""
+        valid_expressions = [
+            r"$\text{Constante}$",
+            r"$\textrm{Condición de frontera}$",
+            r"$\mathrm{det}(A) \neq 0$",
+            r"$x = 5 \text{ unidades de medida}$",
+        ]
+        for expr in valid_expressions:
+            errs = validate_katex_syntax(expr, "test_field")
+            assert not any("[KATEX-PROSE-OVERFLOW]" in e for e in errs), f"Unexpected overflow error on {expr}: {errs}"
+
+    def test_long_text_macros_trigger_prose_overflow(self):
+        """Text macros exceeding 45 characters must trigger [KATEX-PROSE-OVERFLOW] and never R-23."""
+        long_prose = "Esta es una explicación extensa en prosa que supera con creces el límite de cuarenta y cinco caracteres permitidos."
+        assert len(long_prose) > 45
+
+        macros = [r"\text", r"\textrm", r"\mathrm"]
+        for m in macros:
+            expr = f"${m}{{{long_prose}}}$"
+            errs = validate_katex_syntax(expr, "option_content")
+            assert any("[KATEX-PROSE-OVERFLOW]" in e for e in errs), f"Expected [KATEX-PROSE-OVERFLOW] for {m}, got: {errs}"
+            assert not any("R-23" in e for e in errs), f"Rule tag must NOT use R-23: {errs}"
+
+    def test_nested_braces_in_text_macro_handled_properly(self):
+        """Balanced nested braces inside text macro are handled correctly."""
+        inner = "Texto corto con {llaves internas} anidadas"
+        expr = rf"$\text{{{inner}}}$"
+        errs = validate_katex_syntax(expr, "option_content")
+        assert not any("[KATEX-PROSE-OVERFLOW]" in e for e in errs), f"Unexpected error for nested short text: {errs}"
+

@@ -470,3 +470,80 @@ def test_assemble_question_mc7_and_ms_strips_giveaway_and_interpolates_vars():
 
     is_valid_ms, errors_ms = check_instance_invariants(assembled_ms, "multiple_select")
     assert is_valid_ms, f"MS question invariants failed: {errors_ms}"
+
+
+def test_katex_prose_overflow_exact_45_boundary_and_nested_braces():
+    """Verify KaTeX prose overflow exact boundary: 45 chars passes, 46 fails with [KATEX-PROSE-OVERFLOW] and never R-23.
+    Also verifies nested braces inside \\text{...}, \\textrm{...}, \\mathrm{...}.
+    """
+    # 45 characters inside \text{...} -> PASS
+    text_45 = r"$\text{" + "a" * 45 + r"}$"
+    errs_45 = validate_katex_syntax(text_45, "context_45")
+    assert not any("KATEX-PROSE-OVERFLOW" in e for e in errs_45)
+    assert not any("R-23" in e for e in errs_45)
+    assert errs_45 == []
+
+    # 46 characters inside \text{...} -> FAIL with [KATEX-PROSE-OVERFLOW], never R-23
+    text_46 = r"$\text{" + "a" * 46 + r"}$"
+    errs_46 = validate_katex_syntax(text_46, "context_46")
+    assert any("[KATEX-PROSE-OVERFLOW]" in e for e in errs_46)
+    assert not any("R-23" in e for e in errs_46)
+
+    # 46 characters in \textrm{...} and \mathrm{...}
+    text_46_rm = r"$\textrm{" + "b" * 46 + r"}$"
+    errs_46_rm = validate_katex_syntax(text_46_rm, "context_46_rm")
+    assert any("[KATEX-PROSE-OVERFLOW]" in e for e in errs_46_rm)
+    assert not any("R-23" in e for e in errs_46_rm)
+
+    text_46_mathrm = r"$\mathrm{" + "c" * 46 + r"}$"
+    errs_46_mathrm = validate_katex_syntax(text_46_mathrm, "context_46_mathrm")
+    assert any("[KATEX-PROSE-OVERFLOW]" in e for e in errs_46_mathrm)
+    assert not any("R-23" in e for e in errs_46_mathrm)
+
+    # Nested braces inside text macro: \text{valor de $x_{i}$ en el sistema} (32 chars) -> PASS
+    nested_pass = r"\text{valor de $x_{i}$ en el sistema}"
+    errs_nested_pass = validate_katex_syntax(nested_pass, "nested_pass")
+    assert not any("KATEX-PROSE-OVERFLOW" in e for e in errs_nested_pass)
+    assert errs_nested_pass == []
+
+    # Nested braces inside text macro with > 45 chars -> FAIL [KATEX-PROSE-OVERFLOW]
+    nested_fail = r"\text{valor analítico para la variable $x_{i}$ en el modelo}"
+    errs_nested_fail = validate_katex_syntax(nested_fail, "nested_fail")
+    assert any("[KATEX-PROSE-OVERFLOW]" in e for e in errs_nested_fail)
+    assert not any("R-23" in e for e in errs_nested_fail)
+
+    # Nested braces inside math mode \mathrm{...}
+    math_nested_pass = r"$\mathrm{valor de } x_{i}$"
+    errs_mn_pass = validate_katex_syntax(math_nested_pass, "math_nested_pass")
+    assert not any("KATEX-PROSE-OVERFLOW" in e for e in errs_mn_pass)
+    assert errs_mn_pass == []
+
+    math_nested_fail = r"$\mathrm{valor analítico extendido para la variable de interés } x_{i}$"
+    errs_mn_fail = validate_katex_syntax(math_nested_fail, "math_nested_fail")
+    assert any("[KATEX-PROSE-OVERFLOW]" in e for e in errs_mn_fail)
+    assert not any("R-23" in e for e in errs_mn_fail)
+
+
+def test_r18_unwrapping_with_nested_braces_and_mathrm():
+    """Verify R-18 unwrapping detects synthetic boilerplate with nested braces and \\mathrm{...}."""
+    from engine.invariants import check_synthetic_boilerplate_distractors, _unwrap_text_in_math
+
+    # Unwrapping test with nested braces
+    wrapped = r"$\text{valor de {x_{i}} en sistema}$ y $\mathrm{resultado final}$"
+    unwrapped = _unwrap_text_in_math(wrapped)
+    assert "valor de {x_{i}} en sistema" in unwrapped
+    assert "resultado final" in unwrapped
+
+    # Boilerplate detection with unwrapped math
+    correct = r"$\mathrm{La solución analítica es única y estable}$"
+    distractors = [
+        r"$\mathrm{El valor converge con respecto a } x_{1}$",
+        r"$\mathrm{El valor converge con respecto a } x_{2}$",
+        r"$\mathrm{El valor converge con respecto a } x_{3}$",
+        r"$\mathrm{El valor converge con respecto a } x_{4}$",
+        r"$\mathrm{El valor diverge hacia el infinito}$",
+        r"$\mathrm{La cota superior no existe}$",
+    ]
+    errs = check_synthetic_boilerplate_distractors(correct, distractors)
+    assert any("Synthetic boilerplate distractor pattern detected" in e for e in errs)
+

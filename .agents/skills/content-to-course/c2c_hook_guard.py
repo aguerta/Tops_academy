@@ -830,7 +830,8 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                                         f"y registra {error_count} errores (< 6, umbral oficial). "
                                                         "Para menos de 6 errores está prohibido reescribir todo el archivo desde cero con write_file: "
                                                         "usa edit_file quirúrgico (replace_file_content) sobre las líneas reportadas "
-                                                        "(ej. para insertar tuplas faltantes en TEMPLATES como en [M3-ARCHETYPES]), "
+                                                        "(ej. para actualizar tuplas en TEMPLATES al nuevo contrato Form-B Tri-Banda: --min-archetypes 3, bandas easy/medium/hard, "
+                                                        ">= 2 Bloom, FIB/MS obligatorio y 3-tuplas (did, val, error_rationale_@var@) como en [M3-ARCHETYPES]), "
                                                         "o escribe un parche modular aislado en work/shards/shard_fixes/<CID>.py."
                                                     ),
                                                 }

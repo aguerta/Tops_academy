@@ -151,15 +151,66 @@ def heal_shard_source_file(py_path: Path) -> bool:
     return modified
 
 
-def _format_socratic_step(text: str) -> str:
-    """Format an omitted step or misconception into Socratic hint text preserving LaTeX math and removing giveaways."""
-    if not text:
-        return ""
-    from check_templates import _strip_giveaway_prefix
-    cleaned = _strip_giveaway_prefix(str(text).strip()).rstrip(".")
-    if len(cleaned) > 1 and cleaned[0].isupper() and cleaned[1].islower() and not cleaned.startswith(("$", "\\")):
-        cleaned = cleaned[0].lower() + cleaned[1:]
-    return cleaned
+def is_trivial_verifier(ver_code: str, ver_fn_callable: Any = None) -> Tuple[bool, str]:
+    """Inspect AST of verifier code to reject trivial verifiers like constant 'return True'."""
+    if not ver_code or not ver_code.strip():
+        return True, "verifier code is empty"
+    try:
+        tree = ast.parse(ver_code)
+    except Exception as e:
+        return True, f"verifier code syntax error: {e}"
+
+    fn_node = None
+    target_names = {"verify", "cross_check"}
+    if ver_fn_callable and hasattr(ver_fn_callable, "__name__"):
+        target_names.add(ver_fn_callable.__name__)
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if node.name in target_names:
+                fn_node = node
+                break
+    if not fn_node:
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                fn_node = node
+                break
+
+    if not fn_node:
+        return True, "no function definition found in verifier code"
+
+    body_stmts = [
+        s for s in fn_node.body
+        if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant) and isinstance(s.value.value, str))
+    ]
+
+    if not body_stmts:
+        return True, "verifier function body has no operational statements"
+
+    # Single return constant (e.g. return True, return 1, or return None)
+    if len(body_stmts) == 1 and isinstance(body_stmts[0], ast.Return):
+        ret_val = body_stmts[0].value
+        if isinstance(ret_val, ast.Constant):
+            return True, f"returns constant '{ret_val.value}' without evaluating conditions"
+        if ret_val is None:
+            return True, "returns None without evaluating conditions"
+
+    # Check if first argument (instance / res) is ever loaded in operational statements
+    arg_names = [a.arg for a in (getattr(fn_node.args, "posonlyargs", []) + fn_node.args.args + getattr(fn_node.args, "kwonlyargs", []))]
+    if arg_names:
+        first_arg = arg_names[0]
+        used_arg = False
+        for s in body_stmts:
+            for sub in ast.walk(s):
+                if isinstance(sub, ast.Name) and sub.id == first_arg and isinstance(sub.ctx, ast.Load):
+                    used_arg = True
+                    break
+            if used_arg:
+                break
+        if not used_arg:
+            return True, f"argument '{first_arg}' is never inspected in verifier function body"
+
+    return False, ""
 
 
 def normalize_double_braces(text: str, declared_vars: Optional[Set[str]] = None) -> str:
@@ -221,6 +272,39 @@ def normalize_double_braces(text: str, declared_vars: Optional[Set[str]] = None)
         prev = curr
         curr = _normalize_once(curr)
     return curr
+
+
+def _find_diagnostic_line(
+    locator: Optional[Any],
+    gen_fn_name: Optional[str],
+    orig_idx: int,
+    needle: str = "",
+) -> int:
+    """Finds exact 1-based source line for surgical error diagnostics."""
+    if not locator or not hasattr(locator, "lines"):
+        return 1
+    # 1. Search in generator function lines if gen_fn_name is known
+    if gen_fn_name and hasattr(locator, "functions") and gen_fn_name in locator.functions:
+        s_fn, e_fn = locator.functions[gen_fn_name]
+        if needle:
+            n_clean = needle.strip()
+            for line_no in range(s_fn, min(e_fn + 1, len(locator.lines) + 1)):
+                if n_clean and n_clean in locator.lines[line_no - 1]:
+                    return line_no
+        return s_fn
+    # 2. Search in tuple lines
+    if hasattr(locator, "get_tuple_info"):
+        t_info = locator.get_tuple_info(orig_idx)
+        if t_info:
+            s_t = t_info.get("start_line", 1)
+            e_t = t_info.get("end_line", s_t)
+            if needle:
+                n_clean = needle.strip()
+                for line_no in range(s_t, min(e_t + 1, len(locator.lines) + 1)):
+                    if n_clean and n_clean in locator.lines[line_no - 1]:
+                        return line_no
+            return s_t
+    return 1
 
 
 
@@ -335,35 +419,24 @@ class ShardDataLineLocator:
             "elements": {},
             "competency_id": None,
             "template_id": None,
+            "question_type": None,
+            "difficulty": None,
+            "bloom": None,
             "gen_fn_name": None,
             "ver_fn_name": None,
+            "stems_var": None,
+            "hints_var": None,
+            "sol_var": None,
         }
 
         if isinstance(node, (ast.Tuple, ast.List)):
             elts = node.elts
-            # Detect tuple structure:
-            # Form A: [cid, qtype, stem_es, gen_fn, ver_fn, exp_es, target_kc, target_misc, src_ref]
-            # Form B: [tpl_id, cid, qtype, gen_fn, ver_fn, diff, stems, hints, sol]
-            known_types = {"multiple_choice", "multiple_choice_7_options", "fill_in_the_blank", "multiple_select", "open_ended"}
-            is_form_b = False
-            if len(elts) >= 3:
-                e2 = elts[2]
-                if isinstance(e2, ast.Constant) and isinstance(e2.value, str) and e2.value.lower().strip() in known_types:
-                    is_form_b = True
-
-            if is_form_b:
-                element_names = [
-                    "template_id", "competency_id", "question_type",
-                    "generator_code", "verifier_code", "difficulty_bloom",
-                    "stem_variants", "hints", "solution"
-                ]
-            else:
-                element_names = [
-                    "competency_id", "question_type", "stem_es",
-                    "generator_code", "verifier_code", "explanation_es",
-                    "target_kc", "target_misconceptions", "source_reference",
-                    "hints",
-                ]
+            # Strictly Form B 9-tuple: [tpl_id, cid, qtype, gen_fn, ver_fn, diff_bloom, stems, hints, sol]
+            element_names = [
+                "template_id", "competency_id", "question_type",
+                "generator_code", "verifier_code", "difficulty_bloom",
+                "stem_variants", "hints", "solution"
+            ]
 
             for e_idx, elt in enumerate(elts):
                 if e_idx < len(element_names):
@@ -379,12 +452,183 @@ class ShardDataLineLocator:
                         info["competency_id"] = elt.value
                     elif name == "template_id" and isinstance(elt, ast.Constant) and isinstance(elt.value, str):
                         info["template_id"] = elt.value
+                    elif name == "question_type" and isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                        info["question_type"] = elt.value.strip().lower()
+                    elif name == "difficulty_bloom" and isinstance(elt, (ast.Tuple, ast.List)) and len(elt.elts) >= 2:
+                        d_elt, b_elt = elt.elts[0], elt.elts[1]
+                        if isinstance(d_elt, ast.Constant) and isinstance(d_elt.value, str):
+                            info["difficulty"] = d_elt.value.strip().lower()
+                        if isinstance(b_elt, ast.Constant) and isinstance(b_elt.value, str):
+                            info["bloom"] = b_elt.value.strip()
                     elif name == "generator_code" and isinstance(elt, ast.Name):
                         info["gen_fn_name"] = elt.id
                     elif name == "verifier_code" and isinstance(elt, ast.Name):
                         info["ver_fn_name"] = elt.id
+                    elif name == "stem_variants" and isinstance(elt, ast.Name):
+                        info["stems_var"] = elt.id
+                    elif name == "hints" and isinstance(elt, ast.Name):
+                        info["hints_var"] = elt.id
+                    elif name == "solution" and isinstance(elt, ast.Name):
+                        info["sol_var"] = elt.id
 
         return info
+
+    def find_tuple_for_question(
+        self,
+        cid: str,
+        template_id: Optional[str] = None,
+        difficulty: Optional[str] = None,
+        interaction_type: Optional[str] = None,
+        bloom: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Resolves the exact TEMPLATES tuple info matching a question's competency, template_id, or difficulty/type."""
+        cand_tuples = [t for t in self.tuples if t.get("competency_id") == cid]
+        if not cand_tuples:
+            cand_tuples = list(self.tuples)
+        if not cand_tuples:
+            return None
+
+        if template_id:
+            for t in cand_tuples:
+                if t.get("template_id") == template_id:
+                    return t
+            m_idx = re.search(r"-0*(\d+)$", str(template_id))
+            if m_idx:
+                idx_1based = int(m_idx.group(1))
+                if 1 <= idx_1based <= len(cand_tuples):
+                    return cand_tuples[idx_1based - 1]
+
+        norm_diff = (difficulty or "").strip().lower()
+        norm_itype = (interaction_type or "").strip().lower()
+        norm_bloom = (bloom or "").strip().lower()
+
+        if norm_diff:
+            diff_matches = [t for t in cand_tuples if t.get("difficulty") == norm_diff]
+            if len(diff_matches) == 1:
+                return diff_matches[0]
+            if len(diff_matches) > 1 and norm_itype:
+                for t in diff_matches:
+                    qt = t.get("question_type") or ""
+                    if ("multiple_choice" in norm_itype and "multiple_choice" in qt) or (
+                        "fill_in" in norm_itype and ("fill_in" in qt or "open" in qt or "fib" in qt)
+                    ) or ("select" in norm_itype and "select" in qt):
+                        return t
+                return diff_matches[0]
+
+        if norm_itype:
+            for t in cand_tuples:
+                qt = t.get("question_type") or ""
+                if ("multiple_choice" in norm_itype and "multiple_choice" in qt) or (
+                    "fill_in" in norm_itype and ("fill_in" in qt or "open" in qt or "fib" in qt)
+                ) or ("select" in norm_itype and "select" in qt):
+                    if not norm_bloom or (t.get("bloom") or "").lower() == norm_bloom:
+                        return t
+
+        return cand_tuples[0]
+
+    def find_offending_lines(
+        self,
+        tuple_info: Optional[Dict[str, Any]],
+        linter_name: str = "",
+        needle: str = "",
+    ) -> Tuple[int, int, List[Tuple[int, str]]]:
+        """Pinpoints the exact 1-based (start_line, end_line, [(lineno, code), ...]) inside the shard file."""
+        if not self.lines:
+            return 1, 1, []
+        if not tuple_info:
+            return 1, min(len(self.lines), 5), [(i + 1, self.lines[i]) for i in range(min(len(self.lines), 5))]
+
+        linter_low = (linter_name or "").lower()
+        gen_fn = tuple_info.get("gen_fn_name")
+        ver_fn = tuple_info.get("ver_fn_name")
+        stems_var = tuple_info.get("stems_var")
+        hints_var = tuple_info.get("hints_var")
+        sol_var = tuple_info.get("sol_var")
+        t_start = tuple_info.get("start_line", 1)
+        t_end = tuple_info.get("end_line", t_start)
+
+        def _slice_lines(s: int, e: int) -> List[Tuple[int, str]]:
+            s_c = max(1, s)
+            e_c = min(len(self.lines), max(s_c, e))
+            return [(ln, self.lines[ln - 1]) for ln in range(s_c, e_c + 1)]
+
+        # 1. Hints linters -> locate hints_var or tuple hints element
+        if "hint" in linter_low or "socratic" in linter_low or "scaffolding" in linter_low:
+            if hints_var and hints_var in self.constants:
+                s_h, e_h = self.constants[hints_var]
+                return s_h, e_h, _slice_lines(s_h, e_h)
+            h_elt = tuple_info.get("elements", {}).get("hints")
+            if h_elt:
+                return h_elt["start_line"], h_elt["end_line"], _slice_lines(h_elt["start_line"], h_elt["end_line"])
+
+        # 2. ZPD / modality / archetype linters -> locate TEMPLATES tuple(s)
+        if "zpd" in linter_low or "modality" in linter_low or "archetype" in linter_low:
+            cid = tuple_info.get("competency_id")
+            if cid:
+                cid_tuples = [t for t in self.tuples if t.get("competency_id") == cid]
+                if cid_tuples:
+                    s_all = min(t["start_line"] for t in cid_tuples)
+                    e_all = max(t["end_line"] for t in cid_tuples)
+                    return s_all, e_all, _slice_lines(s_all, e_all)
+            return t_start, t_end, _slice_lines(t_start, t_end)
+
+        # 3. Distractor / rationale / magic-multiplier / anti-gaming / option length linters -> inside gen_fn
+        if any(
+            k in linter_low
+            for k in ("diagnostic_rationale", "distractor", "cloned", "telltale", "anti_gaming", "length_padded", "magic")
+        ):
+            if gen_fn and gen_fn in self.functions:
+                s_fn, e_fn = self.functions[gen_fn]
+                fn_lines = _slice_lines(s_fn, e_fn)
+                if "multiplicador" in needle.lower() or "magic" in linter_low or "diagnostic_rationale" in linter_low:
+                    mult_lines = [
+                        (ln, txt)
+                        for ln, txt in fn_lines
+                        if re.search(
+                            r"\b(?:ds|cds|dists|distractors|d[1-6])\s*=|\bround\s*\(\s*ans\b|\bans\s*[\*/]|\(\"D-",
+                            txt,
+                        )
+                    ]
+                    if mult_lines:
+                        s_m = mult_lines[0][0]
+                        e_m = min(e_fn, max(mult_lines[-1][0], s_m + 1))
+                        # If a multi-line list assignment starts at s_m, include up to its closing bracket or dists
+                        return s_m, e_m, _slice_lines(s_m, min(e_m, s_m + 14))
+                dist_lines = [
+                    (ln, txt)
+                    for ln, txt in fn_lines
+                    if re.search(r"\b(?:dists|distractors|options|ds|d[1-6])\s*=|\(\"D-", txt)
+                ]
+                if dist_lines:
+                    s_d = dist_lines[0][0]
+                    e_d = dist_lines[-1][0]
+                    return s_d, e_d, _slice_lines(s_d, min(e_d + 2, e_fn))
+                return s_fn, e_fn, fn_lines
+
+        # 4. KaTeX / uninterpolated / residue / string replacement -> search needle across gen_fn, stems_var, hints_var, sol_var
+        if needle:
+            n_clean = needle.strip()
+            search_ranges: List[Tuple[int, int]] = []
+            if gen_fn and gen_fn in self.functions:
+                search_ranges.append(self.functions[gen_fn])
+            for vname in (stems_var, hints_var, sol_var):
+                if vname and vname in self.constants:
+                    search_ranges.append(self.constants[vname])
+            search_ranges.append((t_start, t_end))
+            for s_r, e_r in search_ranges:
+                matched = [
+                    (ln, txt)
+                    for ln, txt in _slice_lines(s_r, e_r)
+                    if n_clean in txt
+                ]
+                if matched:
+                    return matched[0][0], matched[-1][0], matched
+
+        if gen_fn and gen_fn in self.functions:
+            s_fn, e_fn = self.functions[gen_fn]
+            return s_fn, e_fn, _slice_lines(s_fn, e_fn)
+
+        return t_start, t_end, _slice_lines(t_start, t_end)
 
     def get_tuple_info(self, idx_or_cid: Union[int, str]) -> Optional[Dict[str, Any]]:
         idx = self.competency_to_tuple_idx.get(idx_or_cid) if isinstance(idx_or_cid, str) else idx_or_cid
@@ -506,41 +750,18 @@ def build_adapted_mc7_generator(
     base_gen_code: str,
     cid: str,
     cta_distractors: List[Dict[str, Any]],
+    strict: bool = True,
 ) -> str:
-    """Wraps an MC7 generator function to reliably provide 6 non-colliding distractors with DRY rationale inheritance.
+    """Wraps an MC7 generator function to assemble options list with 1 correct and distractors.
 
-    Supports distractor items returned by author as:
-    1. Full dict: {"value": ..., "distractor_id": ..., "error_rationale": ...}
-    2. Compact dict: {"value": ..., "distractor_id": ...} or {"id": ..., "value": ...}
-    3. 2-tuple: ("D-XX-01", val) or (val, "D-XX-01")
-    4. 3-tuple: ("D-XX-01", val, rationale)
-    5. String / scalar: val (distractor_id and rationale populated by position from cta_distractors)
+    In strict mode:
+    - Eliminates magical multipliers and synthetic positional assignment.
+    - Rejects 2-tuples (did, val) and requires 3-tuples (did, val, error_rationale).
+    - Ensures distractor IDs match declared CTA distractors.
     """
-    from check_templates import _strip_giveaway_prefix, _wrap_bare_latex_in_rationale
-
-    clean_declared = []
-    for idx, d in enumerate(cta_distractors):
-        did = d.get("id", f"D-{cid}-{idx+1:02d}")
-        rem = d.get("remediation_hint") or ""
-        wb = d.get("wrong_belief") or d.get("manifestation") or ""
-        om = d.get("omitted_step") or ""
-        if rem:
-            rat = rem
-        elif wb and om:
-            rat = f"{wb.rstrip('.')}. Se debe considerar: {om.rstrip('.')}."
-        elif wb:
-            rat = wb
-        elif om:
-            rat = f"Error procedimental: {om}."
-        else:
-            rat = f"Procedimiento analítico alternativo para {cid}."
-        clean_rat = _wrap_bare_latex_in_rationale(_strip_giveaway_prefix(str(rat)))
-        clean_declared.append({
-            "id": did,
-            "rationale": clean_rat,
-        })
-
-    d_repr = repr(clean_declared)
+    declared_ids_list = [d.get("id") for d in cta_distractors if isinstance(d, dict) and d.get("id")]
+    declared_ids_repr = repr(set(declared_ids_list))
+    strict_repr = "True" if strict else "False"
 
     wrapper = f"""{base_gen_code}
 
@@ -560,21 +781,11 @@ def generate_params(rng):
     elif not isinstance(res, dict):
         return res
 
-    declared_list = {d_repr}
-    declared_map = {{d["id"]: d["rationale"] for d in declared_list}}
-    declared_ids = set(declared_map.keys())
+    declared_ids = {declared_ids_repr}
+    is_strict = {strict_repr}
 
-    # Synchronize options items (both 'value' and 'content')
+    # Extract options and distractors
     opts = res.get("options")
-    if isinstance(opts, list):
-        for opt in opts:
-            if isinstance(opt, dict):
-                if "value" in opt and "content" not in opt:
-                    opt["content"] = opt["value"]
-                elif "content" in opt and "value" not in opt:
-                    opt["value"] = opt["content"]
-
-    # Extract distractors from options or distractors
     dists_raw = res.get("distractors")
     if dists_raw is None and isinstance(opts, list):
         dists_raw = [dict(opt) for opt in opts if isinstance(opt, dict) and not opt.get("is_correct")]
@@ -589,13 +800,7 @@ def generate_params(rng):
                 res["correct"] = correct_val
                 break
 
-    used_values = set()
-    if correct_val:
-        used_values.add(correct_val)
-
     normalized_dists = []
-    used_ids = set()
-
     for idx, d in enumerate(dists_raw):
         val = ""
         did = None
@@ -603,7 +808,7 @@ def generate_params(rng):
         if isinstance(d, dict):
             val = str(d.get("value") if "value" in d else (d.get("content") if "content" in d else d.get("ans", ""))).strip()
             did = d.get("distractor_id") or d.get("id") or d.get("did")
-            rat = d.get("error_rationale") or d.get("rationale") or d.get("hint")
+            rat = d.get("error_rationale") or d.get("rationale")
         elif isinstance(d, (tuple, list)):
             if len(d) >= 3:
                 e0, e1 = str(d[0]).strip(), str(d[1]).strip()
@@ -614,8 +819,13 @@ def generate_params(rng):
                 elif e1.startswith(("D-", "D_")) or norm_e1 in declared_ids:
                     val, did, rat = e0, norm_e1, str(d[2]).strip()
                 else:
-                    val, did, rat = e0, e1, str(d[2]).strip()
+                    did, val, rat = norm_e0, e1, str(d[2]).strip()
             elif len(d) == 2:
+                if is_strict:
+                    raise ValueError(
+                        f"[TPL-MC7-STRICT] En modo estricto, la 2-tupla (distractor_id, value) esta prohibida en MC7. "
+                        f"Cada distractor debe ser una 3-tupla (distractor_id, value, error_rationale) con error_rationale >= 20 caracteres: {{repr(d)}}"
+                    )
                 e0, e1 = str(d[0]).strip(), str(d[1]).strip()
                 norm_e0 = e0.replace("_", "-")
                 norm_e1 = e1.replace("_", "-")
@@ -624,107 +834,34 @@ def generate_params(rng):
                 elif e1.startswith(("D-", "D_")) or norm_e1 in declared_ids:
                     val, did = e0, norm_e1
                 else:
-                    val = e0
+                    did, val = norm_e0, e1
             elif len(d) == 1:
+                if is_strict:
+                    raise ValueError(f"Distractor escalar no permitido en modo estricto: {{repr(d)}}")
                 val = str(d[0]).strip()
         elif isinstance(d, (str, int, float)):
+            if is_strict:
+                raise ValueError(f"Distractor escalar no permitido en modo estricto: {{repr(d)}}")
             val = str(d).strip()
 
-        # Infer did by position from declared_list if absent
-        if not did:
-            for cand_d in declared_list:
-                if cand_d["id"] not in used_ids:
-                    did = cand_d["id"]
-                    break
-            if not did:
-                did = f"D-{cid}-{{len(normalized_dists)+1:02d}}"
+        if did and did not in declared_ids:
+            norm_did = str(did).replace("_", "-")
+            if norm_did in declared_ids:
+                did = norm_did
+            elif is_strict:
+                raise ValueError(
+                    f"Distractor ID '{{did}}' no esta declarado en cta.json para la competencia '{cid}'."
+                )
 
-        used_ids.add(did)
-
-        # Infer rationale if absent, empty or placeholder
-        if not rat or str(rat).strip() in ("", "None", "placeholder", "N/A", "error", "distractor"):
-            rat = declared_map.get(did)
-            if not rat:
-                cand_idx = len(normalized_dists)
-                if cand_idx < len(declared_list):
-                    rat = declared_list[cand_idx]["rationale"]
-                else:
-                    rat = "Procedimiento cuantitativo o analítico alternativo."
-        else:
-            rat = str(rat)
-
-        if val:
-            used_values.add(val)
-            normalized_dists.append({{
-                "value": val,
-                "content": val,
-                "distractor_id": did,
-                "error_rationale": rat,
-                "is_correct": False,
-            }})
-
-    # Ensure at least 6 distinct distractors for MC7 compliance
-    if len(normalized_dists) < 6:
-        avail_dids = [d for d in declared_list if d.get("id") not in used_ids]
-
-        # Extract numeric anchor from correct_val if available
-        base_num = 1.0
-        pfx, sfx = "", ""
-        m_num = False
-        _v_map = res.get("vars") if isinstance(res.get("vars"), dict) else {{}}
-        _resolved_c = correct_val
-        for _vk, _vv in _v_map.items():
-            _resolved_c = _resolved_c.replace("@" + str(_vk) + "@", str(_vv))
-        for token in _resolved_c.replace("$", " ").split():
-            clean_tok = token.strip("=").strip()
-            try:
-                base_num = float(clean_tok)
-                idx_tok = _resolved_c.find(token)
-                pfx = _resolved_c[:idx_tok]
-                sfx = _resolved_c[idx_tok + len(token):]
-                m_num = True
-                break
-            except ValueError:
-                continue
-
-        needed = 6 - len(normalized_dists)
-        multipliers = [1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, 2.1, 0.45, 1.85, 0.15]
-        m_idx = 0
-        for i in range(needed):
-            did_obj = avail_dids[i] if i < len(avail_dids) else {{"id": f"D-{cid}-" + str(len(normalized_dists)+1).zfill(2), "rationale": "Procedimiento analítico alternativo"}}
-            did = did_obj.get("id")
-            rat = did_obj.get("rationale") or "Concepción alternativa pedagógica"
-
-            cand_val = ""
-            while m_idx < len(multipliers):
-                mult = multipliers[m_idx]
-                m_idx += 1
-                if m_num:
-                    new_val_num = round(base_num * mult, 3)
-                    cand = f"{{pfx}}{{new_val_num}}{{sfx}}"
-                else:
-                    cand = f"Opción alterna {{len(normalized_dists)+1}}: {{correct_val}}"
-                if cand not in used_values:
-                    cand_val = cand
-                    used_values.add(cand)
-                    break
-
-            if not cand_val:
-                cand_val = f"{{pfx}}{{round(base_num + (i + 1) * 0.137, 3)}}{{sfx}}" if m_num else f"Variante {{len(normalized_dists)+1}}"
-                used_values.add(cand_val)
-
-            normalized_dists.append({{
-                "value": cand_val,
-                "content": cand_val,
-                "distractor_id": did,
-                "error_rationale": rat,
-                "is_correct": False,
-            }})
-            used_ids.add(did)
+        normalized_dists.append({{
+            "value": val,
+            "content": val,
+            "distractor_id": did,
+            "error_rationale": rat or "",
+            "is_correct": False,
+        }})
 
     res["distractors"] = normalized_dists
-
-    # Construct complete options list with 1 correct + 6 distractors
     correct_opt = {{
         "value": correct_val,
         "content": correct_val,
@@ -736,52 +873,6 @@ def generate_params(rng):
 generate = generate_params
 """
     return wrapper
-
-
-def generate_rich_stem_variants(stem: str) -> List[str]:
-    """Generates 16+ lexically differentiated stem variants to guarantee diversity ratio >= 0.50."""
-    clean_stem = stem.strip()
-    # Check if stem starts with common lead-in phrases to vary
-    lead_variations = [
-        "",
-        "Considere el siguiente planteamiento formal: ",
-        "A partir de las condiciones analíticas dadas, determine: ",
-        "Para el modelo formulado a continuación, evalúe: ",
-        "En el contexto formal planteado, analice con rigor: ",
-        "Tomando en cuenta la estructura teórica del problema, halle: ",
-        "De acuerdo con los postulados fundamentales del sistema, verifique: ",
-        "Bajo los parámetros establecidos, calcule el valor exacto: ",
-        "Examine con detenimiento la situación y resuelva: ",
-        "Establezca formalmente la solución correspondiente para: ",
-        "Identifique la proposición matemáticamente válida sabiendo que: ",
-        "Dada la caracterización analítica descrita, halle: ",
-        "En el marco de referencia correspondiente, establezca: ",
-        "Evalúe la expresión y determine la cantidad buscada: ",
-        "Analice la formulación operativa y deduzca: ",
-        "Verifique la consistencia del modelo y obtenga: ",
-        "Procediendo conforme al marco teórico correspondiente, deduzca: ",
-        "Con base en los datos y relaciones proporcionados, resuelva: ",
-        "Realizando las deducciones matemáticas pertinentes, calcule: ",
-        "Teniendo en consideración los fundamentos del equilibrio, determine: ",
-        "A la luz de los supuestos del modelo, identifique el valor de: ",
-        "A partir del marco de análisis cuantitativo, encuentre: ",
-        "Considerando las ecuaciones fundamentales del régimen, obtenga: ",
-        "Aplicando las identidades teóricas pertinentes, evalúe: ",
-        "Al examinar detenidamente las condiciones de frontera, resuelva: ",
-        "Con arreglo a las definiciones operativas del sistema, verifique: ",
-        "Efectuando el análisis formal respectivo, precise: ",
-        "Desde la perspectiva analítica correspondiente, compute: ",
-        "Atendiendo a la relación funcional planteada, halle: ",
-        "Demuestre el resultado correcto determinando: ",
-        "Sustentando la solución en los principios teóricos, halle: ",
-        "Siguiendo el procedimiento analítico estándar, calcule: ",
-    ]
-    variants = []
-    for pfx in lead_variations:
-        v = f"{pfx}{clean_stem}" if pfx else clean_stem
-        if v not in variants:
-            variants.append(v)
-    return variants
 
 
 def discover_fix_files(fixes_dir: Optional[Path], expected_cids: List[str]) -> Tuple[Dict[str, Path], List[Path]]:
@@ -815,7 +906,7 @@ def discover_fix_files(fixes_dir: Optional[Path], expected_cids: List[str]) -> T
                     relevant_files.append(fix_p)
                 matched = True
                 break
-        if not matched:
+        if not matched and not expected_cids:
             norm_stem_cid = stem.replace("_", "-")
             fix_files_by_cid[norm_stem_cid] = fix_p
             if fix_p not in relevant_files:
@@ -1027,7 +1118,7 @@ def compile_shard(
     if not expected_cids and "competencies" in shard_entry:
         expected_cids = [c["id"] for c in shard_entry["competencies"] if isinstance(c, dict) and "id" in c]
 
-    eff_min_arch = 1
+    eff_min_arch = 3
     if min_archetypes is not None:
         eff_min_arch = int(min_archetypes)
     elif isinstance(shard_entry, dict) and shard_entry.get("min_archetypes"):
@@ -1331,24 +1422,29 @@ def compile_shard(
         curr_loc = rec["locator"]
         curr_p = rec["file_path"]
         orig_idx = rec["orig_idx"]
-        if not isinstance(t, (list, tuple)) or len(t) < 9:
+        if not isinstance(t, (list, tuple)) or len(t) != 9:
             s_t, e_t, snip = curr_loc.get_tuple_snippet(orig_idx)
             err_msg = (
-                f"FAIL: La tupla en índice {orig_idx} tiene {len(t) if isinstance(t, (list, tuple)) else 0} elementos (se requieren 9 posicionales).\n"
+                f"FAIL: La tupla en índice {orig_idx} tiene {len(t) if isinstance(t, (list, tuple)) else 0} elementos "
+                f"(se requieren exactamente 9 elementos según el contrato Form-B: "
+                f"tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution).\n"
                 f"  Ubicación: Líneas {s_t}..{e_t} en {curr_p.name}\n"
                 f"{snip}"
             )
             return _fail(err_msg)
 
-        if len(t) >= 3 and str(t[2]).lower().strip() in known_types:
-            c_candidate = str(t[1]).strip()
-        elif len(t) >= 3 and str(t[1]).lower().strip() in known_types:
-            c_candidate = str(t[0]).strip()
-        elif str(t[1]).strip() in expected_cids:
-            c_candidate = str(t[1]).strip()
-        else:
-            c_candidate = str(t[0]).strip()
+        if str(t[1]).lower().strip() in known_types or str(t[2]).lower().strip() not in known_types:
+            s_t, e_t, snip = curr_loc.get_tuple_snippet(orig_idx)
+            err_msg = (
+                f"FAIL: Se detectó formato legacy Form-A o tipo inválido en la tupla {orig_idx}. "
+                f"El compilador solo admite el contrato Form-B de 9 elementos: "
+                f"(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution).\n"
+                f"  Ubicación: Líneas {s_t}..{e_t} en {curr_p.name}\n"
+                f"{snip}"
+            )
+            return _fail(err_msg)
 
+        c_candidate = str(t[1]).strip()
         found_cids.append(c_candidate)
 
     missing_cids = [cid for cid in expected_cids if cid not in found_cids]
@@ -1394,61 +1490,51 @@ def compile_shard(
         curr_p = rec["file_path"]
         orig_idx = rec["orig_idx"]
 
-        # Determine format
-        if len(t) >= 3 and str(t[2]).lower().strip() in known_types:
-            tpl_id = str(t[0]).strip()
-            cid = str(t[1]).strip()
-            qtype = str(t[2]).strip().lower()
-            gen_raw = t[3]
-            ver_raw = t[4]
-            diff_raw = t[5]
-            stems_raw = t[6]
-            hints_raw = t[7]
-            sol_raw = str(t[8])
-            target_kc = cid
-            target_misc = []
-            src_ref = {"doc": "manifest.pdf", "page": 1, "quote": ""}
-        else:
-            cid = str(t[0]).strip()
-            qtype = str(t[1]).strip().lower()
-            stems_raw = t[2]
-            gen_raw = t[3]
-            ver_raw = t[4]
-            sol_raw = str(t[5])
-            target_kc = str(t[6]).strip()
-            target_misc = list(t[7]) if isinstance(t[7], (list, tuple, set)) else [str(t[7])]
-            src_ref_raw = t[8]
-            diff_raw = "medium"
-            hints_raw = list(t[9]) if len(t) >= 10 and isinstance(t[9], (list, tuple)) else []
-            tpl_id = f"T-{cid}" if not cid.startswith("T-") else cid
+        # Determine format (Form-B 9-tuple)
+        if len(t) != 9 or str(t[2]).lower().strip() not in known_types:
+            return _fail(
+                f"FAIL: Tupla {orig_idx} no cumple el contrato Form-B de 9 elementos: "
+                f"(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution)."
+            )
 
-            if isinstance(src_ref_raw, (list, tuple)) and len(src_ref_raw) >= 3:
-                src_ref = {"doc": str(src_ref_raw[0]), "page": int(src_ref_raw[1]), "quote": str(src_ref_raw[2])}
-            elif isinstance(src_ref_raw, dict):
-                src_ref = {"doc": str(src_ref_raw.get("doc", "")), "page": int(src_ref_raw.get("page", 1)), "quote": str(src_ref_raw.get("quote", ""))}
-            else:
-                src_ref = {"doc": str(src_ref_raw), "page": 1, "quote": ""}
+        tpl_id = str(t[0]).strip()
+        cid = str(t[1]).strip()
+        qtype = str(t[2]).strip().lower()
+        gen_raw = t[3]
+        ver_raw = t[4]
+        diff_raw = t[5]
+        stems_raw = t[6]
+        hints_raw = t[7]
+        sol_raw = str(t[8])
+        target_kc = cid
+        target_misc = []
+        src_ref = {"doc": "manifest.pdf", "page": 1, "quote": ""}
 
-        # Determine difficulty and bloom
-        if isinstance(diff_raw, (list, tuple)) and len(diff_raw) >= 2:
-            difficulty = str(diff_raw[0]).lower().strip()
-            bloom = str(diff_raw[1]).capitalize().strip()
-        elif isinstance(diff_raw, str):
-            difficulty = diff_raw.lower().strip()
-            bloom = "Understand"
-        else:
-            difficulty = "medium"
-            bloom = "Understand"
+        # Determine difficulty and bloom (element [5] must be 2-tuple (difficulty, bloom))
+        if not isinstance(diff_raw, (list, tuple)) or len(diff_raw) != 2:
+            return _fail(
+                f"FAIL: El elemento de dificultad en tupla {orig_idx} ('{tpl_id}') debe ser explícitamente "
+                f"una 2-tupla (difficulty, bloom) (ej. ('easy', 'Remember')), se recibió: {repr(diff_raw)}."
+            )
+
+        difficulty = str(diff_raw[0]).lower().strip()
+        bloom = str(diff_raw[1]).capitalize().strip()
 
         if difficulty not in ("easy", "medium", "hard"):
-            difficulty = "medium"
+            return _fail(
+                f"FAIL: Dificultad inválida '{difficulty}' en tupla {orig_idx} ('{tpl_id}'). "
+                f"Debe ser 'easy', 'medium' o 'hard'."
+            )
         if bloom not in ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"):
-            bloom = "Understand"
+            return _fail(
+                f"FAIL: Nivel de Bloom inválido '{bloom}' en tupla {orig_idx} ('{tpl_id}'). "
+                f"Debe ser Remember, Understand, Apply, Analyze, Evaluate o Create."
+            )
 
         # Determine interaction_type
-        if qtype in ("multiple_choice", "multiple_choice_7_options"):
+        if qtype in ("multiple_choice", "multiple_choice_7_options", "mc7"):
             interaction_type = "multiple_choice_7_options"
-        elif qtype in ("open_ended", "fill_in_the_blank"):
+        elif qtype in ("open_ended", "fill_in_the_blank", "fib"):
             interaction_type = "fill_in_the_blank"
             target_misc = []
         elif qtype in ("multiple_select", "ms"):
@@ -1464,10 +1550,72 @@ def compile_shard(
         gen_code = extract_function_code(gen_raw, "generate_params", locator=curr_loc, fn_name_hint=gen_fn_name)
         ver_code = extract_function_code(ver_raw, "verify", locator=curr_loc, fn_name_hint=ver_fn_name)
 
-        # Retrieve CTA distractors for this competency and strip giveaway prefixes
+        # Check non-trivial verifier
+        ver_is_trivial, ver_reason = is_trivial_verifier(ver_code, ver_raw)
+        if ver_is_trivial:
+            return _fail(
+                f"FAIL: [TPL-VERIFIER] El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' es trivial ({ver_reason}). "
+                f"Debe evaluar condiciones lógicas o matemáticas reales sobre el resultado generado."
+            )
+
+        # Stems validation: require at least 3 distinct author-written stems
+        if not isinstance(stems_raw, (list, tuple)) or len(stems_raw) < 3:
+            return _fail(
+                f"FAIL: La plantilla '{tpl_id}' debe proporcionar al menos 3 enunciados distintos en stems "
+                f"(se recibieron {len(stems_raw) if isinstance(stems_raw, (list, tuple)) else 0})."
+            )
+        cleaned_stems = [str(s).strip() for s in stems_raw if str(s).strip()]
+        if len(set(cleaned_stems)) < 3:
+            return _fail(
+                f"FAIL: La plantilla '{tpl_id}' contiene enunciados duplicados en stems "
+                f"(se encontraron {len(set(cleaned_stems))} únicos, se requieren >= 3)."
+            )
+        stem_es = cleaned_stems[0]
+        stem_variants = cleaned_stems
+
+        # Hints validation: require 3 to 5 author hints, >= 25 chars, no anti-socratic catchphrases, no literal wrong_belief copy
         cta_comp = cta_comp_map.get(cid, {})
         cta_distractors = cta_comp.get("distractors", [])
+        if not isinstance(hints_raw, (list, tuple)) or not (3 <= len(hints_raw) <= 5):
+            return _fail(
+                f"FAIL: La plantilla '{tpl_id}' debe definir entre 3 y 5 pistas explícitas (hints) "
+                f"(se recibieron {len(hints_raw) if isinstance(hints_raw, (list, tuple)) else 0})."
+            )
+
         from check_templates import _strip_giveaway_prefix
+        hints = []
+        anti_socratic_patterns = [
+            "evita el error",
+            "recuerda no confundir",
+            "no confundas",
+            "cuidado con el error",
+            "no cometas el error",
+            "error común",
+        ]
+        cta_wrong_beliefs = [
+            str(d.get("wrong_belief") or "").strip().lower()
+            for d in cta_distractors if isinstance(d, dict) and d.get("wrong_belief")
+        ]
+        for h_idx, h_item in enumerate(hints_raw, start=1):
+            h_text = _strip_giveaway_prefix(str(h_item).strip())
+            if len(h_text) < 25:
+                return _fail(
+                    f"FAIL: La pista {h_idx} de '{tpl_id}' tiene menos de 25 caracteres ({len(h_text)} < 25): '{h_text}'."
+                )
+            h_lower = h_text.lower()
+            for pat in anti_socratic_patterns:
+                if pat in h_lower:
+                    return _fail(
+                        f"FAIL: La pista {h_idx} de '{tpl_id}' contiene una muletilla anti-socrática prohibida ('{pat}'): '{h_text}'."
+                    )
+            for wb in cta_wrong_beliefs:
+                if len(wb) >= 12 and wb in h_lower:
+                    return _fail(
+                        f"FAIL: La pista {h_idx} de '{tpl_id}' copia literalmente la concepción errónea de cta.json ('{wb}')."
+                    )
+            hints.append(h_text)
+
+        # Retrieve CTA declared distractor IDs
         clean_cta_distractors = []
         for d in cta_distractors:
             if isinstance(d, dict):
@@ -1479,54 +1627,14 @@ def compile_shard(
             else:
                 clean_cta_distractors.append(d)
 
-        # If MC7, apply robust generator adaptation to guarantee 6 disjoint distractors
+        cta_declared_ids = {d.get("id") for d in clean_cta_distractors if isinstance(d, dict) and d.get("id")}
+
+        # Adapt MC7 generator if applicable
         if interaction_type == "multiple_choice_7_options":
-            gen_code = build_adapted_mc7_generator(gen_code, cid, clean_cta_distractors)
-            if len(target_misc) < 6 and clean_cta_distractors:
-                declared_ids = [d["id"] for d in clean_cta_distractors if isinstance(d, dict) and "id" in d]
-                for did in declared_ids:
-                    if did not in target_misc:
-                        target_misc.append(did)
-            if len(target_misc) < 6:
-                for idx in range(len(target_misc), 6):
-                    target_misc.append(f"D-{cid}-{idx+1:02d}")
+            gen_code = build_adapted_mc7_generator(gen_code, cid, clean_cta_distractors, strict=strict)
 
-        # Normalize stems and stem_variants
-        if isinstance(stems_raw, (list, tuple)) and len(stems_raw) > 0:
-            stem_es = str(stems_raw[0])
-            stem_variants = [str(s) for s in stems_raw]
-            if len(stem_variants) < 30:
-                stem_variants = generate_rich_stem_variants(stem_es)
-        else:
-            stem_es = str(stems_raw)
-            stem_variants = generate_rich_stem_variants(stem_es)
-
-        # Normalize hints
-        if isinstance(hints_raw, (list, tuple)) and len(hints_raw) >= 3 and all(str(h).strip() for h in hints_raw[:3]):
-            from check_templates import _strip_giveaway_prefix
-            hints = [_strip_giveaway_prefix(str(h)) for h in hints_raw[:3]]
-        else:
-            c_name = cta_comp.get("name") or cta_comp.get("competency_name") or cid
-            d0 = clean_cta_distractors[0] if len(clean_cta_distractors) > 0 and isinstance(clean_cta_distractors[0], dict) else {}
-            d1 = clean_cta_distractors[1] if len(clean_cta_distractors) > 1 and isinstance(clean_cta_distractors[1], dict) else {}
-            omitted0 = d0.get("omitted_step") or d0.get("wrong_belief") or ""
-            omitted1 = d1.get("omitted_step") or d1.get("wrong_belief") or ""
-
-            step0 = _format_socratic_step(omitted0)
-            step1 = _format_socratic_step(omitted1)
-
-            hint1 = f"Identifique la estructura conceptual de {c_name}: analice las relaciones formales y condiciones teóricas del modelo."
-            if step0:
-                hint2 = f"Revise el procedimiento analítico paso a paso para {c_name}, asegurando considerar adecuadamente: {step0}."
-            else:
-                hint2 = f"Plantee la deducción cuantitativa correspondiente para {c_name}, verificando los supuestos operacionales del sistema."
-            if step1:
-                hint3 = f"Antes de concluir, compruebe la consistencia dimensional del resultado de {c_name} y evalúe posibles desvíos al considerar: {step1}."
-            else:
-                hint3 = f"Verifique la consistencia lógica y matemática de la solución obtenida para {c_name} contrastándola con el comportamiento límite."
-            hints = [hint1, hint2, hint3]
-
-        # Determine declared vars from generator callable (with timeout guard) or AST
+        # Determine declared vars from generator callable (with timeout guard) or sandbox or AST
+        sample_res = None
         declared_vars: Set[str] = set()
         if callable(gen_raw):
             try:
@@ -1544,6 +1652,18 @@ def compile_shard(
                     declared_vars = set(str(k) for k in sample_res[0].keys())
             except Exception:
                 pass
+
+        if sample_res is None and gen_code:
+            try:
+                from engine.sandbox import run_code_in_env
+                sample_res = run_code_in_env(gen_code, "generate", seed=42, timeout=0.5)
+                if isinstance(sample_res, dict) and "vars" in sample_res and isinstance(sample_res["vars"], dict):
+                    declared_vars = set(str(k) for k in sample_res["vars"].keys())
+                elif isinstance(sample_res, (tuple, list)) and len(sample_res) >= 1 and isinstance(sample_res[0], dict):
+                    declared_vars = set(str(k) for k in sample_res[0].keys())
+            except Exception:
+                pass
+
         if not declared_vars and gen_code:
             try:
                 _gtree = ast.parse(gen_code)
@@ -1568,6 +1688,135 @@ def compile_shard(
                 if m_vars:
                     var_names = re.findall(r"['\"]([a-zA-Z_][a-zA-Z0-9_]*)['\"]\s*:", m_vars.group(1))
                     declared_vars = set(var_names)
+
+        # Distractor validation, dynamic rationale check, and KaTeX guards on sample_res
+        if sample_res is not None and isinstance(sample_res, (dict, tuple, list)):
+            if isinstance(sample_res, (tuple, list)):
+                if len(sample_res) >= 3:
+                    s_vars = sample_res[0] if isinstance(sample_res[0], dict) else {}
+                    s_corr = str(sample_res[1])
+                    s_dists = sample_res[2] if isinstance(sample_res[2], list) else []
+                    sample_dict = {"vars": s_vars, "correct": s_corr, "distractors": s_dists}
+                elif len(sample_res) == 2:
+                    s_vars = sample_res[0] if isinstance(sample_res[0], dict) else {}
+                    s_corr = str(sample_res[1])
+                    sample_dict = {"vars": s_vars, "correct": s_corr, "distractors": []}
+                else:
+                    sample_dict = {}
+            else:
+                sample_dict = sample_res
+
+            # Parametric indicators for dynamic rationale check
+            has_var_in_correct = bool(re.search(r"@([a-zA-Z0-9_]+)@", str(sample_dict.get("correct", ""))))
+            has_var_in_stem = bool(re.search(r"@([a-zA-Z0-9_]+)@", stem_es)) or any(bool(re.search(r"@([a-zA-Z0-9_]+)@", s)) for s in stem_variants)
+
+            # FIB KaTeX guard
+            if interaction_type == "fill_in_the_blank":
+                corr_str = str(sample_dict.get("correct", "")).strip()
+                if corr_str.startswith("$") and corr_str.endswith("$") and len(corr_str) >= 2:
+                    line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, corr_str)
+                    return _fail(
+                        f"FAIL: [TPL-FIB-KATEX] La respuesta FIB en '{tpl_id}' ('{corr_str}') (Línea {line_no} en {curr_p.name}) contiene delimitadores '$' externos. "
+                        f"En Frontend (FeedbackToast) se formatea automáticamente en modo matemático; retire los '$' externos."
+                    )
+
+            # MC7 checks
+            if interaction_type == "multiple_choice_7_options":
+                dists_list = sample_dict.get("distractors") or []
+                if isinstance(dists_list, list) and dists_list:
+                    dids_found = []
+                    for d_idx, d_item in enumerate(dists_list, start=1):
+                        did = None
+                        rat = ""
+                        val = ""
+                        if isinstance(d_item, dict):
+                            did = d_item.get("distractor_id") or d_item.get("id") or d_item.get("did")
+                            rat = str(d_item.get("error_rationale") or d_item.get("rationale") or "")
+                            val = str(d_item.get("value") if "value" in d_item else (d_item.get("content") or ""))
+                        elif isinstance(d_item, (tuple, list)):
+                            if len(d_item) >= 3:
+                                did = str(d_item[0]).strip().replace("_", "-")
+                                val = str(d_item[1]).strip()
+                                rat = str(d_item[2]).strip()
+                            elif len(d_item) == 2 and strict:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, str(d_item[0]))
+                                return _fail(
+                                    f"FAIL: [TPL-MC7-STRICT] En modo estricto, la 2-tupla (distractor_id, value) está prohibida en MC7 ('{tpl_id}') (Línea {line_no} en {curr_p.name}). "
+                                    f"Cada distractor debe ser una 3-tupla (distractor_id, value, error_rationale) con error_rationale >= 20 caracteres: {repr(d_item)}"
+                                )
+                            elif len(d_item) == 2:
+                                did = str(d_item[0]).strip().replace("_", "-")
+                                val = str(d_item[1]).strip()
+
+                        if did:
+                            dids_found.append(did)
+                            if cta_declared_ids and did not in cta_declared_ids:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did)
+                                return _fail(
+                                    f"FAIL: Distractor ID '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) no está declarado en cta.json para la competencia '{cid}'."
+                                )
+
+                        if strict:
+                            if len(rat.strip()) < 20:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
+                                return _fail(
+                                    f"FAIL: [TPL-MC7-RATIONALE] El distractor '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale de longitud {len(rat.strip())} (< 20 caracteres): '{rat}'."
+                                )
+                            # Dynamic rationale check [TPL-DYNAMIC-RATIONALE]
+                            if declared_vars:
+                                has_var_in_val = bool(re.search(r"@([a-zA-Z0-9_]+)@", val))
+                                is_param_dist = has_var_in_val or has_var_in_correct or has_var_in_stem
+                                if is_param_dist:
+                                    rat_tokens = set(re.findall(r"@([a-zA-Z0-9_]+)@", rat))
+                                    valid_rat_tokens = rat_tokens.intersection(declared_vars)
+                                    if not valid_rat_tokens:
+                                        line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
+                                        return _fail(
+                                            f"FAIL: [TPL-DYNAMIC-RATIONALE] El distractor '{did}' en la plantilla paramétrica '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene una explicación estática sin variables ('{rat}'). "
+                                            f"Debe incluir al menos un token @var@ declarado en vars ({', '.join(sorted(declared_vars))}) para explicar dinámicamente el desvío."
+                                        )
+                    target_misc = dids_found
+
+            # MS checks
+            if interaction_type == "multiple_select":
+                opts_list = sample_dict.get("options") or []
+                ms_dids = []
+                for opt in opts_list:
+                    if isinstance(opt, dict) and not opt.get("is_correct"):
+                        did = opt.get("distractor_id") or opt.get("id") or opt.get("did")
+                        rat = str(opt.get("error_rationale") or opt.get("rationale") or "")
+                        val = str(opt.get("value") if "value" in opt else (opt.get("content") or ""))
+                        if did:
+                            norm_did = str(did).replace("_", "-")
+                            ms_dids.append(norm_did)
+                            if cta_declared_ids and norm_did not in cta_declared_ids:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, str(did))
+                                return _fail(
+                                    f"FAIL: Distractor ID '{did}' en opción falsa de '{tpl_id}' (Línea {line_no} en {curr_p.name}) no está declarado en cta.json para la competencia '{cid}'."
+                                )
+                        if strict:
+                            if not did:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, val)
+                                return _fail(f"FAIL: [TPL-MS-DISTRACTOR-ID] Opción falsa en multiple_select ('{tpl_id}') (Línea {line_no} en {curr_p.name}) carece de distractor_id.")
+                            if len(rat.strip()) < 20:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
+                                return _fail(
+                                    f"FAIL: [TPL-MS-RATIONALE] La opción falsa '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale de longitud {len(rat.strip())} (< 20 caracteres): '{rat}'."
+                                )
+                            # Dynamic rationale check [TPL-DYNAMIC-RATIONALE]
+                            if declared_vars:
+                                has_var_in_val = bool(re.search(r"@([a-zA-Z0-9_]+)@", val))
+                                is_param_opt = has_var_in_val or has_var_in_correct or has_var_in_stem
+                                if is_param_opt:
+                                    rat_tokens = set(re.findall(r"@([a-zA-Z0-9_]+)@", rat))
+                                    valid_rat_tokens = rat_tokens.intersection(declared_vars)
+                                    if not valid_rat_tokens:
+                                        line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
+                                        return _fail(
+                                            f"FAIL: [TPL-DYNAMIC-RATIONALE] La opción falsa '{did}' en la plantilla paramétrica '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene una explicación estática sin variables ('{rat}'). "
+                                            f"Debe incluir al menos un token @var@ declarado en vars ({', '.join(sorted(declared_vars))})."
+                                        )
+                target_misc = list(dict.fromkeys(ms_dids))
 
         # Normalize non-variable double curly braces {{token}} -> {token} before R-20 validation
         stem_es = normalize_double_braces(stem_es, declared_vars)
@@ -1649,9 +1898,9 @@ def compile_shard(
         from_compile_shard=True,
     )
 
-    # Milestone 3 4-Archetype Enforcement Gate [M3-ARCHETYPES]
+    # Milestone 3 Tri-Band Multimodal Enforcement Gate [M3-ARCHETYPES]
     m3_errors: List[str] = []
-    if strict and eff_min_arch > 1:
+    if strict and eff_min_arch >= 3:
         target_cids = expected_cids if expected_cids else list(templates_by_cid.keys())
         shard_data_name = shard_data_path.name if shard_data_path else f"{norm_shard_id}_data.py"
 
@@ -1686,9 +1935,44 @@ def compile_shard(
 
             if len(tpls) < eff_min_arch:
                 m3_errors.append(
-                    f"{cid}.json ({source_name}): [M3-ARCHETYPES] La competencia '{cid}' define solo {len(tpls)} tupla(s) en TEMPLATES, pero Milestone 3 exige mínimo {eff_min_arch} arquetipos disjuntos por competencia (1. Directo, 2. Inverso, 3. Perturbación, 4. Frontera). Nota: poner múltiples stem_variants dentro de 1 sola tupla NO cuenta como 4 arquetipos; agrega las {eff_min_arch - len(tpls)} tuplas faltantes para '{cid}' en TEMPLATES usando un helper parametrizado def _gen_{cid.lower().replace('-', '_')}(rng, arch) + 4 wrappers gen_1..4."
+                    f"{cid}.json ({source_name}): [M3-ARCHETYPES] La competencia '{cid}' define solo {len(tpls)} plantilla(s) en TEMPLATES, "
+                    f"pero el contrato Tri-Banda exige mínimo {eff_min_arch} plantillas/arquetipos por competencia."
                 )
             else:
+                # Verificación Tri-Banda de dificultad
+                diffs = {t.get("difficulty") for t in tpls}
+                if not {"easy", "medium", "hard"}.issubset(diffs):
+                    missing_diffs = sorted(list({"easy", "medium", "hard"} - diffs))
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Cobertura incompleta de bandas de dificultad para '{cid}'. "
+                        f"Se requieren las 3 bandas {{'easy', 'medium', 'hard'}}, faltan: {missing_diffs}."
+                    )
+
+                # Verificación de diversidad de Bloom (>= 2 distintos)
+                blooms = {t.get("bloom") for t in tpls if t.get("bloom")}
+                if len(blooms) < 2:
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Diversidad cognitiva insuficiente para '{cid}'. "
+                        f"Se requieren al menos 2 niveles Bloom distintos por competencia (encontrados: {sorted(list(blooms))})."
+                    )
+
+                # Verificación de práctica activa (FIB o MS)
+                cta_c = cta_comp_map.get(cid, {})
+                c_type = str(cta_c.get("type", "")).lower()
+                is_skill = cid.startswith("Hab-") or c_type in ("skill", "habilidad")
+                req_active = 2 if is_skill else 1
+                active_tpls = [
+                    t for t in tpls
+                    if t.get("interaction_type") in ("fill_in_the_blank", "multiple_select")
+                    or t.get("question_type") in ("fib", "fill_in_the_blank", "ms", "multiple_select")
+                ]
+                if len(active_tpls) < req_active:
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Práctica activa insuficiente para '{cid}' "
+                        f"({'habilidad' if is_skill else 'concepto/misconception'}). Se requieren al menos {req_active} plantilla(s) "
+                        f"de tipo FIB o MS (encontradas: {len(active_tpls)})."
+                    )
+
                 # Verificación 1 — Enunciados (stem_es) distintos por arquetipo & detección de clones
                 distinct_stems = {t.get("stem_es", "").strip() for t in tpls if t.get("stem_es", "").strip()}
                 norm_gen_codes = {
@@ -1696,22 +1980,16 @@ def compile_shard(
                     for t in tpls
                 }
 
-                if len(distinct_stems) < min(eff_min_arch, 2) and len(norm_gen_codes) < min(eff_min_arch, 2):
+                if len(distinct_stems) < len(tpls):
                     m3_errors.append(
-                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Las {len(tpls)} tuplas de '{cid}' en TEMPLATES son clones idénticos (mismo stem y mismo generador). Cada uno de los {eff_min_arch} arquetipos debe tener su propio enunciado y wrapper/generador (ej. gen_1..4)."
-                    )
-                elif len(tpls) >= 2 and len(distinct_stems) < min(eff_min_arch, len(tpls)):
-                    m3_errors.append(
-                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}' repite el mismo enunciado (stem_es) entre sus tuplas ({len(distinct_stems)} enunciados únicos de {len(tpls)} tuplas). Cada arquetipo (1=Directo, 2=Inverso, 3=Perturbación, 4=Frontera) debe tener su propia lista de enunciados distinta."
+                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}' repite el mismo enunciado (stem_es) entre sus plantillas ({len(distinct_stems)} únicos de {len(tpls)} plantillas). Cada plantilla debe tener su propio enunciado distintivo."
                     )
                 elif len(norm_gen_codes) < min(eff_min_arch, 2):
                     m3_errors.append(
-                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Las {len(tpls)} tuplas de '{cid}' en TEMPLATES son clones idénticos (mismo stem y mismo generador). Cada uno de los {eff_min_arch} arquetipos debe tener su propio enunciado y wrapper/generador (ej. gen_1..4)."
+                        f"{cid}.json ({source_name}): [M3-ARCHETYPES] Las {len(tpls)} tuplas de '{cid}' en TEMPLATES son clones idénticos (mismo generador)."
                     )
 
                 # Verificación 2 — AST analysis de la fuente efectiva de esta competencia
-                # Si la competencia fue sobrescrita por shard_fixes/<CID>.py, se aísla el código modular
-                # evitando falsos positivos producidos por funciones obsoletas del shard base.
                 cid_sources: List[str] = []
                 if is_modular_fix:
                     try:
@@ -1779,10 +2057,8 @@ def compile_shard(
                             )
 
                 # Verificación 3 — Detección de Evasión Trivial y Clones Matemáticos Puros (seed=100 & seed=101)
-                # Cuando strict y eff_min_arch >= 4 y len(tpls) >= 4, evalúa que las tuplas produzcan
-                # al menos 2 salidas matemáticas distintas (correct, vars) para la misma semilla.
-                if eff_min_arch >= 4 and len(tpls) >= 4:
-                    def _eval_tuple_output(t_idx: int, seed_val: int) -> Optional[Tuple[str, str]]:
+                if eff_min_arch >= 3 and len(tpls) >= 3:
+                    def _eval_tuple_output(t_idx: int, seed_val: int) -> Optional[Tuple[str, str, str]]:
                         c_call = gen_callables[t_idx] if t_idx < len(gen_callables) else None
                         if callable(c_call):
                             try:
@@ -1803,11 +2079,19 @@ def compile_shard(
                                     c_v = str(res.get("correct", ""))
                                     v_d = res.get("vars", {})
                                     v_s = json.dumps(v_d, sort_keys=True, default=str) if isinstance(v_d, dict) else str(v_d)
-                                    return (c_v, v_s)
+                                    opts = res.get("options", [])
+                                    opts_s = ""
+                                    if isinstance(opts, list) and opts:
+                                        simplified_opts = [
+                                            (str(o.get("value") or o.get("content", "")), bool(o.get("is_correct")))
+                                            for o in opts if isinstance(o, dict)
+                                        ]
+                                        opts_s = json.dumps(sorted(simplified_opts), default=str)
+                                    return (c_v, v_s, opts_s)
                                 elif isinstance(res, (tuple, list)) and len(res) >= 1 and isinstance(res[0], dict):
                                     v_d = res[0]
                                     v_s = json.dumps(v_d, sort_keys=True, default=str)
-                                    return ("", v_s)
+                                    return ("", v_s, "")
                             except Exception:
                                 pass
 
@@ -1820,7 +2104,15 @@ def compile_shard(
                                     c_v = str(res.get("correct", ""))
                                     v_d = res.get("vars", {})
                                     v_s = json.dumps(v_d, sort_keys=True, default=str) if isinstance(v_d, dict) else str(v_d)
-                                    return (c_v, v_s)
+                                    opts = res.get("options", [])
+                                    opts_s = ""
+                                    if isinstance(opts, list) and opts:
+                                        simplified_opts = [
+                                            (str(o.get("value") or o.get("content", "")), bool(o.get("is_correct")))
+                                            for o in opts if isinstance(o, dict)
+                                        ]
+                                        opts_s = json.dumps(sorted(simplified_opts), default=str)
+                                    return (c_v, v_s, opts_s)
                             except Exception:
                                 pass
                         return None
@@ -1832,8 +2124,153 @@ def compile_shard(
                         valid_101 = [o for o in outs_101 if o is not None]
                         if len(valid_101) == len(tpls) and len(set(valid_101)) < 2:
                             m3_errors.append(
-                                f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}': las {len(tpls)} tuplas generan salidas matemáticas idénticas (mismo 'correct' y 'vars' en la misma semilla). Los {eff_min_arch} arquetipos deben producir al menos 2 variantes matemáticas distintas (1=Directo, 2=Inverso, 3=Perturbación, 4=Frontera); ramifica con 'if arch == 1 / elif arch == 2 ...' para variar el cálculo numérico o analítico."
+                                f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}': las {len(tpls)} tuplas generan salidas matemáticas idénticas (mismo 'correct', 'vars' y 'options' en la misma semilla). Las plantillas deben producir al menos 2 variantes matemáticas distintas."
                             )
+
+                # Verificación 4 — Detección de Distractores por Multiplicador Arbitrario [DIAG-MAGIC-MULT]
+                _magic_mults = (1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, 2.1, 0.45, 1.85, 0.15)
+                _distinctive_magic = {1.333, 0.667, 1.667, 0.333, 2.1, 0.45, 1.85, 0.15}
+                _num_re = re.compile(r"-?\d+\.\d+|-?\d+")
+                try:
+                    import zlib
+                    from engine.assemble import format_template_string
+                    _seed_base = 42 + (zlib.crc32(cid.encode("utf-8")) % 10000)
+                except Exception:
+                    _seed_base = 10000
+                    format_template_string = None
+
+                for t_idx_m, tpl_m in enumerate(tpls):
+                    if tpl_m.get("interaction_type") != "multiple_choice_7_options":
+                        continue
+                    c_call_m = gen_callables[t_idx_m] if t_idx_m < len(gen_callables) else None
+                    if not callable(c_call_m):
+                        continue
+                    gen_c_m = str(tpl_m.get("generator_code") or tpl_m.get("generate_py") or "")
+                    has_mult_ast = bool(
+                        re.search(r"\bans\s*[\*/]|[\*/]\s*ans\b", gen_c_m)
+                        or re.search(r"\b(?:1\.333|0\.667|1\.667|0\.333|2\.1|0\.45|1\.85|0\.15)\b", gen_c_m)
+                    )
+                    if not has_mult_ast:
+                        continue
+                    tpl_id_m = tpl_m.get("id") or tpl_m.get("template_id") or f"T-{cid}-{t_idx_m+1:02d}"
+                    gen_fn_m = tpl_m.get("gen_fn_name") or getattr(c_call_m, "__name__", "gen_fn")
+                    tpl_seed_off = _seed_base + (t_idx_m * 500)
+                    eval_seeds = [tpl_seed_off + s_i for s_i in range(20)]
+                    hit_seeds: List[int] = []
+                    hit_mults_sample: List[float] = []
+                    for s_val in eval_seeds:
+                        try:
+                            import random
+                            rng_m = random.Random(s_val)
+                            res_m = c_call_m(rng_m)
+                            if not isinstance(res_m, dict):
+                                continue
+                            vars_m = res_m.get("vars", {}) if isinstance(res_m.get("vars"), dict) else {}
+                            corr_raw = str(res_m.get("correct", ""))
+                            corr_txt = format_template_string(corr_raw, vars_m) if format_template_string else corr_raw
+                            dists_raw = res_m.get("distractors", [])
+                            if not isinstance(dists_raw, list) or len(dists_raw) < 4:
+                                continue
+                            c_nums = _num_re.findall(corr_txt)
+                            if not c_nums:
+                                continue
+                            c_val = float(c_nums[-1])
+                            if abs(c_val) <= 1e-6 or abs(c_val) in (1.0, 2.0, 4.0):
+                                continue
+                            matched_m: List[float] = []
+                            for d_item in dists_raw:
+                                if isinstance(d_item, (tuple, list)) and len(d_item) >= 2:
+                                    d_raw = str(d_item[1])
+                                elif isinstance(d_item, dict):
+                                    d_raw = str(d_item.get("value") or d_item.get("content") or "")
+                                else:
+                                    continue
+                                d_txt = format_template_string(d_raw, vars_m) if format_template_string else d_raw
+                                d_nums = _num_re.findall(d_txt)
+                                if not d_nums:
+                                    continue
+                                d_val = float(d_nums[-1])
+                                for m_factor in _magic_mults:
+                                    if abs(d_val - round(c_val * m_factor, 3)) <= 0.0015:
+                                        matched_m.append(m_factor)
+                                        break
+                            dist_hits = [m_f for m_f in matched_m if m_f in _distinctive_magic]
+                            if len(dist_hits) >= 2 or len(matched_m) >= 4:
+                                hit_seeds.append(s_val)
+                                if not hit_mults_sample:
+                                    hit_mults_sample = dist_hits[:3] or matched_m[:3]
+                        except Exception:
+                            pass
+                    if hit_seeds:
+                        eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
+                        loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
+                        t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
+                        s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "diagnostic_rationale_alignment_linter", "multiplicador") if loc_obj else (1, 1, [])
+                        m3_errors.append(
+                            f"{cid}.json ({source_name}): [DIAG-MAGIC-MULT] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}), "
+                            f"los distractores numéricos en {len(hit_seeds)} semillas (ej. seed={hit_seeds[0]}) coinciden con multiplicadores arbitrarios prohibidos ({hit_mults_sample}) respecto a la respuesta correcta. "
+                            f"Reemplaza los multiplicadores sintéticos sobre 'ans' por las fórmulas algebraicas reales de cada error_rationale y evita razones d/ans en {{0.333, 0.5, 0.667, 0.75, 1.25, 1.333, 1.5, 1.667}}."
+                        )
+
+                # Verificación 5 — Compuerta de Diversidad de Enunciados [STEM-DIVERSITY-GATE] (Paridad con run.py --stage build)
+                if len(tpls) >= 3 and seeds >= 30:
+                    try:
+                        from engine.diversity import mask_stem_numbers as _mask_stem_nums
+                    except Exception:
+                        def _mask_stem_nums(st: str) -> str:
+                            return re.sub(r"\b\d+(?:\.\d+)?\b", "[NUM]", re.sub(r"\s+", " ", st.strip()))
+
+                    is_true_skill = cid.startswith("Hab-") or (not cid.startswith(("C-", "H-")) and is_skill)
+                    quota_build = 30 if is_true_skill else 20
+                    req_unique_stems = 15 if quota_build == 30 else 10
+                    all_masked_stems: Set[str] = set()
+                    stem_line_ranges: List[str] = []
+                    eff_loc_s = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
+                    loc_obj_s = ShardDataLineLocator(eff_loc_s) if eff_loc_s and eff_loc_s.is_file() else locator
+
+                    for t_idx_s, tpl_s in enumerate(tpls):
+                        tpl_id_s = tpl_s.get("id") or tpl_s.get("template_id") or f"T-{cid}-{t_idx_s+1:02d}"
+                        sv_list = tpl_s.get("stem_variants") or ([tpl_s.get("stem_es")] if tpl_s.get("stem_es") else [])
+                        c_call_s = gen_callables[t_idx_s] if t_idx_s < len(gen_callables) else None
+                        sample_vars_list: List[Dict[str, Any]] = []
+                        if callable(c_call_s):
+                            for s_try in (100, 101, 102):
+                                try:
+                                    import random
+                                    r_try = c_call_s(random.Random(s_try))
+                                    if isinstance(r_try, dict) and isinstance(r_try.get("vars"), dict):
+                                        sample_vars_list.append(r_try["vars"])
+                                except Exception:
+                                    pass
+                        for sv_raw in sv_list:
+                            sv_str = str(sv_raw).strip()
+                            if not sv_str:
+                                continue
+                            if sample_vars_list and format_template_string:
+                                for sv_vars in sample_vars_list:
+                                    rendered_sv = format_template_string(sv_str, sv_vars)
+                                    all_masked_stems.add(_mask_stem_nums(rendered_sv))
+                            else:
+                                dummy_sv = re.sub(r"@[a-zA-Z0-9_]+(?::[^@]+)?@", "100", sv_str)
+                                all_masked_stems.add(_mask_stem_nums(dummy_sv))
+
+                        if loc_obj_s:
+                            t_info_s = loc_obj_s.find_tuple_for_question(cid, template_id=tpl_id_s)
+                            s_ln, e_ln, _ = loc_obj_s.find_offending_lines(t_info_s, "anti_gaming_psychometric_linter", "stem")
+                            rng_lbl = f"L{s_ln}..L{e_ln}" if s_ln != e_ln else f"L{s_ln}"
+                            if rng_lbl not in stem_line_ranges:
+                                stem_line_ranges.append(rng_lbl)
+
+                    if len(all_masked_stems) < req_unique_stems:
+                        cat_label = "skills" if is_true_skill else "concepts/facts"
+                        req_per_tpl = "6-7" if is_true_skill else "4-5"
+                        tot_rec = "18-21" if is_true_skill else "12-15"
+                        lines_ctx = f" [{', '.join(stem_line_ranges)} en {source_name}]" if stem_line_ranges else ""
+                        m3_errors.append(
+                            f"{cid}.json ({source_name}): [STEM-DIVERSITY-GATE] Diagnostic: Stem diversity gate failed for competency '{cid}' "
+                            f"(only {len(all_masked_stems)} stems, required >= {req_unique_stems} unique, quota {quota_build} for {cat_label}){lines_ctx}. "
+                            f"Provide >= {req_per_tpl} distinct syntactic stems per template (totaling >= {tot_rec})."
+                        )
 
     if m3_errors:
         is_clean = False
@@ -1967,7 +2404,7 @@ def main():
     parser.add_argument("--strict", action="store_true", default=True, help="Enforce strict validation (default: True)")
     parser.add_argument("--no-strict", dest="strict", action="store_false", help="Bypass strict validation")
     parser.add_argument("--seeds", type=int, default=50, help="Number of dry-run seeds (default: 50)")
-    parser.add_argument("--min-archetypes", dest="min_archetypes", type=int, default=None, help="Minimum disjoint archetypes (tuples) required per competency in TEMPLATES (e.g. 4 for Milestone 3)")
+    parser.add_argument("--min-archetypes", dest="min_archetypes", type=int, default=None, help="Minimum disjoint archetypes (tuples) required per competency in TEMPLATES (default: 3)")
     args = parser.parse_args()
 
     work_or_path = args.input_path or args.shard_data_path or args.work

@@ -35,6 +35,7 @@ if str(_src_root) not in sys.path:
 
 from check_templates import check_templates_file_or_dir
 from compile_shard import compile_shard
+from cta_merge import apply_harmonize, merge_cta_parts
 from engine.instantiate import allocate_template_quotas, instantiate_competency
 from plan_shards import (
     DEFAULT_COMPS_PER_SHARD,
@@ -204,12 +205,12 @@ def gen_c01_direct(rng):
     inv = round(s * y, 2)
     d_ids = ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"]
     rats = [
-        "Sobreestimación de propensión marginal al ahorro",
-        "Subestimación de propensión marginal al ahorro",
-        "Atribución de factor de escala tecnológico espurio",
-        "Deducción contractiva no justificada",
-        "Confusión entre ahorro voluntario y ahorro forzoso",
-        "Omisión de depreciación en la inversión bruta",
+        "Sobreestimación de propensión marginal al ahorro con tasa @s@ y producto @y@",
+        "Subestimación de propensión marginal al ahorro con tasa @s@ y producto @y@",
+        "Atribución de factor de escala espurio sobre el producto @y@",
+        "Deducción contractiva no justificada para la inversión @inv@",
+        "Confusión entre ahorro voluntario y forzoso con tasa @s@",
+        "Omisión de depreciación en la inversión bruta per cápita @inv@",
     ]
     distractors = [
         {"value": rf"${round(inv + (i + 1) * 3.5, 2)}$", "distractor_id": did, "error_rationale": rat}
@@ -229,18 +230,18 @@ def gen_c01_inverse(rng):
     inv = round(s * y, 2)
     d_ids = ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"]
     rats = [
-        "Desvío positivo en el despeje algebraico del ahorro",
-        "Desvío negativo en el cálculo del coeficiente",
-        "Multiplicación de inversión por producto",
-        "Inversión del cociente analítico de solvencia",
-        "Suma directa de constante no normalizada",
-        "Resta arbitraria en el cálculo del ratio",
+        "Desvío superior en el cálculo de la tasa requerida @s@ para producto @y@",
+        "Desvío inferior por aproximación truncada en tasa @s@ y producto @y@",
+        "Uso erróneo de la inversión bruta @inv@ en el numerador",
+        "Cociente invertido entre inversión @inv@ y producto @y@",
+        "Sesgo aditivo constante en la tasa de ahorro @s@",
+        "Sesgo sustractivo constante en la tasa de ahorro @s@",
     ]
     distractors = [
         {"value": rf"$s = {round(s + (i + 1) * 0.05, 2)}$", "distractor_id": did, "error_rationale": rat}
         for i, (did, rat) in enumerate(zip(d_ids, rats))
     ]
-    return {"vars": {"inv": inv, "y": y, "s": s}, "correct": rf"$s = {s}$", "distractors": distractors}
+    return {"vars": {"inv": inv, "y": y, "s": s}, "correct": str(s), "distractors": distractors}
 
 def ver_c01_inverse(res):
     v = res["vars"]
@@ -248,144 +249,192 @@ def ver_c01_inverse(res):
 
 # Archetype 3: Comparative Statics / Perturbation
 def gen_c01_perturbation(rng):
-    s1 = rng.choice([0.18, 0.22, 0.26, 0.30, 0.34, 0.38, 0.42])
-    delta_s = rng.choice([0.04, 0.06, 0.08, 0.10, 0.12])
+    s1 = round(rng.uniform(0.15, 0.35), 2)
+    delta_s = round(rng.uniform(0.02, 0.15), 2)
     s2 = round(s1 + delta_s, 2)
-    shift_dir = "hacia arriba" if delta_s > 0 else "hacia abajo"
+    shift_dir = "hacia arriba"
     distractors = [
-        {"value": "La curva de inversión rota en sentido horario convergiendo a cero", "distractor_id": "D-C01-01", "error_rationale": "Confusión entre desplazamiento y rotación"},
-        {"value": "La recta de depreciación incrementa su pendiente de forma automática", "distractor_id": "D-C01-02", "error_rationale": "Atribución errónea del efecto a la depreciación"},
-        {"value": "La tasa de ahorro marginal colapsa produciendo rendimientos decrecientes", "distractor_id": "D-C01-03", "error_rationale": "Confusión entre ahorro y productividad marginal"},
-        {"value": "El nivel de producto per cápita permanece estrictamente inmutable", "distractor_id": "D-C01-04", "error_rationale": "Falsa neutralidad del parámetro de ahorro"},
-        {"value": "La acumulación neta de capital se anula instantáneamente en el plano", "distractor_id": "D-C01-05", "error_rationale": "Confusión entre régimen transitorio y estado estacionario"},
-        {"value": "El consumo por trabajador iguala a la inversión bruta en todo momento", "distractor_id": "D-C01-06", "error_rationale": "Supuesto arbitrario de igualdad ahorro-consumo"},
+        {"value": rf"La curva de inversión rota en sentido horario con nueva tasa s = {round(s2 + 0.05, 2)}", "distractor_id": "D-C01-01", "error_rationale": "Confusión entre desplazamiento y rotación para tasa @s1@"},
+        {"value": rf"La recta de reposición incrementa su pendiente automáticamente para s = {round(s2 + 0.10, 2)}", "distractor_id": "D-C01-02", "error_rationale": "Atribución errónea del efecto a la reposición con @delta_s@"},
+        {"value": rf"La tasa de ahorro marginal colapsa produciendo rendimientos con s = {round(s2 + 0.15, 2)}", "distractor_id": "D-C01-03", "error_rationale": "Confusión entre ahorro @s2@ y productividad marginal"},
+        {"value": rf"El nivel de producto per cápita permanece estrictamente inmutable con s = {round(s2 + 0.20, 2)}", "distractor_id": "D-C01-04", "error_rationale": "Falsa neutralidad del parámetro de ahorro @s1@ a @s2@"},
+        {"value": rf"La acumulación neta de capital se anula instantáneamente para s = {round(s2 + 0.25, 2)}", "distractor_id": "D-C01-05", "error_rationale": "Confusión entre régimen transitorio y estado estacionario con @s2@"},
+        {"value": rf"El consumo por trabajador iguala a la inversión bruta en todo momento con s = {round(s2 + 0.30, 2)}", "distractor_id": "D-C01-06", "error_rationale": "Supuesto arbitrario de igualdad ahorro-consumo para @delta_s@"},
     ]
-    correct_str = rf"La curva de inversión se desplaza {shift_dir} en el diagrama fundamental de Solow"
+    correct_str = rf"La curva de inversión se desplaza {shift_dir} con nueva tasa de ahorro s = {s2}"
     return {"vars": {"s1": s1, "s2": s2, "delta_s": delta_s}, "correct": correct_str, "distractors": distractors}
 
 def ver_c01_perturbation(res):
-    return "diagrama fundamental" in res["correct"]
+    return res.get("vars", {}).get("s2") is not None and "curva de inversión" in res.get("correct", "")
 
 # Archetype 4: Boundary Testing / Axiomatic Violations
 def gen_c01_boundary(rng):
-    s_lim = rng.choice([0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.992, 0.994])
-    if s_lim < 0.5:
-        cond = "mínimo"
-        correct_str = "La inversión bruta per cápita converge a cero asintóticamente al anularse el ahorro"
-    else:
-        cond = "máximo"
-        correct_str = "El consumo agregado por trabajador converge a cero asintóticamente en dicho límite"
+    s_lim = round(rng.uniform(0.001, 0.050), 4)
+    cond = "mínimo"
+    correct_str = rf"La inversión bruta converge asintóticamente al anularse el ahorro con tasa s = {s_lim}"
 
     distractors = [
-        {"value": "La economía alcanza el óptimo dinámico de la regla de oro de Phelps en equilibrio", "distractor_id": "D-C01-01", "error_rationale": "Confusión con el óptimo de consumo intertemporal"},
-        {"value": "La función de producción global pierde los rendimientos constantes a escala agregados", "distractor_id": "D-C01-02", "error_rationale": "Atribución de cambios tecnológicos a parámetros de ahorro"},
-        {"value": "El capital per cápita diverge exponencialmente sin cota analítica alguna en el tiempo", "distractor_id": "D-C01-03", "error_rationale": "Falsa analogía con modelos de crecimiento endógeno"},
-        {"value": "La tasa efectiva de depreciación del capital colapsa a valores negativos no admisibles", "distractor_id": "D-C01-04", "error_rationale": "Violación axiomática de no-negatividad en parámetros físicos"},
-        {"value": "El estado estacionario se convierte en una órbita periódica cerrada y estable en Solow", "distractor_id": "D-C01-05", "error_rationale": "Atribución espuria de ciclos límite en sistemas unidimensionales"},
-        {"value": "La elasticidad del producto respecto al capital se vuelve discontinua en la frontera", "distractor_id": "D-C01-06", "error_rationale": "Atribución espuria de singularidad en la función de producción"},
+        {"value": rf"La economía alcanza el óptimo dinámico de la regla de oro para tasa {round(s_lim + 0.01, 4)}", "distractor_id": "D-C01-01", "error_rationale": "Confusión con el óptimo intertemporal en régimen para tasa @s_lim@"},
+        {"value": rf"La función de producción global pierde los rendimientos constantes para {round(s_lim + 0.02, 4)}", "distractor_id": "D-C01-02", "error_rationale": "Atribución de cambios tecnológicos a parámetro @s_lim@"},
+        {"value": rf"El capital per cápita diverge exponencialmente sin cota para la tasa {round(s_lim + 0.03, 4)}", "distractor_id": "D-C01-03", "error_rationale": "Falsa analogía con modelos endógenos en límite @s_lim@"},
+        {"value": rf"La tasa efectiva de depreciación del capital colapsa a valores negativos para {round(s_lim + 0.04, 4)}", "distractor_id": "D-C01-04", "error_rationale": "Violación axiomática de no-negatividad bajo régimen con @s_lim@"},
+        {"value": rf"El estado estacionario se convierte en una órbita periódica cerrada para {round(s_lim + 0.05, 4)}", "distractor_id": "D-C01-05", "error_rationale": "Atribución espuria de ciclos límite para tasa @s_lim@"},
+        {"value": rf"La elasticidad del producto respecto al capital se vuelve discontinua en {round(s_lim + 0.06, 4)}", "distractor_id": "D-C01-06", "error_rationale": "Atribución espuria de singularidad en régimen con @s_lim@"},
     ]
     return {"vars": {"s_lim": s_lim, "cond": cond}, "correct": correct_str, "distractors": distractors}
 
 def ver_c01_boundary(res):
-    return "asintóticamente" in res["correct"]
+    return res.get("vars", {}).get("s_lim") is not None and "asintóticamente" in res.get("correct", "")
 
 
 # --- Competency C-02 (Skill) Archetypes ---
 def gen_c02_direct(rng):
-    s = rng.choice([0.16, 0.20, 0.24, 0.28, 0.32, 0.36, 0.40, 0.44])
-    denom = rng.choice([0.05, 0.06, 0.07, 0.08, 0.09, 0.10])
+    s = round(rng.uniform(0.15, 0.45), 2)
+    denom = round(rng.uniform(0.04, 0.10), 3)
     ratio = s / denom
     k_star = round(ratio ** 2, 2)
     d_ids = ["D-C02-01", "D-C02-02", "D-C02-03", "D-C02-04", "D-C02-05", "D-C02-06"]
     rats = [
-        "Sobreestimación por omisión del exponente cuadrático",
-        "Subestimación por truncamiento de decimales",
-        "Inversión de los términos en el cociente de reposición",
-        "Atribución de factor de depreciación duplicado",
-        "Sesgo aditivo espurio en la ecuación de equilibrio",
-        "Sesgo sustractivo espurio en el despeje analítico",
+        "Sobreestimación por omisión del exponente cuadrático en capital @k_star@",
+        "Subestimación por truncamiento de decimales para tasa @s@",
+        "Inversión de los términos en el cociente de reposición @denom@",
+        "Atribución de factor de depreciación duplicado en factor @denom@",
+        "Sesgo aditivo espurio en la ecuación de equilibrio para @k_star@",
+        "Sesgo sustractivo espurio en el despeje analítico con tasa @s@",
     ]
     distractors = [
         {"value": rf"$k^* = {round(k_star + (i + 1) * 4.5, 2)}$", "distractor_id": did, "error_rationale": rat}
         for i, (did, rat) in enumerate(zip(d_ids, rats))
     ]
-    return {"vars": {"s": s, "denom": denom, "k_star": k_star}, "correct": rf"$k^* = {k_star}$", "distractors": distractors}
+    return {"vars": {"s": s, "denom": denom, "k_star": k_star}, "correct": str(k_star), "distractors": distractors}
 
 def ver_c02_direct(res):
     v = res["vars"]
     return abs(round((v["s"] / v["denom"]) ** 2, 2) - v["k_star"]) < 1e-4
 
 def gen_c02_inverse(rng):
-    k_root = rng.randint(4, 15)
+    k_root = rng.randint(4, 25)
     k_star = round(float(k_root ** 2), 2)
-    denom = rng.choice([0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10])
+    denom = round(rng.uniform(0.04, 0.10), 3)
     s = round(k_root * denom, 3)
     d_ids = ["D-C02-01", "D-C02-02", "D-C02-03", "D-C02-04", "D-C02-05", "D-C02-06"]
     rats = [
-        "Desvío superior en el cálculo de la tasa requerida",
-        "Desvío inferior por aproximación truncada",
-        "Uso de k en lugar de la raíz cuadrada de k",
-        "Cociente invertido entre depreciación y capital",
-        "Sesgo aditivo constante en la tasa de ahorro",
-        "Sesgo sustractivo constante en la tasa de ahorro",
+        "Desvío superior en el cálculo de la tasa requerida @s@",
+        "Desvío inferior por aproximación truncada en tasa @s@",
+        "Uso de k en lugar de la raíz cuadrada de capital @k_star@",
+        "Cociente invertido entre tasa @denom@ y capital @k_star@",
+        "Sesgo aditivo constante en la tasa de ahorro @s@",
+        "Sesgo sustractivo constante en la tasa de ahorro @s@",
     ]
     distractors = [
         {"value": rf"$s = {round(s + (i + 1) * 0.04, 3)}$", "distractor_id": did, "error_rationale": rat}
         for i, (did, rat) in enumerate(zip(d_ids, rats))
     ]
-    return {"vars": {"k_star": k_star, "denom": denom, "s": s}, "correct": rf"$s = {s}$", "distractors": distractors}
+    return {"vars": {"k_star": k_star, "denom": denom, "s": s}, "correct": str(s), "distractors": distractors}
 
 def ver_c02_inverse(res):
     v = res["vars"]
     return abs(round(math.sqrt(v["k_star"]) * v["denom"], 3) - v["s"]) < 1e-4
 
 def gen_c02_perturbation(rng):
-    n_old = rng.choice([0.01, 0.02, 0.03])
-    delta_n = rng.choice([0.01, 0.02, 0.03, 0.04, 0.05, 0.06])
+    n_old = round(rng.uniform(0.01, 0.03), 3)
+    delta_n = round(rng.uniform(0.01, 0.05), 3)
     n_new = round(n_old + delta_n, 3)
     distractors = [
-        {"value": "El capital estacionario se incrementa debido al mayor tamaño de la fuerza laboral agregada", "distractor_id": "D-C02-01", "error_rationale": "Confusión entre dilución de capital y producto absoluto"},
-        {"value": "El capital estacionario permanece inalterado por neutralidad demográfica de largo plazo", "distractor_id": "D-C02-02", "error_rationale": "Falsa neutralidad demográfica en el modelo neoclásico"},
-        {"value": "El sistema diverge hacia una trayectoria caótica no convergente de acumulación", "distractor_id": "D-C02-03", "error_rationale": "Atribución espuria de dinámica caótica en ecuaciones cóncavas"},
-        {"value": "La tasa de ahorro se ajusta endógenamente para compensar la dilución de trabajadores", "distractor_id": "D-C02-04", "error_rationale": "Atribución errónea de endogeneidad en parámetros de conducta"},
-        {"value": "La productividad marginal del capital disminuye discontinuamente a un valor nulo", "distractor_id": "D-C02-05", "error_rationale": "Violación axiomática de continuidad en la función de producción"},
-        {"value": "El consumo per cápita converge instantáneamente a la regla de oro modificada", "distractor_id": "D-C02-06", "error_rationale": "Confusión de régimen transitorio con optimización de Ramsey"},
+        {"value": rf"El capital estacionario se incrementa debido al mayor tamaño laboral con tasa {round(n_new + 0.01, 3)}", "distractor_id": "D-C02-01", "error_rationale": "Confusión entre dilución de capital y producto absoluto con @delta_n@"},
+        {"value": rf"El capital estacionario permanece inalterado por neutralidad demográfica ante {round(n_new + 0.02, 3)}", "distractor_id": "D-C02-02", "error_rationale": "Falsa neutralidad demográfica ante cambio de @n_old@ a @n_new@"},
+        {"value": rf"El sistema diverge hacia una trayectoria caótica no convergente con tasa {round(n_new + 0.03, 3)}", "distractor_id": "D-C02-03", "error_rationale": "Atribución espuria de dinámica caótica ante variación @delta_n@"},
+        {"value": rf"La tasa de ahorro se ajusta endógenamente para compensar la dilución con {round(n_new + 0.04, 3)}", "distractor_id": "D-C02-04", "error_rationale": "Atribución errónea de endogeneidad ante tasa @n_new@"},
+        {"value": rf"La productividad marginal del capital disminuye discontinuamente para la tasa {round(n_new + 0.05, 3)}", "distractor_id": "D-C02-05", "error_rationale": "Violación axiomática de continuidad para tasa @n_old@"},
+        {"value": rf"El consumo per cápita converge instantáneamente a la regla modificada con {round(n_new + 0.06, 3)}", "distractor_id": "D-C02-06", "error_rationale": "Confusión de régimen transitorio con optimización para @delta_n@"},
     ]
-    correct_str = rf"El capital estacionario $k^*$ disminuye al incrementarse la pendiente de reposición efectiva"
+    correct_str = rf"El capital estacionario $k^*$ disminuye al incrementarse la reposición con tasa n = {n_new}"
     return {"vars": {"n_old": n_old, "n_new": n_new, "delta_n": delta_n}, "correct": correct_str, "distractors": distractors}
 
 def ver_c02_perturbation(res):
-    return "disminuye al incrementarse la pendiente" in res["correct"]
+    return res.get("vars", {}).get("n_new") is not None and "El capital estacionario" in res.get("correct", "")
 
 def gen_c02_boundary(rng):
-    sample_rate = rng.choice([0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008])
-    correct_str = r"Cuando $(n + g + \delta) \to 0^+$, la tasa de reposición se anula y el capital $k^*$ tiende a infinito"
+    sample_rate = round(rng.uniform(0.001, 0.050), 4)
+    correct_str = rf"Para tasa límite {sample_rate}, el capital $k^*$ tiende a infinito al anularse la reposición"
     distractors = [
-        {"value": "El capital estacionario colapsa asintóticamente a cero por falta de renovación tecnológica", "distractor_id": "D-C02-01", "error_rationale": "Inversión del comportamiento límite en el cociente"},
-        {"value": "La economía deja de producir bienes y el consumo por trabajador se extingue", "distractor_id": "D-C02-02", "error_rationale": "Confusión entre dinámica de capital y nivel de producto"},
-        {"value": "La función de producción global pierde su propiedad de homogeneidad de grado uno", "distractor_id": "D-C02-03", "error_rationale": "Atribución errónea de cambio tecnológico a tasas demográficas"},
-        {"value": "El estado estacionario resultante es dinámicamente inestable y genera oscilaciones", "distractor_id": "D-C02-04", "error_rationale": "Atribución errónea de inestabilidad en modelo de Solow"},
-        {"value": "La tasa de ahorro voluntario se transforma en una variable residual compensatoria", "distractor_id": "D-C02-05", "error_rationale": "Violación de supuestos de comportamiento exógeno"},
-        {"value": "El producto marginal del capital se fija de manera inelástica en la unidad global", "distractor_id": "D-C02-06", "error_rationale": "Atribución de valor arbitrario a la derivada de producción"},
+        {"value": rf"El capital estacionario colapsa asintóticamente a cero para tasa {round(sample_rate + 0.005, 4)}", "distractor_id": "D-C02-01", "error_rationale": "Inversión del comportamiento límite en cociente con tasa @sample_rate@"},
+        {"value": rf"La economía deja de producir bienes y el consumo se extingue con tasa {round(sample_rate + 0.010, 4)}", "distractor_id": "D-C02-02", "error_rationale": "Confusión entre dinámica de capital y nivel de producto con @sample_rate@"},
+        {"value": rf"La función de producción global pierde su homogeneidad con tasa {round(sample_rate + 0.015, 4)}", "distractor_id": "D-C02-03", "error_rationale": "Atribución errónea de cambio tecnológico para parámetro @sample_rate@"},
+        {"value": rf"El estado estacionario resultante genera oscilaciones para la tasa {round(sample_rate + 0.020, 4)}", "distractor_id": "D-C02-04", "error_rationale": "Atribución errónea de inestabilidad ante valor @sample_rate@"},
+        {"value": rf"La tasa de ahorro voluntario se transforma en variable residual con {round(sample_rate + 0.025, 4)}", "distractor_id": "D-C02-05", "error_rationale": "Violación de supuestos exógenos para tasa de reposición @sample_rate@"},
+        {"value": rf"El producto marginal del capital se fija de manera inelástica para {round(sample_rate + 0.030, 4)}", "distractor_id": "D-C02-06", "error_rationale": "Atribución de valor arbitrario a magnitud marginal con tasa @sample_rate@"},
     ]
     return {"vars": {"sample_rate": sample_rate}, "correct": correct_str, "distractors": distractors}
 
 def ver_c02_boundary(res):
-    return "tiende a infinito" in res["correct"]
+    return res.get("vars", {}).get("sample_rate") is not None and "tiende a infinito" in res.get("correct", "")
 
+stems_c01_1 = [
+    r"Considere una tasa de ahorro $s = {s}$ y un producto $y = {y}$. Calcule la inversión bruta per cápita:",
+    r"Determine la inversión bruta per cápita asociada a una tasa de ahorro $s = {s}$ y un producto $y = {y}$:",
+    r"Evalúe el flujo de inversión bruta por trabajador dados $s = {s}$ e ingreso $y = {y}$:",
+]
+stems_c01_2 = [
+    r"Si la inversión es $i = {inv}$ y el producto es $y = {y}$, determine la tasa de ahorro implícita $s$:",
+    r"A partir de una inversión $i = {inv}$ y un nivel de producto $y = {y}$, halle la tasa $s$ requerida:",
+    r"Calcule la propensión marginal al ahorro $s$ cuando la inversión per cápita es $i = {inv}$ y el producto es $y = {y}$:",
+]
+stems_c01_3 = [
+    r"Analice el impacto cualitativo de un aumento en la tasa de ahorro de $s_1 = {s1}$ a $s_2 = {s2}$ sobre la curva de inversión:",
+    r"Examine la traslación de la función de ahorro e inversión ante una variación de $s_1 = {s1}$ a $s_2 = {s2}$:",
+    r"Determine la respuesta gráfica del flujo de inversión cuando la tasa de ahorro cambia de $s_1 = {s1}$ a $s_2 = {s2}$:",
+]
+stems_c01_4 = [
+    r"Examine las implicaciones teóricas en el caso límite de régimen de ahorro {cond} con $s = {s_lim}$:",
+    r"Analice el comportamiento asintótico del sistema económico en la frontera {cond} fijando $s = {s_lim}$:",
+    r"Evalúe la dinámica de acumulación en el escenario extremo {cond} bajo el valor de parámetro $s = {s_lim}$:",
+]
+
+stems_c02_1 = [
+    r"Bajo una tasa de ahorro $s = {s}$ y depreciación combinada $(n + g + \delta) = {denom}$, halle $k^*$:",
+    r"Calcule el capital de estado estacionario $k^*$ dado el parámetro $s = {s}$ y el factor $(n + g + \delta) = {denom}$:",
+    r"Determine el nivel estacionario $k^*$ resolviendo el balance con $s = {s}$ y tasa de reposición ${denom}$:",
+]
+stems_c02_2 = [
+    r"Si se desea sostener un capital de estado estacionario $k^* = {k_star}$ con $(n+g+\delta) = {denom}$, determine la tasa de ahorro $s$:",
+    r"Halle la tasa de ahorro requerida $s$ para alcanzar el nivel de capital $k^* = {k_star}$ con factor $(n+g+\delta) = {denom}$:",
+    r"Calcule el valor de la propensión al ahorro $s$ necesario para preservar el equilibrio $k^* = {k_star}$ con tasa ${denom}$:",
+]
+stems_c02_3 = [
+    r"Considere un incremento en la tasa de crecimiento poblacional de $n = {n_old}$ a $n = {n_new}$. ¿Cómo responde el capital $k^*$?",
+    r"Analice el efecto sobre el capital de equilibrio $k^*$ ante un shock demográfico de $n = {n_old}$ a $n = {n_new}$:",
+    r"Examine la sensibilidad del estado estacionario $k^*$ cuando la tasa demográfica varía de $n = {n_old}$ a $n = {n_new}$:",
+]
+stems_c02_4 = [
+    r"Considere el caso límite donde la tasa combinada toma el valor ${sample_rate}$. Analice la trayectoria asintótica de $k^*$:",
+    r"Examine el comportamiento de frontera con tasa combinada de reposición ${sample_rate}$ para el capital $k^*$:",
+    r"Determine la trayectoria asintótica del capital $k^*$ evaluando la tasa combinada ${sample_rate}$:",
+]
+
+hints_c01 = [
+    "Identifique la tasa de ahorro y el producto per cápita.",
+    "Aplique la relación fundamental de inversión bruta.",
+    "Verifique la escala del valor numérico obtenido.",
+]
+hints_c02 = [
+    "Iguale la inversión bruta a la depreciación de reposición.",
+    "Divida ambos lados por la función de producción per cápita.",
+    "Eleve al exponente adecuado para despejar el capital estacionario.",
+]
 
 TEMPLATES = [
     # Competency C-01: 4 Archetypes
-    ("C-01", "multiple_choice", r"Considere una tasa de ahorro $s = {s}$ y un producto $y = {y}$. Calcule la inversión bruta per cápita:", gen_c01_direct, ver_c01_direct, r"La inversión es $i = s y = ({s})({y}) = {inv}$.", "Inversión Bruta", ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"], ("solow.pdf", 5, "Inversión"), ["Identifique la tasa de ahorro y el producto.", "Multiplique ambos términos.", "Verifique el valor resultante."]),
-    ("C-01", "multiple_choice", r"Si la inversión es $i = {inv}$ y el producto es $y = {y}$, determine la tasa de ahorro implícita $s$:", gen_c01_inverse, ver_c01_inverse, r"Despejando, $s = i / y = {inv} / {y} = {s}$.", "Despeje de Tasa de Ahorro", ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"], ("solow.pdf", 6, "Inversión inversa"), ["Plantee la relación i = s y.", "Despeje la tasa s como cociente.", "Calcule el valor escalar."]),
-    ("C-01", "multiple_choice", r"Analice el impacto cualitativo de un aumento exógeno en la tasa de ahorro de $s_1 = {s1}$ a $s_2 = {s2}$ sobre la curva de inversión:", gen_c01_perturbation, ver_c01_perturbation, r"Un incremento en $s$ desplaza la curva de inversión verticalmente hacia arriba.", "Estática Comparativa de Ahorro", ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"], ("solow.pdf", 7, "Perturbación"), ["Examine el signo de Delta s.", "Analice el desplazamiento gráfico de la función s f(k).", "Identifique la conclusión correcta."]),
-    ("C-01", "multiple_choice", r"Examine las implicaciones teóricas en el caso límite de régimen de ahorro ${cond}$ con $s = {s_lim}$:", gen_c01_boundary, ver_c01_boundary, r"En el caso límite analizado, el comportamiento del sistema refleja la condición de frontera.", "Casos Límite de Ahorro", ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"], ("solow.pdf", 8, "Límites"), ["Considere el valor extremo del parámetro.", "Evalúe las ecuaciones dinámicas en dicha frontera.", "Determine la implicación formal."]),
+    ("T-C-01-01", "C-01", "multiple_choice", gen_c01_direct, ver_c01_direct, ("easy", "Remember"), stems_c01_1, hints_c01, r"La inversión es $i = s y = ({s})({y}) = {inv}$."),
+    ("T-C-01-02", "C-01", "fill_in_the_blank", gen_c01_inverse, ver_c01_inverse, ("medium", "Understand"), stems_c01_2, hints_c01, r"Despejando, $s = i / y = {inv} / {y} = {s}$."),
+    ("T-C-01-03", "C-01", "multiple_choice", gen_c01_perturbation, ver_c01_perturbation, ("hard", "Apply"), stems_c01_3, hints_c01, r"Un incremento en $s$ desplaza la curva de inversión verticalmente hacia arriba."),
+    ("T-C-01-04", "C-01", "multiple_choice", gen_c01_boundary, ver_c01_boundary, ("hard", "Analyze"), stems_c01_4, hints_c01, r"En el caso límite analizado, el comportamiento del sistema refleja la condición de frontera."),
 
     # Competency C-02: 4 Archetypes
-    ("C-02", "multiple_choice", r"Bajo $s = {s}$ y tasa de depreciación efectiva combinada $(n + g + \delta) = {denom}$, halle $k^*$ con $f(k) = \sqrt{{k}}$:", gen_c02_direct, ver_c02_direct, r"En estado estacionario, $s \sqrt{{k}} = ({denom})k \implies k^* = (s/{denom})^2 = {k_star}$.", "Estado Estacionario Frontal", ["D-C02-01", "D-C02-02", "D-C02-03", "D-C02-04", "D-C02-05", "D-C02-06"], ("solow.pdf", 10, "Cálculo k*"), ["Iguale inversión a depreciación de reposición.", "Divida por la raíz de k.", "Eleve al cuadrado para despejar k*."]),
-    ("C-02", "multiple_choice", r"Si se desea sostener un capital de estado estacionario $k^* = {k_star}$ con $(n+g+\delta) = {denom}$, determine la tasa de ahorro requerida $s$:", gen_c02_inverse, ver_c02_inverse, r"Despejando, $s = \sqrt{{k^*}} ({denom}) = {s}$.", "Despeje Inverso de k*", ["D-C02-01", "D-C02-02", "D-C02-03", "D-C02-04", "D-C02-05", "D-C02-06"], ("solow.pdf", 11, "Despeje s"), ["Plantee la condición de equilibrio.", "Sustituya k* y el denominador.", "Calcule la tasa s necesaria."]),
-    ("C-02", "multiple_choice", r"Considere un incremento en la tasa de crecimiento poblacional de $n = {n_old}$ a $n = {n_new}$. ¿Cómo responde el capital $k^*$?", gen_c02_perturbation, ver_c02_perturbation, r"Un aumento en $n$ incrementa la pendiente de la recta de reposición reduciendo $k^*$.", "Perturbación Demográfica", ["D-C02-01", "D-C02-02", "D-C02-03", "D-C02-04", "D-C02-05", "D-C02-06"], ("solow.pdf", 12, "Shock poblacional"), ["Analice el efecto de n sobre la recta de depreciación.", "Observe la nueva intersección con la curva de ahorro.", "Deduzca la dirección del cambio en k*."]),
-    ("C-02", "multiple_choice", r"Considere el caso límite donde la tasa combinada $(n + g + \delta) \to 0$. Analice la trayectoria asintótica de $k^*$:", gen_c02_boundary, ver_c02_boundary, r"Al anularse el denominador de la relación de equilibrio, $k^*$ diverge hacia infinito.", "Frontera Asintótica k*", ["D-C02-01", "D-C02-02", "D-C02-03", "D-C02-04", "D-C02-05", "D-C02-06"], ("solow.pdf", 13, "Límites k*"), ["Examine el comportamiento del cociente cuando el divisor tiende a cero.", "Analice la ausencia de depreciación en la acumulación.", "Concluya sobre la divergencia asintótica."]),
+    ("T-C-02-01", "C-02", "fill_in_the_blank", gen_c02_direct, ver_c02_direct, ("easy", "Remember"), stems_c02_1, hints_c02, r"En estado estacionario, $s \sqrt{k} = ({denom})k \implies k^* = (s/{denom})^2 = {k_star}$."),
+    ("T-C-02-02", "C-02", "fill_in_the_blank", gen_c02_inverse, ver_c02_inverse, ("medium", "Understand"), stems_c02_2, hints_c02, r"Despejando, $s = \sqrt{k^*} ({denom}) = {s}$."),
+    ("T-C-02-03", "C-02", "multiple_choice", gen_c02_perturbation, ver_c02_perturbation, ("hard", "Apply"), stems_c02_3, hints_c02, r"Un aumento en $n$ incrementa la pendiente de la recta de reposición reduciendo $k^*$."),
+    ("T-C-02-04", "C-02", "multiple_choice", gen_c02_boundary, ver_c02_boundary, ("hard", "Analyze"), stems_c02_4, hints_c02, r"Al anularse el denominador de la relación de equilibrio, $k^*$ diverge hacia infinito."),
 ]
 '''
         (shards_dir / "shard_01_data.py").write_text(shard_source, encoding="utf-8")
@@ -419,3 +468,303 @@ TEMPLATES = [
         c02_tids = [t["id"] for t in c02_data["templates"]]
         assert len(set(c02_tids)) == 4, f"Expected 4 unique template IDs, got {c02_tids}"
         assert all(tid.startswith("T-C-02") for tid in c02_tids)
+
+
+class TestCase2BTribandMultimodalAndHarmonization:
+    """End-to-end integration tests for Tri-Banda Multimodal coverage and CTA Harmonization."""
+
+    def test_triband_multimodal_coverage_and_fib_non_dollar(self, tmp_path: Path):
+        """Verifies Tri-Banda coverage (easy/medium/hard), >=2 Bloom, FIB without external $, and MS distractor IDs."""
+        work_dir = tmp_path / "work_triband"
+        shards_dir = work_dir / "shards"
+        templates_dir = work_dir / "templates"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+        templates_dir.mkdir(parents=True, exist_ok=True)
+
+        cta_data = {
+            "course_id": "course_triband",
+            "title": "Curso Tri-Banda Multimodal",
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "type": "concept",
+                    "name": "Concepto Fundamental de Balances",
+                    "description_latex": r"Ecuación $y = f(k)$",
+                    "distractors": [
+                        {
+                            "id": f"D-C01-0{i}",
+                            "name": f"Distractor {i}",
+                            "wrong_belief": f"Error {i}",
+                            "remediation_hint": f"Pista {i}",
+                        }
+                        for i in range(1, 7)
+                    ],
+                }
+            ],
+        }
+        (work_dir / "cta.json").write_text(json.dumps(cta_data), encoding="utf-8")
+        (shards_dir / "pre_shard_manifest.json").write_text(json.dumps({
+            "shards": [
+                {
+                    "shard_id": "shard_01",
+                    "competency_ids": ["C-01"],
+                    "competencies": cta_data["competencies"],
+                }
+            ]
+        }), encoding="utf-8")
+
+        shard_code = r'''
+def gen_mc(rng):
+    k = rng.randint(10, 50)
+    ans = f"${k * 2}$"
+    distractors = [
+        {"value": f"${k * 2 + i * 5}$", "distractor_id": f"D-C01-0{i}", "error_rationale": f"Desvío analítico en variable @k@ de tipo {i}"}
+        for i in range(1, 7)
+    ]
+    return {"vars": {"k": k}, "correct": ans, "distractors": distractors}
+
+def ver_mc(res):
+    return res.get("vars", {}).get("k") is not None
+
+def gen_fib(rng):
+    k = rng.randint(10, 50)
+    # FIB answer must be a clean numeric string without wrapping dollar signs
+    ans_num = str(k * 3)
+    distractors = [
+        {"value": str(k * 3 + i * 5), "distractor_id": f"D-C01-0{i}", "error_rationale": f"Desvío analítico en variable @k@ de tipo {i}"}
+        for i in range(1, 7)
+    ]
+    return {"vars": {"k": k}, "correct": ans_num, "distractors": distractors}
+
+def ver_fib(res):
+    v = res.get("vars", {}).get("k")
+    return v is not None and str(res.get("correct")) == str(v * 3)
+
+def gen_ms(rng):
+    k = rng.randint(10, 50)
+    # Multiple select options with explicit correctness and declared distractor_ids
+    options = [
+        {"content": f"El valor límite supera {k}", "is_correct": True, "distractor_id": None, "error_rationale": None},
+        {"content": f"El valor límite es menor a {k - 5}", "is_correct": False, "distractor_id": "D-C01-01", "error_rationale": "Subestimación del umbral con parámetro @k@"},
+        {"content": f"La relación se anula para {k}", "is_correct": False, "distractor_id": "D-C01-02", "error_rationale": "Atribución espuria de anulación para parámetro @k@"},
+        {"content": f"La tasa diverge sin cota para {k}", "is_correct": False, "distractor_id": "D-C01-03", "error_rationale": "Falsa divergencia en régimen con parámetro @k@"},
+    ]
+    return {"vars": {"k": k}, "options": options, "correct": "A"}
+
+def ver_ms(res):
+    return res.get("vars", {}).get("k") is not None
+
+stems_mc = [
+    r"Considere el parámetro {k}. Calcule el balance directo:",
+    r"A partir de la tasa {k}, halle la magnitud resultante:",
+    r"Determine el balance correspondiente al valor {k}:",
+]
+stems_fib = [
+    r"Dado el nivel de capital $k = {k}$, calcule el producto implícito:",
+    r"Para una economía con parámetro $k = {k}$, complete el valor analítico:",
+    r"Evalúe la función estructural fijando $k = {k}$ e indique el resultado:",
+]
+stems_ms = [
+    r"Considere el sistema con parámetro $k = {k}$. Seleccione todas las afirmaciones válidas:",
+    r"Para el marco paramétrico con nivel $k = {k}$, determine las opciones correctas:",
+    r"Evalúe las propiedades analíticas del sistema con $k = {k}$ y elija las verdaderas:",
+]
+
+hints_common = [
+    "Identifique las variables relevantes del enunciado.",
+    "Aplique la relación analítica fundamental entre factores.",
+    "Verifique la coherencia y magnitud del cálculo obtenido.",
+]
+
+TEMPLATES = [
+    ("T-C-01-01", "C-01", "multiple_choice", gen_mc, ver_mc, ("easy", "Remember"), stems_mc, hints_common, "Solución formal."),
+    ("T-C-01-02", "C-01", "fill_in_the_blank", gen_fib, ver_fib, ("medium", "Apply"), stems_fib, hints_common, "Solución FIB."),
+    ("T-C-01-03", "C-01", "multiple_select", gen_ms, ver_ms, ("hard", "Analyze"), stems_ms, hints_common, "Solución MS."),
+]
+'''
+        (shards_dir / "shard_01_data.py").write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, "shard_01", strict=True, seeds=50, min_archetypes=1)
+        assert success, f"Shard compilation failed: {errors}"
+
+        c01_path = templates_dir / "C-01.json"
+        assert c01_path.is_file()
+        c01_data = json.loads(c01_path.read_text(encoding="utf-8"))
+
+        templates = c01_data["templates"]
+        assert len(templates) == 3
+
+        # 1. Tri-Banda difficulties: easy, medium, hard
+        diffs = {t["difficulty"] for t in templates}
+        assert diffs == {"easy", "medium", "hard"}, f"Expected tri-band difficulties, got {diffs}"
+
+        # 2. Bloom diversity >= 2
+        blooms = {t["bloom"] for t in templates}
+        assert len(blooms) >= 2, f"Expected >= 2 Bloom levels, got {blooms}"
+        assert blooms == {"Remember", "Apply", "Analyze"}
+
+        # 3. Multimodal interaction types
+        itypes = {t["interaction_type"] for t in templates}
+        assert itypes == {"multiple_choice_7_options", "fill_in_the_blank", "multiple_select"}
+
+        # 4. FIB validation: answer must NOT be wrapped in external dollar signs
+        fib_tpl = next(t for t in templates if t["interaction_type"] == "fill_in_the_blank")
+        from engine.sandbox import execute_sandbox_batch
+        fib_batch = execute_sandbox_batch(fib_tpl["generate_py"], [101, 102, 103])
+        for item in fib_batch:
+            assert item["success"]
+            c_val = str(item["result"]["correct"]).strip()
+            assert not (c_val.startswith("$") and c_val.endswith("$")), (
+                f"FIB answer key must NOT be wrapped in external dollar signs: '{c_val}'"
+            )
+
+        # 5. MS validation: options must have distractor_ids and error_rationale
+        ms_tpl = next(t for t in templates if t["interaction_type"] == "multiple_select")
+        assert ms_tpl["distractor_ids"] == ["D-C01-01", "D-C01-02", "D-C01-03"]
+        ms_batch = execute_sandbox_batch(ms_tpl["generate_py"], [101, 102])
+        for item in ms_batch:
+            assert item["success"]
+            for opt in item["result"]["options"]:
+                if not opt["is_correct"]:
+                    assert opt.get("distractor_id") in ms_tpl["distractor_ids"]
+                    rat = opt.get("error_rationale")
+                    assert rat and len(rat) >= 20
+
+    def test_cta_mapreduce_full_flow_merge_to_harmonize(self, tmp_path: Path):
+        """Verifies complete Map-Reduce flow: merge_cta_parts -> cta_draft.json -> apply_harmonize -> cta.json."""
+        work_dir = tmp_path / "work_cta_flow"
+        work_dir.mkdir(parents=True, exist_ok=True)
+        parts_dir = work_dir / "cta_parts"
+        parts_dir.mkdir(parents=True, exist_ok=True)
+
+        # Pre-CTA manifest
+        manifest = {
+            "course_id": "solow_growth_mapreduce",
+            "title": "Crecimiento Económico Avanzado",
+            "files": [
+                {"doc": "solow_part1.pdf", "file_index": 0, "total_pages": 50, "valid_page_range": [1, 50]},
+                {"doc": "solow_part2.pdf", "file_index": 1, "total_pages": 50, "valid_page_range": [1, 50]},
+            ],
+            "subparts": [
+                {"subpart_id": "part_01", "subpart_index": 0, "file_index": 0},
+                {"subpart_id": "part_02", "subpart_index": 1, "file_index": 1},
+            ],
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        # Two sectional CTA parts
+        part_01 = [
+            {
+                "id": "C-01",
+                "name": "Ecuación de Dinámica de Capital",
+                "type": "concept",
+                "bloom": "Understand",
+                "session": "Sesión 1",
+                "unit_index": 1,
+                "description_latex": r"Dinámica $\dot{k} = s f(k) - (n + g + \delta)k$",
+                "prerequisites": [],
+                "evidence": [{"doc": "solow_part1.pdf", "page": 10}],
+                "distractors": [
+                    {
+                        "id": f"D-C01-0{i}",
+                        "name": f"Error de Dinámica {i}",
+                        "wrong_belief": f"Belief erróneo {i}",
+                        "correct_belief": f"Belief correcto {i}",
+                        "trigger": f"Condición de balance {i}",
+                        "manifestation": f"Manifestación analítica {i}",
+                        "error_type": "sign_error",
+                        "severity": "medium",
+                        "origin": "inferred",
+                        "evidence": {"doc": "solow_part1.pdf", "page": 10},
+                        "remediation_hint": f"Pista formativa {i}",
+                    }
+                    for i in range(1, 7)
+                ],
+            }
+        ]
+        part_02 = [
+            {
+                "id": "C-01",  # Local duplicate ID across parts, to be sequentially renumbered to Hab-01
+                "name": "Cálculo de Capital Estacionario",
+                "type": "skill",
+                "bloom": "Apply",
+                "session": "Sesión 2",
+                "unit_index": 2,
+                "description_latex": r"Resolución de $k^*$ tal que $\dot{k} = 0$",
+                "prerequisites": [],
+                "evidence": [{"doc": "solow_part2.pdf", "page": 25}],
+                "distractors": [
+                    {
+                        "id": f"D-C02-0{i}",
+                        "name": f"Error de Cálculo {i}",
+                        "wrong_belief": f"Belief cálculo erróneo {i}",
+                        "correct_belief": f"Belief cálculo correcto {i}",
+                        "trigger": f"Despeje analítico {i}",
+                        "manifestation": f"Manifestación cálculo {i}",
+                        "error_type": "skipped_step" if i <= 2 else "boundary_case",
+                        "severity": "high",
+                        "origin": "inferred",
+                        "evidence": {"doc": "solow_part2.pdf", "page": 25},
+                        "remediation_hint": f"Pista cálculo {i}",
+                        "omitted_step": f"Paso omitido {i}" if i <= 2 else None,
+                    }
+                    for i in range(1, 7)
+                ],
+            }
+        ]
+        (parts_dir / "part_01.json").write_text(json.dumps(part_01), encoding="utf-8")
+        (parts_dir / "part_02.json").write_text(json.dumps(part_02), encoding="utf-8")
+
+        # Step 1: Execute merge_cta_parts
+        res_merge = merge_cta_parts(work_dir)
+        assert res_merge["status"] == "success"
+        assert res_merge["total_competencies"] == 2
+
+        # Verify Stage 1 artifacts
+        draft_file = work_dir / "cta_draft.json"
+        order_file = work_dir / "cta_order.json"
+        candidates_file = work_dir / "duplicate_candidates.json"
+        outline_file = work_dir / "cta_outline.json"
+        assert draft_file.is_file(), "Missing cta_draft.json"
+        assert order_file.is_file(), "Missing cta_order.json"
+        assert candidates_file.is_file(), "Missing duplicate_candidates.json"
+        assert outline_file.is_file(), "Missing cta_outline.json"
+
+        # Verify draft IDs are cleanly renumbered
+        draft_data = json.loads(draft_file.read_text(encoding="utf-8"))
+        draft_cids = [c["id"] for c in draft_data["competencies"]]
+        assert draft_cids == ["C-01", "Hab-01"]
+
+        # Step 2: Write cta_harmonize.json with valid Harmonizer directives
+        harmonize_payload = {
+            "rename": [
+                {"competency": "C-01", "name": "Dinámica Fundamental del Capital de Solow"}
+            ],
+            "add_prerequisites": [
+                {"competency": "Hab-01", "prerequisites": ["C-01"]}
+            ],
+            "drop_duplicate_distractors": [],
+            "merge": [],
+        }
+        (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_payload), encoding="utf-8")
+
+        # Step 3: Execute apply_harmonize
+        apply_harmonize(work_dir)
+
+        # Verify Stage 2 final artifacts
+        cta_file = work_dir / "cta.json"
+        cta_md = work_dir / "cta.md"
+        report_file = work_dir / "merge_report.json"
+        assert cta_file.is_file(), "Missing final cta.json"
+        assert cta_md.is_file(), "Missing final cta.md"
+        assert report_file.is_file(), "Missing merge_report.json"
+
+        # Verify applied changes in cta.json
+        cta_final = json.loads(cta_file.read_text(encoding="utf-8"))
+        comps_final = cta_final["competencies"]
+        assert len(comps_final) == 2
+        assert comps_final[0]["id"] == "C-01"
+        assert comps_final[0]["name"] == "Dinámica Fundamental del Capital de Solow"
+        assert comps_final[1]["id"] == "Hab-01"
+        assert comps_final[1]["prerequisites"] == ["C-01"]
+

@@ -24,7 +24,7 @@ if str(_SKILL_DIR) not in sys.path:
     sys.path.insert(0, str(_SKILL_DIR))
 
 from check_cta import check_prerequisites_dag, validate_cta_rules
-from cta_merge import merge_cta_parts
+from cta_merge import merge_cta_parts, apply_harmonize
 
 
 def _make_distractors(cid: str, ctype: str, page: int = 1, doc: str = "lecture.pdf") -> List[Dict[str, Any]]:
@@ -355,7 +355,7 @@ class TestCtaMergePrereqScoping:
         part_02 = {
             "course_id": "test_prereq_scoping",
             "competencies": [
-                _make_comp("H-01", "fact", "Fact B", unit_index=2, page=2),
+                _make_comp("H-01", "fact", "Fact B", unit_index=2, prerequisites=["part_01:H-01"], page=2),
                 _make_comp("C-01", "concept", "Concept B", unit_index=2, prerequisites=["H-01", "part_01:C-01"], page=2),
             ],
         }
@@ -396,7 +396,7 @@ class TestCtaMergePrereqScoping:
             "course_id": "test_prereq_scoping",
             "competencies": [
                 _make_comp("H-01", "fact", "Fact Root", unit_index=1, page=1),
-                _make_comp("C-01", "concept", "Concept Alpha", unit_index=1, prerequisites=["C-02"], page=1),
+                _make_comp("C-01", "concept", "Concept Alpha", unit_index=1, prerequisites=["H-01", "C-02"], page=1),
                 _make_comp("C-02", "concept", "Concept Beta", unit_index=1, prerequisites=["C-01"], page=2),
             ],
         }
@@ -416,8 +416,8 @@ class TestCtaMergePrereqScoping:
         assert c_beta["id"] == "C-02"
 
         # Alpha appeared before Beta in sort order, so Alpha's forward edge to Beta is dropped,
-        # while Beta's backward edge to Alpha is kept.
-        assert c_alpha["prerequisites"] == []
+        # while Alpha's backward edge to H-01 and Beta's backward edge to Alpha are kept.
+        assert c_alpha["prerequisites"] == ["H-01"]
         assert c_beta["prerequisites"] == ["C-01"]
 
         # Strict backward-only invariant
@@ -431,6 +431,8 @@ class TestCtaMergePrereqScoping:
         assert len(dag_errors) == 0, f"DAG errors: {dag_errors}"
 
         # Guarantee no temporary internal keys leak to disk
+        (work_dir / "cta_harmonize.json").write_text("{}", encoding="utf-8")
+        apply_harmonize(work_dir)
         draft_json = json.loads((work_dir / "cta_draft.json").read_text(encoding="utf-8"))
         final_json = json.loads((work_dir / "cta.json").read_text(encoding="utf-8"))
         for item in draft_json["competencies"] + final_json["competencies"]:
@@ -559,9 +561,9 @@ class TestCtaMergePrereqScoping:
         p1_comps = [
             # 4 Facts
             _make_comp("H-01", "fact", "Propiedad Asintótica Básica", unit_index=1, page=1, doc=doc_name),
-            _make_comp("H-02", "fact", "Lema de Slutsky Condición", unit_index=1, page=2, doc=doc_name),
-            _make_comp("H-03", "fact", "Teorema del Mapeo Continuo", unit_index=2, page=3, doc=doc_name),
-            _make_comp("H-04", "fact", "Convergencia en Probabilidad", unit_index=2, page=4, doc=doc_name),
+            _make_comp("H-02", "fact", "Lema de Slutsky Condición", unit_index=1, prerequisites=["H-01"], page=2, doc=doc_name),
+            _make_comp("H-03", "fact", "Teorema del Mapeo Continuo", unit_index=2, prerequisites=["H-02"], page=3, doc=doc_name),
+            _make_comp("H-04", "fact", "Convergencia en Probabilidad", unit_index=2, prerequisites=["H-03"], page=4, doc=doc_name),
             # 4 Concepts (with intra-part dependencies)
             _make_comp("C-01", "concept", "Concepto Consistencia Débil", unit_index=1, prerequisites=["H-01"], page=2, doc=doc_name),
             _make_comp("C-02", "concept", "Concepto Normalidad Asintótica", unit_index=2, prerequisites=["H-02"], page=3, doc=doc_name),
@@ -581,9 +583,9 @@ class TestCtaMergePrereqScoping:
         p2_comps = [
             # 4 Facts
             _make_comp("H-01", "fact", "Estimador M-Estimador Hipótesis", unit_index=4, prerequisites=["part_01:H-01"], page=11, doc=doc_name),
-            _make_comp("H-02", "fact", "Condición de Rango e Identificación", unit_index=4, page=12, doc=doc_name),
-            _make_comp("H-03", "fact", "Matriz de Información de Fisher", unit_index=5, page=13, doc=doc_name),
-            _make_comp("H-04", "fact", "Test de Razón de Verosimilitud", unit_index=5, page=14, doc=doc_name),
+            _make_comp("H-02", "fact", "Condición de Rango e Identificación", unit_index=4, prerequisites=["H-01"], page=12, doc=doc_name),
+            _make_comp("H-03", "fact", "Matriz de Información de Fisher", unit_index=5, prerequisites=["H-02"], page=13, doc=doc_name),
+            _make_comp("H-04", "fact", "Test de Razón de Verosimilitud", unit_index=5, prerequisites=["H-03"], page=14, doc=doc_name),
             # 5 Concepts
             _make_comp("C-01", "concept", "Concepto M-Estimadores", unit_index=4, prerequisites=["H-01", "part_01:C-01"], page=12, doc=doc_name),
             _make_comp("C-02", "concept", "Concepto Identificabilidad Local", unit_index=4, prerequisites=["H-02", "C-01"], page=13, doc=doc_name),
@@ -625,8 +627,12 @@ class TestCtaMergePrereqScoping:
         dag_errors = check_prerequisites_dag(comps)
         assert len(dag_errors) == 0, f"check_prerequisites_dag reported errors: {dag_errors}"
 
+        # Apply harmonize to create final cta.json
+        (work_dir / "cta_harmonize.json").write_text("{}", encoding="utf-8")
+        final_cta = apply_harmonize(work_dir)
+
         # Validate full validate_cta_rules
-        valid, rules_errors = validate_cta_rules(res, manifest_data)
+        valid, rules_errors = validate_cta_rules(final_cta, manifest_data)
         assert valid is True, f"validate_cta_rules returned False: {rules_errors}"
         assert len(rules_errors) == 0
 

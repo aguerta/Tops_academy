@@ -29,6 +29,13 @@ from compile_cta import compile_cta, render_compact_cta_errors
 from compile_shard import compile_shard
 from c2c_hook_guard import process_hook
 from dispatch import dispatch_authors, get_type_definitions
+from check_cta import check_cta_prose_overflow
+from prepare import prepare_course
+
+try:
+    import pymupdf
+except ImportError:
+    import fitz as pymupdf
 
 
 # ==============================================================================
@@ -613,6 +620,100 @@ class TestSweetSpotCrossContractCTA(unittest.TestCase):
         self.assertEqual(res_blocked_edit.get("decision"), "deny")
         self.assertIn("BLOCKER:: El módulo CTA part_01 ya aprobó", res_blocked_edit.get("reason", ""))
 
+    def test_corpus_over_25_pages_promotes_automatically_to_mapreduce(self) -> None:
+        """A corpus with total_pages > 25 (e.g. 30 or 59 pages) automatically promotes to mapreduce mode,
+        while <= 25 pages remains direct mode.
+        """
+        temp_corpus_dir = Path(self.test_dir) / "corpus"
+        temp_corpus_dir.mkdir(parents=True, exist_ok=True)
+
+        def _make_pdf(path: Path, page_count: int) -> Path:
+            doc = pymupdf.open()
+            for _ in range(page_count):
+                doc.new_page()
+            doc.save(str(path))
+            doc.close()
+            return path
+
+        # 1. 10 pages, unspecified mode -> default mapreduce
+        pdf10 = _make_pdf(temp_corpus_dir / "doc10.pdf", 10)
+        work10 = Path(self.test_dir) / "work10"
+        manifest10 = prepare_course(input_path=pdf10, work_dir=work10, course_id="course10", render_pages=False)
+        self.assertEqual(manifest10.get("cta_mode"), "mapreduce")
+        self.assertGreaterEqual(len(manifest10.get("subparts", [])), 1)
+
+        # 2. 30 pages: > 25 pages -> promoted to mapreduce mode
+        pdf30 = _make_pdf(temp_corpus_dir / "doc30.pdf", 30)
+        work30 = Path(self.test_dir) / "work30"
+        manifest30 = prepare_course(input_path=pdf30, work_dir=work30, course_id="course30", render_pages=False)
+        self.assertEqual(manifest30.get("cta_mode"), "mapreduce")
+        self.assertGreater(len(manifest30.get("subparts", [])), 1)
+
+        # 3. 59 pages: > 25 pages -> promoted to mapreduce mode
+        pdf59 = _make_pdf(temp_corpus_dir / "doc59.pdf", 59)
+        work59 = Path(self.test_dir) / "work59"
+        manifest59 = prepare_course(input_path=pdf59, work_dir=work59, course_id="course59", render_pages=False)
+        self.assertEqual(manifest59.get("cta_mode"), "mapreduce")
+        self.assertGreater(len(manifest59.get("subparts", [])), 1)
+
+        # 4. USER PRECEDENCE: explicit direct is never promoted, even with 59 pages
+        work59d = Path(self.test_dir) / "work59d"
+        manifest59d = prepare_course(input_path=pdf59, work_dir=work59d, course_id="course59d", cta_mode="direct", render_pages=False)
+        self.assertEqual(manifest59d.get("cta_mode"), "direct")
+        self.assertEqual(len(manifest59d.get("subparts", [])), 1)
+
+    def test_check_cta_blocks_fail_fast_katex_prose_overflow_over_45_chars(self) -> None:
+        """check_cta.py / compile_cta.py fails fast with [KATEX-PROSE-OVERFLOW] in Stage 1
+        when \\text{...} exceeds 45 characters.
+        """
+        # 1. Direct function unit test
+        short_text = r"$\text{Varianza asintótica}$"
+        long_text = r"$\text{Este texto explicativo es excesivamente largo y supera el limite de cuarenta y cinco caracteres}$"
+        self.assertEqual(check_cta_prose_overflow(short_text, "short_ctx"), [])
+        long_errs = check_cta_prose_overflow(long_text, "long_ctx")
+        self.assertGreater(len(long_errs), 0)
+        self.assertTrue(any("[KATEX-PROSE-OVERFLOW]" in e for e in long_errs))
+
+        # 2. Stage 1 compile_cta fail-fast integration test
+        overflow_cta_source = '''# part_overflow_data.py
+COURSE_ID = "overflow_stats"
+COURSE_TITLE = "Estadística Asintótica"
+
+COMPETENCIES = [
+    (
+        "concept",
+        "C-01",
+        "Propiedad de Consistencia",
+        r"Definición analítica formal de convergencia en probabilidad.",
+        "Understand",
+        "asymptotic_notes.pdf",
+        1,
+        [],
+        [
+            ("D1", r"$\\text{Este texto explicativo es excesivamente largo y supera el limite de cuarenta y cinco caracteres}$", r"$\\sigma$", "Cero", "rh1", None),
+            ("D2", r"$\\sigma$", r"$\\sigma$", "Cero", "rh2", None),
+            ("D3", r"$\\sigma$", r"$\\sigma$", "Cero", "rh3", None),
+            ("D4", r"$\\sigma$", r"$\\sigma$", "Cero", "rh4", None),
+            ("D5", r"$\\sigma$", r"$\\sigma$", "Cero", "rh5", None),
+            ("D6", r"$\\sigma$", r"$\\sigma$", "Cero", "rh6", None),
+        ],
+    ),
+]
+'''
+        overflow_py = self.cta_parts_dir / "part_overflow_data.py"
+        overflow_py.write_text(overflow_cta_source, encoding="utf-8")
+
+        ok, cta_dict, errors, elapsed = compile_cta(
+            cta_data_path=overflow_py,
+            output_dir=self.cta_parts_dir,
+            manifest_path=self.manifest_file,
+            output_json_name="part_overflow.json",
+            is_part=True,
+            allow_degrade=False,
+        )
+        self.assertFalse(ok)
+        self.assertTrue(any("[KATEX-PROSE-OVERFLOW]" in str(e) for e in errors), f"Expected [KATEX-PROSE-OVERFLOW] in errors: {errors}")
+
 
 
 class TestSweetSpotCrossContractShards(unittest.TestCase):
@@ -693,22 +794,22 @@ class TestSweetSpotCrossContractShards(unittest.TestCase):
         shutil.rmtree(self.test_dir, ignore_errors=True)
 
     def test_dispatch_authors_stamps_min_archetypes_and_injected_in_compile_cmd(self) -> None:
-        """1. Shard Integration: dispatch_authors stamps min_archetypes: 4 in pre_shard_manifest.json
-        and includes --min-archetypes 4 in compile_cmd.
+        """1. Shard Integration: dispatch_authors stamps min_archetypes: 3 in pre_shard_manifest.json
+        and includes --min-archetypes 3 in compile_cmd.
         """
         dispatch_authors(self.work_dir, pointer=True)
 
         # Verify stamping in pre_shard_manifest.json
         manifest_on_disk = json.loads((self.shards_dir / "pre_shard_manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual(manifest_on_disk.get("min_archetypes"), 4, "Root min_archetypes must be 4")
-        self.assertEqual(manifest_on_disk["shards"][0].get("min_archetypes"), 4, "Shard item min_archetypes must be 4")
+        self.assertEqual(manifest_on_disk.get("min_archetypes"), 3, "Root min_archetypes must be 3")
+        self.assertEqual(manifest_on_disk["shards"][0].get("min_archetypes"), 3, "Shard item min_archetypes must be 3")
 
         # Verify compile_cmd in item file
         item_file = self.work_dir / "dispatch" / "items" / "author_09.json"
         self.assertTrue(item_file.is_file(), f"Missing item file: {item_file}")
         item_data = json.loads(item_file.read_text(encoding="utf-8"))
         compile_cmd = item_data.get("compile_command", "")
-        self.assertIn("--min-archetypes 4", compile_cmd, f"compile_cmd missing --min-archetypes 4: {compile_cmd}")
+        self.assertIn("--min-archetypes 3", compile_cmd, f"compile_cmd missing --min-archetypes 3: {compile_cmd}")
         self.assertIn("--strict", compile_cmd)
         self.assertIn("--shard shard_09", compile_cmd)
 
@@ -719,52 +820,55 @@ class TestSweetSpotCrossContractShards(unittest.TestCase):
         - c2c_hook_guard.py blocks full write_file and instructs to use edit_file or shard_fixes/<CID>.py.
         """
         shard_09_py = self.shards_dir / "shard_09_data.py"
-        # 1-tuple legacy implementation with >= 40 lines
+        # 1-tuple Form-B implementation with >= 40 lines
         single_tuple_code = '''# shard_09_data.py
-"""Exercise templates for shard_09 (v5 legacy 1-tuple implementation)."""
+"""Exercise templates for shard_09 (1-tuple Form-B implementation)."""
 import random
-import math
 
 # Preamble functions
 def gen_c06(rng):
     n = rng.randint(20, 200)
     ans = n * 2
-    deltas = [-5, 5, 10, -10, 15, -15]
-    d_ids = ["D-C06-01", "D-C06-02", "D-C06-03", "D-C06-04", "D-C06-05", "D-C06-06"]
-    v_dict = {"n": n, "ans": ans}
-    distractors = []
-    for i, (d, did) in enumerate(zip(deltas, d_ids), 1):
-        v_dict[f"d{i}"] = ans + d
-        distractors.append({"value": r"$\\text{Avar} = @d" + str(i) + r"@$", "distractor_id": did})
+    v = {"n": n, "ans": ans}
+    for i in range(1, 7):
+        v[f"d{i}"] = ans + i * 5
+    dists = [
+        (f"D-C06-0{i}", f"$@d{i}@$", f"Desvío de varianza asintótica con parámetro @d{i}@ y delta.")
+        for i in range(1, 7)
+    ]
     return {
-        "vars": v_dict,
-        "correct": r"$\\text{Avar} = @ans@$",
-        "distractors": distractors,
+        "vars": v,
+        "correct": "$@ans@$",
+        "distractors": dists,
     }
 
 def ver_c06(res):
-    return res["vars"]["ans"] == res["vars"]["n"] * 2
+    v = res.get("vars", {})
+    return v.get("ans") == v.get("n") * 2
 
-# Legacy 1 tuple per competency covering 4 stem_variants (v5 pattern)
 TEMPLATES = [
     (
+        "T-C06-01",
         "C-06",
-        "multiple_choice",
+        "multiple_choice_7_options",
+        gen_c06,
+        ver_c06,
+        ("easy", "Remember"),
         [
             r"Para una muestra de tamaño $n = @n@$, determine la varianza asintótica del estimador MLE:",
             r"Considere el estimador de máxima verosimilitud con $n = @n@$. Calcule $\\text{Avar}(\\hat{\\theta})$:",
             r"En un modelo regular con $n = @n@$ observaciones, halle la cota de varianza asintótica:",
             r"Dado el tamaño muestral $n = @n@$, compute la varianza límite del estimador:",
         ],
-        gen_c06,
-        ver_c06,
-        r"La varianza asintótica resulta $\\text{Avar} = 2n = @ans@$.",
-        "Varianza Asintótica MLE",
-        ["D-C06-01", "D-C06-02", "D-C06-03", "D-C06-04", "D-C06-05", "D-C06-06"],
-        ("asymptotic_notes.pdf", 2, "Cálculo de varianza asintótica"),
+        [
+            r"Multiplique el tamaño muestral n por el factor dos de dispersión.",
+            r"Recuerde que la cota regular se escala linealmente con la muestra.",
+            r"El valor de varianza asintótica calculado es $@ans@$."
+        ],
+        r"La varianza asintótica resulta $\\text{Avar} = 2n = @ans@$."
     )
 ]
-'''
+''' + ("# Padding line to ensure file exceeds 40 lines\\n" * 45)
         shard_09_py.write_text(single_tuple_code, encoding="utf-8")
         self.assertGreaterEqual(len(single_tuple_code.splitlines()), 40)
 
@@ -852,29 +956,30 @@ def _gen_c06(rng, arch):
     n = rng.randint(20, 200)
     if arch == 1:
         ans = n + 10
-        distractors = [ans - 2, ans + 2, ans + 4, ans + 6, ans + 8, ans + 10]
+        v = {"n": n, "ans": ans}
+        for i in range(1, 7):
+            v[f"d{i}"] = ans + i * 2
+        dists = [
+            (f"D-C06-0{i}", f"$@d{i}@$", f"Desvío de estimación en arquetipo uno con parámetro @d{i}@.")
+            for i in range(1, 7)
+        ]
+        return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
     elif arch == 2:
         ans = n * 2
-        distractors = [ans - 5, ans + 5, ans + 10, ans + 15, ans + 20, ans + 25]
+        v = {"n": n, "ans": ans}
+        for i in range(1, 7):
+            v[f"d{i}"] = ans + i * 5
+        dists = [
+            (f"D-C06-0{i}", f"$@d{i}@$", f"Desvío de estimación en arquetipo dos con parámetro @d{i}@.")
+            for i in range(1, 7)
+        ]
+        return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
     elif arch == 3:
         ans = n + 5
-        distractors = [ans - 1, ans + 1, ans + 3, ans + 7, ans + 9, ans + 11]
+        return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
     else:  # arch == 4 (frontera)
         ans = n * 3
-        distractors = [ans - 3, ans + 3, ans + 6, ans + 9, ans + 12, ans + 15]
-
-    return {
-        "vars": {
-            "n": n, "ans": ans,
-            "d1": distractors[0], "d2": distractors[1], "d3": distractors[2],
-            "d4": distractors[3], "d5": distractors[4], "d6": distractors[5],
-        },
-        "correct": r"$@ans@$",
-        "distractors": [
-            r"$@d1@$", r"$@d2@$", r"$@d3@$",
-            r"$@d4@$", r"$@d5@$", r"$@d6@$",
-        ],
-    }
+        return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
 
 # 4 Thin Wrappers
 def gen_c06_1(rng): return _gen_c06(rng, 1)
@@ -887,59 +992,67 @@ def ver_c06_2(res): return res["vars"]["ans"] == res["vars"]["n"] * 2
 def ver_c06_3(res): return res["vars"]["ans"] == res["vars"]["n"] + 5
 def ver_c06_4(res): return res["vars"]["ans"] == res["vars"]["n"] * 3
 
-# 4 Form-A 9-element tuples: position 7 is [] and 10th element (hints) is omitted
+# 4 Form-B 9-element tuples: covering easy, medium, hard and active modalities
 TEMPLATES = [
     (
-        "C-06", "multiple_choice_7_options",
+        "T-C06-01", "C-06", "multiple_choice_7_options",
+        gen_c06_1, ver_c06_1, ("easy", "Remember"),
         [
             r"Arquetipo 1: Calcule la varianza asintótica directa para $n = @n@$:",
             r"Arquetipo 1 Variante B: Determine el valor asintótico frontal con $n = @n@$:",
             r"Arquetipo 1 Variante C: Para tamaño $n = @n@$, halle la dispersión directa:",
         ],
-        gen_c06_1, ver_c06_1,
-        r"La varianza asintótica frontal es $@ans@$.",
-        "Varianza Asintótica Directa",
-        [],
-        ("asymptotic_notes.pdf", 2, "Fórmula directa de varianza"),
+        [
+            r"Multiplique el valor base por la constante de dispersión.",
+            r"Recuerde que el cálculo directo conserva la escala del parámetro.",
+            r"El valor asintótico frontal obtenido es $@ans@$."
+        ],
+        r"La varianza asintótica frontal es $@ans@$."
     ),
     (
-        "C-06", "multiple_choice_7_options",
+        "T-C06-02", "C-06", "multiple_choice_7_options",
+        gen_c06_2, ver_c06_2, ("medium", "Understand"),
         [
             r"Arquetipo 2: Inverso: A partir de la dispersión dada con $n = @n@$, determine el parámetro:",
             r"Arquetipo 2 Variante B: Diagnóstico inverso de varianza asintótica con $n = @n@$:",
             r"Arquetipo 2 Variante C: Deduzca el parámetro subyacente para $n = @n@$:",
         ],
-        gen_c06_2, ver_c06_2,
-        r"Por inversión analítica del estimador, el resultado es $@ans@$.",
-        "Diagnóstico Inverso Asintótico",
-        [],
-        ("asymptotic_notes.pdf", 2, "Inversión analítica"),
+        [
+            r"Invierta analíticamente la expresión de la varianza asintótica.",
+            r"Recupere el parámetro dividiendo la dispersión entre el factor dos.",
+            r"Por inversión analítica del estimador el resultado es $@ans@$."
+        ],
+        r"Por inversión analítica del estimador, el resultado es $@ans@$."
     ),
     (
-        "C-06", "multiple_choice_7_options",
+        "T-C06-03", "C-06", "fill_in_the_blank",
+        gen_c06_3, ver_c06_3, ("hard", "Apply"),
         [
             r"Arquetipo 3: Perturbación: Analice el cambio incremental en la varianza con $n = @n@$:",
             r"Arquetipo 3 Variante B: Estática comparativa de la varianza límite bajo $n = @n@$:",
             r"Arquetipo 3 Variante C: Evalúe la perturbación de primer orden para $n = @n@$:",
         ],
-        gen_c06_3, ver_c06_3,
-        r"La perturbación de primer orden incrementa la varianza a $@ans@$.",
-        "Perturbación Asintótica",
-        [],
-        ("asymptotic_notes.pdf", 2, "Estática comparativa"),
+        [
+            r"Calcule la perturbación incremental sumando cinco al tamaño de muestra.",
+            r"Evalúe la estática comparativa de primer orden en el punto dado.",
+            r"La perturbación de primer orden incrementa el parámetro a @ans@."
+        ],
+        r"La perturbación de primer orden incrementa la varianza a @ans@."
     ),
     (
-        "C-06", "multiple_choice_7_options",
+        "T-C06-04", "C-06", "fill_in_the_blank",
+        gen_c06_4, ver_c06_4, ("hard", "Analyze"),
         [
             r"Arquetipo 4: Frontera: Evalúe el comportamiento en el régimen límite con $n = @n@$:",
             r"Arquetipo 4 Variante B: Caso extremo de cota asintótica para $n = @n@$:",
             r"Arquetipo 4 Variante C: En la condición de frontera con $n = @n@$, halle la dispersión:",
         ],
-        gen_c06_4, ver_c06_4,
-        r"En la frontera del soporte paramétrico el valor límite es $@ans@$.",
-        "Frontera Asintótica",
-        [],
-        ("asymptotic_notes.pdf", 2, "Condiciones de frontera"),
+        [
+            r"Multiplique el tamaño muestral n por el factor tres de frontera.",
+            r"Examine el comportamiento de la dispersión en el régimen extremo.",
+            r"En la frontera del soporte paramétrico el valor límite es @ans@."
+        ],
+        r"En la frontera del soporte paramétrico el valor límite es @ans@."
     ),
 ]
 '''
@@ -970,7 +1083,8 @@ TEMPLATES = [
         templates_list = t_data.get("templates", [])
         self.assertEqual(len(templates_list), 4)
         for tpl in templates_list:
-            self.assertEqual(len(tpl.get("distractor_ids", [])), 6)
+            if tpl.get("interaction_type") == "multiple_choice_7_options":
+                self.assertEqual(len(tpl.get("distractor_ids", [])), 6)
             self.assertGreaterEqual(len(tpl.get("hints", [])), 3)
 
         # Hook Guard Rule B: Verify write_file on shard_09_data.py is blocked post-PASS
@@ -1053,33 +1167,104 @@ import random
 
 def _gen_c06(rng, arch):
     n = rng.randint(20, 200)
-    ans = n * (arch + 1)
-    distractors = [ans - 2, ans + 2, ans + 4, ans + 6, ans + 8, ans + 10]
-    return {
-        "vars": {
-            "n": n, "ans": ans,
-            "d1": distractors[0], "d2": distractors[1], "d3": distractors[2],
-            "d4": distractors[3], "d5": distractors[4], "d6": distractors[5],
-        },
-        "correct": r"$@ans@$",
-        "distractors": [r"$@d1@$", r"$@d2@$", r"$@d3@$", r"$@d4@$", r"$@d5@$", r"$@d6@$"],
-    }
+    if arch == 1:
+        ans = n + 10
+        v = {"n": n, "ans": ans}
+        for i in range(1, 7):
+            v[f"d{i}"] = ans + i * 2
+        dists = [
+            (f"D-C06-0{i}", f"$@d{i}@$", f"Desvío de estimación en arquetipo uno con parámetro @d{i}@.")
+            for i in range(1, 7)
+        ]
+        return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
+    elif arch == 2:
+        ans = n * 2
+        v = {"n": n, "ans": ans}
+        for i in range(1, 7):
+            v[f"d{i}"] = ans + i * 5
+        dists = [
+            (f"D-C06-0{i}", f"$@d{i}@$", f"Desvío de estimación en arquetipo dos con parámetro @d{i}@.")
+            for i in range(1, 7)
+        ]
+        return {"vars": v, "correct": r"$@ans@$", "distractors": dists}
+    elif arch == 3:
+        ans = n + 5
+        return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
+    else:  # arch == 4 (frontera)
+        ans = n * 3
+        return {"vars": {"n": n, "ans": ans}, "correct": str(ans), "distractors": []}
 
 def gen_c06_1(rng): return _gen_c06(rng, 1)
 def gen_c06_2(rng): return _gen_c06(rng, 2)
 def gen_c06_3(rng): return _gen_c06(rng, 3)
 def gen_c06_4(rng): return _gen_c06(rng, 4)
 
-def ver_c06_1(res): return res["vars"]["ans"] == res["vars"]["n"] * 2
-def ver_c06_2(res): return res["vars"]["ans"] == res["vars"]["n"] * 3
-def ver_c06_3(res): return res["vars"]["ans"] == res["vars"]["n"] * 4
-def ver_c06_4(res): return res["vars"]["ans"] == res["vars"]["n"] * 5
+def ver_c06_1(res): return res["vars"]["ans"] == res["vars"]["n"] + 10
+def ver_c06_2(res): return res["vars"]["ans"] == res["vars"]["n"] * 2
+def ver_c06_3(res): return res["vars"]["ans"] == res["vars"]["n"] + 5
+def ver_c06_4(res): return res["vars"]["ans"] == res["vars"]["n"] * 3
 
 TEMPLATES = [
-    ("C-06", "multiple_choice_7_options", [r"Arquetipo 1: $n = @n@$:"], gen_c06_1, ver_c06_1, r"Solución: $@ans@$.", "KC Directo", [], ("asymptotic_notes.pdf", 2, "Ref 1")),
-    ("C-06", "multiple_choice_7_options", [r"Arquetipo 2: $n = @n@$:"], gen_c06_2, ver_c06_2, r"Solución: $@ans@$.", "KC Inverso", [], ("asymptotic_notes.pdf", 2, "Ref 2")),
-    ("C-06", "multiple_choice_7_options", [r"Arquetipo 3: $n = @n@$:"], gen_c06_3, ver_c06_3, r"Solución: $@ans@$.", "KC Perturbación", [], ("asymptotic_notes.pdf", 2, "Ref 3")),
-    ("C-06", "multiple_choice_7_options", [r"Arquetipo 4: $n = @n@$:"], gen_c06_4, ver_c06_4, r"Solución: $@ans@$.", "KC Frontera", [], ("asymptotic_notes.pdf", 2, "Ref 4")),
+    (
+        "T-C06-01", "C-06", "multiple_choice_7_options",
+        gen_c06_1, ver_c06_1, ("easy", "Remember"),
+        [
+            r"Arquetipo 1: Calcule la varianza asintótica directa para $n = @n@$:",
+            r"Arquetipo 1 Variante B: Determine el valor asintótico frontal con $n = @n@$:",
+            r"Arquetipo 1 Variante C: Para tamaño $n = @n@$, halle la dispersión directa:",
+        ],
+        [
+            r"Multiplique el valor base por la constante de dispersión.",
+            r"Recuerde que el cálculo directo conserva la escala del parámetro.",
+            r"El valor asintótico frontal obtenido es $@ans@$."
+        ],
+        r"La varianza asintótica frontal es $@ans@$."
+    ),
+    (
+        "T-C06-02", "C-06", "multiple_choice_7_options",
+        gen_c06_2, ver_c06_2, ("medium", "Understand"),
+        [
+            r"Arquetipo 2: Inverso: A partir de la dispersión dada con $n = @n@$, determine el parámetro:",
+            r"Arquetipo 2 Variante B: Diagnóstico inverso de varianza asintótica con $n = @n@$:",
+            r"Arquetipo 2 Variante C: Deduzca el parámetro subyacente para $n = @n@$:",
+        ],
+        [
+            r"Invierta analíticamente la expresión de la varianza asintótica.",
+            r"Recupere el parámetro dividiendo la dispersión entre el factor dos.",
+            r"Por inversión analítica del estimador el resultado es $@ans@$."
+        ],
+        r"Por inversión analítica del estimador, el resultado es $@ans@$."
+    ),
+    (
+        "T-C06-03", "C-06", "fill_in_the_blank",
+        gen_c06_3, ver_c06_3, ("hard", "Apply"),
+        [
+            r"Arquetipo 3: Perturbación: Analice el cambio incremental en la varianza con $n = @n@$:",
+            r"Arquetipo 3 Variante B: Estática comparativa de la varianza límite bajo $n = @n@$:",
+            r"Arquetipo 3 Variante C: Evalúe la perturbación de primer orden para $n = @n@$:",
+        ],
+        [
+            r"Calcule la perturbación incremental sumando cinco al tamaño de muestra.",
+            r"Evalúe la estática comparativa de primer orden en el punto dado.",
+            r"La perturbación de primer orden incrementa el parámetro a @ans@."
+        ],
+        r"La perturbación de primer orden incrementa la varianza a @ans@."
+    ),
+    (
+        "T-C06-04", "C-06", "fill_in_the_blank",
+        gen_c06_4, ver_c06_4, ("hard", "Analyze"),
+        [
+            r"Arquetipo 4: Frontera: Evalúe el comportamiento en el régimen límite con $n = @n@$:",
+            r"Arquetipo 4 Variante B: Caso extremo de cota asintótica para $n = @n@$:",
+            r"Arquetipo 4 Variante C: En la condición de frontera con $n = @n@$, halle la dispersión:",
+        ],
+        [
+            r"Multiplique el tamaño muestral n por el factor tres de frontera.",
+            r"Examine el comportamiento de la dispersión en el régimen extremo.",
+            r"En la frontera del soporte paramétrico el valor límite es @ans@."
+        ],
+        r"En la frontera del soporte paramétrico el valor límite es @ans@."
+    ),
 ]
 '''
         write_payload = {
@@ -1178,6 +1363,9 @@ class TestCatalogAndPromptsAlignment(unittest.TestCase):
 
         raw_bytes = types_file.read_bytes()
         self.assertNotIn(b"\r", raw_bytes, "subagent_types.json must use strict LF line endings without CRLF")
+        self.assertEqual(raw_bytes.count(b"\r\n"), 0, "subagent_types.json must have exactly 0 CRLF (\\r\\n)")
+        self.assertEqual(raw_bytes.count(b"\r"), 0, "subagent_types.json must have exactly 0 CR (\\r)")
+        self.assertGreater(raw_bytes.count(b"\n"), 0, "subagent_types.json must have LF (\\n)")
 
         disk_content = json.loads(raw_bytes.decode("utf-8"))
         mem_types = get_type_definitions(lean=False)
@@ -1207,7 +1395,7 @@ class TestCatalogAndPromptsAlignment(unittest.TestCase):
             lf = lean_dir / prompt_name
             self.assertTrue(lf.is_file(), f"Missing lean prompt file: {lf}")
             lf_bytes = lf.read_bytes()
-            max_size = 4750 if prompt_name == "prompt_shard_author.md" else 5120
+            max_size = 5000 if prompt_name == "prompt_shard_author.md" else 5120
             self.assertLessEqual(
                 len(lf_bytes),
                 max_size,

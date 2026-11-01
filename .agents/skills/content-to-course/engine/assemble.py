@@ -115,7 +115,11 @@ def _inspect_second_arg_of_value_macro(prefix_stripped: str, key: str) -> Tuple[
     return False, False
 
 
-def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
+def format_template_string(
+    template_str: str,
+    variables: Dict[str, Any],
+    is_cta: bool = False,
+) -> str:
     r"""Safely format string with template variables without corrupting KaTeX curly braces or macros.
 
     Supports:
@@ -142,6 +146,8 @@ def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
 
     result = _PL_TOKEN_PATTERN.sub(_pl_replacer, result)
     for k, v in variables.items():
+        if is_cta and not (len(k) > 2 or k.endswith(("_val", "_num", "_str", "_res"))):
+            continue
         pattern = re.compile(rf"\{{{re.escape(k)}(?::([^{{}}]+))?\}}")
         math_spans = [m_s.span() for m_s in re.finditer(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", result)]
         def is_in_math_span(pos: int) -> bool:
@@ -202,6 +208,9 @@ def format_template_string(template_str: str, variables: Dict[str, Any]) -> str:
             # Case 4: Superscript ^{k} or subscript _{k}
             if prefix_stripped.endswith("^") or prefix_stripped.endswith("_"):
                 if has_pl_tokens and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
+                    return m.group(0)
+                base_m = re.search(r"\\([a-zA-Z]+)\*?(\[[^\]]*\])?(?:\{[^{}]*\})?\s*$", prefix_stripped[:-1].rstrip())
+                if base_m and base_m.group(1) in _LATEX_SYMBOL_MACROS and len(key) <= 1 and not fmt_spec and is_in_math_span(start):
                     return m.group(0)
                 return f"{{{val_str}}}"
 
@@ -434,14 +443,7 @@ def _format_and_sanitize_candidate(
         return ""
     clean = _strip_giveaway_prefix(candidate)
     if variables:
-        if is_cta:
-            vars_to_use = {
-                k: v for k, v in variables.items()
-                if len(k) > 2 or k.endswith(("_val", "_num", "_str", "_res"))
-            }
-        else:
-            vars_to_use = variables
-        formatted = format_template_string(clean, vars_to_use)
+        formatted = format_template_string(clean, variables, is_cta=is_cta)
     else:
         formatted = clean
     return sanitize_katex_syntax(formatted)
@@ -681,9 +683,8 @@ def assemble_question(
 
     if isinstance(common_misconception_warning, str) and common_misconception_warning:
         clean_warning = _strip_giveaway_prefix(common_misconception_warning)
-        cta_vars = {k: v for k, v in variables.items() if len(k) > 2 or k.endswith(("_val", "_num", "_str", "_res"))}
         common_misconception_warning = sanitize_katex_syntax(
-            format_template_string(clean_warning, cta_vars)
+            format_template_string(clean_warning, variables, is_cta=True)
         )
         if validate_katex_syntax(common_misconception_warning, "common_misconception_warning", allow_template_vars=False):
             common_misconception_warning = "Verifique cuidadosamente los supuestos y cálculos antes de seleccionar su respuesta."
@@ -817,10 +818,17 @@ def assemble_question(
 
         options = []
         correct_letters = []
+        tpl_dids = template.get("distractor_ids", [])
+        false_idx = 0
         for idx, opt in enumerate(shuffled_options):
             letter = OPTION_LETTERS[idx]
             is_correct = bool(opt.get("is_correct") if "is_correct" in opt else opt.get("correct", False))
             d_id = opt.get("distractor_id")
+            if not is_correct and not d_id and false_idx < len(tpl_dids):
+                d_id = tpl_dids[false_idx]
+                false_idx += 1
+            elif not is_correct:
+                false_idx += 1
 
             if not is_correct:
                 default_fb = "Opción inválida derivada de una concepción errónea del concepto o propiedad."

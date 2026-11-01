@@ -50,6 +50,7 @@ from engine.sandbox import (
     execute_sandbox_batch,
     validate_code_ast,
 )
+from repair_loop import RepairLoop
 from run import PipelineRunner
 
 
@@ -274,8 +275,9 @@ COMPETENCIES = [
         # Build >= 10 competencies
         comps = []
         for i in range(1, 11):
+            prereqs = f'["C-{i-1:02d}"]' if i > 1 else '[]'
             comps.append(
-                f'    ("concept", "C-{i:02d}", "Concepto {i}", "Desc {i}", "Remember", "doc.pdf", {i}, [], '
+                f'    ("concept", "C-{i:02d}", "Concepto {i}", "Desc {i}", "Remember", "doc.pdf", {i}, {prereqs}, '
                 f'[("D1", "wb1", "cb1", "$1$", "h1"), ("D2", "wb2", "cb2", "$2$", "h2"), ("D3", "wb3", "cb3", "$3$", "h3")])'
             )
         data_text = "COMPETENCIES = [\n" + ",\n".join(comps) + "\n]\n"
@@ -351,7 +353,7 @@ COMPETENCIES = [
             ]
         }), encoding="utf-8")
         (shards_dir / "pre_shard_manifest.json").write_text(
-            json.dumps({"shards": [{"shard_id": "shard_01", "competency_ids": ["C-01"]}]}), encoding="utf-8"
+            json.dumps({"min_archetypes": 1, "shards": [{"shard_id": "shard_01", "min_archetypes": 1, "competency_ids": ["C-01"]}]}), encoding="utf-8"
         )
         shard_code = '''
 def gen_c01(rng):
@@ -361,12 +363,12 @@ def gen_c01(rng):
     ans_val = round(1.0 - (tc / th), 3)
 
     distractors = [
-        {"value": rf"$\\eta = {round(ans_val + 0.10, 3)}$", "distractor_id": "D-C01-01", "error_rationale": "Inversión TH/TC"},
-        {"value": rf"$\\eta = {round(ans_val + 0.20, 3)}$", "distractor_id": "D-C01-02", "error_rationale": "Calor residual"},
-        {"value": rf"$\\eta = {round(ans_val + 0.30, 3)}$", "distractor_id": "D-C01-03", "error_rationale": "Desplazamiento"},
-        {"value": rf"$\\eta = {round(ans_val + 0.40, 3)}$", "distractor_id": "D-C01-04", "error_rationale": "Factor espurio"},
-        {"value": rf"$\\eta = {round(ans_val - 0.10, 3)}$", "distractor_id": "D-C01-05", "error_rationale": "Suma"},
-        {"value": rf"$\\eta = {round(ans_val - 0.20, 3)}$", "distractor_id": "D-C01-06", "error_rationale": "Semidiferencia"},
+        {"value": rf"$\\eta = {round(ans_val + 0.10, 3)}$", "distractor_id": "D-C01-01", "error_rationale": "Inversión errónea en foco caliente @th@ y frío @tc@"},
+        {"value": rf"$\\eta = {round(ans_val + 0.20, 3)}$", "distractor_id": "D-C01-02", "error_rationale": "Calor residual no disipado desde foco @th@"},
+        {"value": rf"$\\eta = {round(ans_val + 0.30, 3)}$", "distractor_id": "D-C01-03", "error_rationale": "Desplazamiento anómalo en temperatura fría @tc@"},
+        {"value": rf"$\\eta = {round(ans_val + 0.40, 3)}$", "distractor_id": "D-C01-04", "error_rationale": "Factor espurio aplicado al foco térmico @th@"},
+        {"value": rf"$\\eta = {round(ans_val - 0.10, 3)}$", "distractor_id": "D-C01-05", "error_rationale": "Suma errónea en lugar de resta con temperatura @tc@"},
+        {"value": rf"$\\eta = {round(ans_val - 0.20, 3)}$", "distractor_id": "D-C01-06", "error_rationale": "Semidiferencia incorrecta entre focos @th@ y @tc@"},
     ]
     return {
         "vars": {"th": th, "tc": tc, "ans": ans_val},
@@ -381,20 +383,37 @@ def ver_c01(res):
 
 TEMPLATES = [
     (
+        "T-C-01",
         "C-01",
         "multiple_choice",
-        r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$. Determine el rendimiento térmico:",
         gen_c01,
         ver_c01,
-        r"Por el teorema de Carnot, el rendimiento es $\\eta = 1 - \\frac{T_C}{T_H} = {ans}$.",
-        "Eficiencia de Carnot",
-        ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"],
-        ("solow.pdf", 1, "Cita")
+        ("medium", "Understand"),
+        [
+            r"Una máquina térmica reversible de Carnot opera entre focos a $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$. Determine el rendimiento térmico:",
+            r"Considere un ciclo reversible de Carnot con focos térmicos $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$. Calcule la eficiencia térmica:",
+            r"Para una máquina de Carnot que transfiere calor entre focos $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$, halle el rendimiento:",
+            r"Evalúe la eficiencia máxima teórica entre reservorios a $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$ mediante Carnot:",
+            r"Estime el rendimiento de una máquina ideal de Carnot entre reservorios térmicos $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Analice el ciclo térmico de Carnot entre dos fuentes con $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$, calculando su rendimiento:",
+            r"Determine el factor de eficiencia de una máquina reversible operando entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Calcule el rendimiento característico de Carnot para un sistema térmico entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Obtenga la eficiencia límite para una máquina reversible entre focos a $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Verifique la cota superior del rendimiento de Carnot para depósitos a $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Halle el valor de la eficiencia térmica ideal entre temperaturas $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Compruebe la razón de rendimiento para la máquina de Carnot entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+        ],
+        [
+            "Recuerde que el rendimiento térmico depende de la relación entre temperaturas.",
+            "Aplique la fórmula de Carnot con las temperaturas dadas para el ciclo.",
+            "Sustituya directamente los valores absolutos en Kelvin para obtener la eficiencia.",
+        ],
+        r"Por el principio de Carnot, el rendimiento es $\\eta = 1 - \\frac{T_C}{T_H} = {ans}$."
     )
 ]
 '''
         (shards_dir / "shard_01_data.py").write_text(shard_code, encoding="utf-8")
-        ok, errs = compile_shard(self.work_dir, "shard_01")
+        ok, errs = compile_shard(self.work_dir, "shard_01", min_archetypes=1)
         self.assertTrue(ok, f"Compilation failed: {errs}")
         tpl_file = self.work_dir / "templates" / "C-01.json"
         self.assertTrue(tpl_file.is_file())
@@ -606,6 +625,62 @@ def generate(rng):
         res = compare_judge_responses({item_id: approx_ans}, gt)
         self.assertEqual(res["agreement_rate"], 1.0)
         self.assertEqual(len(res["discordances"]), 0)
+
+    # =========================================================================
+    # COMPONENT 6: RepairLoop Module A Sanitization & Shared Pads Purge
+    # =========================================================================
+    def test_component_6_repair_loop_module_a_purged_shared_pads(self):
+        """RepairLoop sanea escapes LaTeX (Module A) and never injects synthetic shared_pads."""
+        # 1. Test Module A regex sanitizer and silent control char restoration
+        raw_json_str = '{"stem": "Ecuación con \\frac{1}{2} y \\tau y \text{balance}."}'
+        sanitized = RepairLoop.sanitize_latex_escapes(raw_json_str)
+        self.assertIn(r"\\frac{1}{2}", sanitized)
+        self.assertIn(r"\\tau", sanitized)
+        self.assertIn(r"\\text{balance}", sanitized)
+
+        # 2. Test that options remain intact and zero shared_pads are added
+        course_payload = {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "schema_version": "1.0.0",
+            "course_id": "test_course_pads",
+            "course_title": "Curso de Reparación",
+            "title": "Curso de Reparación",
+            "description": "Descripción formal del curso de prueba para sanitización.",
+            "language": "es",
+            "created_at": "2026-10-12T00:00:00Z",
+            "competencies": [{
+                "id": "C-01",
+                "code": "C-01",
+                "name": "Concepto",
+                "category": "Concept",
+                "description": "Desc",
+                "mastery_target": 100,
+            }],
+            "questions": [{
+                "id": "Q-01",
+                "competency_id": "C-01",
+                "interaction_type": "multiple_choice_7_options",
+                "difficulty": "medium",
+                "bloom": "Understand",
+                "misconception_warning": "Evite confundir los parámetros analíticos.",
+                "stem": "Pregunta de validación sin fugas.",
+                "hints": ["Pista formativa 1 amplia y sustancial.", "Pista formativa 2 amplia y sustancial.", "Pista formativa 3 amplia y sustancial."],
+                "detailed_solution": "Solución detallada formal paso a paso.",
+                "options": [
+                    {"id": f"opt_{i}", "content": f"Opción {i}", "is_correct": (i == 0), "error_rationale": (None if i == 0 else f"Error formativo con longitud {i}")}
+                    for i in range(7)
+                ]
+            }]
+        }
+
+        loop = RepairLoop(strict=True)
+        res = loop.repair_course(course_payload)
+        repaired_opts = res.repaired_course_data["questions"][0]["options"]
+        self.assertEqual(len(repaired_opts), 7)
+        self.assertNotIn("shared_pads", res.repaired_course_data)
+        for opt in repaired_opts:
+            self.assertNotIn("synthetic_pad", opt.get("id", ""))
+            self.assertNotIn("shared_pad", opt.get("id", ""))
 
 
 if __name__ == "__main__":

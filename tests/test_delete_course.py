@@ -68,13 +68,28 @@ class TestDeletionEngineOperations:
     """Verifies dry-run, real deletion, archive mode, and audit report stamping."""
 
     @pytest.fixture
-    def dummy_course_setup(self):
+    def dummy_course_setup(self, tmp_path, monkeypatch):
+        iso_courses = tmp_path / "courses"
+        iso_reports = tmp_path / "reports" / "qa_audits"
+        iso_archive = tmp_path / "archive_rejected_courses"
+        iso_courses.mkdir(parents=True, exist_ok=True)
+        iso_reports.mkdir(parents=True, exist_ok=True)
+        iso_archive.mkdir(parents=True, exist_ok=True)
+
+        monkeypatch.setattr(delete_course_mod, "REPO_ROOT", tmp_path)
+        monkeypatch.setattr(delete_course_mod, "WORK_DIR", tmp_path / "work")
+        monkeypatch.setattr(delete_course_mod, "COURSES_DIR", iso_courses)
+        monkeypatch.setenv("COURSES_DIR", str(iso_courses))
+        monkeypatch.setattr(delete_course_mod, "REPORTS_DIR", iso_reports)
+        monkeypatch.setattr(delete_course_mod, "ARCHIVE_DIR", iso_archive)
+        monkeypatch.setattr(run_platform, "COURSES_DIR", iso_courses)
+
         cid = "unit_test_dummy_course_99"
-        json_path = REPO_ROOT / "courses" / f"{cid}.json"
-        cta_path = REPO_ROOT / "courses" / f"competence_analysis_{cid}.md"
-        dir_path = REPO_ROOT / "courses" / cid
-        report_json = REPO_ROOT / "reports" / "qa_audits" / f"{cid}_qa_report.json"
-        report_md = REPO_ROOT / "reports" / "qa_audits" / f"{cid}_qa_report.md"
+        json_path = iso_courses / f"{cid}.json"
+        cta_path = iso_courses / f"competence_analysis_{cid}.md"
+        dir_path = iso_courses / cid
+        report_json = iso_reports / f"{cid}_qa_report.json"
+        report_md = iso_reports / f"{cid}_qa_report.md"
 
         # Create dummy course
         dummy_data = {
@@ -95,7 +110,6 @@ class TestDeletionEngineOperations:
         (dir_path / "dummy_work.txt").write_text("intermediate work", encoding="utf-8")
 
         # Create dummy QA reports
-        report_json.parent.mkdir(parents=True, exist_ok=True)
         report_json.write_text(json.dumps({
             "course_metadata": {"course_id": cid, "unit_title": "Curso Dummy"},
             "final_score": 18.0,
@@ -110,15 +124,8 @@ class TestDeletionEngineOperations:
             "dir_path": dir_path,
             "report_json": report_json,
             "report_md": report_md,
+            "archive_root": iso_archive,
         }
-
-        # Cleanup in case test failed before engine deleted them
-        json_path.unlink(missing_ok=True)
-        cta_path.unlink(missing_ok=True)
-        if dir_path.is_dir():
-            shutil.rmtree(dir_path, ignore_errors=True)
-        report_json.unlink(missing_ok=True)
-        report_md.unlink(missing_ok=True)
 
     def test_dry_run_preserves_files(self, dummy_course_setup):
         cid = dummy_course_setup["cid"]
@@ -268,7 +275,7 @@ class TestDeletionEngineOperations:
         assert not dummy_course_setup["json_path"].exists()
 
         # Verify items were moved to archive
-        archive_root = REPO_ROOT / "archive_rejected_courses"
+        archive_root = dummy_course_setup["archive_root"]
         found_archived = list(archive_root.glob(f"{cid}_*"))
         assert len(found_archived) > 0
 

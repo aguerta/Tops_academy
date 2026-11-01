@@ -91,7 +91,7 @@ def test_stage0_ingest_multiformat_pdf_tex_image(tmp_path: Path):
 
     data = json.loads(manifest_file.read_text(encoding="utf-8"))
     assert data["course_id"] == "math_foundations"
-    assert data["cta_mode"] == "direct"
+    assert data["cta_mode"] == "direct"  # explicit user choice is never auto-promoted
     assert data["total_files"] == 3
     assert len(data["files"]) == 3
     assert len(data["subparts"]) == 3

@@ -34,7 +34,7 @@ inputs:
     required: false
   stage:
     type: string
-    description: Run a single stage (bootstrap, prepare, cta, shard, templates, build, verify, publish, define-types, judge-compare, wave-status, unlock)
+    description: Run a single stage (bootstrap, prepare, cta, cta-reduce, cta-apply, shard, templates, build, verify, publish, define-types, judge-compare, wave-status, unlock)
     required: false
   from_stage:
     type: string
@@ -100,22 +100,18 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 > 4. **Genera los 4 archivos de tipos** en `<work_dir>/dispatch/types/{c2c_cta_architect,c2c_shard_author,c2c_judge,c2c_repair}.json`.
 > 5. **Ejecuta internamente `dispatch_cta(pointer=True)`**, devolviendo en su JSON de salida (`stdout`) la lista `type_spec_files` y el arreglo `Subagents` listo para invocar (`c2c_cta_architect`), **sin necesidad de llamar a `dispatch.py dispatch-cta` por separado**.
 >
-> ### Secuencia Exacta de Arranque (3 Turnos = `< 25 segundos`):
+> ### Secuencia Exacta de Arranque (arranque en 3 turnos cortos + registro diferido de tipos):
 > - **Turno 1 (inmediatamente tras leer `SKILL.md`)**: Ejecuta **únicamente** este comando (ajustando `--course-id`, `--sources`, `--cta-mode` y `--granularity` según el pedido del usuario):
 >   ```powershell
 >   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage bootstrap --course-id <id> --sources <ruta_o_directorio_fuente> --cta-mode <direct|mapreduce> --granularity <standard|fine|coarse> --director-id <CONVERSATION_ID>
 >   ```
->   *(Si el usuario no especifica modo o granularidad, usa `--cta-mode direct --granularity standard`. Si es extensión incremental de un curso existente, añade `--append --base-course courses/<id>.json`).*
-> - **Turno 2**: Lee en paralelo (en 1 solo turno con 4 llamadas `read_file`) los 4 archivos devueltos en `type_spec_files`:
->   - `<work_dir>/dispatch/types/c2c_cta_architect.json`
->   - `<work_dir>/dispatch/types/c2c_shard_author.json`
->   - `<work_dir>/dispatch/types/c2c_judge.json`
->   - `<work_dir>/dispatch/types/c2c_repair.json`
-> - **Turno 3**: En **un único turno paralelo**, realiza:
->   1. Las 4 llamadas a `define_subagent` (usando exactamente `Name`, `Description`, `SystemPrompt`, `EnableWriteTools=true`, `EnableMCPTools=false`, `EnableSubagentTools=false` de cada JSON).
+>   *(Si el usuario no especifica modo o granularidad, usa `--cta-mode mapreduce --granularity standard` (default). Si el usuario pide explícitamente `cta_direct`/`direct`, pasa `--cta-mode direct`: la instrucción del usuario SIEMPRE prevalece y NUNCA se promueve a mapreduce por número de páginas o archivos. Si es extensión incremental de un curso existente, añade `--append --base-course courses/<id>.json`).*
+> - **Turno 2**: Lee en paralelo (en 1 solo turno, solo lecturas = costo de generación casi nulo) todos los archivos devueltos en `type_spec_files` (`c2c_cta_architect.json`, `c2c_shard_author.json`, `c2c_judge.json`, `c2c_repair.json` y, si existe, `c2c_cta_harmonizer.json`).
+> - **Turno 3 (arranque mínimo, solo el CTA Architect)**: En **un único turno paralelo**, realiza únicamente:
+>   1. **UNA** llamada a `define_subagent` para `c2c_cta_architect` (usando exactamente `Name`, `Description`, `SystemPrompt`, `EnableWriteTools=true`, `EnableMCPTools=false`, `EnableSubagentTools=false` de su JSON). **NO registres aún los demás tipos**: copiar sus system prompts (~14 KB) cuesta ~20 s de generación.
 >   2. Todas las llamadas a `invoke_subagent` (`Model="flash"`, `Workspace="inherit"`) para cada elemento del arreglo `Subagents` que ya te devolvió `bootstrap` en el Turno 1 (**NO ejecutes `dispatch.py dispatch-cta` de nuevo**).
->   3. Una llamada a `schedule` (`DurationSeconds=300`, `Prompt="Auditar progreso CTA"`).
->   4. Detén tu turno inmediatamente y entra en **Barrera Reactiva Silenciosa**.
+>   3. Una llamada a `schedule` (`DurationSeconds=420` = 7 min, `Prompt="Auditar progreso CTA"`).
+> - **Turno 4 (registro diferido mientras los CTA Architects trabajan, ~5-10 min)**: Inmediatamente después, en **un único turno paralelo**, registra con `define_subagent` los tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair` y `c2c_cta_harmonizer` si su JSON existe) usando los JSON ya leídos en el Turno 2 (**sin volver a leerlos**). Luego detén tu turno y entra en **Barrera Reactiva Silenciosa** (cero herramientas hasta recibir `DONE:` de los architects). Los tipos ya estarán listos antes de `cta-reduce` / `dispatch-authors`.
 
 ---
 
@@ -124,11 +120,14 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 >
 > La conversación principal actúa **exclusivamente como Directora de Proyecto / Orquestadora General**. Su responsabilidad es coordinar el flujo de trabajo, invocar las etapas del runner CLI (`run.py`), inspeccionar los presupuestos y artefactos de control, y **delegar todas las tareas intensivas a subagentes especializados en paralelo mediante `invoke_subagent`**.
 >
-> ### 🏛️ ARQUITECTURA HARDENED v3.3:
-> - **Fast Bootstrap (SLA ≤ 60–90s)**: Un único comando atómico CLI (`run.py --stage bootstrap`) inicializa el entorno, procesa los PDFs sin rasterizado, genera manifiestos, produce las especificaciones de tipos en disco (`work/dispatch/types/*.json`) y emite las órdenes `Subagents` de CTA listas para despachar.
-> - **Silent Reactive Barrier Protocol (~12–16 Turnos del Director)**: En despertares reactivos parciales (`k < N` subagentes listos), el Director **NO EJECUTA NINGUNA HERRAMIENTA** (cero llamadas a CLI o sistema de archivos), registra el progreso en 1 línea y finaliza el turno en `< 2s`.
+> ### 🏛️ ARQUITECTURA HARDENED v3.8 MASTERY TRI-BANDA:
+> - **Fast Bootstrap & Promoción MapReduce (SLA ≤ 60–90s)**: Un único comando atómico CLI (`run.py --stage bootstrap`) inicializa el entorno, procesa PDFs sin rasterizado, y usa `mapreduce` por defecto (un `direct` expl&iacute;cito del usuario SIEMPRE prevalece y nunca se promueve por p&aacute;ginas/archivos), con particionado `slice_pdf_lossless` ($k = \lceil P/20 \rceil$) cuando el material supera 25 páginas o múltiples archivos.
+> - **Flujo Simétrico de Armonización (`cta -> cta-reduce -> cta-apply`)**: En mapreduce o modo `--append`, la síntesis de partes converge simétricamente a través de `c2c_cta_harmonizer` (`cta_outline.json` y `duplicate_candidates.json`), absorbiendo nodos preexistentes `[BASE]` de solo lectura y ejecutando Fail-Fast ante desbordamiento de prosa en KaTeX (`[KATEX-PROSE-OVERFLOW]`, `\text{...} > 45` chars).
+> - **Contrato Form-B Tri-Banda Multimodal (`--min-archetypes 3`)**: Cada competencia define 3 plantillas ortogonales (Directo `'easy'`, Inverso `'medium'`, Perturbación `'hard'`) con $\ge 2$ niveles Bloom y diversidad multimodal ($\ge 2$ FIB/MS en `Hab-*`, $\ge 1$ en `C-*`/`H-*`), con 3-tuplas dinámicas `(did, val, rationale_con_@var@)` (`[TPL-DYNAMIC-RATIONALE]`) y anti-patrón estático erradicado (`[TPL-STATIC-OPT]`).
+> - **Silent Reactive Barrier Protocol (~12–16 Turnos del Director)**: En despertares reactivos parciales (`k < N` subagentes listos), el Director **NO EJECUTA NINGUNA HERRAMIENTA** (cero llamadas a CLI o sistema de archivos), registra el progreso en 1 línea (`Progreso de ola: k/N subagentes completados.`) y finaliza el turno en `< 2s`.
 > - **Weighted Waves (`1 Hab/shard`, olas ≤ 10)**: Priorización *Heaviest-First*: cada habilidad práctica compleja (`Hab-*`) se aísla en su propio shard individual y se despacha en la Ola 1 (`--wave 1`) a $t=0$, amortiguando el camino crítico.
-> - **Streaming Incremental de Jueces (`--ready-only`)**: Los jueces ciegos se despachan concurrentemente conforme cada ola de templates se certifica, sin esperar a la finalización de todo el banco.
+> - **Arbitraje Ciego 100% de Plantillas con 3 Semillas (101, 202, 303)**: Evaluación ciega tolerancia-cero (acuerdo 100% por `template_id`) en streaming concurrente (`--ready-only`).
+> - **Compuerta Bloqueante Pre-Publish (`PublishQualityGateError`)**: Publicación bloqueada si el reporte de jueces falla o si el banco no cumple los umbrales psicométricos de producción (MPRI $\ge 75$, ZPD $> 0$, P4 $\ge 13.0/15$, unicidad de fundamentaciones $\ge 30\%$, 0 hard penalties, 0 opciones infladas con relleno de longitud).
 > - **Dieta Estricta del Director & Cero Depuración Manual**: El Director tiene **PROHIBIDO** (y bloqueado por `c2c_hook_guard.py`) leer o editar código fuente de shards (`*_data.py`, `shard_fixes/*.py`), respuestas de jueces o scripts internos `.py` del skill. Todo error o discordancia se delega quirúrgicamente al subagente `c2c_repair`.
 > - **PrairieLearn KaTeX Orthogonal (@var@)**: Desacoplamiento total entre KaTeX y Python mediante tokens `@var@` / `@var:fmt@` en raw strings `r"..."`, erradicando el uso de `rf"..."` y llaves triples `{{{...}}}`.
 
@@ -144,8 +143,8 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 │ Fast Bootstrap (run.py --stage bootstrap --course-id <id> --sources <...>)  │
 │ - Ingesta Zero-Raster, manifiestos centralizados y delta continuo           │
 │ - Genera work/dispatch/types/*.json (≤ 5 KB cada uno) y Subagents CTA       │
-│ - Director lee los 4 tipos, llama define_subagent y despacha c2c_cta_arch  │
-│ - Activa watchdog (schedule a 5 min con budget_guard.py)                    │
+│ - Director define SOLO c2c_cta_architect, despacha CTA y luego define el resto│
+│ - Activa watchdog (schedule a 7 min con budget_guard.py)                    │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
@@ -245,28 +244,30 @@ Este comando ejecuta en `< 1s`:
 - Creación de especificaciones de tipos (`<work_dir>/dispatch/types/*.json`).
 - Generación inmediata de las órdenes de trabajo de CTA (`Subagents` en el JSON de salida de `bootstrap`).
 
-### Paso 1: Definición de Subagentes y Lanzamiento de CTA (Turnos 2 y 3)
-1. **Turno 2**: Lee en paralelo los 4 archivos en `<work_dir>/dispatch/types/*.json` (`c2c_cta_architect.json`, `c2c_shard_author.json`, `c2c_judge.json`, `c2c_repair.json`).
-2. **Turno 3**: Registra los 4 tipos vía `define_subagent`, invoca `invoke_subagent` (`Model="flash"`) para cada elemento de `Subagents` devuelto por `bootstrap`, y agenda el watchdog a 5 minutos mediante `schedule` (`DurationSeconds=300`, `Prompt="Auditar progreso CTA"`).
+### Paso 1: Lanzamiento de CTA y Registro Diferido de Subagentes (Turnos 2, 3 y 4)
+1. **Turno 2**: Lee en paralelo los archivos de `<work_dir>/dispatch/types/*.json` listados en `type_spec_files` (solo lecturas).
+2. **Turno 3**: Registra **solo** `c2c_cta_architect` vía `define_subagent`, invoca `invoke_subagent` (`Model="flash"`) para cada elemento de `Subagents` devuelto por `bootstrap`, y agenda el watchdog a 7 minutos mediante `schedule` (`DurationSeconds=420` = 7 min, `Prompt="Auditar progreso CTA"`).
+3. **Turno 4**: Mientras los architects trabajan, registra en un único turno paralelo los tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair`, `c2c_cta_harmonizer` si existe) con `define_subagent`, y entra a la barrera.
    *(Nota: No necesitas ejecutar `dispatch.py dispatch-cta --work-dir <work_dir>` tras `bootstrap` porque `bootstrap` ya devuelve `Subagents` listos; usa `dispatch-cta` únicamente si necesitas re-despachar un trabajador caído).*
-3. Aplica el Protocolo de Barrera Silenciosa hasta recibir `DONE:` de todos los arquitectos CTA (`1/1` en modo `direct` o `N/N` `part_XX` en modo `mapreduce`).
+4. Aplica el Protocolo de Barrera Silenciosa hasta recibir `DONE:` de todos los arquitectos CTA (`1/1` en modo `direct` o `N/N` `part_XX` en modo `mapreduce`).
 
-### Paso 2: Validación Curricular y Sharding Ponderado
-1. Certifica el currículo compilado (en modo `mapreduce`, este comando fusiona automáticamente `cta_parts/part_*.json` en `<work_dir>/cta.json` y aplica auto-healing L1–L5):
+### Paso 2: Validación Curricular Simétrica (CTA -> CTA-Reduce -> CTA-Apply) y Sharding
+1. Certifica el currículo compilado. En modo `mapreduce` (o bajo `--append`), el runner procesa las partes, despacha `c2c_cta_harmonizer` (`run.py --stage cta-reduce`) y consolida las directivas mediante `run.py --stage cta-apply` produciendo `cta.json`:
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage cta --work-dir <work_dir>
+   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage cta-apply --work-dir <work_dir>
    ```
 2. Realiza la partición ponderada en shards (aislando cada `Hab-*` en un shard exclusivo y asignando todos los shards en **1 sola ola** ordenada *Heaviest-First*):
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage shard --work-dir <work_dir>
    ```
 
-### Paso 3: Despacho de Autores en 1 Sola Ola (Máxima Paralelización)
-1. Despacha todos los shards en **1 sola ola paralela a $t=0$** (sin partición artificial en olas secuenciales, ordenados *Heaviest-First* con `author_shard_XX.json` sin colisiones):
+### Paso 3: Despacho de Autores en 1 Sola Ola (Contrato Form-B Tri-Banda)
+1. Despacha todos los shards en **1 sola ola paralela a $t=0$** (sin partición artificial en olas secuenciales, ordenados *Heaviest-First* con `author_shard_XX.json` sin colisiones, requiriendo `--min-archetypes 3`):
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-authors --work-dir <work_dir>
    ```
-2. Invoca todos los subagentes en paralelo (`Model="flash"`) y agenda watchdog a 8 minutos (`DurationSeconds=480`).
+2. Invoca todos los subagentes en paralelo (`Model="flash"`) y agenda watchdog a 7 minutos (`DurationSeconds=420`).
 3. Aplica Barrera Silenciosa: cero herramientas en mensajes parciales (`k < N`).
 4. Al completar la ola (o si un shard activa Circuit Breaker, delegando con `dispatch.py dispatch-repair --work-dir <work_dir> --ids <CID>`), valida y compila los templates:
    ```powershell
@@ -278,7 +279,7 @@ Este comando ejecuta en `< 1s`:
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage build --work-dir <work_dir>
    ```
-2. Despacha los lotes ciegos a jueces (`≤ 12` ítems por juez con Pointer Mode):
+2. Despacha los lotes ciegos a jueces (`≤ 12` ítems por juez con Pointer Mode, evaluando el 100% de plantillas con 3 semillas `(101, 202, 303)`):
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-judges --work-dir <work_dir>
    ```
@@ -287,8 +288,8 @@ Este comando ejecuta en `< 1s`:
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage judge-compare --work-dir <work_dir>
    ```
 
-### Paso 5: Publicación Final y Liberación
-Publica el curso certificado:
+### Paso 5: Publicación Final y Liberación (Compuerta Bloqueante PublishQualityGateError)
+Publica el curso certificado (validando estricto `PublishQualityGateError` con MPRI $\ge 75$ y ZPD $> 0$):
 ```powershell
 & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage publish --work-dir <work_dir> --output-dir courses
 ```

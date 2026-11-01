@@ -549,3 +549,48 @@ def test_stem_variants_with_prairielearn_tokens():
         is_valid, errors = check_instance_invariants(q, "multiple_choice_7_options")
         assert is_valid, f"Variant instance invariant error: {errors}"
 
+
+def test_is_cta_preserves_single_letter_curly_braces_latex_tokens():
+    """Verify is_cta=True in format_template_string protects ${k}^*$ from {k} while replacing @k@."""
+    variables = {"k": 42, "n": 100, "param_name": "alpha", "dim_val": 3}
+
+    # 1. PrairieLearn single-letter tokens interpolate everywhere
+    cta_text_at = "Para el parámetro @k@ y tamaño muestral @n@, el valor es @dim_val@."
+    rendered_at = format_template_string(cta_text_at, variables, is_cta=True)
+    assert rendered_at == "Para el parámetro 42 y tamaño muestral 100, el valor es 3."
+
+    # 2. LaTeX expression ${k}^*$ or ${n}_{sub}$ with single-letter brace must NOT be replaced
+    cta_text_curly = "El punto estacionario ${k}^*$ con parámetro {param_name} y dimensión {dim_val}."
+    rendered_curly = format_template_string(cta_text_curly, variables, is_cta=True)
+    assert "${k}^*$" in rendered_curly, f"Expected ${{k}}^*$, got {rendered_curly}"
+    assert "param_name" not in rendered_curly
+    assert "alpha" in rendered_curly
+    assert "dim_val" not in rendered_curly
+    assert "3" in rendered_curly
+    assert rendered_curly == "El punto estacionario ${k}^*$ con parámetro alpha y dimensión 3."
+
+    # 3. If is_cta=False, legacy {k} can still interpolate
+    non_cta = "Valor de {k} y {n}"
+    rendered_non_cta = format_template_string(non_cta, variables, is_cta=False)
+    assert rendered_non_cta == "Valor de 42 y 100"
+
+
+def test_simultaneous_pl_tokens_and_latex_math_preservation():
+    """Verify simultaneous interpolation of @n@, @k@, @c@ along with preservation of ${k}^*$ and $\\mathbb{R}^{n}$ when is_cta=True and is_cta=False."""
+    template_str = r"Muestra @n@, dimensión @k@, constante @c@. Sea ${k}^*$ en $\mathbb{R}^{n}$."
+    variables = {"n": 50, "k": 3, "c": 12}
+
+    # is_cta = True
+    rendered_cta = format_template_string(template_str, variables, is_cta=True)
+    assert "Muestra 50, dimensión 3, constante 12." in rendered_cta
+    assert r"${k}^*$" in rendered_cta
+    assert r"$\mathbb{R}^{n}$" in rendered_cta
+
+    # is_cta = False
+    rendered_non_cta = format_template_string(template_str, variables, is_cta=False)
+    assert "Muestra 50, dimensión 3, constante 12." in rendered_non_cta
+    assert r"${k}^*$" in rendered_non_cta
+    assert r"$\mathbb{R}^{n}$" in rendered_non_cta
+
+
+

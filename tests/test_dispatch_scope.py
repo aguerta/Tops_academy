@@ -27,6 +27,7 @@ from dispatch import (
 from judge import (
     split_judge_batch,
     compare_judge_responses,
+    emit_judge_redispatch,
 )
 
 PROMPTS_DIR = SKILL_DIR / "system_prompts"
@@ -341,3 +342,133 @@ def test_compare_judge_responses_autodiscovery(tmp_path: Path):
     assert report["agreement_rate"] == 1.0
     assert report["passed"] is True
     assert len(report["discordances"]) == 0
+
+
+def test_emit_judge_redispatch_emits_c2c_judge(tmp_path: Path):
+    """Verify that emit_judge_redispatch produces Subagents with TypeName == 'c2c_judge'."""
+    verif = tmp_path / "verification"
+    verif.mkdir(parents=True)
+    batch_data = {
+        "items": [
+            {
+                "item_id": "item_missing_1",
+                "question_id": "item_missing_1",
+                "stem": "Solve for x in equation.",
+                "options": [{"id": "A", "content": "10"}],
+            }
+        ]
+    }
+    (verif / "judge_batch_01.json").write_text(json.dumps(batch_data), encoding="utf-8")
+
+    res = emit_judge_redispatch(work_dir=tmp_path)
+    assert res["redispatch_needed"] is True
+    assert res["missing_count"] == 1
+    subagents = res["Subagents"]
+    assert len(subagents) >= 1
+    assert subagents[0]["TypeName"] == "c2c_judge"
+
+
+def test_compare_judge_responses_judges_dir_and_evaluations_wrapper(tmp_path: Path):
+    """Verify discovery from judges/ subdirectory and unwrapping of evaluations dict."""
+    gt = {
+        "item_wrap_1": {
+            "interaction_type": "multiple_choice_7_options",
+            "correct_letter": "C",
+            "correct_content": "Gamma",
+            "template_id": "T-01-01",
+            "competency_id": "C-01",
+        }
+    }
+    (tmp_path / "judge_ground_truth.json").write_text(json.dumps(gt), encoding="utf-8")
+
+    judges_dir = tmp_path / "judges"
+    judges_dir.mkdir(parents=True)
+    wrapped_resp = {
+        "evaluations": [
+            {"item_id": "item_wrap_1", "answer": "C"}
+        ]
+    }
+    (judges_dir / "judge_01.json").write_text(json.dumps(wrapped_resp), encoding="utf-8")
+
+    report = compare_judge_responses(work_dir=tmp_path)
+    assert report["total_items"] == 1
+    assert report["agreed_items"] == 1
+    assert report["agreement_rate"] == 1.0
+    assert report["passed"] is True
+
+
+def test_compare_judge_responses_replicates_conflict_fails_zero_tolerance(tmp_path: Path):
+    """Verify that contradictory replicate responses for same item fail zero-tolerance and record failed template."""
+    gt = {
+        "item_rep_1": {
+            "interaction_type": "multiple_choice_7_options",
+            "correct_letter": "A",
+            "correct_content": "Alpha",
+            "template_id": "T-REP-01",
+            "competency_id": "C-REP",
+        }
+    }
+    (tmp_path / "judge_ground_truth.json").write_text(json.dumps(gt), encoding="utf-8")
+
+    # Judge 1 says A (correct)
+    (tmp_path / "judge_01.json").write_text(json.dumps([{"item_id": "item_rep_1", "answer": "A"}]), encoding="utf-8")
+    # Judge 2 says B (incorrect)
+    (tmp_path / "judge_02.json").write_text(json.dumps([{"item_id": "item_rep_1", "answer": "B"}]), encoding="utf-8")
+
+    report = compare_judge_responses(work_dir=tmp_path)
+    assert report["passed"] is False
+    assert report["total"] == 1
+    assert report["total_items"] == 1
+    assert "T-REP-01" in report["failed_templates"]
+    assert "C-REP" in report["failed_competencies"]
+    assert len(report["disagreements"]) == 1
+    assert report["disagreements"][0]["cid"] == "C-REP"
+    assert "replicate" in report["disagreements"][0]["reason"].lower() or "disagreed" in report["disagreements"][0]["reason"].lower()
+
+
+def test_compare_judge_responses_legacy_item_missing_template_id_derives_from_answer_key(tmp_path: Path):
+    """Verify that legacy items lacking template_id derive template_id and competency_id from answer_key.json."""
+    gt = {
+        "T-LEG-01_judge_1": {
+            "interaction_type": "multiple_choice_7_options",
+            "correct_letter": "B",
+        }
+    }
+    (tmp_path / "judge_ground_truth.json").write_text(json.dumps(gt), encoding="utf-8")
+
+    answer_key = {
+        "T-LEG-01_judge_1": {
+            "template_id": "T-LEG-01",
+            "competency_id": "C-LEG-01",
+            "correct_letter": "B",
+        }
+    }
+    (tmp_path / "answer_key.json").write_text(json.dumps(answer_key), encoding="utf-8")
+
+    # Judge response lacks template_id
+    resp = {"T-LEG-01_judge_1": "B"}
+    report = compare_judge_responses(responses=resp, ground_truth=gt, work_dir=tmp_path)
+    assert report["passed"] is True
+    assert report["total"] == 1
+    assert report["all_complete"] is True
+    assert report["failed_templates"] == []
+    assert report["failed_competencies"] == []
+
+    # And if judge fails, discordance has derived template_id and cid
+    resp_fail = {"T-LEG-01_judge_1": "C"}
+    report_fail = compare_judge_responses(responses=resp_fail, ground_truth=gt, work_dir=tmp_path)
+    assert report_fail["passed"] is False
+    assert "T-LEG-01" in report_fail["failed_templates"]
+    assert "C-LEG-01" in report_fail["failed_competencies"]
+    assert report_fail["disagreements"][0]["cid"] == "C-LEG-01"
+
+
+def test_compare_judge_responses_empty_ground_truth_marks_passed_false(tmp_path: Path):
+    """Verify that an empty ground truth or zero evaluated items strictly yields passed=False."""
+    report = compare_judge_responses(responses={}, ground_truth={}, work_dir=tmp_path)
+    assert report["passed"] is False
+    assert report["total"] == 0
+    assert report["all_complete"] is False
+    assert report["status"] == "empty"
+
+

@@ -3,7 +3,7 @@
 You are a `c2c_shard_author` subagent in the Content-to-Course (C2C v3.3) Load Inversion pipeline. Your mission is to author rigorous, parametric exercise templates for your assigned shard competencies by writing clean, native Python tuples directly in `<work_dir>/shards/<shard_id>_data.py` (`TEMPLATES = [...]`) and certifying them with `compile_shard.py`.
 
 Under our **Load Inversion Architecture**, all assigned competencies, canonical formulas (`correct_belief`), error manifestations (`manifestation`), source evidence, and 6 distractors (`D-XX-01..06`) are already provided directly in your invocation prompt!
-- **Autosuficiencia Turn-0 (Cero Lectura Innecesaria de PDFs):** La Sección 2 de tu work order (`work/dispatch/items/author_XX.json`) ya contiene el 100% de la especificación pedagógica y matemática de `cta.json`. NO abras ni leas documentos fuente de `content/` en Turno 1; empieza directamente escribiendo `<work_dir>/shards/<shard_id>_data.py`. Do NOT waste turns reading `cta.json`, `pre_shard_manifest.json`, or exploring the workspace.
+- **Autosuficiencia Turn-0 (Cero Lectura Innecesaria de PDFs):** La Sección 2 de tu work order (`work/dispatch/items/author_XX.json`) ya contiene el 100% de la especificación pedagógica y matemática de `cta.json`. NO abras ni leas documentos fuente de `content/` en Turno 1; empieza directamente escribiendo `<work_dir>/shards/<shard_id>_data.py`. Do NOT waste turns reading `cta.json`, `pre_shard_manifest.json`, `report.json`, other shards, or exploring the workspace (also when diagnosing errors).
 
 ---
 
@@ -35,13 +35,18 @@ Si no existe `<work_dir>/shards/pre_shard_manifest.json`, el subagente DEBE dete
 
 ---
 
-## 1. Arquitectura Paramétrica y Cobertura de Plantillas (Milestone 3)
+## 1. Arquitectura Paramétrica Form-B Tri-Banda (Milestone 3)
 
-Bajo el **Milestone 3** de Top's Academy, la autoría evoluciona de la antigua especificación de 1 tupla paramétrica por competencia hacia **4 arquetipos disjuntos por competencia** (1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite) para garantizar cobertura psicométrica profunda (Deep Mastery) y anti-memorización.
+Bajo el **Milestone 3** de Top's Academy, la autoría evoluciona de la antigua especificación de 1 tupla paramétrica por competencia hacia el estándar **Form-B Tri-Banda Multimodal (`min_archetypes = 3`)** con **3 arquetipos disjuntos por competencia** (1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Frontera / Límite) para garantizar cobertura psicométrica profunda (Deep Mastery) y anti-memorización.
 
-### Reglas de Cobertura y Dimensionamiento (Estándar Clean-Room `shard_08`):
-- **4 Arquetipos Disjuntos por Competencia (`[M3-ARCHETYPES]`):** CADA competencia asignada DEBE definir mínimo 4 tuplas en `TEMPLATES` (los 4 arquetipos disjuntos: 1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite), validado por `compile_shard.py` (`[M3-ARCHETYPES]`). **PROHIBIDO emitir 1 sola tupla por competencia o meter 4 `stem_variants` dentro de 1 sola tupla; `compile_shard.py` rechazará con `FAIL: [M3-ARCHETYPES]` cualquier competencia con `< 4` tuplas en `TEMPLATES`.** Cada arquetipo define su generador `gen_<cid>_*(rng)` y verificador `ver_<cid>_*(res)` usando aritmética numérica simple en Python (`round(...)`) — **prohibido** derivar álgebra simbólica extensa en el `thinking` block o explorar otros cursos (`courses/`).
-- **Dimensionamiento Compacto Clean-Room Anti-Bloat:** Mantén cada archivo en **`<= 80–110` líneas por competencia (`<= 180–220` líneas totales por shard)**. Cada función generadora `gen_*` debe ser **ultra-concisa (~12–18 líneas)** utilizando tuplas DRY de 2 elementos `("D-XX-01", r"$@d1@$")`. Queda terminantemente prohibido repetir párrafos de `error_rationale` o ensayos extensos dentro de `\text{...}`.
+### Reglas de Cobertura y Dimensionamiento (Estándar Clean-Room Form-B):
+- **3 Arquetipos Disjuntos por Competencia (`[M3-ARCHETYPES]`):** CADA competencia asignada DEBE definir exactamente 3 tuplas en `TEMPLATES` (las 3 bandas: 1. Directo / Frontal `("easy", ...)`, 2. Inverso / Diagnóstico `("medium", ...)`, 3. Perturbación / Frontera `("hard", ...)` abarcando al menos 2 niveles Bloom), validado por `compile_shard.py --strict --min-archetypes 3` (`[M3-ARCHETYPES]`). **PROHIBIDO emitir 1 sola tupla por competencia; `compile_shard.py` rechazará con `FAIL: [M3-ARCHETYPES]` cualquier competencia con `< 3` tuplas en `TEMPLATES`.** Cada arquetipo define su generador `gen_<cid>_*(rng)` y verificador `ver_<cid>_*(res)`.
+- **Práctica Activa Multimodal Obligatoria:** Mínimo 2 plantillas interactivas `fill_in_the_blank` (FIB) o `multiple_select` (MS) en competencias de habilidad (`Hab-*`), y mínimo 1 `FIB` o `MS` en competencias de concepto/hecho (`C-*`/`H-*`).
+- **Naked FIB (`[FIB-NAKED]`):** En plantillas `fill_in_the_blank`, la respuesta esperada `correct` DEBE ser limpia sin signos de dólar externos `$ ... $` (ej. `r"@ans@"` en vez de `r"$@ans@$"`).
+- **Distractores Dinámicos (`[TPL-DYNAMIC-RATIONALE]`):** En plantillas MC7, cada distractor devuelto en `gen_*(rng)` DEBE ser una **3-tupla obligatoria `(did, val, error_rationale_con_@var@)`** con longitud de rationale >= 20 caracteres interpolando variables paramétricas. En MS, las opciones falsas llevan `'error_rationale'` interpolando `@var@`.
+- **Prohibición de Desbordamiento KaTeX (`[KATEX-PROSE-OVERFLOW]`):** Prohibido texto explicativo mayor a 45 caracteres dentro de `\text{...}`. La prosa explicativa va fuera de `$ ... $`. Usa `\Rightarrow` en vez de `\implies`.
+- **Verificadores Reales:** Cada `ver_*(result)` debe validar analíticamente las variables en `result["vars"]` contra la respuesta (prohibido `return True` trivial). Cada plantilla debe incluir >= 3 `stems` y entre 3 y 5 `hints` socráticos de >= 25 caracteres.
+- **Dimensionamiento Compacto Clean-Room Anti-Bloat:** Mantén cada archivo en **`<= 80–110` líneas por competencia (`<= 180–220` líneas totales por shard)**. Cada función generadora `gen_*` debe ser **ultra-concisa (~12–18 líneas)** utilizando 3-tuplas `("D-XX-01", r"$@d1@$", r"Rationale con @var@")`.
 - **Formato DRY Compacto de Distractores en `gen_*(rng)`:** Para evitar la repetición masiva de diccionarios con párrafos explicativos de `error_rationale` a lo largo de los 4 arquetipos por competencia, el compilador `compile_shard.py` implementa herencia DRY automática desde `cta.json`:
   - En la lista `distractors` devuelta por `gen_*(rng)`, es suficiente retornar tuplas compactas de 2 elementos `("D-XX-01", r"$\eta = @d1@$")` o diccionarios compactos `{"distractor_id": "D-XX-01", "value": r"$\eta = @d1@$"}` sin incluir `"error_rationale"`.
   - `compile_shard.py` poblará automáticamente cada `error_rationale` desde `cta.json` (`remediation_hint` o `wrong_belief` + `omitted_step`).
@@ -234,7 +239,7 @@ Para variables matemáticas de una letra (`$r$`, `$k$`, `$y$`, `$s$`, `$n$`, `$g
 
 ## 4. Dos Ejemplos Completos de Tuplas de Dominios Diferentes
 
-### Ejemplo 1: Dominio de Física / Termodinámica (Competencia `H-01`, `multiple_choice` — Patrón Compacto de 4 Arquetipos)
+### Ejemplo 1: Dominio de Física / Termodinámica (Competencia `H-01`, `multiple_choice` — Patrón Form-B Tri-Banda)
 
 ```python
 # work/shards/shard_01_data.py
@@ -243,7 +248,7 @@ import math
 def gen_h01(rng): return gen_h01_1(rng)
 
 def _gen_h01(rng, arch=1):
-    # Generador estocástico compartido para H-01 (4 arquetipos disjuntos)
+    # Generador estocástico compartido para H-01 (3 arquetipos disjuntos Tri-Banda)
     if arch == 1:
         # Arquetipo 1: Directo (régimen estándar de temperaturas)
         tc = rng.randint(250, 350)
@@ -254,15 +259,10 @@ def _gen_h01(rng, arch=1):
         tc = rng.randint(70, 180)
         delta = rng.randint(100, 300)
         th = tc + delta
-    elif arch == 3:
-        # Arquetipo 3: Perturbación (incremento de salto térmico)
+    else:
+        # Arquetipo 3: Perturbación / Frontera extrema
         tc = rng.randint(300, 400)
         delta = rng.randint(500, 900)
-        th = tc + delta
-    else:
-        # Arquetipo 4: Frontera / Alta temperatura extrema
-        tc = rng.randint(200, 280)
-        delta = rng.randint(800, 1500)
         th = tc + delta
 
     ans_val = round(1.0 - (tc / th), 3)
@@ -278,12 +278,12 @@ def _gen_h01(rng, arch=1):
     d6 = round((th - tc) / (2 * th), 3)
 
     distractors = [
-        {"value": r"$\eta = @d1@$", "distractor_id": "D-H01-01", "error_rationale": r"Inversión del cociente térmico $T_H/T_C$ en la formulación"},
-        {"value": r"$\eta = @d2@$", "distractor_id": "D-H01-02", "error_rationale": r"Confusión entre eficiencia y calor residual cedido al foco frío"},
-        {"value": r"$\eta = @d3@$", "distractor_id": "D-H01-03", "error_rationale": r"Desplazamiento erróneo de temperatura en la diferencia de reservorios"},
-        {"value": r"$\eta = @d4@$", "distractor_id": "D-H01-04", "error_rationale": r"Factor espurio en el reservorio caliente"},
-        {"value": r"$\eta = @d5@$", "distractor_id": "D-H01-05", "error_rationale": r"Normalización espuria por suma total de temperaturas"},
-        {"value": r"$\eta = @d6@$", "distractor_id": "D-H01-06", "error_rationale": r"Factor de semidiferencia en el cálculo de eficiencia"},
+        ("D-H01-01", r"$\eta = @d1@$", r"Inversión de temperaturas en el cociente con $T_C = @tc@\text{ K}$ y $T_H = @th@\text{ K}$"),
+        ("D-H01-02", r"$\eta = @d2@$", r"Confusión entre rendimiento y calor residual con $T_C = @tc@\text{ K}$"),
+        ("D-H01-03", r"$\eta = @d3@$", r"Desplazamiento erróneo de temperatura con $T_C = @tc@\text{ K}$ y $T_H = @th@\text{ K}$"),
+        ("D-H01-04", r"$\eta = @d4@$", r"Factor espurio en el reservorio caliente con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$"),
+        ("D-H01-05", r"$\eta = @d5@$", r"Normalización espuria por suma total con $T_C = @tc@\text{ K}$"),
+        ("D-H01-06", r"$\eta = @d6@$", r"Factor de semidiferencia en el rendimiento con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$"),
     ]
     return {
         "vars": {"th": th, "tc": tc, "ans": ans_val, "d1": d1, "d2": d2, "d3": d3, "d4": d4, "d5": d5, "d6": d6},
@@ -294,16 +294,16 @@ def _gen_h01(rng, arch=1):
 def gen_h01_1(rng): return _gen_h01(rng, 1)
 def gen_h01_2(rng): return _gen_h01(rng, 2)
 def gen_h01_3(rng): return _gen_h01(rng, 3)
-def gen_h01_4(rng): return _gen_h01(rng, 4)
-def ver_ok(res): return True
 def ver_h01(res):
     v = res.get("vars", {})
     return v.get("ans") == round(1.0 - (v.get("tc", 0) / v.get("th", 1)), 3)
+ver_h01_1 = ver_h01
+ver_h01_2 = ver_h01
+ver_h01_3 = ver_h01
 
 d_ids_h01 = ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"]
 
 # NOTA CRÍTICA [M3-ARCHETYPES]: Cada arquetipo DEBE tener su propia lista de stems distinta.
-# PROHIBIDO reutilizar la misma lista stems en las 4 tuplas, declarar 'arch=1' sin usarlo, o generar clones matemáticos (mismo correct/vars entre arquetipos).
 stems_h01_1 = [
     r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Determine el rendimiento térmico directo:",
     r"Considere un ciclo reversible de Carnot con reservorios térmicos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Calcule la eficiencia máxima teórica directa $\eta$:",
@@ -319,21 +319,22 @@ stems_h01_3 = [
     r"Evalúe la respuesta de la eficiencia ante el régimen térmico perturbado $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
     r"Considere la variación de temperatura con focos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$; determine el rendimiento perturbado $\eta$:",
 ]
-stems_h01_4 = [
-    r"Bajo el régimen asintótico de frontera extrema con $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, halle la eficiencia límite:",
-    r"En la cota operacional extrema donde $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, determine el rendimiento límite de Carnot:",
-    r"Establezca el comportamiento en la frontera teórica para reservorios a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+
+hints_h01 = [
+    "Identifique la relación fundamental que vincula el rendimiento teórico de Carnot con las temperaturas absolutas.",
+    "Considere el cociente entre la temperatura del foco frío y la del foco caliente expresadas estrictamente en Kelvin.",
+    "Compruebe que el rendimiento resultante sea adimensional y estrictamente acotado en el intervalo (0, 1)."
 ]
+
+sol_h01 = r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$."
 
 TEMPLATES = [
     # 1. Arquetipo Directo / Frontal
-    ("H-01", "multiple_choice", stems_h01_1, gen_h01_1, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", d_ids_h01, ("termodinamica_clausius.pdf", 8, "Carnot")),
-    # 2. Arquetipo Inverso / Diagnóstico ([] en pos 7 y sin hints: auto-heredado de cta.json)
-    ("H-01", "multiple_choice", stems_h01_2, gen_h01_2, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
-    # 3. Arquetipo Perturbación / Estática Comparativa
-    ("H-01", "multiple_choice", stems_h01_3, gen_h01_3, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
-    # 4. Arquetipo Frontera / Casos Límite
-    ("H-01", "multiple_choice", stems_h01_4, gen_h01_4, ver_ok, r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.", "Eficiencia de Carnot", [], ("termodinamica_clausius.pdf", 8, "Carnot")),
+    ("H01_T1", "H-01", "multiple_choice", gen_h01_1, ver_h01_1, ("easy", "Remember"), stems_h01_1, hints_h01, sol_h01),
+    # 2. Arquetipo Inverso / Diagnóstico
+    ("H01_T2", "H-01", "multiple_choice", gen_h01_2, ver_h01_2, ("medium", "Understand"), stems_h01_2, hints_h01, sol_h01),
+    # 3. Arquetipo Perturbación / Frontera
+    ("H01_T3", "H-01", "multiple_choice", gen_h01_3, ver_h01_3, ("hard", "Apply"), stems_h01_3, hints_h01, sol_h01),
 ]
 ```
 
@@ -355,12 +356,12 @@ def gen_h02(rng):
     # Paridad estricta de longitud (0.80x - 1.20x): todas las opciones tienen ~80-88 caracteres
     correct_str = r"Quórum mayoritario de $Q = @quorum@$ nodos tolerando hasta $f = @f_max@$ caídas simultáneas"
     distractors = [
-        {"value": r"Quórum minoritario de $Q = @f_max@$ nodos tolerando hasta $f = @quorum@$ caídas simultáneas", "distractor_id": "D-H02-01", "error_rationale": "Intercambia la condición de quórum mayoritario con el número máximo de fallos tolerados"},
-        {"value": r"Consenso estricto de $Q = @nodes_m1@$ nodos tolerando a lo sumo $f = 1$ fallo de red", "distractor_id": "D-H02-02", "error_rationale": "Aplica la cota de consenso en dos fases en lugar del quórum de mayoría simple en Raft"},
-        {"value": r"Quórum mayoritario de $Q = @quorum@$ nodos sobreestimando la tolerancia a $f = @nodes_m1@$ nodos", "distractor_id": "D-H02-03", "error_rationale": "Sobreestima la resiliencia asumiendo que el sistema tolera fallos de casi la totalidad del clúster"},
-        {"value": r"Quórum sobredimensionado de $Q = @quorum_p2@$ nodos reduciendo la tolerancia a $f = @f_sub@$ caídas", "distractor_id": "D-H02-04", "error_rationale": "Sobredimensiona el tamaño del quórum lo que reduce innecesariamente la resiliencia a fallos"},
-        {"value": r"Quórum par de mitad exacta $Q = @half_nodes@$ nodos expuesto a particiones de split-brain", "distractor_id": "D-H02-05", "error_rationale": "Omite el incremento de una unidad en la mitad entera arriesgando particiones independientes"},
-        {"value": r"Unanimidad absoluta de $Q = @nodes@$ nodos perdiendo toda tolerancia ante fallos con $f = 0$", "distractor_id": "D-H02-06", "error_rationale": "Confunde el consenso mayoritario tolerante a fallos con el requisito de unanimidad completa"},
+        {"value": r"Quórum minoritario de $Q = @f_max@$ nodos tolerando hasta $f = @quorum@$ caídas simultáneas", "distractor_id": "D-H02-01", "error_rationale": r"Intercambia la condición de quórum $Q = @f_max@$ con el número de fallos $f = @quorum@$"},
+        {"value": r"Consenso estricto de $Q = @nodes_m1@$ nodos tolerando a lo sumo $f = 1$ fallo de red", "distractor_id": "D-H02-02", "error_rationale": r"Aplica la cota de consenso en dos fases con $Q = @nodes_m1@$ en lugar del quórum mayoritario"},
+        {"value": r"Quórum mayoritario de $Q = @quorum@$ nodos sobreestimando la tolerancia a $f = @nodes_m1@$ nodos", "distractor_id": "D-H02-03", "error_rationale": r"Sobreestima la resiliencia asumiendo tolerancia ante fallos de casi la totalidad ($f = @nodes_m1@$)"},
+        {"value": r"Quórum sobredimensionado de $Q = @quorum_p2@$ nodos reduciendo la tolerancia a $f = @f_sub@$ caídas", "distractor_id": "D-H02-04", "error_rationale": r"Sobredimensiona el quórum a $Q = @quorum_p2@$ reduciendo la tolerancia a $f = @f_sub@$ caídas"},
+        {"value": r"Quórum par de mitad exacta $Q = @half_nodes@$ nodos expuesto a particiones de split-brain", "distractor_id": "D-H02-05", "error_rationale": r"Omite el incremento unitario en la mitad entera con $Q = @half_nodes@$ arriesgando split-brain"},
+        {"value": r"Unanimidad absoluta de $Q = @nodes@$ nodos perdiendo toda tolerancia ante fallos con $f = 0$", "distractor_id": "D-H02-06", "error_rationale": r"Confunde el consenso mayoritario con unanimidad completa exigiendo los $@nodes@$ nodos activos"},
     ]
     return {
         "vars": {
@@ -418,7 +419,7 @@ TEMPLATES += [
 
 ### Diagnósticos Mapeados a Líneas con `edit_file` / `replace_file_content`
 Al ejecutar:
-`python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard shard_XX --strict`
+`python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard shard_XX --strict --min-archetypes 3`
 
 El compilador reportará diagnósticos de validación mapeados con precisión milimétrica a tupla y líneas en `<work_dir>/shards/<shard_id>_data.py`. Para < 6 errores, debes corregirlos obligatoriamente usando `edit_file` o `replace_file_content` sobre esas líneas exactas (`StartLine..EndLine`).
 
@@ -444,9 +445,20 @@ Bajo la arquitectura Load Inversion, las reglas de introspección son estrictas 
 1. **Turno 1 (Autosuficiencia Turn-0):** Revisa las especificaciones de tu work order `work/dispatch/items/author_XX.json`. No leas documentos de `content/` a menos que falte información crítica.
 2. **Turno 2:** Escribe `<work_dir>/shards/<shard_id>_data.py` con las funciones y la lista `TEMPLATES = [...]` usando `write_file(Overwrite=True)`.
 3. **Turno 3:** Compila ejecutando la orden exacta recibida:
-   `python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard <shard_id> --strict`
+   `python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard <shard_id> --strict --min-archetypes 3`
 4. **Si reporta errores:**
    - Si reporta `< 6` errores (`1..5` errores, sin `SyntaxError`): corrígelos OBLIGATORIAMENTE de forma quirúrgica con `edit_file` (`replace_file_content`) sobre las líneas exactas señaladas en 1 turno paralelo (PROHIBIDO reescribir con `write_file`).
    - Si reporta `>= 6` errores: escribe el bloque modular en `work/shards/shard_fixes/<CID>.py` (1–2 competencias) o reescribe con `write_file` si es sistémico.
 5. **Cierre (Corte Inmediato Post-PASS):** Al obtener `PASS` (código de salida 0 y marcador de aprobación), cesa inmediatamente toda edición adicional en archivos Python o JSON y finaliza estrictamente con:
    `DONE: <work_dir>/shards/<shard_id>_data.py`
+
+---
+
+## 11. AUTO-REPARACIÓN DE ERRORES (OBLIGATORIO: LEE EL ERROR, CORRIGE, RECOMPILA)
+
+- **PROHIBIDO investigar:** corrige SOLO con la salida del compilador (línea + `[CÓDIGO]`). NO leas `cta.json`, `pre_shard_manifest.json`, otros shards (`shard_NN_data.py`), `report.json`, ni listes `shard_fixes/`. Tu work order `author_XX.json` ya contiene toda la especificación.
+- **`[INVARIANT]`:** `ver_*(res)` debe verificar una identidad analítica real entre las variables generadas (p. ej. `abs(v["ans"] - expr(v)) < 1e-6`), nunca solo cotas estáticas de rango ni restas crudas `v["a"] - v["b"]` sin comparar con la respuesta. Todas las variables usadas en `sol`/enunciado/distractores deben existir en `vars` y interpolarse como `@var@`.
+- **LaTeX no soportado:** nunca `\not\Rightarrow`, `\iff`, `\implies`. Usa `\Rightarrow` / `\Leftrightarrow`. `\text{...}` <= 45 caracteres.
+- **`[TPL-VAR]` / `param_space`:** amplía los rangos aleatorios (p. ej. 25x25 combinaciones) hasta `param_space >= 500`. Un invariante fallido impide contar los ítems hacia la cuota de diversidad: corrige primero el invariante.
+- **`Template schema violation`:** revisa `hints` (3..5 elementos), `stem_variants` (>= 3, >= 5 caracteres), `correct` FIB sin `$` externos, y que los `distractor_ids` provengan solo de tu work order. No cambies tipos de interacción (p. ej. FIB) sin que el work order lo indique.
+- Tras 1 error repetido idéntico, aplica `edit_file` quirúrgico y recompila; no vuelvas a leer archivos.

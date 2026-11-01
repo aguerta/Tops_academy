@@ -31,6 +31,7 @@ from dispatch import (
     build_scope_header,
     dispatch_authors,
     dispatch_cta,
+    dispatch_cta_reduce,
     dispatch_judges,
     dispatch_repair,
     generate_define_subagent_specs,
@@ -489,6 +490,147 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
         self.assertIn("judge_01.json", prompt_ptr)
         self.assertNotIn("NO EJECUTES `view_file`", prompt_ptr)
         self.assertIn(f"DONE: {expected_target}", prompt_ptr)
+
+    # =========================================================================
+    # 7. dispatch_cta_reduce: Pointer Mode, TypeName and DAG closure
+    # =========================================================================
+    def test_dispatch_cta_reduce_pointer_and_typename(self) -> None:
+        """dispatch_cta_reduce generates pointer item cta_reduce_01.json with TypeName c2c_cta_harmonizer."""
+        cta_parts_dir = self.work_dir / "cta_parts"
+        cta_parts_dir.mkdir(parents=True, exist_ok=True)
+        (cta_parts_dir / "part_01.json").write_text(json.dumps({"competencies": []}), encoding="utf-8")
+
+        res = dispatch_cta_reduce(self.work_dir, pointer=True)
+        self.assertEqual(len(res["Subagents"]), 1)
+        subagent = res["Subagents"][0]
+        self.assertEqual(subagent.get("TypeName"), "c2c_cta_harmonizer")
+        self.assertIn("cta_reduce_01.json", subagent.get("Prompt", ""))
+
+        item_path = Path(res["item_files"][0])
+        self.assertTrue(item_path.is_file())
+        item_data = json.loads(item_path.read_text(encoding="utf-8"))
+        self.assertEqual(item_data.get("TypeName"), "c2c_cta_harmonizer")
+        self.assertIn("connected_components == 1", item_data.get("Prompt", ""))
+        self.assertIn("root_ratio <= 0.20", item_data.get("Prompt", ""))
+
+        type_spec = self.work_dir / "dispatch" / "types" / "c2c_cta_harmonizer.json"
+        self.assertTrue(type_spec.is_file())
+
+    # =========================================================================
+    # 8. dispatch_repair multi-issue accumulation and --min-archetypes 3
+    # =========================================================================
+    def test_dispatch_repair_multi_issue_and_min_archetypes_3(self) -> None:
+        """dispatch_repair accumulates multiple issues per competency and includes --min-archetypes 3."""
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "macro_test",
+            "documents": [{"name": "book.pdf", "path": "content/book.pdf"}],
+        }), encoding="utf-8")
+        (self.work_dir / "cta.json").write_text(json.dumps({"course_id": "macro_test"}), encoding="utf-8")
+
+        shards_dir = self.work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+        (shards_dir / "pre_shard_manifest.json").write_text(json.dumps({
+            "shards": [{"shard_id": "shard_01", "competency_ids": ["Hab-05"]}],
+        }), encoding="utf-8")
+
+        (self.work_dir / "reports").mkdir(parents=True, exist_ok=True)
+        (self.work_dir / "reports" / "templates_report.json").write_text(json.dumps({
+            "results": [{"cid": "Hab-05", "status": "fail", "errors": ["R-20 unbalance", "FIB dollar wrap error"]}],
+        }), encoding="utf-8")
+        (self.work_dir / "judge_report.json").write_text(json.dumps({
+            "disagreements": [
+                {"cid": "Hab-05", "item_id": "Q-05-01", "reason": "Judge discrepancy on root computation"},
+                {"cid": "Hab-05", "item_id": "Q-05-02", "reason": "Ambiguous options formulation"},
+            ],
+        }), encoding="utf-8")
+
+        res = dispatch_repair(self.work_dir)
+        self.assertEqual(len(res["Subagents"]), 1)
+        subagent = res["Subagents"][0]
+        prompt = subagent["Prompt"]
+
+        self.assertIn("R-20 unbalance", prompt)
+        self.assertIn("FIB dollar wrap error", prompt)
+        self.assertIn("Judge discrepancy on root computation", prompt)
+        self.assertIn("Ambiguous options formulation", prompt)
+        self.assertIn("--min-archetypes 3", prompt)
+        self.assertIn("--min-archetypes 3", subagent.get("compile_command", ""))
+
+    # =========================================================================
+    # 9. CLI parity and schema verification for dispatch-cta-reduce
+    # =========================================================================
+    def test_dispatch_cta_reduce_cli_and_duplicate_decisions_schema(self) -> None:
+        """dispatch-cta-reduce CLI subcommand is callable and emits duplicate_decisions schema with keep_id/drop_id."""
+        from unittest.mock import patch
+        import dispatch
+
+        cta_parts_dir = self.work_dir / "cta_parts"
+        cta_parts_dir.mkdir(parents=True, exist_ok=True)
+        (cta_parts_dir / "part_01.json").write_text(json.dumps({"competencies": []}), encoding="utf-8")
+        (self.work_dir / "delta_manifest.json").write_text(json.dumps({"existing_competency_ids": ["C-01"]}), encoding="utf-8")
+
+        test_args = ["dispatch.py", "dispatch-cta-reduce", "--work-dir", str(self.work_dir), "--pointer"]
+        with patch.object(sys, "argv", test_args):
+            dispatch.main()
+
+        item_path = self.work_dir / "dispatch" / "items" / "cta_reduce_01.json"
+        self.assertTrue(item_path.is_file(), "cta_reduce_01.json was not created via CLI")
+        item_data = json.loads(item_path.read_text(encoding="utf-8"))
+        self.assertEqual(item_data.get("TypeName"), "c2c_cta_harmonizer")
+
+        prompt_str = item_data.get("Prompt", "")
+        self.assertIn("duplicate_decisions", prompt_str)
+        self.assertIn("keep_id", prompt_str)
+        self.assertIn("drop_id", prompt_str)
+        self.assertIn("add_prerequisites", prompt_str)
+        self.assertIn("[BASE]", prompt_str)
+
+    # =========================================================================
+    # 10. Multi-diagnostic accumulation from judge_report.json in dispatch_repair
+    # =========================================================================
+    def test_dispatch_repair_accumulates_judge_report_failed_templates_and_competencies(self) -> None:
+        """dispatch_repair consumes failed_templates and failed_competencies from judge_report.json without truncation."""
+        (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
+            "course_id": "macro_test",
+            "documents": [{"name": "book.pdf", "path": "content/book.pdf"}],
+        }), encoding="utf-8")
+        (self.work_dir / "cta.json").write_text(json.dumps({"course_id": "macro_test"}), encoding="utf-8")
+
+        shards_dir = self.work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+        (shards_dir / "pre_shard_manifest.json").write_text(json.dumps({
+            "shards": [{"shard_id": "shard_01", "competency_ids": ["C-02", "Hab-03"]}],
+        }), encoding="utf-8")
+
+        (self.work_dir / "judge_report.json").write_text(json.dumps({
+            "failed_templates": {
+                "C-02": ["R-16 length parity failure: correct length outside [0.80, 1.20]"],
+            },
+            "failed_competencies": [
+                {"cid": "Hab-03", "reason": "FIB dollar wrap violation in template T3"},
+            ],
+            "disagreements": [
+                {"cid": "C-02", "item_id": "Q-02-01", "reason": "Option C distractor collision"},
+            ],
+        }), encoding="utf-8")
+
+        res = dispatch_repair(self.work_dir)
+        self.assertEqual(len(res["Subagents"]), 2, "Expected 2 repair subagents, one per failing competency")
+        sub_c02 = next(s for s in res["Subagents"] if "C-02" in s.get("assigned_competency", "") or "C-02" in s.get("Role", ""))
+        sub_hab03 = next(s for s in res["Subagents"] if "Hab-03" in s.get("assigned_competency", "") or "Hab-03" in s.get("Role", ""))
+
+        prompt_c02 = sub_c02["Prompt"]
+        prompt_hab03 = sub_hab03["Prompt"]
+
+        self.assertIn("R-16 length parity failure", prompt_c02)
+        self.assertIn("Option C distractor collision", prompt_c02)
+        self.assertIn("FIB dollar wrap violation", prompt_hab03)
+        self.assertIn("--min-archetypes 3", sub_c02.get("compile_command", ""))
+        self.assertIn("--strict", sub_c02.get("compile_command", ""))
+        self.assertIn("--min-archetypes 3", sub_hab03.get("compile_command", ""))
+        self.assertIn("--strict", sub_hab03.get("compile_command", ""))
+
+
 
 
 if __name__ == "__main__":

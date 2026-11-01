@@ -351,7 +351,7 @@ class TestRealCoursesKaTeXZeroFalsePositives:
 
     MATRIX_KEYWORDS = ("matrix", "pmatrix", "bmatrix", "vmatrix", "Vmatrix", "cases", "aligned", "array")
 
-    def test_all_matrix_questions_in_real_courses_have_zero_r23_errors(self):
+    def test_all_matrix_questions_in_real_courses_have_zero_r23_errors(self, real_courses_parsed):
         courses_dir = REPO_ROOT / "courses"
         assert courses_dir.is_dir(), f"Courses directory not found: {courses_dir}"
 
@@ -360,11 +360,8 @@ class TestRealCoursesKaTeXZeroFalsePositives:
         violations = []
 
         for course_filename in self.COURSES:
-            course_path = courses_dir / course_filename
-            assert course_path.is_file(), f"Course file not found: {course_path}"
-
-            with open(course_path, "r", encoding="utf-8") as f:
-                course_data = json.load(f)
+            assert course_filename in real_courses_parsed, f"Course file not found: {course_filename}"
+            course_data = real_courses_parsed[course_filename]
 
             questions = course_data.get("questions", [])
             total_questions_scanned += len(questions)

@@ -21,7 +21,7 @@ if str(ROOT_DIR / "src") not in sys.path:
     sys.path.insert(0, str(ROOT_DIR / "src"))
 
 from check_templates import check_templates_file_or_dir
-from course_publisher import CoursePublisher
+from course_publisher import CoursePublisher, PublishQualityGateError
 from dispatch import dispatch_cta
 from run import PipelineRunner
 
@@ -271,3 +271,276 @@ class TestAppendModeDryRun:
         assert res3.success, f"Same-competency append failed: {res3.error_message}"
         assert res3.total_competencies == orig_comp_count * 2  # No duplicate competency added
         assert res3.total_questions == (orig_q_count * 2) + 1  # Only 1 new question added (duplicate skipped)
+
+
+class TestSymmetricHarmonizationAndPublishGates:
+    """Tests for Matiz 4a, Matiz 3, and Stage publish quality gate enforcement."""
+
+    def test_matiz_4a_mapreduce_single_part_harmonization_without_cta_json(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Matiz 4a: Forced mapreduce with 1 short part merges without cta.json and dispatches cta-reduce."""
+        monkeypatch.chdir(tmp_path)
+        work_dir = tmp_path / "courses" / "custom_course" / "work"
+        work_dir.mkdir(parents=True, exist_ok=True)
+        cta_parts_dir = work_dir / "cta_parts"
+        cta_parts_dir.mkdir(parents=True, exist_ok=True)
+
+        manifest_data = {
+            "course_id": "custom_course",
+            "cta_mode": "mapreduce",
+            "total_pages": 5,
+            "files": [{"doc": "doc_01.pdf", "file_index": 0, "total_pages": 5}],
+            "subparts": [
+                {
+                    "subpart_id": "cta_part_01",
+                    "subpart_index": 0,
+                    "file_index": 0,
+                    "doc": "doc_01.pdf",
+                    "page_range": [1, 5],
+                    "total_pages": 5,
+                }
+            ],
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest_data), encoding="utf-8")
+
+        def _make_dist(did: str, name: str) -> Dict[str, Any]:
+            return {
+                "id": did,
+                "name": name,
+                "wrong_belief": "Confusion basica",
+                "omitted_step": None,
+                "trigger": "Disparador de error",
+                "manifestation": "Manifestacion del fallo",
+                "error_type": "conceptual_swap",
+                "severity": "medium",
+                "origin": "source",
+                "evidence": {"doc": "doc_01.pdf", "page": 1},
+                "remediation_hint": "Pista de recuperacion analitica",
+            }
+
+        single_part_data = {
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "type": "concept",
+                    "name": "Concepto Fundamental Uno",
+                    "description": "Explicacion conceptual base",
+                    "description_latex": r"$\alpha + 1$",
+                    "bloom": "Understand",
+                    "prerequisites": [],
+                    "evidence": [{"doc": "doc_01.pdf", "page": 1}],
+                    "distractors": [
+                        _make_dist("D-C01-01", "Distractor Uno"),
+                        _make_dist("D-C01-02", "Distractor Dos"),
+                        _make_dist("D-C01-03", "Distractor Tres"),
+                    ],
+                }
+            ]
+        }
+        (cta_parts_dir / "cta_part_01.json").write_text(json.dumps(single_part_data), encoding="utf-8")
+
+        # Guarantee cta.json does NOT exist
+        cta_file = work_dir / "cta.json"
+        assert not cta_file.is_file()
+
+        runner = PipelineRunner(
+            work_dir=work_dir,
+            course_id="custom_course",
+            cta_mode="mapreduce",
+            output_dir=tmp_path / "courses",
+        )
+        res = runner.run_stage_cta()
+
+        # Verify Stage 1 returns needs_harmonize pointing to cta-apply
+        assert res.get("needs_harmonize") is True
+        assert res.get("next_stage") == "cta-apply"
+        assert res.get("status") == "needs_harmonize"
+        # cta.json must NOT exist yet (merge_cta_parts only produces draft and outline)
+        assert not cta_file.is_file()
+        assert (work_dir / "cta_draft.json").is_file()
+        assert (work_dir / "cta_outline.json").is_file()
+        assert (work_dir / "dispatch" / "cta_reduce.json").is_file() or (work_dir / "dispatch" / "cta-reduce.json").is_file()
+        assert (work_dir / "dispatch" / "items" / "cta_reduce_01.json").is_file()
+
+        # Simulate c2c_cta_harmonizer producing cta_harmonize.json
+        harmonize_data = {
+            "duplicate_decisions": [],
+            "add_prerequisites": [],
+        }
+        (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_data), encoding="utf-8")
+
+        # Now run cta-apply
+        apply_res = runner.run_stage_cta_apply()
+        assert apply_res.get("cta_path")
+        assert cta_file.is_file()
+        cta_obj = json.loads(cta_file.read_text(encoding="utf-8"))
+        assert len(cta_obj.get("competencies", [])) == 1
+        assert cta_obj["competencies"][0]["id"] == "C-01"
+
+    def test_matiz_3_append_mode_direct_single_draft_preserves_base_nodes(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Matiz 3: Append mode with 1 short PDF in direct mode prepares harmonization with [BASE] nodes."""
+        monkeypatch.chdir(tmp_path)
+        work_dir = tmp_path / "courses" / "custom_course" / "work_append"
+        work_dir.mkdir(parents=True, exist_ok=True)
+
+        delta_data = {
+            "existing_course_id": "custom_course",
+            "existing_competency_ids": ["C-01"],
+            "existing_competencies": [
+                {
+                    "id": "C-01",
+                    "name": "Base Competency",
+                    "type": "concept",
+                    "session": "[BASE]",
+                    "evidence": [],
+                    "prerequisites": [],
+                }
+            ],
+            "existing_competencies_outline": [
+                {
+                    "id": "C-01",
+                    "name": "Base Competency",
+                    "type": "concept",
+                    "session": "[BASE]",
+                }
+            ],
+            "next_ids_by_prefix": {"C": 2, "H": 1, "Hab": 1},
+        }
+        (work_dir / "delta_manifest.json").write_text(json.dumps(delta_data), encoding="utf-8")
+
+        manifest_data = {
+            "course_id": "custom_course",
+            "cta_mode": "direct",
+            "total_pages": 4,
+            "files": [{"doc": "delta.pdf", "file_index": 0, "total_pages": 4}],
+            "subparts": [],
+            "delta": delta_data,
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest_data), encoding="utf-8")
+
+        new_draft_data = {
+            "course_id": "custom_course",
+            "title": "Custom Course",
+            "macro_competency": "Mastery of Custom Course",
+            "competencies": [
+                {
+                    "id": "C-02",
+                    "type": "concept",
+                    "name": "Incremental Concept",
+                    "description": "Descripcion incremental",
+                    "description_latex": r"$\beta + 2$",
+                    "evidence": [{"doc": "delta.pdf", "page": 1}],
+                    "prerequisites": ["C-01"],
+                    "distractors": [
+                        {"id": "D-C02-01", "name": "Distractor Inc 1", "wrong_belief": "Falso", "omitted_step": "Ninguno"},
+                        {"id": "D-C02-02", "name": "Distractor Inc 2", "wrong_belief": "Invalido", "omitted_step": "Ninguno"},
+                        {"id": "D-C02-03", "name": "Distractor Inc 3", "wrong_belief": "Erroneo", "omitted_step": "Ninguno"},
+                    ],
+                }
+            ]
+        }
+        # Direct cta placed at work/cta.json (or cta_draft.json)
+        (work_dir / "cta.json").write_text(json.dumps(new_draft_data), encoding="utf-8")
+
+        runner = PipelineRunner(
+            work_dir=work_dir,
+            course_id="custom_course",
+            append=True,
+            output_dir=tmp_path / "courses",
+        )
+        res = runner.run_stage_cta()
+
+        assert res.get("needs_harmonize") is True
+        assert res.get("next_stage") == "cta-apply"
+
+        # Verify cta_outline.json contains both [BASE] competency and new competency
+        outline_file = work_dir / "cta_outline.json"
+        assert outline_file.is_file()
+        outline_obj = json.loads(outline_file.read_text(encoding="utf-8"))
+        outline_ids = [c["id"] for c in outline_obj.get("competencies", [])]
+        assert "C-01" in outline_ids
+        assert "C-02" in outline_ids
+        base_item = next(c for c in outline_obj["competencies"] if c["id"] == "C-01")
+        assert base_item.get("read_only_base") is True
+        assert base_item.get("session") == "[BASE]"
+
+        # Verify dispatch item was created with [BASE] node instructions
+        reduce_item_file = work_dir / "dispatch" / "items" / "cta_reduce_01.json"
+        assert reduce_item_file.is_file()
+        reduce_obj = json.loads(reduce_item_file.read_text(encoding="utf-8"))
+        assert "[BASE]" in reduce_obj["Prompt"]
+        assert "--append" in reduce_obj["Prompt"]
+
+    def test_publish_gate_rejects_failed_judge_report(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stage publish strictly blocks when judge report passed is False."""
+        monkeypatch.chdir(tmp_path)
+        work_dir = tmp_path / "courses" / "custom_course" / "work"
+        work_dir.mkdir(parents=True, exist_ok=True)
+
+        course_data = {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "schema_version": "1.0.0",
+            "course_id": "custom_course",
+            "course_title": "Custom Course",
+            "title": "Custom Course",
+            "description": "Course description",
+            "competencies": [],
+            "questions": [],
+        }
+        (work_dir / "course_verified.json").write_text(json.dumps(course_data), encoding="utf-8")
+
+        # Write failing judge report
+        failing_judge_report = {
+            "passed": False,
+            "status": "fail",
+            "disagreements": [{"question_id": "Q-01", "author_answer": "A", "judge_answer": "B"}],
+        }
+        (work_dir / "judge_report.json").write_text(json.dumps(failing_judge_report), encoding="utf-8")
+
+        runner = PipelineRunner(
+            work_dir=work_dir,
+            course_id="custom_course",
+            output_dir=tmp_path / "courses",
+        )
+        with pytest.raises(RuntimeError) as exc_info:
+            runner.run_stage_publish()
+        assert "Publication blocked" in str(exc_info.value)
+
+    def test_publish_gate_rejects_publisher_quality_gate_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stage publish propagates PublishQualityGateError when QualityGate check fails."""
+        monkeypatch.chdir(tmp_path)
+        work_dir = tmp_path / "courses" / "custom_course" / "work"
+        work_dir.mkdir(parents=True, exist_ok=True)
+
+        course_data = {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "schema_version": "1.0.0",
+            "course_id": "custom_course",
+            "course_title": "Custom Course",
+            "title": "Custom Course",
+            "description": "Course description",
+            "competencies": [],
+            "questions": [],
+        }
+        (work_dir / "course_verified.json").write_text(json.dumps(course_data), encoding="utf-8")
+
+        passing_judge_report = {
+            "passed": True,
+            "status": "pass",
+            "disagreements": [],
+        }
+        (work_dir / "judge_report.json").write_text(json.dumps(passing_judge_report), encoding="utf-8")
+
+        def _mock_publish(*args: Any, **kwargs: Any) -> Any:
+            raise PublishQualityGateError("MPRI score below threshold: 62.0 < 75.0 (with 25 questions)")
+
+        monkeypatch.setattr(CoursePublisher, "publish", _mock_publish)
+
+        runner = PipelineRunner(
+            work_dir=work_dir,
+            course_id="custom_course",
+            output_dir=tmp_path / "courses",
+        )
+        with pytest.raises(PublishQualityGateError) as exc_info:
+            runner.run_stage_publish()
+        assert "MPRI score below threshold" in str(exc_info.value)
+

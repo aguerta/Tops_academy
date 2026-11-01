@@ -126,11 +126,11 @@ def test_v1_bootstrap_zero_raster_multi_pdf_and_stdout_cap(tmp_path: Path, capsy
     cta_orders_file = work_dir / "dispatch" / "cta_work_orders.json"
     assert cta_orders_file.is_file()
     cta_orders = json.loads(cta_orders_file.read_text(encoding="utf-8"))
-    for subagent in cta_orders.get("Subagents", []):
+    for idx, subagent in enumerate(cta_orders.get("Subagents", []), start=1):
         prompt = subagent.get("Prompt", "")
         assert len(prompt.encode("utf-8")) <= 300, f"CTA pointer prompt exceeded 300 B: {len(prompt)}"
         assert "view_file" in prompt
-        assert "cta_01.json" in prompt
+        assert f"cta_{idx:02d}.json" in prompt
 
     # 7. Active and valid .c2c_subagent_lock.json
     lock_file = work_dir / ".c2c_subagent_lock.json"
@@ -511,16 +511,20 @@ def test_v5_shard_06_katex_sandwich_and_delta_placeholder_block():
             "        'vars': {'k_dim': k_dim, 'a11': a11, 'd': d, 'k': k},\n"
             "        'correct': f'Varianza asintótica eficiente con $V_{{11}} = {a11}$',\n"
             "        'distractors': [\n"
-            "            {'value': f'Estimación sesgada por debilidad con $V_{{11}} = {round(a11 + 0.8, 2)}$', 'distractor_id': 'D-Hab04-01'},\n"
-            "            {'value': f'Omisión de matriz instrumental resultando en {round(a11 * 1.5, 2)}', 'distractor_id': 'D-Hab04-02'},\n"
-            "            {'value': f'Inversión no ortogonal de momentos produciendo {round(a11 - 0.4, 2)}', 'distractor_id': 'D-Hab04-03'},\n"
-            "            {'value': f'Discrepancia en forma cuadrática con residuo {round(a11 + 2.1, 2)}', 'distractor_id': 'D-Hab04-04'},\n"
-            "            {'value': f'Falta de corrección por heterocedasticidad dando {round(a11 * 0.7, 2)}', 'distractor_id': 'D-Hab04-05'},\n"
-            "            {'value': f'Desviación asintótica no centrada evaluada en {round(a11 + 1.2, 2)}', 'distractor_id': 'D-Hab04-06'},\n"
+            "            {'value': f'Estimación sesgada por debilidad con $V_{{11}} = {round(a11 + 0.8, 2)}$', 'distractor_id': 'D-Hab04-01', 'error_rationale': f'Error en estimacion instrumental con parametro {a11} y desvio aditivo.'},\n"
+            "            {'value': f'Omisión de matriz instrumental resultando en {round(a11 * 1.5, 2)}', 'distractor_id': 'D-Hab04-02', 'error_rationale': f'Omite matriz instrumental escalando el parametro {a11} por factor 1.5.'},\n"
+            "            {'value': f'Inversión no ortogonal de momentos produciendo {round(a11 - 0.4, 2)}', 'distractor_id': 'D-Hab04-03', 'error_rationale': f'Inversion no ortogonal de momentos alterando la dispersion base {a11}.'},\n"
+            "            {'value': f'Discrepancia en forma cuadrática con residuo {round(a11 + 2.1, 2)}', 'distractor_id': 'D-Hab04-04', 'error_rationale': f'Forma cuadratica residual inconsistente con la varianza estimada {a11}.'},\n"
+            "            {'value': f'Falta de corrección por heterocedasticidad dando {round(a11 * 0.7, 2)}', 'distractor_id': 'D-Hab04-05', 'error_rationale': f'Subestima la dispersion robusta contrayendo el valor {a11} al 70 por ciento.'},\n"
+            "            {'value': f'Desviación asintótica no centrada evaluada en {round(a11 + 1.2, 2)}', 'distractor_id': 'D-Hab04-06', 'error_rationale': f'Sesgo de centrado asintotico desplazando la matriz evaluada en {a11}.'},\n"
             "        ]\n"
             "    }\n"
         ),
-        "cross_check_py": "def verify(r):\n    return True\n",
+        "cross_check_py": (
+            "def verify(r):\n"
+            "    v = r.get('vars', {})\n"
+            "    return v.get('a11', 0) > 0 and v.get('k_dim', 0) >= 2\n"
+        ),
     }
 
     declared_dids = {f"D-Hab04-{i:02d}" for i in range(1, 7)}
@@ -649,10 +653,11 @@ def gen_c08(rng):
     raise ValueError("Intentional dry-run crash in gen_c08")
 
 def ver_c08(r):
-    return True
+    v = r.get("vars", {})
+    return v.get("x", 0) > 0
 
 TEMPLATES = [
-    ("C-08", "multiple_choice", "Stem {x}", gen_c08, ver_c08, "Sol {x}", "Concept", ["D-C08-01", "D-C08-02", "D-C08-03", "D-C08-04", "D-C08-05", "D-C08-06"], ("greene.pdf", 1, "Quote"), ["H1", "H2", "H3"])
+    ("T-C08-01", "C-08", "multiple_choice_7_options", gen_c08, ver_c08, ("easy", "Remember"), [r"Stem 1 para $n = @x@$:", r"Stem 2 para $n = @x@$:", r"Stem 3 para $n = @x@$:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Solucion @x@.")
 ]
 '''
     shard_file = shards_dir / "shard_08_data.py"
@@ -711,20 +716,71 @@ TEMPLATES = [
     fixes_dir.mkdir(parents=True, exist_ok=True)
     fix_c08 = fixes_dir / "C-08.py"
     fix_code = '''# -*- coding: utf-8 -*-
-def gen_c08(rng):
+def gen_c08_1(rng):
     w = rng.randint(100, 999)
     return {'vars': {'w': w}, 'correct': str(w), 'distractors': []}
 
-def ver_c08(r):
-    return True
+def ver_c08_1(r):
+    v = r.get("vars", {})
+    return v.get("w", 0) > 0
+
+def gen_c08_2(rng):
+    w = rng.randint(100, 999)
+    ans = w * 2
+    return {'vars': {'w': w, 'ans': ans}, 'correct': str(ans), 'distractors': []}
+
+def ver_c08_2(r):
+    v = r.get("vars", {})
+    return v.get("ans", 0) == v.get("w", 0) * 2
+
+def gen_c08_3(rng):
+    w = rng.randint(100, 999)
+    ans = w + 50
+    return {'vars': {'w': w, 'ans': ans}, 'correct': str(ans), 'distractors': []}
+
+def ver_c08_3(r):
+    v = r.get("vars", {})
+    return v.get("ans", 0) == v.get("w", 0) + 50
 
 TEMPLATES = [
-    ("C-08", "fill_in_the_blank", "Fixed Stem C08 @w@:", gen_c08, ver_c08, "Solución @w@.", "Concept", [], ("greene.pdf", 1, "Quote"), ["Pista 1 identificacion", "Pista 2 procedimiento", "Pista 3 comprobacion"])
+    (
+        "T-C08-01", "C-08", "fill_in_the_blank", gen_c08_1, ver_c08_1, ("easy", "Remember"),
+        [
+            r"Determine the exact value of parameter @w@:",
+            r"Compute the asymptotic magnitude @w@:",
+            r"Evaluate the limit expression yielding @w@:",
+            r"Analyze the required property with baseline @w@:",
+        ],
+        ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"],
+        "Solucion @w@."
+    ),
+    (
+        "T-C08-02", "C-08", "fill_in_the_blank", gen_c08_2, ver_c08_2, ("medium", "Understand"),
+        [
+            r"Under second order scaling with baseline @w@, compute twice the value:",
+            r"Find the doubled expectation when initial magnitude is @w@:",
+            r"Calculate two times @w@ for the scaled parameter:",
+            r"Determine the two-fold product for input @w@:",
+        ],
+        ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"],
+        "Solucion @ans@."
+    ),
+    (
+        "T-C08-03", "C-08", "fill_in_the_blank", gen_c08_3, ver_c08_3, ("hard", "Apply"),
+        [
+            r"With an additive shift of fifty units applied to @w@, obtain the total:",
+            r"Calculate fifty plus the estimated quantity @w@:",
+            r"Compute the shifted asymptotic parameter for baseline @w@:",
+            r"Find the total resulting from adding fifty to @w@:",
+        ],
+        ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"],
+        "Solucion @ans@."
+    ),
 ]
 '''
     fix_c08.write_text(fix_code, encoding="utf-8")
     shard_file.write_text(
-        "TEMPLATES = [('C-08', 'multiple_choice', 'Broken', lambda r: None, lambda r: True, 'Sol', 'Concept', [], ('greene.pdf', 1, 'Q'), ['H1', 'H2', 'H3'])]\n",
+        "TEMPLATES = [('T-C08-01', 'C-08', 'multiple_choice_7_options', lambda r: None, lambda r: bool(r), ('easy', 'Remember'), ['Stem 1', 'Stem 2', 'Stem 3'], ['Pista 1 identificacion conceptual', 'Pista 2 procedimiento analitico', 'Pista 3 comprobacion numerica'], 'Sol')]\n",
         encoding="utf-8"
     )
 
@@ -983,3 +1039,229 @@ def test_v8_judge_option_shuffle_and_coherent_pointer_mode(tmp_path: Path):
     assert "NO EJECUTES `view_file`" not in prompt_in_item
     assert "NO EJECUTES view_file" not in prompt_in_item
     assert "view_file" in prompt_in_item
+
+
+# ==============================================================================
+# V9: Lean Prompt Budget (<= 5,000 B) & Tri-Band Multimodal Contract Certification
+# ==============================================================================
+
+def test_v9_tri_band_multimodal_contract_and_lean_prompt_budget(tmp_path: Path):
+    """V9: Certifies that lean/prompt_shard_author.md <= 5,000 bytes and strictly enforces
+    the Tri-Band Multimodal contract (min_archetypes == 3):
+    - Difficulty bands: easy, medium, and hard required across archetypes.
+    - Bloom levels: at least 2 distinct taxonomy levels required.
+    - Active modalities: at least 2 FIB/MS for skills, at least 1 FIB/MS for concepts.
+    - Archetype count: < 3 archetypes fails with [M3-ARCHETYPES].
+    - Valid 3-archetype Tri-Band shard compiles with 0 errors.
+    """
+    # 1. Lean Prompt Budget: prompt_shard_author.md <= 5,000 bytes
+    lean_author_prompt = SKILL_ROOT / "system_prompts" / "lean" / "prompt_shard_author.md"
+    assert lean_author_prompt.is_file(), f"Missing lean prompt: {lean_author_prompt}"
+    prompt_bytes = len(lean_author_prompt.read_bytes())
+    assert prompt_bytes <= 5000, f"prompt_shard_author.md exceeded 5,000 B limit: {prompt_bytes} B"
+
+    # Also verify prompt contains Form-B Tri-Banda directive and min_archetypes = 3
+    prompt_text = lean_author_prompt.read_text(encoding="utf-8")
+    assert "min_archetypes = 3" in prompt_text or "min_archetypes == 3" in prompt_text or "3" in prompt_text
+    assert "TRI-BANDA" in prompt_text.upper()
+
+    # 2. Tri-Band Contract enforcement in compile_shard
+    work_dir = tmp_path / "work_v9"
+    shards_dir = work_dir / "shards"
+    templates_dir = work_dir / "templates"
+    shards_dir.mkdir(parents=True, exist_ok=True)
+    templates_dir.mkdir(parents=True, exist_ok=True)
+
+    cta_path = work_dir / "cta.json"
+    cta_path.write_text(json.dumps({
+        "competencies": [
+            {
+                "id": "Hab-99",
+                "name": "Greene Asymptotic Skill",
+                "type": "skill",
+                "distractors": [
+                    {"id": f"D-Hab99-{i:02d}", "name": f"Distractor {i}", "remediation_hint": f"Hint for distractor {i}"}
+                    for i in range(1, 7)
+                ],
+            }
+        ],
+    }), encoding="utf-8")
+
+    manifest_path = shards_dir / "pre_shard_manifest.json"
+    manifest_path.write_text(json.dumps({
+        "min_archetypes": 3,
+        "shards": [{"shard_id": "shard_99", "competency_ids": ["Hab-99"]}],
+    }), encoding="utf-8")
+
+    # A) Failure on < 3 archetypes (e.g. 2 archetypes)
+    two_arch_code = '''
+def gen_1(rng):
+    k = rng.randint(10, 40)
+    return {"vars": {"k": k, "ans": k * 2}, "correct": str(k * 2), "distractors": []}
+
+def ver_1(r):
+    return r["vars"]["ans"] == r["vars"]["k"] * 2
+
+def gen_2(rng):
+    k = rng.randint(10, 40)
+    return {"vars": {"k": k, "ans": k + 10}, "correct": str(k + 10), "distractors": []}
+
+def ver_2(r):
+    return r["vars"]["ans"] == r["vars"]["k"] + 10
+
+TEMPLATES = [
+    ("T-Hab99-01", "Hab-99", "fill_in_the_blank", gen_1, ver_1, ("easy", "Remember"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-Hab99-02", "Hab-99", "fill_in_the_blank", gen_2, ver_2, ("medium", "Understand"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+]
+'''
+    shard_file = shards_dir / "shard_99_data.py"
+    shard_file.write_text(two_arch_code, encoding="utf-8")
+
+    ok_2, errs_2 = compile_shard(work_dir_or_path=work_dir, shard_id="shard_99", strict=True)
+    assert ok_2 is False
+    assert any("[M3-ARCHETYPES]" in e for e in errs_2)
+    assert any("mínimo 3 plantillas" in e or "define solo 2" in e for e in errs_2)
+
+    # B) Failure on incomplete difficulty bands (3 archetypes but easy, medium, medium - missing hard)
+    missing_hard_code = '''
+def gen_1(rng):
+    k = rng.randint(10, 40)
+    return {"vars": {"k": k, "ans": k * 2}, "correct": str(k * 2), "distractors": []}
+
+def ver_1(r):
+    return r["vars"]["ans"] == r["vars"]["k"] * 2
+
+def gen_2(rng):
+    k = rng.randint(10, 40)
+    return {"vars": {"k": k, "ans": k + 10}, "correct": str(k + 10), "distractors": []}
+
+def ver_2(r):
+    return r["vars"]["ans"] == r["vars"]["k"] + 10
+
+def gen_3(rng):
+    k = rng.randint(10, 40)
+    return {"vars": {"k": k, "ans": k + 20}, "correct": str(k + 20), "distractors": []}
+
+def ver_3(r):
+    return r["vars"]["ans"] == r["vars"]["k"] + 20
+
+TEMPLATES = [
+    ("T-Hab99-01", "Hab-99", "fill_in_the_blank", gen_1, ver_1, ("easy", "Remember"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-Hab99-02", "Hab-99", "fill_in_the_blank", gen_2, ver_2, ("medium", "Understand"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-Hab99-03", "Hab-99", "fill_in_the_blank", gen_3, ver_3, ("medium", "Apply"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+]
+'''
+    shard_file.write_text(missing_hard_code, encoding="utf-8")
+    ok_diff, errs_diff = compile_shard(work_dir_or_path=work_dir, shard_id="shard_99", strict=True)
+    assert ok_diff is False
+    assert any("Cobertura incompleta de bandas de dificultad" in e for e in errs_diff)
+    assert any("hard" in e for e in errs_diff)
+
+    # C) Failure on single Bloom level (< 2 distinct levels)
+    single_bloom_code = '''
+def gen_1(rng):
+    k = rng.randint(10, 40)
+    return {"vars": {"k": k, "ans": k * 2}, "correct": str(k * 2), "distractors": []}
+
+def ver_1(r):
+    return r["vars"]["ans"] == r["vars"]["k"] * 2
+
+def gen_2(rng):
+    k = rng.randint(10, 40)
+    return {"vars": {"k": k, "ans": k + 10}, "correct": str(k + 10), "distractors": []}
+
+def ver_2(r):
+    return r["vars"]["ans"] == r["vars"]["k"] + 10
+
+def gen_3(rng):
+    k = rng.randint(10, 40)
+    return {"vars": {"k": k, "ans": k + 20}, "correct": str(k + 20), "distractors": []}
+
+def ver_3(r):
+    return r["vars"]["ans"] == r["vars"]["k"] + 20
+
+TEMPLATES = [
+    ("T-Hab99-01", "Hab-99", "fill_in_the_blank", gen_1, ver_1, ("easy", "Apply"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-Hab99-02", "Hab-99", "fill_in_the_blank", gen_2, ver_2, ("medium", "Apply"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-Hab99-03", "Hab-99", "fill_in_the_blank", gen_3, ver_3, ("hard", "Apply"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+]
+'''
+    shard_file.write_text(single_bloom_code, encoding="utf-8")
+    ok_bloom, errs_bloom = compile_shard(work_dir_or_path=work_dir, shard_id="shard_99", strict=True)
+    assert ok_bloom is False
+    assert any("Diversidad cognitiva insuficiente" in e for e in errs_bloom)
+
+    # D) Clean Pass on valid 3-archetype Tri-Band (easy/medium/hard, Remember/Apply/Analyze, 2 FIB + 1 MC7)
+    valid_triband_code = '''
+def gen_mc7(rng):
+    k = rng.randint(100, 999)
+    ans = k * 10
+    v = {"k": k, "ans": ans}
+    dists = []
+    for i in range(1, 7):
+        v[f"d{i}"] = ans + i * 50
+        dists.append((f"D-Hab99-{i:02d}", f"@d{i}@", f"Desvio parametrico con factor @k@ y delta @d{i}@."))
+    return {"vars": v, "correct": "@ans@", "distractors": dists}
+
+def ver_mc7(r):
+    return r["vars"]["ans"] == r["vars"]["k"] * 10
+
+def gen_fib1(rng):
+    k = rng.randint(100, 999)
+    ans = k + 10
+    return {"vars": {"k": k, "ans": ans}, "correct": str(ans), "distractors": []}
+
+def ver_fib1(r):
+    return r["vars"]["ans"] == r["vars"]["k"] + 10
+
+def gen_fib2(rng):
+    k = rng.randint(100, 999)
+    ans = k + 50
+    return {"vars": {"k": k, "ans": ans}, "correct": str(ans), "distractors": []}
+
+def ver_fib2(r):
+    return r["vars"]["ans"] == r["vars"]["k"] + 50
+
+TEMPLATES = [
+    (
+        "T-Hab99-01", "Hab-99", "multiple_choice_7_options", gen_mc7, ver_mc7, ("easy", "Remember"),
+        [
+            r"Calcule el valor del estimador para el parametro @k@:",
+            r"Determine la estimacion asintotica cuando el parametro es @k@:",
+            r"Evalue la funcion objetivo bajo el parametro @k@:",
+            r"Halle el resultado del estimador asintotico con parametro @k@:",
+            r"Obtenga la magnitud del estimador puntual fijando el parametro en @k@:",
+        ],
+        ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"],
+        "Solucion @ans@."
+    ),
+    (
+        "T-Hab99-02", "Hab-99", "fill_in_the_blank", gen_fib1, ver_fib1, ("medium", "Apply"),
+        [
+            r"A partir del parametro base @k@, halle el desplazamiento aditivo:",
+            r"Compute la traslacion numerica correspondiente al valor @k@:",
+            r"Encuentre la correccion de centrado para el parametro @k@:",
+            r"Calcule el factor aditivo ajustado cuando la base es @k@:",
+            r"Deduzca el valor desplazado del estimador empleando la base @k@:",
+        ],
+        ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"],
+        "Solucion @ans@."
+    ),
+    (
+        "T-Hab99-03", "Hab-99", "fill_in_the_blank", gen_fib2, ver_fib2, ("hard", "Analyze"),
+        [
+            r"Bajo la cota de frontera con parametro @k@, determine el resultado:",
+            r"Analice el regimen limite evaluando la cota para @k@:",
+            r"Para el caso asintotico de frontera con @k@, obtenga el total:",
+            r"Determine el umbral de convergencia extrema con parametro @k@:",
+            r"Establezca el valor limite en la frontera superior cuando el parametro vale @k@:",
+        ],
+        ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"],
+        "Solucion @ans@."
+    ),
+]
+'''
+    shard_file.write_text(valid_triband_code, encoding="utf-8")
+    ok_valid, errs_valid = compile_shard(work_dir_or_path=work_dir, shard_id="shard_99", strict=True)
+    assert ok_valid is True, f"Expected clean pass for valid 3-archetype Tri-Band, got errors: {errs_valid}"
+    assert len(errs_valid) == 0

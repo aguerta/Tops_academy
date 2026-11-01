@@ -1473,7 +1473,12 @@ class TestTplVarAndStemVariants:
                 "Variante D evaluando {p}.",
                 "Variante E evaluando {p}.",
             ],
-            "hints": ["Hint 1", "Hint 2", "Hint 3"],
+            "hints": [
+                "Identifique el parámetro escalar presente en el enunciado.",
+                "Aplique la definición formal para evaluar la magnitud requerida.",
+                "Verifique que la respuesta numérica sea compatible con las unidades.",
+            ],
+            "cross_check_py": "def verify(res):\n    return int(res['vars']['p']) >= 10",
             "detailed_solution": "Solucion para {p}.",
             "distractor_ids": [],
             "generate_py": (
@@ -1489,6 +1494,23 @@ class TestTplVarAndStemVariants:
             num_dry_run_seeds=50,
         )
         assert len(errs) == 0
+
+    def test_r18_synthetic_boilerplate_caught_inside_math_text_macro(self):
+        """Options wrapped inside $\text{...}$ with formulaic skeletons must not evade R-18."""
+        from engine.invariants import check_synthetic_boilerplate_distractors
+
+        correct = r"$\text{La solución analítica es única y estable}$"
+        distractors = [
+            r"$\text{El valor converge con } 1 \text{ en el intervalo}$",
+            r"$\text{El valor converge con } 2 \text{ en el intervalo}$",
+            r"$\text{El valor converge con } 3 \text{ en el intervalo}$",
+            r"$\text{El valor converge con } 4 \text{ en el intervalo}$",
+            r"$\text{El valor diverge hacia el infinito}$",
+            r"$\text{La cota superior no existe}$",
+        ]
+        errs = check_synthetic_boilerplate_distractors(correct, distractors)
+        assert any("Synthetic boilerplate distractor pattern detected" in e for e in errs)
+
 
 
 if __name__ == "__main__":

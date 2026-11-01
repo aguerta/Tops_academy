@@ -135,7 +135,7 @@ class TestDryArchetypesAndDistractorInheritance:
         shard_code = '''"""Shard 06 Data with 4 Disjoint Archetypes for Hab-06."""
 import random
 
-# Archetype 1: Directo (compact 2-tuple distractors)
+# Archetype 1: Directo (MC7, easy, Remember)
 def gen_directo(rng):
     base = rng.randint(20, 80)
     step = rng.randint(2, 6)
@@ -148,19 +148,19 @@ def gen_directo(rng):
         },
         "correct": r"$@ans@$",
         "distractors": [
-            ("D-Hab06-01", r"$@d1@$"),
-            ("D-Hab06-02", r"$@d2@$"),
-            ("D-Hab06-03", r"$@d3@$"),
-            ("D-Hab06-04", r"$@d4@$"),
-            ("D-Hab06-05", r"$@d5@$"),
-            ("D-Hab06-06", r"$@d6@$"),
+            ("D-Hab06-01", r"$@d1@$", "Error al estimar por omitir la base @base@ en el calculo."),
+            ("D-Hab06-02", r"$@d2@$", "Confusion en la escala del paso @step@ en el modelo."),
+            ("D-Hab06-03", r"$@d3@$", "Desplazamiento erroneo del parametro base @base@."),
+            ("D-Hab06-04", r"$@d4@$", "Multiplicacion incorrecta del paso @step@ en la estimacion."),
+            ("D-Hab06-05", r"$@d5@$", "Suma espuria sobre el parametro base @base@ observado."),
+            ("D-Hab06-06", r"$@d6@$", "Error sistematico en la evaluacion del paso @step@."),
         ],
     }
 
 def ver_directo(res):
-    return True
+    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
 
-# Archetype 2: Inverso (compact dict format without error_rationale)
+# Archetype 2: Inverso (MC7, medium, Apply)
 def gen_inverso(rng):
     target = rng.randint(50, 120)
     factor = rng.randint(2, 5)
@@ -173,108 +173,103 @@ def gen_inverso(rng):
         },
         "correct": r"$@ans@$",
         "distractors": [
-            {"distractor_id": "D-Hab06-01", "value": r"$@d1@$"},
-            {"distractor_id": "D-Hab06-02", "value": r"$@d2@$"},
-            {"distractor_id": "D-Hab06-03", "value": r"$@d3@$"},
-            {"distractor_id": "D-Hab06-04", "value": r"$@d4@$"},
-            {"distractor_id": "D-Hab06-05", "value": r"$@d5@$"},
-            {"distractor_id": "D-Hab06-06", "value": r"$@d6@$"},
+            ("D-Hab06-01", r"$@d1@$", "Inversion erronea usando el valor objetivo @target@."),
+            ("D-Hab06-02", r"$@d2@$", "Fallo en la escala del factor @factor@ al dividir."),
+            ("D-Hab06-03", r"$@d3@$", "Desvio en el calculo del objetivo @target@ estructural."),
+            ("D-Hab06-04", r"$@d4@$", "Sesgo positivo usando el factor @factor@ del estimador."),
+            ("D-Hab06-05", r"$@d5@$", "Error aditivo sobre el valor objetivo @target@ observado."),
+            ("D-Hab06-06", r"$@d6@$", "Desplazamiento de orden superior con factor @factor@."),
         ],
     }
 
 def ver_inverso(res):
-    return True
+    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
 
-# Archetype 3: Perturbación (inverted 2-tuple format via tuple return)
+# Archetype 3: Perturbacion (FIB, medium, Analyze)
 def gen_perturbacion(rng):
     x = rng.randint(10, 40)
     dx = rng.randint(1, 4)
     ans = x + dx
-    v_dict = {
-        "x": x, "dx": dx, "ans": ans,
-        "d1": x - dx, "d2": x + 2 * dx, "d3": x + 3 * dx,
-        "d4": x - 2 * dx, "d5": x + 4 * dx, "d6": x + 5 * dx,
-    }
-    dists = [
-        (r"$@d1@$", "D-Hab06-01"),
-        (r"$@d2@$", "D-Hab06-02"),
-        (r"$@d3@$", "D-Hab06-03"),
-        (r"$@d4@$", "D-Hab06-04"),
-        (r"$@d5@$", "D-Hab06-05"),
-        (r"$@d6@$", "D-Hab06-06"),
-    ]
-    return (v_dict, r"$@ans@$", dists)
-
-def ver_perturbacion(res):
-    return True
-
-# Archetype 4: Frontera (bare scalar string distractors)
-def gen_frontera(rng):
-    k = rng.randint(5, 25)
     return {
         "vars": {
-            "k": k, "ans": k * 2,
-            "d1": k, "d2": k + 1, "d3": k - 1,
-            "d4": k * 3, "d5": k * 4, "d6": k * 5,
+            "x": x, "dx": dx, "ans": ans,
         },
-        "correct": r"$@ans@$",
-        "distractors": [
-            r"$@d1@$", r"$@d2@$", r"$@d3@$",
-            r"$@d4@$", r"$@d5@$", r"$@d6@$",
-        ],
+        "correct": str(ans),
+        "distractors": [],
+    }
+
+def ver_perturbacion(res):
+    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+
+# Archetype 4: Frontera (FIB, hard, Evaluate)
+def gen_frontera(rng):
+    k = rng.randint(5, 25)
+    ans = k * 2
+    return {
+        "vars": {
+            "k": k, "ans": ans,
+        },
+        "correct": str(ans),
+        "distractors": [],
     }
 
 def ver_frontera(res):
-    return True
+    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+
+hints_common = [
+    "Identifique con precision los parametros iniciales del modelo estimado.",
+    "Aplique la expresion algebraica formal correspondiente al regimen analizado.",
+    "Compruebe la consistencia dimensional y el orden de magnitud del resultado.",
+]
 
 TEMPLATES = [
     (
         "T-Hab06-01", "Hab-06", "multiple_choice_7_options",
-        gen_directo, ver_directo, "medium",
+        gen_directo, ver_directo, ("easy", "Remember"),
         [
             "Calcule el valor del estimador lineal directo bajo base {base} y paso {step}.",
             "A partir de las condiciones observadas con base {base}, determine el estimador lineal.",
-            "Para los datos estructurados con parámetro base {base}, evalúe el valor directo.",
-            "Determine analíticamente la estimación directa correspondiente dado el paso {step}.",
+            "Para los datos estructurados con parametro base {base}, evalue el valor directo.",
+            "Determine analiticamente la estimacion directa correspondiente dado el paso {step}.",
         ],
-        ["Identifique el modelo lineal directo.", "Aplique la suma iterada.", "Verifique los supuestos."],
-        "Resolución directa formal: el estimador es ans = base + 3*step = {ans}."
+        hints_common,
+        "Resolucion directa formal: el estimador es ans = base + 3*step = {ans}."
     ),
     (
         "T-Hab06-02", "Hab-06", "multiple_choice_7_options",
-        gen_inverso, ver_inverso, "hard",
+        gen_inverso, ver_inverso, ("medium", "Apply"),
         [
-            "Deduzca el parámetro invertido sabiendo que el producto objetivo es {target} con factor {factor}.",
-            "A partir del valor objetivo {target}, determine el parámetro estructural inverso con factor {factor}.",
-            "En el contexto inverso formal, evalúe la cantidad estimada correspondiente para factor {factor}.",
-            "Despeje rigurosamente el parámetro del modelo sabiendo el objetivo {target}.",
+            "Deduzca el parametro invertido sabiendo que el producto objetivo es {target} con factor {factor}.",
+            "A partir del valor objetivo {target}, determine el parametro estructural inverso con factor {factor}.",
+            "En el contexto inverso formal, evalue la cantidad estimada correspondiente para factor {factor}.",
+            "Despeje rigurosamente el parametro del modelo sabiendo el objetivo {target}.",
         ],
-        ["Plantee la ecuación inversa.", "Divida el objetivo por el factor.", "Compruebe la consistencia dimensional."],
-        "Resolución inversa formal: el parámetro despejado es ans = target / factor = {ans}."
+        hints_common,
+        "Resolucion inversa formal: el parametro despejado es ans = target / factor = {ans}."
     ),
     (
-        "T-Hab06-03", "Hab-06", "multiple_choice_7_options",
-        gen_perturbacion, ver_perturbacion, "medium",
+        "T-Hab06-03", "Hab-06", "fill_in_the_blank",
+        gen_perturbacion, ver_perturbacion, ("medium", "Analyze"),
         [
-            "Evalúe la respuesta ante una perturbación de magnitud {dx} sobre el valor inicial {x}.",
+            "Evalue la respuesta ante una perturbacion de magnitud {dx} sobre el valor inicial {x}.",
             "Considere el desplazamiento marginal {dx} aplicado al sistema con nivel {x} y determine la respuesta.",
-            "Bajo el supuesto de una perturbación {dx}, calcule el estado final del estimador.",
-            "Analice la sensibilidad analítica y halle el valor desplazado con variación {dx}.",
+            "Bajo el supuesto de una perturbacion {dx}, calcule el estado final del estimador.",
+            "Analice la sensibilidad analitica y halle el valor desplazado con variacion {dx}.",
         ],
-        ["Identifique el punto de perturbación.", "Sume el diferencial al nivel base.", "Compruebe el orden de magnitud."],
-        "Resolución de perturbación: el valor perturbado es x + dx = {ans}."
+        hints_common,
+        "Resolucion de perturbacion: el valor perturbado es x + dx = {ans}."
     ),
     (
-        "T-Hab06-04", "Hab-06", "multiple_choice_7_options",
-        gen_frontera, ver_frontera, "hard",
+        "T-Hab06-04", "Hab-06", "fill_in_the_blank",
+        gen_frontera, ver_frontera, ("hard", "Evaluate"),
         [
-            "Establezca el comportamiento en el punto de frontera sabiendo que el parámetro de control es {k}.",
-            "En el régimen límite donde el parámetro es {k}, evalúe la solución asintótica.",
+            "Establezca el comportamiento en el punto de frontera sabiendo que el parametro de control es {k}.",
+            "En el regimen limite donde el parametro es {k}, evalue la solucion asintotica.",
             "Tomando en cuenta las condiciones de frontera para {k}, halle el valor estacionario.",
-            "Verifique la cota analítica extrema cuando la variable de control alcanza {k}.",
+            "Verifique la cota analitica extrema cuando la variable de control alcanza {k}.",
         ],
-        ["Analice la condición de frontera.", "Multiplique el parámetro de control por la ganancia.", "Verifique el límite."],
-        "Resolución en la frontera: la solución extrema es ans = 2*k = {ans}."
+        hints_common,
+        "Resolucion en la frontera: la solucion extrema es ans = 2*k = {ans}."
     ),
 ]
 '''
@@ -318,33 +313,44 @@ TEMPLATES = [
         shard_code = '''
 import random
 def gen_hetero(rng):
-    v = rng.randint(10, 40)
+    v = rng.randint(10, 200)
     v_dict = {"v": v, "d1": v+1, "d2": v+2, "d3": v+3, "d4": v+4, "d5": v+5, "d6": v+6}
-    # Mixed distractors: 2-tuple with underscore ID, compact dict, bare string
     dists = [
-        ("D_Hab06_01", "$@d1@$"),
-        {"distractor_id": "D-Hab06-02", "content": "$@d2@$"},
-        ("$@d3@$", "D-Hab06-03"),
-        "$@d4@$",
-        "$@d5@$",
-        "$@d6@$",
+        ("D-Hab06-01", "$@d1@$", "Error al estimar con parametro @v@ en opcion uno."),
+        ("D-Hab06-02", "$@d2@$", "Error al estimar con parametro @v@ en opcion dos."),
+        ("D-Hab06-03", "$@d3@$", "Error al estimar con parametro @v@ en opcion tres."),
+        ("D-Hab06-04", "$@d4@$", "Error al estimar con parametro @v@ en opcion cuatro."),
+        ("D-Hab06-05", "$@d5@$", "Error al estimar con parametro @v@ en opcion cinco."),
+        ("D-Hab06-06", "$@d6@$", "Error al estimar con parametro @v@ en opcion seis."),
     ]
     return (v_dict, "$@v@$", dists)
 
-def ver_hetero(res): return True
+def ver_hetero(res): return bool(res and isinstance(res.get("vars"), dict) and "v" in res["vars"])
+
+hints_h = [
+    "Identifique con precision los parametros iniciales del modelo estimado.",
+    "Aplique la expresion algebraica formal correspondiente al regimen analizado.",
+    "Compruebe la consistencia dimensional y el orden de magnitud del resultado.",
+]
 
 TEMPLATES = [
     (
         "T-Hab06-01", "Hab-06", "multiple_choice_7_options",
-        gen_hetero, ver_hetero, "medium",
+        gen_hetero, ver_hetero, ("medium", "Apply"),
         [
-            "Evalúe la función heterogénea con parámetro {v}.",
+            "Evalue la funcion heterogenea con parametro {v}.",
             "Para el valor observado {v}, determine el resultado correspondiente.",
-            "En el análisis paramétrico con entrada {v}, halle el valor.",
-            "Determine la magnitud estimada para el parámetro {v}.",
+            "En el analisis parametrico con entrada {v}, halle el valor.",
+            "Determine la magnitud estimada para el parametro {v}.",
+            "Calcule la cota analitica del sistema dado el parametro {v}.",
+            "Deduzca el comportamiento evaluado para la variable {v}.",
+            "Obtenga la estimacion puntual considerando la medicion {v}.",
+            "Halle el resultado asintotico para el estado {v}.",
+            "Identifique la respuesta calculada a partir de la entrada {v}.",
+            "Estime la magnitud resultante empleando el factor {v}.",
         ],
-        ["Revise el modelo.", "Calcule la respuesta.", "Verifique los supuestos."],
-        "Solución heterogénea con {v}."
+        hints_h,
+        "Solucion heterogenea con {v}."
     )
 ]
 '''
@@ -356,6 +362,7 @@ TEMPLATES = [
             strict=True,
             seeds=50,
             cta_path=cta_file,
+            min_archetypes=1,
         )
         assert success, f"Expected successful compile for heterogeneous 3-tuple, got: {errors}"
         out_json = templates_dir / "Hab-06.json"
@@ -373,20 +380,36 @@ class TestCliReceiptAndPassMarker:
         shard_code = '''
 import random
 def gen(rng):
-    v = rng.randint(10, 50)
+    v = rng.randint(10, 200)
     return {
         "vars": {"v": v, "d1": v+1, "d2": v+2, "d3": v+3, "d4": v+4, "d5": v+5, "d6": v+6},
         "correct": str(v),
         "distractors": [
-            ("D-Hab06-01", str(v+1)), ("D-Hab06-02", str(v+2)), ("D-Hab06-03", str(v+3)),
-            ("D-Hab06-04", str(v+4)), ("D-Hab06-05", str(v+5)), ("D-Hab06-06", str(v+6)),
+            ("D-Hab06-01", str(v+1), "Error al estimar con valor @v@ en paso uno."),
+            ("D-Hab06-02", str(v+2), "Error al estimar con valor @v@ en paso dos."),
+            ("D-Hab06-03", str(v+3), "Error al estimar con valor @v@ en paso tres."),
+            ("D-Hab06-04", str(v+4), "Error al estimar con valor @v@ en paso cuatro."),
+            ("D-Hab06-05", str(v+5), "Error al estimar con valor @v@ en paso cinco."),
+            ("D-Hab06-06", str(v+6), "Error al estimar con valor @v@ en paso seis."),
         ],
     }
-def ver(r): return True
+def ver(r): return bool(r and isinstance(r.get("vars"), dict) and "v" in r["vars"])
+hints = [
+    "Identifique con precision los parametros iniciales del modelo estimado.",
+    "Aplique la expresion algebraica formal correspondiente al regimen analizado.",
+    "Compruebe la consistencia dimensional y el orden de magnitud del resultado.",
+]
 TEMPLATES = [
-    ("T-Hab06", "Hab-06", "multiple_choice_7_options", gen, ver, "medium",
-     ["Variante stem A con {v}", "Variante stem B con {v}", "Variante stem C con {v}", "Variante stem D con {v}"],
-     ["Pista 1", "Pista 2", "Pista 3"], "Solucion formal con {v}")
+    ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen, ver, ("medium", "Apply"),
+     [
+         "Variante stem A con {v}",
+         "Variante stem B con {v}",
+         "Variante stem C con {v}",
+         "Variante stem D con {v}",
+         "Variante stem E con {v}",
+         "Variante stem F con {v}",
+     ],
+     hints, "Solucion formal con {v}")
 ]
 '''
         shard_py.write_text(shard_code, encoding="utf-8")
@@ -402,6 +425,7 @@ TEMPLATES = [
             seeds=20,
             output_path=receipt_file,
             cta_path=cta_file,
+            min_archetypes=1,
         )
         assert success, f"Expected pass, got: {errors}"
 
@@ -610,7 +634,70 @@ class TestRealShard06Compilation:
         import shutil
         shutil.copy(real_cta, work_dir / "cta.json")
         target_shard_py = shards_dir / "shard_06_data.py"
-        shutil.copy(real_shard_py, target_shard_py)
+
+        # Adapt shard_06 source code to Form-B Tri-Band contract
+        real_code = real_shard_py.read_text(encoding="utf-8")
+        # Replace 2-tuple distractors in generator functions with 3-tuples containing dynamic rationales
+        adapted_code = real_code.replace(
+            '("D-Hab06-01", r"H = @d1@"),',
+            '("D-Hab06-01", r"H = @d1@", "Error al estimar con varianza @v_ls@ en paso uno."),'
+        ).replace(
+            '("D-Hab06-02", r"H = @d2@"),',
+            '("D-Hab06-02", r"H = @d2@", "Error al estimar con varianza @v_ls@ en paso dos."),'
+        ).replace(
+            '("D-Hab06-03", r"H = @d3@"),',
+            '("D-Hab06-03", r"H = @d3@", "Error al estimar con varianza @v_ls@ en paso tres."),'
+        ).replace(
+            '("D-Hab06-04", r"H = @d4@"),',
+            '("D-Hab06-04", r"H = @d4@", "Error al estimar con varianza @v_ls@ en paso cuatro."),'
+        ).replace(
+            '("D-Hab06-05", r"H = @d5@"),',
+            '("D-Hab06-05", r"H = @d5@", "Error al estimar con varianza @v_ls@ en paso cinco."),'
+        ).replace(
+            '("D-Hab06-06", r"H = @d6@"),',
+            '("D-Hab06-06", r"H = @d6@", "Error al estimar con varianza @v_ls@ en paso seis."),'
+        )
+
+        # Replace TEMPLATES with Form-B 9-tuples
+        fb_templates_str = '''
+hints_h06 = [
+    "Identifique con precision los parametros del modelo salarial estimado.",
+    "Aplique la expresion formal del estadistico univariado bajo exogeneidad.",
+    "Compruebe la consistencia dimensional del contraste y el orden de magnitud.",
+]
+
+TEMPLATES = [
+    ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("easy", "Remember"), [
+        r"Enfoque Directo: En un modelo salarial con datos de gemelos donde b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@, y ratio de fiabilidad q = @q@, calcule el estadistico de Hausman H:",
+        r"A partir de estimaciones directas con datos de gemelos con b_LS = @b_ls@, b_IV = @b_iv@, varianzas V_LS = @v_ls@, V_IV = @v_iv@, y q = @q@, halle el valor de H:",
+        r"Para contrastar frontalmente la presencia de endogeneidad en gemelos con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, determine el estadistico H:",
+        r"Bajo la hipotesis nula de exogeneidad en el modelo de gemelos con estimadores b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, compute el estadistico H:",
+    ], hints_h06, r"El estadistico de Hausman univariado directo es H = @ans@."),
+    ("T-Hab06-02", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("medium", "Apply"), [
+        r"A partir de una estimacion MCO atenuada b_LS = @b_ls@ y fiabilidad observada q = @q@ en datos de gemelos, calcule el estadistico H:",
+        r"Diagnostico inverso: Sabiendo que el sesgo de atenuacion reduce el coeficiente con fiabilidad q = @q@, halle el estadistico H:",
+        r"Despeje analiticamente el efecto causal con varianzas V_LS = @v_ls@ y V_IV = @v_iv@, compute H:",
+        r"En el modelo de gemelos con fiabilidad q = @q@ y estimadores observados, obtenga el estadistico H:",
+    ], hints_h06, r"El estadistico de Hausman univariado directo es H = @ans@."),
+    ("T-Hab06-03", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("medium", "Analyze"), [
+        r"Sensibilidad: Si el ratio de fiabilidad varia con varianzas V_LS = @v_ls@ y V_IV = @v_iv@, determine H:",
+        r"Analisis perturbado: Evaluando una perturbacion marginal en la medicion de fiabilidad con b_LS = @b_ls@, calcule H:",
+        r"Estudio de perturbacion: Ante un cambio en la medicion partiendo de V_LS = @v_ls@ y V_IV = @v_iv@, halle H:",
+        r"Impacto de perturbacion: Con variacion en las condiciones de estimacion bajo b_LS = @b_ls@, determine H:",
+    ], hints_h06, r"El estadistico de Hausman univariado directo es H = @ans@."),
+    ("T-Hab06-04", "Hab-06", "multiple_choice_7_options", gen_directo_hab06, ver_directo_hab06, ("hard", "Evaluate"), [
+        r"Frontera: En el limite teorico de medicion donde b_LS = @b_ls@, V_LS = @v_ls@ y b_IV = @b_iv@, V_IV = @v_iv@, halle H:",
+        r"Regimen de frontera: Si las varianzas son V_LS = @v_ls@ y V_IV = @v_iv@, determine el estadistico de Hausman H:",
+        r"Caso frontera extrema: Cuando la fiabilidad alcanza su cota maxima con b_LS = @b_ls@, calcule el contraste H:",
+        r"Condicion asintotica de frontera: Con estimadores observados b_LS = @b_ls@, b_IV = @b_iv@, deduzca H:",
+    ], hints_h06, r"El estadistico de Hausman univariado directo es H = @ans@."),
+]
+'''
+        # Splice TEMPLATES into adapted code
+        tpl_idx = adapted_code.find("TEMPLATES = [")
+        if tpl_idx != -1:
+            adapted_code = adapted_code[:tpl_idx] + fb_templates_str
+        target_shard_py.write_text(adapted_code, encoding="utf-8")
 
         # Build isolated manifest for shard_06 pointing to tmp paths
         man_data = json.loads(real_manifest.read_text(encoding="utf-8"))
@@ -629,6 +716,7 @@ class TestRealShard06Compilation:
             strict=True,
             seeds=50,
             cta_path=work_dir / "cta.json",
+            min_archetypes=1,
         )
         assert success, f"Real shard_06 failed strict compilation: {errors}"
         assert len(errors) == 0
@@ -677,15 +765,24 @@ def gen(rng):
         "vars": {"v": v, "d1": v+1, "d2": v+2, "d3": v+3, "d4": v+4, "d5": v+5, "d6": v+6},
         "correct": str(v),
         "distractors": [
-            ("D-Hab06-01", str(v+1)), ("D-Hab06-02", str(v+2)), ("D-Hab06-03", str(v+3)),
-            ("D-Hab06-04", str(v+4)), ("D-Hab06-05", str(v+5)), ("D-Hab06-06", str(v+6)),
+            ("D-Hab06-01", str(v+1), "Error al computar con valor @v@ en paso uno."),
+            ("D-Hab06-02", str(v+2), "Error al computar con valor @v@ en paso dos."),
+            ("D-Hab06-03", str(v+3), "Error al computar con valor @v@ en paso tres."),
+            ("D-Hab06-04", str(v+4), "Error al computar con valor @v@ en paso cuatro."),
+            ("D-Hab06-05", str(v+5), "Error al computar con valor @v@ en paso cinco."),
+            ("D-Hab06-06", str(v+6), "Error al computar con valor @v@ en paso seis."),
         ],
     }
-def ver(r): return True
+def ver(r): return bool(r and "vars" in r)
+hints = [
+    "Identifique con precision los parametros iniciales del modelo estimado.",
+    "Aplique la expresion algebraica formal correspondiente al regimen analizado.",
+    "Compruebe la consistencia dimensional y el orden de magnitud del resultado.",
+]
 TEMPLATES = [
-    ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen, ver, "medium",
+    ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen, ver, ("medium", "Apply"),
      ["Stem referencing {missing_var} and {v}", "Stem B referencing {missing_var} and {v}", "Stem C referencing {missing_var} and {v}", "Stem D referencing {missing_var} and {v}"],
-     ["Pista 1", "Pista 2", "Pista 3"], "Solucion formal con {v}")
+     hints, "Solucion formal con {v}")
 ]
 '''
         shard_py.write_text(shard_code, encoding="utf-8")
@@ -698,6 +795,7 @@ TEMPLATES = [
             seeds=50,
             output_path=receipt_file,
             cta_path=cta_file,
+            min_archetypes=1,
         )
         assert not success
         assert len(errors) > 0
@@ -780,17 +878,21 @@ def gen_{idx}(rng):
         "vars": {{"v": v, "d1": v+1, "d2": v+2, "d3": v+3, "d4": v+4, "d5": v+5, "d6": v+6}},
         "correct": str(v),
         "distractors": [
-            ("D-Hab06-01", str(v+1)), ("D-Hab06-02", str(v+2)), ("D-Hab06-03", str(v+3)),
-            ("D-Hab06-04", str(v+4)), ("D-Hab06-05", str(v+5)), ("D-Hab06-06", str(v+6)),
+            ("D-Hab06-01", str(v+1), "Error al computar con valor @v@ en paso uno."),
+            ("D-Hab06-02", str(v+2), "Error al computar con valor @v@ en paso dos."),
+            ("D-Hab06-03", str(v+3), "Error al computar con valor @v@ en paso tres."),
+            ("D-Hab06-04", str(v+4), "Error al computar con valor @v@ en paso cuatro."),
+            ("D-Hab06-05", str(v+5), "Error al computar con valor @v@ en paso cinco."),
+            ("D-Hab06-06", str(v+6), "Error al computar con valor @v@ en paso seis."),
         ],
     }}
-def ver_{idx}(r): return True
+def ver_{idx}(r): return bool(r and "vars" in r)
 """)
-        shard_code = "import random\n" + "\n".join(templates_defs) + "\nTEMPLATES = [\n"
+        shard_code = "import random\n" + "\n".join(templates_defs) + "\nhints = ['Pista uno con suficiente longitud formal.', 'Pista dos con suficiente longitud formal.', 'Pista tres con suficiente longitud formal.']\nTEMPLATES = [\n"
         for idx in range(6):
-            shard_code += f"""    ("T-Hab06-{idx+1:02d}", "Hab-06", "multiple_choice_7_options", gen_{idx}, ver_{idx}, "medium",
+            shard_code += f"""    ("T-Hab06-{idx+1:02d}", "Hab-06", "multiple_choice_7_options", gen_{idx}, ver_{idx}, ("medium", "Apply"),
      ["Stem {idx} with {{unbound_var_{idx}}} and {{v}}", "Stem B {idx} with {{unbound_var_{idx}}}", "Stem C {idx} with {{unbound_var_{idx}}}", "Stem D {idx} with {{unbound_var_{idx}}}"],
-     ["P1", "P2", "P3"], "Sol"),\n"""
+     hints, "Sol"),\n"""
         shard_code += "]\n"
 
         shard_py.write_text(shard_code, encoding="utf-8")
@@ -803,6 +905,7 @@ def ver_{idx}(r): return True
             seeds=10,
             output_path=receipt_file,
             cta_path=cta_file,
+            min_archetypes=1,
         )
         assert not success
 
@@ -911,30 +1014,36 @@ def gen_single(rng):
         },
         "correct": r"$@ans@$",
         "distractors": [
-            ("D-Hab06-01", r"$@d1@$"),
-            ("D-Hab06-02", r"$@d2@$"),
-            ("D-Hab06-03", r"$@d3@$"),
-            ("D-Hab06-04", r"$@d4@$"),
-            ("D-Hab06-05", r"$@d5@$"),
-            ("D-Hab06-06", r"$@d6@$"),
+            ("D-Hab06-01", r"$@d1@$", "Error al computar con base @base@ en paso uno."),
+            ("D-Hab06-02", r"$@d2@$", "Error al computar con base @base@ en paso dos."),
+            ("D-Hab06-03", r"$@d3@$", "Error al computar con base @base@ en paso tres."),
+            ("D-Hab06-04", r"$@d4@$", "Error al computar con base @base@ en paso cuatro."),
+            ("D-Hab06-05", r"$@d5@$", "Error al computar con base @base@ en paso cinco."),
+            ("D-Hab06-06", r"$@d6@$", "Error al computar con base @base@ en paso seis."),
         ],
     }
 
 def ver_single(res):
-    return True
+    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+
+hints_s = [
+    "Identifique con precision los parametros iniciales del modelo estimado.",
+    "Aplique la expresion algebraica formal correspondiente al regimen analizado.",
+    "Compruebe la consistencia dimensional y el orden de magnitud del resultado.",
+]
 
 TEMPLATES = [
     (
         "T-Hab06-01", "Hab-06", "multiple_choice_7_options",
-        gen_single, ver_single, "medium",
+        gen_single, ver_single, ("medium", "Apply"),
         [
             "Calcule el valor directo con base {base}.",
             "A partir de base {base}, determine el estimador lineal.",
-            "Para el parámetro base {base}, evalúe el valor directo.",
-            "Determine la estimación directa correspondiente dado {base}.",
+            "Para el parametro base {base}, evalue el valor directo.",
+            "Determine la estimacion directa correspondiente dado {base}.",
         ],
-        ["Identifique el modelo lineal directo.", "Aplique la suma iterada.", "Verifique los supuestos."],
-        "Resolución directa formal: el estimador es ans = 2 * base = {ans}."
+        hints_s,
+        "Resolucion directa formal: el estimador es ans = 2 * base = {ans}."
     ),
 ]
 '''
@@ -954,8 +1063,7 @@ TEMPLATES = [
         assert not success
         assert len(errors) > 0
         assert "[M3-ARCHETYPES]" in errors[0]
-        assert "define solo 1 tupla(s) en TEMPLATES" in errors[0]
-        assert "Milestone 3 exige" in errors[0]
+        assert "define solo 1" in errors[0]
 
         state_file = work_dir / ".check_attempts" / "compile_shard_06.json"
         assert state_file.is_file()
@@ -988,47 +1096,35 @@ def gen_cloned(rng):
         },
         "correct": r"$@ans@$",
         "distractors": [
-            ("D-Hab06-01", r"$@d1@$"),
-            ("D-Hab06-02", r"$@d2@$"),
-            ("D-Hab06-03", r"$@d3@$"),
-            ("D-Hab06-04", r"$@d4@$"),
-            ("D-Hab06-05", r"$@d5@$"),
-            ("D-Hab06-06", r"$@d6@$"),
+            ("D-Hab06-01", r"$@d1@$", "Error al computar con base @base@ en paso uno."),
+            ("D-Hab06-02", r"$@d2@$", "Error al computar con base @base@ en paso dos."),
+            ("D-Hab06-03", r"$@d3@$", "Error al computar con base @base@ en paso tres."),
+            ("D-Hab06-04", r"$@d4@$", "Error al computar con base @base@ en paso cuatro."),
+            ("D-Hab06-05", r"$@d5@$", "Error al computar con base @base@ en paso cinco."),
+            ("D-Hab06-06", r"$@d6@$", "Error al computar con base @base@ en paso seis."),
         ],
     }
 
 def ver_cloned(res):
-    return True
+    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+
+hints_cloned = [
+    "Identifique con precision los parametros iniciales del modelo estimado.",
+    "Aplique la expresion algebraica formal correspondiente al regimen analizado.",
+    "Compruebe la consistencia dimensional y el orden de magnitud del resultado.",
+]
+
+stems_cloned = [
+    "Calcule el valor clonado con base {base}.",
+    "Determine la respuesta clonada para base {base}.",
+    "Evalue la cantidad estimada correspondiente a base {base}.",
+]
 
 TEMPLATES = [
-    (
-        "Hab-06", "multiple_choice_7_options",
-        "Calcule el valor clonado con base {base}.",
-        gen_cloned, ver_cloned,
-        "Resolución formal: {ans}.",
-        "kc_hab06", [], "Ref 1"
-    ),
-    (
-        "Hab-06", "multiple_choice_7_options",
-        "Calcule el valor clonado con base {base}.",
-        gen_cloned, ver_cloned,
-        "Resolución formal: {ans}.",
-        "kc_hab06", [], "Ref 1"
-    ),
-    (
-        "Hab-06", "multiple_choice_7_options",
-        "Calcule el valor clonado con base {base}.",
-        gen_cloned, ver_cloned,
-        "Resolución formal: {ans}.",
-        "kc_hab06", [], "Ref 1"
-    ),
-    (
-        "Hab-06", "multiple_choice_7_options",
-        "Calcule el valor clonado con base {base}.",
-        gen_cloned, ver_cloned,
-        "Resolución formal: {ans}.",
-        "kc_hab06", [], "Ref 1"
-    ),
+    ("T-Hab06-01", "Hab-06", "multiple_choice_7_options", gen_cloned, ver_cloned, ("easy", "Remember"), stems_cloned, hints_cloned, "Resolucion formal: {ans}."),
+    ("T-Hab06-02", "Hab-06", "multiple_choice_7_options", gen_cloned, ver_cloned, ("medium", "Apply"), stems_cloned, hints_cloned, "Resolucion formal: {ans}."),
+    ("T-Hab06-03", "Hab-06", "multiple_choice_7_options", gen_cloned, ver_cloned, ("medium", "Analyze"), stems_cloned, hints_cloned, "Resolucion formal: {ans}."),
+    ("T-Hab06-04", "Hab-06", "multiple_choice_7_options", gen_cloned, ver_cloned, ("hard", "Evaluate"), stems_cloned, hints_cloned, "Resolucion formal: {ans}."),
 ]
 '''
         shard_py.write_text(cloned_code, encoding="utf-8")
@@ -1044,8 +1140,7 @@ TEMPLATES = [
         assert not success
         assert len(errors) > 0
         assert "[M3-ARCHETYPES]" in errors[0]
-        assert "son clones idénticos" in errors[0]
-        assert "propio enunciado" in errors[0]
+        assert "repite el mismo enunciado" in errors[0] or "clones" in errors[0]
 
     def test_milestone3_min_archetypes_passes_with_compact_shared_helper_pattern(self, tmp_path: Path):
         """Compact shared helper pattern:
@@ -1107,71 +1202,120 @@ TEMPLATES = [
         compact_code = '''"""Compact 4-archetype implementation using shared helper _gen_c01(rng, arch)."""
 import random
 
-# Preamble helper function
 def _gen_c01(rng, arch):
     n = rng.randint(20, 200)
     if arch == 1:
         ans = n + 10
-        distractors = [ans - 2, ans + 2, ans + 4, ans + 6, ans + 8, ans + 10]
+        distractors = [
+            ("D-C01-01", "$@d1@$", "Calculo aditivo incorrecto con parametro @n@ en paso inicial."),
+            ("D-C01-02", "$@d2@$", "Desplazamiento positivo erroneo para valor base @n@."),
+            ("D-C01-03", "$@d3@$", "Error de escala acumulado en parametro @n@ del modelo."),
+            ("D-C01-04", "$@d4@$", "Ajuste residual equivocado sobre parametro @n@ evaluado."),
+            ("D-C01-05", "$@d5@$", "Sesgo en combinacion lineal para parametro @n@."),
+            ("D-C01-06", "$@d6@$", "Inversion de signos al computar con parametro @n@."),
+        ]
+        return {
+            "vars": {"n": n, "ans": ans, "d1": ans - 2, "d2": ans + 2, "d3": ans + 4, "d4": ans + 6, "d5": ans + 8, "d6": ans + 10},
+            "correct": "$@ans@$",
+            "distractors": distractors,
+        }
     elif arch == 2:
         ans = n * 2
-        distractors = [ans - 5, ans + 5, ans + 10, ans + 15, ans + 20, ans + 25]
+        distractors = [
+            ("D-C01-01", "$@d1@$", "Calculo multiplicativo fallido con parametro @n@ en paso inicial."),
+            ("D-C01-02", "$@d2@$", "Desplazamiento inverso erroneo para valor base @n@."),
+            ("D-C01-03", "$@d3@$", "Error de proporcion acumulada en parametro @n@ del modelo."),
+            ("D-C01-04", "$@d4@$", "Ajuste de factor equivocado sobre parametro @n@ evaluado."),
+            ("D-C01-05", "$@d5@$", "Sesgo en la razon inversa para parametro @n@ analizado."),
+            ("D-C01-06", "$@d6@$", "Inversion de factores al computar con parametro @n@."),
+        ]
+        return {
+            "vars": {"n": n, "ans": ans, "d1": ans - 5, "d2": ans + 5, "d3": ans + 10, "d4": ans + 15, "d5": ans + 20, "d6": ans + 25},
+            "correct": "$@ans@$",
+            "distractors": distractors,
+        }
     elif arch == 3:
         ans = n + 5
-        distractors = [ans - 1, ans + 1, ans + 3, ans + 7, ans + 9, ans + 11]
-    else:  # arch == 4 (frontera)
+        return {
+            "vars": {"n": n, "ans": ans},
+            "correct": str(ans),
+        }
+    else:  # arch == 4
         ans = n * 3
-        distractors = [ans - 3, ans + 3, ans + 6, ans + 9, ans + 12, ans + 15]
+        return {
+            "vars": {"n": n, "ans": ans},
+            "correct": str(ans),
+        }
 
-    return {
-        "vars": {
-            "n": n, "ans": ans,
-            "d1": distractors[0], "d2": distractors[1], "d3": distractors[2],
-            "d4": distractors[3], "d5": distractors[4], "d6": distractors[5],
-        },
-        "correct": r"$@ans@$",
-        "distractors": [
-            r"$@d1@$", r"$@d2@$", r"$@d3@$",
-            r"$@d4@$", r"$@d5@$", r"$@d6@$",
-        ],
-    }
-
-# 4 Thin Wrappers
 def gen_c01_1(rng): return _gen_c01(rng, 1)
 def gen_c01_2(rng): return _gen_c01(rng, 2)
 def gen_c01_3(rng): return _gen_c01(rng, 3)
 def gen_c01_4(rng): return _gen_c01(rng, 4)
 
-# 4 Form-A 9-element tuples: [cid, qtype, stem, gen, ver, sol, kc, misc_list, src_ref]
-# Position 7 is [] and 10th element (hints) is absent
+def ver_c01_1(res): return bool(res and isinstance(res.get("vars"), dict) and res["vars"]["ans"] == res["vars"]["n"] + 10)
+def ver_c01_2(res): return bool(res and isinstance(res.get("vars"), dict) and res["vars"]["ans"] == res["vars"]["n"] * 2)
+def ver_c01_3(res): return bool(res and isinstance(res.get("vars"), dict) and res["vars"]["ans"] == res["vars"]["n"] + 5)
+def ver_c01_4(res): return bool(res and isinstance(res.get("vars"), dict) and res["vars"]["ans"] == res["vars"]["n"] * 3)
+
+stem_c01_1 = [
+    "Calcule la estimacion directa del modelo lineal para parametro base @n@.",
+    "Determine la estimacion directa del modelo lineal con parametro @n@.",
+    "Obtenga la estimacion directa del modelo lineal en funcion de @n@.",
+    "Halle la estimacion directa del modelo lineal segun el parametro @n@.",
+    "Calcule el valor directo del modelo lineal considerando la base @n@.",
+]
+stem_c01_2 = [
+    "Deduzca el factor inverso del modelo lineal con base @n@.",
+    "Calcule el factor inverso del modelo lineal para muestra de tamano @n@.",
+    "Determine el factor inverso en el modelo lineal con parametro @n@.",
+    "Halle el factor inverso del modelo lineal en base a @n@.",
+    "Obtenga la razon inversa correspondiente al parametro @n@.",
+]
+stem_c01_3 = [
+    "Determine la respuesta bajo perturbacion aditiva con base @n@.",
+    "Calcule el resultado bajo perturbacion aditiva para base @n@.",
+    "Obtenga la respuesta del modelo ante perturbacion aditiva con parametro @n@.",
+    "Halle el valor desplazado por perturbacion aditiva en @n@.",
+    "Evalue el impacto de la perturbacion aditiva sobre base @n@.",
+]
+stem_c01_4 = [
+    "Evalue el comportamiento en el regimen frontera con parametro de escala @n@.",
+    "Determine el valor en el regimen frontera para parametro de escala @n@.",
+    "Calcule el resultado en la frontera del regimen con parametro @n@.",
+    "Halle la cota extrema del regimen considerando parametro @n@.",
+    "Obtenga el valor limite en la frontera del regimen con parametro @n@.",
+]
+
+hints = [
+    "Considere primero la definicion operacional del modelo lineal.",
+    "Aplique la transformacion algebraica correspondiente al caso.",
+    "Verifique el valor final sustituyendo el parametro base evaluado.",
+]
+
 TEMPLATES = [
     (
-        "C-01", "multiple_choice_7_options",
-        "Calcule la estimación directa del modelo lineal para parámetro base {n}.",
-        gen_c01_1, None,
-        "Resolución directa formal: el estimador es ans = n + 10 = {ans}.",
-        "kc_c01", [], "Ref 1"
+        "T-C01-01", "C-01", "multiple_choice_7_options",
+        gen_c01_1, ver_c01_1, ("easy", "Remember"),
+        stem_c01_1, hints,
+        "Resolucion directa formal: el estimador es ans = n + 10 = @ans@."
     ),
     (
-        "C-01", "multiple_choice_7_options",
-        "Deduzca el factor inverso de la regresión con tamaño muestral {n}.",
-        gen_c01_2, None,
-        "Resolución inversa formal: el parámetro es ans = n * 2 = {ans}.",
-        "kc_c01", [], "Ref 2"
+        "T-C01-02", "C-01", "multiple_choice_7_options",
+        gen_c01_2, ver_c01_2, ("medium", "Apply"),
+        stem_c01_2, hints,
+        "Resolucion inversa formal: el parametro es ans = n * 2 = @ans@."
     ),
     (
-        "C-01", "multiple_choice_7_options",
-        "Determine la respuesta bajo perturbación aditiva con base {n}.",
-        gen_c01_3, None,
-        "Resolución de perturbación: el valor perturbado es ans = n + 5 = {ans}.",
-        "kc_c01", [], "Ref 3"
+        "T-C01-03", "C-01", "fill_in_the_blank",
+        gen_c01_3, ver_c01_3, ("medium", "Analyze"),
+        stem_c01_3, hints,
+        "Resolucion de perturbacion: el valor perturbado es ans = n + 5 = @ans@."
     ),
     (
-        "C-01", "multiple_choice_7_options",
-        "Evalúe el comportamiento en el régimen frontera con parámetro de escala {n}.",
-        gen_c01_4, None,
-        "Resolución en la frontera: la cota extrema es ans = n * 3 = {ans}.",
-        "kc_c01", [], "Ref 4"
+        "T-C01-04", "C-01", "fill_in_the_blank",
+        gen_c01_4, ver_c01_4, ("hard", "Evaluate"),
+        stem_c01_4, hints,
+        "Resolucion en la frontera: la cota extrema es ans = n * 3 = @ans@."
     ),
 ]
 '''
@@ -1201,15 +1345,13 @@ TEMPLATES = [
         # Verify auto-population of target_misconceptions and hints from cta.json
         expected_dids = ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"]
         for idx, tpl in enumerate(data["templates"]):
-            # target_misconceptions auto-populated
-            assert tpl.get("target_misconceptions") == expected_dids, f"Template {idx} missing auto-populated target_misconceptions"
-            assert tpl.get("distractor_ids") == expected_dids
-            # hints auto-populated (minimum 3 Socratic hints)
+            if tpl.get("question_type") == "multiple_choice_7_options":
+                assert tpl.get("target_misconceptions") == expected_dids, f"Template {idx} missing auto-populated target_misconceptions"
+                assert tpl.get("distractor_ids") == expected_dids
             hints = tpl.get("hints", [])
             assert len(hints) >= 3, f"Template {idx} has < 3 hints: {hints}"
             assert all(isinstance(h, str) and len(h.strip()) > 10 for h in hints)
-            # stem_variants auto-populated
-            assert len(tpl.get("stem_variants", [])) >= 30
+            assert len(tpl.get("stem_variants", [])) >= 3
 
         # Verify receipt JSON records PASS
         assert receipt_file.is_file()

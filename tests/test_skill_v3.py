@@ -184,3 +184,10 @@ def test_deterministic_crc32_seeding():
     seed2 = zlib.crc32(cid.encode("utf-8")) % 10000
     assert seed1 == seed2
     assert isinstance(seed1, int)
+
+
+def test_triband_min_archetypes_three_contract():
+    """Verify that Form-B Tri-Banda specifies min_archetypes = 3."""
+    from plan_shards import DSL_REFERENCE
+    assert DSL_REFERENCE.get("min_archetypes") == 3
+    assert DSL_REFERENCE.get("canonical_template_schema") is not None

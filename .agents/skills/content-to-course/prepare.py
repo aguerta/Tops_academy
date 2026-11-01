@@ -148,12 +148,13 @@ def prepare_course(
     course_id: Optional[str] = None,
     courses_dir: Union[str, Path] = "courses",
     append: bool = False,
-    cta_mode: str = "direct",
+    cta_mode: str = "auto",
     granularity: str = "standard",
     dpi: int = 150,
     order_override: Optional[Sequence[str]] = None,
     title: Optional[str] = None,
     render_pages: bool = False,
+    force_direct: bool = False,
 ) -> Dict[str, Any]:
     """Executes Stage 0 preparation: partitioning, manifest generation, and append delta injection."""
     clean_work_dir = Path(sanitize_cli_arg(str(work_dir)))
@@ -199,6 +200,7 @@ def prepare_course(
         order_override=order_override,
         render_pages=render_pages,
         input_files=sources,
+        force_direct=force_direct,
     )
 
     # Pre-seed compile_cta.py compiler in canonical work directory if present
@@ -248,6 +250,20 @@ def prepare_course(
                     ],
                     "existing_competency_names": [
                         str(c.get("name") or c.get("title") or "").strip() for c in existing_comps
+                    ],
+                    "existing_competencies": [
+                        {
+                            "id": str(c.get("id") or c.get("competency_id")),
+                            "name": str(c.get("name") or c.get("title") or "").strip(),
+                            "type": str(c.get("type") or c.get("category", "concept")).lower(),
+                            "prerequisites": list(c.get("prerequisites", [])),
+                            "distractor_names": [
+                                str(d.get("name") or d.get("id", ""))
+                                for d in c.get("distractors", [])
+                                if isinstance(d, dict)
+                            ],
+                        }
+                        for c in existing_comps
                     ],
                     "existing_competencies_summary": [
                         {
@@ -336,6 +352,7 @@ def main() -> None:
     parser.add_argument("--order", nargs="*", help="Optional document processing order")
     parser.add_argument("--render-pages", dest="render_pages", action="store_true", default=False, help="Render PDF pages to PNG (default False)")
     parser.add_argument("--no-render-pages", dest="render_pages", action="store_false", help="Do not render PDF pages to PNG")
+    parser.add_argument("--force-direct", action="store_true", default=False, help="Force direct execution mode without mapreduce promotion")
 
     # Sanitize sys.argv arguments
     sanitized_argv = [sys.argv[0]] + [sanitize_cli_arg(a) for a in sys.argv[1:]]
@@ -356,6 +373,7 @@ def main() -> None:
             order_override=args.order,
             title=args.title,
             render_pages=args.render_pages,
+            force_direct=args.force_direct,
         )
         print(f"[+] Prepare complete: {manifest.get('total_files', 0)} files, {manifest.get('total_pages', 0)} pages processed.")
         print(f"[+] Manifest written to: {Path(args.work_dir) / 'pre_cta_manifest.json'}")

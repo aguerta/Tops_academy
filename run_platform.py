@@ -285,6 +285,9 @@ def validate_platform_course(content: str) -> tuple[bool, dict | str]:
     return True, data
 
 
+_SCAN_COURSE_CACHE: dict[tuple[str, int, int], dict] = {}
+
+
 def scan_courses() -> list[dict]:
     """Dynamically scan courses/ directory and return all discovered course records."""
     if not COURSES_DIR.exists():
@@ -297,6 +300,13 @@ def scan_courses() -> list[dict]:
     results: list[dict] = []
     for f in course_files:
         try:
+            st = f.stat()
+            cache_key = (str(f.resolve()), st.st_mtime_ns, st.st_size)
+            cached_rec = _SCAN_COURSE_CACHE.get(cache_key)
+            if cached_rec is not None:
+                results.append(cached_rec)
+                continue
+
             content = f.read_text(encoding="utf-8")
             is_valid, payload = validate_platform_course(content)
 
@@ -308,13 +318,15 @@ def scan_courses() -> list[dict]:
                     if re_valid and isinstance(re_payload, dict):
                         try:
                             f.write_text(repaired_content, encoding="utf-8")
+                            st = f.stat()
+                            cache_key = (str(f.resolve()), st.st_mtime_ns, st.st_size)
                         except Exception:
                             pass
                         content = repaired_content
                         is_valid, payload = re_valid, re_payload
 
             if is_valid and isinstance(payload, dict):
-                results.append({
+                rec = {
                     "id": payload.get("course_id"),
                     "filename": f.name,
                     "title": payload.get("title") or payload.get("course_title", f.stem),
@@ -323,7 +335,9 @@ def scan_courses() -> list[dict]:
                     "total_competencies": len(payload.get("competencies", [])),
                     "total_questions": len(payload.get("questions", [])),
                     "data": payload,
-                })
+                }
+                _SCAN_COURSE_CACHE[cache_key] = rec
+                results.append(rec)
             else:
                 # Attempt to extract title for display on error card
                 fallback_title = f.stem
@@ -342,6 +356,8 @@ def scan_courses() -> list[dict]:
                     "status": "error",
                     "error_message": str(payload) if not is_valid else "Validation failed",
                 })
+        except FileNotFoundError:
+            continue
         except Exception as err:
             results.append({
                 "id": f.stem,

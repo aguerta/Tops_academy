@@ -150,9 +150,12 @@ class TestBoundedCompilation:
             "    v = rng.randint(10, 50)\n"
             "    return {'vars': {'v': v}, 'correct': str(v), 'distractors': []}\n"
             "def ver_c01(res):\n"
-            "    return True\n"
+            "    return res is not None and 'v' in res.get('vars', {}) and int(res['vars']['v']) >= 10\n"
             "TEMPLATES = [\n"
-            "    ('C-01', 'fill_in_the_blank', 'Stem {v}', gen_c01, ver_c01, 'Sol {v}', 'KC', [], ('doc.pdf', 1, 'Quote'))\n"
+            "    ('T-C01-01', 'C-01', 'fill_in_the_blank', gen_c01, ver_c01, ('easy', 'Remember'), "
+            "['Stem 1 @v@ para análisis formal.', 'Stem 2 @v@ para cálculo cuantitativo.', 'Stem 3 @v@ en contexto del modelo.'], "
+            "['Pista socrática 1 identificando variables.', 'Pista socrática 2 deduciendo fórmula requerida.', 'Pista socrática 3 evaluando el resultado numérico.'], "
+            "'Sol @v@')\n"
             "]\n"
         )
         shard_py.write_text(shard_code, encoding="utf-8")

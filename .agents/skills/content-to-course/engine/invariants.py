@@ -64,6 +64,63 @@ MATH_ACCENT_COMMANDS = (
 _PL_TOKEN_PATTERN = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*(?::[^@\s{}]+)?)@")
 
 
+def _unwrap_text_in_math(text: Optional[str]) -> str:
+    """Unwrap \\text{...} and \\textrm{...} from inside KaTeX math delimiters ($...$ and $$...$$)."""
+    if not text or not isinstance(text, str):
+        return ""
+
+    def _unwrap_math_block(match: re.Match) -> str:
+        raw_block = match.group(0)
+        is_display = raw_block.startswith("$$") and raw_block.endswith("$$") and len(raw_block) >= 4
+        delim = "$$" if is_display else "$"
+        content = raw_block[len(delim) : -len(delim)]
+
+        pattern = re.compile(r"\\(text|textrm|mathrm)\s*\{")
+        if not pattern.search(content):
+            return raw_block
+
+        pieces = []
+        last_idx = 0
+        for m in pattern.finditer(content):
+            if m.start() < last_idx:
+                continue
+            before = content[last_idx:m.start()]
+            if before.strip():
+                pieces.append(f"{delim}{before}{delim}")
+            start_brace = m.end() - 1
+            depth = 1
+            pos = start_brace + 1
+            n = len(content)
+            while pos < n and depth > 0:
+                ch = content[pos]
+                if ch == "\\" and pos + 1 < n:
+                    pos += 2
+                    continue
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                pos += 1
+            if depth == 0:
+                inner = content[start_brace + 1 : pos - 1]
+                pieces.append(f" {inner} ")
+                last_idx = pos
+            else:
+                rem = content[m.start():]
+                if rem.strip():
+                    pieces.append(f"{delim}{rem}{delim}")
+                last_idx = len(content)
+                break
+        after = content[last_idx:]
+        if after.strip():
+            pieces.append(f"{delim}{after}{delim}")
+        return "".join(pieces)
+
+    res = re.sub(r"\$\$[\s\S]*?\$\$", _unwrap_math_block, text)
+    res = re.sub(r"\$[^\$]*\$", _unwrap_math_block, res)
+    return res
+
+
 def check_synthetic_boilerplate_distractors(
     correct_content: Optional[str],
     distractor_contents: List[str],
@@ -90,10 +147,11 @@ def check_synthetic_boilerplate_distractors(
     for d in distractor_contents:
         if re.search(r"\b(?:distractor|dummy|placeholder)\b", d, re.IGNORECASE):
             continue
-        prose_outside = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]*\$", " ", d)
+        unwrapped_d = _unwrap_text_in_math(d)
+        prose_outside = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]*\$", " ", unwrapped_d)
         if len(re.sub(r"[^a-zA-ZáéíóúñÁÉÍÓÚÑ]", "", prose_outside)) < 10:
             continue
-        sk = _skeleton(d)
+        sk = _skeleton(unwrapped_d)
         if len(sk) >= 20:
             skel_counts.setdefault(sk, []).append(d)
     for sk, group in skel_counts.items():
@@ -105,7 +163,8 @@ def check_synthetic_boilerplate_distractors(
 
     # 2. Symmetric antonym pairing with correct answer
     if correct_content:
-        c_low = correct_content.lower()
+        unwrapped_correct = _unwrap_text_in_math(correct_content)
+        c_low = unwrapped_correct.lower()
         for w1, w2 in ANTONYM_PAIRS:
             has_w1 = bool(re.search(rf"\b{w1}\b", c_low))
             has_w2 = bool(re.search(rf"\b{w2}\b", c_low))
@@ -113,7 +172,8 @@ def check_synthetic_boilerplate_distractors(
                 c_norm = re.sub(rf"\b{w1}\b", "<SYM>", c_low)
                 c_sk = _skeleton(c_norm)
                 for d in distractor_contents:
-                    d_low = d.lower()
+                    unwrapped_d = _unwrap_text_in_math(d)
+                    d_low = unwrapped_d.lower()
                     if re.search(rf"\b{w2}\b", d_low):
                         d_norm = re.sub(rf"\b{w2}\b", "<SYM>", d_low)
                         d_sk = _skeleton(d_norm)
@@ -126,7 +186,8 @@ def check_synthetic_boilerplate_distractors(
                 c_norm = re.sub(rf"\b{w2}\b", "<SYM>", c_low)
                 c_sk = _skeleton(c_norm)
                 for d in distractor_contents:
-                    d_low = d.lower()
+                    unwrapped_d = _unwrap_text_in_math(d)
+                    d_low = unwrapped_d.lower()
                     if re.search(rf"\b{w1}\b", d_low):
                         d_norm = re.sub(rf"\b{w1}\b", "<SYM>", d_low)
                         d_sk = _skeleton(d_norm)
@@ -494,6 +555,34 @@ def validate_katex_syntax(
             errors.append(
                 f"Unescaped underscore '_' inside '\\text{{{m_txt.group(1)}}}' in {context} causes KaTeX ParseError."
             )
+
+    # 14. KaTeX prose overflow in text macros (\text{...}, \textrm{...}, \mathrm{...})
+    # Blocks exceeding 45 characters must be rejected with [KATEX-PROSE-OVERFLOW]
+    prose_macro_pat = re.compile(r"\\(text|textrm|mathrm)\s*\{")
+    for m in prose_macro_pat.finditer(text):
+        start_brace = m.end() - 1
+        depth = 1
+        pos = start_brace + 1
+        n = len(text)
+        while pos < n and depth > 0:
+            ch = text[pos]
+            if ch == "\\" and pos + 1 < n:
+                pos += 2
+                continue
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+            pos += 1
+        if depth == 0:
+            inner = text[start_brace + 1 : pos - 1]
+            if len(inner) > 45:
+                macro_name = m.group(1)
+                snippet = inner[:30] + "..." if len(inner) > 30 else inner
+                errors.append(
+                    f"[KATEX-PROSE-OVERFLOW] KaTeX text macro '\\{macro_name}{{{snippet}}}' exceeds 45 characters "
+                    f"({len(inner)} chars) in {context}. Split into markdown prose outside math delimiters."
+                )
 
     return errors
 

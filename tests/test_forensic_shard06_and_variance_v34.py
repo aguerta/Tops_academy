@@ -239,14 +239,14 @@ class TestF01AndF02KaTeXAndRationale:
         }
         manifest_file.write_text(json.dumps(manifest_payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
-        # The exact 1-tuple code that failed 10 times in 0b8b5084
+        # Clean-Room Standard v3.8 Form-B Tri-Band implementation for Hab-06
         legacy_code = '''"""
 Parametric Exercise Templates for Shard 06
 Competency: Hab-06 (Estimación con Datos de Gemelos, Ratio de Fiabilidad y Corrección de Endogeneidad)
-Clean-Room Standard v3.21
+Clean-Room Standard v3.8
 """
 
-def gen_hab06(rng):
+def gen_hab06_1(rng):
     b_iv = round(rng.randint(150, 450) * 0.001, 3)
     b_ls = round(rng.randint(20, 120) * 0.001, 3)
     q = round(rng.randint(60, 95) * 0.01, 2)
@@ -298,18 +298,18 @@ def gen_hab06(rng):
     }
 
     dists = [
-        {"value": r"H = @d1@", "distractor_id": "D-Hab06-01", "error_rationale": "Omite el agravamiento del sesgo de atenuacion tras primeras diferencias."},
-        {"value": r"H = @d2@", "distractor_id": "D-Hab06-02", "error_rationale": "Confunde el ratio de fiabilidad con la proporcion de varianza de ruido."},
-        {"value": r"H = @d3@", "distractor_id": "D-Hab06-03", "error_rationale": "Asume que MCO supera a VI debido al sesgo de habilidad."},
-        {"value": r"H = @d4@", "distractor_id": "D-Hab06-04", "error_rationale": "Suma las varianzas en el denominador del estadistico de Hausman."},
-        {"value": r"H = @d5@", "distractor_id": "D-Hab06-05", "error_rationale": "Omite la varianza de MCO en el denominador del estadistico."},
-        {"value": r"H = @d6@", "distractor_id": "D-Hab06-06", "error_rationale": "Aplica incorrectamente el factor de atenuacion dividiendo por el ratio de fiabilidad."},
+        ("D-Hab06-01", r"H = @d1@", "Omite el agravamiento del sesgo tras primeras diferencias con @q@."),
+        ("D-Hab06-02", r"H = @d2@", "Confunde el ratio de fiabilidad con la proporcion de varianza @q@."),
+        ("D-Hab06-03", r"H = @d3@", "Asume que MCO supera a VI debido al sesgo con estimador @b_ls@."),
+        ("D-Hab06-04", r"H = @d4@", "Suma las varianzas en el denominador del estadistico de Hausman. Con valor @v_ls@."),
+        ("D-Hab06-05", r"H = @d5@", "Omite la varianza de MCO en el denominador con valor @v_ls@."),
+        ("D-Hab06-06", r"H = @d6@", "Aplica incorrectamente el factor de atenuacion dividiendo por @q@."),
     ]
 
     return {"vars": v, "correct": r"H = @ans@", "distractors": dists}
 
 
-def ver_hab06(res):
+def ver_hab06_1(res):
     if not isinstance(res, dict):
         return False
     v = res.get("vars", {})
@@ -328,38 +328,92 @@ def ver_hab06(res):
     return abs(ans - expected) < 1e-3
 
 
+def gen_hab06_2(rng):
+    v_iv = round(rng.randint(80, 250) * 0.0001, 4)
+    v_ls = round(rng.randint(10, 50) * 0.0001, 4)
+    denom = round(v_iv - v_ls, 4)
+    ans = denom
+    v = {"v_iv": v_iv, "v_ls": v_ls, "denom": denom, "ans": ans}
+    return {"vars": v, "correct": str(ans), "distractors": []}
+
+
+def ver_hab06_2(res):
+    v = res.get("vars", {})
+    return abs(v.get("ans", 0) - round(v.get("v_iv", 0) - v.get("v_ls", 0), 4)) < 1e-4
+
+
+def gen_hab06_3(rng):
+    b_iv = round(rng.randint(150, 450) * 0.001, 3)
+    b_ls = round(rng.randint(20, 120) * 0.001, 3)
+    diff = round(b_iv - b_ls, 3)
+    ans = round(diff ** 2, 4)
+    v = {"b_iv": b_iv, "b_ls": b_ls, "diff": diff, "ans": ans}
+    return {"vars": v, "correct": str(ans), "distractors": []}
+
+
+def ver_hab06_3(res):
+    v = res.get("vars", {})
+    return abs(v.get("ans", 0) - round(round(v.get("b_iv", 0) - v.get("b_ls", 0), 3) ** 2, 4)) < 1e-4
+
+
 TEMPLATES = [
     (
+        "T-Hab06-01",
         "Hab-06",
-        "multiple_choice",
+        "multiple_choice_7_options",
+        gen_hab06_1,
+        ver_hab06_1,
+        ("easy", "Remember"),
         [
             r"En un modelo salarial con datos de gemelos donde b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@, V_IV = @v_iv@, y ratio de fiabilidad q = @q@, calcule el estadistico de Hausman H:",
             r"A partir de estimaciones con datos de gemelos donde b_LS = @b_ls@, b_IV = @b_iv@, varianzas V_LS = @v_ls@, V_IV = @v_iv@, y q = @q@, halle el valor de H:",
             r"Para contrastar la presencia de endogeneidad en las diferencias entre gemelos con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, determine el estadistico H:",
             r"Bajo la hipotesis nula de exogeneidad en el modelo de gemelos con estimadores b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, compute el estadistico H:",
         ],
-        gen_hab06,
-        ver_hab06,
-        r"El estadistico de Hausman univariado es H = @ans@.",
-        r"En el contraste de Hausman univariado para evaluar endogeneidad en datos de gemelos el estadistico escalar se define como H = (b_IV - b_LS)^2 / (V_IV - V_LS).",
-        [
-            "D-Hab06-01",
-            "D-Hab06-02",
-            "D-Hab06-03",
-            "D-Hab06-04",
-            "D-Hab06-05",
-            "D-Hab06-06",
-        ],
-        (
-            "ECONOMETRIC ANALTYSIS FIFTH EDITION  -  William H_ Greene  -  5th ed_, Upper Saddle River, N_J, New Jersey, 2003  -  Prentice Hall PTR  -  isbn13 9780130661890  -  d139b0dca2a0c7d0984d735f6be1944e  -  Anna’s Archive-93.pdf",
-            25,
-            "Estimación con Datos de Gemelos, Ratio de Fiabilidad y Corrección de Endogeneidad",
-        ),
         [
             r"El numerador del estadistico de Hausman es la diferencia al cuadrado entre los estimadores.",
             r"El denominador del estadistico de Hausman es la resta de varianzas, nunca su suma.",
             r"Sustituyendo los valores del modelo se obtiene H = @ans@.",
         ],
+        r"En el contraste de Hausman univariado para evaluar endogeneidad en datos de gemelos con estimador b_LS = @b_ls@ y b_{LS} consistente, el estadistico escalar se define como H = (b_IV - b_LS)^2 / (V_IV - V_LS) = @ans@."
+    ),
+    (
+        "T-Hab06-02",
+        "Hab-06",
+        "fill_in_the_blank",
+        gen_hab06_2,
+        ver_hab06_2,
+        ("medium", "Understand"),
+        [
+            r"Con varianzas asintoticas estimadas V_IV = @v_iv@ y V_LS = @v_ls@, calcule el denominador de Hausman:",
+            r"A partir de las precisiones V_IV = @v_iv@ y V_LS = @v_ls@, halle la resta de varianzas del contraste:",
+            r"Determine la diferencia escalar entre las varianzas V_IV = @v_iv@ y V_LS = @v_ls@:",
+        ],
+        [
+            r"Reste la varianza de minimos cuadrados de la varianza instrumental.",
+            r"Recuerde que el estimador eficiente tiene menor varianza que el consistente.",
+            r"El valor del denominador corresponde exactamente a @ans@.",
+        ],
+        r"El denominador del contraste de Hausman es V_IV - V_LS = @ans@."
+    ),
+    (
+        "T-Hab06-03",
+        "Hab-06",
+        "fill_in_the_blank",
+        gen_hab06_3,
+        ver_hab06_3,
+        ("hard", "Apply"),
+        [
+            r"Para coeficientes salariales b_IV = @b_iv@ y b_LS = @b_ls@, halle el numerador cuadratico de Hausman:",
+            r"Calcule el cuadrado de la discrepancia vectorial entre b_IV = @b_iv@ y b_LS = @b_ls@:",
+            r"Determine el factor cuadratico (b_IV - b_LS)^2 para b_IV = @b_iv@ y b_LS = @b_ls@:",
+        ],
+        [
+            r"Calcule primero la resta entre el estimador IV y el estimador MCO.",
+            r"Eleve al cuadrado la diferencia calculada para obtener el numerador.",
+            r"El resultado cuadratico resultante es @ans@.",
+        ],
+        r"El numerador del estadistico de Hausman es (b_IV - b_LS)^2 = @ans@."
     ),
 ]
 '''
@@ -385,14 +439,15 @@ TEMPLATES = [
 
         tpl_data = json.loads(raw_compiled_text)
         assert tpl_data.get("competency_id") == "Hab-06"
-        ca_instances = instantiate_template(tpl_data, "Hab-06", target_count=3, seed_offset=42)
+        target_tpl = tpl_data["templates"][0] if "templates" in tpl_data else tpl_data
+        ca_instances = instantiate_template(target_tpl, "Hab-06", target_count=3, seed_offset=42)
         assert len(ca_instances) == 3
 
         # Verify author error_rationale was strictly preserved for D-Hab06-04
         d4_rationales = [
             opt["error_rationale"]
             for q in ca_instances
-            for opt in q["options"]
+            for opt in q.get("options", [])
             if opt.get("distractor_id") == "D-Hab06-04"
         ]
         assert len(d4_rationales) >= 1
@@ -456,11 +511,7 @@ class TestF03Milestone3DisjointArchetypes:
         }
         (work_dir / "cta.json").write_text(json.dumps(cta_payload, indent=2), encoding="utf-8")
 
-        # Native shard script defining 4 disjoint archetypes using compact DRY distractor formats:
-        # Archetype 1 (Directo): 2-tuple ("D-HabM3-01", r"$@d1@$")
-        # Archetype 2 (Inverso): Compact dict {"distractor_id": "D-HabM3-02", "value": r"$@d2@$"}
-        # Archetype 3 (Perturbación): Inverted 2-tuple (r"$@d1@$", "D-HabM3-01")
-        # Archetype 4 (Frontera): Bare numeric/string formats
+        # Native shard script defining 4 disjoint archetypes in Form-B Tri-Band format:
         shard_source = '''
 import random
 
@@ -471,12 +522,19 @@ def gen_directo(rng):
     v = {"base": base, "step": step, "ans": ans}
     for i in range(1, 7):
         v[f"d{i}"] = ans + i * 5
-    dists = [(f"D-HabM3-0{i}", f"$@d{i}@$") for i in range(1, 7)]
+    dists = [
+        ("D-HabM3-01", f"$@d1@$", "Inversión de signo en el estimador. Con parámetro @d1@."),
+        ("D-HabM3-02", f"$@d2@$", "Omitir la covarianza entre regresores. Con parámetro @d2@."),
+        ("D-HabM3-03", f"$@d3@$", "Varianza No Consistente usando matriz con parámetro @d3@."),
+        ("D-HabM3-04", f"$@d4@$", "Instrumento Débil en identificación con @d4@."),
+        ("D-HabM3-05", f"$@d5@$", "Sesgo de Selección por truncamiento con @d5@."),
+        ("D-HabM3-06", f"$@d6@$", "Identificación Exacta con cota @d6@."),
+    ]
     return {"vars": v, "correct": "$@ans@$", "distractors": dists}
 
 def ver_directo(res):
-    v = res["vars"]
-    return v["ans"] == v["base"] * v["step"]
+    v = res.get("vars", {})
+    return v.get("ans") == v.get("base") * v.get("step")
 
 def gen_inverso(rng):
     ans = rng.randint(10, 50)
@@ -485,104 +543,117 @@ def gen_inverso(rng):
     v = {"total": total, "div": div, "ans": ans}
     for i in range(1, 7):
         v[f"d{i}"] = ans + (i * 3)
-    dists = [{"distractor_id": f"D-HabM3-0{i}", "value": f"$@d{i}@$"} for i in range(1, 7)]
+    dists = [
+        ("D-HabM3-01", f"$@d1@$", "Inversión de signo en el estimador. Con parámetro @d1@."),
+        ("D-HabM3-02", f"$@d2@$", "Omitir la covarianza entre regresores. Con parámetro @d2@."),
+        ("D-HabM3-03", f"$@d3@$", "Varianza No Consistente usando matriz con parámetro @d3@."),
+        ("D-HabM3-04", f"$@d4@$", "Instrumento Débil en identificación con @d4@."),
+        ("D-HabM3-05", f"$@d5@$", "Sesgo de Selección por truncamiento con @d5@."),
+        ("D-HabM3-06", f"$@d6@$", "Identificación Exacta con cota @d6@."),
+    ]
     return {"vars": v, "correct": "$@ans@$", "distractors": dists}
 
 def ver_inverso(res):
-    v = res["vars"]
-    return v["ans"] * v["div"] == v["total"]
+    v = res.get("vars", {})
+    return v.get("ans") * v.get("div") == v.get("total")
 
 def gen_perturbacion(rng):
     x = rng.randint(10, 40)
     delta = rng.choice([1, 2, 3])
     ans = (x + delta) ** 2
     v = {"x": x, "delta": delta, "ans": ans}
-    for i in range(1, 7):
-        v[f"d{i}"] = ans - (i * 7)
-    dists = [(f"$@d{i}@$", f"D-HabM3-0{i}") for i in range(1, 7)]
-    return {"vars": v, "correct": "$@ans@$", "distractors": dists}
+    return {"vars": v, "correct": str(ans), "distractors": []}
 
 def ver_perturbacion(res):
-    v = res["vars"]
-    return v["ans"] == (v["x"] + v["delta"]) ** 2
+    v = res.get("vars", {})
+    return v.get("ans") == (v.get("x") + v.get("delta")) ** 2
 
 def gen_frontera(rng):
     k = rng.randint(5, 25)
-    ans = round(1.0 / k, 4)
+    ans = round(100.0 / k, 2)
     v = {"k": k, "ans": ans}
-    for i in range(1, 7):
-        v[f"d{i}"] = round((1.0 + i * 0.1) / k, 4)
-    dists = [f"$@d{i}@$" for i in range(1, 7)]
-    return {"vars": v, "correct": "$@ans@$", "distractors": dists}
+    return {"vars": v, "correct": str(ans), "distractors": []}
 
 def ver_frontera(res):
-    v = res["vars"]
-    return abs(v["ans"] * v["k"] - 1.0) < 1e-3
+    v = res.get("vars", {})
+    return abs(v.get("ans", 0) * v.get("k", 1) - 100.0) < 0.5
 
 TEMPLATES = [
     (
+        "T-HabM3-01",
         "Hab-M3",
-        "multiple_choice",
+        "multiple_choice_7_options",
+        gen_directo,
+        ver_directo,
+        ("easy", "Remember"),
         [
             r"Enfoque Directo: Dados $@base@$ y $@step@$, halle el producto:",
             r"Cálculo frontal estándar de $@base@$ multiplicado por $@step@$:",
             r"Multiplique directamente $@base@$ y $@step@$:"
         ],
-        gen_directo,
-        ver_directo,
-        r"El resultado directo es $@ans@$.",
-        "Directo",
-        ["D-HabM3-01", "D-HabM3-02", "D-HabM3-03", "D-HabM3-04", "D-HabM3-05", "D-HabM3-06"],
-        ("doc.pdf", 1, "Directo"),
-        ["Pista 1", "Pista 2", "Pista 3"]
+        [
+            r"Multiplique el valor base por el factor de escala.",
+            r"Recuerde que el producto directo conserva la escala lineal.",
+            r"El valor resultante del producto directo es $@ans@$."
+        ],
+        r"El resultado directo es $@ans@$."
     ),
     (
+        "T-HabM3-02",
         "Hab-M3",
-        "multiple_choice",
+        "multiple_choice_7_options",
+        gen_inverso,
+        ver_inverso,
+        ("medium", "Understand"),
         [
             r"Enfoque Inverso: Dado el total $@total@$ y divisor $@div@$, determine el cociente:",
             r"Resolución inversa para recuperar la cantidad base de $@total@$ dividido $@div@$:",
             r"Halle la inversa de $@total@$ sobre $@div@$:"
         ],
-        gen_inverso,
-        ver_inverso,
-        r"El resultado inverso es $@ans@$.",
-        "Inverso",
-        ["D-HabM3-01", "D-HabM3-02", "D-HabM3-03", "D-HabM3-04", "D-HabM3-05", "D-HabM3-06"],
-        ("doc.pdf", 2, "Inverso"),
-        ["Pista 1", "Pista 2", "Pista 3"]
+        [
+            r"Divida el valor acumulado total entre el divisor proporcionado.",
+            r"Verifique que el cociente recuperado reproduzca el total original.",
+            r"El valor obtenido mediante la division inversa es $@ans@$."
+        ],
+        r"El resultado inverso es $@ans@$."
     ),
     (
+        "T-HabM3-03",
         "Hab-M3",
-        "multiple_choice",
+        "fill_in_the_blank",
+        gen_perturbacion,
+        ver_perturbacion,
+        ("hard", "Apply"),
         [
             r"Enfoque Perturbación: Considere $@x@$ perturbado por $@delta@$:",
             r"Análisis de estática comparativa tras sumar $@delta@$ a $@x@$:",
             r"Evalúe la perturbación sobre $@x@$ con incremento $@delta@$:"
         ],
-        gen_perturbacion,
-        ver_perturbacion,
-        r"La perturbación evaluada es $@ans@$.",
-        "Perturbación",
-        ["D-HabM3-01", "D-HabM3-02", "D-HabM3-03", "D-HabM3-04", "D-HabM3-05", "D-HabM3-06"],
-        ("doc.pdf", 3, "Perturbación"),
-        ["Pista 1", "Pista 2", "Pista 3"]
+        [
+            r"Sume el incremento perturbativo al valor base analizado.",
+            r"Eleve la suma resultante al cuadrado para evaluar la perturbacion.",
+            r"El valor final tras la perturbacion cuadratica es @ans@."
+        ],
+        r"La perturbación evaluada es @ans@."
     ),
     (
+        "T-HabM3-04",
         "Hab-M3",
-        "multiple_choice",
-        [
-            r"Enfoque Frontera: Con parámetro límite $@k@$, determine el recíproco:",
-            r"Evaluación en régimen asintótico o de frontera para $@k@$:",
-            r"Halle el caso límite de $1/@k@$:"
-        ],
+        "fill_in_the_blank",
         gen_frontera,
         ver_frontera,
-        r"El valor de frontera es $@ans@$.",
-        "Frontera",
-        ["D-HabM3-01", "D-HabM3-02", "D-HabM3-03", "D-HabM3-04", "D-HabM3-05", "D-HabM3-06"],
-        ("doc.pdf", 4, "Frontera"),
-        ["Pista 1", "Pista 2", "Pista 3"]
+        ("hard", "Analyze"),
+        [
+            r"Enfoque Frontera: Con parámetro límite $@k@$, determine el valor escalado de cien entre k:",
+            r"Evaluación en régimen asintótico o de frontera para la razón de cien sobre $@k@$:",
+            r"Halle el caso límite de cien dividido $@k@$:"
+        ],
+        [
+            r"Divida la constante cien entre el parametro de frontera k.",
+            r"Redondee el cociente a dos decimales de precision numerica.",
+            r"El valor en el regimen de frontera asintotico es @ans@."
+        ],
+        r"El valor de frontera es @ans@."
     ),
 ]
 '''
@@ -623,6 +694,203 @@ TEMPLATES = [
         gen_code = tpl_data["templates"][0]["generator_code"]
         assert "Inversión de signo en el estimador." in gen_code
         assert "Omitir la covarianza entre regresores." in gen_code
+
+    def test_tpl_static_opt_blocks_mono_clave_even_when_vars_empty_matiz_4b(self):
+        """Certifies that [TPL-STATIC-OPT] unconditionally blocks len(unique_correct) == 1
+        even when vars = {} is empty (Matiz 4b).
+        """
+        # Template with empty vars and static correct answer across all dry-run seeds
+        tpl_empty_vars = {
+            "id": "T-HabM3-STATIC-01",
+            "competency_id": "Hab-M3",
+            "interaction_type": "multiple_choice_7_options",
+            "difficulty": "medium",
+            "bloom": "Understand",
+            "stem": r"Considere el estimador asintótico estándar en el modelo:",
+            "hints": [
+                "Pista 1 de identificación conceptual del parámetro.",
+                "Pista 2 sobre el procedimiento analítico del estimador.",
+                "Pista 3 de comprobación formal de la varianza.",
+            ],
+            "detailed_solution": "Solución detallada con clave estática.",
+            "distractor_ids": [f"D-HabM3-{i:02d}" for i in range(1, 7)],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    return {\n"
+                "        'vars': {},\n"
+                "        'correct': '$H = 42.0$',\n"
+                "        'distractors': [\n"
+                "            {'value': f'$H = {42 + i * 2}$', 'distractor_id': f'D-HabM3-{i:02d}', 'error_rationale': f'Desvío estático aditivo {i} sin variables.'}\n"
+                "            for i in range(1, 7)\n"
+                "        ]\n"
+                "    }\n"
+            ),
+            "cross_check_py": "def verify(r):\n    return True\n",
+        }
+
+        declared_dids = {f"D-HabM3-{i:02d}" for i in range(1, 7)}
+        errors = check_single_template(
+            template=tpl_empty_vars,
+            competency_id="Hab-M3",
+            declared_distractor_ids=declared_dids,
+            num_dry_run_seeds=50,
+            strict=True,
+        )
+
+        assert any("[TPL-STATIC-OPT]" in str(e) for e in errors), f"Expected [TPL-STATIC-OPT] in errors: {errors}"
+        assert any("MONO-CLAVE DETECTADA" in str(e) or "Mono-clave detected" in str(e) for e in errors)
+
+        # Also verify with non-empty vars but static/constant answer
+        tpl_const_vars = {
+            "id": "T-HabM3-STATIC-02",
+            "competency_id": "Hab-M3",
+            "interaction_type": "multiple_choice_7_options",
+            "difficulty": "medium",
+            "bloom": "Understand",
+            "stem": r"Considere el estimador asintótico con parámetro @k@:",
+            "hints": [
+                "Pista 1 de identificación conceptual del parámetro.",
+                "Pista 2 sobre el procedimiento analítico del estimador.",
+                "Pista 3 de comprobación formal de la varianza.",
+            ],
+            "detailed_solution": "Solución detallada con constante.",
+            "distractor_ids": [f"D-HabM3-{i:02d}" for i in range(1, 7)],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    k = 5\n"
+                "    return {\n"
+                "        'vars': {'k': k},\n"
+                "        'correct': '$H = 100$',\n"
+                "        'distractors': [\n"
+                "            {'value': f'$H = {100 + i * 5}$', 'distractor_id': f'D-HabM3-{i:02d}', 'error_rationale': f'Desvío estático aditivo {i} con @k@.'}\n"
+                "            for i in range(1, 7)\n"
+                "        ]\n"
+                "    }\n"
+            ),
+            "cross_check_py": "def verify(r):\n    return True\n",
+        }
+
+        errors_const = check_single_template(
+            template=tpl_const_vars,
+            competency_id="Hab-M3",
+            declared_distractor_ids=declared_dids,
+            num_dry_run_seeds=50,
+            strict=True,
+        )
+        assert any("[TPL-STATIC-OPT]" in str(e) for e in errors_const), f"Expected [TPL-STATIC-OPT] in errors: {errors_const}"
+
+    def test_tpl_dynamic_rationale_blocks_static_error_rationale_without_var_brecha_1(self, tmp_path: Path):
+        """Certifies that [TPL-DYNAMIC-RATIONALE] blocks distractors whose content varies dynamically across seeds
+        while error_rationale remains static without dynamic parameter @var@ (Brecha 1).
+        """
+        # 1. Verification via check_single_template
+        tpl_static_rationale = {
+            "id": "T-HabM3-RATIONALE-01",
+            "competency_id": "Hab-M3",
+            "interaction_type": "multiple_choice_7_options",
+            "difficulty": "medium",
+            "bloom": "Understand",
+            "stem": r"Considere el parámetro dinámico @base@ en el modelo:",
+            "hints": [
+                "Pista 1 contextual sobre el parámetro analizado.",
+                "Pista 2 sobre la dispersión asintótica estimada.",
+                "Pista 3 de comprobación sobre la cota regular.",
+            ],
+            "detailed_solution": "Solución paramétrica para @base@.",
+            "distractor_ids": [f"D-HabM3-{i:02d}" for i in range(1, 7)],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    base = rng.randint(20, 90)\n"
+                "    return {\n"
+                "        'vars': {'base': base},\n"
+                "        'correct': f'$H = {base}$',\n"
+                "        'distractors': [\n"
+                "            {'value': f'$H = {base + i * 3}$', 'distractor_id': f'D-HabM3-{i:02d}', 'error_rationale': 'Explicación estática fija sin variable ni parámetro.'}\n"
+                "            for i in range(1, 7)\n"
+                "        ]\n"
+                "    }\n"
+            ),
+            "cross_check_py": "def verify(r):\n    return True\n",
+        }
+
+        declared_dids = {f"D-HabM3-{i:02d}" for i in range(1, 7)}
+        errors = check_single_template(
+            template=tpl_static_rationale,
+            competency_id="Hab-M3",
+            declared_distractor_ids=declared_dids,
+            num_dry_run_seeds=50,
+            strict=True,
+        )
+
+        assert any("[TPL-DYNAMIC-RATIONALE]" in str(e) for e in errors), f"Expected [TPL-DYNAMIC-RATIONALE] in errors: {errors}"
+        assert any("RATIONALE ESTÁTICO EN DISTRACTOR DINÁMICO" in str(e) or "remains static" in str(e) for e in errors)
+
+        # 2. Verification via compile_shard
+        work_dir = tmp_path / "work_dr"
+        shards_dir = work_dir / "shards"
+        templates_dir = work_dir / "templates"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+        templates_dir.mkdir(parents=True, exist_ok=True)
+
+        (work_dir / "cta.json").write_text(json.dumps({
+            "competencies": [
+                {
+                    "id": "Hab-DR",
+                    "name": "Estimación Dinámica",
+                    "distractors": [{"id": f"D-HabDR-{i:02d}", "name": f"D{i}"} for i in range(1, 7)],
+                }
+            ]
+        }), encoding="utf-8")
+
+        shard_code = '''
+def gen_dr_1(rng):
+    k = rng.randint(10, 50)
+    ans = k * 2
+    d1 = k + 10
+    v = {"k": k, "ans": ans, "d1": d1}
+    for i in range(2, 7):
+        v[f"d{i}"] = ans + i * 3
+    # Distractor 1 has static rationale without @k@ or @d1@:
+    dists = [
+        ("D-HabDR-01", "@d1@", "Error de inversión en la matriz sin ningún token."),
+    ] + [
+        (f"D-HabDR-{i:02d}", f"@d{i}@", f"Desvío con parámetro @k@ y delta @d{i}@.")
+        for i in range(2, 7)
+    ]
+    return {"vars": v, "correct": "@ans@", "distractors": dists}
+
+def ver_dr_1(r):
+    return r["vars"]["ans"] == r["vars"]["k"] * 2
+
+def gen_dr_2(rng):
+    k = rng.randint(10, 50)
+    return {"vars": {"k": k, "ans": k * 3}, "correct": str(k * 3), "distractors": []}
+
+def ver_dr_2(r):
+    return r["vars"]["ans"] == r["vars"]["k"] * 3
+
+def gen_dr_3(rng):
+    k = rng.randint(10, 50)
+    return {"vars": {"k": k, "ans": k + 100}, "correct": str(k + 100), "distractors": []}
+
+def ver_dr_3(r):
+    return r["vars"]["ans"] == r["vars"]["k"] + 100
+
+TEMPLATES = [
+    ("T-HabDR-01", "Hab-DR", "multiple_choice_7_options", gen_dr_1, ver_dr_1, ("easy", "Remember"), [r"Stem 1 con @k@:", r"Stem 2 con @k@:", r"Stem 3 con @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-HabDR-02", "Hab-DR", "fill_in_the_blank", gen_dr_2, ver_dr_2, ("medium", "Understand"), [r"FIB Stem 1 @k@:", r"FIB Stem 2 @k@:", r"FIB Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-HabDR-03", "Hab-DR", "fill_in_the_blank", gen_dr_3, ver_dr_3, ("hard", "Apply"), [r"FIB Hard Stem 1 @k@:", r"FIB Hard Stem 2 @k@:", r"FIB Hard Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+]
+'''
+        shard_file = shards_dir / "shard_dr_data.py"
+        shard_file.write_text(shard_code, encoding="utf-8")
+        (shards_dir / "pre_shard_manifest.json").write_text(json.dumps({
+            "shards": [{"shard_id": "shard_dr", "competency_ids": ["Hab-DR"]}],
+        }), encoding="utf-8")
+
+        ok, c_errors = compile_shard(work_dir_or_path=work_dir, shard_id="shard_dr", strict=True)
+        assert ok is False
+        assert any("[TPL-DYNAMIC-RATIONALE]" in e for e in c_errors), f"Expected [TPL-DYNAMIC-RATIONALE] in compile_shard errors: {c_errors}"
 
 
 # ==============================================================================

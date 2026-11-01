@@ -60,6 +60,20 @@ def _atomic_write_json(target_path: Path, data: Any) -> None:
 
 # Self-contained reference for shard authors so they never read engine code
 DSL_REFERENCE: Dict[str, Any] = {
+    "min_archetypes": 3,
+    "description": "Form-B Tri-Banda (min_archetypes = 3) parametric exercise architecture",
+    "canonical_template_schema": "(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution)",
+    "supported_question_types": [
+        "multiple_choice",
+        "fill_in_the_blank",
+        "multiple_select",
+        "open_ended",
+    ],
+    "distractor_rules": {
+        "mc7_tuple_format": "(did, val, rationale_con_@var@)",
+        "min_rationale_length": 20,
+        "requires_var_interpolation": True,
+    },
     "helpers": {
         "fmt": "fmt(x, nd=4): Formats scalars (integers as '3', floats as '3.1416', Fraction as '\\frac{a}{b}').",
         "bmatrix": "bmatrix(matrix, nd=4): Formats a 2D matrix or list of lists as KaTeX '\\begin{bmatrix} ... \\end{bmatrix}'.",
@@ -82,18 +96,36 @@ DSL_REFERENCE: Dict[str, Any] = {
             "Toda la información necesaria está embebida en tu archivo de shard asignado."
         ),
         "validation_command": (
-            "python .agents/skills/content-to-course/check_templates.py work/templates/<comp_id1>.json work/templates/<comp_id2>.json ... --cta work/cta.json --strict"
+            "python .agents/skills/content-to-course/compile_shard.py --input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 3"
         ),
         "quotas": (
-            "Para CADA competencia asignada: autorar exactamente 4 plantillas paramétricas disjuntas "
-            "(Caso 2B: 4 arquetipos: 1. Directo / Cálculo Frontal, 2. Inverso / Despeje de Parámetro, "
-            "3. Perturbación / Estática Comparativa, 4. Frontera / Casos Límite y Contraejemplos) "
-            "en work/shards/<shard_id>_data.py y compilar a work/templates/<comp_id>.json. "
-            "[REVERT TO 2A]: Cambiar a 3 plantillas disjuntas para Caso 2A (Directo, Inverso, Perturbación)."
+            "Para CADA competencia asignada: autorar exactamente 3 plantillas paramétricas disjuntas bajo contrato "
+            "Form-B Tri-Banda (min_archetypes = 3: 'easy', 'medium', 'hard', cubriendo >= 2 niveles Bloom con "
+            "práctica activa multimodal: FIB sin signos de dólar externos, MS y MC7 con 3-tuplas dinámicas) "
+            "en work/shards/<shard_id>_data.py y compilar a work/templates/<comp_id>.json."
+        ),
+        "form_b_triband": (
+            "Contrato Form-B Tri-Banda (min_archetypes = 3): Cada plantilla se declara como una 9-tupla "
+            "(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution). Toda competencia "
+            "debe cubrir 'easy', 'medium', 'hard' con >= 2 niveles Bloom y práctica activa obligatoria (FIB / MS / MC7)."
         ),
         "distractor_coverage": (
-            "Regla TPL-D3: 100% de los distractor_ids declarados en la competencia deben usarse en al menos una plantilla. "
-            "Regla TPL-D2: Plantillas MC7 requieren exactamente 6 distractor_ids distintos."
+            "Regla TPL-D3: 100% de los distractor_ids declarados deben usarse en al menos una plantilla. "
+            "Regla TPL-D2: Plantillas MC7 requieren exactamente 6 distractores estructurados como 3-tuplas obligatorias "
+            "(did, val, rationale_con_@var@) con longitud >= 20 caracteres interpolando variables paramétricas."
+        ),
+        "dynamic_rationale": (
+            "[TPL-DYNAMIC-RATIONALE]: En MC7, cada distractor DEBE declararse como una 3-tupla (did, val, rationale_con_@var@) "
+            "con len(rationale) >= 20 interpolando variables paramétricas. En MS, las opciones falsas deben incluir "
+            "'error_rationale' interpolando @var@. Prohibido omitir rationale."
+        ),
+        "fib_naked_contract": (
+            "[FIB-NAKED]: En fill_in_the_blank, el valor numérico o algebraico esperado en 'correct' y 'answer_contract' "
+            "no debe incluir signos de dólar externos '$...$'."
+        ),
+        "katex_prose_overflow": (
+            "[KATEX-PROSE-OVERFLOW]: Prohibido colocar fragmentos de prosa mayores a 45 caracteres dentro de \\text{...}. "
+            "La prosa explicativa debe ubicarse fuera de $...$."
         ),
         "tpl_var_mandatory": (
             "Regla TPL-VAR-MANDATORY: Declarar obligatoriamente entre 3 y 5 'stem_variants' "
@@ -124,15 +156,15 @@ DSL_REFERENCE: Dict[str, Any] = {
             "distintos, o usar rng.randint / rng.uniform, para satisfacer TPL-VAR (mínimo 4 variantes únicas generadas)."
         ),
         "native_graph_schema": (
-            "SOPORTE NATIVO DE GRÁFICOS: Para diagramas de fase o curvas analíticas, Top's Academy soporta "
+            "SOPORTE NATIVO DE GRÁFICOS: Para diagramas o curvas analíticas, Top's Academy soporta "
             "el esquema JSON nativo 'graph': {'title': str, 'x_axis': {'label': str, 'min': float, 'max': float}, "
             "'y_axis': {'label': str, 'min': float, 'max': float}, 'curves': [{'name': str, 'fn': str, 'style': 'solid'}], "
             "'points': [{'name': str, 'x': float, 'y': float, 'label': str}]}. NO simular gráficos en puro texto KaTeX."
         ),
         "shard_isolated_script": (
-            "SCRIPT INDEPENDIENTE: Cada shard escribe exclusivamente su propio script work/build_<shard_id>.py. "
-            "Valida únicamente tu shard asignado: python .agents/skills/content-to-course/check_templates.py "
-            "work/shards/<shard_id>.json --cta work/cta.json --strict"
+            "SCRIPT INDEPENDIENTE: Cada shard escribe exclusivamente su propio script work/shards/<shard_id>_data.py. "
+            "Valida únicamente tu shard asignado: python .agents/skills/content-to-course/compile_shard.py "
+            "--input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 3"
         ),
         "modular_per_comp_overrides": (
             "SOPORTE MODULAR DE CORRECCIONES POR COMPETENCIA: Si una competencia específica requiere corrección "
@@ -141,140 +173,136 @@ DSL_REFERENCE: Dict[str, Any] = {
         ),
     },
     "canonical_examples": {
+        "tuple_signature": "(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution)",
         "multiple_choice_7_options": {
-            "id": "T-SAMPLE-01",
+            "template_id": "T-SAMPLE-01",
             "competency_id": "<comp_id>",
-            "interaction_type": "multiple_choice_7_options",
+            "question_type": "multiple_choice_7_options",
             "difficulty": "medium",
             "bloom": "Understand",
-            "stem": r"Considere la ecuación @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0. Calcule su discriminante $\Delta = B^2 - 4AC$ y determine su clasificación:",
-            "stem_variants": [
-                r"Considere la ecuación @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0. Calcule su discriminante $\Delta = B^2 - 4AC$ y determine su clasificación:",
-                r"Dada la ecuación de segundo orden @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0, evalúe el discriminante $\Delta = B^2 - 4AC$ para establecer el tipo de ecuación:",
-                r"Para el modelo formal plano @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0, clasifique su naturaleza analítica a partir del signo de $\Delta = B^2 - 4AC$:",
+            "stems": [
+                r"Considere un conductor óhmico con resistencia $R = @R@\text{ }\Omega$ por el que circula corriente $I = @I@\text{ A}$. Calcule la potencia disipada $P = I^2 R$:",
+                r"Para un elemento resistivo lineal de $R = @R@\text{ }\Omega$ sometido a una corriente estacionaria $I = @I@\text{ A}$, determine la tasa de disipación de energía $P$:",
+                r"Dado un circuito con resistencia nominal $R = @R@\text{ }\Omega$ e intensidad de corriente $I = @I@\text{ A}$, halle la potencia activa disipada por efecto Joule:",
             ],
             "generate_py": (
-                "def generate(rng):\n"
-                "    A = rng.randint(2, 5)\n"
-                "    C = rng.randint(2, 5)\n"
-                "    B = rng.choice([0, 1, 2, 3, 4, 5, 6, 7])\n"
-                "    delta = B**2 - 4 * A * C\n"
-                "    correct_str = f'Discriminante $\\\\Delta = {delta} < 0$, de modo que la ecuación es elíptica en el plano.'\n"
-                "    d1 = f'Discriminante $\\\\Delta = {delta} < 0$, de modo que la ecuación es hiperbólica en el plano.'\n"
-                "    d2 = f'Discriminante $\\\\Delta = {B**2 - A*C}$, por lo que la ecuación es parabólica en el plano.'\n"
-                "    d3 = f'Discriminante $\\\\Delta = {abs(delta)} > 0$, de modo que la ecuación es hiperbólica en el plano.'\n"
-                "    d4 = f'Discriminante $\\\\Delta = {-delta}$, por lo que la ecuación es parabólica degenerada plana.'\n"
-                "    d5 = f'Discriminante $\\\\Delta = {(2*B)**2 - 4*A*C}$, indicando indeterminación analítica global.'\n"
-                "    d6 = f'Discriminante $\\\\Delta = 0$, concluyendo que la ecuación pertenece al tipo parabólico.'\n"
+                "def gen_sample_mc7(rng):\n"
+                "    R = rng.randint(3, 15)\n"
+                "    I = rng.randint(2, 9)\n"
+                "    P = (I**2) * R\n"
+                "    d1 = I * R\n"
+                "    d2 = (I**2) * (R + 2)\n"
+                "    d3 = 2 * I * R\n"
+                "    d4 = I * (R**2)\n"
+                "    d5 = (I**2) + R\n"
+                "    d6 = round((I**2) / R, 4)\n"
                 "    return {\n"
-                "        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta},\n"
-                "        'correct': correct_str,\n"
+                "        'vars': {'R': R, 'I': I, 'P': P, 'd1': d1, 'd2': d2, 'd3': d3, 'd4': d4, 'd5': d5, 'd6': d6},\n"
+                "        'correct': f'$P = {P}\\\\text{{ W}}$',\n"
                 "        'distractors': [\n"
-                "            {'value': d1, 'distractor_id': 'D-01'},\n"
-                "            {'value': d2, 'distractor_id': 'D-02'},\n"
-                "            {'value': d3, 'distractor_id': 'D-03'},\n"
-                "            {'value': d4, 'distractor_id': 'D-04'},\n"
-                "            {'value': d5, 'distractor_id': 'D-05'},\n"
-                "            {'value': d6, 'distractor_id': 'D-06'},\n"
+                "            ('D-01', f'$P = {d1}\\\\text{{ W}}$', f'Omite elevar la corriente al cuadrado calculando $I \\\\cdot R = {d1}$ en lugar de $I^2 R$.'),\n"
+                "            ('D-02', f'$P = {d2}\\\\text{{ W}}$', f'Suma resistencia parásita espuria calculando $I^2(R+2) = {d2}$ sin justificación física.'),\n"
+                "            ('D-03', f'$P = {d3}\\\\text{{ W}}$', f'Multiplica por dos la potencia lineal $2 I R = {d3}$ confundiendo exponente cuadrático.'),\n"
+                "            ('D-04', f'$P = {d4}\\\\text{{ W}}$', f'Aplica el cuadrado erróneamente a la resistencia $I R^2 = {d4}$ en lugar de la corriente.'),\n"
+                "            ('D-05', f'$P = {d5}\\\\text{{ W}}$', f'Suma aditivamente los términos $I^2 + R = {d5}$ en vez de multiplicar factores.'),\n"
+                "            ('D-06', f'$P = {d6}\\\\text{{ W}}$', f'Divide por la resistencia $I^2 / R = {d6}$ invirtiendo la formulación dimensional.'),\n"
                 "        ]\n"
                 "    }"
             ),
             "cross_check_py": (
-                "def verify(result):\n"
-                "    delta = result['vars']['delta']\n"
-                "    return delta < 0 and 'elíptica' in result['correct']"
+                "def ver_sample_mc7(result):\n"
+                "    R = result['vars']['R']\n"
+                "    I = result['vars']['I']\n"
+                "    return result['vars']['P'] == (I**2) * R"
             ),
             "hints": [
-                "Identifique los coeficientes de segundo orden: A acompaña a u_xx, B a u_xy y C a u_yy.",
-                "Calcule el discriminante formal utilizando la expresión Delta = B^2 - 4AC.",
-                "Recuerde el criterio: Delta < 0 es elíptica, Delta = 0 es parabólica y Delta > 0 es hiperbólica.",
+                "Identifique la relación fundamental de potencia disipada en función de corriente y resistencia.",
+                "Recuerde elevar la corriente al cuadrado antes de multiplicarla por el valor de la resistencia.",
+                "Verifique que las unidades resultantes correspondan a Watts en el Sistema Internacional.",
             ],
-            "solution": r"Se tienen los coeficientes A = @A@, B = @B@ y C = @C@. Al calcular el discriminante obtenemos Delta = (@B@)^2 - 4(@A@)(@C@) = @delta@. Dado que Delta < 0, la ecuación es estrictamente elíptica.",
+            "solution": r"Aplicando la relación de disipación Joule, $P = I^2 R = (@I@)^2 \cdot @R@ = @P@\text{ W}$.",
             "distractor_ids": ["D-01", "D-02", "D-03", "D-04", "D-05", "D-06"],
         },
         "fill_in_the_blank": {
-            "id": "T-SAMPLE-02",
+            "template_id": "T-SAMPLE-02",
             "competency_id": "<comp_id>",
-            "interaction_type": "fill_in_the_blank",
+            "question_type": "fill_in_the_blank",
             "difficulty": "easy",
             "bloom": "Apply",
-            "stem": r"Determine el valor numérico del discriminante $\Delta = B^2 - 4AC$ para la ecuación @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0.",
-            "stem_variants": [
-                r"Determine el valor numérico del discriminante $\Delta = B^2 - 4AC$ para la ecuación @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0.",
-                r"Calcule el valor escalar de $\Delta = B^2 - 4AC$ correspondiente a la ecuación @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0.",
-                r"Para la formulación de segundo orden @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0, halle el discriminante numérico $\Delta = B^2 - 4AC$.",
+            "stems": [
+                r"Calcule el valor escalar de la resistencia equivalente en serie de dos resistores $R_1 = @r1@\text{ }\Omega$ y $R_2 = @r2@\text{ }\Omega$:",
+                r"Determine numéricamente la resistencia total de una rama con resistores en serie $R_1 = @r1@\text{ }\Omega$ y $R_2 = @r2@\text{ }\Omega$:",
+                r"Halle la resistencia neta equivalente resultante de conectar en serie $R_1 = @r1@\text{ }\Omega$ junto a $R_2 = @r2@\text{ }\Omega$:",
             ],
             "generate_py": (
-                "def generate(rng):\n"
-                "    A = rng.randint(1, 5)\n"
-                "    B = rng.randint(1, 6)\n"
-                "    C = rng.randint(1, 5)\n"
-                "    delta = B**2 - 4 * A * C\n"
+                "def gen_sample_fib(rng):\n"
+                "    r1 = rng.randint(10, 45)\n"
+                "    r2 = rng.randint(5, 30)\n"
+                "    req = r1 + r2\n"
                 "    return {\n"
-                "        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta},\n"
-                "        'correct': delta,\n"
-                "        'value': str(delta),\n"
-                "        'canonical_algebraic': str(delta),\n"
-                "        'accepted_equivalents': [str(delta), f'{delta}.0'],\n"
-                "        'tolerance': 0.0001,\n"
+                "        'vars': {'r1': r1, 'r2': r2, 'req': req},\n"
+                "        'correct': str(req),\n"
+                "        'value': str(req),\n"
+                "        'canonical_algebraic': str(req),\n"
+                "        'accepted_equivalents': [str(req), f'{req}.0'],\n"
+                "        'tolerance': 0.01,\n"
                 "        'distractors': []\n"
                 "    }"
             ),
             "cross_check_py": (
-                "def verify(result):\n"
-                "    A = result['vars']['A']\n"
-                "    B = result['vars']['B']\n"
-                "    C = result['vars']['C']\n"
-                "    return int(result['correct']) == (B**2 - 4 * A * C)"
+                "def ver_sample_fib(result):\n"
+                "    r1 = result['vars']['r1']\n"
+                "    r2 = result['vars']['r2']\n"
+                "    return int(result['correct']) == (r1 + r2)"
             ),
             "hints": [
-                "Identifique los valores de A, B y C dados en la ecuación.",
-                "Calcule B^2 elevando al cuadrado el coeficiente de la derivada cruzada.",
-                "Reste 4 * A * C para obtener el valor escalar final de Delta.",
+                "Para resistores conectados en serie, las resistencias individuales se suman directamente.",
+                "Sume los dos valores escalares r1 y r2 para obtener la resistencia total.",
+                "Ingrese el resultado escalar sin signos de dólar ni unidades en la casilla de respuesta.",
             ],
-            "solution": r"Aplicando la fórmula del discriminante: Delta = (@B@)^2 - 4(@A@)(@C@) = @delta@.",
+            "solution": r"La resistencia equivalente en serie es la suma directa: $R_{eq} = R_1 + R_2 = @r1@ + @r2@ = @req@\text{ }\Omega$.",
             "distractor_ids": [],
         },
         "multiple_select": {
-            "id": "T-SAMPLE-03",
+            "template_id": "T-SAMPLE-03",
             "competency_id": "<comp_id>",
-            "interaction_type": "multiple_select",
+            "question_type": "multiple_select",
             "difficulty": "hard",
             "bloom": "Analyze",
-            "stem": r"Para la ecuación diferencial @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0, seleccione todas las afirmaciones teóricas que son matemáticamente verdaderas:",
-            "stem_variants": [
-                r"Para la ecuación diferencial @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0, seleccione todas las afirmaciones teóricas que son matemáticamente verdaderas:",
-                r"Considere el modelo de segundo orden @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0. ¿Cuáles de las siguientes propiedades sobre su clasificación y discriminante son válidas?",
-                r"Respecto a la formulación @A@ u_{xx} + @B@ u_{xy} + @C@ u_{yy} = 0, identifique todas las proposiciones ciertas sobre sus curvas características y discriminante:",
+            "stems": [
+                r"Para un sistema térmico cerrado que absorbe calor $Q = @Q@\text{ J}$ y realiza trabajo $W = @W@\text{ J}$, seleccione todas las afirmaciones analíticamente verdaderas:",
+                r"Considere un gas ideal que recibe transferencia de calor $Q = @Q@\text{ J}$ realizando trabajo mecánico $W = @W@\text{ J}$. Identifique las proposiciones correctas:",
+                r"En un proceso termodinámico con calor neto $Q = @Q@\text{ J}$ y trabajo de expansión $W = @W@\text{ J}$, marque todas las conclusiones cuantitativas válidas:",
             ],
             "generate_py": (
-                "def generate(rng):\n"
-                "    A = 1\n"
-                "    C = 1\n"
-                "    B = rng.choice([4, 5, 6, 7, 8, 9, 10, 11, 12])\n"
-                "    delta = B**2 - 4 * A * C\n"
+                "def gen_sample_ms(rng):\n"
+                "    Q = rng.randint(50, 120)\n"
+                "    W = rng.randint(15, 45)\n"
+                "    delta_u = Q - W\n"
                 "    opts = [\n"
-                "        {'content': 'El discriminante Delta es estrictamente positivo en todo el dominio.', 'is_correct': True, 'distractor_id': None},\n"
-                "        {'content': 'La ecuación admite dos familias reales y distintas de curvas características.', 'is_correct': True, 'distractor_id': None},\n"
-                "        {'content': 'La ecuación es de tipo elíptico en todo el plano euclídeo.', 'is_correct': False, 'distractor_id': 'D-01', 'error_rationale': 'El discriminante es estrictamente positivo, por lo que la ecuación es hiperbólica.'},\n"
-                "        {'content': 'El discriminante se calcula como Delta = B^2 - AC sin el factor cuatro.', 'is_correct': False, 'distractor_id': 'D-02', 'error_rationale': 'La fórmula del discriminante exige el factor cuatro: $4AC$.'},\n"
+                "        {'content': f'El cambio de energía interna satisface $\\\\Delta U = {delta_u}\\\\text{{ J}}$.', 'is_correct': True, 'distractor_id': None},\n"
+                "        {'content': 'La energía interna aumenta porque el calor absorbido excede el trabajo realizado.', 'is_correct': True, 'distractor_id': None},\n"
+                "        {'content': f'El cambio de energía interna es $\\\\Delta U = {Q + W}\\\\text{{ J}}$ sumando calor y trabajo.', 'is_correct': False, 'distractor_id': 'D-01', 'error_rationale': f'Suma erróneamente trabajo al calor obteniendo $\\\\Delta U = {Q + W}$ en lugar de $Q - W$.'},\n"
+                "        {'content': f'El cambio de energía interna es $\\\\Delta U = {W - Q}\\\\text{{ J}}$ invirtiendo la resta.', 'is_correct': False, 'distractor_id': 'D-02', 'error_rationale': f'Invierte los signos del balance energético obteniendo ${W - Q}$ en vez de $Q - W$.'},\n"
                 "    ]\n"
                 "    return {\n"
-                "        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta},\n"
+                "        'vars': {'Q': Q, 'W': W, 'delta_u': delta_u},\n"
                 "        'options': opts,\n"
                 "        'distractors': []\n"
                 "    }"
             ),
             "cross_check_py": (
-                "def verify(result):\n"
-                "    return result['vars']['delta'] > 0"
+                "def ver_sample_ms(result):\n"
+                "    Q = result['vars']['Q']\n"
+                "    W = result['vars']['W']\n"
+                "    return result['vars']['delta_u'] == (Q - W)"
             ),
             "hints": [
-                "Calcule el signo de Delta = B^2 - 4AC.",
-                "Analice las implicaciones geométricas del signo sobre las curvas características.",
-                "Marque sólo las propiedades que se desprenden del carácter hiperbólico de la ecuación.",
+                "Aplique la primera ley de la termodinámica para sistemas cerrados: Delta U = Q - W.",
+                "Calcule la diferencia aritmética entre el calor suministrado y el trabajo realizado.",
+                "Evalúe la coherencia física del signo resultante sobre la energía interna del sistema.",
             ],
-            "solution": r"Dado que B^2 - 4AC = @delta@ > 0, la ecuación es hiperbólica y admite dos familias de curvas características reales y distintas.",
+            "solution": r"Por la primera ley, $\Delta U = Q - W = @Q@ - @W@ = @delta_u@\text{ J}$. Como $Q > W$, la energía interna aumenta.",
             "distractor_ids": ["D-01", "D-02"],
         },
     },

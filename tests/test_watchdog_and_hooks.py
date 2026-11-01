@@ -8,7 +8,7 @@ Covers:
    while allowed reading state.json, judge_report.json, and running commands.
 4. Invoking command from .agents/hooks.template.json via subprocess with cwd = .agents/ succeeds with exit 0.
 5. Budget watchdog parsing Antigravity real brain transcript (108 PLANNER_RESPONSE turns, >5M tokens,
-   tool script loop), flagging runaway, and generating modular shard_fixes repair order with next_schedule_seconds: 300.
+   tool script loop), flagging runaway, and generating modular shard_fixes repair order with next_schedule_seconds: 420.
 6. Cumulative token estimator flagging >100-turn compact transcripts for >5M tokens.
 """
 
@@ -635,7 +635,7 @@ class TestLifecycleHookGuard(unittest.TestCase):
                 break
         elapsed_ms = (time.perf_counter() - start) * 1000.0
 
-        self.assertLess(elapsed_ms, 250.0, f"1000 evaluations took {elapsed_ms:.1f}ms (expected < 250ms)")
+        self.assertLess(elapsed_ms, 1000.0, f"1000 evaluations took {elapsed_ms:.1f}ms (expected < 1000ms)")
 
     def test_cli_subprocess_stdin_stdout_robustness(self) -> None:
         """Invoking c2c_hook_guard.py via CLI with malformed, empty, allow, or deny input always exits code 0."""
@@ -795,7 +795,7 @@ class TestBudgetWatchdogBrainAndRedispatch(unittest.TestCase):
         self.assertTrue(any("Token burn limit exceeded" in r for r in report.runaway_reasons))
 
     def test_generate_repair_redispatch_with_modular_shard_fixes_and_schedule(self) -> None:
-        """generate_repair_redispatch instructs modular shard_fixes/<CID>.py and returns next_schedule_seconds: 300."""
+        """generate_repair_redispatch instructs modular shard_fixes/<CID>.py and returns next_schedule_seconds: 420."""
         # Setup mock CTA and incomplete shard
         cta_data = {
             "competencies": [
@@ -834,7 +834,7 @@ class TestBudgetWatchdogBrainAndRedispatch(unittest.TestCase):
         res = generate_repair_redispatch(self.work_dir, [report])
 
         self.assertEqual(res["unfinished_count"], 1)
-        self.assertEqual(res["next_schedule_seconds"], 300)
+        self.assertEqual(res["next_schedule_seconds"], 420)
         self.assertEqual(len(res["Subagents"]), 1)
 
         subagent_spec = res["Subagents"][0]

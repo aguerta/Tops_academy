@@ -1,0 +1,108 @@
+{
+  "course_metadata": {
+    "course_id": "estadistica_3_s9_vmapreduce5",
+    "unit_title": "Estadística Asintótica, Modos de Convergencia y Métodos de Aproximación",
+    "detected_objective": "Dominio y aplicación analítica rigurosa de inferencia en muestras grandes, descomposición del ECM, desigualdades fundamentales (Markov, Chebyshev, Jensen, Cauchy-Schwarz), jerarquía de modos de convergencia estocástica (L^r, m.s., p, d, a.s.), Leyes de los Grandes Números, Teorema Central del Límite y Método Delta.",
+    "total_competencies": 37,
+    "total_questions": 860
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Excelente arquitectura curricular y topología DAG. 37 micro-competencias atómicas con balance idóneo entre Hechos (8), Conceptos (17) y Habilidades (12). Grafo acíclico y conexo (profundidad 7, 0 prerrequisitos colgantes o invertidos). Calibración ZPD perfecta: el 100% de las competencias dispone de las 3 bandas de dificultad (easy: 295, medium: 295, hard: 270), garantizando la activación continua de calibrateByMasteryDifficulty."
+    },
+    "assessment_quality": {
+      "score": 4.9,
+      "max": 5.0,
+      "feedback": "Calidad psicométrica sobresaliente con alta resistencia anti-gaming. Modalidad dual equilibrada con 46.86% de evocación activa generativa (403 fill_in_the_blank) y 53.14% de selección estructurada (457 MC7). El 100% de las competencias de habilidad integra preguntas generativas. Cero multiplicadores mágicos, cero relleno de longitud, cero claves memorizables. Se deduce 0.1 pt por ausencia de reactivos multiple_select para discriminación condicional múltiple."
+    },
+    "scaffolding_hints": {
+      "score": 4.8,
+      "max": 5.0,
+      "feedback": "Andamiaje socrático de primer nivel. El 100% de los reactivos (860/860) posee 3 o más pistas progresivas genuinas (Pista 1: Conceptual -> Pista 2: Estratégica -> Pista 3: Operativa) sin fugas de clave ni envenenamiento conceptual. Cobertura de rationales diagnósticos al 100% (2742 distractores) con 89.2% de unicidad semántica. Se deduce 0.2 pts debido a que los 403 ítems FIB comparten una advertencia de error conceptual estándar en lugar de advertencias diferenciadas por tipo de error numérico."
+    },
+    "instructional_alignment": {
+      "score": 3.9,
+      "max": 4.0,
+      "feedback": "Alineación instruccional y pureza conceptual rigurosa. Cobertura matemática exhaustiva de estadística matemática avanzada. Distribución de Bloom sólida (Apply: 273, Analyze: 118, Understand: 274, Remember: 195), con 61.11% de nivel superior (Apply/Analyze) en competencias de habilidad. Cero contaminación por plantillas externas. Arbitraje de jueces ciegos con 100% de concordancia (120/120 ítems evaluados). Se deduce 0.1 pt por persistencia de un 38.89% de preguntas de habilidad categorizadas a nivel Understand."
+    },
+    "technical_ergonomics": {
+      "score": 1.8,
+      "max": 2.0,
+      "feedback": "Ergonomía técnica y sintaxis KaTeX altamente sólida. Cero delimitadores impares, cero llaves rotas, cero residuos f-string y notación canónica impecable. Se verificó que los 237 avisos de uninterpolated_math_variable_linter corresponden a falsos positivos del linter sobre macros KaTeX legítimas (\\text{ECM}, \\bar{Y}_n, \\operatorname{plim}). Se deduce 0.2 pts por 7 reactivos en C-14 (Q-C14-641 a Q-C14-647) que envuelven proposiciones en prosa completa dentro de KaTeX ($\\text{...}$), lo cual puede forzar white-space: nowrap en dispositivos móviles."
+    }
+  },
+  "penalties_applied": [],
+  "raw_subtotal": 19.4,
+  "final_score": 19.4,
+  "quality_tier": "EXCELENTE (17-20)",
+  "mastery_path_readiness": {
+    "mpri_score": 96.79,
+    "mpri_max": 100.0,
+    "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 16.89,
+        "max": 20.0
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 20.0,
+        "max": 20.0
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 25.0,
+        "max": 25.0
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 15.0,
+        "max": 15.0
+      },
+      "dag_and_interleaving_topology": {
+        "score": 10.0,
+        "max": 10.0
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 9.9,
+        "max": 10.0
+      }
+    },
+    "student_journey_verdict": "Ruta de aprendizaje excepcionalmente fluida y robusta. El motor de Top's Academy (sessionShuffler.ts y calibrateByMasteryDifficulty) puede operar en su máximo potencial gracias al balance tri-banda (easy/medium/hard) en el 100% de las micro-competencias. El estudiante cuenta con salvaguardas socráticas efectivas de 3 intentos respaldadas por 403 ejercicios de evocación activa generativa que impiden el avance por adivinación o atajos visuales."
+  },
+  "discovered_lint_rules": [
+    {
+      "rule_id": "katex_command_argument_false_positive",
+      "severity": "warning",
+      "regex_pattern": "(?<!\\\\(?:text|operatorname|bar|hat|tilde|vec|mathcal|mathbf|mathrm|mathit|xrightarrow|sqrt|frac|binom|sum|prod|int|lim))\\{([A-Za-z0-9_]+)\\}",
+      "description": "El linter 'uninterpolated_math_variable_linter' utiliza una expresión regular simplista r'\\{([A-Za-z0-9_]+)\\}' que captura argumentos legítimos de macros LaTeX estándar como \\text{ECM}, \\bar{Y}_n, \\bar{X}, \\operatorname{plim}, \\mathcal{F} y \\xrightarrow{p}, generando más de 200 falsos positivos en cursos avanzados de matemáticas/estadística.",
+      "evidence_items": [
+        "Q-H01-031",
+        "Q-H01-035",
+        "Q-C11-541",
+        "Q-C16-681",
+        "Q-C18-701"
+      ]
+    },
+    {
+      "rule_id": "full_prose_wrapped_in_katex_option",
+      "severity": "warning",
+      "regex_pattern": "\\$\\s*\\\\text\\{[^}]{35,}\\}\\s*\\$",
+      "description": "Detecta opciones donde oraciones argumentativas completas son encapsuladas enteramente dentro de KaTeX ($\\text{Oración completa...}$), provocando que KaTeX fuerce la regla CSS 'white-space: nowrap' que rompe el responsive wrapping en tarjetas de opciones móviles.",
+      "evidence_items": [
+        "Q-C14-641",
+        "Q-C14-642",
+        "Q-C14-643",
+        "Q-C14-644",
+        "Q-C14-645",
+        "Q-C14-646",
+        "Q-C14-647"
+      ]
+    }
+  ],
+  "remediation_actions": [
+    "Refactorizar los 7 reactivos de la micro-competencia C-14 (Q-C14-641 a Q-C14-647) para separar la prosa argumentativa fuera de los delimitadores '$', empleando fórmulas KaTeX inline únicamente para los operadores matemáticos (ej. 'Insesgadez en $n=76 \\succ$ Consistencia' en lugar de '$\\text{Insesgadez en } n=76 \\succ \\text{Consistencia}$').",
+    "Incorporar una batería de reactivos 'multiple_select' (10-15% del banco) en competencias conceptuales discriminativas como C-05 (Jerarquía de convergencia) y C-14 (Ortogonalidad insesgadez-consistencia) para entrenar la discriminación de condiciones necesarias frente a suficientes.",
+    "Actualizar la expresión regular del linter 'uninterpolated_math_variable_linter' en la suite de linters deterministas para excluir comandos LaTeX canónicos con argumentos entre llaves (\\text, \\bar, \\hat, \\operatorname, \\mathcal, \\xrightarrow), eliminando el ruido de falsos positivos en auditorías futuras.",
+    "Personalizar las 'misconception_warnings' en el bloque de 403 reactivos fill_in_the_blank para proporcionar retroalimentación de diagnóstico diferenciada según el rango de dispersión o el signo del error operativo del estudiante."
+  ]
+}

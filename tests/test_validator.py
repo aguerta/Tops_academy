@@ -27,7 +27,8 @@ import pytest
 # Ensure repo root and src are on sys.path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SRC_DIR = REPO_ROOT / "src"
-for p in [str(SRC_DIR), str(REPO_ROOT)]:
+SKILL_DIR = REPO_ROOT / ".agents" / "skills" / "content-to-course"
+for p in [str(SRC_DIR), str(REPO_ROOT), str(SKILL_DIR)]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
@@ -792,4 +793,233 @@ class TestExtendedQualityRules:
         res = validate_course_content(json.dumps(course))
         assert not res.is_valid
         assert any(e.rule_id == "R-22" and e.code == "ERR_MS_MISSING_RATIONALE" for e in res.errors)
+
+
+# =============================================================================
+# 9. Stream 1E Tests: Symbolic Ties, KaTeX Prose Overflow, Anti-Pad, and RepairLoop Purge
+# =============================================================================
+
+class TestStream1EEnhancements:
+    """Tests for:
+    - R-16: Symbolic uniform ties len_c == max_d == min_d produce 0 false positives
+    - R-20: [KATEX-PROSE-OVERFLOW] KaTeX text macro length <= 45 chars
+    - R-18: ERR_SYNTHETIC_PAD rejects bureaucratic padding phrases
+    - R-18: ERR_SYNTHETIC_BOILERPLATE detects camouflaged boilerplate in $\text{...}$
+    - RepairLoop: Exclusively executes Module A without injecting padding or mutating options
+    """
+
+    def test_r16_symbolic_ties_zero_false_positives(self, base_valid_course: dict) -> None:
+        """When all options have identical length (e.g. 7 options of 12 chars), R-16 produces 0 errors."""
+        course = copy.deepcopy(base_valid_course)
+        # Uniform length options across all MC items
+        for q in course["questions"]:
+            if q.get("interaction_type") == "multiple_choice_7_options":
+                q["options"] = [
+                    {"id": "opt_a", "option_id": "A", "content": "$O(n^{-1/2})$", "is_correct": True},
+                    {"id": "opt_b", "option_id": "B", "content": "$O_p(n^{-1})$", "is_correct": False, "error_rationale": "Error de orden 1"},
+                    {"id": "opt_c", "option_id": "C", "content": "$o(n^{-1/2})$", "is_correct": False, "error_rationale": "Error de orden 2"},
+                    {"id": "opt_d", "option_id": "D", "content": "$o_p(n^{-1})$", "is_correct": False, "error_rationale": "Error de orden 3"},
+                    {"id": "opt_e", "option_id": "E", "content": "$O(n^{-3/4})$", "is_correct": False, "error_rationale": "Error de orden 4"},
+                    {"id": "opt_f", "option_id": "F", "content": "$o(n^{-3/4})$", "is_correct": False, "error_rationale": "Error de orden 5"},
+                    {"id": "opt_g", "option_id": "G", "content": "$O_p(n^{-2})$", "is_correct": False, "error_rationale": "Error de orden 6"},
+                ]
+        psy_errors = check_psychometrics(course)
+        r16_errors = [e for e in psy_errors if e.rule_id == "R-16"]
+        assert len(r16_errors) == 0, f"Symbolic ties triggered R-16: {r16_errors}"
+
+    @pytest.mark.parametrize("macro", ["text", "textrm", "mathrm"])
+    def test_katex_prose_overflow_detected(self, base_valid_course: dict, macro: str) -> None:
+        """KaTeX text macros with inner content > 45 chars trigger ERR_KATEX_PROSE_OVERFLOW (R-20)."""
+        course = copy.deepcopy(base_valid_course)
+        # 51 characters inside macro (> 45 chars)
+        long_prose = "Este contenido de texto supera los cuarenta y cinco"
+        assert len(long_prose) > 45
+        course["questions"][0]["stem"] = f"Considere el modelo con $\\{macro}{{{long_prose}}}$ en KaTeX."
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        overflow_errs = [e for e in res.errors if e.rule_id == "R-20" and e.code == "ERR_KATEX_PROSE_OVERFLOW"]
+        assert len(overflow_errs) == 1
+        assert "[KATEX-PROSE-OVERFLOW]" in overflow_errs[0].message
+        assert f"\\{macro}" in overflow_errs[0].message
+
+    @pytest.mark.parametrize("macro", ["text", "textrm", "mathrm"])
+    def test_katex_short_prose_passes(self, base_valid_course: dict, macro: str) -> None:
+        """KaTeX text macros with inner content <= 45 chars pass cleanly."""
+        course = copy.deepcopy(base_valid_course)
+        short_prose = "Texto breve y conciso"
+        assert len(short_prose) <= 45
+        course["questions"][0]["stem"] = f"Considere el modelo con $\\{macro}{{{short_prose}}}$ en KaTeX."
+        res = validate_course_content(json.dumps(course))
+        overflow_errs = [e for e in res.errors if e.code == "ERR_KATEX_PROSE_OVERFLOW"]
+        assert len(overflow_errs) == 0
+
+    @pytest.mark.parametrize("pad_phrase", [
+        "bajo las premisas y condiciones del modelo",
+        "en el marco de las condiciones establecidas",
+        "Opción alterna A",
+        "Distractor homogéneo B",
+        r"$\text{bajo las premisas y condiciones del modelo}$",
+        r"$\text{en el marco de las condiciones establecidas}$",
+    ])
+    def test_synthetic_padding_rejected(self, base_valid_course: dict, pad_phrase: str) -> None:
+        """Options containing synthetic padding phrases trigger ERR_SYNTHETIC_PAD (R-18)."""
+        course = copy.deepcopy(base_valid_course)
+        q = course["questions"][0]
+        for opt in q["options"]:
+            if not opt.get("is_correct"):
+                opt["content"] = f"Respuesta {pad_phrase}"
+                break
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        pad_errs = [e for e in res.errors if e.rule_id == "R-18" and e.code == "ERR_SYNTHETIC_PAD"]
+        assert len(pad_errs) >= 1
+        assert "forbidden synthetic padding boilerplate" in pad_errs[0].message
+
+    def test_camouflaged_boilerplate_in_math_mode_detected(self, base_valid_course: dict) -> None:
+        """Repetitive boilerplate distractors camouflaged in $\text{...}$ trigger ERR_SYNTHETIC_BOILERPLATE."""
+        course = copy.deepcopy(base_valid_course)
+        q = course["questions"][0]
+        # 4 distractors sharing trivial repetitive skeleton in $\text{...}$
+        distractors = [opt for opt in q["options"] if not opt.get("is_correct")]
+        for i, d in enumerate(distractors[:4]):
+            d["content"] = f"$\\text{{El estimador diverge en probabilidad para el caso caso {i+1}}}$"
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        bp_errs = [e for e in res.errors if e.rule_id == "R-18" and e.code == "ERR_SYNTHETIC_BOILERPLATE"]
+        assert len(bp_errs) >= 1
+        assert "Synthetic boilerplate distractor pattern detected" in bp_errs[0].message
+
+    def test_repair_loop_purged_never_injects_padding(self, base_valid_course: dict) -> None:
+        """RepairLoop executes Module A exclusively without mutating options or injecting shared_pads."""
+        from repair_loop import RepairLoop
+
+        course = copy.deepcopy(base_valid_course)
+        q = course["questions"][0]
+        # Make correct option significantly longer (would have triggered _repair_giveaway_lengths in old loop)
+        original_c = "Resultado analítico fundamental con deducción detallada paso a paso " + ("y" * 120)
+        original_d = [opt["content"] for opt in q["options"] if not opt.get("is_correct")]
+        for opt in q["options"]:
+            if opt.get("is_correct"):
+                opt["content"] = original_c
+
+        repairer = RepairLoop(max_iterations=2, strict=True)
+        res = repairer.repair_course(course)
+
+        repaired_q = res.repaired_course_data["questions"][0]
+        repaired_c = next(opt["content"] for opt in repaired_q["options"] if opt.get("is_correct"))
+        repaired_d = [opt["content"] for opt in repaired_q["options"] if not opt.get("is_correct")]
+
+        # Correct option and distractors must remain IDENTICAL (no padding injected)
+        assert repaired_c == original_c
+        assert repaired_d == original_d
+        assert not any("bajo las hipótesis del modelo" in str(d) for d in repaired_d)
+        assert not any("bajo las premisas y condiciones del modelo" in str(d) for d in repaired_d)
+
+    def test_repair_loop_module_a_sanitizes_latex_escapes(self) -> None:
+        """RepairLoop Module A successfully sanitizes raw unescaped LaTeX backslashes."""
+        from repair_loop import RepairLoop
+
+        raw_bad_json = '{\n  "stem": "Evaluar $\\alpha + \\beta = \\frac{1}{2}$"\n}'
+        repairer = RepairLoop(max_iterations=1, strict=False)
+        sanitized = repairer.sanitize_latex_escapes(raw_bad_json)
+        assert "\\\\alpha" in sanitized
+        assert "\\\\beta" in sanitized
+        assert "\\\\frac" in sanitized
+
+    @pytest.mark.parametrize("macro", ["text", "textrm", "mathrm"])
+    def test_katex_prose_overflow_nested_braces_adversarial(self, base_valid_course: dict, macro: str) -> None:
+        """Balanced nested braces inside KaTeX text macros do not truncate prematurely and report correct length."""
+        course = copy.deepcopy(base_valid_course)
+        # 65 chars with internal {i}
+        prose_with_nested = r"valor de $x_{i}$ en el límite asintótico cuando la muestra diverge"
+        assert len(prose_with_nested) > 45
+        course["questions"][0]["stem"] = f"Considere el modelo con $\\{macro}{{{prose_with_nested}}}$ en KaTeX."
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        overflow_errs = [e for e in res.errors if e.rule_id == "R-20" and e.code == "ERR_KATEX_PROSE_OVERFLOW"]
+        assert len(overflow_errs) == 1
+        err = overflow_errs[0]
+        assert "[KATEX-PROSE-OVERFLOW]" in err.message
+        assert err.details.get("length") == len(prose_with_nested)
+        # Ensure no R-23 errors
+        assert not any(e.rule_id == "R-23" for e in res.errors)
+
+    @pytest.mark.parametrize("macro", ["text", "textrm", "mathrm"])
+    def test_katex_prose_nested_braces_under_limit_passes(self, base_valid_course: dict, macro: str) -> None:
+        """Balanced nested braces inside KaTeX text macros pass cleanly when length <= 45."""
+        course = copy.deepcopy(base_valid_course)
+        # 29 chars with internal {i}
+        prose_short_nested = r"valor de $x_{i}$ en el límite"
+        assert len(prose_short_nested) <= 45
+        course["questions"][0]["stem"] = f"Considere el modelo con $\\{macro}{{{prose_short_nested}}}$ en KaTeX."
+        res = validate_course_content(json.dumps(course))
+        overflow_errs = [e for e in res.errors if e.code == "ERR_KATEX_PROSE_OVERFLOW"]
+        assert len(overflow_errs) == 0
+
+    @pytest.mark.parametrize("macro", ["text", "textrm", "mathrm"])
+    def test_katex_prose_overflow_exact_boundary_45_vs_46(self, base_valid_course: dict, macro: str) -> None:
+        """Exact boundary test: len == 45 passes cleanly, len == 46 fails with R-20 ERR_KATEX_PROSE_OVERFLOW."""
+        # 1. Exactly 45 chars -> passes cleanly
+        course_45 = copy.deepcopy(base_valid_course)
+        p45 = "a" * 45
+        course_45["questions"][0]["stem"] = f"Modelo con $\\{macro}{{{p45}}}$ en KaTeX."
+        res_45 = validate_course_content(json.dumps(course_45))
+        assert not any(e.code == "ERR_KATEX_PROSE_OVERFLOW" for e in res_45.errors)
+
+        # 2. Exactly 46 chars -> triggers R-20 ERR_KATEX_PROSE_OVERFLOW
+        course_46 = copy.deepcopy(base_valid_course)
+        p46 = "a" * 46
+        course_46["questions"][0]["stem"] = f"Modelo con $\\{macro}{{{p46}}}$ en KaTeX."
+        res_46 = validate_course_content(json.dumps(course_46))
+        assert not res_46.is_valid
+        overflow_46 = [e for e in res_46.errors if e.rule_id == "R-20" and e.code == "ERR_KATEX_PROSE_OVERFLOW"]
+        assert len(overflow_46) == 1
+        assert "[KATEX-PROSE-OVERFLOW]" in overflow_46[0].message
+        assert overflow_46[0].details.get("length") == 46
+        # Invariant: NEVER R-23
+        assert not any(e.rule_id == "R-23" for e in res_46.errors)
+
+    def test_r16_genuine_outliers_detected(self, base_valid_course: dict) -> None:
+        """Genuine length outliers (> 25% of MC items) correctly trigger R-16 ERR_GIVEAWAY_COURSE."""
+        course = copy.deepcopy(base_valid_course)
+        # Make correct option strictly longer in all MC questions
+        for q in course["questions"]:
+            if q.get("interaction_type") == "multiple_choice_7_options":
+                for opt in q["options"]:
+                    if opt.get("is_correct"):
+                        opt["content"] = "Opción correcta sustancialmente más extensa con desarrollo analítico paso a paso " * 3
+                    else:
+                        opt["content"] = "Distractor breve"
+        psy_errors = check_psychometrics(course)
+        r16_errors = [e for e in psy_errors if e.rule_id == "R-16" and e.code == "ERR_GIVEAWAY_COURSE"]
+        assert len(r16_errors) >= 1
+        assert "maximum allowed is 25.0%" in r16_errors[0].message
+
+    def test_repair_loop_run_alias_preserves_option_invariance(self, base_valid_course: dict) -> None:
+        """RepairLoop.run() invocation preserves 100% option invariance without mutating texts or injecting padding."""
+        from repair_loop import RepairLoop
+
+        course = copy.deepcopy(base_valid_course)
+        q = course["questions"][0]
+        orig_options = copy.deepcopy(q["options"])
+
+        repairer = RepairLoop(max_iterations=3, strict=True)
+        result = repairer.run(course)
+
+        # Confirm result attributes and types
+        assert hasattr(result, "success")
+        assert hasattr(result, "iterations_run")
+        assert hasattr(result, "repaired_course_data")
+        assert hasattr(result, "repaired_raw_json")
+        assert hasattr(result, "remaining_errors")
+        assert hasattr(result, "iteration_history")
+
+        as_dict = result.to_dict()
+        assert "success" in as_dict
+        assert "iterations_run" in as_dict
+
+        repaired_options = result.repaired_course_data["questions"][0]["options"]
+        assert repaired_options == orig_options
+
+
 

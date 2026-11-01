@@ -57,7 +57,6 @@ from check_templates import (
 from compile_shard import (
     ShardDataLineLocator,
     _atomic_write_json,
-    _format_socratic_step,
     compile_shard,
     compile_shard_file,
     heal_shard_source_file,
@@ -85,9 +84,9 @@ class TestPillar1ErrorAggregation:
         shard_py.write_text(
             '# Shard 01 Data\n'
             'TEMPLATES = [\n'
-            '    ("C-01", "multiple_choice", "Stem 1", lambda rng: {}, lambda p, a: True, "Sol 1", "KC", [], "doc:1"),\n'
-            '    ("C-02", "multiple_choice", "Stem 2", lambda rng: {}, lambda p, a: True, "Sol 2", "KC", [], "doc:1"),\n'
-            '    ("C-03", "multiple_choice", "Stem 3", lambda rng: {}, lambda p, a: True, "Sol 3", "KC", [], "doc:1"),\n'
+            '    ("T-C-01", "C-01", "multiple_choice", lambda rng: {}, lambda p, a: True, ("medium", "Understand"), ["Stem 1"], ["Hint 1"], "Sol 1"),\n'
+            '    ("T-C-02", "C-02", "multiple_choice", lambda rng: {}, lambda p, a: True, ("medium", "Understand"), ["Stem 2"], ["Hint 2"], "Sol 2"),\n'
+            '    ("T-C-03", "C-03", "multiple_choice", lambda rng: {}, lambda p, a: True, ("medium", "Understand"), ["Stem 3"], ["Hint 3"], "Sol 3"),\n'
             ']\n',
             encoding="utf-8",
         )
@@ -139,16 +138,15 @@ class TestPillar1ErrorAggregation:
             '\n'
             'TEMPLATES = [\n'
             '    (\n'
+            '        "T-Hab-01",\n'
             '        "Hab-01",\n'
             '        "multiple_choice",\n'
-            '        "Calcule el valor de ${k}^*$...",\n'
             '        gen_func,\n'
             '        ver_func,\n'
+            '        ("medium", "Apply"),\n'
+            '        ["Calcule el valor de ${k}^*$...", "Stem 2", "Stem 3"],\n'
+            '        ["Hint 1", "Hint 2", "Hint 3"],\n'
             '        "Explicación formal",\n'
-            '        "Hab-01",\n'
-            '        ["D-Hab01-01", "D-Hab01-02"],\n'
-            '        ("doc.pdf", 42, "Cita"),\n'
-            '        ["Hint 1", "Hint 2", "Hint 3"]\n'
             '    ),\n'
             ']\n'
         )
@@ -160,13 +158,13 @@ class TestPillar1ErrorAggregation:
         t_info = locator.get_tuple_info("Hab-01")
         assert t_info is not None
         assert t_info["start_line"] == 9
-        assert t_info["end_line"] == 20
-        assert t_info["elements"]["competency_id"]["start_line"] == 10
-        assert t_info["elements"]["hints"]["start_line"] == 19
+        assert t_info["end_line"] == 19
+        assert t_info["elements"]["competency_id"]["start_line"] == 11
+        assert t_info["elements"]["hints"]["start_line"] == 17
 
         s, e, snippet = locator.get_tuple_snippet("Hab-01")
         assert s == 9
-        assert e == 20
+        assert e == 19
         assert "Hab-01" in snippet
 
 
@@ -440,23 +438,25 @@ class TestPillar4CompilerParityAndHealing:
         assert cleaned[2] == "Paso 3 dimensional."
 
     def test_9_element_tuple_socratic_hints_synthesis_math_integrity(self):
-        """Synthesized Socratic hints preserve math symbols ($K$, \\Delta) without improper lowercasing."""
+        r"""Explicit Form-B hints preserve math symbols ($K$, \Delta) and strip giveaway prefixes."""
+        from check_templates import _strip_giveaway_prefix
         c_name = "Equilibrio de Solow"
-        omitted0 = "Inversión de roles: Omitir la tasa de depreciación $\\delta$ y el capital $K$."
-        omitted1 = "Confusión de conceptos: No diferenciar la variación $\\Delta K$ del estado estacionario."
+        hint0 = r"Inversión de roles: Considere la tasa de depreciación $\delta$ y el capital $K$."
+        hint1 = r"Confusión de conceptos: Diferenciar la variación $\Delta K$ del estado estacionario."
 
-        step0 = _format_socratic_step(omitted0)
-        step1 = _format_socratic_step(omitted1)
+        step0 = _strip_giveaway_prefix(hint0)
+        step1 = _strip_giveaway_prefix(hint1)
 
         assert not step0.startswith("Inversión de roles:")
         assert "$K$" in step0, "Uppercase math symbol $K$ must NOT be lowercased to $k$"
         assert r"\delta" in step0
-        assert r"\Delta K" in step1, "Uppercase Greek macro \\Delta must NOT be lowercased"
+        assert r"\Delta K" in step1, r"Uppercase Greek macro \Delta must NOT be lowercased"
 
         hint2 = f"Revise el procedimiento analítico paso a paso para {c_name}, asegurando considerar adecuadamente: {step0}."
         hint3 = f"Antes de concluir, compruebe la consistencia dimensional del resultado de {c_name} y evalúe posibles desvíos al considerar: {step1}."
         assert "$K$" in hint2
         assert r"\Delta K" in hint3
+        assert len(hint2) >= 25 and len(hint3) >= 25
 
     def test_diversity_quota_enforcement_skill_30_concept_20(self):
         """Diversity quota is 30 for skills and 20 for concepts when enforce_full_quota is True."""
@@ -481,9 +481,11 @@ class TestPillar4CompilerParityAndHealing:
         shards_dir.mkdir(parents=True, exist_ok=True)
 
         manifest = {
+            "min_archetypes": 1,
             "shards": [
                 {
                     "shard_id": "shard_01",
+                    "min_archetypes": 1,
                     "competency_ids": ["C-01"],
                     "competencies": [
                         {
@@ -514,37 +516,54 @@ class TestPillar4CompilerParityAndHealing:
         (work_dir / "cta.json").write_text(json.dumps(cta_data), encoding="utf-8")
 
         shard_data_code = (
-            'def gen_c01(rng):\n'
-            '    val = rng.randint(100, 200)\n'
-            '    c_ans = f"${val} unidades$"\n'
-            '    d_list = [\n'
-            '        {"distractor_id": f"D-C01-0{i}", "value": f"${val + i * 10} unidades$", "error_rationale": f"Err {i}"}\n'
-            '        for i in range(1, 7)\n'
-            '    ]\n'
-            '    return {"vars": {"k": val, "k_val": val}, "correct": c_ans, "distractors": d_list}\n'
-            '\n'
-            'def ver_c01(result, *args):\n'
-            '    return True\n'
-            '\n'
-            'TEMPLATES = [\n'
-            '    (\n'
-            '        "C-01",\n'
-            '        "multiple_choice",\n'
-            '        "Considere ${k}^* = {k_val}$ con trayectorias $f({k}) = {r}$ y ${r}_t$.",\n'
-            '        gen_c01,\n'
-            '        ver_c01,\n'
-            '        "Solución formal detallada para ${k}^*$.",\n'
-            '        "C-01",\n'
-            '        ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"],\n'
-            '        ("doc.pdf", 1, "Cita"),\n'
-            '        ["Hint 1 personalizado", "Hint 2 personalizado", "Hint 3 personalizado"]\n'
-            '    )\n'
-            ']\n'
-        )
+    'def gen_c01(rng):\n'
+    '    val = rng.randint(100, 500)\n'
+    '    r_val = rng.choice([0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08])\n'
+    '    c_ans = f"${val} unidades$"\n'
+    '    d_list = [\n'
+    '        {"distractor_id": f"D-C01-0{i}", "value": f"${val + i * 10} unidades$", "error_rationale": f"Desvío analítico en variable @k@ de tipo {i}"}\n'
+    '        for i in range(1, 7)\n'
+    '    ]\n'
+    '    return {"vars": {"k": val, "k_val": val, "r": r_val}, "correct": c_ans, "distractors": d_list}\n'
+    '\n'
+    'def ver_c01(result, *args):\n'
+    '    return result.get("vars", {}).get("k") is not None\n'
+    '\n'
+    'TEMPLATES = [\n'
+    '    (\n'
+    '        "T-C-01",\n'
+    '        "C-01",\n'
+    '        "multiple_choice",\n'
+    '        gen_c01,\n'
+    '        ver_c01,\n'
+    '        ("medium", "Understand"),\n'
+    '        [\n'
+    '            "Considere el sendero ${k}^*$ = {k_val} con trayectorias $f({k}) = {r}$ y ${r}_t$.",\n'
+    '            "Determine la trayectoria ${k}^*$ = {k_val} evaluando las curvas $f({k}) = {r}$ y ${r}_t$.",\n'
+    '            "Calcule el equilibrio ${k}^*$ = {k_val} mediante las funciones $f({k}) = {r}$ y ${r}_t$.",\n'
+    '            "Analice la convergencia ${k}^*$ = {k_val} a partir de las tasas $f({k}) = {r}$ y ${r}_t$.",\n'
+    '            "Evalúe el punto estacionario ${k}^*$ = {k_val} según el flujo $f({k}) = {r}$ y ${r}_t$.",\n'
+    '            "Halle la solución óptima ${k}^*$ = {k_val} asociada al modelo $f({k}) = {r}$ y ${r}_t$.",\n'
+    '            "Examine la dinámica temporal ${k}^*$ = {k_val} observando los niveles $f({k}) = {r}$ y ${r}_t$.",\n'
+    '            "Compruebe el balance paramétrico ${k}^*$ = {k_val} aplicando las relaciones $f({k}) = {r}$ y ${r}_t$.",\n'
+    '            "Verifique el valor asintótico ${k}^*$ = {k_val} contrastando $f({k}) = {r}$ y ${r}_t$.",\n'
+    '            "Estudie el sistema estructural ${k}^*$ = {k_val} con las ecuaciones $f({k}) = {r}$ y ${r}_t$.",\n'
+    '            "Identifique la senda consistente ${k}^*$ = {k_val} bajo las condiciones $f({k}) = {r}$ y ${r}_t$.",\n'
+    '            "Estime la magnitud teórica ${k}^*$ = {k_val} con ayuda de $f({k}) = {r}$ y ${r}_t$."\n'
+    '        ],\n'
+    '        [\n'
+    '            "Hint 1 personalizado para el procedimiento analítico.",\n'
+    '            "Hint 2 personalizado para el procedimiento analítico.",\n'
+    '            "Hint 3 personalizado para el procedimiento analítico.",\n'
+    '        ],\n'
+    '        "Solución formal detallada para ${k}^*$ con variable {k_val}."\n'
+    '    )\n'
+    ']\n'
+)
         shard_py = shards_dir / "shard_01_data.py"
         shard_py.write_text(shard_data_code, encoding="utf-8")
 
-        success, errors = compile_shard(work_dir, "shard_01", strict=True, seeds=50)
+        success, errors = compile_shard(work_dir, "shard_01", strict=True, seeds=50, min_archetypes=1)
         out_json = work_dir / "templates" / "C-01.json"
         if out_json.is_file():
             content = json.loads(out_json.read_text(encoding="utf-8"))
@@ -560,7 +579,7 @@ class TestPillar4CompilerParityAndHealing:
         out_json = work_dir / "templates" / "C-01.json"
         assert out_json.is_file()
         content = json.loads(out_json.read_text(encoding="utf-8"))
-        assert content["hints"] == ["Hint 1 personalizado", "Hint 2 personalizado", "Hint 3 personalizado"]
+        assert content["hints"] == ["Hint 1 personalizado para el procedimiento analítico.", "Hint 2 personalizado para el procedimiento analítico.", "Hint 3 personalizado para el procedimiento analítico."]
         assert not any(c in out_json.read_text(encoding="utf-8") for c in _CONTROL_CHAR_TEXT_MAP)
 
     def test_compile_shard_failing_outputs_compact_error_under_30_lines(self, tmp_path: Path):
@@ -580,7 +599,7 @@ class TestPillar4CompilerParityAndHealing:
                             "name": "Concepto",
                             "type": "concept",
                             "description_latex": "Desc",
-                            "distractors": [{"id": f"D-C01-0{i}", "wrong_belief": "W"} for i in range(1, 7)],
+                            "distractors": [{"id": f"D-C01-0{i}", "wrong_belief": f"W{i}"} for i in range(1, 7)],
                         }
                     ],
                 }
@@ -589,17 +608,39 @@ class TestPillar4CompilerParityAndHealing:
         (shards_dir / "pre_shard_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
         (work_dir / "cta.json").write_text(json.dumps({"competencies": manifest["shards"][0]["competencies"]}), encoding="utf-8")
 
-        # Shard with undeclared distractor ID causing TPL-D1 failure
+        # Shard with static options triggering validation failure
         shard_data_code = (
             'def gen_fail(rng):\n'
             '    return {\n'
+            '        "vars": {"k": 10},\n'
             '        "correct": "$1$",\n'
-            '        "distractors": [{"distractor_id": "D-UNDECLARED", "value": "$2$"}] * 6\n'
+            '        "distractors": [\n'
+            '            {"distractor_id": f"D-C01-0{i}", "value": f"${i+1}$", "error_rationale": f"Desvío dinámico en parámetro @k@ detectado {i}"}\n'
+            '            for i in range(1, 7)\n'
+            '        ]\n'
             '    }\n'
             'def ver_fail(params, ans):\n'
-            '    return True\n'
+            '    return params.get("vars", {}).get("k") is not None\n'
             'TEMPLATES = [\n'
-            '    ("C-01", "multiple_choice", "Stem", gen_fail, ver_fail, "Sol", "C-01", ["D-UNDECLARED"], "doc:1")\n'
+            '    (\n'
+            '        "T-C-01",\n'
+            '        "C-01",\n'
+            '        "multiple_choice",\n'
+            '        gen_fail,\n'
+            '        ver_fail,\n'
+            '        ("medium", "Understand"),\n'
+            '        [\n'
+            '            "Stem variante 1 para validación de error compacto.",\n'
+            '            "Stem variante 2 para validación de error compacto.",\n'
+            '            "Stem variante 3 para validación de error compacto.",\n'
+            '        ],\n'
+            '        [\n'
+            '            "Pista formativa 1 con longitud suficiente para pasar la compuerta de validación.",\n'
+            '            "Pista formativa 2 con longitud suficiente para pasar la compuerta de validación.",\n'
+            '            "Pista formativa 3 con longitud suficiente para pasar la compuerta de validación.",\n'
+            '        ],\n'
+            '        "Solución formal de prueba."\n'
+            '    )\n'
             ']\n'
         )
         (shards_dir / "shard_01_data.py").write_text(shard_data_code, encoding="utf-8")
@@ -612,3 +653,135 @@ class TestPillar4CompilerParityAndHealing:
         assert len(report_lines) < 30, f"Expected error report < 30 lines, got {len(report_lines)} lines"
         assert "[Tupla en shard_01_data.py: Líneas" in report
         assert "(StartLine:" in report and "EndLine:" in report
+
+
+# ==============================================================================
+# PILLAR 5: Simultaneous LaTeX Math Immunity, @var@ Interpolation & Dynamic Rationale
+# ==============================================================================
+
+class TestPillar5SimultaneousMathImmunityAndDynamicRationale:
+    """End-to-end integration tests for simultaneous LaTeX immunity and dynamic rationales."""
+
+    def test_simultaneous_latex_math_immunity_and_token_interpolation_both_cta_modes(self):
+        """Validates simultaneous ${k}^*$ immunity, @k@/@n@ interpolation, and {k_val} resolution under both CTA modes."""
+        text_compound = (
+            r"Trayectoria con ${k}^*$ y ${r}_t$. "
+            r"Falla detectada en factor @k@ y tasa @n@. "
+            r"Nivel paramétrico: {k_val}."
+        )
+        variables = {"k": 10, "n": 2, "k_val": 42, "r": 0.05}
+
+        # Case A: is_cta=True (CTA context)
+        # Protects static math ${k}^*$ and ${r}_t$, while interpolating @k@ and @n@
+        res_cta = format_template_string(text_compound, variables, is_cta=True)
+        assert "${k}^*$" in res_cta
+        assert "${r}_t$" in res_cta
+        assert "10^*" not in res_cta
+        assert "0.05_t" not in res_cta
+        assert "factor 10" in res_cta
+        assert "tasa 2" in res_cta
+        assert "Nivel paramétrico: 42." in res_cta
+
+        # Case B: is_cta=False (Instance generation context)
+        # Math span superscript protection preserves ${k}^*$, while interpolating tokens
+        res_non_cta = format_template_string(text_compound, variables, is_cta=False)
+        assert "${k}^*$" in res_non_cta
+        assert "${r}_t$" in res_non_cta
+        assert "10^*" not in res_non_cta
+        assert "factor 10" in res_non_cta
+        assert "tasa 2" in res_non_cta
+        assert "Nivel paramétrico: 42." in res_non_cta
+
+        # Case C: Free-standing {k} inside vs outside math span
+        text_differentiating = r"Constante externa {k} junto a balance ${k}^*$."
+        res_cta_diff = format_template_string(text_differentiating, variables, is_cta=True)
+        res_non_cta_diff = format_template_string(text_differentiating, variables, is_cta=False)
+
+        # In CTA mode, short name {k} is immune to substitution
+        assert "Constante externa {k}" in res_cta_diff
+        assert "${k}^*$" in res_cta_diff
+
+        # In non-CTA mode, bare {k} outside math is substituted while ${k}^*$ remains immune
+        assert "Constante externa 10" in res_non_cta_diff
+        assert "${k}^*$" in res_non_cta_diff
+
+    def test_dynamic_rationale_blocking_when_distractor_omits_var(self, tmp_path: Path):
+        """Templates where distractors vary across seeds but omit dynamic @var@ placeholders trigger TPL-DYNAMIC-RATIONALE."""
+        work_dir = tmp_path / "work_dyn_rat"
+        shards_dir = work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+
+        manifest = {
+            "shards": [
+                {
+                    "shard_id": "shard_01",
+                    "competency_ids": ["C-01"],
+                    "competencies": [
+                        {
+                            "id": "C-01",
+                            "name": "Concepto de Dinámica",
+                            "type": "concept",
+                            "description_latex": "Definición formal",
+                            "distractors": [
+                                {
+                                    "id": f"D-C01-0{i}",
+                                    "wrong_belief": f"Creencia errónea {i}",
+                                    "remediation_hint": f"Revisar paso {i}",
+                                    "manifestation": f"Manifestación {i}",
+                                }
+                                for i in range(1, 7)
+                            ],
+                        }
+                    ],
+                }
+            ]
+        }
+        (shards_dir / "pre_shard_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        (work_dir / "cta.json").write_text(json.dumps({"competencies": manifest["shards"][0]["competencies"]}), encoding="utf-8")
+
+        # Shard where distractors vary across seeds, but rationales are static (omits @k@ or @var@)
+        shard_static_rat = (
+            'def gen_static_rat(rng):\n'
+            '    val = rng.randint(100, 500)\n'
+            '    r_val = rng.choice([0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08])\n'
+            '    c_ans = f"${val} unidades$"\n'
+            '    d_list = [\n'
+            '        {"distractor_id": f"D-C01-0{i}", "value": f"${val + i * 10} unidades$", "error_rationale": "Desvío conceptual estático sin variable"}\n'
+            '        for i in range(1, 7)\n'
+            '    ]\n'
+            '    return {"vars": {"k": val, "k_val": val, "r": r_val}, "correct": c_ans, "distractors": d_list}\n'
+            '\n'
+            'def ver_static_rat(result, *args):\n'
+            '    return result.get("vars", {}).get("k") is not None\n'
+            '\n'
+            'TEMPLATES = [\n'
+            '    (\n'
+            '        "T-C-01",\n'
+            '        "C-01",\n'
+            '        "multiple_choice",\n'
+            '        gen_static_rat,\n'
+            '        ver_static_rat,\n'
+            '        ("medium", "Understand"),\n'
+            '        [\n'
+            '            "Considere la trayectoria ${k}^*$ = {k_val} con flujos $f({k}) = {r}$ y ${r}_t$.",\n'
+            '            "Determine la trayectoria ${k}^*$ = {k_val} con curvas $f({k}) = {r}$ y ${r}_t$.",\n'
+            '            "Calcule el punto de balance ${k}^*$ = {k_val} con funciones $f({k}) = {r}$ y ${r}_t$.",\n'
+            '            "Analice la convergencia asintótica ${k}^*$ = {k_val} con tasas $f({k}) = {r}$ y ${r}_t$.",\n'
+            '            "Evalúe el equilibrio paramétrico ${k}^*$ = {k_val} con flujos $f({k}) = {r}$ y ${r}_t$.",\n'
+            '            "Halle el valor de referencia ${k}^*$ = {k_val} con curvas $f({k}) = {r}$ y ${r}_t$.",\n'
+            '        ],\n'
+            '        [\n'
+            '            "Pista formativa 1 con longitud sustancial superior a veinticinco caracteres.",\n'
+            '            "Pista formativa 2 con longitud sustancial superior a veinticinco caracteres.",\n'
+            '            "Pista formativa 3 con longitud sustancial superior a veinticinco caracteres.",\n'
+            '        ],\n'
+            '        "Solución analítica formal para ${k}^*$ con variable {k_val}."\n'
+            '    )\n'
+            ']\n'
+        )
+        (shards_dir / "shard_01_data.py").write_text(shard_static_rat, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, "shard_01", strict=True, seeds=50, min_archetypes=1)
+        assert not success, "Expected compilation failure when dynamic distractor has static rationale without @var@"
+        assert any("TPL-DYNAMIC-RATIONALE" in err for err in errors)
+

@@ -164,12 +164,10 @@ class TestCourseIndexContract:
 
     def test_build_index_warm_cache_performance(self):
         """Validates AC-19: buildIndex() executes in < 100 ms when cache is warm."""
-        # Warm up the cache once
-        run_node_eval("return courseIndex.buildIndex();")
-
-        # Measure warm buildIndex() execution time
+        # Warm up the cache and measure warm buildIndex() in the same Node process
         stats_and_time = run_node_eval(
             """
+            courseIndex.buildIndex();
             courseIndex.resetStats();
             const t0 = Date.now();
             courseIndex.buildIndex();

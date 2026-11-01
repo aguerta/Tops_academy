@@ -25,6 +25,8 @@ from engine.assemble import assemble_question
 from engine.diversity import evaluate_competency_diversity
 from check_templates import check_single_template
 from judge import compare_judge_responses, generate_judge_batch
+from course_publisher import CoursePublisher, check_prerequisites_dag, are_competencies_duplicate
+from validator.models import ValidationResult
 
 
 # ==============================================================================
@@ -248,3 +250,321 @@ def test_judge_canonical_option_comparison():
     # Case 4: mismatch
     res4 = compare_judge_responses({"item_1": "A", "item_2": "99.9"}, gt)
     assert res4["agreement_rate"] == 0.0
+
+
+def test_judge_sampling_three_seeds_full_template_coverage(tmp_path):
+    """Verify generate_judge_batch samples 3 seeds across 100% of templates by default."""
+    templates = []
+    for i in range(1, 5):
+        cid = "C-01" if i <= 2 else "C-02"
+        templates.append({
+            "id": f"T-0{i}",
+            "competency_id": cid,
+            "interaction_type": "fill_in_the_blank",
+            "stem": f"Calculate parameter value {{val}} for template {i}",
+            "hints": ["Hint 1", "Hint 2", "Hint 3"],
+            "detailed_solution": "Solution is {val}",
+            "generate_py": (
+                "def generate(rng):\n"
+                "    v = rng.randint(10, 100)\n"
+                "    return {'vars': {'val': v}, 'correct': v, 'equivalents': [str(v)]}\n"
+            ),
+        })
+
+    tpl_file = tmp_path / "templates.json"
+    tpl_file.write_text(json.dumps(templates), encoding="utf-8")
+
+    batch_path, gt_path = generate_judge_batch(tpl_file, work_dir=tmp_path)
+    batch = json.loads(batch_path.read_text(encoding="utf-8"))
+    gt = json.loads(gt_path.read_text(encoding="utf-8"))
+
+    # 4 templates * 3 seeds (101, 202, 303) = 12 items
+    assert len(batch) == 12
+    assert len(gt) == 12
+
+    covered_templates = {item["template_id"] for item in batch}
+    assert covered_templates == {"T-01", "T-02", "T-03", "T-04"}
+
+    for item in batch:
+        assert "template_id" in item
+        assert "competency_id" in item
+        assert item["template_id"] in ("T-01", "T-02", "T-03", "T-04")
+        assert item["competency_id"] in ("C-01", "C-02")
+
+
+def test_judge_zero_tolerance_rejection_empty_or_incomplete(tmp_path):
+    """Verify zero tolerance when judge responses are empty or incomplete."""
+    # Case A: total == 0
+    res_empty = compare_judge_responses(responses={}, ground_truth={})
+    assert res_empty["total_items"] == 0
+    assert res_empty["passed"] is False
+
+    # Case B: incomplete items
+    gt = {
+        "item_1": {"interaction_type": "fill_in_the_blank", "correct_value": 10.0, "template_id": "T-01", "competency_id": "C-01"},
+        "item_2": {"interaction_type": "fill_in_the_blank", "correct_value": 20.0, "template_id": "T-02", "competency_id": "C-02"},
+    }
+    # Only item_1 answered
+    res_incomplete = compare_judge_responses(responses={"item_1": 10.0}, ground_truth=gt)
+    assert res_incomplete["total_items"] == 2
+    assert res_incomplete["passed"] is False
+
+
+def test_judge_zero_tolerance_single_template_disagreement():
+    """Verify that a single disagreement in any template marks passed=False and records failed_templates."""
+    gt = {
+        "item_1": {"interaction_type": "multiple_choice_7_options", "correct_letter": "A", "template_id": "T-01", "competency_id": "C-01"},
+        "item_2": {"interaction_type": "multiple_choice_7_options", "correct_letter": "B", "template_id": "T-01", "competency_id": "C-01"},
+        "item_3": {"interaction_type": "multiple_choice_7_options", "correct_letter": "C", "template_id": "T-02", "competency_id": "C-02"},
+        "item_4": {"interaction_type": "multiple_choice_7_options", "correct_letter": "D", "template_id": "T-02", "competency_id": "C-02"},
+    }
+    # Judge agrees on item 1, 2, 3, but fails item 4 in T-02
+    responses = {
+        "item_1": "A",
+        "item_2": "B",
+        "item_3": "C",
+        "item_4": "E",
+    }
+    res = compare_judge_responses(responses=responses, ground_truth=gt)
+    assert res["passed"] is False
+    assert "T-02" in res["failed_templates"]
+    assert "C-02" in res["failed_competencies"]
+    assert "T-01" not in res["failed_templates"]
+
+
+def test_course_publisher_append_paraphrase_detection_and_prereqs_remap(tmp_path, monkeypatch):
+    """Verify that append merges real paraphrases (Jaccard 0.40-0.54) and remaps prerequisites cleanly."""
+    courses_dir = tmp_path / "courses"
+    courses_dir.mkdir(parents=True)
+
+    base_course = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "course_id": "stats_math",
+        "course_title": "Mathematical Statistics",
+        "competencies": [
+            {
+                "id": "C-01",
+                "name": "Estimador BLUE y teorema de Gauss-Markov en $Y = X\\beta + u$",
+                "description": "Demostración de insesgadez y varianza mínima para estimadores lineales en modelos con $\\beta$.",
+                "category": "Concept",
+                "type": "Concept",
+                "level": "Analyze",
+                "mastery_target": 100,
+                "prerequisites": [],
+                "distractors": [{"id": "D-C01-01", "name": "D1"}],
+            }
+        ],
+        "questions": [
+            {
+                "id": "Q-C01-01",
+                "competency_id": "C-01",
+                "stem": "Determine the property of the OLS estimator.",
+                "correct_answer": "It is BLUE under classical assumptions.",
+                "options": [{"id": "A", "content": "It is BLUE under classical assumptions.", "is_correct": True}],
+            }
+        ],
+    }
+    base_file = courses_dir / "stats_math.json"
+    base_file.write_text(json.dumps(base_course, indent=2), encoding="utf-8")
+
+    # Incoming delta batch has:
+    # C-99: Real paraphrase of C-01 with shared math symbol \beta and shared conceptual stems
+    # C-02: New competency with prerequisite referencing C-99
+    delta_batch = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "course_id": "stats_math",
+        "course_title": "Mathematical Statistics",
+        "competencies": [
+            {
+                "id": "C-99",
+                "name": "Teorema de Gauss-Markov y propiedad BLUE con $y = X\\beta + \\varepsilon$",
+                "description": "Prueba formal de varianza mínima e insesgadez en modelos lineales para $\\beta$.",
+                "category": "Concept",
+                "type": "Concept",
+                "level": "Analyze",
+                "mastery_target": 100,
+                "prerequisites": [],
+                "distractors": [{"id": "D-C99-01", "name": "D1"}],
+            },
+            {
+                "id": "C-02",
+                "name": "Contraste de hipótesis lineal para $\\beta$",
+                "description": "Prueba de significancia individual mediante estadístico t.",
+                "category": "Skill",
+                "type": "Skill",
+                "level": "Evaluate",
+                "mastery_target": 100,
+                "prerequisites": ["C-99"],
+                "distractors": [{"id": "D-C02-01", "name": "D1"}],
+            },
+        ],
+        "questions": [
+            {
+                "id": "Q-C99-01",
+                "competency_id": "C-99",
+                "stem": "Question about BLUE property.",
+                "correct_answer": "Valid ans",
+                "options": [{"id": "A", "content": "Valid ans", "is_correct": True}],
+            },
+            {
+                "id": "Q-C02-01",
+                "competency_id": "C-02",
+                "stem": "Question about hypothesis test.",
+                "correct_answer": "Valid ans 2",
+                "options": [{"id": "A", "content": "Valid ans 2", "is_correct": True}],
+            },
+        ],
+    }
+
+    publisher = CoursePublisher(courses_dir=courses_dir)
+    publisher._run_cli_validator = lambda p, strict=True: True
+    monkeypatch.setattr(
+        "course_publisher.validate_course_content",
+        lambda raw, file_path=None, strict=False: ValidationResult(is_valid=True, file_path=file_path, errors=[]),
+    )
+
+    res = publisher.publish(delta_batch, append=True, strict=False)
+    assert res.success is True
+
+    # Check merged course on disk
+    merged_data = json.loads(base_file.read_text(encoding="utf-8"))
+    merged_c_ids = [c["id"] for c in merged_data["competencies"]]
+
+    # C-99 was detected as duplicate of C-01 and merged!
+    assert "C-01" in merged_c_ids
+    assert "C-99" not in merged_c_ids
+    assert "C-02" in merged_c_ids
+
+    # Prerequisites of C-02 must be remapped from C-99 to C-01!
+    c02 = next(c for c in merged_data["competencies"] if c["id"] == "C-02")
+    assert c02["prerequisites"] == ["C-01"]
+
+    # DAG check must pass without errors
+    dag_errors = check_prerequisites_dag(merged_data["competencies"])
+    assert len(dag_errors) == 0
+
+    # Questions for C-99 must be remapped to C-01
+    q_c01 = [q for q in merged_data["questions"] if q["competency_id"] == "C-01"]
+    assert len(q_c01) == 2
+
+
+def test_matiz3_paraphrase_composite_detection_adversary():
+    """Verify Matiz 3: Sem-9 paraphrase competencies with Jaccard ~0.44 and shared LaTeX math are merged,
+    while genuinely distinct competencies from the same topic are NOT merged."""
+    comp_a = {
+        "id": "C-01",
+        "name": "Estimador por mínimos cuadrados y varianza formal con $\\hat{\\beta}$ y residuo $\\varepsilon$",
+        "description": "Deducción de insesgadez y cálculo algebraico de varianza para $\\hat{\\beta}$ considerando error $\\varepsilon$.",
+    }
+    comp_b = {
+        "id": "C-02",
+        "name": "Propiedades de mínimos cuadrados y matriz de varianzas con $\\hat{\\beta}$ y perturbación $\\varepsilon$",
+        "description": "Demostración analítica de varianza mínima e insesgadez para el estimador $\\hat{\\beta}$ con $\\varepsilon$.",
+    }
+
+    is_dup = are_competencies_duplicate(comp_b, comp_a)
+    assert is_dup is True, "Expected paraphrase competencies sharing math symbols and content stems to merge"
+
+    comp_c = {
+        "id": "C-03",
+        "name": "Inferencia y contraste de hipótesis lineal $R\\beta = r$ con estadístico F",
+        "description": "Distribución asintótica y regiones de confianza para combinaciones lineales de parámetros.",
+    }
+    is_distinct = are_competencies_duplicate(comp_c, comp_a)
+    assert is_distinct is False, "Expected distinct topic competency to NOT merge with OLS estimation competency"
+
+
+def test_append_prerequisites_remap_avoids_self_loop_and_duplicates(tmp_path, monkeypatch):
+    """Verify append remapping drops self-loops (cid in prerequisites) and eliminates duplicate prerequisites."""
+    courses_dir = tmp_path / "courses"
+    courses_dir.mkdir(parents=True)
+
+    base_course = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "course_id": "math_base",
+        "course_title": "Base Course",
+        "competencies": [
+            {
+                "id": "C-01",
+                "name": "Concepto Base 1",
+                "description": "Fundamento inicial.",
+                "prerequisites": [],
+            }
+        ],
+        "questions": [
+            {
+                "id": "Q-01",
+                "competency_id": "C-01",
+                "stem": "Stem 1",
+                "correct_answer": "Ans",
+                "options": [{"id": "A", "content": "Ans", "is_correct": True}],
+            }
+        ],
+    }
+    base_file = courses_dir / "math_base.json"
+    base_file.write_text(json.dumps(base_course, indent=2), encoding="utf-8")
+
+    delta = {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "course_id": "math_base",
+        "course_title": "Base Course",
+        "competencies": [
+            {
+                "id": "C-99",
+                "name": "Concepto Base 1",
+                "description": "Fundamento inicial duplicado.",
+                "prerequisites": [],
+            },
+            {
+                "id": "C-02",
+                "name": "Concepto Habilitado 2",
+                "description": "Dependencia compuesta.",
+                "prerequisites": ["C-99", "C-01"],
+            },
+            {
+                "id": "C-03",
+                "name": "Concepto Habilitado 3",
+                "description": "Dependencia con auto-bucle.",
+                "prerequisites": ["C-03", "C-01"],
+            },
+        ],
+        "questions": [
+            {
+                "id": "Q-C02-01",
+                "competency_id": "C-02",
+                "stem": "Stem for C-02",
+                "correct_answer": "Ans",
+                "options": [{"id": "A", "content": "Ans", "is_correct": True}],
+            },
+            {
+                "id": "Q-C03-01",
+                "competency_id": "C-03",
+                "stem": "Stem for C-03",
+                "correct_answer": "Ans",
+                "options": [{"id": "A", "content": "Ans", "is_correct": True}],
+            },
+        ],
+    }
+
+    publisher = CoursePublisher(courses_dir=courses_dir)
+    publisher._run_cli_validator = lambda p, strict=True: True
+    monkeypatch.setattr(
+        "course_publisher.validate_course_content",
+        lambda raw, file_path=None, strict=False: ValidationResult(is_valid=True, file_path=file_path, errors=[]),
+    )
+
+    res = publisher.publish(delta, append=True, strict=False)
+    assert res.success is True
+
+    merged = json.loads(base_file.read_text(encoding="utf-8"))
+    c02 = next(c for c in merged["competencies"] if c["id"] == "C-02")
+    c03 = next(c for c in merged["competencies"] if c["id"] == "C-03")
+
+    assert c02["prerequisites"] == ["C-01"]
+    assert "C-03" not in c03["prerequisites"]
+    assert c03["prerequisites"] == ["C-01"]
+
+    dag_errs = check_prerequisites_dag(merged["competencies"])
+    assert len(dag_errs) == 0
+
+

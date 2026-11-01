@@ -9,6 +9,7 @@ Validates cta.json against cta.schema.json and enforces:
 
 import argparse
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -182,12 +183,13 @@ def validate_cta_schema(
 
 def check_prerequisites_dag(
     competencies: List[Dict[str, Any]],
-    allowed_prereq_ids: Optional[Set[str]] = None,
+    allowed_prereq_ids: Optional[Union[Set[str], List[str], Tuple[str, ...]]] = None,
 ) -> List[str]:
-    """Ensure prerequisite references exist and form an acyclic graph."""
+    """Ensure prerequisite references exist, form an acyclic graph, and satisfy connectivity and root ratio."""
     errors = []
     comp_ids = {c["id"] for c in competencies}
-    valid_ids = comp_ids | (allowed_prereq_ids or set())
+    allowed_set = set(allowed_prereq_ids) if allowed_prereq_ids else set()
+    valid_ids = comp_ids | allowed_set
 
     adj: Dict[str, List[str]] = {cid: [] for cid in comp_ids}
     for comp in competencies:
@@ -217,6 +219,63 @@ def check_prerequisites_dag(
     for cid in comp_ids:
         if visited.get(cid, 0) == 0:
             dfs(cid, [cid])
+
+    # Graph connectivity and root ratio checks
+    n = len(competencies)
+    if n >= 2:
+        # Undirected graph for connected components
+        undirected_adj: Dict[str, Set[str]] = {c["id"]: set() for c in competencies}
+        base_anchor = "__BASE_COURSE__"
+        has_base_anchor = False
+
+        for comp in competencies:
+            cid = comp["id"]
+            for prereq in comp.get("prerequisites", []):
+                if prereq in comp_ids:
+                    undirected_adj[cid].add(prereq)
+                    undirected_adj[prereq].add(cid)
+                elif allowed_set and prereq in allowed_set:
+                    if not has_base_anchor:
+                        undirected_adj[base_anchor] = set()
+                        has_base_anchor = True
+                    undirected_adj[cid].add(base_anchor)
+                    undirected_adj[base_anchor].add(cid)
+
+        # Count connected components using BFS
+        visited_nodes: Set[str] = set()
+        components = 0
+        for node in list(undirected_adj.keys()):
+            if node not in visited_nodes:
+                components += 1
+                queue = [node]
+                visited_nodes.add(node)
+                while queue:
+                    curr = queue.pop(0)
+                    for neighbor in undirected_adj.get(curr, set()):
+                        if neighbor not in visited_nodes:
+                            visited_nodes.add(neighbor)
+                            queue.append(neighbor)
+
+        if components > 1:
+            errors.append(
+                f"Prerequisite DAG is disconnected ({components} components detected for {n} competencies). "
+                f"Curriculum must form a single connected component."
+            )
+
+        # Root ratio check (competencies without any prerequisite dependencies)
+        root_nodes = [
+            c["id"]
+            for c in competencies
+            if not [p for p in c.get("prerequisites", []) if p]
+        ]
+        num_roots = len(root_nodes)
+        max_roots = max(1, math.floor(0.20 * n))
+        if num_roots > max_roots:
+            errors.append(
+                f"Too many root competencies ({num_roots}/{n} = {num_roots/n:.1%}). "
+                f"Maximum allowed root ratio is 20% (max {max_roots} roots for {n} competencies). "
+                f"Root competencies found: {', '.join(root_nodes)}."
+            )
 
     return errors
 
@@ -338,12 +397,49 @@ def _check_evidence_detailed(
     return None
 
 
+def check_cta_prose_overflow(text: str, ctx: str) -> List[str]:
+    """Detects KaTeX text macros exceeding 45 characters, causing mobile overflow.
+
+    Checks \\text{}, \\textrm{}, \\mathrm{} within LaTeX formulas or strings.
+    Emits canonical error tag [KATEX-PROSE-OVERFLOW].
+    """
+    if not isinstance(text, str) or not text:
+        return []
+    errors: List[str] = []
+    pattern = re.compile(r"(?<![a-zA-Z])\\(text|textrm|mathrm)\s*\{")
+    for m in pattern.finditer(text):
+        start_idx = m.end()
+        macro_name = m.group(1)
+        depth = 1
+        i = start_idx
+        while i < len(text) and depth > 0:
+            if text[i] == "\\":
+                i += 2
+                continue
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+            if depth == 0:
+                break
+            i += 1
+        if depth == 0:
+            inner_content = text[start_idx:i]
+            if len(inner_content) > 45:
+                preview = inner_content[:40] + "..." if len(inner_content) > 40 else inner_content
+                errors.append(
+                    f"[KATEX-PROSE-OVERFLOW] In {ctx}: \\{macro_name}{{{preview}}} block exceeds 45 chars ({len(inner_content)})."
+                )
+    return errors
+
+
 def validate_distractor_math(d: Dict[str, Any], did: str) -> List[str]:
     """Audit all distractor text fields unconditionally for raw/orphaned LaTeX and KaTeX errors."""
     errors: List[str] = []
-    for field in ["manifestation", "remediation_hint", "wrong_belief", "omitted_step"]:
+    for field in ["manifestation", "remediation_hint", "wrong_belief", "correct_belief", "omitted_step", "trigger"]:
         val = d.get(field)
         if isinstance(val, str) and val.strip():
+            errors.extend(check_cta_prose_overflow(val, f"distractor '{did}' {field}"))
             # Check for corrupted ASCII control characters
             if any(c in val for c in ("\x07", "\x08", "\x0b", "\x0c", "\x0d")):
                 errors.append(
@@ -370,8 +466,9 @@ def check_cta_katex(
     Inspects:
     - competencies[].name
     - competencies[].description_latex and competencies[].description
-    - distractors[].manifestation, remediation_hint, wrong_belief, omitted_step
-    unconditionally auditing for raw LaTeX outside '$...$' and validating KaTeX syntax.
+    - competencies[].source_examples
+    - distractors[].manifestation, remediation_hint, wrong_belief, correct_belief, omitted_step, trigger
+    unconditionally auditing for raw LaTeX outside '$...$', prose overflow and validating KaTeX syntax.
     """
     errors: List[str] = []
     if isinstance(cta_data, list):
@@ -392,6 +489,7 @@ def check_cta_katex(
         # competencies[].name
         c_name = comp.get("name")
         if isinstance(c_name, str) and c_name.strip():
+            errors.extend(check_cta_prose_overflow(c_name, f"competency '{cid}' name"))
             if any(c in c_name for c in ("\x07", "\x08", "\x0b", "\x0c", "\x0d")):
                 errors.append(
                     f"Competency ({cid}): Corrupted ASCII control character (unescaped LaTeX backslash like \\rho, \\frac, \\alpha, \\beta) in 'name'"
@@ -407,6 +505,7 @@ def check_cta_katex(
         for desc_key in ("description_latex", "description"):
             c_desc = comp.get(desc_key)
             if isinstance(c_desc, str) and c_desc.strip():
+                errors.extend(check_cta_prose_overflow(c_desc, f"competency '{cid}' {desc_key}"))
                 if any(c in c_desc for c in ("\x07", "\x08", "\x0b", "\x0c", "\x0d")):
                     errors.append(
                         f"Competency ({cid}): Corrupted ASCII control character (unescaped LaTeX backslash like \\rho, \\frac, \\alpha, \\beta) in '{desc_key}'"
@@ -418,14 +517,24 @@ def check_cta_katex(
                     for kv in validate_katex_syntax(c_desc, f"competency '{cid}' {desc_key}", allow_template_vars=True):
                         katex_syntax_items.setdefault(kv, []).append((cid, desc_key))
 
+        # competencies[].source_examples
+        src_exs = comp.get("source_examples")
+        if isinstance(src_exs, list):
+            for ex_idx, ex_item in enumerate(src_exs):
+                if isinstance(ex_item, str) and ex_item.strip():
+                    errors.extend(check_cta_prose_overflow(ex_item, f"competency '{cid}' source_examples[{ex_idx}]"))
+        elif isinstance(src_exs, str) and src_exs.strip():
+            errors.extend(check_cta_prose_overflow(src_exs, f"competency '{cid}' source_examples"))
+
         # distractors[] math validation
         for d in comp.get("distractors", []):
             if not isinstance(d, dict):
                 continue
             did = d.get("id", "UNKNOWN")
-            for field in ["manifestation", "remediation_hint", "wrong_belief", "omitted_step"]:
+            for field in ["manifestation", "remediation_hint", "wrong_belief", "correct_belief", "omitted_step", "trigger"]:
                 val = d.get(field)
                 if isinstance(val, str) and val.strip():
+                    errors.extend(check_cta_prose_overflow(val, f"distractor '{did}' {field}"))
                     if any(c in val for c in ("\x07", "\x08", "\x0b", "\x0c", "\x0d")):
                         errors.append(
                             f"Distractor ({did}): Corrupted ASCII control character (unescaped LaTeX backslash like \\rho, \\frac, \\alpha, \\beta) in '{field}'"
@@ -473,7 +582,7 @@ def check_cta_katex(
             l_info = f" (línea {ln})" if ln else ""
             errors.append(f"{kv}{l_info}")
 
-    return errors
+    return list(dict.fromkeys(errors))
 
 
 def _validate_competencies_rules(
@@ -671,7 +780,8 @@ def check_cta_part(
     katex_errors = check_cta_katex(data if isinstance(data, dict) else {"competencies": data}, locator=locator)
     errors.extend(katex_errors)
 
-    return len(errors) == 0, errors
+    unique_errors = list(dict.fromkeys(errors))
+    return len(unique_errors) == 0, unique_errors
 
 
 def validate_cta_rules(
@@ -679,6 +789,7 @@ def validate_cta_rules(
     manifest_data: Optional[Dict[str, Any]] = None,
     file_path: Optional[Union[str, Path]] = None,
     locator: Optional[JsonLineLocator] = None,
+    allowed_prereq_ids: Optional[Set[str]] = None,
 ) -> Tuple[bool, List[str]]:
     """Validate all cognitive and psychometric rules on cta.json."""
     errors = []
@@ -710,6 +821,8 @@ def validate_cta_rules(
     existing_comp_ids: Set[str] = set()
     if isinstance(delta_info, dict):
         existing_comp_ids = set(delta_info.get("existing_competency_ids", []))
+    if allowed_prereq_ids:
+        existing_comp_ids = existing_comp_ids | set(allowed_prereq_ids)
 
     dag_errors = check_prerequisites_dag(competencies, allowed_prereq_ids=existing_comp_ids)
     errors.extend(dag_errors)
@@ -718,7 +831,8 @@ def validate_cta_rules(
     katex_errors = check_cta_katex(cta_data, locator=locator)
     errors.extend(katex_errors)
 
-    return len(errors) == 0, errors
+    unique_errors = list(dict.fromkeys(errors))
+    return len(unique_errors) == 0, unique_errors
 
 
 def main():

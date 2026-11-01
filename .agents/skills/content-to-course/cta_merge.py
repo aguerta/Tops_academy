@@ -16,6 +16,7 @@ import heapq
 import json
 import logging
 import re
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -41,8 +42,8 @@ except ImportError:
 logger = logging.getLogger("cta_merge")
 
 # Heuristic thresholds for duplicate candidate detection
-JACCARD_DUPLICATE_THRESHOLD: float = 0.6
-NAME_OVERLAP_THRESHOLD: float = 0.3
+JACCARD_DUPLICATE_THRESHOLD: float = 0.30
+NAME_OVERLAP_THRESHOLD: float = 0.30
 
 
 def tokenize_text(text: str) -> Set[str]:
@@ -603,16 +604,21 @@ def sanitize_competency_math(comp: Dict[str, Any], record_patches: bool = True) 
                                 pass
 
 
-def find_duplicate_candidates(competencies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def find_duplicate_candidates(
+    competencies: List[Dict[str, Any]],
+    existing_competencies: Optional[List[Dict[str, Any]]] = None,
+) -> List[Dict[str, Any]]:
     """Deterministic candidate detector for duplicate competencies.
 
-    Identifies pairs of competencies of the same type that satisfy at least one objective signal:
-    1. High lexical similarity (Jaccard of normalized name + description tokens >= 0.6)
+    Identifies pairs of competencies that satisfy at least one objective signal:
+    1. Lexical similarity (Jaccard of normalized name + description tokens >= 0.30)
     2. Shared evidence (identical doc & page) combined with partial name overlap.
+    Supports cross-type comparisons (e.g. Concept vs Skill) and delta-vs-base comparisons.
     """
     candidates: List[Dict[str, Any]] = []
     n = len(competencies)
 
+    # 1. Intra-curriculum candidate detection
     for i in range(n):
         c1 = competencies[i]
         id1 = c1.get("id", "")
@@ -627,10 +633,6 @@ def find_duplicate_candidates(competencies: List[Dict[str, Any]]) -> List[Dict[s
             c2 = competencies[j]
             id2 = c2.get("id", "")
             type2 = c2.get("type", "").lower()
-
-            # Must be of the same knowledge type
-            if type1 != type2:
-                continue
 
             name2 = c2.get("name", "")
             desc2 = c2.get("description_latex") or c2.get("description", "")
@@ -659,7 +661,7 @@ def find_duplicate_candidates(competencies: List[Dict[str, Any]]) -> List[Dict[s
             if signals:
                 candidates.append({
                     "pair": [id1, id2],
-                    "type": type1,
+                    "type": type1 if type1 == type2 else f"{type1}_vs_{type2}",
                     "signals": signals,
                     "jaccard_similarity": round(jaccard_lex, 4),
                     "shared_evidence": [{"doc": d, "page": p} for d, p in shared_ev],
@@ -667,6 +669,58 @@ def find_duplicate_candidates(competencies: List[Dict[str, Any]]) -> List[Dict[s
                     "c1_name": name1,
                     "c2_name": name2,
                 })
+
+    # 2. Delta vs Base course candidate detection
+    if existing_competencies:
+        for c1 in competencies:
+            id1 = c1.get("id", "")
+            type1 = c1.get("type", "").lower()
+            name1 = c1.get("name", "")
+            desc1 = c1.get("description_latex") or c1.get("description", "")
+            text1_tokens = tokenize_text(f"{name1} {desc1}")
+            name1_tokens = tokenize_text(name1)
+            ev1_keys = extract_evidence_keys(c1.get("evidence", []))
+
+            for cb in existing_competencies:
+                id_base = cb.get("id") or cb.get("competency_id", "")
+                type_base = (cb.get("type") or cb.get("category", "concept")).lower()
+                name_base = cb.get("name") or cb.get("title", "")
+                desc_base = cb.get("description_latex") or cb.get("description", "")
+                text_base_tokens = tokenize_text(f"{name_base} {desc_base}")
+                name_base_tokens = tokenize_text(name_base)
+                ev_base_keys = extract_evidence_keys(cb.get("evidence", []))
+
+                jaccard_lex = jaccard_similarity(text1_tokens, text_base_tokens)
+                jaccard_name = jaccard_similarity(name1_tokens, name_base_tokens)
+                shared_ev = ev1_keys & ev_base_keys
+
+                has_name_overlap = (
+                    jaccard_name >= NAME_OVERLAP_THRESHOLD
+                    or len(name1_tokens & name_base_tokens) >= 1
+                    or (name1.lower() in name_base.lower() if len(name1) > 4 else False)
+                    or (name_base.lower() in name1.lower() if len(name_base) > 4 else False)
+                )
+
+                signals = []
+                if jaccard_lex >= JACCARD_DUPLICATE_THRESHOLD:
+                    signals.append("lexical_similarity")
+                if len(shared_ev) > 0 and has_name_overlap:
+                    signals.append("shared_evidence")
+
+                if signals:
+                    candidates.append({
+                        "pair": [id1, id_base],
+                        "type": type1 if type1 == type_base else f"{type1}_vs_{type_base}",
+                        "signals": signals,
+                        "jaccard_similarity": round(jaccard_lex, 4),
+                        "shared_evidence": [{"doc": d, "page": p} for d, p in shared_ev],
+                        "name_overlap": sorted(list(name1_tokens & name_base_tokens)),
+                        "c1_name": name1,
+                        "c2_name": name_base,
+                        "against_base": True,
+                        "base_id": id_base,
+                        "delta_id": id1,
+                    })
 
     return candidates
 
@@ -1069,8 +1123,11 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         comp.pop("_part_key", None)
         comp.pop("_sort_key", None)
 
-    # Detect duplicate candidates
-    duplicate_candidates = find_duplicate_candidates(combined_competencies)
+    # Detect duplicate candidates (including against base course in --append mode)
+    existing_comps = []
+    if delta_info and isinstance(delta_info, dict):
+        existing_comps = delta_info.get("existing_competencies") or delta_info.get("existing_competencies_outline") or []
+    duplicate_candidates = find_duplicate_candidates(combined_competencies, existing_competencies=existing_comps)
 
     # Prepare outputs
     id_map_payload = {
@@ -1086,24 +1143,40 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         "competencies": combined_competencies,
     }
 
+    outline_competencies: List[Dict[str, Any]] = []
+    if existing_comps:
+        for bc in existing_comps:
+            bc_id = bc.get("id") or bc.get("competency_id", "")
+            outline_competencies.append({
+                "id": bc_id,
+                "name": bc.get("name") or bc.get("title", ""),
+                "type": (bc.get("type") or bc.get("category", "concept")).lower(),
+                "session": bc.get("session", "[BASE]"),
+                "unit_index": bc.get("unit_index", 0),
+                "evidence": bc.get("evidence", []),
+                "prerequisites": bc.get("prerequisites", []),
+                "distractor_names": bc.get("distractor_names", []),
+                "read_only_base": True,
+            })
+
+    for c in combined_competencies:
+        outline_competencies.append({
+            "id": c["id"],
+            "name": c.get("name", ""),
+            "type": c.get("type", ""),
+            "session": c.get("session", ""),
+            "unit_index": c.get("unit_index", 0),
+            "evidence": c.get("evidence", []),
+            "prerequisites": c.get("prerequisites", []),
+            "distractor_names": [d.get("name", "") for d in c.get("distractors", [])],
+            "distractor_ids": [d.get("id", "") for d in c.get("distractors", [])],
+        })
+
     outline_payload = {
         "course_id": course_id,
         "title": course_title,
         "macro_competency": macro_competency,
-        "competencies": [
-            {
-                "id": c["id"],
-                "name": c.get("name", ""),
-                "type": c.get("type", ""),
-                "session": c.get("session", ""),
-                "unit_index": c.get("unit_index", 0),
-                "evidence": c.get("evidence", []),
-                "prerequisites": c.get("prerequisites", []),
-                "distractor_names": [d.get("name", "") for d in c.get("distractors", [])],
-                "distractor_ids": [d.get("id", "") for d in c.get("distractors", [])],
-            }
-            for c in combined_competencies
-        ],
+        "competencies": outline_competencies,
     }
 
     order_list = [c["id"] for c in combined_competencies]
@@ -1129,17 +1202,16 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         json.dumps(order_payload, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
-    # Write canonical cta.json and cta.md
-    final_cta_json = work_path / "cta.json"
-    final_cta_json.write_text(
-        json.dumps(draft_payload, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
-    final_cta_md = work_path / "cta.md"
-    rendered_md = render_cta_md(draft_payload)
-    final_cta_md.write_text(rendered_md, encoding="utf-8")
+    # Ensure neither cta.json nor cta.md exist before harmonization
+    for stale_final in (work_path / "cta.json", work_path / "cta.md"):
+        if stale_final.is_file():
+            try:
+                stale_final.unlink()
+            except Exception:
+                pass
 
     logger.info(
-        "Successfully merged %d parts into %d competencies. Detected %d duplicate candidates.",
+        "Successfully merged %d parts into %d draft competencies. Detected %d duplicate candidates.",
         len(part_files),
         len(combined_competencies),
         len(duplicate_candidates),
@@ -1154,6 +1226,114 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
     ret["duplicate_candidates"] = duplicate_candidates
     ret["parts"] = [p.name for p in part_files]
     return ret
+
+
+def prepare_harmonize_from_single_draft(work_dir: Union[str, Path]) -> Dict[str, Any]:
+    """Prepares harmonization inputs from a single compiled draft for direct or append flows."""
+    work_path = Path(work_dir).resolve()
+    draft_file = work_path / "cta_draft.json"
+    final_file = work_path / "cta.json"
+    final_md = work_path / "cta.md"
+
+    if not draft_file.is_file():
+        if final_file.is_file():
+            shutil.copy2(final_file, draft_file)
+            try:
+                final_file.unlink()
+            except Exception:
+                pass
+        else:
+            raise FileNotFoundError(f"Neither cta_draft.json nor cta.json found in {work_path}")
+    elif final_file.is_file():
+        try:
+            final_file.unlink()
+        except Exception:
+            pass
+
+    if final_md.is_file():
+        try:
+            final_md.unlink()
+        except Exception:
+            pass
+
+    draft_payload = json.loads(draft_file.read_text(encoding="utf-8"))
+    competencies = draft_payload.get("competencies", [])
+
+    # Load delta manifest if present
+    delta_info = None
+    delta_p = work_path / "delta_manifest.json"
+    if delta_p.is_file():
+        try:
+            delta_info = json.loads(delta_p.read_text(encoding="utf-8"))
+        except Exception:
+            delta_info = None
+    if not delta_info:
+        man_p = work_path / "pre_cta_manifest.json"
+        if man_p.is_file():
+            try:
+                m_data = json.loads(man_p.read_text(encoding="utf-8"))
+                delta_info = m_data.get("delta") or m_data.get("existing_course")
+            except Exception:
+                pass
+
+    base_comps = []
+    if delta_info and isinstance(delta_info, dict):
+        base_comps = delta_info.get("existing_competencies") or delta_info.get("existing_competencies_outline") or []
+
+    outline_competencies: List[Dict[str, Any]] = []
+    for bc in base_comps:
+        cid = bc.get("id") or bc.get("competency_id", "")
+        outline_competencies.append({
+            "id": cid,
+            "name": bc.get("name") or bc.get("title", ""),
+            "type": (bc.get("type") or bc.get("category", "concept")).lower(),
+            "session": bc.get("session", "[BASE]"),
+            "unit_index": bc.get("unit_index", 0),
+            "evidence": bc.get("evidence", []),
+            "prerequisites": bc.get("prerequisites", []),
+            "distractor_names": bc.get("distractor_names", []),
+            "read_only_base": True,
+        })
+
+    for c in competencies:
+        outline_competencies.append({
+            "id": c["id"],
+            "name": c.get("name", ""),
+            "type": c.get("type", ""),
+            "session": c.get("session", ""),
+            "unit_index": c.get("unit_index", 0),
+            "evidence": c.get("evidence", []),
+            "prerequisites": c.get("prerequisites", []),
+            "distractor_names": [d.get("name", "") for d in c.get("distractors", [])],
+            "distractor_ids": [d.get("id", "") for d in c.get("distractors", [])],
+        })
+
+    outline_payload = {
+        "course_id": draft_payload.get("course_id", "course"),
+        "title": draft_payload.get("title", ""),
+        "macro_competency": draft_payload.get("macro_competency", ""),
+        "competencies": outline_competencies,
+    }
+
+    duplicate_candidates = find_duplicate_candidates(competencies, existing_competencies=base_comps)
+    order_list = [c["id"] for c in competencies]
+    order_hash = hashlib.sha256(json.dumps(order_list).encode("utf-8")).hexdigest()
+    order_payload = {
+        "order": order_list,
+        "order_hash": order_hash,
+    }
+
+    (work_path / "cta_outline.json").write_text(json.dumps(outline_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    (work_path / "duplicate_candidates.json").write_text(json.dumps(duplicate_candidates, indent=2, ensure_ascii=False), encoding="utf-8")
+    (work_path / "cta_order.json").write_text(json.dumps(order_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    return {
+        "status": "success",
+        "draft_path": str(draft_file),
+        "outline_path": str(work_path / "cta_outline.json"),
+        "candidates_path": str(work_path / "duplicate_candidates.json"),
+        "duplicate_candidates": duplicate_candidates,
+    }
 
 
 def apply_harmonize(
@@ -1295,7 +1475,16 @@ def apply_harmonize(
         })
 
     # 3. Process merges
-    merges_directives = harmonize_data.get("merges", harmonize_data.get("merge", []))
+    merges_directives: List[Dict[str, Any]] = []
+    for m_key in ("duplicate_decisions", "merges", "merge"):
+        m_val = harmonize_data.get(m_key)
+        if isinstance(m_val, list):
+            for item in m_val:
+                if isinstance(item, dict):
+                    merges_directives.append(item)
+        elif isinstance(m_val, dict):
+            merges_directives.append(m_val)
+
     if no_merge:
         decisions_log.append({
             "operation": "merge",
@@ -1304,46 +1493,116 @@ def apply_harmonize(
         })
     else:
         for m_entry in merges_directives:
-            pair = m_entry.get("pair", [])
-            if len(pair) != 2:
-                continue
-            id_x, id_y = pair[0], pair[1]
-            decision = m_entry.get("decision", "merge")
-            reason = m_entry.get("reason", "")
-            sorted_pair = tuple(sorted([id_x, id_y]))
+            decision = str(m_entry.get("decision", "merge")).lower().strip()
+            reason = str(m_entry.get("reason", "")).strip()
 
-            if sorted_pair not in allowed_candidates_set:
-                raise ValueError(
-                    f"REJECTED: Merge attempted on pair {pair} which was NOT identified as a candidate in duplicate_candidates.json."
-                )
+            # Support multiple merge format inputs
+            pair = m_entry.get("pair")
+            if not pair and m_entry.get("id1") and m_entry.get("id2"):
+                pair = [m_entry["id1"], m_entry["id2"]]
 
-            if decision == "keep_separate":
+            keep_id = (
+                m_entry.get("keep_id")
+                or m_entry.get("target_id")
+                or m_entry.get("target")
+                or m_entry.get("keep")
+                or m_entry.get("survivor")
+                or m_entry.get("survivor_id")
+            )
+            drop_id = (
+                m_entry.get("drop_id")
+                or m_entry.get("source_id")
+                or m_entry.get("source")
+                or m_entry.get("drop")
+                or m_entry.get("absorbed")
+                or m_entry.get("absorbed_id")
+            )
+            drop_ids = m_entry.get("drop_ids") or m_entry.get("sources")
+
+            if pair and len(pair) == 2:
+                id_x, id_y = str(pair[0]), str(pair[1])
+                if decision in ("keep_separate", "separate", "no_merge"):
+                    decisions_log.append({
+                        "operation": "merge",
+                        "pair": [id_x, id_y],
+                        "decision": "keep_separate",
+                        "reason": reason,
+                    })
+                    continue
+
+                if keep_id:
+                    survivor_id = str(keep_id)
+                    absorbed_ids = [id_y if id_x == keep_id else id_x]
+                elif drop_id:
+                    absorbed_ids = [str(drop_id)]
+                    survivor_id = id_y if id_x == drop_id else id_x
+                else:
+                    if id_x in existing_competency_ids:
+                        survivor_id, absorbed_ids = id_x, [id_y]
+                    elif id_y in existing_competency_ids:
+                        survivor_id, absorbed_ids = id_y, [id_x]
+                    else:
+                        idx_x = orig_order.index(id_x) if id_x in orig_order else 999999
+                        idx_y = orig_order.index(id_y) if id_y in orig_order else 999999
+                        if idx_x <= idx_y:
+                            survivor_id, absorbed_ids = id_x, [id_y]
+                        else:
+                            survivor_id, absorbed_ids = id_y, [id_x]
+            else:
+                if not keep_id:
+                    continue
+                survivor_id = str(keep_id)
+                if drop_ids:
+                    absorbed_ids = [str(d) for d in drop_ids]
+                elif drop_id:
+                    absorbed_ids = [str(drop_id)]
+                else:
+                    absorbed_ids = []
+
+            if decision in ("keep_separate", "separate", "no_merge"):
                 decisions_log.append({
                     "operation": "merge",
-                    "pair": [id_x, id_y],
+                    "keep_id": survivor_id,
+                    "drop_ids": absorbed_ids,
                     "decision": "keep_separate",
                     "reason": reason,
                 })
                 continue
 
-            if decision == "merge":
-                # Determine survivor: must be the one that appears EARLIER in pedagogical sequence
-                idx_x = orig_order.index(id_x) if id_x in orig_order else 999999
-                idx_y = orig_order.index(id_y) if id_y in orig_order else 999999
-                if idx_x <= idx_y:
-                    survivor_id, absorbed_id = id_x, id_y
-                else:
-                    survivor_id, absorbed_id = id_y, id_x
+            for absorbed_id in absorbed_ids:
+                if not absorbed_id or absorbed_id == survivor_id:
+                    continue
 
+                # Case A: Absorbed into base course competency
+                if survivor_id in existing_competency_ids:
+                    comp_absorbed = next((c for c in competencies if c["id"] == absorbed_id), None)
+                    if comp_absorbed:
+                        competencies = [c for c in competencies if c["id"] != absorbed_id]
+                        for c in competencies:
+                            c_prereqs = c.get("prerequisites", [])
+                            rewritten: List[str] = []
+                            for pr in c_prereqs:
+                                target = survivor_id if pr == absorbed_id else pr
+                                if target != c["id"] and target not in rewritten:
+                                    rewritten.append(target)
+                            c["prerequisites"] = rewritten
+                        decisions_log.append({
+                            "operation": "merge",
+                            "survivor": survivor_id,
+                            "absorbed": absorbed_id,
+                            "absorbed_into_base": True,
+                            "decision": "merge",
+                            "reason": reason,
+                        })
+                    continue
+
+                # Case B: Standard merge within delta competencies
                 comp_survivor = next((c for c in competencies if c["id"] == survivor_id), None)
                 comp_absorbed = next((c for c in competencies if c["id"] == absorbed_id), None)
-
                 if not comp_survivor or not comp_absorbed:
-                    raise ValueError(
-                        f"Merge failed: Competency {survivor_id} or {absorbed_id} not found."
-                    )
+                    continue
 
-                # Unify distractors (eliminate exact duplicates by name/belief signature)
+                # Unify distractors (eliminate exact duplicates by signature)
                 combined_distractors = list(comp_survivor.get("distractors", []))
                 seen_signatures = {
                     (
@@ -1409,37 +1668,63 @@ def apply_harmonize(
 
                 decisions_log.append({
                     "operation": "merge",
-                    "pair": [id_x, id_y],
+                    "pair": [survivor_id, absorbed_id],
                     "survivor": survivor_id,
                     "absorbed": absorbed_id,
                     "decision": "merge",
                     "reason": reason,
                 })
 
-    # 4. Process add_prerequisites
-    add_prereqs = harmonize_data.get("add_prerequisites", [])
-    # Index current competency positions in pedagogical order
+    # 4. Process add_prerequisites (supports dict, prerequisite_additions, prerequisite_updates)
+    prereq_directives: List[Tuple[str, List[str]]] = []
+    for prereq_key in ("add_prerequisites", "prerequisite_additions", "prerequisite_updates"):
+        p_data = harmonize_data.get(prereq_key)
+        if isinstance(p_data, dict):
+            for cid, reqs in p_data.items():
+                r_list = [reqs] if isinstance(reqs, str) else [str(r) for r in reqs]
+                prereq_directives.append((str(cid), r_list))
+        elif isinstance(p_data, list):
+            for item in p_data:
+                if isinstance(item, dict):
+                    cid = (
+                        item.get("competency")
+                        or item.get("competency_id")
+                        or item.get("id")
+                        or item.get("target")
+                        or item.get("target_id")
+                    )
+                    reqs = (
+                        item.get("requires")
+                        or item.get("prerequisites")
+                        or item.get("add")
+                        or item.get("prereqs")
+                        or item.get("add_prerequisites")
+                        or []
+                    )
+                    r_list = [reqs] if isinstance(reqs, str) else [str(r) for r in reqs]
+                    if cid:
+                        prereq_directives.append((str(cid), r_list))
+
     current_order_map = {c["id"]: idx for idx, c in enumerate(competencies)}
 
-    for item in add_prereqs:
-        cid = item.get("competency")
-        reqs = item.get("requires", item.get("prerequisites", []))
-        if isinstance(reqs, str):
-            reqs = [reqs]
-
+    for cid, reqs in prereq_directives:
         if cid not in current_order_map:
             raise ValueError(f"add_prerequisites failed: Competency '{cid}' not found.")
         cid_pos = current_order_map[cid]
         comp = next(c for c in competencies if c["id"] == cid)
         comp_prereqs = list(comp.get("prerequisites", []))
 
-        for req in reqs:
+        for req_raw in reqs:
+            req = str(req_raw).strip()
+            if ":" in req:
+                prefix_part, bare_id = req.split(":", 1)
+                if prefix_part.lower() in ("base", "existing"):
+                    req = bare_id
+            if req in existing_competency_ids:
+                if req != cid and req not in comp_prereqs:
+                    comp_prereqs.append(req)
+                continue
             if req not in current_order_map:
-                if req in existing_competency_ids:
-                    # Valid prerequisite from base course in append mode
-                    if req not in comp_prereqs:
-                        comp_prereqs.append(req)
-                    continue
                 raise ValueError(
                     f"add_prerequisites failed: Prerequisite '{req}' for '{cid}' not found."
                 )
@@ -1462,9 +1747,8 @@ def apply_harmonize(
             "requires": reqs,
         })
 
-    # 5. Validate DAG acyclicity
-    check_nodes = [{"id": x, "prerequisites": []} for x in existing_competency_ids] + competencies
-    dag_errors = check_prerequisites_dag(check_nodes)
+    # 5. Validate DAG acyclicity and connectivity
+    dag_errors = check_prerequisites_dag(competencies, allowed_prereq_ids=existing_competency_ids)
     if dag_errors:
         raise ValueError(f"Prerequisite DAG validation failed: {dag_errors}")
 
@@ -1490,16 +1774,11 @@ def apply_harmonize(
         raise FileNotFoundError("BLOCKER:: No existe pre_cta_manifest.json")
     manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
 
-    valid, rule_errors = validate_cta_rules(cta_draft, manifest_data)
-    if not valid and existing_competency_ids:
-        filtered_errors = []
-        for err in rule_errors:
-            m = re.match(r"Competency '([^']+)' references non-existent prerequisite '([^']+)'.", err)
-            if m and m.group(2) in existing_competency_ids:
-                continue
-            filtered_errors.append(err)
-        rule_errors = filtered_errors
-        valid = (len(rule_errors) == 0)
+    valid, rule_errors = validate_cta_rules(
+        cta_draft,
+        manifest_data,
+        allowed_prereq_ids=existing_competency_ids,
+    )
     if not valid:
         raise ValueError(f"validate_cta_rules failed with errors: {rule_errors}")
 
@@ -1631,10 +1910,20 @@ def render_cta_md(cta_data: Dict[str, Any]) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="CTA Map-Reduce and Harmonization Manager")
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    parser.add_argument("--prepare-single-draft", action="store_true", help="Prepare harmonize artifacts from single draft")
+    parser.add_argument("--merge", action="store_true", help="Merge sectional CTA parts into cta_draft.json")
+    parser.add_argument("--apply", action="store_true", help="Apply cta_harmonize.json to cta_draft.json")
+    parser.add_argument("--work", "--work-dir", dest="work_dir", default="work", help="Path to working directory")
+    parser.add_argument("--no-merge", action="store_true", help="Disable duplicate merging")
+    parser.add_argument("--manifest", help="Optional path to pre_cta_manifest.json for evidence checks")
+
+    subparsers = parser.add_subparsers(dest="command", required=False)
 
     merge_parser = subparsers.add_parser("merge", help="Merge sectional CTA parts into cta_draft.json")
     merge_parser.add_argument("--work", "--work-dir", dest="work_dir", default="work", help="Path to working directory containing pre_cta_manifest.json")
+
+    prep_parser = subparsers.add_parser("prepare-single-draft", aliases=["prepare-harmonize", "prepare"], help="Prepare harmonize artifacts from single draft")
+    prep_parser.add_argument("--work", "--work-dir", dest="work_dir", default="work", help="Path to working directory")
 
     apply_parser = subparsers.add_parser("apply", help="Apply cta_harmonize.json to cta_draft.json")
     apply_parser.add_argument("--work", "--work-dir", dest="work_dir", default="work", help="Path to working directory")
@@ -1643,7 +1932,33 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "merge":
+    cmd = args.command
+    if not cmd:
+        if args.prepare_single_draft:
+            cmd = "prepare-single-draft"
+        elif args.merge:
+            cmd = "merge"
+        elif args.apply:
+            cmd = "apply"
+        else:
+            parser.print_help()
+            sys.exit(1)
+
+    if cmd in ("prepare-single-draft", "prepare-harmonize", "prepare"):
+        try:
+            prepare_harmonize_from_single_draft(args.work_dir)
+            print(f"SUCCESS: Harmonization artifacts prepared from single draft in {args.work_dir}")
+            sys.exit(0)
+        except FileNotFoundError as e:
+            if "BLOCKER::" in str(e):
+                sys.exit(2)
+            print(f"FAIL: prepare_harmonize_from_single_draft failed: {e}", file=sys.stderr)
+            sys.exit(1)
+        except Exception as e:
+            print(f"FAIL: prepare_harmonize_from_single_draft failed: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    elif cmd == "merge":
         try:
             merge_cta_parts(args.work_dir)
             print(f"SUCCESS: Sectional parts merged in {args.work_dir}")
@@ -1657,7 +1972,7 @@ def main():
             print(f"FAIL: merge_cta_parts failed: {e}", file=sys.stderr)
             sys.exit(1)
 
-    elif args.command == "apply":
+    elif cmd == "apply":
         try:
             apply_harmonize(args.work_dir, no_merge=args.no_merge, manifest_path=args.manifest)
             print(f"SUCCESS: Harmonization applied in {args.work_dir}")

@@ -57,12 +57,13 @@ except ImportError:
     except ImportError:
         compile_cta_file = None
 from check_templates import check_templates_file_or_dir
-from course_publisher import CoursePublisher
-from cta_merge import apply_harmonize, merge_cta_parts
+from course_publisher import CoursePublisher, PublishQualityGateError
+from cta_merge import apply_harmonize, merge_cta_parts, prepare_harmonize_from_single_draft
 from dispatch import (
     build_dispatch,
     dispatch_authors,
     dispatch_cta,
+    dispatch_cta_reduce,
     dispatch_judges,
     generate_define_subagent_specs,
     get_type_definitions,
@@ -226,6 +227,7 @@ STAGE_MAP = {
 }
 AUXILIARY_STAGES = {
     "cta-merge": "run_stage_cta_merge",
+    "cta-reduce": "run_stage_cta_reduce",
     "cta-apply": "run_stage_cta_apply",
     "dispatch": "run_stage_dispatch",
     "scope-check": "run_stage_scope_check",
@@ -432,13 +434,12 @@ class PipelineRunner:
                 raise FileNotFoundError(f"Input path does not exist: {p.resolve() if p else item}")
             sources.append(p)
 
-        input_target = sources[0] if len(sources) == 1 else sources[0].parent
         courses_dir_target = self.output_dir
         if self.base_course and self.base_course.is_file():
             courses_dir_target = self.base_course.parent
 
         prep_res = prepare_course(
-            input_path=input_target,
+            input_path=sources,
             work_dir=self.work_dir,
             course_id=self.course_id,
             courses_dir=courses_dir_target,
@@ -448,6 +449,9 @@ class PipelineRunner:
             order_override=self.order,
             title=self.title,
         )
+
+        if "cta_mode" in prep_res:
+            self.cta_mode = prep_res["cta_mode"]
 
         # Ensure work/pre_cta_manifest.json exists (zero fallbacks)
         pre_cta_file = self.work_dir / "pre_cta_manifest.json"
@@ -541,7 +545,10 @@ class PipelineRunner:
             compile_script = self.work_dir / "compile_cta.py"
             if not compile_script.is_file():
                 compile_script = skill_dir / "compile_cta.py"
-            for part_data_p in sorted(cta_parts_dir.glob("part_*_data.py")):
+            pending_parts = sorted(
+                list(set(list(cta_parts_dir.glob("part_*_data.py")) + list(cta_parts_dir.glob("cta_part_*_data.py"))))
+            )
+            for part_data_p in pending_parts:
                 part_stem = re.sub(r"_data$", "", part_data_p.stem)
                 part_json_p = cta_parts_dir / f"{part_stem}.json"
                 needs_compile = not part_json_p.is_file() or (part_data_p.stat().st_mtime > part_json_p.stat().st_mtime)
@@ -572,12 +579,48 @@ class PipelineRunner:
                                 print(f"  - {err}", file=sys.stderr)
                             raise ValueError(f"{part_data_p.name} compilation failed.")
 
-            compiled_parts = sorted(cta_parts_dir.glob("part_*.json"))
-            if compiled_parts:
-                latest_part_mtime = max(p.stat().st_mtime for p in compiled_parts)
-                if not cta_file.is_file() or latest_part_mtime > cta_file.stat().st_mtime:
-                    print("  [*] Merging compiled CTA parts into cta.json...")
+        # Symmetric Harmonization Predicate (Matiz 3 and Matiz 4a)
+        is_append_mode = bool(getattr(self, "append", False)) or (self.work_dir / "delta_manifest.json").is_file()
+        part_files_set = set()
+        if cta_parts_dir.is_dir():
+            for p in cta_parts_dir.glob("part_*.json"):
+                part_files_set.add(p)
+            for p in cta_parts_dir.glob("cta_part_*.json"):
+                part_files_set.add(p)
+        cta_shards_dir = self.work_dir / "cta"
+        if cta_shards_dir.is_dir():
+            for p in cta_shards_dir.glob("cta_shard_*.json"):
+                part_files_set.add(p)
+        part_files = sorted(list(part_files_set))
+        needs_harmonize = (self.cta_mode == "mapreduce") or bool(part_files) or bool(is_append_mode)
+
+        harmonize_file = self.work_dir / "cta_harmonize.json"
+
+        if needs_harmonize:
+            if not harmonize_file.is_file():
+                if part_files:
+                    print("  [*] Merging sectional CTA parts into draft...")
                     merge_cta_parts(self.work_dir)
+                else:
+                    print("  [*] Preparing harmonization draft from single source in append mode...")
+                    prepare_harmonize_from_single_draft(self.work_dir)
+
+                print("  [*] Emitting dispatch for c2c_cta_harmonizer...")
+                dispatch_cta_reduce(self.work_dir)
+                print("  [+] Next Stage: cta-apply")
+                elapsed = time.time() - t0
+                record_stage_timing(self.work_dir, "cta", elapsed)
+                record_stage_telemetry(self.work_dir, "01", "cta", status="completed", metadata={"duration_seconds": elapsed, "needs_harmonize": True})
+                return {
+                    "paused_for_review": False,
+                    "needs_harmonize": True,
+                    "next_stage": "cta-apply",
+                    "status": "needs_harmonize",
+                }
+
+            if not cta_file.is_file() or harmonize_file.stat().st_mtime > cta_file.stat().st_mtime:
+                print("  [*] Applying harmonization directives...")
+                apply_harmonize(self.work_dir, no_merge=self.no_merge)
 
         if not cta_file.is_file():
             raise FileNotFoundError(
@@ -816,12 +859,15 @@ class PipelineRunner:
                         continue
 
                 if compile_shard_mod and hasattr(compile_shard_mod, "compile_shard"):
-                    ok, errs = compile_shard_mod.compile_shard(self.work_dir, shard_id=shard_id, strict=True)
+                    ok, errs = compile_shard_mod.compile_shard(self.work_dir, shard_id=shard_id, strict=True, min_archetypes=3)
                     if not ok:
                         logger.warning("Compilation for %s reported issues: %s", shard_id, errs[:3] if errs else "unknown")
                 elif compile_shard_script.is_file():
                     import subprocess
-                    subprocess.run([sys.executable, str(compile_shard_script), "--work", str(self.work_dir), "--shard", shard_id, "--strict"], check=False)
+                    subprocess.run(
+                        [sys.executable, str(compile_shard_script), "--work", str(self.work_dir), "--shard", shard_id, "--strict", "--min-archetypes", "3"],
+                        check=False,
+                    )
 
         if not templates_dir.is_dir() or not list(templates_dir.glob("*.json")):
             raise FileNotFoundError(
@@ -1008,6 +1054,7 @@ class PipelineRunner:
         course_competencies_output: List[Dict[str, Any]] = []
         q_global_idx = 1
 
+        stem_gate_failures: List[Dict[str, Any]] = []
         for comp in competencies:
             cid = comp["id"]
             cat = comp.get("type", "concept").title()
@@ -1019,10 +1066,15 @@ class PipelineRunner:
             unique_c = div_res["unique_masked"]
             total_c = div_res["total"]
             if div_ratio < 0.5:
-                raise ValueError(
-                    f"Stem diversity gate failed for competency '{cid}': ratio is {div_ratio:.3f} "
-                    f"({unique_c}/{total_c} unique masked patterns), strictly required >= 0.5."
-                )
+                stem_gate_failures.append({
+                    "cid": cid,
+                    "cat": cat,
+                    "quota": quota,
+                    "div_ratio": div_ratio,
+                    "unique_c": unique_c,
+                    "total_c": total_c,
+                })
+                continue
             print(f"  [*] Instantiated {quota} items for '{cid}' ({cat}) - Stem diversity: {div_ratio:.3f} ({unique_c}/{total_c})")
 
             # Re-index questions cleanly
@@ -1032,6 +1084,122 @@ class PipelineRunner:
                 q_global_idx += 1
 
             all_questions.extend(comp_questions)
+
+        if stem_gate_failures:
+            from compile_shard import ShardDataLineLocator
+            shards_dir = self.work_dir / "shards"
+            manifest_p = shards_dir / "pre_shard_manifest.json"
+            if not manifest_p.is_file():
+                manifest_p = self.work_dir / "pre_shard_manifest.json"
+            cid_to_shard: Dict[str, str] = {}
+            if manifest_p.is_file():
+                try:
+                    m_obj = json.loads(manifest_p.read_text(encoding="utf-8"))
+                    for s_item in (m_obj.get("shards") or []):
+                        if isinstance(s_item, dict) and s_item.get("shard_id"):
+                            for c_id_m in (s_item.get("competency_ids") or []):
+                                cid_to_shard[str(c_id_m)] = str(s_item["shard_id"])
+                except Exception:
+                    pass
+            fail_cids = [f["cid"] for f in stem_gate_failures]
+            fail_shards = sorted({cid_to_shard.get(c, "shard_01") for c in fail_cids})
+            work_rel_str = self.work_dir.as_posix()
+            repair_cmd = f'& ".venv\\Scripts\\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-repair --work-dir "{work_rel_str}" --ids {" ".join(fail_cids)}'
+            locations_list: List[Dict[str, Any]] = []
+            md_lines: List[str] = [
+                "======================================================================",
+                "[SPECIFIC ERROR REPORT — BUILD STEM DIVERSITY GATE REJECTION]",
+                "======================================================================",
+                f"Competencias Afectadas ({len(fail_cids)}): {', '.join(fail_cids)}",
+                f"Shards Afectados ({len(fail_shards)}): {', '.join(fail_shards)}",
+                f"PROPOSED REPAIR COMMAND: {repair_cmd}",
+                "",
+                "[-] [STEM-DIVERSITY-GATE / build_stem_diversity_gate]",
+                "  Descripción: Ratio de diversidad estructural de enunciados (unique_masked / quota) menor a 0.50.",
+                "  Causa: Las plantillas de la competencia definen muy pocas variantes sintácticas en `stems` (ej. 3x3 = 9 stems < 15 requeridos para Skill o < 10 para Concept/Fact).",
+                "  Acción: En `s1`, `s2`, `s3` de `shard_XX_data.py`, provee >= 6-7 enunciados sintácticamente distintos por plantilla para Skills (total >= 18-21) o >= 4-5 para Concepts/Facts (total >= 12-15).",
+            ]
+            for f_item in stem_gate_failures:
+                f_cid = f_item["cid"]
+                is_sk = f_item["cat"].lower() == "skill"
+                req_u = 15 if is_sk else 10
+                req_pt = "6-7" if is_sk else "4-5"
+                tot_pt = "18-21" if is_sk else "12-15"
+                cat_lbl = "skills" if is_sk else "concepts/facts"
+                s_id = cid_to_shard.get(f_cid, "shard_01")
+                fix_p = shards_dir / "shard_fixes" / f"{f_cid}.py"
+                py_p = fix_p if fix_p.is_file() else (shards_dir / f"{s_id}_data.py")
+                s_file_rel = f"shards/shard_fixes/{f_cid}.py" if fix_p.is_file() else f"shards/{s_id}_data.py"
+                loc_inst = ShardDataLineLocator(py_p) if py_p.is_file() else None
+                c_tpls = templates_by_comp.get(f_cid, [])
+                for t_i, t_d in enumerate(c_tpls):
+                    t_id = t_d.get("id") or t_d.get("template_id") or f"T-{f_cid}-{t_i+1:02d}"
+                    t_info = loc_inst.find_tuple_for_question(f_cid, template_id=t_id) if loc_inst else None
+                    l_s, l_e, c_lns = loc_inst.find_offending_lines(t_info, "anti_gaming_psychometric_linter", "stem") if loc_inst else (1, 1, [])
+                    fn_nm = t_info.get("gen_fn_name", "gen_fn") if t_info else (t_d.get("gen_fn_name") or "gen_fn")
+                    fn_s = t_info.get("gen_fn_line_start", 1) if t_info else 1
+                    fn_e = t_info.get("gen_fn_line_end", 1) if t_info else 1
+                    tp_s = t_info.get("tuple_line_start", 1) if t_info else 1
+                    tp_e = t_info.get("tuple_line_end", 1) if t_info else 1
+                    finding_msg = (
+                        f"Diagnostic: Stem diversity gate failed for competency '{f_cid}' "
+                        f"(only {f_item['unique_c']} stems, required >= {req_u} unique, quota {f_item['quota']} for {cat_lbl}, ratio={f_item['div_ratio']:.3f}). "
+                        f"Provide >= {req_pt} distinct syntactic stems per template (totaling >= {tot_pt})."
+                    )
+                    locations_list.append({
+                        "competency_id": f_cid,
+                        "shard_id": s_id,
+                        "shard_file": s_file_rel,
+                        "template_id": t_id,
+                        "item_ids": [],
+                        "gen_fn_name": fn_nm,
+                        "gen_fn_line_start": fn_s,
+                        "gen_fn_line_end": fn_e,
+                        "tuple_line_start": tp_s,
+                        "tuple_line_end": tp_e,
+                        "offending_line_start": l_s,
+                        "offending_line_end": l_e,
+                        "offending_code_lines": c_lns,
+                        "sample_findings": [finding_msg],
+                    })
+                    md_lines.append(
+                        f"  * {s_file_rel}:L{l_s}-L{l_e} | competency_id={f_cid} | template_id={t_id} "
+                        f"| [Fn {fn_nm}: L{fn_s}..L{fn_e} | Tupla: L{tp_s}..L{tp_e}]"
+                    )
+                    md_lines.append(f"    Detalle: {finding_msg}")
+                    if c_lns:
+                        md_lines.append("    CONTEXTO EXACTO (OFFENDING LINES):")
+                        for cl in c_lns[:8]:
+                            md_lines.append(f"      {cl}")
+            md_lines.append("======================================================================")
+            md_text = "\n".join(md_lines)
+            spec_payload = {
+                "status": "REJECTED",
+                "stage": "build",
+                "failing_competencies": fail_cids,
+                "failing_shards": fail_shards,
+                "proposed_repair_command": repair_cmd,
+                "groups": [
+                    {
+                        "linter": "build_stem_diversity_gate",
+                        "rule_tag": "STEM-DIVERSITY-GATE",
+                        "severity": "CRITICAL",
+                        "description": "Ratio de diversidad estructural de enunciados (unique_masked / quota) menor a 0.50.",
+                        "cause": "Las plantillas de la competencia definen muy pocas variantes sintácticas en `stems`.",
+                        "action": "En `s1`, `s2`, `s3` de `shard_XX_data.py`, provee >= 6-7 enunciados sintácticamente distintos por plantilla para Skills (total >= 18-21) o >= 4-5 para Concepts/Facts (total >= 12-15).",
+                        "locations": locations_list,
+                    }
+                ],
+                "formatted_report": md_text,
+            }
+            (self.work_dir / "specific_error_report.json").write_text(json.dumps(spec_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            (self.work_dir / "specific_error_report.md").write_text(md_text + "\n", encoding="utf-8")
+            first_f = stem_gate_failures[0]
+            raise ValueError(
+                f"Stem diversity gate failed for competency '{first_f['cid']}': ratio is {first_f['div_ratio']:.3f} "
+                f"({first_f['unique_c']}/{first_f['total_c']} unique masked patterns), strictly required >= 0.5.\n\n"
+                f"{md_text}"
+            )
 
         import datetime
         now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -1095,12 +1263,15 @@ class PipelineRunner:
 
         # 1. Generate blind judge batch for independent evaluation
         if templates_dir.is_dir() and list(templates_dir.glob("*.json")):
-            print("  [*] Generating blind judge batch (stratified 2 items/competency WITHOUT answer keys)...")
+            print("  [*] Generating blind judge batch (stratified random selection, max 10 judges x 20 items WITHOUT answer keys)...")
             judge_batch_p, gt_p = generate_judge_batch(
                 templates_path=templates_dir,
                 work_dir=self.work_dir,
                 cta_path=cta_file if cta_file.is_file() else None,
-                items_per_competency=2,
+                seeds=None,
+                items_per_competency=0,
+                max_judges=10,
+                max_items_per_judge=20,
             )
             print(f"      Judge batch written: {judge_batch_p}")
             print(f"      Ground truth written: {gt_p}")
@@ -1144,7 +1315,11 @@ class PipelineRunner:
         print("=" * 70)
 
         verified_file = self.work_dir / "course_verified.json"
-        source_file = verified_file if verified_file.is_file() else (self.work_dir / "course.json")
+        course_file = self.work_dir / "course.json"
+        if verified_file.is_file() and course_file.is_file():
+            source_file = course_file if course_file.stat().st_mtime > verified_file.stat().st_mtime else verified_file
+        else:
+            source_file = verified_file if verified_file.is_file() else course_file
         if not source_file.is_file():
             raise FileNotFoundError(f"Missing required artifact: {source_file.resolve()}. Run stage build/verify first.")
 
@@ -1163,17 +1338,17 @@ class PipelineRunner:
                 )
             try:
                 jr_data = json.loads(judge_report_file.read_text(encoding="utf-8"))
-                if jr_data.get("status") not in ("pass", "passed", "success") and not jr_data.get("passed", False):
-                    disagreements = jr_data.get("disagreements", []) or jr_data.get("discordances", [])
-                    if disagreements:
-                        raise RuntimeError(
-                            f"Publication blocked: Blind judge evaluations have {len(disagreements)} unresolved disagreement(s). "
-                            "Repair discordances via dispatch --role repair before publishing."
-                        )
-            except Exception as ex:
-                if "Publication blocked" in str(ex):
-                    raise
-                logger.warning("Could not read judge_report.json during publish check: %s", ex)
+            except Exception as parse_ex:
+                raise RuntimeError(
+                    f"Publication blocked: Invalid or unreadable judge report at {judge_report_file.resolve()}: {parse_ex}"
+                )
+            if not jr_data.get("passed", False) or jr_data.get("status") not in ("pass", "passed", "success"):
+                disagreements = jr_data.get("disagreements", []) or jr_data.get("discordances", [])
+                raise RuntimeError(
+                    f"Publication blocked: Blind judge evaluations have {len(disagreements)} unresolved disagreement(s) "
+                    f"or report passed=False (status={jr_data.get('status')}). "
+                    "Repair discordances via dispatch --role repair before publishing."
+                )
 
         course_data = json.loads(source_file.read_text(encoding="utf-8"))
         if self.course_id and self.course_id != "custom_course":
@@ -1209,6 +1384,7 @@ class PipelineRunner:
             strict=self.strict,
             cta_markdown=cta_md,
             append=self.append,
+            work_dir=self.work_dir,
         )
 
         if not pub_result.success:
@@ -1297,11 +1473,34 @@ class PipelineRunner:
         res = apply_harmonize(self.work_dir, no_merge=self.no_merge)
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "cta_apply", elapsed)
-        print(f"  [+] Final CTA validated: {res.get('total_competencies', 0)} competencies.")
-        print(f"  [+] cta.json written to: {res.get('cta_path')}")
-        print(f"  [+] cta.md generated at: {res.get('cta_md_path')}")
-        print(f"  [+] Merge report written to: {res.get('report_path')}")
+        cta_p = self.work_dir / "cta.json"
+        cta_md_p = self.work_dir / "cta.md"
+        rep_p = self.work_dir / "merge_report.json"
+        total_comps = len(res.get("competencies", [])) if isinstance(res, dict) else 0
+        print(f"  [+] Final CTA validated: {total_comps} competencies.")
+        print(f"  [+] cta.json written to: {cta_p}")
+        print(f"  [+] cta.md generated at: {cta_md_p}")
+        print(f"  [+] Merge report written to: {rep_p}")
         print("  [+] Auxiliary Stage (cta-apply) completed successfully.")
+        if isinstance(res, dict):
+            res["total_competencies"] = total_comps
+            res["cta_path"] = str(cta_p.resolve())
+            res["cta_md_path"] = str(cta_md_p.resolve())
+            res["report_path"] = str(rep_p.resolve())
+        return res
+
+    def run_stage_cta_reduce(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Generate CTA Harmonizer dispatch payload."""
+        t0 = time.time()
+        print("\n" + "=" * 70)
+        print("[AUX STAGE: CTA-REDUCE] Generating c2c_cta_harmonizer dispatch")
+        print("=" * 70)
+        res = dispatch_cta_reduce(self.work_dir, pointer=not self.no_pointer)
+        elapsed = time.time() - t0
+        record_stage_timing(self.work_dir, "dispatch_cta_reduce", elapsed)
+        subagents = res.get("Subagents", [])
+        print(f"  [+] Dispatched c2c_cta_harmonizer with {len(subagents)} subagent(s).")
+        print("  [+] Auxiliary Stage (cta-reduce) completed successfully.")
         return res
 
     def run_stage_dispatch(self) -> Dict[str, Any]:
@@ -1748,7 +1947,11 @@ class PipelineRunner:
             templates_path=templates_dir,
             work_dir=self.work_dir,
             cta_path=cta_file if cta_file.is_file() else None,
+            seeds=None,
+            items_per_competency=0,
             ready_only=self.ready_only,
+            max_judges=10,
+            max_items_per_judge=20,
         )
         elapsed = time.time() - t0
         record_stage_timing(self.work_dir, "judge_generate", elapsed)
@@ -1826,7 +2029,7 @@ def main() -> None:
     stage_choices = [
         "prepare", "ingest", "cta", "shard", "templates", "build", "verify", "publish",
         "0", "1", "2", "3", "4", "5", "6",
-        "cta-merge", "cta-apply", "dispatch", "scope-check",
+        "cta-merge", "cta-reduce", "cta-apply", "dispatch", "scope-check",
         "define-types", "judge-compare",
         "bootstrap", "unlock", "wave-status",
         "dispatch-cta", "dispatch-authors", "dispatch-judges", "judge-generate",
@@ -2034,12 +2237,31 @@ def main() -> None:
             from_stage=args.from_stage,
         )
     except Exception as ex:
-        err_info = {
+        err_info: Dict[str, Any] = {
             "status": "failed",
-            "error": str(ex),
             "stage": args.stage or args.from_stage or "full",
             "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         }
+        spec_json_p = runner.work_dir / "specific_error_report.json"
+        spec_md_p = runner.work_dir / "specific_error_report.md"
+        if spec_json_p.is_file():
+            try:
+                spec_d = json.loads(spec_json_p.read_text(encoding="utf-8"))
+                err_info["specific_error_report_file"] = spec_md_p.as_posix()
+                err_info["specific_error_report_json"] = spec_json_p.as_posix()
+                err_info["orchestrator_directive"] = (
+                    f"READ FIRST: {spec_md_p.as_posix()} — Contiene las líneas exactas (Lstart..Lend), "
+                    f"template_id, item_id, CONTEXTO EXACTO y el comando de reparación agrupado por linter."
+                )
+                err_info["failing_competencies"] = spec_d.get("failing_competencies", [])
+                err_info["failing_shards"] = spec_d.get("failing_shards", [])
+                err_info["proposed_repair_command"] = spec_d.get("proposed_repair_command", "")
+            except Exception:
+                pass
+        raw_err_str = str(ex)
+        if spec_json_p.is_file() and "\n\n# SPECIFIC ERROR REPORT" in raw_err_str:
+            raw_err_str = raw_err_str.split("\n\n# SPECIFIC ERROR REPORT", 1)[0]
+        err_info["error"] = raw_err_str
         print(f"\n[FATAL ERROR] Pipeline terminated:\n{json.dumps(err_info, indent=2, ensure_ascii=False)}", file=sys.stderr)
         sys.exit(1)
 

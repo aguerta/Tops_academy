@@ -624,7 +624,7 @@ def generate_repair_redispatch(
 
     if not unfinished:
         logger.info("Watchdog: No unfinished competencies found for re-dispatch.")
-        return {"Subagents": [], "unfinished_count": 0, "item_files": [], "next_schedule_seconds": 300}
+        return {"Subagents": [], "unfinished_count": 0, "item_files": [], "next_schedule_seconds": 420}
 
     dispatch_items_dir = work / "dispatch" / "items"
     dispatch_items_dir.mkdir(parents=True, exist_ok=True)
@@ -701,7 +701,7 @@ def generate_repair_redispatch(
         "unfinished_count": len(unfinished),
         "item_files": item_files,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "next_schedule_seconds": 300,
+        "next_schedule_seconds": 420,
     }
 
     # Persist watchdog redispatch audit file

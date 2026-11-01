@@ -14,6 +14,7 @@ import hashlib
 import json
 import logging
 import math
+import random
 import re
 import sys
 import zlib
@@ -31,6 +32,8 @@ from engine.sandbox import execute_sandbox_instance
 
 logger = logging.getLogger("judge")
 MAX_CORRECTION_CYCLES = 3
+DEFAULT_MAX_JUDGES = 10
+DEFAULT_MAX_ITEMS_PER_JUDGE = 20
 
 
 def _load_templates(templates_path: Union[str, Path]) -> List[Dict[str, Any]]:
@@ -164,22 +167,30 @@ def generate_judge_batch(
     templates_path: Union[str, Path],
     work_dir: Union[str, Path],
     cta_path: Optional[Union[str, Path]] = None,
-    seeds: Tuple[int, int] = (101, 202),
-    items_per_competency: int = 2,
+    seeds: Optional[Tuple[int, ...]] = None,
+    items_per_competency: int = 0,
     ready_only: bool = False,
+    max_judges: int = DEFAULT_MAX_JUDGES,
+    max_items_per_judge: int = DEFAULT_MAX_ITEMS_PER_JUDGE,
+    random_seed: Optional[int] = None,
 ) -> Tuple[Path, Path]:
-    """Generates work/judge_batch.json WITHOUT answer keys using stratified sampling by competency.
+    """Generates work/judge_batch.json WITHOUT answer keys using stratified random sampling.
     
-    Also generates work/judge_ground_truth.json (retained for comparison).
+    Guarantees >= 1 random instance per template/competency and samples/shuffles randomly
+    up to the cap (max_judges * max_items_per_judge, default 10 * 20 = 200 items).
+    Also generates work/judge_ground_truth.json and work/answer_key.json.
 
     Args:
         templates_path: Path to template JSON file or directory.
         work_dir: Working directory to write judge files.
         cta_path: Optional path to cta.json for distractor metadata.
-        seeds: Two deterministic seeds for generating instances.
-        items_per_competency: Stratified sample count per competency (defaults to 2).
-                              If <= 0, generates 2 instances for every template.
+        seeds: Optional candidate seeds tuple. When None (default), draws random seeds per template.
+        items_per_competency: Stratified sample count per competency (defaults to 0).
+                              If <= 0, performs stratified random selection across all templates up to cap.
         ready_only: If True, skips competencies that were already evaluated in earlier waves/batches.
+        max_judges: Maximum number of blind judges (default: 10).
+        max_items_per_judge: Maximum questions per blind judge (default: 20).
+        random_seed: Optional RNG seed for reproducible random selection when needed.
 
     Returns:
         Tuple of (path_to_judge_batch_json, path_to_ground_truth_json).
@@ -262,11 +273,27 @@ def generate_judge_batch(
         comp_id = template.get("competency_id", "comp-01")
         comp_templates.setdefault(comp_id, []).append(template)
 
+    rng = random.Random(random_seed)
+    max_total_items = max(1, max_judges * max_items_per_judge) if (max_judges > 0 and max_items_per_judge > 0) else 200
+
+    def _draw_template_seeds(count: int = 3) -> List[int]:
+        if seeds is not None and len(seeds) > 0:
+            pool = list(seeds)
+            rng.shuffle(pool)
+            if len(pool) >= count:
+                return pool[:count]
+            return [pool[i % len(pool)] for i in range(count)]
+        return rng.sample(range(100, 100000), max(1, count))
+
     planned_items: List[Tuple[Dict[str, Any], int]] = []
 
     if items_per_competency > 0:
-        # Stratified sampling: ~items_per_competency per competency
-        for comp_id, t_list in comp_templates.items():
+        # Stratified random sampling: ~items_per_competency per competency
+        comp_keys = list(comp_templates.keys())
+        rng.shuffle(comp_keys)
+        for comp_id in comp_keys:
+            t_list = list(comp_templates[comp_id])
+            rng.shuffle(t_list)
             # Group by interaction type for diverse stratified coverage
             by_type: Dict[str, List[Dict[str, Any]]] = {}
             for t in t_list:
@@ -274,32 +301,72 @@ def generate_judge_batch(
                 by_type.setdefault(itype, []).append(t)
 
             type_queues = [list(q) for q in by_type.values()]
+            for q in type_queues:
+                rng.shuffle(q)
             selected_comp_items: List[Tuple[Dict[str, Any], int]] = []
+            c_seeds = _draw_template_seeds(max(3, items_per_competency))
 
             while len(selected_comp_items) < items_per_competency:
                 added = False
                 for q in type_queues:
                     if q and len(selected_comp_items) < items_per_competency:
                         t = q.pop(0)
-                        seed = seeds[len(selected_comp_items) % len(seeds)]
+                        seed = c_seeds[len(selected_comp_items) % len(c_seeds)]
                         selected_comp_items.append((t, seed))
                         added = True
                 if not added:
-                    # If all queues drained, cycle through t_list
+                    # If all queues drained, cycle through shuffled t_list
                     for t in t_list:
                         if len(selected_comp_items) < items_per_competency:
-                            seed = seeds[len(selected_comp_items) % len(seeds)]
+                            seed = c_seeds[len(selected_comp_items) % len(c_seeds)]
                             selected_comp_items.append((t, seed))
                         else:
                             break
                     break
 
             planned_items.extend(selected_comp_items)
+        if len(planned_items) > max_total_items:
+            planned_items = planned_items[:max_total_items]
     else:
-        # Unstratified: evaluate all templates across all seeds
-        for template in templates:
-            for seed in seeds:
-                planned_items.append((template, seed))
+        # Stratified random selection across all templates:
+        # 1. Guarantee >= 1 random instance per template/competency in Round 0.
+        # 2. Fill subsequent rounds randomly and stratified by competency up to max_total_items (<= 200).
+        seeds_per_tpl = len(seeds) if (seeds is not None and len(seeds) > 0) else 3
+        comp_keys = list(comp_templates.keys())
+        rng.shuffle(comp_keys)
+
+        # Prepare per-template random seed lists
+        tpl_seed_lists: Dict[int, List[int]] = {}
+        shuffled_comp_tpls: Dict[str, List[Dict[str, Any]]] = {}
+        for cid in comp_keys:
+            c_tpls = list(comp_templates[cid])
+            rng.shuffle(c_tpls)
+            shuffled_comp_tpls[cid] = c_tpls
+            for t in c_tpls:
+                tpl_seed_lists[id(t)] = _draw_template_seeds(seeds_per_tpl)
+
+        for r_idx in range(seeds_per_tpl):
+            round_candidates: List[Tuple[Dict[str, Any], int]] = []
+            # Round-robin across competencies within this round so every competency is represented
+            max_tpls_in_comp = max((len(v) for v in shuffled_comp_tpls.values()), default=0)
+            round_cids = list(comp_keys)
+            rng.shuffle(round_cids)
+            for pos in range(max_tpls_in_comp):
+                for cid in round_cids:
+                    c_tpls = shuffled_comp_tpls[cid]
+                    if pos < len(c_tpls):
+                        t = c_tpls[pos]
+                        t_seeds = tpl_seed_lists[id(t)]
+                        if r_idx < len(t_seeds):
+                            round_candidates.append((t, t_seeds[r_idx]))
+            if r_idx > 0:
+                rng.shuffle(round_candidates)
+            for cand in round_candidates:
+                if len(planned_items) >= max_total_items:
+                    break
+                planned_items.append(cand)
+            if len(planned_items) >= max_total_items:
+                break
 
     template_counts: Dict[str, int] = {}
     for template, seed in planned_items:
@@ -423,6 +490,9 @@ def generate_judge_batch(
         judge_batch_items.append(judge_item)
         ground_truth[item_id] = gt_record
 
+    # Shuffle the assembled batch items randomly so question order is randomized
+    rng.shuffle(judge_batch_items)
+
     v_dir = work / "verification"
     v_dir.mkdir(parents=True, exist_ok=True)
 
@@ -435,6 +505,10 @@ def generate_judge_batch(
     truth_json_str = json.dumps(ground_truth, indent=2, ensure_ascii=False)
     truth_path.write_text(truth_json_str, encoding="utf-8")
     (v_dir / "judge_ground_truth.json").write_text(truth_json_str, encoding="utf-8")
+
+    answer_key_path = work / "answer_key.json"
+    answer_key_path.write_text(truth_json_str, encoding="utf-8")
+    (v_dir / "answer_key.json").write_text(truth_json_str, encoding="utf-8")
 
     # Clean up stale split batches in verification and work so dispatch_judges slices the new batch fresh
     for stale_split in list(v_dir.glob("judge_batch_*.json")) + list(work.glob("judge_batch_*.json")):
@@ -468,17 +542,20 @@ def generate_judge_batch(
 
 def split_judge_batch(
     work_dir: Union[str, Path, List[Dict[str, Any]]],
-    max_judges: int = 8,
-    items_per_judge: int = 12,
+    max_judges: int = DEFAULT_MAX_JUDGES,
+    items_per_judge: int = DEFAULT_MAX_ITEMS_PER_JUDGE,
     max_items_per_judge: Optional[int] = None,
+    random_seed: Optional[int] = None,
 ) -> Any:
-    """Splits work/judge_batch.json or raw items list into batches with at most items_per_judge items each (default <= 12).
+    """Splits work/judge_batch.json or raw items list into batches with at most items_per_judge items each (default <= 20)
+    and at most max_judges judges (default <= 10), using stratified random assignment.
     
     Args:
         work_dir: Working directory containing judge_batch.json, OR a direct list of item dicts.
-        max_judges: Soft target for maximum number of judges.
-        items_per_judge: Maximum item count per judge (default: 12).
+        max_judges: Hard cap for maximum number of judges (default: 10).
+        items_per_judge: Maximum item count per judge (default: 20).
         max_items_per_judge: Alias for items_per_judge.
+        random_seed: Optional RNG seed for reproducible shuffling/sampling.
 
     Returns:
         List of Paths if work_dir is a Path/str, or List of List[Dict] if work_dir is a list.
@@ -486,11 +563,16 @@ def split_judge_batch(
     if max_items_per_judge is not None:
         items_per_judge = max_items_per_judge
 
+    rng = random.Random(random_seed)
+    limit = max(1, items_per_judge)
+    max_total = max(1, max_judges * limit) if max_judges > 0 else 0
+
     if isinstance(work_dir, list):
-        items = work_dir
+        items = list(work_dir)
         if not items:
             return []
-        limit = max(1, items_per_judge)
+        if max_total > 0 and len(items) > max_total:
+            items = rng.sample(items, max_total)
         return [items[i : i + limit] for i in range(0, len(items), limit)]
 
     work = Path(work_dir)
@@ -502,7 +584,7 @@ def split_judge_batch(
         return []
 
     try:
-        items: List[Dict[str, Any]] = json.loads(batch_file.read_text(encoding="utf-8"))
+        items = json.loads(batch_file.read_text(encoding="utf-8"))
     except Exception as e:
         logger.error("Failed to parse judge_batch.json: %s", e)
         return []
@@ -510,14 +592,54 @@ def split_judge_batch(
     if not items:
         return []
 
+    verif_dir = work / "verification"
+    verif_dir.mkdir(parents=True, exist_ok=True)
+
+    # Stratified random cap if total items exceed max_judges * items_per_judge (default 10 * 20 = 200)
+    if max_total > 0 and len(items) > max_total:
+        by_cid: Dict[str, List[Dict[str, Any]]] = {}
+        for itm in items:
+            cid = str(itm.get("competency_id", "default"))
+            by_cid.setdefault(cid, []).append(itm)
+        cid_keys = list(by_cid.keys())
+        rng.shuffle(cid_keys)
+        for cid in cid_keys:
+            rng.shuffle(by_cid[cid])
+        sampled_items: List[Dict[str, Any]] = []
+        pos = 0
+        max_len = max((len(v) for v in by_cid.values()), default=0)
+        while len(sampled_items) < max_total and pos < max_len:
+            for cid in cid_keys:
+                if pos < len(by_cid[cid]) and len(sampled_items) < max_total:
+                    sampled_items.append(by_cid[cid][pos])
+            pos += 1
+        items = sampled_items
+        # Synchronize judge_batch.json and ground_truth to the capped items
+        batch_json_str = json.dumps(items, indent=2, ensure_ascii=False)
+        (work / "judge_batch.json").write_text(batch_json_str, encoding="utf-8")
+        (verif_dir / "judge_batch.json").write_text(batch_json_str, encoding="utf-8")
+        kept_ids = {
+            str(itm.get("item_id") or itm.get("question_id") or itm.get("id"))
+            for itm in items if isinstance(itm, dict)
+        }
+        for gt_p in [work / "judge_ground_truth.json", verif_dir / "judge_ground_truth.json", work / "answer_key.json", verif_dir / "answer_key.json"]:
+            if gt_p.is_file():
+                try:
+                    gt_obj = json.loads(gt_p.read_text(encoding="utf-8"))
+                    if isinstance(gt_obj, dict):
+                        filtered_gt = {k: v for k, v in gt_obj.items() if str(k) in kept_ids}
+                        gt_p.write_text(json.dumps(filtered_gt, indent=2, ensure_ascii=False), encoding="utf-8")
+                except Exception:
+                    pass
+
     total_items = len(items)
-    # Strictly enforce items_per_judge <= 12 by sizing num_judges appropriately
-    needed_judges = math.ceil(total_items / items_per_judge) if items_per_judge > 0 else 1
-    num_judges = max(1, max(max_judges, needed_judges) if needed_judges > max_judges else needed_judges)
+    # Strictly enforce both items_per_judge <= 20 and num_judges <= max_judges (10)
+    needed_judges = math.ceil(total_items / limit)
+    num_judges = min(max_judges, max(1, needed_judges)) if max_judges > 0 else max(1, needed_judges)
     num_judges = min(num_judges, total_items)
     num_judges = max(1, num_judges)
 
-    # Stratified distribution by competency_id
+    # Stratified random distribution by competency_id
     comp_groups: Dict[str, List[Dict[str, Any]]] = {}
     for item in items:
         cid = item.get("competency_id", "default")
@@ -526,16 +648,26 @@ def split_judge_batch(
     buckets: List[List[Dict[str, Any]]] = [[] for _ in range(num_judges)]
     curr_j = 0
     for cid, c_items in comp_groups.items():
-        for itm in c_items:
+        c_shuffled = list(c_items)
+        rng.shuffle(c_shuffled)
+        for itm in c_shuffled:
             buckets[curr_j % num_judges].append(itm)
             curr_j += 1
 
-    # Filter out empty buckets if any
-    non_empty_buckets = [b for b in buckets if b]
+    # Filter out empty buckets and randomize order within each judge's bucket
+    non_empty_buckets = []
+    for b in buckets:
+        if b:
+            rng.shuffle(b)
+            non_empty_buckets.append(b)
 
-    # Verification directory support
-    verif_dir = work / "verification"
-    verif_dir.mkdir(parents=True, exist_ok=True)
+    # Remove stale split files before writing fresh ones
+    for stale_split in list(verif_dir.glob("judge_batch_*.json")) + list(work.glob("judge_batch_*.json")):
+        if stale_split.name not in ("judge_batch.json", "judge_redispatch_batch.json"):
+            try:
+                stale_split.unlink(missing_ok=True)
+            except Exception:
+                pass
 
     generated_paths: List[Path] = []
     for idx, b_items in enumerate(non_empty_buckets):
@@ -548,7 +680,7 @@ def split_judge_batch(
         verif_out_p = verif_dir / f"judge_batch_{idx + 1:02d}.json"
         verif_out_p.write_text(json.dumps(b_items, indent=2, ensure_ascii=False), encoding="utf-8")
 
-    logger.info("Split %d items across %d judge batches (max %d items/judge) in %s", total_items, len(non_empty_buckets), items_per_judge, work)
+    logger.info("Split %d items across %d judge batches (max %d items/judge, max %d judges) in %s", total_items, len(non_empty_buckets), limit, max_judges, work)
     return generated_paths
 
 
@@ -678,7 +810,7 @@ def check_judge_completeness(work_dir: Union[str, Path]) -> Dict[str, Any]:
 
 def emit_judge_redispatch(
     work_dir: Union[str, Path],
-    max_items_per_judge: int = 12,
+    max_items_per_judge: int = DEFAULT_MAX_ITEMS_PER_JUDGE,
 ) -> Dict[str, Any]:
     """Automatically detects incomplete evaluations and emits re-dispatch batch files for only missing IDs.
     
@@ -781,7 +913,7 @@ def emit_judge_redispatch(
     for b_idx, b_path in enumerate(redispatch_batches, start=1):
         for j_num in (1, 2):
             subagents.append({
-                "TypeName": "c2c_blind_judge",
+                "TypeName": "c2c_judge",
                 "Role": f"Blind Judge Re-dispatch Batch {b_idx:02d} - Judge {j_num}",
                 "Model": "flash",
                 "Prompt": (
@@ -801,6 +933,88 @@ def emit_judge_redispatch(
     }
 
 
+def _check_single_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) -> Tuple[bool, str]:
+    """Evaluates a single judge answer against ground truth for a given interaction type."""
+    if user_ans is None:
+        return False, "Missing response from judge"
+
+    if itype == "multiple_choice_7_options":
+        u_letter = _normalize_option_letter(user_ans)
+        gt_letter = _normalize_option_letter(gt.get("correct_letter", ""))
+        gt_content = gt.get("correct_content", "")
+
+        if u_letter and gt_letter and u_letter == gt_letter:
+            return True, ""
+        elif _normalize_str(user_ans) == _normalize_str(gt_content):
+            return True, ""
+        else:
+            return False, f"Judge selected '{user_ans}' (letter '{u_letter}') but expected letter '{gt_letter}' ({gt_content})"
+
+    elif itype == "fill_in_the_blank":
+        gt_val = gt.get("correct_value")
+        gt_canon = gt.get("canonical_algebraic")
+        gt_equivs = gt.get("accepted_equivalents", [])
+        raw_tol = gt.get("tolerance") or gt.get("answer_contract", {}).get("tolerance") or 0.01
+        try:
+            tol = float(raw_tol)
+        except (ValueError, TypeError):
+            tol = 0.01
+
+        if _is_numeric_equal(user_ans, gt_val, tol=tol):
+            return True, ""
+        elif gt_canon and _is_numeric_equal(user_ans, gt_canon, tol=tol):
+            return True, ""
+        elif gt_canon and _normalize_str(user_ans) == _normalize_str(gt_canon):
+            return True, ""
+        elif _normalize_str(user_ans) == _normalize_str(gt_val):
+            return True, ""
+        elif any(_is_numeric_equal(user_ans, eq, tol=tol) for eq in gt_equivs):
+            return True, ""
+        elif any(_normalize_str(user_ans) == _normalize_str(eq) for eq in gt_equivs):
+            return True, ""
+        else:
+            return False, f"Judge provided '{user_ans}' but expected '{gt_val}' (or {gt_canon})"
+
+    elif itype == "multiple_select":
+        gt_letters = set(_normalize_option_letter(x) for x in gt.get("correct_letters", []))
+        gt_contents = set(_normalize_str(c) for c in gt.get("correct_contents", []))
+
+        if isinstance(user_ans, list):
+            raw_items = [str(x).strip() for x in user_ans]
+        elif isinstance(user_ans, str):
+            s = user_ans.strip()
+            if s.startswith("[") and s.endswith("]"):
+                try:
+                    parsed = json.loads(s)
+                    if isinstance(parsed, list):
+                        raw_items = [str(x).strip() for x in parsed]
+                    else:
+                        raw_items = [s]
+                except Exception:
+                    raw_items = [x.strip() for x in re.split(r"[,;\s]+", s) if x.strip()]
+            else:
+                raw_items = [x.strip() for x in re.split(r"[,;\s]+|\band\b|\by\b", s) if x.strip()]
+        else:
+            raw_items = []
+
+        u_letters = set()
+        u_contents = set()
+        for item in raw_items:
+            nl = _normalize_option_letter(item)
+            if len(nl) == 1 and nl.isalpha():
+                u_letters.add(nl)
+            u_contents.add(_normalize_str(item))
+
+        if u_letters and u_letters == gt_letters:
+            return True, ""
+        elif u_contents and u_contents == gt_contents:
+            return True, ""
+        else:
+            return False, f"Judge selected {raw_items} (letters: {sorted(u_letters)}) but expected {sorted(gt_letters)}"
+
+    return False, f"Unsupported interaction type '{itype}'"
+
+
 def compare_judge_responses(
     responses: Optional[Union[Dict[str, Any], List[Dict[str, Any]], str, Path]] = None,
     ground_truth: Optional[Dict[str, Dict[str, Any]]] = None,
@@ -809,8 +1023,8 @@ def compare_judge_responses(
 ) -> Dict[str, Any]:
     """Compares judge answers against ground truth answer keys and records discordances.
     
-    Automatically discovers and merges all work/judge_responses_*.json when responses is None
-    or a directory path.
+    Zero-tolerance: requires 100% agreement (1.0) on all templates, rejects empty or incomplete batches.
+    Scans responses in work/judge_*.json, work/judges/judge_*.json, and work/judge_responses_*.json.
     
     Args:
         responses: Judge responses dict `{item_id: answer}`, list, or path to file/directory.
@@ -832,19 +1046,30 @@ def compare_judge_responses(
     if responses is None or (isinstance(responses, (str, Path)) and Path(responses).is_dir()):
         if resolved_work_dir is None:
             raise ValueError("Either responses or work_dir must be provided")
-        # Discover all judge_responses_*.json and judge_responses.json
-        cand_files = sorted(resolved_work_dir.glob("judge_responses_*.json"))
-        verif_dir = resolved_work_dir / "verification"
-        if verif_dir.is_dir():
-            for vf in sorted(verif_dir.glob("judge_responses_*.json")):
-                if vf.name not in [cf.name for cf in cand_files]:
-                    cand_files.append(vf)
-        main_resp = resolved_work_dir / "judge_responses.json"
-        if main_resp.is_file() and main_resp not in cand_files:
-            cand_files.append(main_resp)
-        verif_main = verif_dir / "judge_responses.json"
-        if verif_main.is_file() and verif_main not in cand_files:
-            cand_files.append(verif_main)
+
+        ignored_prefixes = (
+            "judge_batch",
+            "judge_ground_truth",
+            "judge_report",
+            "judge_redispatch",
+            "evaluated_competencies",
+            "answer_key",
+        )
+
+        cand_files: List[Path] = []
+        search_dirs = [resolved_work_dir]
+        for sub_name in ("judges", "verification"):
+            sub_dir = resolved_work_dir / sub_name
+            if sub_dir.is_dir():
+                search_dirs.append(sub_dir)
+
+        for s_dir in search_dirs:
+            for pattern in ("judge_*.json", "judge_responses_*.json", "judge_responses.json"):
+                for f in sorted(s_dir.glob(pattern)):
+                    if not any(f.name.startswith(pfx) for pfx in ignored_prefixes):
+                        if f not in cand_files:
+                            cand_files.append(f)
+
         for f in cand_files:
             try:
                 raw_responses_list.append(json.loads(f.read_text(encoding="utf-8")))
@@ -857,130 +1082,172 @@ def compare_judge_responses(
     elif responses is not None:
         raw_responses_list.append(responses)
 
-    # Normalize and merge responses to dict {item_id: answer}
-    resp_map: Dict[str, Any] = {}
+    # Collect replicate responses per item_id and capture response metadata
+    resp_replicates: Dict[str, List[Any]] = {}
+    resp_meta_map: Dict[str, Dict[str, Any]] = {}
+
     for raw in raw_responses_list:
         if isinstance(raw, list):
             for r in raw:
-                iid = r.get("item_id")
-                ans = r.get("answer") if "answer" in r else r.get("response")
-                if iid:
-                    resp_map[iid] = ans
+                if isinstance(r, dict):
+                    iid = r.get("item_id") or r.get("question_id") or r.get("id")
+                    ans = r.get("answer") if "answer" in r else (r.get("response") if "response" in r else r.get("verdict"))
+                    if iid:
+                        s_iid = str(iid)
+                        resp_replicates.setdefault(s_iid, []).append(ans)
+                        if s_iid not in resp_meta_map:
+                            resp_meta_map[s_iid] = {
+                                "template_id": r.get("template_id"),
+                                "competency_id": r.get("competency_id") or r.get("cid"),
+                            }
         elif isinstance(raw, dict):
-            dict_data = raw.get("responses", raw) if "responses" in raw and isinstance(raw["responses"], dict) else raw
-            for k, v in dict_data.items():
-                if isinstance(v, dict) and ("answer" in v or "response" in v):
-                    resp_map[k] = v.get("answer", v.get("response"))
-                else:
-                    resp_map[k] = v
+            unwrapped = False
+            for cand_key in ("evaluations", "responses", "items", "results"):
+                if cand_key in raw:
+                    sub_val = raw[cand_key]
+                    if isinstance(sub_val, list):
+                        for r in sub_val:
+                            if isinstance(r, dict):
+                                iid = r.get("item_id") or r.get("question_id") or r.get("id")
+                                ans = r.get("answer") if "answer" in r else (r.get("response") if "response" in r else r.get("verdict"))
+                                if iid:
+                                    s_iid = str(iid)
+                                    resp_replicates.setdefault(s_iid, []).append(ans)
+                                    if s_iid not in resp_meta_map:
+                                        resp_meta_map[s_iid] = {
+                                            "template_id": r.get("template_id"),
+                                            "competency_id": r.get("competency_id") or r.get("cid"),
+                                        }
+                        unwrapped = True
+                        break
+                    elif isinstance(sub_val, dict):
+                        for k, v in sub_val.items():
+                            s_k = str(k)
+                            if isinstance(v, dict) and ("answer" in v or "response" in v or "verdict" in v):
+                                ans_v = v.get("answer", v.get("response", v.get("verdict")))
+                                resp_replicates.setdefault(s_k, []).append(ans_v)
+                                if s_k not in resp_meta_map:
+                                    resp_meta_map[s_k] = {
+                                        "template_id": v.get("template_id"),
+                                        "competency_id": v.get("competency_id") or v.get("cid"),
+                                    }
+                            else:
+                                resp_replicates.setdefault(s_k, []).append(v)
+                        unwrapped = True
+                        break
+            if not unwrapped:
+                for k, v in raw.items():
+                    s_k = str(k)
+                    if isinstance(v, dict) and ("answer" in v or "response" in v or "verdict" in v):
+                        ans_v = v.get("answer", v.get("response", v.get("verdict")))
+                        resp_replicates.setdefault(s_k, []).append(ans_v)
+                        if s_k not in resp_meta_map:
+                            resp_meta_map[s_k] = {
+                                "template_id": v.get("template_id"),
+                                "competency_id": v.get("competency_id") or v.get("cid"),
+                            }
+                    else:
+                        resp_replicates.setdefault(s_k, []).append(v)
 
     if ground_truth is None:
         if resolved_work_dir:
             gt_p = resolved_work_dir / "judge_ground_truth.json"
+            if not gt_p.is_file():
+                gt_p = resolved_work_dir / "answer_key.json"
             if gt_p.is_file():
                 ground_truth = json.loads(gt_p.read_text(encoding="utf-8"))
         if ground_truth is None:
             raise ValueError("ground_truth mapping must be provided or judge_ground_truth.json present in work_dir")
 
+    # Load answer_key.json for legacy items missing template_id or competency_id
+    answer_key_map: Dict[str, Dict[str, Any]] = {}
+    if resolved_work_dir:
+        for ak_cand in (
+            resolved_work_dir / "answer_key.json",
+            resolved_work_dir / "verification" / "answer_key.json",
+            resolved_work_dir / "judge_ground_truth.json",
+            resolved_work_dir / "verification" / "judge_ground_truth.json",
+        ):
+            if ak_cand.is_file():
+                try:
+                    ak_data = json.loads(ak_cand.read_text(encoding="utf-8"))
+                    if isinstance(ak_data, dict):
+                        for k, v in ak_data.items():
+                            if isinstance(v, dict) and str(k) not in answer_key_map:
+                                answer_key_map[str(k)] = v
+                except Exception:
+                    pass
+
     total = len(ground_truth)
     agreed = 0
     discordances: List[Dict[str, Any]] = []
 
+    tpl_items: Dict[str, List[bool]] = {}
+    comp_items: Dict[str, List[bool]] = {}
+    all_complete = (total > 0)
+
     for item_id, gt in ground_truth.items():
-        user_ans = resp_map.get(item_id)
+        s_iid = str(item_id)
+        reps = resp_replicates.get(s_iid, [])
         itype = gt.get("interaction_type", "multiple_choice_7_options")
+
+        ak_info = answer_key_map.get(s_iid, {})
+        meta_info = resp_meta_map.get(s_iid, {})
+
+        tid = gt.get("template_id") or ak_info.get("template_id") or meta_info.get("template_id")
+        cid = gt.get("competency_id") or gt.get("cid") or ak_info.get("competency_id") or meta_info.get("competency_id")
+
+        if not tid:
+            m = re.match(r"^([A-Za-z0-9_-]+?)_judge_\d+", s_iid)
+            if m:
+                tid = m.group(1)
+            else:
+                tid = "unknown_template"
+        if not cid:
+            cid = "unknown_comp"
+
+        tpl_items.setdefault(tid, [])
+        comp_items.setdefault(cid, [])
+
         is_match = False
         reason = ""
+        user_ans: Any = None
 
-        if user_ans is None:
+        if not reps:
             is_match = False
+            all_complete = False
+            user_ans = None
             reason = "Missing response from judge"
-        elif itype == "multiple_choice_7_options":
-            # Normalize option letters (removing opt_/OPT_ prefixes) and content text
-            u_letter = _normalize_option_letter(user_ans)
-            gt_letter = _normalize_option_letter(gt.get("correct_letter", ""))
-            gt_content = gt.get("correct_content", "")
+        else:
+            rep_evals = [_check_single_answer_match(r_ans, gt, itype) for r_ans in reps]
+            if any(r_ans is None for r_ans in reps):
+                all_complete = False
 
-            if u_letter and gt_letter and u_letter == gt_letter:
+            if all(m_ok for m_ok, _ in rep_evals):
                 is_match = True
-            elif _normalize_str(user_ans) == _normalize_str(gt_content):
-                is_match = True
+                user_ans = reps[0] if len(set(str(x) for x in reps)) == 1 else reps
             else:
                 is_match = False
-                reason = f"Judge selected '{user_ans}' (letter '{u_letter}') but expected letter '{gt_letter}' ({gt_content})"
-
-        elif itype == "fill_in_the_blank":
-            gt_val = gt.get("correct_value")
-            gt_canon = gt.get("canonical_algebraic")
-            gt_equivs = gt.get("accepted_equivalents", [])
-            raw_tol = gt.get("tolerance") or gt.get("answer_contract", {}).get("tolerance") or 0.01
-            try:
-                tol = float(raw_tol)
-            except (ValueError, TypeError):
-                tol = 0.01
-
-            if _is_numeric_equal(user_ans, gt_val, tol=tol):
-                is_match = True
-            elif gt_canon and _is_numeric_equal(user_ans, gt_canon, tol=tol):
-                is_match = True
-            elif gt_canon and _normalize_str(user_ans) == _normalize_str(gt_canon):
-                is_match = True
-            elif _normalize_str(user_ans) == _normalize_str(gt_val):
-                is_match = True
-            elif any(_is_numeric_equal(user_ans, eq, tol=tol) for eq in gt_equivs):
-                is_match = True
-            elif any(_normalize_str(user_ans) == _normalize_str(eq) for eq in gt_equivs):
-                is_match = True
-            else:
-                is_match = False
-                reason = f"Judge provided '{user_ans}' but expected '{gt_val}' (or {gt_canon})"
-
-        elif itype == "multiple_select":
-            gt_letters = set(_normalize_option_letter(x) for x in gt.get("correct_letters", []))
-            gt_contents = set(_normalize_str(c) for c in gt.get("correct_contents", []))
-
-            # User ans might be list of letters or comma-separated string
-            if isinstance(user_ans, list):
-                raw_items = [str(x).strip() for x in user_ans]
-            elif isinstance(user_ans, str):
-                s = user_ans.strip()
-                if s.startswith("[") and s.endswith("]"):
-                    try:
-                        parsed = json.loads(s)
-                        if isinstance(parsed, list):
-                            raw_items = [str(x).strip() for x in parsed]
-                        else:
-                            raw_items = [s]
-                    except Exception:
-                        raw_items = [x.strip() for x in re.split(r"[,;\s]+", s) if x.strip()]
+                user_ans = reps[0] if len(reps) == 1 else reps
+                exp_val = gt.get("correct_letter") or gt.get("correct_value") or gt.get("correct_letters")
+                if len(reps) > 1 and len(set(str(x) for x in reps)) > 1:
+                    mismatch_reasons = [r_msg for m_ok, r_msg in rep_evals if not m_ok and r_msg]
+                    reason = f"Judge replicas disagreed: {reps} (expected {exp_val}; errors: {'; '.join(mismatch_reasons)})"
                 else:
-                    raw_items = [x.strip() for x in re.split(r"[,;\s]+|\band\b|\by\b", s) if x.strip()]
-            else:
-                raw_items = []
+                    first_fail = next((r_msg for m_ok, r_msg in rep_evals if not m_ok), "Evaluation mismatch")
+                    reason = first_fail
 
-            u_letters = set()
-            u_contents = set()
-            for item in raw_items:
-                nl = _normalize_option_letter(item)
-                if len(nl) == 1 and nl.isalpha():
-                    u_letters.add(nl)
-                u_contents.add(_normalize_str(item))
-
-            if u_letters and u_letters == gt_letters:
-                is_match = True
-            elif u_contents and u_contents == gt_contents:
-                is_match = True
-            else:
-                is_match = False
-                reason = f"Judge selected {raw_items} (letters: {sorted(u_letters)}) but expected {sorted(gt_letters)}"
+        tpl_items[tid].append(is_match)
+        comp_items[cid].append(is_match)
 
         if is_match:
             agreed += 1
         else:
             discordances.append({
-                "item_id": item_id,
-                "template_id": gt.get("template_id"),
-                "competency_id": gt.get("competency_id"),
+                "item_id": s_iid,
+                "template_id": tid,
+                "competency_id": cid,
+                "cid": cid,
                 "interaction_type": itype,
                 "judge_response": user_ans,
                 "expected": (
@@ -992,21 +1259,45 @@ def compare_judge_responses(
                 "cycle": cycle,
             })
 
-    agreement_rate = (agreed / total) if total > 0 else 1.0
-    passed = agreement_rate >= 0.95 and len(discordances) <= (total * 0.05)
+    failed_templates: List[str] = []
+    for tid, matches in tpl_items.items():
+        if not matches or not all(matches):
+            failed_templates.append(tid)
 
-    affected_templates = sorted(list(set(d["template_id"] for d in discordances)))
+    failed_competencies: List[str] = []
+    for cid, matches in comp_items.items():
+        if not matches or not all(matches):
+            failed_competencies.append(cid)
+
+    failed_templates = sorted(list(set(failed_templates)))
+    failed_competencies = sorted(list(set(failed_competencies)))
+
+    agreement_rate = (agreed / total) if total > 0 else 0.0
+    passed = (total > 0) and all_complete and (len(failed_templates) == 0) and (len(discordances) == 0)
+
+    if not all_complete and total > 0:
+        status = "incomplete"
+    elif total == 0:
+        status = "empty"
+    elif passed:
+        status = "passed"
+    else:
+        status = "disagreements"
 
     report_data = {
         "cycle": cycle,
+        "total": total,
         "total_items": total,
         "agreed_items": agreed,
         "agreement_rate": round(agreement_rate, 4),
         "passed": passed,
-        "status": "passed" if passed else "disagreements",
+        "status": status,
+        "all_complete": all_complete,
+        "failed_templates": failed_templates,
+        "failed_competencies": failed_competencies,
+        "affected_template_ids": failed_templates,
         "disagreements": discordances,
         "discordances": discordances,
-        "affected_template_ids": affected_templates,
         "can_retry": (cycle < MAX_CORRECTION_CYCLES and not passed),
         "max_cycles_reached": (cycle >= MAX_CORRECTION_CYCLES),
     }
@@ -1046,8 +1337,8 @@ def main() -> None:
     prep.add_argument(
         "--items-per-competency",
         type=int,
-        default=2,
-        help="Stratified sample count per competency (default: 2, <=0 for unstratified)",
+        default=0,
+        help="Stratified sample count per competency (default: 0 for 100% templates unstratified)",
     )
     prep.add_argument(
         "--ready-only",
@@ -1059,8 +1350,8 @@ def main() -> None:
     # split subcommand
     split_p = subparsers.add_parser("split", help="Split judge_batch.json into stratified batches")
     split_p.add_argument("--work-dir", required=True, help="Working directory containing judge_batch.json")
-    split_p.add_argument("--max-judges", type=int, default=8, help="Maximum number of judges (default: 8)")
-    split_p.add_argument("--items-per-judge", type=int, default=12, help="Target items per judge (default: 12)")
+    split_p.add_argument("--max-judges", type=int, default=DEFAULT_MAX_JUDGES, help="Maximum number of judges (default: 10)")
+    split_p.add_argument("--items-per-judge", type=int, default=DEFAULT_MAX_ITEMS_PER_JUDGE, help="Target items per judge (default: 20)")
 
     # check-completeness subcommand
     chk = subparsers.add_parser("check-completeness", help="Detect truncated or missing judge responses")
@@ -1069,7 +1360,7 @@ def main() -> None:
     # emit-redispatch subcommand
     redisp = subparsers.add_parser("emit-redispatch", help="Emit blind re-dispatch batches for missing items")
     redisp.add_argument("--work-dir", required=True, help="Working directory containing judge batches and responses")
-    redisp.add_argument("--max-items-per-judge", type=int, default=12, help="Max items per judge batch (default: 12)")
+    redisp.add_argument("--max-items-per-judge", type=int, default=DEFAULT_MAX_ITEMS_PER_JUDGE, help="Max items per judge batch (default: 20)")
 
     # compare subcommand
     comp = subparsers.add_parser("compare", help="Compare judge responses against ground truth")

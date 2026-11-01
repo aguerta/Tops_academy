@@ -35,6 +35,7 @@ from cta_merge import normalize_orphan_math, sanitize_competency_math
 from engine.invariants import validate_katex_syntax
 from check_templates import format_invariant_error_diagnostic, format_parity_error, check_templates_file_or_dir
 from dispatch import ROLE_SPECS, build_dispatch, dispatch_authors
+from repair_loop import RepairLoop, RepairResult
 
 
 class TestStage1BUpstreamValidation(unittest.TestCase):
@@ -433,6 +434,80 @@ class TestTelemetryFallback(unittest.TestCase):
         workload = WorkloadExtractor.extract(workspace_root=repo_root, records=records)
         self.assertEqual(workload["questions_count"], 0)
         self.assertEqual(workload["run_status"], "ABORTED_INCOMPLETE")
+
+
+class TestRepairLoopPurgedSharedPadsAndModuleASanitization(unittest.TestCase):
+    """Verifies that RepairLoop strictly runs deterministic Module A LaTeX sanitization without injecting shared_pads."""
+
+    def test_repair_loop_module_a_sanitizes_latex_escapes_and_control_chars(self):
+        """Module A sanitizes raw backslashes and recovers corrupted ASCII control characters."""
+        raw_snippet = '{"stem": "Considere \\frac{a}{b} y \\alpha junto a \text{equilibrio} con \x08eta."}'
+        sanitized = RepairLoop.sanitize_latex_escapes(raw_snippet)
+
+        # \frac must be escaped as \\frac
+        self.assertIn(r"\\frac{a}{b}", sanitized)
+        # \alpha must be escaped as \\alpha
+        self.assertIn(r"\\alpha", sanitized)
+        # \text from \t control char must be restored as \\text
+        self.assertIn(r"\\text{equilibrio}", sanitized)
+        # \beta from \x08 control char must be restored as \\beta
+        self.assertIn(r"\\beta", sanitized)
+
+    def test_repair_loop_does_not_inject_shared_pads_and_preserves_options_intact(self):
+        """RepairLoop does NOT inject synthetic shared_pads and preserves options intact."""
+        sample_course = {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "course_id": "test_course_pads",
+            "title": "Curso de Prueba",
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "code": "C-01",
+                    "name": "Concepto Fundamental",
+                    "category": "Concept",
+                    "description": "Descripción formal",
+                    "mastery_target": 100,
+                }
+            ],
+            "questions": [
+                {
+                    "id": "Q-C01-001",
+                    "competency_id": "C-01",
+                    "interaction_type": "multiple_choice_7_options",
+                    "stem": "Considere la ecuación fundamental y determine el balance:",
+                    "hints": [
+                        "Revise las relaciones paramétricas del planteamiento.",
+                        "Aplique la condición de equilibrio estacionario requerida.",
+                        "Verifique la consistencia analítica del resultado.",
+                    ],
+                    "detailed_solution": "Solución analítica formal paso a paso.",
+                    "options": [
+                        {"id": "opt_a", "content": "Opción A", "is_correct": True, "error_rationale": None},
+                        {"id": "opt_b", "content": "Opción B", "is_correct": False, "error_rationale": "Error explicativo B"},
+                        {"id": "opt_c", "content": "Opción C", "is_correct": False, "error_rationale": "Error explicativo C"},
+                        {"id": "opt_d", "content": "Opción D", "is_correct": False, "error_rationale": "Error explicativo D"},
+                        {"id": "opt_e", "content": "Opción E", "is_correct": False, "error_rationale": "Error explicativo E"},
+                        {"id": "opt_f", "content": "Opción F", "is_correct": False, "error_rationale": "Error explicativo F"},
+                        {"id": "opt_g", "content": "Opción G", "is_correct": False, "error_rationale": "Error explicativo G"},
+                    ],
+                }
+            ],
+        }
+
+        repairer = RepairLoop(strict=True)
+        # Verify no padding method exists on class
+        self.assertFalse(hasattr(repairer, "inject_shared_pads"))
+        self.assertFalse(hasattr(repairer, "pad_options"))
+
+        res = repairer.repair_course(sample_course)
+        repaired_opts = res.repaired_course_data["questions"][0]["options"]
+
+        # Exactly 7 options preserved; zero synthetic padding injected
+        self.assertEqual(len(repaired_opts), 7)
+        self.assertNotIn("shared_pads", res.repaired_course_data)
+        for opt in repaired_opts:
+            self.assertNotIn("synthetic_pad", opt.get("id", ""))
+            self.assertNotIn("shared_pad", opt.get("id", ""))
 
 
 if __name__ == "__main__":

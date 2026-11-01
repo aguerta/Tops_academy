@@ -194,14 +194,18 @@ def slice_pdf_lossless(
     total_pages = len(doc)
 
     if k_parts is None:
-        # Determine K dynamically in [2, 4]
-        if total_pages <= 4:
+        if total_pages > 25:
+            k_parts = max(2, math.ceil(total_pages / 20))
+        elif total_pages <= 4:
             k_parts = 2
         elif total_pages <= 12:
             k_parts = 3
         else:
             k_parts = 4
-    k_parts = max(2, min(4, k_parts))
+    else:
+        k_parts = max(2, k_parts)
+    if total_pages <= 25 and k_parts is not None:
+        k_parts = max(2, min(4, k_parts))
     if total_pages < k_parts:
         k_parts = max(1, total_pages)
 
@@ -225,10 +229,19 @@ def slice_pdf_lossless(
 
         # Lossless slice via clean insert_pdf (immune to MuPDF in-place select() mutation crash on Windows)
         slice_doc = pymupdf.open()
-        for p in pages_to_extract:
-            slice_doc.insert_pdf(doc, from_page=p, to_page=p)
-        # Preserve original streams and objects without lossy recompression
-        slice_doc.save(str(slice_filepath), garbage=3, deflate=True)
+        # Insert contiguous page runs in a single call so shared resources (fonts/images)
+        # are grafted once instead of being duplicated per page.
+        run_start = prev = pages_to_extract[0]
+        for p in pages_to_extract[1:]:
+            if p == prev + 1:
+                prev = p
+                continue
+            slice_doc.insert_pdf(doc, from_page=run_start, to_page=prev)
+            run_start = prev = p
+        slice_doc.insert_pdf(doc, from_page=run_start, to_page=prev)
+        # Preserve original streams and objects without lossy recompression.
+        # garbage=3 (full object dedup) was the dominant cost; garbage=1 is cheap.
+        slice_doc.save(str(slice_filepath), garbage=1, deflate=True)
         slice_doc.close()
 
         # Build local (1-indexed) to global (1-indexed) page mapping
@@ -249,15 +262,22 @@ def slice_pdf_lossless(
         manifest = {
             "part_index": k,
             "part_id": part_id,
+            "subpart_id": part_id,
             "source_file": source_path.name,
-            "source_path": str(source_path),
+            "source_doc": source_path.name,
+            "doc": source_path.name,
+            "file_index": 0,
+            "source_path": source_path.as_posix(),
             "slice_pdf": slice_filename,
-            "slice_path": str(slice_filepath),
+            "slice_file": slice_filename,
+            "path": slice_filepath.as_posix(),
+            "slice_path": slice_filepath.as_posix(),
             "has_context_page": has_context,
             "context_page_local": 1 if has_context else None,
             "context_page_global": start_idx if has_context else None,
             "core_page_range_local": [core_start_local, core_end_local],
             "core_page_range_global": [start_idx + 1, end_idx],
+            "page_range": [core_start_local, core_end_local],
             "page_count": len(pages_to_extract),
             "total_pages": len(pages_to_extract),
             "page_mapping": page_mapping,
@@ -319,7 +339,10 @@ def slice_image_lossless(
                 "part_index": k,
                 "part_id": part_id,
                 "source_file": img_path.name,
+                "source_path": img_path.as_posix(),
                 "slice_file": tile_filename,
+                "path": tile_filepath.as_posix(),
+                "slice_path": tile_filepath.as_posix(),
                 "crop_box": list(crop_box),
                 "original_size": [width, height],
                 "page_count": 1,
@@ -392,7 +415,10 @@ def slice_tex_sections(
             "part_index": k,
             "part_id": part_id,
             "source_file": tex_path.name,
+            "source_path": tex_path.as_posix(),
             "slice_file": part_filename,
+            "path": part_filepath.as_posix(),
+            "slice_path": part_filepath.as_posix(),
             "section_range": [sec_start + 1, sec_end],
             "sections": sec_titles[sec_start:sec_end],
             "line_range": [line_start + 1, line_end],
@@ -475,15 +501,24 @@ def update_pre_cta_manifest(
 
     subparts = []
     for p in parts_info:
+        raw_p_path = p.get("path") or p.get("slice_path")
+        posix_p_path = Path(raw_p_path).as_posix() if raw_p_path else ""
+        raw_slice_path = p.get("slice_path") or p.get("path")
+        posix_slice_path = Path(raw_slice_path).as_posix() if raw_slice_path else ""
         subparts.append({
-            "subpart_id": p.get("part_id"),
+            "subpart_id": p.get("subpart_id") or p.get("part_id"),
             "subpart_index": p.get("part_index", 1) - 1,
-            "slice_file": p.get("slice_pdf") or p.get("slice_file"),
-            "source_doc": p.get("source_file"),
+            "source_doc": p.get("source_doc") or p.get("source_file"),
+            "slice_file": p.get("slice_file") or p.get("slice_pdf"),
+            "doc": p.get("doc") or p.get("source_file"),
+            "file_index": p.get("file_index", 0),
+            "path": posix_p_path,
+            "slice_path": posix_slice_path,
             "core_page_range": p.get("core_page_range_global"),
+            "page_range": p.get("page_range") or p.get("core_page_range_global"),
             "page_map": p.get("page_map"),
             "page_mapping": p.get("page_mapping"),
-            "total_pages": p.get("page_count"),
+            "total_pages": p.get("total_pages") or p.get("page_count"),
         })
 
     manifest_data["subparts"] = subparts

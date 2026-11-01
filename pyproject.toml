@@ -28,4 +28,4 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [".", "src"]
-addopts = "--ignore=tests/e2e"
+addopts = "-n auto --dist worksteal --ignore=tests/e2e"

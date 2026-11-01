@@ -29,7 +29,7 @@ from compile_cta import (
     render_compact_cta_errors,
 )
 from cta_merge import normalize_orphan_math
-from check_cta import check_cta_katex, validate_distractor_math
+from check_cta import check_cta_katex, check_cta_prose_overflow, validate_distractor_math
 
 
 class TestC2CV321PreHealerAndCompiler:
@@ -302,3 +302,130 @@ class TestC2CV321RenderCompactCtaErrors:
         rendered = render_compact_cta_errors(errors, "cta_data.py")
         rendered_lines = rendered.splitlines()
         assert len(rendered_lines) < 25, f"Expected < 25 lines, got {len(rendered_lines)} lines"
+
+
+class TestCtaProseOverflowFailFast:
+    """Tests for fail-fast detection of KaTeX prose overflow in CTA stage."""
+
+    def test_prose_overflow_text_macro_threshold(self):
+        """Macros with inner length > 45 characters trigger [KATEX-PROSE-OVERFLOW]."""
+        short_prose = r"$\text{Short text under limit}$"
+        assert check_cta_prose_overflow(short_prose, "ctx") == []
+
+        long_inner = "This is a very long explanatory prose sentence exceeding forty five characters"
+        long_prose = f"$\\text{{{long_inner}}}$"
+        errs = check_cta_prose_overflow(long_prose, "ctx")
+        assert len(errs) == 1
+        assert "[KATEX-PROSE-OVERFLOW]" in errs[0]
+        assert "R-23" not in errs[0]
+        assert "R23" not in errs[0]
+
+    def test_prose_overflow_textrm_mathrm_variants(self):
+        """Validates that \\textrm and \\mathrm are audited for overflow."""
+        long_txt = "A long explanatory comment inside math exceeding forty five chars"
+        errs_rm = check_cta_prose_overflow(f"$\\textrm{{{long_txt}}}$", "test_ctx")
+        assert len(errs_rm) == 1
+        assert "[KATEX-PROSE-OVERFLOW]" in errs_rm[0]
+
+        errs_m = check_cta_prose_overflow(f"$\\mathrm{{{long_txt}}}$", "test_ctx")
+        assert len(errs_m) == 1
+        assert "[KATEX-PROSE-OVERFLOW]" in errs_m[0]
+
+    def test_distractor_math_detects_prose_overflow(self):
+        """validate_distractor_math audits all text fields for prose overflow."""
+        long_txt = "When calculating parameters across multiple discrete periods and iterations"
+        dist = {
+            "id": "D-C01-01",
+            "name": "Sign Confusion",
+            "wrong_belief": f"Assumes $\\text{{{long_txt}}}$ is true",
+            "correct_belief": "Follows standard rules",
+            "manifestation": "Error occurred",
+            "remediation_hint": "Review steps",
+        }
+        errs = validate_distractor_math(dist, "D-C01-01")
+        assert any("[KATEX-PROSE-OVERFLOW]" in e for e in errs)
+
+    def test_prose_overflow_exact_45_boundary_and_nested_braces(self):
+        """Exact boundary: 45 characters passes, 46 characters triggers [KATEX-PROSE-OVERFLOW]."""
+        # Exactly 45 characters inside \text{}
+        body_45 = "A" * 45
+        assert len(body_45) == 45
+        assert check_cta_prose_overflow(f"$\\text{{{body_45}}}$", "exact_45") == []
+
+        # Exactly 46 characters inside \text{}
+        body_46 = "A" * 46
+        assert len(body_46) == 46
+        errs_46 = check_cta_prose_overflow(f"$\\text{{{body_46}}}$", "exact_46")
+        assert len(errs_46) == 1
+        assert "[KATEX-PROSE-OVERFLOW]" in errs_46[0]
+        assert "46" in errs_46[0]
+        assert "R-23" not in errs_46[0]
+
+        # Nested balanced braces: {nested} inside \text{}
+        # "Prefix " (7) + "{inner text}" (12) + " suffix" (7) = 26 chars (passes)
+        nested_pass = r"$\text{Prefix {inner text} suffix}$"
+        assert check_cta_prose_overflow(nested_pass, "nested_pass") == []
+
+        # Nested braces exceeding 45 chars
+        nested_long = r"$\text{Prefix {" + ("X" * 35) + r"} trailing text block}$"
+        errs_nested = check_cta_prose_overflow(nested_long, "nested_long")
+        assert len(errs_nested) == 1
+        assert "[KATEX-PROSE-OVERFLOW]" in errs_nested[0]
+
+    def test_prose_overflow_all_competency_and_distractor_fields_and_no_duplicates(self):
+        """Coverage across name, description, description_latex, source_examples and all 6 distractor fields."""
+        over_prose = "$\\text{" + ("Z" * 50) + "}$"
+
+        # 1. Competency fields
+        comp_name = {"id": "C-01", "name": f"Concept {over_prose}"}
+        errs = check_cta_katex({"competencies": [comp_name]})
+        assert any("[KATEX-PROSE-OVERFLOW]" in e and "name" in e for e in errs)
+
+        comp_desc = {"id": "C-02", "name": "Valid Name", "description_latex": over_prose}
+        errs = check_cta_katex({"competencies": [comp_desc]})
+        assert any("[KATEX-PROSE-OVERFLOW]" in e and "description_latex" in e for e in errs)
+
+        comp_ex = {"id": "C-03", "name": "Valid Name", "source_examples": [over_prose]}
+        errs = check_cta_katex({"competencies": [comp_ex]})
+        assert any("[KATEX-PROSE-OVERFLOW]" in e and "source_examples" in e for e in errs)
+
+        # 2. All 6 distractor fields
+        dist_fields = [
+            "manifestation",
+            "remediation_hint",
+            "wrong_belief",
+            "correct_belief",
+            "omitted_step",
+            "trigger",
+        ]
+        for f in dist_fields:
+            d_obj = {
+                "id": f"D-C01-01",
+                "name": "Trap",
+                f: over_prose,
+            }
+            comp = {
+                "id": "C-01",
+                "name": "Valid",
+                "distractors": [d_obj],
+            }
+            errs = check_cta_katex({"competencies": [comp]})
+            assert any("[KATEX-PROSE-OVERFLOW]" in e and f in e for e in errs), f"Field {f} not detected"
+
+        # 3. Zero duplicate messages
+        dup_test_comp = {
+            "id": "C-01",
+            "name": f"Concept {over_prose}",
+            "description": f"Desc {over_prose}",
+            "distractors": [
+                {
+                    "id": "D-C01-01",
+                    "manifestation": over_prose,
+                    "remediation_hint": over_prose,
+                }
+            ],
+        }
+        res_errs = check_cta_katex({"competencies": [dup_test_comp]})
+        assert len(res_errs) == len(set(res_errs)), "check_cta_katex emitted duplicate error messages"
+
+

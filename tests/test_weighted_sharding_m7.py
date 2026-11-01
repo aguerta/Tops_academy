@@ -677,3 +677,32 @@ class TestCliMainInvocation:
         assert "total waves: 3" in captured.out
         assert "(wave 1)" in captured.out
 
+
+# =============================================================================
+# 11. DSL_REFERENCE FORM-B TRI-BANDA CONTRACT
+# =============================================================================
+
+class TestDslReferenceTriBanda:
+    """Tests that DSL_REFERENCE reflects Form-B Tri-Banda specifications."""
+
+    def test_dsl_reference_form_b_tri_banda_contract(self):
+        from plan_shards import DSL_REFERENCE
+        assert DSL_REFERENCE.get("min_archetypes") == 3
+        assert "Form-B Tri-Banda" in DSL_REFERENCE.get("description", "")
+        tpl_schema = DSL_REFERENCE.get("canonical_template_schema", "")
+        assert "tpl_id" in tpl_schema
+        assert "difficulty, bloom" in tpl_schema
+        assert "hints" in tpl_schema
+        assert "solution" in tpl_schema
+
+        d_rules = DSL_REFERENCE.get("distractor_rules", {})
+        assert d_rules.get("mc7_tuple_format") == "(did, val, rationale_con_@var@)"
+        assert d_rules.get("min_rationale_length") == 20
+        assert d_rules.get("requires_var_interpolation") is True
+
+        q_types = DSL_REFERENCE.get("supported_question_types", [])
+        assert "fill_in_the_blank" in q_types
+        assert "multiple_select" in q_types
+        assert "multiple_choice" in q_types
+
+

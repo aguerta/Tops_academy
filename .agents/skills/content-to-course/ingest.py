@@ -24,9 +24,19 @@ except ImportError:
     import fitz as pymupdf
 from PIL import Image
 
+try:
+    from partition_corpus import slice_pdf_lossless
+except ImportError:
+    try:
+        from .partition_corpus import slice_pdf_lossless
+    except ImportError:
+        slice_pdf_lossless = None
+
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tiff"}
 PDF_EXTENSIONS = {".pdf"}
 TEX_EXTENSIONS = {".tex"}
+
+MAX_DIRECT_PAGES = 25
 
 
 def compute_sha256(filepath_or_bytes: Union[str, Path, bytes]) -> str:
@@ -202,17 +212,17 @@ def ingest_course(
     input_path: Union[str, Path],
     output_dir: Union[str, Path],
     course_id: Optional[str] = None,
-    cta_mode: str = "direct",
+    cta_mode: str = "auto",
     dpi: int = 150,
     order_override: Optional[Union[str, List[str], Sequence[str]]] = None,
     render_pages: bool = True,
     input_files: Optional[Sequence[Union[str, Path]]] = None,
+    force_direct: bool = False,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """Stage 0 Ingestion: Zero-Waste PDF page rendering and central pre_cta_manifest.json generation.
 
-    Eliminates all legacy intermediate artifacts (corpus.md, corpus_raw.md, density.json,
-    budget.json, vision_pages.json, order.json, pages/manifest.json, sections/*).
+    Eliminates all legacy intermediate artifacts.
     """
     in_path = Path(input_path).resolve()
     work_dir = Path(output_dir).resolve()
@@ -233,16 +243,6 @@ def ingest_course(
             course_id = parent_cand if parent_cand not in ("work", "Tops_academy", ".") else "course"
     if not course_id:
         course_id = "course"
-
-    # Normalize cta_mode: "direct" by default, or "mapreduce"
-    clean_mode = str(cta_mode or "direct").strip().lower()
-    if clean_mode in ("mapreduce", "map_reduce", "map-reduce", "multiple"):
-        mode = "mapreduce"
-    else:
-        mode = "direct"
-
-    # NOTE: If cta_mode == "mapreduce", deterministic rules or LLM arbitration to subdivide
-    # files into multiple subparts are pending for a future iteration (currently 1 file = 1 subpart).
 
     # Discover target files
     target_files: List[Path] = []
@@ -289,7 +289,7 @@ def ingest_course(
         target_files = sorted(target_files, key=natural_sort_key)
 
     files_manifest: List[Dict[str, Any]] = []
-    subparts_manifest: List[Dict[str, Any]] = []
+    file_details: List[Dict[str, Any]] = []
     total_pages_sum = 0
     seen_slugs: Dict[str, int] = {}
 
@@ -345,22 +345,128 @@ def ingest_course(
             "valid_page_range": valid_range,
         }
         files_manifest.append(file_entry)
-
-        subpart_id = f"part_{file_idx + 1:02d}"
-        subpart_entry = {
-            "subpart_id": subpart_id,
-            "subpart_index": file_idx,
-            "doc": doc_name,
+        file_details.append({
+            "file_idx": file_idx,
+            "fpath": fpath,
+            "doc_name": doc_name,
             "doc_slug": doc_slug,
-            "file_index": file_idx,
-            "path": fpath.as_posix(),
-            "type": file_type,
-            "page_range": valid_range,
-            "total_pages": num_pages,
-            "cta_data_path": (cta_parts_dir / f"{subpart_id}_data.py").as_posix(),
-            "cta_out_path": (cta_parts_dir / f"{subpart_id}.json").as_posix(),
-        }
-        subparts_manifest.append(subpart_entry)
+            "file_type": file_type,
+            "num_pages": num_pages,
+            "valid_range": valid_range,
+        })
+
+    # Determine mode. USER PRECEDENCE: an explicit user choice is NEVER overridden by page/file heuristics.
+    #   - explicit "direct" (or force_direct) -> direct, regardless of pages/files.
+    #   - explicit "mapreduce"                -> mapreduce.
+    #   - unspecified ("auto"/None/empty)     -> mapreduce (default).
+    clean_mode = str(cta_mode or "auto").strip().lower()
+    if force_direct or clean_mode in ("direct", "single", "direct_cta", "direct-cta"):
+        mode = "direct"
+    else:
+        mode = "mapreduce"
+
+    subparts_manifest: List[Dict[str, Any]] = []
+    global_subpart_idx = 0
+
+    if mode == "mapreduce":
+        slices_dir = work_dir / "slices"
+        for detail in file_details:
+            file_idx = detail["file_idx"]
+            fpath = detail["fpath"]
+            doc_name = detail["doc_name"]
+            doc_slug = detail["doc_slug"]
+            file_type = detail["file_type"]
+            num_pages = detail["num_pages"]
+            valid_range = detail["valid_range"]
+
+            if file_type == "pdf" and num_pages > MAX_DIRECT_PAGES and slice_pdf_lossless is not None:
+                slices_dir.mkdir(parents=True, exist_ok=True)
+                part_infos = slice_pdf_lossless(fpath, slices_dir, k_parts=None, include_context_page=True)
+                for p_info in part_infos:
+                    global_subpart_idx += 1
+                    subpart_id = f"part_{global_subpart_idx:02d}"
+                    slice_filename = p_info.get("slice_file") or p_info.get("slice_pdf") or Path(p_info.get("slice_path", "")).name
+                    slice_path_val = Path(p_info.get("slice_path") or p_info.get("path") or fpath).as_posix()
+                    page_rng = p_info.get("core_page_range_global") or p_info.get("page_range") or [1, p_info.get("total_pages", num_pages)]
+                    subpart_entry = {
+                        "subpart_id": subpart_id,
+                        "subpart_index": global_subpart_idx - 1,
+                        "doc": doc_name,
+                        "doc_slug": doc_slug,
+                        "source_doc": doc_name,
+                        "file_index": file_idx,
+                        "slice_file": slice_filename,
+                        "path": slice_path_val,
+                        "slice_path": slice_path_val,
+                        "type": file_type,
+                        "page_range": page_rng,
+                        "core_page_range": page_rng,
+                        "page_map": p_info.get("page_map") or {},
+                        "page_mapping": p_info.get("page_mapping") or {},
+                        "total_pages": p_info.get("total_pages") or p_info.get("page_count", num_pages),
+                        "cta_data_path": (cta_parts_dir / f"{subpart_id}_data.py").as_posix(),
+                        "cta_out_path": (cta_parts_dir / f"{subpart_id}.json").as_posix(),
+                    }
+                    subparts_manifest.append(subpart_entry)
+            else:
+                global_subpart_idx += 1
+                subpart_id = f"part_{global_subpart_idx:02d}"
+                page_map = {str(i): {"doc": doc_name, "doc_page": i} for i in range(1, num_pages + 1)}
+                page_mapping = {str(i): i for i in range(1, num_pages + 1)}
+                subpart_entry = {
+                    "subpart_id": subpart_id,
+                    "subpart_index": global_subpart_idx - 1,
+                    "doc": doc_name,
+                    "doc_slug": doc_slug,
+                    "source_doc": doc_name,
+                    "file_index": file_idx,
+                    "slice_file": doc_name,
+                    "path": fpath.as_posix(),
+                    "slice_path": fpath.as_posix(),
+                    "type": file_type,
+                    "page_range": valid_range,
+                    "core_page_range": valid_range,
+                    "page_map": page_map,
+                    "page_mapping": page_mapping,
+                    "total_pages": num_pages,
+                    "cta_data_path": (cta_parts_dir / f"{subpart_id}_data.py").as_posix(),
+                    "cta_out_path": (cta_parts_dir / f"{subpart_id}.json").as_posix(),
+                }
+                subparts_manifest.append(subpart_entry)
+    else:
+        for detail in file_details:
+            file_idx = detail["file_idx"]
+            fpath = detail["fpath"]
+            doc_name = detail["doc_name"]
+            doc_slug = detail["doc_slug"]
+            file_type = detail["file_type"]
+            num_pages = detail["num_pages"]
+            valid_range = detail["valid_range"]
+
+            global_subpart_idx += 1
+            subpart_id = f"part_{global_subpart_idx:02d}"
+            page_map = {str(i): {"doc": doc_name, "doc_page": i} for i in range(1, num_pages + 1)}
+            page_mapping = {str(i): i for i in range(1, num_pages + 1)}
+            subpart_entry = {
+                "subpart_id": subpart_id,
+                "subpart_index": global_subpart_idx - 1,
+                "doc": doc_name,
+                "doc_slug": doc_slug,
+                "source_doc": doc_name,
+                "file_index": file_idx,
+                "slice_file": doc_name,
+                "path": fpath.as_posix(),
+                "slice_path": fpath.as_posix(),
+                "type": file_type,
+                "page_range": valid_range,
+                "core_page_range": valid_range,
+                "page_map": page_map,
+                "page_mapping": page_mapping,
+                "total_pages": num_pages,
+                "cta_data_path": (cta_parts_dir / f"{subpart_id}_data.py").as_posix(),
+                "cta_out_path": (cta_parts_dir / f"{subpart_id}.json").as_posix(),
+            }
+            subparts_manifest.append(subpart_entry)
 
     manifest_payload = {
         "course_id": course_id,
@@ -385,10 +491,11 @@ def main():
     parser.add_argument("--input", required=True, help="Input directory or file path")
     parser.add_argument("--output-dir", "--work", dest="output_dir", required=True, help="Output work directory")
     parser.add_argument("--course-id", default=None, help="Optional course ID")
-    parser.add_argument("--cta-mode", choices=["direct", "mapreduce"], default="direct", help="CTA execution mode")
+    parser.add_argument("--cta-mode", choices=["direct", "mapreduce", "auto"], default="auto", help="CTA execution mode (explicit direct is never auto-promoted; auto/unspecified = mapreduce)")
     parser.add_argument("--dpi", type=int, default=150, help="DPI for PDF page rendering (default 150)")
     parser.add_argument("--render-pages", dest="render_pages", action="store_true", default=False, help="Render PDF pages to PNG (default False)")
     parser.add_argument("--no-render-pages", dest="render_pages", action="store_false", help="Do not render PDF pages to PNG")
+    parser.add_argument("--force-direct", action="store_true", default=False, help="Force direct execution mode without mapreduce promotion")
     args = parser.parse_args()
 
     manifest = ingest_course(
@@ -398,6 +505,7 @@ def main():
         cta_mode=args.cta_mode,
         dpi=args.dpi,
         render_pages=args.render_pages,
+        force_direct=args.force_direct,
     )
     print(f"[+] Ingestion complete: {manifest['total_files']} files, {manifest['total_pages']} pages processed.")
     print(f"[+] Manifest written to: {Path(args.output_dir) / 'pre_cta_manifest.json'} (cta_mode={manifest['cta_mode']})")

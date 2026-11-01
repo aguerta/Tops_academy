@@ -90,13 +90,13 @@ class TestStandardSandboxRestrictions:
             validate_code_ast(code)
 
     def test_infinite_loop_timeout_clean_termination(self):
-        """Resource exhaustion via infinite loop must trigger 2.0s timeout and exit cleanly."""
+        """Resource exhaustion via infinite loop must trigger the (locally shortened) 0.5s timeout and exit cleanly."""
         code = "def generate(rng):\n    while True:\n        pass\n"
         t0 = time.time()
         with pytest.raises(SandboxTimeoutError):
-            execute_sandbox_instance(code, seed=42, timeout=2.0)
+            execute_sandbox_instance(code, seed=42, timeout=0.5)
         elapsed = time.time() - t0
-        assert 1.8 <= elapsed <= 3.5, f"Timeout took {elapsed:.2f}s, expected ~2.0s"
+        assert 0.4 <= elapsed <= 2.0, f"Timeout took {elapsed:.2f}s, expected ~0.5s"
 
     def test_memory_bomb_handled_gracefully(self):
         """Excessive memory allocation must not corrupt host process or hang indefinitely."""
@@ -104,6 +104,9 @@ class TestStandardSandboxRestrictions:
         with pytest.raises((SandboxExecutionError, SandboxTimeoutError)):
             execute_sandbox_instance(code, seed=42, timeout=2.0)
 
+
+# Pre-warm sympy/scipy.stats in the sandbox worker once at import time.
+warm_up_sandbox(timeout=60.0)
 
 # =============================================================================
 # SECTION 2: Legitimate Whitelisted Math Libraries & Determinism
@@ -114,7 +117,6 @@ class TestLegitimateFunctionality:
 
     def test_all_whitelisted_math_libraries(self):
         """math, fractions, statistics, sympy, numpy, scipy.stats, random with rng."""
-        warm_up_sandbox(timeout=60.0)
         code = """
 def generate(rng):
     import math
