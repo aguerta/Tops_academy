@@ -199,20 +199,35 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 
 ---
 
-## ⚡ Regla de Oro: Protocolo de Barrera Reactiva Silenciosa (Silent Reactive Barrier)
+## ⚡ Regla de Oro: Protocolo de Barrera Reactiva Silenciosa y Auto-Kill Inmediato
 
 El Director de Proyecto debe mantener una interacción conversacional ultra-eficiente (~12–16 turnos en toda la corrida).
 
-> [!CAUTION]
-> **COMPORTAMIENTO OBLIGATORIO EN DESPERTARES PARCIALES (`k < N`):**
-> Cuando un subagente finaliza y envía un mensaje `DONE: ...`, la plataforma despierta automáticamente al Director.
-> - Si aún restan subagentes activos de la ola en curso (`k < N`) y el temporizador `schedule` de watchdog NO ha vencido:
-> - **EL DIRECTOR TIENE ESTRICTAMENTE PROHIBIDO LLAMAR A CUALQUIER HERRAMIENTA.**
-> - 🚫 NO ejecutes `Get-ChildItem`, `dir`, `run.py`, `view_file` ni `manage_subagents`.
-> - Simplemente emite una línea de texto informativo: `Progreso de ola: k/N subagentes completados.` y **detén inmediatamente tu turno** (`< 2s` de ejecución).
-> - La plataforma volverá a despertarte reactivamente cuando el siguiente subagente reporte o cuando la ola completa `N/N` esté lista.
+> [!IMPORTANT]
+> **AUTO-KILL OBLIGATORIO DE CUALQUIER SUBAGENTE AL DECIR 'DONE':**
+> En cuanto CUALQUIER subagente (sea `c2c_cta_architect`, `c2c_cta_harmonizer`, `c2c_shard_author`, `c2c_repair`, `c2c_judge`, etc.) reporte `DONE: ...`, el Director **DEBE TERMINARLO INMEDIATAMENTE** llamando a:
+> ```python
+> manage_subagents(Action='kill', ConversationIds=[subagent_conversation_id])
+> ```
+> Dejar subagentes terminados vivos en segundo plano genera procesos zombis, sobreconsumo de inferencia y asfixia por cuota de API (HTTP 429). El auto-kill al recibir `DONE:` es una regla universal e inviolable.
 
-Solo cuando se satisfaga la condición de barrera completa (`N/N` trabajadores de la ola reportaron `DONE:`, o `BLOCKED:`, o cuando el watchdog despierta al Director por tiempo), el Director procede a ejecutar la etapa siguiente del runner.
+> [!CAUTION]
+> **COMPORTAMIENTO EN DESPERTARES PARCIALES (`k < N`):**
+> Cuando un subagente finaliza y envía `DONE: ...`, la plataforma despierta al Director:
+> 1. Ejecuta **únicamente** `manage_subagents(Action='kill', ConversationIds=[subagent_conversation_id])` para apagar al trabajador que concluyó.
+> 2. Si aún restan subagentes activos (`k < N`) y el temporizador no ha vencido:
+>    - 🚫 **PROHIBIDO** ejecutar `Get-ChildItem`, `dir`, `run.py`, `view_file` o inspecciones exploratorias.
+>    - Emite una línea de texto informativo: `Progreso de ola: k/N subagentes completados.` y **detén inmediatamente tu turno** (`< 2s` de ejecución).
+>    - La plataforma volverá a despertarte reactivamente cuando el siguiente subagente reporte `DONE:` o cuando la ola completa `N/N` esté lista.
+
+> [!NOTE]
+> **GESTIÓN DE STRAGGLERS A LOS 10 MINUTOS (WATCHDOG ACTIVO):**
+> Si un subagente de shard o reparación supera los 10 minutos de pared sin reportar `DONE:` y el watchdog despierta al Director:
+> 1. El Director debe leer el transcript del subagente (`transcript.jsonl`) para auditar su estado real.
+> 2. **Si el subagente está convergiendo y terminando sus últimas verificaciones:** déjalo continuar y reprograma el watchdog.
+> 3. **Si el subagente está ciclado o atascado:** envíale un mensaje de ayuda directa analítica (`send_message(Recipient=cid, Message="...")`) indicándole la causa exacta del bloqueo y cómo destrabarlo.
+
+Solo cuando se satisfaga la condición de barrera completa (`N/N` trabajadores de la ola reportaron `DONE:`, o `BLOCKED:`, o tras la resolución de rezagados), el Director procede a ejecutar la etapa siguiente del runner.
 
 ---
 

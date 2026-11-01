@@ -183,7 +183,7 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         prompt = subagents[0]["Prompt"]
         self.assertIn("Hab-02", prompt)
         self.assertIn("shard_02", prompt)
-        self.assertIn("shard_fixes/Hab-02.py", prompt)
+        self.assertIn("shard_fixes/shard_02/Hab-02.py", prompt)
         self.assertIn("DONE: work/shards/shard_02.json", prompt)
 
     # =========================================================================

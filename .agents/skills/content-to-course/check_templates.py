@@ -1210,9 +1210,16 @@ def _format_dry_failure(
         shards_dir = sp.parent if sp.parent.name == "shards" else sp.parent / "shards"
         fixes_dir = shards_dir / "shard_fixes"
         if fixes_dir.is_dir():
-            for f in fixes_dir.glob("*.py"):
-                if f.stem in (competency_id, competency_id.replace("-", "_")):
-                    fix_obj = f
+            # Check shard-specific subdirectory first, then flat fallback
+            shard_id_hint = sp.stem.replace("_data", "")
+            cand_dirs = [fixes_dir / shard_id_hint, fixes_dir]
+            for c_dir in cand_dirs:
+                if c_dir.is_dir():
+                    for f in c_dir.glob("*.py"):
+                        if f.stem in (competency_id, competency_id.replace("-", "_")):
+                            fix_obj = f
+                            break
+                if fix_obj:
                     break
     if fix_obj:
         shard_obj = fix_obj
@@ -1230,7 +1237,8 @@ def _format_dry_failure(
         fr_name = fr.name
         fr_line = fr.line or ""
 
-        mapped_file = f"shard_fixes/{shard_obj.name}" if (fix_obj and shard_obj) else (shard_obj.name if shard_obj else fr.filename)
+        rel_fix_str = str(fix_obj.relative_to(shards_dir)).replace("\\", "/") if (fix_obj and 'shards_dir' in locals()) else (f"shard_fixes/{shard_obj.name}" if fix_obj else (shard_obj.name if shard_obj else fr.filename))
+        mapped_file = rel_fix_str if fix_obj else (shard_obj.name if shard_obj else fr.filename)
         mapped_lineno = fr_lineno
         mapped_code = fr_line
 
@@ -1256,7 +1264,7 @@ def _format_dry_failure(
             f"      File \"{mapped_file}\", line {mapped_lineno}, in {fr_name}\n        {mapped_code}"
         )
 
-    shard_label = f"shard_fixes/{shard_obj.name}" if (fix_obj and shard_obj) else (shard_obj.name if shard_obj else "shard_XX_data.py")
+    shard_label = str(fix_obj.relative_to(shards_dir)).replace("\\", "/") if (fix_obj and 'shards_dir' in locals()) else (f"shard_fixes/{shard_obj.name}" if fix_obj else (shard_obj.name if shard_obj else "shard_XX_data.py"))
     report_lines = [
         f"[-] [TPL-DRY: FALLO EN EJECUCIÓN DRY-RUN]",
         f"    Competencia: {competency_id} | Plantilla: {tpl_id}",

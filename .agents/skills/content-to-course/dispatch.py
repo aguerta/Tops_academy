@@ -251,6 +251,7 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/shards/*_data.py",
             "work/shards/*.json",
             "work/templates/*.json",
+            "work/shards/shard_fixes/<shard_id>/<CID>.py",
             "work/shards/shard_fixes/<CID>.py",
         ],
         "forbidden": [
@@ -308,6 +309,7 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
             "work/shards/*_data.py",
             "work/shards/*.json",
             "work/templates/*.json",
+            "work/shards/shard_fixes/<shard_id>/<CID>.py",
             "work/shards/shard_fixes/<CID>.py",
         ],
         "forbidden": [
@@ -2195,15 +2197,17 @@ def build_dispatch(
 
             out_py = f"{work_rel}/shards/{shard_id}_data.py"
             out_json = f"{work_rel}/shards/{shard_id}.json"
-            shard_fix_path = f"{work_rel}/shards/shard_fixes/{cid}.py"
+            shard_fix_dir = work / "shards" / "shard_fixes" / shard_id
+            shard_fix_dir.mkdir(parents=True, exist_ok=True)
+            shard_fix_path = f"{work_rel}/shards/shard_fixes/{shard_id}/{cid}.py"
             compile_cmd = (
                 f"{cmd_prefix} .agents/skills/content-to-course/compile_shard.py "
-                f"--input {out_py} --output {out_json} --cta {cta_rel} --manifest {manifest_rel} --strict --min-archetypes 3"
+                f"--input {out_py} --output {out_json} --cta {cta_rel} --manifest {manifest_rel} --shard {shard_id} --strict --min-archetypes 3"
             )
             scope_header = build_scope_header(
                 role="repair",
                 read_paths=[out_py, f"{work_rel}/templates/{cid}.json", cta_rel],
-                write_paths=[out_py, out_json, shard_fix_path, f"{work_rel}/shards/shard_fixes/<CID>.py"],
+                write_paths=[out_py, out_json, shard_fix_path, f"{work_rel}/shards/shard_fixes/{shard_id}/<CID>.py", f"{work_rel}/shards/shard_fixes/<CID>.py"],
                 forbidden_paths=[
                     ".agents/skills/content-to-course/compile_shard.py",
                     "scratch/**",

@@ -16,7 +16,7 @@ Trabaja únicamente con los archivos autorizados para tu shard:
   - `<work_dir>/templates/<cid>.json`
 - **WRITE permitido:**
   - `<work_dir>/shards/<shard_id>_data.py` (creación y refinamiento quirúrgico de tuplas Python con `write_file(Overwrite=True)`)
-  - `<work_dir>/shards/shard_fixes/<cid>.py` (anulación modular quirúrgica por competencia durante reparaciones o fallos de compilación)
+  - `<work_dir>/shards/shard_fixes/<shard_id>/<cid>.py` (anulación modular aislada por shard y competencia durante reparaciones o fallos de compilación)
   - `<work_dir>/templates/<cid>.json` (generado y actualizado automáticamente al compilar con `compile_shard.py`)
 - **PROHIBIDO:**
   - 🚫 **PROHIBIDO pasar `ArtifactMetadata` a `write_file` o `edit_file`:** Los archivos de trabajo no son artefactos del cerebro.
@@ -201,8 +201,8 @@ Toda cadena que contenga código LaTeX o KaTeX DEBE escribirse con prefijo raw s
   - Ejemplo escalar: `r"Sea $\hat{\beta} = @beta_hat:.4f@$ en $\mathbb{R}^{@k@}$"`
   - Ejemplo matricial: `r"$$\begin{bmatrix} @a11@ & @a12@ \\ @a21@ & @a22@ \end{bmatrix}$$"`
 
-### Requisito Anti-Memorización: 3 a 5 Variantes de Enunciado (`stem_variants`)
-Cada plantilla debe definir entre 3 y 5 `stem_variants` disjuntos (con distinto encuadre narrativo y contextual, compartiendo el mismo contrato matemático `@var@`) para garantizar anti-memorización y maestría profunda (Mastery Learning).
+### Requisito Anti-Memorización y Compuerta de Diversidad: Al menos 5 Variantes de Enunciado por Arquetipo (`stem_variants`)
+Cada plantilla debe definir al menos 5 `stem_variants` disjuntos (con distinto encuadre narrativo y contextual, compartiendo el mismo contrato matemático `@var@`). Entre los 3 arquetipos de una competencia se debe alcanzar un total de al menos 14 a 15 stems sintácticamente independientes para superar con holgura el Stem Diversity Gate (diversity_ratio $\ge 0.50$, requiriendo $\ge 14$ stems únicos).
 
 ### Regla TPL-VAR: Anti-Colapso y Diversidad Paramétrica
 El generador `gen_<cid>(rng)` debe generar al menos 4 instancias numéricamente distintas a través de las semillas de dry-run. Evite divisiones enteras truncadas a cero o cancelaciones tautológicas que colapsen el espacio de respuestas a un valor constante.
@@ -303,21 +303,28 @@ ver_h01_3 = ver_h01
 
 d_ids_h01 = ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"]
 
-# NOTA CRÍTICA [M3-ARCHETYPES]: Cada arquetipo DEBE tener su propia lista de stems distinta.
+# NOTA CRÍTICA [M3-ARCHETYPES & STEM-DIVERSITY]: Cada arquetipo DEBE tener su propia lista con >= 5 stems
+# disyuntos (alcanzando >= 14 a 15 stems únicos entre los 3 arquetipos) para superar la compuerta de diversidad.
 stems_h01_1 = [
     r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Determine el rendimiento térmico directo:",
     r"Considere un ciclo reversible de Carnot con reservorios térmicos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Calcule la eficiencia máxima teórica directa $\eta$:",
     r"Para una máquina ideal que opera entre $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, determine el rendimiento directo $\eta$:",
+    r"Halle la eficiencia termodinámica de una máquina de Carnot que intercambia calor con reservorios a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+    r"Calcule el factor de rendimiento teórico en un ciclo Carnot estándar operando entre $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
 ]
 stems_h01_2 = [
     r"En un análisis inverso de ciclo térmico con foco frío a $T_C = @tc@\text{ K}$ y caliente a $T_H = @th@\text{ K}$, evalúe el rendimiento:",
     r"Deduzca la eficiencia termodinámica inversa asociada a las cotas térmicas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
     r"A partir de las condiciones observadas con $T_C = @tc@\text{ K}$ y $T_H = @th@\text{ K}$, determine el valor inverso de $\eta$:",
+    r"Bajo la configuración invertida de temperaturas $T_C = @tc@\text{ K}$ frente a $T_H = @th@\text{ K}$, halle el rendimiento:",
+    r"Determine la cota de eficiencia calculada en perspectiva inversa para los reservorios $T_C = @tc@\text{ K}$ y $T_H = @th@\text{ K}$:",
 ]
 stems_h01_3 = [
     r"Si se aplica una perturbación térmica tal que los reservorios operan a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, calcule la nueva eficiencia:",
     r"Evalúe la respuesta de la eficiencia ante el régimen térmico perturbado $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
     r"Considere la variación de temperatura con focos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$; determine el rendimiento perturbado $\eta$:",
+    r"Frente a una desviación de equilibrio en las fuentes a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, determine la eficiencia resultante:",
+    r"En el escenario de frontera térmica con reservorios a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, obtenga la eficiencia $\eta$:",
 ]
 
 hints_h01 = [
@@ -329,12 +336,12 @@ hints_h01 = [
 sol_h01 = r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$."
 
 TEMPLATES = [
-    # 1. Arquetipo Directo / Frontal
-    ("H01_T1", "H-01", "multiple_choice", gen_h01_1, ver_h01_1, ("easy", "Remember"), stems_h01_1, hints_h01, sol_h01),
-    # 2. Arquetipo Inverso / Diagnóstico
-    ("H01_T2", "H-01", "multiple_choice", gen_h01_2, ver_h01_2, ("medium", "Understand"), stems_h01_2, hints_h01, sol_h01),
-    # 3. Arquetipo Perturbación / Frontera
-    ("H01_T3", "H-01", "multiple_choice", gen_h01_3, ver_h01_3, ("hard", "Apply"), stems_h01_3, hints_h01, sol_h01),
+    # 1. Arquetipo Directo / Frontal (ID estricto con prefijo ^T-)
+    ("T-H01-01", "H-01", "multiple_choice", gen_h01_1, ver_h01_1, ("easy", "Remember"), stems_h01_1, hints_h01, sol_h01),
+    # 2. Arquetipo Inverso / Diagnóstico (ID estricto con prefijo ^T-)
+    ("T-H01-02", "H-01", "multiple_choice", gen_h01_2, ver_h01_2, ("medium", "Understand"), stems_h01_2, hints_h01, sol_h01),
+    # 3. Arquetipo Perturbación / Frontera (ID estricto con prefijo ^T-)
+    ("T-H01-03", "H-01", "multiple_choice", gen_h01_3, ver_h01_3, ("hard", "Apply"), stems_h01_3, hints_h01, sol_h01),
 ]
 ```
 
@@ -448,7 +455,7 @@ Bajo la arquitectura Load Inversion, las reglas de introspección son estrictas 
    `python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard <shard_id> --strict --min-archetypes 3`
 4. **Si reporta errores:**
    - Si reporta `< 6` errores (`1..5` errores, sin `SyntaxError`): corrígelos OBLIGATORIAMENTE de forma quirúrgica con `edit_file` (`replace_file_content`) sobre las líneas exactas señaladas en 1 turno paralelo (PROHIBIDO reescribir con `write_file`).
-   - Si reporta `>= 6` errores: escribe el bloque modular en `work/shards/shard_fixes/<CID>.py` (1–2 competencias) o reescribe con `write_file` si es sistémico.
+   - Si reporta `>= 6` errores: escribe el bloque modular en `work/shards/shard_fixes/<shard_id>/<CID>.py` (1–2 competencias) o reescribe con `write_file` si es sistémico.
 5. **Cierre (Corte Inmediato Post-PASS):** Al obtener `PASS` (código de salida 0 y marcador de aprobación), cesa inmediatamente toda edición adicional en archivos Python o JSON y finaliza estrictamente con:
    `DONE: <work_dir>/shards/<shard_id>_data.py`
 
@@ -460,5 +467,5 @@ Bajo la arquitectura Load Inversion, las reglas de introspección son estrictas 
 - **`[INVARIANT]`:** `ver_*(res)` debe verificar una identidad analítica real entre las variables generadas (p. ej. `abs(v["ans"] - expr(v)) < 1e-6`), nunca solo cotas estáticas de rango ni restas crudas `v["a"] - v["b"]` sin comparar con la respuesta. Todas las variables usadas en `sol`/enunciado/distractores deben existir en `vars` y interpolarse como `@var@`.
 - **LaTeX no soportado:** nunca `\not\Rightarrow`, `\iff`, `\implies`. Usa `\Rightarrow` / `\Leftrightarrow`. `\text{...}` <= 45 caracteres.
 - **`[TPL-VAR]` / `param_space`:** amplía los rangos aleatorios (p. ej. 25x25 combinaciones) hasta `param_space >= 500`. Un invariante fallido impide contar los ítems hacia la cuota de diversidad: corrige primero el invariante.
-- **`Template schema violation`:** revisa `hints` (3..5 elementos), `stem_variants` (>= 3, >= 5 caracteres), `correct` FIB sin `$` externos, y que los `distractor_ids` provengan solo de tu work order. No cambies tipos de interacción (p. ej. FIB) sin que el work order lo indique.
+- **`Template schema violation`:** revisa `hints` (3..5 elementos), `stem_variants` (>= 5 elementos, total >= 14 stems por competencia), FIB `correct` sin `$` externos, prefijos de template ID iniciando con `^T-` (ej. `T-H01-01`), y que los `distractor_ids` provengan solo de tu work order. No cambies tipos de interacción (p. ej. FIB) sin que el work order lo indique.
 - Tras 1 error repetido idéntico, aplica `edit_file` quirúrgico y recompila; no vuelvas a leer archivos.

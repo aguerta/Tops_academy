@@ -49,9 +49,9 @@ hints = ["Relación temperaturas absolutas.", "Cociente foco frío y caliente.",
 sol = r"$\eta = 1 - \frac{@tc@}{@th@} = @ans@$"
 
 TEMPLATES = [
-    ("H01_T1", "H-01", "multiple_choice", gen_h01_1, ver_h01_1, ("easy", "Remember"), s1, hints, sol),
-    ("H01_T2", "H-01", "multiple_choice", gen_h01_2, ver_h01_2, ("medium", "Understand"), s2, hints, sol),
-    ("H01_T3", "H-01", "multiple_choice", gen_h01_3, ver_h01_3, ("hard", "Apply"), s3, hints, sol),
+    ("T-H01-01", "H-01", "multiple_choice", gen_h01_1, ver_h01_1, ("easy", "Remember"), s1, hints, sol),
+    ("T-H01-02", "H-01", "multiple_choice", gen_h01_2, ver_h01_2, ("medium", "Understand"), s2, hints, sol),
+    ("T-H01-03", "H-01", "multiple_choice", gen_h01_3, ver_h01_3, ("hard", "Apply"), s3, hints, sol),
 ]
 ```
 

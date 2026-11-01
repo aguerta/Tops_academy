@@ -88,7 +88,7 @@ _WRITE_TOOLS = (
 WORKER_AUTHORIZED_PYTHON_PATTERNS = [
     re.compile(r"(?:^|/)shards/[a-zA-Z0-9_-]+_data\.py$", re.IGNORECASE),
     re.compile(r"(?:^|/)shard_[a-zA-Z0-9_-]+_data\.py$", re.IGNORECASE),
-    re.compile(r"(?:^|/)(?:shards/)?shard_fixes/[^/\\<>:\"|?*]+\.py$", re.IGNORECASE),
+    re.compile(r"(?:^|/)(?:shards/)?shard_fixes/(?:[a-zA-Z0-9_-]+/)?(?:[^/\\<>:\"|?*]+\.py)$", re.IGNORECASE),
     re.compile(r"(?:^|/)(?:shards/)?build_[a-zA-Z0-9_-]+\.py$", re.IGNORECASE),
     re.compile(r"(?:^|/)(?:cta_parts/)?cta_fixes/[^/\\<>:\"|?*]+\.py$", re.IGNORECASE),
     re.compile(r"(?:^|/)cta_fixes/[^/\\<>:\"|?*]+\.py$", re.IGNORECASE),

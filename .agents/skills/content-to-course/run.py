@@ -841,6 +841,8 @@ class PipelineRunner:
                             all_up_to_date = False
                             break
                         shard_fixes_candidates = [
+                            shards_dir / "shard_fixes" / shard_id / f"{cid}.py",
+                            shards_dir / "shard_fixes" / shard_id / f"{cid.lower()}.py",
                             shards_dir / "shard_fixes" / f"{cid}.py",
                             self.work_dir / "shard_fixes" / f"{cid}.py",
                             shards_dir / "shard_fixes" / f"{cid.lower()}.py",
@@ -1127,9 +1129,11 @@ class PipelineRunner:
                 tot_pt = "18-21" if is_sk else "12-15"
                 cat_lbl = "skills" if is_sk else "concepts/facts"
                 s_id = cid_to_shard.get(f_cid, "shard_01")
-                fix_p = shards_dir / "shard_fixes" / f"{f_cid}.py"
+                isolated_fix_p = shards_dir / "shard_fixes" / s_id / f"{f_cid}.py"
+                flat_fix_p = shards_dir / "shard_fixes" / f"{f_cid}.py"
+                fix_p = isolated_fix_p if isolated_fix_p.is_file() else flat_fix_p
                 py_p = fix_p if fix_p.is_file() else (shards_dir / f"{s_id}_data.py")
-                s_file_rel = f"shards/shard_fixes/{f_cid}.py" if fix_p.is_file() else f"shards/{s_id}_data.py"
+                s_file_rel = f"shards/shard_fixes/{s_id}/{f_cid}.py" if isolated_fix_p.is_file() else (f"shards/shard_fixes/{f_cid}.py" if flat_fix_p.is_file() else f"shards/{s_id}_data.py")
                 loc_inst = ShardDataLineLocator(py_p) if py_p.is_file() else None
                 c_tpls = templates_by_comp.get(f_cid, [])
                 for t_i, t_d in enumerate(c_tpls):

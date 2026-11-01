@@ -10,7 +10,7 @@ from playwright.sync_api import sync_playwright, Browser, Page, BrowserContext
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 COURSES_DIR = ROOT_DIR / "courses"
-FIXTURES_DIR = COURSES_DIR / "test_fixtures"
+FIXTURES_DIR = COURSES_DIR / "fixtures"
 SCREENSHOTS_DIR = ROOT_DIR / "tests" / "e2e" / "screenshots"
 
 SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -38,23 +38,22 @@ def platform_server():
     # Attempt to start platform via run_platform.py if present
     run_platform_script = ROOT_DIR / "run_platform.py"
     proc = None
-    target_port = 5173
 
     if run_platform_script.exists():
         proc = subprocess.Popen(
             [sys.executable, str(run_platform_script)],
             cwd=str(ROOT_DIR),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            shell=False,
         )
     elif (ROOT_DIR / "platform" / "package.json").exists():
         proc = subprocess.Popen(
             ["npm.cmd", "run", "dev"],
             cwd=str(ROOT_DIR / "platform"),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            shell=True,
         )
 
     # Wait up to 15 seconds for server to be responsive
@@ -70,7 +69,6 @@ def platform_server():
         time.sleep(0.5)
 
     if not base_url:
-        # Default fallback to 5173 (standard Vite port)
         base_url = "http://localhost:5173"
 
     yield base_url
@@ -83,19 +81,48 @@ def platform_server():
             proc.kill()
 
 
+def resolve_chromium_executable() -> str | None:
+    """Find pre-installed Chromium executable in ms-playwright."""
+    candidates = [
+        Path(os.environ.get("LOCALAPPDATA", "")) / "ms-playwright",
+        Path(os.environ.get("USERPROFILE", "")) / "AppData" / "Local" / "ms-playwright",
+        Path.home() / "AppData" / "Local" / "ms-playwright",
+    ]
+    for ms_dir in candidates:
+        if ms_dir.is_dir():
+            for chrome_dir in sorted(ms_dir.glob("chromium-*"), reverse=True):
+                for sub in ("chrome-win64", "chrome-win"):
+                    exe = chrome_dir / sub / "chrome.exe"
+                    if exe.is_file():
+                        return str(exe)
+    return None
+
+
 @pytest.fixture(scope="session")
 def browser_instance():
-    """Create a headless Chromium browser instance."""
+    """Create a Chromium browser instance matching Milestone 1 rules (headed or scrollbar-preserving)."""
+    # Respect HEADLESS env var; defaults to False (headed) unless HEADLESS=1 or CI=1
+    headless_env = os.environ.get("HEADLESS", "0").lower()
+    headless_mode = headless_env in ("1", "true", "yes")
+
+    exec_path = resolve_chromium_executable()
+    launch_kwargs = {
+        "headless": headless_mode,
+        "args": [
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-gpu",
+            "--window-size=1280,800",
+        ],
+        # Milestone 1 critical finding: headless Chromium hides scrollbars (--hide-scrollbars)
+        # which masks real CSS viewport width. We must ignore it so real scrollbars render!
+        "ignore_default_args": ["--hide-scrollbars"],
+    }
+    if exec_path:
+        launch_kwargs["executable_path"] = exec_path
+
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-gpu",
-                "--window-size=1280,800"
-            ]
-        )
+        browser = p.chromium.launch(**launch_kwargs)
         yield browser
         browser.close()
 
@@ -142,14 +169,14 @@ def setup_test_courses():
     created_files = []
 
     # Copy calculus fixture to root courses/
-    calculus_src = FIXTURES_DIR / "valid_course_calculus.json"
+    calculus_src = FIXTURES_DIR / "28_valid_complete_course.json"
     calculus_dst = COURSES_DIR / "test_differential_calculus.json"
     if calculus_src.exists() and not calculus_dst.exists():
         shutil.copy2(calculus_src, calculus_dst)
         created_files.append(calculus_dst)
 
     # Copy challenge fixture to root courses/
-    challenge_src = FIXTURES_DIR / "valid_course_challenge.json"
+    challenge_src = FIXTURES_DIR / "demo_course.json"
     challenge_dst = COURSES_DIR / "test_course_challenge.json"
     if challenge_src.exists() and not challenge_dst.exists():
         shutil.copy2(challenge_src, challenge_dst)

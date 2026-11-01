@@ -369,6 +369,7 @@ TEMPLATES = [
             r"A partir de estimaciones con datos de gemelos donde b_LS = @b_ls@, b_IV = @b_iv@, varianzas V_LS = @v_ls@, V_IV = @v_iv@, y q = @q@, halle el valor de H:",
             r"Para contrastar la presencia de endogeneidad en las diferencias entre gemelos con b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, determine el estadistico H:",
             r"Bajo la hipotesis nula de exogeneidad en el modelo de gemelos con estimadores b_LS = @b_ls@, b_IV = @b_iv@, V_LS = @v_ls@ y V_IV = @v_iv@, compute el estadistico H:",
+            r"Evaluando la muestra salarial pareada con coeficientes b_LS = @b_ls@ y b_IV = @b_iv@, obtenga el estadistico de prueba H:",
         ],
         [
             r"El numerador del estadistico de Hausman es la diferencia al cuadrado entre los estimadores.",
@@ -388,6 +389,8 @@ TEMPLATES = [
             r"Con varianzas asintoticas estimadas V_IV = @v_iv@ y V_LS = @v_ls@, calcule el denominador de Hausman:",
             r"A partir de las precisiones V_IV = @v_iv@ y V_LS = @v_ls@, halle la resta de varianzas del contraste:",
             r"Determine la diferencia escalar entre las varianzas V_IV = @v_iv@ y V_LS = @v_ls@:",
+            r"Calcule la magnitud del denominador en el test de Hausman con V_IV = @v_iv@ y V_LS = @v_ls@:",
+            r"Obtenga el valor escalar resultante de restar V_LS = @v_ls@ de V_IV = @v_iv@:",
         ],
         [
             r"Reste la varianza de minimos cuadrados de la varianza instrumental.",
@@ -407,6 +410,8 @@ TEMPLATES = [
             r"Para coeficientes salariales b_IV = @b_iv@ y b_LS = @b_ls@, halle el numerador cuadratico de Hausman:",
             r"Calcule el cuadrado de la discrepancia vectorial entre b_IV = @b_iv@ y b_LS = @b_ls@:",
             r"Determine el factor cuadratico (b_IV - b_LS)^2 para b_IV = @b_iv@ y b_LS = @b_ls@:",
+            r"Halle la diferencia elevada al cuadrado entre b_IV = @b_iv@ y b_LS = @b_ls@ para el numerador:",
+            r"Evalúe la discrepancia cuadratica de estimadores con valores b_IV = @b_iv@ y b_LS = @b_ls@:",
         ],
         [
             r"Calcule primero la resta entre el estimador IV y el estimador MCO.",
@@ -589,7 +594,8 @@ TEMPLATES = [
         [
             r"Enfoque Directo: Dados $@base@$ y $@step@$, halle el producto:",
             r"Cálculo frontal estándar de $@base@$ multiplicado por $@step@$:",
-            r"Multiplique directamente $@base@$ y $@step@$:"
+            r"Multiplique directamente $@base@$ y $@step@$:",
+            r"Determine el producto escalar resultante entre $@base@$ y $@step@$:"
         ],
         [
             r"Multiplique el valor base por el factor de escala.",
@@ -608,7 +614,8 @@ TEMPLATES = [
         [
             r"Enfoque Inverso: Dado el total $@total@$ y divisor $@div@$, determine el cociente:",
             r"Resolución inversa para recuperar la cantidad base de $@total@$ dividido $@div@$:",
-            r"Halle la inversa de $@total@$ sobre $@div@$:"
+            r"Halle la inversa de $@total@$ sobre $@div@$:",
+            r"Calcule el valor base despejando $@total@$ respecto al divisor $@div@$:"
         ],
         [
             r"Divida el valor acumulado total entre el divisor proporcionado.",
@@ -627,7 +634,8 @@ TEMPLATES = [
         [
             r"Enfoque Perturbación: Considere $@x@$ perturbado por $@delta@$:",
             r"Análisis de estática comparativa tras sumar $@delta@$ a $@x@$:",
-            r"Evalúe la perturbación sobre $@x@$ con incremento $@delta@$:"
+            r"Evalúe la perturbación sobre $@x@$ con incremento $@delta@$:",
+            r"Determine la respuesta del sistema al perturbar $@x@$ con incremento $@delta@$:"
         ],
         [
             r"Sume el incremento perturbativo al valor base analizado.",
@@ -646,7 +654,8 @@ TEMPLATES = [
         [
             r"Enfoque Frontera: Con parámetro límite $@k@$, determine el valor escalado de cien entre k:",
             r"Evaluación en régimen asintótico o de frontera para la razón de cien sobre $@k@$:",
-            r"Halle el caso límite de cien dividido $@k@$:"
+            r"Halle el caso límite de cien dividido $@k@$:",
+            r"Calcule la magnitud en el régimen asintótico límite de cien sobre $@k@$:"
         ],
         [
             r"Divida la constante cien entre el parametro de frontera k.",

@@ -303,13 +303,13 @@ def _resolve_linter_remediation(
             ),
         )
 
-    if "zpd" in l_low or "modality" in l_low:
+    if "zpd" in l_low or "modality" in l_low or "archetype" in l_low:
         return (
             f"ZPD-TRI-BAND / {linter_name}",
-            f"Cobertura incompleta de bandas ZPD (`easy`, `medium`, `hard`), niveles de Bloom o modalidades activas en `{cid}` ({file_label}).",
+            f"Cobertura incompleta de bandas ZPD (`easy`, `medium`, `hard`), arquetipos estructurales (< 3), niveles de Bloom o modalidades activas en `{cid}` ({file_label}).",
             (
-                f"En `{file_label}` ({line_range_label}), define al menos 3 tuplas en `TEMPLATES` para `{cid}` cubriendo "
-                f"`('easy', ...)`, `('medium', ...)`, `('hard', ...)` con >= 2 niveles de Bloom y la cuota de `fill_in_the_blank` / `multiple_select`."
+                f"En `{file_label}` ({line_range_label}), define al menos 3 tuplas ortogonales en `TEMPLATES` para `{cid}` cubriendo "
+                f"`('easy', ...)`, `('medium', ...)`, `('hard', ...)` con >= 2 niveles de Bloom, enunciados estructuralmente distintos y la cuota de `fill_in_the_blank` / `multiple_select`."
             ),
         )
 
@@ -412,7 +412,9 @@ def build_specific_error_report(
                             shard_to_py[s_id] = s_py
                         for c_item in cids:
                             cid_to_shard[str(c_item)] = s_id
-                            fix_cand = work_dir / "shards" / "shard_fixes" / f"{c_item}.py"
+                            isolated_fix = work_dir / "shards" / "shard_fixes" / s_id / f"{c_item}.py"
+                            flat_fix = work_dir / "shards" / "shard_fixes" / f"{c_item}.py"
+                            fix_cand = isolated_fix if isolated_fix.is_file() else flat_fix
                             cid_to_py[str(c_item)] = fix_cand if fix_cand.is_file() else s_py
                     break
                 except Exception:
@@ -430,7 +432,9 @@ def build_specific_error_report(
                         t_cid = t_info.get("competency_id")
                         if t_cid and t_cid not in cid_to_py:
                             cid_to_shard[t_cid] = s_id
-                            fix_cand = shards_dir / "shard_fixes" / f"{t_cid}.py"
+                            isolated_fix = shards_dir / "shard_fixes" / s_id / f"{t_cid}.py"
+                            flat_fix = shards_dir / "shard_fixes" / f"{t_cid}.py"
+                            fix_cand = isolated_fix if isolated_fix.is_file() else flat_fix
                             cid_to_py[t_cid] = fix_cand if fix_cand.is_file() else py_f
 
     # Load template_id hints from work/templates/<cid>.json if available

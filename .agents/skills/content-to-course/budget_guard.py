@@ -642,7 +642,9 @@ def generate_repair_redispatch(
         unit_id = item["unit_id"]
         reasons = item["reasons"]
 
-        fix_py = f"work/shards/shard_fixes/{cid}.py"
+        shard_isolated_dir = shard_fixes_dir / unit_id
+        shard_isolated_dir.mkdir(parents=True, exist_ok=True)
+        fix_py = f"work/shards/shard_fixes/{unit_id}/{cid}.py"
         out_py = f"work/shards/{unit_id}_data.py"
         out_json = f"work/shards/{unit_id}.json"
 

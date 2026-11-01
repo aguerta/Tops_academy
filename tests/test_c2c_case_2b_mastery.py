@@ -249,17 +249,17 @@ def ver_c01_inverse(res):
 
 # Archetype 3: Comparative Statics / Perturbation
 def gen_c01_perturbation(rng):
-    s1 = round(rng.uniform(0.15, 0.35), 2)
-    delta_s = round(rng.uniform(0.02, 0.15), 2)
+    s1 = round(rng.uniform(0.16, 0.34), 2)
+    delta_s = round(rng.uniform(0.02, 0.14), 2)
     s2 = round(s1 + delta_s, 2)
     shift_dir = "hacia arriba"
     distractors = [
-        {"value": rf"La curva de inversión rota en sentido horario con nueva tasa s = {round(s2 + 0.05, 2)}", "distractor_id": "D-C01-01", "error_rationale": "Confusión entre desplazamiento y rotación para tasa @s1@"},
-        {"value": rf"La recta de reposición incrementa su pendiente automáticamente para s = {round(s2 + 0.10, 2)}", "distractor_id": "D-C01-02", "error_rationale": "Atribución errónea del efecto a la reposición con @delta_s@"},
-        {"value": rf"La tasa de ahorro marginal colapsa produciendo rendimientos con s = {round(s2 + 0.15, 2)}", "distractor_id": "D-C01-03", "error_rationale": "Confusión entre ahorro @s2@ y productividad marginal"},
-        {"value": rf"El nivel de producto per cápita permanece estrictamente inmutable con s = {round(s2 + 0.20, 2)}", "distractor_id": "D-C01-04", "error_rationale": "Falsa neutralidad del parámetro de ahorro @s1@ a @s2@"},
-        {"value": rf"La acumulación neta de capital se anula instantáneamente para s = {round(s2 + 0.25, 2)}", "distractor_id": "D-C01-05", "error_rationale": "Confusión entre régimen transitorio y estado estacionario con @s2@"},
-        {"value": rf"El consumo por trabajador iguala a la inversión bruta en todo momento con s = {round(s2 + 0.30, 2)}", "distractor_id": "D-C01-06", "error_rationale": "Supuesto arbitrario de igualdad ahorro-consumo para @delta_s@"},
+        {"value": rf"La curva de inversión rota en sentido horario con nueva tasa s = {round(s2 + 0.07, 2)}", "distractor_id": "D-C01-01", "error_rationale": "Confusión entre desplazamiento y rotación para tasa @s1@"},
+        {"value": rf"La recta de reposición incrementa su pendiente automáticamente para s = {round(s2 + 0.11, 2)}", "distractor_id": "D-C01-02", "error_rationale": "Atribución errónea del efecto a la reposición con @delta_s@"},
+        {"value": rf"La tasa de ahorro marginal colapsa produciendo rendimientos con s = {round(s2 + 0.17, 2)}", "distractor_id": "D-C01-03", "error_rationale": "Confusión entre ahorro @s2@ y productividad marginal"},
+        {"value": rf"El nivel de producto per cápita permanece estrictamente inmutable con s = {round(s2 + 0.23, 2)}", "distractor_id": "D-C01-04", "error_rationale": "Falsa neutralidad del parámetro de ahorro @s1@ a @s2@"},
+        {"value": rf"La acumulación neta de capital se anula instantáneamente para s = {round(s2 + 0.29, 2)}", "distractor_id": "D-C01-05", "error_rationale": "Confusión entre régimen transitorio y estado estacionario con @s2@"},
+        {"value": rf"El consumo por trabajador iguala a la inversión bruta en todo momento con s = {round(s2 + 0.37, 2)}", "distractor_id": "D-C01-06", "error_rationale": "Supuesto arbitrario de igualdad ahorro-consumo para @delta_s@"},
     ]
     correct_str = rf"La curva de inversión se desplaza {shift_dir} con nueva tasa de ahorro s = {s2}"
     return {"vars": {"s1": s1, "s2": s2, "delta_s": delta_s}, "correct": correct_str, "distractors": distractors}

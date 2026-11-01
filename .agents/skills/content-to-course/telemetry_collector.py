@@ -304,19 +304,34 @@ def inspect_subagent_transcript(
 
 
 def _infer_canonical_subagent_role(p0: str, fallback_role: str, cid: str) -> str:
-    """Infers canonical role (Direct CTA Architect, Author Shard XX, Judge XX) from step 0 prompt."""
+    """Infers canonical role (Direct CTA Architect, Author Shard XX, Judge XX, Repair Engineer XX) from step 0 prompt."""
     combined = f"{fallback_role} {p0[:600]}"
+
+    # 1. Check Repair Engineer first (must precede shard author check to avoid false match on shard file paths)
+    m_rep = re.search(r"(?:Repair\s+Engineer\s+([A-Za-z0-9_\-]+)|repair_([A-Za-z0-9_\-]+)|c2c_repair)", combined, re.IGNORECASE)
+    if m_rep:
+        target = m_rep.group(1) or m_rep.group(2)
+        return f"Repair Engineer ({target})" if target else "Repair Engineer"
+    if any(k in combined.lower() for k in ("c2c_repair", "repair engineer", "repair_engineer", "prompts/repair", "prompt_repair", "shard_fixes")):
+        return fallback_role if ("repair" in fallback_role.lower()) else "Repair Engineer"
+
+    # 2. Check CTA parts and architects
     m_part = re.search(r"(?:part_|cta_|CTA Architect\s*\(?part_|CTA Architect\s+)(\d+)", combined, re.IGNORECASE)
-    m_shard = re.search(r"(?:shard_|Shard Exercise Author:\s*`?shard_|Shard Author shard_|Author Shard\s+|Shard\s+)(\d+)", combined, re.IGNORECASE)
-    m_judge = re.search(r"(?:Judge\s+|judge_batch_|judge_responses_|judge_)(\d+)", combined, re.IGNORECASE)
     if m_part:
         return f"CTA Architect (part_{int(m_part.group(1)):02d})"
     if any(k in combined.lower() for k in ("direct cta", "cta-direct", "prompt_cta", "cognitive task analysis architect", "c2c_cta_architect", "compile_cta.py")):
         return "Direct CTA Architect"
+
+    # 3. Check Shard Authors
+    m_shard = re.search(r"(?:shard_|Shard Exercise Author:\s*`?shard_|Shard Author shard_|Author Shard\s+|Shard\s+)(\d+)", combined, re.IGNORECASE)
     if m_shard:
         return f"Author Shard {int(m_shard.group(1)):02d}"
+
+    # 4. Check Blind Judges
+    m_judge = re.search(r"(?:Judge\s+|judge_batch_|judge_responses_|judge_)(\d+)", combined, re.IGNORECASE)
     if m_judge:
         return f"Judge {int(m_judge.group(1)):02d}"
+
     if fallback_role and not fallback_role.startswith("Subagent"):
         return fallback_role
     return f"Subagent-{cid[:8]}"
@@ -345,7 +360,8 @@ def extract_stage_subagents(
         "cta": ["cta", "cta-direct", "cta-map", "cta-reduce", "c2c-cta", "architect", "part_", "compile_cta"],
         "shard": ["shard", "author", "compile_shard"],
         "templates": ["author", "c2c-author", "shard_", "exercise", "compile_shard"],
-        "build": ["build"],
+        "build": ["build", "repair", "c2c-repair", "c2c_repair", "shard_fixes"],
+        "repair": ["repair", "c2c-repair", "c2c_repair", "shard_fixes", "fix"],
         "verify": ["judge", "c2c-judge", "repair", "c2c-repair"],
         "judge_compare": ["judge", "c2c-judge", "judge_batch", "judge_responses"],
         "publish": ["publish"],

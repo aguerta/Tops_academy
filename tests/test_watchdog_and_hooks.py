@@ -847,11 +847,11 @@ class TestBudgetWatchdogBrainAndRedispatch(unittest.TestCase):
         self.assertTrue(item_file.is_file())
         item_data = json.loads(item_file.read_text(encoding="utf-8"))
 
-        self.assertEqual(item_data["modular_fix_file"], "work/shards/shard_fixes/Hab-04.py")
+        self.assertEqual(item_data["modular_fix_file"], "work/shards/shard_fixes/shard_06/Hab-04.py")
         self.assertEqual(item_data["output_python"], "work/shards/shard_06_data.py")
         self.assertIn("--work", item_data["compile_command"])
         self.assertIn("--shard shard_06", item_data["compile_command"])
-        self.assertIn("shard_fixes/Hab-04.py", item_data["instructions"])
+        self.assertIn("shard_fixes/shard_06/Hab-04.py", item_data["instructions"])
 
     def test_parse_transcript_with_truncated_live_line(self) -> None:
         """Live transcripts mid-write with a truncated trailing JSON line parse cleanly."""

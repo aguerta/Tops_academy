@@ -49,19 +49,19 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
 
 2. **Estrategia Quirúrgica y Umbral Oficial < 6 Errores:**
    - **Errores < 6 (1..5 errores, sin SyntaxError):** Uso **OBLIGATORIO** de `edit_file` (o `replace_file_content`) quirúrgico en 1 turno paralelo directamente sobre las líneas afectadas `StartLine..EndLine` en `<work_dir>/shards/<shard_id>_data.py`. Queda prohibido reescribir todo el archivo desde cero con `write_file`.
-   - **Errores >= 6:** Escribe el bloque completo de la competencia corregida en `<work_dir>/shards/shard_fixes/<CID>.py` usando `write_file(Overwrite=True)` (si está acotado a 1–2 competencias) o reescribe con `write_file` (si es sistémico en >= 3 competencias o SyntaxError). El compilador `compile_shard.py` detecta e integra automáticamente `shard_fixes/<CID>.py` en memoria durante la compilación.
+   - **Errores >= 6:** Escribe el bloque completo de la competencia corregida en `<work_dir>/shards/shard_fixes/<shard_id>/<CID>.py` usando `write_file(Overwrite=True)` (si está acotado a 1–2 competencias) o reescribe con `write_file` (si es sistémico en >= 3 competencias o SyntaxError). El compilador `compile_shard.py` detecta e integra automáticamente `shard_fixes/<shard_id>/<CID>.py` de forma aislada en memoria durante la compilación.
 
 ### B. Estructura Canónica de 9-Tupla Form-B
 Cada plantilla corregida sigue la estructura:
 ```python
 (
-    "C01_T1",                     # 0: template_id
+    "T-C01-01",                   # 0: template_id (prefijo estricto ^T-)
     "C-01",                       # 1: competency_id
     "multiple_choice",            # 2: question_type ('multiple_choice', 'fill_in_the_blank', 'multiple_select')
     gen_c01_1,                    # 3: generator_code
     ver_c01_1,                    # 4: verifier_code (analítico no trivial)
     ("easy", "Remember"),         # 5: (difficulty, bloom)
-    stems_c01_1,                  # 6: stem_variants (>= 3 variantes disjuntas con @var@)
+    stems_c01_1,                  # 6: stem_variants (>= 5 variantes disjuntas con @var@, total >= 14 stems)
     hints_c01_1,                  # 7: hints (3..5 pistas socráticas >= 25 chars)
     sol_c01_1,                    # 8: solution / explanation_es con @var@
 )

@@ -921,4 +921,4 @@ def test_judge_streaming_sha256_re_evaluation_on_repair_and_wave_isolation(tmp_p
     # Assert compile_shard in forbidden, not in read, and shard_fixes/<CID>.py in write
     prompt = repair_data["Prompt"]
     assert ".agents/skills/content-to-course/compile_shard.py" in prompt
-    assert "shard_fixes/C-03.py" in prompt
+    assert "shard_fixes/shard_02/C-03.py" in prompt
