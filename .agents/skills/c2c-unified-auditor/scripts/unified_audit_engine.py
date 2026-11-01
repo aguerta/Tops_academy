@@ -484,6 +484,15 @@ def generate_merged_markdown_report(
         bar = "█" * filled + "░" * (40 - filled)
         ascii_bars.append(f"{s_name:<23}: [{bar}] {int(st.get('inference_seconds', 0))}s ({inf_pct}%) LLM | {int(st.get('tool_seconds', 0))}s Tools")
 
+    repairs_data = traceback_data.get("repairs", {})
+    for r_name, r_info in repairs_data.items():
+        if r_name not in shards_data:
+            rt = r_info.get("timings", {})
+            inf_pct = rt.get("inference_pct", 0.0)
+            filled = int(inf_pct / 2.5)
+            bar = "█" * filled + "░" * (40 - filled)
+            ascii_bars.append(f"{r_name:<23}: [{bar}] {int(rt.get('inference_seconds', 0))}s ({inf_pct}%) LLM | {int(rt.get('tool_seconds', 0))}s Tools")
+
     for j_name, j_info in judges_data.items():
         jt = j_info.get("timings", {})
         inf_pct = jt.get("inference_pct", 0.0)
@@ -706,8 +715,27 @@ def generate_merged_markdown_report(
     avg_tool_pct = global_timings.get("avg_tool_pct", 0.0)
     stg1b = stg.get("stage_1b_cta", {})
     stg3 = stg.get("stage_3_authors", {})
+    stg3b = stg.get("stage_3b_repairs", {})
+    if not stg3b or not stg3b.get("repairs_count"):
+        repair_subs = [s for s in telemetry_data.get("subagents", []) if s.get("category") == "repair"]
+        repair_durs = [s.get("duration_seconds", 0.0) for s in repair_subs]
+        max_rep = max(repair_durs) if repair_durs else 0.0
+        med_rep = sorted(repair_durs)[len(repair_durs) // 2] if repair_durs else 0.0
+        slowest_rep = next((s for s in repair_subs if s.get("duration_seconds") == max_rep), None) if repair_durs else None
+        stg3b = {
+            "repairs_count": len(repair_subs),
+            "repairs": repair_subs,
+            "min_duration_seconds": min(repair_durs) if repair_durs else 0.0,
+            "median_duration_seconds": med_rep,
+            "max_duration_seconds": max_rep,
+            "slowest_repair": slowest_rep["label"] if slowest_rep else "N/A",
+        }
     stg5 = stg.get("stage_5_judges", {})
     orch_td = orch.get("time_decomposition", {})
+    cta_count = stg1b.get('agents_count', stg1b.get('mappers_count', 0) + (1 if stg1b.get('harmonizer') else 0))
+    shards_count = stg3.get('shards_count', len(shards_data) or 0)
+    repairs_count = stg3b.get('repairs_count', 0)
+    judges_count = stg5.get('judges_count', 0)
 
     # PART II: RUN AUDITOR
     md += f"""
@@ -722,7 +750,7 @@ def generate_merged_markdown_report(
 | **Material de Entrada (`pre_cta_manifest.json`)** | `{workload.get('source_files_count', len(workload.get('source_files', [])))} archivos` ({workload.get('pages_or_slides', workload.get('total_pages_or_slides', 0))} págs / {workload.get('input_mb', workload.get('total_input_mb', 0.0))} MB) | Ingesta directa PDF Zero-Waste (v3.2) |
 | **Competencias Extraídas (`cta.json`)** | **`{total_comps} competencias`** | Compiladas desde tuplas posicionales (`compile_cta.py`) |
 | **Shards Particionados (`pre_shard_manifest.json`)** | **`{workload.get('shards_count', len(shards_data) or 0)} shards`** | Compilados vía `compile_shard.py` |
-| **Subagentes Desplegados ($M$ CTA, $N$ Shards, $K$ Judges)** | **`{t_summary.get('total_subagents_spawned', 0)} subagentes`** | Fan-out dinámico coordinado por orquestador |
+| **Subagentes Desplegados ($M$ CTA, $N$ Shards, $R$ Repairs, $K$ Judges)** | **`{t_summary.get('total_subagents_spawned', 0)} subagentes`** | Fan-out dinámico coordinado por orquestador (CTA: {cta_count}, Shards: {shards_count}, Repairs: {repairs_count}, Judges: {judges_count}) |
 | **Reactivos Finales Validados** | **`{total_questions} preguntas`** | Evaluadas en sandbox in-process |
 | **Tokens Entrada (Subagentes)** | **`{t_summary.get('total_input_tokens', 0):,} tokens`** | Contexto acumulativo enviado a subagentes |
 | **Tokens Salida (Subagentes)** | **`{t_summary.get('total_output_tokens', 0):,} tokens`** | Código de tuplas Python y JSON generado |
@@ -763,6 +791,7 @@ DISTRIBUCIÓN DEL TIEMPO DE PARED POR SUBAGENTE (INFERENCIA LLM vs TOOLS)
 | :--- | :---: | :---: | :--- |
 | **Stage 1B: CTA Architects** | `{stg1b.get('agents_count', stg1b.get('mappers_count', 0) + (1 if stg1b.get('harmonizer') else 0))}` | `{stg1b.get('total_stage_wall_time', 0.0)}s` | Mappers max: `{stg1b.get('mappers_max_wall_time', 0.0)}s`, Harmonizer: `{stg1b.get('harmonizer_duration', 0.0)}s` |
 | **Stage 3: Shard Authors** | `{stg3.get('shards_count', 0)}` | `{stg3.get('max_duration_seconds', 0.0)}s` | Min: `{stg3.get('min_duration_seconds', 0.0)}s`, Mediana: `{stg3.get('median_duration_seconds', 0.0)}s`, Straggler: `{stg3.get('straggler_shard', 'N/A')}` (`+{stg3.get('straggler_delay_vs_median', 0.0)}s`) |
+| **Stage 3B: Repair Engineers** | `{stg3b.get('repairs_count', 0)}` | `{stg3b.get('max_duration_seconds', 0.0)}s` | Min: `{stg3b.get('min_duration_seconds', 0.0)}s`, Mediana: `{stg3b.get('median_duration_seconds', 0.0)}s`, Straggler / Slowest: `{stg3b.get('slowest_repair', 'N/A')}` |
 | **Stage 5: Blind Judges** | `{stg5.get('judges_count', 0)}` | `{stg5.get('max_judge_duration', 0.0)}s` | Lote: `{stg5.get('batch_items_count', 0)}` ítems, 1er intento: `{stg5.get('passed_first_attempt', True)}`, Auto-repair: `{stg5.get('repair_iterations', 0)}` |
 | **Orquestador Principal** | `1` | `{wall_sec:.1f}s` | CLI: `{orch_td.get('cli_execution_seconds', 0.0)}s`, Barrera: `{orch_td.get('barrier_wait_seconds', 0.0)}s`, Intervenciones: `{orch.get('interventions_count', 0)}` (`{orch_td.get('supervisor_repair_seconds', 0.0)}s`) |
 

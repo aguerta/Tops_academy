@@ -353,6 +353,10 @@ class TranscriptParser:
                         category = "vision"
                     elif "repair" in role_lower or "repair" in type_lower or "prompts/repair" in prompt_preview.lower():
                         category = "repair"
+                        shard_id = None
+                    elif "judge" in role_lower or "judge" in type_lower:
+                        category = "judge"
+                        shard_id = None
                     elif (
                         "mapper" in role_lower
                         or "cta section" in role_lower
@@ -363,18 +367,17 @@ class TranscriptParser:
                         or "subpart" in prompt_preview.lower()
                     ):
                         category = "cta_mapper"
+                        shard_id = None
                     elif "harmonizer" in role_lower or "cta reduce" in role_lower or "cta-reduce" in type_lower:
                         category = "cta_harmonizer"
+                        shard_id = None
                     elif "direct cta" in role_lower or "cta architect" in role_lower or "cta-direct" in type_lower or "cta" in type_lower:
                         category = "cta_harmonizer"
+                        shard_id = None
                     elif shard_id or "author" in role_lower or "shard" in role_lower or "author" in type_lower:
                         category = "author"
                         if role == "Subagent" and shard_id:
                             role = f"Shard Author {shard_id}"
-                    elif "judge" in role_lower or "judge" in type_lower:
-                        category = "judge"
-                    elif "repair" in role_lower or "repair" in type_lower:
-                        category = "repair"
                     else:
                         category = "generic"
 
@@ -1353,12 +1356,17 @@ class ExecutionAuditor:
 
             tcs = rec.get("tool_calls", [])
             for tc in tcs:
-                tname = tc.get("name")
-                if tname in ("replace_file_content", "write_to_file"):
-                    args = tc.get("args", {})
-                    target_raw = args.get("TargetFile", "")
+                tname = tc.get("name") or tc.get("function", {}).get("name", "")
+                if tname in ("replace_file_content", "write_to_file", "write_file", "edit_file"):
+                    args = tc.get("args") or tc.get("function", {}).get("arguments", {})
+                    if isinstance(args, str):
+                        try:
+                            args = json.loads(args)
+                        except Exception:
+                            args = {}
+                    target_raw = args.get("TargetFile") or args.get("Path", "")
                     target_file = target_raw.strip('"\'')
-                    desc = (args.get("Description", "") or args.get("Instruction", "")).strip()
+                    desc = (args.get("Description", "") or args.get("Instruction", "") or args.get("Summary", "")).strip()
 
                     f_lower = target_file.lower()
                     d_lower = desc.lower()
@@ -1443,7 +1451,7 @@ class ExecutionAuditor:
                 tool_names = [tc.get("name") for tc in tcs]
                 if "invoke_subagent" in tool_names:
                     total_barrier_dur += delta
-                elif any(tn in ("replace_file_content", "write_to_file") for tn in tool_names):
+                elif any(tn in ("replace_file_content", "write_to_file", "write_file", "edit_file") for tn in tool_names):
                     total_repair_dur += delta
                 elif "run_command" in tool_names:
                     total_cli_dur += delta
@@ -1669,10 +1677,29 @@ class ExecutionAuditor:
             "actions_taken": actions_taken
         }
 
+        # 3b. Stage 3B: Repair Engineers (Remediation Agents)
+        repair_durs = [s["duration_seconds"] for s in repair_subs]
+        max_repair_dur = max(repair_durs) if repair_durs else 0.0
+        median_repair_dur = sorted(repair_durs)[len(repair_durs) // 2] if repair_durs else 0.0
+        total_repair_active_tokens = sum(s["active_tokens"] for s in repair_subs)
+        slowest_repair = next((s for s in repair_subs if s["duration_seconds"] == max_repair_dur), None) if repair_durs else None
+
+        stage_3b = {
+            "repairs_count": len(repair_subs),
+            "repairs": repair_subs,
+            "min_duration_seconds": min(repair_durs) if repair_durs else 0.0,
+            "median_duration_seconds": median_repair_dur,
+            "max_duration_seconds": max_repair_dur,
+            "total_active_tokens": total_repair_active_tokens,
+            "total_cache_tokens": sum(s["cache_read_tokens"] for s in repair_subs),
+            "slowest_repair": slowest_repair["label"] if slowest_repair else "N/A",
+        }
+
         return {
             "stage_1a_vision": stage_1a,
             "stage_1b_cta": stage_1b,
             "stage_3_authors": stage_3,
+            "stage_3b_repairs": stage_3b,
             "stage_5_judges": stage_5
         }
 
@@ -2086,7 +2113,7 @@ class ReportGenerator:
             f"| **Corpus Sintetizado** | `{w['corpus_chars']:,} caracteres` ({w['corpus_words']:,} palabras) | Texto consolidado tras ingesta y visión |",
             f"| **Competencias Extraídas** | **`{w['competencies_count']} competencias`** | Desglose pedagógico (Hechos, Conceptos, Habilidades) |",
             f"| **Shards Particionados** | **`{w['shards_count']} shards`** | Unidades de trabajo concurrentes |",
-            f"| **Subagentes Desplegados** | **`{summary['total_subagents_spawned']} subagentes`** | Visión ({stg['stage_1a_vision']['agents_count']}), CTA ({stg['stage_1b_cta'].get('agents_count', stg['stage_1b_cta']['mappers_count'] + (1 if stg['stage_1b_cta']['harmonizer'] else 0))}), Autores ({stg['stage_3_authors']['shards_count']}), Jueces ({stg['stage_5_judges'].get('judges_count', 0)}) |",
+            f"| **Subagentes Desplegados** | **`{summary['total_subagents_spawned']} subagentes`** | Visión ({stg['stage_1a_vision']['agents_count']}), CTA ({stg['stage_1b_cta'].get('agents_count', stg['stage_1b_cta']['mappers_count'] + (1 if stg['stage_1b_cta']['harmonizer'] else 0))}), Autores ({stg['stage_3_authors']['shards_count']}), Repairs ({stg.get('stage_3b_repairs', {}).get('repairs_count', 0)}), Jueces ({stg['stage_5_judges'].get('judges_count', 0)}) |",
             f"| **Reactivos Finales Validados** | **`{w['questions_count']} preguntas`** | Evaluadas en sandbox |",
             f"| **Tokens Entrada (Subagentes)** | **`{sum(s['input_tokens'] for s in subs):,}` tokens** | Contexto acumulativo enviado a subagentes |",
             f"| **Tokens Salida (Subagentes)** | **`{sum(s['output_tokens'] for s in subs):,}` tokens** | Código de plantillas y JSON generado |",
@@ -2222,6 +2249,27 @@ class ReportGenerator:
                 f"{sa['output_tokens']:,} | {sa['cache_read_tokens']:,} | {sa['active_tokens']:,} | "
                 f"**{tok_per_c}** | {sa['turns_count']} | {sa['tool_errors_count']} | **{sa['duration_seconds']}s** |"
             )
+
+        stg_3b = stg.get("stage_3b_repairs", {})
+        if stg_3b and stg_3b.get("repairs_count", 0) > 0:
+            md.extend([
+                "",
+                "---",
+                "",
+                "### 3.3b. Stage 3B: Remediación y Repair Engineers (Ingenieros de Reparación)",
+                f"- **Total de Repair Engineers Desplegados:** `{stg_3b['repairs_count']} subagentes`",
+                f"- **Duración Mínima:** `{stg_3b['min_duration_seconds']}s` | **Mediana:** `{stg_3b['median_duration_seconds']}s` | **Máxima:** `{stg_3b['max_duration_seconds']}s` (`{round(stg_3b['max_duration_seconds']/60, 1)} min`)",
+                f"- **Tokens Activos Totales en Reparación:** `{stg_3b['total_active_tokens']:,} tokens`",
+                f"- **Agente Determinante del Retraso:** `{stg_3b['slowest_repair']}`",
+                "",
+                "| Repair Engineer | Turnos | Tokens In | Tokens Out | Cache Leído | Total Activo | Errores | Duración |",
+                "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |"
+            ])
+            for ra in stg_3b.get("repairs", []):
+                md.append(
+                    f"| **{ra['label']}** | {ra['turns_count']} | {ra['input_tokens']:,} | {ra['output_tokens']:,} | "
+                    f"{ra['cache_read_tokens']:,} | {ra['active_tokens']:,} | {ra['tool_errors_count']} | **{ra['duration_seconds']}s** |"
+                )
 
         md.extend([
             "",
@@ -2808,7 +2856,8 @@ def main():
     print(f"    - Wall-Clock Time: {audit_result['summary']['wall_clock_minutes']} min (Speedup: {audit_result['summary']['parallel_speedup_factor']}x)")
     print(f"    - Total Tokens:    {audit_result['summary']['total_tokens']:,} (Active: {audit_result['summary']['total_active_tokens']:,})")
     cta_subs_total = audit_result['stage_deep_dives']['stage_1b_cta'].get('agents_count', audit_result['stage_deep_dives']['stage_1b_cta']['mappers_count'] + (1 if audit_result['stage_deep_dives']['stage_1b_cta']['harmonizer'] else 0))
-    print(f"    - Subagents Run:   {audit_result['summary']['total_subagents_spawned']} (Vision: {audit_result['stage_deep_dives']['stage_1a_vision']['agents_count']}, CTA: {cta_subs_total}, Authors: {audit_result['stage_deep_dives']['stage_3_authors']['shards_count']}, Judges: {audit_result['stage_deep_dives']['stage_5_judges'].get('judges_count', 0)})")
+    repairs_total = audit_result['stage_deep_dives'].get('stage_3b_repairs', {}).get('repairs_count', 0)
+    print(f"    - Subagents Run:   {audit_result['summary']['total_subagents_spawned']} (Vision: {audit_result['stage_deep_dives']['stage_1a_vision']['agents_count']}, CTA: {cta_subs_total}, Authors: {audit_result['stage_deep_dives']['stage_3_authors']['shards_count']}, Repairs: {repairs_total}, Judges: {audit_result['stage_deep_dives']['stage_5_judges'].get('judges_count', 0)})")
     print(f"    - Shards Straggler:{audit_result['stage_deep_dives']['stage_3_authors']['straggler_shard']} ({audit_result['stage_deep_dives']['stage_3_authors']['max_duration_seconds']}s)")
     print(f"    - Supervisor Fixes:{audit_result['orchestrator_audit']['interventions_count']} manual interventions detected")
     print(f"    - Run Directory:   {run_dir}")

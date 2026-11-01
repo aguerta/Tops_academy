@@ -495,21 +495,22 @@ class ForensicsEngine:
                 args = tc.get("args", {})
                 res_content = turn["results"][0].get("content", "") if turn.get("results") else ""
 
-                if tname == "write_to_file":
+                if tname in ("write_to_file", "write_file"):
                     writes_count += 1
-                    tf = Path(args.get("TargetFile", "")).name
+                    target_path = args.get("TargetFile") or args.get("Path", "")
+                    tf = Path(target_path).name
                     if tf:
                         scripts_written.add(tf)
-                elif tname == "replace_file_content":
+                elif tname in ("replace_file_content", "edit_file"):
                     edits_count += 1
-                elif tname == "view_file":
-                    target_file = str(args.get("AbsolutePath", ""))
+                elif tname in ("view_file", "read_file"):
+                    target_file = str(args.get("AbsolutePath") or args.get("Path", ""))
                     if any(k in target_file.lower() for k in ("check_templates.py", "compile_shard.py", "rules.py", "invariants.py", "assembler.py")):
                         reverse_eng_reads.append({
                             "turn": t_idx + 1,
                             "file": Path(target_file).name,
                             "step_index": turn.get("step_index"),
-                            "via": "view_file",
+                            "via": tname,
                         })
                 elif tname == "run_command":
                     cmd = args.get("CommandLine", "")
@@ -1144,10 +1145,13 @@ def run_traceback_audit(
 
     # 4. Analyze Shard Authors (dynamic N instances) & Repair Engineers
     shards_data = {}
+    repairs_data = {}
     for sname, (s_steps, s_turns) in sorted(shards_map.items()):
         shards_data[sname] = ForensicsEngine.audit_shard_author(sname, s_steps, s_turns)
     for rname, (r_steps, r_turns) in sorted(repairs_map.items()):
-        shards_data[rname] = ForensicsEngine.audit_shard_author(rname, r_steps, r_turns)
+        r_audit = ForensicsEngine.audit_shard_author(rname, r_steps, r_turns)
+        shards_data[rname] = r_audit
+        repairs_data[rname] = r_audit
 
     # 5. Analyze Blind Judges (dynamic K instances)
     judges_data = ForensicsEngine.audit_blind_judges(judges_map)
@@ -1222,6 +1226,7 @@ def run_traceback_audit(
         "thinking_traces": thinking_traces_summary,
         "cta_architect": cta_data,
         "shards": shards_data,
+        "repairs": repairs_data,
         "judges": judges_data,
         "error_taxonomy": taxonomy,
     }
