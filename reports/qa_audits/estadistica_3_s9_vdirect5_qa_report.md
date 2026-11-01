@@ -1,5 +1,10 @@
 # Reporte de Auditoría de Calidad Pedagógica, Psicométrica y Path-to-Mastery v2.0
 
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-01 00:52:43**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-01 00:52:43  
 **Curso Auditado:** `estadistica_3_s9_vdirect5`  
 **Título Oficial:** Estadistica 3 S9 Vdirect5  
 **Objetivo Curricular:** Dominio y aplicación analítica integral de Estadistica 3 S9 Vdirect5  

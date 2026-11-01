@@ -17,7 +17,9 @@
       "agreed_items": 54,
       "agreement_rate": 1.0,
       "unrepaired_disagreements_count": 0
-    }
+    },
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-01 00:52:40"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -253,5 +255,8 @@
     "[P1 - CRITICAL | Modalidad & Anti-Gaming] Diversificar el banco eliminando el monocultivo 100% MC7: convertir al menos 40-50% de las 8 competencias de Habilidad (Hab-01 a Hab-08) a fill_in_the_blank (cálculo exacto de ECM, Var(Y_bar), cotas de Markov/Chebyshev y varianza asintótica por Método Delta evaluados vía mathEquivalence.ts) e introducir reactivos multiple_select en C-01..C-09 para discriminar hipótesis necesarias vs suficientes. Rediseñar H-03 y H-04 con >= 6 arquetipos distintos para eliminar el exploit de 1 respuesta única.",
     "[P1 - CRITICAL | Alineación Diagnóstica en FeedbackToast] Prohibir el reciclaje circular de racionales y los multiplicadores porcentuales arbitrarios (0.84x..1.18x en H-09/H-10 y 0.5x..2.0x en C-03). Computar cada distractor numérico mediante la fórmula exacta del error cognitivo (ej. multiplicar por n en Q-H10-183 debe producir Z_n = 200.0, no 11.5), eliminar el distractor intruso matricial k x k de Hab-01 (D-Hab01-05) y reemplazar los error_rationale que repiten literalmente la fórmula falsa en H-04, C-01 y C-08 por refutaciones diagnósticas explícitas.",
     "[P2 - HIGH | Encuadre Curricular, Relleno [R-15] y Ergonomía KaTeX] Eliminar del compilador todas las listas de prefijos robóticos de Solow/EDP (60 ítems) y las 8 variantes de coletillas burocráticas [R-15] (incluyendo colisiones dobles); extraer la prosa en español fuera de $\\text{...}$ en los 80 ítems afectados; normalizar identificadores crudos ($theta_hat$ -> $\\hat{\\theta}_n$, $Y_bar$ -> $\\bar{Y}_n$, op(1) -> $o_p(1)$, {plim} -> \\operatorname{plim}); curar el título del curso ('Estadística III — Semana 9: Propiedades de Muestras Finitas y Teoría Asintótica') e incorporar micro-competencias dedicadas para LGN Débil/Fuerte, Convergencia Casi Segura y Teorema de Slutsky."
-  ]
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-01 00:52:40",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

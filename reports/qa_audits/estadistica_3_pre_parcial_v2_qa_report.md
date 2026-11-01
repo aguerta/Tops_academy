@@ -1,4 +1,9 @@
 # Informe de Evaluación de Calidad Pedagógica y Técnica (Course QA)
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-01 00:52:25**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-01 00:52:25  
 **Curso Auditado:** `estadistica_3_pre_parcial_v2`  
 **Título:** Estadistica 3 Pre Parcial V2  
 **Total Competencias:** 118  

@@ -8,9 +8,10 @@
     "question_types_distribution": {
       "multiple_choice_7_options": 2950
     },
-    "platform_status": "ACTIVO",
+    "platform_status": "ELIMINADO",
     "evaluator": "Course QA Auditor — Top's Academy",
-    "evaluation_date": "2026-10-25"
+    "evaluation_date": "2026-10-25",
+    "deleted_at": "2026-11-01 00:52:51"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -76,5 +77,7 @@
       "proposed_detection_logic": "Flag course warning if more than 35% of hint strings share identical 6-gram prefixes across distinct competencies."
     }
   ],
-  "platform_status": "ACTIVO"
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-01 00:52:51",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

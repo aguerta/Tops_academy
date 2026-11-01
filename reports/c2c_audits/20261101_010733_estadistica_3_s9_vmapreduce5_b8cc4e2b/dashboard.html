@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>C2C Architectural Forensic Dashboard - estadistica_3_s9_vmapreduce5</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); padding: 24px; line-height: 1.5; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+    .header h1 { font-size: 1.5rem; color: var(--accent); }
+    .header .meta { color: var(--text-muted); font-size: 0.85rem; }
+    .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+    .kpi-card .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-card .val { font-size: 1.6rem; font-weight: bold; color: var(--text); margin-top: 4px; }
+    .kpi-card .sub { font-size: 0.75rem; color: var(--accent-green); margin-top: 2px; }
+    .section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .section h2 { font-size: 1.1rem; color: var(--accent); margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-high { background: rgba(244, 63, 94, 0.2); color: var(--accent-rose); }
+    .badge-med { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); }
+    .badge-ok { background: rgba(74, 222, 128, 0.2); color: var(--accent-green); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>C2C Architectural Forensic Telemetry</h1>
+      <div class="meta">Estadistica 3 S9 Vmapreduce5 (<code>estadistica_3_s9_vmapreduce5</code>) | Conv: <code>b8cc4e2b-0a4...</code></div>
+    </div>
+    <div class="meta">Audit Date: 2026-11-01T06:07:33 UTC</div>
+  </div>
+
+  <div class="grid-kpi">
+    <div class="kpi-card">
+      <div class="label">Wall-Clock Time</div>
+      <div class="val">183.08 min</div>
+      <div class="sub">10985.0s elapsed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Parallel Speedup</div>
+      <div class="val">3.11x</div>
+      <div class="sub">569.63m compute time</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Total Tokens</div>
+      <div class="val">110,157,990</div>
+      <div class="sub">Active: 15,335,536 | Cache: 94,822,454</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Tokens / Question</div>
+      <div class="val">128,090.7</div>
+      <div class="sub">860 questions generated</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Seconds / Question</div>
+      <div class="val">12.77s</div>
+      <div class="sub">4.7 questions/min</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Supervisor Interventions</div>
+      <div class="val">27</div>
+      <div class="sub">4.5m spent repairing</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Stage 3: Shard Question Authoring & Competency Metrics</h2>
+    <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
+      Critical Straggler: <strong>Shard Author shard_13</strong> (400.0s | +86.0s vs median) |
+      Avg Tokens / Competency: <strong>89,623.1</strong>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Shard ID</th>
+          <th>Competencias</th>
+          <th>Comps</th>
+          <th>Tokens In</th>
+          <th>Tokens Out</th>
+          <th>Active Tokens</th>
+          <th>Tokens / Comp</th>
+          <th>Turns</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Shard Author shard_13</strong></td>
+          <td><code>C-02, C-03</code></td>
+          <td>2</td>
+          <td>99,498</td>
+          <td>57,833</td>
+          <td><strong>157,331</strong></td>
+          <td><strong>78,665.5</strong></td>
+          <td>11</td>
+          <td><strong>400.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_14</strong></td>
+          <td><code>C-06, C-07</code></td>
+          <td>2</td>
+          <td>88,119</td>
+          <td>50,191</td>
+          <td><strong>138,310</strong></td>
+          <td><strong>69,155.0</strong></td>
+          <td>9</td>
+          <td><strong>319.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_15</strong></td>
+          <td><code>C-10, C-11</code></td>
+          <td>2</td>
+          <td>105,279</td>
+          <td>51,554</td>
+          <td><strong>156,833</strong></td>
+          <td><strong>78,416.5</strong></td>
+          <td>16</td>
+          <td><strong>389.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_16</strong></td>
+          <td><code>C-15, C-16</code></td>
+          <td>2</td>
+          <td>99,737</td>
+          <td>50,975</td>
+          <td><strong>150,712</strong></td>
+          <td><strong>75,356.0</strong></td>
+          <td>13</td>
+          <td><strong>359.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_17</strong></td>
+          <td><code>C-18, C-19</code></td>
+          <td>2</td>
+          <td>102,287</td>
+          <td>49,193</td>
+          <td><strong>151,480</strong></td>
+          <td><strong>75,740.0</strong></td>
+          <td>9</td>
+          <td><strong>342.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_18</strong></td>
+          <td><code>C-01, H-01</code></td>
+          <td>2</td>
+          <td>94,940</td>
+          <td>45,670</td>
+          <td><strong>140,610</strong></td>
+          <td><strong>70,305.0</strong></td>
+          <td>13</td>
+          <td><strong>314.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_19</strong></td>
+          <td><code>H-02, C-04</code></td>
+          <td>2</td>
+          <td>96,828</td>
+          <td>53,385</td>
+          <td><strong>150,213</strong></td>
+          <td><strong>75,106.5</strong></td>
+          <td>10</td>
+          <td><strong>332.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_20</strong></td>
+          <td><code>H-03, C-05</code></td>
+          <td>2</td>
+          <td>97,349</td>
+          <td>55,892</td>
+          <td><strong>153,241</strong></td>
+          <td><strong>76,620.5</strong></td>
+          <td>9</td>
+          <td><strong>381.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_21</strong></td>
+          <td><code>H-04, C-08</code></td>
+          <td>2</td>
+          <td>100,748</td>
+          <td>44,767</td>
+          <td><strong>145,515</strong></td>
+          <td><strong>72,757.5</strong></td>
+          <td>10</td>
+          <td><strong>321.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_22</strong></td>
+          <td><code>C-09, H-06</code></td>
+          <td>2</td>
+          <td>78,311</td>
+          <td>38,331</td>
+          <td><strong>116,642</strong></td>
+          <td><strong>58,321.0</strong></td>
+          <td>10</td>
+          <td><strong>253.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_23</strong></td>
+          <td><code>H-07, C-14</code></td>
+          <td>2</td>
+          <td>83,884</td>
+          <td>49,356</td>
+          <td><strong>133,240</strong></td>
+          <td><strong>66,620.0</strong></td>
+          <td>8</td>
+          <td><strong>319.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_24</strong></td>
+          <td><code>C-20, H-08</code></td>
+          <td>2</td>
+          <td>85,740</td>
+          <td>48,266</td>
+          <td><strong>134,006</strong></td>
+          <td><strong>67,003.0</strong></td>
+          <td>8</td>
+          <td><strong>315.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_01</strong></td>
+          <td><code>Hab-01</code></td>
+          <td>1</td>
+          <td>72,277</td>
+          <td>27,869</td>
+          <td><strong>100,146</strong></td>
+          <td><strong>100,146.0</strong></td>
+          <td>12</td>
+          <td><strong>220.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_02</strong></td>
+          <td><code>Hab-02</code></td>
+          <td>1</td>
+          <td>76,067</td>
+          <td>33,344</td>
+          <td><strong>109,411</strong></td>
+          <td><strong>109,411.0</strong></td>
+          <td>13</td>
+          <td><strong>258.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_03</strong></td>
+          <td><code>Hab-03</code></td>
+          <td>1</td>
+          <td>97,231</td>
+          <td>41,492</td>
+          <td><strong>138,723</strong></td>
+          <td><strong>138,723.0</strong></td>
+          <td>11</td>
+          <td><strong>284.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_04</strong></td>
+          <td><code>Hab-04</code></td>
+          <td>1</td>
+          <td>76,387</td>
+          <td>28,859</td>
+          <td><strong>105,246</strong></td>
+          <td><strong>105,246.0</strong></td>
+          <td>14</td>
+          <td><strong>223.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_05</strong></td>
+          <td><code>Hab-05</code></td>
+          <td>1</td>
+          <td>147,616</td>
+          <td>44,324</td>
+          <td><strong>191,940</strong></td>
+          <td><strong>191,940.0</strong></td>
+          <td>11</td>
+          <td><strong>315.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_06</strong></td>
+          <td><code>Hab-06</code></td>
+          <td>1</td>
+          <td>82,529</td>
+          <td>39,554</td>
+          <td><strong>122,083</strong></td>
+          <td><strong>122,083.0</strong></td>
+          <td>11</td>
+          <td><strong>273.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_07</strong></td>
+          <td><code>Hab-07</code></td>
+          <td>1</td>
+          <td>71,030</td>
+          <td>36,173</td>
+          <td><strong>107,203</strong></td>
+          <td><strong>107,203.0</strong></td>
+          <td>8</td>
+          <td><strong>230.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_08</strong></td>
+          <td><code>Hab-08</code></td>
+          <td>1</td>
+          <td>77,155</td>
+          <td>35,695</td>
+          <td><strong>112,850</strong></td>
+          <td><strong>112,850.0</strong></td>
+          <td>10</td>
+          <td><strong>273.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_09</strong></td>
+          <td><code>Hab-09</code></td>
+          <td>1</td>
+          <td>79,709</td>
+          <td>38,355</td>
+          <td><strong>118,064</strong></td>
+          <td><strong>118,064.0</strong></td>
+          <td>10</td>
+          <td><strong>280.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_10</strong></td>
+          <td><code>Hab-10</code></td>
+          <td>1</td>
+          <td>73,790</td>
+          <td>36,606</td>
+          <td><strong>110,396</strong></td>
+          <td><strong>110,396.0</strong></td>
+          <td>9</td>
+          <td><strong>262.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_11</strong></td>
+          <td><code>Hab-11</code></td>
+          <td>1</td>
+          <td>85,512</td>
+          <td>42,775</td>
+          <td><strong>128,287</strong></td>
+          <td><strong>128,287.0</strong></td>
+          <td>11</td>
+          <td><strong>314.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_12</strong></td>
+          <td><code>Hab-12</code></td>
+          <td>1</td>
+          <td>94,675</td>
+          <td>47,230</td>
+          <td><strong>141,905</strong></td>
+          <td><strong>141,905.0</strong></td>
+          <td>13</td>
+          <td><strong>346.0s</strong></td>
+        </tr><tr>
+          <td><strong>Shard Author shard_25</strong></td>
+          <td><code>H-09</code></td>
+          <td>1</td>
+          <td>68,348</td>
+          <td>33,318</td>
+          <td><strong>101,666</strong></td>
+          <td><strong>101,666.0</strong></td>
+          <td>8</td>
+          <td><strong>239.0s</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Blind Judges & Psychometric Verification</h2>
+    <div style="margin-bottom: 12px; font-size: 0.9rem;">
+      <span class="badge badge-high">❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)</span>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+      Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Lote Estratificado</th>
+          <th>Primer Intento</th>
+          <th>Auto-Repair Iterations</th>
+          <th>Supervisor Fixes</th>
+          <th>Status Final</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>120 reactivos</strong></td>
+          <td><span class="badge badge-high">FAILED</span></td>
+          <td>0 iteraciones</td>
+          <td><strong>26 fixes</strong></td>
+          <td><span class="badge badge-ok">CERTIFICADO</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top: 14px; font-size: 0.85rem;">
+      <strong>Acciones Correctivas Tomadas:</strong>
+      <ul style="margin-left: 20px; margin-top: 6px; color: var(--text-muted);">
+        <li>1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.</li><li>2. **Intervenciones de Supervisor (27 operaciones)**: Operaciones sobre `C-14.py`, `POST_PRODUCTION_NOTES_estadistica_3_s9_vmapreduce5.md`, `audit_all_diversity.py`, `check_all_prose.py`, `check_dist_manifest.py`.</li><li>3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 120 reactivos.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Orchestrator Manual Interventions (Supervisor Repair Anti-Pattern)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>Target File</th>
+          <th>Action Type</th>
+          <th>Root Cause / Snippet</th>
+          <th>Tool</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>182</strong></td>
+          <td><code>audit_all_diversity.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T19:41:54-05:00
+Completed At: 2026-10-31T19:41:59-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>240</strong></td>
+          <td><code>compile_shard.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T19:47:26-05:00
+Completed At: 2026-10-31T19:47:26-05:00
+Command exit</td>
+          <td><code>edit_file</code></td>
+        </tr><tr>
+          <td><strong>728</strong></td>
+          <td><code>run.py</code></td>
+          <td>Parche de Infraestructura Core</td>
+          <td>Ajuste en run.py</td>
+          <td><code>edit_file</code></td>
+        </tr><tr>
+          <td><strong>782</strong></td>
+          <td><code>check_katex.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:00:42-05:00
+Completed At: 2026-10-31T22:00:42-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>786</strong></td>
+          <td><code>run_katex_linters.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:00:42-05:00
+Completed At: 2026-10-31T22:00:42-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>790</strong></td>
+          <td><code>run_katex_linters.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:01:23-05:00
+Completed At: 2026-10-31T22:01:24-05:00
+Command exit</td>
+          <td><code>edit_file</code></td>
+        </tr><tr>
+          <td><strong>800</strong></td>
+          <td><code>inspect_c14.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:01:23-05:00
+Completed At: 2026-10-31T22:01:24-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>804</strong></td>
+          <td><code>print_c14.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:01:23-05:00
+Completed At: 2026-10-31T22:01:24-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>814</strong></td>
+          <td><code>find_c14_in_shard23.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:01:23-05:00
+Completed At: 2026-10-31T22:01:24-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>818</strong></td>
+          <td><code>print_c14_questions.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:01:23-05:00
+Completed At: 2026-10-31T22:01:24-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>824</strong></td>
+          <td><code>check_all_prose.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:01:23-05:00
+Completed At: 2026-10-31T22:01:24-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>828</strong></td>
+          <td><code>read_s23_c14.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:01:23-05:00
+Completed At: 2026-10-31T22:01:24-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>849</strong></td>
+          <td><code>run_katex_linters.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:05:26-05:00
+Completed At: 2026-10-31T22:05:26-05:00
+Encountered </td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>853</strong></td>
+          <td><code>run_katex_linters.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:05:59-05:00
+Completed At: 2026-10-31T22:06:00-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>872</strong></td>
+          <td><code>inspect_c14.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:06:58-05:00
+Completed At: 2026-10-31T22:06:59-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>878</strong></td>
+          <td><code>scan_shards_katex.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:06:58-05:00
+Completed At: 2026-10-31T22:06:59-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>882</strong></td>
+          <td><code>find_all_text_options.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:07:28-05:00
+Completed At: 2026-10-31T22:07:28-05:00
+The tool's o</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>890</strong></td>
+          <td><code>C-14.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:07:28-05:00
+Completed At: 2026-10-31T22:07:28-05:00
+The tool's o</td>
+          <td><code>edit_file</code></td>
+        </tr><tr>
+          <td><strong>894</strong></td>
+          <td><code>C-14.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:07:28-05:00
+Completed At: 2026-10-31T22:07:28-05:00
+The tool's o</td>
+          <td><code>edit_file</code></td>
+        </tr><tr>
+          <td><strong>898</strong></td>
+          <td><code>shard_23_data.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:07:28-05:00
+Completed At: 2026-10-31T22:07:28-05:00
+The tool's o</td>
+          <td><code>edit_file</code></td>
+        </tr><tr>
+          <td><strong>900</strong></td>
+          <td><code>shard_23_data.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:07:28-05:00
+Completed At: 2026-10-31T22:07:28-05:00
+The tool's o</td>
+          <td><code>edit_file</code></td>
+        </tr><tr>
+          <td><strong>931</strong></td>
+          <td><code>POST_PRODUCTION_NOTES_estadistica_3_s9_vmapreduce5.md</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:10:27-05:00
+Completed At: 2026-10-31T22:10:28-05:00
+Showing line</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>1040</strong></td>
+          <td><code>check_dist_manifest.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:17:43-05:00
+Completed At: 2026-10-31T22:17:44-05:00
+Command exit</td>
+          <td><code>write_file</code></td>
+        </tr><tr>
+          <td><strong>1058</strong></td>
+          <td><code>vite.config.ts</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:18:44-05:00
+Completed At: 2026-10-31T22:18:44-05:00
+Showing line</td>
+          <td><code>edit_file</code></td>
+        </tr><tr>
+          <td><strong>1060</strong></td>
+          <td><code>courseIndex.cjs</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:18:44-05:00
+Completed At: 2026-10-31T22:18:44-05:00
+Showing line</td>
+          <td><code>edit_file</code></td>
+        </tr><tr>
+          <td><strong>1064</strong></td>
+          <td><code>run_platform.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:19:03-05:00
+Completed At: 2026-10-31T22:19:03-05:00
+Showing line</td>
+          <td><code>edit_file</code></td>
+        </tr><tr>
+          <td><strong>1066</strong></td>
+          <td><code>run_platform.py</code></td>
+          <td>Modificación / Script Auxiliar</td>
+          <td>Created At: 2026-10-31T22:19:03-05:00
+Completed At: 2026-10-31T22:19:03-05:00
+Showing line</td>
+          <td><code>edit_file</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>

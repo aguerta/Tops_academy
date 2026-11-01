@@ -4,7 +4,8 @@
 > [!NOTE]
 > **CURSO CERTIFICADO EN TIER EXCELENTE**: Este informe presenta la auditoría pedagógica, técnica y psicométrica integral realizada sobre el curso `gavilano_pre_parcial` bajo el marco normativo de **Quality Matters (QM)**, **OSCQR** y **Mastery Learning**.
 
-**Estado en Plataforma:** ACTIVO  
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-01 00:52:51  
 **Curso Auditado:** Gavilano Pre Parcial (Organización Industrial y Microeconomía Aplicada)  
 **Identificador del Curso:** `gavilano_pre_parcial`  
 **Archivo Fuente del Curso:** [`courses/gavilano_pre_parcial.json`](file:///d:/Augusto/personal_portfolio/Tops_academy/courses/gavilano_pre_parcial.json)  

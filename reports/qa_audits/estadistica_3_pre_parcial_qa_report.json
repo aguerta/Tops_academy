@@ -4,7 +4,9 @@
     "unit_title": "Estadistica 3 Pre Parcial",
     "detected_objective": "Dominio y aplicación analítica integral de modelos econométricos de regresión lineal simple y múltiple, propiedades algebraicas y estadísticas de MCO (teorema de Gauss-Markov, insesgadez, consistencia y eficiencia BLUE), análisis geométrico de proyección y residuos, inferencia estadística (contrastes t y F, descomposiciones ANOVA), diagnóstico y tratamiento de violaciones a los supuestos clásicos (multicolinealidad, heterocedasticidad, autocorrelación de errores), formas funcionales, quiebres estructurales y endogeneidad.",
     "total_competencies": 93,
-    "total_questions": 2190
+    "total_questions": 2190,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-01 00:52:21"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -87,5 +89,8 @@
       "regex_patch": "re.sub(r'^(Opción alterna \\d+:\\s*|Alternativa \\d+:\\s*)', '', option_content)",
       "rationale": "Permite al detector de Phantom Keying atrapar clones de la respuesta correcta que fueron ocultados detrás de prefijos sintéticos durante la generación paramétrica de distractores."
     }
-  ]
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-01 00:52:21",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

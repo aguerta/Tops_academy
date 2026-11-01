@@ -4,7 +4,9 @@
     "unit_title": "Estadistica 3 Pre Parcial V2",
     "detected_objective": "Dominio avanzado de Inferencia Asintótica, Estimadores MCO, Variables Instrumentales, MCG y Modelos de Elección Discreta",
     "total_competencies": 118,
-    "total_questions": 2770
+    "total_questions": 2770,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-01 00:52:25"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -47,5 +49,8 @@
   "remediation_actions": [
     "Aprobar el curso para publicación inmediata en producción.",
     "Actualizar el linter estático standardized_audit_engine.py con la regla de exclusión de macros LaTeX \\text{}."
-  ]
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-01 00:52:25",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

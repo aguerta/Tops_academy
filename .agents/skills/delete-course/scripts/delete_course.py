@@ -271,8 +271,13 @@ def stamp_suite_audit_table(course_id: str, timestamp_str: str, dry_run: bool = 
 
                 cells = [c.strip() for c in stripped.split("|")[1:-1]]
                 
-                # Check if this row corresponds to the deleted course
-                is_target_course = (course_id in stripped) or (f"`{course_id}`" in stripped)
+                # Check if this row corresponds to the deleted course (match in first cell with backticks/exact token)
+                first_cell = cells[0] if cells else ""
+                is_target_course = (
+                    f"`{course_id}`" in first_cell
+                    or f"**{course_id}**" in first_cell
+                    or first_cell.strip("*` ") == course_id
+                )
                 
                 if not header_has_col:
                     # We added the column, pad row
@@ -378,13 +383,21 @@ def find_course_artifacts(course_id: str) -> Dict[str, List[Path]]:
     # 3. Intermediate course directory: courses/<course_id>/
     for cand in courses_dir.iterdir():
         if cand.is_dir() and cand.name != "fixtures":
-            if cand.name == course_id or cand.name.startswith(f"{course_id}_"):
+            if cand.name == course_id or (cand.name.startswith(f"{course_id}_") and not (courses_dir / f"{cand.name}.json").exists()):
                 artifacts["course_dirs"].append(cand)
 
     # 4. QA Audit reports (to be stamped, not deleted)
     if REPORTS_DIR.exists():
-        for r in REPORTS_DIR.glob(f"*{course_id}*"):
-            if r.is_file():
+        for r in REPORTS_DIR.iterdir():
+            if not r.is_file():
+                continue
+            name = r.name
+            if (
+                name.startswith(f"{course_id}_payload.")
+                or name.startswith(f"{course_id}_qa_report.")
+                or name.startswith(f"{course_id}_qa_report_")
+                or name.startswith(f"POST_PRODUCTION_NOTES_{course_id}.")
+            ):
                 artifacts["qa_reports"].append(r)
 
     # 5. Active work directory if it references this course

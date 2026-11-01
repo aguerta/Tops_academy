@@ -1,4 +1,9 @@
 # Informe de Auditoría Forense de Calidad Instruccional, Psicométrica y Camino al Dominio (Path-to-Mastery v2.0)
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-01 00:52:48**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-01 00:52:48  
 ## Curso: Estadística III — Semana 9: Propiedades en Muestras Finitas y Teoría Asintótica (`estadistica_3_s9_vmapreduce`)
 
 ---

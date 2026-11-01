@@ -15,7 +15,9 @@
       "Fact": 5,
       "Concept": 20,
       "Skill": 14
-    }
+    },
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-01 00:52:48"
   },
   "mastery_path_readiness": {
     "mpri_score": 39.45,
@@ -127,13 +129,23 @@
       "rule": "vacuous_quantifier_key_corruption",
       "deduction": -1.0,
       "affected_items_count": 20,
-      "sample_items": ["Q-C02-131", "Q-C02-136", "Q-C02-150"]
+      "sample_items": [
+        "Q-C02-131",
+        "Q-C02-136",
+        "Q-C02-150"
+      ]
     },
     {
       "rule": "answer_memorization_exploit",
       "deduction": -1.0,
-      "affected_competencies": ["C-05", "H-01"],
-      "sample_items": ["Q-C05-341", "Q-H01-021"]
+      "affected_competencies": [
+        "C-05",
+        "H-01"
+      ],
+      "sample_items": [
+        "Q-C05-341",
+        "Q-H01-021"
+      ]
     }
   ],
   "total_deduction": 2.0,
@@ -154,35 +166,67 @@
       "defect_id": "DEF-01",
       "severity": "BLOCKER",
       "title": "Doble corrupción matemática en C-02 y bypass del Blind Judge Stage 5 (T-C-02-02_judge_1)",
-      "evidence_items": ["Q-C02-131", "Q-C02-136", "Q-C02-150", "Q-C10-562"],
+      "evidence_items": [
+        "Q-C02-131",
+        "Q-C02-136",
+        "Q-C02-150",
+        "Q-C10-562"
+      ],
       "summary": "En T-C-02-01 (Q-C02-131..135) se interpola \\varepsilon=0.13 dentro de P(|X_n - 7| <= 0.13) dejando 'para todo margen \\varepsilon > 0' vacuo. En T-C-02-02 (Q-C02-136..150), la premisa solo da convergencia para una banda fija \\varepsilon=0.22; el Blind Judge 04 eligió correctamente 'C' (\\exists \\varepsilon > 0), pero la plantilla exigía 'G' (\\forall \\varepsilon > 0), enseñando una falacia lógica refutable con X_n = 38.10. Adicionalmente, C-10 (Q-C10-561..565) escribe 'para todo \\epsilon = 0.02 > 0'."
     },
     {
       "defect_id": "DEF-02",
       "severity": "BLOCKER",
       "title": "Fractura del grafo curricular en 3 sub-DAGs disjuntos sin reducción semántica MapReduce",
-      "evidence_items": ["C-01", "H-01", "C-06", "Hab-01", "C-08", "C-02", "H-05", "C-04", "C-16"],
+      "evidence_items": [
+        "C-01",
+        "H-01",
+        "C-06",
+        "Hab-01",
+        "C-08",
+        "C-02",
+        "H-05",
+        "C-04",
+        "C-16"
+      ],
       "summary": "Los dos arquitectos CTA paralelos concatenaron sus salidas sin deduplicación ni aristas puente: {C-01} queda aislado (1 nodo), Clases_sintetizadas_semana_9.pdf forma el Sub-DAG A (14 nodos, Unidades 5-25) y EST3_LEC07_26.2_V2.pdf forma el Sub-DAG B (24 nodos, reiniciando a Unidad 3-50), duplicando 9 competencias nucleares."
     },
     {
       "defect_id": "DEF-03",
       "severity": "CRITICAL",
       "title": "Colapso total de ZPD (100% medium / 100% Understand) y Monocultivo 100% MC7",
-      "evidence_items": ["Q-C01-001", "Q-Hab01-042", "Q-Hab14-920"],
+      "evidence_items": [
+        "Q-C01-001",
+        "Q-Hab01-042",
+        "Q-Hab14-920"
+      ],
       "summary": "Los 920 reactivos declaran difficulty='medium', bloom_taxonomy_level='Understand' y type='multiple_choice_7_options' (0 FIB, 0 MS). calibrateByMasteryDifficulty en sessionShuffler.ts queda anulado en las 39 competencias."
     },
     {
       "defect_id": "DEF-04",
       "severity": "CRITICAL",
       "title": "Exploits severos de anti-gaming: memorización visual (C-05, H-01) y firma delatora de cláusula única vs doble (H-05)",
-      "evidence_items": ["Q-C05-341", "Q-C05-342", "Q-H01-021", "Q-H05-670", "Q-H05-677"],
+      "evidence_items": [
+        "Q-C05-341",
+        "Q-C05-342",
+        "Q-H01-021",
+        "Q-H05-670",
+        "Q-H05-677"
+      ],
       "summary": "C-05 repite idéntica cadena correcta en 20/20 ítems. En Q-H05-670..680, para burlar [R-15], opt_a concatena 2 muletillas genéricas, 5 distractores llevan 0 muletillas, y la respuesta correcta queda 100% delatada como la única opción con exactamente 1 muletilla."
     },
     {
       "defect_id": "DEF-05",
       "severity": "CRITICAL",
       "title": "Sabotaje del salvavidas socrático (3-Strikes) y fórmulas falsas sin refutar en FeedbackToast",
-      "evidence_items": ["Q-H01-021", "Q-C01-001", "Q-C20-871", "Q-C02-131", "Q-Hab03-130", "Q-Hab08-303"],
+      "evidence_items": [
+        "Q-H01-021",
+        "Q-C01-001",
+        "Q-C20-871",
+        "Q-C02-131",
+        "Q-Hab03-130",
+        "Q-Hab08-303"
+      ],
       "summary": "89.67% de pistas son Mad-Libs genéricas donde la Pista 2 inyecta la fórmula falsa del CTA tras 'asegurando considerar adecuadamente:'; Q-C20-871..875 tienen etiquetas crudas ['C20', 'Teorema-slutsky', 'Asintotica']; Q-C02-131 y Q-Hab03-130 muestran enunciados falsos crudos como error_rationale sin refutación."
     }
   ],
@@ -200,35 +244,70 @@
       "severity": "critical",
       "regex_pattern": "GRAPH_TOPOLOGY: weakly_connected_components(competencies_dag) > 1",
       "description": "Detecta cuando el grafo curricular completo se fractura en múltiples componentes conexas disjuntas (incluso si cada subgrafo tiene nodos con aristas y evade isolated_competencies). Captura concatenaciones MapReduce sin etapa Reduce de fusión semántica.",
-      "evidence_items": ["C-01", "H-01", "H-02", "C-06", "C-20"]
+      "evidence_items": [
+        "C-01",
+        "H-01",
+        "H-02",
+        "C-06",
+        "C-20"
+      ]
     },
     {
       "rule_id": "bound_constant_in_universal_quantifier_linter",
       "severity": "critical",
       "regex_pattern": "(?:para\\s+todo|todo\\s+margen|\\\\forall)\\s+\\$?\\\\eps(?:ilon)?\\s*=\\s*\\d+(?:\\.\\d+)?",
       "description": "Detecta cuantificadores universales ligados directamente por igualdad a un flotante numérico fijo (ej. 'para todo \\epsilon = 0.04 > 0'), corrompiendo la definición analítica de límite en probabilidad en enunciados y soluciones.",
-      "evidence_items": ["Q-C10-561", "Q-C10-562", "Q-C10-563", "Q-C10-564", "Q-C10-565"]
+      "evidence_items": [
+        "Q-C10-561",
+        "Q-C10-562",
+        "Q-C10-563",
+        "Q-C10-564",
+        "Q-C10-565"
+      ]
     },
     {
       "rule_id": "single_vs_double_filler_clause_r15_gaming_linter",
       "severity": "critical",
       "regex_pattern": "(?:,\\s*(?:bajo las hip[oó]tesis del modelo|seg[uú]n los supuestos cl[aá]sicos del modelo|para los par[aá]metros bajo an[aá]lisis|en el contexto del contraste analizado|en el marco de la especificaci[oó]n|de acuerdo con la teor[ií]a econom[eé]trica|para la muestra de datos observada|en la formulaci[oó]n matricial considerada)){2}",
       "description": "Detecta la evasión perversa de [R-15] donde opt_a concatena 2 cláusulas de relleno para superar en longitud a la clave correcta, dejando a la respuesta correcta 100% delatada como la única opción con exactamente 1 cláusula de relleno frente a 5 distractores cortos.",
-      "evidence_items": ["Q-H05-670", "Q-H05-671", "Q-H05-672", "Q-H05-676", "Q-H05-677", "Q-H05-678", "Q-H05-680"]
+      "evidence_items": [
+        "Q-H05-670",
+        "Q-H05-671",
+        "Q-H05-672",
+        "Q-H05-676",
+        "Q-H05-677",
+        "Q-H05-678",
+        "Q-H05-680"
+      ]
     },
     {
       "rule_id": "latex_misconception_injected_in_madlibs_hint_linter",
       "severity": "critical",
       "regex_pattern": "asegurando considerar adecuadamente:\\s*\\$[^$]+\\$",
       "description": "Extiende socratic_scaffolding_integrity_linter para capturar pistas Mad-Libs que inyectan una fórmula LaTeX falsa de la columna CTA Misconception tras 'asegurando considerar adecuadamente:', saboteando al alumno en Strike 1/2 aunque la cadena no coincida literalmente en texto plano con una opción.",
-      "evidence_items": ["Q-C01-001", "Q-C02-131", "Q-C04-339", "Q-C05-341", "Q-H05-670"]
+      "evidence_items": [
+        "Q-C01-001",
+        "Q-C02-131",
+        "Q-C04-339",
+        "Q-C05-341",
+        "Q-H05-670"
+      ]
     },
     {
       "rule_id": "unrefuted_latex_misconception_as_rationale_linter",
       "severity": "warning",
       "regex_pattern": "^\\$(?:\\\\text\\{[^}]+\\}|[^$])+\\$$",
       "description": "Detecta cuando error_rationale consiste únicamente en una ecuación o proposición falsa envuelta en '$...$' sin ningún verbo ni explicación refutativa en español, haciendo que FeedbackToast muestre una afirmación matemáticamente falsa como si fuera retroalimentación válida.",
-      "evidence_items": ["Q-C02-131", "Q-C02-132", "Q-Hab03-130", "Q-C05-341", "Q-C05-342"]
+      "evidence_items": [
+        "Q-C02-131",
+        "Q-C02-132",
+        "Q-Hab03-130",
+        "Q-C05-341",
+        "Q-C05-342"
+      ]
     }
-  ]
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-01 00:52:48",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

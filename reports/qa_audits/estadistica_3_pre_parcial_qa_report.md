@@ -1,4 +1,9 @@
 # Reporte Normativo de Auditoría de Calidad Pedagógica y Técnica (Course QA)
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-01 00:52:21**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-01 00:52:21  
 ## Curso: Estadistica 3 Pre Parcial (`estadistica_3_pre_parcial`)
 
 **Plataforma:** Top's Academy  

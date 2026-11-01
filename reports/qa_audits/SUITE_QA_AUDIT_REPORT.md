@@ -17,8 +17,8 @@
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- | :---: |
 | **`solow_growth_model`** | **4.0** | **4.8** | **5.0** | **4.0** | **2.0** | 0.0 | **19.8 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Gold Standard Tipológico: MC7, MS y FIB) | Nulo |
 | **`saul_control_optimo`** | **4.0** | **4.7** | **3.8** | **4.0** | **2.0** | 0.0 | **18.5 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Aprobado Producción; Remediación de 50 pistas en Hab-01 / C-06) | Nulo |
-| **`gavilano_pre_parcial`** | **4.0** | **4.8** | **3.7** | **4.0** | **2.0** | 0.0 | **18.5 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Aprobado Producción; Remediación de 70 pistas en C-26, H-19, Hab-16) | Nulo |
-| **`asyntotic_estatistics_v7`** | **4.0** | **4.4** | **3.5** | **4.0** | **1.9** | 0.0 | **17.8 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Aprobado Producción; Remediación de 70 pistas en 9 competencias) | Nulo |
+| **`gavilano_pre_parcial`** | **4.0** | **4.8** | **3.7** | **4.0** | **2.0** | 0.0 | **18.5 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Aprobado Producción; Remediación de 70 pistas en C-26, H-19, Hab-16) | 2026-11-01 00:52:51 |
+| **`asyntotic_estatistics_v7`** | **4.0** | **4.4** | **3.5** | **4.0** | **1.9** | 0.0 | **17.8 / 20.0** | **EXCELENTE** | ✅ ACTIVO (Aprobado Producción; Remediación de 70 pistas en 9 competencias) | 2026-11-01 00:52:16 |
 | **`solow_model_v15`** | **3.9** | **3.8** | **4.6** | **4.0** | **1.6** | 0.0 | **17.9 / 20.0** | **EXCELENTE** | ⚠️ ELIMINADO (Re-auditado; ajustado desde 20.0 por monocultivo) | 2026-10-20 13:26:24 |
 | **`estadistica_asintotica`** | **3.8** | **3.5** | **4.3** | **3.9** | **2.0** | 0.0 | **17.5 / 20.0** | **EXCELENTE** | ❌ ELIMINADO (Retirado; riesgo de mecanización por monocultivo) | 2026-10-25 11:12:47 |
 | **`practica_parcial_saul`** | **3.8** | **3.4** | **4.0** | **3.8** | **1.5** | 0.0 | **16.5 / 20.0** | **ACEPTABLE** | ❌ ELIMINADO (Retirado; monocultivo algebraico y variables en pistas) | 2026-10-25 11:12:48 |

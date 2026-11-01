@@ -4,7 +4,8 @@
 > [!NOTE]
 > **CURSO CERTIFICADO CON CALIFICACIÓN EXCELENTE**: Este informe presenta la auditoría pedagógica, psicométrica y técnica exhaustiva realizada sobre el curso oficial `asyntotic_estatistics_v7`, evaluado bajo los estándares internacionales de **Quality Matters (QM)**, **OSCQR** y **Mastery Learning**.
 
-**Estado en Plataforma:** ACTIVO  
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-01 00:52:16  
 **Curso Auditado:** Asyntotic Estatistics V7 (Teoría Asintótica y Econometría de Muestras Grandes)  
 **Identificador del Curso:** `asyntotic_estatistics_v7`  
 **Archivo Fuente:** [`courses/asyntotic_estatistics_v7.json`](file:///d:/Augusto/personal_portfolio/Tops_academy/courses/asyntotic_estatistics_v7.json)  

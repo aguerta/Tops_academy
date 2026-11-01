@@ -1,0 +1,674 @@
+{
+  "course_id": "estadistica_3_s9_vdirect5",
+  "conversation_id": "597bb79e-0f99-4e5f-996d-05d9e432aa23",
+  "run_dir": "reports\\c2c_audits\\20261101_010734_estadistica_3_s9_vdirect5_597bb79e",
+  "total_shards": 16,
+  "median_wall_time_s": 311.0,
+  "gold_standard_cleanroom": {
+    "shard_id": "shard_01",
+    "label": "Shard Author shard_01",
+    "conversation_id": "a449ee81-91c3-4b97-ab4a-283b84476498",
+    "wall_time_s": 198.0,
+    "pre_1st_compile_s": 147.0,
+    "post_1st_compile_s": 58.0,
+    "compile_runs": 2,
+    "compile_fails": 1,
+    "edits_count": 2,
+    "turns_count": 12,
+    "active_tokens": 91698,
+    "thinking_tokens": 4853,
+    "competencies_count": 0,
+    "error_codes": [],
+    "error_snippets": [
+      "[COMPILE 1/10] Compilando shard 'shard_01'..."
+    ],
+    "has_micro_loop": false,
+    "micro_loop_reason": "",
+    "cross_course_explorations": [],
+    "first_thinking_snippet": "I'm thinking through how to approach this.   "
+  },
+  "top_5_stragglers": [
+    {
+      "shard_id": "shard_14",
+      "label": "Shard Author shard_14",
+      "conversation_id": "de6a6e6d-df84-42a9-aa2a-344773b18b2b",
+      "wall_time_s": 510.0,
+      "pre_1st_compile_s": 326.0,
+      "post_1st_compile_s": 193.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 1,
+      "turns_count": 13,
+      "active_tokens": 216188,
+      "thinking_tokens": 14604,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "NameError: name 'ver_h01_1' is not defined\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_14'...",
+        "[COMPILE 2/10] Compilando shard 'shard_14'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial focus is on processing the specified work order for the assigned shard author. The read/write scope is defined to include the input JSON and the output Python data file, with a compilation step via the `compile_shard.py` script. The process m"
+    },
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "0c80e2dd-d461-4122-bd58-b31c33cf8f81",
+      "wall_time_s": 380.0,
+      "pre_1st_compile_s": 44.0,
+      "post_1st_compile_s": 351.0,
+      "compile_runs": 4,
+      "compile_fails": 2,
+      "edits_count": 5,
+      "turns_count": 25,
+      "active_tokens": 181498,
+      "thinking_tokens": 10672,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_08'...",
+        "[COMPILE 2/10] Compilando shard 'shard_08'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial hypothesis: The task involves writing and compiling a Python file based on a provided JSON configuration. The JSON data likely guides the script's content.  The instruction specifies using a \"view_file\" function to access the input data. The "
+    },
+    {
+      "shard_id": "shard_10",
+      "label": "Shard Author shard_10",
+      "conversation_id": "125d4699-30d5-4486-86dd-a2353a31f251",
+      "wall_time_s": 345.0,
+      "pre_1st_compile_s": 276.0,
+      "post_1st_compile_s": 81.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 146029,
+      "thinking_tokens": 9676,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_10'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial file inspection reveals the work order's focus on author_10.json, indicating a data processing task requiring shard creation. The scope lock confirms exclusive access for this operation. The intended shard is named shard_10_data.py, suggestin"
+    },
+    {
+      "shard_id": "shard_12",
+      "label": "Shard Author shard_12",
+      "conversation_id": "84b5fc4d-d38a-4cb9-b7fa-765d2488a040",
+      "wall_time_s": 337.0,
+      "pre_1st_compile_s": 256.0,
+      "post_1st_compile_s": 92.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 10,
+      "active_tokens": 132840,
+      "thinking_tokens": 8592,
+      "competencies_count": 0,
+      "error_codes": [
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_12'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial hypothesis: Acting as Shard Author `shard_12` necessitates adhering to a specific work order and constraints. The primary task involves reading and processing data from a designated file path. Verification steps include confirming the prescri"
+    },
+    {
+      "shard_id": "shard_13",
+      "label": "Shard Author shard_13",
+      "conversation_id": "d2a81d88-0759-4d98-b76d-58a2ab9231fd",
+      "wall_time_s": 334.0,
+      "pre_1st_compile_s": 260.0,
+      "post_1st_compile_s": 84.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 3,
+      "turns_count": 15,
+      "active_tokens": 146151,
+      "thinking_tokens": 8476,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_13'...",
+        "[COMPILE 2/10] Compilando shard 'shard_13'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial assessment: The work order requires processing a JSON file. The task involves a specific file path and a prohibition against accessing certain other files. The first step is reading and understanding the contents of the specified JSON file.  "
+    }
+  ],
+  "top_5_fastest": [
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "a449ee81-91c3-4b97-ab4a-283b84476498",
+      "wall_time_s": 198.0,
+      "pre_1st_compile_s": 147.0,
+      "post_1st_compile_s": 58.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 12,
+      "active_tokens": 91698,
+      "thinking_tokens": 4853,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_01'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "2bfdaf36-a329-4dc2-9f0c-cf9642a76db3",
+      "wall_time_s": 231.0,
+      "pre_1st_compile_s": 190.0,
+      "post_1st_compile_s": 45.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 100203,
+      "thinking_tokens": 6644,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_05'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial task is to create and compile a Python file. First step is to read a JSON file using a specific function. The objective is to write the code specified by the work order, addressing any compilation errors.   "
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "a9de34b5-4ad6-4134-93d6-f69969e952f5",
+      "wall_time_s": 236.0,
+      "pre_1st_compile_s": 203.0,
+      "post_1st_compile_s": 38.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 10,
+      "active_tokens": 104192,
+      "thinking_tokens": 6160,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_04'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   Initial assessment: Understanding the constraints on template generation, specifically focusing on the Form-B Tri-Banda contract requirements and prohibited file access patterns. This involves analyzing th"
+    },
+    {
+      "shard_id": "shard_15",
+      "label": "Shard Author shard_15",
+      "conversation_id": "88ed1ddf-8d49-4315-9309-54667f8b267f",
+      "wall_time_s": 252.0,
+      "pre_1st_compile_s": 181.0,
+      "post_1st_compile_s": 79.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 111075,
+      "thinking_tokens": 6355,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "NameError: name 'ver_h03_1' is not defined\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_15'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial dispatch as Shard Author shard_15. The instruction set emphasizes a specific `send_message` invocation for the caller, and reading a designated JSON work order file. Explicitly prohibited reading or referencing of `ArtifactMetadata`, `cta.jso"
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "85f14cbd-6a1b-422b-a461-63a9f8d90eaa",
+      "wall_time_s": 255.0,
+      "pre_1st_compile_s": 220.0,
+      "post_1st_compile_s": 40.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 11,
+      "active_tokens": 124368,
+      "thinking_tokens": 7121,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_03'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial file inspection is needed to understand the current state. The work order specifies writing a Python file based on existing data. The key is to examine the input data and craft an appropriate Python script.   "
+    }
+  ],
+  "all_shards": [
+    {
+      "shard_id": "shard_14",
+      "label": "Shard Author shard_14",
+      "conversation_id": "de6a6e6d-df84-42a9-aa2a-344773b18b2b",
+      "wall_time_s": 510.0,
+      "pre_1st_compile_s": 326.0,
+      "post_1st_compile_s": 193.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 1,
+      "turns_count": 13,
+      "active_tokens": 216188,
+      "thinking_tokens": 14604,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "NameError: name 'ver_h01_1' is not defined\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_14'...",
+        "[COMPILE 2/10] Compilando shard 'shard_14'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial focus is on processing the specified work order for the assigned shard author. The read/write scope is defined to include the input JSON and the output Python data file, with a compilation step via the `compile_shard.py` script. The process m"
+    },
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "0c80e2dd-d461-4122-bd58-b31c33cf8f81",
+      "wall_time_s": 380.0,
+      "pre_1st_compile_s": 44.0,
+      "post_1st_compile_s": 351.0,
+      "compile_runs": 4,
+      "compile_fails": 2,
+      "edits_count": 5,
+      "turns_count": 25,
+      "active_tokens": 181498,
+      "thinking_tokens": 10672,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_08'...",
+        "[COMPILE 2/10] Compilando shard 'shard_08'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial hypothesis: The task involves writing and compiling a Python file based on a provided JSON configuration. The JSON data likely guides the script's content.  The instruction specifies using a \"view_file\" function to access the input data. The "
+    },
+    {
+      "shard_id": "shard_10",
+      "label": "Shard Author shard_10",
+      "conversation_id": "125d4699-30d5-4486-86dd-a2353a31f251",
+      "wall_time_s": 345.0,
+      "pre_1st_compile_s": 276.0,
+      "post_1st_compile_s": 81.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 8,
+      "active_tokens": 146029,
+      "thinking_tokens": 9676,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_10'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial file inspection reveals the work order's focus on author_10.json, indicating a data processing task requiring shard creation. The scope lock confirms exclusive access for this operation. The intended shard is named shard_10_data.py, suggestin"
+    },
+    {
+      "shard_id": "shard_12",
+      "label": "Shard Author shard_12",
+      "conversation_id": "84b5fc4d-d38a-4cb9-b7fa-765d2488a040",
+      "wall_time_s": 337.0,
+      "pre_1st_compile_s": 256.0,
+      "post_1st_compile_s": 92.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 10,
+      "active_tokens": 132840,
+      "thinking_tokens": 8592,
+      "competencies_count": 0,
+      "error_codes": [
+        "[R-19]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_12'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial hypothesis: Acting as Shard Author `shard_12` necessitates adhering to a specific work order and constraints. The primary task involves reading and processing data from a designated file path. Verification steps include confirming the prescri"
+    },
+    {
+      "shard_id": "shard_13",
+      "label": "Shard Author shard_13",
+      "conversation_id": "d2a81d88-0759-4d98-b76d-58a2ab9231fd",
+      "wall_time_s": 334.0,
+      "pre_1st_compile_s": 260.0,
+      "post_1st_compile_s": 84.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 3,
+      "turns_count": 15,
+      "active_tokens": 146151,
+      "thinking_tokens": 8476,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_13'...",
+        "[COMPILE 2/10] Compilando shard 'shard_13'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial assessment: The work order requires processing a JSON file. The task involves a specific file path and a prohibition against accessing certain other files. The first step is reading and understanding the contents of the specified JSON file.  "
+    },
+    {
+      "shard_id": "shard_11",
+      "label": "Shard Author shard_11",
+      "conversation_id": "8f04d1e0-eff0-4a2e-b1d2-7f9ded9aa19c",
+      "wall_time_s": 333.0,
+      "pre_1st_compile_s": 264.0,
+      "post_1st_compile_s": 81.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 153614,
+      "thinking_tokens": 9101,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "NameError: name 'ver_c08_1' is not defined\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_11'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial file inspection suggests the task is to generate and compile a Python shard. The target shard data file and a subsequent JSON file will be the result of a compilation process, fixing errors as they appear. The goal is to produce `courses/esta"
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "086c74c6-b859-47af-8463-bd9b12ef9a17",
+      "wall_time_s": 331.0,
+      "pre_1st_compile_s": 229.0,
+      "post_1st_compile_s": 116.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 14,
+      "active_tokens": 139048,
+      "thinking_tokens": 7529,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_09'...",
+        "[COMPILE 2/10] Compilando shard 'shard_09'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_16",
+      "label": "Shard Author shard_16",
+      "conversation_id": "7d134ac8-0cbe-44e9-a7fd-26f6d8fe0d09",
+      "wall_time_s": 311.0,
+      "pre_1st_compile_s": 220.0,
+      "post_1st_compile_s": 94.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 5,
+      "turns_count": 16,
+      "active_tokens": 141405,
+      "thinking_tokens": 14107,
+      "competencies_count": 0,
+      "error_codes": [
+        "SyntaxError en shard_16_data.py (L�nea 101, Columna 5): (unicode error) 'unicodeescape' codec can't decode bytes in position 50-51: truncated \\xXX escape\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_16'...",
+        "[COMPILE 2/10] Compilando shard 'shard_16'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial work order requires creating a Python file and compiling it. The goal is to address any compilation errors. The system needs to create a Python file and then execute a compilation process. The focus will be on the compiler output for debuggin"
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "edb1971a-f972-49f1-8252-a1fd4d5975ca",
+      "wall_time_s": 268.0,
+      "pre_1st_compile_s": 247.0,
+      "post_1st_compile_s": 27.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 9,
+      "active_tokens": 113276,
+      "thinking_tokens": 7133,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_02'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial data load successful. Attempting to fulfill the work order instructions. Proceeding to read the specified file and write the Python shard data file, then compiling it.   "
+    },
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "cfd9748d-9ad6-4aa3-bf39-07ecc819e251",
+      "wall_time_s": 264.0,
+      "pre_1st_compile_s": 224.0,
+      "post_1st_compile_s": 43.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 11,
+      "active_tokens": 109464,
+      "thinking_tokens": 6395,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_06'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial focus is on retrieving the work order and identifying the scope of operations: reading a JSON file, writing a Python data file, and compiling the shard. Error correction from compilation is the only allowed modification, and the final result "
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "4aeeb624-9db2-454a-95da-c714630bbc9f",
+      "wall_time_s": 264.0,
+      "pre_1st_compile_s": 224.0,
+      "post_1st_compile_s": 42.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 11,
+      "active_tokens": 117030,
+      "thinking_tokens": 7772,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_07'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The agent is now operational within the designated shard, with read/write access and compile permissions. It's ready to process the assigned work order file.   "
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "85f14cbd-6a1b-422b-a461-63a9f8d90eaa",
+      "wall_time_s": 255.0,
+      "pre_1st_compile_s": 220.0,
+      "post_1st_compile_s": 40.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 11,
+      "active_tokens": 124368,
+      "thinking_tokens": 7121,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_03'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial file inspection is needed to understand the current state. The work order specifies writing a Python file based on existing data. The key is to examine the input data and craft an appropriate Python script.   "
+    },
+    {
+      "shard_id": "shard_15",
+      "label": "Shard Author shard_15",
+      "conversation_id": "88ed1ddf-8d49-4315-9309-54667f8b267f",
+      "wall_time_s": 252.0,
+      "pre_1st_compile_s": 181.0,
+      "post_1st_compile_s": 79.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 111075,
+      "thinking_tokens": 6355,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]",
+        "NameError: name 'ver_h03_1' is not defined\r"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_15'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial dispatch as Shard Author shard_15. The instruction set emphasizes a specific `send_message` invocation for the caller, and reading a designated JSON work order file. Explicitly prohibited reading or referencing of `ArtifactMetadata`, `cta.jso"
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "a9de34b5-4ad6-4134-93d6-f69969e952f5",
+      "wall_time_s": 236.0,
+      "pre_1st_compile_s": 203.0,
+      "post_1st_compile_s": 38.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 10,
+      "active_tokens": 104192,
+      "thinking_tokens": 6160,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_04'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   Initial assessment: Understanding the constraints on template generation, specifically focusing on the Form-B Tri-Banda contract requirements and prohibited file access patterns. This involves analyzing th"
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "2bfdaf36-a329-4dc2-9f0c-cf9642a76db3",
+      "wall_time_s": 231.0,
+      "pre_1st_compile_s": 190.0,
+      "post_1st_compile_s": 45.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 0,
+      "turns_count": 9,
+      "active_tokens": 100203,
+      "thinking_tokens": 6644,
+      "competencies_count": 0,
+      "error_codes": [
+        "[TPL-DRY]",
+        "[TPL-VAR]"
+      ],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_05'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial task is to create and compile a Python file. First step is to read a JSON file using a specific function. The objective is to write the code specified by the work order, addressing any compilation errors.   "
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "a449ee81-91c3-4b97-ab4a-283b84476498",
+      "wall_time_s": 198.0,
+      "pre_1st_compile_s": 147.0,
+      "post_1st_compile_s": 58.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 12,
+      "active_tokens": 91698,
+      "thinking_tokens": 4853,
+      "competencies_count": 0,
+      "error_codes": [],
+      "error_snippets": [
+        "[COMPILE 1/10] Compilando shard 'shard_01'..."
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    }
+  ]
+}

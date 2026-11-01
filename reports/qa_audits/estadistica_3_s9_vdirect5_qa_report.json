@@ -4,7 +4,9 @@
     "unit_title": "Estadistica 3 S9 Vdirect5",
     "detected_objective": "Dominio y aplicación analítica integral de Estadistica 3 S9 Vdirect5",
     "total_competencies": 24,
-    "total_questions": 550
+    "total_questions": 550,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-01 00:52:43"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -114,5 +116,8 @@
     "Generar advertencias de ideas erróneas específicas (misconception_warning) para los 251 reactivos fill_in_the_blank a fin de asegurar paridad diagnóstica completa con el banco MC7.",
     "Actualizar la clasificación taxonómica de Bloom en reactivos de deducción algebraica de las competencias Hab-01, Hab-02, Hab-03 y Hab-04 de 'Understand' a 'Apply'/'Analyze'.",
     "Refactorizar la expresión regular en 'uninterpolated_math_variable_linter' en 'standardized_audit_engine.py' para evitar catalogar llaves de argumentos KaTeX como residuos de plantillas."
-  ]
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-01 00:52:43",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

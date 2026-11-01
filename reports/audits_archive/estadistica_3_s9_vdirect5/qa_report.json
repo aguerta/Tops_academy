@@ -1,0 +1,123 @@
+{
+  "course_metadata": {
+    "course_id": "estadistica_3_s9_vdirect5",
+    "unit_title": "Estadistica 3 S9 Vdirect5",
+    "detected_objective": "Dominio y aplicación analítica integral de Estadistica 3 S9 Vdirect5",
+    "total_competencies": 24,
+    "total_questions": 550,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-01 00:52:43"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Topología DAG impecable de 24 micro-competencias atómicas balanceadas (7 Hechos, 10 Conceptos, 7 Habilidades). Grafo acíclico y estrictamente conexo con profundidad máxima de 7 niveles, orden topológico riguroso (idx(prereq) < idx(comp)), sin dependencias invertidas ni competencias huérfanas. Calibración ZPD perfecta: el 100% (24/24) de las competencias disponen de las tres bandas de dificultad requeridas (189 easy, 189 medium, 172 hard), permitiendo la activación plena de calibrateByMasteryDifficulty en todo el ciclo de transiciones hacia Mastered. Granularidad óptima con 20 a 30 reactivos por competencia."
+    },
+    "assessment_quality": {
+      "score": 4.8,
+      "max": 5.0,
+      "feedback": "Excelente diversidad psicométrica con un balance robusto entre reconocimiento pasivo (299 reactivos MC7, 54.36%) y evocación activa generativa (251 reactivos FIB, 45.64%), superando ampliamente el umbral normativo del 40% de generación activa. 100% de cobertura de rationales diagnósticos (1794/1794 distractores) con alta tasa de unicidad (91.25%, 1637 explicaciones únicas). Cero multiplicadores mágicos sintéticos (1.333x), cero distractores delatores por longitud o pistas directas, cero distractores clonados y cero vulnerabilidad de memorización visual. Validación ciega de Stage 5 con 100% de acuerdo (216/216 reactivos sin desacuerdos). Deducción menor (-0.2 pts) por ausencia de reactivos multiple_select (MS) para discriminación multivariada condicional."
+    },
+    "scaffolding_hints": {
+      "score": 4.7,
+      "max": 5.0,
+      "feedback": "Andamiaje socrático sobresaliente: cero reactivos sin pistas, 100% del banco dotado de 3 a 4 pistas socráticas escalonadas (Conceptual -> Procedimental -> Operativa sin regalar clave), cero boilerplate sintético Mad-Libs, cero fugas de respuestas y cero pistas envenenadas (0% poisoned). Soluciones analíticas paso a paso exhaustivas en el 100% de los reactivos. Deducción leve (-0.3 pts) debido a que los 251 reactivos FIB mantienen advertencias de error conceptual genéricas en contraste con las advertencias hiper-específicas de los reactivos MC7."
+    },
+    "instructional_alignment": {
+      "score": 3.8,
+      "max": 4.0,
+      "feedback": "Rigor disciplinar impecable y pureza absoluta de dominio en estadística matemática e inferencia asintótica (consistencia débil, convergencia casi segura, Slutsky, TCL Lindeberg-Lévy, Teorema de Mann-Wald y Método Delta). Cero contaminación léxica inter-dominio (0% cross-domain). Cero cuantificadores universales vacuos. Las competencias de Habilidad alcanzan un 61.9% de niveles cognitivos superiores (Apply y Analyze). Deducción de -0.2 pts por sub-etiquetado Bloom en un 38.1% de ítems de Habilidad clasificados como 'Understand' a pesar de involucrar deducciones analíticas avanzadas."
+    },
+    "technical_ergonomics": {
+      "score": 1.6,
+      "max": 2.0,
+      "feedback": "Sintaxis KaTeX mayoritariamente limpia: cero llaves rotas, cero dólares impares, cero triples dólares, cero residuos de f-strings y cero bloques de prosa en \\text{...} que rompan el diseño responsivo móvil. No obstante, se detectó un defecto ergonómico puntual en 13 reactivos de la competencia H-06 (Q-H06-431 a Q-H06-437 y Q-H06-445 a Q-H06-450), donde los distractores exponen comandos LaTeX en texto plano sin delimitar entre signos de dólar '$' (ej. '\\operatorname{Var}(\\bar{Y}_n) = 25'), ocasionando que la interfaz del estudiante renderice código LaTeX crudo en lugar de fórmulas matemáticas (-0.4 pts)."
+    }
+  },
+  "penalties_applied": [],
+  "raw_subtotal": 18.9,
+  "final_score": 18.9,
+  "quality_tier": "EXCELENTE (17-20)",
+  "mastery_path_readiness": {
+    "mpri_score": 96.95,
+    "mpri_max": 100.0,
+    "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 16.95,
+        "max": 20.0
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 20.0,
+        "max": 20.0
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 25.0,
+        "max": 25.0
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 15.0,
+        "max": 15.0
+      },
+      "dag_and_interleaving_topology": {
+        "score": 10.0,
+        "max": 10.0
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 10.0,
+        "max": 10.0
+      }
+    },
+    "student_journey_verdict": "El curso 'estadistica_3_s9_vdirect5' alcanza una calificación de certificación Gold Mastery Path (MPRI 96.95/100). El estudiante cuenta con una arquitectura de aprendizaje óptima: progresión adaptativa multibanda calibrada en cada micro-competencia, un salvavidas socrático robusto de 3-4 pistas escalonadas que previene el agotamiento de los 3 strikes en PracticeSession.tsx, rationales diagnósticos específicos que transforman cada error en un momento de instrucción precisa vía FeedbackToast.tsx, y un 45.64% de evocación activa generativa (FIB) que erradica la sustitución pasiva. El único punto de fricción es la omisión de delimitadores '$' en 13 opciones de la competencia H-06, la cual es trivial de corregir."
+  },
+  "discovered_lint_rules": [
+    {
+      "rule_id": "orphan_latex_command_in_option_text",
+      "severity": "warning",
+      "regex_pattern": "^(?:\\\\operatorname|\\\\bar|\\\\sum|\\\\frac|\\\\lim|\\\\sqrt)[^$]*$",
+      "description": "Detecta opciones que inician con un comando LaTeX pero omiten los delimitadores '$...$', provocando que KaTeX muestre texto crudo en lugar de símbolos matemáticos formateados.",
+      "evidence_items": [
+        "Q-H06-431",
+        "Q-H06-432",
+        "Q-H06-433",
+        "Q-H06-434",
+        "Q-H06-435",
+        "Q-H06-436",
+        "Q-H06-437",
+        "Q-H06-445",
+        "Q-H06-446",
+        "Q-H06-447",
+        "Q-H06-448",
+        "Q-H06-449",
+        "Q-H06-450"
+      ]
+    },
+    {
+      "rule_id": "latex_braced_symbol_false_positive_filter",
+      "severity": "info",
+      "regex_pattern": "(?<!\\\\bar|\\\\operatorname|\\\\text|\\^|_)\\{[a-zA-Z_][a-zA-Z0-9_]*\\}",
+      "description": "Filtro de contexto negativo para 'uninterpolated_math_variable_linter'. Evita falsos positivos en agrupadores sintácticos legítimos de LaTeX como \\bar{Y}, \\bar{X}, F_{Y_j}, \\operatorname{plim} y \\text{MSE}.",
+      "evidence_items": [
+        "Q-H01-001",
+        "Q-C01-055",
+        "Q-C02-061",
+        "Q-Hab02-151",
+        "Q-C05-303",
+        "Q-C06-321",
+        "Q-C07-343",
+        "Q-C09-411",
+        "Q-C10-481"
+      ]
+    }
+  ],
+  "remediation_actions": [
+    "Envolver entre delimitadores matemáticos '$' los comandos LaTeX expuestos en las opciones de los reactivos Q-H06-431 a Q-H06-450 (ej. transformar '\\operatorname{Var}(\\bar{Y}_n) = 25' en '$\\operatorname{Var}(\\bar{Y}_n) = 25$').",
+    "Generar advertencias de ideas erróneas específicas (misconception_warning) para los 251 reactivos fill_in_the_blank a fin de asegurar paridad diagnóstica completa con el banco MC7.",
+    "Actualizar la clasificación taxonómica de Bloom en reactivos de deducción algebraica de las competencias Hab-01, Hab-02, Hab-03 y Hab-04 de 'Understand' a 'Apply'/'Analyze'.",
+    "Refactorizar la expresión regular en 'uninterpolated_math_variable_linter' en 'standardized_audit_engine.py' para evitar catalogar llaves de argumentos KaTeX como residuos de plantillas."
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-01 00:52:43",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}
