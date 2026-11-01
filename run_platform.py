@@ -496,7 +496,27 @@ class PlatformRequestHandler(SimpleHTTPRequestHandler):
             content_type = "application/octet-stream"
 
         try:
-            data = file_path.read_bytes()
+            if file_path.name == "index.html":
+                html = file_path.read_text(encoding="utf-8")
+                courses = scan_courses()
+                slim_courses = [{k: v for k, v in c.items() if k != "data"} for c in courses]
+                from datetime import datetime, timezone
+                manifest = {
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
+                    "courses": slim_courses,
+                }
+                manifest_json = json.dumps(manifest, ensure_ascii=False).replace("<", "\\u003c")
+                manifest_script = f'<script id="course-manifest" type="application/json">{manifest_json}</script>'
+                if re.search(r'<script id="course-manifest"[^>]*>[\s\S]*?</script>', html):
+                    html = re.sub(r'<script id="course-manifest"[^>]*>[\s\S]*?</script>', manifest_script, html, count=1)
+                elif "<!--COURSE_MANIFEST-->" in html:
+                    html = html.replace("<!--COURSE_MANIFEST-->", manifest_script)
+                else:
+                    html = html.replace("</head>", f"  {manifest_script}\n</head>")
+                data = html.encode("utf-8")
+            else:
+                data = file_path.read_bytes()
+
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(data)))
@@ -543,10 +563,11 @@ def build_frontend() -> bool:
             temp_dir,
             ignore=shutil.ignore_patterns("node_modules", "dist", ".git", "server"),
         )
+        build_env = {**os.environ, "COURSES_DIR": str(COURSES_DIR)}
         print("  * Installing npm dependencies...")
-        subprocess.run([npm_bin, "install"], cwd=str(temp_dir), check=True, capture_output=True)
+        subprocess.run([npm_bin, "install"], cwd=str(temp_dir), check=True, capture_output=True, env=build_env)
         print("  * Running Vite build...")
-        subprocess.run([npm_bin, "run", "build"], cwd=str(temp_dir), check=True, capture_output=True)
+        subprocess.run([npm_bin, "run", "build"], cwd=str(temp_dir), check=True, capture_output=True, env=build_env)
 
         built_dist = temp_dir / "dist"
         if built_dist.exists() and (built_dist / "index.html").exists():

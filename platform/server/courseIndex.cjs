@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const COURSES_DIR = path.resolve(__dirname, '../../courses');
+const COURSES_DIR = process.env.COURSES_DIR
+  ? path.resolve(process.env.COURSES_DIR)
+  : path.resolve(__dirname, '../../courses');
 const CACHE_FILE = path.resolve(__dirname, '../.cache/course_index.json');
 
 // Telemetry and profiling stats

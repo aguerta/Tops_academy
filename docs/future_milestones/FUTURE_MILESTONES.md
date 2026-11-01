@@ -214,19 +214,20 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 ---
 
 ### 5.2. Lo Que AÚN QUEDA POR MEJORAR (Gaps Críticos Desglosados)
-1. ⚠️ **Completar Auditoría de $\ge 4$ Arquetipos en Milestone 3:**
-   - `ArchetypeEntropyLinter` en `standardized_audit_engine.py` solo chequea si una sola plantilla supera el 85% (`ratio > 0.85`). **No valida que existan al menos 4 esqueletos estructurales distintos** (`distinct_archetypes < 4`), por lo que competencias con solo 2 o 3 plantillas pasan sin penalización. Falta actualizar el linter para contar y exigir $\ge 4$ arquetipos reales.
-2. ⚠️ **Completar Desacoplamiento de Milestone 4 (PrairieLearn & AST):**
-   - Falta integrar el compilador AST en servidor con QuickJS (`pykatex` a $>15,000\text{ fórmulas/s}$) y estructurar los shards bajo el contrato Pydantic `ShardCompetenceContract`, reemplazando las tuplas densas en Python.
-3. ⚠️ **Completar Rúbrica QA v2.0 de Milestone 10:**
-   - Faltan 3 reglas deterministas en `standardized_audit_engine.py`: deducción dura por monocultivo (hasta $-3.0$ pts por 100% MC7), umbral mínimo del 20% multimodal, y penalización dura automática si una competencia tiene $< 4$ arquetipos.
+1. ⚠️ **Afinar Conteo de Esqueletos en `ArchetypeEntropyLinter` (Milestone 3 — Pipeline ya elevado a v3.8 Tri-Banda):**
+   - **En Pipeline (`compile_shard.py` — ✅ RESUELTO):** Se elevó el estándar al **Contrato Form-B Tri-Banda Multimodal (`[M3-ARCHETYPES]`, `--min-archetypes 3`)**, que exige 3 arquetipos ortogonales cubriendo las 3 bandas (`easy`, `medium`, `hard`), $\ge 2$ niveles de Bloom, cuota obligatoria de práctica activa (`FIB`/`MS`), verificación AST anti-clonación, bloqueo de multiplicadores mágicos (`[DIAG-MAGIC-MULT]`) y compuerta `[STEM-DIVERSITY-GATE]` ($\ge 15$ stems únicos en `Hab-*`, $\ge 10$ en `C-*`/`H-*`).
+   - **En Auditor QA (`standardized_audit_engine.py` — ⚠️ BRECHA PUNTUAL PERSISTE EN EL LINTER):** Aunque la nueva suite v2.0 ya audita las 3 bandas (`ZPDProgressionCalibrationLinter`) y penaliza respuestas memorizables (`AntiGamingPsychometricLinter`), la clase `ArchetypeEntropyLinter` (líneas 674–721) **todavía solo evalúa si una plantilla supera el 85% (`ratio > 0.85`)** y aún no verifica `len(counts) < 3` esqueletos distintos. (Arreglo trivial de ~15 min).
+2. ⚠️ **Completar Desacoplamiento de Milestone 4 (PrairieLearn & AST — Estimado: ~3 a 4.5 h con Gemini 3.8):**
+   - Ya están activos los tokens `@var@`, el auto-heal con `tokenize`, el sanitizador R-23 zero-copy y el localizador AST `ShardDataLineLocator`. Solo falta: (a) validación AST de fórmulas KaTeX en servidor durante compilación (~45–90 min) y (b) migrar las 9-tuplas posicionales al contrato tipado Pydantic `ShardCompetenceContract` con soporte dual (~2–3 h).
+3. ✅ **Rúbrica QA v2.0 y Compuerta Bloqueante Pre-Publish de Milestone 10 (Implementado en commits `be43b08` y `b07cec8`):**
+   - **Resuelto y superado en alcance:** Se implementaron los **7 linters Path-to-Mastery v2.0** (`ZPDProgressionCalibrationLinter`, `RetrievalModalityDiversityLinter`, `SocraticScaffoldingIntegrityLinter`, `DiagnosticRationaleAlignmentLinter`, `AntiGamingPsychometricLinter`, `DAGMasteryTopologyLinter`, `KaTeXFrontendErgonomicsLinter`), **3 nuevas penalizaciones duras** (`socratic_hint_poisoning`, `vacuous_quantifier_key_corruption`, `answer_memorization_exploit`), el índice **MPRI (0–100 pts en 6 pilares, exigiendo $\ge 25\%$ de modalidad activa `FIB+MS`)** y el bloqueo duro `PublishQualityGateError` en `course_publisher.py` (exige `MPRI >= 75`, `ZPD > 0`, `P4 >= 13/15`, `unicidad rationales >= 30%` y `0 hard_penalties`).
 4. 🎯 **Evocación Libre (Free Recall) y Micro-Pasos (Milestone 5):**
    - MathLive + SymPy para respuestas abiertas y validación de derivaciones intermedias.
 5. 🎯 **Motor de Decaimiento de Memoria y Repetición Espaciada (Milestone 8):**
    - Curva de Ebbinghaus en `masteryStorage.ts`, refreshers a 1-4-14-45 días y **Modo Blind Recognition** (sesiones sin etiquetas).
 6. 🎯 **Study Harness (Milestone 6): faltan el gating socrático y la «hoja en blanco» previa:**
-   - La ergonomía y el Split-View ya están entregados (Milestone 1). Pendiente: botón socrático que solo aparece cuando el estudiante agotó los intentos, pantalla previa «¿ya lo has intentado?» sin opciones a la vista, pestañas Hoja en Blanco / Ficha Teórica y la certificación oficial del usuario (§6.6).
-7. 🎯 **Arquitectura Jerárquica de Contenido PPT (Milestone 9):**
+   - La ergonomía y el Split-View ya están entregados (Milestone 1). Pendiente: cortina metacognitiva previa «¿ya lo has intentado?» (Hoja en Blanco antes de revelar las 7 opciones), pestañas `[ 📝 Reactivo | ⬜ Pizarra Libre | 📖 Ficha Teórica ]`, botón socrático bloqueado por compuerta hasta agotar intentos/pistas y certificación oficial del usuario (§6.6).
+7. 🎯 **Arquitectura Jerárquica de Contenido PPT (Milestone 9 — Estimado: ~4 a 6 h con Gemini 3.8):**
    - Módulos de Contenido (PPT) con Glosario, Núcleo Conceptual, Quizzes por subtema y Challenge integrador de PPT.
 8. 🎯 **Apertura instantánea de cursos pesados (Milestone 11b):**
    - La lentitud percibida al abrir Gavilano / Estadística v2 no se explica por servidor ni parseo (≈ 0.1 s medido, §2.2); falta diagnóstico en navegador, quitar el `await` de IndexedDB del camino de apertura e indicador de progreso.
@@ -240,17 +241,17 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 
 > Los milestones **completados y certificados** (1, 2a y núcleo del 11) viven en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md). Esta matriz lista solo lo abierto.
 
-| Hito / Milestone | Área | Impacto Cognitivo y Operativo | Esfuerzo Estimado | Estado de Ejecución |
+| Hito / Milestone | Área | Impacto Cognitivo y Operativo | Esfuerzo Estimado (con Gemini 3.8) | Estado de Ejecución |
 | :--- | :--- | :--- | :---: | :---: |
-| **Milestone 2: PWA Instalable y Modo Offline** | Frontend / PWA | **Habilita el estudio ubicuo e instalable.** `vite-plugin-pwa`, manifest con iconos, safe areas y precaching de fuentes KaTeX. *(La usabilidad móvil ya está cerrada: Milestone 2a.)* | 1 a 2 h | 🚀 **Quick Win #2 (pendiente)** |
-| **Milestone 3: Anti-Overfitting y Variedad de Plantillas** | Pipeline & QA | **Destruye la automatización sintáctica.** 4 arquetipos disjuntos (`[M3-ARCHETYPES]`) en pipeline y linter de entropía en QA. | 2 a 3 h (Auditor) | 🛠️ **Pipeline: Hecho / Auditor: Falta contar $\ge 4$** |
-| **Milestone 4: Desacoplamiento KaTeX-Python (PrairieLearn)** | Backend / Pipeline | **Erradica al 100% las colisiones de sintaxis.** Tokens `@var@` activos; falta compilación AST QuickJS y contrato Pydantic. | 1 a 2 d | 🛠️ **Parcial (@var@ activo / AST pendiente)** |
+| **Milestone 2: PWA Instalable y Modo Offline** | Frontend / PWA | **Habilita el estudio ubicuo e instalable.** `vite-plugin-pwa`, manifest con iconos, safe areas y precaching de fuentes KaTeX (excluyendo JSONs de 14 MB del precache inicial para delegarlos a IndexedDB + `runtimeCaching`). *(Usabilidad móvil e IndexedDB ya están hechos.)* | **1 a 2 h** (60–90 min código + 30 min test SW) | 🚀 **Quick Win #2 (pendiente)** |
+| **Milestone 3: Anti-Overfitting y Variedad de Plantillas** | Pipeline & QA | **Destruye la automatización sintáctica.** Contrato v3.8 Tri-Banda (`[M3-ARCHETYPES]`, `--min-archetypes 3`, 3 bandas ZPD, cuota FIB/MS, `[STEM-DIVERSITY-GATE]` $\ge 10\text{–}15$ stems y `[DIAG-MAGIC-MULT]`) activo en `compile_shard.py`. | **15 a 30 min** (solo afinar `ArchetypeEntropyLinter`) | ✅ **Pipeline v3.8: Hecho / QA: Solo falta `distinct < 3` en `ArchetypeEntropyLinter`** |
+| **Milestone 4: Desacoplamiento KaTeX-Python (PrairieLearn)** | Backend / Pipeline | **Erradica al 100% las colisiones de sintaxis.** Tokens `@var@`, R-23 zero-copy y `ShardDataLineLocator` activos; solo falta validador AST KaTeX en compilación y contrato Pydantic `ShardCompetenceContract`. | **3 a 4.5 h** (~1 h AST KaTeX + ~2.5 h Pydantic) | 🛠️ **75% Hecho (@var@ y R-23 activos / Pydantic pendiente)** |
 | **Milestone 5: Entradas Simbólicas Libres (Free Recall)** | Full-Stack | **Trascendencia del reconocimiento pasivo.** MathLive + SymPy para respuestas abiertas y validación de pasos intermedios. | 2 a 3 d | 🧠 **Impacto Cognitivo Máximo** |
-| **Milestone 6: Antigravity Study Harness (Split-View & 1/3–1/2 Viewport)** | Arquitectura UI | **Estación de ultra-aprendizaje en Flow.** Vía Pragmática: Viewport 1/3–1/2 + Pestañas (Hoja en Blanco / Teoría) + Copiar Prompt Socrático. Vía Full: Visor PDF integrado in-app. | 1 a 2 h (Vía Pragmática) / 3 a 5 d (Full) | 🛠️ **En progreso: pasos 1–2 hechos; falta gating socrático + hoja en blanco; pendiente certificación del usuario** |
-| **Milestone 7: Streaming DAG, Pool de Workers y Aceleración de Tests** | Infraestructura | **Quiebra la barrera de 15 min en pipeline y acelera la suite de 1,037 tests de 85s a < 30s.** DAG asíncrono, pre-warming de sandbox y paralelización `pytest-xdist` (12 cores). | 2 a 3 d | ⚡ **Rendimiento Pipeline & CI/CD** |
+| **Milestone 6: Antigravity Study Harness (Split-View & 1/3–1/2 Viewport)** | Arquitectura UI | **Estación de ultra-aprendizaje en Flow.** Vía Pragmática: Viewport 1/3–1/2 + Cortina «Hoja en Blanco» previa + Pestañas (Pizarra / Teoría) + Botón Prompt Socrático con gating estricto (3-strikes). | **1.5 a 2.5 h** (Vía Pragmática) / 3 a 5 d (Full) | 🛠️ **En progreso: pasos 1–2 hechos; falta gating socrático + hoja en blanco; pendiente certificación** |
+| **Milestone 7: Streaming DAG, Pool de Workers y Aceleración de Tests** | Infraestructura | **Quiebra la barrera de 15 min en pipeline y acelera la suite de 1,271 tests de 85s a 24.10s.** DAG asíncrono, pre-warming de sandbox y paralelización `pytest-xdist` (12 cores). | 1 a 2 d (solo resta Streaming DAG) | 🛠️ **Tests `< 30s` (24.10s) logrado / Streaming DAG pendiente** |
 | **Milestone 8: Repetición Espaciada (SRS) y Blind Mode** | Motor de Sesión | **Combate el decaimiento de memoria (Curva de Ebbinghaus).** Decaimiento temporal, refreshers a 1-4-14-45 días y sesiones a ciegas. | 2 a 3 d | 🔁 **Cierre de Ciclo de Pericia** |
-| **Milestone 9: Jerarquía de Contenido (PPT $\to$ Core/Subtemas)** | Curricular / Schema | **Organización natural en torno a la fuente real.** Contenido PPT $\to$ [Glosario + Núcleo] + Subtemas $\to$ Quizzes de subtema + Challenge PPT. | 2 a 3 d | 🏛️ **Arquitectura Curricular** |
-| **Milestone 10: QA Rubric v2.0 Deep Mastery** | Auditoría QA | **Certificación integral de rigor.** Linters deterministas activos; falta penalización automática por monocultivo MC7 y multimodalidad. | 1 a 2 d | 📋 **Parcial (Linters activos / Penalizaciones pendientes)** |
+| **Milestone 9: Jerarquía de Contenido (PPT $\to$ Core/Subtemas)** | Curricular / Schema | **Organización natural en torno a la fuente real.** Contenido PPT $\to$ [Glosario + Núcleo] + Subtemas $\to$ Quizzes de subtema + Challenge PPT. | **4 a 6 h** (~3 h en paralelo con Flash Triad) | 🏛️ **Arquitectura Curricular** |
+| **Milestone 10: QA Rubric v2.0 Deep Mastery** | Auditoría QA | **Certificación integral de rigor.** 7 nuevos linters Path-to-Mastery v2.0, 6 pilares MPRI (`/100`), penalizaciones duras y bloqueo `PublishQualityGateError` en `course_publisher.py`. | **Hecho** (solo resta unificar umbral `< 3` en `ArchetypeEntropyLinter`) | ✅ **95% Completado (Suite v2.0 + MPRI + Quality Gate activos)** |
 | **Milestone 11b: Apertura Instantánea de Cursos Pesados** | Frontend | **Cierra la lentitud percibida al abrir Gavilano / Estadística v2.** Diagnóstico en navegador, quitar el `await` de IndexedDB del camino de apertura, indicador de progreso y política de prefetch; worker solo si se mide bloqueo. | 0.5 a 1 d | ⏳ **Pendiente (servidor + parseo medidos ≈ 0.1 s)** |
 | **Milestone 1-T: Deuda de Pruebas de Ergonomía** | QA / E2E | **Convierte la certificación manual en regresión automática.** Matriz 125%/150%, tablets y AC-CORE medido por código. | 2 a 4 h | ⏳ **Pendiente** |
 | **Milestone 12: Resiliencia ante Suspensión de la Laptop (Restauración de Sesión)** | Frontend / Servidor | **Preserva el estado de práctica ante sleep del SO y cortes HMR.** Restauración desde `sessionStorage`, banner de reconexión, `/healthz` y modo estudio `npm run study`. | 1 a 2 d | ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** |
@@ -275,21 +276,26 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 ---
 
 ### Milestone 2: PWA Instalable y Modo Offline (Configuración PWA Móvil)
-* **Estado:** ⏳ **Pendiente.** La parte de *usabilidad móvil* (responsive, drawer, columna única) ya se completó y quedó registrada como Milestone 2a en `MILESTONES_COMPLETED.md`; lo que falta es lo propiamente PWA (a 2026-10-26 el repositorio no tiene `vite-plugin-pwa`, ni `<link rel="manifest">`, ni service worker).
-* **Objetivo:** Experiencia nativa en smartphones Android e iOS para estudio ubicuo.
-* **Componentes:**
-  - `vite-plugin-pwa` con precaching de fuentes KaTeX y bundles JS.
-  - Manifest con iconos adaptativos (`192x192`, `512x512`) y metatags de Safe Areas (`viewport-fit=cover`, `env(safe-area-inset-bottom)`).
+* **Estado:** ⏳ **Pendiente (Esfuerzo real: 1 a 2 h porque el 80% de la infraestructura offline ya existe).** La parte de *usabilidad móvil* (responsive, drawer, columna única) ya se completó como Milestone 2a en `MILESTONES_COMPLETED.md`, el progreso ya vive en `localStorage` (`masteryStorage.ts`) y la caché offline de cursos completos ya opera sobre IndexedDB (`tops_academy_cache` en `courseLoader.ts`).
+* **Objetivo:** Experiencia nativa instalable (`standalone`) en smartphones Android, iOS y escritorio sin red.
+* **Componentes y Salvaguardas Críticas (60–90 min código + 30 min test):**
+  - `vite-plugin-pwa` con precaching de App Shell (HTML, JS, CSS, `api/courses.json` y fuentes `.woff2` de KaTeX ≈ 2.5 MB).
+  - **Exclusión obligatoria en Workbox:** No incluir `api/courses/*.json` ni `courses/*.json` en `globPatterns` (ya que cursos como Gavilano pesan 14 MB y romperían el límite de 2 MB de precache); delegar los JSON de cursos a `runtimeCaching` (`StaleWhileRevalidate`) + la caché existente en IndexedDB.
+  - Manifest con iconos adaptativos (`192x192`, `512x512`), metatags de Safe Areas (`viewport-fit=cover`, `env(safe-area-inset-bottom)`) y badge visual `✓ Offline` por curso en `CourseLibrary.tsx`.
 
 ---
 
 ### Milestone 3: Anti-Overfitting y Variedad de Plantillas por Competencia
-* **Estado:** 🛠️ **En Progreso (Pipeline implementado / Auditoría por afinar)**.
-* **Diagnóstico de Brecha:**
-  - **Pipeline (LOGRADO):** `compile_shard.py` y `prompt_shard_author.md` exigen y validan 4 tuplas disjuntas en `TEMPLATES` bajo la regla `[M3-ARCHETYPES]` (1. Directo, 2. Inverso, 3. Perturbación, 4. Frontera).
-  - **Auditor QA (PENDIENTE):** En `standardized_audit_engine.py`, `ArchetypeEntropyLinter` solo alerta ante una plantilla dominante que supera el 85% de frecuencia (`ratio > 0.85`), pero **no valida que existan al menos 4 esqueletos estructurales distintos** (`distinct_archetypes < 4`). Si una competencia tiene solo 2 o 3 plantillas, el auditor no alerta.
-* **Acción para Certificación Completa:**
-  - Modificar `ArchetypeEntropyLinter` para calcular `distinct_archetypes_count = len(set(skeletons))` por competencia y emitir `LintIssue` si `distinct_archetypes_count < 4`.
+* **Estado:** ✅ **Pipeline v3.8 Completado y Endurecido / 🛠️ Auditoría QA al 95% (falta 1 línea en `ArchetypeEntropyLinter`)**.
+* **Diagnóstico de Brecha Verificado en Código (2026-10-31):**
+  - **Pipeline (`compile_shard.py:L1901-L2274` — ✅ LOGRADO Y ELEVADO A v3.8 TRI-BANDA):** La compuerta `[M3-ARCHETYPES]` exige por defecto `--min-archetypes 3` bajo el **Contrato Form-B Tri-Banda Multimodal**, validando en tiempo de compilación:
+    1. Cobertura obligatoria de las **3 bandas ZPD (`easy`, `medium`, `hard`)** por competencia.
+    2. Mínimo **2 niveles distintos de la taxonomía de Bloom** por competencia.
+    3. Cuota obligatoria de **práctica activa (`fill_in_the_blank` o `multiple_select`)**: $\ge 2$ plantillas activas en habilidades (`Hab-*`) y $\ge 1$ en conceptos/hechos (`C-*`/`H-*`).
+    4. Verificación AST anti-clonación (`_fn_uses_arch_in_body`), rechazo de generadores idénticos en `seed=100/101`, bloqueo de multiplicadores mágicos `[DIAG-MAGIC-MULT]` y compuerta `[STEM-DIVERSITY-GATE]` ($\ge 15$ stems únicos en `Hab-*`, $\ge 10$ en `C-*`/`H-*`).
+  - **Auditor QA (`standardized_audit_engine.py:L674-L721` — ⚠️ BRECHA PUNTUAL PERSISTE):** Aunque `ZPDProgressionCalibrationLinter` ya audita las 3 bandas y `AntiGamingPsychometricLinter` penaliza bancos con $\le 4$ claves únicas (`answer_memorization_exploit`), `ArchetypeEntropyLinter` **aún solo alerta cuando un esqueleto supera el 85% (`ratio > 0.85`)** y no verifica `len(counts) < 3`.
+* **Acción para Cierre Total (15 min):**
+  - Añadir `if len(counts) < 3:` en `ArchetypeEntropyLinter.run()` para reportar competencias legacy con menos de 3 esqueletos estructurales.
 
 ---
 
@@ -498,6 +504,80 @@ El nuevo diseño del Milestone 6 se estructura en dos modalidades complementaria
 3. **Choque deliberado con AC-CORE.** AC-CORE (Milestone 1) exige las opciones visibles en el primer frame; la pantalla en blanco lo cambia a propósito. Debe ser un **modo explícito** y la matriz E2E (Milestone 1-T) debe cubrir ambos modos: las pruebas actuales asumen opciones visibles.
 4. **Relación con otros hitos.** Es la versión sin MathLive de los puntos 1 (evocación libre) y 7 (andamiaje diferido) de §1.1; no sustituye al Milestone 5.
 
+#### 6.6.1. Arquitectura Visual de los 3 Estados: «Hoja en Blanco Previa» + Gating Socrático
+
+```mermaid
+stateDiagram-v2
+    [*] --> Fase0_HojaEnBlanco: Nueva pregunta (Modo Deep Study activo)
+    
+    state "FASE 0: Cortina de Evocación Libre (Blank-First)" as Fase0_HojaEnBlanco {
+        [*] --> EnunciadoVisible
+        EnunciadoVisible: • Enunciado visible arriba\n• Opciones MC7 OCULTAS tras cortina metacognitiva\n• Área de borrador / reflexión libre activa\n• Pregunta guía: "¿Ya planteaste tu idea antes de mirar las opciones?"
+    }
+
+    Fase0_HojaEnBlanco --> Fase1_IntentoAutonomo: Clic en "Ya tengo mi planteamiento -> Revelar opciones"
+
+    state "FASE 1: Resolución Activa y Andamiaje (Intentos 1 a 3)" as Fase1_IntentoAutonomo {
+        [*] --> OpcionesReveladas
+        OpcionesReveladas: • Grid de 2 columnas con las 7 opciones\n• Tabs disponibles: [📝 Reactivo] [⬜ Pizarra] [📖 Ficha Teórica]\n• 🔒 Botón Socrático OCULTO / BLOQUEADO\n• Si falla (Strike 1 o 2): FeedbackToast + desbloqueo gradual de Pistas 1..3
+    }
+
+    Fase1_IntentoAutonomo --> Fase2_CompuertaSocratica: Agota los 3 intentos (isExhausted) o abre las 3 pistas tras ≥2 fallos
+
+    state "FASE 2: Compuerta Socrática Desbloqueada (Último Recurso)" as Fase2_CompuertaSocratica {
+        [*] --> BotonSocraticoActivo
+        BotonSocraticoActivo: • Se habilita botón "🤖 Copiar Prompt Socrático"\n• Empaqueta: Enunciado + Opciones falladas + Pistas vistas + Regla Anti-Giveaway\n• El alumno pega (Ctrl+V) en su ventana lateral de Gemini Pro
+    }
+```
+
+**Wireframes Visuales de Interfaz (Layout 1/2 Pantalla):**
+
+```text
+┌──────────────────────────────────────────────────────────────────────┐
+│ [ 📝 Reactivo ]  [ ⬜ Pizarra Libre ]  [ 📖 Ficha Teórica ]   [🧠 ON] │
+├──────────────────────────────────────────────────────────────────────┤
+│ ENUNCIADO (Competencia Hab-02 · Dificultad: Hard):                   │
+│ Sea X_n una sucesión tal que √n(X_n - θ) -> N(0, σ²). Determine la  │
+│ distribución asintótica de g(X_n) = X_n² mediante el Método Delta.   │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   ╔══════════════════════════════════════════════════════════════╗   │
+│   ║  🧠 FASE 1: EVOCACIÓN EN HOJA EN BLANCO (Opciones Ocultas)   ║   │
+│   ║                                                              ║   │
+│   ║  ¿Ya lo has intentado en papel o en tu cabeza?               ║   │
+│   ║  ¿Tienes claro qué teorema aplicar y a qué forma llegar?     ║   │
+│   ║                                                              ║   │
+│   ║  ┌────────────────────────────────────────────────────────┐  ║   │
+│   ║  │ (Opcional) Anota aquí tu derivada g'(θ) o tu idea...   │  ║   │
+│   ║  └────────────────────────────────────────────────────────┘  ║   │
+│   ║                                                              ║   │
+│   ║   [ 💡 Ya tengo mi idea -> Revelar Opciones ]  [ No sé aún ] ║   │
+│   ╚══════════════════════════════════════════════════════════════╝   │
+│                                                                      │
+│ 🔒 Tutor Socrático IA: bloqueado hasta agotar tus intentos y pistas  │
+└──────────────────────────────────────────────────────────────────────┘
+                                   │
+                    (Al pulsar "Revelar Opciones")
+                                   ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│ [ 📝 Reactivo ]  [ ⬜ Pizarra Libre ]  [ 📖 Ficha Teórica ]   [🧠 ON] │
+├──────────────────────────────────────────────────────────────────────┤
+│ (Enunciado visible arriba...)                                        │
+│ ┌────────────────────────────────┐ ┌───────────────────────────────┐ │
+│ │ (A) √n(X_n² - θ²) -> N(0,4θ²σ²)│ │ (B) √n(X_n² - θ²) -> N(0,2θσ²)│ │
+│ └────────────────────────────────┘ └───────────────────────────────┘ │
+│ ┌────────────────────────────────┐ ┌───────────────────────────────┐ │
+│ │ (C) n(X_n² - θ²) -> N(0,4θ²σ²) │ │ (D) ... (7 opciones en grid)  │ │
+│ └────────────────────────────────┘ └───────────────────────────────┘ │
+├──────────────────────────────────────────────────────────────────────┤
+│ ▼ Pistas Progresivas (3/3 consultadas) · Intentos: ❌ ❌ ❌ (Agotados)│
+│ ┌──────────────────────────────────────────────────────────────────┐ │
+│ │ 🔓 Has agotado tus intentos autónomos. ¿Sigues con duda?         │ │
+│ │ [ 🤖 Copiar Prompt Socrático para Gemini Pro (Anti-Giveaway) ]   │ │
+│ └──────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ### Milestone 7: Pipeline Streaming DAG, Pool de Subprocesos y Aceleración de la Suite de Tests (Target Pipeline: < 15 min / Target Tests: < 30 s)
@@ -607,12 +687,13 @@ El nuevo diseño del Milestone 6 se estructura en dos modalidades complementaria
 
 ---
 
-### Milestone 10: Rúbrica QA v2.0 (Certificación Deep Mastery)
-* **Estado:** 🛠️ **Parcialmente Cumplido (Linters de micro-calidad activos / Deducciones duras y multimodalidad pendientes)**.
-* **Componentes Técnicos:**
-  1. **Penalización Dura por Monocultivo (hasta -3.0 pts):** Linter determinista que compute la entropía de tipos de reactivo y aplique deducción automática en `hard_penalties` si el 100% es opción múltiple.
-  2. **Exigencia de Diversidad Multimodal ($\ge 20\%$):** Requisito de contar con al menos 20% de preguntas en formatos alternativos para certificar en Tier "Excelente".
-  3. **Formalización de Linters Psicométricos:** Consolidación permanente de linters de entropía de arquetipos ($\ge 4$ variedades), distractor cloning, syntax residual y andamiaje socrático.
+### Milestone 10: Rúbrica QA v2.0 (Certificación Deep Mastery & Path-to-Mastery)
+* **Estado:** ✅ **95% Completado y Activo en Producción (Commits `be43b08`, `24c44f8`, `0e2fd38`, `b07cec8`)**.
+* **Componentes Técnicos Implementados (`standardized_audit_engine.py`, `qa_rubric.md` y `course_publisher.py`):**
+  1. ✅ **Suite de 7 Linters Path-to-Mastery v2.0:** `ZPDProgressionCalibrationLinter` (3 bandas + Bloom `Apply+`), `RetrievalModalityDiversityLinter` (cuota `FIB + MS` vs. monocultivo `MC7`), `SocraticScaffoldingIntegrityLinter` (detección de pistas envenenadas, boilerplate Mad-Libs y fugas de respuesta), `DiagnosticRationaleAlignmentLinter` (bloqueo de multiplicadores mágicos `1.333x` y reciclaje de rationales), `AntiGamingPsychometricLinter` (memorización visual $\le 4$ claves, relleno `[R-15]`, prefijos cruzados Solow/EDP y cuantificadores universales vacuos), `DAGMasteryTopologyLinter` (ciclos, inversiones topológicas y subgrafos desconectados) y `KaTeXFrontendErgonomicsLinter` (`\text{prosa} \ge 45` chars e identificadores crudos `$theta_hat$`).
+  2. ✅ **Índice MPRI (`Mastery Path Readiness Index`, 0 a 100 pts en 6 pilares) y Exigencia Multimodal ($\ge 25\%$):** El Pilar 2 exige $\ge 25\%$ de generación activa/discriminación (`FIB + MS`) para otorgar el puntaje completo de modalidad (restando hasta 10 pts MPRI y -1.0 a -1.3 pts en D2 ante monocultivo 100% MC7).
+  3. ✅ **Nuevas Penalizaciones Duras (`hard_penalties`):** `socratic_hint_poisoning` (-1.5 pts), `vacuous_quantifier_key_corruption` (-1.0 pt) y `answer_memorization_exploit` (-0.5 pt/comp, máx -2.0 pts), sumadas a `bank_lt_3_exercises`, `hints_zero` y `orphan_questions`.
+  4. ✅ **Compuerta Bloqueante Pre-Publish (`PublishQualityGateError` en `course_publisher.py`):** Impide publicar cualquier curso si `MPRI < 75.0`, `zpd_score <= 0.0`, `diag_pillar_score < 13.0`, `rationale_uniqueness_pct < 30.0%`, `len(hard_penalties) > 0`, cualquier issue `critical`, o `len(length_padded_options) > 0`, generando automáticamente `specific_error_report.{md,json}` con mapeo AST de líneas exactas.
 
 ---
 

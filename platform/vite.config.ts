@@ -7,7 +7,8 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 
 function courseApiPlugin(): Plugin {
-  const getCoursesDir = () => path.resolve(__dirname, '../courses');
+  const getCoursesDir = () =>
+    process.env.COURSES_DIR ? path.resolve(process.env.COURSES_DIR) : path.resolve(__dirname, '../courses');
 
   // Fallback indexing logic in case ./server/courseIndex.cjs is unavailable
   function createFallbackCourseIndex() {
