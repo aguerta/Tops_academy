@@ -2,7 +2,7 @@
 
 > **Propósito:** archivo de los milestones **cerrados**. Lo pendiente o en curso vive en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md) *(espejo de este archivo en `docs/future_milestones/MILESTONES_COMPLETED.md`)*.  
 > **Convención de certificación:** cada entrada dice *quién* certificó y *cómo*. «Certificado por el usuario» = prueba manual en sus equipos. «Verificado automáticamente» = tests o E2E con nombre y resultado. Lo no verificado se declara de forma explícita.  
-> **Última actualización:** 2026-10-26 (Branch: `main` = `optimizaciones_test`).
+> **Última actualización:** 2026-10-31 (Branch: `main` — Milestones 1, 2a, 3 y núcleo del 11 cerrados).
 
 ---
 
@@ -12,6 +12,7 @@
 | :--- | :--- | :--- | :--- |
 | **1** Ergonomía Web (Zoom-Fix, Split 50%, Remediación v3) | Laptops 14" a 150%, TUF F15 a 125%, split 50%, tablets; biblioteca de 3 columnas; prosa en fórmulas | Usuario (2026-10-26) + matriz de 7 viewports + 97 contratos | `05c8f4b`, `12042d0`, `950bd20` |
 | **2a** Usabilidad móvil | Teléfono: columna única, drawer, footer en flujo | Usuario (2026-10-26) + viewport 390 × 844 en la matriz | los de M1 |
+| **3** Anti-Overfitting y Variedad de Plantillas (v3.8 Tri-Banda) | Contrato Tri-Banda (`--min-archetypes 3`, 3 bandas ZPD, $\ge 2$ Bloom, cuota FIB/MS, `[STEM-DIVERSITY-GATE]`) + `ArchetypeEntropyLinter` (`MIN_ARCHETYPES = 3` + `ratio > 0.85` + MPRI) | Automática (`test_new_audit_linters.py`, 11 cursos publicados con 0 infracciones) | `5b5395c`, `be43b08`, `b07cec8` + cierre 2026-10-31 |
 | **11** Carga de cursos — núcleo | Manifest slim, índice con caché, ETag/304/gzip, manifest inline, IndexedDB, prefetch | Automática (12 tests de API + build); ACs de cliente sin medir | `41435c5`, `b73a5ee`, `2051b8b`, `97fa2f3` |
 
 ---
@@ -97,6 +98,22 @@
 * **Estado:** ✅ **Completado y certificado por el usuario (2026-10-26):** «ahora sí funciona el celular… ya no se tiene que pelear con la plataforma para hacer las preguntas».
 * **Entregado (consecuencia directa del Milestone 1):** columna única bajo 480 px de contenedor, sidebar como drawer bajo 1024 px, indicador `n of N` en el footer, toast como bottom sheet, footer en flujo sin scroll fantasma (`h-dvh`) y cero desborde horizontal. El viewport 390 × 844 forma parte de la matriz E2E (PASS).
 * **No incluido (permanece abierto como «Milestone 2: PWA Instalable y Modo Offline» en `FUTURE_MILESTONES.md`):** `vite-plugin-pwa`, manifest con iconos, safe areas (`viewport-fit=cover`) y precaching de fuentes KaTeX. Evidencia al 2026-10-26: `platform/package.json` no declara dependencias PWA y `platform/index.html` no tiene `<link rel="manifest">`.
+
+---
+
+## Milestone 3: Anti-Overfitting y Variedad de Plantillas por Competencia (Arquitectura v3.8 Tri-Banda Multimodal)
+* **Estado:** ✅ **Completado al 100% en Pipeline y Auditoría QA (2026-10-31).** Verificado automáticamente mediante pruebas unitarias (`tests/test_new_audit_linters.py`), tests de compilación de shards y escaneo estático sobre los 11 cursos publicados en `courses/*.json` (0 infracciones).
+* **Objetivo Crítico:** Erradicar el sobreajuste sintáctico (*overfitting* a un único molde donde solo rotan números) exigiendo polimorfismo estructural real, progresión adaptativa ZPD y modalidades de evocación activa en cada competencia.
+* **Componentes Técnicos Entregados:**
+  1. **Compuerta de Compilación `[M3-ARCHETYPES]` — Contrato Form-B Tri-Banda Multimodal ([`compile_shard.py:L1901-L2274`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/compile_shard.py#L1901-L2274)):**
+     - **Mínimo 3 arquetipos ortogonales por competencia (`--min-archetypes 3`):** Cubriendo obligatoriamente las 3 bandas ZPD (`easy` = Directo, `medium` = Inverso, `hard` = Perturbación).
+     - **Diversidad cognitiva de Bloom:** Mínimo $\ge 2$ niveles distintos de la taxonomía de Bloom por competencia.
+     - **Cuota de práctica activa multimodal (`FIB` / `MS`):** Mínimo $\ge 2$ plantillas activas (`fill_in_the_blank` o `multiple_select`) en habilidades (`Hab-*`) y $\ge 1$ en conceptos/hechos (`C-*`/`H-*`).
+     - **Anti-clonación AST y matemática:** Verifica que toda función generadora que declare `arch` ramifique realmente en su cuerpo AST (`_fn_uses_arch_in_body`), que los enunciados `stem_es` y funciones generadoras no sean clones, y que las tuplas produzcan salidas matemáticas distintas al evaluarse con `seed=100` y `seed=101`.
+     - **Bloqueo de multiplicadores mágicos (`[DIAG-MAGIC-MULT]`) y Compuerta de Diversidad de Enunciados (`[STEM-DIVERSITY-GATE]`):** Exige $\ge 15$ stems enmascarados únicos en habilidades (cuota 30) y $\ge 10$ en conceptos/hechos (cuota 20).
+  2. **Auditoría Determinista Integral en QA Engine ([`standardized_audit_engine.py:L674-L767`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/course-qa-evaluator/scripts/standardized_audit_engine.py#L674-L767)):**
+     - `ArchetypeEntropyLinter` (`MIN_ARCHETYPES = 3`): Audita tanto concentración excesiva en una sola plantilla (`ratio > 0.85`) como insuficiencia de esqueletos estructurales (`distinct_skeletons < 3`) o de plantillas declaradas (`len(tpl_ids) < 3`) en competencias con $\ge 15$ reactivos, exponiendo `low_archetype_variety_competencies` y `min_distinct_skeletons_observed`.
+     - Integración directa con el **Pilar 2 del MPRI** (`retrieval_modality_and_anti_gaming`, penalizando competencias monótonas en `anti_gaming_score`) y mapeo prescriptivo en [`course_publisher.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/course_publisher.py#L306-L314) (`ZPD-TRI-BAND / archetype_entropy_linter`), complementado por `ZPDProgressionCalibrationLinter` y `AntiGamingPsychometricLinter` (`answer_memorization_exploit`).
 
 ---
 
