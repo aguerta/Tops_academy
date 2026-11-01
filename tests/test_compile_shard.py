@@ -375,3 +375,72 @@ class TestAdaptiveShardSizing:
     def test_max_comps_per_shard_overrides_adaptive(self):
         """Explicit max_comps_per_shard takes precedence."""
         assert determine_shard_count(24, max_comps_per_shard=2) == 12
+
+
+class TestHardenedRemediations:
+    """Tests for template ID normalization, AST preamble dedent, and shard_fixes isolation."""
+
+    def test_template_id_normalization_and_locator_matching(self, tmp_path: Path):
+        """Templates with non-prefixed IDs like C01_T1 are normalized to T-C01-01 and matched by locator."""
+        from compile_shard import ShardDataLineLocator, is_trivial_verifier
+
+        sample_src = (
+            "import math\n\n"
+            "def gen_c01_1(rng):\n"
+            "    x = rng.randint(10, 50)\n"
+            "    return {'vars': {'x': x, 'ans': x * 2}, 'correct': '@ans@', 'distractors': []}\n\n"
+            "def ver_c01_1(res):\n"
+            "    import math\n"  # Indented import inside function!
+            "    v = res.get('vars', {})\n"
+            "    return v.get('ans') == v.get('x', 0) * 2\n\n"
+            "TEMPLATES = [\n"
+            "    ('C01_T1', 'C-01', 'fill_in_the_blank', gen_c01_1, ver_c01_1, ('easy', 'Remember'), ['Enunciado 1'], ['H1'], 'Sol'),\n"
+            "    ('C01_T2', 'C-01', 'fill_in_the_blank', gen_c01_1, ver_c01_1, ('medium', 'Understand'), ['Enunciado 2'], ['H1'], 'Sol'),\n"
+            "]\n"
+        )
+        data_py = tmp_path / "shard_01_data.py"
+        data_py.write_text(sample_src, encoding="utf-8")
+
+        locator = ShardDataLineLocator(data_py)
+
+        # 1. Verify preamble extraction ignores indented import inside ver_c01_1
+        preamble = locator.get_preamble_code()
+        assert "import math" in preamble
+        for line in preamble.splitlines():
+            assert not line.startswith(" "), f"Indented line found in preamble: '{line}'"
+
+        # 2. Verify is_trivial_verifier accepts verifier with indented function and internal import
+        ver_src = "    def ver_c01_1(res):\n        import math\n        v = res.get('vars', {})\n        return v.get('ans') == v.get('x', 0) * 2"
+        is_triv, reason = is_trivial_verifier(ver_src)
+        assert not is_triv, f"Valid verifier flagged as trivial: {reason}"
+
+        # 3. Verify find_tuple_for_question resolves cross-mapped IDs (T-C01-01 -> C01_T1)
+        t_info1 = locator.find_tuple_for_question("C-01", template_id="T-C01-01")
+        assert t_info1 is not None
+        assert t_info1.get("template_id") == "C01_T1"
+
+        t_info2 = locator.find_tuple_for_question("C-01", template_id="T-C-01-02")
+        assert t_info2 is not None
+        assert t_info2.get("template_id") == "C01_T2"
+
+    def test_discover_fix_files_shard_isolation(self, tmp_path: Path):
+        """discover_fix_files respects per-shard directory isolation."""
+        from compile_shard import discover_fix_files
+
+        fixes_root = tmp_path / "shard_fixes"
+        s01_dir = fixes_root / "shard_01"
+        s02_dir = fixes_root / "shard_02"
+        s01_dir.mkdir(parents=True, exist_ok=True)
+        s02_dir.mkdir(parents=True, exist_ok=True)
+
+        fix_c01 = s01_dir / "C-01.py"
+        fix_c01.write_text("# fix C01\n", encoding="utf-8")
+        fix_c02 = s02_dir / "C-02.py"
+        fix_c02.write_text("# fix C02\n", encoding="utf-8")
+
+        # Querying shard_01 fixes with expected competency C-01
+        fixes_by_cid, rel_files = discover_fix_files(fixes_root, expected_cids=["C-01"], shard_id="shard_01")
+        assert "C-01" in fixes_by_cid
+        assert fixes_by_cid["C-01"] == fix_c01
+        assert "C-02" not in fixes_by_cid
+        assert fix_c02 not in rel_files

@@ -89,7 +89,7 @@ def test_parenthetical_telltale_linter():
 
 
 def test_archetype_entropy_linter():
-    # 20 questions with identical structural skeleton
+    # Case 1: 20 questions with 1 identical structural skeleton (ratio = 1.0 > 0.85 & distinct = 1 < 3)
     questions = []
     for i in range(20):
         questions.append({
@@ -106,8 +106,66 @@ def test_archetype_entropy_linter():
     summary = ArchetypeEntropyLinter().run(course_data, issues)
     assert summary["monotonous_competencies_count"] == 1
     assert "C-01" in summary["monotonous_competencies"]
+    assert summary["low_archetype_variety_competencies_count"] == 1
+    assert "C-01" in summary["low_archetype_variety_competencies"]
     assert len(issues) == 1
     assert issues[0].severity == "warning"
+
+    # Case 2: 20 questions split 50%/50% across ONLY 2 skeletons (ratio = 0.50 <= 0.85, but distinct = 2 < 3)
+    two_arch_qs = []
+    for i in range(10):
+        two_arch_qs.append({
+            "id": f"Q-A-{i:02d}",
+            "competency_id": "C-02",
+            "stem": f"Dado el estimador muestral con tamaño $n = {i + 20}$, determine la varianza asintótica exacta.",
+        })
+        two_arch_qs.append({
+            "id": f"Q-B-{i:02d}",
+            "competency_id": "C-02",
+            "stem": f"Si la varianza límite observada equivale a $\\sigma^2 = {i + 5}$, despeje el parámetro estructural subyacente.",
+        })
+    issues_two = []
+    summary_two = ArchetypeEntropyLinter().run(
+        {"course_id": "test_two_arch", "competencies": [{"id": "C-02"}], "questions": two_arch_qs},
+        issues_two,
+    )
+    assert summary_two["monotonous_competencies_count"] == 1
+    assert summary_two["low_archetype_variety_competencies_count"] == 1
+    assert "C-02" in summary_two["low_archetype_variety_competencies"]
+    assert summary_two["min_distinct_skeletons_observed"] == 2
+    assert len(issues_two) == 1
+    assert "Variedad insuficiente de arquetipos" in issues_two[0].message
+
+    # Case 3: 18 questions balanced across 3 distinct skeletons (6/6/6 -> ratio = 0.33 <= 0.85 & distinct = 3 >= 3) -> CLEAN
+    three_arch_qs = []
+    for i in range(6):
+        three_arch_qs.append({
+            "id": f"Q-T1-{i:02d}",
+            "competency_id": "Hab-01",
+            "template_id": "T-Hab-01-01",
+            "stem": f"Calcule directamente el equilibrio estacionario cuando la productividad toma valor $A = {i + 2}$.",
+        })
+        three_arch_qs.append({
+            "id": f"Q-T2-{i:02d}",
+            "competency_id": "Hab-01",
+            "template_id": "T-Hab-01-02",
+            "stem": f"Sabiendo que el capital de regla de oro converge a $k^* = {i + 10}$, infiera la tasa de ahorro requerida.",
+        })
+        three_arch_qs.append({
+            "id": f"Q-T3-{i:02d}",
+            "competency_id": "Hab-01",
+            "template_id": "T-Hab-01-03",
+            "stem": f"Ante un choque permanente sobre la depreciación $\\delta' = 0.0{i + 3}$, evalúe la dirección de transición dinámica.",
+        })
+    issues_three = []
+    summary_three = ArchetypeEntropyLinter().run(
+        {"course_id": "test_three_arch", "competencies": [{"id": "Hab-01"}], "questions": three_arch_qs},
+        issues_three,
+    )
+    assert summary_three["monotonous_competencies_count"] == 0
+    assert summary_three["low_archetype_variety_competencies_count"] == 0
+    assert summary_three["min_distinct_skeletons_observed"] == 3
+    assert len(issues_three) == 0
 
 
 def test_uninterpolated_math_variable_linter():

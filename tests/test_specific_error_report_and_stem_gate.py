@@ -396,3 +396,92 @@ def test_blind_judge_stratified_random_max_20_items_max_10_judges(tmp_path: Path
     stems_2 = [itm["stem"] for itm in batch_2]
     assert stems_1 != stems_2
 
+
+def test_compile_shard_rejects_debug_raise_and_accepts_legitimate_chebyshev(tmp_path: Path):
+    """Verifies that:
+    1. A generator with an artificial debug 'raise' statement is rejected with [TPL-DEBUG-ARTIFACT].
+    2. A legitimate Chebyshev exercise with small bound and conceptual distractors is accepted.
+    """
+    work_dir, shards_dir, _, cta_file, _ = _create_isolated_workspace(tmp_path, cid="H-05", ctype="concept")
+    shard_py = shards_dir / "shard_01_data.py"
+
+    # Part 1: Artifact rejection
+    code_with_raise = r'''
+import random
+
+def _gen_h05(rng, arch=1):
+    mu = rng.randint(20, 60)
+    sigma = rng.randint(5, 12)
+    varx = sigma**2
+    eps = rng.randint(sigma * 2 + 5, 80)
+    ans = round(varx / (eps**2), 4)
+    d1 = round(sigma / eps, 4)
+    d3 = round(sigma / (eps**2), 4)
+    v = {"mu": mu, "sigma": sigma, "varx": varx, "eps": eps, "ans": ans, "d1": d1, "d3": d3}
+    if arch == 2:
+        return {"vars": v, "correct": r"@ans@"}
+    dists = [
+        ("D-H05-01", r"$P(|X - @mu@| \ge @eps@) \le @d1@$", r"Error de exponente lineal 1/k en lugar de cuadrático para eps=@eps@ y sigma=@sigma@."),
+        ("D-H05-02", r"$P(|X - @mu@| \ge @eps@) \ge @ans@$", r"Inversión de la cota de Chebyshev para dispersión eps=@eps@ y sigma=@sigma@."),
+        ("D-H05-03", r"$P(|X - @mu@| \ge @eps@) \le @d3@$", r"Uso de desviación típica sigma=@sigma@ en vez de varianza para eps=@eps@."),
+        ("D-H05-04", r"$P(|X - @mu@| < @eps@) \le @ans@$", r"Confunde evento de cola con evento central para eps=@eps@ y sigma=@sigma@."),
+        ("D-H05-05", r"$X \sim \mathcal{N} \Rightarrow P(|X - @mu@| \ge @eps@) \le @ans@$", r"Asume incorrectamente distribución normal para mu=@mu@ y sigma=@sigma@."),
+        ("D-H05-06", r"$P(|X| \ge @eps@) \le @ans@$", r"Omite centrado respecto a la media mu=@mu@ para eps=@eps@."),
+    ]
+    return {"vars": v, "correct": r"$P(|X - @mu@| \ge @eps@) \le @ans@$", "distractors": dists}
+
+def gen_h05_1(rng): return _gen_h05(rng, 1)
+def gen_h05_2(rng): return _gen_h05(rng, 2)
+def gen_h05_3(rng):
+    res = _gen_h05(rng, 3)
+    if res["vars"]["mu"] > 0:
+        raise RuntimeError("DEBUG_CRASH")
+    return res
+
+def ver_h05(res): return abs(res["vars"]["ans"] - round(res["vars"]["varx"] / (res["vars"]["eps"]**2), 4)) < 1e-6
+
+s1 = [
+    r"Para una variable aleatoria $X$ con $\mu = @mu@$ y varianza $\sigma^2 = @varx@$, halle la cota:",
+    r"Considere una distribución con media $\mu = @mu@$ y varianza $\sigma^2 = @varx@$, determine la cota:",
+    r"Aplicando Chebyshev a una variable con centro en $\mu = @mu@$ y $\text{Var}(X) = @varx@$, determine la relación:",
+    r"A partir de los parámetros $\mu = @mu@$ y varianza $\sigma^2 = @varx@$, determine la cota de Chebyshev:",
+]
+s2 = [
+    r"Dada una muestra teórica con media $\mu = @mu@$ y dispersión $\sigma^2 = @varx@$, calcule el valor crítico:",
+    r"En un proceso con promedio $\mu = @mu@$ y varianza $\sigma^2 = @varx@$, obtenga el resultado de la cota:",
+    r"Calcule la cota superior del evento según Chebyshev para $\mu = @mu@$ y $\sigma^2 = @varx@$:",
+    r"Estime el límite probabilístico con parámetros $\mu = @mu@$ y $\sigma^2 = @varx@$:",
+]
+s3 = [
+    r"Se tiene una distribución continua con valor esperado $\mu = @mu@$ y $\sigma^2 = @varx@$. Identifique la cota:",
+    r"Evalúe la probabilidad de desviación respecto a $\mu = @mu@$ cuando la varianza es $\sigma^2 = @varx@$:",
+    r"Utilizando la regla de Chebyshev para $\mu = @mu@$ y varianza poblacional $\sigma^2 = @varx@$, halle la expresión:",
+    r"Determine la cota de Chebyshev con base en $\mu = @mu@$ y segundo momento central $\sigma^2 = @varx@$:",
+]
+hints = [
+    "La desigualdad de Chebyshev acota colas bilaterales empleando el segundo momento central.",
+    "La cota superior general se evalúa mediante el cociente de la varianza entre el cuadrado de la tolerancia.",
+    "Compruebe que la cota decrezca de manera cuadrática con respecto a la amplitud permitida.",
+]
+TEMPLATES = [
+    ("T-H05-01", "H-05", "multiple_choice_7_options", gen_h05_1, ver_h05, ("easy", "Remember"), s1, hints, "Sol @ans@."),
+    ("T-H05-02", "H-05", "fill_in_the_blank", gen_h05_2, ver_h05, ("medium", "Understand"), s2, hints, "Sol @ans@."),
+    ("T-H05-03", "H-05", "multiple_choice_7_options", gen_h05_3, ver_h05, ("hard", "Apply"), s3, hints, "Sol @ans@."),
+]
+'''
+    shard_py.write_text(code_with_raise, encoding="utf-8")
+    ok, errors = compile_shard(work_dir, shard_id="shard_01", strict=True, min_archetypes=3, cta_path=cta_file, seeds=50)
+    assert not ok, "Expected compile_shard to reject generator with debug raise"
+    err_str = "\n".join(errors)
+    assert "[TPL-DEBUG-ARTIFACT]" in err_str
+
+    # Part 2: Clean code without raise passes without false DIAG-MAGIC-MULT
+    clean_code = code_with_raise.replace(
+        'def gen_h05_3(rng):\n    res = _gen_h05(rng, 3)\n    if res["vars"]["mu"] > 0:\n        raise RuntimeError("DEBUG_CRASH")\n    return res',
+        'def gen_h05_3(rng): return _gen_h05(rng, 3)'
+    )
+    shard_py.write_text(clean_code, encoding="utf-8")
+    ok, errors = compile_shard(work_dir, shard_id="shard_01", strict=True, min_archetypes=3, cta_path=cta_file, seeds=50)
+    assert ok, f"Expected clean Chebyshev exercise to compile with PASS, got: {errors}"
+
+

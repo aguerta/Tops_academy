@@ -674,6 +674,7 @@ class ParentheticalTelltaleLinter(BaseLinter):
 class ArchetypeEntropyLinter(BaseLinter):
     name = "archetype_entropy_linter"
     dimension = "D2_assessment"
+    MIN_ARCHETYPES = 3
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
         questions = course_data.get("questions", [])
@@ -683,6 +684,9 @@ class ArchetypeEntropyLinter(BaseLinter):
             q_by_comp.setdefault(cid, []).append(q)
 
         monotonous_comps = []
+        low_archetype_variety_comps = []
+        archetype_counts_by_comp: dict[str, int] = {}
+
         for cid, qlist in q_by_comp.items():
             if len(qlist) < 15:
                 continue
@@ -698,26 +702,68 @@ class ArchetypeEntropyLinter(BaseLinter):
             if not skeletons:
                 continue
 
-            counts = {}
+            counts: dict[str, int] = {}
             for sk in skeletons:
                 counts[sk] = counts.get(sk, 0) + 1
+            distinct_skeletons = len(counts)
+            archetype_counts_by_comp[cid] = distinct_skeletons
             max_freq = max(counts.values())
             ratio = max_freq / len(skeletons)
+            tpl_ids = {str(q.get("template_id")).strip() for q in qlist if q.get("template_id")}
 
             if ratio > 0.85:
                 monotonous_comps.append(cid)
+                if distinct_skeletons < self.MIN_ARCHETYPES:
+                    low_archetype_variety_comps.append(cid)
                 issues.append(LintIssue(
                     linter=self.name,
                     dimension=self.dimension,
                     severity="warning",
                     item_id=qlist[0].get("id", cid),
                     competency_id=cid,
-                    message=f"Monocultivo de arquetipo en competencia '{cid}': {round(ratio * 100, 1)}% de las preguntas comparten la misma plantilla estructural",
+                    message=(
+                        f"Monocultivo de arquetipo en competencia '{cid}': {round(ratio * 100, 1)}% de las preguntas "
+                        f"comparten la misma plantilla estructural ({distinct_skeletons} esqueleto(s) distinto(s))"
+                    ),
+                ))
+            elif distinct_skeletons < self.MIN_ARCHETYPES:
+                monotonous_comps.append(cid)
+                low_archetype_variety_comps.append(cid)
+                issues.append(LintIssue(
+                    linter=self.name,
+                    dimension=self.dimension,
+                    severity="warning",
+                    item_id=qlist[0].get("id", cid),
+                    competency_id=cid,
+                    message=(
+                        f"Variedad insuficiente de arquetipos en competencia '{cid}': solo {distinct_skeletons} "
+                        f"esqueleto(s) estructural(es) distinto(s) en {len(qlist)} preguntas "
+                        f"(mínimo requerido: {self.MIN_ARCHETYPES} bajo contrato Tri-Banda)"
+                    ),
+                ))
+            elif tpl_ids and len(tpl_ids) < self.MIN_ARCHETYPES:
+                monotonous_comps.append(cid)
+                low_archetype_variety_comps.append(cid)
+                issues.append(LintIssue(
+                    linter=self.name,
+                    dimension=self.dimension,
+                    severity="warning",
+                    item_id=qlist[0].get("id", cid),
+                    competency_id=cid,
+                    message=(
+                        f"Variedad insuficiente de plantillas en competencia '{cid}': solo {len(tpl_ids)} "
+                        f"template_id distinto(s) en {len(qlist)} preguntas "
+                        f"(mínimo requerido: {self.MIN_ARCHETYPES} bajo contrato Tri-Banda)"
+                    ),
                 ))
 
         return {
+            "min_required_archetypes": self.MIN_ARCHETYPES,
             "monotonous_competencies_count": len(monotonous_comps),
             "monotonous_competencies": monotonous_comps,
+            "low_archetype_variety_competencies_count": len(low_archetype_variety_comps),
+            "low_archetype_variety_competencies": low_archetype_variety_comps,
+            "min_distinct_skeletons_observed": min(archetype_counts_by_comp.values()) if archetype_counts_by_comp else 0,
         }
 
 
@@ -1174,9 +1220,13 @@ class DiagnosticRationaleAlignmentLinter(BaseLinter):
                                 if not d_nums:
                                     continue
                                 d_val = float(d_nums[-1])
+                                # Ignore conceptual distractors where d_val is identical to c_val (e.g. sign or event domain misconceptions)
+                                if abs(d_val - c_val) <= 1e-4:
+                                    continue
+                                actual_ratio = d_val / c_val if abs(c_val) > 1e-9 else 0.0
                                 for m in self.MAGIC_MULTIPLIERS:
                                     # Strictly focus on non-half/non-double distinctive multipliers or >=3 total hits
-                                    if abs(d_val - round(c_val * m, 3)) <= 0.0015:
+                                    if abs(actual_ratio - m) <= 0.05 and abs(d_val - round(c_val * m, 3)) <= 0.0015:
                                         matched_mults.append(m)
                                         break
                             distinctive_hits = [m for m in matched_mults if m in (1.333, 0.667, 1.667, 0.333, 2.1, 0.45, 1.85, 0.15)]
@@ -1596,6 +1646,7 @@ def compute_mastery_path_readiness(summaries: dict[str, Any], total_comps: int, 
     dist = summaries.get("distractor_integrity_linter", {})
     cloned = summaries.get("cloned_distractor_value_linter", {})
     ag = summaries.get("anti_gaming_psychometric_linter", {})
+    arch_ent = summaries.get("archetype_entropy_linter", {})
     dag_t = summaries.get("dag_mastery_topology_linter", {})
     katex = summaries.get("katex_syntax_linter", {})
     erg = summaries.get("katex_frontend_ergonomics_linter", {})
@@ -1618,9 +1669,13 @@ def compute_mastery_path_readiness(summaries: dict[str, Any], total_comps: int, 
     else:
         modality_score = 10.0
     mem_comps = ag.get("memorizable_competencies_count", 0)
+    arch_mono_comps = arch_ent.get("monotonous_competencies_count", 0)
     vac_items = ag.get("vacuous_quantifier_items_count", 0)
     pad_ratio = ag.get("length_padded_items_count", 0) / total_q
-    anti_gaming_score = max(0.0, 10.0 - mem_comps * 3.0 - min(5.0, vac_items * 0.5) - pad_ratio * 8.0)
+    anti_gaming_score = max(
+        0.0,
+        10.0 - mem_comps * 3.0 - min(4.0, arch_mono_comps * 1.5) - min(5.0, vac_items * 0.5) - pad_ratio * 8.0,
+    )
     p2_retrieval = round(max(0.0, min(20.0, modality_score + anti_gaming_score)), 2)
 
     # Pillar 3: Socratic Scaffolding Lifeline (25 pts) — protects 3-strikes progression

@@ -155,8 +155,9 @@ def is_trivial_verifier(ver_code: str, ver_fn_callable: Any = None) -> Tuple[boo
     """Inspect AST of verifier code to reject trivial verifiers like constant 'return True'."""
     if not ver_code or not ver_code.strip():
         return True, "verifier code is empty"
+    clean_ver_code = textwrap.dedent(ver_code.strip())
     try:
-        tree = ast.parse(ver_code)
+        tree = ast.parse(clean_ver_code)
     except Exception as e:
         return True, f"verifier code syntax error: {e}"
 
@@ -333,6 +334,7 @@ class ShardDataLineLocator:
         self.constants: Dict[str, Tuple[int, int]] = {}
         self.functions: Dict[str, Tuple[int, int]] = {}
         self.helper_functions: Set[str] = set()
+        self.top_level_imports: List[Tuple[int, int, str]] = []
         self.tuples: List[Dict[str, Any]] = []
         self.competency_to_tuple_idx: Dict[str, int] = {}
         if self.source_text:
@@ -360,9 +362,17 @@ class ShardDataLineLocator:
             }
             return False
 
-        # 1. Map top-level functions and constants
+        # 1. Map top-level imports, functions, and constants
         for node in tree.body:
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(node, ast.Import):
+                root = node.names[0].name.split(".")[0] if node.names else ""
+                end_lineno = getattr(node, "end_lineno", node.lineno)
+                self.top_level_imports.append((node.lineno, end_lineno, root))
+            elif isinstance(node, ast.ImportFrom):
+                root = (node.module or "").split(".")[0]
+                end_lineno = getattr(node, "end_lineno", node.lineno)
+                self.top_level_imports.append((node.lineno, end_lineno, root))
+            elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 end_lineno = getattr(node, "end_lineno", node.lineno)
                 self.functions[node.name] = (node.lineno, end_lineno)
             elif isinstance(node, ast.Assign):
@@ -490,9 +500,16 @@ class ShardDataLineLocator:
 
         if template_id:
             for t in cand_tuples:
-                if t.get("template_id") == template_id:
+                tid = str(t.get("template_id") or "")
+                if (
+                    tid == template_id
+                    or tid.replace("_", "-") == template_id.replace("_", "-")
+                    or f"T-{tid}" == template_id
+                    or tid == f"T-{template_id}"
+                    or tid.lower() == template_id.lower()
+                ):
                     return t
-            m_idx = re.search(r"-0*(\d+)$", str(template_id))
+            m_idx = re.search(r"[_-]0*(\d+)$", str(template_id))
             if m_idx:
                 idx_1based = int(m_idx.group(1))
                 if 1 <= idx_1based <= len(cand_tuples):
@@ -667,27 +684,38 @@ class ShardDataLineLocator:
         return 0, 0, ""
 
     def get_preamble_code(self) -> str:
-        """Extracts allowed imports, top-level constants, and helper functions for sandbox injection."""
+        """Extracts allowed top-level imports, top-level constants, and helper functions for sandbox injection."""
         preamble_lines: List[str] = []
         # Safe allowed root modules in sandbox
         allowed_import_roots = {"math", "fractions", "statistics", "sympy", "numpy", "scipy", "random", "decimal"}
 
-        for line in self.lines:
-            stripped = line.strip()
-            if stripped.startswith("import ") or stripped.startswith("from "):
-                parts = stripped.split()
-                root = parts[1].split(".")[0]
+        # Only extract top-level imports from tree.body (ignoring imports inside functions)
+        if getattr(self, "top_level_imports", None):
+            for s, e, root in self.top_level_imports:
                 if root in allowed_import_roots:
-                    preamble_lines.append(line)
+                    import_lines = self.lines[s - 1 : e]
+                    preamble_lines.append(textwrap.dedent("\n".join(import_lines)).strip())
+        else:
+            # Fallback when AST didn't parse: strictly column-0 imports with NO leading indentation
+            for line in self.lines:
+                if line.startswith("import ") or line.startswith("from "):
+                    stripped = line.strip()
+                    parts = stripped.split()
+                    if len(parts) >= 2:
+                        root = parts[1].split(".")[0]
+                        if root in allowed_import_roots:
+                            preamble_lines.append(stripped)
 
         # Include constant lines
         for cname, (s, e) in sorted(self.constants.items(), key=lambda x: x[1][0]):
-            preamble_lines.extend(self.lines[s - 1 : e])
+            const_lines = self.lines[s - 1 : e]
+            preamble_lines.append(textwrap.dedent("\n".join(const_lines)).strip())
 
         # Include helper function lines in ascending line order
         for hname in sorted(self.helper_functions, key=lambda k: self.functions[k][0]):
             s, e = self.functions[hname]
-            preamble_lines.extend(self.lines[s - 1 : e])
+            helper_src = "\n".join(self.lines[s - 1 : e])
+            preamble_lines.append(textwrap.dedent(helper_src).strip())
 
         return "\n".join(preamble_lines).strip()
 
@@ -875,9 +903,15 @@ generate = generate_params
     return wrapper
 
 
-def discover_fix_files(fixes_dir: Optional[Path], expected_cids: List[str]) -> Tuple[Dict[str, Path], List[Path]]:
+def discover_fix_files(
+    fixes_dir: Optional[Path],
+    expected_cids: List[str],
+    shard_id: Optional[str] = None,
+) -> Tuple[Dict[str, Path], List[Path]]:
     """Discovers and maps shard fix files to competency IDs with case-insensitive and delimiter-agnostic normalization.
     
+    Supports both per-shard isolated directories (shard_fixes/<shard_id>/<cid>.py)
+    and legacy flat directories (shard_fixes/<cid>.py).
     Matches Hab-03, Hab_03, hab-03, hab_03, T-Hab-03, and hab03 to Hab-03.
     Returns (fix_files_by_cid, all_relevant_fix_files).
     """
@@ -886,7 +920,16 @@ def discover_fix_files(fixes_dir: Optional[Path], expected_cids: List[str]) -> T
     if not fixes_dir or not fixes_dir.is_dir():
         return fix_files_by_cid, relevant_files
 
-    all_fix_files = sorted(fixes_dir.glob("*.py"))
+    # Check for per-shard subdirectory if fixes_dir is a root shard_fixes dir
+    if shard_id and (fixes_dir / shard_id).is_dir():
+        sub_files = sorted((fixes_dir / shard_id).glob("*.py"))
+        if sub_files:
+            all_fix_files = sub_files
+        else:
+            all_fix_files = sorted(fixes_dir.glob("*.py"))
+    else:
+        all_fix_files = sorted(fixes_dir.glob("*.py"))
+
     for fix_p in all_fix_files:
         stem = fix_p.stem
         norm_stem = re.sub(r"[^a-zA-Z0-9]", "", stem).lower()
@@ -1126,13 +1169,20 @@ def compile_shard(
     elif isinstance(manifest_data, dict) and manifest_data.get("min_archetypes"):
         eff_min_arch = int(manifest_data["min_archetypes"])
 
-    # Locate shard_fixes directory
-    fixes_dir = shards_dir / "shard_fixes"
-    if not fixes_dir.is_dir() and (work_p / "shards" / "shard_fixes").is_dir():
-        fixes_dir = work_p / "shards" / "shard_fixes"
+    # Locate shard_fixes directory: prioritize shard-isolated directory (shard_fixes/<shard_id>/)
+    shard_fixes_dir = shards_dir / "shard_fixes" / norm_shard_id
+    if not shard_fixes_dir.is_dir() and (work_p / "shards" / "shard_fixes" / norm_shard_id).is_dir():
+        shard_fixes_dir = work_p / "shards" / "shard_fixes" / norm_shard_id
+
+    flat_fixes_dir = shards_dir / "shard_fixes"
+    if not flat_fixes_dir.is_dir() and (work_p / "shards" / "shard_fixes").is_dir():
+        flat_fixes_dir = work_p / "shards" / "shard_fixes"
+
+    # Prioritize shard-isolated directory if it exists and has fix files, else fallback to flat
+    fixes_dir = shard_fixes_dir if (shard_fixes_dir.is_dir() and any(shard_fixes_dir.glob("*.py"))) else flat_fixes_dir
 
     # Discover relevant fix files for hashing and modular splicing
-    fix_files_by_cid, relevant_fix_files = discover_fix_files(fixes_dir, expected_cids)
+    fix_files_by_cid, relevant_fix_files = discover_fix_files(fixes_dir, expected_cids, shard_id=norm_shard_id)
     has_all_fixes = bool(expected_cids and all(ecid in fix_files_by_cid for ecid in expected_cids))
 
     # Locate shard data path if not provided
@@ -1666,7 +1716,7 @@ def compile_shard(
 
         if not declared_vars and gen_code:
             try:
-                _gtree = ast.parse(gen_code)
+                _gtree = ast.parse(textwrap.dedent(gen_code.strip()))
                 for _gnode in ast.walk(_gtree):
                     if isinstance(_gnode, ast.Dict):
                         for _gk, _gv in zip(_gnode.keys, _gnode.values):
@@ -1866,14 +1916,18 @@ def compile_shard(
     # 6. Write templates atomically grouped by competency
     compiled_paths: List[Path] = []
     for cid, tpls in templates_by_cid.items():
-        if len(tpls) > 1:
-            base_id = f"T-{cid}" if not cid.startswith("T-") else cid
-            for idx, tpl in enumerate(tpls, start=1):
-                cur_id = tpl.get("id") or base_id
-                if cur_id == base_id or any(tpls[j].get("id") == cur_id for j in range(len(tpls)) if j != idx - 1):
-                    unique_id = f"{base_id}-{idx:02d}"
-                    tpl["id"] = unique_id
-                    tpl["template_id"] = unique_id
+        base_id = f"T-{cid}" if not cid.startswith("T-") else cid
+        for idx, tpl in enumerate(tpls, start=1):
+            cur_id = tpl.get("id") or base_id
+            needs_normalization = (
+                not cur_id.startswith("T-")
+                or (len(tpls) > 1 and cur_id == base_id)
+                or any(tpls[j].get("id") == cur_id for j in range(len(tpls)) if j != idx - 1)
+            )
+            if needs_normalization:
+                unique_id = f"{base_id}-{idx:02d}"
+                tpl["id"] = unique_id
+                tpl["template_id"] = unique_id
 
         out_json_path = templates_dir / f"{cid}.json"
         if len(tpls) == 1:
@@ -2015,7 +2069,7 @@ def compile_shard(
                 cid_ast_funcs: Dict[str, Union[ast.FunctionDef, ast.AsyncFunctionDef]] = {}
                 for src_txt in cid_sources:
                     try:
-                        parsed_tree = ast.parse(src_txt)
+                        parsed_tree = ast.parse(textwrap.dedent(src_txt.strip()))
                         for ast_node in ast.walk(parsed_tree):
                             if isinstance(ast_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                                 cid_ast_funcs[ast_node.name] = ast_node
@@ -2055,6 +2109,19 @@ def compile_shard(
                             m3_errors.append(
                                 f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}': la función generadora '{func_name}' recibe el parámetro 'arch' pero nunca lo utiliza en su cuerpo, produciendo salidas idénticas en los 4 arquetipos. Ramifica con 'if arch == 1 / elif arch == 2 / elif arch == 3 / else' para variar el problema matemático por arquetipo."
                             )
+                    # Pillar 3: Detect artificial debug exceptions in generator functions
+                    if fn_node:
+                        for sub_ast in ast.walk(fn_node):
+                            if isinstance(sub_ast, ast.Raise):
+                                exc_name = ""
+                                if isinstance(sub_ast.exc, ast.Call) and isinstance(sub_ast.exc.func, ast.Name):
+                                    exc_name = sub_ast.exc.func.id
+                                elif isinstance(sub_ast.exc, ast.Name):
+                                    exc_name = sub_ast.exc.id
+                                m3_errors.append(
+                                    f"{cid}.json ({source_name}): [TPL-DEBUG-ARTIFACT] La función generadora '{func_name}' contiene una sentencia 'raise {exc_name or ''}' en su cuerpo. Las funciones generadoras de ítems deben retornar un diccionario de variables y opciones, sin sentencias 'raise' de depuración."
+                                )
+                                break
 
                 # Verificación 3 — Detección de Evasión Trivial y Clones Matemáticos Puros (seed=100 & seed=101)
                 if eff_min_arch >= 3 and len(tpls) >= 3:
@@ -2190,8 +2257,13 @@ def compile_shard(
                                 if not d_nums:
                                     continue
                                 d_val = float(d_nums[-1])
+                                # Guard 1: Skip conceptual distractors sharing the same numerical value as correct answer
+                                if abs(d_val - c_val) <= 1e-4:
+                                    continue
+                                actual_ratio = d_val / c_val if abs(c_val) > 1e-9 else 0.0
                                 for m_factor in _magic_mults:
-                                    if abs(d_val - round(c_val * m_factor, 3)) <= 0.0015:
+                                    # Ratio check with 5% relative tolerance AND absolute rounding check to reject small-number false positives
+                                    if abs(actual_ratio - m_factor) <= 0.05 and abs(d_val - round(c_val * m_factor, 3)) <= 0.0015:
                                         matched_m.append(m_factor)
                                         break
                             dist_hits = [m_f for m_f in matched_m if m_f in _distinctive_magic]
@@ -2199,9 +2271,12 @@ def compile_shard(
                                 hit_seeds.append(s_val)
                                 if not hit_mults_sample:
                                     hit_mults_sample = dist_hits[:3] or matched_m[:3]
-                        except Exception:
-                            pass
-                    if hit_seeds:
+                        except Exception as e_seed:
+                            m3_errors.append(
+                                f"{cid}.json ({source_name}): [TPL-EXEC-ERROR] En '{tpl_id_m}' (semilla {s_val}), la función generadora falló con excepción: {type(e_seed).__name__}: {e_seed}"
+                            )
+                            break
+                    if len(hit_seeds) >= 3:
                         eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
                         loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
                         t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
@@ -2209,7 +2284,7 @@ def compile_shard(
                         m3_errors.append(
                             f"{cid}.json ({source_name}): [DIAG-MAGIC-MULT] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}), "
                             f"los distractores numéricos en {len(hit_seeds)} semillas (ej. seed={hit_seeds[0]}) coinciden con multiplicadores arbitrarios prohibidos ({hit_mults_sample}) respecto a la respuesta correcta. "
-                            f"Reemplaza los multiplicadores sintéticos sobre 'ans' por las fórmulas algebraicas reales de cada error_rationale y evita razones d/ans en {{0.333, 0.5, 0.667, 0.75, 1.25, 1.333, 1.5, 1.667}}."
+                            f"Reemplaza los multiplicadores sintéticos sobre 'ans' por las fórmulas algebraicas reales de cada error_rationale."
                         )
 
                 # Verificación 5 — Compuerta de Diversidad de Enunciados [STEM-DIVERSITY-GATE] (Paridad con run.py --stage build)
