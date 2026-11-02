@@ -97,10 +97,71 @@ async function saveToIndexedDB(id: string, course: Course, etag?: string): Promi
       };
       store.put(record);
 
-      tx.oncomplete = () => resolve();
+      tx.oncomplete = () => {
+        notifyCacheChange();
+        resolve();
+      };
       tx.onerror = () => resolve();
     } catch {
       resolve();
+    }
+  });
+}
+
+const cacheChangeListeners = new Set<(cachedIds: Set<string>) => void>();
+
+function notifyCacheChange() {
+  if (cacheChangeListeners.size === 0) return;
+  getCachedCourseIds().then((ids) => {
+    cacheChangeListeners.forEach((listener) => {
+      try {
+        listener(ids);
+      } catch (err) {
+        console.error('[courseLoader] Error in cache change listener:', err);
+      }
+    });
+  });
+}
+
+/**
+ * Subscribe to changes in cached course set (e.g. when background prefetch saves a course).
+ */
+export function onCourseCacheChanged(callback: (cachedIds: Set<string>) => void): () => void {
+  cacheChangeListeners.add(callback);
+  return () => {
+    cacheChangeListeners.delete(callback);
+  };
+}
+
+/**
+ * Scan all cached course IDs in memory and IndexedDB.
+ */
+export async function getCachedCourseIds(): Promise<Set<string>> {
+  const cached = new Set<string>();
+  for (const id of memoryCache.keys()) {
+    cached.add(id);
+  }
+
+  const db = await openDatabase();
+  if (!db) return cached;
+
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const req = store.getAllKeys();
+
+      req.onsuccess = () => {
+        if (Array.isArray(req.result)) {
+          for (const key of req.result) {
+            cached.add(String(key));
+          }
+        }
+        resolve(cached);
+      };
+      req.onerror = () => resolve(cached);
+    } catch {
+      resolve(cached);
     }
   });
 }
@@ -490,7 +551,10 @@ export async function clearCourseCache(): Promise<void> {
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
       const req = store.clear();
-      req.onsuccess = () => resolve();
+      req.onsuccess = () => {
+        notifyCacheChange();
+        resolve();
+      };
       req.onerror = () => resolve();
     } catch {
       resolve();

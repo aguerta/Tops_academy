@@ -14,6 +14,8 @@ import {
   loadCourse,
   prefetchCourses,
   prefetchCourse,
+  getCachedCourseIds,
+  onCourseCacheChanged,
 } from './utils/courseLoader';
 import { Sidebar } from './components/Sidebar';
 import { CourseOverview } from './components/CourseOverview';
@@ -52,6 +54,7 @@ export const App: React.FC = () => {
   const [courses, setCourses] = useState<CourseSummary[]>(initialCourses || []);
   const [loadingCourses, setLoadingCourses] = useState(initialCourses === null);
   const [loadingCourseId, setLoadingCourseId] = useState<string | null>(null);
+  const [cachedCourseIds, setCachedCourseIds] = useState<Set<string>>(new Set());
 
   const [activeCourse, setActiveCourse] = useState<Course | null>(null);
   const [mastery, setMastery] = useState<CourseMasteryRecord | null>(null);
@@ -66,6 +69,15 @@ export const App: React.FC = () => {
   const [sessionScore, setSessionScore] = useState(0);
   const [sessionTotal, setSessionTotal] = useState(0);
   const [sessionKey, setSessionKey] = useState(0);
+
+  // Load cached course IDs on mount and subscribe to updates
+  useEffect(() => {
+    getCachedCourseIds().then(setCachedCourseIds);
+    const unsubscribe = onCourseCacheChanged((ids) => {
+      setCachedCourseIds(new Set(ids));
+    });
+    return unsubscribe;
+  }, []);
 
   // Load manifest instantly (0 ms if inline, or fallback fetch) and start idle prefetch
   useEffect(() => {
@@ -106,6 +118,9 @@ export const App: React.FC = () => {
       }
     } catch (err) {
       console.error(`Failed to load course ${summary.id}:`, err);
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        alert("Este curso no se encuentra disponible sin conexión. Conéctate a internet para cargarlo y guardarlo para uso offline.");
+      }
     } finally {
       setLoadingCourseId(null);
     }
@@ -261,6 +276,7 @@ export const App: React.FC = () => {
           onSelectCourse={selectCourse}
           onPrefetch={(id) => prefetchCourse(id)}
           loadingCourseId={loadingCourseId}
+          cachedCourseIds={cachedCourseIds}
         />
       )}
 

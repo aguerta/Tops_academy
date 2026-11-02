@@ -9,6 +9,7 @@ interface CourseLibraryProps {
   onSelectCourse: (course: CourseSummary) => void;
   onPrefetch?: (id: string) => void;
   loadingCourseId?: string | null;
+  cachedCourseIds?: Set<string>;
 }
 
 export const CourseLibrary: React.FC<CourseLibraryProps> = ({
@@ -17,21 +18,56 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
   onSelectCourse,
   onPrefetch,
   loadingCourseId,
+  cachedCourseIds,
 }) => {
+  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 overflow-x-hidden">
       {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 text-ka-blue font-bold text-sm mb-2">
-          <span>📚</span>
-          <span>Top's Academy Platform</span>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-ka-blue font-bold text-sm mb-2">
+            <span>📚</span>
+            <span>Top's Academy Platform</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-ka-text-primary tracking-tight break-words [overflow-wrap:anywhere]">
+            Course Library
+          </h1>
+          <p className="text-sm text-ka-text-secondary mt-1 max-w-2xl break-words">
+            Explore and practice competency-based courses loaded directly from your exercise bank.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-ka-text-primary tracking-tight break-words [overflow-wrap:anywhere]">
-          Course Library
-        </h1>
-        <p className="text-sm text-ka-text-secondary mt-1 max-w-2xl break-words">
-          Explore and practice competency-based courses loaded directly from your exercise bank.
-        </p>
+
+        {deferredPrompt && (
+          <button
+            type="button"
+            data-testid="pwa-install-button"
+            onClick={handleInstallClick}
+            className="self-start sm:self-auto px-4 py-2 bg-ka-blue hover:bg-ka-blue-hover text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm transition-all flex items-center gap-2 cursor-pointer shrink-0"
+          >
+            <span aria-hidden="true">📲</span>
+            <span>Instalar App</span>
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -87,6 +123,7 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
             const courseId = c.id || c.data?.course_id || '';
             const record = getCourseMasteryRecord(courseId);
             const isCompleted = isCourseCompleted(courseId, c.total_competencies);
+            const isCachedOffline = cachedCourseIds ? cachedCourseIds.has(courseId) : false;
             const masteryPercent = record?.mastery_points || 0;
             const isLoadingThis = loadingCourseId === c.id;
 
@@ -110,6 +147,16 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                       <span className="px-2 py-0.5 bg-ka-blue-light text-ka-blue text-[11px] font-bold rounded shrink-0">
                         {c.total_competencies || 0} Units
                       </span>
+                      {isCachedOffline && (
+                        <span
+                          data-testid="course-offline-badge"
+                          className="px-2 py-0.5 bg-sky-50 text-sky-700 text-[11px] font-bold rounded-full border border-sky-200 flex items-center gap-1 shrink-0"
+                          title="Curso descargado y disponible sin conexión"
+                        >
+                          <span aria-hidden="true">✓</span>
+                          <span>Offline</span>
+                        </span>
+                      )}
                       {isCompleted ? (
                         <span
                           data-testid="course-completed-badge"
@@ -165,7 +212,7 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                     ) : (
                       <>
                         {isCompleted && <span className="shrink-0">✓</span>}
-                        <span className="truncate block min-w-0"><MathText text={c.title} inline /></span>
+                        <span className="truncate block min-w-0">Let's go</span>
                       </>
                     )}
                   </button>
