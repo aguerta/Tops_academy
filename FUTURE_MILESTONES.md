@@ -874,3 +874,10 @@ Los estudios técnicos, diagnósticos forenses y especificaciones psicométricas
 
 ---
 *Documento consolidado, sintetizado y actualizado para la evolución integral de Tops Academy hacia el estándar de Práctica Deliberada y Pericia Experta.*
+
+
+---
+
+## 10. Observación de Rendimiento / Deuda Técnica Pendiente
+
+- **Optimización de Tiempo en Etapa de Templates:** La ejecución de la etapa de templates (`.agents/skills/content-to-course/run.py --stage templates`) se demora mucho (evidenciado con avisos de alcance como `WARNING: Advisory scope-check for 'author': 237 non-standard files found` en ejecuciones como `courses/saul_pc_sistemas_de_ecuaciones_vmapreduce1/work`). Requiere optimización y recorte de tiempos de ejecución y chequeo.
