@@ -147,21 +147,21 @@
       "uninterpolated_math_variable_linter": {
         "uninterpolated_math_items_count": 49,
         "uninterpolated_math_sample_items": [
-          "Q-Hab03-230",
-          "Q-Hab03-208",
-          "Q-H03-123",
-          "Q-Hab03-207",
-          "Q-Hab03-204",
-          "Q-Hab03-222",
-          "Q-Hab03-205",
-          "Q-Hab03-201",
-          "Q-H03-127",
-          "Q-Hab03-219",
-          "Q-Hab03-218",
-          "Q-Hab03-227",
-          "Q-H05-390",
           "Q-Hab03-215",
-          "Q-Hab03-225"
+          "Q-Hab03-228",
+          "Q-Hab03-217",
+          "Q-Hab03-212",
+          "Q-H03-139",
+          "Q-Hab03-209",
+          "Q-H03-137",
+          "Q-H03-124",
+          "Q-H05-390",
+          "Q-Hab03-203",
+          "Q-Hab03-221",
+          "Q-H05-380",
+          "Q-Hab01-169",
+          "Q-Hab03-207",
+          "Q-H03-136"
         ]
       },
       "zpd_progression_linter": {

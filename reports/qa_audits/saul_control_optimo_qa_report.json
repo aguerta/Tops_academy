@@ -8,9 +8,10 @@
     "question_types_distribution": {
       "multiple_choice_7_options": 350
     },
-    "platform_status": "ACTIVO",
+    "platform_status": "ELIMINADO",
     "evaluator": "Course QA Auditor — Top's Academy",
-    "evaluation_date": "2026-10-25"
+    "evaluation_date": "2026-10-25",
+    "deleted_at": "2026-11-01 19:55:00"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -68,5 +69,7 @@
       "proposed_detection_logic": "Flag item if any hint string matches regex r'^(?:C|H|Hab|Fact|Concept|Skill)-\\d+$' or len(hint.strip()) < 15 without alphanumeric whitespace phrases."
     }
   ],
-  "platform_status": "ACTIVO"
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-01 19:55:00",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

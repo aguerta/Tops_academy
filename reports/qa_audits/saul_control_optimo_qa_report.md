@@ -4,7 +4,8 @@
 > [!NOTE]
 > **CURSO CERTIFICADO EN TIER EXCELENTE**: Este informe documenta la auditoría técnica, pedagógica y psicométrica exhaustiva del curso `saul_control_optimo` conforme a los estándares de **Quality Matters (QM)**, **OSCQR** y **Mastery Learning**.
 
-**Estado en Plataforma:** ACTIVO  
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-01 19:55:00  
 **Curso Auditado:** Saul Control Optimo (Cálculo de Variaciones y Control Óptimo en Economía)  
 **Identificador del Curso:** `saul_control_optimo`  
 **Archivo Fuente:** [`courses/saul_control_optimo.json`](file:///d:/Augusto/personal_portfolio/Tops_academy/courses/saul_control_optimo.json)  

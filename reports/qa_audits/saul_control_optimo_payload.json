@@ -46,9 +46,9 @@
   },
   "evaluator_guidance": {
     "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0 y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
-    "risk_score": 60.0,
+    "risk_score": 76.14,
     "mastery_path_readiness": {
-      "mpri_score": 54.23,
+      "mpri_score": 52.79,
       "mpri_max": 100.0,
       "mpri_tier": "ILLUSION OF MASTERY (40-64): Riesgo de Memorización / Mecanización Superficial",
       "pillars": {
@@ -57,7 +57,7 @@
           "max": 20.0
         },
         "retrieval_modality_and_anti_gaming": {
-          "score": 9.77,
+          "score": 8.33,
           "max": 20.0
         },
         "socratic_scaffolding_lifeline": {
@@ -144,27 +144,31 @@
         "parenthetical_telltale_items": []
       },
       "archetype_entropy_linter": {
+        "min_required_archetypes": 3,
         "monotonous_competencies_count": 0,
-        "monotonous_competencies": []
+        "monotonous_competencies": [],
+        "low_archetype_variety_competencies_count": 0,
+        "low_archetype_variety_competencies": [],
+        "min_distinct_skeletons_observed": 20
       },
       "uninterpolated_math_variable_linter": {
         "uninterpolated_math_items_count": 30,
         "uninterpolated_math_sample_items": [
-          "Q-C07-317",
-          "Q-H03-166",
-          "Q-H03-169",
-          "Q-C03-082",
+          "Q-C07-304",
           "Q-C03-081",
-          "Q-C03-096",
+          "Q-C07-301",
           "Q-C07-315",
-          "Q-C03-097",
+          "Q-C07-317",
+          "Q-C07-320",
           "Q-C07-305",
-          "Q-C07-311",
-          "Q-C07-314",
-          "Q-C07-318",
-          "Q-C03-098",
-          "Q-C03-084",
-          "Q-C07-304"
+          "Q-C03-082",
+          "Q-C07-319",
+          "Q-H03-168",
+          "Q-H03-167",
+          "Q-H03-166",
+          "Q-C03-099",
+          "Q-C07-312",
+          "Q-C07-313"
         ]
       },
       "zpd_progression_linter": {
@@ -224,21 +228,21 @@
         "boilerplate_hints_items_count": 317,
         "boilerplate_hints_pct": 90.57,
         "boilerplate_sample_items": [
-          "Q-Hab04-282",
-          "Q-C06-266",
-          "Q-C02-059",
-          "Q-C06-262",
+          "Q-C03-088",
+          "Q-Hab03-228",
+          "Q-Hab04-280",
           "Q-C01-009",
-          "Q-C06-261",
-          "Q-Hab03-235",
-          "Q-Hab03-225",
-          "Q-C01-008",
-          "Q-Hab05-338",
-          "Q-Hab03-237",
-          "Q-C01-012",
-          "Q-C03-089",
-          "Q-Hab02-186",
-          "Q-Hab02-193"
+          "Q-Hab03-230",
+          "Q-Hab01-120",
+          "Q-C02-052",
+          "Q-Hab05-337",
+          "Q-Hab02-181",
+          "Q-C07-313",
+          "Q-C06-257",
+          "Q-C06-270",
+          "Q-H01-025",
+          "Q-C04-137",
+          "Q-H03-156"
         ],
         "poisoned_hints_items_count": 0,
         "poisoned_hints_pct": 0.0,
@@ -252,27 +256,32 @@
         "rationale_uniqueness_pct": 4.29,
         "magic_multiplier_distractor_items_count": 4,
         "magic_multiplier_sample_items": [
+          "Q-Hab03-247",
           "Q-Hab04-284",
           "Q-Hab02-172",
-          "Q-Hab03-247",
           "Q-Hab04-281"
         ]
       },
       "anti_gaming_psychometric_linter": {
         "memorizable_competencies_count": 0,
         "memorizable_competencies": [],
-        "length_padded_items_count": 10,
+        "length_padded_items_count": 73,
         "length_padded_sample_items": [
-          "Q-Hab03-224",
-          "Q-Hab02-178",
-          "Q-Hab05-340",
-          "Q-Hab02-191",
-          "Q-C07-310",
-          "Q-Hab03-241",
+          "Q-Hab02-192",
+          "Q-Hab05-329",
+          "Q-Hab02-188",
+          "Q-Hab05-322",
+          "Q-Hab04-291",
+          "Q-Hab03-234",
+          "Q-Hab04-295",
+          "Q-Hab02-174",
           "Q-Hab04-285",
-          "Q-Hab04-294",
-          "Q-Hab05-331",
-          "Q-Hab03-242"
+          "Q-C07-317",
+          "Q-Hab02-178",
+          "Q-Hab02-194",
+          "Q-Hab02-187",
+          "Q-C07-320",
+          "Q-Hab02-179"
         ],
         "cross_domain_prefix_items_count": 0,
         "cross_domain_prefix_sample_items": [],
@@ -282,6 +291,8 @@
       "dag_mastery_topology_linter": {
         "has_cycle": false,
         "max_dag_depth": 6,
+        "connected_components_count": 1,
+        "multi_node_subgraphs_count": 1,
         "inverted_prerequisite_edges_count": 0,
         "inverted_prerequisite_edges": [],
         "dangling_prerequisites_count": 0,
@@ -298,9 +309,9 @@
       }
     },
     "hard_penalties": [],
-    "risk_score": 60.0,
+    "risk_score": 76.14,
     "mastery_path_readiness": {
-      "mpri_score": 54.23,
+      "mpri_score": 52.79,
       "mpri_max": 100.0,
       "mpri_tier": "ILLUSION OF MASTERY (40-64): Riesgo de Memorización / Mecanización Superficial",
       "pillars": {
@@ -309,7 +320,7 @@
           "max": 20.0
         },
         "retrieval_modality_and_anti_gaming": {
-          "score": 9.77,
+          "score": 8.33,
           "max": 20.0
         },
         "socratic_scaffolding_lifeline": {
@@ -1030,16 +1041,79 @@
       ],
       "memorizable_answers": [],
       "length_padded_options": [
+        "Q-Hab02-174",
+        "Q-Hab02-175",
+        "Q-Hab02-176",
+        "Q-Hab02-177",
         "Q-Hab02-178",
+        "Q-Hab02-179",
+        "Q-Hab02-185",
+        "Q-Hab02-186",
+        "Q-Hab02-187",
+        "Q-Hab02-188",
+        "Q-Hab02-189",
+        "Q-Hab02-190",
         "Q-Hab02-191",
+        "Q-Hab02-192",
+        "Q-Hab02-193",
+        "Q-Hab02-194",
+        "Q-Hab02-195",
+        "Q-Hab02-196",
+        "Q-Hab02-198",
+        "Q-Hab02-199",
         "Q-Hab03-224",
+        "Q-Hab03-226",
+        "Q-Hab03-229",
+        "Q-Hab03-234",
+        "Q-Hab03-235",
+        "Q-Hab03-238",
+        "Q-Hab03-239",
+        "Q-Hab03-240",
         "Q-Hab03-241",
         "Q-Hab03-242",
+        "Q-Hab03-246",
+        "Q-Hab03-247",
+        "Q-Hab03-250",
+        "Q-Hab04-274",
+        "Q-Hab04-279",
+        "Q-Hab04-281",
         "Q-Hab04-285",
+        "Q-Hab04-291",
         "Q-Hab04-294",
+        "Q-Hab04-295",
+        "Q-Hab04-300",
+        "Q-C07-306",
+        "Q-C07-307",
+        "Q-C07-308",
+        "Q-C07-309",
         "Q-C07-310",
+        "Q-C07-316",
+        "Q-C07-317",
+        "Q-C07-318",
+        "Q-C07-319",
+        "Q-C07-320",
+        "Q-Hab05-322",
+        "Q-Hab05-325",
+        "Q-Hab05-326",
+        "Q-Hab05-327",
+        "Q-Hab05-328",
+        "Q-Hab05-329",
         "Q-Hab05-331",
-        "Q-Hab05-340"
+        "Q-Hab05-332",
+        "Q-Hab05-333",
+        "Q-Hab05-335",
+        "Q-Hab05-336",
+        "Q-Hab05-337",
+        "Q-Hab05-339",
+        "Q-Hab05-340",
+        "Q-Hab05-341",
+        "Q-Hab05-343",
+        "Q-Hab05-344",
+        "Q-Hab05-345",
+        "Q-Hab05-346",
+        "Q-Hab05-348",
+        "Q-Hab05-349",
+        "Q-Hab05-350"
       ],
       "cross_domain_prefixes": [],
       "vacuous_quantifiers": [],
@@ -4668,10 +4742,244 @@
         "linter": "anti_gaming_psychometric_linter",
         "dimension": "D2_assessment",
         "severity": "warning",
+        "item_id": "Q-Hab02-174",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\dot{x}(t) = 26$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-174",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 2 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "$\\dot{x}(t) = 24$, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-175",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\dot{x}(t) = 8$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-175",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$\\dot{x}(t) = 6$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-176",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\dot{x}(t) = 6$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-176",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$\\dot{x}(t) = 7$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-177",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\dot{x}(t) = 4$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-177",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\dot{x}(t) = 2$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-178",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 2 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$\\dot{x}(t) = 4$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
         "item_id": "Q-Hab02-178",
         "competency_id": "Hab-02",
         "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', para los parámetros bajo análisis.'",
         "snippet": "$\\dot{x}(t) = 5$, para los parámetros bajo análisis."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-179",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$C = 15$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-179",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "snippet": "$C = 45$, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-179",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', en el contexto del contraste analizado.'",
+        "snippet": "$C = 65$, en el contexto del contraste analizado."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-185",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "$C = 74$, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-185",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "snippet": "$C = 71$, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-186",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$C = 50$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-186",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 2 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "$C = 30$, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-186",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "snippet": "$C = 90$, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-187",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\Delta \\dot{x} = 24$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-187",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "$\\Delta \\dot{x} = 12$, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-188",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$\\Delta \\dot{x} = 5$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-188",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 2 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$\\Delta \\dot{x} = 4$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-189",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\Delta \\dot{x} = 5$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-189",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$\\Delta \\dot{x} = 2$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-190",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\Delta \\dot{x} = 6$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-190",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\Delta \\dot{x} = 7$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-191",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\Delta \\dot{x} = 7$, bajo las hipótesis del modelo."
       },
       {
         "linter": "anti_gaming_psychometric_linter",
@@ -4686,6 +4994,150 @@
         "linter": "anti_gaming_psychometric_linter",
         "dimension": "D2_assessment",
         "severity": "warning",
+        "item_id": "Q-Hab02-192",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\Delta \\dot{x} = 11$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-192",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en el contexto del contraste analizado.'",
+        "snippet": "$\\Delta \\dot{x} = 12$, en el contexto del contraste analizado."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-193",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\Delta \\dot{x} = 10$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-193",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$\\Delta \\dot{x} = 14$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-193",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "snippet": "$\\Delta \\dot{x} = 11$, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-194",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$x_1 = 48$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-194",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 4 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "snippet": "$x_1 = 24$, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-195",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "$x_1 = 35$, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-195",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$x_1 = 37$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-196",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$x_1 = 30$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-196",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$x_1 = 56$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-196",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$x_1 = 28$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-198",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$x_1 = 14$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-198",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$x_1 = 48$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-199",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$x_1 = 22$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-199",
+        "competency_id": "Hab-02",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$x_1 = 21$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
         "item_id": "Q-Hab03-224",
         "competency_id": "Hab-03",
         "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para los parámetros bajo análisis.'",
@@ -4695,10 +5147,163 @@
         "linter": "anti_gaming_psychometric_linter",
         "dimension": "D2_assessment",
         "severity": "warning",
+        "item_id": "Q-Hab03-224",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$x^*(4) = 41.0$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-226",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el contexto del contraste analizado.'",
+        "snippet": "$x^*(5) = 15.0$, en el contexto del contraste analizado."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-226",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 2 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$x^*(5) = 35.0$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-229",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$x^*(9) = 13.0$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-229",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "snippet": "$x^*(9) = 53.5$, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-229",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 2 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$x^*(9) = 65.5$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-234",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$x^*(9) = 74.0$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-234",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 2 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "snippet": "$x^*(9) = 33.5$, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-235",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$x^*(8) = 92.0$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-235",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "$x^*(8) = 60.0$, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-238",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$x^*(3) = 159.75$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-239",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo, en el marco de la especificación.'",
+        "snippet": " bajo las hipótesis del modelo, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-239",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$x^*(4) = 85.0$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-240",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo, bajo las hipótesis del modelo.'",
+        "snippet": "0$, bajo las hipótesis del modelo, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-240",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$x^*(3) = 131.5$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
         "item_id": "Q-Hab03-241",
         "competency_id": "Hab-03",
-        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', para los parámetros bajo análisis.'",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$x^*(7) = 91.88$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-241",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo, para los parámetros bajo análisis.'",
         "snippet": "bajo las hipótesis del modelo, para los parámetros bajo análisis."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-242",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación, en el contexto del contraste analizado.'",
+        "snippet": "rco de la especificación, en el contexto del contraste analizado."
       },
       {
         "linter": "anti_gaming_psychometric_linter",
@@ -4713,10 +5318,136 @@
         "linter": "anti_gaming_psychometric_linter",
         "dimension": "D2_assessment",
         "severity": "warning",
+        "item_id": "Q-Hab03-246",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el contexto del contraste analizado.'",
+        "snippet": "$x^*(2) = 2.0$, en el contexto del contraste analizado."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-246",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 2 para evadir [R-15]: ', en el marco de la especificación, según los supuestos clásicos del modelo.'",
+        "snippet": "co de la especificación, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-247",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "snippet": "$x^*(1) = 2.25$, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-250",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación, para la muestra de datos observada.'",
+        "snippet": "l marco de la especificación, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab03-250",
+        "competency_id": "Hab-03",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "snippet": "$x^*(4) = -2.0$, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-274",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación, de acuerdo con la teoría econométrica.'",
+        "snippet": "arco de la especificación, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-274",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "snippet": "$t_1^* = 4.32$, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-279",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo, en el marco de la especificación.'",
+        "snippet": " bajo las hipótesis del modelo, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-279",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "$x(t_1) = 4.688$, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-281",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo, bajo las hipótesis del modelo.'",
+        "snippet": "3$, bajo las hipótesis del modelo, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-281",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 4 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$x(t_1) = 1.286$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
         "item_id": "Q-Hab04-285",
         "competency_id": "Hab-04",
-        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', para los parámetros bajo análisis.'",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación, para los parámetros bajo análisis.'",
         "snippet": "el marco de la especificación, para los parámetros bajo análisis."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-285",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$x(t_1) = 6.429$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-291",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$\\Delta t_1^* = 3.1$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-291",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 4 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "$\\Delta t_1^* = 4.0$, para la muestra de datos observada."
       },
       {
         "linter": "anti_gaming_psychometric_linter",
@@ -4731,10 +5462,235 @@
         "linter": "anti_gaming_psychometric_linter",
         "dimension": "D2_assessment",
         "severity": "warning",
+        "item_id": "Q-Hab04-294",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo, en el contexto del contraste analizado.'",
+        "snippet": "las hipótesis del modelo, en el contexto del contraste analizado."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-295",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo, según los supuestos clásicos del modelo.'",
+        "snippet": "as hipótesis del modelo, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-295",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el contexto del contraste analizado.'",
+        "snippet": "dot{x}^*(t_1^*) = 3.625$, en el contexto del contraste analizado."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-300",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "snippet": "\\dot{x}^*(t_1^*) = 3.0$, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab04-300",
+        "competency_id": "Hab-04",
+        "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', según los supuestos clásicos del modelo, en la formulación matricial considerada.'",
+        "snippet": "tos clásicos del modelo, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-306",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "scuento $e^{-5 t}$ ($r > 0$), para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-307",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "ento $e^{-8 t}$ ($r > 0$), de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-308",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 4 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "descuento $e^{-3 t}$ ($r > 0$), en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-309",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 4 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "on descuento $e^{-3 t}$ ($r > 0$), bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
         "item_id": "Q-C07-310",
         "competency_id": "C-07",
         "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', para los parámetros bajo análisis.'",
         "snippet": "escuento $e^{-8 t}$ ($r > 0$), para los parámetros bajo análisis."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-316",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "snippet": "tes donde $q = 41 - 8p$, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-316",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', según los supuestos clásicos del modelo, en el contexto del contraste analizado.'",
+        "snippet": "stos clásicos del modelo, en el contexto del contraste analizado."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-317",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 4 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "ndientes donde $q = 66 - 7p$, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-317",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "snippet": "la empresa se hace nulo, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-318",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "snippet": "la empresa se hace nulo, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-318",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "entes donde $q = 26 - 6p$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-319",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "snippet": "la empresa se hace nulo, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-319",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "pendientes donde $q = 27 - 7p$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-320",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "ndependientes donde $q = 32 - 9p$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C07-320",
+        "competency_id": "C-07",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "e la empresa se hace nulo, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-322",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "snippet": "$r = 0.827$, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-325",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "snippet": "$r = 0.372$, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-326",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "$r = 0.221$, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-327",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 2 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$r = 5.002$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-328",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$r = 1.225$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-329",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$r = 0.251$, bajo las hipótesis del modelo."
       },
       {
         "linter": "anti_gaming_psychometric_linter",
@@ -4749,10 +5705,145 @@
         "linter": "anti_gaming_psychometric_linter",
         "dimension": "D2_assessment",
         "severity": "warning",
+        "item_id": "Q-Hab05-332",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en el contexto del contraste analizado.'",
+        "snippet": "$r = 0.999$, en el contexto del contraste analizado."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-333",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "snippet": "$r = 0.25$, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-335",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "snippet": "$r = 1.248$, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-336",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "$r = 12.019$, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-337",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 2 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$r = 7.001$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-339",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 5 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$r = 0.107$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
         "item_id": "Q-Hab05-340",
         "competency_id": "Hab-05",
         "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para los parámetros bajo análisis.'",
         "snippet": "$r = 7.0$, para los parámetros bajo análisis."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-340",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$r = 0.6$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-341",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$r = 15.002$, bajo las hipótesis del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-343",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', en el contexto del contraste analizado.'",
+        "snippet": "$r = 0.786$, en el contexto del contraste analizado."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-344",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 2 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "snippet": "$r = 12.001$, según los supuestos clásicos del modelo."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-345",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "snippet": "$r = 23.001$, en la formulación matricial considerada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-346",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 3 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "snippet": "$r = 15.001$, para la muestra de datos observada."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-348",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 6 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "snippet": "$r = 22.002$, de acuerdo con la teoría econométrica."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-349",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 0 para evadir [R-15]: ', en el marco de la especificación.'",
+        "snippet": "$r = 0.444$, en el marco de la especificación."
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab05-350",
+        "competency_id": "Hab-05",
+        "message": "Relleno artificial de longitud en opción 4 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "snippet": "$r = 12.002$, bajo las hipótesis del modelo."
       }
     ],
     "issues_by_item": {
@@ -4922,23 +6013,33 @@
       ],
       "Q-C07-316": [
         "[WARNING] Variable de plantilla posiblemente sin interpolar '{p}' en 'opt_0'",
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', según los supuestos clásicos del modelo, en el contexto del contraste analizado.'"
       ],
       "Q-C07-317": [
         "[WARNING] Variable de plantilla posiblemente sin interpolar '{p}' en 'opt_0'",
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 4 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', en la formulación matricial considerada.'"
       ],
       "Q-C07-318": [
         "[WARNING] Variable de plantilla posiblemente sin interpolar '{p}' en 'opt_4'",
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-C07-319": [
         "[WARNING] Variable de plantilla posiblemente sin interpolar '{p}' en 'opt_3'",
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-C07-320": [
         "[WARNING] Variable de plantilla posiblemente sin interpolar '{p}' en 'opt_6'",
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-C01-001": [
         "[WARNING] Colapso de calibración ZPD en 'C-01': 100% de sus 20 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma.",
@@ -5377,23 +6478,35 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab02-174": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', para la muestra de datos observada.'"
       ],
       "Q-Hab02-175": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-Hab02-176": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-Hab02-177": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', bajo las hipótesis del modelo.'"
       ],
       "Q-Hab02-178": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
         "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', para los parámetros bajo análisis.'"
       ],
       "Q-Hab02-179": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en la formulación matricial considerada.'",
+        "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', en el contexto del contraste analizado.'"
       ],
       "Q-Hab02-180": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5411,50 +6524,80 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab02-185": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', según los supuestos clásicos del modelo.'"
       ],
       "Q-Hab02-186": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', en la formulación matricial considerada.'"
       ],
       "Q-Hab02-187": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', para la muestra de datos observada.'"
       ],
       "Q-Hab02-188": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-Hab02-189": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-Hab02-190": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', bajo las hipótesis del modelo.'"
       ],
       "Q-Hab02-191": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
         "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', para los parámetros bajo análisis.'"
       ],
       "Q-Hab02-192": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en el contexto del contraste analizado.'"
       ],
       "Q-Hab02-193": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', según los supuestos clásicos del modelo.'"
       ],
       "Q-Hab02-194": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación.'",
+        "[WARNING] Relleno artificial de longitud en opción 4 para evadir [R-15]: ', en la formulación matricial considerada.'"
       ],
       "Q-Hab02-195": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para la muestra de datos observada.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo.'"
       ],
       "Q-Hab02-196": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-Hab02-197": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab02-198": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación.'",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-Hab02-199": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo.'"
       ],
       "Q-Hab02-200": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5512,13 +6655,16 @@
       ],
       "Q-Hab03-224": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para los parámetros bajo análisis.'"
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para los parámetros bajo análisis.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo.'"
       ],
       "Q-Hab03-225": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab03-226": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el contexto del contraste analizado.'",
+        "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-Hab03-227": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5527,7 +6673,10 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab03-229": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-Hab03-230": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5542,10 +6691,14 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab03-234": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación.'",
+        "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', en la formulación matricial considerada.'"
       ],
       "Q-Hab03-235": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', para la muestra de datos observada.'"
       ],
       "Q-Hab03-236": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5554,20 +6707,27 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab03-238": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-Hab03-239": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo, en el marco de la especificación.'",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-Hab03-240": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo, bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-Hab03-241": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', para los parámetros bajo análisis.'"
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo, para los parámetros bajo análisis.'"
       ],
       "Q-Hab03-242": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación, en el contexto del contraste analizado.'",
         "[WARNING] Relleno artificial de longitud en opción 4 para evadir [R-15]: ', para los parámetros bajo análisis.'"
       ],
       "Q-Hab03-243": [
@@ -5580,11 +6740,14 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab03-246": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el contexto del contraste analizado.'",
+        "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', en el marco de la especificación, según los supuestos clásicos del modelo.'"
       ],
       "Q-Hab03-247": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-        "[CRITICAL] Distractores numéricos sintéticos por multiplicador arbitrario ([1.667, 1.333, 0.667]) con error_rationale desconectado del cálculo real."
+        "[CRITICAL] Distractores numéricos sintéticos por multiplicador arbitrario ([1.667, 1.333, 0.667]) con error_rationale desconectado del cálculo real.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en la formulación matricial considerada.'"
       ],
       "Q-Hab03-248": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5593,7 +6756,9 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab03-250": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación, para la muestra de datos observada.'",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', según los supuestos clásicos del modelo.'"
       ],
       "Q-C06-256": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5647,7 +6812,9 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab04-274": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación, de acuerdo con la teoría econométrica.'",
+        "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', en la formulación matricial considerada.'"
       ],
       "Q-Hab04-275": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5662,14 +6829,18 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab04-279": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo, en el marco de la especificación.'",
+        "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', para la muestra de datos observada.'"
       ],
       "Q-Hab04-280": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab04-281": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-        "[CRITICAL] Distractores numéricos sintéticos por multiplicador arbitrario ([0.333, 0.667]) con error_rationale desconectado del cálculo real."
+        "[CRITICAL] Distractores numéricos sintéticos por multiplicador arbitrario ([0.333, 0.667]) con error_rationale desconectado del cálculo real.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo, bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 4 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-Hab04-282": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5683,7 +6854,8 @@
       ],
       "Q-Hab04-285": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', para los parámetros bajo análisis.'"
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el marco de la especificación, para los parámetros bajo análisis.'",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-Hab04-286": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5701,7 +6873,9 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab04-291": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 4 para evadir [R-15]: ', para la muestra de datos observada.'"
       ],
       "Q-Hab04-292": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5711,10 +6885,13 @@
       ],
       "Q-Hab04-294": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para los parámetros bajo análisis.'"
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para los parámetros bajo análisis.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', bajo las hipótesis del modelo, en el contexto del contraste analizado.'"
       ],
       "Q-Hab04-295": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo, según los supuestos clásicos del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en el contexto del contraste analizado.'"
       ],
       "Q-Hab04-296": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5729,26 +6906,33 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab04-300": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', según los supuestos clásicos del modelo.'",
+        "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', según los supuestos clásicos del modelo, en la formulación matricial considerada.'"
       ],
       "Q-C07-306": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', para la muestra de datos observada.'"
       ],
       "Q-C07-307": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-C07-308": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 4 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-C07-309": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 4 para evadir [R-15]: ', bajo las hipótesis del modelo.'"
       ],
       "Q-C07-310": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
         "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', para los parámetros bajo análisis.'"
       ],
       "Q-Hab05-322": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', según los supuestos clásicos del modelo.'"
       ],
       "Q-Hab05-323": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5757,19 +6941,24 @@
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab05-325": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', en la formulación matricial considerada.'"
       ],
       "Q-Hab05-326": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para la muestra de datos observada.'"
       ],
       "Q-Hab05-327": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-Hab05-328": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-Hab05-329": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'"
       ],
       "Q-Hab05-330": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
@@ -5779,62 +6968,77 @@
         "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', para los parámetros bajo análisis.'"
       ],
       "Q-Hab05-332": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en el contexto del contraste analizado.'"
       ],
       "Q-Hab05-333": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', según los supuestos clásicos del modelo.'"
       ],
       "Q-Hab05-334": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab05-335": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en la formulación matricial considerada.'"
       ],
       "Q-Hab05-336": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', para la muestra de datos observada.'"
       ],
       "Q-Hab05-337": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-Hab05-338": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab05-339": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-Hab05-340": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para los parámetros bajo análisis.'"
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para los parámetros bajo análisis.'",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-Hab05-341": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'"
       ],
       "Q-Hab05-342": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab05-343": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', en el contexto del contraste analizado.'"
       ],
       "Q-Hab05-344": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', según los supuestos clásicos del modelo.'"
       ],
       "Q-Hab05-345": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en la formulación matricial considerada.'"
       ],
       "Q-Hab05-346": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', para la muestra de datos observada.'"
       ],
       "Q-Hab05-347": [
         "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
       ],
       "Q-Hab05-348": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 6 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
       ],
       "Q-Hab05-349": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', en el marco de la especificación.'"
       ],
       "Q-Hab05-350": [
-        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema."
+        "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+        "[WARNING] Relleno artificial de longitud en opción 4 para evadir [R-15]: ', bajo las hipótesis del modelo.'"
       ]
     }
   },
@@ -9536,7 +10740,8 @@
         "misconception_warning": "La transversalidad sustituye la condición de contorno ausente en el extremo terminal y debe evaluarse obligatoriamente en $t=2$.",
         "detected_issues": [
           "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-          "[CRITICAL] Distractores numéricos sintéticos por multiplicador arbitrario ([1.667, 1.333, 0.667]) con error_rationale desconectado del cálculo real."
+          "[CRITICAL] Distractores numéricos sintéticos por multiplicador arbitrario ([1.667, 1.333, 0.667]) con error_rationale desconectado del cálculo real.",
+          "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', en la formulación matricial considerada.'"
         ]
       },
       {
@@ -9609,7 +10814,9 @@
         "misconception_warning": "La derivada parcial de $3\\dot{x}^2$ respecto a la velocidad es $6\\dot{x}$, por lo que el producto resta $6\\dot{x}^2$, dejando un término neto en $-3\\dot{x}^2$.",
         "detected_issues": [
           "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-          "[CRITICAL] Distractores numéricos sintéticos por multiplicador arbitrario ([0.333, 0.667]) con error_rationale desconectado del cálculo real."
+          "[CRITICAL] Distractores numéricos sintéticos por multiplicador arbitrario ([0.333, 0.667]) con error_rationale desconectado del cálculo real.",
+          "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo, bajo las hipótesis del modelo.'",
+          "[WARNING] Relleno artificial de longitud en opción 4 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
         ]
       },
       {
@@ -9764,6 +10971,302 @@
     "memorizable_answers": [],
     "length_padded_options": [
       {
+        "id": "Q-Hab02-174",
+        "competency_id": "Hab-02",
+        "stem": "En el contexto formal planteado, analice con rigor: Considere el funcional $J[x] = \\int_{0}^{8} (5 t^2 + 5 \\dot{x}^2) dt$ con extremos $x(0) = 19$ y $x(8) = 211$. Aplicando la primera integral $F_{\\dot{x}} = c$, la velocidad constante extremal $\\dot{x}(t)$ es:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\dot{x}(t) = 26$, bajo las hipótesis del modelo.",
+            "is_correct": false,
+            "error_rationale": "Cuando la optimización produce una curva rígida sin constantes de integración, las condiciones de frontera deben coincidir estrictamente con los puntos de la curva.",
+            "distractor_id": "D-Hab02-02"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\dot{x}(t) = 23$",
+            "is_correct": false,
+            "error_rationale": "Al restar un término negativo $(-6x\\dot{x}^2)$ la operación se convierte en adición, cambiando el signo a $+3x\\dot{x}^2$.",
+            "distractor_id": "D-Hab02-03"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\dot{x}(t) = 24$, para la muestra de datos observada.",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\dot{x}(t) = 48$",
+            "is_correct": false,
+            "error_rationale": "Una ecuación de segundo orden reducida a primer orden requiere dos constantes totales para ajustarse a las dos condiciones de contorno.",
+            "distractor_id": "D-Hab02-04"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$\\dot{x}(t) = 32$",
+            "is_correct": false,
+            "error_rationale": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
+            "distractor_id": "D-Hab02-01"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$\\dot{x}(t) = 29$",
+            "is_correct": false,
+            "error_rationale": "El carácter de óptimo depende de la curvatura del funcional y no de si la trayectoria tiene pendiente o posición negativa.",
+            "distractor_id": "D-Hab02-05"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$\\dot{x}(t) = 27$",
+            "is_correct": false,
+            "error_rationale": "En el cálculo variacional, las derivadas parciales de $F$ se computan tratando a cada argumento de forma desacoplada.",
+            "distractor_id": "D-Hab02-06"
+          }
+        ],
+        "hints": [
+          "Identifique la estructura conceptual de Integración de Extremos Usando Primeras Integrales de Euler: analice las relaciones formales y condiciones teóricas del modelo.",
+          "Revise el procedimiento analítico paso a paso para Integración de Extremos Usando Primeras Integrales de Euler, asegurando considerar adecuadamente: integración lineal de la velocidad constante obtenida de la primera integral.",
+          "Antes de concluir, compruebe la consistencia dimensional del resultado de Integración de Extremos Usando Primeras Integrales de Euler y evalúe posibles desvíos al considerar: comprobación de compatibilidad entre la curva rígida y las condiciones de contorno."
+        ],
+        "detailed_solution": "Al ser $F_x = 0$, la primera integral es $F_{\\dot{x}} = 2 5 \\dot{x} = c \\Rightarrow \\dot{x}(t) = c_1$. Con $x(t) = c_1 t + 19$ y $x(8) = 211$, se obtiene $c_1 = \\frac{211 - 19}{8} = 24$.",
+        "misconception_warning": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
+        "detected_issues": [
+          "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+          "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+          "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', para la muestra de datos observada.'"
+        ]
+      },
+      {
+        "id": "Q-Hab02-175",
+        "competency_id": "Hab-02",
+        "stem": "Tomando en cuenta la estructura teórica del problema, halle: Considere el funcional $J[x] = \\int_{0}^{6} (5 t^2 + 8 \\dot{x}^2) dt$ con extremos $x(0) = 21$ y $x(6) = 57$. Aplicando la primera integral $F_{\\dot{x}} = c$, la velocidad constante extremal $\\dot{x}(t)$ es:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\dot{x}(t) = 8$, bajo las hipótesis del modelo.",
+            "is_correct": false,
+            "error_rationale": "Cuando la optimización produce una curva rígida sin constantes de integración, las condiciones de frontera deben coincidir estrictamente con los puntos de la curva.",
+            "distractor_id": "D-Hab02-02"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\dot{x}(t) = 6$, de acuerdo con la teoría econométrica.",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\dot{x}(t) = 9$",
+            "is_correct": false,
+            "error_rationale": "En el cálculo variacional, las derivadas parciales de $F$ se computan tratando a cada argumento de forma desacoplada.",
+            "distractor_id": "D-Hab02-06"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\dot{x}(t) = 5$",
+            "is_correct": false,
+            "error_rationale": "Al restar un término negativo $(-6x\\dot{x}^2)$ la operación se convierte en adición, cambiando el signo a $+3x\\dot{x}^2$.",
+            "distractor_id": "D-Hab02-03"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$\\dot{x}(t) = 14$",
+            "is_correct": false,
+            "error_rationale": "El carácter de óptimo depende de la curvatura del funcional y no de si la trayectoria tiene pendiente o posición negativa.",
+            "distractor_id": "D-Hab02-05"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$\\dot{x}(t) = 12$",
+            "is_correct": false,
+            "error_rationale": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
+            "distractor_id": "D-Hab02-01"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$\\dot{x}(t) = 11$",
+            "is_correct": false,
+            "error_rationale": "Una ecuación de segundo orden reducida a primer orden requiere dos constantes totales para ajustarse a las dos condiciones de contorno.",
+            "distractor_id": "D-Hab02-04"
+          }
+        ],
+        "hints": [
+          "Identifique la estructura conceptual de Integración de Extremos Usando Primeras Integrales de Euler: analice las relaciones formales y condiciones teóricas del modelo.",
+          "Revise el procedimiento analítico paso a paso para Integración de Extremos Usando Primeras Integrales de Euler, asegurando considerar adecuadamente: integración lineal de la velocidad constante obtenida de la primera integral.",
+          "Antes de concluir, compruebe la consistencia dimensional del resultado de Integración de Extremos Usando Primeras Integrales de Euler y evalúe posibles desvíos al considerar: comprobación de compatibilidad entre la curva rígida y las condiciones de contorno."
+        ],
+        "detailed_solution": "Al ser $F_x = 0$, la primera integral es $F_{\\dot{x}} = 2 8 \\dot{x} = c \\Rightarrow \\dot{x}(t) = c_1$. Con $x(t) = c_1 t + 21$ y $x(6) = 57$, se obtiene $c_1 = \\frac{57 - 21}{6} = 6$.",
+        "misconception_warning": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
+        "detected_issues": [
+          "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+          "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+          "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'"
+        ]
+      },
+      {
+        "id": "Q-Hab02-176",
+        "competency_id": "Hab-02",
+        "stem": "De acuerdo con los postulados fundamentales del sistema, verifique: Considere el funcional $J[x] = \\int_{0}^{7} (6 t^2 + 2 \\dot{x}^2) dt$ con extremos $x(0) = 47$ y $x(7) = 96$. Aplicando la primera integral $F_{\\dot{x}} = c$, la velocidad constante extremal $\\dot{x}(t)$ es:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\dot{x}(t) = 6$, bajo las hipótesis del modelo.",
+            "is_correct": false,
+            "error_rationale": "Al restar un término negativo $(-6x\\dot{x}^2)$ la operación se convierte en adición, cambiando el signo a $+3x\\dot{x}^2$.",
+            "distractor_id": "D-Hab02-03"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\dot{x}(t) = 12$",
+            "is_correct": false,
+            "error_rationale": "En el cálculo variacional, las derivadas parciales de $F$ se computan tratando a cada argumento de forma desacoplada.",
+            "distractor_id": "D-Hab02-06"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\dot{x}(t) = 13$",
+            "is_correct": false,
+            "error_rationale": "Una ecuación de segundo orden reducida a primer orden requiere dos constantes totales para ajustarse a las dos condiciones de contorno.",
+            "distractor_id": "D-Hab02-04"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\dot{x}(t) = 7$, en el marco de la especificación.",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$\\dot{x}(t) = 9$",
+            "is_correct": false,
+            "error_rationale": "Cuando la optimización produce una curva rígida sin constantes de integración, las condiciones de frontera deben coincidir estrictamente con los puntos de la curva.",
+            "distractor_id": "D-Hab02-02"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$\\dot{x}(t) = 14$",
+            "is_correct": false,
+            "error_rationale": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
+            "distractor_id": "D-Hab02-01"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$\\dot{x}(t) = 10$",
+            "is_correct": false,
+            "error_rationale": "El carácter de óptimo depende de la curvatura del funcional y no de si la trayectoria tiene pendiente o posición negativa.",
+            "distractor_id": "D-Hab02-05"
+          }
+        ],
+        "hints": [
+          "Identifique la estructura conceptual de Integración de Extremos Usando Primeras Integrales de Euler: analice las relaciones formales y condiciones teóricas del modelo.",
+          "Revise el procedimiento analítico paso a paso para Integración de Extremos Usando Primeras Integrales de Euler, asegurando considerar adecuadamente: integración lineal de la velocidad constante obtenida de la primera integral.",
+          "Antes de concluir, compruebe la consistencia dimensional del resultado de Integración de Extremos Usando Primeras Integrales de Euler y evalúe posibles desvíos al considerar: comprobación de compatibilidad entre la curva rígida y las condiciones de contorno."
+        ],
+        "detailed_solution": "Al ser $F_x = 0$, la primera integral es $F_{\\dot{x}} = 2 2 \\dot{x} = c \\Rightarrow \\dot{x}(t) = c_1$. Con $x(t) = c_1 t + 47$ y $x(7) = 96$, se obtiene $c_1 = \\frac{96 - 47}{7} = 7$.",
+        "misconception_warning": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
+        "detected_issues": [
+          "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+          "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+          "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', en el marco de la especificación.'"
+        ]
+      },
+      {
+        "id": "Q-Hab02-177",
+        "competency_id": "Hab-02",
+        "stem": "Bajo los parámetros establecidos, calcule el valor exacto: Considere el funcional $J[x] = \\int_{0}^{8} (4 t^2 + 8 \\dot{x}^2) dt$ con extremos $x(0) = 25$ y $x(8) = 41$. Aplicando la primera integral $F_{\\dot{x}} = c$, la velocidad constante extremal $\\dot{x}(t)$ es:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\dot{x}(t) = 4$, bajo las hipótesis del modelo.",
+            "is_correct": false,
+            "error_rationale": "Cuando la optimización produce una curva rígida sin constantes de integración, las condiciones de frontera deben coincidir estrictamente con los puntos de la curva.",
+            "distractor_id": "D-Hab02-02"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\dot{x}(t) = 7$",
+            "is_correct": false,
+            "error_rationale": "El carácter de óptimo depende de la curvatura del funcional y no de si la trayectoria tiene pendiente o posición negativa.",
+            "distractor_id": "D-Hab02-05"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\dot{x}(t) = 6$",
+            "is_correct": false,
+            "error_rationale": "Una ecuación de segundo orden reducida a primer orden requiere dos constantes totales para ajustarse a las dos condiciones de contorno.",
+            "distractor_id": "D-Hab02-04"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\dot{x}(t) = 5$",
+            "is_correct": false,
+            "error_rationale": "Al restar un término negativo $(-6x\\dot{x}^2)$ la operación se convierte en adición, cambiando el signo a $+3x\\dot{x}^2$.",
+            "distractor_id": "D-Hab02-03"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$\\dot{x}(t) = 10$",
+            "is_correct": false,
+            "error_rationale": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
+            "distractor_id": "D-Hab02-01"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$\\dot{x}(t) = 2$, bajo las hipótesis del modelo.",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$\\dot{x}(t) = 9$",
+            "is_correct": false,
+            "error_rationale": "En el cálculo variacional, las derivadas parciales de $F$ se computan tratando a cada argumento de forma desacoplada.",
+            "distractor_id": "D-Hab02-06"
+          }
+        ],
+        "hints": [
+          "Identifique la estructura conceptual de Integración de Extremos Usando Primeras Integrales de Euler: analice las relaciones formales y condiciones teóricas del modelo.",
+          "Revise el procedimiento analítico paso a paso para Integración de Extremos Usando Primeras Integrales de Euler, asegurando considerar adecuadamente: integración lineal de la velocidad constante obtenida de la primera integral.",
+          "Antes de concluir, compruebe la consistencia dimensional del resultado de Integración de Extremos Usando Primeras Integrales de Euler y evalúe posibles desvíos al considerar: comprobación de compatibilidad entre la curva rígida y las condiciones de contorno."
+        ],
+        "detailed_solution": "Al ser $F_x = 0$, la primera integral es $F_{\\dot{x}} = 2 8 \\dot{x} = c \\Rightarrow \\dot{x}(t) = c_1$. Con $x(t) = c_1 t + 25$ y $x(8) = 41$, se obtiene $c_1 = \\frac{41 - 25}{8} = 2$.",
+        "misconception_warning": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
+        "detected_issues": [
+          "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+          "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', bajo las hipótesis del modelo.'",
+          "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', bajo las hipótesis del modelo.'"
+        ]
+      },
+      {
         "id": "Q-Hab02-178",
         "competency_id": "Hab-02",
         "stem": "Examine con detenimiento la situación y resuelva: Considere el funcional $J[x] = \\int_{0}^{4} (5 t^2 + 3 \\dot{x}^2) dt$ con extremos $x(0) = 9$ y $x(4) = 29$. Aplicando la primera integral $F_{\\dot{x}} = c$, la velocidad constante extremal $\\dot{x}(t)$ es:",
@@ -9833,304 +11336,16 @@
         "misconception_warning": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
         "detected_issues": [
           "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
+          "[WARNING] Relleno artificial de longitud en opción 2 para evadir [R-15]: ', de acuerdo con la teoría econométrica.'",
           "[WARNING] Relleno artificial de longitud en opción 5 para evadir [R-15]: ', para los parámetros bajo análisis.'"
-        ]
-      },
-      {
-        "id": "Q-Hab02-191",
-        "competency_id": "Hab-02",
-        "stem": "Evalúe la expresión y determine la cantidad buscada: En el problema variacional $\\min \\int_{0}^{3} (6 t + 7 \\dot{x}^2) dt$ con extremos $x(0) = 5$ y $x(3) = 23$, si la cota terminal experimenta una perturbación $\\Delta x_1 = 24$, la variación inducida en la velocidad constante $\\Delta \\dot{x}$ es:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$\\Delta \\dot{x} = 7$, bajo las hipótesis del modelo.",
-            "is_correct": false,
-            "error_rationale": "El carácter de óptimo depende de la curvatura del funcional y no de si la trayectoria tiene pendiente o posición negativa.",
-            "distractor_id": "D-Hab02-05"
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$\\Delta \\dot{x} = 11$",
-            "is_correct": false,
-            "error_rationale": "Cuando la optimización produce una curva rígida sin constantes de integración, las condiciones de frontera deben coincidir estrictamente con los puntos de la curva.",
-            "distractor_id": "D-Hab02-02"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$\\Delta \\dot{x} = 13$",
-            "is_correct": false,
-            "error_rationale": "En el cálculo variacional, las derivadas parciales de $F$ se computan tratando a cada argumento de forma desacoplada.",
-            "distractor_id": "D-Hab02-06"
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$\\Delta \\dot{x} = 8$, para los parámetros bajo análisis.",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_e",
-            "option_id": "E",
-            "content": "$\\Delta \\dot{x} = 16$",
-            "is_correct": false,
-            "error_rationale": "Una ecuación de segundo orden reducida a primer orden requiere dos constantes totales para ajustarse a las dos condiciones de contorno.",
-            "distractor_id": "D-Hab02-04"
-          },
-          {
-            "id": "opt_f",
-            "option_id": "F",
-            "content": "$\\Delta \\dot{x} = 9$",
-            "is_correct": false,
-            "error_rationale": "Al restar un término negativo $(-6x\\dot{x}^2)$ la operación se convierte en adición, cambiando el signo a $+3x\\dot{x}^2$.",
-            "distractor_id": "D-Hab02-03"
-          },
-          {
-            "id": "opt_g",
-            "option_id": "G",
-            "content": "$\\Delta \\dot{x} = 72$",
-            "is_correct": false,
-            "error_rationale": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
-            "distractor_id": "D-Hab02-01"
-          }
-        ],
-        "hints": [
-          "Identifique la estructura conceptual de Integración de Extremos Usando Primeras Integrales de Euler: analice las relaciones formales y condiciones teóricas del modelo.",
-          "Revise el procedimiento analítico paso a paso para Integración de Extremos Usando Primeras Integrales de Euler, asegurando considerar adecuadamente: integración lineal de la velocidad constante obtenida de la primera integral.",
-          "Antes de concluir, compruebe la consistencia dimensional del resultado de Integración de Extremos Usando Primeras Integrales de Euler y evalúe posibles desvíos al considerar: comprobación de compatibilidad entre la curva rígida y las condiciones de contorno."
-        ],
-        "detailed_solution": "Como $\\dot{x}(t) = \\frac{x_1 - x_0}{3}$, la tasa de cambio respecto al extremo final es $\\frac{\\partial \\dot{x}}{\\partial x_1} = \\frac{1}{3}$. Por consiguiente, $\\Delta \\dot{x} = \\frac{\\Delta x_1}{3} = \\frac{24}{3} = 8$.",
-        "misconception_warning": "La integral de una constante respecto al tiempo produce una función lineal en $t$, no un término cuadrático.",
-        "detected_issues": [
-          "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-          "[WARNING] Relleno artificial de longitud en opción 3 para evadir [R-15]: ', para los parámetros bajo análisis.'"
-        ]
-      },
-      {
-        "id": "Q-Hab03-224",
-        "competency_id": "Hab-03",
-        "stem": "Sustentando la solución en los principios teóricos, halle: Considere el problema de cálculo de variaciones $\\min \\int_0^{4} [3 t \\dot{x} + 3 \\dot{x}^2]\\,dt$ con condición inicial fija $x(0) = 49$ y estado terminal $x(4)$ libre. Determine el valor del estado extremal final $x^*(4)$:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$x^*(4) = 45.0$, para los parámetros bajo análisis.",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$x^*(4) = 41.0$, bajo las hipótesis del modelo.",
-            "is_correct": false,
-            "error_rationale": "La suficiencia global se deriva de la curvatura del integrando en todo el espacio y abarca tanto problemas con extremos fijos como libres.",
-            "distractor_id": "D-Hab03-06"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$x^*(4) = 77.67$",
-            "is_correct": false,
-            "error_rationale": "Cada constante atiende a una exigencia distinta: una ancla el origen espacial y la otra calibra la inclinación óptima de llegada.",
-            "distractor_id": "D-Hab03-03"
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$x^*(4) = 53.0$",
-            "is_correct": false,
-            "error_rationale": "El término $t\\dot{x}$ tiene grado uno en $\\dot{x}$, por lo que al derivarlo dos veces respecto a la velocidad se anula por completo.",
-            "distractor_id": "D-Hab03-05"
-          },
-          {
-            "id": "opt_e",
-            "option_id": "E",
-            "content": "$x^*(4) = 48.0$",
-            "is_correct": false,
-            "error_rationale": "La solución óptima queda incompleta si no se especifica el estado terminal que el sistema dinámico eligió libremente alcanzar.",
-            "distractor_id": "D-Hab03-04"
-          },
-          {
-            "id": "opt_f",
-            "option_id": "F",
-            "content": "$x^*(4) = 49.0$",
-            "is_correct": false,
-            "error_rationale": "La transversalidad sustituye la condición de contorno ausente en el extremo terminal y debe evaluarse obligatoriamente en $t=2$.",
-            "distractor_id": "D-Hab03-01"
-          },
-          {
-            "id": "opt_g",
-            "option_id": "G",
-            "content": "$x^*(4) = 33.0$",
-            "is_correct": false,
-            "error_rationale": "Al integrar una variable lineal con coeficiente fraccionario se debe multiplicar el denominador por el nuevo exponente 2.",
-            "distractor_id": "D-Hab03-02"
-          }
-        ],
-        "hints": [
-          "Identifique la estructura conceptual de Optimización Variacional con Estado Final Libre: analice las relaciones formales y condiciones teóricas del modelo.",
-          "Revise el procedimiento analítico paso a paso para Optimización Variacional con Estado Final Libre, asegurando considerar adecuadamente: evaluación rigurosa de la condición de transversalidad en el instante de frontera terminal $t=2$.",
-          "Antes de concluir, compruebe la consistencia dimensional del resultado de Optimización Variacional con Estado Final Libre y evalúe posibles desvíos al considerar: integración de los coeficientes fraccionarios en la ecuación de velocidad."
-        ],
-        "detailed_solution": "Por la ecuación de Euler con $F_x=0$, el momento conjugado es constante: $F_{\\dot{x}} = 3 t + 2(3)\\dot{x} = c$. Al ser $x(4)$ libre, la transversalidad exige $\\left. F_{\\dot{x}} \\right|_{t=4} = 0 \\Rightarrow c = 0$. Luego $\\dot{x}(t) = -\\frac{3 t}{2(3)}$. Integrando con $x(0) = 49$ se obtiene $x^*(t) = 49 - \\frac{3 t^2}{4(3)}$, por lo que $x^*(4) = 45.0$.",
-        "misconception_warning": "La transversalidad sustituye la condición de contorno ausente en el extremo terminal y debe evaluarse obligatoriamente en $t=2$.",
-        "detected_issues": [
-          "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-          "[WARNING] Relleno artificial de longitud en opción 0 para evadir [R-15]: ', para los parámetros bajo análisis.'"
-        ]
-      },
-      {
-        "id": "Q-Hab03-241",
-        "competency_id": "Hab-03",
-        "stem": "Bajo los parámetros establecidos, calcule el valor exacto: Si los parámetros del sistema varían fijando los coeficientes en $a = 9$, $b = 2$, horizonte $t_1 = 7$ y $x(0) = 147$ en $\\min \\int_0^{7} [9 t \\dot{x} + 2 \\dot{x}^2]\\,dt$ con $x(7)$ libre, el nuevo estado terminal óptimo $x^*(7)$ es:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$x^*(7) = 91.88$, bajo las hipótesis del modelo.",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$x^*(7) = 147.0$, bajo las hipótesis del modelo, para los parámetros bajo análisis.",
-            "is_correct": false,
-            "error_rationale": "La transversalidad sustituye la condición de contorno ausente en el extremo terminal y debe evaluarse obligatoriamente en $t=2$.",
-            "distractor_id": "D-Hab03-01"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$x^*(7) = 36.75$",
-            "is_correct": false,
-            "error_rationale": "La suficiencia global se deriva de la curvatura del integrando en todo el espacio y abarca tanto problemas con extremos fijos como libres.",
-            "distractor_id": "D-Hab03-06"
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$x^*(7) = 349.12$",
-            "is_correct": false,
-            "error_rationale": "Cada constante atiende a una exigencia distinta: una ancla el origen espacial y la otra calibra la inclinación óptima de llegada.",
-            "distractor_id": "D-Hab03-03"
-          },
-          {
-            "id": "opt_e",
-            "option_id": "E",
-            "content": "$x^*(7) = 202.12$",
-            "is_correct": false,
-            "error_rationale": "El término $t\\dot{x}$ tiene grado uno en $\\dot{x}$, por lo que al derivarlo dos veces respecto a la velocidad se anula por completo.",
-            "distractor_id": "D-Hab03-05"
-          },
-          {
-            "id": "opt_f",
-            "option_id": "F",
-            "content": "$x^*(7) = -73.5$",
-            "is_correct": false,
-            "error_rationale": "Al integrar una variable lineal con coeficiente fraccionario se debe multiplicar el denominador por el nuevo exponente 2.",
-            "distractor_id": "D-Hab03-02"
-          },
-          {
-            "id": "opt_g",
-            "option_id": "G",
-            "content": "$x^*(7) = 139.12$",
-            "is_correct": false,
-            "error_rationale": "La solución óptima queda incompleta si no se especifica el estado terminal que el sistema dinámico eligió libremente alcanzar.",
-            "distractor_id": "D-Hab03-04"
-          }
-        ],
-        "hints": [
-          "Identifique la estructura conceptual de Optimización Variacional con Estado Final Libre: analice las relaciones formales y condiciones teóricas del modelo.",
-          "Revise el procedimiento analítico paso a paso para Optimización Variacional con Estado Final Libre, asegurando considerar adecuadamente: evaluación rigurosa de la condición de transversalidad en el instante de frontera terminal $t=2$.",
-          "Antes de concluir, compruebe la consistencia dimensional del resultado de Optimización Variacional con Estado Final Libre y evalúe posibles desvíos al considerar: integración de los coeficientes fraccionarios en la ecuación de velocidad."
-        ],
-        "detailed_solution": "Por la ecuación de Euler con $F_x=0$, el momento conjugado es constante: $F_{\\dot{x}} = 9 t + 2(2)\\dot{x} = c$. Al ser $x(7)$ libre, la transversalidad exige $\\left. F_{\\dot{x}} \\right|_{t=7} = 0 \\Rightarrow c = 0$. Luego $\\dot{x}(t) = -\\frac{9 t}{2(2)}$. Integrando con $x(0) = 147$ se obtiene $x^*(t) = 147 - \\frac{9 t^2}{4(2)}$, por lo que $x^*(7) = 91.88$.",
-        "misconception_warning": "La transversalidad sustituye la condición de contorno ausente en el extremo terminal y debe evaluarse obligatoriamente en $t=2$.",
-        "detected_issues": [
-          "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-          "[WARNING] Relleno artificial de longitud en opción 1 para evadir [R-15]: ', para los parámetros bajo análisis.'"
-        ]
-      },
-      {
-        "id": "Q-Hab03-242",
-        "competency_id": "Hab-03",
-        "stem": "Examine con detenimiento la situación y resuelva: Si los parámetros del sistema varían fijando los coeficientes en $a = 11$, $b = 1$, horizonte $t_1 = 7$ y $x(0) = 133$ en $\\min \\int_0^{7} [11 t \\dot{x} + 1 \\dot{x}^2]\\,dt$ con $x(7)$ libre, el nuevo estado terminal óptimo $x^*(7)$ es:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$x^*(7) = -406.0$",
-            "is_correct": false,
-            "error_rationale": "Al integrar una variable lineal con coeficiente fraccionario se debe multiplicar el denominador por el nuevo exponente 2.",
-            "distractor_id": "D-Hab03-02"
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$x^*(7) = 133.0$, en el marco de la especificación, en el contexto del contraste analizado.",
-            "is_correct": false,
-            "error_rationale": "La transversalidad sustituye la condición de contorno ausente en el extremo terminal y debe evaluarse obligatoriamente en $t=2$.",
-            "distractor_id": "D-Hab03-01"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$x^*(7) = 463.75$",
-            "is_correct": false,
-            "error_rationale": "Cada constante atiende a una exigencia distinta: una ancla el origen espacial y la otra calibra la inclinación óptima de llegada.",
-            "distractor_id": "D-Hab03-03"
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$x^*(7) = 267.75$",
-            "is_correct": false,
-            "error_rationale": "El término $t\\dot{x}$ tiene grado uno en $\\dot{x}$, por lo que al derivarlo dos veces respecto a la velocidad se anula por completo.",
-            "distractor_id": "D-Hab03-05"
-          },
-          {
-            "id": "opt_e",
-            "option_id": "E",
-            "content": "$x^*(7) = -1.75$, para los parámetros bajo análisis.",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_f",
-            "option_id": "F",
-            "content": "$x^*(7) = -136.5$",
-            "is_correct": false,
-            "error_rationale": "La suficiencia global se deriva de la curvatura del integrando en todo el espacio y abarca tanto problemas con extremos fijos como libres.",
-            "distractor_id": "D-Hab03-06"
-          },
-          {
-            "id": "opt_g",
-            "option_id": "G",
-            "content": "$x^*(7) = 113.75$",
-            "is_correct": false,
-            "error_rationale": "La solución óptima queda incompleta si no se especifica el estado terminal que el sistema dinámico eligió libremente alcanzar.",
-            "distractor_id": "D-Hab03-04"
-          }
-        ],
-        "hints": [
-          "Identifique la estructura conceptual de Optimización Variacional con Estado Final Libre: analice las relaciones formales y condiciones teóricas del modelo.",
-          "Revise el procedimiento analítico paso a paso para Optimización Variacional con Estado Final Libre, asegurando considerar adecuadamente: evaluación rigurosa de la condición de transversalidad en el instante de frontera terminal $t=2$.",
-          "Antes de concluir, compruebe la consistencia dimensional del resultado de Optimización Variacional con Estado Final Libre y evalúe posibles desvíos al considerar: integración de los coeficientes fraccionarios en la ecuación de velocidad."
-        ],
-        "detailed_solution": "Por la ecuación de Euler con $F_x=0$, el momento conjugado es constante: $F_{\\dot{x}} = 11 t + 2(1)\\dot{x} = c$. Al ser $x(7)$ libre, la transversalidad exige $\\left. F_{\\dot{x}} \\right|_{t=7} = 0 \\Rightarrow c = 0$. Luego $\\dot{x}(t) = -\\frac{11 t}{2(1)}$. Integrando con $x(0) = 133$ se obtiene $x^*(t) = 133 - \\frac{11 t^2}{4(1)}$, por lo que $x^*(7) = -1.75$.",
-        "misconception_warning": "La transversalidad sustituye la condición de contorno ausente en el extremo terminal y debe evaluarse obligatoriamente en $t=2$.",
-        "detected_issues": [
-          "[WARNING] Andamiaje Mad-Libs sintético de compilador sin guía socrática específica al problema.",
-          "[WARNING] Relleno artificial de longitud en opción 4 para evadir [R-15]: ', para los parámetros bajo análisis.'"
         ]
       }
     ],
     "cross_domain_prefixes": [],
     "vacuous_quantifiers": [],
     "katex_ergonomics": []
-  }
+  },
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-01 19:55:00",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }
