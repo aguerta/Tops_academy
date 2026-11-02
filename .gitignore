@@ -22,6 +22,8 @@ __pycache__/
 *.egg-info/
 src/*.egg-info/
 .pytest_cache/
+.validation_cache/
+**/.validation_cache/
 
 # 4. Pipelines Transitorios y Carpetas de Trabajo (Zero-Bloat)
 work/
