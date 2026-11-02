@@ -139,7 +139,7 @@ def test_multiple_select_variable_interpolation_and_invariants():
             },
         ],
         "vars": {
-            "estimator": "\\hat{\\theta}_{IV}",
+            "estimator": "$\\hat{\\theta}_{IV}$",
             "var_type": "heterocedástica",
             "rate": "1/n",
         },
@@ -152,13 +152,13 @@ def test_multiple_select_variable_interpolation_and_invariants():
         question_index=1,
     )
 
-    assert "\\hat{\\theta}_{IV}" in assembled["stem"]
+    assert "$\\hat{\\theta}_{IV}$" in assembled["stem"]
     contents = [opt["content"] for opt in assembled["options"]]
     assert any("heterocedástica" in c for c in contents)
     assert any("1/n" in c for c in contents)
 
     rationales = [opt["error_rationale"] for opt in assembled["options"] if not opt["is_correct"]]
-    assert any("\\hat{\\theta}_{IV}" in str(r) for r in rationales)
+    assert any("$\\hat{\\theta}_{IV}$" in str(r) for r in rationales)
     assert any("heterocedástica" in str(r) for r in rationales)
 
     is_valid, errors = check_instance_invariants(assembled, "multiple_select", variables=gen_result["vars"])
@@ -473,7 +473,7 @@ def test_multiple_select_content_and_value_fallback():
             },
         ],
         "vars": {
-            "rate": "1/\\sqrt{n}",
+            "rate": "$1/\\sqrt{n}$",
             "k": 4,
         },
     }
@@ -487,11 +487,11 @@ def test_multiple_select_content_and_value_fallback():
 
     # Options correctly resolved from value and text fallback
     opt_contents = [opt["content"] for opt in assembled["options"]]
-    assert any("tasa 1/\\sqrt{n}" in c for c in opt_contents)
+    assert any("tasa $1/\\sqrt{n}$" in c for c in opt_contents)
     assert any("dimensión 4" in c for c in opt_contents)
 
     # Hints correctly resolved from dict text and content
-    assert any("tasa de convergencia 1/\\sqrt{n}" in h for h in assembled["hints"])
+    assert any("tasa de convergencia $1/\\sqrt{n}$" in h for h in assembled["hints"])
     assert any("4 variables" in h for h in assembled["hints"])
 
     # Invariants pass

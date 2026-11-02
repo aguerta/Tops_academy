@@ -547,3 +547,26 @@ def test_r18_unwrapping_with_nested_braces_and_mathrm():
     errs = check_synthetic_boilerplate_distractors(correct, distractors)
     assert any("Synthetic boilerplate distractor pattern detected" in e for e in errs)
 
+
+def test_katex_exposed_commands_outside_dollars():
+    """Verify that LaTeX math commands outside $...$ (like vdirect5 shard_13 incident) are flagged."""
+    # Raw command outside $ (from vdirect5 incident)
+    bad_dist_1 = r"\operatorname{Var}(Y_i) = \infty \Rightarrow Z_n \xrightarrow{d} N(0, 1)"
+    errs_1 = validate_katex_syntax(bad_dist_1, "distractor D-H06-04")
+    assert any("exposed outside '$...$' delimiters" in e for e in errs_1)
+
+    bad_dist_2 = r"\operatorname{Var}(\bar{Y}_n) = @sigma2@"
+    errs_2 = validate_katex_syntax(bad_dist_2, "distractor D-H06-05")
+    assert any("exposed outside '$...$' delimiters" in e for e in errs_2)
+
+    # Properly enclosed in $...$
+    good_dist_1 = r"$\operatorname{Var}(Y_i) = \infty \Rightarrow Z_n \xrightarrow{d} N(0, 1)$"
+    assert validate_katex_syntax(good_dist_1, "distractor D-H06-04", allow_template_vars=True) == []
+
+    good_dist_2 = r"$\operatorname{Var}(\bar{Y}_n) = @sigma2@$"
+    assert validate_katex_syntax(good_dist_2, "distractor D-H06-05", allow_template_vars=True) == []
+
+
+
+
+

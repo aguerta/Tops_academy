@@ -367,12 +367,12 @@ class TestAssembleQuestionSafeguardsIntegration:
             "vars": {},
             "options": [
                 {
-                    "content": f"\\\\text{{Identidad: }} {matrix_latex}",
+                    "content": f"$\\\\text{{Identidad: }} {matrix_latex}$",
                     "is_correct": True,
                     "error_rationale": None,
                 },
                 {
-                    "content": r"\\\\forall x \\\\in \\\\mathbb{R}^n, \\\\|Ax\\\\| = \\\\|x\\\\|",
+                    "content": r"$\\\\forall x \\\\in \\\\mathbb{R}^n, \|Ax\| = \|x\|$",
                     "is_correct": True,
                     "error_rationale": None,
                 },

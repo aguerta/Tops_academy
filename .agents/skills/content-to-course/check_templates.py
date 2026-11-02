@@ -2581,7 +2581,7 @@ def check_single_template(
             continue
 
         # Collect rendered correct answer and distractors for TPL-STATIC-OPT and TPL-DYNAMIC-RATIONALE
-        if interaction_type == "multiple_choice_7_options":
+        if interaction_type in ("multiple_choice_7_options", "multiple_choice"):
             correct_opt = next((opt for opt in assembled_q.get("options", []) if opt.get("is_correct")), None)
             c_val = re.sub(r"\s+", " ", str(correct_opt.get("content", ""))).strip() if correct_opt else ""
             rendered_correct_answers.append(c_val)

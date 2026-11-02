@@ -32,6 +32,8 @@ _skill_root = Path(__file__).parent.resolve()
 if str(_skill_root) not in sys.path:
     sys.path.insert(0, str(_skill_root))
 
+from engine.invariants import validate_katex_syntax
+
 
 def _atomic_write_json(target_path: Path, data: Any) -> None:
     """Safely write JSON payload to file using atomic rename to prevent race conditions."""
@@ -1769,9 +1771,19 @@ def compile_shard(
                         f"FAIL: [TPL-FIB-KATEX] La respuesta FIB en '{tpl_id}' ('{corr_str}') (Línea {line_no} en {curr_p.name}) contiene delimitadores '$' externos. "
                         f"En Frontend (FeedbackToast) se formatea automáticamente en modo matemático; retire los '$' externos."
                     )
+                fib_katex_errs = validate_katex_syntax(corr_str, f"FIB correct answer in '{tpl_id}'", allow_template_vars=True)
+                if fib_katex_errs:
+                    line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, corr_str)
+                    return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {fib_katex_errs[0]}")
 
             # MC7 checks
             if interaction_type == "multiple_choice_7_options":
+                s_corr_raw = str(sample_dict.get("correct", "")).strip()
+                if s_corr_raw:
+                    corr_katex_errs = validate_katex_syntax(s_corr_raw, f"correct answer in '{tpl_id}'", allow_template_vars=True)
+                    if corr_katex_errs:
+                        line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, s_corr_raw)
+                        return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {corr_katex_errs[0]}")
                 dists_list = sample_dict.get("distractors") or []
                 if isinstance(dists_list, list) and dists_list:
                     dids_found = []
@@ -1797,6 +1809,17 @@ def compile_shard(
                             elif len(d_item) == 2:
                                 did = str(d_item[0]).strip().replace("_", "-")
                                 val = str(d_item[1]).strip()
+
+                        if val:
+                            val_katex_errs = validate_katex_syntax(val, f"distractor '{did}' value in '{tpl_id}'", allow_template_vars=True)
+                            if val_katex_errs:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or val)
+                                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {val_katex_errs[0]}")
+                        if rat:
+                            rat_katex_errs = validate_katex_syntax(rat, f"distractor '{did}' rationale in '{tpl_id}'", allow_template_vars=True)
+                            if rat_katex_errs:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
+                                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {rat_katex_errs[0]}")
 
                         if did:
                             dids_found.append(did)
@@ -1836,6 +1859,16 @@ def compile_shard(
                         did = opt.get("distractor_id") or opt.get("id") or opt.get("did")
                         rat = str(opt.get("error_rationale") or opt.get("rationale") or "")
                         val = str(opt.get("value") if "value" in opt else (opt.get("content") or ""))
+                        if val:
+                            opt_katex_errs = validate_katex_syntax(val, f"option '{did}' value in '{tpl_id}'", allow_template_vars=True)
+                            if opt_katex_errs:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or val)
+                                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {opt_katex_errs[0]}")
+                        if rat:
+                            opt_rat_errs = validate_katex_syntax(rat, f"option '{did}' rationale in '{tpl_id}'", allow_template_vars=True)
+                            if opt_rat_errs:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
+                                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {opt_rat_errs[0]}")
                         if did:
                             norm_did = str(did).replace("_", "-")
                             ms_dids.append(norm_did)
@@ -1878,6 +1911,22 @@ def compile_shard(
             lambda m: f"{{{m.group(1)}}}" if m.group(1) not in declared_vars else m.group(0),
             healed_solution,
         )
+
+        for s_idx, sv in enumerate(stem_variants):
+            sv_katex = validate_katex_syntax(sv, f"stem_variant[{s_idx}] in '{tpl_id}'", allow_template_vars=True)
+            if sv_katex:
+                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, sv)
+                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {sv_katex[0]}")
+        for h_idx, h_text in enumerate(hints):
+            h_katex = validate_katex_syntax(h_text, f"hint[{h_idx}] in '{tpl_id}'", allow_template_vars=True)
+            if h_katex:
+                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, h_text)
+                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {h_katex[0]}")
+        sol_katex = validate_katex_syntax(healed_solution, f"explanation_es in '{tpl_id}'", allow_template_vars=True)
+        if sol_katex:
+            line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, sol_raw)
+            return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {sol_katex[0]}")
+
 
         canonical_dict: Dict[str, Any] = {
             "template_id": tpl_id,
@@ -1954,7 +2003,7 @@ def compile_shard(
 
     # Milestone 3 Tri-Band Multimodal Enforcement Gate [M3-ARCHETYPES]
     m3_errors: List[str] = []
-    if strict and eff_min_arch >= 3:
+    if strict:
         target_cids = expected_cids if expected_cids else list(templates_by_cid.keys())
         shard_data_name = shard_data_path.name if shard_data_path else f"{norm_shard_id}_data.py"
 
@@ -1987,12 +2036,45 @@ def compile_shard(
             is_modular_fix = bool(cid in fix_files_by_cid and fix_files_by_cid[cid].is_file())
             source_name = fix_files_by_cid[cid].name if is_modular_fix else shard_data_name
 
-            if len(tpls) < eff_min_arch:
+            # AST analysis de la fuente efectiva de esta competencia
+            cid_sources: List[str] = []
+            if is_modular_fix:
+                try:
+                    cid_sources.append(fix_files_by_cid[cid].read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+            else:
+                if healed_source:
+                    cid_sources.append(healed_source)
+                elif raw_source:
+                    cid_sources.append(raw_source)
+                elif shard_data_path and shard_data_path.is_file():
+                    try:
+                        cid_sources.append(shard_data_path.read_text(encoding="utf-8"))
+                    except Exception:
+                        pass
+
+            for t in tpls:
+                gen_c = t.get("generator_code") or t.get("generate_py") or ""
+                if gen_c and gen_c not in cid_sources:
+                    cid_sources.append(gen_c)
+
+            cid_ast_funcs: Dict[str, Union[ast.FunctionDef, ast.AsyncFunctionDef]] = {}
+            for src_txt in cid_sources:
+                try:
+                    parsed_tree = ast.parse(textwrap.dedent(src_txt.strip()))
+                    for ast_node in ast.walk(parsed_tree):
+                        if isinstance(ast_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                            cid_ast_funcs[ast_node.name] = ast_node
+                except Exception:
+                    pass
+
+            if eff_min_arch >= 3 and len(tpls) < eff_min_arch:
                 m3_errors.append(
                     f"{cid}.json ({source_name}): [M3-ARCHETYPES] La competencia '{cid}' define solo {len(tpls)} plantilla(s) en TEMPLATES, "
                     f"pero el contrato Tri-Banda exige mínimo {eff_min_arch} plantillas/arquetipos por competencia."
                 )
-            else:
+            elif eff_min_arch >= 3:
                 # Verificación Tri-Banda de dificultad
                 diffs = {t.get("difficulty") for t in tpls}
                 if not {"easy", "medium", "hard"}.issubset(diffs):
@@ -2044,38 +2126,6 @@ def compile_shard(
                     )
 
                 # Verificación 2 — AST analysis de la fuente efectiva de esta competencia
-                cid_sources: List[str] = []
-                if is_modular_fix:
-                    try:
-                        cid_sources.append(fix_files_by_cid[cid].read_text(encoding="utf-8"))
-                    except Exception:
-                        pass
-                else:
-                    if healed_source:
-                        cid_sources.append(healed_source)
-                    elif raw_source:
-                        cid_sources.append(raw_source)
-                    elif shard_data_path and shard_data_path.is_file():
-                        try:
-                            cid_sources.append(shard_data_path.read_text(encoding="utf-8"))
-                        except Exception:
-                            pass
-
-                for t in tpls:
-                    gen_c = t.get("generator_code") or t.get("generate_py") or ""
-                    if gen_c and gen_c not in cid_sources:
-                        cid_sources.append(gen_c)
-
-                cid_ast_funcs: Dict[str, Union[ast.FunctionDef, ast.AsyncFunctionDef]] = {}
-                for src_txt in cid_sources:
-                    try:
-                        parsed_tree = ast.parse(textwrap.dedent(src_txt.strip()))
-                        for ast_node in ast.walk(parsed_tree):
-                            if isinstance(ast_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                                cid_ast_funcs[ast_node.name] = ast_node
-                    except Exception:
-                        pass
-
                 cid_clean = cid.lower().replace("-", "_")
                 cid_compact = cid.lower().replace("-", "")
                 cid_candidate_funcs: Set[str] = set()
@@ -2194,101 +2244,220 @@ def compile_shard(
                                 f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}': las {len(tpls)} tuplas generan salidas matemáticas idénticas (mismo 'correct', 'vars' y 'options' en la misma semilla). Las plantillas deben producir al menos 2 variantes matemáticas distintas."
                             )
 
-                # Verificación 4 — Detección de Distractores por Multiplicador Arbitrario [DIAG-MAGIC-MULT]
-                _magic_mults = (1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, 2.1, 0.45, 1.85, 0.15)
-                _distinctive_magic = {1.333, 0.667, 1.667, 0.333, 2.1, 0.45, 1.85, 0.15}
-                _num_re = re.compile(r"-?\d+\.\d+|-?\d+")
-                try:
-                    import zlib
-                    from engine.assemble import format_template_string
-                    _seed_base = 42 + (zlib.crc32(cid.encode("utf-8")) % 10000)
-                except Exception:
-                    _seed_base = 10000
-                    format_template_string = None
+            # Verificación 4 — Detección de Distractores por Multiplicador Arbitrario [DIAG-MAGIC-MULT]
+            _magic_mults = (1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, 2.1, 0.45, 1.85, 0.15)
+            _distinctive_magic = {1.333, 0.667, 1.667, 0.333, 2.1, 0.45, 1.85, 0.15}
+            _num_re = re.compile(r"-?\d+\.\d+|-?\d+")
 
+            def _check_func_has_magic_mult(fn_node: ast.AST) -> bool:
+                for sub_n in ast.walk(fn_node):
+                    if isinstance(sub_n, ast.Constant) and isinstance(sub_n.value, (int, float)):
+                        val = float(sub_n.value)
+                        for mf in _magic_mults:
+                            if abs(val - mf) <= 0.01:
+                                return True
+                    if isinstance(sub_n, ast.BinOp) and isinstance(sub_n.op, (ast.Mult, ast.Div, ast.FloorDiv)):
+                        left_names = {n.id for n in ast.walk(sub_n.left) if isinstance(n, ast.Name)}
+                        right_names = {n.id for n in ast.walk(sub_n.right) if isinstance(n, ast.Name)}
+                        ans_indicators = {"ans", "correct", "corr", "c_val", "c_num", "target"}
+                        if (left_names & ans_indicators) or (right_names & ans_indicators):
+                            return True
+                        if (
+                            isinstance(sub_n.left, ast.Constant)
+                            and isinstance(sub_n.right, ast.Constant)
+                            and isinstance(sub_n.left.value, (int, float))
+                            and isinstance(sub_n.right.value, (int, float))
+                        ):
+                            try:
+                                if float(sub_n.right.value) != 0:
+                                    r_val = float(sub_n.left.value) / float(sub_n.right.value)
+                                    for mf in _magic_mults:
+                                        if abs(r_val - mf) <= 0.01:
+                                            return True
+                            except Exception:
+                                pass
+                return False
+
+            try:
+                import zlib
+                from engine.assemble import format_template_string
+                _seed_base = 42 + (zlib.crc32(cid.encode("utf-8")) % 10000)
+            except Exception:
+                _seed_base = 10000
+                format_template_string = None
+
+            for t_idx_m, tpl_m in enumerate(tpls):
+                if tpl_m.get("interaction_type") not in ("multiple_choice_7_options", "multiple_choice"):
+                    continue
+                c_call_m = gen_callables[t_idx_m] if t_idx_m < len(gen_callables) else None
+                if not callable(c_call_m):
+                    continue
+                tpl_id_m = tpl_m.get("id") or tpl_m.get("template_id") or f"T-{cid}-{t_idx_m+1:02d}"
+                gen_fn_m = tpl_m.get("gen_fn_name") or getattr(c_call_m, "__name__", "gen_fn")
+
+                # Walk generator AST and any helper functions reached via call graph in cid_ast_funcs
+                queue_funcs = [gen_fn_m]
+                visited_fn_names: Set[str] = set()
+                while queue_funcs:
+                    curr_fn = queue_funcs.pop(0)
+                    if curr_fn in visited_fn_names:
+                        continue
+                    visited_fn_names.add(curr_fn)
+                    c_node = cid_ast_funcs.get(curr_fn)
+                    if c_node:
+                        for sub_call in ast.walk(c_node):
+                            if isinstance(sub_call, ast.Call) and isinstance(sub_call.func, ast.Name):
+                                if sub_call.func.id in cid_ast_funcs and sub_call.func.id not in visited_fn_names:
+                                    queue_funcs.append(sub_call.func.id)
+
+                if not visited_fn_names or not any(fn_n in cid_ast_funcs for fn_n in visited_fn_names):
+                    gen_c_src = str(tpl_m.get("generator_code") or tpl_m.get("generate_py") or "")
+                    if gen_c_src.strip():
+                        try:
+                            tree_m = ast.parse(textwrap.dedent(gen_c_src.strip()))
+                            has_mult_ast = _check_func_has_magic_mult(tree_m)
+                        except Exception:
+                            has_mult_ast = True
+                    else:
+                        has_mult_ast = True
+                else:
+                    has_mult_ast = any(
+                        _check_func_has_magic_mult(cid_ast_funcs[fn_n])
+                        for fn_n in visited_fn_names
+                        if fn_n in cid_ast_funcs
+                    )
+
+                tpl_seed_off = _seed_base + (t_idx_m * 500)
+                eval_seeds = [tpl_seed_off + s_i for s_i in range(20)]
+                hit_seeds: List[int] = []
+                hit_mults_sample: List[float] = []
+                corr_answers_sample: List[str] = []
+                for s_val in eval_seeds:
+                    try:
+                        import random
+                        rng_m = random.Random(s_val)
+                        res_m = c_call_m(rng_m)
+                        if not isinstance(res_m, dict):
+                            continue
+                        vars_m = res_m.get("vars", {}) if isinstance(res_m.get("vars"), dict) else {}
+                        corr_raw = str(res_m.get("correct", ""))
+                        corr_txt = format_template_string(corr_raw, vars_m) if format_template_string else corr_raw
+                        corr_answers_sample.append(corr_txt.strip())
+                        dists_raw = res_m.get("distractors", [])
+                        if not isinstance(dists_raw, list) or len(dists_raw) < 4:
+                            continue
+                        c_nums = _num_re.findall(corr_txt)
+                        if not c_nums:
+                            continue
+                        c_val = float(c_nums[-1])
+                        if abs(c_val) <= 1e-6 or abs(c_val) in (1.0, 2.0, 4.0):
+                            continue
+                        matched_m: List[float] = []
+                        for d_item in dists_raw:
+                            if isinstance(d_item, (tuple, list)) and len(d_item) >= 2:
+                                d_raw = str(d_item[1])
+                            elif isinstance(d_item, dict):
+                                d_raw = str(d_item.get("value") or d_item.get("content") or "")
+                            else:
+                                continue
+                            d_txt = format_template_string(d_raw, vars_m) if format_template_string else d_raw
+                            d_nums = _num_re.findall(d_txt)
+                            if not d_nums:
+                                continue
+                            d_val = float(d_nums[-1])
+                            # Guard 1: Skip conceptual distractors sharing the same numerical value as correct answer
+                            if abs(d_val - c_val) <= 1e-4:
+                                continue
+                            actual_ratio = d_val / c_val if abs(c_val) > 1e-9 else 0.0
+                            for m_factor in _magic_mults:
+                                # Ratio check with 5% relative tolerance AND absolute rounding check to reject small-number false positives
+                                if abs(actual_ratio - m_factor) <= 0.05 and abs(d_val - round(c_val * m_factor, 3)) <= 0.0015:
+                                    matched_m.append(m_factor)
+                                    break
+                        dist_hits = [m_f for m_f in matched_m if m_f in _distinctive_magic]
+                        if len(dist_hits) >= 2 or len(matched_m) >= 4:
+                            hit_seeds.append(s_val)
+                            if not hit_mults_sample:
+                                hit_mults_sample = dist_hits[:3] or matched_m[:3]
+                    except Exception as e_seed:
+                        m3_errors.append(
+                            f"{cid}.json ({source_name}): [TPL-EXEC-ERROR] En '{tpl_id_m}' (semilla {s_val}), la función generadora falló con excepción: {type(e_seed).__name__}: {e_seed}"
+                        )
+                        break
+                if has_mult_ast and len(hit_seeds) >= 3:
+                    eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
+                    loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
+                    t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
+                    s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "diagnostic_rationale_alignment_linter", "multiplicador") if loc_obj else (1, 1, [])
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [DIAG-MAGIC-MULT] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}), "
+                        f"los distractores numéricos en {len(hit_seeds)} semillas (ej. seed={hit_seeds[0]}) coinciden con multiplicadores arbitrarios prohibidos ({hit_mults_sample}) respecto a la respuesta correcta. "
+                        f"Reemplaza los multiplicadores sintéticos sobre 'ans' por las fórmulas algebraicas reales de cada error_rationale."
+                    )
+                if strict and len(set(corr_answers_sample)) <= 1 and len(corr_answers_sample) >= 10:
+                    first_ans_str = str(corr_answers_sample[0]) if corr_answers_sample else ""
+                    if len(first_ans_str) > 50:
+                        first_ans_str = first_ans_str[:47] + "..."
+                    eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
+                    loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
+                    t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
+                    s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "TPL-STATIC-OPT", "correct") if loc_obj else (1, 1, [])
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [TPL-STATIC-OPT] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}), "
+                        f"mono-clave fija detectada en {len(corr_answers_sample)} semillas: '{first_ans_str}'. "
+                        f"La respuesta correcta debe ser dinámica y depender de parámetros generados (@var@)."
+                    )
+
+            # Verificación 4b — Detección Temprana de Mono-Clave [TPL-STATIC-OPT] para FIB y MS
+            if strict:
                 for t_idx_m, tpl_m in enumerate(tpls):
-                    if tpl_m.get("interaction_type") != "multiple_choice_7_options":
+                    itype_m = tpl_m.get("interaction_type") or tpl_m.get("question_type")
+                    if itype_m not in ("fill_in_the_blank", "multiple_select"):
                         continue
                     c_call_m = gen_callables[t_idx_m] if t_idx_m < len(gen_callables) else None
                     if not callable(c_call_m):
-                        continue
-                    gen_c_m = str(tpl_m.get("generator_code") or tpl_m.get("generate_py") or "")
-                    has_mult_ast = bool(
-                        re.search(r"\bans\s*[\*/]|[\*/]\s*ans\b", gen_c_m)
-                        or re.search(r"\b(?:1\.333|0\.667|1\.667|0\.333|2\.1|0\.45|1\.85|0\.15)\b", gen_c_m)
-                    )
-                    if not has_mult_ast:
                         continue
                     tpl_id_m = tpl_m.get("id") or tpl_m.get("template_id") or f"T-{cid}-{t_idx_m+1:02d}"
                     gen_fn_m = tpl_m.get("gen_fn_name") or getattr(c_call_m, "__name__", "gen_fn")
                     tpl_seed_off = _seed_base + (t_idx_m * 500)
                     eval_seeds = [tpl_seed_off + s_i for s_i in range(20)]
-                    hit_seeds: List[int] = []
-                    hit_mults_sample: List[float] = []
+                    corr_samples: List[str] = []
                     for s_val in eval_seeds:
                         try:
                             import random
-                            rng_m = random.Random(s_val)
-                            res_m = c_call_m(rng_m)
+                            res_m = c_call_m(random.Random(s_val))
                             if not isinstance(res_m, dict):
                                 continue
                             vars_m = res_m.get("vars", {}) if isinstance(res_m.get("vars"), dict) else {}
-                            corr_raw = str(res_m.get("correct", ""))
-                            corr_txt = format_template_string(corr_raw, vars_m) if format_template_string else corr_raw
-                            dists_raw = res_m.get("distractors", [])
-                            if not isinstance(dists_raw, list) or len(dists_raw) < 4:
-                                continue
-                            c_nums = _num_re.findall(corr_txt)
-                            if not c_nums:
-                                continue
-                            c_val = float(c_nums[-1])
-                            if abs(c_val) <= 1e-6 or abs(c_val) in (1.0, 2.0, 4.0):
-                                continue
-                            matched_m: List[float] = []
-                            for d_item in dists_raw:
-                                if isinstance(d_item, (tuple, list)) and len(d_item) >= 2:
-                                    d_raw = str(d_item[1])
-                                elif isinstance(d_item, dict):
-                                    d_raw = str(d_item.get("value") or d_item.get("content") or "")
-                                else:
-                                    continue
-                                d_txt = format_template_string(d_raw, vars_m) if format_template_string else d_raw
-                                d_nums = _num_re.findall(d_txt)
-                                if not d_nums:
-                                    continue
-                                d_val = float(d_nums[-1])
-                                # Guard 1: Skip conceptual distractors sharing the same numerical value as correct answer
-                                if abs(d_val - c_val) <= 1e-4:
-                                    continue
-                                actual_ratio = d_val / c_val if abs(c_val) > 1e-9 else 0.0
-                                for m_factor in _magic_mults:
-                                    # Ratio check with 5% relative tolerance AND absolute rounding check to reject small-number false positives
-                                    if abs(actual_ratio - m_factor) <= 0.05 and abs(d_val - round(c_val * m_factor, 3)) <= 0.0015:
-                                        matched_m.append(m_factor)
-                                        break
-                            dist_hits = [m_f for m_f in matched_m if m_f in _distinctive_magic]
-                            if len(dist_hits) >= 2 or len(matched_m) >= 4:
-                                hit_seeds.append(s_val)
-                                if not hit_mults_sample:
-                                    hit_mults_sample = dist_hits[:3] or matched_m[:3]
-                        except Exception as e_seed:
-                            m3_errors.append(
-                                f"{cid}.json ({source_name}): [TPL-EXEC-ERROR] En '{tpl_id_m}' (semilla {s_val}), la función generadora falló con excepción: {type(e_seed).__name__}: {e_seed}"
-                            )
-                            break
-                    if len(hit_seeds) >= 3:
+                            if itype_m == "fill_in_the_blank":
+                                c_raw = str(res_m.get("correct", ""))
+                                c_txt = format_template_string(c_raw, vars_m) if format_template_string else c_raw
+                                corr_samples.append(c_txt.strip())
+                            else:  # multiple_select
+                                opts_m = res_m.get("options", [])
+                                corr_set = tuple(sorted([
+                                    (format_template_string(str(o.get("content") or o.get("value") or ""), vars_m) if format_template_string else str(o.get("content") or o.get("value") or "")).strip()
+                                    for o in opts_m if isinstance(o, dict) and o.get("is_correct")
+                                ]))
+                                corr_samples.append(str(corr_set))
+                        except Exception:
+                            pass
+                    if len(set(corr_samples)) <= 1 and len(corr_samples) >= 10:
+                        first_ans_str = str(corr_samples[0]) if corr_samples else ""
+                        if len(first_ans_str) > 50:
+                            first_ans_str = first_ans_str[:47] + "..."
                         eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
                         loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
                         t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
-                        s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "diagnostic_rationale_alignment_linter", "multiplicador") if loc_obj else (1, 1, [])
+                        s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "TPL-STATIC-OPT", "correct") if loc_obj else (1, 1, [])
                         m3_errors.append(
-                            f"{cid}.json ({source_name}): [DIAG-MAGIC-MULT] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}), "
-                            f"los distractores numéricos en {len(hit_seeds)} semillas (ej. seed={hit_seeds[0]}) coinciden con multiplicadores arbitrarios prohibidos ({hit_mults_sample}) respecto a la respuesta correcta. "
-                            f"Reemplaza los multiplicadores sintéticos sobre 'ans' por las fórmulas algebraicas reales de cada error_rationale."
+                            f"{cid}.json ({source_name}): [TPL-STATIC-OPT] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}), "
+                            f"mono-clave fija detectada en {len(corr_samples)} semillas: '{first_ans_str}'. "
+                            f"La respuesta correcta debe ser dinámica y depender de parámetros generados (@var@)."
                         )
 
                 # Verificación 5 — Compuerta de Diversidad de Enunciados [STEM-DIVERSITY-GATE] (Paridad con run.py --stage build)
-                if len(tpls) >= 3 and seeds >= 30:
+                if eff_min_arch >= 3 and len(tpls) >= 3 and seeds >= 30:
                     try:
                         from engine.diversity import mask_stem_numbers as _mask_stem_nums
                     except Exception:

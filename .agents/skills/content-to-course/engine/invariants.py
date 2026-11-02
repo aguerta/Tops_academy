@@ -584,6 +584,26 @@ def validate_katex_syntax(
                     f"({len(inner)} chars) in {context}. Split into markdown prose outside math delimiters."
                 )
 
+    # 15. LaTeX math commands with backslash exposed outside math delimiters '$...$' or '$$...$$'
+    # Skips purely algebraic fields (e.g. canonical_algebraic or expression in FIB) which are mathematical formulas by specification
+    if not ("canonical_algebraic" in context or "expression" in context):
+        clean_no_math = re.sub(r"\$\$[\s\S]*?\$\$", "", clean_text)
+        clean_no_math = re.sub(r"\$[^\$]*?\$", "", clean_no_math)
+        EXPOSED_LATEX_CMD = (
+            r"operatorname|frac|dfrac|tfrac|cfrac|binom|sqrt|mathrm|mathbf|mathbb|mathcal|mathscr|mathfrak|"
+            r"bar|hat|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|overline|underline|"
+            r"sum|prod|int|iint|iiint|oint|lim|limsup|liminf|infty|"
+            r"Rightarrow|rightarrow|Leftarrow|leftarrow|Leftrightarrow|leftrightarrow|xrightarrow|xleftarrow|"
+            r"le|ge|leq|geq|neq|approx|equiv|sim|simeq|subset|supset|subseteq|supseteq|notin|cap|cup|"
+            r"times|div|pm|mp|cdot|cdots|ldots|ddots|partial|nabla|begin|end"
+        )
+        for m_exp in re.finditer(rf"(?<!\\)\\(?:{EXPOSED_LATEX_CMD})\b", clean_no_math):
+            cmd = m_exp.group(0)
+            errors.append(
+                f"LaTeX command '{cmd}' exposed outside '$...$' delimiters in {context}. "
+                f"Enclose the mathematical expression in '$...$' (e.g. '${cmd}...$')."
+            )
+
     return errors
 
 
