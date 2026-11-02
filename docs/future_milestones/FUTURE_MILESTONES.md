@@ -272,12 +272,11 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 ---
 
 ### Milestone 2: PWA Instalable y Modo Offline (Configuración PWA Móvil)
-* **Estado:** ⏳ **Pendiente (Esfuerzo real: 1 a 2 h porque el 80% de la infraestructura offline ya existe).** La parte de *usabilidad móvil* (responsive, drawer, columna única) ya se completó como Milestone 2a en `MILESTONES_COMPLETED.md`, el progreso ya vive en `localStorage` (`masteryStorage.ts`) y la caché offline de cursos completos ya opera sobre IndexedDB (`tops_academy_cache` en `courseLoader.ts`).
-* **Objetivo:** Experiencia nativa instalable (`standalone`) en smartphones Android, iOS y escritorio sin red.
-* **Componentes y Salvaguardas Críticas (60–90 min código + 30 min test):**
-  - `vite-plugin-pwa` con precaching de App Shell (HTML, JS, CSS, `api/courses.json` y fuentes `.woff2` de KaTeX ≈ 2.5 MB).
-  - **Exclusión obligatoria en Workbox:** No incluir `api/courses/*.json` ni `courses/*.json` en `globPatterns` (ya que cursos como Gavilano pesan 14 MB y romperían el límite de 2 MB de precache); delegar los JSON de cursos a `runtimeCaching` (`StaleWhileRevalidate`) + la caché existente en IndexedDB.
-  - Manifest con iconos adaptativos (`192x192`, `512x512`), metatags de Safe Areas (`viewport-fit=cover`, `env(safe-area-inset-bottom)`) y badge visual `✓ Offline` por curso en `CourseLibrary.tsx`.
+* **Estado:** ✅ **Completado (2026-11-01).** Movido a `MILESTONES_COMPLETED.md`.
+  - Service Worker Workbox precacheando App Shell + fuentes KaTeX `.woff2` (1.5 MB total).
+  - Cursos excluidos del precache para evitar desborde de 14 MB; manejados con `StaleWhileRevalidate` e IndexedDB.
+  - Manifest standalone, iconos adaptativos (192, 512, maskable) y metatags iOS/Android (`viewport-fit=cover`, `safe-area-inset-bottom`).
+  - Insignia visual `✓ Offline` por curso en `CourseLibrary.tsx` y suite automatizada en `tests/test_pwa_offline.py` (12/12 PASS).
 
 ---
 

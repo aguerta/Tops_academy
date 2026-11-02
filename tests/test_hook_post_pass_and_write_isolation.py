@@ -204,6 +204,36 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
         res_replace = process_hook(payload_replace, custom_lock_file=str(self.lock_file))
         self.assertEqual(res_replace.get("decision"), "deny")
 
+    def test_rule_b_allows_edit_when_shard_has_active_specific_error_report(self) -> None:
+        """Exemption: If shard has pass file but is actively rejected in specific_error_report.json, edits are allowed."""
+        pass_file = self.check_attempts_dir / "pass_shard_01.json"
+        pass_file.write_text(json.dumps({"status": "PASS", "shard_id": "shard_01"}), encoding="utf-8")
+
+        # Create specific_error_report.json marking shard_01 as rejected
+        spec_rep = self.work_dir / "specific_error_report.json"
+        spec_rep.write_text(json.dumps({
+            "status": "REJECTED",
+            "affected_shards": ["shard_01"],
+            "diagnostics_by_competency": {"C-01": [{"rule_tag": "PSYCHOMETRIC-OPTIONS"}]}
+        }), encoding="utf-8")
+
+        shard_py = self.shards_dir / "shard_01_data.py"
+        shard_py.write_text("# existing code\n" * 10, encoding="utf-8")
+
+        payload_edit = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "edit_file",
+                "args": {
+                    "Path": str(shard_py),
+                    "Target": "# existing code",
+                    "Replacement": "# repaired code",
+                },
+            },
+        }
+        res_edit = process_hook(payload_edit, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_edit.get("decision"), "allow")
+
     def test_rule_b_allows_writing_to_other_shards_without_pass_file(self) -> None:
         """A shard that has not passed yet is not blocked by Rule B."""
         # pass_shard_01 exists, but shard_02 has no pass file

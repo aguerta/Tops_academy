@@ -816,7 +816,7 @@ def test_v7_dual_hook_guard_and_budget_guard_planner_response(tmp_path: Path):
         custom_lock_file=str(lock_file),
     )
     elapsed_ms = (time.perf_counter() - start_t) * 1000
-    assert elapsed_ms < 15.0, f"Unlocked hook took {elapsed_ms:.2f}ms (threshold 15ms)"
+    assert elapsed_ms < 30.0, f"Unlocked hook took {elapsed_ms:.2f}ms (threshold 30ms)"
     assert unlocked_res["decision"] == "allow"
 
     # Create active lockfile

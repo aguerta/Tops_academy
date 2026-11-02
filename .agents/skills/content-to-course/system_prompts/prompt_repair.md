@@ -27,6 +27,7 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
   - 🚫 **PROHIBIDO ejecutar `git log` o listar recursivamente con `Get-ChildItem -Recurse` sobre `courses/`.**
   - 🚫 **PROHIBIDO crear o usar archivos en `scratch/**`:** Todo el código reside exclusivamente en `<work_dir>/shards/<shard_id>_data.py` o `<work_dir>/shards/shard_fixes/<CID>.py`.
   - 🚫 **PROHIBIDO modificar código fuera de la competencia asignada:** No alteres tuplas de competencias que compilaron exitosamente.
+  - 🚫 **PROHIBIDO ejecutar `compile_shard.py` antes de editar (ORDEN ESTRICTO: EDITA PRIMERO, COMPILA DESPUÉS):** El Hook Guard protege los archivos de trabajo con aislamiento estricto. La compilación previa sin cambios genera bloqueos innecesarios. El flujo obligatorio es: **1. Edita primero con `edit_file` sobre las líneas señaladas -> 2. Compila únicamente después de editar para certificar el cambio.**
   - 🚫 **PROHIBIDO ejecutar `python -c` inline en PowerShell:** Todos los comandos de compilación deben invocar scripts directamente.
 
 ---
@@ -36,6 +37,8 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
 ### A. Diagnóstico y Selección de Estrategia
 1. **Inspección de Diagnóstico Multi-Fallo:** Revisa minuciosamente los diagnósticos reportados en `repair_XX.json` (que acumulan discordancias de jueces, fallos de compilación y validaciones estocásticas):
    - `[M3-ARCHETYPES]` / `min_archetypes = 3`: Toda competencia debe definir exactamente 3 tuplas en `TEMPLATES` bajo las tres bandas de dificultad (`'easy'`, `'medium'`, `'hard'`) y al menos 2 niveles de Bloom.
+   - `[PSYCHOMETRIC-OPTIONS / parenthetical_telltale_linter]`: Prohibido incluir coletillas parentéticas explicativas o etiquetas diagnósticas en el texto visible de opciones o stems (p. ej. `(sesgo negativo...)`, `(confusión con...)`, `(omisión...)`, `(error de cálculo...)`). Toda la fundamentación pedagógica debe residir en `error_rationale` o `sol`, jamás en la opción visible.
+   - `[DIAG-MAGIC-MULT]`: Prohibido el uso de multiplicadores escalares fijos o proporciones predecibles (`1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, ...`) aplicadas a la respuesta correcta. Cada distractor debe generarse a partir de un error conceptual genuino (p. ej. invertir un signo, omitir un término, aplicar una fórmula errónea con las variables muestreadas).
    - `[TPL-DYNAMIC-RATIONALE]`: En MC7, cada distractor DEBE ser una 3-tupla `(did, val, rationale_@var@)` con longitud >= 20 caracteres interpolando variables paramétricas. En MS, opciones falsas requieren `'error_rationale'` dinámico.
    - `[FIB-NAKED]`: En plantillas `fill_in_the_blank`, la respuesta esperada `correct` DEBE ser limpia sin signos de dólar externos `$ ... $` (ej. `r"@ans@"` en vez de `r"$@ans@$"`).
    - `[KATEX-PROSE-OVERFLOW]`: Prohibido texto explicativo mayor a 45 caracteres dentro de `\text{...}`. La prosa explicativa va fuera de `$ ... $`. Usa `\Rightarrow` en vez de `\implies`.

@@ -284,8 +284,15 @@ def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, A
             "file_path": None,
         }
 
-    if "[STEM-DIVERSITY-GATE]" in err_str or "[DIAG-MAGIC-MULT]" in err_str:
-        rule_tag = "STEM-DIVERSITY-GATE" if "[STEM-DIVERSITY-GATE]" in err_str else "DIAG-MAGIC-MULT"
+    if "[STEM-DIVERSITY-GATE]" in err_str or "[DIAG-MAGIC-MULT]" in err_str or "[PSYCHOMETRIC-OPTIONS" in err_str:
+        if "[STEM-DIVERSITY-GATE]" in err_str:
+            rule_tag = "STEM-DIVERSITY-GATE"
+        elif "[DIAG-MAGIC-MULT]" in err_str:
+            rule_tag = "DIAG-MAGIC-MULT"
+        elif "parenthetical_telltale_linter" in err_str:
+            rule_tag = "PSYCHOMETRIC-OPTIONS / parenthetical_telltale_linter"
+        else:
+            rule_tag = "PSYCHOMETRIC-OPTIONS"
         m_cid = (
             re.search(r"competency\s+'([^']+)'", err_str, re.IGNORECASE)
             or re.search(r"^([A-Za-z0-9_-]+)\.json", err_str)
@@ -293,7 +300,7 @@ def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, A
         comp = m_cid.group(1).strip() if m_cid else ""
         m_tpl = re.search(r"En\s+'([^']+)'", err_str)
         tpl = m_tpl.group(1).strip() if m_tpl else (f"T-{comp}" if comp else "")
-        m_body = re.search(r"\[(?:STEM-DIVERSITY-GATE|DIAG-MAGIC-MULT)\]\s*(.+)", err_str)
+        m_body = re.search(r"\[(?:STEM-DIVERSITY-GATE|DIAG-MAGIC-MULT|PSYCHOMETRIC-OPTIONS)(?:[ /A-Za-z0-9_-]*)\]\s*(.+)", err_str)
         body_txt = m_body.group(1).strip() if m_body else err_str
         if "Provide >=" in body_txt:
             parts = body_txt.split("Provide >=", 1)
@@ -303,6 +310,10 @@ def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, A
             parts = body_txt.split("Reemplaza los multiplicadores", 1)
             cause = f"[{rule_tag}] {parts[0].strip()}"
             action = f"Reemplaza los multiplicadores {parts[1].strip()}"
+        elif "Elimina coletillas parentéticas" in body_txt:
+            parts = body_txt.split("Elimina coletillas parentéticas", 1)
+            cause = f"[{rule_tag}] {parts[0].strip()}"
+            action = f"Elimina coletillas parentéticas {parts[1].strip()}"
         else:
             cause = f"[{rule_tag}] {body_txt}"
             action = "Corregir en las líneas indicadas de shard_XX_data.py."
@@ -1438,11 +1449,11 @@ def build_compact_diagnostic_groups(
         fp = r["file_path"]
         s_ref = r.get("shard_ref", "")
         scause = r["cause"]
-        max_cause_len = 240 if rtag in ("STEM-DIVERSITY-GATE", "DIAG-MAGIC-MULT") else 95
+        max_cause_len = 240 if any(k in rtag for k in ("STEM-DIVERSITY-GATE", "DIAG-MAGIC-MULT", "PSYCHOMETRIC-OPTIONS")) else 95
         if len(scause) > max_cause_len:
             scause = scause[:max_cause_len - 3] + "..."
         sact = r["action"]
-        max_act_len = 220 if rtag in ("STEM-DIVERSITY-GATE", "DIAG-MAGIC-MULT") else 85
+        max_act_len = 220 if any(k in rtag for k in ("STEM-DIVERSITY-GATE", "DIAG-MAGIC-MULT", "PSYCHOMETRIC-OPTIONS")) else 85
         if len(sact) > max_act_len:
             sact = sact[:max_act_len - 3] + "..."
 
@@ -1592,6 +1603,18 @@ def format_invariant_error_diagnostic(
 ) -> str:
     """Formats an error from check_instance_invariants into the enriched diagnostic structure."""
     inv_clean = inv_err.strip()
+
+    # Case A-pre: Parenthetical telltale clue in visible options
+    if "parenthetical_telltale_linter" in inv_clean or "Metainformación delatora parentética" in inv_clean:
+        m_tt = re.search(r"'(.*?)'", inv_clean)
+        snippet = m_tt.group(1) if m_tt else inv_clean
+        cause = f"Metainformación delatora parentética en opción visible: '{snippet}'."
+        actions = [
+            "Elimina coletillas parentéticas del texto visible de la opción.",
+            "Traslada explicaciones conceptuales a 'error_rationale' o 'sol'.",
+            "Asegura que el estudiante deduzca la respuesta por razonamiento matemático.",
+        ]
+        return format_diagnostic_error("PSYCHOMETRIC-OPTIONS", cid, tpl_id, q_id, "options", snippet, cause, actions)
 
     # Case A0: Unescaped LaTeX math command
     if "Unescaped LaTeX math command" in inv_clean:
@@ -2599,6 +2622,22 @@ def check_single_template(
             opt_set = frozenset((re.sub(r"\s+", " ", str(opt.get("content", ""))).strip(), bool(opt.get("is_correct"))) for opt in assembled_q.get("options", []))
             rendered_correct_answers.append(opt_set)
             for opt in assembled_q.get("options", []):
+                opt_txt = str(opt.get("content") or opt.get("text") or "")
+                m_tt = re.search(
+                    r"\(\s*(?:confusi[oó]n|error|omisi[oó]n|sesgo|falsamente|definici[oó]n\s+err[oó]nea|desplazamiento\s+err[oó]neo|c[aá]lculo\s+err[oó]neo)[^)]*\)",
+                    opt_txt,
+                    re.IGNORECASE,
+                )
+                if m_tt:
+                    tt_msg = f"[PSYCHOMETRIC-OPTIONS / parenthetical_telltale_linter] Metainformación delatora parentética en opción visible: '{m_tt.group(0)}'"
+                    canon_key = get_canonical_invariant_key(tt_msg)
+                    seed_tag = f"seed={seed_val}"
+                    if canon_key not in raw_inv_failures:
+                        raw_inv_failures[canon_key] = (tt_msg, [seed_tag], assembled_q)
+                    else:
+                        if seed_tag not in raw_inv_failures[canon_key][1]:
+                            raw_inv_failures[canon_key][1].append(seed_tag)
+
                 if not opt.get("is_correct"):
                     slot_key = opt.get("distractor_id") or opt.get("content")
                     distractor_contents_by_slot[slot_key].append(str(opt.get("content", "")).strip())

@@ -2244,10 +2244,14 @@ def compile_shard(
                                 f"{cid}.json ({source_name}): [M3-ARCHETYPES] Competencia '{cid}': las {len(tpls)} tuplas generan salidas matemáticas idénticas (mismo 'correct', 'vars' y 'options' en la misma semilla). Las plantillas deben producir al menos 2 variantes matemáticas distintas."
                             )
 
-            # Verificación 4 — Detección de Distractores por Multiplicador Arbitrario [DIAG-MAGIC-MULT]
+            # Verificación 4 — Detección de Distractores por Multiplicador Arbitrario [DIAG-MAGIC-MULT] y Pistas Parentéticas [PSYCHOMETRIC-OPTIONS]
             _magic_mults = (1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, 2.1, 0.45, 1.85, 0.15)
             _distinctive_magic = {1.333, 0.667, 1.667, 0.333, 2.1, 0.45, 1.85, 0.15}
             _num_re = re.compile(r"-?\d+\.\d+|-?\d+")
+            _parenthetical_telltale_re = re.compile(
+                r"\(\s*(?:confusi[oó]n|error|omisi[oó]n|sesgo|falsamente|definici[oó]n\s+err[oó]nea|desplazamiento\s+err[oó]neo|c[aá]lculo\s+err[oó]neo)[^)]*\)",
+                re.IGNORECASE,
+            )
 
             def _check_func_has_magic_mult(fn_node: ast.AST) -> bool:
                 for sub_n in ast.walk(fn_node):
@@ -2273,6 +2277,15 @@ def compile_shard(
                                     r_val = float(sub_n.left.value) / float(sub_n.right.value)
                                     for mf in _magic_mults:
                                         if abs(r_val - mf) <= 0.01:
+                                            return True
+                            except Exception:
+                                pass
+                        if isinstance(sub_n.right, ast.Constant) and isinstance(sub_n.right.value, (int, float)):
+                            try:
+                                if float(sub_n.right.value) != 0:
+                                    inv_factor = 1.0 / float(sub_n.right.value)
+                                    for mf in _magic_mults:
+                                        if abs(inv_factor - mf) <= 0.01:
                                             return True
                             except Exception:
                                 pass
@@ -2328,10 +2341,11 @@ def compile_shard(
                     )
 
                 tpl_seed_off = _seed_base + (t_idx_m * 500)
-                eval_seeds = [tpl_seed_off + s_i for s_i in range(20)]
+                eval_seeds = [tpl_seed_off + s_i for s_i in range(50)]
                 hit_seeds: List[int] = []
                 hit_mults_sample: List[float] = []
                 corr_answers_sample: List[str] = []
+                telltale_sample: Optional[Tuple[str, str]] = None
                 for s_val in eval_seeds:
                     try:
                         import random
@@ -2343,6 +2357,11 @@ def compile_shard(
                         corr_raw = str(res_m.get("correct", ""))
                         corr_txt = format_template_string(corr_raw, vars_m) if format_template_string else corr_raw
                         corr_answers_sample.append(corr_txt.strip())
+                        if not telltale_sample:
+                            m_tt = _parenthetical_telltale_re.search(corr_txt)
+                            if m_tt:
+                                telltale_sample = (m_tt.group(0), "correct")
+
                         dists_raw = res_m.get("distractors", [])
                         if not isinstance(dists_raw, list) or len(dists_raw) < 4:
                             continue
@@ -2361,6 +2380,10 @@ def compile_shard(
                             else:
                                 continue
                             d_txt = format_template_string(d_raw, vars_m) if format_template_string else d_raw
+                            if not telltale_sample:
+                                m_tt = _parenthetical_telltale_re.search(d_txt)
+                                if m_tt:
+                                    telltale_sample = (m_tt.group(0), "distractor")
                             d_nums = _num_re.findall(d_txt)
                             if not d_nums:
                                 continue
@@ -2384,6 +2407,18 @@ def compile_shard(
                             f"{cid}.json ({source_name}): [TPL-EXEC-ERROR] En '{tpl_id_m}' (semilla {s_val}), la función generadora falló con excepción: {type(e_seed).__name__}: {e_seed}"
                         )
                         break
+
+                if telltale_sample:
+                    eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
+                    loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
+                    t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
+                    s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "parenthetical_telltale_linter", telltale_sample[0]) if loc_obj else (1, 1, [])
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [PSYCHOMETRIC-OPTIONS / parenthetical_telltale_linter] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}), "
+                        f"la opción visible contiene metainformación delatora parentética: '{telltale_sample[0]}'. "
+                        "Elimina coletillas parentéticas del texto visible de la opción y traslada explicaciones conceptuales a 'error_rationale' o 'sol'."
+                    )
+
                 if has_mult_ast and len(hit_seeds) >= 3:
                     eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
                     loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator

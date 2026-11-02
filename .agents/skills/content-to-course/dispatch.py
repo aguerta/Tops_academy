@@ -1400,6 +1400,21 @@ def dispatch_judges(
     work_rel = get_work_rel(work)
     use_pointer = pointer if pointer is not None else (os.getenv("C2C_POINTER_PROMPTS", "1").lower() in ("1", "true", "yes"))
 
+    if ids or ready_only:
+        from judge import generate_judge_batch, split_judge_batch
+        templates_path = work / "templates"
+        if templates_path.is_dir():
+            generate_judge_batch(
+                templates_path=templates_path,
+                work_dir=work,
+                cta_path=work / "cta.json",
+                ready_only=ready_only,
+                max_judges=max_judges,
+                max_items_per_judge=max_items_per_judge,
+                ids=ids,
+            )
+            split_batches = split_judge_batch(work, max_judges=max_judges, items_per_judge=max_items_per_judge)
+
     # Native Batch Slicing: ensure batches are sliced at <= max_items_per_judge (default 20) and <= max_judges (default 10)
     unsplit = work / "verification" / "judge_batch.json"
     if not unsplit.is_file():
@@ -1467,6 +1482,30 @@ def dispatch_judges(
 
     if max_judges > 0 and len(split_batches) > max_judges:
         split_batches = split_batches[:max_judges]
+
+    if ids is not None:
+        raw_ids = [ids] if isinstance(ids, (str, int)) else list(ids)
+        target_ids = {str(x).strip().upper() for x in raw_ids if str(x).strip()}
+        if target_ids and split_batches:
+            filtered_batches = []
+            for bf in split_batches:
+                try:
+                    b_data = json.loads(bf.read_text(encoding="utf-8"))
+                    raw_items = b_data.get("items", []) if isinstance(b_data, dict) else (b_data if isinstance(b_data, list) else [])
+                    matching = [
+                        it for it in raw_items
+                        if isinstance(it, dict) and (
+                            str(it.get("competency_id", "")).strip().upper() in target_ids
+                            or any(tid in str(it.get("question_id", "")).upper() for tid in target_ids)
+                            or any(tid in str(it.get("id", "")).upper() for tid in target_ids)
+                        )
+                    ]
+                    if matching:
+                        bf.write_text(json.dumps(matching, indent=2, ensure_ascii=False), encoding="utf-8")
+                        filtered_batches.append(bf)
+                except Exception:
+                    pass
+            split_batches = filtered_batches
 
     # Swift-Dispatch SLA: Sort batches heaviest unit first
     def _batch_count(bf: Path) -> int:
@@ -2282,13 +2321,13 @@ def build_dispatch(
                 f"{error_bullets}"
                 f"```json\n{diag_str}\n```\n\n"
                 f"## 3. INSTRUCCIONES DE REPARACIÓN\n"
-                f"1. Corrige la tupla de `{cid}` en `{out_py}` cumpliendo el contrato Form-B Tri-Banda (min_archetypes = 3: 'easy', 'medium', 'hard', 3-tuplas dinámicas `(did, val, rationale_con_@var@)` con len >= 20, FIB sin `$` externos, verificador real, y `\\text{{...}}` <= 45 caracteres), o escribe el parche modular en `{shard_fix_path}`.\n"
-                f"2. Compila y certifica la corrección ejecutando:\n"
+                f"1. [ORDEN ESTRICTO]: Aplica corrección quirúrgica con edit_file sobre las líneas señaladas de `{out_py}` (o parche modular en `{shard_fix_path}`). PROHIBIDO ejecutar compile_shard.py antes de editar. Cumple Form-B Tri-Banda (min_archetypes=3: 'easy','medium','hard', 3-tuplas `(did, val, rationale_con_@var@)` len >= 20, FIB sin `$`, verificador real, `\\text{{...}}` <= 45 chars, sin coletillas parentéticas delatoras tipo '(sesgo/error...)').\n"
+                f"2. Compila ÚNICAMENTE DESPUÉS de editar para certificar:\n"
                 f"   ```bash\n"
                 f"   {compile_cmd}\n"
                 f"   ```\n"
-                f"3. **[AUTO-REPARACIÓN SIN INVESTIGAR]:** corrige SOLO con la salida del compilador (línea + `[CÓDIGO]`). PROHIBIDO leer `cta.json`, `pre_shard_manifest.json`, otros shards, `report.json` o listar `shard_fixes/` para diagnosticar. `[INVARIANT]`: `ver_*` debe verificar una identidad analítica real entre las variables (`abs(v[\"ans\"] - expr(v)) < 1e-6`), nunca solo cotas de rango ni restas crudas; toda variable usada en `sol`/stems/distractores debe estar en `vars` e interpolarse como `@var@`. LaTeX: nunca `\\not\\Rightarrow`, `\\iff`, `\\implies` (usa `\\Rightarrow`/`\\Leftrightarrow`); `\\text{{...}}` <= 45 caracteres. `[TPL-VAR]`: amplía rangos hasta `param_space >= 500`; un invariante fallido impide contar ítems hacia la cuota, corrígelo primero. `Template schema violation`: revisa `hints` (3..5), `stem_variants` (>= 3), FIB `correct` sin `$` externos, `distractor_ids` solo los de este work order; no cambies tipos de interacción (p. ej. FIB) sin que el work order lo indique.\n"
-                f"4. Sigue todas las directivas de tu System Prompt `c2c_repair` y finaliza con: `DONE: {out_json}`.\n"
+                f"3. **[AUTO-REPARACIÓN]:** Corrige SOLO con salida del compilador (línea + `[CÓDIGO]`). PROHIBIDO leer `cta.json`, `pre_shard_manifest.json`, otros shards o `report.json`. `ver_*`: valida identidad analítica (`abs(v[\"ans\"] - expr(v)) < 1e-6`); variables en `sol`/stems/distractores en `vars` como `@var@`. LaTeX: `\\Rightarrow`/`\\Leftrightarrow`, `\\text{{...}}` <= 45 chars. `[TPL-VAR]`: `param_space >= 500`. Revisa `hints` (3..5), `stem_variants` (>= 3), FIB sin `$`, `distractor_ids` del work order.\n"
+                f"4. Sigue directivas de System Prompt `c2c_repair` y finaliza con: `DONE: {out_json}`.\n"
             )
             safe_cid = re.sub(r"[^\w-]", "_", str(cid))
             cid_norm = re.sub(r"[^\w]", "", str(cid)).lower()
@@ -2321,7 +2360,7 @@ def build_dispatch(
             prompts_idx_file.write_text(item_json_str, encoding="utf-8")
 
             if use_pointer:
-                extra = f"[SCOPE-LOCK] Fix {cid} in `{out_py}` or write `{shard_fix_path}`, compile with `compile_shard.py`."
+                extra = f"[SCOPE-LOCK] Edit first: Fix {cid} in `{out_py}` with edit_file. Do NOT compile before editing. Certify with `compile_shard.py`."
                 pointer_prompt = make_pointer_prompt(
                     role_name=f"Repair Engineer {cid}",
                     work_order_rel=f"{work_rel}/prompts/repair/{prompts_cid_file.name}",
@@ -2563,6 +2602,7 @@ def main() -> None:
     dj.add_argument("--pointer", action="store_true", default=True, help="Generate pointer-prompt work orders (default: True)")
     dj.add_argument("--no-pointer", action="store_false", dest="pointer", help="Disable pointer-prompt work orders")
     dj.add_argument("--ready-only", action="store_true", default=False, help="Dispatch only ready evaluated items")
+    dj.add_argument("--ids", nargs="*", default=None, help="Target competency IDs to arbitrate (default: all)")
     dj.add_argument("--max-items-per-judge", type=int, default=12, help="Maximum items per judge batch (default: 12)")
 
     # dispatch-repair subcommand
@@ -2606,7 +2646,7 @@ def main() -> None:
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "dispatch-judges":
-        res = dispatch_judges(args.work_dir, pointer=args.pointer, max_items_per_judge=args.max_items_per_judge, ready_only=args.ready_only)
+        res = dispatch_judges(args.work_dir, pointer=args.pointer, max_items_per_judge=args.max_items_per_judge, ready_only=args.ready_only, ids=args.ids)
         print(json.dumps(res, indent=2, ensure_ascii=False))
 
     elif args.action == "dispatch-repair":
