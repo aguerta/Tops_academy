@@ -20,23 +20,73 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
   loadingCourseId,
   cachedCourseIds,
 }) => {
-  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
+  const isStandalone = typeof window !== 'undefined' && (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true ||
+    (typeof document !== 'undefined' && document.referrer.includes('android-app://'))
+  );
+
+  const [canInstall, setCanInstall] = React.useState(!isStandalone);
+  const [isInstalling, setIsInstalling] = React.useState(false);
 
   React.useEffect(() => {
-    const handler = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
+    if (isStandalone) {
+      setCanInstall(false);
+      return;
+    }
+
+    const handleInstalled = () => {
+      setCanInstall(false);
+      setIsInstalling(false);
     };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
+
+    const handleBeforeInstall = (e: any) => {
+      e.preventDefault();
+      (window as any).__deferredPrompt = e;
+    };
+
+    window.addEventListener('pwa-installed', handleInstalled);
+    window.addEventListener('appinstalled', handleInstalled);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+
+    return () => {
+      window.removeEventListener('pwa-installed', handleInstalled);
+      window.removeEventListener('appinstalled', handleInstalled);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
+  }, [isStandalone]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null);
+    const prompt = (window as any).__deferredPrompt;
+    if (prompt) {
+      prompt.prompt();
+      const { outcome } = await prompt.userChoice;
+      if (outcome === 'accepted') {
+        (window as any).__deferredPrompt = null;
+        setCanInstall(false);
+      }
+      setIsInstalling(false);
+    } else {
+      setIsInstalling(true);
+      const onReady = () => {
+        window.removeEventListener('pwa-prompt-ready', onReady);
+        const readyPrompt = (window as any).__deferredPrompt;
+        if (readyPrompt) {
+          readyPrompt.prompt();
+          readyPrompt.userChoice.then(({ outcome }: any) => {
+            if (outcome === 'accepted') {
+              (window as any).__deferredPrompt = null;
+              setCanInstall(false);
+            }
+            setIsInstalling(false);
+          });
+        }
+      };
+      window.addEventListener('pwa-prompt-ready', onReady);
+      setTimeout(() => {
+        window.removeEventListener('pwa-prompt-ready', onReady);
+        setIsInstalling(false);
+      }, 4000);
     }
   };
 
@@ -57,15 +107,25 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
           </p>
         </div>
 
-        {deferredPrompt && (
+        {canInstall && (
           <button
             type="button"
             data-testid="pwa-install-button"
             onClick={handleInstallClick}
-            className="self-start sm:self-auto px-4 py-2 bg-ka-blue hover:bg-ka-blue-hover text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm transition-all flex items-center gap-2 cursor-pointer shrink-0"
+            disabled={isInstalling}
+            className="self-start sm:self-auto px-4 py-2 bg-ka-blue hover:bg-ka-blue-hover text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm transition-all flex items-center gap-2 cursor-pointer shrink-0 disabled:opacity-85"
           >
-            <span aria-hidden="true">📲</span>
-            <span>Instalar App</span>
+            {isInstalling ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                <span>Preparando instalación...</span>
+              </>
+            ) : (
+              <>
+                <span aria-hidden="true">📲</span>
+                <span>Instalar App</span>
+              </>
+            )}
           </button>
         )}
       </div>

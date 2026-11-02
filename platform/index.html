@@ -21,6 +21,18 @@
     <meta property="og:site_name" content="Top's Academy" />
     <meta property="og:description" content="Top's Academy Practice Platform" />
     <meta name="twitter:title" content="Top's Academy" />
+    <script>
+      window.__deferredPrompt = null;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window.__deferredPrompt = e;
+        window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
+      });
+      window.addEventListener('appinstalled', function() {
+        window.__deferredPrompt = null;
+        window.dispatchEvent(new CustomEvent('pwa-installed'));
+      });
+    </script>
   </head>
   <body class="bg-[#fafbfc] text-[#21242c] antialiased">
     <div id="root"></div>
