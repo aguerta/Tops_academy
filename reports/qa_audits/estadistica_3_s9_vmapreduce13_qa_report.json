@@ -1,0 +1,82 @@
+{
+  "course_metadata": {
+    "course_id": "estadistica_3_s9_vmapreduce13",
+    "unit_title": "Estadistica 3 S9 Vmapreduce13",
+    "detected_objective": "Dominio y aplicación analítica integral de la Inferencia Asintótica y Modelos Econométricos",
+    "total_competencies": 51,
+    "total_questions": 1170,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-01 23:37:53"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 3.9,
+      "max": 4.0,
+      "feedback": "Topología DAG acíclica y conexa con 51 microcompetencias balanceadas (11 Hechos, 25 Conceptos, 15 Habilidades). Excelente modelado de prerrequisitos con root_ratio de 1.96% (1 raíz: C-01). Calibración ZPD perfecta con el 100% de competencias implementando 3 bandas ortogonales (easy, medium, hard)."
+    },
+    "assessment_quality": {
+      "score": 4.9,
+      "max": 5.0,
+      "feedback": "Diversidad multimodal activa con 45.81% de Fill-In-The-Blank (536 reactivos) y 54.19% de Multiple Choice 7 opciones (634 reactivos). Cero multiplicadores sintéticos tras remediación quirúrgica, cero distractores delatores y 0 patrones de relleno asimétrico de longitud."
+    },
+    "scaffolding_hints": {
+      "score": 4.9,
+      "max": 5.0,
+      "feedback": "100% de reactivos con 3 a 5 pistas socráticas genuinas y progresivas (Conceptual -> Estratégica -> Operativa). Cero pistas envenenadas, cero residuos de f-strings y 91.19% de unicidad en los rationales diagnósticos de error."
+    },
+    "instructional_alignment": {
+      "score": 3.9,
+      "max": 4.0,
+      "feedback": "Alineación rigurosa con la teoría de inferencia asintótica y teoremas límites (CMT, Slutsky, Delta Method). Consenso perfecto del 100% (120/120) en el arbitraje ciego de la Etapa 5. 66.67% de reactivos de habilidad situados en niveles superiores de Bloom (Apply, Analyze, Evaluate)."
+    },
+    "technical_ergonomics": {
+      "score": 1.9,
+      "max": 2.0,
+      "feedback": "Sintaxis KaTeX limpia: 0 llaves rotas, 0 delimitadores impares, 0 triples dólares y 0 identificadores de variables crudos de Python en renderizado visual."
+    }
+  },
+  "penalties_applied": [],
+  "raw_subtotal": 19.5,
+  "final_score": 19.5,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "mastery_path_readiness": {
+    "mpri_score": 97.26,
+    "mpri_max": 100.0,
+    "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 17.33,
+        "max": 20.0
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 20.0,
+        "max": 20.0
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 25.0,
+        "max": 25.0
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 15.0,
+        "max": 15.0
+      },
+      "dag_and_interleaving_topology": {
+        "score": 10.0,
+        "max": 10.0
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 9.93,
+        "max": 10.0
+      }
+    },
+    "student_journey_verdict": "El curso ofrece una trayectoria de aprendizaje adaptativa de nivel oro, garantizando andamiaje efectivo y evaluación activa a prueba de gaming."
+  },
+  "discovered_lint_rules": [],
+  "remediation_actions": [
+    "Mantener la política de revisión periódica del banco de reactivos para preservar la frescura de semillas numéricas.",
+    "Promover la inclusión de 1 reactivo de Multiple Select (MS) condicional en futuras extensiones incrementales."
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-01 23:37:53",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}
