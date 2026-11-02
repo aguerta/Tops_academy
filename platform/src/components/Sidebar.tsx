@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Course } from '../types';
+import { Course, CourseMasteryRecord } from '../types';
+import { isUnitCompleted, isUnitStarted } from '../utils/masteryStorage';
 import { MathText } from './MathText';
 
 interface SidebarProps {
@@ -9,6 +10,7 @@ interface SidebarProps {
   onSelectUnit: (index: number) => void;
   onSelectCourseChallenge: () => void;
   onBackToLibrary: () => void;
+  mastery?: CourseMasteryRecord | null;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -18,6 +20,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectUnit,
   onSelectCourseChallenge,
   onBackToLibrary,
+  mastery,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(() =>
@@ -252,6 +255,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <nav className="flex-1 overflow-y-auto py-2 overscroll-contain">
           {units.map((unit, idx) => {
             const isActive = selectedUnitIndex === idx && !isCourseChallengeActive;
+            const compMastery = mastery?.competencies?.[unit.id];
+            const isCompleted = isUnitCompleted(compMastery);
+            const isInProgress = !isCompleted && isUnitStarted(compMastery);
+
             return (
               <button
                 key={unit.id}
@@ -260,12 +267,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className={`w-full text-left px-6 py-3 border-b border-ka-border-subtle transition-colors flex flex-col justify-center focus:outline-none focus:bg-slate-100 ${
                   isActive
                     ? 'bg-ka-blue-light border-l-4 border-l-ka-blue text-ka-blue'
-                    : 'hover:bg-slate-50 text-ka-text-primary'
+                    : isCompleted
+                    ? 'border-l-4 border-l-emerald-500 hover:bg-slate-50 text-ka-text-primary'
+                    : isInProgress
+                    ? 'border-l-4 border-l-amber-400 hover:bg-slate-50 text-ka-text-primary'
+                    : 'border-l-4 border-l-transparent hover:bg-slate-50 text-ka-text-primary'
                 }`}
               >
-                <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-                  UNIT {idx + 1}
-                </span>
+                <div className="flex items-center justify-between gap-1.5 min-w-0">
+                  <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
+                    UNIT {idx + 1}
+                  </span>
+                  {isCompleted ? (
+                    <span
+                      data-testid={`sidebar-unit-status-${unit.id}`}
+                      className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded-full border border-emerald-300 shrink-0"
+                    >
+                      <span>✓</span>
+                      <span>100%</span>
+                    </span>
+                  ) : isInProgress ? (
+                    <span
+                      data-testid={`sidebar-unit-status-${unit.id}`}
+                      className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500 shrink-0"
+                      title="In progress"
+                    />
+                  ) : null}
+                </div>
                 <span
                   className={`text-sm font-medium mt-0.5 block max-w-full truncate ${
                     isActive ? 'text-ka-blue font-semibold' : 'text-ka-text-primary'

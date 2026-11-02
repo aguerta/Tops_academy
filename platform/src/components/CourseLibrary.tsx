@@ -1,6 +1,6 @@
 import React from 'react';
 import { CourseSummary } from '../types';
-import { getCourseMasteryRecord, isCourseCompleted } from '../utils/masteryStorage';
+import { getCourseMasteryRecord, isCourseCompleted, getCourseProgressDetails } from '../utils/masteryStorage';
 import { MathText } from './MathText';
 
 interface CourseLibraryProps {
@@ -121,10 +121,12 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
 
             // Valid Course Card
             const courseId = c.id || c.data?.course_id || '';
-            const record = getCourseMasteryRecord(courseId);
-            const isCompleted = isCourseCompleted(courseId, c.total_competencies);
+            const progressData = getCourseProgressDetails(courseId, c.total_competencies);
+            const { percentage, status } = progressData;
+            const isCompletedStrong = status === 'completed'; // 100% Verde Fuerte
+            const isCompletedLight = status === 'unit_tests_mastered'; // 80% Verde Light
+            const isInProgress = status === 'in_progress'; // Amarillo
             const isCachedOffline = cachedCourseIds ? cachedCourseIds.has(courseId) : false;
-            const masteryPercent = record?.mastery_points || 0;
             const isLoadingThis = loadingCourseId === c.id;
 
             return (
@@ -136,8 +138,12 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                 onFocus={() => onPrefetch?.(c.id)}
                 onTouchStart={() => onPrefetch?.(c.id)}
                 className={`cursor-pointer min-w-0 p-4 bg-white rounded-xl border shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${
-                  isCompleted
-                    ? 'border-emerald-300 ring-2 ring-emerald-100 hover:border-emerald-500'
+                  isCompletedStrong
+                    ? 'border-emerald-600 ring-2 ring-emerald-100 hover:border-emerald-700'
+                    : isCompletedLight
+                    ? 'border-emerald-400 ring-2 ring-emerald-50 hover:border-emerald-500'
+                    : isInProgress
+                    ? 'border-amber-300 hover:border-amber-400'
                     : 'border-ka-border-card hover:border-ka-blue'
                 }`}
               >
@@ -157,20 +163,28 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                           <span>Offline</span>
                         </span>
                       )}
-                      {isCompleted ? (
+                      {isCompletedStrong ? (
                         <span
                           data-testid="course-completed-badge"
-                          className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full border border-emerald-300 flex items-center gap-1 shadow-sm shrink-0"
+                          className="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 text-[11px] font-bold rounded-full border border-emerald-400 flex items-center gap-1 shadow-sm shrink-0"
                         >
                           <span>✓</span>
-                          <span>Completed</span>
+                          <span>100% Completed</span>
                         </span>
-                      ) : masteryPercent > 0 ? (
+                      ) : isCompletedLight ? (
+                        <span
+                          data-testid="course-completed-badge"
+                          className="px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-[11px] font-bold rounded-full border border-emerald-300 flex items-center gap-1 shadow-sm shrink-0"
+                        >
+                          <span>✓</span>
+                          <span>80% Mastered</span>
+                        </span>
+                      ) : isInProgress ? (
                         <span
                           data-testid="course-progress-badge"
                           className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[11px] font-bold rounded-full border border-amber-200 shrink-0"
                         >
-                          {masteryPercent}% Mastery
+                          {percentage}% Progress
                         </span>
                       ) : null}
                     </div>
@@ -186,6 +200,23 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                   <div className="text-xs text-ka-text-secondary mt-0.5 line-clamp-2 leading-tight break-words [overflow-wrap:anywhere]">
                     <MathText text={c.description || 'Interactive practice course.'} />
                   </div>
+
+                  {/* Horizontal Course Progress Bar */}
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden mt-3 mb-0.5">
+                    <div
+                      data-testid="course-progress-bar"
+                      className={`h-full transition-all duration-300 rounded-full ${
+                        isCompletedStrong
+                          ? 'bg-emerald-700'
+                          : isCompletedLight
+                          ? 'bg-emerald-500'
+                          : isInProgress
+                          ? 'bg-amber-400'
+                          : 'bg-transparent'
+                      }`}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
                 </div>
 
                 <div className="mt-2 pt-1.5 border-t border-ka-border-subtle flex items-center justify-between min-w-0">
@@ -199,8 +230,10 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                     className={`w-full py-2 px-3 text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors text-center flex items-center justify-center gap-1.5 min-w-0 ${
                       isLoadingThis
                         ? 'bg-ka-blue/70 cursor-wait'
-                        : isCompleted
-                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                        : isCompletedStrong
+                        ? 'bg-emerald-700 hover:bg-emerald-800'
+                        : isCompletedLight
+                        ? 'bg-emerald-500 hover:bg-emerald-600'
                         : 'bg-ka-blue hover:bg-ka-blue-hover'
                     }`}
                   >
@@ -211,7 +244,7 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                       </>
                     ) : (
                       <>
-                        {isCompleted && <span className="shrink-0">✓</span>}
+                        {(isCompletedStrong || isCompletedLight) && <span className="shrink-0">✓</span>}
                         <span className="truncate block min-w-0">Let's go</span>
                       </>
                     )}

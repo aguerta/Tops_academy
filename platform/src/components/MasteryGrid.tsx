@@ -1,6 +1,6 @@
 import React from 'react';
 import { Course, CourseMasteryRecord, Competency, MasteryTier } from '../types';
-import { TIER_COLORS } from '../utils/masteryStorage';
+import { TIER_COLORS, isUnitCompleted, isUnitStarted } from '../utils/masteryStorage';
 import { MathText } from './MathText';
 
 interface MasteryGridProps {
@@ -27,11 +27,8 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
         const tier: MasteryTier = compMastery?.status || 'Not started';
         const colors = TIER_COLORS[tier];
 
-        const isCompleted =
-          tier === 'Mastered' || tier === 'Proficient' || (compMastery?.points ?? 0) >= 80;
-        const isInProgress =
-          !isCompleted &&
-          (tier === 'Familiar' || tier === 'Attempted' || (compMastery?.points ?? 0) > 0);
+        const isCompleted = isUnitCompleted(compMastery);
+        const isInProgress = !isCompleted && isUnitStarted(compMastery);
         const statusLabel = isCompleted ? 'Completed' : isInProgress ? 'In Progress' : 'Not Started';
 
         return (
@@ -40,10 +37,10 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
             data-testid={`competency-block-${unit.id}`}
             className={`p-4 sm:p-5 bg-white rounded-lg border border-ka-border-card shadow-sm hover:shadow-md transition-shadow border-l-4 min-w-0 ${
               isCompleted
-                ? 'border-l-emerald-500'
+                ? 'border-l-emerald-600'
                 : isInProgress
-                ? 'border-l-amber-500'
-                : 'border-l-slate-300'
+                ? 'border-l-amber-400'
+                : 'border-l-slate-200'
             }`}
           >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-w-0">

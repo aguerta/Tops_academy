@@ -284,6 +284,7 @@ export const App: React.FC = () => {
         <div className="flex min-h-screen">
           <Sidebar
             course={activeCourse}
+            mastery={mastery}
             selectedUnitIndex={selectedUnitIndex}
             isCourseChallengeActive={false}
             onSelectUnit={(idx) => {
@@ -353,6 +354,7 @@ export const App: React.FC = () => {
         <div className="flex min-h-screen">
           <Sidebar
             course={activeCourse}
+            mastery={mastery}
             selectedUnitIndex={null}
             isCourseChallengeActive={true}
             onSelectUnit={(idx) => {

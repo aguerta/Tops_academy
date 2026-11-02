@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Course, CourseMasteryRecord, Competency } from '../types';
+import { calculateCourseProgress } from '../utils/masteryStorage';
 import { MasteryLegend } from './MasteryLegend';
 import { MasteryGrid } from './MasteryGrid';
 import { MathText } from './MathText';
@@ -23,20 +24,15 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
 
-  const challengeCompleted = mastery.course_challenge?.completed;
-  const challengePercent = challengeCompleted ? 100 : 0;
-
   const totalUnits = course.competencies.length;
-  const completedUnits = course.competencies.filter((c) => {
-    const cm = mastery.competencies[c.id];
-    return cm && (cm.status === 'Mastered' || cm.status === 'Proficient' || cm.points >= 80);
-  }).length;
-  const inProgressUnits = course.competencies.filter((c) => {
-    const cm = mastery.competencies[c.id];
-    const isComp = cm && (cm.status === 'Mastered' || cm.status === 'Proficient' || cm.points >= 80);
-    return !isComp && cm && (cm.status === 'Familiar' || cm.status === 'Attempted' || cm.points > 0);
-  }).length;
-  const notStartedUnits = totalUnits - completedUnits - inProgressUnits;
+  const progressDetails = calculateCourseProgress(mastery, totalUnits);
+  const { percentage, status, completedUnits, inProgressUnits, notStartedUnits } = progressDetails;
+  const isCompletedStrong = status === 'completed';
+  const isCompletedLight = status === 'unit_tests_mastered';
+  const isInProgress = status === 'in_progress';
+
+  const challengeCompleted = mastery.course_challenge?.completed;
+  const challengePercent = challengeCompleted ? 100 : (mastery.course_challenge?.percentage || 0);
 
   return (
     <div className="flex-1 min-w-0 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -60,7 +56,7 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
       {/* Course Mastery Percentage Line */}
       <div className="mt-4 flex items-center gap-2 relative">
         <span className="text-base font-bold text-ka-text-primary">
-          Course mastery: {mastery.mastery_points}%
+          Course mastery: {percentage}%
         </span>
         <button
           type="button"
@@ -126,13 +122,22 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
         <div className="w-full sm:w-48 flex flex-col gap-1.5 shrink-0">
           <div className="flex justify-between text-[11px] font-semibold text-slate-500">
             <span>Overall completion</span>
-            <span>{totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0}%</span>
+            <span>{percentage}%</span>
           </div>
           <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
             <div
-              className="bg-emerald-600 h-2.5 rounded-full transition-all duration-300"
+              data-testid="course-progress-bar-overview"
+              className={`h-2.5 rounded-full transition-all duration-300 ${
+                isCompletedStrong
+                  ? 'bg-emerald-700'
+                  : isCompletedLight
+                  ? 'bg-emerald-500'
+                  : isInProgress
+                  ? 'bg-amber-400'
+                  : 'bg-slate-300'
+              }`}
               style={{
-                width: `${totalUnits > 0 ? (completedUnits / totalUnits) * 100 : 0}%`,
+                width: `${percentage}%`,
               }}
             />
           </div>
