@@ -116,10 +116,18 @@ export type MasteryTier =
   | 'Proficient'
   | 'Mastered';
 
+export interface UnitTestRecord {
+  last_score: number;
+  total_questions: number;
+  percentage: number;
+  completed_at: string;
+}
+
 export interface CompetencyMastery {
   status: MasteryTier;
   points: number;
   last_practiced: string;
+  unit_test?: UnitTestRecord;
   history: Array<{
     date: string;
     score: number;
@@ -136,6 +144,22 @@ export interface CourseMasteryRecord {
     completed: boolean;
     last_score: number;
     total_questions: number;
+    percentage?: number;
     completed_at: string;
   };
+}
+
+export type CourseProgressStatus =
+  | 'completed'             // 100%: All Unit Tests 100% + Course Challenge 100% (Verde Fuerte)
+  | 'unit_tests_mastered'  // 80%: All Unit Tests 100%, Course Challenge < 100% (Verde Light)
+  | 'in_progress'          // 1 - 79%: En progreso (Amarillo)
+  | 'not_started';         // 0%: Sin iniciar (Neutro)
+
+export interface CourseProgressDetails {
+  percentage: number;
+  status: CourseProgressStatus;
+  completedUnits: number;
+  inProgressUnits: number;
+  notStartedUnits: number;
+  totalUnits: number;
 }

@@ -1,4 +1,12 @@
-import { Course, CourseMasteryRecord, CompetencyMastery, MasteryTier } from '../types';
+import {
+  Course,
+  CourseMasteryRecord,
+  CompetencyMastery,
+  MasteryTier,
+  UnitTestRecord,
+  CourseProgressDetails,
+  CourseProgressStatus,
+} from '../types';
 
 const STORAGE_KEY = 'tops_academic_progress_v1';
 const LEGACY_STORAGE_KEY = 'khan_academic_progress_v1';
@@ -96,21 +104,39 @@ export function updateCompetencyScore(
   };
 
   const ratio = total > 0 ? score / total : 0;
+  const percentage = Math.round(ratio * 100);
   let newTier: MasteryTier = prev.status;
 
-  if (sessionType === 'practice') {
+  let unitTestRecord: UnitTestRecord | undefined = prev.unit_test;
+
+  if (sessionType === 'test') {
+    // Record latest Unit Test attempt
+    unitTestRecord = {
+      last_score: score,
+      total_questions: total,
+      percentage,
+      completed_at: new Date().toISOString(),
+    };
+
     if (ratio === 1) {
-      // 100% in practice promotes to Proficient (or stays Mastered)
+      newTier = 'Mastered';
+    } else if (ratio >= 0.8) {
+      newTier = 'Proficient';
+    } else if (ratio >= 0.5) {
+      newTier = 'Familiar';
+    } else {
+      newTier = 'Attempted';
+    }
+  } else if (sessionType === 'practice') {
+    if (ratio === 1) {
       if (prev.status !== 'Mastered') {
         newTier = 'Proficient';
       }
     } else if (ratio >= 0.7) {
-      // >= 70% promotes to Familiar if below
       if (prev.status === 'Not started' || prev.status === 'Attempted') {
         newTier = 'Familiar';
       }
     } else {
-      // < 70% marks as Attempted if Not started
       if (prev.status === 'Not started') {
         newTier = 'Attempted';
       }
@@ -125,23 +151,13 @@ export function updateCompetencyScore(
         newTier = 'Familiar';
       }
     }
-  } else if (sessionType === 'test' || sessionType === 'challenge') {
-    if (ratio === 1) {
-      newTier = 'Mastered';
-    } else if (ratio >= 0.8) {
-      newTier = 'Proficient';
-    } else if (ratio >= 0.6) {
-      newTier = 'Familiar';
-    } else if (ratio < 0.5 && prev.status === 'Mastered') {
-      // Demote on poor performance
-      newTier = 'Proficient';
-    }
   }
 
   record.competencies[competencyId] = {
     status: newTier,
     points: TIER_POINTS[newTier],
     last_practiced: new Date().toISOString(),
+    unit_test: unitTestRecord,
     history: [
       ...prev.history,
       {
@@ -153,15 +169,9 @@ export function updateCompetencyScore(
     ],
   };
 
-  // Recalculate total course mastery %
-  const totalComp = course.competencies.length;
-  if (totalComp > 0) {
-    const sumPoints = course.competencies.reduce((acc, c) => {
-      const tier = record.competencies[c.id]?.status || 'Not started';
-      return acc + TIER_POINTS[tier];
-    }, 0);
-    record.mastery_points = Math.round((sumPoints / (totalComp * 100)) * 100);
-  }
+  // Recalculate total course progress using the 80/20 formula
+  const progress = calculateCourseProgress(record, course.competencies.length);
+  record.mastery_points = progress.percentage;
 
   all[course.course_id] = record;
   saveAllStoredData(all);
@@ -176,12 +186,21 @@ export function updateCourseChallengeCompleted(
   const all = getAllStoredData();
   const record = loadCourseMastery(course);
 
+  const ratio = total > 0 ? score / total : 0;
+  const percentage = Math.round(ratio * 100);
+  const isCompleted = ratio === 1 && total > 0;
+
   record.course_challenge = {
-    completed: true,
+    completed: isCompleted,
     last_score: score,
     total_questions: total,
+    percentage,
     completed_at: new Date().toISOString(),
   };
+
+  // Recalculate total course progress using the 80/20 formula
+  const progress = calculateCourseProgress(record, course.competencies.length);
+  record.mastery_points = progress.percentage;
 
   all[course.course_id] = record;
   saveAllStoredData(all);
@@ -193,33 +212,135 @@ export function getCourseMasteryRecord(courseId: string): CourseMasteryRecord | 
   return all[courseId];
 }
 
-export function isCompetencyCompleted(compMastery?: CompetencyMastery): boolean {
-  if (!compMastery) return false;
+/**
+ * A unit is completed (Verde) ONLY when its latest Unit Test scored 100%.
+ */
+export function isUnitCompleted(compMastery?: CompetencyMastery): boolean {
+  if (!compMastery || !compMastery.unit_test) return false;
   return (
-    compMastery.status === 'Mastered' ||
-    compMastery.status === 'Proficient' ||
-    compMastery.points >= 80
+    compMastery.unit_test.percentage === 100 &&
+    compMastery.unit_test.total_questions > 0
   );
 }
 
-export function isCourseCompleted(courseId: string, totalCompetencies?: number): boolean {
-  const all = getAllStoredData();
-  const record = all[courseId];
-  if (!record) return false;
+/**
+ * A unit is started (Amarillo) when it has at least one practice, quiz or unit test attempt.
+ */
+export function isUnitStarted(compMastery?: CompetencyMastery): boolean {
+  if (!compMastery) return false;
+  if (isUnitCompleted(compMastery)) return true;
+  return (
+    (compMastery.history && compMastery.history.length > 0) ||
+    compMastery.status !== 'Not started' ||
+    compMastery.points > 0 ||
+    !!compMastery.unit_test
+  );
+}
 
-  // 1. Overall course mastery points reaches 100%
-  if (record.mastery_points >= 100) {
-    return true;
+export function isCompetencyCompleted(compMastery?: CompetencyMastery): boolean {
+  return isUnitCompleted(compMastery);
+}
+
+/**
+ * Calculates course progress using the strict 80/20 model:
+ * - Average of Unit Tests across all units contributes 0-80% (avg * 0.80).
+ * - Course Challenge (100% required) contributes the remaining 0-20% (cc_pct * 0.20).
+ * - Total = round(unitTestsContribution + ccContribution).
+ */
+export function calculateCourseProgress(
+  record?: CourseMasteryRecord,
+  totalCompetencies?: number
+): CourseProgressDetails {
+  if (!record) {
+    const total = totalCompetencies || 0;
+    return {
+      percentage: 0,
+      status: 'not_started',
+      completedUnits: 0,
+      inProgressUnits: 0,
+      notStartedUnits: total,
+      totalUnits: total,
+    };
   }
 
-  // 2. All competencies in the course are mastered
-  const compValues = Object.values(record.competencies || {});
-  if (compValues.length > 0) {
-    const allMastered = compValues.every((c) => c.status === 'Mastered');
-    if (allMastered && (!totalCompetencies || compValues.length >= totalCompetencies)) {
-      return true;
+  const compList = Object.values(record.competencies || {});
+  const totalUnits = totalCompetencies || compList.length || 0;
+
+  if (totalUnits === 0) {
+    return {
+      percentage: 0,
+      status: 'not_started',
+      completedUnits: 0,
+      inProgressUnits: 0,
+      notStartedUnits: 0,
+      totalUnits: 0,
+    };
+  }
+
+  let completedUnits = 0;
+  let inProgressUnits = 0;
+  let sumUnitTestPercentages = 0;
+
+  for (const comp of compList) {
+    if (isUnitCompleted(comp)) {
+      completedUnits++;
+    } else if (isUnitStarted(comp)) {
+      inProgressUnits++;
+    }
+
+    if (comp.unit_test && comp.unit_test.total_questions > 0) {
+      sumUnitTestPercentages += comp.unit_test.percentage;
     }
   }
 
-  return false;
+  const notStartedUnits = Math.max(0, totalUnits - completedUnits - inProgressUnits);
+
+  // 80/20 Formula:
+  const avgUnitTests = sumUnitTestPercentages / totalUnits;
+  const unitTestsContribution = avgUnitTests * 0.8;
+
+  const cc = record.course_challenge;
+  const ccPercentage =
+    cc && cc.total_questions > 0
+      ? (cc.percentage ?? (cc.completed ? 100 : Math.round((cc.last_score / cc.total_questions) * 100)))
+      : 0;
+  const ccContribution = (ccPercentage / 100) * 20;
+
+  const rawPercentage = Math.round(unitTestsContribution + ccContribution);
+  const percentage = Math.min(100, Math.max(0, rawPercentage));
+
+  const allUnitTests100 = completedUnits >= totalUnits && totalUnits > 0;
+  const cc100 = cc?.completed === true || ccPercentage === 100;
+
+  let status: CourseProgressStatus = 'not_started';
+  if (allUnitTests100 && cc100) {
+    status = 'completed'; // Verde Fuerte (100%)
+  } else if (allUnitTests100) {
+    status = 'unit_tests_mastered'; // Verde Light (80%)
+  } else if (percentage > 0 || completedUnits > 0 || inProgressUnits > 0) {
+    status = 'in_progress'; // Amarillo
+  }
+
+  return {
+    percentage,
+    status,
+    completedUnits,
+    inProgressUnits,
+    notStartedUnits,
+    totalUnits,
+  };
+}
+
+export function getCourseProgressDetails(
+  courseId: string,
+  totalCompetencies?: number
+): CourseProgressDetails {
+  const all = getAllStoredData();
+  const record = all[courseId];
+  return calculateCourseProgress(record, totalCompetencies);
+}
+
+export function isCourseCompleted(courseId: string, totalCompetencies?: number): boolean {
+  const details = getCourseProgressDetails(courseId, totalCompetencies);
+  return details.status === 'completed' || details.status === 'unit_tests_mastered';
 }
