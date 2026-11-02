@@ -139,7 +139,7 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                 onTouchStart={() => onPrefetch?.(c.id)}
                 className={`cursor-pointer min-w-0 p-4 bg-white rounded-xl border shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${
                   isCompletedStrong
-                    ? 'border-emerald-600 ring-2 ring-emerald-100 hover:border-emerald-700'
+                    ? 'border-emerald-950 ring-2 ring-emerald-200 hover:border-black'
                     : isCompletedLight
                     ? 'border-emerald-400 ring-2 ring-emerald-50 hover:border-emerald-500'
                     : isInProgress
@@ -207,7 +207,7 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                       data-testid="course-progress-bar"
                       className={`h-full transition-all duration-300 rounded-full ${
                         isCompletedStrong
-                          ? 'bg-emerald-700'
+                          ? 'bg-emerald-950'
                           : isCompletedLight
                           ? 'bg-emerald-500'
                           : isInProgress
@@ -231,7 +231,7 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                       isLoadingThis
                         ? 'bg-ka-blue/70 cursor-wait'
                         : isCompletedStrong
-                        ? 'bg-emerald-700 hover:bg-emerald-800'
+                        ? 'bg-emerald-950 hover:bg-black'
                         : isCompletedLight
                         ? 'bg-emerald-500 hover:bg-emerald-600'
                         : 'bg-ka-blue hover:bg-ka-blue-hover'

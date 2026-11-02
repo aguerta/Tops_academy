@@ -129,7 +129,7 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
               data-testid="course-progress-bar-overview"
               className={`h-2.5 rounded-full transition-all duration-300 ${
                 isCompletedStrong
-                  ? 'bg-emerald-700'
+                  ? 'bg-emerald-950'
                   : isCompletedLight
                   ? 'bg-emerald-500'
                   : isInProgress

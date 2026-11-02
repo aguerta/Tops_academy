@@ -195,9 +195,9 @@ class TestFrontendComponentIntegration:
 
         assert "getCourseProgressDetails" in code
         assert "course-progress-bar" in code
-        assert "bg-emerald-700" in code  # Verde Fuerte
-        assert "bg-emerald-500" in code  # Verde Light
-        assert "bg-amber-400" in code    # Amarillo
+        assert "bg-emerald-950" in code  # Green Black Fuerte (100% completo con Course Challenge)
+        assert "bg-emerald-500" in code  # Verde Light (80% todos unit tests 100%)
+        assert "bg-amber-400" in code    # Amarillo (en progreso)
         assert "Let's go" in code
 
     def test_course_overview_has_dynamic_progress_bar(self):
@@ -206,7 +206,7 @@ class TestFrontendComponentIntegration:
 
         assert "calculateCourseProgress" in code
         assert "course-progress-bar-overview" in code
-        assert "bg-emerald-700" in code
+        assert "bg-emerald-950" in code  # Green Black Fuerte
         assert "bg-emerald-500" in code
         assert "bg-amber-400" in code
 
