@@ -97,7 +97,32 @@
 ## Milestone 2a: Usabilidad Móvil (alcance cerrado del antiguo Milestone 2)
 * **Estado:** ✅ **Completado y certificado por el usuario (2026-10-26):** «ahora sí funciona el celular… ya no se tiene que pelear con la plataforma para hacer las preguntas».
 * **Entregado (consecuencia directa del Milestone 1):** columna única bajo 480 px de contenedor, sidebar como drawer bajo 1024 px, indicador `n of N` en el footer, toast como bottom sheet, footer en flujo sin scroll fantasma (`h-dvh`) y cero desborde horizontal. El viewport 390 × 844 forma parte de la matriz E2E (PASS).
-* **No incluido (permanece abierto como «Milestone 2: PWA Instalable y Modo Offline» en `FUTURE_MILESTONES.md`):** `vite-plugin-pwa`, manifest con iconos, safe areas (`viewport-fit=cover`) y precaching de fuentes KaTeX. Evidencia al 2026-10-26: `platform/package.json` no declara dependencias PWA y `platform/index.html` no tiene `<link rel="manifest">`.
+
+---
+
+## Milestone 2b: PWA Instalable y Modo Offline (Configuración PWA Móvil)
+* **Estado:** ✅ **Completado al 100% y Verificado (2026-11-01).** Testeado exhaustivamente con `tests/test_pwa_offline.py` (12/12 PASS), `test_course_api_manifest.py` (12/12 PASS), y `test_platform.py` (19/19 PASS).
+* **Objetivo:** Experiencia nativa instalable (`standalone`) en smartphones Android, iOS y escritorio con soporte 100% offline.
+* **Componentes Técnicos Entregados:**
+  1. **Workbox Precache App Shell (`vite-plugin-pwa` ^2.0.0):**
+     - Precaching de `index.html`, JS, CSS, `api/courses.json` (slim manifest < 2 KB) y fuentes `.woff2` de KaTeX (19 fuentes optimizadas).
+     - **Salvaguarda Crítica Cumplida:** Cursos (`courses/**` y `api/courses/**`) 100% excluidos del precache para erradicar el riesgo de superar el límite de 2 MB (evitando precachear cursos pesados de 14 MB).
+     - Tamaño total de precache medido: **1,539 KiB (1.5 MB)**, distribuido en 38 entradas estables.
+  2. **Estrategia Dual Offline para Cursos:**
+     - Runtime Caching con `StaleWhileRevalidate` en Service Worker para peticiones `/api/courses/` y `/courses/`.
+     - Persistencia en cliente con IndexedDB (`tops_academy_cache`) gestionada por `courseLoader.ts`, cargando preguntas en < 16 ms.
+  3. **Manifiesto PWA e Iconos Adaptativos:**
+     - `dist/manifest.webmanifest` con `display: standalone`, `theme_color: #1865f2`, `background_color: #fafbfc`, `orientation: any`.
+     - Iconos generados en `platform/public/`: `pwa-192x192.png`, `pwa-512x512.png`, `pwa-maskable-512x512.png` (safe area), `apple-touch-icon.png` (180x180) y `icon.svg`.
+     - Botón `📲 Instalar App` en la cabecera de `CourseLibrary.tsx` al dispararse el evento `beforeinstallprompt`.
+  4. **Metatags iOS / Safe Areas:**
+     - Metatags de Safe Area (`viewport-fit=cover`, `mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style: black-translucent`).
+     - Utilidades CSS para `env(safe-area-inset-bottom)` en `index.css` asegurando que barras y footers de práctica no choquen con indicadores gestuales de iOS/Android.
+  5. **Insignia Visual `✓ Offline` en Tiempo Real:**
+     - Sincronización reactiva en `courseLoader.ts` (`getCachedCourseIds()`, `onCourseCacheChanged()`).
+     - Insignia visual `✓ Offline` (`data-testid="course-offline-badge"`) en cada tarjeta de curso disponible sin red en `CourseLibrary.tsx`.
+  6. **Hardening de Cabeceras HTTP:**
+     - `sw.js` y `registerSW.js` servidos con `Cache-Control: no-cache, no-store, must-revalidate` en Node (`courseServer.cjs`) y Python (`run_platform.py`), garantizando actualizaciones transparentes e inmediatas (`registerType: 'autoUpdate'`).
 
 ---
 
