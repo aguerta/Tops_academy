@@ -2,7 +2,7 @@
 ## Elevando la Vara: Del Paradigma Cerrado al "Antigravity Study Harness", Práctica Deliberada, Intuición Experta (*The Expert Myth*) y Ultra-Aprendizaje
 
 > **Documento Estratégico, Psicométrico y de Arquitectura de Sistemas End-to-End**  
-> **Fecha de Actualización:** 2026-10-31 (Branch: `main` / C2C v3.8 Tri-Banda & QA v2.0; Milestones 1, 2a, 3 y núcleo del 11 cerrados)  
+> **Fecha de Actualización:** 2026-11-02 (Branch: `main` / C2C v3.8 Tri-Banda, QA v2.0 & PWA; Milestones 1, 2, 2a, 3, 10 y núcleo del 11 cerrados)  
 > **Áreas del Ecosistema:** Plataforma Web (`React 18 + Vite + TypeScript`), UI Multi-Panel (Split-View Harness), Pipeline Multi-Agente C2C (`Google Antigravity SDK`), Motor Determinista (`engine/`), Evaluador de Calidad (`course-qa-evaluator`) y Marco Neurocognitivo de Adquisición de Pericia (*The Expert Myth Framework*).  
 > **Ubicación Canónica:** [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md) *(espejo en [`docs/future_milestones/FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md))*.
 > **Milestones Cerrados:** [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md) *(espejo en `docs/future_milestones/MILESTONES_COMPLETED.md`)*. Este archivo conserva lo **pendiente o en curso** y el conocimiento técnico y tribal.
@@ -147,6 +147,63 @@ La frontera entre Python y TypeScript es el archivo `courses/<course_id>.json` (
 - **Aritmética de anchos a 150% en laptop de 14":** split 50% ≈ 640 px CSS − 15 px de scrollbar − 32 px de padding ≈ 586–593 px útiles (de ahí el umbral de 2 columnas en 480 px). La biblioteca ve `innerWidth` ≈ 1265 px, no 1280 (de ahí el breakpoint de 3 columnas en 1000 px).
 - **Referencia que no debe regresar:** ASUS TUF F15 de 15.6" a 125% (1536 × 740).
 
+### 2.3. Conocimiento Tribal del Pipeline C2C: Medición de la Excelencia Académica, Taxonomía de Bloom y los 4 Arquetipos de Plantillas
+
+> Registrado como convención canónica del pipeline multi-agente C2C y el evaluador de calidad (`course-qa-evaluator`). Define la vara epistemológica innegociable de Tops Academy.
+
+#### a) Cómo Medimos la Excelencia Académica (Más Allá de la Compilación Mecánica)
+En Tops Academy, un curso **no se considera excelente simplemente porque sus archivos `.py` compilen sin errores de sintaxis** o porque el motor genere 1,000 reactivos con tests pasando. La verdadera excelencia académica se evalúa bajo un estándar de maestría profunda (*Deep Mastery*) estructurado en tres dimensiones complementarias:
+
+1. **Equilibrio Cognitivo en la Taxonomía de Bloom:**
+   - Queda estrictamente vetado el reduccionismo pedagógico a reactivos de mera memorización o reconocimiento pasivo.
+   - Cada competencia debe exhibir una distribución intencional entre los niveles de la Taxonomía de Bloom revisada:
+     - **Niveles Fundacionales (*Recall* y *Understand*):** Evocación de definiciones canónicas, comprensión de propiedades y significado conceptual intuitivo de los modelos.
+     - **Niveles Intermedios (*Apply*):** Aplicación de algoritmos de cálculo, operaciones matriciales, derivaciones estándar y resolución numérica con parámetros instanciados.
+     - **Niveles Superiores (*Analyze*, *Evaluate* y *Create*):** Diagnóstico de violaciones de supuestos, descomposición de demostraciones, selección crítica entre estimadores alternativos, análisis de sensibilidad ante choques estructurales y formulación de contraejemplos.
+   - **Regla Tribal Inviolable:** Toda competencia debe involucrar **mínimo $\ge 2$ niveles distintos de Bloom**, con presencia obligatoria de niveles de aplicación o análisis (`Apply+`), garantizando que el estudiante trascienda la repetición mecánica de fórmulas.
+
+2. **Higiene Psicométrica y Prevención de Trampas (*Anti-Gaming*):**
+   - **Longitud Calibrada:** Opciones de respuesta homogéneas en extensión para evitar que la opción correcta destaque visualmente por ser más larga o descriptiva (`AntiGamingPsychometricLinter`).
+   - **Distractores con Diagnóstico Refutacional:** Cada distractor debe reflejar una concepción errónea verosímil y documentada (*misconception*), portando su respectivo `error_rationale` para que el error active aprendizaje correctivo inmediato en el toast.
+   - **Erradicación de Multiplicadores Mágicos:** Bloqueo absoluto de distractores construidos artificialmente como múltiplos fijos de la respuesta correcta (`[DIAG-MAGIC-MULT]`).
+
+3. **Polimorfismo Estructural Anti-Overfitting (El Sistema de los 4 Arquetipos):**
+   - El estudiante no debe memorizar el molde sintáctico de la pregunta; debe dominar el principio subyacente independientemente de cómo se le plantee el problema.
+
+#### b) Los 4 Arquetipos Canónicos de Plantillas por Competencia
+Para que una competencia sea verdaderamente formativa y robusta ante el sobreajuste (*anti-overfitting*), su diseño pedagógico debe articularse en torno a **4 plantillas ortogonales y disjuntas**:
+
+```mermaid
+flowchart TD
+    subgraph Competencia ["Competencia Académica (1 Shard)"]
+        T1["Plantilla 1: Aplicación Canónica / Forward\n(Directo - Easy - Bloom: Recall/Understand/Apply)"]
+        T2["Plantilla 2: Problema Inverso / Deducción Retrospectiva\n(Inverso - Medium - Bloom: Apply/Analyze)"]
+        T3["Plantilla 3: Perturbación y Sensibilidad de Parámetros\n(Perturbación - Hard - Bloom: Analyze/Evaluate)"]
+        T4["Plantilla 4: Casos Frontera y Confusiones Comunes\n(Edge Cases & Misconceptions - Hard/Expert - Bloom: Evaluate/Create)"]
+    end
+    
+    T1 -->|Comprende el algoritmo estándar| T2
+    T2 -->|Deconstruye la relación causal inversa| T3
+    T3 -->|Evalúa elasticidades y dinámica estructural| T4
+    T4 -->|Domina límites de validez y trampas conceptuales| Mastery["Maestría Cognitiva Genuina (Deep Mastery)"]
+```
+
+1. **Plantilla 1: Aplicación Canónica / Forward (`archetype: "direct"`, Banda ZPD: `easy`, Bloom: *Recall / Understand / Apply*):**
+   - **Qué evalúa:** La ejecución directa del algoritmo estándar o la definición base en condiciones normales.
+   - **Mecánica:** A partir de los parámetros base y supuestos fundamentales conocidos, el estudiante debe calcular o derivar directamente la solución estándar (ej. calcular el estimador MCO dados $X$ e $y$, o hallar el nivel de capital de estado estacionario $k^*$ dados $s, n, g, \delta$).
+
+2. **Plantilla 2: Problema Inverso / Deducción Retrospectiva (`archetype: "inverse"`, Banda ZPD: `medium`, Bloom: *Apply / Analyze*):**
+   - **Qué evalúa:** La capacidad de desarmar la ecuación en sentido inverso, evitando la mecanización unidireccional.
+   - **Mecánica:** Se proporciona el resultado final observado o la meta deseada del sistema (ej. el margen de error máximo uniforme tolerable, el valor crítico fijado, o la tasa de crecimiento objetivo) y se solicita despejar o deducir el valor inicial requerido, el tamaño muestral necesario $n$, o el parámetro exógeno latente.
+
+3. **Plantilla 3: Perturbación y Sensibilidad de Parámetros (`archetype: "perturbation"`, Banda ZPD: `hard`, Bloom: *Analyze / Evaluate*):**
+   - **Qué evalúa:** La comprensión profunda de las relaciones de elasticidad, derivadas analíticas y el comportamiento asintótico del modelo.
+   - **Mecánica:** Se introduce un choque exógeno o una alteración cuantitativa (ej. cuadruplicar el tamaño de muestra $n \to 4n$, duplicar la tasa de depreciación $\delta$, o variar el nivel de significancia $\alpha$), exigiendo determinar analíticamente cómo reacciona el estimador, el error estándar o la velocidad de convergencia sin re-calcular todo desde cero.
+
+4. **Plantilla 4: Casos Frontera, Confusiones Comunes y Edge Cases (`archetype: "boundary_or_edge_case"`, Banda ZPD: `hard / expert`, Bloom: *Evaluate / Create*):**
+   - **Qué evalúa:** El discernimiento de los límites de validez del teorema y la superación de las concepciones erróneas más arraigadas (*misconceptions*).
+   - **Mecánica:** Plantea escenarios donde la fórmula general falla, colapsa o no es aplicable (ej. varianza asintótica infinita, raíces unitarias, matrices no invertibles, proporciones en las fronteras $p=0$ o $p=1$, o violación de supuestos de exogeneidad estricta), así como **las trampas conceptuales y confusiones más frecuentes** documentadas empíricamente en exámenes universitarios. Diagnostica con precisión si el estudiante comprende el trasfondo teórico o simplemente aplica "recetas de cocina".
+
 ---
 
 ## 3. Síntesis Forense y Física de Inferencia en Pipelines Multi-Agente
@@ -236,21 +293,22 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 
 ## 6. Matriz Maestra de Priorización de Ingeniería
 
-> Los milestones **completados y certificados** (1, 2a, 3 y núcleo del 11) viven en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md). Esta matriz lista solo lo abierto.
+> Los milestones **completados y certificados** (1, 2, 2a, 3, 10 y núcleo del 11) viven en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md). Esta matriz lista solo lo abierto o en revisión.
 
 | Hito / Milestone | Área | Impacto Cognitivo y Operativo | Esfuerzo Estimado (con Gemini 3.8) | Estado de Ejecución |
 | :--- | :--- | :--- | :---: | :---: |
-| **Milestone 2: PWA Instalable y Modo Offline** | Frontend / PWA | **Habilita el estudio ubicuo e instalable.** `vite-plugin-pwa`, manifest con iconos, safe areas y precaching de fuentes KaTeX (excluyendo JSONs de 14 MB del precache inicial para delegarlos a IndexedDB + `runtimeCaching`). *(Usabilidad móvil e IndexedDB ya están hechos.)* | **1 a 2 h** (60–90 min código + 30 min test SW) | 🚀 **Quick Win #2 (pendiente)** |
+| **Milestone 2: PWA Instalable y Modo Offline** | Frontend / PWA | **Habilita el estudio ubicuo e instalable.** Service Worker Workbox, precaching App Shell + fuentes KaTeX, Web App Manifest, suite de iconos, navegación nativa popstate y modo offline. | **Completado** | ✅ **Completado (movido a `MILESTONES_COMPLETED.md`)** |
 | **Milestone 4: Desacoplamiento KaTeX-Python (PrairieLearn)** | Backend / Pipeline | **Erradica al 100% las colisiones de sintaxis.** Tokens `@var@`, R-23 zero-copy y `ShardDataLineLocator` activos; solo falta validador AST KaTeX en compilación y contrato Pydantic `ShardCompetenceContract`. | **3 a 4.5 h** (~1 h AST KaTeX + ~2.5 h Pydantic) | 🛠️ **75% Hecho (@var@ y R-23 activos / Pydantic pendiente)** |
-| **Milestone 5: Entradas Simbólicas Libres (Free Recall)** | Full-Stack | **Trascendencia del reconocimiento pasivo.** MathLive + SymPy para respuestas abiertas y validación de pasos intermedios. | 2 a 3 d | 🧠 **Impacto Cognitivo Máximo** |
-| **Milestone 6: Antigravity Study Harness (Split-View & 1/3–1/2 Viewport)** | Arquitectura UI | **Estación de ultra-aprendizaje en Flow.** Vía Pragmática: Viewport 1/3–1/2 + Cortina «Hoja en Blanco» previa + Pestañas (Pizarra / Teoría) + Botón Prompt Socrático con gating estricto (3-strikes). | **1.5 a 2.5 h** (Vía Pragmática) / 3 a 5 d (Full) | 🛠️ **En progreso: pasos 1–2 hechos; falta gating socrático + hoja en blanco; pendiente certificación** |
-| **Milestone 7: Streaming DAG, Pool de Workers y Aceleración de Tests** | Infraestructura | **Quiebra la barrera de 15 min en pipeline y acelera la suite de 1,271 tests de 85s a 24.10s.** DAG asíncrono, pre-warming de sandbox y paralelización `pytest-xdist` (12 cores). | 1 a 2 d (solo resta Streaming DAG) | 🛠️ **Tests `< 30s` (24.10s) logrado / Streaming DAG pendiente** |
+| **Milestone 5: Modalidades Interactivas (Tipo Khan Academy), Entradas Simbólicas y Drag & Drop** | Full-Stack | **Trascendencia del reconocimiento pasivo.** Nuevos tipos interactivos: Reordenamiento secuencial (Drag & Drop / Parsons), Emparejamiento (Matching), Manipuladores gráficos, Clasificación en contenedores y Open Symbolic (MathLive + SymPy). | **2 a 3 d** | 🧠 **Impacto Cognitivo Máximo** |
+| **Milestone 6: Antigravity Study Harness (Split-View & 1/3–1/2 Viewport)** | Arquitectura UI | **Estación de ultra-aprendizaje en Flow.** Pasos 1–2 (Split-View 50%, layout 1/3–1/2, container queries 2 col, drawer sidebar, bottom sheet toast) completados en M1/M2a; falta micro-harness cognitivo (pestañas Pizarra/Teoría y botón prompt socrático). | **1.5 a 2.5 h** (Micro-Harness) | 🛠️ **En progreso: ergonomía y split 100% hechos; falta micro-harness cognitivo** |
+| **Milestone 7: Streaming DAG, Pool de Workers y Aceleración de Tests** | Infraestructura | **Quiebra la barrera de 15 min en pipeline y acelera la suite de 1,271 tests de 85s a 24.10s.** DAG asíncrono, pre-warming de sandbox, paralelización `pytest-xdist` (12 cores) y paridad contractual Stage 2 $\leftrightarrow$ Stage 4. | 1 a 2 d (solo resta Streaming DAG) | 🛠️ **Tests `< 30s` (24.10s) logrado / Streaming DAG y Contratos pendientes** |
 | **Milestone 8: Repetición Espaciada (SRS) y Blind Mode** | Motor de Sesión | **Combate el decaimiento de memoria (Curva de Ebbinghaus).** Decaimiento temporal, refreshers a 1-4-14-45 días y sesiones a ciegas. | 2 a 3 d | 🔁 **Cierre de Ciclo de Pericia** |
 | **Milestone 9: Jerarquía de Contenido (PPT $\to$ Core/Subtemas)** | Curricular / Schema | **Organización natural en torno a la fuente real.** Contenido PPT $\to$ [Glosario + Núcleo] + Subtemas $\to$ Quizzes de subtema + Challenge PPT. | **4 a 6 h** (~3 h en paralelo con Flash Triad) | 🏛️ **Arquitectura Curricular** |
-| **Milestone 10: QA Rubric v2.0 Deep Mastery** | Auditoría QA | **Certificación integral de rigor.** 7 nuevos linters Path-to-Mastery v2.0, `ArchetypeEntropyLinter` (`MIN_ARCHETYPES = 3`), 6 pilares MPRI (`/100`), penalizaciones duras y bloqueo `PublishQualityGateError`. | **Completado** (listo para archivar tras revisión final) | ✅ **100% Implementado en código** |
-| **Milestone 11b: Apertura Instantánea de Cursos Pesados** | Frontend | **Cierra la lentitud percibida al abrir Gavilano / Estadística v2.** Diagnóstico en navegador, quitar el `await` de IndexedDB del camino de apertura, indicador de progreso y política de prefetch; worker solo si se mide bloqueo. | 0.5 a 1 d | ⏳ **Pendiente (servidor + parseo medidos ≈ 0.1 s)** |
+| **Milestone 10: QA Rubric v2.0 Deep Mastery** | Auditoría QA | **Certificación integral de rigor.** 7 nuevos linters Path-to-Mastery v2.0, `ArchetypeEntropyLinter` (`MIN_ARCHETYPES = 3`), 6 pilares MPRI (`/100`), penalizaciones duras y bloqueo `PublishQualityGateError`. | **Completado** | ✅ **100% Completado (movido a `MILESTONES_COMPLETED.md`)** |
+| **Milestone 11b: Apertura Instantánea de Cursos Pesados** | Frontend | **Cierra la lentitud percibida al abrir Gavilano / Estadística v2.** Diagnóstico en navegador, quitar el `await` de IndexedDB del camino de apertura, indicador de progreso y política de prefetch; worker solo si se mide bloqueo. | 0.5 a 1 d | ⏳ **Pendiente de revisión (re-evaluar métricas ahora que opera como PWA)** |
 | **Milestone 1-T: Deuda de Pruebas de Ergonomía** | QA / E2E | **Convierte la certificación manual en regresión automática.** Matriz 125%/150%, tablets y AC-CORE medido por código. | 2 a 4 h | ⏳ **Pendiente** |
-| **Milestone 12: Resiliencia ante Suspensión de la Laptop (Restauración de Sesión)** | Frontend / Servidor | **Preserva el estado de práctica ante sleep del SO y cortes HMR.** Restauración desde `sessionStorage`, banner de reconexión, `/healthz` y modo estudio `npm run study`. | 1 a 2 d | ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** |
+| **Milestone 12: Resiliencia ante Suspensión de la Laptop (Restauración de Sesión)** | Frontend / Servidor | **Preserva el estado de práctica ante sleep del SO y cortes HMR.** La PWA mitigó cortes de red y desconexiones HMR; resta persistencia en `sessionStorage` ante purga de pestañas por el SO. | 1 a 2 d | ⏳ **Pendiente de revisión técnica post-migración a PWA** |
+| **Milestone 13: Consolidación del Repositorio, Higiene y Tests por Dominio** | Arquitectura / DevOps | **Erradicación del bloat y claridad estructural.** Purga de payloads de QA masivos (preservando solo reportes Markdown útiles), eliminación de archivos huérfanos/de un solo uso, y reorganización de 1,270 tests en 4 suites temáticas (Calidad, Pipeline, Engine, Plataforma). | **1.5 a 2.5 d** | 🧹 **Higiene y De-Bloating** |
 | *Opcional A: Pipeline Performance Daemon en RAM / SSD* | Infraestructura | *Acelera subprocesos locales, complementando el pool lazy.* | *3 a 4 h* | ⏳ **Opcional / Secundario** |
 | *Opcional B: Empaquetado Nativo con Capacitor* | Distribución | *Generación de APK para tiendas de aplicaciones.* | *4 a 6 h* | ⏳ **Opcional / Backlog** |
 
@@ -268,15 +326,6 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
   4. Biblioteca: 3 columnas con ≥ 1000 px (incluye 1265) y 2 entre 560 y 999 px.
   5. Casos reales de prosa dentro de `\text{}` (por ejemplo `$P = 169 \text{ porque los compradores no toleran postergar su compra}$`) y una prueba de regresión que impida volver a forzar `white-space: normal` sobre KaTeX.
   6. Chromium con `ignoreDefaultArgs: ['--hide-scrollbars']` y reutilización de `.agents/teamwork/m1_zoomfix_split50/generate_audit_screenshots.mjs` (200 capturas, 50 por curso) como auditoría visual.
-
----
-
-### Milestone 2: PWA Instalable y Modo Offline (Configuración PWA Móvil)
-* **Estado:** ✅ **Completado (2026-11-01).** Movido a `MILESTONES_COMPLETED.md`.
-  - Service Worker Workbox precacheando App Shell + fuentes KaTeX `.woff2` (1.5 MB total).
-  - Cursos excluidos del precache para evitar desborde de 14 MB; manejados con `StaleWhileRevalidate` e IndexedDB.
-  - Manifest standalone, iconos adaptativos (192, 512, maskable) y metatags iOS/Android (`viewport-fit=cover`, `safe-area-inset-bottom`).
-  - Insignia visual `✓ Offline` por curso en `CourseLibrary.tsx` y suite automatizada en `tests/test_pwa_offline.py` (12/12 PASS).
 
 ---
 
@@ -325,22 +374,34 @@ pie title Distribución de Capacidades Cognitivas y de Arquitectura
 
 ---
 
-### Milestone 5: Entradas Simbólicas Libres (Open Symbolic) y Micro-Pasos
-* **Objetivo:** Superar el techo del reconocimiento asistido (100% MC/MS) forzando el efecto de generación y la evocación pura (*Free Recall*).
-* **Componentes Técnicos:**
-  1. **Tipo de Reactivo de Entrada Simbólica Abierta (`open_symbolic`):**
-     - Caja matemática MathLive en cliente evaluada mediante `SymPy`: `simplify(user_expr - correct_expr) == 0`.
-  2. **Validador de Demostraciones por Micro-Pasos Intermedios (*Step-by-Step Proof Grader*):**
-     - Descomponer problemas complejos en 3 micro-decisiones rápidas encadenadas (1. Identificar regla aplicable $\to$ 2. Plantear condición crítica $\to$ 3. Despeje/Límite).
-  3. **Módulo Gráfico Interactivo Visoespacial (SVG / Canvas):**
-     - Arrastre de vectores en campos de pendientes, trazado de isoclinas nulas y selección interactiva de retratos de fase.
-  4. **Andamiaje con Retardo y Escalera de Fricción (*Delayed Scaffolding*):**
-     - Bloqueo inicial temporal de pistas (3–5 min) para forzar el esfuerzo autónomo antes de la consulta.
+### Milestone 5: Modalidades Interactivas Avanzadas (Estilo Khan Academy & PrairieLearn), Entradas Simbólicas Libres (Open Symbolic) y Reordenamiento de Pasos (Drag & Drop Secuencial)
+* **Objetivo:** Superar el techo del reconocimiento asistido (100% MC7/MS/FIB) forzando el efecto de generación, la manipulación activa de objetos de aprendizaje y la evocación pura (*Free Recall*), incorporando las modalidades interactivas dinámicas presentes en plataformas como Khan Academy y PrairieLearn.
+* **Componentes Técnicos y Nuevas Modalidades Interactivas:**
+  1. **Reordenamiento Secuencial de Pasos / Parsons Problems (`sequence_ordering` con Drag-and-Drop):**
+     - Permite al estudiante agarrar y mover bloques u objetos de un lado a otro (mediante arrastre táctil en móviles o ratón en PC) para establecer el orden lógico correcto en la resolución de problemas.
+     - **Casos de Uso Pedagógicos:** Ordenar los pasos deductivos de una demostración analítica, secuenciar las fases del test de Breusch-Pagan / White, organizar la jerarquía de un algoritmo de optimización numérica (Lagrangiano $\to$ CPO $\to$ Matriz Hessiana Orlada), o estructurar el procedimiento de derivación de un estimador asintótico.
+     - **Motor de Calificación:** Verificación determinista que admite tanto cadenas estrictamente lineales como grafos de precedencia dirigida (DAGs de pasos donde dos operaciones intermedias conmutan válidamente).
+  2. **Emparejamiento Interactivo Término-Propiedad (`concept_matching`):**
+     - Mecánica de unión interactiva o arrastre de pares entre dos columnas: relacionar Supuestos econométricos $\leftrightarrow$ Consecuencia de su violación, Gráficos de dispersión $\leftrightarrow$ Tipo de perturbación o heterocedasticidad, o Modelos $\leftrightarrow$ Condiciones de estabilidad dinámica.
+  3. **Manipuladores Gráficos y Visuales Dinámicos (`graph_manipulator`):**
+     - Interacción directa sobre gráficos vectoriales SVG / Canvas: arrastre de puntos de equilibrio, rotación de isoclinas, desplazamiento de asíntotas y sliders de parámetros continuos (ej. mover interactivamente la curva $sf(k)$ o la recta $(n+g+\delta)k$ en el Modelo de Solow para calibrar la transición hacia el nuevo estado estacionario, o desplazar el valor crítico $z_{\alpha/2}$ en una distribución para observar el cambio en la potencia de la prueba).
+  4. **Clasificación en Contenedores / Sorting Buckets (`sorting_buckets`):**
+     - Arrastrar tarjetas o expresiones hacia contenedores o categorías disjuntas (ej. clasificar variables en Exógenas vs Endógenas vs Instrumentos válidos; o clasificar modos de convergencia en Probabilidad vs Casi Segura vs Media Cuadrática vs Distribución).
+  5. **Tipo de Reactivo de Entrada Simbólica Abierta (`open_symbolic`):**
+     - Caja matemática MathLive en cliente evaluada en backend/subproceso mediante `SymPy`: `simplify(user_expr - correct_expr) == 0`, exigiendo la generación libre de fórmulas frente a una "hoja en blanco" sin pistas visuales.
+  6. **Validador de Demostraciones por Micro-Pasos Intermedios (*Step-by-Step Proof Grader*):**
+     - Descomponer derivaciones complejas en 3 micro-decisiones rápidas encadenadas (1. Identificar regla aplicable $\to$ 2. Plantear condición crítica $\to$ 3. Despeje/Límite).
+  7. **Andamiaje con Retardo y Escalera de Fricción (*Delayed Scaffolding*):**
+     - Bloqueo inicial temporal de pistas (3–5 min) para forzar el esfuerzo cognitivo autónomo antes de habilitar la ayuda.
+  8. **Arquitectura e Integración en el Stack:**
+     - **Frontend (`platform/src/components/`):** Creación de subcomponentes interactivos modulares (`interactions/SequenceOrderingCard.tsx`, `interactions/ConceptMatchingCard.tsx`, `interactions/SortingBucketsCard.tsx`) utilizando `PointerEvents` y la `HTML5 Drag and Drop API` nativa (cero sobrecarga de dependencias pesadas, responsive con soporte táctil garantizado).
+     - **Contrato Canónico (`schemas/course.schema.json` y `platform/src/types.ts`):** Ampliación del enum `interaction_type` para incluir `sequence_ordering`, `concept_matching`, `graph_manipulator`, `sorting_buckets` y `open_symbolic`.
+     - **Pipeline C2C:** Incorporación de generadores paramétricos de estas modalidades en `compile_shard.py` y `engine/assemble.py`, asegurando que el linteo psicométrico y la verificación de invariantes cubran cada nueva modalidad sin relajar el rigor.
 
 ---
 
 ### Milestone 6: "Antigravity Study Harness" (Multi-Panel Split-View & Viewport 1/3–1/2 Adaptativo)
-* **Estado:** 🛠️ **En progreso, sin certificación oficial del usuario.** La Vía Pragmática lleva los pasos 1–2 (ergonomía y Split-View) entregados; el paso 3 (pestañas, botón socrático) no se ha iniciado y hay requisitos nuevos bloqueantes (§6.6).
+* **Estado:** 🛠️ **En progreso (Fase 1 de layout adaptativo y Split-View 100% completada y certificada en M1/M2a; Fase 2 de Micro-Harness cognitivo pendiente).**
 * **Objetivo:** Transformar la plataforma en una estación de trabajo de ultra-aprendizaje en flow, conectando preguntas interactivas con el material de origen y tutoría socrática por IA, optimizada para la realidad operativa de un único mantenedor con recursos y suscripciones estándar (Plan Pro).
 
 ```mermaid
@@ -374,8 +435,8 @@ sequenceDiagram
 #### 6.1. Diagnóstico Estratégico y Contraste de Hipótesis: Solo Maintainer vs. Harness Monolítico
 En el diseño original del Milestone 6 se concibió un harness monolítico "todo-en-uno" con visor interno de PDFs (`react-pdf`), servidor estático de archivos fuente, metadatos `source_anchor` inyectados en el pipeline C2C y un sidecar de chat con Google Gemini embebido dentro del cliente React.
 
-**Contraste de Realidad Operativa (Hipótesis Huertas):**
-Un equipo corporativo dispone de desarrolladores 24/7 y presupuestos de tokens dedicados. En Tops Academy, el proyecto es liderado por un único mantenedor (Augusto Huertas) con acceso a un plan Pro de IA personal. Desarrollar un visor de PDF integrado y un proxy de chat LLM con consumo de API dedicada introduce una triple penalización:
+**Contraste de Realidad Operativa (Hipótesis Huerta):**
+Un equipo corporativo dispone de desarrolladores 24/7 y presupuestos de tokens dedicados. En Tops Academy, el proyecto es liderado por un único mantenedor (Augusto Huerta) con acceso a un plan Pro de IA personal. Desarrollar un visor de PDF integrado y un proxy de chat LLM con consumo de API dedicada introduce una triple penalización:
 1. **Sobrecosto financiero innecesario:** Pagar tokens de API por cada consulta cuando ya se dispone de una suscripción Pro activa en el navegador.
 2. **Deuda técnica y consumo de RAM:** Incrustar visores de PDF pesados en React (`pdf.js` workers, problemas de CORS, Canvas scaling) cuando los visores nativos del sistema operativo y del navegador ya renderizan documentos a 60 FPS con búsqueda `Ctrl+F` instantánea.
 3. **Mantenimiento sobredimensionado:** Mantener endpoints y estado multi-panel reactivo complejo en un solo dispositivo.
@@ -387,19 +448,16 @@ Permitir que la plataforma se comprima limpiamente a **1/3 (~450px–640px)** o 
 
 ---
 
-#### 6.2. Auditoría Forense de Puntos de Fricción en la Codebase Actual (Pantallas Estrechas)
-La codebase actual en `platform/src/` asume un viewport de pantalla completa de escritorio. Si la ventana se redimensiona a 1/3 o 1/2 de pantalla, emergen 5 puntos de rotura estructurales:
+#### 6.2. Auditoría Forense de Puntos de Fricción en Pantallas Estrechas
 
-1. **Sidebar Incolapsable con Ancho Rígido ([`Sidebar.tsx:L27`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/Sidebar.tsx#L27)):**
-   - Posee `w-64 flex-shrink-0` (256px fijos). En una ventana de 500px (1/3 de pantalla en laptop), el menú lateral consume más del 50% del ancho útil, aplastando [`CourseOverview.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseOverview.tsx).
-2. **Colisión en Barra Inferior de Práctica ([`PracticeSession.tsx:L385`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/PracticeSession.tsx#L385)):**
-   - El footer fijo combina en una sola fila `px-8`, el contador de reactivos, los puntos de progreso individuales (`gap-2`) y los botones de acción (`Skip`, `Quick Redo`, `Check ↵ Enter`). En anchos reducidos, los puntos chocan y desplazan el botón `Check` fuera del viewport.
-3. **Desbordamiento Asimétrico del Toast de Feedback ([`FeedbackToast.tsx:L170`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/FeedbackToast.tsx#L170)):**
-   - Posee ancho fijo `w-96` (384px) y anclaje absoluto `right-8 bottom-24`. En ventanas menores a 550px, se corta por la derecha o tapa la totalidad de las opciones de respuesta impidiendo reintentar.
-4. **Desborde Horizontal de Ecuaciones KaTeX en Opciones ([`QuestionCard.tsx:L131`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/QuestionCard.tsx#L131) y [`MathText.tsx:L73`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/MathText.tsx#L73)):**
-   - Las expresiones matemáticas inline carecen de `overflow-x-auto` contenedor. Ecuaciones largas (matrices, integrales con límites) en las opciones MC7 desbordan el ancho del botón en columnas de 400px.
-5. **Dimensionamiento Estático de Gráficos SVG ([`CoordinatePlane.tsx:L10`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CoordinatePlane.tsx#L10) y [`L167`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CoordinatePlane.tsx#L167)):**
-   - El plano cartesiano SVG tiene `width: 360` rígido en píxeles en lugar de un escalado vectorial fluido `w-full max-w-[360px] h-auto`.
+> [!NOTE]
+> **Estado de Verificación y Cierre en Producción:** Los 5 puntos de rotura estructurales identificados originalmente en esta auditoría previa fueron **100% resueltos y certificados** en los Milestones 1 y 2a (ver [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md)).
+> - **1. Sidebar Incolapsable:** Resuelto con Sidebar Drawer Off-Canvas (`< 1024px`) y botón toggle flotante.
+> - **2. Footer de Práctica:** Resuelto con footer en flujo, compactación de dots a `n of N` y botones alineados.
+> - **3. Toast de Feedback:** Resuelto como Bottom Sheet elástico (`max-h-[45dvh]`) anclado a `bottom: 4.5rem`.
+> - **4. KaTeX en Opciones:** Resuelto con extracción de prosa y flow inline sin scrollbars parásitas.
+> - **5. Gráficos SVG:** Resuelto con escalado vectorial fluido y contención `max-h-[30dvh]`.
+> La adaptabilidad del layout a 1/3 y 1/2 de pantalla es hoy un hecho certificado en producción.
 
 ---
 
@@ -408,10 +466,8 @@ La codebase actual en `platform/src/` asume un viewport de pantalla completa de 
 El nuevo diseño del Milestone 6 se estructura en dos modalidades complementarias:
 
 ##### Modalidad A: La Vía Pragmática Inmediata (1/3 y 1/2 de Pantalla + Micro-Tabs)
-1. **Layout Adaptativo Multi-Viewport:**
-   - **En Viewport 1/3 (< 640px):** `Sidebar.tsx` se transforma en Drawer desplegable con botón hamburguesa; el footer de `PracticeSession.tsx` compacta los puntos de progreso a una barra resumida (`X de Y`); `FeedbackToast.tsx` opera como Bottom Sheet acoplado abajo con altura elástica y botón de minimizar.
-   - **En Viewport 1/2 (640px – 1024px):** Las 7 opciones adoptan el Grid Inteligente de 2 columnas (Milestone 1) para erradicar el scroll vertical excesivo.
-2. **Micro-Harness de Pestañas en Sesión de Práctica:**
+1. **Layout Adaptativo Multi-Viewport:** ✅ **100% Implementado y Certificado** (entregado en Milestones 1 y 2a).
+2. **Micro-Harness de Pestañas en Sesión de Práctica (Pendiente):**
    - **Tab 1: Pizarra / Hoja en Blanco (Scratchpad en Vacío):** Vista inicial que permite anotar datos, variables o bosquejos algebraicos con previsualización KaTeX inmediata, forzando la **evocación libre pura** (*Free Recall*) sin estímulos teóricos visibles.
    - **Tab 2: Teoría y Fórmulas de la Competencia (Bajo Demanda):** Permanece oculta hasta que el alumno la solicita. Despliega la ficha de la competencia activa (`competency.name`, `competency.description`, fórmulas canónicas y prerrequisitos del curso), información que **ya está presente en los archivos JSON existentes** (`courses/*.json`), sin necesidad de migrar contratos.
    - **Tab 3: Problema / Reactivo Activo:** Interfaz de resolución normal con enunciado, opciones, entrada simbólica y verificación.
@@ -574,7 +630,7 @@ stateDiagram-v2
      - Máximo 1 competencia `Skill` (`Hab-*`) por shard o 2–3 de `Concept`/`Fact`.
   5. **Pre-Filtro Heurístico para Blind Judge en `judge.py`:**
      - Filtro psicométrico determinista previo para reservar llamadas LLM a una muestra estratificada.
-  6. **Aceleración Integral de la Suite de Pruebas (De 85.58 s a < 30 s):**
+  6. ✅ **Aceleración Integral de la Suite de Pruebas (De 85.58 s a < 30 s) [COMPLETADA]:**
      - **Diagnóstico Forense de la Suite Global (1,037 pruebas):**
        * Tras resolver el sobreescape R-23 ($O(N^2)$ en `scan_lexical`), la suite completa de 54 archivos pasó de colgar (>6 min) a **85.58 s (~1 min 25 s)**.
        * Aunque ya opera bajo el límite de 1.5 minutos (90 s), el margen es estrecho (4.4 s) y se identifican 3 cuellos de botella remanentes:
@@ -605,6 +661,10 @@ stateDiagram-v2
          - **Solo Vía A (con `sympy`/`scipy` instalados):** `44.08 s` (1,263 passed, 1 skipped).
          - **Vía A (`--dist worksteal`) + Vía B completa:** **`24.10 s` (1,271 passed, 1 skipped, 0 fallos)** — reducción total del **71.8%** y cumplimiento estricto de la meta `< 30 s`.
          - `FUTURE_MILESTONES.md` y su espejo `docs/future_milestones/FUTURE_MILESTONES.md` se mantienen sincronizados byte a byte.
+  7. 🚨 **[CRÍTICO] Sincronización Estricta de Contratos Stage 2 $\longleftrightarrow$ Stage 4 y Ola Única de Reparación (Shift-Left Wall Time):**
+     - **Paridad Contractual Stage 2 y Stage 4:** Garantizar que el 100% de las validaciones, cuotas por arquetipo, invariantes analíticos y reglas psicométricas evaluadas en Stage 4 (`build` / `templates`) estén estricta y bidireccionalmente sincronizadas con las especificaciones generadas en Stage 2 (`run.py --stage shard` $\to$ `pre_shard_manifest.json`). Se erradica el anti-patrón de esperar a que un shard falle en Stage 4 para que recién el autor sepa qué hizo mal.
+     - **Compuertas de Stage 4 Concurrentes con Jueces y Ola Única de Reparación:** En lugar de múltiples olas reactivas tardías o inventar escáneres adicionales, ejecutar directamente las compuertas y escáneres de Stage 4 (`[DIAG-MAGIC-MULT]`, sweeps y linters) al mismo tiempo que los Plan Judges. Consolidar los hallazgos en una única orden de trabajo holística atendida por una sola ola de subagentes `c2c_repair`, ejecutando re-arbitraje selectivo solo en el juez específico afectado.
+     - **Re-intento Obligatorio de Publicación por el Orquestador:** No se asume jamás el éxito ciego ni se salta la compuerta solo porque un subagente declare haber corregido el archivo. El orquestador C2C debe SIEMPRE volver a ejecutar formalmente la etapa de publicación (`run.py --stage publish`) y analizar deterministamente el resultado para verificar si el curso puede publicarse o si aún requiere ajustes adicionales (detallado en [`reporte_problemas_reparacion_c2c.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/c2c_audits/reporte_problemas_reparacion_c2c.md)).
 
 ---
 
@@ -668,18 +728,8 @@ stateDiagram-v2
 
 ---
 
-### Milestone 10: Rúbrica QA v2.0 (Certificación Deep Mastery & Path-to-Mastery)
-* **Estado:** ✅ **95% Completado y Activo en Producción (Commits `be43b08`, `24c44f8`, `0e2fd38`, `b07cec8`)**.
-* **Componentes Técnicos Implementados (`standardized_audit_engine.py`, `qa_rubric.md` y `course_publisher.py`):**
-  1. ✅ **Suite de 7 Linters Path-to-Mastery v2.0:** `ZPDProgressionCalibrationLinter` (3 bandas + Bloom `Apply+`), `RetrievalModalityDiversityLinter` (cuota `FIB + MS` vs. monocultivo `MC7`), `SocraticScaffoldingIntegrityLinter` (detección de pistas envenenadas, boilerplate Mad-Libs y fugas de respuesta), `DiagnosticRationaleAlignmentLinter` (bloqueo de multiplicadores mágicos `1.333x` y reciclaje de rationales), `AntiGamingPsychometricLinter` (memorización visual $\le 4$ claves, relleno `[R-15]`, prefijos cruzados Solow/EDP y cuantificadores universales vacuos), `DAGMasteryTopologyLinter` (ciclos, inversiones topológicas y subgrafos desconectados) y `KaTeXFrontendErgonomicsLinter` (`\text{prosa} \ge 45` chars e identificadores crudos `$theta_hat$`).
-  2. ✅ **Índice MPRI (`Mastery Path Readiness Index`, 0 a 100 pts en 6 pilares) y Exigencia Multimodal ($\ge 25\%$):** El Pilar 2 exige $\ge 25\%$ de generación activa/discriminación (`FIB + MS`) para otorgar el puntaje completo de modalidad (restando hasta 10 pts MPRI y -1.0 a -1.3 pts en D2 ante monocultivo 100% MC7).
-  3. ✅ **Nuevas Penalizaciones Duras (`hard_penalties`):** `socratic_hint_poisoning` (-1.5 pts), `vacuous_quantifier_key_corruption` (-1.0 pt) y `answer_memorization_exploit` (-0.5 pt/comp, máx -2.0 pts), sumadas a `bank_lt_3_exercises`, `hints_zero` y `orphan_questions`.
-  4. ✅ **Compuerta Bloqueante Pre-Publish (`PublishQualityGateError` en `course_publisher.py`):** Impide publicar cualquier curso si `MPRI < 75.0`, `zpd_score <= 0.0`, `diag_pillar_score < 13.0`, `rationale_uniqueness_pct < 30.0%`, `len(hard_penalties) > 0`, cualquier issue `critical`, o `len(length_padded_options) > 0`, generando automáticamente `specific_error_report.{md,json}` con mapeo AST de líneas exactas.
-
----
-
 ### Milestone 11b: Apertura Instantánea de Cursos Pesados (Diagnóstico en Navegador y Ajustes de Carga)
-* **Estado:** ⏳ **Pendiente.** Nace del Milestone 11 (núcleo cerrado en `MILESTONES_COMPLETED.md`). El usuario percibe que abrir un curso pesado «se demora una buena parte del tiempo»; el servidor y el parseo miden ≈ 0.1 s en total (§2.2), así que el cuello de botella está en otro lado y **primero hay que medirlo**.
+* **Estado:** ⏳ **Pendiente de revisión (post-migración a PWA).** Nace del Milestone 11 (núcleo cerrado en `MILESTONES_COMPLETED.md`). Al haberse completado la migración de la plataforma a PWA (Milestone 2), con Service Worker, IndexedDB (`tops_academy_cache`), `StaleWhileRevalidate` y carga desacoplada, se debe re-evaluar en primer lugar la velocidad de apertura percibida de cursos pesados (ej. Gavilano de 14 MB o Estadística v2) en entornos reales antes de aplicar optimizaciones complejas.
 * **Entregables, por orden de costo/beneficio:**
   1. **Instrumentación:** `performance.mark` en el clic, fin de descarga, fin de parseo y primer pintado de la vista del curso; resultados legibles desde la consola de la laptop de 14".
   2. **Quitar el `await saveToIndexedDB(...)` del camino de apertura** en `courseLoader.ts` (escribir en segundo plano) y hacer que el prefetch escriba en IndexedDB solo en tiempo ocioso.
@@ -698,7 +748,11 @@ stateDiagram-v2
 ---
 
 ### Milestone 12: Resiliencia ante Suspensión de la Laptop (Restauración de Sesión)
-* **Estado:** ⏳ **Pendiente (diferido por decisión del usuario 2026-10-26)** (especificado como Frente C del plan de remediación; postergado para preservar la estabilidad de la sesión actual de estudio).
+* **Estado:** ⏳ **Pendiente de revisión técnica (post-migración a PWA).**
+
+> [!NOTE]
+> **Evaluación tras migración a PWA:** El traslado exitoso a PWA (Milestone 2) resolvió la desconexión del servidor y las recargas destructivas por reconexión HMR de Vite (`location.reload()`), ya que la PWA en modo standalone corre sobre Service Worker e IndexedDB sin depender de sockets de desarrollo. Sin embargo, **se mantiene pendiente de desarrollo y revisión** la persistencia reactiva en caliente en `sessionStorage` (`sessionStore.ts`) para restaurar la pregunta y respuestas en curso si el sistema operativo purga la pestaña/proceso de la app en segundo plano mientras la laptop está suspendida (AC-28).
+
 * **Diagnóstico Medido (Causa Raíz de Desconexión y Pérdida de Estado):**
   - **Comportamiento HMR de Vite ante Suspensión:** No existe código custom en Tops Academy que reinicie el servidor Node. Al suspender la laptop en modo `npm run dev`, la conexión WebSocket de HMR de Vite se interrumpe. Al despertar el sistema, el cliente Vite detecta la reconexión y fuerza un `location.reload()` completo de la ventana del navegador.
   - **Fragilidad del Estado en Memoria:** El estado de la práctica (curso activo, unidad, tipo de sesión, preguntas barajadas, índice actual, respuestas marcadas e historial de aciertos) reside únicamente en la memoria volátil de React. Solo los niveles de maestría se persisten en `localStorage` (`masteryStorage.ts`). En consecuencia, la recarga forzada tras suspensión devuelve al usuario a la biblioteca perdiendo el progreso del quiz.
@@ -724,6 +778,57 @@ stateDiagram-v2
   - **AC-29:** Tras un reload, la biblioteca y el curso activo se restauran sin volver a descargar archivos de curso con el mismo `ETag` (0 descargas de curso; únicamente el manifest).
   - **AC-30:** Si el servidor se detiene unos segundos y reanuda, el frontend reintenta con backoff, muestra banner "Reconectando…" y se recupera sin recargar manualmente ni perder la sesión.
   - **AC-31:** Endpoint `/healthz` responde con uptime y versión; excepciones no controladas en peticiones no tumban el servidor; script `npm run study` opera sin HMR.
+
+---
+
+### Milestone 13: Consolidación del Repositorio, Higiene de Artefactos y Reestructuración de Tests por Esquema
+* **Estado:** ⏳ **Pendiente / Prioritario para De-Bloating y Mantenibilidad.**
+* **Objetivo:** Erradicar la proliferación descontrolada de archivos efímeros (*bloat*), limpiar artefactos huérfanos o de un solo uso que saturan la vista del repositorio, establecer una política de retención estricta en las auditorías de QA (preservando únicamente el reporte Markdown de alto valor), y consolidar la suite de más de 1,270 tests dispersos en una arquitectura limpia, estructurada por dominios y gobernada por esquemas de contrato.
+
+```mermaid
+flowchart TD
+    subgraph RepoBloat ["Problema: Explosión de Archivos y Dispersión (Repo Bloat)"]
+        B1["10 archivos por corrida de QA\n(Payloads JSON de 100k líneas que nadie lee)"]
+        B2["Archivos dispersos y de un solo uso\n(Scripts de fix, notas temporales, volcados huérfanos)"]
+        B3["1,270 tests dispersos en >50 archivos ad-hoc\n(Tests forenses reactivos y duplicación de aserciones)"]
+    end
+
+    subgraph RepoConsolidation ["Solución: Consolidación y Gobernanza Estructural"]
+        C1["Política Clean Artifacts\nSolo se preserva *_qa_report.md + audit_registry.json"]
+        C2["Purga Sistemática & Higiene de Workspace\nEliminación de archivos de 1 solo uso; .gitignore defensivo"]
+        C3["Arquitectura de Tests por 4 Dominios de Esquema\nQuality (Calidad) | Pipeline (Reglas) | Engine (Motor) | Platform (Web/PWA)"]
+    end
+
+    RepoBloat ==>|Consolidación Integral| RepoConsolidation
+```
+
+* **Frentes de Consolidación y Acciones Clave:**
+  1. **Política de Higiene y Poda de Artefactos de QA (`reports/qa_audits/` y `reports/c2c_audits/`):**
+     - **Diagnóstico del Bloat:** Cada auditoría QA genera hasta 10 archivos derivados por curso (payloads JSON gigantes de más de 100,000 líneas y decenas de MB como `*_payload.json`, copias intermedias de evaluación v1 vs v2, snapshots transitorios). En la realidad operativa, **el único artefacto que el usuario y el equipo leen y analizan es el reporte en Markdown** (`*_qa_report.md` o el reporte consolidado). Los archivos JSON crudos saturan el explorador, ralentizan operaciones de git y distorsionan búsquedas de texto.
+     - **Regla Inviolable de Generación:** Los pipelines de auditoría (`course-qa-evaluator`, `c2c-unified-auditor`) deben generar y versionar exclusivamente el archivo `.md` legible y registrar métricas cuantitativas clave en el registro unificado `reports/c2c_audits/audit_registry.json`.
+     - **Tratamiento de Payloads Masivos:** Los archivos `*_payload.json` se tratarán como artefactos efímeros de compilación: se confinarán a directorios temporales de trabajo (`work/tmp_qa/`) o se excluirán de git mediante `.gitignore`.
+     - **Purga de Bloat Histórico:** Purgar los volcados y payloads JSON acumulados que ya fueron auditados y no tienen función activa en el servidor ni en el runtime.
+  2. **Erradicación de Archivos Huérfanos y de Un Solo Uso (*Single-Use / Scatter Files*):**
+     - Identificar y limpiar scripts efímeros de corrección puntual, volcados de diagnóstico exploratorio y notas provisionales regadas en la raíz o en carpetas de scripts.
+     - Si un script de utilidad retiene valor operativo recurrente, se reubica ordenadamente en `tools/` con documentación concisa de uso; de lo contrario, se elimina para desaturar el árbol de trabajo.
+     - Reforzar `.gitignore` para bloquear la creación inadvertida de volcados locales fuera de las carpetas canónicas de artefactos.
+  3. **Reestructuración y Consolidación de la Suite de Pruebas por Dominios y Esquemas:**
+     - **Diagnóstico de Dispersión:** Actualmente el repositorio alberga más de 1,270 pruebas repartidas en más de 50 archivos en `tests/` (`test_c2c_v321_comp1_cta.py`, `test_c2c_v321_comp2_shard.py`, `test_shard06_and_dry_archetypes.py`, `test_forensic_replay_...`, etc.). Muchos surgieron de forma reactiva para depurar un incidente puntual en versiones antiguas de C2C, generando superposición de aserciones y dificultad para discernir qué prueba qué.
+     - **Consolidación en 4 Dominios de Esquema Claros:**
+       - **Dominio 1: Calidad Pedagógica y Psicométrica del Curso (`tests/quality/`):**
+         * Valida el cumplimiento del esquema canónico (`schemas/course.schema.json`).
+         * Valida los linters de excelencia académica: distribución de Bloom ($\ge 2$ niveles, presencia obligatoria `Apply+`), ZPD tri-banda, cuota multimodal ($\ge 25\%$ FIB/MS), higiene de distractores (`error_rationale`), erradicación de multiplicadores sintéticos `[DIAG-MAGIC-MULT]`, y diversidad léxica de stems (`[STEM-DIVERSITY-GATE]`).
+       - **Dominio 2: Eficiencia, Orquestación y Reglas del Pipeline C2C (`tests/pipeline/`):**
+         * Valida compuertas de compilación (`compile_shard.py`, `compile_cta.py`), watchdogs de presupuesto (`budget_guard.py`) y hooks de aislamiento (`c2c_hook_guard.py`).
+         * Valida la paridad contractual estricta entre Stage 2 (`pre_shard_manifest.json`) y Stage 4 (`build` / sweeps engine), evitando desincronizaciones reactivas.
+         * Valida reglas de deduplicación de hashes y tiempos de ejecución del orquestador.
+       - **Dominio 3: Integridad de Motor y Evaluación Determinista (`tests/engine/`):**
+         * Valida el sandbox de ejecución segura (`engine/sandbox.py`) y la evaluación matemática en CAS con SymPy.
+         * Valida la sintaxis PrairieLearn `@var@`, reglas de sanitización KaTeX (R-23 zero-copy) y evaluación determinista de invariantes analíticos.
+       - **Dominio 4: Plataforma Web, PWA y API REST (`tests/platform/`):**
+         * Valida el endpoint del manifest slim (`/api/courses.json`), el índice con caché `mtime + size`, compresión gzip y respuestas HTTP 304.
+         * Valida la PWA offline, Service Worker, caché en IndexedDB (`tops_academy_cache`), navegación nativa con popstate (`navigationHistory.ts`) y ergonomía de layouts.
+     - **Poda de Pruebas Redundantes:** Fusionar tests forenses históricos superados en suites parametrizadas limpias, garantizando que cada prueba tenga un propósito de validación de contrato claro y evitando inflar el conteo de tests con casos duplicados.
 
 ---
 
