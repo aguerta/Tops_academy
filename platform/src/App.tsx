@@ -24,14 +24,14 @@ import { PracticeSession } from './components/PracticeSession';
 import { CompletionScreen } from './components/CompletionScreen';
 import { CourseChallenge } from './components/CourseChallenge';
 import { CourseLibrary } from './components/CourseLibrary';
-
-type ViewMode =
-  | 'library'
-  | 'overview'
-  | 'pre_exercise'
-  | 'practice'
-  | 'completed'
-  | 'challenge';
+import {
+  AppViewMode as ViewMode,
+  NavigationState,
+  pushNavState,
+  replaceNavState,
+  setupNavigationHistory,
+  registerBackInterceptor,
+} from './utils/navigationHistory';
 
 // Instant manifest detection for 0ms initial render
 const getInitialManifest = (): CourseSummary[] | null => {
@@ -62,6 +62,10 @@ export const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('library');
   const [selectedUnitIndex, setSelectedUnitIndex] = useState<number | null>(null);
 
+  // Mobile Back Navigation & Safety states
+  const [showExitToast, setShowExitToast] = useState(false);
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+
   // Active session parameters
   const [sessionCompetency, setSessionCompetency] = useState<Competency | null>(null);
   const [sessionType, setSessionType] = useState<'practice' | 'quiz' | 'test' | 'challenge'>('practice');
@@ -69,6 +73,70 @@ export const App: React.FC = () => {
   const [sessionScore, setSessionScore] = useState(0);
   const [sessionTotal, setSessionTotal] = useState(0);
   const [sessionKey, setSessionKey] = useState(0);
+
+  // Navigation helper synchronized with History API
+  const navigateView = (
+    newMode: ViewMode,
+    options?: { replace?: boolean; competencyId?: string; courseId?: string }
+  ) => {
+    setViewMode(newMode);
+    const navState: NavigationState = {
+      viewMode: newMode,
+      courseId: options?.courseId || activeCourse?.course_id,
+      competencyId: options?.competencyId || sessionCompetency?.id,
+    };
+    if (options?.replace) {
+      replaceNavState(navState);
+    } else {
+      pushNavState(navState);
+    }
+  };
+
+  // Setup browser popstate listener for native mobile back gesture
+  useEffect(() => {
+    const unregister = setupNavigationHistory({
+      getCurrentState: () => ({
+        viewMode,
+        courseId: activeCourse?.course_id,
+        competencyId: sessionCompetency?.id,
+      }),
+      onNavigate: (target) => {
+        if (target.viewMode === 'library') {
+          setActiveCourse(null);
+          setViewMode('library');
+        } else {
+          setViewMode(target.viewMode);
+        }
+      },
+      onDoubleBackToast: () => {
+        setShowExitToast(true);
+        setTimeout(() => setShowExitToast(false), 2000);
+      },
+    });
+    return unregister;
+  }, [viewMode, activeCourse, sessionCompetency]);
+
+  // Intercept back gesture during active practice/challenge sessions
+  useEffect(() => {
+    if (viewMode !== 'practice' && viewMode !== 'challenge') {
+      setShowQuitConfirm(false);
+      return;
+    }
+
+    const unregister = registerBackInterceptor(() => {
+      if (showQuitConfirm) {
+        // Second back gesture: dismiss confirm modal and remain in session
+        setShowQuitConfirm(false);
+        return true;
+      } else {
+        // First back gesture: open confirm modal
+        setShowQuitConfirm(true);
+        return true;
+      }
+    });
+
+    return unregister;
+  }, [viewMode, showQuitConfirm]);
 
   // Load cached course IDs on mount and subscribe to updates
   useEffect(() => {
@@ -114,7 +182,7 @@ export const App: React.FC = () => {
         const m = loadCourseMastery(normalizedCourse);
         setMastery(m);
         setSelectedUnitIndex(0);
-        setViewMode('overview');
+        navigateView('overview', { courseId: normalizedCourse.course_id });
       }
     } catch (err) {
       console.error(`Failed to load course ${summary.id}:`, err);
@@ -178,9 +246,9 @@ export const App: React.FC = () => {
     setSessionKey((prev) => prev + 1);
 
     if (directToPractice) {
-      setViewMode('practice');
+      navigateView('practice', { competencyId: targetComp?.id });
     } else {
-      setViewMode('pre_exercise');
+      navigateView('pre_exercise', { competencyId: targetComp?.id });
     }
   };
 
@@ -191,7 +259,7 @@ export const App: React.FC = () => {
 
   // Start Practice from Pre-Exercise Modal
   const handleBeginPracticeSession = () => {
-    setViewMode('practice');
+    navigateView('practice');
   };
 
   // Launch Unit Quiz
@@ -206,7 +274,7 @@ export const App: React.FC = () => {
 
   // Open Course Challenge screen
   const handleOpenCourseChallenge = () => {
-    setViewMode('challenge');
+    navigateView('challenge');
   };
 
   // Start Course Challenge Session
@@ -235,7 +303,7 @@ export const App: React.FC = () => {
       }
     }
 
-    setViewMode('completed');
+    navigateView('completed');
   };
 
   // Handle "Try again" from Completion - preserves sessionType and performs fresh reshuffle directly
@@ -252,7 +320,7 @@ export const App: React.FC = () => {
   // Handle "Up next" from Completion
   const handleUpNext = () => {
     if (!activeCourse || !sessionCompetency) {
-      setViewMode('overview');
+      navigateView('overview');
       return;
     }
 
@@ -263,7 +331,7 @@ export const App: React.FC = () => {
       const nextComp = activeCourse.competencies[currentIdx + 1];
       handleStartPractice(nextComp);
     } else {
-      setViewMode('overview');
+      navigateView('overview');
     }
   };
 
@@ -294,7 +362,7 @@ export const App: React.FC = () => {
             onSelectCourseChallenge={handleOpenCourseChallenge}
             onBackToLibrary={() => {
               setActiveCourse(null);
-              setViewMode('library');
+              navigateView('library');
             }}
           />
           <main className="flex-1 min-w-0 overflow-y-auto pt-14 lg:pt-0">
@@ -315,7 +383,7 @@ export const App: React.FC = () => {
           competency={sessionCompetency}
           questionCount={sessionQuestions.length}
           onStart={handleBeginPracticeSession}
-          onBack={() => setViewMode('overview')}
+          onBack={() => navigateView('overview')}
         />
       )}
 
@@ -334,7 +402,7 @@ export const App: React.FC = () => {
           questions={sessionQuestions}
           onRestart={() => launchSession(sessionType, sessionCompetency, true)}
           onComplete={handleCompleteSession}
-          onQuit={() => setViewMode('overview')}
+          onQuit={() => setShowQuitConfirm(true)}
         />
       )}
 
@@ -359,12 +427,12 @@ export const App: React.FC = () => {
             isCourseChallengeActive={true}
             onSelectUnit={(idx) => {
               setSelectedUnitIndex(idx);
-              setViewMode('overview');
+              navigateView('overview');
             }}
             onSelectCourseChallenge={() => {}}
             onBackToLibrary={() => {
               setActiveCourse(null);
-              setViewMode('library');
+              navigateView('library');
             }}
           />
           <main className="flex-1 min-w-0 overflow-y-auto pt-14 lg:pt-0">
@@ -372,9 +440,66 @@ export const App: React.FC = () => {
               course={activeCourse}
               totalQuestions={Math.min(30, activeCourse.questions.length)}
               onStart={handleBeginCourseChallenge}
-              onBack={() => setViewMode('overview')}
+              onBack={() => setShowQuitConfirm(true)}
             />
           </main>
+        </div>
+      )}
+
+      {/* Toast: Presiona atrás de nuevo para salir */}
+      {showExitToast && (
+        <div
+          data-testid="double-back-toast"
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-full shadow-2xl backdrop-blur-md transition-all duration-300 flex items-center gap-2 pointer-events-none"
+        >
+          <span aria-hidden="true">↩️</span>
+          <span>Presiona atrás de nuevo para salir</span>
+        </div>
+      )}
+
+      {/* Modal: Confirmación de abandono de práctica/examen */}
+      {showQuitConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="quit-dialog-title"
+          data-testid="quit-confirm-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        >
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center border border-slate-200">
+            <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+              ⚠️
+            </div>
+            <h3 id="quit-dialog-title" className="text-lg font-bold text-ka-text-primary mb-2">
+              ¿Deseas salir de la sesión?
+            </h3>
+            <p className="text-sm text-ka-text-secondary mb-6 leading-relaxed">
+              El progreso actual de esta práctica o examen no se guardará si decides salir ahora.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                data-testid="quit-confirm-continue"
+                onClick={() => setShowQuitConfirm(false)}
+                className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-ka-text-primary font-bold text-sm rounded-xl transition-colors cursor-pointer"
+              >
+                Continuar
+              </button>
+              <button
+                type="button"
+                data-testid="quit-confirm-exit"
+                onClick={() => {
+                  setShowQuitConfirm(false);
+                  navigateView('overview');
+                }}
+                className="flex-1 py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-xl transition-colors shadow-sm cursor-pointer"
+              >
+                Salir
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

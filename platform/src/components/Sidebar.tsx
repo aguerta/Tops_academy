@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Course, CourseMasteryRecord } from '../types';
 import { isUnitCompleted, isUnitStarted } from '../utils/masteryStorage';
+import { registerBackInterceptor } from '../utils/navigationHistory';
 import { MathText } from './MathText';
 
 interface SidebarProps {
@@ -46,6 +47,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isOpen]);
+
+  // Intercept native mobile back gesture to close drawer first
+  useEffect(() => {
+    if (!isOpen || isDesktop) return;
+    const unregister = registerBackInterceptor(() => {
+      setIsOpen(false);
+      return true;
+    });
+    return unregister;
+  }, [isOpen, isDesktop]);
 
   // Body scroll lock with scrollbar compensation when drawer is open
   useEffect(() => {
