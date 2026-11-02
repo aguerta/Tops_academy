@@ -1,246 +1,264 @@
-# Informe Técnico Forense: Análisis de Problemas que Requirieron Subagentes de Reparación (`c2c_repair`)
+# Informe Técnico Forense: Registro Histórico Consolidado de Problemas que Requirieron Subagentes de Reparación (`c2c_repair`)
 
-**Curso Auditado:** `estadistica_3_s9_vmapreduce13`  
+**Repositorio Central de Auditorías C2C:** `reports/c2c_audits/reporte_problemas_reparacion_c2c.md`  
+**Fecha de Actualización:** `2026-11-02`  
+**Arquitectura del Pipeline:** C2C v3.3 (Hardened MapReduce Architecture)  
+
+---
+
+## Índice de Contenidos
+1. [Resumen Ejecutivo Multi-Curso](#1-resumen-ejecutivo-multi-curso)
+2. [Curso 1: Saul PC Sistemas de Ecuaciones vMapReduce1 (`saul_pc_sistemas_de_ecuaciones_vmapreduce1`)](#2-curso-1-saul-pc-sistemas-de-ecuaciones-vmapreduce1)
+   - [2.1. Ola 1: Reparaciones por Discordancias en Arbitraje Ciego (Stage 5)](#21-ola-1-reparaciones-por-discordancias-en-arbitraje-ciego-stage-5)
+     - [Caso 1.1: Competencia `Hab-19` (`shard_19_data.py`)](#caso-11-competencia-hab-19-shard_19_datapy---reactivo-sin-contexto-suficiente)
+     - [Caso 1.2: Competencia `C-01` (`shard_24_data.py`)](#caso-12-competencia-c-01-shard_24_datapy---ambigüedad-en-definición-de-orden-de-sistema)
+     - [Caso 1.3: Competencia `C-18` (`shard_36_data.py`)](#caso-13-competencia-c-18-shard_36_datapy---discordancia-en-relación-dimensional)
+   - [2.2. Ola 2: Reparaciones por Bloqueo en Compuerta Pre-Publish (Stage 6)](#22-ola-2-reparaciones-por-bloqueo-en-compuerta-pre-publish-stage-6)
+     - [Caso 1.4: Competencia `H-02` (`shard_32_data.py`)](#caso-14-competencia-h-02-shard_32_datapy---multiplicadores-sintéticos-en-curva-de-phillips)
+     - [Caso 1.5: Competencia `Hab-23` (`shard_23_data.py`)](#caso-15-competencia-hab-23-shard_23_datapy---colisión-con-cota-de-estabilidad-de-cournot)
+3. [Curso 2: Estadística 3 S9 vMapReduce13 (`estadistica_3_s9_vmapreduce13`)](#3-curso-2-estadística-3-s9-vmapreduce13)
+   - [Caso 2.1: Competencia `Hab-03` (`shard_03_data.py`)](#caso-21-competencia-hab-03-shard_03_datapy---razones-constantes-sobre-ans)
+   - [Caso 2.2: Competencia `C-23` (`shard_31_data.py`)](#caso-22-competencia-c-23-shard_31_datapy---conflicto-matemático-intrínseco-n---4n)
+4. [Matriz Taxonómica Comparativa de Errores y Linters](#4-matriz-taxonómica-comparativa-de-errores-y-linters)
+5. [Protocolo de Desbloqueo y Directivas Antiestancamiento](#5-protocolo-de-desbloqueo-y-directivas-antiestancamiento)
+6. [Hitos de Reingeniería para Eliminación de Olas Tardías](#6-hitos-de-reingeniería-para-eliminación-de-olas-tardías)
+
+---
+
+## 1. Resumen Ejecutivo Multi-Curso
+
+Este documento recopila de manera forense y sistemática **todos los problemas detectados en las distintas ejecuciones del pipeline C2C que requirieron la intervención de ingenieros de reparación quirúrgica (`c2c_repair`)**, documentando:
+- La causa raíz exacta a nivel de código fuente y modelo conceptual.
+- El síntoma o linter que activó la alarma.
+- La solución matemática, pedagógica y de implementación adoptada por cada subagente.
+- El tiempo de resolución y las lecciones aprendidas para evitar regresiones.
+
+### Tabla Comparativa de Ejecuciones con Remediación
+
+| Curso | Total Comps / Shards | Ítems en Banco | Fase de Activación | Subagentes `c2c_repair` | Causa Principal | Estado Final |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **`saul_pc_sistemas_de_ecuaciones_vmapreduce1`** | 56 / 40 | 1,350 | • Stage 5 (Jueces)<br>• Stage 6 (Quality Gate) | **5 subagentes**<br>(`Hab-19`, `C-01`, `C-18`, `H-02`, `Hab-23`) | • Ambigüedad en stems de orden y contexto de solución particular.<br>• Colisión con multiplicadores prohibidos (`[DIAG-MAGIC-MULT]`). | ✅ Publicado (100% PASS) |
+| **`estadistica_3_s9_vmapreduce13`** | 51 / 33 | 1,170 | • Stage 6 (Quality Gate) | **2 subagentes**<br>(`Hab-03`, `C-23`) | • Distractores con razones constantes sobre `ans`.<br>• Conflicto matemático intrínseco en reducción proporcional ($n \to 4n$). | ✅ Publicado (100% PASS) |
+
+---
+
+## 2. Curso 1: Saul PC Sistemas de Ecuaciones vMapReduce1
+
+**Identificador:** `saul_pc_sistemas_de_ecuaciones_vmapreduce1`  
+**Conversación Orquestadora:** [`d2bdb524-f682-4e86-b7a3-a13d5e708bf9`](conversation://d2bdb524-f682-4e86-b7a3-a13d5e708bf9)  
+**Dominio Temático:** Sistemas de Ecuaciones Diferenciales Ordinarias (EDOs) y en Diferencias (EEDs), Estabilidad Dinámica, Autovalores y Modelos Económicos (Phillips-Phelps, Duopolio de Cournot).
+
+---
+
+### 2.1. Ola 1: Reparaciones por Discordancias en Arbitraje Ciego (Stage 5)
+
+En la etapa de verificación ciega concurrente con 10 jueces (`c2c_judge`), se evaluaron 120 reactivos estratificados sin claves de respuesta. El arbitraje determinó una tasa de acuerdo inicial del **96.7% (116/120)**, registrando 4 discordancias que bloquearon la certificación inmediata en 3 competencias: `Hab-19`, `C-01` y `C-18`.
+
+```
+======================================================================
+[AUX STAGE: JUDGE-COMPARE] Comparing blind judge evaluations vs Ground Truth
+======================================================================
+  [+] Judge comparison finished with status: DISCORDANCES
+  [+] Agreement rate: 96.7% (116/120)
+  [!] Disagreements detected: 4
+      * [T-Hab19-03_judge_1] template=T-Hab19-03 (Hab-19)
+      * [T-C01-01_judge_1] template=T-C01-01 (C-01)
+      * [T-C01-03_judge_2] template=T-C01-03 (C-01)
+      * [T-C18-01_judge_2] template=T-C18-01 (C-18)
+```
+
+---
+
+#### Caso 1.1: Competencia `Hab-19` (`shard_19_data.py`) — Reactivo sin Contexto Suficiente
+
+- **Subagente:** `Repair Engineer Hab-19` (`47cdc4d8-0971-491c-946b-dde9c9e3c9f6`)
+- **Plantilla Afectada:** `T-Hab19-03` (Tipo: `fill_in_the_blank`)
+- **Archivo Objetivo:** `courses/saul_pc_sistemas_de_ecuaciones_vmapreduce1/work/shards/shard_19_data.py`
+- **Diagnóstico del Fallo:**
+  - El evaluador independiente emitió: `BLOCKED: Reactivo carece de contexto` en lugar del valor numérico esperado `136`.
+- **Causa Raíz:**
+  La plantilla evaluaba la solución temporal $X_t = X_{h,t} + X_{p,t}$ de un sistema acoplado en diferencias finitas. Las variantes de stem en `s3` y `s2` daban por sentada la tasa de forzamiento exógeno y omitían explicitar las ecuaciones dinámicas completas del sistema o la forma de ensayo de la solución particular, obligando al juez a adivinar las hipótesis implícitas del generador. Al no disponer de un enunciado autosuficiente, el protocolo del juez ciego dictó correctamente el bloqueo del ítem.
+- **Solución Implementada por el Repair Engineer:**
+  1. Se reescribieron quirúrgicamente los stems de `s3` y `s2` en `shard_19_data.py` utilizando `edit_file`.
+  2. Se explicitó la formulación matemática integral: la matriz de transición simétrica $A$, el vector de términos independientes $B(t) = B_0 \cdot \mu^t$, el forzamiento exponencial y la forma de la solución particular ensayada $X_{p,t} = K \mu^t$.
+  3. Se mantuvo el verificador analítico `ver_hab19_3(res)` validando que la solución particular satisficiera $( \mu I - A ) K = B_0$.
+  4. Certificación: `compile_shard.py` arrojó `PASS` en 50 semillas deterministas sin advertencias.
+
+---
+
+#### Caso 1.2: Competencia `C-01` (`shard_24_data.py`) — Ambigüedad en Definición de Orden de Sistema
+
+- **Subagente:** `Repair Engineer C-01` (`a7b7ccf5-712b-4ab4-beb4-0fafc891533b`)
+- **Plantillas Afectadas:** `T-C01-01` y `T-C01-03` (Tipo: `multiple_choice_7_options`)
+- **Archivo Objetivo:** `courses/saul_pc_sistemas_de_ecuaciones_vmapreduce1/work/shards/shard_24_data.py`
+- **Diagnóstico del Fallo:**
+  - En `T-C01-01_judge_1`: Juez seleccionó `'F'` (letra F) esperando `'E'` ($n = 29$).
+  - En `T-C01-03_judge_2`: Juez seleccionó `'A'` (letra A) esperando `'B'` ($n = 23$).
+- **Causa Raíz:**
+  Conflicto semántico en la definición curricular del orden de un sistema de EDOs. En sistemas donde distintas ecuaciones tienen órdenes dispares (ej. $y_1^{(29)} + y_2'' = 0$ y $y_2' + y_1 = 0$), el curso define en su CTA que el **orden del sistema es la derivada de mayor orden que figure en cualquiera de sus ecuaciones** ($\max_{j,k} \{ \text{orden de } y_j^{(k)} \} = 29$).  
+  Sin embargo, los enunciados de `T-C01-01` y `T-C01-03` formulaban la pregunta de manera ambigua, permitiendo que el evaluador ciego interpretara el orden del sistema como la **dimensión del espacio de estados equivalente** (la suma de los órdenes máximos de cada variable dependiente: $29 + 2 = 31$, o $23 + 5 + 4 = 32$), seleccionando las opciones distractoras que reflejaban dicha suma.
+- **Solución Implementada por el Repair Engineer:**
+  1. Se editaron quirúrgicamente los stems de `C-01` en `shard_24_data.py` para precisar sin ambigüedad: *"determine el orden formal del sistema de ecuaciones diferenciales, definido canónicamente como el orden de la derivada más alta que aparece en cualquiera de sus ecuaciones constituyentes"*.
+  2. Se ajustaron los distractores para mantener diagnóstica la confusión entre orden máximo vs suma de órdenes, pero eliminando la posibilidad de interpretación dual del enunciado.
+  3. Certificación: `compile_shard.py` validó las 3 plantillas (`T-C01-01`, `T-C01-02`, `T-C01-03`) arrojando `PASS` con estricta adherencia Form-B Tri-Banda.
+
+---
+
+#### Caso 1.3: Competencia `C-18` (`shard_36_data.py`) — Discordancia en Relación Dimensional
+
+- **Subagente:** `Repair Engineer C-18` (`54dd361b-0df5-452d-bec5-e380b60cfccf`)
+- **Plantilla Afectada:** `T-C18-01` (Tipo: `multiple_choice_7_options`)
+- **Archivo Objetivo:** `courses/saul_pc_sistemas_de_ecuaciones_vmapreduce1/work/shards/shard_36_data.py`
+- **Diagnóstico del Fallo:**
+  - El juez seleccionó `'B'` en lugar de `'E'` ($m = 53p$).
+- **Causa Raíz:**
+  En la reducción matricial de sistemas de orden superior a sistemas de primer orden, el número total de variables de estado viene dado por la suma de órdenes $m = \sum n_i$. En el generador de `T-C18-01`, una opción distractora formulaba una notación sintáctica muy similar a la correcta respecto al producto $n \cdot p$, lo que generó colisión en la interpretación de los subíndices de la matriz compañera.
+- **Solución Implementada por el Repair Engineer:**
+  1. Se refinó la expresión algebraica de las opciones en `shard_36_data.py` distinguiendo nítidamente el número de ecuaciones dependientes del orden de cada ecuación.
+  2. Se certificaron las 3 plantillas de la competencia con `compile_shard.py` obteniendo `PASS`.
+
+---
+
+### 2.2. Ola 2: Reparaciones por Bloqueo en Compuerta Pre-Publish (Stage 6)
+
+Tras resolver las 4 discordancias y re-arbitrar con éxito el 100% de las plantillas, el orquestador intentó la publicación formal mediante `run.py --stage publish`. En este punto, la compuerta psicométrica estricta `PublishQualityGateError` abortó la publicación:
+
+```
+ERROR: Publish Quality Gate Rejected Publication:
+  - Critical audit issues detected (2): 
+    [diagnostic_rationale_alignment_linter] Distractores numéricos sintéticos por multiplicador arbitrario ([1.333, 1.667]) con error_rationale desconectado del cálculo real.
+    [diagnostic_rationale_alignment_linter] Distractores numéricos sintéticos por multiplicador arbitrario ([0.45, 1.333]) con error_rationale desconectado del cálculo real.
+  - Affected Shards: shard_23, shard_32
+  - Competencies: H-02, Hab-23
+```
+
+---
+
+#### Caso 1.4: Competencia `H-02` (`shard_32_data.py`) — Multiplicadores Sintéticos en Curva de Phillips
+
+- **Subagente:** `Repair Engineer H-02` (`46c43464-6e1c-4321-ac77-80cfa11fec1f`)
+- **Plantilla Afectada:** `T-H02-01` (Función generadora: `gen_h02_1`, L205)
+- **Linter Infraccionado:** `[DIAG-MAGIC-MULT / diagnostic_rationale_alignment_linter]`
+- **Archivo Objetivo:** `courses/saul_pc_sistemas_de_ecuaciones_vmapreduce1/work/shards/shard_32_data.py`
+- **Diagnóstico del Fallo:**
+  El generador construía distractores numéricos para la tasa de inflación efectiva $p = (\alpha - T) - \beta U + g\pi$ escalando el valor correcto `ans` por constantes fijas o colisionando numéricamente con los factores prohibidos `[1.333, 1.667]` ($4/3$ y $5/3$).
+- **Incidente de Estancamiento (Straggler):**
+  Durante los primeros 5 minutos, el subagente se desvió de su scope leyendo exhaustivamente fragmentos de `cta.json`. El Director de Proyecto intervino mediante `send_message`, prohibiendo lecturas externas y ordenando la edición directa sobre `shard_32_data.py`.
+- **Solución Implementada:**
+  1. Inmediatamente tras la directiva, el subagente ejecutó `edit_file` sobre `shard_32_data.py`.
+  2. Sustituyó cualquier factor multiplicativo sobre `ans` por cálculos derivados de concepciones erróneas auténticas:
+     - Error en signo de desempleo: $p_1 = (\alpha - T) + \beta U + g\pi$.
+     - Omisión de la tasa de productividad: $p_2 = \alpha - \beta U + g\pi$.
+     - Traspaso unitario erróneo de expectativas ($g = 1$ en vez de $g < 1$).
+     - Confusión entre tasa y nivel de precios.
+  3. Agregó un filtro en la desduplicación garantizando que $|d - round(ans \cdot m, 3)| > 0.0015$ para todo $m \in \{1.333, 1.667, \dots\}$.
+  4. Certificación: `compile_shard.py` otorgó `PASS`.
+
+---
+
+#### Caso 1.5: Competencia `Hab-23` (`shard_23_data.py`) — Colisión con Cota de Estabilidad de Cournot
+
+- **Subagente:** `Repair Engineer Hab-23` (`9b16a916-f37f-401a-ad66-7abf9940aa8f`)
+- **Plantilla Afectada:** `T-Hab23-01` (Función generadora: `gen_hab23_1`, L3..L38)
+- **Linter Infraccionado:** `[DIAG-MAGIC-MULT / diagnostic_rationale_alignment_linter]`
+- **Archivo Objetivo:** `courses/saul_pc_sistemas_de_ecuaciones_vmapreduce1/work/shards/shard_23_data.py`
+- **Diagnóstico del Fallo:**
+  En el duopolio de Cournot con velocidad de ajuste simétrica $d$, la matriz de transición es $A = \begin{bmatrix} 1-d & -d/2 \\ -d/2 & 1-d \end{bmatrix}$ con autovalores $\lambda_1 = 1 - d/2$ y $\lambda_2 = 1 - 3d/2$. La estabilidad exige $|\lambda_2| < 1 \Rightarrow 0 < d < 4/3$.  
+  El generador incluía distractores con valores derivados de $1 - d$ (para $d = 0.55 \Rightarrow 0.45$) y cotas que igualaban $4/3 \approx 1.333$. El linter psicométrico detectó que los distractores coincidían con las razones prohibidas `[0.45, 1.333]`.
+- **Incidente de Estancamiento (Straggler):**
+  Al igual que en `H-02`, el subagente demoró intentando parsear `cta.json`. Fue destrabado con el mensaje analítico del Director.
+- **Solución Implementada:**
+  1. Modificó `shard_23_data.py` reestructurando los distractores de `gen_hab23_1`.
+  2. Los errores se reformularon en términos cualitativos y algebraicos rigurosos:
+     - Confundir la estabilidad simultánea con la estabilidad del autovalor no restrictivo ($0 < d < 4$).
+     - Signos erróneos en las pendientes de las curvas de reacción rivales ($+d/2$ en lugar de $-d/2$).
+     - Autovalores desacoplados falsos $(1-d, 1+d)$.
+  3. Se eliminaron todas las operaciones que producían razones coincidentes con $0.45$ y $1.333$.
+  4. Certificación: `compile_shard.py` emitió `PASS` de inmediato.
+
+---
+
+## 3. Curso 2: Estadística 3 S9 vMapReduce13
+
+**Identificador:** `estadistica_3_s9_vmapreduce13`  
 **Conversación Orquestadora:** [`b82c4415-eb81-44a5-b31e-e1094de6b645`](conversation://b82c4415-eb81-44a5-b31e-e1094de6b645)  
-**Fecha de Emisión:** `2026-11-02`  
-**Origen de Activación:** Bloqueo en la compuerta de pre-publicación (`PublishQualityGateError` en Stage 6: Publish)
+**Dominio Temático:** Estadística Inferencial Asintótica, Estimadores MCO/IV, Convergencia en Probabilidad, Teorema Central del Límite e Intervalos de Confianza para Proporciones.
 
 ---
 
-## 1. Resumen Ejecutivo de la Fase de Remediación
+### Caso 2.1: Competencia `Hab-03` (`shard_03_data.py`) — Razones Constantes sobre `ans`
 
-Durante la ejecución del pipeline Content-to-Course (C2C v3.3), el 100% de las 51 competencias y 33 shards compilaron exitosamente en la etapa de autores y obtuvieron un **100.0% de acuerdo unánime en el arbitraje ciego** (120/120 reactivos evaluados por 10 jueces independientes).
-
-Sin embargo, al ejecutar la compuerta final `run.py --stage publish`, el linter psicométrico global `diagnostic_rationale_alignment_linter` (`[DIAG-MAGIC-MULT]`) inspeccionó el 100% de los **1,170 reactivos instanciados** y rechazó la publicación debido a **8 colisiones críticas de distractores sintéticos** distribuidas en 2 competencias: **`Hab-03`** y **`C-23`**.
-
-Para subsanar el bloqueo sin intervención humana ni edición manual del orquestador, se despacharon concurrentemente 2 subagentes quirúrgicos especializados (`c2c_repair`).
-
-| Reparación / Shard | Competencia | Error Base | Tiempo de Pared | Turnos | Tokens Activos | Reintentos Compile | Resultado Final |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Repair Engineer Hab-03** (`f3ed7c`) | `Hab-03` (`shard_03`) | `[DIAG-MAGIC-MULT]` | **170.0s** (2.8 min) | 9 | 90,520 | 1 (0 fallos) | ✅ PASS (Limpio) |
-| **Repair Engineer C-23** (`b1d31f`) | `C-23` (`shard_31`) | `[DIAG-MAGIC-MULT]` | **382.0s** (6.4 min) | 18 | 206,903 | 2 (1 fallo) | ✅ PASS (Remediado) |
-
----
-
-## 2. Detalle del Caso 1: Competencia `Hab-03` (`shard_03_data.py`)
-
-### 2.1. El Problema Exacto
-En la plantilla `T-Hab03-01` (función generadora `gen_hab03_1`, líneas 6 a 23 de `shard_03_data.py`), se evaluaba el cálculo analítico de convergencia y errores estándar asintóticos.
-- **Vicio detectado:** Los distractores $d_1$ a $d_6$ se construían mediante combinaciones de variables como:
-  ```python
-  d1 = round((mu + 15) / delta, 4)
-  d2 = round(mu / (delta + mu), 4)
-  d3 = round(mu / (2 * delta), 4)
-  d4 = round(mu / (3 * delta), 4)
-  ```
-- **Fallo:** Siendo la respuesta correcta `ans = round(mu / delta, 4)`, los distractores $d_3$ y $d_4$ colisionaban exactamente con los multiplicadores prohibidos:
-  $$\frac{d_3}{ans} = \frac{\mu / (2\delta)}{\mu / \delta} = \frac{1}{2} = 0.500$$
-  $$\frac{d_4}{ans} = \frac{\mu / (3\delta)}{\mu / \delta} = \frac{1}{3} \approx 0.333$$
-  Además, en ciertas combinaciones aleatorias de $\mu$ y $\delta$, la razón producía valores cercanos a $1.333$, violando la regla que prohíbe distractores numéricos predecibles y desconectados de su justificación diagnóstica.
-
-### 2.2. ¿Por Qué Demoró? (170.0 segundos / 2.8 min)
-- **Fase Pre-Compile (155s):** El subagente consumió 2.5 minutos leyendo la orden de trabajo (`repair_hab03.json`), analizando el archivo de código y razonando las concepciones erróneas pedagógicas reales para no generar un parche cosmético que rompiera el contrato Form-B Tri-Banda (`min_archetypes = 3`).
-- **Fase Post-Compile (15s):** La edición quirúrgica mediante `edit_file` fue 100% acertada al primer intento. El subagente ejecutó `compile_shard.py` obteniendo `PASS` de inmediato sin requerir reintentos adicionales.
-
-### 2.3. Solución Implementada
-1. Se redefinieron las fórmulas de los distractores en `shard_03_data.py` vinculándolas estrictamente a pasos algebraicos erróneos independientes de la razón constante sobre `ans` (ej. olvidar elevar al cuadrado el denominador, omitir la corrección por varianza asintótica en el numerador o confundir media con desviación estándar).
-2. Se incorporó una guarda de descarte en el generador que verifica que ninguna razón $|d / ans - m| \le 0.02$ coincida con la lista negra de multiplicadores sintéticos.
-3. Se certificó la plantilla con 50 semillas CRC32 deterministas sin fallos.
+- **Subagente:** `Repair Engineer Hab-03` (`f3ed7c`)
+- **Tiempo de Resolución:** 170.0 segundos (2.8 min) — 9 turnos
+- **Plantilla Afectada:** `T-Hab03-01` (`gen_hab03_1`, L6..L23)
+- **Linter Infraccionado:** `[DIAG-MAGIC-MULT]`
+- **El Problema:**
+  Los distractores $d_3$ y $d_4$ se generaban mediante:
+  $$d_3 = \text{round}(\mu / (2\delta), 4) \quad \text{y} \quad d_4 = \text{round}(\mu / (3\delta), 4)$$
+  Dado que la respuesta correcta era $ans = \text{round}(\mu / \delta, 4)$, las razones resultantes eran algebraicamente idénticas a constantes prohibidas:
+  $$\frac{d_3}{ans} = 0.500 \quad \text{y} \quad \frac{d_4}{ans} = 0.333$$
+- **Solución Implementada:**
+  Se sustituyeron las fórmulas por pasos erróneos de derivación asintótica (omisión de la corrección por varianza asintótica en el numerador, confusión entre desviación estándar y varianza $\delta^2$). Se agregó una guarda que verifica $|d / ans - m| > 0.02$. Certificado en primer intento.
 
 ---
 
-## 3. Detalle del Caso 2: Competencia `C-23` (`shard_31_data.py`) — Caso Complejo / Straggler
+### Caso 2.2: Competencia `C-23` (`shard_31_data.py`) — Conflicto Matemático Intrínseco ($n \to 4n$)
 
-### 3.1. El Problema Exacto
-La competencia `C-23` evalúa el *Margen de Error e Intervalos de Confianza Asintóticos para Proporciones* ($ME = z \sqrt{\frac{p(1-p)}{n}}$). Presentaba colisiones en dos de sus tres plantillas:
+- **Subagente:** `Repair Engineer C-23` (`b1d31f`)
+- **Tiempo de Resolución:** 382.0 segundos (6.4 min) — 18 turnos (Straggler crítico)
+- **Plantillas Afectadas:** `T-C23-01` y `T-C23-03`
+- **Linter Infraccionado:** `[DIAG-MAGIC-MULT]`
+- **El Problema:**
+  En el cálculo del margen de error para proporciones ($ME = z \sqrt{\frac{p(1-p)}{n}}$):
+  1. En `T-C23-01`: Cuando la proporción oscilaba entre $0.20$ y $0.45$, combinaciones de varianzas erróneas generaban razones accidentales cercanas a $0.50$ y $0.75$.
+  2. En `T-C23-03`: Al cuadruplicar la muestra ($n \to 4n$), el error correcto se reduce a la mitad ($ME_{nuevo} = ME / 2$). El distractor pedagógico legítimo de asumir linealidad dividiendo entre 4 producía:
+     $$d = \frac{ME}{4} = \frac{1}{2} \cdot ans = 0.500 \cdot ans$$
+     Colisionaba de forma matemática inevitable con el factor $0.50$.
+- **Solución Implementada:**
+  1. En `gen_c23_1`: Se reemplazó el cuantil $z=1.00$ por $z=1.645$ (confianza al 90%), desplazando la razón a $0.839$, fuera del rango de colisión.
+  2. En `gen_c23_3`: Se sustituyó la división entre 4 por el error conceptual de calcular el margen considerando únicamente el *incremento muestral* ($\Delta n = 4n - n = 3n$), generando una razón $\sqrt{4/3} \approx 1.155 \cdot ans$, matemáticamente rica y libre de colisiones.
 
-1. **En `T-C23-01` (`gen_c23_1`):**
-   - El generador construía distractores calculando varianzas erróneas:
-     - $d_2 = 1.96 \sqrt{p(1-p)/(2n)} \Rightarrow d_2 = \frac{ans}{\sqrt{2}} \approx 0.707 \cdot ans$.
-     - $d_5 = 1.00 \sqrt{p(1-p)/n} \Rightarrow d_5 = \frac{ans}{1.96} \approx 0.510 \cdot ans$.
-     - $d_1 = 1.96 p / \sqrt{n}$.
-   - **Fallo:** Cuando la proporción muestral $p$ oscilaba entre $0.20$ y $0.45$, la combinación de fórmulas producía valores de $d_1$ y $d_5$ que caían a menos de $0.0015$ de los multiplicadores prohibidos $[1.667, 0.667, 0.45, 0.50]$.
+---
 
-2. **En `T-C23-03` (`gen_c23_3`):**
-   - El ejercicio planteaba cuadruplicar el tamaño de la muestra ($n_{nuevo} = 4n$).
-   - Por la propiedad matemática de la raíz cuadrada:
-     $$ME_{nuevo} = 1.96 \sqrt{\frac{p(1-p)}{4n}} = \frac{1}{2} \left(1.96 \sqrt{\frac{p(1-p)}{n}}\right) = \frac{ME_{orig}}{2}$$
-   - El distractor $d_2$ representaba el error de un alumno que cree que la relación es lineal y divide entre 4:
-     $$d_2 = \frac{ME_{orig}}{4} = \frac{1}{2} \cdot ME_{nuevo} = 0.500 \cdot ans$$
-   - **Fallo insidioso:** El distractor representaba un error conceptual legítimo del alumno, pero numéricamente producía **exactamente $0.5 \times ans$ en el 100% de las instancias**, activando de forma implacable el linter `[DIAG-MAGIC-MULT]`.
+## 4. Matriz Taxonómica Comparativa de Errores y Linters
 
-### 3.2. ¿Por Qué Demoró Tanto? (382.0 segundos / 6.4 min — 18 Turnos)
-Este agente fue el causante del mayor retraso en la fase de remediación debido a tres factores concurrentes:
+| Código de Error / Linter | Mecanismo de Detección | Causa Subyacente Típica | Solución Canónica Demostrada |
+| :--- | :--- | :--- | :--- |
+| **`[DIAG-MAGIC-MULT]`** | `diagnostic_rationale_alignment_linter` analiza 50 semillas; calcula $\min \|d - ans \cdot m\|$ contra lista negra $\{0.333, 0.5, 0.667, 0.75, 1.25, 1.333, 1.5, 1.667, \dots\}$. | • Creación perezosa de distractores multiplicando `ans` por constantes.<br>• Coincidencia accidental por la física/matemática del problema ($n \to 4n \Rightarrow 1/2$, o cotas como $4/3$). | • Modelar el distractor mediante la fórmula del paso algebraico equivocado real.<br>• Cambiar parámetros estructurales ($z=1.645$, $\Delta n = 3n$) para desplazar la razón lejos de los múltiplos prohibidos. |
+| **`BLOCKED: Reactivo carece de contexto`** | Subagente `c2c_judge` (evaluador ciego) no puede resolver el problema desde primeros principios. | Enunciado incompleto en stems; omisión de matrices dinámicas, tasas exógenas o condiciones iniciales necesarias para el cálculo. | Reescribir stems explicitando formalmente el modelo matemático, parámetros exógenos y formas funcionales completas. |
+| **`Discordancia de Arbitraje (Judge vs GT)`** | Comparación estricta entre respuesta de jueces ciegos y clave generada (`judge-compare`). | Ambigüedad en definiciones conceptuales (ej. orden máximo de derivación vs dimensión del espacio de estados). | Clarificar en el stem la convención curricular exacta evaluada sin delatar la respuesta ni usar coletillas delatoras. |
+| **`Straggler por Scope-Creep`** | Watchdog del Director detecta inactividad o consumo de tiempo excesivo en fase pre-compile. | Subagente de reparación lee archivos masivos (`cta.json`, `course.json`) fuera de su scope autorizado. | Envío inmediato de directiva analítica `send_message` instruyendo edición directa con `edit_file` y compilación local. |
 
-1. **Conflicto Matemático Intrínseco (Turnos 1–14, 263s de Pre-Compile):**  
-   El subagente descubrió que las fórmulas pedagógicas estándar de error en proporciones ($n \to 4n$) generaban factores $0.5$ y $2.0$ de manera natural por la física del problema. Tuvo que dedicar 9 turnos de razonamiento profundo (más de 33,000 caracteres de thinking) calculando derivadas y relaciones algebraicas alternativas para diseñar concepciones erróneas que mantuvieran validez pedagógica sin colisionar con los múltiplos prohibidos.
-2. **Fallo de Compilación Intermedio (Turno 26):**  
-   Tras su primera edición quirúrgica, el subagente ejecutó `compile_shard.py`, pero la compilación fue **rechazada con código de salida 1**:
-   ```text
-   [-] [DIAG-MAGIC-MULT] En 'T-C23-01' (función 'gen_c23_1'), los distractores numéricos
-   en 5 semillas (ej. seed=396) coinciden con multiplicadores arbitrarios prohibidos ([0.667, 0.45])
+---
+
+## 5. Protocolo de Desbloqueo y Directivas Antiestancamiento
+
+Durante la ejecución de reparaciones en ambos cursos, se consolidó la **Regla de Intervención del Director**:
+
+1. **Watchdog Activo a los 7–10 Minutos:**
+   Si un subagente `c2c_repair` supera los 5–7 minutos sin reportar `DONE:`, el Director audita de inmediato su `transcript.jsonl`.
+2. **Detección Temprana de Lecturas Prohibidas:**
+   Si el transcript revela que el subagente está leyendo archivos globales como `cta.json` (más de 300 KB) o intentando parsear el curso completo, el Director emite de inmediato un mensaje analítico:
+   ```python
+   send_message(
+       Recipient=cid,
+       Message="ALERTA: Tienes PROHIBIDO leer cta.json. Ve directo al grano: edita con edit_file la función [fn] en [shard_data.py], aplica las fórmulas algebraicas reales, ejecuta compile_shard.py y reporta DONE."
+   )
    ```
-   El bucle de descarte de colisiones que había implementado no contemplaba la tolerancia épsilon exacta que evaluaba el linter en números de 4 decimales.
-3. **Remediación en Segundo Turno Quirúrgico (Turnos 27–30):**  
-   El subagente no cayó en pánico ni reescribió el archivo completo; utilizó la salida del compilador para ajustar los umbrales de búsqueda a 500 iteraciones y modificar las fórmulas en conflicto.
-
-### 3.3. Solución Implementada
-1. **Reemplazo en `gen_c23_1`:**
-   - Se sustituyó el cuantil arbitrario $z=1.00$ por $z=1.645$ (nivel de confianza del 90% en lugar del 95%), desplazando la razón relativa de $0.510$ a $0.839$, fuera del rango de colisión de $0.50$ y $0.75$.
-   - Se implementó un bucle de 500 iteraciones con verificación matricial de colisiones que descarta cualquier semilla con:
-     $$\min_{d \in D, m \in M} |d - \text{round}(ans \cdot m, 4)| \le 0.0015$$
-2. **Reemplazo en `gen_c23_3`:**
-   - Se eliminó la división entre 4 sobre el error original.
-   - En su lugar, se modeló el error conceptual en el que el estudiante confunde el nuevo tamaño de muestra con el *incremento neto* ($\Delta n = n_{nuevo} - n = 3n$), calculando:
-     $$d_2 = 1.96 \sqrt{\frac{p(1-p)}{3n}}$$
-     Lo cual genera una razón analítica $\sqrt{4/3} \approx 1.155 \cdot ans$, matemáticamente robusta, pedagógicamente fundada y 100% libre de colisiones.
-3. **Certificación:** Segunda corrida de `compile_shard.py` resultó en `PASS` inmediato sin advertencias.
+3. **Efectividad Comprobada:**
+   En los casos de `H-02` y `Hab-23` en el curso de sistemas de ecuaciones, la directiva destrabó ambos subagentes, logrando que completaran la edición y la compilación exitosa en menos de 2 minutos tras recibir el mensaje.
 
 ---
 
-## 4. Cronología de la Resolución y Desbloqueo del Pipeline
+## 6. Hitos de Reingeniería para Eliminación de Olas Tardías
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Orch as Orquestador C2C
-    participant Gate as Pre-Publish Gate (Stage 6)
-    participant Rep03 as Repair Engineer Hab-03
-    participant Rep31 as Repair Engineer C-23
-    participant Comp as Shard Compiler & Build Engine
+Para evitar que las reparaciones ocurran de manera tardía en Stage 6, se ratifican los siguientes hitos de reingeniería arquitectónica:
 
-    Orch->>Gate: run.py --stage publish
-    Gate-->>Orch: ERROR PublishQualityGateError ([DIAG-MAGIC-MULT] en Hab-03 y C-23)
-    Orch->>Rep03: invoke_subagent(Repair Engineer Hab-03)
-    Orch->>Rep31: invoke_subagent(Repair Engineer C-23)
-    
-    par Reparación en Paralelo
-        Rep03->>Comp: compile_shard.py (Hab-03)
-        Comp-->>Rep03: PASS (170s)
-        Rep03-->>Orch: DONE: shard_03.json
-    and
-        Rep31->>Comp: compile_shard.py (Intento 1)
-        Comp-->>Rep31: FAIL (DIAG-MAGIC-MULT en seed=396)
-        Rep31->>Comp: compile_shard.py (Intento 2 con cuantil 90% y Delta n=3n)
-        Comp-->>Rep31: PASS (382s)
-        Rep31-->>Orch: DONE: shard_31.json
-    end
-
-    Orch->>Comp: run.py --stage templates
-    Comp-->>Orch: PASS (51/51 plantillas)
-    Orch->>Comp: run.py --stage build
-    Comp-->>Orch: PASS (1,170 reactivos instanciados)
-    Orch->>Gate: run.py --stage publish --skip-judges
-    Gate-->>Orch: SUCCESS (Curso publicado y cerrojo liberado)
-```
-
----
-
-## 5. Lecciones Aprendidas
-
-1. **Pre-validación de `[DIAG-MAGIC-MULT]` en Etapa de Autores (`Stage 3`):**  
-   Actualmente, la comprobación de multiplicadores sintéticos se ejecuta con mayor rigurosidad en la compuerta de publicación (`publish.py`) que en el validador unitario de shard (`compile_shard.py`). Alinear ambos linters con la misma suite de 50 semillas permitirá que los autores de shard detecten y resuelvan estas colisiones a $t=0$, ahorrando los ~6 minutos de la fase de remediación.
-2. **Patrones de Reducción Proporcional ($n \to 4n$):**  
-   En problemas donde el resultado exacto sea un submúltiplo exacto de la base (como $1/2$ o $1/4$), las instrucciones de los autores deben sugerir explícitamente el uso de concepciones erróneas por *incremento muestral* ($\Delta n = 3n$) o cambios de nivel de confianza ($z = 1.645$ o $z = 2.576$), evitando inducir multiplicadores mágicos.
-3. **Eficacia de la Barrera Reactiva Silenciosa:**  
-   A pesar de la complejidad del straggler en `C-23`, el orquestador no realizó ninguna edición manual ni lectura exploratoria en disco. La delegación quirúrgica a subagentes `c2c_repair` con scope acotado preservó el presupuesto de tokens del chat principal y garantizó la integridad psicométrica del curso.
-
----
-
-## 6. Hitos Futuros (Future Milestones): Reingeniería del Pipeline para Máxima Eficiencia en Wall Time
-
-> [!IMPORTANT]
-> **Diagnóstico de Necesidad:** A pesar de la robustez del cerrojo de calidad y de que los subagentes `c2c_repair` remediaron el 100% de los incidentes de forma autónoma, el flujo operativo actual todavía adolece de problemas estructurales que le impiden ser súper eficiente a nivel de **tiempo de pared (*wall time*)**. La serialización de compuertas y la aparición de olas tardías de reparación en Stage 6 introducen demoras evitables en cursos de gran escala.
-
-### 6.1. Limitaciones del Flujo Serializado Actual
-En la arquitectura vigente:
-1. Se compilan los shards y se despachan los **Plan Judges** (Stage 4-5).
-2. Si un juez detecta discrepancias, se espera a que todos los jueces terminen para ejecutar reparaciones pedagógicas.
-3. Se procede a la generación de plantillas (`templates`) y construcción masiva del curso (`build`).
-4. **Fricción tardía:** Al invocar la compuerta final `run.py --stage publish` (Stage 6), el linter psicométrico global `diagnostic_rationale_alignment_linter` analiza los 1,170 reactivos y bloquea la publicación por colisiones de distractores sintéticos (`[DIAG-MAGIC-MULT]`).
-5. Se despacha una **segunda ola reactiva de subagentes** (`c2c_repair`), sumando más de 6 minutos de espera adicional (como en `C-23`), seguidos de una re-ejecución completa de `templates`, `build` y `publish`.
-
-### 6.2. Decisión Arquitectónica para la Siguiente Iteración: Ejecución Concurrente de Gates de Stage 4 y Plan Judges
-Para la siguiente iteración de C2C, se debe establecer que el curso completo se someta a las compuertas y escáneres existentes en su estado actual (*as-is*) **en simultáneo con la ejecución de los Plan Judges**, en lugar de diferir estas verificaciones técnicas y psicométricas hasta después de los jueces o hasta la etapa final.
-
-Aun cuando el curso requiera arbitraje pedagógico ciego mediante Plan Judges, no se debe esperar de forma pasiva a que concluya todo el arbitraje para recién descubrir incompatibilidades técnicas, linters o fallos de compilación:
-- **No se requiere un escáner predictivo nuevo:** Se aplican directamente los mismos escáneres y *quality gates* de **Stage 4** (`build`, sweeps deterministas de 50 semillas, `diagnostic_rationale_alignment_linter`, multiplicadores sintéticos `[DIAG-MAGIC-MULT]`, rangos y metadatos) en paralelo con el arbitraje de los jueces.
-- Esto detecta en el mismo instante temporal $t = t_{\text{judges}}$ tanto los posibles reparos pedagógicos del juez como cualquier fallo técnico o psicométrico de las plantillas.
-
-### 6.3. Ola Única de Reparación Holística y Verificación Obligatoria del Orquestador
-En lugar de múltiples fases de remediación desfasadas (reparar por objeciones de jueces $\rightarrow$ compilar $\rightarrow$ construir $\rightarrow$ reparar por compuerta de publicación $\rightarrow$ volver a compilar $\rightarrow$ publicar), la arquitectura se reestructurará en torno a un único punto de consolidación:
-
-1. **Ejecución Concurrente:** Se disparan los Plan Judges y, al mismo tiempo, los escáneres y compuertas de Stage 4 aplicados sobre todos los shards del curso.
-2. **Consolidación en Matriz Única de Defectos:** El orquestador unifica los hallazgos pedagógicos (observaciones de jueces) y las fallas técnicas/psicométricas (linters y gates de Stage 4) en una sola orden de trabajo por shard/competencia afectada.
-3. **Ola Única de Subagentes (`c2c_repair`):** Se lanza una única ola de reparación donde cada subagente aborda simultáneamente tanto el rigor conceptual exigido por los jueces como la resolución de las fallas detectadas por las compuertas de Stage 4.
-4. **Re-Arbitraje Quirúrgico Focalizado:**
-   - Si la remediación alteró reactivos específicos arbitrados por un juez, se invoca **únicamente el Plan Judge específico a esa competencia o problema puntual**, sin necesidad de reevaluar el resto del curso.
-   - Si la corrección fue puramente paramétrica o de linters sin alterar el contenido arbitrado, no se requiere re-arbitraje.
-5. **Re-intento Riguroso de Publicación por el Orquestador (Cero Asunciones Ciegas):**
-   - **Regla Inquebrantable:** No porque un subagente de reparación declare haber corregido el shard se asume el éxito ciego ni se salta la compuerta.
-   - El orquestador C2C debe **siempre respetar el ciclo de validación**: vuelve a ejecutar formalmente la etapa de publicación (`run.py --stage publish`) y analiza el resultado de forma exhaustiva para verificar si el curso efectivamente cumple todos los contratos o si se requiere cambiar/ajustar algo más antes de certificar la salida.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Orch as Orquestador C2C
-    participant Shards as Shards de Autores (Stage 3)
-    participant Judges as Plan Judges (Stage 5)
-    participant Stage4Gates as Gates y Linters de Stage 4
-    participant Repair as Ola Única de Reparación (c2c_repair)
-    participant SpecJudge as Plan Judge Quirúrgico (Específico)
-    participant Pub as Validación y Publicación (Stage 6)
-
-    Orch->>Shards: Compilar Shards de Autores
-    Shards-->>Orch: Shards Listos (t = 0)
-
-    par Verificación Concurrente (Judges + Gates Stage 4)
-        Orch->>Judges: Evaluar reactivos ciegos
-        Judges-->>Orch: Reporte Pedagógico (Objeciones o PASS)
-    and
-        Orch->>Stage4Gates: Ejecutar escáneres y gates de Stage 4 ([DIAG-MAGIC-MULT], etc.)
-        Stage4Gates-->>Orch: Reporte de Fallos Técnicos/Psicométricos
-    end
-
-    Note over Orch,Repair: Consolidación de Defectos en Matriz Unificada
-    Orch->>Repair: Despachar Ola Única de Reparación (Pedagogía + Linters)
-    Repair-->>Orch: Shards Remediados por Subagentes
-
-    opt Solo si hubo cambios en reactivos arbitrados
-        Orch->>SpecJudge: Re-evaluación quirúrgica del reactivo específico
-        SpecJudge-->>Orch: PASS del Juez Específico
-    end
-
-    Note over Orch,Pub: Re-intento Formal y Análisis Obligatorio del Orquestador
-    Orch->>Pub: run.py --stage publish (Comprobación Real de Gates)
-    alt Todos los contratos y linters pasan
-        Pub-->>Orch: Publicación Exitosa y Cerrojada
-    else Persiste algún conflicto
-        Pub-->>Orch: Error Detallado -> Orquestador analiza y ajusta
-    end
-```
-
-### 6.4. Sincronización Estricta de Contratos entre Stage 2 (Sharding) y Stage 4 (Build/Sweeps)
-
-> [!CAUTION]
-> **Anti-patrón de Contratos Desfasados:** Actualmente existe el riesgo de que las especificaciones emitidas en Stage 2 (`run.py --stage shard` $\rightarrow$ `pre_shard_manifest.json`) no reflejen de manera idéntica y estricta el conjunto de validaciones, cuotas y restricciones que se evaluarán más adelante en Stage 4 (`run.py --stage build` / `templates`). Esto provoca que un autor en Stage 3 genere código creyendo cumplir la especificación de Stage 2, solo para ser rechazado tardíamente al compilar o instanciar en Stage 4.
-
-Para la siguiente iteración se establece como hito crítico:
-1. **Espejo Contractual Stage 2 $\longleftrightarrow$ Stage 4:** Todo requerimiento que la compuerta de Stage 4 vaya a auditar (cuotas mínimas por arquetipo, diversidad de stems $\ge 0.50$, invariantes analíticos, rangos de parámetros y linters de esquema) debe inyectarse contractualmente y de forma explícita en las directivas de Stage 2.
-2. **Eliminación de Descubrimiento de Fallos por Rechazo:** El subagente autor de shard debe conocer desde su *prompt inicial* y esquema de entrada exactamente la totalidad de las reglas que evaluará Stage 4. Es inadmisible esperar a que un shard falle en Stage 4 para que recién el desarrollador o subagente sepa qué hizo mal.
-3. **Pre-validación Sintáctica y Semántica Local (`compile_shard.py` sincronizado):** La herramienta de auto-test que corre el autor antes de entregar su shard debe contener el 100% de la lógica de evaluación de Stage 4, logrando paridad contractual absoluta a $t=0$.
-
-### 6.5. Análisis de Rendimiento: Wall Time y Presupuesto de Tokens
-
-| Métrica | Flujo Actual (Serializado / Reactivo) | Nuevo Flujo (Ola Única / Shift-Left) | Impacto Neto Esperado |
-| :--- | :---: | :---: | :---: |
-| **Tiempo de Pared (*Wall Time*)** | Elevado (~6 a 10 min de penalización tardía por re-ejecuciones en Stage 6) | Mínimo (Remediación consolidada a $t=t_{\text{judges}}$, sin bucles finales) | **Reducción de hasta un 40%–60%** en la fase post-autores |
-| **Consumo de Tokens** | Duplicación de overhead de contexto al invocar subagentes en 2 olas separadas | Invocación de subagentes consolidada; una sola lectura de archivos por shard | **Neutro o Ligero Ahorro (< 5% tokens)** por contexto unificado |
-| **Riesgo de Regresión** | Alto (parchear para el linter al final puede romper contratos ya avalados por jueces) | Nulo (el subagente concilia el criterio pedagógico y las reglas psicométricas a la vez) | **Garantía de Convergencia Determinista** |
-
-### 6.6. Hoja de Ruta de Implementación
-- [ ] **M6.1:** Habilitar la ejecución anticipada de las compuertas y escáneres de Stage 4 (`build`, linters de distractores, multiplicadores sintéticos) para correr concurrentemente con los Plan Judges.
-- [ ] **M6.2:** Adaptar el orquestador principal (`c2c-run-auditor` / `content-to-course`) para consolidar en paralelo las observaciones de los jueces y las fallas de los gates de Stage 4.
-- [ ] **M6.3:** Formalizar el generador de órdenes de trabajo unificadas `repair_work_order.json` que combine hallazgos de jueces y de linters en una sola matriz de remediación para la ola única.
-- [ ] **M6.4:** Implementar el re-arbitraje selectivo/quirúrgico (solo reactivos afectados) y la obligación estricta del orquestador de re-intentar formalmente `run.py --stage publish` analizando su viabilidad sin atajos ciegos.
-- [ ] **M6.5 [CRÍTICO]:** Sincronización y paridad contractual total entre Stage 2 (`pre_shard_manifest.json`) y Stage 4 (`build` / sweeps engine), garantizando que las restricciones y linters de Stage 4 se inyecten de forma explícita y preventiva desde Stage 2 para evitar rechazos reactivos tardíos.
+1. **Shift-Left de `[DIAG-MAGIC-MULT]` a Stage 3 (Autores):**
+   Incorporar la verificación exhaustiva de multiplicadores sintéticos (50 semillas) directamente en `compile_shard.py`, para que el autor del shard detecte y corrija las colisiones antes de entregar su archivo, eliminando la necesidad de despachar `c2c_repair` en la compuerta final.
+2. **Ejecución Concurrente de Gates de Stage 4 y Jueces Ciegos (Stage 5):**
+   Disparar en paralelo los Plan Judges y los escáneres psicométricos globales de Stage 4. Si se detectan objeciones de jueces y colisiones de linters, se consolidan en una **única matriz de reparación por shard**, ejecutando una sola ola consolidada de subagentes `c2c_repair`.
+3. **Re-Arbitraje Quirúrgico Exclusivo:**
+   Si una reparación altera el contenido pedagógico evaluado por un juez, se re-evalúa únicamente esa competencia puntual mediante un juez quirúrgico individual, sin re-despachar lotes masivos de 10 jueces.
+4. **Validación Formal Obligatoria del Orquestador:**
+   El Director nunca asume el éxito ciego tras el reporte de un subagente; siempre re-ejecuta formalmente el ciclo de compilación, construcción y compuerta de publicación (`run.py --stage publish`) para certificar la integridad psicométrica del banco.
