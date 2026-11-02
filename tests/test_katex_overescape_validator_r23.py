@@ -198,7 +198,7 @@ def test_escaped_underscore_in_text_allowed() -> None:
 # =============================================================================
 
 @pytest.mark.parametrize("course_filename", [
-    "saul_control_optimo.json",
+    "saul_control_optimo_vmapreduce2.json",
     "solow_growth_model.json",
     "saul_pre_parcial.json",
     "estadistica_3_s9_vmapreduce5.json",

@@ -30,7 +30,9 @@ from plan_shards import determine_shard_count, plan_shards
 
 def test_stage0_ingest_pre_cta_manifest_and_no_corpus(tmp_path):
     """Test Stage 0 ingest generates pre_cta_manifest.json without corpus.md or density.json."""
-    sample_pdf = Path("content/estadistica3_Cano/EST3_LEC01_26_2.pdf")
+    sample_pdf = Path("content/estadistica3_Cano/1_EST3_LEC01_26_2.pdf")
+    if not sample_pdf.exists():
+        sample_pdf = Path("content/estadistica3_Cano/EST3_LEC01_26_2.pdf")
     if not sample_pdf.exists():
         pytest.skip("Sample PDF not found.")
 

@@ -646,7 +646,7 @@ class TestRealCoursesAdmission:
             assert len(payload.get("competencies", [])) > 0
 
     @pytest.mark.parametrize("course_name", [
-        "saul_control_optimo.json",
+        "saul_control_optimo_vmapreduce2.json",
         "saul_pre_parcial.json",
         "solow_growth_model.json",
         "estadistica_3_s9_vmapreduce5.json",
