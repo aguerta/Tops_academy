@@ -134,8 +134,12 @@ function serveStaticFile(req, res, filePath) {
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
   const etag = courseIndex.computeEtag(stat.size, stat.mtimeMs);
 
+  const fileName = path.basename(filePath);
   const isHashedAsset = filePath.includes(path.sep + 'assets' + path.sep) || filePath.includes('/assets/');
-  const cacheControl = isHashedAsset
+  const isServiceWorker = fileName === 'sw.js' || fileName === 'registerSW.js';
+  const cacheControl = isServiceWorker
+    ? 'no-cache, no-store, must-revalidate'
+    : isHashedAsset
     ? 'public, max-age=31536000, immutable'
     : 'public, max-age=3600';
 

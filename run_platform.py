@@ -36,6 +36,7 @@ mimetypes.add_type("text/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
 mimetypes.add_type("image/svg+xml", ".svg")
 mimetypes.add_type("font/woff2", ".woff2")
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 
 def repair_platform_course_katex(content: str) -> tuple[str, int]:
@@ -521,7 +522,9 @@ class PlatformRequestHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(data)))
             # Add cache headers
-            if file_path.suffix in {".js", ".css", ".woff2", ".svg", ".png"}:
+            if file_path.name in {"sw.js", "registerSW.js"}:
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            elif file_path.suffix in {".js", ".css", ".woff2", ".svg", ".png"}:
                 self.send_header("Cache-Control", "public, max-age=31536000, immutable")
             else:
                 self.send_header("Cache-Control", "no-cache")
