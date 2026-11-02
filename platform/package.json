@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "prebuild": "node ../scripts/ensure_pwa_icons.cjs",
+    "build": "node ../scripts/ensure_pwa_icons.cjs && tsc && vite build",
     "preview": "vite preview",
     "server": "node server/courseServer.cjs"
   },

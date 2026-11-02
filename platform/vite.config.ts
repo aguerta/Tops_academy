@@ -421,8 +421,10 @@ function courseApiPlugin(): Plugin {
   };
 }
 
+const basePath = process.env.VITE_BASE_PATH || './';
+
 export default defineConfig({
-  base: process.env.VITE_BASE_PATH || './',
+  base: basePath,
   plugins: [
     react(),
     VitePWA({
@@ -430,6 +432,7 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon.png'],
       manifest: {
+        id: basePath,
         name: "Top's Academy",
         short_name: "Top's Academy",
         description: "Plataforma de práctica y maestría académica offline",
@@ -437,18 +440,21 @@ export default defineConfig({
         background_color: '#fafbfc',
         display: 'standalone',
         orientation: 'any',
-        start_url: './',
-        scope: './',
+        start_url: basePath,
+        scope: basePath,
+        categories: ['education'],
         icons: [
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
             type: 'image/png',
+            purpose: 'any',
           },
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
+            purpose: 'any',
           },
           {
             src: 'pwa-maskable-512x512.png',
@@ -460,6 +466,7 @@ export default defineConfig({
             src: 'icon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
+            purpose: 'any',
           },
         ],
       },

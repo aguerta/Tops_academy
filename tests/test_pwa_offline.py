@@ -68,7 +68,7 @@ class TestPwaManifestAndIcons:
         assert data.get("display") == "standalone"
         assert data.get("theme_color") == "#1865f2"
         assert data.get("background_color") == "#fafbfc"
-        assert data.get("start_url") == "./"
+        assert data.get("start_url") in ["./", "/Tops_academy/"]
 
         icons = data.get("icons", [])
         assert len(icons) >= 3, "Manifest must declare at least 3 icons"
