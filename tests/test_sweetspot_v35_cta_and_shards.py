@@ -1408,7 +1408,8 @@ class TestCatalogAndPromptsAlignment(unittest.TestCase):
         for subagent in mem_lean:
             name = subagent["name"]
             self.assertIn(name, file_map)
-            expected_prompt = (lean_dir / file_map[name]).read_text(encoding="utf-8")
+            from engine.stage_contract import render_contract_tokens
+            expected_prompt = render_contract_tokens((lean_dir / file_map[name]).read_text(encoding="utf-8"))
             self.assertEqual(
                 subagent["system_prompt"],
                 expected_prompt,

@@ -1239,8 +1239,8 @@ def gen_steady_state(rng):
     distractors = [
         {"value": rf"$k^* = {round(k_star * 1.2, 3)}$", "distractor_id": "D-C01-01", "error_rationale": "Omite depreciación en sendero con ahorro @s@ y capital @k_star@"},
         {"value": rf"$k^* = {round(k_star * 0.8, 3)}$", "distractor_id": "D-C01-02", "error_rationale": "Tasa g duplicada distorsionando el parámetro @s@ y @k_star@"},
-        {"value": rf"$k^* = {round(k_star * 1.5, 3)}$", "distractor_id": "D-C01-03", "error_rationale": "Exponente inverso aplicado a la tasa de ahorro @s@"},
-        {"value": rf"$k^* = {round(k_star * 0.5, 3)}$", "distractor_id": "D-C01-04", "error_rationale": "Suma directa de tasas alterando el equilibrio @k_star@"},
+        {"value": rf"$k^* = {round(k_star * 1.6, 3)}$", "distractor_id": "D-C01-03", "error_rationale": "Exponente inverso aplicado a la tasa de ahorro @s@"},
+        {"value": rf"$k^* = {round(k_star * 0.6, 3)}$", "distractor_id": "D-C01-04", "error_rationale": "Suma directa de tasas alterando el equilibrio @k_star@"},
         {"value": rf"$k^* = {round(k_star * 1.1, 3)}$", "distractor_id": "D-C01-05", "error_rationale": "Fallo aritmético en el producto con variable @s@"},
         {"value": rf"$k^* = {round(k_star * 0.9, 3)}$", "distractor_id": "D-C01-06", "error_rationale": "Subestimación del estado estacionario con capital @k_star@"},
     ]
@@ -1316,6 +1316,23 @@ TEMPLATES = [
         self.assertIn("[Tupla en shard_01_data.py: Líneas", reported_text)
         self.assertIn("StartLine:", reported_text)
         self.assertIn("EndLine:", reported_text)
+
+        # 3.4 Shift-left isolated exact-ratio distractor (e.g. n -> 4n => ME/4 = 0.5*ans) must be rejected in Stage 3
+        iso_old = 'round(k_star * 0.6, 3)}$", "distractor_id": "D-C01-04"'
+        self.assertIn(iso_old, valid_shard_source)
+        iso_shard_source = valid_shard_source.replace(iso_old, 'round(k_star * 0.5, 3)}$", "distractor_id": "D-C01-04"')
+        shard_file.write_text(iso_shard_source, encoding="utf-8")
+        ok_iso, iso_errs = compile_shard(self.work_dir, "shard_01", seeds=10, min_archetypes=1)
+        self.assertFalse(ok_iso, "compile_shard must reject a systematic isolated 0.5x distractor")
+        iso_text = " ".join(iso_errs)
+        self.assertIn("[DIAG-MAGIC-MULT]", iso_text)
+        self.assertIn("0.5", iso_text)
+
+        # 3.5 A non-constant ratio (depends on the seed-generated parameter s) must NOT be flagged
+        var_shard_source = valid_shard_source.replace(iso_old, 'round(k_star * (1.7 + 2 * s), 3)}$", "distractor_id": "D-C01-04"')
+        shard_file.write_text(var_shard_source, encoding="utf-8")
+        ok_var, var_errs = compile_shard(self.work_dir, "shard_01", seeds=10, min_archetypes=1)
+        self.assertTrue(ok_var, f"Seed-dependent ratio must not trigger DIAG-MAGIC-MULT: {var_errs}")
 
     # -------------------------------------------------------------------------
     # 4. dispatch: payload size (<46,080 bytes) & full prompt integrity
