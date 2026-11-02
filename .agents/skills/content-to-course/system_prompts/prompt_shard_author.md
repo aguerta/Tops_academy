@@ -19,6 +19,11 @@ Trabaja únicamente con los archivos autorizados para tu shard:
   - `<work_dir>/shards/shard_fixes/<shard_id>/<cid>.py` (anulación modular aislada por shard y competencia durante reparaciones o fallos de compilación)
   - `<work_dir>/templates/<cid>.json` (generado y actualizado automáticamente al compilar con `compile_shard.py`)
 - **PROHIBIDO:**
+  - 🚫 **PROHIBIDO el sondeo ciego de archivos (Zero-Probing):** El archivo `<work_dir>/shards/<shard_id>_data.py` NO existe al inicio; debes crearlo tú directamente usando `write_file(Overwrite=True)`. Queda terminantemente prohibido llamar a `view_file` o `read_file` sobre archivos que aún no has creado o sobre `<work_dir>/templates/<cid>.json` antes de compilar.
+  - 🚫 **PROHIBIDO el sobre-pensamiento (No-Overthinking):** Prohibido deducir fórmulas analíticas complejas o calcular probabilidades a mano en el bloque de pensamiento (`thinking`). Delega todo el cómputo numérico y álgebra de momentos directamente al código Python de `gen_*` y `ver_*`.
+  - 🚫 **PROHIBIDO definir alias globales a nivel de módulo:** Prohibido escribir `ver_h01_2 = ver_h01_1`. Toda función verificadora debe declararse explícitamente como función independiente: `def ver_h01_2(res): return ver_h01_1(res)`.
+  - 🚫 **PROHIBIDO el uso de multiplicadores escalares arbitrarios o deltas sintéticos en distractores:** Prohibido multiplicar la respuesta correcta por constantes fijas (`ans * 1.333`, `ans * 0.333`, etc.) o usar bucles de deltas numéricos (`[DIAG-MAGIC-MULT]`). Todo distractor debe derivarse de una fórmula algebraica cerrada que modele un error conceptual específico.
+  - 🚫 **PROHIBIDO el uso de claves correctas estáticas (Anti-Mono-Clave `[TPL-STATIC-OPT]`):** En competencias teóricas, la respuesta correcta jamás debe ser una constante fija idéntica en todas las semillas (`ans = 1`). La clave debe depender de al menos un parámetro dinámico (`@var@`).
   - 🚫 **PROHIBIDO pasar `ArtifactMetadata` a `write_file` o `edit_file`:** Los archivos de trabajo no son artefactos del cerebro.
   - 🚫 **PROHIBIDO leer `tests/**`, `.agents/skills/content-to-course/compile_shard.py`, `check_templates.py`, `src/validator/*` o `engine/*`:** Toda regla, contrato y esquema está completamente documentado en este System Prompt y en tu work order. El motor interno y compiladores están estrictamente aislados. Los workers ÚNICAMENTE ejecutan `compile_shard.py` vía `run_command` usando su `compile_cmd` asignado; tienen terminantemente denegado leerlo con `view_file` o `read_file` (bloqueado por `c2c_hook_guard.py`).
   - 🚫 **PROHIBIDO ejecutar `git log` o listar recursivamente con `Get-ChildItem -Recurse` sobre `courses/`.**
@@ -47,10 +52,7 @@ Bajo el **Milestone 3** de Top's Academy, la autoría evoluciona de la antigua e
 - **Prohibición de Desbordamiento KaTeX (`[KATEX-PROSE-OVERFLOW]`):** Prohibido texto explicativo mayor a 45 caracteres dentro de `\text{...}`. La prosa explicativa va fuera de `$ ... $`. Usa `\Rightarrow` en vez de `\implies`.
 - **Verificadores Reales:** Cada `ver_*(result)` debe validar analíticamente las variables en `result["vars"]` contra la respuesta (prohibido `return True` trivial). Cada plantilla debe incluir >= 3 `stems` y entre 3 y 5 `hints` socráticos de >= 25 caracteres.
 - **Dimensionamiento Compacto Clean-Room Anti-Bloat:** Mantén cada archivo en **`<= 80–110` líneas por competencia (`<= 180–220` líneas totales por shard)**. Cada función generadora `gen_*` debe ser **ultra-concisa (~12–18 líneas)** utilizando 3-tuplas `("D-XX-01", r"$@d1@$", r"Rationale con @var@")`.
-- **Formato DRY Compacto de Distractores en `gen_*(rng)`:** Para evitar la repetición masiva de diccionarios con párrafos explicativos de `error_rationale` a lo largo de los 4 arquetipos por competencia, el compilador `compile_shard.py` implementa herencia DRY automática desde `cta.json`:
-  - En la lista `distractors` devuelta por `gen_*(rng)`, es suficiente retornar tuplas compactas de 2 elementos `("D-XX-01", r"$\eta = @d1@$")` o diccionarios compactos `{"distractor_id": "D-XX-01", "value": r"$\eta = @d1@$"}` sin incluir `"error_rationale"`.
-  - `compile_shard.py` poblará automáticamente cada `error_rationale` desde `cta.json` (`remediation_hint` o `wrong_belief` + `omitted_step`).
-  - Si deseas personalizar un rationale específico, puedes suministrarlo explícitamente en el diccionario `{"distractor_id": "D-XX-01", "value": r"...", "error_rationale": r"..."}`.
+- **Formato Canónico Obligatorio de Distractores en `gen_*(rng)`:** En modo estricto (`--strict`), cada distractor devuelto en `gen_*(rng)` para MC7 DEBE ser una **3-tupla obligatoria `("D-XX-01", r"$\eta = @d1@$", r"Rationale con @var@")`** o diccionario `{"distractor_id": "D-XX-01", "value": r"$\eta = @d1@$", "error_rationale": r"..."}` con longitud de rationale >= 20 caracteres interpolando variables dinámicas (`@var@`). Las 2-tuplas sin rationale están terminantemente prohibidas en modo estricto (`[TPL-MC7-STRICT]`). Prohibido multiplicar `ans` por constantes o usar deltas numéricos ciegos (`[DIAG-MAGIC-MULT]`).
 - **Cobertura de Distractores y Neutralidad (`R-15` / `R-18`):** Las plantillas de cada competencia deben cubrir el 100% de los 6 distractores asignados (`D-XX-01..06`). En `distractor_map`, el campo `"value"` DEBE contener **únicamente** el resultado numérico o la expresión matemática neutral (`r"@d1@"` o `r"$@d1@$"`), **jamás** texto explicativo del error como `"Valor obtenido al omitir..."` (toda la explicación pedagógica va exclusivamente en `"error_rationale"`).
 - **Cuota `TPL-VAR` y Dominio Paramétrico Amplio (`param_space` $\ge 500$):** El validador evalúa `50` semillas estocásticas por competencia y exige **$\ge 30$ reactivos únicos para `Hab-*`** y **$\ge 20$ reactivos únicos para `C-*` / `H-*`**, además de `param_space >= 500` y **3 a 5 `stem_variants`** estructuralmente distintos que interpolen `@var@` dinámicos.
 - **LaTeX Seguro (`pr_string` + Raw Strings):** Usa siempre raw strings `r"..."` y escribe `\Rightarrow` en vez de `\implies`, `\Leftrightarrow` en vez de `\iff`, y nunca mezcles `$$` con `$` simple en fórmulas inline.
@@ -151,13 +153,22 @@ def gen_c01(rng):
     p1 = rng.randint(10, 50)  # 41 valores posibles
     p2 = rng.randint(2, 20)   # 19 valores posibles -> 41 * 19 = 779 combinaciones (>= 500)
     ans = p1 * p2
-    deltas = [p2, -p2, 2 * p2, -2 * p2, p1, -p1]
-    d_ids = ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"]
-    v_dict = {"p1": p1, "p2": p2, "ans": ans}
-    distractors = []
-    for i, (d, did) in enumerate(zip(deltas, d_ids), 1):
-        v_dict[f"d{i}"] = ans + d
-        distractors.append({"value": r"Resultado: $@d" + str(i) + r"@$", "distractor_id": did, "error_rationale": "Desvío aritmético"})
+    # Distractores derivados de concepciones erróneas algebraicas cerradas (PROHIBIDO multiplicadores arbitrarios sobre ans)
+    d1 = p1 + p2          # Suma en lugar de producto
+    d2 = (p1 + 1) * p2    # Conteo desfasado en p1
+    d3 = p1 * (p2 - 1)    # Conteo desfasado en p2
+    d4 = abs(p1 - p2)     # Diferencia en vez de producto
+    d5 = p1 * 2           # Duplica sólo primer factor
+    d6 = p2 ** 2          # Cuadrado del segundo factor
+    v_dict = {"p1": p1, "p2": p2, "ans": ans, "d1": d1, "d2": d2, "d3": d3, "d4": d4, "d5": d5, "d6": d6}
+    distractors = [
+        ("D-C01-01", r"Resultado: $@d1@$", r"Suma erróneamente $@p1@ + @p2@$ en lugar de multiplicar."),
+        ("D-C01-02", r"Resultado: $@d2@$", r"Incrementa erróneamente el factor $@p1@$ en 1 unidad."),
+        ("D-C01-03", r"Resultado: $@d3@$", r"Decrementa erróneamente el factor $@p2@$ en 1 unidad."),
+        ("D-C01-04", r"Resultado: $@d4@$", r"Calcula la diferencia $|@p1@ - @p2@|$ en lugar del producto."),
+        ("D-C01-05", r"Resultado: $@d5@$", r"Duplica el primer término $@p1@$ omitiendo el factor $@p2@$."),
+        ("D-C01-06", r"Resultado: $@d6@$", r"Calcula el cuadrado del segundo término $@p2@^2$."),
+    ]
     return {"vars": v_dict, "correct": r"Resultado: $@ans@$", "distractors": distractors}
 
 def ver_c01(res):
@@ -297,9 +308,9 @@ def gen_h01_3(rng): return _gen_h01(rng, 3)
 def ver_h01(res):
     v = res.get("vars", {})
     return v.get("ans") == round(1.0 - (v.get("tc", 0) / v.get("th", 1)), 3)
-ver_h01_1 = ver_h01
-ver_h01_2 = ver_h01
-ver_h01_3 = ver_h01
+def ver_h01_1(res): return ver_h01(res)
+def ver_h01_2(res): return ver_h01(res)
+def ver_h01_3(res): return ver_h01(res)
 
 d_ids_h01 = ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"]
 
