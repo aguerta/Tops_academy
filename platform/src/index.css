@@ -140,3 +140,16 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
 }
+
+/* Safe-area insets for standalone mobile PWA (iPhone notch, Android gesture bar) */
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+}
+
+.safe-top {
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
+}
+
+.footer-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
