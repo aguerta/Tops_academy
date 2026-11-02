@@ -444,3 +444,56 @@ class TestHardenedRemediations:
         assert fixes_by_cid["C-01"] == fix_c01
         assert "C-02" not in fixes_by_cid
         assert fix_c02 not in rel_files
+
+    def test_parenthetical_telltale_linter_early_detection(self, tmp_path: Path):
+        """compile_shard flags parenthetical telltale clues in options during Stage 4."""
+        from compile_shard import compile_shard
+
+        work_dir = tmp_path / "work"
+        shards_dir = work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+
+        manifest_data = {
+            "shards": [
+                {"shard_id": "shard_01", "competency_ids": ["C-01"]}
+            ]
+        }
+        (shards_dir / "pre_shard_manifest.json").write_text(json.dumps(manifest_data), encoding="utf-8")
+
+        cta_data = {
+            "course_id": "test_course",
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "type": "knowledge",
+                    "distractors": [{"id": f"D-01-{i:02d}", "name": f"D{i}"} for i in range(1, 7)]
+                }
+            ]
+        }
+        (work_dir / "cta.json").write_text(json.dumps(cta_data), encoding="utf-8")
+
+        shard_py = shards_dir / "shard_01_data.py"
+        shard_code = (
+            "def gen_c01_1(rng):\n"
+            "    v = rng.randint(10, 50)\n"
+            "    dists = [('D-01-01', f'Valor {v + 1} (sesgo negativo hacia abajo)', 'Rationale 1 con v=@v@'),\n"
+            "             ('D-01-02', f'Valor {v + 2}', 'Rationale 2 con v=@v@'),\n"
+            "             ('D-01-03', f'Valor {v + 3}', 'Rationale 3 con v=@v@'),\n"
+            "             ('D-01-04', f'Valor {v + 4}', 'Rationale 4 con v=@v@'),\n"
+            "             ('D-01-05', f'Valor {v + 5}', 'Rationale 5 con v=@v@'),\n"
+            "             ('D-01-06', f'Valor {v + 6}', 'Rationale 6 con v=@v@')]\n"
+            "    return {'vars': {'v': v}, 'correct': f'Valor {v}', 'distractors': dists}\n"
+            "def ver_c01_1(res):\n"
+            "    return res is not None and 'v' in res.get('vars', {})\n"
+            "stems = ['Stem 1 @v@ para análisis formal.', 'Stem 2 @v@ para cálculo cuantitativo.', 'Stem 3 @v@ en contexto del modelo.']\n"
+            "hints = ['Pista socrática 1 identificando variables.', 'Pista socrática 2 deduciendo fórmula requerida.', 'Pista socrática 3 evaluando el resultado numérico.']\n"
+            "TEMPLATES = [\n"
+            "    ('T-C01-01', 'C-01', 'multiple_choice_7_options', gen_c01_1, ver_c01_1, ('easy', 'Remember'), stems, hints, 'Sol @v@')\n"
+            "]\n"
+        )
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success, "Expected compile_shard to fail due to parenthetical telltale clue"
+        assert any("parenthetical_telltale_linter" in e for e in errors), f"Expected parenthetical_telltale_linter error, got: {errors}"
+        assert any("(sesgo negativo hacia abajo)" in e for e in errors), f"Expected offending snippet in errors, got: {errors}"

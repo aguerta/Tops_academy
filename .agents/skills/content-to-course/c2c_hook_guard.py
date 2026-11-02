@@ -667,6 +667,22 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                             if isinstance(p_data, dict):
                                                 st = str(p_data.get("status", "")).strip().upper()
                                                 if st == "PASS":
+                                                    # Exemption: Do not deny edits when the shard is actively marked REJECTED/under repair
+                                                    is_rejected = False
+                                                    spec_rep = wd / "specific_error_report.json"
+                                                    if spec_rep.is_file():
+                                                        try:
+                                                            s_raw = spec_rep.read_text(encoding="utf-8", errors="ignore")
+                                                            s_data = json.loads(s_raw) if s_raw.strip() else {}
+                                                            if isinstance(s_data, dict) and s_data.get("status") in ("REJECTED", "FAIL", "FAILED"):
+                                                                aff_shards = [str(x).lower() for x in s_data.get("affected_shards", [])]
+                                                                if any(alias.lower() in aff_shards or f"shard_{alias.lower()}" in aff_shards for alias in _shard_id_aliases(target_id)):
+                                                                    is_rejected = True
+                                                        except Exception:
+                                                            pass
+                                                    if is_rejected:
+                                                        continue
+
                                                     return {
                                                         "decision": "deny",
                                                         "reason": (
@@ -689,6 +705,21 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                                 if isinstance(p_data, dict):
                                                     st = str(p_data.get("status", "")).strip().upper()
                                                     if st == "PASS":
+                                                        # Exemption: Do not deny edits when CTA is actively marked REJECTED/under repair
+                                                        is_rejected = False
+                                                        spec_rep = wd / "specific_error_report.json"
+                                                        if spec_rep.is_file():
+                                                            try:
+                                                                s_raw = spec_rep.read_text(encoding="utf-8", errors="ignore")
+                                                                s_data = json.loads(s_raw) if s_raw.strip() else {}
+                                                                if isinstance(s_data, dict) and s_data.get("status") in ("REJECTED", "FAIL", "FAILED"):
+                                                                    if s_data.get("affected_cta"):
+                                                                        is_rejected = True
+                                                            except Exception:
+                                                                pass
+                                                        if is_rejected:
+                                                            continue
+
                                                         return {
                                                             "decision": "deny",
                                                             "reason": (

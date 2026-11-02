@@ -173,6 +173,7 @@ def generate_judge_batch(
     max_judges: int = DEFAULT_MAX_JUDGES,
     max_items_per_judge: int = DEFAULT_MAX_ITEMS_PER_JUDGE,
     random_seed: Optional[int] = None,
+    ids: Optional[Union[str, List[Union[str, int]]]] = None,
 ) -> Tuple[Path, Path]:
     """Generates work/judge_batch.json WITHOUT answer keys using stratified random sampling.
     
@@ -191,6 +192,7 @@ def generate_judge_batch(
         max_judges: Maximum number of blind judges (default: 10).
         max_items_per_judge: Maximum questions per blind judge (default: 20).
         random_seed: Optional RNG seed for reproducible random selection when needed.
+        ids: Optional list of competency IDs to arbitrate in targeted mode.
 
     Returns:
         Tuple of (path_to_judge_batch_json, path_to_ground_truth_json).
@@ -201,6 +203,18 @@ def generate_judge_batch(
     templates = _load_templates(templates_path)
     if not templates:
         raise ValueError(f"No templates found in path: {templates_path}")
+
+    if ids is not None:
+        raw_ids = [ids] if isinstance(ids, (str, int)) else list(ids)
+        target_ids = {str(x).strip().upper() for x in raw_ids if str(x).strip()}
+        if target_ids:
+            templates = [
+                t for t in templates
+                if str(t.get("competency_id", "")).strip().upper() in target_ids
+                or str(t.get("id", "")).strip().upper() in target_ids
+            ]
+            if not templates:
+                logger.warning("No templates matched the specified ids: %s", target_ids)
 
     # Load previously evaluated competencies if in ready_only mode
     evaluated_file = work / "verification" / "evaluated_competencies.json"
@@ -378,7 +392,8 @@ def generate_judge_batch(
         template_counts[template_id] = inst_idx
         item_id = f"{template_id}_judge_{inst_idx}"
 
-        gen_res = execute_sandbox_instance(template["generate_py"], seed=seed)
+        gen_code = template.get("generate_py") or template.get("generator_code") or ""
+        gen_res = execute_sandbox_instance(gen_code, seed=seed)
 
         # Cryptographic per-item option shuffle seed (uniform A..G distribution)
         option_shuffle_seed = zlib.crc32(f"{template_id}:{inst_idx}:{seed}".encode("utf-8")) & 0xFFFFFFFF
@@ -538,6 +553,10 @@ def generate_judge_batch(
 
     logger.info("Generated judge batch with %d items at %s", len(judge_batch_items), batch_path)
     return batch_path, truth_path
+
+
+# Canonical alias for compatibility
+prepare_judge_batch = generate_judge_batch
 
 
 def split_judge_batch(
@@ -1346,6 +1365,12 @@ def main() -> None:
         default=False,
         help="Only evaluate templates whose competencies have not yet been evaluated",
     )
+    prep.add_argument(
+        "--ids",
+        nargs="*",
+        default=None,
+        help="Target competency IDs to arbitrate (default: all)",
+    )
 
     # split subcommand
     split_p = subparsers.add_parser("split", help="Split judge_batch.json into stratified batches")
@@ -1377,6 +1402,7 @@ def main() -> None:
             cta_path=args.cta,
             items_per_competency=args.items_per_competency,
             ready_only=args.ready_only,
+            ids=args.ids,
         )
         print(f"Generated judge batch: {batch_p}")
         print(f"Generated ground truth: {truth_p}")

@@ -420,6 +420,76 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
         self.assertEqual(rep_pass["status"], "PASS")
         self.assertEqual(len(rep_pass["errors"]), 0)
 
+    def test_dispatch_judges_targeted_arbitration_with_ids(self) -> None:
+        """dispatch_judges filters judge batches and payload strictly to targeted competencies when ids is passed."""
+        from dispatch import dispatch_judges
+        from judge import generate_judge_batch
+
+        templates_dir = self.work_dir / "templates"
+        templates_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create templates for C-01 and C-16
+        code_c01 = (
+            "def generate(rng):\n"
+            "    return {'vars': {'x': 1}, 'correct': '10', 'distractors': [\n"
+            "        {'distractor_id': f'D-01-{i:02d}', 'value': f'{10+i}', 'error_rationale': f'Rat {i} con @x@'}\n"
+            "        for i in range(1, 7)\n"
+            "    ]}\n"
+        )
+        c01_tpl = {
+            "id": "T-C01-01",
+            "template_id": "T-C01-01",
+            "competency_id": "C-01",
+            "interaction_type": "multiple_choice_7_options",
+            "generator_code": code_c01,
+            "generate_py": code_c01,
+            "stem": "Stem 1 @x@",
+            "stems": ["Stem 1 @x@", "Stem 2 @x@", "Stem 3 @x@"],
+            "hints": ["Hint 1", "Hint 2", "Hint 3"],
+            "explanation_es": "Sol",
+        }
+        code_c16 = (
+            "def generate(rng):\n"
+            "    return {'vars': {'x': 2}, 'correct': '20', 'distractors': [\n"
+            "        {'distractor_id': f'D-16-{i:02d}', 'value': f'{20+i}', 'error_rationale': f'Rat {i} con @x@'}\n"
+            "        for i in range(1, 7)\n"
+            "    ]}\n"
+        )
+        c16_tpl = {
+            "id": "T-C16-01",
+            "template_id": "T-C16-01",
+            "competency_id": "C-16",
+            "interaction_type": "multiple_choice_7_options",
+            "generator_code": code_c16,
+            "generate_py": code_c16,
+            "stem": "Stem 1 @x@",
+            "stems": ["Stem 1 @x@", "Stem 2 @x@", "Stem 3 @x@"],
+            "hints": ["Hint 1", "Hint 2", "Hint 3"],
+            "explanation_es": "Sol",
+        }
+        (templates_dir / "C-01.json").write_text(json.dumps([c01_tpl]), encoding="utf-8")
+        (templates_dir / "C-16.json").write_text(json.dumps([c16_tpl]), encoding="utf-8")
+
+        # 1. Test generate_judge_batch with targeted ids
+        batch_p, truth_p = generate_judge_batch(
+            templates_path=templates_dir,
+            work_dir=self.work_dir,
+            ids=["C-16"],
+        )
+        batch_items = json.loads(batch_p.read_text(encoding="utf-8"))
+        self.assertGreater(len(batch_items), 0)
+        self.assertTrue(all(item["competency_id"] == "C-16" for item in batch_items))
+
+        # 2. Test dispatch_judges with targeted ids
+        res = dispatch_judges(self.work_dir, ids=["C-16"], pointer=False)
+        self.assertIn("Subagents", res)
+        self.assertGreater(len(res["Subagents"]), 0)
+        # Parse items payload from prompt
+        for sub in res["Subagents"]:
+            prompt = sub["Prompt"]
+            self.assertIn("T-C16-01", prompt)
+            self.assertNotIn("T-C01-01", prompt)
+
 
 if __name__ == "__main__":
     unittest.main()

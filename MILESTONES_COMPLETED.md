@@ -12,7 +12,9 @@
 | :--- | :--- | :--- | :--- |
 | **1** Ergonomía Web (Zoom-Fix, Split 50%, Remediación v3) | Laptops 14" a 150%, TUF F15 a 125%, split 50%, tablets; biblioteca de 3 columnas; prosa en fórmulas | Usuario (2026-10-26) + matriz de 7 viewports + 97 contratos | `05c8f4b`, `12042d0`, `950bd20` |
 | **2a** Usabilidad móvil | Teléfono: columna única, drawer, footer en flujo | Usuario (2026-10-26) + viewport 390 × 844 en la matriz | los de M1 |
+| **2** PWA Instalable y Modo Offline | Service Worker Workbox, precaching App Shell + fuentes KaTeX, Web App Manifest, suite de iconos (192, 512, maskable), badge `✓ Offline`, navegación nativa popstate (`navigationHistory.ts`), instalación guiada | Automática (`tests/test_pwa_offline.py`, `tests/test_pwa_navigation_and_install.py`) + Verificado en producción PWA (2026-11-01) | `23cb4ec`, `e26769b`, `7e6a238`, `9296f9c` |
 | **3** Anti-Overfitting y Variedad de Plantillas (v3.8 Tri-Banda) | Contrato Tri-Banda (`--min-archetypes 3`, 3 bandas ZPD, $\ge 2$ Bloom, cuota FIB/MS, `[STEM-DIVERSITY-GATE]`) + `ArchetypeEntropyLinter` (`MIN_ARCHETYPES = 3` + `ratio > 0.85` + MPRI) | Automática (`test_new_audit_linters.py`, 11 cursos publicados con 0 infracciones) | `5b5395c`, `be43b08`, `b07cec8` + cierre 2026-10-31 |
+| **10** QA Rubric v2.0 Deep Mastery | 7 linters Path-to-Mastery v2.0, MPRI (/100 pts en 6 pilares, cuota $\ge 25\%$ multimodal), penalizaciones duras, compuerta bloqueante pre-publish `PublishQualityGateError` con mapeo AST | Automática (`tests/test_new_audit_linters.py`) + Auditoría en pipeline sobre 11 cursos | `be43b08`, `24c44f8`, `0e2fd38`, `b07cec8` |
 | **11** Carga de cursos — núcleo | Manifest slim, índice con caché, ETag/304/gzip, manifest inline, IndexedDB, prefetch | Automática (12 tests de API + build); ACs de cliente sin medir | `41435c5`, `b73a5ee`, `2051b8b`, `97fa2f3` |
 
 ---
@@ -97,32 +99,33 @@
 ## Milestone 2a: Usabilidad Móvil (alcance cerrado del antiguo Milestone 2)
 * **Estado:** ✅ **Completado y certificado por el usuario (2026-10-26):** «ahora sí funciona el celular… ya no se tiene que pelear con la plataforma para hacer las preguntas».
 * **Entregado (consecuencia directa del Milestone 1):** columna única bajo 480 px de contenedor, sidebar como drawer bajo 1024 px, indicador `n of N` en el footer, toast como bottom sheet, footer en flujo sin scroll fantasma (`h-dvh`) y cero desborde horizontal. El viewport 390 × 844 forma parte de la matriz E2E (PASS).
+* **Evolución:** La infraestructura PWA e instalación móvil complementaria se completó formalmente en el **Milestone 2** (ver abajo).
 
 ---
 
-## Milestone 2b: PWA Instalable y Modo Offline (Configuración PWA Móvil)
-* **Estado:** ✅ **Completado al 100% y Verificado (2026-11-01).** Testeado exhaustivamente con `tests/test_pwa_offline.py` (12/12 PASS), `test_course_api_manifest.py` (12/12 PASS), y `test_platform.py` (19/19 PASS).
-* **Objetivo:** Experiencia nativa instalable (`standalone`) en smartphones Android, iOS y escritorio con soporte 100% offline.
+## Milestone 2: PWA Instalable y Modo Offline (Configuración PWA Móvil y Navegación Nativa)
+* **Estado:** ✅ **Completado y Verificado (2026-11-01).**
+* **Objetivo:** Experiencia nativa instalable (`standalone`) en smartphones Android, iOS y escritorio sin red, con sincronización de historial del navegador para gestos de retroceso nativos.
 * **Componentes Técnicos Entregados:**
-  1. **Workbox Precache App Shell (`vite-plugin-pwa` ^2.0.0):**
-     - Precaching de `index.html`, JS, CSS, `api/courses.json` (slim manifest < 2 KB) y fuentes `.woff2` de KaTeX (19 fuentes optimizadas).
-     - **Salvaguarda Crítica Cumplida:** Cursos (`courses/**` y `api/courses/**`) 100% excluidos del precache para erradicar el riesgo de superar el límite de 2 MB (evitando precachear cursos pesados de 14 MB).
-     - Tamaño total de precache medido: **1,539 KiB (1.5 MB)**, distribuido en 38 entradas estables.
-  2. **Estrategia Dual Offline para Cursos:**
-     - Runtime Caching con `StaleWhileRevalidate` en Service Worker para peticiones `/api/courses/` y `/courses/`.
-     - Persistencia en cliente con IndexedDB (`tops_academy_cache`) gestionada por `courseLoader.ts`, cargando preguntas en < 16 ms.
-  3. **Manifiesto PWA e Iconos Adaptativos:**
-     - `dist/manifest.webmanifest` con `display: standalone`, `theme_color: #1865f2`, `background_color: #fafbfc`, `orientation: any`.
-     - Iconos generados en `platform/public/`: `pwa-192x192.png`, `pwa-512x512.png`, `pwa-maskable-512x512.png` (safe area), `apple-touch-icon.png` (180x180) y `icon.svg`.
-     - Botón `📲 Instalar App` en la cabecera de `CourseLibrary.tsx` al dispararse el evento `beforeinstallprompt`.
-  4. **Metatags iOS / Safe Areas:**
-     - Metatags de Safe Area (`viewport-fit=cover`, `mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style: black-translucent`).
-     - Utilidades CSS para `env(safe-area-inset-bottom)` en `index.css` asegurando que barras y footers de práctica no choquen con indicadores gestuales de iOS/Android.
-  5. **Insignia Visual `✓ Offline` en Tiempo Real:**
-     - Sincronización reactiva en `courseLoader.ts` (`getCachedCourseIds()`, `onCourseCacheChanged()`).
-     - Insignia visual `✓ Offline` (`data-testid="course-offline-badge"`) en cada tarjeta de curso disponible sin red en `CourseLibrary.tsx`.
-  6. **Hardening de Cabeceras HTTP:**
-     - `sw.js` y `registerSW.js` servidos con `Cache-Control: no-cache, no-store, must-revalidate` en Node (`courseServer.cjs`) y Python (`run_platform.py`), garantizando actualizaciones transparentes e inmediatas (`registerType: 'autoUpdate'`).
+  1. **Service Worker y Precaching con Workbox (`vite-plugin-pwa`):**
+     - Precaching de App Shell (HTML, JS, CSS y fuentes `.woff2` de KaTeX ≈ 1.5 MB total).
+     - **Exclusión obligatoria en Workbox:** Exclusión de `api/courses/*.json` y `courses/*.json` de los `globPatterns` de precache (evitando desbordar el límite de 2 MB ante cursos de 14 MB como Gavilano); delegación a IndexedDB (`tops_academy_cache` en `courseLoader.ts`) con estrategia `StaleWhileRevalidate` en tiempo de ejecución.
+  2. **Web App Manifest e Iconos Adaptativos:**
+     - `manifest.webmanifest` con `display: standalone`, `scope: ./`, `id: tops-academy-pwa`, `background_color: #ffffff`, `theme_color: #1a73e8`.
+     - Suite completa de iconos: `pwa-192x192.png`, `pwa-512x512.png` y `pwa-maskable-512x512.png`.
+     - Metatags de Safe Areas (`viewport-fit=cover`, soporte de `env(safe-area-inset-bottom)`).
+     - Insignia visual `✓ Offline` por curso en `CourseLibrary.tsx`.
+  3. **Gestión de Navegación Nativa y Popstate (`navigationHistory.ts`):**
+     - Sincronización del estado de vistas de React con el `History API` del navegador (`popstate`).
+     - Soporte para gesto de retroceso físico/gestual nativo en Android e iOS.
+     - Interceptores LIFO para modales, sidebars y drawer.
+     - Modal de confirmación antes de abandonar una sesión de práctica en curso y protección de doble atrás (`double-back exit toast`) en la raíz (biblioteca) para evitar salidas accidentales.
+  4. **Instalación Guiada:**
+     - Captura temprana del evento `beforeinstallprompt` y botón de instalación con spinner de carga interactivo en la barra superior.
+* **Verificación Automatizada:**
+  - `tests/test_pwa_offline.py` (12/12 PASS).
+  - `tests/test_pwa_navigation_and_install.py` (PASS).
+* **Commits:** `23cb4ec`, `e26769b`, `7e6a238`, `9296f9c`.
 
 ---
 
@@ -139,6 +142,32 @@
   2. **Auditoría Determinista Integral en QA Engine ([`standardized_audit_engine.py:L674-L767`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/course-qa-evaluator/scripts/standardized_audit_engine.py#L674-L767)):**
      - `ArchetypeEntropyLinter` (`MIN_ARCHETYPES = 3`): Audita tanto concentración excesiva en una sola plantilla (`ratio > 0.85`) como insuficiencia de esqueletos estructurales (`distinct_skeletons < 3`) o de plantillas declaradas (`len(tpl_ids) < 3`) en competencias con $\ge 15$ reactivos, exponiendo `low_archetype_variety_competencies` y `min_distinct_skeletons_observed`.
      - Integración directa con el **Pilar 2 del MPRI** (`retrieval_modality_and_anti_gaming`, penalizando competencias monótonas en `anti_gaming_score`) y mapeo prescriptivo en [`course_publisher.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/course_publisher.py#L306-L314) (`ZPD-TRI-BAND / archetype_entropy_linter`), complementado por `ZPDProgressionCalibrationLinter` y `AntiGamingPsychometricLinter` (`answer_memorization_exploit`).
+
+---
+
+## Milestone 10: Rúbrica QA v2.0 (Certificación Deep Mastery & Path-to-Mastery)
+* **Estado:** ✅ **Completado al 100% y Activo en Producción (2026-10-31).** Verificado automáticamente con la suite `tests/test_new_audit_linters.py` y validación sobre los 11 cursos publicados en `courses/*.json` (1,170 reactivos certificados sin bloqueos ni regresiones).
+* **Objetivo:** Certificación integral del rigor pedagógico, psicométrico y técnico bajo estándares de Quality Matters (QM), OSCQR y Mastery Learning con compuertas de bloqueo deterministas.
+* **Componentes Técnicos Entregados (`standardized_audit_engine.py`, `qa_rubric.md` y `course_publisher.py`):**
+  1. **Suite de 7 Linters Path-to-Mastery v2.0:**
+     - `ZPDProgressionCalibrationLinter`: 3 bandas ZPD con progresión obligatoria y presencia de niveles Bloom `Apply+`.
+     - `RetrievalModalityDiversityLinter`: Cuota activa (`FIB + MS`) frente al monocultivo pasivo de reconocimiento (MC7).
+     - `SocraticScaffoldingIntegrityLinter`: Detección estricta de pistas envenenadas, boilerplate Mad-Libs y fugas directas de la respuesta correcta.
+     - `DiagnosticRationaleAlignmentLinter`: Bloqueo de multiplicadores numéricos arbitrarios (`[DIAG-MAGIC-MULT]`) y reciclaje de rationales genéricos.
+     - `AntiGamingPsychometricLinter`: Prevención de memorización visual ($\le 4$ claves), relleno de opciones `[R-15]`, prefijos cruzados y cuantificadores universales vacuos.
+     - `DAGMasteryTopologyLinter`: Detección de ciclos, inversiones topológicas y subgrafos curriculares desconectados.
+     - `KaTeXFrontendErgonomicsLinter`: Detección de bloques de prosa dentro de `\text{}` que excedan 45 caracteres e identificadores matemáticos crudos sin formateo KaTeX.
+  2. **Índice MPRI (`Mastery Path Readiness Index`, 0 a 100 pts en 6 pilares):**
+     - Exigencia de $\ge 25\%$ de generación activa / discriminación (`FIB + MS`) para otorgar puntaje completo de modalidad (penalizando hasta -10 pts MPRI y -1.3 pts en Dimensión 2 ante monocultivo 100% MC7).
+  3. **Penalizaciones Duras Deterministas (`hard_penalties`):**
+     - `socratic_hint_poisoning` (-1.5 pts), `vacuous_quantifier_key_corruption` (-1.0 pt), `answer_memorization_exploit` (-0.5 pt/comp, máx -2.0 pts), sumadas a `bank_lt_3_exercises`, `hints_zero` y `orphan_questions`.
+  4. **Compuerta Bloqueante Pre-Publish (`PublishQualityGateError` en `course_publisher.py`):**
+     - Bloqueo determinista de publicación si `MPRI < 75.0`, `zpd_score <= 0.0`, `diag_pillar_score < 13.0`, `rationale_uniqueness_pct < 30.0%`, `len(hard_penalties) > 0`, cualquier issue `critical`, o presencia de opciones con padding de longitud artificial (`length_padded_options`).
+     - Generación automática de `specific_error_report.{md,json}` con mapeo AST de números de línea exactos para remediación quirúrgica por subagentes.
+* **Verificación Automatizada:**
+  - Suite `tests/test_new_audit_linters.py` (100% PASS).
+  - Validación sobre los 11 cursos reales publicados en `courses/*.json` (1,170 reactivos certificados sin bloqueos ni regresiones).
+* **Commits:** `be43b08`, `24c44f8`, `0e2fd38`, `b07cec8`.
 
 ---
 
