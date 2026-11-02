@@ -63,6 +63,7 @@ class TestPwaNavigationHistoryArchitecture:
         assert "setupNavigationHistory" in code
         assert "registerBackInterceptor" in code
         assert "navigateView" in code
+        assert "handleQuitSession" in code
         assert "showExitToast" in code
         assert "showQuitConfirm" in code
         assert "double-back-toast" in code
@@ -71,6 +72,24 @@ class TestPwaNavigationHistoryArchitecture:
         assert "¿Deseas salir de la sesión?" in code
         assert "quit-confirm-continue" in code
         assert "quit-confirm-exit" in code
+
+    def test_navigation_history_enforces_overview_to_library_invariant(self):
+        nav_module = PLATFORM_DIR / "src" / "utils" / "navigationHistory.ts"
+        code = nav_module.read_text(encoding="utf-8")
+
+        # Must enforce: from 'overview', back gesture MUST route to 'library'
+        assert "if (currentView === 'overview')" in code
+        assert "options.onNavigate({ viewMode: 'library' })" in code
+        assert "replaceNavState({ viewMode: 'library' })" in code
+
+    def test_navigation_history_sanitizes_stale_ephemeral_screens(self):
+        nav_module = PLATFORM_DIR / "src" / "utils" / "navigationHistory.ts"
+        code = nav_module.read_text(encoding="utf-8")
+
+        # Must sanitize: if previous state was practice, challenge, or completed, never re-enter
+        assert "previousState.viewMode === 'practice'" in code
+        assert "previousState.viewMode === 'challenge'" in code
+        assert "previousState.viewMode === 'completed'" in code
 
 
 class TestNavigationStateTransitions:

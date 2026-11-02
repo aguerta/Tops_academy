@@ -246,7 +246,8 @@ export const App: React.FC = () => {
     setSessionKey((prev) => prev + 1);
 
     if (directToPractice) {
-      navigateView('practice', { competencyId: targetComp?.id });
+      const shouldReplace = viewMode === 'pre_exercise' || viewMode === 'completed';
+      navigateView('practice', { competencyId: targetComp?.id, replace: shouldReplace });
     } else {
       navigateView('pre_exercise', { competencyId: targetComp?.id });
     }
@@ -257,9 +258,9 @@ export const App: React.FC = () => {
     launchSession('practice', comp, false);
   };
 
-  // Start Practice from Pre-Exercise Modal
+  // Start Practice from Pre-Exercise Modal (replaces modal in history)
   const handleBeginPracticeSession = () => {
-    navigateView('practice');
+    navigateView('practice', { replace: true });
   };
 
   // Launch Unit Quiz
@@ -280,6 +281,16 @@ export const App: React.FC = () => {
   // Start Course Challenge Session
   const handleBeginCourseChallenge = () => {
     launchSession('challenge', null, true);
+  };
+
+  // Safe quit from session: replaces current transient state with overview so back never re-enters quizzes
+  const handleQuitSession = () => {
+    setShowQuitConfirm(false);
+    setViewMode('overview');
+    replaceNavState({
+      viewMode: 'overview',
+      courseId: activeCourse?.course_id,
+    });
   };
 
   // Handle Practice Session Completion
@@ -303,7 +314,8 @@ export const App: React.FC = () => {
       }
     }
 
-    navigateView('completed');
+    // Replace practice with completed so you cannot back into questions
+    navigateView('completed', { replace: true });
   };
 
   // Handle "Try again" from Completion - preserves sessionType and performs fresh reshuffle directly
@@ -490,10 +502,7 @@ export const App: React.FC = () => {
               <button
                 type="button"
                 data-testid="quit-confirm-exit"
-                onClick={() => {
-                  setShowQuitConfirm(false);
-                  navigateView('overview');
-                }}
+                onClick={handleQuitSession}
                 className="flex-1 py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-xl transition-colors shadow-sm cursor-pointer"
               >
                 Salir

@@ -117,9 +117,36 @@ export function setupNavigationHistory(options: SetupNavigationOptions): () => v
       }
     }
 
-    // 3. Transición de vista según el estado recuperado
+    // 3. REGLA INVIOLABLE: Desde 'overview', retroceder NUNCA debe ingresar a un quiz, test, modal o completed.
+    // El único destino hacia atrás desde la vista de un curso es la biblioteca general ('library').
+    if (currentView === 'overview') {
+      options.onNavigate({ viewMode: 'library' });
+      replaceNavState({ viewMode: 'library' });
+      return;
+    }
+
+    // 4. Desde 'completed' (pantalla de resultados), retroceder debe volver al curso ('overview').
+    if (currentView === 'completed') {
+      const cur = options.getCurrentState();
+      options.onNavigate({ viewMode: 'overview', courseId: cur.courseId });
+      replaceNavState({ viewMode: 'overview', courseId: cur.courseId });
+      return;
+    }
+
+    // 5. Transición de vista según el estado recuperado con sanitización estricta
     if (previousState && previousState.viewMode) {
-      options.onNavigate(previousState);
+      // Salvaguarda: No permitir que ningún retroceso aterrice en un quiz, examen o challenge efímero previo
+      if (
+        previousState.viewMode === 'practice' ||
+        previousState.viewMode === 'challenge' ||
+        previousState.viewMode === 'completed'
+      ) {
+        const cur = options.getCurrentState();
+        options.onNavigate({ viewMode: 'overview', courseId: cur.courseId });
+        replaceNavState({ viewMode: 'overview', courseId: cur.courseId });
+      } else {
+        options.onNavigate(previousState);
+      }
     } else {
       options.onNavigate({ viewMode: 'library' });
     }
