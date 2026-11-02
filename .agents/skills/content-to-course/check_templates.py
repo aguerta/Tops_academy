@@ -21,7 +21,7 @@ import uuid
 import zlib
 from collections import defaultdict
 from datetime import datetime, timezone
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
@@ -3159,6 +3159,39 @@ def _validate_single_template_file(
     return file_errors, comp_id, referenced_dids, templates_list
 
 
+def _eval_comp_diversity_and_parity_worker(
+    cid: str,
+    comp_obj: Dict[str, Any],
+    comp_tpls: List[Dict[str, Any]],
+    cta_distractors_map: Dict[str, Any],
+    num_dry_run_seeds: int,
+    strict: bool,
+) -> List[str]:
+    """Module-level (picklable) TPL-VAR diversity + production parity check for one competency."""
+    c_errors: List[str] = []
+    sim_seeds = num_dry_run_seeds if num_dry_run_seeds <= 20 else None
+    div_errors, comp_questions = check_competency_diversity(
+        templates=comp_tpls,
+        competency=comp_obj,
+        distractor_map=cta_distractors_map,
+        num_seeds=sim_seeds,
+        return_questions=True,
+        enforce_full_quota=(num_dry_run_seeds >= 50),
+        strict=strict,
+    )
+    c_errors.extend(div_errors)
+    if strict and comp_questions:
+        c_errors.extend(
+            check_production_parity_for_competency(
+                cid=cid,
+                competency=comp_obj,
+                questions=comp_questions,
+                strict=True,
+            )
+        )
+    return c_errors
+
+
 def check_templates_file_or_dir(
     target_path: Union[Path, List[Path], str, List[str]],
     cta_path: Optional[Path] = None,
@@ -3302,30 +3335,95 @@ def check_templates_file_or_dir(
     errors_by_comp: Dict[str, List[str]] = {}
 
     if len(template_files) > 1:
-        max_workers = min(4, os.cpu_count() or 4, len(template_files))
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_file = {
-                executor.submit(
-                    _validate_single_template_file,
-                    tf,
-                    cta_distractors_by_comp,
-                    cta_distractors_map,
-                    num_dry_run_seeds,
-                    shard_py,
-                    strict,
-                ): tf
-                for tf in template_files
-            }
-            for future in future_to_file:
-                file_errs, comp_id, ref_dids, tpls = future.result()
-                errors.extend(file_errs)
-                if comp_id:
-                    processed_comp_ids.add(comp_id)
-                    if file_errs:
-                        errors_by_comp.setdefault(comp_id, []).extend(file_errs)
-                    templates_by_comp.setdefault(comp_id, []).extend(tpls)
-                    if comp_id in referenced_distractors_by_comp:
-                        referenced_distractors_by_comp[comp_id].update(ref_dids)
+        max_workers = min(os.cpu_count() or 4, len(template_files))
+
+        def _run_pool(pool_cls, workers, files):
+            with pool_cls(max_workers=workers) as executor:
+                futs = [
+                    executor.submit(
+                        _validate_single_template_file,
+                        tf,
+                        cta_distractors_by_comp,
+                        cta_distractors_map,
+                        num_dry_run_seeds,
+                        shard_py,
+                        strict,
+                    )
+                    for tf in files
+                ]
+                return [f.result() for f in futs]
+
+        # Incremental cache: skip files whose content, CTA, params and validator code are
+        # unchanged since their last *passing* validation (failures are never cached).
+        import pickle
+        cache_dir: Optional[Path] = None
+        key_prefix = ""
+        if cta_p is not None and shard_py is None:
+            try:
+                cache_dir = cta_p.parent / ".validation_cache"
+                h = hashlib.sha256()
+                h.update(cta_p.read_bytes())
+                h.update(f"{num_dry_run_seeds}|{strict}".encode())
+                skill_root = Path(__file__).resolve().parent
+                for src in sorted(list((skill_root / "engine").glob("*.py")) + list((skill_root / "validator").glob("*.py")) + [Path(__file__).resolve()]):
+                    h.update(src.read_bytes())
+                key_prefix = h.hexdigest()
+            except Exception:
+                cache_dir = None
+
+        def _cache_path(tf: Path) -> Optional[Path]:
+            if cache_dir is None:
+                return None
+            fh = hashlib.sha256(key_prefix.encode() + tf.read_bytes()).hexdigest()
+            return cache_dir / f"{tf.stem}_{fh[:24]}.pkl"
+
+        cached_results: Dict[Path, Any] = {}
+        pending: List[Path] = []
+        for tf in template_files:
+            cp = None
+            try:
+                cp = _cache_path(tf)
+                if cp is not None and cp.is_file():
+                    cached_results[tf] = pickle.loads(cp.read_bytes())
+                    continue
+            except Exception:
+                pass
+            pending.append(tf)
+
+        fresh: Dict[Path, Any] = {}
+        if pending:
+            # Validation is CPU-bound (GIL): prefer processes, fall back to threads if
+            # the pool cannot be used (e.g. unpicklable args or restricted environment).
+            workers = min(os.cpu_count() or 4, len(pending))
+            try:
+                res_list = _run_pool(ProcessPoolExecutor, workers, pending) if len(pending) > 1 else _run_pool(ThreadPoolExecutor, 1, pending)
+            except Exception:
+                res_list = _run_pool(ThreadPoolExecutor, min(4, workers), pending)
+            fresh = dict(zip(pending, res_list))
+            if cache_dir is not None:
+                for tf, res in fresh.items():
+                    try:
+                        if not res[0]:
+                            cp = _cache_path(tf)
+                            if cp is not None:
+                                cache_dir.mkdir(parents=True, exist_ok=True)
+                                cp.write_bytes(pickle.dumps(res))
+                    except Exception:
+                        pass
+
+        results = [cached_results[tf] if tf in cached_results else fresh[tf] for tf in template_files]
+        if cached_results:
+            print(f"  [i] Template validation cache: {len(cached_results)} reused, {len(pending)} re-validated.")
+
+        for file_errs, comp_id, ref_dids, tpls in results:
+            errors.extend(file_errs)
+            if comp_id:
+                processed_comp_ids.add(comp_id)
+                if file_errs:
+                    errors_by_comp.setdefault(comp_id, []).extend(file_errs)
+                templates_by_comp.setdefault(comp_id, []).extend(tpls)
+                if comp_id in referenced_distractors_by_comp:
+                    referenced_distractors_by_comp[comp_id].update(ref_dids)
     else:
         for tf in template_files:
             file_errs, comp_id, ref_dids, tpls = _validate_single_template_file(
@@ -3403,50 +3501,83 @@ def check_templates_file_or_dir(
         comp_map = {c["id"]: c for c in cta_data.get("competencies", [])}
         comps_to_check = list(referenced_distractors_by_comp.keys()) if is_full_dir else list(processed_comp_ids)
         def _evaluate_comp_diversity_and_parity(cid: str) -> List[str]:
-            c_errors: List[str] = []
             comp_obj = comp_map.get(cid)
             comp_tpls = templates_by_comp.get(cid, [])
             if not (comp_obj and comp_tpls):
-                return c_errors
-            sim_seeds = num_dry_run_seeds if num_dry_run_seeds <= 20 else None
-            div_errors, comp_questions = check_competency_diversity(
-                templates=comp_tpls,
-                competency=comp_obj,
-                distractor_map=cta_distractors_map,
-                num_seeds=sim_seeds,
-                return_questions=True,
-                enforce_full_quota=(num_dry_run_seeds >= 50),
-                strict=strict,
+                return []
+            return _eval_comp_diversity_and_parity_worker(
+                cid, comp_obj, comp_tpls, cta_distractors_map, num_dry_run_seeds, strict
             )
-            c_errors.extend(div_errors)
-
-            if strict and comp_questions:
-                parity_errors = check_production_parity_for_competency(
-                    cid=cid,
-                    competency=comp_obj,
-                    questions=comp_questions,
-                    strict=True,
-                )
-                c_errors.extend(parity_errors)
-            return c_errors
 
         sorted_comps = sorted(comps_to_check)
-        if len(sorted_comps) > 1:
-            max_workers = min(4, os.cpu_count() or 4, len(sorted_comps))
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                comp_futures = {executor.submit(_evaluate_comp_diversity_and_parity, cid): cid for cid in sorted_comps}
-                for fut in comp_futures:
-                    cid = comp_futures[fut]
-                    c_errs = fut.result()
-                    errors.extend(c_errs)
-                    if c_errs:
-                        errors_by_comp.setdefault(cid, []).extend(c_errs)
+
+        # Incremental cache for this phase (passing results only). key_prefix already
+        # covers cta.json, seeds/strict and validator code; add the comp's templates.
+        import pickle as _pk
+        div_cache_ok = bool(cache_dir is not None and key_prefix) if "cache_dir" in locals() else False
+
+        def _div_cache_path(cid: str) -> Optional[Path]:
+            if not div_cache_ok:
+                return None
+            try:
+                blob = json.dumps(templates_by_comp.get(cid, []), sort_keys=True, default=str)
+                fh = hashlib.sha256((key_prefix + "|div|" + cid + blob).encode("utf-8")).hexdigest()
+                return cache_dir / f"div_{cid}_{fh[:24]}.ok"
+            except Exception:
+                return None
+
+        comp_results: Dict[str, List[str]] = {}
+        to_run: List[str] = []
+        for cid in sorted_comps:
+            dp = _div_cache_path(cid)
+            if dp is not None and dp.is_file():
+                comp_results[cid] = []
+            else:
+                to_run.append(cid)
+
+        if len(to_run) > 1:
+            def _submit_all(pool_cls, workers):
+                with pool_cls(max_workers=workers) as ex:
+                    futs = {}
+                    for cid in to_run:
+                        comp_obj = comp_map.get(cid)
+                        comp_tpls = templates_by_comp.get(cid, [])
+                        if not (comp_obj and comp_tpls):
+                            comp_results[cid] = []
+                            continue
+                        futs[cid] = ex.submit(
+                            _eval_comp_diversity_and_parity_worker,
+                            cid, comp_obj, comp_tpls, cta_distractors_map, num_dry_run_seeds, strict,
+                        )
+                    for cid, fut in futs.items():
+                        comp_results[cid] = fut.result()
+            w = min(os.cpu_count() or 4, len(to_run))
+            try:
+                _submit_all(ProcessPoolExecutor, w)
+            except Exception:
+                comp_results.clear()
+                for cid in sorted_comps:
+                    dp = _div_cache_path(cid)
+                    if dp is not None and dp.is_file():
+                        comp_results[cid] = []
+                _submit_all(ThreadPoolExecutor, min(4, w))
         else:
-            for cid in sorted_comps:
-                c_errs = _evaluate_comp_diversity_and_parity(cid)
-                errors.extend(c_errs)
-                if c_errs:
-                    errors_by_comp.setdefault(cid, []).extend(c_errs)
+            for cid in to_run:
+                comp_results[cid] = _evaluate_comp_diversity_and_parity(cid)
+
+        for cid in sorted_comps:
+            c_errs = comp_results.get(cid, [])
+            errors.extend(c_errs)
+            if c_errs:
+                errors_by_comp.setdefault(cid, []).extend(c_errs)
+            elif cid in to_run:
+                dp = _div_cache_path(cid)
+                if dp is not None:
+                    try:
+                        cache_dir.mkdir(parents=True, exist_ok=True)
+                        dp.write_bytes(b"ok")
+                    except Exception:
+                        pass
 
     # Associate any global or unassociated errors with relevant competencies
     for err in errors:

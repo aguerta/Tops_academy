@@ -21,6 +21,9 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from engine.stage_contract import MIN_ARCHETYPES, competency_contract, global_contract, render_contract_tokens  # noqa: E402
+
 # =============================================================================
 # SHARD & TEMPLATE SCALING CONFIGURATION
 # Caso 2B (Variedad Máxima / Deep Mastery) - ACTUAL:
@@ -127,10 +130,11 @@ DSL_REFERENCE: Dict[str, Any] = {
             "[KATEX-PROSE-OVERFLOW]: Prohibido colocar fragmentos de prosa mayores a 45 caracteres dentro de \\text{...}. "
             "La prosa explicativa debe ubicarse fuera de $...$."
         ),
-        "tpl_var_mandatory": (
-            "Regla TPL-VAR-MANDATORY: Declarar obligatoriamente entre 3 y 5 'stem_variants' "
-            "(directa/conceptual, contextualizada, analítica/simbólica) con placeholders @var@ o {var} en cada plantilla "
-            "para garantizar diversidad estructural de enunciados (ratio >= 0.50)."
+        "tpl_var_mandatory": render_contract_tokens(
+            "Regla TPL-VAR-MANDATORY: Declarar obligatoriamente entre <<S4_VARIANTS_OTHER>> y 5 'stem_variants' "
+            "(directa/conceptual, contextualizada, analítica/simbólica) con placeholders @var@ o {var} en cada plantilla. "
+            "Stage 4 exige stems únicos enmascarados >= <<S4_UNIQ_SKILL>> (Skill, cuota <<S4_QUOTA_SKILL>>) o >= <<S4_UNIQ_OTHER>> "
+            "(Concept/Fact, cuota <<S4_QUOTA_OTHER>>), ratio >= <<S4_RATIO>> (ver stage4_contract del shard)."
         ),
         "orthogonal_tokens_raw_strings": (
             "REGLA DE TOKENS ORTOGONALES (@var@ / @var:fmt@): Usar strings crudos r'...' con tokens @nombre@ o @nombre:fmt@ "
@@ -685,6 +689,12 @@ def plan_shards(
             })
 
     manifest_shards = []
+    # Stage 4 authority: type is read exactly as run.py --stage build reads it (comp["type"]).
+    cta_type_by_cid = {
+        str(c.get("id")): str(c.get("type", "concept"))
+        for c in competencies
+        if isinstance(c, dict) and c.get("id")
+    }
     templates_dir_abs = str((work_dir / "templates").resolve().as_posix())
 
     for idx, shard in enumerate(shards):
@@ -734,8 +744,13 @@ def plan_shards(
                 matched_sources.append(doc)
 
         wave_idx = shard.get("wave_index", (idx // max_wave_size) + 1)
+        s4_by_cid = {
+            cid_s4: competency_contract(cta_type_by_cid.get(cid_s4, "concept"))
+            for cid_s4 in shard["competency_ids"]
+        }
         shard_entry = {
             "shard_id": s_id,
+            "stage4_contract": s4_by_cid,
             "shard_index": idx,
             "wave_index": wave_idx,
             "competencies": shard["competencies"],
@@ -769,6 +784,7 @@ def plan_shards(
             "templates_dir": templates_dir_abs,
             "source_files": matched_sources,
             "dsl_reference": DSL_REFERENCE,
+            "stage4_contract": {"global": global_contract(), "per_competency": s4_by_cid},
         }
         _atomic_write_json(shard_file, shard_payload)
 
@@ -788,6 +804,8 @@ def plan_shards(
         "total_shards": len(shards),
         "total_waves": total_waves,
         "max_wave_size": max_wave_size,
+        "min_archetypes": MIN_ARCHETYPES,
+        "stage4_contract": global_contract(),
         "waves": waves_summary,
         "shards": manifest_shards,
     }

@@ -23,7 +23,7 @@ Your repair targets, diagnostics, and source files are in `work/dispatch/items/r
    - FIB: naked answer without outer `$` (`r"@ans@"`), `[FIB-NAKED]`.
 4. **Verifiers & Quality:**
    - Real analytical `ver_*(result)` checking `vars` (prohibited `return True`).
-   - >= 3 stems and 3..5 socratic hints >= 25 chars per template.
+   - >= <<S4_VARIANTS_OTHER>> stems per template (unique stems per competency >= <<S4_UNIQ_SKILL>> Hab / <<S4_UNIQ_OTHER>> C-H) and 3..5 socratic hints >= 25 chars per template.
    - Prose outside `$ ... $`; no full sentences in `\text{...} > 45` chars (`[KATEX-PROSE-OVERFLOW]`). Use `\Rightarrow` not `\implies`.
    - Balanced KaTeX delimiters `$ ... $` and braces `{ ... }` (`R-20`).
 

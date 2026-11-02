@@ -48,7 +48,7 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
    - `[R-16]` (Paridad de longitud): longitud de `correct` en rango `[0.80, 1.20]` respecto a distractores.
    - `[TPL-DRY]`: variable `@var@` en enunciado u opciones sin existir en `vars`.
    - `[Verificadores Reales]`: `ver_*(result)` debe validar analíticamente variables contra la respuesta (prohibido `return True` trivial).
-   - Requisitos de stems e hints: `>= 3` stems y `3..5` hints socráticos de `>= 25` caracteres por plantilla.
+   - Requisitos de stems e hints: `stem_variants` por plantilla (>= <<S4_VARIANTS_OTHER>>, máx 5; stems únicos por competencia >= <<S4_UNIQ_SKILL>> en `Hab-*` y >= <<S4_UNIQ_OTHER>> en `C-*`/`H-*`) y `3..5` hints socráticos de `>= 25` caracteres por plantilla.
 
 2. **Estrategia Quirúrgica y Umbral Oficial < 6 Errores:**
    - **Errores < 6 (1..5 errores, sin SyntaxError):** Uso **OBLIGATORIO** de `edit_file` (o `replace_file_content`) quirúrgico en 1 turno paralelo directamente sobre las líneas afectadas `StartLine..EndLine` en `<work_dir>/shards/<shard_id>_data.py`. Queda prohibido reescribir todo el archivo desde cero con `write_file`.
@@ -64,7 +64,7 @@ Cada plantilla corregida sigue la estructura:
     gen_c01_1,                    # 3: generator_code
     ver_c01_1,                    # 4: verifier_code (analítico no trivial)
     ("easy", "Remember"),         # 5: (difficulty, bloom)
-    stems_c01_1,                  # 6: stem_variants (>= 5 variantes disjuntas con @var@, total >= 14 stems)
+    stems_c01_1,                  # 6: stem_variants (>= <<S4_VARIANTS_OTHER>> variantes disjuntas con @var@, total >= <<S4_UNIQ_SKILL>> Hab / <<S4_UNIQ_OTHER>> C-H stems)
     hints_c01_1,                  # 7: hints (3..5 pistas socráticas >= 25 chars)
     sol_c01_1,                    # 8: solution / explanation_es con @var@
 )

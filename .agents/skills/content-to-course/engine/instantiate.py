@@ -32,10 +32,8 @@ def competency_seed_base(cid: str, base_seed: int = 42) -> int:
 
 def get_competency_quota(comp_type: str) -> int:
     """Return required question quota: >=30 for Skill, >=20 for Fact/Concept."""
-    t = comp_type.lower().strip()
-    if t in ("skill", "hab", "habilidad"):
-        return 30
-    return 20
+    from engine.stage_contract import quota_for_type
+    return quota_for_type(comp_type)
 
 
 def allocate_template_quotas(

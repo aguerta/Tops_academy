@@ -21,6 +21,23 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union, Set
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from engine.stage_contract import (  # noqa: E402
+    competency_contract,
+    contract_tokens as _s4_tokens,
+    is_skill_type,
+    quota_for_type,
+    render_contract_tokens,
+)
+
+_S4 = _s4_tokens()
+_S4_UNIQ_SKILL = _S4["<<S4_UNIQ_SKILL>>"]
+_S4_UNIQ_OTHER = _S4["<<S4_UNIQ_OTHER>>"]
+_S4_VARIANTS_OTHER = _S4["<<S4_VARIANTS_OTHER>>"]
+_S4_VARIANTS_SKILL = _S4["<<S4_VARIANTS_SKILL>>"]
+_S4_QUOTA_SKILL = _S4["<<S4_QUOTA_SKILL>>"]
+_S4_QUOTA_OTHER = _S4["<<S4_QUOTA_OTHER>>"]
+
 if sys.platform == "win32":
     try:
         if sys.stdout and hasattr(sys.stdout, "reconfigure"):
@@ -94,11 +111,11 @@ def load_system_prompt(name_or_path: Union[str, Path], lean: bool = False) -> st
         ])
         for c in candidates:
             if c.is_file():
-                return c.read_text(encoding="utf-8")
+                return render_contract_tokens(c.read_text(encoding="utf-8"))
         raise FileNotFoundError(f"System prompt file not found: {name_or_path}")
     if not p.is_file():
         raise FileNotFoundError(f"System prompt file not found: {p}")
-    return p.read_text(encoding="utf-8")
+    return render_contract_tokens(p.read_text(encoding="utf-8"))
 
 
 def get_type_definitions(lean: bool = False) -> List[Dict[str, Any]]:
@@ -1160,7 +1177,7 @@ def dispatch_authors(
         for cid in c_ids:
             c_obj = cta_comps_by_id.get(cid) or manifest_comps_by_id.get(cid, {})
             t = str(c_obj.get("type", "knowledge")).lower()
-            w += 30 if t in ("skill", "habilidad", "hab") else 20
+            w += quota_for_type(t)
         return w if w > 0 else (len(c_ids) * 20)
 
     shard_list = sorted(shard_list, key=_shard_weight, reverse=True)
@@ -1192,12 +1209,11 @@ def dispatch_authors(
             c_obj = cta_comps_by_id.get(cid) or manifest_comps_by_id.get(cid, {})
             c_name = _clean_str(c_obj.get("name")) or cid
             raw_type = str(c_obj.get("type", "knowledge")).lower()
-            if raw_type in ("skill", "habilidad", "hab"):
-                comp_type = "skill"
-                quota = 30
-            else:
-                comp_type = "knowledge"
-                quota = 20
+            _s4c = (s.get("stage4_contract") or {}).get(cid) or competency_contract(raw_type)
+            quota = _s4c["quota"]
+            comp_type = "skill" if is_skill_type(raw_type) else "knowledge"
+            req_uniq = _s4c["required_unique_stems"]
+            per_tpl = -(-req_uniq // _s4c["min_archetypes"])
 
             desc_latex = _clean_str(c_obj.get("description_latex") or c_obj.get("description")) or "(Definición pedagógica según fuentes del curso)"
 
@@ -1255,6 +1271,9 @@ def dispatch_authors(
             block = (
                 f"### Competencia: `{cid}`\n"
                 f"- **Tipo:** `{comp_type}` (Cuota requerida: **{quota}** reactivos)\n"
+                f"- **Umbrales Stage 4 (contrato exacto, se auditan al construir):** cuota **{quota}**; "
+                f"**>= {req_uniq} stems únicos** tras enmascarar números (>= {per_tpl} `stems` distintos por plantilla x {_s4c['min_archetypes']} arquetipos); "
+                f"ratio de diversidad >= {_s4c['min_diversity_ratio']:.2f}\n"
                 f"- **Nombre:** {c_name}\n"
                 f"- **Descripción (LaTeX):** {desc_latex}\n"
                 f"{cb_line}"
@@ -1311,16 +1330,16 @@ def dispatch_authors(
             f"1. Escribe en `{out_py}` (`TEMPLATES = [...]`) las funciones generadoras y tuplas de plantillas de forma concisa (<= 80-110 líneas por competencia, <= 180-220 líneas totales por shard, funciones gen_* concisas de ~15 líneas).",
             f"2. **Contrato Form-B Tri-Banda Multimodal OBLIGATORIO (`min_archetypes = 3`, `[M3-ARCHETYPES]`):** Define exactamente **3 tuplas en `TEMPLATES` por cada competencia asignada** bajo la 9-tupla Form-B: `(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution)`. Cobertura obligatoria de tres bandas de dificultad (`'easy'`, `'medium'`, `'hard'`) abarcando al menos 2 niveles taxonómicos Bloom distintos. Se exige práctica activa multimodal: mínimo 2 plantillas interactivas `fill_in_the_blank` (FIB) o `multiple_select` (MS) en competencias de habilidad (`Hab-*`), y mínimo 1 `FIB` o `MS` en competencias de concepto/hecho (`C-*`/`H-*`). En `fill_in_the_blank`, el valor esperado no debe llevar signos de dólar externos `$ ... $` (`[FIB-NAKED]`).",
             f"3. **[TPL-DYNAMIC-RATIONALE & ANTI-MAGIC-MULT Obligatorio]:** En plantillas MC7, cada distractor devuelto en `gen_*(rng)` DEBE ser una **3-tupla obligatoria `(did, val, error_rationale_con_@var@)`** con longitud de rationale >= 20 caracteres interpolando variables paramétricas del error específico. En MS, las opciones falsas deben incluir `'error_rationale'` interpolando `@var@`. PROHIBIDO multiplicar 'ans' por factores constantes (ans * 1.333, ans * 0.333, etc.) o usar deltas numéricos ciegos (`[DIAG-MAGIC-MULT]`); deriva cada distractor de una fórmula algebraica cerrada concreta.",
-            f"4. **[TPL-VAR & ANTI-MONO-CLAVE Obligatorio]:** Cada `gen_*(rng)` DEBE tener espacio paramétrico >= 500 combinaciones (`rng.randint` amplios, NUNCA listas pequeñas `rng.choice`) para producir >= 30 instancias únicas (`Hab-*`) o >= 20 (`C-*`/`H-*`) en 50 semillas. PROHIBIDO fijar respuestas correctas invariantes (`ans = 1`) en competencias teóricas (`[TPL-STATIC-OPT]`); la clave debe depender de al menos un parámetro dinámico (@var@).",
+            f"4. **[TPL-VAR & ANTI-MONO-CLAVE Obligatorio]:** Cada `gen_*(rng)` DEBE tener espacio paramétrico >= 500 combinaciones (`rng.randint` amplios, NUNCA listas pequeñas `rng.choice`) para producir >= {_S4_QUOTA_SKILL} instancias únicas (`Hab-*`) o >= {_S4_QUOTA_OTHER} (`C-*`/`H-*`) en 50 semillas. PROHIBIDO fijar respuestas correctas invariantes (`ans = 1`) en competencias teóricas (`[TPL-STATIC-OPT]`); la clave debe depender de al menos un parámetro dinámico (@var@).",
             f"5. **[R-18 / R-15 / R-20 / KATEX-PROSE-OVERFLOW]:** Usa siempre `r\"...\"` con `@var@` (PROHIBIDO `rf\"...\"`/`fr\"...\"`/`{{{{...}}}}`; formato `@var:fmt@` permitido, p. ej. `@b:.4f@`; todo `@var@` de stem/stem_variants/options/correct debe existir en `vars`; `\\implies` -> usa `\\Rightarrow`, o `hat{{\\theta}}` sin barra). En `distractors`, `\"val\"` contiene el resultado matemático limpio sin gerundios sesgados ni texto explicativo. PROHIBIDO desbordamiento en KaTeX: no coloques texto explicativo mayor a 45 caracteres dentro de `\\text{{...}}` (`[KATEX-PROSE-OVERFLOW]`); ubica la prosa explicativa fuera de `$ ... $`. PROHIBIDO comandos LaTeX expuestos fuera de delimitadores `$ ... $` (`[KATEX-RAW-SYNTAX]`).",
-            f"6. **[Verificadores Reales y Sin Alias Globales]:** Cada `ver_*(result)` debe validar analíticamente las variables en `result[\"vars\"]` contra la respuesta (prohibido `return True` trivial). PROHIBIDO definir alias a nivel de módulo (`ver_2 = ver_1`); define cada verificador como función independiente (`def ver_2(res): return ver_1(res)`). Para aprobar `[STEM-DIVERSITY-GATE]`, cada plantilla de habilidad (`Hab-*`, cuota 30) debe incluir **>= 6 `stems` sintácticamente distintos** (total >= 18), y cada plantilla de concepto/hecho (`C-*`/`H-*`, cuota 20) **>= 4 `stems` distintos** (total >= 12), además de 3 a 5 `hints` socráticos de >= 25 caracteres.",
+            f"6. **[Verificadores Reales y Sin Alias Globales]:** Cada `ver_*(result)` debe validar analíticamente las variables en `result[\"vars\"]` contra la respuesta (prohibido `return True` trivial). PROHIBIDO definir alias a nivel de módulo (`ver_2 = ver_1`); define cada verificador como función independiente (`def ver_2(res): return ver_1(res)`). Para aprobar `[STEM-DIVERSITY-GATE]`, cada competencia debe alcanzar el mínimo de **stems únicos** indicado en su bloque de la Sección 2 (`Hab-*`: >= {_S4_UNIQ_SKILL}, cuota {_S4_QUOTA_SKILL}; `C-*`/`H-*`: >= {_S4_UNIQ_OTHER}, cuota {_S4_QUOTA_OTHER}), repartidos entre las 3 plantillas (>= {_S4_VARIANTS_SKILL} `stems` por plantilla en habilidades, >= {_S4_VARIANTS_OTHER} en concepto/hecho), además de 3 a 5 `hints` socráticos de >= 25 caracteres.",
             f"7. Compila deterministamente:",
             f"   ```bash",
             f"   {compile_cmd}",
             f"   ```",
             f"8. Si reporta < 6 errores (1..5 errores), corrígelos OBLIGATORIAMENTE de forma quirúrgica con edit_file (replace_file_content) sobre las líneas exactas de {out_py}; si reporta >= 6 errores, escribe en {work_rel}/shards/shard_fixes/<CID>.py (1-2 comps) o reescribe con write_file. Para < 6 errores, NO reescribas todo el archivo desde cero con `write_file`.",
             f"9. **[Corte Inmediato Post-PASS]:** Al obtener `PASS`, cesa inmediatamente toda edición y finaliza estrictamente con: `DONE: {target_json}`.",
-            f"10. **[AUTO-REPARACIÓN SIN INVESTIGAR]:** corrige SOLO con la salida del compilador (línea + `[CÓDIGO]`). PROHIBIDO leer `cta.json`, `pre_shard_manifest.json`, otros shards, `report.json` o listar `shard_fixes/` para diagnosticar. `[INVARIANT]`: `ver_*` debe verificar una identidad analítica real entre las variables (`abs(v[\"ans\"] - expr(v)) < 1e-6`), nunca solo cotas de rango ni restas crudas; toda variable usada en `sol`/stems/distractores debe estar en `vars` e interpolarse como `@var@`. LaTeX: nunca `\\not\\Rightarrow`, `\\iff`, `\\implies` (usa `\\Rightarrow`/`\\Leftrightarrow`); `\\text{{...}}` <= 45 caracteres. `[TPL-VAR]`: amplía rangos hasta `param_space >= 500`; un invariante fallido impide contar ítems hacia la cuota, corrígelo primero. `Template schema violation`: revisa `hints` (3..5), `stem_variants` (>= 3), FIB `correct` sin `$` externos, `distractor_ids` solo los de este work order; no cambies tipos de interacción (p. ej. FIB) sin que el work order lo indique.",
+            f"10. **[AUTO-REPARACIÓN SIN INVESTIGAR]:** corrige SOLO con la salida del compilador (línea + `[CÓDIGO]`). PROHIBIDO leer `cta.json`, `pre_shard_manifest.json`, otros shards, `report.json` o listar `shard_fixes/` para diagnosticar. `[INVARIANT]`: `ver_*` debe verificar una identidad analítica real entre las variables (`abs(v[\"ans\"] - expr(v)) < 1e-6`), nunca solo cotas de rango ni restas crudas; toda variable usada en `sol`/stems/distractores debe estar en `vars` e interpolarse como `@var@`. LaTeX: nunca `\\not\\Rightarrow`, `\\iff`, `\\implies` (usa `\\Rightarrow`/`\\Leftrightarrow`); `\\text{{...}}` <= 45 caracteres. `[TPL-VAR]`: amplía rangos hasta `param_space >= 500`; un invariante fallido impide contar ítems hacia la cuota, corrígelo primero. `Template schema violation`: revisa `hints` (3..5), `stem_variants` (>= {_S4_VARIANTS_OTHER} por plantilla; stems únicos >= {_S4_UNIQ_SKILL} en Hab-*, >= {_S4_UNIQ_OTHER} en C-*/H-*), FIB `correct` sin `$` externos, `distractor_ids` solo los de este work order; no cambies tipos de interacción (p. ej. FIB) sin que el work order lo indique.",
         ])
         prompt_full = "\n".join(prompt_lines)
 
@@ -2302,7 +2321,10 @@ def build_dispatch(
                     loc_blocks.append(f"  - **Descripción:** {s_loc.get('description')}")
                     loc_blocks.append(f"  - **Causa:** {s_loc.get('cause')}")
                     loc_blocks.append(f"  - **Acción:** {s_loc.get('action')}")
-                    code_lns = s_loc.get("offending_code_lines") or []
+                    code_lns = [
+                        (f"{cl[0]}: {cl[1]}" if isinstance(cl, (list, tuple)) and len(cl) >= 2 else str(cl))
+                        for cl in (s_loc.get("offending_code_lines") or [])
+                    ]
                     if code_lns:
                         loc_blocks.append("  - **CONTEXTO EXACTO (OFFENDING LINES):**\n    ```python\n    " + "\n    ".join(code_lns[:10]) + "\n    ```")
                 error_bullets += "\n".join(loc_blocks) + "\n\n"
@@ -2326,7 +2348,7 @@ def build_dispatch(
                 f"   ```bash\n"
                 f"   {compile_cmd}\n"
                 f"   ```\n"
-                f"3. **[AUTO-REPARACIÓN]:** Corrige SOLO con salida del compilador (línea + `[CÓDIGO]`). PROHIBIDO leer `cta.json`, `pre_shard_manifest.json`, otros shards o `report.json`. `ver_*`: valida identidad analítica (`abs(v[\"ans\"] - expr(v)) < 1e-6`); variables en `sol`/stems/distractores en `vars` como `@var@`. LaTeX: `\\Rightarrow`/`\\Leftrightarrow`, `\\text{{...}}` <= 45 chars. `[TPL-VAR]`: `param_space >= 500`. Revisa `hints` (3..5), `stem_variants` (>= 3), FIB sin `$`, `distractor_ids` del work order.\n"
+                f"3. **[AUTO-REPARACIÓN]:** Corrige SOLO con salida del compilador (línea + `[CÓDIGO]`). PROHIBIDO leer `cta.json`, `pre_shard_manifest.json`, otros shards o `report.json`. `ver_*`: valida identidad analítica (`abs(v[\"ans\"] - expr(v)) < 1e-6`); variables en `sol`/stems/distractores en `vars` como `@var@`. LaTeX: `\\Rightarrow`/`\\Leftrightarrow`, `\\text{{...}}` <= 45 chars. `[TPL-VAR]`: `param_space >= 500`. Revisa `hints` (3..5), `stem_variants` (>= {_S4_VARIANTS_OTHER} por plantilla; stems únicos >= {_S4_UNIQ_SKILL} en Hab-*, >= {_S4_UNIQ_OTHER} en C-*/H-*), FIB sin `$`, `distractor_ids` del work order.\n"
                 f"4. Sigue directivas de System Prompt `c2c_repair` y finaliza con: `DONE: {out_json}`.\n"
             )
             safe_cid = re.sub(r"[^\w-]", "_", str(cid))
@@ -2474,6 +2496,12 @@ def _is_allowed_path(rel_path: str, role: str) -> bool:
         or norm.startswith("__pycache__/")
         or norm.startswith(".pytest_cache/")
         or norm.startswith(".git/")
+        # Pipeline-internal artifacts written by the orchestrator/check tooling, not by subagents
+        or norm.startswith(".check_attempts/")
+        or norm.startswith("logs/")
+        or norm.startswith("telemetry/")
+        or norm.startswith("prompts/")
+        or norm.startswith(".c2c_")
     ):
         return True
 

@@ -15,7 +15,7 @@
 - **Distractors [TPL-DYNAMIC-RATIONALE]:** MC7 3-tuplas `(did, val, rationale_con_@var@)` (len >= 20). MS `'error_rationale'` con `@var@`.
 - **KaTeX Safe [KATEX-PROSE-OVERFLOW]:** Raw `r"..."` con `@var@`. Sin `rf`/`fr`/`{{{}}}`; `@var:fmt@` ok. Prosa <= 45 chars en `\text{...}`; prosa fuera de `$ ... $`. Usa `\Rightarrow` no `\implies`.
 - **TPL-VAR & R-16:** `param_space >= 500`. >= 30 únicas (`Hab-*`), >= 20 (`C-*`/`H-*`). Paridad `[0.80*min(D), 1.20*max(D)]`.
-- **Verificadores Reales:** `ver_*(res)` valida analíticamente `vars` (prohibido `return True`). `stem_variants` >= 3, hints 3..5 >= 25 chars.
+- **Verificadores Reales:** `ver_*(res)` valida analíticamente `vars` (prohibido `return True`). `stem_variants` >= %VO%/%VS% Hab, hints 3..5 >= 25 chars.
 - Dominios: Física, Sistemas Distribuidos.
 
 ## 2. CANONICAL FORM-B 9-TUPLE STRUCTURE

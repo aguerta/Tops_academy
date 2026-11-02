@@ -72,6 +72,7 @@ from dispatch import (
 )
 from engine.assemble import check_course_giveaway_distribution
 from engine.diversity import evaluate_competency_diversity
+from engine.stage_contract import MIN_DIVERSITY_RATIO, is_skill_type, quota_for_type, required_unique_stems, stems_advice, stems_advice_text
 from engine.instantiate import instantiate_competency
 from engine.invariants import check_instance_invariants
 from ingest import ingest_course
@@ -233,6 +234,11 @@ AUXILIARY_STAGES = {
     "scope-check": "run_stage_scope_check",
     "define-types": "run_stage_define_types",
     "judge-compare": "run_stage_judge_compare",
+    "repair-matrix": "run_stage_repair_matrix",
+    "rejudge": "run_stage_rejudge",
+    "rejudge-compare": "run_stage_rejudge_compare",
+    "certify": "run_stage_certify",
+    "gates": "run_stage_gates",
     "bootstrap": "run_stage_bootstrap",
     "unlock": "run_stage_unlock",
     "wave-status": "run_stage_wave_status",
@@ -749,7 +755,9 @@ class PipelineRunner:
         # Advisory scope check on author subagents
         try:
             is_clean, violations = scope_check(self.work_dir, "author", {})
-            if not is_clean:
+            # Only author-owned areas are relevant here; other files are outputs of earlier/later stages.
+            violations = [v for v in violations if v.startswith(("shards/", "templates/"))]
+            if violations:
                 logger.warning("Advisory scope-check for 'author': %d non-standard files found: %s", len(violations), violations[:5])
         except Exception:
             pass
@@ -1063,11 +1071,11 @@ class PipelineRunner:
             course_comp_dict, comp_questions, div_res = comp_results_map[cid]
             course_competencies_output.append(course_comp_dict)
 
-            quota = 30 if cat.lower() == "skill" else 20
+            quota = quota_for_type(cat)
             div_ratio = div_res["diversity_ratio"]
             unique_c = div_res["unique_masked"]
             total_c = div_res["total"]
-            if div_ratio < 0.5:
+            if div_ratio < MIN_DIVERSITY_RATIO:
                 stem_gate_failures.append({
                     "cid": cid,
                     "cat": cat,
@@ -1119,14 +1127,14 @@ class PipelineRunner:
                 "[-] [STEM-DIVERSITY-GATE / build_stem_diversity_gate]",
                 "  Descripción: Ratio de diversidad estructural de enunciados (unique_masked / quota) menor a 0.50.",
                 "  Causa: Las plantillas de la competencia definen muy pocas variantes sintácticas en `stems` (ej. 3x3 = 9 stems < 15 requeridos para Skill o < 10 para Concept/Fact).",
-                "  Acción: En `s1`, `s2`, `s3` de `shard_XX_data.py`, provee >= 6-7 enunciados sintácticamente distintos por plantilla para Skills (total >= 18-21) o >= 4-5 para Concepts/Facts (total >= 12-15).",
+                "  Acción: En `s1`, `s2`, `s3` de `shard_XX_data.py`, provee " + stems_advice_text() + "",
             ]
             for f_item in stem_gate_failures:
                 f_cid = f_item["cid"]
-                is_sk = f_item["cat"].lower() == "skill"
-                req_u = 15 if is_sk else 10
-                req_pt = "6-7" if is_sk else "4-5"
-                tot_pt = "18-21" if is_sk else "12-15"
+                is_sk = is_skill_type(f_item["cat"])
+                req_u = required_unique_stems(f_item["quota"])
+                req_pt = stems_advice("skill" if is_sk else "concept")["per_tpl"]
+                tot_pt = stems_advice("skill" if is_sk else "concept")["total"]
                 cat_lbl = "skills" if is_sk else "concepts/facts"
                 s_id = cid_to_shard.get(f_cid, "shard_01")
                 isolated_fix_p = shards_dir / "shard_fixes" / s_id / f"{f_cid}.py"
@@ -1190,7 +1198,7 @@ class PipelineRunner:
                         "severity": "CRITICAL",
                         "description": "Ratio de diversidad estructural de enunciados (unique_masked / quota) menor a 0.50.",
                         "cause": "Las plantillas de la competencia definen muy pocas variantes sintácticas en `stems`.",
-                        "action": "En `s1`, `s2`, `s3` de `shard_XX_data.py`, provee >= 6-7 enunciados sintácticamente distintos por plantilla para Skills (total >= 18-21) o >= 4-5 para Concepts/Facts (total >= 12-15).",
+                        "action": "En `s1`, `s2`, `s3` de `shard_XX_data.py`, provee " + stems_advice_text() + "",
                         "locations": locations_list,
                     }
                 ],
@@ -1644,6 +1652,273 @@ class PipelineRunner:
         print("  [+] Auxiliary Stage (judge-compare) completed.")
         return res
 
+    def run_stage_repair_matrix(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Consolidate linter/build failures and blind-judge objections into ONE repair matrix per shard."""
+        t0 = time.time()
+        print("\n" + "=" * 70)
+        print("[AUX STAGE: REPAIR-MATRIX] Consolidating gate findings per shard")
+        print("=" * 70)
+
+        cid_to_shard: Dict[str, str] = {}
+        for mp in (self.work_dir / "shards" / "pre_shard_manifest.json", self.work_dir / "pre_shard_manifest.json"):
+            if mp.is_file():
+                try:
+                    for s_item in (json.loads(mp.read_text(encoding="utf-8")).get("shards") or []):
+                        if isinstance(s_item, dict) and s_item.get("shard_id"):
+                            for c in (s_item.get("competency_ids") or []):
+                                cid_to_shard[str(c)] = str(s_item["shard_id"])
+                    break
+                except Exception:
+                    pass
+
+        matrix: Dict[str, Dict[str, Any]] = {}
+
+        def _add(cid: Any, source: str, detail: str) -> None:
+            if not cid:
+                return
+            cid = str(cid)
+            entry = matrix.setdefault(cid, {"shard_id": cid_to_shard.get(cid, "shard_01"), "sources": [], "findings": []})
+            if source not in entry["sources"]:
+                entry["sources"].append(source)
+            if detail and detail not in entry["findings"] and len(entry["findings"]) < 12:
+                entry["findings"].append(detail)
+
+        # 1. Linter / build gate findings (Stage 4 scanners)
+        spec_p = self.work_dir / "specific_error_report.json"
+        if spec_p.is_file():
+            try:
+                spec = json.loads(spec_p.read_text(encoding="utf-8"))
+                for cid in spec.get("failing_competencies") or []:
+                    _add(cid, "linter", "")
+                for grp in spec.get("groups") or []:
+                    tag = grp.get("rule_tag") or grp.get("linter") or "LINTER"
+                    for loc in grp.get("locations") or []:
+                        msgs = loc.get("sample_findings") or [""]
+                        _add(loc.get("competency_id"), "linter", f"[{tag}] {loc.get('template_id', '')}: {msgs[0]}"[:400])
+            except Exception as e:
+                logger.warning("Could not read specific_error_report.json: %s", e)
+
+        # 2. Blind judge objections
+        jr_p = self.work_dir / "judge_report.json"
+        if jr_p.is_file():
+            try:
+                jr = json.loads(jr_p.read_text(encoding="utf-8"))
+                for d in (jr.get("disagreements") or jr.get("discordances") or []):
+                    if isinstance(d, dict):
+                        reason = d.get("reason") or d.get("error") or d.get("feedback") or "Discordancia evaluador ciego"
+                        _add(d.get("cid") or d.get("competency_id"), "judge", f"[JUDGE] {d.get('item_id', '')}: {reason}"[:400])
+                tpl_to_cid: Dict[str, str] = {}
+                for tp in (self.work_dir / "templates").glob("*.json"):
+                    try:
+                        td = json.loads(tp.read_text(encoding="utf-8"))
+                        for t_obj in (td if isinstance(td, list) else td.get("templates", [td]) if isinstance(td, dict) else []):
+                            if isinstance(t_obj, dict) and (t_obj.get("id") or t_obj.get("template_id")):
+                                tpl_to_cid[str(t_obj.get("id") or t_obj.get("template_id"))] = tp.stem
+                    except Exception:
+                        pass
+
+                def _resolve(c: str) -> str:
+                    return tpl_to_cid.get(c, c)
+
+                for key in ("failed_competencies", "failed_templates"):
+                    val = jr.get(key) or []
+                    for c in (val.keys() if isinstance(val, dict) else val):
+                        if isinstance(c, str):
+                            _add(_resolve(c), "judge", "")
+                        elif isinstance(c, dict):
+                            _add(_resolve(str(c.get("cid") or c.get("competency_id") or "")), "judge", str(c.get("reason", ""))[:400])
+            except Exception as e:
+                logger.warning("Could not read judge_report.json: %s", e)
+
+        by_shard: Dict[str, List[str]] = {}
+        for cid, e in matrix.items():
+            by_shard.setdefault(e["shard_id"], []).append(cid)
+        fail_cids = sorted(matrix)
+        repair_cmd = (
+            f'& ".venv\\Scripts\\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-repair '
+            f'--work-dir "{self.work_dir.as_posix()}" --ids {" ".join(fail_cids)}'
+        ) if fail_cids else ""
+        result = {
+            "status": "REPAIR_NEEDED" if fail_cids else "CLEAN",
+            "failing_competencies": fail_cids,
+            "by_shard": {k: sorted(v) for k, v in sorted(by_shard.items())},
+            "matrix": matrix,
+            "single_wave_repair_command": repair_cmd,
+        }
+        (self.work_dir / "repair_matrix.json").write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"  [+] Matrix: {len(fail_cids)} competencies across {len(by_shard)} shard(s) -> repair_matrix.json")
+        if repair_cmd:
+            print(f"  [>] ONE consolidated repair wave: {repair_cmd}")
+        record_stage_timing(self.work_dir, "repair_matrix", time.time() - t0)
+        return result
+
+    def run_stage_gates(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Run Stage 4 scanners non-fatally (concurrent with blind judges) and consolidate into one repair matrix."""
+        print("\n" + "=" * 70)
+        print("[AUX STAGE: GATES] Stage 4 build/linter scan (non-fatal) + repair matrix")
+        print("=" * 70)
+        build_ok = True
+        # Drop stale build findings so a now-passing build does not resurrect old failures.
+        for stale in ("specific_error_report.json", "specific_error_report.md"):
+            (self.work_dir / stale).unlink(missing_ok=True)
+        try:
+            self.run_stage_build()
+        except Exception as e:
+            build_ok = False
+            print(f"  [!] Build gate reported findings (captured, not aborting): {str(e).splitlines()[0] if str(e) else type(e).__name__}")
+        res = self.run_stage_repair_matrix()
+        res["build_ok"] = build_ok
+        return res
+
+    def _detect_changed_competencies(self) -> List[str]:
+        """Competencies whose template hash differs from the one recorded when last judged (i.e. repaired since)."""
+        import hashlib
+        from judge import _load_templates
+        ev_p = self.work_dir / "verification" / "evaluated_competencies.json"
+        if not ev_p.is_file():
+            ev_p = self.work_dir / "evaluated_competencies.json"
+        if not ev_p.is_file():
+            return []
+        saved = json.loads(ev_p.read_text(encoding="utf-8")).get("competency_hashes", {})
+        changed: set = set()
+        for t in _load_templates(self.work_dir / "templates"):
+            cid = str(t.get("competency_id", ""))
+            sha = t.get("_sha256") or hashlib.sha256(json.dumps(t, sort_keys=True).encode("utf-8")).hexdigest()
+            if cid in saved and saved[cid] != sha:
+                changed.add(cid)
+        return sorted(changed)
+
+    def run_stage_rejudge(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Surgical re-arbitration. Re-judges ONLY repaired competencies (--ids, or auto-detected by template hash change)."""
+        import shutil
+        t0 = time.time()
+        print("\n" + "=" * 70)
+        print("[AUX STAGE: REJUDGE] Surgical blind re-arbitration (no mass re-dispatch)")
+        print("=" * 70)
+        target = [str(x).strip() for x in (self.ids or []) if str(x).strip()] or self._detect_changed_competencies()
+        if not target:
+            print("  [+] No repaired/targeted competencies detected. Nothing to re-judge.")
+            return {"status": "nothing_to_rejudge", "ids": []}
+
+        jr_p = self.work_dir / "judge_report.json"
+        base_p = self.work_dir / "judge_report_baseline.json"
+        if jr_p.is_file() and not base_p.is_file():
+            shutil.copy2(jr_p, base_p)
+
+        # Archive stale responses: item_ids are reused across generations and would mask the new verdicts.
+        archive = self.work_dir / "judge_archive" / time.strftime("%Y%m%d_%H%M%S")
+        for d in (self.work_dir, self.work_dir / "verification", self.work_dir / "judges"):
+            if d.is_dir():
+                for f in list(d.glob("judge_responses*.json")):
+                    archive.mkdir(parents=True, exist_ok=True)
+                    shutil.move(str(f), str(archive / f"{d.name}__{f.name}"))
+
+        (self.work_dir / "rejudge_scope.json").write_text(
+            json.dumps({"ids": target, "baseline": base_p.name if base_p.is_file() else None}, indent=2), encoding="utf-8"
+        )
+        res = dispatch_judges(self.work_dir, ids=target, pointer=not self.no_pointer)
+        n_sub = len(res.get("Subagents", []))
+        (self.work_dir / "dispatch").mkdir(parents=True, exist_ok=True)
+        (self.work_dir / "dispatch" / "judge_work_orders.json").write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"  [+] Re-judging {len(target)} competency(ies): {', '.join(target)} -> {n_sub} judge(s)")
+        print("  [>] After judges reply: run.py --stage rejudge-compare")
+        record_stage_timing(self.work_dir, "rejudge", time.time() - t0)
+        return {"status": "dispatched", "ids": target, "subagents_count": n_sub, "Subagents": res.get("Subagents", []), "item_files": res.get("item_files", [])}
+
+    def run_stage_rejudge_compare(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Compare surgical re-judge answers and merge them into the full judge_report.json (other competencies keep their verdicts)."""
+        t0 = time.time()
+        print("\n" + "=" * 70)
+        print("[AUX STAGE: REJUDGE-COMPARE] Merging surgical verdicts into full report")
+        print("=" * 70)
+        scope_p = self.work_dir / "rejudge_scope.json"
+        base_p = self.work_dir / "judge_report_baseline.json"
+        if not scope_p.is_file():
+            raise RuntimeError("No rejudge_scope.json: run --stage rejudge first.")
+        target = set(json.loads(scope_p.read_text(encoding="utf-8")).get("ids", []))
+        partial = compare_judge_responses(work_dir=self.work_dir)
+        (self.work_dir / "judge_report_rejudge.json").write_text(json.dumps(partial, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        base = json.loads(base_p.read_text(encoding="utf-8")) if base_p.is_file() else {"disagreements": [], "total_items": 0, "agreed_items": 0}
+        def _cid(d: Dict[str, Any]) -> str:
+            return str(d.get("cid") or d.get("competency_id") or "")
+        kept = [d for d in (base.get("disagreements") or base.get("discordances") or []) if _cid(d) not in target]
+        discord = kept + list(partial.get("disagreements") or [])
+        base_total = int(base.get("total_items", base.get("total", 0)) or 0)
+        total_items = base_total if base_total else partial.get("total_items", 0)
+        agreed = total_items - len(discord)
+        failed_c = sorted({_cid(d) for d in discord if _cid(d)})
+        failed_t = sorted({str(d.get("template_id")) for d in discord if d.get("template_id")})
+        complete = bool(partial.get("all_complete", False)) and total_items > 0
+        passed = complete and not discord
+        merged = dict(base)
+        merged.update({
+            "total": total_items, "total_items": total_items, "agreed_items": agreed,
+            "agreement_rate": round(agreed / total_items, 4) if total_items else 0.0,
+            "passed": passed, "status": "passed" if passed else ("incomplete" if not complete else "disagreements"),
+            "all_complete": complete, "failed_templates": failed_t, "failed_competencies": failed_c,
+            "affected_template_ids": failed_t, "disagreements": discord, "discordances": discord,
+            "rejudged_competencies": sorted(target),
+        })
+        (self.work_dir / "judge_report.json").write_text(json.dumps(merged, indent=2, ensure_ascii=False), encoding="utf-8")
+        base_p.write_text(json.dumps(merged, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"  [+] Surgical result: {'PASSED' if not partial.get('disagreements') else 'DISCORDANCES'} for {sorted(target)}")
+        print(f"  [+] Merged report: status={merged['status']}, remaining disagreements={len(discord)}")
+        record_stage_timing(self.work_dir, "rejudge_compare", time.time() - t0)
+        return merged
+
+    def run_stage_certify(self) -> Dict[str, Any]:
+        """Auxiliary Stage: Mandatory formal Director validation. Re-runs templates -> build -> verify -> publish and writes certification.json.
+        It does NOT stop at the first failure: every non-destructive gate (templates, build, verify) runs so ALL findings are collected,
+        then repair-matrix consolidates them (with judge objections) to start one complete repair cycle. Publish only runs when every
+        prior gate passed, so a stale/failed bank is never published. The Director must never assume success from a subagent's DONE report."""
+        t0 = time.time()
+        print("\n" + "=" * 70)
+        print("[AUX STAGE: CERTIFY] Formal re-validation: templates -> build -> verify -> publish")
+        print("=" * 70)
+        steps: List[Dict[str, Any]] = []
+        cert: Dict[str, Any] = {"status": "CERTIFIED", "steps": steps}
+
+        def _run(name: str, fn: Any) -> bool:
+            s0 = time.time()
+            try:
+                fn()
+                steps.append({"stage": name, "ok": True, "seconds": round(time.time() - s0, 2)})
+                return True
+            except BaseException as e:  # SystemExit from strict gates must also fail certification
+                if isinstance(e, KeyboardInterrupt):
+                    raise
+                err = str(e).splitlines()[0][:400] if str(e) else type(e).__name__
+                steps.append({"stage": name, "ok": False, "seconds": round(time.time() - s0, 2), "error": err})
+                print(f"  [!] Gate '{name}' failed: {err}")
+                return False
+
+        results = [_run(n, f) for n, f in (
+            ("templates", self.run_stage_templates),
+            ("build", self.run_stage_build),
+            ("verify", self.run_stage_verify),
+        )]
+        if all(results):
+            _run("publish", self.run_stage_publish)
+        else:
+            steps.append({"stage": "publish", "ok": False, "skipped": True, "error": "skipped: prerequisite gates failed"})
+
+        failed = [s["stage"] for s in steps if not s["ok"]]
+        if failed:
+            cert["status"] = "REJECTED"
+            cert["failed_stages"] = failed
+            matrix = self.run_stage_repair_matrix()
+            cert["repair_matrix"] = {"failing_competencies": matrix.get("failing_competencies", []), "by_shard": matrix.get("by_shard", {}),
+                                     "single_wave_repair_command": matrix.get("single_wave_repair_command", "")}
+            print(f"  [!] CERTIFICATION REJECTED. Failed gates: {', '.join(failed)}")
+            print("  [>] Run ONE consolidated repair wave from repair_matrix.json, then rejudge only repaired competencies and certify again.")
+        cert["total_seconds"] = round(time.time() - t0, 2)
+        (self.work_dir / "certification.json").write_text(json.dumps(cert, indent=2, ensure_ascii=False), encoding="utf-8")
+        if cert["status"] == "CERTIFIED":
+            print("  [+] CERTIFIED: all formal gates re-executed successfully.")
+        else:
+            sys.exit(1)
+        return cert
     def run_stage_bootstrap(self) -> Dict[str, Any]:
         """Stage bootstrap: Atomically prepare, define subagent specs, pointer dispatch_cta, and write lockfile."""
         t0 = time.time()
@@ -2034,7 +2309,7 @@ def main() -> None:
         "prepare", "ingest", "cta", "shard", "templates", "build", "verify", "publish",
         "0", "1", "2", "3", "4", "5", "6",
         "cta-merge", "cta-reduce", "cta-apply", "dispatch", "scope-check",
-        "define-types", "judge-compare",
+        "define-types", "judge-compare", "repair-matrix", "gates", "rejudge", "rejudge-compare", "certify",
         "bootstrap", "unlock", "wave-status",
         "dispatch-cta", "dispatch-authors", "dispatch-judges", "judge-generate",
     ]

@@ -214,7 +214,7 @@ Toda cadena que contenga código LaTeX o KaTeX DEBE escribirse con prefijo raw s
   - Ejemplo matricial: `r"$$\begin{bmatrix} @a11@ & @a12@ \\ @a21@ & @a22@ \end{bmatrix}$$"`
 
 ### Requisito Anti-Memorización y Compuerta de Diversidad: Al menos 5 Variantes de Enunciado por Arquetipo (`stem_variants`)
-Cada plantilla debe definir al menos 5 `stem_variants` disjuntos (con distinto encuadre narrativo y contextual, compartiendo el mismo contrato matemático `@var@`). Entre los 3 arquetipos de una competencia se debe alcanzar un total de al menos 14 a 15 stems sintácticamente independientes para superar con holgura el Stem Diversity Gate (diversity_ratio $\ge 0.50$, requiriendo $\ge 14$ stems únicos).
+Tu `work/shards/<shard_id>.json` trae `stage4_contract.per_competency[<cid>]` con `quota`, `required_unique_stems` y `min_diversity_ratio`: son EXACTAMENTE los valores que audita Stage 4 (`build`). Cada plantilla debe definir entre <<S4_VARIANTS_OTHER>> y 5 `stem_variants` disjuntos (distinto encuadre narrativo/contextual, mismo contrato `@var@`; máximo 5). Entre los <<S4_MIN_ARCH>> arquetipos se deben alcanzar al menos `required_unique_stems` stems sintácticamente independientes tras enmascarar números: **>= <<S4_UNIQ_SKILL>> para `Hab-*`/skills (cuota <<S4_QUOTA_SKILL>>)** y **>= <<S4_UNIQ_OTHER>> para `C-*`/`H-*` (cuota <<S4_QUOTA_OTHER>>)**, con `diversity_ratio >= <<S4_RATIO>>`. Para skills usa <<S4_VARIANTS_SKILL>> variantes por arquetipo (sin repetidos); para conceptos/hechos, <<S4_VARIANTS_OTHER>> por arquetipo como mínimo.
 
 ### Regla TPL-VAR: Anti-Colapso y Diversidad Paramétrica
 El generador `gen_<cid>(rng)` debe generar al menos 4 instancias numéricamente distintas a través de las semillas de dry-run. Evite divisiones enteras truncadas a cero o cancelaciones tautológicas que colapsen el espacio de respuestas a un valor constante.
@@ -316,7 +316,7 @@ def ver_h01_3(res): return ver_h01(res)
 d_ids_h01 = ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"]
 
 # NOTA CRÍTICA [M3-ARCHETYPES & STEM-DIVERSITY]: Cada arquetipo DEBE tener su propia lista con >= 5 stems
-# disyuntos (alcanzando >= 14 a 15 stems únicos entre los 3 arquetipos) para superar la compuerta de diversidad.
+# disyuntos (alcanzando >= <<S4_UNIQ_SKILL>> stems únicos en `Hab-*` o >= <<S4_UNIQ_OTHER>> en `C-*`/`H-*` entre los 3 arquetipos) para superar la compuerta de diversidad.
 stems_h01_1 = [
     r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Determine el rendimiento térmico directo:",
     r"Considere un ciclo reversible de Carnot con reservorios térmicos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Calcule la eficiencia máxima teórica directa $\eta$:",
@@ -479,5 +479,5 @@ Bajo la arquitectura Load Inversion, las reglas de introspección son estrictas 
 - **`[INVARIANT]`:** `ver_*(res)` debe verificar una identidad analítica real entre las variables generadas (p. ej. `abs(v["ans"] - expr(v)) < 1e-6`), nunca solo cotas estáticas de rango ni restas crudas `v["a"] - v["b"]` sin comparar con la respuesta. Todas las variables usadas en `sol`/enunciado/distractores deben existir en `vars` y interpolarse como `@var@`.
 - **LaTeX no soportado:** nunca `\not\Rightarrow`, `\iff`, `\implies`. Usa `\Rightarrow` / `\Leftrightarrow`. `\text{...}` <= 45 caracteres.
 - **`[TPL-VAR]` / `param_space`:** amplía los rangos aleatorios (p. ej. 25x25 combinaciones) hasta `param_space >= 500`. Un invariante fallido impide contar los ítems hacia la cuota de diversidad: corrige primero el invariante.
-- **`Template schema violation`:** revisa `hints` (3..5 elementos), `stem_variants` (>= 5 elementos, total >= 14 stems por competencia), FIB `correct` sin `$` externos, prefijos de template ID iniciando con `^T-` (ej. `T-H01-01`), y que los `distractor_ids` provengan solo de tu work order. No cambies tipos de interacción (p. ej. FIB) sin que el work order lo indique.
+- **`Template schema violation`:** revisa `hints` (3..5 elementos), `stem_variants` (<<S4_VARIANTS_OTHER>>..5 por plantilla; total >= <<S4_UNIQ_SKILL>> stems únicos en `Hab-*`, >= <<S4_UNIQ_OTHER>> en `C-*`/`H-*`, según `stage4_contract` de tu shard JSON), FIB `correct` sin `$` externos, prefijos de template ID iniciando con `^T-` (ej. `T-H01-01`), y que los `distractor_ids` provengan solo de tu work order. No cambies tipos de interacción (p. ej. FIB) sin que el work order lo indique.
 - Tras 1 error repetido idéntico, aplica `edit_file` quirúrgico y recompila; no vuelvas a leer archivos.

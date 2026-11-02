@@ -33,6 +33,13 @@ if str(_skill_root) not in sys.path:
     sys.path.insert(0, str(_skill_root))
 
 from engine.invariants import validate_katex_syntax
+from engine.stage_contract import (
+    MIN_ARCHETYPES as _S4_MIN_ARCHETYPES,
+    competency_contract as _s4_competency_contract,
+    contract_drift as _s4_contract_drift,
+    is_skill_type as _s4_is_skill_type,
+    stems_advice as _s4_stems_advice,
+)
 
 
 def _atomic_write_json(target_path: Path, data: Any) -> None:
@@ -1160,10 +1167,17 @@ def compile_shard(
         return False, [err_msg]
 
     expected_cids: List[str] = shard_entry.get("competency_ids", [])
+
+    _drift = _s4_contract_drift(manifest_data.get("stage4_contract"))
+    if _drift:
+        _cleanup_stale_pass_marker()
+        err_msg = f"BLOCKER:: [STAGE4-CONTRACT-DRIFT] {_drift}"
+        print(err_msg, file=sys.stderr)
+        return False, [err_msg]
     if not expected_cids and "competencies" in shard_entry:
         expected_cids = [c["id"] for c in shard_entry["competencies"] if isinstance(c, dict) and "id" in c]
 
-    eff_min_arch = 3
+    eff_min_arch = _S4_MIN_ARCHETYPES
     if min_archetypes is not None:
         eff_min_arch = int(min_archetypes)
     elif isinstance(shard_entry, dict) and shard_entry.get("min_archetypes"):
@@ -2247,6 +2261,9 @@ def compile_shard(
             # Verificación 4 — Detección de Distractores por Multiplicador Arbitrario [DIAG-MAGIC-MULT] y Pistas Parentéticas [PSYCHOMETRIC-OPTIONS]
             _magic_mults = (1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, 2.1, 0.45, 1.85, 0.15)
             _distinctive_magic = {1.333, 0.667, 1.667, 0.333, 2.1, 0.45, 1.85, 0.15}
+            # Shift-left: a SINGLE distractor with an exact fixed ratio (e.g. n->4n => ME/4 = 0.5*ans) in >=80% of seeds is systematic and collides with the final audit.
+            _isolated_exact_mults = (0.5, 0.75, 1.5, 1.25)
+            _ISO_MIN_FRACTION = 0.8
             _num_re = re.compile(r"-?\d+\.\d+|-?\d+")
             _parenthetical_telltale_re = re.compile(
                 r"\(\s*(?:confusi[oó]n|error|omisi[oó]n|sesgo|falsamente|definici[oó]n\s+err[oó]nea|desplazamiento\s+err[oó]neo|c[aá]lculo\s+err[oó]neo)[^)]*\)",
@@ -2343,6 +2360,9 @@ def compile_shard(
                 tpl_seed_off = _seed_base + (t_idx_m * 500)
                 eval_seeds = [tpl_seed_off + s_i for s_i in range(50)]
                 hit_seeds: List[int] = []
+                iso_valid_seeds = 0
+                iso_hit_seeds: List[int] = []
+                iso_hit_ratio: Optional[float] = None
                 hit_mults_sample: List[float] = []
                 corr_answers_sample: List[str] = []
                 telltale_sample: Optional[Tuple[str, str]] = None
@@ -2372,6 +2392,8 @@ def compile_shard(
                         if abs(c_val) <= 1e-6 or abs(c_val) in (1.0, 2.0, 4.0):
                             continue
                         matched_m: List[float] = []
+                        iso_valid_seeds += 1
+                        _iso_hit_here = False
                         for d_item in dists_raw:
                             if isinstance(d_item, (tuple, list)) and len(d_item) >= 2:
                                 d_raw = str(d_item[1])
@@ -2397,6 +2419,13 @@ def compile_shard(
                                 if abs(actual_ratio - m_factor) <= 0.05 and abs(d_val - round(c_val * m_factor, 3)) <= 0.0015:
                                     matched_m.append(m_factor)
                                     break
+                            for m_iso in _isolated_exact_mults:
+                                if abs(actual_ratio - m_iso) <= 0.05 and abs(d_val - round(c_val * m_iso, 3)) <= 0.0015:
+                                    _iso_hit_here = True
+                                    iso_hit_ratio = m_iso
+                                    break
+                        if _iso_hit_here:
+                            iso_hit_seeds.append(s_val)
                         dist_hits = [m_f for m_f in matched_m if m_f in _distinctive_magic]
                         if len(dist_hits) >= 2 or len(matched_m) >= 4:
                             hit_seeds.append(s_val)
@@ -2428,6 +2457,16 @@ def compile_shard(
                         f"{cid}.json ({source_name}): [DIAG-MAGIC-MULT] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}), "
                         f"los distractores numéricos en {len(hit_seeds)} semillas (ej. seed={hit_seeds[0]}) coinciden con multiplicadores arbitrarios prohibidos ({hit_mults_sample}) respecto a la respuesta correcta. "
                         f"Reemplaza los multiplicadores sintéticos sobre 'ans' por las fórmulas algebraicas reales de cada error_rationale."
+                    )
+                if iso_valid_seeds >= 10 and len(iso_hit_seeds) >= _ISO_MIN_FRACTION * iso_valid_seeds and len(hit_seeds) < 3:
+                    eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
+                    loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
+                    t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
+                    s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "diagnostic_rationale_alignment_linter", "multiplicador") if loc_obj else (1, 1, [])
+                    m3_errors.append(
+                        f"{cid}.json ({source_name}): [DIAG-MAGIC-MULT] En '{tpl_id_m}' (funcion '{gen_fn_m}', Lineas {s_off}..{e_off} en {source_name}), "
+                        f"un distractor numerico equivale a {iso_hit_ratio} x respuesta correcta en {len(iso_hit_seeds)}/{iso_valid_seeds} semillas (razon fija sistematica, colisiona con el linter final). "
+                        f"Cambia parametros estructurales (p. ej. otro cuantil z o otra razon de muestras) o reemplaza ese distractor por un error algebraico real cuya razon no sea constante."
                     )
                 if strict and len(set(corr_answers_sample)) <= 1 and len(corr_answers_sample) >= 10:
                     first_ans_str = str(corr_answers_sample[0]) if corr_answers_sample else ""
@@ -2499,9 +2538,18 @@ def compile_shard(
                         def _mask_stem_nums(st: str) -> str:
                             return re.sub(r"\b\d+(?:\.\d+)?\b", "[NUM]", re.sub(r"\s+", " ", st.strip()))
 
-                    is_true_skill = cid.startswith("Hab-") or (not cid.startswith(("C-", "H-")) and is_skill)
-                    quota_build = 30 if is_true_skill else 20
-                    req_unique_stems = 15 if quota_build == 30 else 10
+                    # Stage 2 -> Stage 4 contract parity: quota/threshold come from the manifest
+                    # (written by plan_shards from engine.stage_contract), never hardcoded here.
+                    _s4c = (shard_entry.get("stage4_contract") or {}).get(cid) if isinstance(shard_entry, dict) else None
+                    if not isinstance(_s4c, dict):
+                        # Legacy manifest without stage4_contract: preserve id-prefix heuristic.
+                        _legacy_skill = cid.startswith("Hab-") or (
+                            not cid.startswith(("C-", "H-")) and bool(locals().get("is_skill", False))
+                        )
+                        _s4c = _s4_competency_contract("skill" if _legacy_skill else "concept")
+                    is_true_skill = _s4_is_skill_type(_s4c.get("type", ""))
+                    quota_build = int(_s4c["quota"])
+                    req_unique_stems = int(_s4c["required_unique_stems"])
                     all_masked_stems: Set[str] = set()
                     stem_line_ranges: List[str] = []
                     eff_loc_s = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
@@ -2542,8 +2590,9 @@ def compile_shard(
 
                     if len(all_masked_stems) < req_unique_stems:
                         cat_label = "skills" if is_true_skill else "concepts/facts"
-                        req_per_tpl = "6-7" if is_true_skill else "4-5"
-                        tot_rec = "18-21" if is_true_skill else "12-15"
+                        _adv = _s4_stems_advice("skill" if is_true_skill else "concept")
+                        req_per_tpl = _adv["per_tpl"]
+                        tot_rec = _adv["total"]
                         lines_ctx = f" [{', '.join(stem_line_ranges)} en {source_name}]" if stem_line_ranges else ""
                         m3_errors.append(
                             f"{cid}.json ({source_name}): [STEM-DIVERSITY-GATE] Diagnostic: Stem diversity gate failed for competency '{cid}' "

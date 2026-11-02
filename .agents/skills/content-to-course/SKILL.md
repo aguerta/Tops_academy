@@ -302,6 +302,20 @@ Este comando ejecuta en `< 1s`:
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage judge-compare --work-dir <work_dir>
    ```
+4. **Gates concurrentes y ola unica de reparacion**: en lugar de `--stage build` seguido de jueces, usa `--stage gates` (build NO fatal: captura hallazgos y escribe `repair_matrix.json`) y, EN EL MISMO TURNO, `dispatch-judges` (los jueces solo dependen de `work/templates`). NO despaches `c2c_repair` al primer fallo parcial. Al recibir N/N jueces: `judge-compare`, luego `--stage repair-matrix` fusiona linters + objeciones de jueces por shard y emite UN solo comando `dispatch-repair --ids ...` (ola consolidada):
+   ```powershell
+   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage gates --work-dir <work_dir>
+   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage repair-matrix --work-dir <work_dir>
+   ```
+   Si una reparacion altera contenido evaluado por un juez, NO re-despaches los lotes masivos: usa re-arbitraje quirurgico solo de las competencias reparadas (`--ids`, o auto-detectadas por cambio de hash de plantilla). `rejudge` archiva respuestas viejas y despacha jueces solo para esas competencias; `rejudge-compare` fusiona el veredicto en `judge_report.json` conservando el resto:
+   ```powershell
+   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage rejudge --ids <CID1> <CID2> --work-dir <work_dir>
+   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage rejudge-compare --work-dir <work_dir>
+   ```
+5. **Validacion formal obligatoria**: el Director NUNCA asume exito por el `DONE:` de un subagente. Antes de dar por cerrado, ejecuta `--stage certify` (re-ejecuta templates, build y verify SIN detenerse en el primer fallo para juntar todos los hallazgos; publish solo corre si todo lo previo paso; si rechaza, genera `repair_matrix.json` para iniciar el ciclo completo de reparacion, escribe `certification.json` y sale con codigo 1):
+   ```powershell
+   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage certify --work-dir <work_dir> --output-dir courses
+   ```
 
 ### Paso 5: Publicación Final y Liberación (Compuerta Bloqueante PublishQualityGateError)
 Publica el curso certificado (validando estricto `PublishQualityGateError` con MPRI $\ge 75$ y ZPD $> 0$):
