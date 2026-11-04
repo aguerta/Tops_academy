@@ -21,6 +21,11 @@ interface QuestionResult {
   skipped: boolean;
 }
 
+const isTypingTarget = (t: EventTarget | null): boolean => {
+  const el = t as HTMLElement | null;
+  return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+};
+
 export const PracticeSession: React.FC<PracticeSessionProps> = ({
   sessionTitle,
   questions,
@@ -296,6 +301,18 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.isComposing) return;
 
+      if (
+        (e.key === 's' || e.key === 'S') &&
+        !e.altKey &&
+        (e.ctrlKey || e.metaKey || !isTypingTarget(e.target))
+      ) {
+        e.preventDefault();
+        if (!(isChecked && isCorrect === true) && !isExhausted) {
+          handleSkip();
+        }
+        return;
+      }
+
       if (e.key === 'Enter') {
         e.preventDefault();
 
@@ -508,13 +525,14 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
             disabled={(isChecked && isCorrect === true) || isExhausted}
             onClick={handleSkip}
             aria-label="Skip question"
+            title="Skip (S or Ctrl+S)"
             className={`text-sm font-semibold transition-colors px-1 sm:px-2 ${
               (isChecked && isCorrect === true) || isExhausted
                 ? 'text-slate-300 cursor-not-allowed'
                 : 'text-ka-blue hover:text-ka-blue-hover'
             }`}
           >
-            Skip
+            Skip <kbd className="hidden sm:inline text-[10px] font-bold px-1 bg-slate-100 border border-slate-300 rounded text-slate-600">S</kbd>
           </button>
 
           {isExhausted ? (

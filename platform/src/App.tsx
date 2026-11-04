@@ -22,6 +22,7 @@ import { CourseOverview } from './components/CourseOverview';
 import { PreExerciseModal } from './components/PreExerciseModal';
 import { PracticeSession } from './components/PracticeSession';
 import { CompletionScreen } from './components/CompletionScreen';
+import { ShortcutHelp } from './components/ShortcutHelp';
 import { CourseChallenge } from './components/CourseChallenge';
 import { CourseLibrary } from './components/CourseLibrary';
 import {
@@ -61,6 +62,7 @@ export const App: React.FC = () => {
 
   const [viewMode, setViewMode] = useState<ViewMode>('library');
   const [selectedUnitIndex, setSelectedUnitIndex] = useState<number | null>(null);
+  const [focusCompetencyId, setFocusCompetencyId] = useState<string | null>(null);
 
   // Mobile Back Navigation & Safety states
   const [showExitToast, setShowExitToast] = useState(false);
@@ -138,6 +140,22 @@ export const App: React.FC = () => {
     return unregister;
   }, [viewMode, showQuitConfirm]);
 
+  // Esc opens the quit confirmation; a second Esc confirms the exit
+  useEffect(() => {
+    if (viewMode !== 'practice') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.isComposing || e.repeat) return;
+      e.preventDefault();
+      if (showQuitConfirm) {
+        handleQuitSession();
+      } else {
+        setShowQuitConfirm(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
   // Load cached course IDs on mount and subscribe to updates
   useEffect(() => {
     getCachedCourseIds().then(setCachedCourseIds);
@@ -213,6 +231,7 @@ export const App: React.FC = () => {
     }
 
     setSessionCompetency(targetComp);
+    setFocusCompetencyId(null);
     setSessionType(type);
 
     if (type !== 'challenge' && !targetComp) {
@@ -341,14 +360,20 @@ export const App: React.FC = () => {
     );
     if (currentIdx >= 0 && currentIdx < activeCourse.competencies.length - 1) {
       const nextComp = activeCourse.competencies[currentIdx + 1];
-      handleStartPractice(nextComp);
+      if (sessionType === 'quiz' || sessionType === 'test') {
+        launchSession(sessionType, nextComp, true);
+      } else {
+        handleStartPractice(nextComp);
+      }
     } else {
+      setFocusCompetencyId(sessionCompetency.id);
       navigateView('overview');
     }
   };
 
   return (
     <div className="min-h-screen bg-ka-bg-canvas text-ka-text-primary flex flex-col font-sans">
+      <ShortcutHelp />
       {viewMode === 'library' && (
         <CourseLibrary
           courses={courses}
@@ -381,6 +406,7 @@ export const App: React.FC = () => {
             <CourseOverview
               course={activeCourse}
               mastery={mastery}
+              focusCompetencyId={focusCompetencyId}
               onStartPractice={handleStartPractice}
               onStartQuiz={handleStartQuiz}
               onStartUnitTest={handleStartUnitTest}
@@ -427,6 +453,14 @@ export const App: React.FC = () => {
           sessionType={sessionType}
           onTryAgain={handleTryAgain}
           onUpNext={handleUpNext}
+          onBackToCourse={() => {
+            if (sessionCompetency && activeCourse) {
+              const idx = activeCourse.competencies.findIndex((c) => c.id === sessionCompetency.id);
+              if (idx >= 0) setSelectedUnitIndex(idx);
+            }
+            setFocusCompetencyId(sessionType === 'challenge' ? null : sessionCompetency?.id ?? null);
+            navigateView('overview');
+          }}
         />
       )}
 
@@ -489,6 +523,9 @@ export const App: React.FC = () => {
             </h3>
             <p className="text-sm text-ka-text-secondary mb-6 leading-relaxed">
               El progreso actual de esta práctica o examen no se guardará si decides salir ahora.
+            </p>
+            <p className="text-xs text-slate-500 -mt-4 mb-5">
+              Press <kbd className="px-1 font-bold bg-slate-100 border border-slate-300 rounded">Esc</kbd> again to exit.
             </p>
             <div className="flex gap-3">
               <button

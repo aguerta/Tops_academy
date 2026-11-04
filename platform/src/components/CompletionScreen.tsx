@@ -11,6 +11,7 @@ interface CompletionScreenProps {
   sessionType: 'practice' | 'quiz' | 'test' | 'challenge';
   onTryAgain: () => void;
   onUpNext: () => void;
+  onBackToCourse: () => void;
 }
 
 export const CompletionScreen: React.FC<CompletionScreenProps> = ({
@@ -21,6 +22,7 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
   sessionType,
   onTryAgain,
   onUpNext,
+  onBackToCourse,
 }) => {
   useEffect(() => {
     // Launch celebratory confetti bursts!
@@ -57,13 +59,21 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
       if (e.key === 'Enter') {
         e.preventDefault();
         onUpNext();
+      } else if (
+        (e.key === 'v' || e.key === 'V') &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey
+      ) {
+        e.preventDefault();
+        onBackToCourse();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onUpNext]);
+  }, [onUpNext, onBackToCourse]);
 
   const titlePrefix =
     sessionType === 'challenge'
@@ -94,12 +104,22 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
         </div>
         <button
           type="button"
-          onClick={onUpNext}
-          className="text-xs font-semibold text-ka-blue hover:text-ka-blue-hover shrink-0"
+          onClick={onBackToCourse}
+          title="Back to course (V)"
+          className="text-xs font-semibold text-ka-blue hover:text-ka-blue-hover shrink-0 flex items-center gap-1.5"
         >
           Back to course
+          <kbd className="hidden sm:inline px-1.5 py-0.5 text-[10px] font-bold bg-slate-100 border border-slate-300 rounded text-slate-600">V</kbd>
         </button>
       </header>
+
+      <p className="bg-blue-50 text-ka-blue text-xs text-center py-1.5 px-4 border-b border-blue-100" data-testid="shortcut-hint">
+        💡 Press <kbd className="px-1 font-bold bg-white border border-blue-200 rounded">Enter</kbd>{' '}
+        {nextCompetency
+          ? `for the next ${sessionType === 'quiz' ? 'quiz' : sessionType === 'test' ? 'unit test' : 'practice'}`
+          : 'to go back to the course'}
+        , or <kbd className="px-1 font-bold bg-white border border-blue-200 rounded">V</kbd> to go back to the course.
+      </p>
 
       {/* Main Celebratory Blue Hero Container */}
       <div className="flex-1 flex items-center justify-center p-4 sm:p-6 min-w-0">

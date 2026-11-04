@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect } from 'react';
 import { Course, CourseMasteryRecord, Competency } from '../types';
 import { calculateCourseProgress } from '../utils/masteryStorage';
 import { MasteryLegend } from './MasteryLegend';
@@ -12,6 +12,7 @@ interface CourseOverviewProps {
   onStartQuiz: (competency: Competency) => void;
   onStartUnitTest: (competency: Competency) => void;
   onStartCourseChallenge: () => void;
+  focusCompetencyId?: string | null;
 }
 
 export const CourseOverview: React.FC<CourseOverviewProps> = ({
@@ -21,8 +22,18 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
   onStartQuiz,
   onStartUnitTest,
   onStartCourseChallenge,
+  focusCompetencyId,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
+
+  // Jump straight to the unit the learner just worked on (no manual scrolling)
+  useLayoutEffect(() => {
+    if (!focusCompetencyId) return;
+    const el = document.querySelector<HTMLElement>(
+      `[data-testid="competency-block-${focusCompetencyId}"]`
+    );
+    el?.scrollIntoView({ block: 'center', behavior: 'auto' });
+  }, [focusCompetencyId]);
 
   const totalUnits = course.competencies.length;
   const progressDetails = calculateCourseProgress(mastery, totalUnits);
