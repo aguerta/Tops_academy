@@ -304,7 +304,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       if (
         (e.key === 's' || e.key === 'S') &&
         !e.altKey &&
-        (e.ctrlKey || e.metaKey || !isTypingTarget(e.target))
+        (e.ctrlKey || e.metaKey)
       ) {
         e.preventDefault();
         if (!(isChecked && isCorrect === true) && !isExhausted) {
@@ -525,7 +525,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
             disabled={(isChecked && isCorrect === true) || isExhausted}
             onClick={handleSkip}
             aria-label="Skip question"
-            title="Skip (S or Ctrl+S)"
+            title="Skip (Ctrl+S)"
             className={`text-sm font-semibold transition-colors px-1 sm:px-2 ${
               (isChecked && isCorrect === true) || isExhausted
                 ? 'text-slate-300 cursor-not-allowed'

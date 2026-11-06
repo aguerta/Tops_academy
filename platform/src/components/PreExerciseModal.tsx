@@ -21,13 +21,20 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
       if (e.key === 'Enter') {
         e.preventDefault();
         onStart();
+      } else if (
+        e.key === 'Escape' ||
+        (e.key.toLowerCase() === 'v' && (e.ctrlKey || e.metaKey) && !e.altKey)
+      ) {
+        if (e.key === 'Escape' && document.querySelector('[role="dialog"]')) return;
+        e.preventDefault();
+        onBack();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onStart]);
+  }, [onStart, onBack]);
 
   return (
     <div className="min-h-screen min-h-[100dvh] bg-slate-50 flex flex-col justify-between overflow-x-hidden">

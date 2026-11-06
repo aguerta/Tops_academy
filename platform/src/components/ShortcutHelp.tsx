@@ -5,14 +5,14 @@ const SECTIONS: { title: string; items: [string, string][] }[] = [
     title: 'During a practice / quiz / test',
     items: [
       ['Enter', 'Check answer · continue · retry'],
-      ['S  or  Ctrl+S', 'Skip question'],
+      ['Ctrl+S', 'Skip question'],
     ],
   },
   {
     title: 'On the results screen',
     items: [
       ['Enter', 'Next practice / quiz / unit test'],
-      ['V', 'Back to the course (at the unit you just did)'],
+      ['Ctrl+V', 'Back to the course (at the unit you just did)'],
     ],
   },
   {

@@ -24,8 +24,18 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
   onUpNext,
   onBackToCourse,
 }) => {
+  const isPerfect = total > 0 && score === total;
+  const isZero = score === 0;
+  const resultEmoji = isPerfect ? '🤩' : isZero ? '😢' : '🙂';
+  const resultMessage = isPerfect
+    ? 'Great work! Your practice points have been recorded in your course mastery progress.'
+    : isZero
+    ? "Don't give up! Review the material and try again."
+    : 'Good effort! Practice again to reach a perfect score.';
+
   useEffect(() => {
-    // Launch celebratory confetti bursts!
+    // Confetti only for a perfect score
+    if (!isPerfect) return;
     const end = Date.now() + 1500;
     const colors = ['#1865f2', '#14a34b', '#e07a21', '#583b8b', '#06b6d4'];
 
@@ -60,11 +70,10 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
         e.preventDefault();
         onUpNext();
       } else if (
-        (e.key === 'v' || e.key === 'V') &&
-        !e.ctrlKey &&
-        !e.metaKey &&
-        !e.altKey
+        e.key === 'Escape' ||
+        (e.key.toLowerCase() === 'v' && (e.ctrlKey || e.metaKey) && !e.altKey)
       ) {
+        if (e.key === 'Escape' && document.querySelector('[role="dialog"]')) return;
         e.preventDefault();
         onBackToCourse();
       }
@@ -105,11 +114,11 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
         <button
           type="button"
           onClick={onBackToCourse}
-          title="Back to course (V)"
+          title="Back to course (Ctrl+V)"
           className="text-xs font-semibold text-ka-blue hover:text-ka-blue-hover shrink-0 flex items-center gap-1.5"
         >
           Back to course
-          <kbd className="hidden sm:inline px-1.5 py-0.5 text-[10px] font-bold bg-slate-100 border border-slate-300 rounded text-slate-600">V</kbd>
+          <kbd className="hidden sm:inline px-1.5 py-0.5 text-[10px] font-bold bg-slate-100 border border-slate-300 rounded text-slate-600">Ctrl+V</kbd>
         </button>
       </header>
 
@@ -118,7 +127,7 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
         {nextCompetency
           ? `for the next ${sessionType === 'quiz' ? 'quiz' : sessionType === 'test' ? 'unit test' : 'practice'}`
           : 'to go back to the course'}
-        , or <kbd className="px-1 font-bold bg-white border border-blue-200 rounded">V</kbd> to go back to the course.
+        , or <kbd className="px-1 font-bold bg-white border border-blue-200 rounded">Ctrl+V</kbd> to go back to the course.
       </p>
 
       {/* Main Celebratory Blue Hero Container */}
@@ -128,7 +137,7 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
           <div className="flex flex-col items-center md:items-start text-center md:text-left min-w-0">
             {/* Line-art Thumbs-up Icon with radiating lines */}
             <div className="w-20 h-20 mb-4 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-4xl shadow-inner">
-              👍
+              {resultEmoji}
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight break-words [overflow-wrap:anywhere]">
@@ -138,7 +147,7 @@ export const CompletionScreen: React.FC<CompletionScreenProps> = ({
               {score}/{total} correct
             </p>
             <p className="text-sm text-blue-200 mt-1 max-w-sm">
-              Great work! Your practice points have been recorded in your course mastery progress.
+              {resultMessage}
             </p>
           </div>
 
