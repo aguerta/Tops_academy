@@ -197,7 +197,7 @@ class TestFrontendComponentIntegration:
         assert "course-progress-bar" in code
         assert "bg-emerald-950" in code  # Green Black Fuerte (100% completo con Course Challenge)
         assert "bg-emerald-500" in code  # Verde Light (80% todos unit tests 100%)
-        assert "bg-amber-400" in code    # Amarillo (en progreso)
+        assert "bg-emerald-400" in code  # Verde (en progreso)
         assert "Let's go" in code
 
     def test_course_overview_has_dynamic_progress_bar(self):
@@ -208,7 +208,7 @@ class TestFrontendComponentIntegration:
         assert "course-progress-bar-overview" in code
         assert "bg-emerald-950" in code  # Green Black Fuerte
         assert "bg-emerald-500" in code
-        assert "bg-amber-400" in code
+        assert "bg-emerald-400" in code  # Verde (en progreso)
 
     def test_mastery_grid_strict_unit_colors(self):
         path = PLATFORM_DIR / "src" / "components" / "MasteryGrid.tsx"

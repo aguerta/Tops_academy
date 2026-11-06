@@ -271,7 +271,7 @@ export const CourseLibrary: React.FC<CourseLibraryProps> = ({
                           : isCompletedLight
                           ? 'bg-emerald-500'
                           : isInProgress
-                          ? 'bg-amber-400'
+                          ? 'bg-emerald-400'
                           : 'bg-transparent'
                       }`}
                       style={{ width: `${percentage}%` }}
