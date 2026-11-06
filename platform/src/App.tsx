@@ -6,7 +6,7 @@ import {
   Question,
   CourseMasteryRecord,
 } from './types';
-import { loadCourseMastery, updateCompetencyScore, updateCourseChallengeCompleted } from './utils/masteryStorage';
+import { loadCourseMastery, updateCompetencyScore, updateCourseChallengeCompleted, isUnitCompleted, isUnitStarted } from './utils/masteryStorage';
 import { buildInterleavedSessionQuestions } from './utils/sessionShuffler';
 import { normalizeQuestion } from './utils/questionUtils';
 import {
@@ -107,6 +107,9 @@ export const App: React.FC = () => {
           setActiveCourse(null);
           setViewMode('library');
         } else {
+          if (target.viewMode === 'overview' && sessionCompetency) {
+            setFocusCompetencyId(sessionCompetency.id);
+          }
           setViewMode(target.viewMode);
         }
       },
@@ -156,6 +159,50 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  // Enter on the course overview: Unit Test of the first unit (course order) that has
+  // activity but is not completed; otherwise Practice of the first unit.
+  useEffect(() => {
+    if (viewMode !== 'overview' || !activeCourse) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter' || e.isComposing || e.repeat || e.defaultPrevented) return;
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+      if (document.querySelector('[role="dialog"]') || document.body.style.overflow === 'hidden') return;
+      const t = e.target as HTMLElement | null;
+      if (t && t !== document.body && /^(BUTTON|A|INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+      const comps = activeCourse.competencies;
+      if (comps.length === 0) return;
+      e.preventDefault();
+      const pending = comps.find((c) => {
+        const m = mastery?.competencies?.[c.id];
+        return isUnitStarted(m) && !isUnitCompleted(m);
+      });
+      if (pending) {
+        // 25+ mastery points = perfect practice already done -> Unit Test; otherwise Practice
+        const pts = mastery?.competencies?.[pending.id]?.points ?? 0;
+        if (pts >= 25) handleStartUnitTest(pending);
+        else handleStartPractice(pending);
+      }
+      else handleStartPractice(comps[0]);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  // Esc on the course overview returns to the course library
+  useEffect(() => {
+    if (viewMode !== 'overview') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.isComposing || e.repeat || e.defaultPrevented) return;
+      // Let open dialogs / the mobile sidebar consume Esc first
+      if (document.querySelector('[role="dialog"]') || document.body.style.overflow === 'hidden') return;
+      e.preventDefault();
+      setActiveCourse(null);
+      navigateView('library');
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
   // Load cached course IDs on mount and subscribe to updates
   useEffect(() => {
     getCachedCourseIds().then(setCachedCourseIds);
@@ -200,6 +247,7 @@ export const App: React.FC = () => {
         const m = loadCourseMastery(normalizedCourse);
         setMastery(m);
         setSelectedUnitIndex(0);
+        setFocusCompetencyId(null);
         navigateView('overview', { courseId: normalizedCourse.course_id });
       }
     } catch (err) {
@@ -305,6 +353,7 @@ export const App: React.FC = () => {
   // Safe quit from session: replaces current transient state with overview so back never re-enters quizzes
   const handleQuitSession = () => {
     setShowQuitConfirm(false);
+    setFocusCompetencyId(sessionType === 'challenge' ? null : sessionCompetency?.id ?? null);
     setViewMode('overview');
     replaceNavState({
       viewMode: 'overview',
@@ -421,7 +470,10 @@ export const App: React.FC = () => {
           competency={sessionCompetency}
           questionCount={sessionQuestions.length}
           onStart={handleBeginPracticeSession}
-          onBack={() => navigateView('overview')}
+          onBack={() => {
+            setFocusCompetencyId(sessionCompetency.id);
+            navigateView('overview');
+          }}
         />
       )}
 

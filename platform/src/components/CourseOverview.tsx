@@ -1,6 +1,6 @@
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect, useRef } from 'react';
 import { Course, CourseMasteryRecord, Competency } from '../types';
-import { calculateCourseProgress } from '../utils/masteryStorage';
+import { calculateCourseProgress, isUnitCompleted, isUnitStarted } from '../utils/masteryStorage';
 import { MasteryLegend } from './MasteryLegend';
 import { MasteryGrid } from './MasteryGrid';
 import { MathText } from './MathText';
@@ -25,15 +25,65 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
   focusCompetencyId,
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [barBox, setBarBox] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
 
-  // Jump straight to the unit the learner just worked on (no manual scrolling)
+  // Keep the fixed bar aligned with the overview column (sidebar / centered layout)
+  useEffect(() => {
+    const update = () => {
+      const r = rootRef.current?.getBoundingClientRect();
+      if (r) setBarBox({ left: r.left, width: r.width });
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+    };
+  }, []);
+
+  // Show the compact sticky progress bar once the full summary card scrolls out above the viewport
+  useEffect(() => {
+    const el = summaryRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const obs = new IntersectionObserver(([entry]) => {
+      setShowStickyBar(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // Focus rules: furthest completed unit (course order); else furthest unit with any
+  // progress (Attempted+); else no progress at all -> show the top of the course.
   useLayoutEffect(() => {
-    if (!focusCompetencyId) return;
-    const el = document.querySelector<HTMLElement>(
-      `[data-testid="competency-block-${focusCompetencyId}"]`
-    );
-    el?.scrollIntoView({ block: 'center', behavior: 'auto' });
-  }, [focusCompetencyId]);
+    let completedId: string | null = null;
+    let startedId: string | null = null;
+    for (const c of course.competencies) {
+      const m = mastery.competencies?.[c.id];
+      if (isUnitCompleted(m)) completedId = c.id;
+      if (isUnitStarted(m)) startedId = c.id;
+    }
+    const targetId =
+      (focusCompetencyId &&
+      course.competencies.some((c) => c.id === focusCompetencyId)
+        ? focusCompetencyId
+        : null) ??
+      completedId ??
+      startedId;
+    const el = targetId
+      ? document.querySelector<HTMLElement>(`[data-testid="competency-block-${targetId}"]`)
+      : null;
+    if (el) {
+      el.scrollIntoView({ block: 'center', behavior: 'auto' });
+    } else {
+      window.scrollTo(0, 0);
+      document.querySelector<HTMLElement>('main')?.scrollTo?.(0, 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [course.course_id, focusCompetencyId]);
 
   const totalUnits = course.competencies.length;
   const progressDetails = calculateCourseProgress(mastery, totalUnits);
@@ -46,7 +96,43 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
   const challengePercent = challengeCompleted ? 100 : (mastery.course_challenge?.percentage || 0);
 
   return (
-    <div className="flex-1 min-w-0 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <div ref={rootRef} className="flex-1 min-w-0 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-20 sm:pb-[88px]">
+      {/* Compact progress bar fixed to the top of the viewport (aligned with this column) */}
+      <div
+        className="fixed bottom-0 z-40"
+        style={{ left: barBox.left, width: barBox.width }}
+      >
+        {showStickyBar && (
+          <div
+            data-testid="sticky-completion-bar"
+            className="pl-4 pr-16 sm:pl-6 py-3.5 sm:py-4 bg-white/95 backdrop-blur border-t border-ka-border-subtle shadow-[0_-2px_8px_rgba(0,0,0,0.06)] flex items-center gap-3 min-w-0"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline justify-between gap-2 text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider">
+                <span className="truncate">Unit Completion Status</span>
+                <span className="shrink-0 normal-case text-sm sm:text-base font-extrabold text-slate-700">
+                  {completedUnits} of {totalUnits} · {percentage}%
+                </span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden mt-2">
+                <div
+                  className={`h-3 rounded-full ${
+                    isCompletedStrong
+                      ? 'bg-emerald-950'
+                      : isCompletedLight
+                      ? 'bg-emerald-500'
+                      : isInProgress
+                      ? 'bg-emerald-400'
+                      : 'bg-slate-300'
+                  }`}
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Breadcrumb */}
       <nav className="flex items-center flex-wrap gap-2 text-xs font-semibold text-ka-blue mb-3 min-w-0">
         <span className="text-base">🏠</span>
@@ -94,6 +180,7 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
 
       {/* Competency Blocks / Units Completion Status Overview */}
       <div
+        ref={summaryRef}
         data-testid="completion-tracker-summary"
         className="mt-4 p-4 bg-slate-50 rounded-xl border border-ka-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
@@ -144,7 +231,7 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
                   : isCompletedLight
                   ? 'bg-emerald-500'
                   : isInProgress
-                  ? 'bg-amber-400'
+                  ? 'bg-emerald-400'
                   : 'bg-slate-300'
               }`}
               style={{
