@@ -134,7 +134,7 @@ function buildInterleavedSessionQuestions(
 
   const totalCount =
     sessionType === 'test'
-      ? 9
+      ? 7
       : sessionType === 'quiz'
       ? 5
       : 4;
@@ -218,7 +218,7 @@ function buildInterleavedSessionQuestions(
     masteryTier
   );
 
-  const desiredTargetCount = sessionType === 'quiz' ? 3 : 5;
+  const desiredTargetCount = sessionType === 'quiz' ? 3 : 4;
   const desiredPriorCount = totalCount - desiredTargetCount;
 
   const chosenTarget = preparedTarget.slice(0, desiredTargetCount);
@@ -322,13 +322,13 @@ const mixedPool = [
   assert.strictEqual(quizPriorCount, 2, 'Quiz must interleave 2 questions from preceding units H-01/H-02');
   assert.ok(quizH03.every((q) => q.competency_id !== 'C-05'), 'Quiz must never pull from future units (C-05)');
 
-  // Case C: Unit Test for C-05 (index 3) interleaves C-05 (5 items) with preceding H-01..H-03 (4 items)
+  // Case C: Unit Test for C-05 (index 3) interleaves C-05 (4 items) with preceding H-01..H-03 (3 items)
   const testC05 = buildInterleavedSessionQuestions(mixedPool, mockCompetencies, 'test', mockCompetencies[3]);
-  assert.strictEqual(testC05.length, 9, 'Unit Test for C-05 must have 9 cumulative interleaved questions');
+  assert.strictEqual(testC05.length, 7, 'Unit Test for C-05 must have 7 cumulative interleaved questions');
   const testTargetCount = testC05.filter((q) => q.competency_id === 'C-05').length;
   const testPriorCount = testC05.filter((q) => ['H-01', 'H-02', 'H-03'].includes(q.competency_id)).length;
-  assert.strictEqual(testTargetCount, 5, 'Unit Test must include 5 questions from target unit C-05');
-  assert.strictEqual(testPriorCount, 4, 'Unit Test must interleave 4 questions from prior units');
+  assert.strictEqual(testTargetCount, 4, 'Unit Test must include 4 questions from target unit C-05');
+  assert.strictEqual(testPriorCount, 3, 'Unit Test must interleave 3 questions from prior units');
 
   // Case D: Empty competency must NEVER fallback to course questions
   const poolEmpty = buildInterleavedSessionQuestions(mixedPool, mockCompetencies, 'practice', mockCompetencies[4]);

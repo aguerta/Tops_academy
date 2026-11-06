@@ -137,8 +137,8 @@ export function prepareSessionQuestions(
  *   calibrated to `masteryTier`.
  * - 'quiz' (5 items): Interleaves `targetComp` (~60%, 3 items) with up to 2 preceding
  *   or prerequisite competencies (~40%, 2 items) to train discriminative retrieval.
- * - 'test' (9 items): Cumulative Unit Test interleaving `targetComp` (~55%, 5 items)
- *   with all preceding/prerequisite competencies in the course (~45%, 4 items).
+ * - 'test' (7 items): Cumulative Unit Test interleaving `targetComp` (~57%, 4 items)
+ *   with all preceding/prerequisite competencies in the course (~43%, 3 items).
  * - 'challenge' (up to 30 items): Full-course interleaved sampling across all competencies.
  */
 export function buildInterleavedSessionQuestions(
@@ -174,7 +174,7 @@ export function buildInterleavedSessionQuestions(
 
   const totalCount =
     sessionType === 'test'
-      ? 9
+      ? 7
       : sessionType === 'quiz'
       ? 5
       : 4;
@@ -265,8 +265,8 @@ export function buildInterleavedSessionQuestions(
     masteryTier
   );
 
-  // Target split: Quiz = 3 target + 2 prior (60/40); Unit Test = 5 target + 4 prior (55/45)
-  const desiredTargetCount = sessionType === 'quiz' ? 3 : 5;
+  // Target split: Quiz = 3 target + 2 prior (60/40); Unit Test = 4 target + 3 prior (57/43)
+  const desiredTargetCount = sessionType === 'quiz' ? 3 : 4;
   const desiredPriorCount = totalCount - desiredTargetCount;
 
   const chosenTarget = preparedTarget.slice(0, desiredTargetCount);
