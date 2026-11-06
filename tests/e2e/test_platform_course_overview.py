@@ -56,8 +56,8 @@ def test_course_overview_structure_and_legend(page, setup_test_courses):
     # Verify Unit Completion Tracker Summary and Status Badges
     completion_summary = page.locator("[data-testid='completion-tracker-summary']")
     assert completion_summary.count() > 0, "Competency / Unit completion tracker summary not found!"
-    assert "Unit Completion Status" in body_text or "Units Completed" in body_text, (
-        "Unit Completion Status text not found on Course Overview!"
+    assert "Course Mastery Status" in body_text, (
+        "Course Mastery Status text not found on Course Overview!"
     )
     unit_statuses = page.locator("[data-testid^='unit-status-']")
     assert unit_statuses.count() >= 2, "Unit completion status badges missing from competency blocks!"

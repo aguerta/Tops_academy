@@ -94,6 +94,11 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
 
   const challengeCompleted = mastery.course_challenge?.completed;
   const challengePercent = challengeCompleted ? 100 : (mastery.course_challenge?.percentage || 0);
+  const challengeState: 'mastered' | 'in_progress' | 'not_attempted' = challengeCompleted
+    ? 'mastered'
+    : mastery.course_challenge && (mastery.course_challenge.total_questions ?? 0) > 0
+    ? 'in_progress'
+    : 'not_attempted';
 
   return (
     <div ref={rootRef} className="flex-1 min-w-0 w-full max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 pb-20 sm:pb-[88px]">
@@ -109,9 +114,9 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-2 text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider">
-                <span className="truncate">Unit Completion Status</span>
+                <span className="truncate">Course Mastery Status</span>
                 <span className="shrink-0 normal-case text-sm sm:text-base font-extrabold text-slate-700">
-                  {completedUnits} of {totalUnits} · {percentage}%
+                  {percentage}%
                 </span>
               </div>
               <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden mt-2">
@@ -150,34 +155,6 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
         <MathText text={course.description} />
       </div>
 
-      {/* Course Mastery Percentage Line */}
-      <div className="mt-4 flex items-center gap-2 relative">
-        <span className="text-base font-bold text-ka-text-primary">
-          Course mastery: {percentage}%
-        </span>
-        <button
-          type="button"
-          aria-label="How Course Mastery is calculated"
-          onClick={() => setShowTooltip(!showTooltip)}
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
-          className="text-slate-400 hover:text-slate-600 transition-colors text-sm"
-          title="Click to view mastery point calculation rules"
-        >
-          ⓘ
-        </button>
-
-        {showTooltip && (
-          <div className="absolute left-0 top-8 z-30 w-72 sm:w-80 max-w-[calc(100vw-2rem)] p-3 bg-white text-xs text-ka-text-secondary rounded-lg shadow-xl border border-ka-border-card break-words [overflow-wrap:anywhere]">
-            <p className="font-bold text-ka-text-primary mb-1">How Course Mastery is calculated:</p>
-            <p>
-              Mastery points are earned by practicing skills, passing quizzes, and conquering unit
-              tests. Mastered = 100 pts, Proficient = 80 pts, Familiar = 50 pts, Attempted = 25 pts.
-            </p>
-          </div>
-        )}
-      </div>
-
       {/* Competency Blocks / Units Completion Status Overview */}
       <div
         ref={summaryRef}
@@ -185,41 +162,85 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
         className="mt-4 p-4 bg-slate-50 rounded-xl border border-ka-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div className="min-w-0">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            Unit Completion Status
+          <div className="relative flex items-center gap-1.5 text-xs font-extrabold text-black uppercase tracking-wider">
+            <span>Course Mastery Status</span>
+            <button
+              type="button"
+              aria-label="How Course Mastery is calculated"
+              onClick={() => setShowTooltip(!showTooltip)}
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+              className="text-slate-400 hover:text-slate-600 transition-colors text-sm normal-case"
+              title="Click to view mastery point calculation rules"
+            >
+              ⓘ
+            </button>
+            {showTooltip && (
+              <div className="absolute left-0 top-7 z-30 w-72 sm:w-80 max-w-[calc(100vw-2rem)] p-3 bg-white text-xs normal-case font-normal text-ka-text-secondary rounded-lg shadow-xl border border-ka-border-card break-words [overflow-wrap:anywhere]">
+                <p className="font-bold text-ka-text-primary mb-1">How Course Mastery is calculated:</p>
+                <p>
+                  Mastery points are earned by practicing skills, passing quizzes, and conquering unit
+                  tests. Mastered = 100 pts, Proficient = 80 pts, Familiar = 50 pts, Attempted = 25 pts.
+                </p>
+              </div>
+            )}
           </div>
           <div className="text-base font-extrabold text-ka-text-primary mt-0.5">
-            {completedUnits} of {totalUnits} Units Completed ({totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0}%)
+            {percentage}%
           </div>
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <span
-              data-testid="summary-completed-count"
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full border border-emerald-200"
-            >
-              <span>✓</span>
-              <span>{completedUnits} Completed</span>
-            </span>
-            <span
-              data-testid="summary-in-progress-count"
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded-full border border-amber-200"
-            >
-              <span>⏳</span>
-              <span>{inProgressUnits} In Progress</span>
-            </span>
-            <span
-              data-testid="summary-not-started-count"
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-slate-200 text-slate-700 text-xs font-bold rounded-full border border-slate-300"
-            >
-              <span>○</span>
-              <span>{notStartedUnits} Not Started</span>
-            </span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
+            {/* Units group */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-0.5">Units</span>
+              <span
+                data-testid="summary-completed-count"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full border border-emerald-200"
+              >
+                <span>✓</span>
+                <span>{completedUnits} Completed</span>
+              </span>
+              <span
+                data-testid="summary-in-progress-count"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-100 text-amber-800 text-xs font-bold rounded-full border border-amber-200"
+              >
+                <span>⏳</span>
+                <span>{inProgressUnits} In Progress</span>
+              </span>
+              <span
+                data-testid="summary-not-started-count"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-slate-200 text-slate-700 text-xs font-bold rounded-full border border-slate-300"
+              >
+                <span>○</span>
+                <span>{notStartedUnits} Not Started</span>
+              </span>
+            </div>
+            {/* Course Challenge group */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-0.5">Challenge</span>
+              <span
+                data-testid="summary-course-challenge-status"
+                className={`inline-flex items-center px-2.5 py-0.5 text-xs font-bold rounded-full border ${
+                  challengeState === 'mastered'
+                    ? 'bg-purple-100 text-purple-800 border-purple-300'
+                    : challengeState === 'in_progress'
+                    ? 'bg-amber-100 text-amber-800 border-amber-200'
+                    : 'bg-slate-200 text-slate-700 border-slate-300'
+                }`}
+              >
+                {challengeState === 'mastered'
+                  ? 'Mastered'
+                  : challengeState === 'in_progress'
+                  ? 'In Progress'
+                  : 'Not Attempted'}
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="w-full sm:w-48 flex flex-col gap-1.5 shrink-0">
           <div className="flex justify-between text-[11px] font-semibold text-slate-500">
-            <span>Overall completion</span>
+            <span>Course mastery</span>
             <span>{percentage}%</span>
           </div>
           <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
