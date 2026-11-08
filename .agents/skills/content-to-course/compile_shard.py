@@ -3189,14 +3189,16 @@ cross_check=verify
                         "Elimina palabras y coletillas delatoras del texto visible de la opción y traslada explicaciones conceptuales a 'error_rationale' o 'sol'."
                     )
 
-                if len(hit_seeds) >= 1:
+                _MAGIC_MULT_MIN_FRACTION = 0.07
+                _magic_min_hits = max(1, int(_MAGIC_MULT_MIN_FRACTION * iso_valid_seeds) + 1) if iso_valid_seeds > 0 else 22
+                if len(hit_seeds) >= _magic_min_hits:
                     eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
                     loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
                     t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
                     s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "diagnostic_rationale_alignment_linter", "multiplicador") if loc_obj else (1, 1, [])
                     m3_errors.append(
                         f"{cid}.json ({source_name}): [DIAG-MAGIC-MULT] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}), "
-                        f"los distractores numéricos en {len(hit_seeds)} semillas (ej. seed={hit_seeds[0]}) coinciden con multiplicadores arbitrarios prohibidos ({hit_mults_sample}) respecto a la respuesta correcta. "
+                        f"los distractores numéricos en {len(hit_seeds)}/{iso_valid_seeds or len(eval_seeds)} semillas (>{_MAGIC_MULT_MIN_FRACTION*100:.0f}%, ej. seed={hit_seeds[0]}) coinciden con multiplicadores arbitrarios prohibidos ({hit_mults_sample}) respecto a la respuesta correcta. "
                         f"Reemplaza los multiplicadores sintéticos sobre 'ans' por las fórmulas algebraicas reales de cada error_rationale."
                     )
                 if iso_valid_seeds >= 10 and len(iso_hit_seeds) >= _ISO_MIN_FRACTION * iso_valid_seeds and len(hit_seeds) == 0:

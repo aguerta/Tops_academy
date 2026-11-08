@@ -1249,20 +1249,28 @@ class DiagnosticRationaleAlignmentLinter(BaseLinter):
                             distinctive_hits = [m for m in matched_mults if m in (1.333, 0.667, 1.667, 0.333, 2.1, 0.45, 1.85, 0.15)]
                             if len(distinctive_hits) >= 2 or len(matched_mults) >= 4:
                                 magic_mult_items.append(qid)
-                                issues.append(LintIssue(
-                                    linter=self.name,
-                                    dimension=self.dimension,
-                                    severity="critical",
-                                    item_id=qid,
-                                    competency_id=cid,
-                                    message=(
-                                        f"Distractores numéricos sintéticos por multiplicador arbitrario ({distinctive_hits[:3] or matched_mults[:3]}) "
-                                        f"con error_rationale desconectado del cálculo real."
-                                    ),
-                                    snippet=correct_texts[0][:50],
-                                ))
+                                magic_mult_candidates.append((qid, cid, distinctive_hits[:3] or matched_mults[:3], correct_texts[0][:50]))
                     except ValueError:
                         pass
+
+        # Only flag as systematic magic-multiplier violation when > 7% of evaluated MC7 items in the competency/course hit
+        mc7_total = max(1, sum(1 for q in questions if isinstance(q.get("options"), list) and len(q.get("options", [])) >= 5))
+        if len(set(magic_mult_items)) / mc7_total > 0.07:
+            for qid, cid, m_hits, snip in magic_mult_candidates:
+                issues.append(LintIssue(
+                    linter=self.name,
+                    dimension=self.dimension,
+                    severity="critical",
+                    item_id=qid,
+                    competency_id=cid,
+                    message=(
+                        f"Distractores numéricos sintéticos por multiplicador arbitrario ({m_hits}) "
+                        f"con error_rationale desconectado del cálculo real."
+                    ),
+                    snippet=snip,
+                ))
+        else:
+            magic_mult_items = []
 
         total_rats = len(all_rationales)
         unique_rats = len(set(all_rationales))
