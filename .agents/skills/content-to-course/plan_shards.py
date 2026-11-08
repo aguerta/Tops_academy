@@ -6,7 +6,7 @@ Partitions CTA competencies into balanced shards with Milestone 7.4 Cognitive Sh
   (allowing up to 3 competencies ONLY when all 3 are 'fact' and total competencies N >= 30).
 - Heaviest-First Ordering: Shards are sorted descending by weight (Skill=6.0, Concept=2.5, Fact=1.5 + 0.1*distractors)
   so all Skill shards sit at the front of Wave 1 (t = 0).
-- Wave Indexing: Single-wave maximum parallelism by default (max_wave_size default: 50, Heaviest-First at t = 0).
+- Wave Indexing: Single-wave maximum parallelism by default (max_wave_size default: 100, Heaviest-First at t = 0).
 - Backward compatibility: Preserves uniform partitioning when explicit K is passed.
 - Emits work/shards/shard_01.json ... shard_0K.json and work/shards/pre_shard_manifest.json.
 - Injects self-contained dsl_reference into every shard for 100% author isolation.
@@ -840,7 +840,7 @@ def main():
     parser.add_argument("--output-dir", required=True, help="Output directory for shards (e.g. work/shards)")
     parser.add_argument("--k", type=int, default=None, help="Force specific shard count K")
     parser.add_argument("--comps-per-shard", type=int, default=DEFAULT_COMPS_PER_SHARD, help="Target max competencies per shard (default: 2 for Case 2B, change to 3 for Case 2A)")
-    parser.add_argument("--max-wave-size", type=int, default=DEFAULT_MAX_WAVE_SIZE, help="Maximum number of author shards dispatched per wave (default: 10)")
+    parser.add_argument("--max-wave-size", type=int, default=DEFAULT_MAX_WAVE_SIZE, help="Maximum number of author shards dispatched per wave (default: 100)")
     parser.add_argument("--no-isolate-skills", action="store_true", default=False, help="Disable 1-Skill-per-shard isolation rule")
     args = parser.parse_args()
 

@@ -12,6 +12,7 @@ import json
 import math
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
@@ -38,6 +39,17 @@ def _validate_pykatex_math_span(span: str, is_display: bool = False) -> Optional
         pykatex.renderToString(span, is_display)
         return None
     except Exception as exc:
+        # 1. Non-ASCII accented Latin characters inside \text{}, \textrm{}, \mathrm{} are supported by web KaTeX
+        if re.search(r"[^\x00-\x7F]", span):
+            ascii_span = "".join(
+                ch for ch in unicodedata.normalize("NFD", span) if unicodedata.category(ch) != "Mn"
+            )
+            try:
+                pykatex.renderToString(ascii_span, is_display)
+                return None
+            except Exception:
+                pass
+        # 2. Bare braced identifiers {x}
         if re.search(r"(?<![a-zA-Z\\])\{[a-zA-Z0-9_]{1,6}\}", span):
             fallback_span = re.sub(r"(?<![a-zA-Z\\])\{([a-zA-Z0-9_]{1,6})\}", r"\1", span)
             try:
@@ -645,15 +657,20 @@ def check_cta_katex(
         if len(items) > 1:
             loc_strs = []
             for tid, f in items:
-                ln = locator.get_line(tid, f) if locator else (locator.get_line(tid) if locator else None)
+                eff_tid = tid if (tid and tid != "UNKNOWN") else "COMP"
+                ln = locator.get_line(eff_tid, f) if locator else (locator.get_line(eff_tid) if locator else None)
                 l_info = f" (línea {ln})" if ln else ""
-                loc_strs.append(f"{tid}.{f}{l_info}")
+                loc_strs.append(f"{eff_tid}.{f}{l_info}")
             errors.append(f"Error de sintaxis KaTeX en {len(items)} campos: {', '.join(loc_strs)}: {kv}")
         else:
             tid, f = items[0]
-            ln = locator.get_line(tid, f) if locator else (locator.get_line(tid) if locator else None)
+            eff_tid = tid if (tid and tid != "UNKNOWN") else "COMP"
+            ln = locator.get_line(eff_tid, f) if locator else (locator.get_line(eff_tid) if locator else None)
             l_info = f" (línea {ln})" if ln else ""
-            errors.append(f"{kv}{l_info}")
+            if eff_tid in kv:
+                errors.append(f"{kv}{l_info}")
+            else:
+                errors.append(f"In '{eff_tid}'.{f}{l_info}: {kv}")
 
     return list(dict.fromkeys(errors))
 

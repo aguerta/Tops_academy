@@ -111,7 +111,7 @@ def record_stage_timing(work_dir: Path, stage_name: str, duration_sec: float) ->
 
 
 @contextlib.contextmanager
-def cap_stdout_to_log(work_dir: Path, stage_name: str, max_bytes: int = 1500):
+def cap_stdout_to_log(work_dir: Path, stage_name: str, max_bytes: int = 16000):
     """Captures stage stdout, writes full verbose log to work/logs/<stage>.log, and caps console stdout to max_bytes."""
     clean_stage = re.sub(r"[^\w-]", "_", stage_name)
     logs_dir = work_dir / "logs"
@@ -151,7 +151,7 @@ def format_compact_json_stdout(
     work_dir: Path,
     stage_name: str,
     work_orders_file: Optional[Path] = None,
-    max_bytes: int = 1450,
+    max_bytes: int = 14000,
 ) -> str:
     """Serializes payload to JSON strictly guaranteeing stdout is <= max_bytes and 100% valid parseable JSON.
 
@@ -618,8 +618,9 @@ class PipelineRunner:
                     prepare_harmonize_from_single_draft(self.work_dir)
 
                 print("  [*] Emitting dispatch for c2c_cta_harmonizer...")
-                dispatch_cta_reduce(self.work_dir)
+                reduce_res = dispatch_cta_reduce(self.work_dir, pointer=not self.no_pointer)
                 print("  [+] Next Stage: cta-apply")
+                print(json.dumps(reduce_res, indent=2, ensure_ascii=False))
                 elapsed = time.time() - t0
                 record_stage_timing(self.work_dir, "cta", elapsed)
                 record_stage_telemetry(self.work_dir, "01", "cta", status="completed", metadata={"duration_seconds": elapsed, "needs_harmonize": True})
@@ -628,6 +629,8 @@ class PipelineRunner:
                     "needs_harmonize": True,
                     "next_stage": "cta-apply",
                     "status": "needs_harmonize",
+                    "Subagents": reduce_res.get("Subagents", []),
+                    "item_files": reduce_res.get("item_files", []),
                 }
 
             if not cta_file.is_file() or harmonize_file.stat().st_mtime > cta_file.stat().st_mtime:
@@ -1642,6 +1645,7 @@ class PipelineRunner:
         record_stage_timing(self.work_dir, "dispatch_cta_reduce", elapsed)
         subagents = res.get("Subagents", [])
         print(f"  [+] Dispatched c2c_cta_harmonizer with {len(subagents)} subagent(s).")
+        print(json.dumps(res, indent=2, ensure_ascii=False))
         print("  [+] Auxiliary Stage (cta-reduce) completed successfully.")
         return res
 

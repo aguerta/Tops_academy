@@ -65,6 +65,6 @@ COMPETENCIES = [
 ## 4. EXECUTION CYCLE (< 6 ERRORS PROTOCOL)
 1. **Create:** full `COMPETENCIES = [...]` in ONE atomic `write_file(Overwrite=True)` (no `ArtifactMetadata`).
 2. **Compile:** `python .agents/skills/content-to-course/compile_cta.py --work "<work_dir>"`.
-3. **< 6 errors (1..5):** surgical `edit_file` in 1 parallel turn on the reported lines (`write_file` is blocked when errors < 6).
+3. **< 6 errors (1..5):** surgical 1-LINE `edit_file` (`Target` = 1 exact offending line without `Lxx:`, `Replacement` = 1 fixed line) in 1 parallel turn; NEVER pass multi-line blocks to `edit_file` (`write_file` is blocked when errors < 6).
 4. **>= 6 errors:** `cta_fixes/<CID>.py` via `write_file(Overwrite=True)`, or 1 full `write_file(Overwrite=True)` if systemic (>= 3 competencies or `SyntaxError`).
 5. **Post-PASS:** stop all edits and output `DONE: <output_json>`.

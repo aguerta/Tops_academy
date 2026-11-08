@@ -200,7 +200,7 @@ def heal_shard_source_file(py_path: Path) -> bool:
     source_text = py_path.read_text(encoding="utf-8")
     modified, healed = heal_shard_source_text(source_text)
     if modified:
-        py_path.write_text(healed, encoding="utf-8")
+        py_path.write_text(healed.replace("\r\n", "\n"), encoding="utf-8", newline="\n")
     return modified
 
 
@@ -1635,6 +1635,15 @@ def compile_shard(
         for w in rf_warnings:
             print(w, file=sys.stderr)
         _, healed_source = heal_shard_source_text(raw_source)
+        try:
+            from shard_precheck import precheck_source as _precheck
+            _pre = _precheck(raw_source)
+            if _pre:
+                print(f"[PRECHECK] {len(_pre)} hallazgo(s) estaticos (advertencias, corrige todos juntos):", file=sys.stderr)
+                for _w in _pre[:20]:
+                    print(f"  - {_w}", file=sys.stderr)
+        except Exception:
+            pass
     else:
         healed_source = ""
 
@@ -1982,7 +1991,9 @@ def compile_shard(
                     p for p in sig.parameters.values()
                     if p.default == inspect.Parameter.empty and p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
                 ]
-                if len(pos_params) == 2 or len(sig.parameters) == 2:
+                # Solo 2 argumentos posicionales OBLIGATORIOS => ver(cand, v).
+                # Firmas con opcionales (res, v=None) o *args reciben la instancia completa.
+                if len(pos_params) == 2:
                     is_two_arg_ver = True
             except Exception:
                 pass
@@ -2482,7 +2493,14 @@ cross_check=verify
                         res_test["correct"] = c_test
 
                 # Soundness check
-                sound_res = run_ver(c_test, v_test, res_test)
+                if callable(ver_raw) and not c_test and isinstance(res_test.get("options"), list):
+                    # Multiple Select: sin clave "correct"; el verificador recibe la instancia completa.
+                    try:
+                        sound_res = ver_raw(res_test)
+                    except TypeError:
+                        sound_res = run_ver(c_test, v_test, res_test)
+                else:
+                    sound_res = run_ver(c_test, v_test, res_test)
                 if hasattr(sound_res, "item"):
                     sound_res = sound_res.item()
                 if sound_res is not True:

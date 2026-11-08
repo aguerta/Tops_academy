@@ -38,6 +38,15 @@ def _is_valid_katex_span(span: str, is_display: bool = False) -> bool:
         pykatex.renderToString(span, is_display)
         return True
     except Exception:
+        if re.search(r"[^\x00-\x7F]", span):
+            ascii_span = "".join(
+                ch for ch in unicodedata.normalize("NFD", span) if unicodedata.category(ch) != "Mn"
+            )
+            try:
+                pykatex.renderToString(ascii_span, is_display)
+                return True
+            except Exception:
+                pass
         return False
 
 # Import validators from check_cta
@@ -680,6 +689,35 @@ def sanitize_competency_math(comp: Dict[str, Any], record_patches: bool = True) 
                                     after=new_d_val,
                                     severity="healed",
                                     reason="Lossless normalization of orphan LaTeX math in distractor",
+                                )
+                            except Exception:
+                                pass
+
+    for a in comp.get("assumptions", []):
+        if isinstance(a, dict):
+            aid = a.get("id", f"A-{cid}")
+            for a_field in (
+                "statement_latex",
+                "violation_consequence",
+                "name",
+                "role_in_proof",
+            ):
+                a_val = a.get(a_field)
+                if isinstance(a_val, str):
+                    new_a_val = normalize_orphan_math(a_val)
+                    if new_a_val != a_val:
+                        a[a_field] = new_a_val
+                        if record_patches:
+                            try:
+                                record_patch(
+                                    stage="cta",
+                                    layer="L2",
+                                    rule_id="NORMALIZE_ORPHAN_MATH",
+                                    scope=f"{aid}.{a_field}",
+                                    before=a_val,
+                                    after=new_a_val,
+                                    severity="healed",
+                                    reason="Lossless normalization of orphan LaTeX math in assumption",
                                 )
                             except Exception:
                                 pass

@@ -134,7 +134,7 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 > - **`--lean` por Defecto en Despacho**: System prompts ultra-compactos ($\le 5\text{ KB}$), ahorrando ~65% de tokens de salida y tiempo de generación.
 > - **Juez Epistémico 1-Seed con Dominancia Bayesiana ($\alpha_{\text{Kernel}} = 0$)**: 1 única semilla pre-verificada por plantilla enfocada en suficiencia epistémica y no-giveaway semántico; ninguna objeción heurística revoca una prueba matemática formal.
 > - **Silent Reactive Barrier Protocol (~12–16 Turnos del Director)**: En despertares reactivos parciales (`k < N`), el Director no ejecuta herramientas, reporta `Progreso de ola: k/N subagentes completados.` y finaliza en `< 2s`.
-> - **Weighted Waves (`1 Hab/shard`, olas ≤ 10)**: Priorización *Heaviest-First*: cada habilidad compleja (`Hab-*`) se aísla en su propio shard individual y se despacha a $t=0$.
+> - **Weighted Waves (`1 Hab/shard`, olas ≤ 100)**: Priorización *Heaviest-First*: cada habilidad compleja (`Hab-*`) se aísla en su propio shard individual y se despacha a $t=0$ (soporte continuo de hasta 100 shards concurrentes en una sola ola paralela).
 > - **Compuerta Bloqueante Pre-Publish (`PublishQualityGateError`)**: Publicación bloqueada ante objeciones de jueces no resueltas o incumplimiento psicométrico (MPRI $\ge 75$, ZPD $> 0$, P4 $\ge 13.0/15$, unicidad de racionalizaciones $\ge 30\%$, 0 hard penalties).
 > - **PrairieLearn KaTeX Orthogonal (@var@)**: Desacoplamiento total entre KaTeX y Python mediante tokens `@var@` / `@var:fmt@` en raw strings `r"..."`.
 

@@ -259,6 +259,7 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "system_prompt": "system_prompts/prompt_shard_author.md",
         "read": [
             "content/**",
+            "work/dispatch/items/author_*.json",
             "work/pre_cta_manifest.json",
             "work/shards/pre_shard_manifest.json",
             "work/shards/*_data.py",
@@ -1349,6 +1350,7 @@ def dispatch_authors(
         ]
         for sdoc in source_doc_list:
             prompt_lines.append(f"  - `{sdoc}`")
+        _n_head = len(prompt_lines)
 
         prompt_lines.extend([
             "",
@@ -1362,8 +1364,8 @@ def dispatch_authors(
             f"3. **[TPL-DYNAMIC-RATIONALE & ANTI-MAGIC-MULT Obligatorio]:** En plantillas MC7, cada distractor devuelto en `gen_*(rng)` DEBE ser una **3-tupla obligatoria `(did, val, error_rationale_con_@var@)`** con longitud de rationale >= 20 caracteres interpolando variables paramétricas del error específico. En MS, las opciones falsas deben incluir `'error_rationale'` interpolando `@var@`. PROHIBIDO multiplicar 'ans' por factores constantes (ans * 1.333, ans * 0.333, etc.) o usar deltas numéricos ciegos (`[DIAG-MAGIC-MULT]`); deriva cada distractor de una fórmula algebraica cerrada concreta.",
             f"4. **[TPL-VAR & ANTI-MONO-CLAVE Obligatorio]:** Cada `gen_*(rng)` DEBE tener espacio paramétrico >= 500 combinaciones (`rng.randint` amplios, NUNCA listas pequeñas `rng.choice`) para producir >= {_S4_QUOTA_SKILL} instancias únicas (`Hab-*`) o >= {_S4_QUOTA_OTHER} (`C-*`/`H-*`) en 50 semillas. PROHIBIDO fijar respuestas correctas invariantes (`ans = 1`) en competencias teóricas (`[TPL-STATIC-OPT]`); la clave debe depender de al menos un parámetro dinámico (@var@).",
             f"5. **[R-18 / R-15 / R-20 / KATEX-PROSE-OVERFLOW]:** Usa siempre `r\"...\"` con `@var@` (PROHIBIDO `rf\"...\"`/`fr\"...\"`/`{{{{...}}}}`; formato `@var:fmt@` permitido, p. ej. `@b:.4f@`; todo `@var@` de stem/stem_variants/options/correct debe existir en `vars`; `\\implies` -> usa `\\Rightarrow`, o `hat{{\\theta}}` sin barra). En `distractors`, `\"val\"` contiene el resultado matemático limpio sin gerundios sesgados ni texto explicativo. PROHIBIDO desbordamiento en KaTeX: no coloques texto explicativo mayor a 45 caracteres dentro de `\\text{{...}}` (`[KATEX-PROSE-OVERFLOW]`); ubica la prosa explicativa fuera de `$ ... $`. PROHIBIDO comandos LaTeX expuestos fuera de delimitadores `$ ... $` (`[KATEX-RAW-SYNTAX]`).",
-            f"6. **[Verificadores Reales y Sin Alias Globales]:** Cada `ver_*(result)` debe validar analíticamente las variables en `result[\"vars\"]` contra la respuesta (prohibido `return True` trivial). PROHIBIDO definir alias a nivel de módulo (`ver_2 = ver_1`); define cada verificador como función independiente (`def ver_2(res): return ver_1(res)`). Para aprobar `[STEM-DIVERSITY-GATE]`, cada competencia debe alcanzar el mínimo de **stems únicos** indicado en su bloque de la Sección 2 (`Hab-*`: >= {_S4_UNIQ_SKILL}, cuota {_S4_QUOTA_SKILL}; `C-*`/`H-*`: >= {_S4_UNIQ_OTHER}, cuota {_S4_QUOTA_OTHER}), repartidos entre las 3 plantillas (>= {_S4_VARIANTS_SKILL} `stems` por plantilla en habilidades, >= {_S4_VARIANTS_OTHER} en concepto/hecho), además de 3 a 5 `hints` socráticos de >= 25 caracteres.",
-            f"7. Compila deterministamente:",
+            f"6. **[Verificadores Reales y Sin Alias Globales]:** Cada verificador debe validar analíticamente las variables en `vars` contra la respuesta (prohibido `return True` trivial). Firma EXACTA: MC7/FIB `def ver_X_N(c, v)`; MS (multiple select, sin clave `correct`) `def ver_X_4(res)`; PROHIBIDO `(res, v=None)`, `*args`, `raise`/`assert`. Usa `_pv(c)` canónico puro Python (sin `import re`) para extraer valores numéricos de cadenas con `=`, `\\le`, `\\ge`. PROHIBIDO definir alias a nivel de módulo (`ver_2 = ver_1`); define cada verificador como función independiente (`def ver_2(res): return ver_1(res)`). Para aprobar `[STEM-DIVERSITY-GATE]`, cada competencia debe alcanzar el mínimo de **stems únicos** indicado en su bloque de la Sección 2 (`Hab-*`: >= {_S4_UNIQ_SKILL}, cuota {_S4_QUOTA_SKILL}; `C-*`/`H-*`: >= {_S4_UNIQ_OTHER}, cuota {_S4_QUOTA_OTHER}), repartidos entre las 4 plantillas (>= {_S4_VARIANTS_SKILL} `stems` por plantilla en habilidades, >= {_S4_VARIANTS_OTHER} en concepto/hecho), además de 3 a 5 `hints` socráticos de >= 25 caracteres.",
+            f"7. Compila deterministamente (run_command con `WaitMsBeforeAsync: 10000`, síncrono; el compilador imprime [PRECHECK] con todos los hallazgos estáticos: corrígelos juntos):",
             f"   ```bash",
             f"   {compile_cmd}",
             f"   ```",
@@ -1419,6 +1421,20 @@ def dispatch_authors(
                 "Model": "flash",
                 "Prompt": pointer_prompt,
             }
+            if os.getenv("C2C_INLINE_AUTHOR_ORDER", "0").lower() in ("1", "true", "yes") and len(shard_list) <= 8:
+                # Inline Work Order (G): only when explicitly enabled via env and shard_list <= 8 so stdout/turn tokens never overflow.
+                inline_lines = list(prompt_lines[:_n_head]) + [
+                    "",
+                    "## 2. ESPECIFICACIÓN TURN-0 COMPLETA DE COMPETENCIAS Y DISTRACTORES",
+                    "\n\n".join(comp_blocks),
+                    "",
+                    "## 3. EJECUCIÓN",
+                    f"- La orden de trabajo completa YA está en este mensaje: PROHIBIDO `view_file` en Turno 1; tu primera acción es `write_file` de `{out_py}` (`TEMPLATES = [...]`, {_S4_VARIANTS_OTHER}+ stems por plantilla, reglas de contrato en tu system prompt).",
+                    f"- Compila (run_command con `WaitMsBeforeAsync: 10000`): `{compile_cmd}`",
+                    "- Errores: corrige SOLO con la salida del compilador ([PRECHECK] primero, todos juntos). Tras `PASS` no edites más.",
+                    f"- Cierre: `DONE: {target_json}`",
+                ]
+                subagent_item["Prompt"] = "\n".join(inline_lines)
         else:
             subagent_item = item_data
 
@@ -2874,3 +2890,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+

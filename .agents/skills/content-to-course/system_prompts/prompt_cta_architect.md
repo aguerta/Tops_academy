@@ -367,7 +367,7 @@ COMPETENCIES = [
 
 ### Protocolo del Umbral Oficial < 6 Errores (edit_file vs write_file)
 - **Turno 1 (Creación Inicial):** Emisión atómica completa de `COMPETENCIES = [...]` mediante una sola llamada `write_file(Overwrite=True)`.
-- **Reparación Post-Compilación (< 6 errores, es decir, 1..5 errores):** Uso **OBLIGATORIO** de `edit_file` (`replace_file_content`) quirúrgico sobre las líneas exactas de `cta_data.py` / `part_XX_data.py` señaladas por `compile_cta.py` en 1 turno paralelo. La reescritura completa mediante `write_file` está expresamente bloqueada por `c2c_hook_guard.py` cuando hay menos de 6 errores.
+- **Reparación Post-Compilación (< 6 errores, es decir, 1..5 errores):** Uso **OBLIGATORIO** de `edit_file` (`replace_file_content`) quirúrgico de **1 SOLA LÍNEA por reemplazo** (`Target` = 1 línea exacta sin número `Lxx:`, `Replacement` = 1 línea corregida; NUNCA bloques multi-línea en `edit_file`) sobre las líneas exactas de `cta_data.py` / `part_XX_data.py` señaladas por `compile_cta.py` en 1 turno paralelo. La reescritura completa mediante `write_file` está expresamente bloqueada por `c2c_hook_guard.py` cuando hay menos de 6 errores.
 - **Reparación Post-Compilación (>= 6 errores):**
   - Si los fallos están acotados a `1–2` competencias: escribir parche modular aislado en `<work_dir>/cta_fixes/<CID>.py` (o `<work_dir>/cta_parts/cta_fixes/<CID>.py`) mediante `write_file(Overwrite=True)`.
   - Si los fallos son sistémicos (`>= 3` competencias) o se produce un `SyntaxError` global: permitido 1 reemplazo completo con `write_file(Overwrite=True)`.

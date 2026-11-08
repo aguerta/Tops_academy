@@ -1003,6 +1003,12 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                                 ),
                                             }
                                         elif strategy == "modular_splicing":
+                                            # Shard Authors (Stage 3) pueden reescribir en los primeros 2 fallos;
+                                            # ModularSplicing se impone solo a Repair Engineers o desde el 3er fallo.
+                                            _role = str(active_lock.get("role") or active_lock.get("subagent_role") or "").strip().lower()
+                                            _compiles = int(c_data.get("total_compiles", 0) or 0)
+                                            if target_type == "shard" and _role != "repair" and _compiles < 3 and streak < 3:
+                                                return {"decision": "allow"}
                                             return {
                                                 "decision": "deny",
                                                 "reason": (

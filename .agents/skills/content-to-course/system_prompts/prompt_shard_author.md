@@ -51,6 +51,7 @@ Bajo el estándar **Form-C Quad-Band & Form-B Multimodal (`min_archetypes = 4`)*
 - **Naked FIB (`[FIB-NAKED]`):** En plantillas `fill_in_the_blank`, la respuesta esperada `correct` DEBE ser limpia sin signos de dólar externos `$ ... $` (ej. `r"@ans@"` en vez de `r"$@ans@$"`).
 - **Distractores Dinámicos (`[TPL-DYNAMIC-RATIONALE]`):** En plantillas MC7, cada distractor devuelto en `gen_*(rng)` DEBE ser una **3-tupla obligatoria `(did, val, error_rationale_con_@var@)`** con longitud de rationale >= 20 caracteres interpolando variables paramétricas. En MS, las opciones falsas llevan `'error_rationale'` interpolando `@var@`.
 - **Prohibición de Desbordamiento KaTeX (`[KATEX-PROSE-OVERFLOW]`):** Prohibido texto explicativo mayor a 45 caracteres dentro de `\text{...}`. La prosa explicativa va fuera de `$ ... $`. Usa `\Rightarrow` en vez de `\implies`.
+- **Firma de verificadores (EXACTA):** MC7/FIB `def ver_X_N(c, v)`; MS `def ver_X_4(res)` (instancia completa con `vars`/`options`). PROHIBIDO `(res, v=None)`, `*args`, `raise`/`assert`. Define `_pv(c)` canónico puro Python (sin `import re`) como en el ejemplo. Compila con `WaitMsBeforeAsync: 10000`.
 - **Verificadores Reales:** Cada `ver_*(result)` debe validar analíticamente las variables en `result["vars"]` contra la respuesta (prohibido `return True` trivial). Cada plantilla debe incluir >= 3 `stems` y entre 3 y 5 `hints` socráticos de >= 25 caracteres.
 - **Dimensionamiento Compacto Clean-Room Anti-Bloat:** Mantén cada archivo en **`<= 80–110` líneas por competencia (`<= 180–220` líneas totales por shard)**. Cada función generadora `gen_*` debe ser **ultra-concisa (~12–18 líneas)** utilizando 3-tuplas `("D-XX-01", r"$@d1@$", r"Rationale con @var@")`.
 - **Formato Canónico Obligatorio de Distractores en `gen_*(rng)`:** En modo estricto (`--strict`), cada distractor devuelto en `gen_*(rng)` para MC7 DEBE ser una **3-tupla obligatoria `("D-XX-01", r"$\eta = @d1@$", r"Rationale con @var@")`** o diccionario `{"distractor_id": "D-XX-01", "value": r"$\eta = @d1@$", "error_rationale": r"..."}` con longitud de rationale >= 20 caracteres interpolando variables dinámicas (`@var@`). Las 2-tuplas sin rationale están terminantemente prohibidas en modo estricto (`[TPL-MC7-STRICT]`). Prohibido multiplicar `ans` por constantes o usar deltas numéricos ciegos (`[DIAG-MAGIC-MULT]`).
@@ -120,7 +121,7 @@ def gen_h01_2(rng): return _gen_h01(rng, 2)
 def gen_h01_3(rng): return _gen_h01(rng, 3)
 def gen_h01_4(rng): return _gen_h01(rng, 4)
 
-def _pv(c): return float(str(c).split("=")[-1].replace("$", "").strip())
+def _pv(c): return float(str(c).replace(r"\le", "=").replace(r"\ge", "=").replace(r"\approx", "=").replace("<=", "=").replace(">=", "=").replace("$", "").split("=")[-1].strip())
 
 def ver_h01_1(cand, v):
     return abs(_pv(cand) - (1.0 - v["tc"] / v["th"])) < 1e-3
@@ -510,3 +511,4 @@ Bajo la arquitectura Load Inversion, las reglas de introspección son estrictas 
 - **`[TPL-VAR]` / `param_space`:** amplía los rangos aleatorios (p. ej. 25x25 combinaciones) hasta `param_space >= 500`. Un invariante fallido impide contar los ítems hacia la cuota de diversidad: corrige primero el invariante.
 - **`Template schema violation`:** revisa `hints` (3..5 elementos), `stem_variants` (<<S4_VARIANTS_OTHER>>..5 por plantilla; total >= <<S4_UNIQ_SKILL>> stems únicos en `Hab-*`, >= <<S4_UNIQ_OTHER>> en `C-*`/`H-*`, según `stage4_contract` de tu shard JSON), FIB `correct` sin `$` externos, prefijos de template ID iniciando con `^T-` (ej. `T-H01-01`), y que los `distractor_ids` provengan solo de tu work order. No cambies tipos de interacción (p. ej. FIB) sin que el work order lo indique.
 - Tras 1 error repetido idéntico, aplica `edit_file` quirúrgico y recompila; no vuelvas a leer archivos.
+

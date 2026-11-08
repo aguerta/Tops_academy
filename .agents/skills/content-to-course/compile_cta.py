@@ -404,7 +404,7 @@ class CtaDataLineLocator:
 
                             if len(a_node.elts) > 0 and isinstance(a_node.elts[0], ast.Constant) and a_node.elts[0].value:
                                 a_name = str(a_node.elts[0].value).strip()
-                                if a_name:
+                                if a_name and (not re.match(r"^A-?\d+$", a_name, re.IGNORECASE) or a_name not in self.assumption_lines):
                                     self.assumption_lines[a_name] = (a_start, a_end)
                                     self.assumption_field_lines[a_name] = a_fields
                         elif isinstance(a_node, ast.Dict):
@@ -416,8 +416,9 @@ class CtaDataLineLocator:
                                     a_fields[k_str] = (k_start, k_end)
                                     if k_str == "id" and isinstance(v_node, ast.Constant) and v_node.value:
                                         a_id_val = str(v_node.value).strip()
-                                        self.assumption_lines[a_id_val] = (a_start, a_end)
-                                        self.assumption_field_lines[a_id_val] = a_fields
+                                        if a_id_val and (not re.match(r"^A-?\d+$", a_id_val, re.IGNORECASE) or a_id_val not in self.assumption_lines):
+                                            self.assumption_lines[a_id_val] = (a_start, a_end)
+                                            self.assumption_field_lines[a_id_val] = a_fields
 
                         self.assumption_field_lines[aid_hyphen] = a_fields
                         self.assumption_field_lines[aid_clean] = a_fields
@@ -560,6 +561,18 @@ class CtaDataLineLocator:
                 return l_num
         return base_line
 
+    def get_competency_for_line(self, line_num: int) -> Optional[str]:
+        """Returns the canonical competency ID (e.g. 'C-06') whose line range encloses line_num."""
+        if not line_num:
+            return None
+        for cid, (s_l, e_l) in self.competency_lines.items():
+            if "-" in cid and s_l <= line_num <= e_l:
+                return cid
+        for cid, (s_l, e_l) in self.competency_lines.items():
+            if s_l <= line_num <= e_l:
+                return cid
+        return None
+
     def resolve_error_location(self, err_msg: str, cid: Optional[str] = None) -> Tuple[int, int, str]:
         """Resolves (start_line, end_line, snippet) for a given CTA error message against the Python source file."""
         m_did = re.search(r"\b(D-[A-Za-z0-9_-]+)\b", err_msg)
@@ -603,10 +616,26 @@ class CtaDataLineLocator:
                 target_range = self.get_range(found_cid, field_match)
 
         if not target_range:
-            m_line = re.search(r"\[(?:.+:)?L[íi]nea\s+(\d+)\]", err_msg)
+            m_line = re.search(r"(?:\[(?:.+:)?L[íi]nea\s+(\d+)\]|\(l[íi]neas?\s+(\d+))", err_msg, re.IGNORECASE)
             if m_line:
-                ln = int(m_line.group(1))
+                ln = int(m_line.group(1) or m_line.group(2))
                 target_range = (ln, ln)
+
+        if not target_range:
+            # Content search fallback: scan source lines for LaTeX/text tokens from the error message
+            m_pos = re.search(r"at position \d+:\s*(.+)$", err_msg)
+            cand_snip = m_pos.group(1).strip() if m_pos else err_msg
+            cand_tokens = [t for t in re.findall(r"[A-Za-z\u00C0-\u017F]{4,}", cand_snip) if t.lower() not in ("text", "katex", "parse", "error", "expected", "position", "sintaxis", "linea")]
+            best_ln = None
+            best_score = 0
+            if cand_tokens:
+                for idx_l, src_line in enumerate(self.lines, start=1):
+                    score = sum(1 for t in cand_tokens if t in src_line)
+                    if score > best_score and score >= min(2, len(cand_tokens)):
+                        best_score = score
+                        best_ln = idx_l
+            if best_ln:
+                target_range = (best_ln, best_ln)
             else:
                 target_range = (1, min(len(self.lines), 5))
 
@@ -822,7 +851,7 @@ def heal_cta_source_file(py_path: Path) -> bool:
             pass
 
         tmp_file = py_path.with_name(f".{py_path.name}.tmp")
-        tmp_file.write_text(rebuilt_text, encoding="utf-8")
+        tmp_file.write_text(rebuilt_text.replace("\r\n", "\n"), encoding="utf-8", newline="\n")
         tmp_file.replace(py_path)
         return True
     except Exception as e:
@@ -839,7 +868,7 @@ def heal_cta_source_file(py_path: Path) -> bool:
                     bak_file.write_bytes(source_bytes)
                 except Exception:
                     pass
-                py_path.write_text(healed, encoding="utf-8")
+                py_path.write_text(healed.replace("\r\n", "\n"), encoding="utf-8", newline="\n")
                 return True
         except Exception:
             pass
@@ -941,10 +970,11 @@ def _normalize_assumptions_list(
         return compiled_assumptions
 
     for a_idx, a in enumerate(raw_assumptions, start=1):
+        canonical_aid = f"A-{cid_clean}-{a_idx:02d}"
         if isinstance(a, dict):
             a_id = str(a.get("id") or "").strip()
-            if not a_id or not a_id.startswith("A-"):
-                a_id = f"A-{cid_clean}-{a_idx:02d}"
+            if not a_id or not a_id.startswith("A-") or re.match(r"^A-?\d+$", a_id, re.IGNORECASE):
+                a_id = canonical_aid
             stmt = str(a.get("statement_latex") or a.get("statement") or "").strip()
             cons = str(a.get("violation_consequence") or a.get("consequence") or "").strip()
             item_dict: Dict[str, Any] = {
@@ -961,41 +991,43 @@ def _normalize_assumptions_list(
             if len(a) < 2:
                 continue
             first_val = str(a[0]).strip()
+            is_aid_token = first_val.startswith("A-") or bool(re.match(r"^A\d+$", first_val, re.IGNORECASE))
+            eff_aid = canonical_aid if (not is_aid_token or re.match(r"^A-?\d+$", first_val, re.IGNORECASE)) else first_val
             if len(a) >= 5:
-                if first_val.startswith("A-"):
-                    a_id = first_val
+                if is_aid_token:
+                    a_id = eff_aid
                     stmt = str(a[1]).strip() if a[1] is not None else ""
                     cons = str(a[2]).strip() if a[2] is not None else ""
                     a_name = str(a[3]).strip() if a[3] is not None else None
                     role = str(a[4]).strip() if a[4] is not None else None
                 else:
-                    a_id = f"A-{cid_clean}-{a_idx:02d}"
+                    a_id = canonical_aid
                     a_name = first_val
                     stmt = str(a[1]).strip() if a[1] is not None else ""
                     cons = str(a[2]).strip() if a[2] is not None else ""
                     role = str(a[3]).strip() if a[3] is not None else None
             elif len(a) == 4:
-                if first_val.startswith("A-"):
-                    a_id = first_val
+                if is_aid_token:
+                    a_id = eff_aid
                     stmt = str(a[1]).strip() if a[1] is not None else ""
                     cons = str(a[2]).strip() if a[2] is not None else ""
                     a_name = None
                     role = str(a[3]).strip() if a[3] is not None else None
                 else:
-                    a_id = f"A-{cid_clean}-{a_idx:02d}"
+                    a_id = canonical_aid
                     a_name = first_val
                     stmt = str(a[1]).strip() if a[1] is not None else ""
                     cons = str(a[2]).strip() if a[2] is not None else ""
                     role = str(a[3]).strip() if a[3] is not None else None
             else:  # len == 3 or 2
-                if first_val.startswith("A-"):
-                    a_id = first_val
+                if is_aid_token:
+                    a_id = eff_aid
                     a_name = None
                     stmt = str(a[1]).strip() if len(a) > 1 and a[1] is not None else ""
                     cons = str(a[2]).strip() if len(a) > 2 and a[2] is not None else ""
                     role = None
                 else:
-                    a_id = f"A-{cid_clean}-{a_idx:02d}"
+                    a_id = canonical_aid
                     a_name = first_val
                     stmt = str(a[1]).strip() if len(a) > 1 and a[1] is not None else ""
                     cons = str(a[2]).strip() if len(a) > 2 and a[2] is not None else ""
@@ -2021,7 +2053,8 @@ def compile_cta(
                 if isinstance(val, str) and val:
                     k_errs = validate_katex_syntax(val, f"{cid}.{fld}")
                     if k_errs:
-                        clean_inner = val.replace("$", "").replace("\\", "").replace("{", "").replace("}", "").strip()[:40]
+                        clean_inner = re.sub(r"[$\\{}^_~]", " ", val)
+                        clean_inner = re.sub(r"\s+", " ", clean_inner).strip()[:40]
                         degraded_val = f"$\\text{{{clean_inner}}}$"
                         comp[fld] = degraded_val
                         record_patch(
@@ -2042,7 +2075,8 @@ def compile_cta(
                     if isinstance(dval, str) and dval:
                         dk_errs = validate_katex_syntax(dval, f"{did}.{dfld}")
                         if dk_errs:
-                            clean_inner = dval.replace("$", "").replace("\\", "").replace("{", "").replace("}", "").strip()[:40]
+                            clean_inner = re.sub(r"[$\\{}^_~]", " ", dval)
+                            clean_inner = re.sub(r"\s+", " ", clean_inner).strip()[:40]
                             degraded_dval = f"$\\text{{{clean_inner}}}$"
                             d[dfld] = degraded_dval
                             record_patch(
@@ -2285,7 +2319,11 @@ def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
             cause = "Delimitador '$' impar en expresión matemática"
             action = "Cerrar delimitador '$...$' o usar raw string r'...'"
         elif "sin delimitar" in err:
-            cause = "Comandos LaTeX sin delimitar por '$...$'"
+            raw_tail = err.split("sin delimitar por '$...$':", 1)[-1].strip() if "sin delimitar por '$...$':" in err else ""
+            raw_tail = re.sub(r"\s*\[[^\]]*L[íi]nea\s+\d+\]\s*$", "", raw_tail).strip()
+            if len(raw_tail) > 90:
+                raw_tail = raw_tail[:87] + "..."
+            cause = f"Comandos LaTeX sin delimitar por '$...$' ({raw_tail})" if raw_tail else "Comandos LaTeX sin delimitar por '$...$'"
             action = "Encerrar expresión matemática en '$...$'"
         elif "unescaped latex" in err.lower() or "math command" in err.lower():
             cause = "Comandos LaTeX sin barra invertida o sin delimitar (e.g. bar{k}, dot{w})"
@@ -2424,8 +2462,8 @@ def render_compact_cta_errors(
     if 1 <= error_count < 6 and not has_syntax_error:
         threshold_directive = (
             f"[UMBRAL OFICIAL < 6 ERRORES ({error_count}/5)]: Usa OBLIGATORIAMENTE edit_file "
-            f"(replace_file_content) quirúrgico en 1 turno paralelo sobre las líneas exactas de '{py_name}' "
-            f"indicadas arriba. PROHIBIDO reescribir todo el archivo con write_file (PROHIBIDO usar 'write_to_file' con Overwrite=True)."
+            f"(replace_file_content) quirúrgico de 1 SOLA LÍNEA por reemplazo en 1 turno paralelo sobre las líneas exactas de '{py_name}' "
+            f"indicadas arriba (PROHIBIDO bloques multi-línea en edit_file). PROHIBIDO reescribir todo el archivo con write_file (PROHIBIDO usar 'write_to_file' con Overwrite=True)."
         )
     else:
         threshold_directive = (
@@ -2448,17 +2486,28 @@ def render_compact_cta_errors(
                 if snip and (start_l, end_l, snip) not in seen_line_ranges:
                     seen_line_ranges.append((start_l, end_l, snip))
             else:
-                m_line = re.search(r"\[(?:.+:)?L[íi]nea\s+(\d+)\]", raw_err)
-                line_num = int(m_line.group(1)) if m_line else None
+                m_line = re.search(r"(?:\[(?:.+:)?L[íi]nea\s+(\d+)\]|\(l[íi]neas?\s+(\d+))", raw_err, re.IGNORECASE)
+                line_num = int(m_line.group(1) or m_line.group(2)) if m_line else None
                 line_str = f"L{line_num}" if line_num else "L?"
                 start_l = line_num or 1
                 end_l = start_l
 
-            m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", raw_err)
-            item_id = m_id.group(1) if m_id else "GENERAL"
+            m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|A-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", raw_err)
+            item_id = m_id.group(1) if m_id else ""
 
             m_comp = re.search(r"\b(H-\d+|C-\d+|Hab-\d+)\b", raw_err)
-            comp_id = m_comp.group(1) if m_comp else item_id
+            if m_comp:
+                comp_id = m_comp.group(1)
+            elif item_id.startswith(("D-", "A-")):
+                m_sub = re.match(r"^[DA]-([A-Za-z]+)-?(\d+)", item_id)
+                comp_id = f"{m_sub.group(1)}-{int(m_sub.group(2)):02d}" if m_sub else item_id
+            elif locator and hasattr(locator, "get_competency_for_line") and line_num:
+                comp_id = locator.get_competency_for_line(line_num) or "GENERAL"
+            else:
+                comp_id = item_id or "GENERAL"
+
+            if not item_id:
+                item_id = comp_id
 
             suggested = ""
             if "bar{" in raw_err:
