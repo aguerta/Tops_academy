@@ -6,13 +6,14 @@ all read these values from here. Never hardcode quotas/ratios elsewhere.
 """
 
 import math
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-CONTRACT_VERSION = 1
+CONTRACT_VERSION = 2
 QUOTA_SKILL = 30
 QUOTA_OTHER = 20
 MIN_DIVERSITY_RATIO = 0.5
-MIN_ARCHETYPES = 3
+MIN_ARCHETYPES = 4
+ARCHETYPE_KINDS = ("direct", "inverse", "perturbation", "boundary_or_edge_case")
 SKILL_TYPES = ("skill", "hab", "habilidad")
 
 
@@ -50,20 +51,21 @@ def global_contract() -> Dict[str, Any]:
     }
 
 
-def stems_advice(comp_type: str) -> Dict[str, str]:
+def stems_advice(comp_type: str, min_archetypes: Optional[int] = None) -> Dict[str, str]:
     """Author-facing ranges (20% headroom over the Stage 4 minimum for dedup after masking)."""
+    m_arch = min_archetypes or MIN_ARCHETYPES
     uniq = required_unique_stems(quota_for_type(comp_type))
-    lo = int(math.ceil(uniq * 1.2 / MIN_ARCHETYPES))
+    lo = int(math.ceil(uniq * 1.2 / m_arch))
     hi = lo + 1
     return {
         "per_tpl": f"{lo}-{hi}",
-        "total": f"{lo * MIN_ARCHETYPES}-{hi * MIN_ARCHETYPES}",
+        "total": f"{lo * m_arch}-{hi * m_arch}",
         "required": str(uniq),
     }
 
 
-def stems_advice_text() -> str:
-    s, c = stems_advice("skill"), stems_advice("concept")
+def stems_advice_text(min_archetypes: Optional[int] = None) -> str:
+    s, c = stems_advice("skill", min_archetypes), stems_advice("concept", min_archetypes)
     return (
         f">= {s['per_tpl']} enunciados sintácticamente distintos por plantilla para Skills (total >= {s['total']}) "
         f"o >= {c['per_tpl']} para Concepts/Facts (total >= {c['total']})."

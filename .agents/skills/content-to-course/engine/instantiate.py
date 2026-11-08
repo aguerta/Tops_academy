@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from engine.assemble import assemble_question, format_template_string, sanitize_katex_syntax
 from engine.diversity import evaluate_competency_diversity
-from engine.invariants import check_instance_invariants
+from engine.invariants import InvariantViolationError, check_instance_invariants
 from engine.sandbox import (
     execute_sandbox_batch,
     execute_sandbox_instance,
@@ -57,6 +57,92 @@ def allocate_template_quotas(
     return quotas
 
 
+MAX_SUBSEED_ATTEMPTS = 8
+
+
+def compute_subseed(seed: int, k: int) -> int:
+    """Deterministic sub-seed derivation for rejection sampling."""
+    if k == 0:
+        return seed
+    return (seed * 1009 + k) & 0x7FFFFFFF
+
+
+def instantiate_verified_seed(
+    template: Dict[str, Any],
+    seed: int,
+    competency_id: str = "comp-01",
+    question_index: int = 1,
+    cta_distractors_map: Optional[Dict[str, Dict[str, Any]]] = None,
+    max_subseeds: int = MAX_SUBSEED_ATTEMPTS,
+    timeout: float = 5.0,
+) -> Tuple[Dict[str, Any], Dict[str, Any], int]:
+    """Deterministically instantiate a verified question instance using sub-seed rejection sampling on collision.
+
+    Returns:
+        (candidate_q, gen_res, subseed_index_used)
+    """
+    generate_py = template["generate_py"]
+    cross_check_py = template.get("cross_check_py")
+    interaction_type = template["interaction_type"]
+
+    last_errors: List[str] = []
+    collision_seen = False
+
+    for k in range(max_subseeds):
+        s_k = compute_subseed(seed, k)
+        try:
+            gen_res = execute_sandbox_instance(
+                generate_py,
+                seed=s_k,
+                cross_check_py=cross_check_py,
+                timeout=timeout,
+            )
+        except Exception as e:
+            last_errors = [str(e)]
+            continue
+
+        variables = gen_res.get("vars", {})
+        try:
+            candidate_q = assemble_question(
+                template=template,
+                gen_result=gen_res,
+                competency_id=competency_id,
+                question_index=question_index,
+                cta_distractors_map=cta_distractors_map,
+                seed=s_k,
+            )
+        except Exception as e:
+            last_errors = [f"Assembly error: {e}"]
+            continue
+
+        is_valid, errors = check_instance_invariants(candidate_q, interaction_type, variables=variables)
+        if is_valid:
+            return candidate_q, gen_res, k
+
+        has_collision = any(
+            "Distractor identical to correct answer" in e or "Duplicate option content" in e
+            for e in errors
+        )
+        if has_collision:
+            collision_seen = True
+        last_errors = errors
+
+    tpl_id = template.get("id", "UNKNOWN")
+    if collision_seen:
+        err_msg = (
+            f"[-] [TPL-D4] Collision violation in template '{tpl_id}' on seed {seed}: "
+            f"Exhausted all {max_subseeds} sub-seeds without resolving distractor collision. "
+            f"Last errors: {last_errors}"
+        )
+        raise InvariantViolationError(err_msg)
+    else:
+        err_msg = (
+            f"Template '{tpl_id}' failed invariants on seed {seed} after {max_subseeds} sub-seeds. "
+            f"Last errors: {last_errors}"
+        )
+        raise InvariantViolationError(err_msg)
+
+
 def instantiate_template(
     template: Dict[str, Any],
     competency_id: str,
@@ -76,8 +162,10 @@ def instantiate_template(
     instantiated_questions: List[Dict[str, Any]] = []
 
     attempt = 0
-    # Process in batches of 20 for speed
     batch_size = 20
+
+    seeds_evaluated_count = 0
+    seeds_retried_count = 0
 
     while len(instantiated_questions) < target_count and attempt < max_attempts:
         current_batch_seeds = [
@@ -92,7 +180,6 @@ def instantiate_template(
                 cross_check_py=cross_check_py,
             )
         except Exception:
-            # Fallback to single instance execution if batch fails
             batch_results = []
             for s in current_batch_seeds:
                 try:
@@ -110,6 +197,7 @@ def instantiate_template(
                     )
                 continue
 
+            s = item["seed"]
             gen_res = item["result"]
             variables = gen_res.get("vars", {})
 
@@ -122,7 +210,7 @@ def instantiate_template(
             raw_stem = template["stem"]
             stem_variants = template.get("stem_variants")
             if stem_variants and len(stem_variants) > 0:
-                var_idx = (item["seed"] % len(stem_variants)) if item.get("seed") is not None else 0
+                var_idx = (s % len(stem_variants))
                 raw_stem = stem_variants[var_idx]
             rendered_stem = sanitize_katex_syntax(format_template_string(raw_stem, variables))
             norm_stem = re.sub(r"\s+", " ", rendered_stem.strip())
@@ -138,15 +226,62 @@ def instantiate_template(
                     competency_id=competency_id,
                     question_index=q_num,
                     cta_distractors_map=cta_distractors_map,
-                    seed=item["seed"],
+                    seed=s,
                 )
             except Exception:
                 continue
 
             # 4. Invariant validation on candidate
             is_valid, errors = check_instance_invariants(candidate_q, interaction_type, variables=variables)
+            k_used = 0
+
+            # If invalid due to collision, attempt sub-seed rejection sampling
+            if not is_valid:
+                has_collision = any(
+                    "Distractor identical to correct answer" in e or "Duplicate option content" in e
+                    for e in errors
+                )
+                if has_collision:
+                    try:
+                        candidate_q, gen_res, k_used = instantiate_verified_seed(
+                            template=template,
+                            seed=s,
+                            competency_id=competency_id,
+                            question_index=q_num,
+                            cta_distractors_map=cta_distractors_map,
+                            max_subseeds=MAX_SUBSEED_ATTEMPTS,
+                        )
+                        variables = gen_res.get("vars", {})
+                        param_tuple = tuple(sorted((str(k), str(v)) for k, v in variables.items()))
+                        if param_tuple in seen_param_tuples:
+                            continue
+                        rendered_stem = candidate_q["stem"]
+                        norm_stem = re.sub(r"\s+", " ", rendered_stem.strip())
+                        if norm_stem in seen_stems:
+                            continue
+                        is_valid = True
+                    except InvariantViolationError:
+                        raise
+                    except Exception:
+                        continue
+                else:
+                    continue
+
             if not is_valid:
                 continue
+
+            seeds_evaluated_count += 1
+            if k_used > 0:
+                seeds_retried_count += 1
+                # Anti-cloning safeguard: > 20% retry rate indicates structurally identical distractors
+                if seeds_evaluated_count >= 5 and (seeds_retried_count / seeds_evaluated_count) > 0.20:
+                    tpl_id = template.get("id", "UNKNOWN")
+                    raise InvariantViolationError(
+                        f"[-] [TPL-D4] Anti-cloning safeguard violation in template '{tpl_id}': "
+                        f"Sub-seed retry rate {seeds_retried_count}/{seeds_evaluated_count} "
+                        f"({(seeds_retried_count/seeds_evaluated_count):.1%}) exceeds 20% limit. "
+                        f"Distractors are structurally identical or systematically colliding."
+                    )
 
             # Passed all checks!
             seen_param_tuples.add(param_tuple)

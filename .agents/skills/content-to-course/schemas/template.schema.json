@@ -44,6 +44,16 @@
           "type": "string",
           "enum": ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]
         },
+        "archetype": {
+          "type": "string",
+          "enum": ["direct", "inverse", "perturbation", "boundary_or_edge_case"]
+        },
+        "assumption_tested_id": {
+          "type": ["string", "null"]
+        },
+        "contract_version": {
+          "type": ["integer", "string"]
+        },
         "stem": { "type": "string", "minLength": 5 },
         "stem_variants": {
           "type": "array",
@@ -75,6 +85,9 @@
       "required": ["competency_id", "templates"],
       "properties": {
         "competency_id": { "type": "string" },
+        "contract_version": {
+          "type": ["integer", "string"]
+        },
         "templates": {
           "type": "array",
           "items": { "$ref": "#/definitions/template_item" },

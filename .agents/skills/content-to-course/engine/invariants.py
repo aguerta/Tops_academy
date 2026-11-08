@@ -12,8 +12,63 @@ Evaluates 100% of instances against strict psychometric and correctness rules:
 - Scaffolding: 3 to 5 hints
 """
 
+import functools
 import re
+import threading
 from typing import Any, Dict, List, Optional, Tuple, Union
+
+try:
+    import pykatex
+except ImportError:
+    pykatex = None
+
+
+_KATEX_LOCK = threading.Lock()
+_KATEX_NUM_SKELETON_RE = re.compile(r"(?<![\\#'\"a-zA-Z0-9_])\d+(?:\.\d+)?")
+
+
+def _normalize_katex_numeric_skeleton(math_content: str) -> str:
+    """Collapse standalone numeric literals to canonical tokens to prevent LRU cache thrashing across seeds."""
+    return _KATEX_NUM_SKELETON_RE.sub(
+        lambda m: "1.2" if "." in m.group(0) else "1",
+        math_content,
+    )
+
+
+def _render_katex_raw(math_content: str, is_display: bool) -> Tuple[bool, Optional[str]]:
+    """Thread-safe native call to pykatex.renderToString without C stderr warning pipe stalls."""
+    if pykatex is None:
+        return True, None
+    strict_mode = getattr(pykatex, "STRICT_IGNORE", "ignore")
+    with _KATEX_LOCK:
+        try:
+            pykatex.renderToString(math_content, is_display, strict=strict_mode)
+            return True, None
+        except Exception as e:
+            msg = str(e).replace("\u0332", "^")
+            return False, msg
+
+
+@functools.lru_cache(maxsize=32768)
+def _render_katex_cached(math_content: str, is_display: bool) -> Tuple[bool, Optional[str]]:
+    """Cached KaTeX render check over normalized or raw math expressions."""
+    return _render_katex_raw(math_content, is_display)
+
+
+def _render_katex_safe(math_content: str, is_display: bool) -> Tuple[bool, Optional[str]]:
+    """Render math content using thread-safe pykatex with numeric-skeleton LRU caching.
+
+    Cleans combining low-line character '\u0332' to ensure Windows cp1252 safety.
+    """
+    if pykatex is None:
+        return True, None
+    norm_math = _normalize_katex_numeric_skeleton(math_content)
+    ok, err = _render_katex_cached(norm_math, is_display)
+    if ok:
+        return True, None
+    if norm_math != math_content:
+        return _render_katex_raw(math_content, is_display)
+    return ok, err
 
 
 class InvariantViolationError(Exception):
@@ -199,6 +254,170 @@ def check_synthetic_boilerplate_distractors(
     return errors
 
 
+# ============================================================================
+# Item-Level Pedagogical & Psychometric Linters (Shift-Left from Audit Engine)
+# ============================================================================
+
+_TELLTALE_PATTERNS = [
+    re.compile(r"\b(err[oó]neamente|incorrectamente|falsamente)\b", re.IGNORECASE),
+    re.compile(r"\b(derivada\s+err[oó]nea|f[oó]rmula\s+err[oó]nea|c[aá]lculo\s+err[oó]neo)\b", re.IGNORECASE),
+    re.compile(r"\b(omitiendo\s+(elevar|multiplicar|dividir|sumar|restar))\b", re.IGNORECASE),
+    re.compile(r"\b(confundiendo\s+con|al\s+rev[eé]s)\b", re.IGNORECASE),
+    re.compile(r"\b(factorizando\s+err[oó]neamente|con\s+signos\s+positivos\s+incorrectos)\b", re.IGNORECASE),
+]
+
+_PARENTHETICAL_TELLTALE_PAT = re.compile(
+    r"\(\s*(?:confusi[oó]n|error|omisi[oó]n|sesgo|falsamente|definici[oó]n\s+err[oó]nea|desplazamiento\s+err[oó]neo|c[aá]lculo\s+err[oó]neo)[^)]*\)",
+    re.IGNORECASE,
+)
+
+_SYNTHETIC_PREFIX_PAT = re.compile(r"^\s*(?:Opci[oó]n|Alternativa|Variante)\s+(?:alterna\s+)?\d+\s*:?", re.IGNORECASE)
+
+_PADDING_SUFFIX_PAT = re.compile(
+    r",\s*(?:para\s+los\s+par[aá]metros\s+bajo\s+an[aá]lisis|bajo\s+las\s+condiciones\s+del\s+modelo|seg[uú]n\s+el\s+marco\s+te[oó]rico\s+establecido|en\s+el\s+contexto\s+del\s+sistema\s+analizado|seg[uú]n\s+los\s+supuestos\s+cl[aá]sicos\s+del\s+modelo|bajo\s+las\s+hip[oó]tesis\s+del\s+modelo|para\s+la\s+muestra\s+de\s+datos\s+observada|de\s+acuerdo\s+con\s+la\s+teor[ií]a\s+econom[eé]trica|en\s+la\s+formulaci[oó]n\s+matricial\s+considerada|en\s+el\s+contexto\s+del\s+contraste\s+analizado|en\s+el\s+marco\s+de\s+la\s+especificaci[oó]n)(?:,\s*[^.]{10,60})?\s*\.?\s*$",
+    re.IGNORECASE,
+)
+
+_FORALL_EPS_PAT = re.compile(r"(?:para\s+todo(?:\s+margen)?\s+\$?\\(?:var)?epsilon\s*>\s*0|\\forall\s+\\(?:var)?epsilon\s*>\s*0)", re.IGNORECASE)
+_BOUND_CONSTANT_FORALL_PAT = re.compile(r"(?:para\s+todo(?:\s+\w+)?|\\forall)\s+\$?\\(?:var)?epsilon\s*=\s*-?\d+(?:\.\d+)?", re.IGNORECASE)
+_HARDCODED_INEQ_PAT = re.compile(r"(?:\\le|\\ge|<|>)\s*0\.\d+")
+
+_POISONED_CONSIDER_PAT = re.compile(
+    r"asegurando\s+considerar\s+adecuadamente:\s*(omitir|confundir|ignorar|olvidar|suponer\s+err[oó]neamente|asumir\s+que|reemplazar\s+err[oó]neamente|dividir\s+err[oó]neamente|no\s+elevar)",
+    re.IGNORECASE,
+)
+_SYMBOLIC_POISON_PAT = re.compile(
+    r"(?:asegurando\s+considerar\s+adecuadamente|eval[uú]e\s+posibles\s+desv[ií]os\s+al\s+considerar):\s*\$",
+    re.IGNORECASE,
+)
+_CONSIDER_EXTRACT_PAT = re.compile(
+    r"(?:asegurando\s+considerar\s+adecuadamente|eval[uú]e\s+posibles\s+desv[ií]os\s+al\s+considerar):\s*(.+)$",
+    re.IGNORECASE,
+)
+_STUB_HINT_PAT = re.compile(r"^(?:C|H|Hab|Fact|Concept|Skill)-\d+$", re.IGNORECASE)
+
+
+def check_item_level_options_integrity(
+    options: List[Dict[str, Any]],
+    interaction_type: str = "multiple_choice_7_options",
+) -> List[str]:
+    """Inspects option contents for telltales, synthetic cloning, padding, and vacuous quantifiers."""
+    errors: List[str] = []
+    if not isinstance(options, list):
+        return errors
+
+    correct_texts = []
+    distractor_texts = []
+
+    for opt_idx, opt in enumerate(options):
+        if not isinstance(opt, dict):
+            continue
+        text = str(opt.get("content") if "content" in opt else (opt.get("text") or opt.get("value") or "")).strip()
+        is_correct = bool(opt.get("is_correct", False))
+
+        if is_correct:
+            correct_texts.append(text)
+        else:
+            distractor_texts.append(text)
+
+            # 1. Distractor confessions / telltale cues in visible text
+            for pat in _TELLTALE_PATTERNS:
+                m = pat.search(text)
+                if m:
+                    errors.append(
+                        f"Metainformación delatora en distractor visible opción {opt_idx + 1}: '{m.group(0)}'"
+                    )
+                    break
+
+            # 2. Cloned synthetic prefix
+            m_syn = _SYNTHETIC_PREFIX_PAT.search(text)
+            if m_syn:
+                errors.append(
+                    f"Distractor con prefijo sintético de clonación ('{m_syn.group(0).strip()}') en opción {opt_idx + 1}"
+                )
+
+        # 3. Parenthetical telltale clue (checked on all options)
+        m_pt = _PARENTHETICAL_TELLTALE_PAT.search(text)
+        if m_pt:
+            errors.append(
+                f"Metainformación delatora parentética en opción visible {opt_idx + 1}: '{m_pt.group(0)}'"
+            )
+
+        # 4. Length-padding suffixes (anti-gaming)
+        m_pad = _PADDING_SUFFIX_PAT.search(text)
+        if m_pad:
+            errors.append(
+                f"Relleno artificial de longitud en opción {opt_idx + 1} para evadir [R-15]: '{m_pad.group(0).strip()}'"
+            )
+
+        # 5. Vacuous universal quantifier instantiation
+        has_bound_const = bool(_BOUND_CONSTANT_FORALL_PAT.search(text))
+        has_vacuous_forall = False
+        if _FORALL_EPS_PAT.search(text):
+            prefix_part = _FORALL_EPS_PAT.split(text)[0]
+            if "\\varepsilon" not in prefix_part and "\\epsilon" not in prefix_part and _HARDCODED_INEQ_PAT.search(prefix_part):
+                has_vacuous_forall = True
+        if has_bound_const or has_vacuous_forall:
+            errors.append(
+                f"Corrupción matemática de cuantificador universal en opción {opt_idx + 1}: "
+                f"sustituye '\\varepsilon' por constante numérica dejando 'para todo \\varepsilon > 0' vacuo."
+            )
+
+    return errors
+
+
+def check_item_level_scaffolding_integrity(
+    hints: List[Any],
+    correct_texts: Optional[List[str]] = None,
+    distractor_texts: Optional[List[str]] = None,
+) -> List[str]:
+    """Audits hints for anti-socratic poisoning, stub hints, and premature answer leaks."""
+    errors: List[str] = []
+    if not isinstance(hints, list) or not hints:
+        return errors
+
+    clean_hints = [h.get("text", "") if isinstance(h, dict) else str(h) for h in hints]
+    c_texts = [ct.strip("$").strip() for ct in (correct_texts or []) if len(ct.strip("$").strip()) >= 15]
+    d_cores = [dt.strip("$").strip().rstrip(".") for dt in (distractor_texts or []) if len(dt.strip("$").strip()) >= 12]
+
+    for h_idx, h_txt in enumerate(clean_hints):
+        if not h_txt or not isinstance(h_txt, str):
+            continue
+        h_clean = h_txt.strip()
+
+        # 1. Stub competency ID hints check
+        if _STUB_HINT_PAT.match(h_clean):
+            errors.append(f"Pista {h_idx + 1} es un ID de competencia stub ('{h_clean}') en lugar de andamiaje socrático.")
+
+        # 2. Poisoned hints
+        m_pois = _POISONED_CONSIDER_PAT.search(h_txt) or _SYMBOLIC_POISON_PAT.search(h_txt)
+        if m_pois:
+            errors.append(
+                f"Envenenamiento anti-socrático en pista {h_idx + 1}: instruye 'considerar adecuadamente' un distractor o error conceptual ('{m_pois.group(0)[:60]}')."
+            )
+        elif "asegurando considerar adecuadamente:" in h_txt.lower():
+            m_ext = _CONSIDER_EXTRACT_PAT.search(h_txt)
+            if m_ext:
+                injected = m_ext.group(1).strip().rstrip(".").strip("$").strip()
+                for dc in d_cores:
+                    if dc and (dc in injected or (len(injected) >= 14 and injected in dc)):
+                        errors.append(
+                            f"Envenenamiento anti-socrático en pista {h_idx + 1}: inyecta fórmula de distractor tras 'considerar adecuadamente': '{injected[:60]}'."
+                        )
+                        break
+
+        # 3. Premature answer leak in early hints (leaving the final hint for operational review)
+        if h_idx < max(1, len(clean_hints) - 1):
+            for ct in c_texts:
+                if ct in h_txt:
+                    errors.append(
+                        f"Fuga prematura de clave correcta en Pista {h_idx + 1} antes del andamiaje final: '{ct[:60]}'."
+                    )
+                    break
+
+    return errors
+
+
 def check_scaffolding_answer_leaks(hints: List[Any]) -> List[str]:
     """Detects mechanical answer leaks in scaffolding hints (R-19)."""
     errors: List[str] = []
@@ -345,7 +564,9 @@ def validate_katex_syntax(
     if "$$$" in text:
         errors.append(f"Triple dollar delimiter '$$$' detected in {context}.")
 
-    # 2. Residual double curly braces (paired template placeholders like {{var}})
+    # 2. Residual double curly braces (paired template placeholders like {{var}} or empty/orphan {{...}})
+    if re.search(r"\{\{\s*\}\}", text):
+        errors.append(f"Empty double curly braces ('{{{{}}}}') detected in {context}.")
     if not allow_template_vars:
         if re.search(r"\{\{\s*[a-zA-Z0-9_]+\s*\}\}", text) or re.search(r"(?<!\\)\{\{", text):
             errors.append(f"Residual double curly braces ('{{{{' or '}}}}') detected in {context}.")
@@ -359,13 +580,24 @@ def validate_katex_syntax(
         if inline_text.count("$") % 2 != 0:
             errors.append(f"Unbalanced inline math delimiter '$' in {context}.")
 
-    # 4. Balanced curly braces inside LaTeX math blocks
-    math_matches = re.findall(r"\$\$(.*?)\$\$|\$(.*?)\$", text, flags=re.DOTALL)
+    # 4. Balanced curly braces and pykatex rendering check inside LaTeX math blocks
+    math_matches = re.finditer(r"\$\$(.*?)\$\$|\$([^\$]+?)\$", text, flags=re.DOTALL)
     for mb in math_matches:
-        block = mb[0] if mb[0] else mb[1]
+        raw_match = mb.group(0)
+        is_disp = raw_match.startswith("$$")
+        block = mb.group(1) if is_disp else mb.group(2)
+        if not block:
+            continue
         clean_block = block.replace(r"\{", "").replace(r"\}", "")
         if clean_block.count("{") != clean_block.count("}"):
             errors.append(f"Unbalanced curly braces in LaTeX math expression in {context}: '{clean_block[:60]}...'")
+
+        # PyKaTeX rendering verification with LRU cache
+        has_tmpl_token = bool(re.search(r"@[A-Za-z0-9_]+@|\{[a-zA-Z0-9_]+\}", block))
+        if not (allow_template_vars and has_tmpl_token):
+            success, render_err = _render_katex_safe(block.strip(), is_disp)
+            if not success and render_err:
+                errors.append(f"KaTeX parse error in {context}: {render_err}")
 
     # 5. Unclosed nested accent/style macros (e.g. \hat{\boldsymbol{\beta}} with missing outer brace)
     accent_macros = r"(?:hat|bar|tilde|vec|dot|ddot|acute|grave|check|breve|mathring|widehat|widetilde|overline|underline)"
@@ -583,6 +815,12 @@ def validate_katex_syntax(
                     f"[KATEX-PROSE-OVERFLOW] KaTeX text macro '\\{macro_name}{{{snippet}}}' exceeds 45 characters "
                     f"({len(inner)} chars) in {context}. Split into markdown prose outside math delimiters."
                 )
+            inner_text_only = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", "", inner)
+            if re.search(r"(?<!\\)_", inner_text_only):
+                macro_name = m.group(1)
+                errors.append(
+                    f"Unescaped underscore '_' inside '\\{macro_name}{{{inner}}}' in {context} causes KaTeX ParseError."
+                )
 
     # 15. LaTeX math commands with backslash exposed outside math delimiters '$...$' or '$$...$$'
     # Skips purely algebraic fields (e.g. canonical_algebraic or expression in FIB) which are mathematical formulas by specification
@@ -603,6 +841,14 @@ def validate_katex_syntax(
                 f"LaTeX command '{cmd}' exposed outside '$...$' delimiters in {context}. "
                 f"Enclose the mathematical expression in '$...$' (e.g. '${cmd}...$')."
             )
+
+    # 16. Vacuous quantifiers (e.g. \forall x = 1, \exists y = 0)
+    for m_vac in re.finditer(r"\\(?:forall|exists)\s+[a-zA-Z\\]+\s*=\s*[-+]?\d", text):
+        errors.append(f"Vacuous quantifier detected in {context}: '{m_vac.group(0)}'.")
+
+    # 17. Newtonian dot accents on digits (e.g. \dot{0}, \dot{1})
+    for m_dot in re.finditer(r"\\dot\{\s*\d+\s*\}", text):
+        errors.append(f"Newtonian dot accent on digits detected in {context}: '{m_dot.group(0)}'.")
 
     return errors
 
@@ -656,6 +902,8 @@ def check_instance_invariants(
             errors.extend(validate_katex_syntax(misc, misc_key, variables=effective_vars))
 
     options_raw = instance.get("options")
+    corr_texts_extracted: List[str] = []
+    dist_texts_extracted: List[str] = []
     if isinstance(options_raw, list):
         for idx, opt in enumerate(options_raw):
             if isinstance(opt, dict):
@@ -665,6 +913,14 @@ def check_instance_invariants(
                 r = opt.get("error_rationale")
                 if isinstance(r, str) and r:
                     errors.extend(validate_katex_syntax(r, f"option {idx + 1} error_rationale", variables=effective_vars))
+                val_txt = str(opt.get("content") if "content" in opt else (opt.get("text") or opt.get("value") or "")).strip()
+                if opt.get("is_correct"):
+                    corr_texts_extracted.append(val_txt)
+                else:
+                    dist_texts_extracted.append(val_txt)
+
+        # Item-level options integrity (telltales, synthetic clone prefix, padding, vacuous quantifiers)
+        errors.extend(check_item_level_options_integrity(options_raw, interaction_type))
 
     # 1. Multiple Choice 7 options
     if interaction_type == "multiple_choice_7_options":
@@ -823,11 +1079,17 @@ def check_instance_invariants(
             bp_errors = check_synthetic_boilerplate_distractors(None, ms_distractors)
             errors.extend(bp_errors)
 
-    # Scaffolding progressive hint answer leak check across all interaction types
+    # Scaffolding progressive hint answer leak and item-level integrity checks across all interaction types
     raw_hints = instance.get("hints", [])
     if isinstance(raw_hints, list) and raw_hints:
         leak_errors = check_scaffolding_answer_leaks(raw_hints)
         errors.extend(leak_errors)
+        scaf_errors = check_item_level_scaffolding_integrity(
+            raw_hints,
+            correct_texts=corr_texts_extracted,
+            distractor_texts=dist_texts_extracted,
+        )
+        errors.extend(scaf_errors)
 
     return (len(errors) == 0, errors)
 

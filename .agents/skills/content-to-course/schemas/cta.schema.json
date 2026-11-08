@@ -14,6 +14,21 @@
     }
   },
   "definitions": {
+    "assumption": {
+      "type": "object",
+      "required": ["id", "statement_latex", "violation_consequence"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^A-[A-Za-z0-9_-]+$"
+        },
+        "name": { "type": "string" },
+        "statement_latex": { "type": "string", "minLength": 1 },
+        "role_in_proof": { "type": "string" },
+        "violation_consequence": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
     "evidence_ref": {
       "type": "object",
       "required": ["page"],
@@ -139,6 +154,10 @@
         "distractors": {
           "type": "array",
           "items": { "$ref": "#/definitions/distractor" }
+        },
+        "assumptions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/assumption" }
         },
         "automation_seeds": {
           "type": "array",

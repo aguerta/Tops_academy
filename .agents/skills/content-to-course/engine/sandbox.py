@@ -8,6 +8,7 @@ Features:
 """
 
 import ast
+import inspect
 import json
 import os
 import sys
@@ -519,6 +520,56 @@ def run_code_in_env(
         raise SandboxExecutionError(f"{type(e).__name__}: {e}") from e
 
 
+def _find_verifier_callable(env: Dict[str, Any]) -> Tuple[str, Any]:
+    """Locate the verification function in the sandbox execution environment."""
+    if "verify" in env and callable(env["verify"]):
+        return "verify", env["verify"]
+    if "cross_check" in env and callable(env["cross_check"]):
+        return "cross_check", env["cross_check"]
+    for k, v in env.items():
+        if callable(v) and (k.startswith("verify") or k.startswith("ver_")):
+            return k, v
+    raise SandboxExecutionError("Function 'verify' was not defined in template code.")
+
+
+def _prepare_verifier_args(ver_fn: Any, result: Dict[str, Any], rng_cc: Any) -> Tuple[Any, ...]:
+    """Inspect verifier callable signature and prepare appropriate arguments."""
+    try:
+        sig = inspect.signature(ver_fn)
+        params = list(sig.parameters.values())
+        param_names = [p.name for p in params]
+    except Exception:
+        co = getattr(ver_fn, "__code__", None)
+        if co is not None:
+            param_names = list(co.co_varnames[:co.co_argcount])
+        else:
+            param_names = ["result"]
+
+    if len(param_names) == 2:
+        if param_names[0] == "rng":
+            return (rng_cc, result)
+        else:
+            cand = result.get("correct") if isinstance(result, dict) else result
+            v = result.get("vars", {}) if isinstance(result, dict) else {}
+            return (cand, v)
+    elif len(param_names) == 1:
+        return (result,)
+    elif len(param_names) == 0:
+        return ()
+    else:
+        return (result,)
+
+
+MAX_SUBSEED_ATTEMPTS = 8
+
+
+def compute_subseed(seed: int, k: int) -> int:
+    """Deterministic sub-seed derivation for rejection sampling."""
+    if k == 0:
+        return seed
+    return (seed * 1009 + k) & 0x7FFFFFFF
+
+
 def execute_template_code(
     generate_py: str,
     seed: int = 42,
@@ -534,13 +585,28 @@ def execute_template_code(
     gen_res = run_code_in_env(generate_py, "generate", seed=seed, timeout=timeout)
     if cross_check_py:
         import copy
+        import random
         try:
             ver_arg = copy.deepcopy(gen_res)
         except Exception:
             ver_arg = serialize_for_json(gen_res)
-        cc_res = run_code_in_env(cross_check_py, "verify", args=(ver_arg,), seed=seed, timeout=timeout)
-        if cc_res is False:
-            raise SandboxExecutionError("cross_check verification returned False")
+
+        ver_env = build_sandbox_globals()
+        ver_compiled = compile(cross_check_py, "<sandbox>", "exec")
+        exec(ver_compiled, ver_env)
+
+        ver_name, ver_fn = _find_verifier_callable(ver_env)
+        random.seed(seed)
+        rng_cc = random.Random(seed)
+        rng_cc.np = _LazyNPRNG(seed)
+        ver_args = _prepare_verifier_args(ver_fn, ver_arg, rng_cc)
+
+        cc_res = call_with_timeout(ver_fn, args=ver_args, seed=seed, timeout=timeout)
+        if hasattr(cc_res, "item") and callable(getattr(cc_res, "item", None)):
+            cc_res = cc_res.item()
+        if cc_res is not True:
+            raise SandboxExecutionError(f"Cross-check verification failed (returned {cc_res!r}).")
+
     return serialize_for_json(gen_res)
 
 
@@ -554,18 +620,40 @@ def execute_verifier_code(
     """Execute verifier/cross-check code strictly in-process."""
     validate_code_ast(verifier_py)
     import copy
+    import random
     try:
         ver_arg = copy.deepcopy(generated_result)
     except Exception:
         ver_arg = serialize_for_json(generated_result)
-    res = run_code_in_env(verifier_py, "verify", args=(ver_arg,), seed=seed, timeout=timeout)
-    return bool(res)
+
+    ver_env = build_sandbox_globals()
+    ver_compiled = compile(verifier_py, "<sandbox>", "exec")
+    exec(ver_compiled, ver_env)
+    ver_name, ver_fn = _find_verifier_callable(ver_env)
+
+    random.seed(seed)
+    rng_cc = random.Random(seed)
+    rng_cc.np = _LazyNPRNG(seed)
+    ver_args = _prepare_verifier_args(ver_fn, ver_arg, rng_cc)
+
+    try:
+        res = call_with_timeout(ver_fn, args=ver_args, seed=seed, timeout=timeout)
+        if hasattr(res, "item") and callable(getattr(res, "item", None)):
+            res = res.item()
+        return res is True
+    except Exception:
+        return False
 
 
 # Backward compatibility aliases (100% in-process)
 execute_template_in_sandbox = execute_template_code
 execute_verifier_in_sandbox = execute_verifier_code
 execute_sandbox_instance = execute_template_code
+
+
+def instantiate_verified_seed(*args, **kwargs):
+    from engine.instantiate import instantiate_verified_seed as _ivs
+    return _ivs(*args, **kwargs)
 
 
 def execute_sandbox_batch(
@@ -654,27 +742,31 @@ def execute_sandbox_batch(
                 ver_env = build_sandbox_globals()
                 exec(ver_compiled, ver_env)
 
-                if "verify" not in ver_env:
-                    raise SandboxExecutionError("Function 'verify' was not defined in template code.")
-
-                ver_fn = ver_env["verify"]
+                ver_name, ver_fn = _find_verifier_callable(ver_env)
                 import copy
                 try:
                     ver_arg = copy.deepcopy(gen_res)
                 except Exception:
                     ver_arg = serialize_for_json(gen_res)
+
+                rng_cc = random.Random(s)
+                rng_cc.np = _LazyNPRNG(s)
+                ver_args = _prepare_verifier_args(ver_fn, ver_arg, rng_cc)
+
                 cc_res = call_with_timeout(
                     ver_fn,
-                    args=(ver_arg,),
+                    args=ver_args,
                     timeout=timeout_per_item,
                     seed=s,
                 )
-                if cc_res is False:
+                if hasattr(cc_res, "item") and callable(getattr(cc_res, "item", None)):
+                    cc_res = cc_res.item()
+                if cc_res is not True:
                     results.append({
                         "seed": s,
                         "success": False,
                         "ok": False,
-                        "error": "cross_check verification returned False",
+                        "error": f"Cross-check verification failed (returned {cc_res!r}).",
                         "stage": "verify",
                     })
                     continue

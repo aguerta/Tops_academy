@@ -290,6 +290,28 @@ def sanitize_katex_syntax(text: str) -> str:
 
     text = re.sub(r"\\text\s*\{([^{}$]*)\}", _escape_text_underscores, text)
 
+    # 0d. Canonicalize algebraic double signs inside math blocks $...$ and $$...$$
+    def _collapse_algebraic_signs(math_body: str) -> str:
+        # Collapses double signs from template interpolation: + -5 -> - 5, - -5 -> + 5, etc.
+        for _ in range(5):
+            orig_body = math_body
+            math_body = re.sub(r"(?<![a-zA-Z\\])\+\s*-\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
+            math_body = re.sub(r"(?<![a-zA-Z\\])-\s*-\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
+            math_body = re.sub(r"(?<![a-zA-Z\\])\+\s*\+\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
+            math_body = re.sub(r"(?<![a-zA-Z\\])-\s*\+\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
+            if math_body == orig_body:
+                break
+        return math_body
+
+    def _canonicalize_math_signs(match: re.Match) -> str:
+        raw_span = match.group(0)
+        is_display = raw_span.startswith("$$")
+        delim = "$$" if is_display else "$"
+        inner = raw_span[len(delim):-len(delim)]
+        return f"{delim}{_collapse_algebraic_signs(inner)}{delim}"
+
+    text = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", _canonicalize_math_signs, text)
+
     # Replace '$$$' with '$$'
     while "$$$" in text:
         text = text.replace("$$$", "$$")
