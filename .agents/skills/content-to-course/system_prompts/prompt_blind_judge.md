@@ -30,11 +30,13 @@ Under our **Load Inversion Architecture (Zero-Warmup In-Prompt Payload or Harmon
 
 ---
 
-## 1. Operating Rules
+## 1. Operating Rules (Epistemic Sufficiency & Semantic No-Giveaway)
 
 1. Lee cada reactivo provisto directamente en tu Prompt o en `work/dispatch/items/judge_XX.json`.
 2. Para cada pregunta:
    - Lee minuciosamente el stem (`stem_es` o `stem`), el tipo de interacción y las opciones/ecuaciones KaTeX.
+   - Verifica la suficiencia epistémica (epistemic sufficiency): el reactivo debe ser autosuficiente analíticamente para resolverlo sin ambigüedad.
+   - Evalúa la ausencia de delatores semánticos (semantic no-giveaway) y de pistas parentéticas en distractores.
    - Computa analíticamente la solución exacta desde primeros principios matemáticos o lógicos.
    - Ajusta tu solución al formato canónico según el tipo de interacción.
 

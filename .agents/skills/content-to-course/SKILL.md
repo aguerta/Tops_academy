@@ -34,7 +34,7 @@ inputs:
     required: false
   stage:
     type: string
-    description: Run a single stage (bootstrap, prepare, cta, cta-reduce, cta-apply, shard, templates, build, verify, publish, define-types, judge-compare, wave-status, unlock)
+    description: Run a single stage (bootstrap, prepare, cta, cta-reduce, cta-apply, shard, templates, build, verify, publish, define-types, judge-compare, wave-status, unlock, gates, repair-matrix, certify, rejudge, rejudge-compare)
     required: false
   from_stage:
     type: string
@@ -77,9 +77,9 @@ outputs:
     description: Absolute path to the Cognitive Task Analysis document
 ---
 
-# Content-to-Course Antigravity Skill (v3.3 Pipeline Hardened Architecture)
+# Content-to-Course Antigravity Skill (C2C v4.0 Formal Mas con Menos Architecture)
 
-A universal, subject-agnostic educational engineering pipeline that converts raw academic materials (Beamer presentations, handwritten OneNote notes, statistical software exports, and high-resolution chalkboard images) into fully playable, interactive Top's Academy courses in **≤ 20 minutes** for a standard 20-competency curriculum.
+A universal, subject-agnostic educational engineering pipeline that converts raw academic materials (Beamer presentations, handwritten OneNote notes, statistical software exports, and high-resolution chalkboard images) into fully playable, interactive Top's Academy courses in **≤ 12 minutes** for a standard 20-competency curriculum under the "Más con Menos" (-65% tokens) formal paradigm.
 
 ---
 
@@ -120,20 +120,27 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 >
 > La conversación principal actúa **exclusivamente como Directora de Proyecto / Orquestadora General**. Su responsabilidad es coordinar el flujo de trabajo, invocar las etapas del runner CLI (`run.py`), inspeccionar los presupuestos y artefactos de control, y **delegar todas las tareas intensivas a subagentes especializados en paralelo mediante `invoke_subagent`**.
 >
-> ### 🏛️ ARQUITECTURA HARDENED v3.8 MASTERY TRI-BANDA:
-> - **Fast Bootstrap & Promoción MapReduce (SLA ≤ 60–90s)**: Un único comando atómico CLI (`run.py --stage bootstrap`) inicializa el entorno, procesa PDFs sin rasterizado, y usa `mapreduce` por defecto (un `direct` expl&iacute;cito del usuario SIEMPRE prevalece y nunca se promueve por p&aacute;ginas/archivos), con particionado `slice_pdf_lossless` ($k = \lceil P/20 \rceil$) cuando el material supera 25 páginas o múltiples archivos.
-> - **Flujo Simétrico de Armonización (`cta -> cta-reduce -> cta-apply`)**: En mapreduce o modo `--append`, la síntesis de partes converge simétricamente a través de `c2c_cta_harmonizer` (`cta_outline.json` y `duplicate_candidates.json`), absorbiendo nodos preexistentes `[BASE]` de solo lectura y ejecutando Fail-Fast ante desbordamiento de prosa en KaTeX (`[KATEX-PROSE-OVERFLOW]`, `\text{...} > 45` chars).
-> - **Contrato Form-B Tri-Banda Multimodal (`--min-archetypes 3`)**: Cada competencia define 3 plantillas ortogonales (Directo `'easy'`, Inverso `'medium'`, Perturbación `'hard'`) con $\ge 2$ niveles Bloom y diversidad multimodal ($\ge 2$ FIB/MS en `Hab-*`, $\ge 1$ en `C-*`/`H-*`), con 3-tuplas dinámicas `(did, val, rationale_con_@var@)` (`[TPL-DYNAMIC-RATIONALE]`) y anti-patrón estático erradicado (`[TPL-STATIC-OPT]`).
-> - **Silent Reactive Barrier Protocol (~12–16 Turnos del Director)**: En despertares reactivos parciales (`k < N` subagentes listos), el Director **NO EJECUTA NINGUNA HERRAMIENTA** (cero llamadas a CLI o sistema de archivos), registra el progreso en 1 línea (`Progreso de ola: k/N subagentes completados.`) y finaliza el turno en `< 2s`.
-> - **Weighted Waves (`1 Hab/shard`, olas ≤ 10)**: Priorización *Heaviest-First*: cada habilidad práctica compleja (`Hab-*`) se aísla en su propio shard individual y se despacha en la Ola 1 (`--wave 1`) a $t=0$, amortiguando el camino crítico.
-> - **Arbitraje Ciego 100% de Plantillas con 3 Semillas (101, 202, 303)**: Evaluación ciega tolerancia-cero (acuerdo 100% por `template_id`) en streaming concurrente (`--ready-only`).
-> - **Compuerta Bloqueante Pre-Publish (`PublishQualityGateError`)**: Publicación bloqueada si el reporte de jueces falla o si el banco no cumple los umbrales psicométricos de producción (MPRI $\ge 75$, ZPD $> 0$, P4 $\ge 13.0/15$, unicidad de fundamentaciones $\ge 30\%$, 0 hard penalties, 0 opciones infladas con relleno de longitud).
-> - **Dieta Estricta del Director & Cero Depuración Manual**: El Director tiene **PROHIBIDO** (y bloqueado por `c2c_hook_guard.py`) leer o editar código fuente de shards (`*_data.py`, `shard_fixes/*.py`), respuestas de jueces o scripts internos `.py` del skill. Todo error o discordancia se delega quirúrgicamente al subagente `c2c_repair`.
-> - **PrairieLearn KaTeX Orthogonal (@var@)**: Desacoplamiento total entre KaTeX y Python mediante tokens `@var@` / `@var:fmt@` en raw strings `r"..."`, erradicando el uso de `rf"..."` y llaves triples `{{{...}}}`.
+> ### 🏛️ ARQUITECTURA C2C v4.0 FORMAL "MÁS CON MENOS":
+> - **Fast Bootstrap & Promoción MapReduce (SLA ≤ 60–90s)**: Inicialización atómica CLI (`run.py --stage bootstrap`) sin rasterizado, selección determinista de modo CTA y particionado `slice_pdf_lossless` ($k = \lceil P/20 \rceil$) cuando supera 25 páginas.
+> - **Contrato Form-C Quad-Band (`MIN_ARCHETYPES = 4`)**: Cada competencia define obligatoriamente 4 arquetipos disjuntos (Directo `'easy'`, Inverso `'medium'`, Perturbación `'hard'`, Frontera/Casos de Borde `'hard'`) con $\ge 2$ niveles Bloom y diversidad multimodal (`1 MC7 + 2 FIB + 1 MS` en `Hab-*`, `1 MC7 + 1 FIB + 1 MS` en `C-*`/`H-*`). En `Hab-*`, las 4 funciones generadoras producen **4 fórmulas algebraicas objetivo disjuntas en AST** (`SymPy`).
+> - **Supuestos Explícitos (`assumptions` en `cta.json`)**: Toda competencia técnica declara supuestos formales (`id`, `statement_latex`, `role_in_proof`, `violation_consequence`). El 4.º arquetipo evalúa obligatoriamente la ruptura de un `assumption_id` explícito.
+> - **Triple Contrato Anti-Trampas para Verificadores (`ver_*`)**: (1) Soundness positiva `ver_fn(correct) is True` en 50 semillas; (2) Refutación estricta de distractores `ver_fn(d_i) is False` para los 6 distractores; (3) Cero verificadores triviales (`return True` o `try/except: return True` bloqueados en AST).
+> - **Matriz 2D de Estrategia de Edición (`decidirEstrategiaEdicion`)**:
+>   * *Nivel 0 (< 5 ms)*: Auto-heal AST/Tokenize en compilador (delimitadores, wraps, R-23).
+>   * *Nivel 1 (10–25 s)*: `1 <= errores < 6` Y `lineasInfractoras <= 5` $\implies$ `edit_file` quirúrgico obligatorio.
+>   * *Nivel 2 (20–40 s)*: `errores >= 6` O `lineasInfractoras > 5` $\implies$ `ModularSplicing` obligatorio (`shards/shard_fixes/<CID>.py`). Bloquea edición in-place repetitiva.
+>   * *Nivel 3 (60–120 s)*: `SyntaxError` global $\implies$ `write_file(Overwrite=True)` atómico.
+> - **Recibos Criptográficos `*.cert.json` (< 5 ms)**: `compile_shard.py` emite certificados sellados por SHA-256. En `--stage templates` y `--stage certify`, la verificación criptográfica salta por completo re-ejecutar el sandbox sobre shards inalterados.
+> - **`--lean` por Defecto en Despacho**: System prompts ultra-compactos ($\le 5\text{ KB}$), ahorrando ~65% de tokens de salida y tiempo de generación.
+> - **Juez Epistémico 1-Seed con Dominancia Bayesiana ($\alpha_{\text{Kernel}} = 0$)**: 1 única semilla pre-verificada por plantilla enfocada en suficiencia epistémica y no-giveaway semántico; ninguna objeción heurística revoca una prueba matemática formal.
+> - **Silent Reactive Barrier Protocol (~12–16 Turnos del Director)**: En despertares reactivos parciales (`k < N`), el Director no ejecuta herramientas, reporta `Progreso de ola: k/N subagentes completados.` y finaliza en `< 2s`.
+> - **Weighted Waves (`1 Hab/shard`, olas ≤ 10)**: Priorización *Heaviest-First*: cada habilidad compleja (`Hab-*`) se aísla en su propio shard individual y se despacha a $t=0$.
+> - **Compuerta Bloqueante Pre-Publish (`PublishQualityGateError`)**: Publicación bloqueada ante objeciones de jueces no resueltas o incumplimiento psicométrico (MPRI $\ge 75$, ZPD $> 0$, P4 $\ge 13.0/15$, unicidad de racionalizaciones $\ge 30\%$, 0 hard penalties).
+> - **PrairieLearn KaTeX Orthogonal (@var@)**: Desacoplamiento total entre KaTeX y Python mediante tokens `@var@` / `@var:fmt@` en raw strings `r"..."`.
 
 ---
 
-## 🏗️ Diagrama de Flujo v3.3
+## 🏗️ Diagrama de Flujo v4.0
 
 ```
 [ Fuentes Académicas: PDFs Beamer, Trazos Vectoriales, Apuntes ]
@@ -143,16 +150,17 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 │ Fast Bootstrap (run.py --stage bootstrap --course-id <id> --sources <...>)  │
 │ - Ingesta Zero-Raster, manifiestos centralizados y delta continuo           │
 │ - Genera work/dispatch/types/*.json (≤ 5 KB cada uno) y Subagents CTA       │
-│ - Director define SOLO c2c_cta_architect, despacha CTA y luego define el resto│
+│ - Inicializa .c2c_subagent_lock.json con campos de gobernanza síncrona      │
 │ - Activa watchdog (schedule a 7 min con budget_guard.py)                    │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ Stage 1: Síntesis Curricular CTA (run.py --stage cta)                       │
-│ - Arquitectos leen sus partes asignadas con Pointer Prompts (<500 B)        │
-│ - Granularidad standard: densidad relativa (3-5 comps por cada 5-10 págs)   │
+│ - Arquitectos leen sus partes con Pointer Prompts (<500 B) en Form-C        │
+│ - Extrae competencias con assumptions [{id, statement, consequence}]        │
 │ - Auto-healing L1–L5; en mapreduce fusiona cta_parts/part_*.json -> cta.json│
+│ - Emite cta.cert.json sellado criptográficamente                            │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
@@ -166,33 +174,37 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ Stage 3: Fan-Out Paralelo en 1 Sola Ola (dispatch-authors)                  │
-│ - Máxima paralelización: Todos los shards lanzados en 1 ola a t=0           │
-│ - Orden Heaviest-First: Habilidades (Hab-*) al frente del despacho          │
+│ - Máxima paralelización: Todos los shards lanzados a t=0 con --lean         │
+│ - Contrato Form-C Quad-Band: 4 arquetipos disjuntos (1 MC7 + 2 FIB + 1 MS)  │
+│ - Triple contrato ver_* (Soundness + Refutación Estricta de Distractores)   │
+│ - Emite shard_XX.cert.json al aprobar 50 semillas (< 5 ms en downstream)   │
 │ - Silent Reactive Barrier: 0 herramientas en mensajes parciales (k < N)    │
-│ - SHA-256 Circuit Breaker; modular fixes en work/shards/shard_fixes/<CID>.py│
-│ - Watchdog budget_guard.py audita transcript.jsonl y releva stragglers      │
+│ - Matriz 2D de edición en caso de error (edit_file vs shard_fixes/<CID>.py) │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Stage 4: Instanciación Masiva y Sweeps (run.py --stage build)               │
-│ - Sweeps deterministas CRC32 (cuotas: 30 Skill / 20 Concepto y Hecho)       │
+│ Stage 4: Instanciación Masiva y Validación (run.py --stage templates/build) │
+│ - Templates: Fast-path < 5 ms por shard_XX.cert.json sin re-cómputo         │
+│ - Build: Sweeps deterministas CRC32 (cuotas: 30 Skill / 20 Concepto y Hecho)│
 │ - Diversidad de stems >= 0.50 y evaluación de invariantes analíticos        │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Stage 5: Verificación Ciega Incremental (dispatch-judges --ready-only)      │
-│ - Lotes ciegos ≤ 12 ítems; Turn 0 view_file ÚNICAMENTE sobre judge_XX.json  │
-│ - Director ejecuta 0 herramientas hasta recibir N/N respuestas              │
+│ Stage 5: Verificación Ciega Epistémica (dispatch-judges --ready-only)       │
+│ - Lotes ciegos ≤ 12 ítems; 1 semilla canónica pre-verificada por plantilla  │
+│ - Dominancia Bayesiana: α_Kernel = 0 (el juez LLM no anula verdad formal)   │
 │ - Arbitraje ciego: run.py --stage judge-compare                             │
-│ - Si hay rechazos: delegación quirúrgica a c2c_repair                       │
+│ - Re-arbitraje quirúrgico sólo sobre modificadas: run.py --stage rejudge    │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Stage 6: Publicación y Cierre (run.py --stage publish)                      │
-│ - Valida consenso de arbitraje ciego y publica a courses/<course_id>.json   │
+│ Stage 6: Compuertas y Publicación (run.py --stage gates / certify / publish)│
+│ - run.py --stage gates: build + verify + QA dry-run + repair-matrix         │
+│ - run.py --stage certify: verificación formal completa multi-etapa          │
+│ - Publica a courses/<course_id>.json, emite publish.cert.json               │
 │ - Libera cerrojo .c2c_subagent_lock.json y reporta URL de visualización     │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -257,13 +269,13 @@ Este comando ejecuta en `< 1s`:
 - Normalización automática de `--course-id` y conteo instantáneo de páginas PDF sin rasterizado.
 - Creación de estructura en `courses/<course_id>/work`, manifiestos iniciales (`pre_cta_manifest.json`, `ingestion_manifest.json`) y delta si aplica `--append`.
 - Creación de especificaciones de tipos (`<work_dir>/dispatch/types/*.json`).
+- Inicialización de `.c2c_subagent_lock.json` con metadatos de gobernanza formal.
 - Generación inmediata de las órdenes de trabajo de CTA (`Subagents` en el JSON de salida de `bootstrap`).
 
 ### Paso 1: Lanzamiento de CTA y Registro Diferido de Subagentes (Turnos 2, 3 y 4)
 1. **Turno 2**: Lee en paralelo los archivos de `<work_dir>/dispatch/types/*.json` listados en `type_spec_files` (solo lecturas).
 2. **Turno 3**: Registra **solo** `c2c_cta_architect` vía `define_subagent`, invoca `invoke_subagent` (`Model="flash"`) para cada elemento de `Subagents` devuelto por `bootstrap`, y agenda el watchdog a 7 minutos mediante `schedule` (`DurationSeconds=420` = 7 min, `Prompt="Auditar progreso CTA"`).
 3. **Turno 4**: Mientras los architects trabajan, registra en un único turno paralelo los tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair`, `c2c_cta_harmonizer` si existe) con `define_subagent`, y entra a la barrera.
-   *(Nota: No necesitas ejecutar `dispatch.py dispatch-cta --work-dir <work_dir>` tras `bootstrap` porque `bootstrap` ya devuelve `Subagents` listos; usa `dispatch-cta` únicamente si necesitas re-despachar un trabajador caído).*
 4. Aplica el Protocolo de Barrera Silenciosa hasta recibir `DONE:` de todos los arquitectos CTA (`1/1` en modo `direct` o `N/N` `part_XX` en modo `mapreduce`).
 
 ### Paso 2: Validación Curricular Simétrica (CTA -> CTA-Reduce -> CTA-Apply) y Sharding
@@ -277,14 +289,14 @@ Este comando ejecuta en `< 1s`:
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage shard --work-dir <work_dir>
    ```
 
-### Paso 3: Despacho de Autores en 1 Sola Ola (Contrato Form-B Tri-Banda)
-1. Despacha todos los shards en **1 sola ola paralela a $t=0$** (sin partición artificial en olas secuenciales, ordenados *Heaviest-First* con `author_shard_XX.json` sin colisiones, requiriendo `--min-archetypes 3`):
+### Paso 3: Despacho de Autores en 1 Sola Ola (Contrato Form-C Quad-Band con `--lean`)
+1. Despacha todos los shards en **1 sola ola paralela a $t=0$** (con prompts `--lean`, ordenados *Heaviest-First*, admitiendo segmentación por olas con `--wave`, requiriendo `MIN_ARCHETYPES = 4` y supuestos explícitos):
    ```powershell
-   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-authors --work-dir <work_dir>
+   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-authors --work-dir <work_dir> [--wave 1]
    ```
 2. Invoca todos los subagentes en paralelo (`Model="flash"`) y agenda watchdog a 7 minutos (`DurationSeconds=420`).
 3. Aplica Barrera Silenciosa: cero herramientas en mensajes parciales (`k < N`).
-4. Al completar la ola (o si un shard activa Circuit Breaker, delegando con `dispatch.py dispatch-repair --work-dir <work_dir> --ids <CID>`), valida y compila los templates:
+4. Al completar la ola (o si un shard activa Circuit Breaker, delegando con `dispatch.py dispatch-repair --work-dir <work_dir> --ids <CID>`), valida los templates aprovechando el fast-path `< 5 ms` de recibos criptográficos `shard_XX.cert.json`:
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage templates --work-dir <work_dir>
    ```
@@ -294,7 +306,7 @@ Este comando ejecuta en `< 1s`:
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage build --work-dir <work_dir>
    ```
-2. Despacha los lotes ciegos a jueces (`≤ 12` ítems por juez con Pointer Mode, evaluando el 100% de plantillas con 3 semillas `(101, 202, 303)`):
+2. Despacha los lotes ciegos a jueces con 1 semilla canónica pre-verificada por plantilla bajo Dominancia Bayesiana ($\alpha_{\text{Kernel}} = 0$):
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-judges --work-dir <work_dir>
    ```
@@ -302,17 +314,17 @@ Este comando ejecuta en `< 1s`:
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage judge-compare --work-dir <work_dir>
    ```
-4. **Gates concurrentes y ola unica de reparacion**: en lugar de `--stage build` seguido de jueces, usa `--stage gates` (build NO fatal: captura hallazgos y escribe `repair_matrix.json`) y, EN EL MISMO TURNO, `dispatch-judges` (los jueces solo dependen de `work/templates`). NO despaches `c2c_repair` al primer fallo parcial. Al recibir N/N jueces: `judge-compare`, luego `--stage repair-matrix` fusiona linters + objeciones de jueces por shard y emite UN solo comando `dispatch-repair --ids ...` (ola consolidada):
+4. **Gates concurrentes y ola única de reparación**: usa `--stage gates` (secuencia determinista `build` + `verify` + QA dry-run + `repair-matrix` consolidada) y `dispatch-judges`. Al recibir veredictos, `--stage repair-matrix` fusiona linters + objeciones de jueces y emite UN solo comando `dispatch-repair --ids ...`:
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage gates --work-dir <work_dir>
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage repair-matrix --work-dir <work_dir>
    ```
-   Si una reparacion altera contenido evaluado por un juez, NO re-despaches los lotes masivos: usa re-arbitraje quirurgico solo de las competencias reparadas (`--ids`, o auto-detectadas por cambio de hash de plantilla). `rejudge` archiva respuestas viejas y despacha jueces solo para esas competencias; `rejudge-compare` fusiona el veredicto en `judge_report.json` conservando el resto:
+   Si una reparación altera plantillas, usa re-arbitraje quirúrgico con `--stage rejudge` y `--stage rejudge-compare`:
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage rejudge --ids <CID1> <CID2> --work-dir <work_dir>
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage rejudge-compare --work-dir <work_dir>
    ```
-5. **Validacion formal obligatoria**: el Director NUNCA asume exito por el `DONE:` de un subagente. Antes de dar por cerrado, ejecuta `--stage certify` (re-ejecuta templates, build y verify SIN detenerse en el primer fallo para juntar todos los hallazgos; publish solo corre si todo lo previo paso; si rechaza, genera `repair_matrix.json` para iniciar el ciclo completo de reparacion, escribe `certification.json` y sale con codigo 1):
+5. **Certificación formal obligatoria**: ejecuta `--stage certify` (valida criptográficamente `*.cert.json` en `< 5 ms` para templates y re-ejecuta compuertas deterministas):
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage certify --work-dir <work_dir> --output-dir courses
    ```

@@ -41,12 +41,12 @@ Si no existe `<work_dir>/shards/pre_shard_manifest.json`, el subagente DEBE dete
 
 ---
 
-## 1. Arquitectura Paramétrica Form-B Tri-Banda (Milestone 3)
+## 1. Arquitectura Paramétrica Form-C Quad-Band & Form-B (min_archetypes = 4)
 
-Bajo el **Milestone 3** de Top's Academy, la autoría evoluciona de la antigua especificación de 1 tupla paramétrica por competencia hacia el estándar **Form-B Tri-Banda Multimodal (`min_archetypes = 3`)** con **3 arquetipos disjuntos por competencia** (1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación / Frontera / Límite) para garantizar cobertura psicométrica profunda (Deep Mastery) y anti-memorización.
+Bajo el estándar **Form-C Quad-Band & Form-B Multimodal (`min_archetypes = 4`)**, la autoría evoluciona de la antigua especificación de 1 tupla paramétrica por competencia hacia **4 arquetipos disjuntos por competencia** (1. Directo / Frontal, 2. Inverso / Diagnóstico, 3. Perturbación, 4. Frontera / Edge-case) para garantizar cobertura psicométrica profunda (Deep Mastery), supuestos explícitos (`assumptions`) y anti-memorización.
 
-### Reglas de Cobertura y Dimensionamiento (Estándar Clean-Room Form-B):
-- **3 Arquetipos Disjuntos por Competencia (`[M3-ARCHETYPES]`):** CADA competencia asignada DEBE definir exactamente 3 tuplas en `TEMPLATES` (las 3 bandas: 1. Directo / Frontal `("easy", ...)`, 2. Inverso / Diagnóstico `("medium", ...)`, 3. Perturbación / Frontera `("hard", ...)` abarcando al menos 2 niveles Bloom), validado por `compile_shard.py --strict --min-archetypes 3` (`[M3-ARCHETYPES]`). **PROHIBIDO emitir 1 sola tupla por competencia; `compile_shard.py` rechazará con `FAIL: [M3-ARCHETYPES]` cualquier competencia con `< 3` tuplas en `TEMPLATES`.** Cada arquetipo define su generador `gen_<cid>_*(rng)` y verificador `ver_<cid>_*(res)`.
+### Reglas de Cobertura y Dimensionamiento (Estándar Clean-Room Form-C / Form-B):
+- **4 Arquetipos Disjuntos por Competencia (`[M3-ARCHETYPES]`):** CADA competencia asignada DEBE definir exactamente 4 tuplas en `TEMPLATES` (las 4 bandas: 1. Directo / Frontal `("easy", ...)`, 2. Inverso / Diagnóstico `("medium", ...)`, 3. Perturbación `("hard", ...)`, 4. Frontera / Edge-case `("hard", ...)` abarcando al menos 2 niveles Bloom), validado por `compile_shard.py --strict --min-archetypes 4` (`[M3-ARCHETYPES]`). **PROHIBIDO emitir 1 sola tupla por competencia; `compile_shard.py` rechazará con `FAIL: [M3-ARCHETYPES]` cualquier competencia con `< 4` tuplas en `TEMPLATES`.** Cada arquetipo define su generador `gen_<cid>_*(rng)` y verificador `ver_<cid>_*(res)`.
 - **Práctica Activa Multimodal Obligatoria:** Mínimo 2 plantillas interactivas `fill_in_the_blank` (FIB) o `multiple_select` (MS) en competencias de habilidad (`Hab-*`), y mínimo 1 `FIB` o `MS` en competencias de concepto/hecho (`C-*`/`H-*`).
 - **Naked FIB (`[FIB-NAKED]`):** En plantillas `fill_in_the_blank`, la respuesta esperada `correct` DEBE ser limpia sin signos de dólar externos `$ ... $` (ej. `r"@ans@"` en vez de `r"$@ans@$"`).
 - **Distractores Dinámicos (`[TPL-DYNAMIC-RATIONALE]`):** En plantillas MC7, cada distractor devuelto en `gen_*(rng)` DEBE ser una **3-tupla obligatoria `(did, val, error_rationale_con_@var@)`** con longitud de rationale >= 20 caracteres interpolando variables paramétricas. En MS, las opciones falsas llevan `'error_rationale'` interpolando `@var@`.
@@ -61,138 +61,150 @@ Bajo el **Milestone 3** de Top's Academy, la autoría evoluciona de la antigua e
 
 ---
 
-## 2. Estructura Canónica de Tuplas en `shard_XX_data.py` (9 y 10 Elementos)
+## 2. Estructura Canónica de Tuplas en `shard_XX_data.py` (Form-C y Form-B)
 
-En lugar de lidiar con escapes de comillas o JSON malformados, toda la lógica de plantillas se escribe en Python nativo dentro de `<work_dir>/shards/<shard_id>_data.py`.
+En lugar de lidiar con escapes de comillas o JSON malformados, toda la lógica de plantillas se escribe en Python nativo dentro de `<work_dir>/shards/<shard_id>_data.py`. Cada competencia implementa obligatoriamente `min_archetypes = 4` (`1 MC7 + 2 FIB + 1 MS`), cubriendo 4 arquetipos disjuntos (Directo, Inverso, Perturbación, Frontera/Casos de Borde).
 
-### Arquitectura de Funciones Nativas + Lista `TEMPLATES`:
-1. Arriba en el archivo defines las funciones nativas de generación (`def gen_<cid>(rng):`) y verificación (`def ver_<cid>(res):`).
-2. Luego defines la lista `TEMPLATES = [ ... ]` conteniendo tuplas con **9 Elementos** posicionales (o **10 Elementos** con la lista de pistas progresivas `hints: list[str]`):
+### Form-C Quad-Band Contract (Recomendado, -65% Tokens)
+En Form-C, cada plantilla en la lista `TEMPLATES = [ ... ]` es un diccionario Python conciso que define explícitamente sus metadatos, funciones generadora y verificadora, variantes composicionales de enunciado, pistas socráticas y solución formal:
 
-### Estructura Canónica de 9 Elementos:
 ```python
-(
-    # Posición 0: competency_id (str) -> "H-01", "C-01", "Hab-01"
-    "H-01",
+# Diccionario unificado de distractores y concepciones erróneas con interpolación dinámica
+RATS = {
+    "D-H01-01": r"Invertido $T_H=@th@$, $T_C=@tc@$",
+    "D-H01-02": r"Calor residual $T_C=@tc@$",
+    "D-H01-03": r"Diferencia $T_C=@tc@$, $T_H=@th@$",
+    "D-H01-04": r"Escala foco $T_C=@tc@$",
+    "D-H01-05": r"Suma térmica $T_H=@th@$, $T_C=@tc@$",
+    "D-H01-06": r"Cuadrado $T_C=@tc@$, $T_H=@th@$",
+}
 
-    # Posición 1: question_type (str) -> "multiple_choice" | "fill_in_the_blank" | "multiple_select" | "open_ended"
-    "multiple_choice",
+def _gen_h01(rng, arch=1):
+    tc = rng.randint(200, 280)
+    th = tc + rng.randint(460, 650)
+    eta = round(1.0 - (tc / th), 3)
+    if arch == 1:
+        # MC7: Directo (cadena algebraica disjunta v1 libre de multiplicadores mágicos)
+        v1 = (th / tc, tc / th, 1.0 - (tc / th)**2, 1.0 - 0.6 * tc / th, (th - tc) / (th + tc), (tc / th)**2)
+        ds = [
+            ("D-H01-01", round(v1[0], 3)),
+            ("D-H01-02", round(v1[1], 3)),
+            ("D-H01-03", round(v1[2], 3)),
+            ("D-H01-04", round(v1[3], 3)),
+            ("D-H01-05", round(v1[4], 3)),
+            ("D-H01-06", round(v1[5], 3)),
+        ]
+        return {"vars": {"tc": tc, "th": th, "ans": eta}, "ans": str(eta), "correct": str(eta), "ds": ds}
+    if arch == 2:
+        # FIB: Inverso (despeje TH = TC / (1 - eta), sin $ externos)
+        ans = round(tc / (1.0 - eta), 1)
+        return {"vars": {"tc": tc, "eta": eta, "ans": ans}, "ans": str(ans), "correct": str(ans)}
+    if arch == 3:
+        # FIB: Perturbación (TC' = TC / 2 => eta' = (1 + eta)/2, sin $ externos)
+        ans = round(0.5 * (1.0 + eta), 3)
+        return {"vars": {"tc": tc, "eta": eta, "ans": ans}, "ans": str(ans), "correct": str(ans)}
+    # arch == 4: MS Frontera bajo ruptura de reversibilidad
+    vl = r"\eta_{\text{real}} %s 1 - \frac{@tc@}{@th@}"
+    return {
+        "vars": {"tc": tc, "th": th, "eta": eta},
+        "options": [
+            {"value": f"${vl % '<'}$", "is_correct": True},
+            {"value": r"$\sigma > 0 \Rightarrow \eta < 1 - \frac{@tc@}{@th@}$", "is_correct": True},
+            {"value": f"${vl % '='}$", "is_correct": False, "distractor_id": "D-H01-01", "error_rationale": RATS["D-H01-01"]},
+            {"value": f"${vl % '>'}$", "is_correct": False, "distractor_id": "D-H01-02", "error_rationale": RATS["D-H01-02"]},
+        ],
+    }
 
-    # Posición 2: stem_variants (list[str] de 3 a 5 variantes o str principal) -> Raw strings r"..." con tokens @var@
-    [
-        r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Determine el rendimiento térmico:",
-        r"Considere un ciclo reversible de Carnot con reservorios térmicos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Calcule la eficiencia máxima teórica $\eta$:",
-        r"Para una máquina térmica ideal operando bajo el ciclo de Carnot entre focos térmicos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, halle el rendimiento $\eta$:",
-    ],
+def gen_h01_1(rng): return _gen_h01(rng, 1)
+def gen_h01_2(rng): return _gen_h01(rng, 2)
+def gen_h01_3(rng): return _gen_h01(rng, 3)
+def gen_h01_4(rng): return _gen_h01(rng, 4)
 
-    # Posición 3: generator_code -> Referencia a función nativa Python def gen_<cid>(rng): ...
-    gen_h01,
+def _pv(c): return float(str(c).split("=")[-1].replace("$", "").strip())
 
-    # Posición 4: verifier_code -> Referencia a función nativa Python def ver_<cid>(res): ...
-    ver_h01,
+def ver_h01_1(cand, v):
+    return abs(_pv(cand) - (1.0 - v["tc"] / v["th"])) < 1e-3
 
-    # Posición 5: explanation_es (str) -> Fundamentación analítica completa en raw string r"..." con tokens @var@
-    r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.",
+def ver_h01_2(cand, v):
+    return abs(_pv(cand) - (v["tc"] / (1.0 - v["eta"]))) < 0.2
 
-    # Posición 6: target_kc (str) -> Nombre formal del Knowledge Component evaluado
-    "Eficiencia de Carnot",
+def ver_h01_3(cand, v):
+    return abs(_pv(cand) - 0.5 * (1.0 + v["eta"])) < 1e-3
 
-    # Posición 7: target_misconceptions (list[str]) -> Lista de 6 distractor_ids declarados en cta.json
-    ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"],
+def ver_h01_4(res):
+    v, opts = (res.get("vars", {}), res.get("options", [])) if isinstance(res, dict) else ({}, [])
+    return (
+        len(opts) == 4
+        and v.get("tc", 0) < v.get("th", 1)
+        and sum(1 for o in opts if o.get("is_correct") and "<" in o.get("value", "")) == 2
+        and all(o.get("distractor_id") in RATS for o in opts if not o.get("is_correct"))
+    )
 
-    # Posición 8: source_reference (tupla o dict) -> (doc_name, page_int, quote_str)
-    ("termodinamica_clausius.pdf", 8, "El rendimiento de Carnot depende exclusivamente de las temperaturas de los focos.")
-)
-```
+# Enunciados composicionales (2 contextos x 2 preguntas = 4 stems distintos por arquetipo)
+CTX = [r"En un ciclo térmico reversible de Carnot,", r"Para una máquina térmica ideal de Carnot,"]
+Q1 = [r"calcule la eficiencia térmica $\eta$ si $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:", r"determine el rendimiento máximo $\eta$ operando entre $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:"]
+Q2 = [r"despeje la temperatura del foco caliente $T_H$ si $T_C = @tc@\text{ K}$ y $\eta = @eta@$:", r"calcule el valor de $T_H\text{ (K)}$ para mantener $T_C = @tc@\text{ K}$ y $\eta = @eta@$:"]
+Q3 = [r"halle la nueva eficiencia $\eta'$ si el foco frío se reduce a $T_C' = T_C / 2$ con $\eta = @eta@$:", r"determine $\eta'$ ante una perturbación que enfría el sumidero a $T_C/2$:"]
+Q4 = [r"si $\sigma>0$ con $T_H=@th@\text{ K}$:", r"con $\sigma>0$ y $T_C=@tc@\text{ K}$:"]
 
-### Estructura Canónica de 10 Elementos (Con Pistas Socráticas):
-Se añade como **Posición 9** la lista de 3 pistas progresivas `hints: list[str]`:
-```python
-(
-    "H-01",
-    "multiple_choice",
-    [
-        r"Una máquina térmica reversible de Carnot opera entre dos focos a temperaturas $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Determine el rendimiento térmico:",
-        r"Considere un ciclo reversible de Carnot con reservorios térmicos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$. Calcule la eficiencia máxima teórica $\eta$:",
-        r"Para una máquina térmica ideal operando bajo el ciclo de Carnot entre focos térmicos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, halle el rendimiento $\eta$:",
-    ],
-    gen_h01,
-    ver_h01,
-    r"Por el teorema de Carnot, $\eta_{\text{max}} = 1 - \frac{T_C}{T_H} = 1 - \frac{@tc@}{@th@} = @ans@$.",
-    "Eficiencia de Carnot",
-    ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"],
-    ("termodinamica_clausius.pdf", 8, "El rendimiento de Carnot depende exclusivamente de las temperaturas de los focos."),
-    # Posición 9: hints (list[str]) -> 3 pistas progresivas socráticas sin revelar la respuesta
-    [
-        "Identifique la relación fundamental que vincula el rendimiento teórico de Carnot con las temperaturas de los focos.",
-        "Considere el cociente entre la temperatura del foco frío y la del foco caliente expresadas estrictamente en escala Kelvin.",
-        "Compruebe que el rendimiento resultante sea adimensional y estrictamente acotado en el intervalo $(0, 1)$."
-    ]
-)
-```
+hints = [
+    "Identifique la relación fundamental que vincula el rendimiento de Carnot con los focos.",
+    "Considere el cociente entre foco frío y caliente expresados en Kelvin.",
+    "Compruebe que el rendimiento resultante sea adimensional y acotado en (0, 1).",
+]
 
-### Contrato Obligatorio de `def gen_<cid>(rng):`
-La función generadora recibe una instancia estocástica `rng` (módulo `random.Random`) y DEBE retornar un diccionario con:
-- `"vars"`: Diccionario de variables numéricas o simbólicas (`{"th": th, "tc": tc, "ans": ans_val, ...}`) sustituidas en enunciados, opciones y soluciones.
-  > [!IMPORTANT]
-  > **CONTRATO DE VARIABLES `[TPL-DRY]`:** Toda variable referenciada como `@var@`, `@var:fmt@` o `{var}` en `stem`, `stem_variants`, `options`, `correct`, `distractors`, `hints` o `explanation_es` DEBE existir obligatoriamente en el diccionario `vars` retornado por `gen_<cid>(rng)`. Si un placeholder queda sin sustituir, el compilador aborta inmediatamente con violación `[TPL-DRY]`.
-- `"correct"`: Cadena raw string con la respuesta correcta (ej. `r"$\eta = @ans@$"`).
-- `"distractors"`: Lista de **exactamente 6 diccionarios** correspondientes a los 6 `distractor_ids` (`D-XX-01..06`):
-  ```python
-  [
-      {"value": r"$\eta = @d1@$", "distractor_id": "D-H01-01", "error_rationale": r"Inversión del cociente térmico $T_H/T_C$ en la formulación"},
-      ...
-  ]
-  ```
-
-### Contrato Obligatorio de `def ver_<cid>(res):`
-La función verificadora recibe el diccionario `res` retornado por `gen_<cid>(rng)`. Comprueba los invariantes analíticos sobre `res["vars"]` o `res["correct"]` y retorna estrictamente `True` si es consistente.
-
-### Patrón Canónico de 15 Líneas (Espacio Paramétrico >= 500 Combinaciones)
-```python
-def gen_c01(rng):
-    p1 = rng.randint(10, 50)  # 41 valores posibles
-    p2 = rng.randint(2, 20)   # 19 valores posibles -> 41 * 19 = 779 combinaciones (>= 500)
-    ans = p1 * p2
-    # Distractores derivados de concepciones erróneas algebraicas cerradas (PROHIBIDO multiplicadores arbitrarios sobre ans)
-    d1 = p1 + p2          # Suma en lugar de producto
-    d2 = (p1 + 1) * p2    # Conteo desfasado en p1
-    d3 = p1 * (p2 - 1)    # Conteo desfasado en p2
-    d4 = abs(p1 - p2)     # Diferencia en vez de producto
-    d5 = p1 * 2           # Duplica sólo primer factor
-    d6 = p2 ** 2          # Cuadrado del segundo factor
-    v_dict = {"p1": p1, "p2": p2, "ans": ans, "d1": d1, "d2": d2, "d3": d3, "d4": d4, "d5": d5, "d6": d6}
-    distractors = [
-        ("D-C01-01", r"Resultado: $@d1@$", r"Suma erróneamente $@p1@ + @p2@$ en lugar de multiplicar."),
-        ("D-C01-02", r"Resultado: $@d2@$", r"Incrementa erróneamente el factor $@p1@$ en 1 unidad."),
-        ("D-C01-03", r"Resultado: $@d3@$", r"Decrementa erróneamente el factor $@p2@$ en 1 unidad."),
-        ("D-C01-04", r"Resultado: $@d4@$", r"Calcula la diferencia $|@p1@ - @p2@|$ en lugar del producto."),
-        ("D-C01-05", r"Resultado: $@d5@$", r"Duplica el primer término $@p1@$ omitiendo el factor $@p2@$."),
-        ("D-C01-06", r"Resultado: $@d6@$", r"Calcula el cuadrado del segundo término $@p2@^2$."),
-    ]
-    return {"vars": v_dict, "correct": r"Resultado: $@ans@$", "distractors": distractors}
-
-def ver_c01(res):
-    return res["vars"]["ans"] == res["vars"]["p1"] * res["vars"]["p2"]
+sol_1 = r"$\eta = 1 - \frac{@tc@}{@th@} = @ans@$"
+sol_2 = r"$T_H = \frac{@tc@}{1 - @eta@} = @ans@\text{ K}$"
+sol_3 = r"$\eta' = 1 - \frac{@tc@ / 2}{@th@} = \frac{1 + @eta@}{2} = @ans@$"
+sol_4 = r"Bajo $\sigma_{\text{irr}} > 0$, el rendimiento real es menor: $\eta < 1 - \frac{@tc@}{@th@}$."
 
 TEMPLATES = [
-    (
-        "C-01",
-        "multiple_choice",
-        [
-            r"Calcule el producto escalar de $@p1@ \times @p2@$:",
-            r"Determine el resultado de multiplicar $@p1@$ por $@p2@$:",
-            r"Evalúe la operación aritmética $@p1@ \cdot @p2@$:"
-        ],
-        gen_c01,
-        ver_c01,
-        r"El producto de $@p1@ \times @p2@ = @ans@$.",
-        "Multiplicación",
-        ["D-C01-01", "D-C01-02", "D-C01-03", "D-C01-04", "D-C01-05", "D-C01-06"],
-        ("source.pdf", 1, "Definición"),
-        ["Identifique los factores.", "Multiplique los enteros.", "Verifique el orden de magnitud."]
-    )
+    {
+        "id": "TPL-H01-01", "cid": "Hab-01", "qtype": "MC7", "archetype": "direct",
+        "band": ("easy", "Apply"), "gen": gen_h01_1, "ver": ver_h01_1,
+        "stems": (CTX, Q1), "hints": hints, "sol": sol_1, "fmt": r"$\eta = @X@$", "rats": RATS,
+    },
+    {
+        "id": "TPL-H01-02", "cid": "Hab-01", "qtype": "FIB", "archetype": "inverse",
+        "band": ("medium", "Apply"), "gen": gen_h01_2, "ver": ver_h01_2,
+        "stems": (CTX, Q2), "hints": hints, "sol": sol_2,
+    },
+    {
+        "id": "TPL-H01-03", "cid": "Hab-01", "qtype": "FIB", "archetype": "perturbation",
+        "band": ("hard", "Analyze"), "gen": gen_h01_3, "ver": ver_h01_3,
+        "stems": (CTX, Q3), "hints": hints, "sol": sol_3,
+    },
+    {
+        "id": "TPL-H01-04", "cid": "Hab-01", "qtype": "MS", "archetype": "boundary_or_edge_case",
+        "band": ("hard", "Evaluate"), "assumption_id": "A-Hab01-01",
+        "gen": gen_h01_4, "ver": ver_h01_4, "stems": (CTX, Q4), "hints": hints, "sol": sol_4,
+    },
 ]
+```
+
+### Form-B 9-Element Tuple Schema (Compatible con Cuádruple Banda)
+Alternativamente, cada una de las 4 plantillas por competencia puede expresarse como una 9-tupla posicional:
+```python
+(
+    # 0: template_id (str)
+    "T-H01-01",
+    # 1: competency_id (str)
+    "Hab-01",
+    # 2: question_type ("multiple_choice" | "fill_in_the_blank" | "multiple_select")
+    "multiple_choice",
+    # 3: generator_code (callable def gen_*(rng): ...)
+    gen_h01_1,
+    # 4: verifier_code (callable def ver_*(cand, v): ... refutando distractores)
+    ver_h01_1,
+    # 5: difficulty_bloom ((difficulty, bloom))
+    ("easy", "Apply"),
+    # 6: stem_variants (list[str] >= 3 o tupla (contextos, preguntas))
+    [f"{c} {q}" for c in CTX for q in Q1],
+    # 7: hints (list[str] de 3 a 5 pistas >= 25 chars)
+    hints,
+    # 8: solution (str en raw string con @var@)
+    sol_1,
+)
 ```
 
 ---
@@ -260,7 +272,7 @@ import math
 def gen_h01(rng): return gen_h01_1(rng)
 
 def _gen_h01(rng, arch=1):
-    # Generador estocástico compartido para H-01 (3 arquetipos disjuntos Tri-Banda)
+    # Generador estocástico compartido para H-01 (4 arquetipos disjuntos Form-C / Form-B Quad-Band)
     if arch == 1:
         # Arquetipo 1: Directo (régimen estándar de temperaturas)
         tc = rng.randint(250, 350)
@@ -271,10 +283,15 @@ def _gen_h01(rng, arch=1):
         tc = rng.randint(70, 180)
         delta = rng.randint(100, 300)
         th = tc + delta
-    else:
-        # Arquetipo 3: Perturbación / Frontera extrema
+    elif arch == 3:
+        # Arquetipo 3: Perturbación
         tc = rng.randint(300, 400)
         delta = rng.randint(500, 900)
+        th = tc + delta
+    else:
+        # Arquetipo 4: Frontera / Edge-case extremo
+        tc = rng.randint(400, 500)
+        delta = rng.randint(100, 200)
         th = tc + delta
 
     ans_val = round(1.0 - (tc / th), 3)
@@ -306,12 +323,14 @@ def _gen_h01(rng, arch=1):
 def gen_h01_1(rng): return _gen_h01(rng, 1)
 def gen_h01_2(rng): return _gen_h01(rng, 2)
 def gen_h01_3(rng): return _gen_h01(rng, 3)
+def gen_h01_4(rng): return _gen_h01(rng, 4)
 def ver_h01(res):
     v = res.get("vars", {})
     return v.get("ans") == round(1.0 - (v.get("tc", 0) / v.get("th", 1)), 3)
 def ver_h01_1(res): return ver_h01(res)
 def ver_h01_2(res): return ver_h01(res)
 def ver_h01_3(res): return ver_h01(res)
+def ver_h01_4(res): return ver_h01(res)
 
 d_ids_h01 = ["D-H01-01", "D-H01-02", "D-H01-03", "D-H01-04", "D-H01-05", "D-H01-06"]
 
@@ -339,6 +358,14 @@ stems_h01_3 = [
     r"En el escenario de frontera térmica con reservorios a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, obtenga la eficiencia $\eta$:",
 ]
 
+stems_h01_4 = [
+    r"En el escenario de frontera térmica con reservorios a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, obtenga la eficiencia $\eta$:",
+    r"Para condiciones de borde térmico entre reservorios a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, calcule la eficiencia límite:",
+    r"Bajo régimen extremo de intercambio térmico $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$, halle el rendimiento asintótico:",
+    r"Considere el límite operacional de una máquina con focos a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$; determine el rendimiento:",
+    r"Evalúe el comportamiento en la frontera termodinámica con fuentes a $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
+]
+
 hints_h01 = [
     "Identifique la relación fundamental que vincula el rendimiento teórico de Carnot con las temperaturas absolutas.",
     "Considere el cociente entre la temperatura del foco frío y la del foco caliente expresadas estrictamente en Kelvin.",
@@ -352,8 +379,10 @@ TEMPLATES = [
     ("T-H01-01", "H-01", "multiple_choice", gen_h01_1, ver_h01_1, ("easy", "Remember"), stems_h01_1, hints_h01, sol_h01),
     # 2. Arquetipo Inverso / Diagnóstico (ID estricto con prefijo ^T-)
     ("T-H01-02", "H-01", "multiple_choice", gen_h01_2, ver_h01_2, ("medium", "Understand"), stems_h01_2, hints_h01, sol_h01),
-    # 3. Arquetipo Perturbación / Frontera (ID estricto con prefijo ^T-)
+    # 3. Arquetipo Perturbación (ID estricto con prefijo ^T-)
     ("T-H01-03", "H-01", "multiple_choice", gen_h01_3, ver_h01_3, ("hard", "Apply"), stems_h01_3, hints_h01, sol_h01),
+    # 4. Arquetipo Frontera / Edge-case (ID estricto con prefijo ^T-)
+    ("T-H01-04", "H-01", "multiple_choice", gen_h01_4, ver_h01_4, ("hard", "Analyze"), stems_h01_4, hints_h01, sol_h01),
 ]
 ```
 
@@ -438,7 +467,7 @@ TEMPLATES += [
 
 ### Diagnósticos Mapeados a Líneas con `edit_file` / `replace_file_content`
 Al ejecutar:
-`python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard shard_XX --strict --min-archetypes 3`
+`python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard shard_XX --strict --min-archetypes 4`
 
 El compilador reportará diagnósticos de validación mapeados con precisión milimétrica a tupla y líneas en `<work_dir>/shards/<shard_id>_data.py`. Para < 6 errores, debes corregirlos obligatoriamente usando `edit_file` o `replace_file_content` sobre esas líneas exactas (`StartLine..EndLine`).
 
@@ -464,7 +493,7 @@ Bajo la arquitectura Load Inversion, las reglas de introspección son estrictas 
 1. **Turno 1 (Autosuficiencia Turn-0):** Revisa las especificaciones de tu work order `work/dispatch/items/author_XX.json`. No leas documentos de `content/` a menos que falte información crítica.
 2. **Turno 2:** Escribe `<work_dir>/shards/<shard_id>_data.py` con las funciones y la lista `TEMPLATES = [...]` usando `write_file(Overwrite=True)`.
 3. **Turno 3:** Compila ejecutando la orden exacta recibida:
-   `python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard <shard_id> --strict --min-archetypes 3`
+   `python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard <shard_id> --strict --min-archetypes 4`
 4. **Si reporta errores:**
    - Si reporta `< 6` errores (`1..5` errores, sin `SyntaxError`): corrígelos OBLIGATORIAMENTE de forma quirúrgica con `edit_file` (`replace_file_content`) sobre las líneas exactas señaladas en 1 turno paralelo (PROHIBIDO reescribir con `write_file`).
    - Si reporta `>= 6` errores: escribe el bloque modular en `work/shards/shard_fixes/<shard_id>/<CID>.py` (1–2 competencias) o reescribe con `write_file` si es sistémico.

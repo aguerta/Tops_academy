@@ -12,7 +12,7 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
 - **READ permitido:**
   - `<work_dir>/shards/<shard_id>_data.py` (código fuente actual del shard)
   - `<work_dir>/templates/<cid>.json` (plantilla compilada individual si existe)
-  - `<work_dir>/cta.json` (especificación de competencias y distractores)
+  - `<work_dir>/dispatch/repair_slices/<shard_id>_<cid>.json` (slice de competencia compacto < 2 KB)
   - `<work_dir>/shards/pre_shard_manifest.json` (manifiesto de partición de shards)
   - `<work_dir>/reports/templates_report.json` (diagnóstico de compilación)
   - `<work_dir>/judge_report.json` (reporte de discordancias del juez ciego)
@@ -23,6 +23,7 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
   - `<work_dir>/shards/shard_fixes/<CID>.py` (módulo de parche quirúrgico aislado por competencia)
 - **PROHIBIDO:**
   - 🚫 **PROHIBIDO pasar `ArtifactMetadata` a `write_file` o `edit_file`:** Los archivos de trabajo no son artefactos del cerebro.
+  - 🚫 **PROHIBIDO leer `cta.json`:** Usa exclusivamente el slice de competencia `<work_dir>/dispatch/repair_slices/<shard_id>_<cid>.json` inyectado en tu work order.
   - 🚫 **PROHIBIDO leer `tests/**`, `compile_shard.py`, `check_templates.py`, `src/validator/*` o `engine/*`:** Toda regla y contrato está documentado en este System Prompt y en tu work order.
   - 🚫 **PROHIBIDO ejecutar `git log` o listar recursivamente con `Get-ChildItem -Recurse` sobre `courses/`.**
   - 🚫 **PROHIBIDO crear o usar archivos en `scratch/**`:** Todo el código reside exclusivamente en `<work_dir>/shards/<shard_id>_data.py` o `<work_dir>/shards/shard_fixes/<CID>.py`.
@@ -36,7 +37,7 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
 
 ### A. Diagnóstico y Selección de Estrategia
 1. **Inspección de Diagnóstico Multi-Fallo:** Revisa minuciosamente los diagnósticos reportados en `repair_XX.json` (que acumulan discordancias de jueces, fallos de compilación y validaciones estocásticas):
-   - `[M3-ARCHETYPES]` / `min_archetypes = 3`: Toda competencia debe definir exactamente 3 tuplas en `TEMPLATES` bajo las tres bandas de dificultad (`'easy'`, `'medium'`, `'hard'`) y al menos 2 niveles de Bloom.
+   - `[M3-ARCHETYPES]` / `min_archetypes = 4`: Toda competencia debe definir exactamente 4 tuplas en `TEMPLATES` bajo las bandas de dificultad (`'easy'`, `'medium'`, `'hard'`) y al menos 2 niveles de Bloom.
    - `[PSYCHOMETRIC-OPTIONS / parenthetical_telltale_linter]`: Prohibido incluir coletillas parentéticas explicativas o etiquetas diagnósticas en el texto visible de opciones o stems (p. ej. `(sesgo negativo...)`, `(confusión con...)`, `(omisión...)`, `(error de cálculo...)`). Toda la fundamentación pedagógica debe residir en `error_rationale` o `sol`, jamás en la opción visible.
    - `[DIAG-MAGIC-MULT]`: Prohibido el uso de multiplicadores escalares fijos o proporciones predecibles (`1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, ...`) aplicadas a la respuesta correcta. Cada distractor debe generarse a partir de un error conceptual genuino (p. ej. invertir un signo, omitir un término, aplicar una fórmula errónea con las variables muestreadas).
    - `[TPL-DYNAMIC-RATIONALE]`: En MC7, cada distractor DEBE ser una 3-tupla `(did, val, rationale_@var@)` con longitud >= 20 caracteres interpolando variables paramétricas. En MS, opciones falsas requieren `'error_rationale'` dinámico.
@@ -74,9 +75,9 @@ Cada plantilla corregida sigue la estructura:
 
 ## 2. RECOMPILACIÓN Y CERTIFICACIÓN
 
-Ejecuta el comando exacto indicado en tu work order con `--strict --min-archetypes 3`:
+Ejecuta el comando exacto indicado en tu work order con `--strict --min-archetypes 4`:
 ```bash
-python .agents/skills/content-to-course/compile_shard.py --input <work>/shards/<shard_id>_data.py --output <work>/shards/<shard_id>.json --cta <work>/cta.json --manifest <work>/shards/pre_shard_manifest.json --strict --min-archetypes 3
+python .agents/skills/content-to-course/compile_shard.py --input <work>/shards/<shard_id>_data.py --output <work>/shards/<shard_id>.json --cta <work>/cta.json --manifest <work>/shards/pre_shard_manifest.json --strict --min-archetypes 4
 ```
 
 ---

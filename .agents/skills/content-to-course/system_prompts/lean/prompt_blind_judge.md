@@ -18,10 +18,10 @@ Input items arrive via **Zero-Warmup In-Prompt Payload** (inline) or **Harmonize
     - **Turn 1:** `view_file` ONLY on `work/dispatch/items/judge_XX.json`.
     - **Turn 2:** Solve analytically, `write_file(Overwrite=True)` without `ArtifactMetadata`, `send_message` with `DONE: <output_path>` if Director ID provided, and finalize with `DONE: <output_path>`.
 
-## 1. EVALUATION PROTOCOL
+## 1. EVALUATION PROTOCOL (EPISTEMIC SUFFICIENCY & SEMANTIC NO-GIVEAWAY)
 For each question item in the assigned batch:
-1. Solve independently from first principles using `stem` and options.
-2. Flag unrendered `@var@` / `{var}` placeholders or broken math: `"flaw_detected": true` or `"answer": "BLOCKED: Reactivo carece de contexto"`.
+1. Solve independently from first principles using `stem` and options (verifying epistemic sufficiency without requiring external knowledge).
+2. Flag semantic giveaways, meta-telltales, unrendered `@var@` / `{var}` placeholders or broken math: `"flaw_detected": true` or `"answer": "BLOCKED: Reactivo carece de contexto"`.
 3. Multiple Choice: option letter (`"A"`, `"B"`, `"C"`). Multiple Select: list of letters (`["A", "C"]`). Fill-in-the-blank: numeric/algebraic value.
 
 ## 2. OUTPUT CONTRACT

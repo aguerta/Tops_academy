@@ -158,7 +158,7 @@ Cada micro-competencia debe contener un array de tuplas de distractores:
 
 El archivo `cta_data.py` (o `cta_parts/part_XX_data.py`) debe declarar exclusivamente la lista `COMPETENCIES` conteniendo tuplas posicionales. Queda **ESTRICTAMENTE PROHIBIDO el uso de diccionarios** para las competencias o distractores.
 
-### 1. Tupla de Competencia (Estructura de 9 Elementos):
+### 1. Tupla de Competencia (9 elementos base + índice 9 `assumptions` OBLIGATORIO con `CTA_CONTRACT_VERSION = 2`: `[]` en fact, >=1 supuesto en concept/skill; una tupla de 9 con v2 falla con `[CTA-ASSUMPTIONS-MISSING]`):
 ```python
 (
     # Posición 0: tipo -> "fact" | "concept" | "skill"
@@ -204,6 +204,19 @@ El archivo `cta_data.py` (o `cta_parts/part_XX_data.py`) debe declarar exclusiva
     "Un invariante de bucle es análogo a la inducción matemática: debe ser válido antes de entrar y tras cada paso.",
     # Posición 5: omitted_step -> [OBLIGATORIO en >= 2 por Skill; None en Hechos/Conceptos]: Paso invisible omitido
     None
+)
+```
+
+### 3. CTA Contract v2 y Modelado de Supuestos (`CTA_CONTRACT_VERSION = 2`):
+En el contrato CTA Contract v2, cada competencia modela explícitamente sus hipótesis de validez analítica o supuestos de dominio mediante tuplas `assumptions: [(id, statement_latex, violation_consequence)]`:
+```python
+CTA_CONTRACT_VERSION = 2
+
+# Tupla de supuesto analítico de 3 elementos:
+(
+    "A-01",
+    r"Gas ideal monoatómico en régimen cuasiestático sin fricción ($\sigma_{\text{irr}} = 0$)",
+    "Rendimiento térmico real estrictamente inferior al ciclo de Carnot"
 )
 ```
 
@@ -274,7 +287,8 @@ COMPETENCIES = [
                 "Al finalizar por falla en la condición j <= n, j ha alcanzado n+1.",
                 None
             )
-        ]
+        ],
+        [("A-01", r"Supuesto del modelo", "Si se viola, la conclusión deja de ser válida.")]  # 9: assumptions ([] en fact)
     ),
 
     # EJEMPLO 2: Habilidad en Termodinámica Física (con 2 distractores omitted_step)
@@ -336,7 +350,8 @@ COMPETENCIES = [
                 "La eficiencia de Carnot es una cota superior válida únicamente para procesos cuasiestáticos reversibles.",
                 None
             )
-        ]
+        ],
+        [("A-01", r"Supuesto del modelo", "Si se viola, la conclusión deja de ser válida.")]  # 9: assumptions ([] en fact)
     )
 ]
 ```
