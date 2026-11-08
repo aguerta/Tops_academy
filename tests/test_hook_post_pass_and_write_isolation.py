@@ -696,7 +696,8 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
             compile_file = self.check_attempts_dir / "compile_shard_01.json"
             compile_file.write_text(
                 json.dumps({
-                    "distinct_compiles": 1,
+                    "distinct_compiles": 3,
+                    "total_compiles": 3,
                     "error_count": err_cnt,
                     "last_errors": [f"Error {i}" for i in range(err_cnt)],
                 }),
@@ -759,7 +760,8 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
             compile_file = self.check_attempts_dir / "compile_shard_01.json"
             compile_file.write_text(
                 json.dumps({
-                    "distinct_compiles": 1,
+                    "distinct_compiles": 3,
+                    "total_compiles": 3,
                     "error_count": err_cnt,
                     "last_errors": [f"Error {i}" for i in range(err_cnt)],
                 }),
@@ -1323,7 +1325,8 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
             compile_file = self.check_attempts_dir / "compile_shard_01.json"
             compile_file.write_text(
                 json.dumps({
-                    "distinct_compiles": 1,
+                    "distinct_compiles": 3,
+                    "total_compiles": 3,
                     "error_count": err_cnt,
                     "last_errors": ["[M3-ARCHETYPES] Competence C1 has only 1 archetype; minimum is 2."],
                 }),

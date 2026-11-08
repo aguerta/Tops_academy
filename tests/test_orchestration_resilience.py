@@ -128,6 +128,7 @@ class TestPointerPromptProtocol(unittest.TestCase):
         self.assertIn("view_file", prompt)
         self.assertIn("DONE: work/shards/shard_01.json", prompt)
 
+    @__import__("unittest.mock").mock.patch.dict(__import__("os").environ, {"C2C_INLINE_AUTHOR_ORDER": "0"})
     def test_dispatch_authors_pointer_mode_creates_disk_items_and_lean_prompts(self) -> None:
         """dispatch_authors in pointer mode writes Turn-0 disk JSON and issues <=300 B prompts."""
         # Setup mock course work dir

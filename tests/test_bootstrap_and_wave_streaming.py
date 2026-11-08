@@ -187,6 +187,7 @@ def test_stage_bootstrap_atomic_and_lockfile_lifecycle(tmp_path: Path):
 # TEST 2: Universal Context Diet (pointer=True Default & Backward Compatibility)
 # ==============================================================================
 
+@__import__("unittest.mock").mock.patch.dict(__import__("os").environ, {"C2C_INLINE_AUTHOR_ORDER": "0"})
 def test_pointer_mode_default_and_backward_compatibility(tmp_path: Path):
     """Certifies pointer=True is the default across dispatch_cta, dispatch_authors, dispatch_judges,
     emitting ultra-compact <= 300 B prompts, while pointer=False maintains 100% full inline prompts.

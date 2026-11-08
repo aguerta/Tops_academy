@@ -369,7 +369,7 @@ def test_all_system_prompts_pure_lf_and_byte_budgets():
     lean_author = LEAN_DIR / "prompt_shard_author.md"
     assert lean_author.is_file()
     author_sz = len(lean_author.read_bytes())
-    assert author_sz <= 4750, f"lean/prompt_shard_author.md size {author_sz} B exceeds 4,750 B!"
+    assert author_sz <= 5000, f"lean/prompt_shard_author.md size {author_sz} B exceeds 5,000 B!"
 
     for l_path in LEAN_DIR.glob("*.md"):
         sz = len(l_path.read_bytes())

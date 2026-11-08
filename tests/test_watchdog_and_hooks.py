@@ -786,7 +786,8 @@ class TestLifecycleHookGuard(unittest.TestCase):
         compile_marker = att_dir / "compile_shard_01.json"
         compile_marker.write_text(
             json.dumps({
-                "distinct_compiles": 1,
+                "distinct_compiles": 3,
+                "total_compiles": 3,
                 "error_count": 2,
                 "affected_line_count": 6,
                 "has_syntax_error": False,

@@ -1377,7 +1377,8 @@ TEMPLATES = [
 
         # Simulate check attempts state recording 6 errors
         att_state = {
-            "distinct_compiles": 1,
+            "distinct_compiles": 3,
+            "total_compiles": 3,
             "error_count": 6,
             "has_syntax_error": False,
             "last_err_hash": "hash-6-errors",

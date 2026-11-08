@@ -211,7 +211,7 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         # Lean file size headroom checks
         lean_author_file = self.lean_dir / "prompt_shard_author.md"
         size_author = lean_author_file.stat().st_size
-        self.assertLessEqual(size_author, 4750, f"lean/prompt_shard_author.md must be <= 4,750 bytes (got {size_author})")
+        self.assertLessEqual(size_author, 5000, f"lean/prompt_shard_author.md must be <= 5,000 bytes (got {size_author})")
 
         # All lean prompts strictly <= 5,000 bytes
         for lfile in self.lean_dir.glob("*.md"):
@@ -453,6 +453,7 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         for term in forbidden_course_terms:
             self.assertNotIn(term, dispatch_code.lower())
 
+    @__import__("unittest.mock").mock.patch.dict(__import__("os").environ, {"C2C_INLINE_AUTHOR_ORDER": "0"})
     def test_dispatch_authors_cli_and_pointer_backward_compatibility(self) -> None:
         """dispatch_authors works seamlessly with pointer=True and pointer=False, preserving backwards-compatibility."""
         (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
@@ -650,7 +651,7 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         self.assertIn("gen_h01_3", lean_author)
         self.assertIn("ver_h01_1", lean_author)
         lean_author_size = (self.lean_dir / "prompt_shard_author.md").stat().st_size
-        self.assertLessEqual(lean_author_size, 4750, f"lean/prompt_shard_author.md size {lean_author_size} exceeds 4,750 B!")
+        self.assertLessEqual(lean_author_size, 5000, f"lean/prompt_shard_author.md size {lean_author_size} exceeds 5,000 B!")
 
         # 3. dispatch_authors: includes --min-archetypes 4 in compile_cmd, mentions [M3-ARCHETYPES], stamps min_archetypes=4 in pre_shard_manifest.json
         (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({

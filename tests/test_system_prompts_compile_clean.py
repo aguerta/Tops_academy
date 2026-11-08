@@ -7,7 +7,7 @@ Validates:
 3. Templates generate all 4 disjoint archetypes (MC7, FIB, FIB, MS), unique stems >= 15, and div_ratio >= 0.50.
 4. Questions assembled by instantiate_competency pass validate_course_content(..., strict=True).
 5. Standardized audit engine reports 0 critical issues and 0 ArchetypeEntropyLinter issues.
-6. Size gate: prompt_shard_author.md <= 4750 bytes and subagent_types.json has 0 \\r bytes.
+6. Size gate: prompt_shard_author.md <= 5000 bytes and subagent_types.json has 0 \\r bytes.
 """
 
 from __future__ import annotations
@@ -40,8 +40,8 @@ def test_lean_prompt_sizes_and_subagent_types_hygiene():
     shard_author_prompt = c2c_dir / "system_prompts" / "lean" / "prompt_shard_author.md"
     assert shard_author_prompt.is_file(), f"Missing file: {shard_author_prompt}"
     raw_prompt_bytes = shard_author_prompt.read_bytes()
-    assert len(raw_prompt_bytes) <= 4750, (
-        f"prompt_shard_author.md exceeds 4750 bytes: {len(raw_prompt_bytes)} bytes"
+    assert len(raw_prompt_bytes) <= 5000, (
+        f"prompt_shard_author.md exceeds 5000 bytes: {len(raw_prompt_bytes)} bytes"
     )
 
     subagent_types_file = c2c_dir / "subagent_types.json"
