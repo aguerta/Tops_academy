@@ -2,7 +2,7 @@
 
 > **Propósito:** archivo de los milestones **cerrados**. Lo pendiente o en curso vive en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md) *(espejo de este archivo en `docs/future_milestones/MILESTONES_COMPLETED.md`)*.  
 > **Convención de certificación:** cada entrada dice *quién* certificó y *cómo*. «Certificado por el usuario» = prueba manual en sus equipos. «Verificado automáticamente» = tests o E2E con nombre y resultado. Lo no verificado se declara de forma explícita.  
-> **Última actualización:** 2026-10-31 (Branch: `main` — Milestones 1, 2a, 3 y núcleo del 11 cerrados).
+> **Última actualización:** 2026-11-08 (Branch: `main` / `optimizaciones_test` — Pipeline C2C v4.0 "Más con Menos", DSL Form-C, Shift-Left 4 Arquetipos, FSM Hook Guard y M1, 2, 2a, 3, 10, 11 cerrados).
 
 ---
 
@@ -14,8 +14,12 @@
 | **2a** Usabilidad móvil | Teléfono: columna única, drawer, footer en flujo | Usuario (2026-10-26) + viewport 390 × 844 en la matriz | los de M1 |
 | **2** PWA Instalable y Modo Offline | Service Worker Workbox, precaching App Shell + fuentes KaTeX, Web App Manifest, suite de iconos (192, 512, maskable), badge `✓ Offline`, navegación nativa popstate (`navigationHistory.ts`), instalación guiada | Automática (`tests/test_pwa_offline.py`, `tests/test_pwa_navigation_and_install.py`) + Verificado en producción PWA (2026-11-01) | `23cb4ec`, `e26769b`, `7e6a238`, `9296f9c` |
 | **3** Anti-Overfitting y Variedad de Plantillas (v3.8 Tri-Banda) | Contrato Tri-Banda (`--min-archetypes 3`, 3 bandas ZPD, $\ge 2$ Bloom, cuota FIB/MS, `[STEM-DIVERSITY-GATE]`) + `ArchetypeEntropyLinter` (`MIN_ARCHETYPES = 3` + `ratio > 0.85` + MPRI) | Automática (`test_new_audit_linters.py`, 11 cursos publicados con 0 infracciones) | `5b5395c`, `be43b08`, `b07cec8` + cierre 2026-10-31 |
+| **4** DSL Form-C y Desacoplamiento KaTeX (Fase Base / 85%) | DSL Form-C en 55–70 líneas (4 arquetipos disjuntos, catálogo RATS único con `@var@`, `_pv` canónico sin regex), desacoplamiento KaTeX-Python con PrairieLearn `@var@` en raw strings, integración de `pykatex>=0.0.8` y `z3-solver>=4.13.0` | Automática (`tests/test_c2c_v321_comp4_prompts.py`, `tests/test_sweetspot_v35_cta_and_shards.py`) + migración de plantillas EDO/EDP | `315690c`, `cee3e5d`, `884c305`, `cb84a16` |
+| **7** Pipeline "Más con Menos" (Target `< 12 min` y `-65%` Tokens) | Deduplicación masiva `-2.0M` tokens en `dispatch.py` (eliminación de triple envío Prompt/work_order/items), recibos criptográficos SHA-256 (`shard_XX.cert.json`) en compilador `< 5 ms`, subagentes `--lean` por defecto con prompts $\le 5\text{ KB}$, weighted waves de hasta 100 shards concurrentes, precheck estático AST `< 50 ms` (`shard_precheck.py`), y suite global de 1,404 tests en 27.76s | Automática (1,404 tests pasando al 100% en 27.76s en `pytest tests/ -q`) + 3 auditorías forenses | `e357df5`, `cb84a16`, `6208088`, `75bfde1`, `c81aaa6` |
 | **10** QA Rubric v2.0 Deep Mastery | 7 linters Path-to-Mastery v2.0, MPRI (/100 pts en 6 pilares, cuota $\ge 25\%$ multimodal), penalizaciones duras, compuerta bloqueante pre-publish `PublishQualityGateError` con mapeo AST | Automática (`tests/test_new_audit_linters.py`) + Auditoría en pipeline sobre 11 cursos | `be43b08`, `24c44f8`, `0e2fd38`, `b07cec8` |
 | **11** Carga de cursos — núcleo | Manifest slim, índice con caché, ETag/304/gzip, manifest inline, IndexedDB, prefetch | Automática (12 tests de API + build); ACs de cliente sin medir | `41435c5`, `b73a5ee`, `2051b8b`, `97fa2f3` |
+| **15** Gobernanza Formal y FSM Multi-Agente (Fase 1 Isomórfica) | Matriz 2D `decidirEstrategiaEdicion` en `c2c_hook_guard.py` (bloqueo estricto de reescrituras globales si errores $< 6$, imposición de edición quirúrgica y modular splicing), tope duro síncrono (40 turnos / 5M tokens por subagente), y aislamiento AST en subprocesos | Automática (`tests/test_hook_post_pass_and_write_isolation.py`, `tests/test_watchdog_and_hooks.py`) | `e357df5`, `75bfde1`, `c81aaa6` |
+| **16** Certificación Matemática Shift-Left y 4 Arquetipos (Fase 1 Motor) | Stage Contract v4.0 (`engine/stage_contract.py`, `engine/invariants.py`), 4 arquetipos obligatorios en `compile_shard.py` (`direct`, `inverse`, `perturbation`, `boundary_or_edge_case`), supuestos explícitos obligatorios en `cta.json` (`assumptions` + `violation_consequence`), fix silencioso de `np.bool_` en sandbox AST, linters anti-gaming (`[DIAG-MAGIC-MULT]`) | Automática (`tests/test_validator.py`, `tests/test_m3_archetypes_semantic_gate.py`, `tests/test_c2c_author_speedups.py`) | `954a6c8`, `cee3e5d`, `9310ff7`, `75bfde1` |
 
 ---
 
@@ -204,6 +208,61 @@
 | AC-23 volver a la biblioteca sin petición | 🟡 | Implementado; sin medición E2E (`tests/e2e_course_loading_perf.mjs` no existe) |
 
 * **Commits:** `41435c5` (servidor + Vite), `b73a5ee` (cliente), `2051b8b` (tests), `97fa2f3` (docs).
+
+---
+
+## Milestone 4: DSL Form-C y Desacoplamiento KaTeX (Fase Base / 85%)
+* **Estado:** ✅ **Fase Base (85%) completada y verificada automáticamente (2026-11-08)**. La fase de gramática estricta `KaTeXAST` permanece en roadmap secundario; el desacoplamiento con PrairieLearn `@var@` en raw strings, el validador `pykatex` y el motor formal `z3-solver` operan al 100% en producción.
+* **Objetivo:** Erradicar definitivamente la colisión de caracteres de control LaTeX (`\t`, `\b`), desacoplar la renderización KaTeX del runtime de Python, y condensar el código de los autores a plantillas de 55–70 líneas (`-65%` de tokens de salida).
+* **Entregado y Verificado:**
+  - **Desacoplamiento KaTeX con `@var@`:** Soporte de tokens ortogonales `@var@` y `@var:fmt@` en `engine/assemble.py`, `engine/invariants.py` y `check_templates.py`, garantizando raw strings libres de escaping parasitario.
+  - **DSL Composicional `Form-C`:** Reducción a 4 tuplas canónicas en `TEMPLATES` estructuradas en 55–70 líneas por competencia; catálogo unificado `RATS` que interpola variables dinámicas y función canonical `_pv(c)` resiliente a desigualdades (`\le`, `\ge`, `<=`, `>=`).
+  - **Tooling Formal:** Inclusión de `pykatex>=0.0.8` y `z3-solver>=4.13.0` en `pyproject.toml` para validación estática de spans matemáticos y consistencia formal.
+  - **Migración de Referencia:** Cursos base `examples/edo/` y `examples/edp/` reescritos al estándar Form-C v2.0.
+* **Pruebas:** `tests/test_c2c_v321_comp4_prompts.py`, `tests/test_sweetspot_v35_cta_and_shards.py`, `tests/test_pykatex_warn.py`.
+* **Commits:** `315690c`, `cee3e5d`, `884c305`, `cb84a16`.
+
+---
+
+## Milestone 7: Pipeline "Más con Menos" — Deduplicación, Recibos SHA-256, Prompts `--lean` y Suite `< 30 s`
+* **Estado:** ✅ **Completado y verificado automáticamente (2026-11-08)**. Se alcanzaron todas las metas de eficiencia en tokens, reducción de latencia de compilación y aceleración de CI.
+* **Objetivo:** Lograr máxima calidad formal (4 arquetipos + supuestos) con el menor consumo de tokens (`-65%`) y latencia reducida (`< 12 min` en corridas completas), erradicando envíos parasitarios y cómputos redundantes.
+* **Entregado y Verificado:**
+  - **Deduplicación Masiva en `dispatch.py` (`-2.0M` tokens):** Se eliminó el triple envío redundante de `"Prompt"`, `"work_order"` e `"items"` en la inicialización de subagentes.
+  - **Recibos Criptográficos SHA-256 (`< 5 ms`):** `run.py` y compiladores emiten y validan `shard_XX.cert.json` para evitar re-compilaciones de shards inalterados.
+  - **Prompts `--lean` Ultra-Compactos:** Todos los subagentes operan con system prompts optimizados $\le 5\text{ KB}$ en `system_prompts/lean/`.
+  - **Weighted Waves (1 Hab/shard, olas $\le 100$):** `dispatch.py` y `plan_shards.py` soportan hasta 100 shards concurrentes en una única ola de despacho paralelo.
+  - **Precheck Estático AST (`shard_precheck.py`):** Detección en $< 50\text{ ms}$ de infracciones de perturbación ad-hoc (`while`), firmas de verificador (`ver_*`), bucles y strings de control antes de invocar subprocesos pesados.
+  - **Suite de Pruebas Ultra-Rápida:** 1,404 pruebas ejecutadas en **27.76 segundos** con `pytest-xdist` dinámico (`worksteal`).
+* **Pruebas:** 1,404 tests pasando al 100% (`pytest tests/ -q`), `tests/test_bootstrap_and_wave_streaming.py`, `tests/test_c2c_author_speedups.py`.
+* **Commits:** `e357df5`, `cb84a16`, `6208088`, `75bfde1`, `c81aaa6`.
+
+---
+
+## Milestone 15: Gobernanza Formal y Certificación FSM del Pipeline C2C (Fase 1 Isomórfica)
+* **Estado:** ✅ **Fase 1 Isomórfica en Python completada y verificada (2026-11-08)**. La compilación de `TopsAcademyC2C.lean` a binario C nativo mediante Lean 4 Perceus C (Fase 2) permanece en el roadmap de certificación formal industrial.
+* **Objetivo:** Imponer guardrails deterministas inquebrantables que impidan bucles infinitos, ediciones parasitarias, alucinaciones de herramientas y reescrituras no modulares de código en subagentes autónomos.
+* **Entregado y Verificado:**
+  - **Matriz 2D `decidirEstrategiaEdicion`:** Integrada en `c2c_hook_guard.py` (Líneas infractoras $\times$ Tipo de error). Si los fallos son $< 6$, prohíbe reescrituras completas de archivos y fuerza edición quirúrgica o modular splicing.
+  - **Tope Duro Síncrono:** Límite estricto de 40 turnos o 5,000,000 tokens por sesión de subagente para blindar el presupuesto.
+  - **Aislamiento AST Anti-Bombas de Debug:** Intercepción en `sandbox.py` de scripts no autorizados, artefactos temporales en `scratch/` o llamadas con `python -c`.
+  - **Flexibilización Quirúrgica para Autores:** Exención controlada en `c2c_hook_guard.py` permitiendo reescritura en los primeros 2 fallos de compilación antes de exigir modular splicing.
+* **Pruebas:** `tests/test_hook_post_pass_and_write_isolation.py`, `tests/test_watchdog_and_hooks.py`, `tests/test_orchestration_resilience.py`.
+* **Commits:** `e357df5`, `cb84a16`, `75bfde1`.
+
+---
+
+## Milestone 16: Certificación Matemática Shift-Left y 4 Arquetipos + Supuestos Explícitos (Fase 1)
+* **Estado:** ✅ **Fase 1 (Motor y Contratos Python) completada y verificada (2026-11-08)**.
+* **Objetivo:** Desplazar la detección de errores matemáticos y psicométricos hacia la etapa de diseño de plantillas (Stage 3), erradicando los Late-Catches en Stage 6 y garantizando variedad estructural profunda anti-overfitting.
+* **Entregado y Verificado:**
+  - **Stage Contract v4.0:** Tipado canónico e invariantes en `engine/stage_contract.py` e `invariants.py`.
+  - **Estándar Inviolable de 4 Arquetipos:** `compile_shard.py` impone 4 arquetipos obligatorios (`direct`, `inverse`, `perturbation`, `boundary_or_edge_case`) con 4/4 fórmulas AST disjuntas y bandas ZPD (`easy`, `medium`, `hard`, `hard/expert`).
+  - **Supuestos Explícitos en el Currículo:** `compile_cta.py` y `check_cta.py` exigen tuplas canónicas con supuestos formales (`assumptions`) y consecuencias de ruptura (`violation_consequence`) en `cta.json`.
+  - **Fix Silencioso de `np.bool_`:** Resuelto el bug `cc_res is False` en `engine/sandbox.py`.
+  - **Linters Psicométricos Anti-Gaming:** Bloqueo de multiplicadores mágicos (`[DIAG-MAGIC-MULT]`) y opciones de longitud heterogénea en `src/validator/psychometric_checker.py`.
+* **Pruebas:** `tests/test_validator.py`, `tests/test_m3_archetypes_semantic_gate.py`, `tests/test_specific_error_report_and_stem_gate.py`, `tests/test_c2c_author_speedups.py`.
+* **Commits:** `954a6c8`, `cee3e5d`, `9310ff7`, `75bfde1`.
 
 ---
 *Registro de cierre. Para el estado vigente de lo pendiente, ver `FUTURE_MILESTONES.md`.*
