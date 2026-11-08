@@ -1,0 +1,124 @@
+{
+  "course_metadata": {
+    "course_id": "estadistica_3_s9_vmapreduce21",
+    "unit_title": "Estadistica 3 S9 Vmapreduce21",
+    "detected_objective": "Dominio y aplicación analítica integral de la Inferencia Asintótica, Propiedades de Muestras Finitas, Leyes de los Grandes Números y Teoremas Límites en Estadística y Econometría",
+    "total_competencies": 47,
+    "total_questions": 1080,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-08 14:30:14"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Arquitectura curricular óptima con 47 micro-competencias atómicas perfectamente jerarquizadas (8 Hechos, 25 Conceptos, 14 Habilidades). Grafo DAG conexo, acíclico y con orden topológico riguroso (profundidad máxima de 25 niveles). El 100% de las competencias implementa las tres bandas de dificultad (easy: 277, medium: 282, hard: 521), garantizando la plena operatividad de calibrateByMasteryDifficulty."
+    },
+    "assessment_quality": {
+      "score": 5.0,
+      "max": 5.0,
+      "feedback": "Diversidad multimodal sobresaliente con un 74.35% de reactivos de generación activa y discriminación condicional (50.0% FIB [540 reactivos], 24.35% MS [263 reactivos], y 25.65% MC7 [277 reactivos]). Alta entropía con un mínimo de 12 arquetipos distintos observados. Cobertura diagnóstica del 100% en distractores con 93.6% de unicidad (2048 rationales únicos). 100% de acuerdo en arbitraje ciego Stage 5 (120/120 ítems). Cero distractores mágicos y cero memorización visual."
+    },
+    "scaffolding_hints": {
+      "score": 4.9,
+      "max": 5.0,
+      "feedback": "Andamiaje socrático genuino en el 100% de los reactivos (3 a 4 pistas progresivas por ejercicio: Conceptual -> Estratégica -> Operativa). Cero pistas Mad-Libs sintéticas, cero pistas envenenadas (0% sabotaje de los 3 intentos en PracticeSession.tsx). Soluciones analíticas paso a paso y advertencias de errores conceptuales en el 100% de los reactivos. Ligera deducción (-0.1 pts) por la estandarización transversal de advertencias conceptuales en reactivos generados por plantilla FIB."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación matemática impecable con el programa curricular de inferencia estadística asintótica. El 95.37% de los reactivos están situados en niveles cognitivos superiores de Bloom (Apply: 504, Analyze: 263, Evaluate: 263), alcanzando el 100% en reactivos de Habilidad. Registro disciplinar auténtico y libre de contaminación léxica inter-dominio."
+    },
+    "technical_ergonomics": {
+      "score": 1.8,
+      "max": 2.0,
+      "feedback": "Sintaxis KaTeX matemáticamente rigurosa y libre de errores críticos: 0 llaves no cerradas, 0 delimitadores impares, 0 triples dólares, 0 variables crudas de Python. La verificación semántica confirmó que los 174 avisos de variables de plantilla corresponden a falsos positivos del linter (comandos estándar \\bar{Y}, \\bar{X}, \\text{Var}, \\text{ECM}, \\text{plim}). Se aplica deducción (-0.2 pts) por 17 reactivos (1.57%) con explicaciones en prosa envueltas dentro del delimitador KaTeX $...$ que impiden el ajuste de línea automático en UI móvil."
+    }
+  },
+  "penalties_applied": [],
+  "raw_subtotal": 19.7,
+  "final_score": 19.7,
+  "quality_tier": "EXCELENTE (17.0 - 20.0 pts)",
+  "mastery_path_readiness": {
+    "mpri_score": 99.81,
+    "mpri_max": 100.0,
+    "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 20.0,
+        "max": 20.0
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 20.0,
+        "max": 20.0
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 25.0,
+        "max": 25.0
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 15.0,
+        "max": 15.0
+      },
+      "dag_and_interleaving_topology": {
+        "score": 10.0,
+        "max": 10.0
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 9.81,
+        "max": 10.0
+      }
+    },
+    "student_journey_verdict": "El curso ofrece una trayectoria de aprendizaje adaptativa de excelencia (Gold Tier), blindada contra atajos de sustitución visual mediante una fuerte presencia de evocación activa (50% FIB, 24.35% MS). El andamiaje socrático protege eficazmente al estudiante contra bloqueos frustrantes bajo el sistema de 3 strikes de PracticeSession.tsx, proveyendo remediación diagnóstica específica y retroalimentación analítica de alto rigor en FeedbackToast.tsx."
+  },
+  "discovered_lint_rules": [
+    {
+      "rule_id": "LINT-KATEX-PROSE-WRAP",
+      "severity": "warning",
+      "regex_pattern": "\\$(?:[^\\$]*\\\\text\\{[^\\}]{20,}\\}[^\\$]*)\\$",
+      "description": "Frases explicativas en español de longitud >= 20 caracteres embebidas dentro de delimitadores KaTeX $...$ que inducen white-space: nowrap y provocan desbordamiento horizontal en pantallas móviles.",
+      "evidence_items": [
+        "Q-H01-037",
+        "Q-H01-038",
+        "Q-H01-039",
+        "Q-H01-040",
+        "Q-Hab01-064",
+        "Q-Hab01-065",
+        "Q-Hab01-066",
+        "Q-Hab01-067",
+        "Q-Hab01-068",
+        "Q-Hab01-069",
+        "Q-Hab01-070",
+        "Q-C11-546",
+        "Q-C11-547",
+        "Q-C11-548",
+        "Q-C11-549",
+        "Q-C11-550"
+      ]
+    },
+    {
+      "rule_id": "LINT-FALSE-POSITIVE-TEMPLATE-VAR-IN-LATEX",
+      "severity": "info",
+      "regex_pattern": "(?<!\\\\bar|\\\\text|\\\\operatorname|\\\\hat|\\\\tilde)\\{[A-Z][a-zA-Z0-9_]*\\}",
+      "description": "Falso positivo del linter determinista de variables de plantilla: expresiones canónicas KaTeX como \\bar{Y}, \\bar{X}, \\text{Var}, \\text{ECM} y \\text{plim} fueron marcadas como variables no interpoladas por coincidencia ingenua de llaves. Se requiere refactorizar el regex con negative lookbehind.",
+      "evidence_items": [
+        "Q-Hab01-041",
+        "Q-Hab02-114",
+        "Q-C02-121",
+        "Q-C04-266",
+        "Q-C09-461",
+        "Q-C14-645",
+        "Q-H08-916",
+        "Q-C21-921"
+      ]
+    }
+  ],
+  "remediation_actions": [
+    "Refactorizar los 17 reactivos señalados (Q-H01-036 a Q-H01-040, Q-Hab01-064 a Q-Hab01-070, Q-C11-546 a Q-C11-550) extrayendo las cláusulas en prosa fuera de los delimitadores KaTeX $...$ (ej. transformar '$\\text{Var}(\\hat{\\theta}_2) - \\text{Var}(\\hat{\\theta}_1) = 25 \\ge 0 \\Rightarrow \\hat{\\theta}_1 \\text{ más eficiente}$' en '$\\text{Var}(\\hat{\\theta}_2) - \\text{Var}(\\hat{\\theta}_1) = 25 \\ge 0 \\Rightarrow$ $\\hat{\\theta}_1$ es más eficiente') para asegurar el ajuste de línea natural en UI móvil.",
+    "Actualizar la regla estática 'uninterpolated_math_variable_linter' en el motor de QA incorporando un negative lookbehind para prefijos LaTeX comunes (\\bar, \\text, \\operatorname, \\hat, \\tilde, etc.), evitando la emisión espuria de 174 advertencias sobre expresiones matemáticas válidas.",
+    "Continuar diversificando a nivel de ítem las advertencias de errores conceptuales ('common_misconception_warning') en reactivos generados por plantillas FIB para aumentar la especificidad diagnóstica contextual."
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-08 14:30:14",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}
