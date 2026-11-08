@@ -17,7 +17,11 @@ dependencies = [
     "scipy>=1.10.0",
     "PyMuPDF>=1.23.0",
     "Pillow>=10.0.0",
+    "PyKaTeX>=0.1.1",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-xdist", "hypothesis>=6.0"]
 
 [project.scripts]
 validate-course = "validator.cli:main"
