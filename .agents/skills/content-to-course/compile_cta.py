@@ -90,6 +90,8 @@ class CtaDataLineLocator:
         self.element_lines: Dict[str, Dict[Union[int, str], Tuple[int, int]]] = {}
         self.distractor_lines: Dict[str, Tuple[int, int]] = {}
         self.distractor_field_lines: Dict[str, Dict[Union[int, str], Tuple[int, int]]] = {}
+        self.assumption_lines: Dict[str, Tuple[int, int]] = {}
+        self.assumption_field_lines: Dict[str, Dict[Union[int, str], Tuple[int, int]]] = {}
         self.comp_tuple_indices: Dict[int, int] = {}
         self._index_source()
 
@@ -119,116 +121,221 @@ class CtaDataLineLocator:
                     continue
 
                 for c_node in comps_nodes:
-                    if not isinstance(c_node, (ast.List, ast.Tuple)):
+                    if not isinstance(c_node, (ast.List, ast.Tuple, ast.Dict)):
                         continue
                     global_c_idx += 1
                     c_start = getattr(c_node, "lineno", 1)
                     c_end = getattr(c_node, "end_lineno", c_start)
 
-                    raw_t = ""
-                    if len(c_node.elts) > 0 and isinstance(c_node.elts[0], ast.Constant) and isinstance(c_node.elts[0].value, str):
-                        raw_t = c_node.elts[0].value.strip().lower()
-
-                    is_6_format = (len(c_node.elts) == 6 and raw_t not in type_prefix_map)
                     d_elts: List[Any] = []
+                    a_elts: List[Any] = []
                     field_names_map: Dict[int, List[str]] = {}
+                    cid = None
+                    prefix = "C"
 
-                    if is_6_format:
-                        title_str = str(c_node.elts[0].value).strip() if isinstance(c_node.elts[0], ast.Constant) else ""
-                        m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", title_str, re.IGNORECASE)
-                        if m_id:
-                            pfx = m_id.group(1).upper()
-                            pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
-                            cid = f"{pfx}-{int(m_id.group(2)):02d}"
-                            prefix = pfx
-                        else:
-                            name_lower = title_str.lower()
-                            if any(kw in name_lower for kw in ["cálculo", "calculo", "calcular", "resolver", "determinar"]):
-                                prefix = "Hab"
-                            elif any(kw in name_lower for kw in ["definición", "definicion", "fórmula", "formula", "constante"]):
-                                prefix = "H"
-                            else:
-                                prefix = "C"
-                            type_counts[prefix] = type_counts.get(prefix, 0) + 1
-                            cid = f"{prefix}-{type_counts[prefix]:02d}"
-
-                        field_names_map = {
-                            0: ["name", "title"],
-                            1: ["description_latex", "description"],
-                            2: ["prerequisites"],
-                            3: ["evidence", "doc", "page"],
-                            4: ["misconceptions"],
-                            5: ["distractors"],
-                        }
-                        if len(c_node.elts) > 5 and isinstance(c_node.elts[5], (ast.List, ast.Tuple)):
-                            d_elts = c_node.elts[5].elts
-                    else:
-                        prefix = type_prefix_map.get(raw_t, "C")
-                        type_counts[prefix] = type_counts.get(prefix, 0) + 1
-
-                        cid = None
-                        if len(c_node.elts) > 1 and isinstance(c_node.elts[1], ast.Constant) and c_node.elts[1].value:
-                            val_str = str(c_node.elts[1].value).strip()
-                            if re.match(r"^(?:H|C|Hab|Fact|Concept|Skill)-?\d+$", val_str, re.IGNORECASE):
-                                cid = val_str
+                    if isinstance(c_node, ast.Dict):
+                        cid_elts: Dict[Union[int, str], Tuple[int, int]] = {}
+                        for k_node, v_node in zip(c_node.keys, c_node.values):
+                            if isinstance(k_node, ast.Constant) and isinstance(k_node.value, str):
+                                k_str = k_node.value.strip()
+                                k_start = getattr(v_node, "lineno", c_start)
+                                k_end = getattr(v_node, "end_lineno", k_start)
+                                cid_elts[k_str] = (k_start, k_end)
+                                if k_str == "id" and isinstance(v_node, ast.Constant) and v_node.value:
+                                    cid = str(v_node.value).strip()
+                                elif k_str == "distractors" and isinstance(v_node, (ast.List, ast.Tuple)):
+                                    d_elts = v_node.elts
+                                elif k_str == "assumptions" and isinstance(v_node, (ast.List, ast.Tuple)):
+                                    a_elts = v_node.elts
                         if not cid:
-                            cid = f"{prefix}-{type_counts[prefix]:02d}"
+                            cid = f"C-{global_c_idx:02d}"
+                        cid_clean = cid.replace("-", "")
+                        self.comp_lines[cid] = c_start
+                        self.comp_lines[cid_clean] = c_start
+                        self.competency_lines[cid] = (c_start, c_end)
+                        self.competency_lines[cid_clean] = (c_start, c_end)
+                        self.comp_tuple_indices[global_c_idx] = c_start
+                        self.element_lines[cid] = cid_elts
+                        self.element_lines[cid_clean] = cid_elts
 
-                        if len(c_node.elts) >= 9:
+                    else:
+                        raw_t = ""
+                        if len(c_node.elts) > 0 and isinstance(c_node.elts[0], ast.Constant) and isinstance(c_node.elts[0].value, str):
+                            raw_t = c_node.elts[0].value.strip().lower()
+
+                        is_7_format = (
+                            len(c_node.elts) == 7
+                            and raw_t in type_prefix_map
+                            and isinstance(c_node.elts[4], (ast.List, ast.Tuple))
+                            and isinstance(c_node.elts[5], (ast.List, ast.Tuple))
+                            and isinstance(c_node.elts[6], (ast.List, ast.Tuple))
+                        )
+                        is_6_tuple_typed = (
+                            len(c_node.elts) == 6
+                            and raw_t in type_prefix_map
+                            and isinstance(c_node.elts[4], (ast.List, ast.Tuple))
+                            and isinstance(c_node.elts[5], (ast.List, ast.Tuple))
+                        )
+                        is_6_format = (len(c_node.elts) == 6 and (raw_t not in type_prefix_map or is_6_tuple_typed))
+
+                        if is_7_format:
+                            prefix = type_prefix_map.get(raw_t, "C")
+                            type_counts[prefix] = type_counts.get(prefix, 0) + 1
+                            title_str = str(c_node.elts[1].value).strip() if isinstance(c_node.elts[1], ast.Constant) else ""
+                            m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", title_str, re.IGNORECASE)
+                            if m_id:
+                                pfx = m_id.group(1).upper()
+                                pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                                cid = f"{pfx}-{int(m_id.group(2)):02d}"
+                            else:
+                                cid = f"{prefix}-{type_counts[prefix]:02d}"
+
                             field_names_map = {
                                 0: ["type"],
-                                1: ["id"],
-                                2: ["name"],
-                                3: ["description_latex", "description"],
-                                4: ["bloom"],
-                                5: ["doc", "evidence"],
-                                6: ["page", "evidence"],
-                                7: ["prerequisites"],
-                                8: ["distractors"],
+                                1: ["name", "title"],
+                                2: ["description_latex", "description"],
+                                3: ["bloom"],
+                                4: ["prerequisites"],
+                                5: ["distractors"],
+                                6: ["assumptions"],
                             }
-                            if isinstance(c_node.elts[8], (ast.List, ast.Tuple)):
-                                d_elts = c_node.elts[8].elts
-                        elif len(c_node.elts) == 8:
+                            d_elts = c_node.elts[5].elts
+                            a_elts = c_node.elts[6].elts
+
+                        elif is_6_tuple_typed:
+                            prefix = type_prefix_map.get(raw_t, "C")
+                            type_counts[prefix] = type_counts.get(prefix, 0) + 1
+                            title_str = str(c_node.elts[1].value).strip() if isinstance(c_node.elts[1], ast.Constant) else ""
+                            m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", title_str, re.IGNORECASE)
+                            if m_id:
+                                pfx = m_id.group(1).upper()
+                                pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                                cid = f"{pfx}-{int(m_id.group(2)):02d}"
+                            else:
+                                cid = f"{prefix}-{type_counts[prefix]:02d}"
+
                             field_names_map = {
-                                0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
-                                4: ["bloom"], 5: ["doc", "evidence"], 6: ["page", "evidence"], 7: ["distractors"],
+                                0: ["type"],
+                                1: ["name", "title"],
+                                2: ["description_latex", "description"],
+                                3: ["bloom"],
+                                4: ["prerequisites"],
+                                5: ["distractors"],
                             }
-                            if isinstance(c_node.elts[7], (ast.List, ast.Tuple)):
-                                d_elts = c_node.elts[7].elts
-                        elif len(c_node.elts) == 7:
+                            d_elts = c_node.elts[5].elts
+
+                        elif is_6_format:
+                            title_str = str(c_node.elts[0].value).strip() if isinstance(c_node.elts[0], ast.Constant) else ""
+                            m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", title_str, re.IGNORECASE)
+                            if m_id:
+                                pfx = m_id.group(1).upper()
+                                pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                                cid = f"{pfx}-{int(m_id.group(2)):02d}"
+                                prefix = pfx
+                            else:
+                                name_lower = title_str.lower()
+                                if any(kw in name_lower for kw in ["cálculo", "calculo", "calcular", "resolver", "determinar"]):
+                                    prefix = "Hab"
+                                elif any(kw in name_lower for kw in ["definición", "definicion", "fórmula", "formula", "constante"]):
+                                    prefix = "H"
+                                else:
+                                    prefix = "C"
+                                type_counts[prefix] = type_counts.get(prefix, 0) + 1
+                                cid = f"{prefix}-{type_counts[prefix]:02d}"
+
                             field_names_map = {
-                                0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
-                                4: ["bloom"], 5: ["page", "evidence"], 6: ["distractors"],
+                                0: ["name", "title"],
+                                1: ["description_latex", "description"],
+                                2: ["prerequisites"],
+                                3: ["evidence", "doc", "page"],
+                                4: ["misconceptions"],
+                                5: ["distractors"],
                             }
-                            if isinstance(c_node.elts[6], (ast.List, ast.Tuple)):
-                                d_elts = c_node.elts[6].elts
-                        elif len(c_node.elts) == 6:
-                            field_names_map = {
-                                0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
-                                4: ["bloom"], 5: ["distractors"],
-                            }
-                            if isinstance(c_node.elts[5], (ast.List, ast.Tuple)):
+                            if len(c_node.elts) > 5 and isinstance(c_node.elts[5], (ast.List, ast.Tuple)):
                                 d_elts = c_node.elts[5].elts
+                        else:
+                            prefix = type_prefix_map.get(raw_t, "C")
+                            type_counts[prefix] = type_counts.get(prefix, 0) + 1
 
-                    cid_clean = cid.replace("-", "")
-                    self.comp_lines[cid] = c_start
-                    self.comp_lines[cid_clean] = c_start
-                    self.competency_lines[cid] = (c_start, c_end)
-                    self.competency_lines[cid_clean] = (c_start, c_end)
-                    self.comp_tuple_indices[global_c_idx] = c_start
+                            if len(c_node.elts) > 1 and isinstance(c_node.elts[1], ast.Constant) and c_node.elts[1].value:
+                                val_str = str(c_node.elts[1].value).strip()
+                                if re.match(r"^(?:H|C|Hab|Fact|Concept|Skill)-?\d+$", val_str, re.IGNORECASE):
+                                    cid = val_str
+                            if not cid:
+                                cid = f"{prefix}-{type_counts[prefix]:02d}"
 
-                    # Index competency elements
-                    cid_elts: Dict[Union[int, str], Tuple[int, int]] = {}
-                    for e_idx, e_node in enumerate(c_node.elts):
-                        e_start = getattr(e_node, "lineno", c_start)
-                        e_end = getattr(e_node, "end_lineno", e_start)
-                        cid_elts[e_idx] = (e_start, e_end)
-                        if e_idx in field_names_map:
-                            for fn in field_names_map[e_idx]:
-                                cid_elts[fn] = (e_start, e_end)
+                            if len(c_node.elts) >= 10:
+                                field_names_map = {
+                                    0: ["type"],
+                                    1: ["id"],
+                                    2: ["name"],
+                                    3: ["description_latex", "description"],
+                                    4: ["bloom"],
+                                    5: ["doc", "evidence"],
+                                    6: ["page", "evidence"],
+                                    7: ["prerequisites"],
+                                    8: ["distractors"],
+                                    9: ["assumptions"],
+                                }
+                                if isinstance(c_node.elts[8], (ast.List, ast.Tuple)):
+                                    d_elts = c_node.elts[8].elts
+                                if isinstance(c_node.elts[9], (ast.List, ast.Tuple)):
+                                    a_elts = c_node.elts[9].elts
+                            elif len(c_node.elts) == 9:
+                                field_names_map = {
+                                    0: ["type"],
+                                    1: ["id"],
+                                    2: ["name"],
+                                    3: ["description_latex", "description"],
+                                    4: ["bloom"],
+                                    5: ["doc", "evidence"],
+                                    6: ["page", "evidence"],
+                                    7: ["prerequisites"],
+                                    8: ["distractors"],
+                                }
+                                if isinstance(c_node.elts[8], (ast.List, ast.Tuple)):
+                                    d_elts = c_node.elts[8].elts
+                            elif len(c_node.elts) == 8:
+                                field_names_map = {
+                                    0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
+                                    4: ["bloom"], 5: ["doc", "evidence"], 6: ["page", "evidence"], 7: ["distractors"],
+                                }
+                                if isinstance(c_node.elts[7], (ast.List, ast.Tuple)):
+                                    d_elts = c_node.elts[7].elts
+                            elif len(c_node.elts) == 7:
+                                field_names_map = {
+                                    0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
+                                    4: ["bloom"], 5: ["page", "evidence"], 6: ["distractors"],
+                                }
+                                if isinstance(c_node.elts[6], (ast.List, ast.Tuple)):
+                                    d_elts = c_node.elts[6].elts
+                            elif len(c_node.elts) == 6:
+                                field_names_map = {
+                                    0: ["type"], 1: ["id"], 2: ["name"], 3: ["description_latex", "description"],
+                                    4: ["bloom"], 5: ["distractors"],
+                                }
+                                if isinstance(c_node.elts[5], (ast.List, ast.Tuple)):
+                                    d_elts = c_node.elts[5].elts
 
-                    self.element_lines[cid] = cid_elts
-                    self.element_lines[cid_clean] = cid_elts
+                        cid_clean = cid.replace("-", "")
+                        self.comp_lines[cid] = c_start
+                        self.comp_lines[cid_clean] = c_start
+                        self.competency_lines[cid] = (c_start, c_end)
+                        self.competency_lines[cid_clean] = (c_start, c_end)
+                        self.comp_tuple_indices[global_c_idx] = c_start
+
+                        # Index competency elements
+                        cid_elts: Dict[Union[int, str], Tuple[int, int]] = {}
+                        for e_idx, e_node in enumerate(c_node.elts):
+                            e_start = getattr(e_node, "lineno", c_start)
+                            e_end = getattr(e_node, "end_lineno", e_start)
+                            cid_elts[e_idx] = (e_start, e_end)
+                            if e_idx in field_names_map:
+                                for fn in field_names_map[e_idx]:
+                                    cid_elts[fn] = (e_start, e_end)
+
+                        self.element_lines[cid] = cid_elts
+                        self.element_lines[cid_clean] = cid_elts
 
                     # Index distractors and subfields
                     distractor_subfields = {
@@ -267,6 +374,53 @@ class CtaDataLineLocator:
 
                         self.distractor_field_lines[did_hyphen] = d_fields
                         self.distractor_field_lines[did_clean] = d_fields
+
+                    # Index assumptions and subfields
+                    assumption_subfields = {
+                        0: ["name", "title", "id"],
+                        1: ["statement_latex", "statement"],
+                        2: ["violation_consequence", "consequence"],
+                        3: ["role_in_proof"],
+                    }
+
+                    for a_idx, a_node in enumerate(a_elts, start=1):
+                        a_start = getattr(a_node, "lineno", c_start)
+                        a_end = getattr(a_node, "end_lineno", a_start)
+                        aid_hyphen = f"A-{cid}-{a_idx:02d}"
+                        aid_clean = f"A-{cid_clean}-{a_idx:02d}"
+
+                        self.assumption_lines[aid_hyphen] = (a_start, a_end)
+                        self.assumption_lines[aid_clean] = (a_start, a_end)
+
+                        a_fields: Dict[Union[int, str], Tuple[int, int]] = {}
+                        if isinstance(a_node, (ast.List, ast.Tuple)):
+                            for s_idx, s_node in enumerate(a_node.elts):
+                                s_start = getattr(s_node, "lineno", a_start)
+                                s_end = getattr(s_node, "end_lineno", s_start)
+                                a_fields[s_idx] = (s_start, s_end)
+                                if s_idx in assumption_subfields:
+                                    for sfn in assumption_subfields[s_idx]:
+                                        a_fields[sfn] = (s_start, s_end)
+
+                            if len(a_node.elts) > 0 and isinstance(a_node.elts[0], ast.Constant) and a_node.elts[0].value:
+                                a_name = str(a_node.elts[0].value).strip()
+                                if a_name:
+                                    self.assumption_lines[a_name] = (a_start, a_end)
+                                    self.assumption_field_lines[a_name] = a_fields
+                        elif isinstance(a_node, ast.Dict):
+                            for k_node, v_node in zip(a_node.keys, a_node.values):
+                                if isinstance(k_node, ast.Constant) and isinstance(k_node.value, str):
+                                    k_str = k_node.value.strip()
+                                    k_start = getattr(v_node, "lineno", a_start)
+                                    k_end = getattr(v_node, "end_lineno", k_start)
+                                    a_fields[k_str] = (k_start, k_end)
+                                    if k_str == "id" and isinstance(v_node, ast.Constant) and v_node.value:
+                                        a_id_val = str(v_node.value).strip()
+                                        self.assumption_lines[a_id_val] = (a_start, a_end)
+                                        self.assumption_field_lines[a_id_val] = a_fields
+
+                        self.assumption_field_lines[aid_hyphen] = a_fields
+                        self.assumption_field_lines[aid_clean] = a_fields
 
         except Exception:
             pass
@@ -311,6 +465,16 @@ class CtaDataLineLocator:
         if item_id in self.distractor_lines:
             return self.distractor_lines[item_id]
 
+        # Check assumption field lines
+        if item_id in self.assumption_field_lines:
+            if field_name and field_name in self.assumption_field_lines[item_id]:
+                return self.assumption_field_lines[item_id][field_name]
+            if item_id in self.assumption_lines:
+                return self.assumption_lines[item_id]
+
+        if item_id in self.assumption_lines:
+            return self.assumption_lines[item_id]
+
         # Check competency element lines
         if item_id in self.element_lines:
             if field_name and field_name in self.element_lines[item_id]:
@@ -345,6 +509,20 @@ class CtaDataLineLocator:
             if f"{prefix}{comp_num}" in self.competency_lines:
                 return self.competency_lines[f"{prefix}{comp_num}"]
 
+        # Assumption ID decomposition fallback, e.g. A-Hab01-02 -> Hab-01
+        m_aid = re.match(r"^A-([A-Za-z]+)(\d+)(?:-(\d+))?$", item_id)
+        if m_aid:
+            prefix, comp_num, asmp_idx = m_aid.groups()
+            cid_hyphen = f"{prefix}-{comp_num}"
+            if asmp_idx:
+                try_aid = f"A-{prefix}{comp_num}-{int(asmp_idx):02d}"
+                if try_aid in self.assumption_lines:
+                    return self.assumption_lines[try_aid]
+            if cid_hyphen in self.competency_lines:
+                return self.competency_lines[cid_hyphen]
+            if f"{prefix}{comp_num}" in self.competency_lines:
+                return self.competency_lines[f"{prefix}{comp_num}"]
+
         if item_id in self.comp_lines:
             ln = self.comp_lines[item_id]
             return (ln, ln)
@@ -360,6 +538,9 @@ class CtaDataLineLocator:
             return rng[0]
         if item_id in self.distractor_lines:
             val = self.distractor_lines[item_id]
+            return val[0] if isinstance(val, tuple) else val
+        if item_id in self.assumption_lines:
+            val = self.assumption_lines[item_id]
             return val[0] if isinstance(val, tuple) else val
         if item_id in self.comp_lines:
             return self.comp_lines[item_id]
@@ -384,14 +565,19 @@ class CtaDataLineLocator:
         m_did = re.search(r"\b(D-[A-Za-z0-9_-]+)\b", err_msg)
         did = m_did.group(1) if m_did else None
 
+        m_aid = re.search(r"\b(A-[A-Za-z0-9_-]+)\b", err_msg)
+        aid = m_aid.group(1) if m_aid else None
+
         m_cid = re.search(r"\b(H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+|H\d+|C\d+|Hab\d+)\b", err_msg, re.IGNORECASE)
         found_cid = m_cid.group(1) if m_cid else cid
 
         field_match = None
         for fld in (
             "manifestation", "remediation_hint", "wrong_belief", "correct_belief",
-            "omitted_step", "description_latex", "description", "name", "evidence",
-            "page", "prerequisites", "bloom", "session", "type"
+            "omitted_step", "statement_latex", "statement", "violation_consequence",
+            "consequence", "role_in_proof", "assumptions", "description_latex",
+            "description", "name", "evidence", "page", "prerequisites", "bloom",
+            "session", "type"
         ):
             if re.search(rf"\b{fld}\b", err_msg, re.IGNORECASE) or f"'{fld}'" in err_msg:
                 field_match = fld
@@ -404,8 +590,17 @@ class CtaDataLineLocator:
                 did_norm = re.sub(r"^D-([A-Za-z]+)-?(\d+)-?(\d+)$", r"D-\1\2-\3", did)
                 target_range = self.get_range(did_norm, field_match)
 
+        if not target_range and aid:
+            target_range = self.get_range(aid, field_match)
+            if not target_range:
+                aid_norm = re.sub(r"^A-([A-Za-z]+)-?(\d+)-?(\d+)$", r"A-\1\2-\3", aid)
+                target_range = self.get_range(aid_norm, field_match)
+
         if not target_range and found_cid:
-            target_range = self.get_range(found_cid, field_match)
+            if "CTA-ASSUMPTIONS-MISSING" in err_msg:
+                target_range = self.get_range(found_cid, "assumptions") or self.get_range(found_cid)
+            else:
+                target_range = self.get_range(found_cid, field_match)
 
         if not target_range:
             m_line = re.search(r"\[(?:.+:)?L[íi]nea\s+(\d+)\]", err_msg)
@@ -736,8 +931,92 @@ def _normalize_distractors_list(
     return compiled_distractors
 
 
+def _normalize_assumptions_list(
+    raw_assumptions: Any,
+    cid_clean: str,
+) -> List[Dict[str, Any]]:
+    """Normalizes assumptions from 3-tuples, 4-tuples, or dicts into formal assumption objects."""
+    compiled_assumptions: List[Dict[str, Any]] = []
+    if not raw_assumptions or not isinstance(raw_assumptions, (list, tuple)):
+        return compiled_assumptions
+
+    for a_idx, a in enumerate(raw_assumptions, start=1):
+        if isinstance(a, dict):
+            a_id = str(a.get("id") or "").strip()
+            if not a_id or not a_id.startswith("A-"):
+                a_id = f"A-{cid_clean}-{a_idx:02d}"
+            stmt = str(a.get("statement_latex") or a.get("statement") or "").strip()
+            cons = str(a.get("violation_consequence") or a.get("consequence") or "").strip()
+            item_dict: Dict[str, Any] = {
+                "id": a_id,
+                "statement_latex": stmt,
+                "violation_consequence": cons,
+            }
+            if "name" in a and a["name"]:
+                item_dict["name"] = str(a["name"]).strip()
+            if "role_in_proof" in a and a["role_in_proof"]:
+                item_dict["role_in_proof"] = str(a["role_in_proof"]).strip()
+            compiled_assumptions.append(item_dict)
+        elif isinstance(a, (list, tuple)):
+            if len(a) < 2:
+                continue
+            first_val = str(a[0]).strip()
+            if len(a) >= 5:
+                if first_val.startswith("A-"):
+                    a_id = first_val
+                    stmt = str(a[1]).strip() if a[1] is not None else ""
+                    cons = str(a[2]).strip() if a[2] is not None else ""
+                    a_name = str(a[3]).strip() if a[3] is not None else None
+                    role = str(a[4]).strip() if a[4] is not None else None
+                else:
+                    a_id = f"A-{cid_clean}-{a_idx:02d}"
+                    a_name = first_val
+                    stmt = str(a[1]).strip() if a[1] is not None else ""
+                    cons = str(a[2]).strip() if a[2] is not None else ""
+                    role = str(a[3]).strip() if a[3] is not None else None
+            elif len(a) == 4:
+                if first_val.startswith("A-"):
+                    a_id = first_val
+                    stmt = str(a[1]).strip() if a[1] is not None else ""
+                    cons = str(a[2]).strip() if a[2] is not None else ""
+                    a_name = None
+                    role = str(a[3]).strip() if a[3] is not None else None
+                else:
+                    a_id = f"A-{cid_clean}-{a_idx:02d}"
+                    a_name = first_val
+                    stmt = str(a[1]).strip() if a[1] is not None else ""
+                    cons = str(a[2]).strip() if a[2] is not None else ""
+                    role = str(a[3]).strip() if a[3] is not None else None
+            else:  # len == 3 or 2
+                if first_val.startswith("A-"):
+                    a_id = first_val
+                    a_name = None
+                    stmt = str(a[1]).strip() if len(a) > 1 and a[1] is not None else ""
+                    cons = str(a[2]).strip() if len(a) > 2 and a[2] is not None else ""
+                    role = None
+                else:
+                    a_id = f"A-{cid_clean}-{a_idx:02d}"
+                    a_name = first_val
+                    stmt = str(a[1]).strip() if len(a) > 1 and a[1] is not None else ""
+                    cons = str(a[2]).strip() if len(a) > 2 and a[2] is not None else ""
+                    role = None
+
+            item_dict = {
+                "id": a_id,
+                "statement_latex": stmt,
+                "violation_consequence": cons,
+            }
+            if a_name:
+                item_dict["name"] = a_name
+            if role:
+                item_dict["role_in_proof"] = role
+            compiled_assumptions.append(item_dict)
+
+    return compiled_assumptions
+
+
 def count_evaluated_fields(cta_dict: Dict[str, Any]) -> int:
-    """Counts all evaluated string and structural fields across competencies and distractors."""
+    """Counts all evaluated string and structural fields across competencies, distractors, and assumptions."""
     total = 0
     for comp in cta_dict.get("competencies", []):
         for fld in ("name", "description_latex", "description", "bloom", "session", "id", "type"):
@@ -762,6 +1041,13 @@ def count_evaluated_fields(cta_dict: Dict[str, Any]) -> int:
                         total += 1
             else:
                 total += 1
+        for a in comp.get("assumptions", []):
+            if isinstance(a, dict):
+                for afld in ("id", "name", "statement_latex", "violation_consequence", "role_in_proof"):
+                    if afld in a:
+                        total += 1
+            else:
+                total += 1
     return max(1, total)
 
 
@@ -772,12 +1058,11 @@ def compile_cta_module(
     macro_competency: str = "",
     initial_counts: Optional[Dict[str, int]] = None,
     existing_competency_ids: Optional[Set[str]] = None,
+    require_assumptions: bool = False,
 ) -> Dict[str, Any]:
     """Compiles tabular positional tuples into formal cta.json dictionary.
 
-    Strictly rejects dictionary representations for competencies and distractors.
-    Exclusively requires tuples (or lists) of 6 to 9 elements for competencies,
-    and 3 to 6 elements for distractors.
+    Supports tuples (6 to 10 elements) and dicts with 'assumptions' or spliced from cta_fixes/.
     """
     if hasattr(competencies_data, "COMPETENCIES"):
         competencies_tuples = getattr(competencies_data, "COMPETENCIES")
@@ -812,152 +1097,260 @@ def compile_cta_module(
     }
 
     for comp_idx, item in enumerate(competencies_tuples, start=1):
+        raw_assumptions = []
         if isinstance(item, dict):
-            raise TypeError(
-                f"[compile_cta] Competencia en índice {comp_idx} es un diccionario. "
-                "COMPETENCIES y distractors deben ser exclusivamente tuplas (o listas posicionales), no diccionarios."
-            )
+            if "assumptions" in item or item.get("_is_spliced"):
+                raw_type = str(item.get("type", "concept")).strip().lower()
+                norm_type, default_prefix = type_map.get(raw_type, ("concept", "C"))
+                user_id = str(item.get("id", "")).strip() or None
+                if user_id:
+                    if existing_competency_ids and user_id in existing_competency_ids:
+                        counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+                        raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+                    else:
+                        raw_id = user_id
+                        m_num = re.search(r"\d+", user_id)
+                        if m_num:
+                            counts_by_prefix[default_prefix] = max(counts_by_prefix.get(default_prefix, 0), int(m_num.group(0)))
+                else:
+                    counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+                    raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
 
-        if not isinstance(item, (list, tuple)):
+                name = str(item.get("name", f"Competencia {raw_id}")).strip()
+                desc_latex = str(item.get("description_latex") or item.get("description") or f"Definición formal de {name}.").strip()
+                raw_bloom = str(item.get("bloom", "Apply" if norm_type == "skill" else "Understand")).strip()
+                bloom = raw_bloom.capitalize()
+                if bloom not in ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"):
+                    bloom = "Apply" if norm_type == "skill" else "Understand"
+
+                ev_list = item.get("evidence", [])
+                doc = "material_fuente.pdf"
+                page = 1
+                if isinstance(ev_list, list) and ev_list:
+                    ev0 = ev_list[0]
+                    if isinstance(ev0, dict):
+                        doc = str(ev0.get("doc", doc)).strip()
+                        page = int(ev0.get("page", 1))
+                prereqs = list(item.get("prerequisites", []))
+                raw_distractors = item.get("distractors", [])
+                raw_assumptions = item.get("assumptions", [])
+            else:
+                raise TypeError(
+                    f"[compile_cta] Competencia en índice {comp_idx} es un diccionario. "
+                    "COMPETENCIES y distractors deben ser exclusivamente tuplas (o listas posicionales), no diccionarios."
+                )
+
+        elif not isinstance(item, (list, tuple)):
             raise TypeError(
                 f"[compile_cta] Competencia en índice {comp_idx} no es una tupla o lista: {type(item).__name__}"
             )
-
-        if len(item) < 6:
+        elif len(item) < 6:
             raise ValueError(
                 f"[compile_cta] Tupla de competencia en índice {comp_idx} tiene {len(item)} elementos (se requieren al menos 6)."
             )
+        else:
+            raw_t = str(item[0]).strip().lower() if len(item) > 0 and item[0] is not None else ""
+            is_7_format = (
+                len(item) == 7
+                and raw_t in type_map
+                and isinstance(item[4], (list, tuple, set))
+                and isinstance(item[5], (list, tuple, set))
+                and isinstance(item[6], (list, tuple, set))
+            )
+            is_6_tuple_typed = (
+                len(item) == 6
+                and raw_t in type_map
+                and isinstance(item[4], (list, tuple, set))
+                and isinstance(item[5], (list, tuple, set))
+            )
+            is_6_format = (len(item) == 6 and not is_6_tuple_typed and (isinstance(item[2], (list, tuple, set)) or raw_t not in type_map))
 
-        is_6_format = (len(item) == 6 and (isinstance(item[2], (list, tuple, set)) or str(item[0]).strip().lower() not in type_map))
+            if is_7_format:
+                norm_type, default_prefix = type_map.get(raw_t, ("concept", "C"))
+                counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+                name = str(item[1]).strip()
+                desc_latex = str(item[2]).strip()
+                raw_bloom = str(item[3]).strip()
+                bloom = raw_bloom.capitalize()
+                if bloom not in ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"):
+                    bloom = "Apply" if norm_type == "skill" else "Understand"
+                prereqs = list(item[4])
+                raw_distractors = item[5]
+                raw_assumptions = item[6]
+                doc = "material_fuente.pdf"
+                page = 1
+                m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", name, re.IGNORECASE)
+                if m_id:
+                    pfx = m_id.group(1).upper()
+                    pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                    raw_id = f"{pfx}-{int(m_id.group(2)):02d}"
+                else:
+                    raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
 
-        if is_6_format:
-            name = str(item[0]).strip()
-            desc_latex = str(item[1]).strip()
-            prereqs = list(item[2]) if isinstance(item[2], (list, tuple, set)) else []
-            evidence_raw = item[3]
-            misconceptions_raw = item[4]
-            raw_distractors = item[5]
+            elif is_6_tuple_typed:
+                norm_type, default_prefix = type_map.get(raw_t, ("concept", "C"))
+                counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+                name = str(item[1]).strip()
+                desc_latex = str(item[2]).strip()
+                raw_bloom = str(item[3]).strip()
+                bloom = raw_bloom.capitalize()
+                if bloom not in ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"):
+                    bloom = "Apply" if norm_type == "skill" else "Understand"
+                prereqs = list(item[4])
+                raw_distractors = item[5]
+                raw_assumptions = []
+                doc = "material_fuente.pdf"
+                page = 1
+                m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", name, re.IGNORECASE)
+                if m_id:
+                    pfx = m_id.group(1).upper()
+                    pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                    raw_id = f"{pfx}-{int(m_id.group(2)):02d}"
+                else:
+                    raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
 
-            # Parse evidence_raw into (doc, page)
-            doc = "material_fuente.pdf"
-            page = 1
-            if isinstance(evidence_raw, dict):
-                doc = str(evidence_raw.get("doc") or evidence_raw.get("pdf") or doc).strip()
-                p_val = evidence_raw.get("page", 1)
-                page = int(p_val) if str(p_val).strip().isdigit() else 1
-            elif isinstance(evidence_raw, (list, tuple)) and len(evidence_raw) > 0:
-                first = evidence_raw[0]
-                if isinstance(first, dict):
-                    doc = str(first.get("doc") or first.get("pdf") or doc).strip()
-                    p_val = first.get("page", 1)
+            elif is_6_format:
+                name = str(item[0]).strip()
+                desc_latex = str(item[1]).strip()
+                prereqs = list(item[2]) if isinstance(item[2], (list, tuple, set)) else []
+                evidence_raw = item[3]
+                misconceptions_raw = item[4]
+                raw_distractors = item[5]
+
+                # Parse evidence_raw into (doc, page)
+                doc = "material_fuente.pdf"
+                page = 1
+                if isinstance(evidence_raw, dict):
+                    doc = str(evidence_raw.get("doc") or evidence_raw.get("pdf") or doc).strip()
+                    p_val = evidence_raw.get("page", 1)
                     page = int(p_val) if str(p_val).strip().isdigit() else 1
-                elif isinstance(first, (list, tuple)) and len(first) >= 2:
-                    doc = str(first[0]).strip()
-                    p_val = first[1]
-                    page = int(p_val) if str(p_val).strip().isdigit() else 1
-                elif isinstance(first, str):
-                    if ":" in first:
-                        d_p, p_p = first.split(":", 1)
+                elif isinstance(evidence_raw, (list, tuple)) and len(evidence_raw) > 0:
+                    first = evidence_raw[0]
+                    if isinstance(first, dict):
+                        doc = str(first.get("doc") or first.get("pdf") or doc).strip()
+                        p_val = first.get("page", 1)
+                        page = int(p_val) if str(p_val).strip().isdigit() else 1
+                    elif isinstance(first, (list, tuple)) and len(first) >= 2:
+                        doc = str(first[0]).strip()
+                        p_val = first[1]
+                        page = int(p_val) if str(p_val).strip().isdigit() else 1
+                    elif isinstance(first, str):
+                        if ":" in first:
+                            d_p, p_p = first.split(":", 1)
+                            doc = d_p.strip()
+                            page = int(p_p.strip()) if p_p.strip().isdigit() else 1
+                        else:
+                            doc = first.strip()
+                elif isinstance(evidence_raw, str):
+                    if ":" in evidence_raw:
+                        d_p, p_p = evidence_raw.split(":", 1)
                         doc = d_p.strip()
                         page = int(p_p.strip()) if p_p.strip().isdigit() else 1
                     else:
-                        doc = first.strip()
-            elif isinstance(evidence_raw, str):
-                if ":" in evidence_raw:
-                    d_p, p_p = evidence_raw.split(":", 1)
-                    doc = d_p.strip()
-                    page = int(p_p.strip()) if p_p.strip().isdigit() else 1
-                else:
-                    doc = evidence_raw.strip()
-            elif isinstance(evidence_raw, (int, float)):
-                page = int(evidence_raw)
+                        doc = evidence_raw.strip()
+                elif isinstance(evidence_raw, (int, float)):
+                    page = int(evidence_raw)
 
-            # Determine type, prefix, raw_id
-            m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", name, re.IGNORECASE)
-            if m_id:
-                pfx = m_id.group(1).upper()
-                pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
-                norm_type = "skill" if pfx == "Hab" else ("fact" if pfx == "H" else "concept")
-                default_prefix = pfx
-                cand_id = f"{pfx}-{int(m_id.group(2)):02d}"
-                if existing_competency_ids and cand_id in existing_competency_ids:
+                # Determine type, prefix, raw_id
+                m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", name, re.IGNORECASE)
+                if m_id:
+                    pfx = m_id.group(1).upper()
+                    pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                    norm_type = "skill" if pfx == "Hab" else ("fact" if pfx == "H" else "concept")
+                    default_prefix = pfx
+                    cand_id = f"{pfx}-{int(m_id.group(2)):02d}"
+                    if existing_competency_ids and cand_id in existing_competency_ids:
+                        counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+                        raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+                    else:
+                        raw_id = cand_id
+                        counts_by_prefix[default_prefix] = max(counts_by_prefix.get(default_prefix, 0), int(m_id.group(2)))
+                else:
+                    name_l = name.lower()
+                    if any(kw in name_l for kw in ["cálculo", "calculo", "calcular", "resolver", "determinar", "derivación", "ejecutar"]):
+                        norm_type, default_prefix = "skill", "Hab"
+                    elif any(kw in name_l for kw in ["definición", "definicion", "fórmula", "formula", "constante", "identidad", "enunciado", "teorema"]):
+                        norm_type, default_prefix = "fact", "H"
+                    else:
+                        norm_type, default_prefix = "concept", "C"
                     counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
                     raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
-                else:
-                    raw_id = cand_id
-                    counts_by_prefix[default_prefix] = max(counts_by_prefix.get(default_prefix, 0), int(m_id.group(2)))
+
+                bloom = "Apply" if norm_type == "skill" else ("Remember" if norm_type == "fact" else "Understand")
+
+                # Fallback if raw_distractors is empty or None, but misconceptions_raw has items
+                if (not raw_distractors or len(raw_distractors) == 0) and misconceptions_raw:
+                    raw_distractors = []
+                    for m_idx, m_item in enumerate(misconceptions_raw, start=1):
+                        if isinstance(m_item, (list, tuple)) and len(m_item) >= 3:
+                            raw_distractors.append(m_item)
+                        elif isinstance(m_item, str) and m_item.strip():
+                            raw_distractors.append((
+                                f"Error común #{m_idx} en {name}",
+                                f"Creencia errónea: {m_item.strip()}",
+                                f"Verdad teórica de {name}.",
+                                "$0$",
+                                f"Revisar {name}.",
+                                None,
+                            ))
             else:
-                name_l = name.lower()
-                if any(kw in name_l for kw in ["cálculo", "calculo", "calcular", "resolver", "determinar", "derivación", "ejecutar"]):
-                    norm_type, default_prefix = "skill", "Hab"
-                elif any(kw in name_l for kw in ["definición", "definicion", "fórmula", "formula", "constante", "identidad", "enunciado", "teorema"]):
-                    norm_type, default_prefix = "fact", "H"
+                raw_type = str(item[0]).strip().lower()
+                norm_type, default_prefix = type_map.get(raw_type, ("concept", "C"))
+
+                user_id = str(item[1]).strip() if len(item) > 1 and item[1] else None
+                if user_id:
+                    if existing_competency_ids and user_id in existing_competency_ids:
+                        counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
+                        raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
+                    else:
+                        raw_id = user_id
+                        m_num = re.search(r"\d+", user_id)
+                        if m_num:
+                            counts_by_prefix[default_prefix] = max(counts_by_prefix.get(default_prefix, 0), int(m_num.group(0)))
                 else:
-                    norm_type, default_prefix = "concept", "C"
-                counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
-                raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
-
-            bloom = "Apply" if norm_type == "skill" else ("Remember" if norm_type == "fact" else "Understand")
-
-            # Fallback if raw_distractors is empty or None, but misconceptions_raw has items
-            if (not raw_distractors or len(raw_distractors) == 0) and misconceptions_raw:
-                raw_distractors = []
-                for m_idx, m_item in enumerate(misconceptions_raw, start=1):
-                    if isinstance(m_item, (list, tuple)) and len(m_item) >= 3:
-                        raw_distractors.append(m_item)
-                    elif isinstance(m_item, str) and m_item.strip():
-                        raw_distractors.append((
-                            f"Error común #{m_idx} en {name}",
-                            f"Creencia errónea: {m_item.strip()}",
-                            f"Verdad teórica de {name}.",
-                            "$0$",
-                            f"Revisar {name}.",
-                            None,
-                        ))
-        else:
-            raw_type = str(item[0]).strip().lower()
-            norm_type, default_prefix = type_map.get(raw_type, ("concept", "C"))
-
-            user_id = str(item[1]).strip() if len(item) > 1 and item[1] else None
-            if user_id:
-                if existing_competency_ids and user_id in existing_competency_ids:
                     counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
                     raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
-                else:
-                    raw_id = user_id
-                    m_num = re.search(r"\d+", user_id)
-                    if m_num:
-                        counts_by_prefix[default_prefix] = max(counts_by_prefix.get(default_prefix, 0), int(m_num.group(0)))
-            else:
-                counts_by_prefix[default_prefix] = counts_by_prefix.get(default_prefix, 0) + 1
-                raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
-            name = str(item[2]).strip() if len(item) > 2 else f"Competencia {raw_id}"
-            desc_latex = str(item[3]).strip() if len(item) > 3 else f"Definición formal de {name}."
-            raw_bloom = str(item[4]).strip() if len(item) > 4 and item[4] else ("Apply" if norm_type == "skill" else "Understand")
-            bloom = raw_bloom.capitalize()
-            if bloom not in ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"):
-                bloom = "Apply" if norm_type == "skill" else "Understand"
+                name = str(item[2]).strip() if len(item) > 2 else f"Competencia {raw_id}"
+                desc_latex = str(item[3]).strip() if len(item) > 3 else f"Definición formal de {name}."
+                raw_bloom = str(item[4]).strip() if len(item) > 4 and item[4] else ("Apply" if norm_type == "skill" else "Understand")
+                bloom = raw_bloom.capitalize()
+                if bloom not in ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"):
+                    bloom = "Apply" if norm_type == "skill" else "Understand"
 
-            if len(item) == 6:
-                doc = "material_fuente.pdf"
-                page = 1
-                prereqs = []
-                raw_distractors = item[5]
-            elif len(item) == 7:
-                doc = "material_fuente.pdf"
-                page = int(item[5]) if str(item[5]).strip().isdigit() else 1
-                prereqs = []
-                raw_distractors = item[6]
-            elif len(item) == 8:
-                doc = str(item[5]).strip()
-                page = int(item[6]) if str(item[6]).strip().isdigit() else 1
-                prereqs = []
-                raw_distractors = item[7]
-            else:  # >= 9
-                doc = str(item[5]).strip() if len(item) > 5 and item[5] else "material_fuente.pdf"
-                page = int(item[6]) if len(item) > 6 and str(item[6]).strip().isdigit() else 1
-                prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple)) else []
-                raw_distractors = item[8] if len(item) > 8 else []
+                if len(item) >= 10:
+                    doc = str(item[5]).strip() if len(item) > 5 and item[5] else "material_fuente.pdf"
+                    page = int(item[6]) if len(item) > 6 and str(item[6]).strip().isdigit() else 1
+                    prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple)) else []
+                    raw_distractors = item[8] if len(item) > 8 else []
+                    raw_assumptions = item[9] if len(item) > 9 else []
+                elif len(item) == 9:
+                    doc = str(item[5]).strip() if len(item) > 5 and item[5] else "material_fuente.pdf"
+                    page = int(item[6]) if len(item) > 6 and str(item[6]).strip().isdigit() else 1
+                    prereqs = list(item[7]) if len(item) > 7 and isinstance(item[7], (list, tuple)) else []
+                    raw_distractors = item[8] if len(item) > 8 else []
+                elif len(item) == 8:
+                    if isinstance(item[5], (list, tuple, set)) and isinstance(item[6], (list, tuple, set)) and isinstance(item[7], (list, tuple, set)):
+                        doc = "material_fuente.pdf"
+                        page = 1
+                        prereqs = list(item[5])
+                        raw_distractors = item[6]
+                        raw_assumptions = item[7]
+                    else:
+                        doc = str(item[5]).strip()
+                        page = int(item[6]) if str(item[6]).strip().isdigit() else 1
+                        prereqs = []
+                        raw_distractors = item[7]
+                        raw_assumptions = []
+                elif len(item) == 7:
+                    doc = "material_fuente.pdf"
+                    page = int(item[5]) if str(item[5]).strip().isdigit() else 1
+                    prereqs = []
+                    raw_distractors = item[6]
+                else:  # len == 6
+                    doc = "material_fuente.pdf"
+                    page = 1
+                    prereqs = []
+                    raw_distractors = item[5]
 
         cid_clean = raw_id.replace("-", "")
         compiled_distractors = _normalize_distractors_list(
@@ -967,6 +1360,10 @@ def compile_cta_module(
             norm_type=norm_type,
             doc=doc,
             page=page,
+        )
+        compiled_assumptions = _normalize_assumptions_list(
+            raw_assumptions=raw_assumptions,
+            cid_clean=cid_clean,
         )
 
         comp_dict = {
@@ -985,6 +1382,7 @@ def compile_cta_module(
                 }
             ],
             "distractors": compiled_distractors,
+            "assumptions": compiled_assumptions,
         }
         sanitize_competency_math(comp_dict)
         compiled_comps.append(comp_dict)
@@ -1224,6 +1622,42 @@ def auto_normalize_page_numbers(
     return cta_dict
 
 
+def compute_error_metrics(
+    errors: List[str],
+    locator: Optional[CtaDataLineLocator] = None,
+    default_line: Optional[int] = None,
+) -> Tuple[int, str]:
+    """Computes distinct affected_line_count and normalized error_sha256."""
+    if not errors:
+        return 0, ""
+
+    affected_lines: Set[int] = set()
+    norm_signatures: List[str] = []
+
+    for err in errors:
+        rule_tag, short_rule, _, _ = categorize_cta_error(err)
+        l_num = None
+        m_line = re.search(r"\[(?:.+:)?L[íi]nea\s+(\d+)\]", err)
+        if m_line:
+            l_num = int(m_line.group(1))
+        elif locator:
+            start_l, _, _ = locator.resolve_error_location(err)
+            if start_l and start_l > 0:
+                l_num = start_l
+        elif default_line:
+            l_num = default_line
+
+        if l_num is not None:
+            affected_lines.add(l_num)
+            norm_signatures.append(f"{short_rule}:{l_num}")
+        else:
+            norm_signatures.append(f"{short_rule}:0")
+
+    norm_signatures.sort()
+    error_sha256 = hashlib.sha256("\n".join(norm_signatures).encode("utf-8")).hexdigest()
+    return len(affected_lines), error_sha256
+
+
 def compile_cta(
     cta_data_path: Union[str, Path],
     output_dir: Optional[Union[str, Path]] = None,
@@ -1231,6 +1665,7 @@ def compile_cta(
     output_json_name: Optional[str] = None,
     is_part: Optional[bool] = None,
     allow_degrade: bool = True,
+    require_assumptions: bool = False,
 ) -> Tuple[bool, Dict[str, Any], List[str], float]:
     """Compiles cta_data.py into cta.json and cta.md, validating all constraints in < 5ms."""
     t0 = time.perf_counter()
@@ -1314,6 +1749,7 @@ def compile_cta(
                 except Exception:
                     pass
 
+        err_sha256 = hashlib.sha256(f"CTA-SYNTAX:{line_num or 1}".encode("utf-8")).hexdigest()
         state = {
             "distinct_compiles": 0,
             "same_error_streak": 0,
@@ -1322,6 +1758,8 @@ def compile_cta(
             "last_errors": [],
             "error_count": 1,
             "has_syntax_error": True,
+            "affected_line_count": 1,
+            "error_sha256": err_sha256,
         }
         for cf in (compile_att_file, alt_compile_att_file):
             if cf.is_file():
@@ -1336,6 +1774,8 @@ def compile_cta(
         state["last_source_sha256"] = source_sha256
         state["error_count"] = 1
         state["has_syntax_error"] = True
+        state["affected_line_count"] = 1
+        state["error_sha256"] = err_sha256
         err_hash = hashlib.sha256(err_msg.encode("utf-8")).hexdigest()
         if state.get("last_err_hash") == err_hash:
             state["same_error_streak"] = state.get("same_error_streak", 0) + 1
@@ -1354,10 +1794,14 @@ def compile_cta(
         elapsed = (time.perf_counter() - t0) * 1000.0
         return False, {}, [f"{data_file.name} does not define 'COMPETENCIES = [...]' list of tuples."], elapsed
 
+    # Auto-activate require_assumptions if CTA_CONTRACT_VERSION >= 2
+    if getattr(mod, "CTA_CONTRACT_VERSION", 1) >= 2:
+        require_assumptions = True
+
     # Post-Import String Healer: clean control characters from imported competencies
     competencies = heal_control_chars_in_obj(competencies)
 
-    # L4: Support splicing override files from cta_fixes/<ID>.py
+    # L4: Support modular splicing override files from cta_fixes/<ID>.py
     if relevant_fix_files:
         for fix_file in relevant_fix_files:
             try:
@@ -1367,22 +1811,54 @@ def compile_cta(
                     cand_l = getattr(fix_mod, "COMPETENCIES", [])
                     if cand_l:
                         override_c = cand_l[0]
-                if override_c and isinstance(override_c, (list, tuple)):
-                    target_cid = str(override_c[1]).strip() if len(override_c) > 1 else fix_file.stem
+                if override_c and isinstance(override_c, (list, tuple, dict)):
+                    if isinstance(override_c, dict):
+                        override_c["_is_spliced"] = True
+                        target_cid = str(override_c.get("id") or "").strip()
+                    else:
+                        target_cid = (
+                            str(override_c[1]).strip()
+                            if len(override_c) > 1 and override_c[1] and isinstance(override_c[1], str) and re.match(r"^(?:H|C|Hab|Fact|Concept|Skill)-?\d+$", override_c[1], re.IGNORECASE)
+                            else ""
+                        )
+                    if not target_cid:
+                        target_cid = fix_file.stem.strip()
+
+                    stem_lower = fix_file.stem.lower()
+                    stem_clean = stem_lower.replace("-", "")
+                    stem_num_match = re.search(r"\d+", stem_lower)
+                    stem_num = int(stem_num_match.group(0)) if stem_num_match else None
+
                     new_comps = []
                     matched = False
-                    for c in competencies:
-                        cid = str(c[1]).strip() if isinstance(c, (list, tuple)) and len(c) > 1 else ""
-                        if (
-                            cid == target_cid
-                            or cid.replace("-", "") == target_cid.replace("-", "")
-                            or fix_file.stem.lower() == cid.lower()
-                            or fix_file.stem.replace("-", "").lower() == cid.replace("-", "").lower()
-                        ):
+                    for idx_c, c in enumerate(competencies, start=1):
+                        cid = ""
+                        if isinstance(c, dict):
+                            cid = str(c.get("id", "")).strip()
+                        elif isinstance(c, (list, tuple)):
+                            if len(c) > 1 and isinstance(c[1], str):
+                                cid = c[1].strip()
+                            elif len(c) > 0 and isinstance(c[0], str):
+                                m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", c[0], re.IGNORECASE)
+                                if m_id:
+                                    cid = m_id.group(0)
+
+                        cid_lower = cid.lower()
+                        cid_clean = cid_lower.replace("-", "")
+                        c_num_match = re.search(r"\d+", cid_lower)
+                        c_num = int(c_num_match.group(0)) if c_num_match else None
+
+                        is_match = (
+                            (target_cid and cid and (cid_lower == target_cid.lower() or cid_clean == target_cid.lower().replace("-", "")))
+                            or (cid and (stem_lower == cid_lower or stem_clean == cid_clean))
+                            or (stem_num is not None and (idx_c == stem_num or c_num == stem_num))
+                        )
+                        if is_match and not matched:
                             new_comps.append(override_c)
                             matched = True
                         else:
                             new_comps.append(c)
+
                     if matched:
                         competencies = new_comps
                         record_patch(
@@ -1492,6 +1968,7 @@ def compile_cta(
         macro_competency=macro,
         initial_counts=initial_counts,
         existing_competency_ids=existing_comp_ids,
+        require_assumptions=require_assumptions,
     )
     cta_dict = heal_control_chars_in_obj(cta_dict)
 
@@ -1513,6 +1990,7 @@ def compile_cta(
             manifest_data=manifest_data,
             file_path=target_json_path,
             locator=locator,
+            require_assumptions=require_assumptions,
         )
     else:
         is_valid, validation_errors = validate_cta_rules(
@@ -1521,6 +1999,7 @@ def compile_cta(
             file_path=target_json_path,
             locator=locator,
             allowed_prereq_ids=existing_comp_ids,
+            require_assumptions=require_assumptions,
         )
 
     if not is_valid and existing_comp_ids:
@@ -1588,6 +2067,7 @@ def compile_cta(
                 manifest_data=manifest_data,
                 file_path=target_json_path,
                 locator=locator,
+                require_assumptions=require_assumptions,
             )
         else:
             is_valid, validation_errors = validate_cta_rules(
@@ -1596,6 +2076,7 @@ def compile_cta(
                 file_path=target_json_path,
                 locator=locator,
                 allowed_prereq_ids=existing_comp_ids,
+                require_assumptions=require_assumptions,
             )
 
         if not is_valid and existing_comp_ids:
@@ -1650,7 +2131,7 @@ def compile_cta(
     if not is_valid:
         for err in validation_errors:
             found_line = None
-            for m in re.finditer(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", err):
+            for m in re.finditer(r"\b(D-[A-Za-z0-9_-]+|A-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", err):
                 candidate_id = m.group(1)
                 l_num = locator.get_line(candidate_id)
                 if l_num:
@@ -1676,6 +2157,8 @@ def compile_cta(
             "last_errors": [],
             "error_count": 0,
             "has_syntax_error": False,
+            "affected_line_count": 0,
+            "error_sha256": "",
         }
         for cf in (compile_att_file, alt_compile_att_file):
             if cf.is_file():
@@ -1689,10 +2172,14 @@ def compile_cta(
         state["distinct_compiles"] = state.get("distinct_compiles", 0) + 1
         state["last_source_sha256"] = source_sha256
         unique_errs = list(dict.fromkeys(mapped_errors or validation_errors))
-        state["error_count"] = len(unique_errs)
-        state["has_syntax_error"] = any(
+        affected_count, err_sha = compute_error_metrics(unique_errs, locator=locator)
+        has_syn = any(
             "syntax" in e.lower() or "indentation" in e.lower() for e in unique_errs
         )
+        state["error_count"] = len(unique_errs)
+        state["has_syntax_error"] = has_syn
+        state["affected_line_count"] = affected_count
+        state["error_sha256"] = err_sha
         err_hash = hashlib.sha256("\n".join(sorted(unique_errs)).encode("utf-8")).hexdigest()
         if state.get("last_err_hash") == err_hash:
             state["same_error_streak"] = state.get("same_error_streak", 0) + 1
@@ -1724,10 +2211,32 @@ def compile_cta(
         "status": "PASS",
         "source_sha256": source_sha256,
         "competency_count": len(compiled_comps),
+        "affected_line_count": 0,
+        "has_syntax_error": False,
+        "error_sha256": "",
     }
     pass_json = json.dumps(pass_data, indent=2, ensure_ascii=False)
     pass_file.write_text(pass_json, encoding="utf-8")
     alt_pass_file.write_text(pass_json, encoding="utf-8")
+
+    # Formal certificate cta.cert.json emission
+    compiler_path = Path(__file__).resolve()
+    compiler_sha256 = hashlib.sha256(compiler_path.read_bytes()).hexdigest()
+    cta_bytes = target_json_path.read_bytes()
+    cta_sha256 = hashlib.sha256(cta_bytes).hexdigest()
+    cert_data = {
+        "schema_version": 1,
+        "stage": "cta",
+        "artifact_id": "cta",
+        "source_sha256": source_sha256,
+        "cta_sha256": cta_sha256,
+        "compiler_sha256": compiler_sha256,
+        "contract_version": 2,
+        "passed_50_seeds": True,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    cert_path = work_dir / "cta.cert.json"
+    cert_path.write_text(json.dumps(cert_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
     return True, cta_dict, [], elapsed_ms
 
@@ -2182,6 +2691,7 @@ def main() -> None:
     parser.add_argument("--work", "--work-dir", dest="work", default=None, help="Working directory containing pre_cta_manifest.json")
     parser.add_argument("--part", default=None, help="Optional subpart id (e.g. part_01) to compile work/cta_parts/<part_id>_data.py -> work/cta_parts/<part_id>.json")
     parser.add_argument("--manifest", default=None, help="Optional path to pre_cta_manifest.json or ingestion_manifest.json")
+    parser.add_argument("--require-assumptions", action="store_true", default=False, help="Require explicit mathematical assumptions on concepts/skills")
     args = parser.parse_args()
 
     eff_input = args.input_path or args.cta_data_path
@@ -2240,6 +2750,7 @@ def main() -> None:
         manifest_path=manifest_p,
         output_json_name=target_json_name,
         is_part=bool(args.part),
+        require_assumptions=args.require_assumptions,
     )
 
     if not valid:

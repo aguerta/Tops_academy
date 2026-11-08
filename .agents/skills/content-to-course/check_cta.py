@@ -24,6 +24,30 @@ if str(_skills_root) not in sys.path:
 
 from engine.invariants import validate_katex_syntax
 
+try:
+    import pykatex
+except ImportError:
+    pykatex = None
+
+
+def _validate_pykatex_math_span(span: str, is_display: bool = False) -> Optional[str]:
+    """Render math span using pykatex, safely sanitizing combining characters on ParseError."""
+    if not pykatex or not span:
+        return None
+    try:
+        pykatex.renderToString(span, is_display)
+        return None
+    except Exception as exc:
+        if re.search(r"(?<![a-zA-Z\\])\{[a-zA-Z0-9_]{1,6}\}", span):
+            fallback_span = re.sub(r"(?<![a-zA-Z\\])\{([a-zA-Z0-9_]{1,6})\}", r"\1", span)
+            try:
+                pykatex.renderToString(fallback_span, is_display)
+                return None
+            except Exception:
+                pass
+        clean_msg = str(exc).replace("\u0332", "^")
+        return clean_msg
+
 LATEX_CMD_NAMES = (
     r"frac|dfrac|tfrac|cfrac|sqrt|sum|prod|int|oint|lim|infty|partial|nabla|"
     r"alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|vartheta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|varphi|chi|psi|omega|"
@@ -205,9 +229,13 @@ def check_prerequisites_dag(
 
     def dfs(node: str, path: List[str]) -> bool:
         visited[node] = 1
-        for neighbor in adj.get(node, []):
+        for neighbor in sorted(adj.get(node, [])):
             if visited.get(neighbor) == 1:
-                cycle_str = " -> ".join(path + [neighbor])
+                if neighbor in path:
+                    idx = path.index(neighbor)
+                    cycle_str = " -> ".join(path[idx:] + [neighbor])
+                else:
+                    cycle_str = " -> ".join(path + [neighbor])
                 errors.append(f"Cycle detected in prerequisites: {cycle_str}")
                 return False
             if visited.get(neighbor, 0) == 0:
@@ -216,7 +244,7 @@ def check_prerequisites_dag(
         visited[node] = 2
         return True
 
-    for cid in comp_ids:
+    for cid in sorted(comp_ids):
         if visited.get(cid, 0) == 0:
             dfs(cid, [cid])
 
@@ -500,6 +528,12 @@ def check_cta_katex(
             if "$" in c_name.replace(r"\$", ""):
                 for kv in validate_katex_syntax(c_name, f"competency '{cid}' name", allow_template_vars=True):
                     katex_syntax_items.setdefault(kv, []).append((cid, "name"))
+                for m_span in re.finditer(r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$(.*?)(?<!\\)\$", c_name, flags=re.DOTALL):
+                    m_text = m_span.group(1) if m_span.group(1) is not None else m_span.group(2)
+                    m_disp = m_span.group(1) is not None
+                    pk_err = _validate_pykatex_math_span(m_text, m_disp)
+                    if pk_err:
+                        katex_syntax_items.setdefault(f"KaTeX parse error: {pk_err}", []).append((cid, "name"))
 
         # competencies[].description_latex and competencies[].description
         for desc_key in ("description_latex", "description"):
@@ -516,6 +550,12 @@ def check_cta_katex(
                 if "$" in c_desc.replace(r"\$", ""):
                     for kv in validate_katex_syntax(c_desc, f"competency '{cid}' {desc_key}", allow_template_vars=True):
                         katex_syntax_items.setdefault(kv, []).append((cid, desc_key))
+                    for m_span in re.finditer(r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$(.*?)(?<!\\)\$", c_desc, flags=re.DOTALL):
+                        m_text = m_span.group(1) if m_span.group(1) is not None else m_span.group(2)
+                        m_disp = m_span.group(1) is not None
+                        pk_err = _validate_pykatex_math_span(m_text, m_disp)
+                        if pk_err:
+                            katex_syntax_items.setdefault(f"KaTeX parse error: {pk_err}", []).append((cid, desc_key))
 
         # competencies[].source_examples
         src_exs = comp.get("source_examples")
@@ -546,6 +586,39 @@ def check_cta_katex(
                     if "$" in clean_dollars:
                         for kv in validate_katex_syntax(val, f"distractor '{did}' {field}", allow_template_vars=True):
                             katex_syntax_items.setdefault(kv, []).append((did, field))
+                        for m_span in re.finditer(r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$(.*?)(?<!\\)\$", val, flags=re.DOTALL):
+                            m_text = m_span.group(1) if m_span.group(1) is not None else m_span.group(2)
+                            m_disp = m_span.group(1) is not None
+                            pk_err = _validate_pykatex_math_span(m_text, m_disp)
+                            if pk_err:
+                                katex_syntax_items.setdefault(f"KaTeX parse error: {pk_err}", []).append((did, field))
+
+        # assumptions[] math validation
+        for a in comp.get("assumptions", []):
+            if not isinstance(a, dict):
+                continue
+            aid = a.get("id", f"A-{cid}")
+            for field in ["statement_latex", "violation_consequence", "name", "role_in_proof"]:
+                val = a.get(field)
+                if isinstance(val, str) and val.strip():
+                    errors.extend(check_cta_prose_overflow(val, f"assumption '{aid}' {field}"))
+                    if any(c in val for c in ("\x07", "\x08", "\x0b", "\x0c", "\x0d")):
+                        errors.append(
+                            f"Assumption ({aid}): Corrupted ASCII control character (unescaped LaTeX backslash) in '{field}'"
+                        )
+                    text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", val, flags=re.DOTALL)
+                    if any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS):
+                        raw_latex_items.setdefault(field, []).append((aid, val))
+                    clean_dollars = val.replace(r"\$", "")
+                    if "$" in clean_dollars:
+                        for kv in validate_katex_syntax(val, f"assumption '{aid}' {field}", allow_template_vars=True):
+                            katex_syntax_items.setdefault(kv, []).append((aid, field))
+                        for m_span in re.finditer(r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$(.*?)(?<!\\)\$", val, flags=re.DOTALL):
+                            m_text = m_span.group(1) if m_span.group(1) is not None else m_span.group(2)
+                            m_disp = m_span.group(1) is not None
+                            pk_err = _validate_pykatex_math_span(m_text, m_disp)
+                            if pk_err:
+                                katex_syntax_items.setdefault(f"KaTeX parse error: {pk_err}", []).append((aid, field))
 
     # Format aggregated raw LaTeX errors
     for field, items in raw_latex_items.items():
@@ -591,6 +664,7 @@ def _validate_competencies_rules(
     comp_validator: Optional[jsonschema.Draft7Validator] = None,
     is_part: bool = False,
     locator: Optional[JsonLineLocator] = None,
+    require_assumptions: bool = False,
 ) -> List[str]:
     errors: List[str] = []
     manifest_pages_set = _build_manifest_pages_set(manifest_data)
@@ -630,6 +704,36 @@ def _validate_competencies_rules(
             omitted_count = sum(1 for d in distractors if isinstance(d, dict) and d.get("omitted_step"))
             if omitted_count < 2:
                 d1_skill_under_2_omitted.append((cid, omitted_count))
+
+        # Rule CTA-ASSUMPTIONS-MISSING: Skill or Concept must declare >= 1 valid assumption with len >= 10
+        if require_assumptions and ctype in ("skill", "concept"):
+            assumptions = comp.get("assumptions")
+            line_no = locator.get_line(cid) if locator else None
+            line_tag = f" [Línea {line_no}]" if line_no else ""
+            if not assumptions or not isinstance(assumptions, list) or len(assumptions) == 0:
+                errors.append(
+                    f"[CTA-ASSUMPTIONS-MISSING]{line_tag} Competency '{cid}' ({ctype}) requires at least 1 valid assumption."
+                )
+            else:
+                valid_cnt = 0
+                for a_idx, a in enumerate(assumptions, start=1):
+                    if isinstance(a, dict):
+                        stmt = str(a.get("statement_latex") or "").strip()
+                        viol = str(a.get("violation_consequence") or "").strip()
+                        if len(stmt) >= 10 and len(viol) >= 10:
+                            valid_cnt += 1
+                        else:
+                            errors.append(
+                                f"[CTA-ASSUMPTIONS-MISSING]{line_tag} Competency '{cid}' assumption #{a_idx} must have statement_latex and violation_consequence of at least 10 chars."
+                            )
+                    else:
+                        errors.append(
+                            f"[CTA-ASSUMPTIONS-MISSING]{line_tag} Competency '{cid}' assumption #{a_idx} is not a valid dictionary."
+                        )
+                if valid_cnt == 0 and not any("[CTA-ASSUMPTIONS-MISSING]" in e and cid in e for e in errors):
+                    errors.append(
+                        f"[CTA-ASSUMPTIONS-MISSING]{line_tag} Competency '{cid}' ({ctype}) requires at least 1 valid assumption (len >= 10)."
+                    )
 
         # Rule CTA-D2: unique IDs within part / global, non-null wrong_belief or omitted_step
         for d in distractors:
@@ -739,6 +843,7 @@ def check_cta_part(
     manifest_data: Optional[Dict[str, Any]] = None,
     file_path: Optional[Union[str, Path]] = None,
     locator: Optional[JsonLineLocator] = None,
+    require_assumptions: bool = False,
 ) -> Tuple[bool, List[str]]:
     """Validate sectional CTA part (cta_part_XX.json).
 
@@ -774,6 +879,7 @@ def check_cta_part(
         comp_validator=comp_validator,
         is_part=True,
         locator=locator,
+        require_assumptions=require_assumptions,
     )
     errors.extend(part_errors)
 
@@ -790,11 +896,17 @@ def validate_cta_rules(
     file_path: Optional[Union[str, Path]] = None,
     locator: Optional[JsonLineLocator] = None,
     allowed_prereq_ids: Optional[Set[str]] = None,
+    require_assumptions: bool = False,
 ) -> Tuple[bool, List[str]]:
     """Validate all cognitive and psychometric rules on cta.json."""
     errors = []
     if locator is None:
         locator = JsonLineLocator(file_path)
+
+    eff_require_assumptions = bool(
+        require_assumptions
+        or int(cta_data.get("contract_version", cta_data.get("CTA_CONTRACT_VERSION", 1))) >= 2
+    )
 
     # 1. JSON Schema validation
     schema_errs = validate_cta_schema(cta_data, locator=locator)
@@ -811,6 +923,7 @@ def validate_cta_rules(
         comp_validator=None,
         is_part=False,
         locator=locator,
+        require_assumptions=eff_require_assumptions,
     )
     errors.extend(comp_errors)
 

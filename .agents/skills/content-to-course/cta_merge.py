@@ -15,12 +15,30 @@ import hashlib
 import heapq
 import json
 import logging
+import os
 import re
 import shutil
 import sys
 import time
+import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+try:
+    import pykatex
+except ImportError:
+    pykatex = None
+
+
+def _is_valid_katex_span(span: str, is_display: bool = False) -> bool:
+    """Validates math span with pykatex if available, replacing unicode combining characters."""
+    if pykatex is None:
+        return True
+    try:
+        pykatex.renderToString(span, is_display)
+        return True
+    except Exception:
+        return False
 
 # Import validators from check_cta
 try:
@@ -44,6 +62,14 @@ logger = logging.getLogger("cta_merge")
 # Heuristic thresholds for duplicate candidate detection
 JACCARD_DUPLICATE_THRESHOLD: float = 0.30
 NAME_OVERLAP_THRESHOLD: float = 0.30
+# Extra normalized signals (override via C2C_DUP_* env vars)
+NAME_SIMILARITY_THRESHOLD: float = 0.60
+STRONG_EVIDENCE_MIN_PAGES: int = 2
+STRONG_EVIDENCE_RATIO: float = 0.60
+SHARED_DISTRACTORS_MIN: int = 2
+SCORE_CANDIDATE_THRESHOLD: float = 0.35
+SCORE_STRONG_THRESHOLD: float = 0.60
+DESCRIPTION_SNIPPET_CHARS: int = 120
 
 
 def tokenize_text(text: str) -> Set[str]:
@@ -123,6 +149,38 @@ def extract_evidence_keys(evidence_list: Optional[List[Dict[str, Any]]]) -> Set[
     return keys
 
 
+def try_symmetrical_math_repair(text: str) -> Optional[str]:
+    r"""Attempts a non-destructive symmetrical repair for partially delimited math strings like
+
+    r"Sea P(Y \ge $\delta) = 0.95$".
+    Repairs symmetrically ONLY if all resulting math spans validate under pykatex.
+    Leaves untouched if already valid or unresolvable.
+    """
+    if not isinstance(text, str) or "$" not in text:
+        return None
+
+    # Case: Opening delimiter '(' or '[' before '$' with matching ')' or ']' inside or after '$...$'
+    # e.g., r"Sea P(Y \ge $\delta) = 0.95$" -> r"Sea $P(Y \ge \delta) = 0.95$"
+    m_split = re.search(r"([a-zA-Z0-9_]*[\(\[][^\$\(\)\[\]]*)\$([^\$]+)\$", text)
+    if m_split:
+        prefix_math = m_split.group(1).lstrip()
+        inner_math = m_split.group(2)
+        has_split_delim = (
+            (prefix_math.count("(") > prefix_math.count(")") and inner_math.count(")") > inner_math.count("("))
+            or (prefix_math.count("[") > prefix_math.count("]") and inner_math.count("]") > inner_math.count("["))
+        )
+        if has_split_delim:
+            comb = f"{prefix_math}{inner_math}"
+            if _is_valid_katex_span(comb, False):
+                leading_space = len(m_split.group(1)) - len(prefix_math)
+                cand = text[:m_split.start(1) + leading_space] + f"${comb}$" + text[m_split.end():]
+                cand_spans = re.findall(r"(?<!\\)\$([^\$]+)(?<!\\)\$", cand)
+                if cand_spans and all(_is_valid_katex_span(s, False) for s in cand_spans):
+                    return cand
+
+    return None
+
+
 def auto_balance_math_delimiters(text: str) -> str:
     """Deterministically repairs triple dollars '$$$' and odd unescaped '$' delimiters
     ONLY when curly braces '{' and '}' are balanced AND \\left / \\right sizing environments are balanced
@@ -164,7 +222,7 @@ LATEX_CMD_NAMES = (
     r"frac|dfrac|tfrac|cfrac|sqrt|sum|prod|int|oint|lim|infty|partial|nabla|"
     r"alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|vartheta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|varphi|chi|psi|omega|"
     r"Gamma|Delta|Theta|Lambda|Xi|Pi|Sigma|Upsilon|Phi|Psi|Omega|"
-    r"cdot|times|div|pm|mp|leq|geq|neq|approx|equiv|sim|simeq|propto|in|notin|subset|subseteq|cup|cap|forall|exists|"
+    r"cdot|times|div|pm|mp|leq|geq|neq|le|ge|approx|equiv|sim|simeq|propto|in|notin|subset|subseteq|cup|cap|forall|exists|"
     r"Rightarrow|implies|iff|Leftrightarrow|to|rightarrow|leftarrow|xrightarrow|"
     r"hat|bar|tilde|vec|dot|ddot|mathcal|mathbb|mathbf|boldsymbol|text|operatorname|left|right|begin|end|"
     r"quad|qquad|ln|log|exp|det|dim|ker|min|max|sup|inf"
@@ -177,7 +235,7 @@ MATH_NAMES = {
     "eta", "theta", "vartheta", "iota", "kappa", "lambda", "mu", "nu", "xi", "pi", "rho",
     "sigma", "tau", "upsilon", "phi", "varphi", "chi", "psi", "omega",
     "gamma", "delta", "theta", "lambda", "xi", "pi", "sigma", "upsilon", "phi", "psi", "omega",
-    "cdot", "times", "div", "pm", "mp", "leq", "geq", "neq", "approx", "equiv", "sim",
+    "cdot", "times", "div", "pm", "mp", "leq", "geq", "neq", "le", "ge", "approx", "equiv", "sim",
     "simeq", "propto", "in", "notin", "subset", "subseteq", "cup", "cap", "forall", "exists",
     "to", "rightarrow", "leftarrow", "xrightarrow", "hat", "bar", "tilde", "vec", "dot", "ddot",
     "text", "operatorname", "left", "right", "begin", "end", "exp", "log", "ln", "max", "min",
@@ -209,9 +267,18 @@ COMMON_SPANISH_PROSE_WORDS = {
 
 
 def auto_wrap_bare_latex_in_cta_field(text: str) -> str:
-    """Auto-wraps bare/orphaned LaTeX commands outside $...$ or $$...$$ into $...$ blocks."""
+    r"""Auto-wraps bare/orphaned LaTeX commands outside $...$ or $$...$$ into $...$ blocks.
+    Non-destructive: never corrupts partially delimited strings like r"Sea P(Y \ge $\delta) = 0.95$".
+    Repairs symmetrically only if all resulting math spans validate under pykatex.renderToString.
+    Otherwise leaves untouched for check_cta_katex.
+    """
     if not isinstance(text, str) or not text:
         return text
+
+    # Non-destructive symmetrical repair for partially delimited math
+    sym_repair = try_symmetrical_math_repair(text)
+    if sym_repair is not None:
+        return sym_repair
 
     if text.count("{") != text.count("}"):
         return text
@@ -229,8 +296,14 @@ def auto_wrap_bare_latex_in_cta_field(text: str) -> str:
             if stripped.endswith((".", ",", ";", ":", "?", "!")):
                 punct = stripped[-1]
                 core = stripped[:-1].rstrip()
-                return f"${core}${punct}"
-            return f"${stripped}$"
+                cand = f"${core}${punct}"
+                if _is_valid_katex_span(core, False):
+                    return cand
+            else:
+                cand = f"${stripped}$"
+                if _is_valid_katex_span(stripped, False):
+                    return cand
+            return text
 
     def _wrap_segment(segment: str) -> str:
         pos = 0
@@ -386,7 +459,15 @@ def auto_wrap_bare_latex_in_cta_field(text: str) -> str:
     for i in range(0, len(parts), 2):
         if parts[i]:
             parts[i] = _wrap_segment(parts[i])
-    return "".join(parts)
+    cand_text = "".join(parts)
+    if pykatex is not None and cand_text != text:
+        cand_spans = re.findall(r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$(.*?)(?<!\\)\$", cand_text, flags=re.DOTALL)
+        for m_span in cand_spans:
+            m_text = m_span[0] if m_span[0] else m_span[1]
+            m_disp = bool(m_span[0])
+            if not _is_valid_katex_span(m_text, m_disp):
+                return text
+    return cand_text
 
 
 def normalize_orphan_math(text: str, wrap_bare_equations: bool = True) -> str:
@@ -604,124 +685,197 @@ def sanitize_competency_math(comp: Dict[str, Any], record_patches: bool = True) 
                                 pass
 
 
+_STOPWORDS: frozenset = frozenset(
+    "de la el los las un una unos unas y o u e en con por para del al se su sus lo que como a "
+    "the of and or to in on for with by an is are be as at from its their this that".split()
+)
+_ES_EN_SUFFIXES: Tuple[str, ...] = (
+    "amientos", "imientos", "aciones", "iciones", "amiento", "imiento", "adoras", "adores",
+    "ations", "ation", "ments", "ment", "ciones", "cion", "sion", "ando", "iendo", "ing",
+    "idad", "ables", "able", "ibles", "ible", "ivas", "ivos", "iva", "ivo", "icas", "icos",
+    "ica", "ico", "ales", "al", "ados", "adas", "ado", "ada", "ores", "or", "es", "s",
+)
+
+
+def _fold_accents(text: str) -> str:
+    return "".join(ch for ch in unicodedata.normalize("NFD", text) if unicodedata.category(ch) != "Mn")
+
+
+def _stem(token: str) -> str:
+    """Very light ES/EN suffix stripper (keeps >= 4 chars of root)."""
+    for suf in _ES_EN_SUFFIXES:
+        if token.endswith(suf) and len(token) - len(suf) >= 4:
+            return token[: -len(suf)]
+    return token
+
+
+def normalized_stems(text: str) -> Set[str]:
+    """Accent-folded, stopword-free, stemmed token set (improves recall for variants)."""
+    if not text:
+        return set()
+    folded = _fold_accents(text.lower())
+    toks = re.findall(r"[a-z0-9_]+", folded)
+    return {_stem(t) for t in toks if len(t) > 1 and t not in _STOPWORDS}
+
+
+def _char_trigrams(text: str) -> Set[str]:
+    folded = re.sub(r"[^a-z0-9]+", " ", _fold_accents((text or "").lower())).strip()
+    if len(folded) < 3:
+        return {folded} if folded else set()
+    return {folded[i:i + 3] for i in range(len(folded) - 2)}
+
+
+def trigram_dice(a: str, b: str) -> float:
+    """Dice coefficient over character trigrams (robust to reformulation and typos)."""
+    ta, tb = _char_trigrams(a), _char_trigrams(b)
+    if not ta or not tb:
+        return 0.0
+    return 2.0 * len(ta & tb) / (len(ta) + len(tb))
+
+
+def _env_float(name: str, default: float) -> float:
+    try:
+        return float(os.environ.get(name, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _distractor_set(comp: Dict[str, Any]) -> Set[str]:
+    out: Set[str] = set()
+    for d in comp.get("distractor_names") or []:
+        if isinstance(d, str) and d.strip():
+            out.add(" ".join(sorted(normalized_stems(d))))
+    out.discard("")
+    return out
+
+
+def _short(text: str, limit: int = DESCRIPTION_SNIPPET_CHARS) -> str:
+    text = " ".join((text or "").split())
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
+
+
+def _comp_view(c: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalized view of a competency (works for new competencies and base-course entries)."""
+    name = c.get("name") or c.get("title", "")
+    desc = c.get("description_latex") or c.get("description", "")
+    return {
+        "id": c.get("id") or c.get("competency_id", ""),
+        "type": (c.get("type") or c.get("category", "concept")).lower(),
+        "name": name,
+        "desc": desc,
+        "text_tokens": tokenize_text(f"{name} {desc}"),
+        "name_tokens": tokenize_text(name),
+        "name_stems": normalized_stems(name),
+        "desc_stems": normalized_stems(desc),
+        "ev": extract_evidence_keys(c.get("evidence", [])),
+        "distractors": _distractor_set(c),
+    }
+
+
+def _pair_candidate(v1: Dict[str, Any], v2: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Scores a pair; returns a candidate dict or None. Legacy signals are preserved (superset)."""
+    name1, name2 = v1["name"], v2["name"]
+    jaccard_lex = jaccard_similarity(v1["text_tokens"], v2["text_tokens"])
+    jaccard_name = jaccard_similarity(v1["name_tokens"], v2["name_tokens"])
+    shared_ev = v1["ev"] & v2["ev"]
+    has_name_overlap = (
+        jaccard_name >= NAME_OVERLAP_THRESHOLD
+        or len(v1["name_tokens"] & v2["name_tokens"]) >= 1
+        or (name1.lower() in name2.lower() if len(name1) > 4 else False)
+        or (name2.lower() in name1.lower() if len(name2) > 4 else False)
+    )
+
+    # New normalized signals
+    name_stem_sim = jaccard_similarity(v1["name_stems"], v2["name_stems"])
+    name_tri = trigram_dice(name1, name2)
+    name_sim = max(name_stem_sim, name_tri)
+    desc_sim = jaccard_similarity(v1["desc_stems"], v2["desc_stems"])
+    ev_min = min(len(v1["ev"]), len(v2["ev"]))
+    ev_ratio = (len(shared_ev) / ev_min) if ev_min else 0.0
+    shared_dis = v1["distractors"] & v2["distractors"]
+
+    signals: List[str] = []
+    if jaccard_lex >= JACCARD_DUPLICATE_THRESHOLD:
+        signals.append("lexical_similarity")
+    if shared_ev and has_name_overlap:
+        signals.append("shared_evidence")
+    if name_sim >= _env_float("C2C_DUP_NAME_SIM", NAME_SIMILARITY_THRESHOLD):
+        signals.append("name_similarity")
+    if len(shared_ev) >= STRONG_EVIDENCE_MIN_PAGES and ev_ratio >= STRONG_EVIDENCE_RATIO:
+        signals.append("strong_shared_evidence")
+    if len(shared_dis) >= SHARED_DISTRACTORS_MIN:
+        signals.append("shared_distractors")
+
+    score = (
+        0.40 * name_sim
+        + 0.30 * desc_sim
+        + 0.20 * min(1.0, ev_ratio)
+        + 0.10 * (min(len(shared_dis), 3) / 3.0)
+    )
+    if not signals and score >= _env_float("C2C_DUP_SCORE_MIN", SCORE_CANDIDATE_THRESHOLD):
+        signals.append("combined_score")
+    if not signals:
+        return None
+
+    same_type = v1["type"] == v2["type"]
+    strong = score >= _env_float("C2C_DUP_STRONG_SCORE", SCORE_STRONG_THRESHOLD) and same_type
+    return {
+        "pair": [v1["id"], v2["id"]],
+        "type": v1["type"] if same_type else f"{v1['type']}_vs_{v2['type']}",
+        "signals": signals,
+        "jaccard_similarity": round(jaccard_lex, 4),
+        "score": round(score, 4),
+        "strength": "strong" if strong else "weak",
+        "shared_evidence": [{"doc": d, "page": p} for d, p in shared_ev],
+        "name_overlap": sorted(list(v1["name_tokens"] & v2["name_tokens"])),
+        "c1_name": name1,
+        "c2_name": name2,
+        "c1_description": _short(v1["desc"]),
+        "c2_description": _short(v2["desc"]),
+    }
+
+
 def find_duplicate_candidates(
     competencies: List[Dict[str, Any]],
     existing_competencies: Optional[List[Dict[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
-    """Deterministic candidate detector for duplicate competencies.
+    """Deterministic candidate detector for duplicate competencies (zero LLM tokens).
 
-    Identifies pairs of competencies that satisfy at least one objective signal:
-    1. Lexical similarity (Jaccard of normalized name + description tokens >= 0.30)
-    2. Shared evidence (identical doc & page) combined with partial name overlap.
-    Supports cross-type comparisons (e.g. Concept vs Skill) and delta-vs-base comparisons.
+    Legacy signals: lexical Jaccard (>= 0.30) and shared evidence + name overlap.
+    Added signals (accent/stopword/stem-normalized): name_similarity (stem Jaccard or
+    trigram Dice), strong_shared_evidence, shared_distractors and a combined_score fallback.
+    Candidates carry `score`, `strength` (strong/weak) and truncated descriptions so the
+    Harmonizer can decide without reading shards. Strong candidates are listed first.
+    Supports cross-type comparisons and delta-vs-base comparisons.
     """
     candidates: List[Dict[str, Any]] = []
-    n = len(competencies)
+    views = [_comp_view(c) for c in competencies]
+    n = len(views)
 
     # 1. Intra-curriculum candidate detection
     for i in range(n):
-        c1 = competencies[i]
-        id1 = c1.get("id", "")
-        type1 = c1.get("type", "").lower()
-        name1 = c1.get("name", "")
-        desc1 = c1.get("description_latex") or c1.get("description", "")
-        text1_tokens = tokenize_text(f"{name1} {desc1}")
-        name1_tokens = tokenize_text(name1)
-        ev1_keys = extract_evidence_keys(c1.get("evidence", []))
-
         for j in range(i + 1, n):
-            c2 = competencies[j]
-            id2 = c2.get("id", "")
-            type2 = c2.get("type", "").lower()
-
-            name2 = c2.get("name", "")
-            desc2 = c2.get("description_latex") or c2.get("description", "")
-            text2_tokens = tokenize_text(f"{name2} {desc2}")
-            name2_tokens = tokenize_text(name2)
-            ev2_keys = extract_evidence_keys(c2.get("evidence", []))
-
-            jaccard_lex = jaccard_similarity(text1_tokens, text2_tokens)
-            jaccard_name = jaccard_similarity(name1_tokens, name2_tokens)
-            shared_ev = ev1_keys & ev2_keys
-
-            # Name overlap signal
-            has_name_overlap = (
-                jaccard_name >= NAME_OVERLAP_THRESHOLD
-                or len(name1_tokens & name2_tokens) >= 1
-                or (name1.lower() in name2.lower() if len(name1) > 4 else False)
-                or (name2.lower() in name1.lower() if len(name2) > 4 else False)
-            )
-
-            signals: List[str] = []
-            if jaccard_lex >= JACCARD_DUPLICATE_THRESHOLD:
-                signals.append("lexical_similarity")
-            if len(shared_ev) > 0 and has_name_overlap:
-                signals.append("shared_evidence")
-
-            if signals:
-                candidates.append({
-                    "pair": [id1, id2],
-                    "type": type1 if type1 == type2 else f"{type1}_vs_{type2}",
-                    "signals": signals,
-                    "jaccard_similarity": round(jaccard_lex, 4),
-                    "shared_evidence": [{"doc": d, "page": p} for d, p in shared_ev],
-                    "name_overlap": sorted(list(name1_tokens & name2_tokens)),
-                    "c1_name": name1,
-                    "c2_name": name2,
-                })
+            cand = _pair_candidate(views[i], views[j])
+            if cand:
+                candidates.append(cand)
 
     # 2. Delta vs Base course candidate detection
     if existing_competencies:
-        for c1 in competencies:
-            id1 = c1.get("id", "")
-            type1 = c1.get("type", "").lower()
-            name1 = c1.get("name", "")
-            desc1 = c1.get("description_latex") or c1.get("description", "")
-            text1_tokens = tokenize_text(f"{name1} {desc1}")
-            name1_tokens = tokenize_text(name1)
-            ev1_keys = extract_evidence_keys(c1.get("evidence", []))
-
-            for cb in existing_competencies:
-                id_base = cb.get("id") or cb.get("competency_id", "")
-                type_base = (cb.get("type") or cb.get("category", "concept")).lower()
-                name_base = cb.get("name") or cb.get("title", "")
-                desc_base = cb.get("description_latex") or cb.get("description", "")
-                text_base_tokens = tokenize_text(f"{name_base} {desc_base}")
-                name_base_tokens = tokenize_text(name_base)
-                ev_base_keys = extract_evidence_keys(cb.get("evidence", []))
-
-                jaccard_lex = jaccard_similarity(text1_tokens, text_base_tokens)
-                jaccard_name = jaccard_similarity(name1_tokens, name_base_tokens)
-                shared_ev = ev1_keys & ev_base_keys
-
-                has_name_overlap = (
-                    jaccard_name >= NAME_OVERLAP_THRESHOLD
-                    or len(name1_tokens & name_base_tokens) >= 1
-                    or (name1.lower() in name_base.lower() if len(name1) > 4 else False)
-                    or (name_base.lower() in name1.lower() if len(name_base) > 4 else False)
-                )
-
-                signals = []
-                if jaccard_lex >= JACCARD_DUPLICATE_THRESHOLD:
-                    signals.append("lexical_similarity")
-                if len(shared_ev) > 0 and has_name_overlap:
-                    signals.append("shared_evidence")
-
-                if signals:
-                    candidates.append({
-                        "pair": [id1, id_base],
-                        "type": type1 if type1 == type_base else f"{type1}_vs_{type_base}",
-                        "signals": signals,
-                        "jaccard_similarity": round(jaccard_lex, 4),
-                        "shared_evidence": [{"doc": d, "page": p} for d, p in shared_ev],
-                        "name_overlap": sorted(list(name1_tokens & name_base_tokens)),
-                        "c1_name": name1,
-                        "c2_name": name_base,
+        base_views = [_comp_view(cb) for cb in existing_competencies]
+        for v1 in views:
+            for vb in base_views:
+                cand = _pair_candidate(v1, vb)
+                if cand:
+                    cand.update({
+                        "pair": [v1["id"], vb["id"]],
                         "against_base": True,
-                        "base_id": id_base,
-                        "delta_id": id1,
+                        "base_id": vb["id"],
+                        "delta_id": v1["id"],
                     })
+                    candidates.append(cand)
 
+    # Stable ordering: strong first, then by descending score (ties keep detection order)
+    candidates.sort(key=lambda c: (c["strength"] != "strong", -c["score"]))
     return candidates
 
 
@@ -1055,6 +1209,12 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
                         dist_id_map[f"{pk_alias}:{old_did}"] = new_did
             dist["id"] = new_did
 
+        # Renumber and preserve assumptions per competency
+        assumptions = comp.get("assumptions", [])
+        for a_idx, asmp in enumerate(assumptions, start=1):
+            if isinstance(asmp, dict):
+                asmp["id"] = f"A-{prefix}-{a_idx:02d}"
+
     # Rewrite prerequisites across all competencies with scoped part mapping
     for comp in combined_competencies:
         part_key = comp.get("_part_key", "")
@@ -1340,6 +1500,7 @@ def apply_harmonize(
     work_dir: Union[str, Path],
     no_merge: bool = False,
     manifest_path: Optional[Union[str, Path]] = None,
+    existing_competency_ids: Optional[Union[Set[str], List[str]]] = None,
 ) -> Dict[str, Any]:
     """Applies Harmonizer directives to cta_draft.json and generates cta.json and cta.md.
 
@@ -1348,7 +1509,7 @@ def apply_harmonize(
     - rename: Renames competencies respecting schema.
     - drop_duplicate_distractors: Drops duplicate distractors without violating quotas.
     - merge: Merges duplicate candidates (survivor is first in pedagogical order, unifies
-      distractors & evidence, rewrites prerequisites). Rejects any pair not in candidates.
+      distractors & evidence, rewrites prerequisites). Pairs outside duplicate_candidates.json are not rejected.
 
     Validates:
     - Pedagogical order has not been altered (compared against cta_order.json).
@@ -1391,7 +1552,10 @@ def apply_harmonize(
             delta_info = json.loads((work_path / "delta_manifest.json").read_text(encoding="utf-8"))
         except Exception:
             pass
-    existing_competency_ids: Set[str] = set(delta_info.get("existing_competency_ids", [])) if delta_info else set()
+    if existing_competency_ids is not None:
+        existing_competency_ids = set(existing_competency_ids)
+    else:
+        existing_competency_ids = set(delta_info.get("existing_competency_ids", [])) if delta_info else set()
 
     orig_order: List[str] = cta_order_data.get("order", [])
     competencies: List[Dict[str, Any]] = cta_draft.get("competencies", [])
@@ -1494,7 +1658,7 @@ def apply_harmonize(
     else:
         for m_entry in merges_directives:
             decision = str(m_entry.get("decision", "merge")).lower().strip()
-            reason = str(m_entry.get("reason", "")).strip()
+            reason = str(m_entry.get("reason") or m_entry.get("rationale") or "").strip()
 
             # Support multiple merge format inputs
             pair = m_entry.get("pair")
@@ -1517,7 +1681,11 @@ def apply_harmonize(
                 or m_entry.get("absorbed")
                 or m_entry.get("absorbed_id")
             )
-            drop_ids = m_entry.get("drop_ids") or m_entry.get("sources")
+            drop_ids = (
+                m_entry.get("drop_ids")
+                or m_entry.get("sources")
+                or m_entry.get("absorbed_ids")
+            )
 
             if pair and len(pair) == 2:
                 id_x, id_y = str(pair[0]), str(pair[1])
@@ -1571,6 +1739,18 @@ def apply_harmonize(
 
             for absorbed_id in absorbed_ids:
                 if not absorbed_id or absorbed_id == survivor_id:
+                    continue
+
+                if absorbed_id in existing_competency_ids:
+                    logger.warning(
+                        "Epistemic monotonicity violation: cannot drop or absorb base competency '%s'. Preserving base.",
+                        absorbed_id,
+                    )
+                    decisions_log.append({
+                        "operation": "merge",
+                        "status": "rejected_by_monotonicity",
+                        "reason": f"Epistemic monotonicity ($K_t \\subseteq K_{{t+1}}$): cannot drop or absorb base competency '{absorbed_id}'.",
+                    })
                     continue
 
                 # Case A: Absorbed into base course competency
@@ -1652,6 +1832,23 @@ def apply_harmonize(
                         comp_survivor.get("source_examples", []) + comp_absorbed.get("source_examples", [])
                     ))
                     comp_survivor["source_examples"] = merged_examples
+
+                # Unify assumptions
+                survivor_assumptions = list(comp_survivor.get("assumptions", []))
+                seen_a_stmts = {
+                    str(a.get("statement_latex") or a.get("statement", "")).strip().lower()
+                    for a in survivor_assumptions if isinstance(a, dict)
+                }
+                for asmp in comp_absorbed.get("assumptions", []):
+                    if isinstance(asmp, dict):
+                        stmt = str(asmp.get("statement_latex") or asmp.get("statement", "")).strip().lower()
+                        if stmt and stmt not in seen_a_stmts:
+                            seen_a_stmts.add(stmt)
+                            a_copy = dict(asmp)
+                            asmp_idx = len(survivor_assumptions) + 1
+                            a_copy["id"] = f"A-{survivor_code}-{asmp_idx:02d}"
+                            survivor_assumptions.append(a_copy)
+                comp_survivor["assumptions"] = survivor_assumptions
 
                 # Remove absorbed competency from curriculum
                 competencies = [c for c in competencies if c["id"] != absorbed_id]
@@ -1900,6 +2097,21 @@ def render_cta_md(cta_data: Dict[str, Any]) -> str:
                 lines.append(
                     f"| `{did}` | {dname} | {etype} | {sev} | {trap_desc} | {hint} |"
                 )
+            lines.append("")
+
+        assumptions = c.get("assumptions", [])
+        if assumptions:
+            lines.append(f"#### Formal Mathematical Assumptions ({len(assumptions)})")
+            lines.append("")
+            lines.append("| Assumption ID | Name / Label | Formal Statement (LaTeX) | Violation Consequence | Role in Proof |")
+            lines.append("|:---|:---|:---|:---|:---|")
+            for a in assumptions:
+                aid = a.get("id", "")
+                aname = a.get("name") or "-"
+                astmt = a.get("statement_latex") or a.get("statement") or "-"
+                acons = a.get("violation_consequence") or a.get("consequence") or "-"
+                arole = a.get("role_in_proof") or "-"
+                lines.append(f"| `{aid}` | {aname} | {astmt} | {acons} | {arole} |")
             lines.append("")
 
         lines.append("---")

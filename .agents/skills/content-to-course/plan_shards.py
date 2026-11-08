@@ -22,7 +22,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from engine.stage_contract import MIN_ARCHETYPES, competency_contract, global_contract, render_contract_tokens  # noqa: E402
+try:
+    from engine.stage_contract import MIN_ARCHETYPES as _SC_MIN_ARCHETYPES
+    MIN_ARCHETYPES = _SC_MIN_ARCHETYPES if _SC_MIN_ARCHETYPES >= 4 else 4
+except Exception:
+    MIN_ARCHETYPES = 4
+from engine.stage_contract import competency_contract, global_contract, render_contract_tokens  # noqa: E402
 
 # =============================================================================
 # SHARD & TEMPLATE SCALING CONFIGURATION
@@ -63,8 +68,8 @@ def _atomic_write_json(target_path: Path, data: Any) -> None:
 
 # Self-contained reference for shard authors so they never read engine code
 DSL_REFERENCE: Dict[str, Any] = {
-    "min_archetypes": 3,
-    "description": "Form-B Tri-Banda (min_archetypes = 3) parametric exercise architecture",
+    "min_archetypes": MIN_ARCHETYPES,
+    "description": "Form-C / Form-B (min_archetypes = 4) parametric exercise architecture (direct, inverse, perturbation, boundary_or_edge_case)",
     "canonical_template_schema": "(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution)",
     "supported_question_types": [
         "multiple_choice",
@@ -99,18 +104,18 @@ DSL_REFERENCE: Dict[str, Any] = {
             "Toda la información necesaria está embebida en tu archivo de shard asignado."
         ),
         "validation_command": (
-            "python .agents/skills/content-to-course/compile_shard.py --input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 3"
+            "python .agents/skills/content-to-course/compile_shard.py --input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4"
         ),
         "quotas": (
-            "Para CADA competencia asignada: autorar exactamente 3 plantillas paramétricas disjuntas bajo contrato "
-            "Form-B Tri-Banda (min_archetypes = 3: 'easy', 'medium', 'hard', cubriendo >= 2 niveles Bloom con "
+            "Para CADA competencia asignada: autorar exactamente 4 plantillas paramétricas disjuntas bajo contrato "
+            "Form-C / Form-B (min_archetypes = 4: 'direct', 'inverse', 'perturbation', 'boundary_or_edge_case', cubriendo >= 2 niveles Bloom con "
             "práctica activa multimodal: FIB sin signos de dólar externos, MS y MC7 con 3-tuplas dinámicas) "
             "en work/shards/<shard_id>_data.py y compilar a work/templates/<comp_id>.json."
         ),
         "form_b_triband": (
-            "Contrato Form-B Tri-Banda (min_archetypes = 3): Cada plantilla se declara como una 9-tupla "
+            "Contrato Form-C / Form-B (min_archetypes = 4): Cada plantilla se declara como una 9-tupla "
             "(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution). Toda competencia "
-            "debe cubrir 'easy', 'medium', 'hard' con >= 2 niveles Bloom y práctica activa obligatoria (FIB / MS / MC7)."
+            "debe cubrir los 4 arquetipos ortogonales ('direct', 'inverse', 'perturbation', 'boundary_or_edge_case') con >= 2 niveles Bloom y práctica activa obligatoria (FIB / MS / MC7)."
         ),
         "distractor_coverage": (
             "Regla TPL-D3: 100% de los distractor_ids declarados deben usarse en al menos una plantilla. "
@@ -168,7 +173,7 @@ DSL_REFERENCE: Dict[str, Any] = {
         "shard_isolated_script": (
             "SCRIPT INDEPENDIENTE: Cada shard escribe exclusivamente su propio script work/shards/<shard_id>_data.py. "
             "Valida únicamente tu shard asignado: python .agents/skills/content-to-course/compile_shard.py "
-            "--input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 3"
+            "--input work/shards/<shard_id>_data.py --output work/shards/<shard_id>.json --strict --min-archetypes 4"
         ),
         "modular_per_comp_overrides": (
             "SOPORTE MODULAR DE CORRECCIONES POR COMPETENCIA: Si una competencia específica requiere corrección "
@@ -649,6 +654,10 @@ def plan_shards(
 
     if not competencies:
         raise ValueError("cta.json contains zero competencies.")
+
+    for c in competencies:
+        if isinstance(c, dict):
+            c.setdefault("assumptions", [])
 
     # Partitioning Strategy Selection
     if k is not None or not isolate_skills:
