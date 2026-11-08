@@ -1201,6 +1201,7 @@ class DiagnosticRationaleAlignmentLinter(BaseLinter):
         questions = course_data.get("questions", [])
         all_rationales: list[str] = []
         magic_mult_items: list[str] = []
+        magic_mult_candidates: list[tuple[str, str, list[float], str]] = []
 
         for q in questions:
             qid = q.get("id", "unknown")
