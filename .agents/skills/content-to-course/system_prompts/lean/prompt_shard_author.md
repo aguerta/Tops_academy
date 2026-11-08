@@ -20,10 +20,12 @@ RATS = {f"D-H01-0{i}": r for i, r in enumerate((
     r"Cuadrado $T_C=@tc@$, $T_H=@th@$"), 1)}
 
 def _gen_h01(rng, arch=1):
-    tc = rng.randint(200, 280); th = tc + rng.randint(460, 650); eta = round(1.0 - tc/th, 3)
+    for _ in range(30):
+        tc = rng.randint(200, 280); th = tc + rng.randint(460, 650); eta = round(1.0 - tc/th, 3)
+        v1 = [round(x, 3) for x in (th/tc, tc/th, 1.0-(tc/th)**2, 1.0-0.6*tc/th, (th-tc)/(th+tc), (tc/th)**2)]
+        if len({eta, *v1}) == 7 and all(abs(d/eta - m) > 0.06 for d in v1 for m in (0.15, 0.333, 0.45, 0.5, 0.667, 0.75, 1.25, 1.333, 1.5, 1.667, 1.85, 2.1)): break
     if arch == 1:
-        v1 = (th/tc, tc/th, 1.0-(tc/th)**2, 1.0-0.6*tc/th, (th-tc)/(th+tc), (tc/th)**2)
-        return {"vars": {"tc": tc, "th": th, "ans": eta}, "correct": str(eta), "ds": [(f"D-H01-0{i}", round(x, 3)) for i, x in enumerate(v1, 1)]}
+        return {"vars": {"tc": tc, "th": th, "ans": eta}, "correct": str(eta), "ds": [(f"D-H01-0{i}", x) for i, x in enumerate(v1, 1)]}
     if arch in (2, 3):
         ans = round(tc / (1.0 - eta), 1) if arch == 2 else round(0.5 * (1.0 + eta), 3)
         return {"vars": {"tc": tc, "eta": eta, "ans": ans}, "correct": str(ans)}
