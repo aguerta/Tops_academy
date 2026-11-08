@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import hashlib
 import json
 import logging
 import os
@@ -118,10 +119,10 @@ def load_system_prompt(name_or_path: Union[str, Path], lean: bool = False) -> st
     return render_contract_tokens(p.read_text(encoding="utf-8"))
 
 
-def get_type_definitions(lean: bool = False) -> List[Dict[str, Any]]:
+def get_type_definitions(lean: bool = True) -> List[Dict[str, Any]]:
     """Returns subagent type definitions for define_subagent registration.
     
-    When lean=True, loads lean static system prompts strictly under 5 KB.
+    When lean=True (default), loads lean static system prompts strictly under 5 KB.
     """
     repair_prompt = "prompt_repair.md" if lean else "prompt_shard_author.md"
     return [
@@ -317,10 +318,10 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
         "system_prompt": "system_prompts/prompt_shard_author.md",
         "read": [
             "work/shards/*",
+            "work/dispatch/repair_slices/*.json",
             "work/reports/templates_report.json",
             "work/judge_report.json",
             "work/templates/*.json",
-            "work/cta.json",
         ],
         "write": [
             "work/shards/*_data.py",
@@ -453,11 +454,11 @@ def get_work_rel(work_dir: Union[str, Path]) -> str:
         return "work"
 
 
-def generate_define_subagent_specs(work_dir: Union[str, Path], lean: bool = False) -> Dict[str, Any]:
+def generate_define_subagent_specs(work_dir: Union[str, Path], lean: bool = True) -> Dict[str, Any]:
     """Writes individual subagent type spec files in work/dispatch/types/<type_name>.json
     and the consolidated index in work/dispatch/subagent_types.json.
     
-    When lean=True, persists lean static system prompts strictly <= 5 KB.
+    When lean=True (default), persists lean static system prompts strictly <= 5 KB.
     """
     work = Path(work_dir).resolve()
     types_dir = work / "dispatch" / "types"
@@ -670,7 +671,7 @@ def dispatch_cta(
                 "## 3. DIRECTIVAS DE OPERACIÓN",
                 f"1. Abre el material fuente asignado con `view_file`: `{doc_path}`.",
                 f"   (Tu primera acción es leer el material fuente. NO abras `compile_cta.py` ni `check_cta.py`: son cajas negras que solo se ejecutan. Secuencia: turno 1 leer fuente en paralelo, turno 2 `write_file` atómico, turno 3 compilar; repara solo con la salida del compilador (línea + `[CÓDIGO]`). No planifiques en voz alta: decide y emite.)",
-                f"2. Escribe las competencias en tuplas tabulares puras de 9 elementos en `{out_py}` (`COMPETENCIES = [...]`).",
+                f"2. Escribe las competencias en tuplas tabulares puras de 10 elementos (índice 9 = assumptions, obligatorio con CTA_CONTRACT_VERSION = 2: [] en fact, >=1 supuesto en concept/skill) en `{out_py}` (`COMPETENCIES = [...]`).",
                 f"3. Ejecuta la compilación oficial determinista:",
                 f"   ```bash",
                 f"   {compile_cmd}",
@@ -680,14 +681,24 @@ def dispatch_cta(
             ])
             prompt_full = "\n".join(prompt_lines)
 
+            prompt_sha256 = hashlib.sha256(prompt_full.encode("utf-8")).hexdigest()
             item_file = items_dir / f"cta_{idx:02d}.json"
+            work_order_meta = {
+                "role": f"Cognitive Task Analysis Architect {subpart_id}",
+                "subpart_id": subpart_id,
+                "output_python": out_py,
+                "output_json": json_target,
+                "compile_cmd": compile_cmd,
+                "compile_command": compile_cmd,
+                "prompt_sha256": prompt_sha256,
+            }
             item_data = {
                 "TypeName": "c2c_cta_architect",
                 "Role": f"Cognitive Task Analysis Architect {subpart_id}",
                 "Model": "flash",
                 "Workspace": "inherit",
                 "Prompt": prompt_full,
-                "work_order": prompt_full,
+                "work_order": work_order_meta,
                 "subpart_id": subpart_id,
                 "output_python": out_py,
                 "output_json": json_target,
@@ -812,7 +823,7 @@ def dispatch_cta(
             "## 3. DIRECTIVAS DE OPERACIÓN",
             f"1. Abre el primer material fuente asignado con `view_file` para extraer conceptos, hechos y habilidades.",
             f"   (NO abras `compile_cta.py` ni `check_cta.py`: son cajas negras que solo se ejecutan. Secuencia: turno 1 leer fuente en paralelo, turno 2 `write_file` atómico, turno 3 compilar; repara solo con la salida del compilador (línea + `[CÓDIGO]`). No planifiques en voz alta: decide y emite.)",
-            f"2. Escribe las competencias en tuplas tabulares puras de 9 elementos en `{out_target}` (`COMPETENCIES = [...]`).",
+            f"2. Escribe las competencias en tuplas tabulares puras de 10 elementos (índice 9 = assumptions, obligatorio con CTA_CONTRACT_VERSION = 2: [] en fact, >=1 supuesto en concept/skill) en `{out_target}` (`COMPETENCIES = [...]`).",
             f"3. Ejecuta la compilación oficial determinista:",
             f"   ```bash",
             f"   {compile_cmd}",
@@ -822,14 +833,23 @@ def dispatch_cta(
         ])
         prompt_full = "\n".join(prompt_lines)
 
+        prompt_sha256 = hashlib.sha256(prompt_full.encode("utf-8")).hexdigest()
         item_file = items_dir / "cta_01.json"
+        work_order_meta = {
+            "role": "Cognitive Task Analysis Architect",
+            "output_python": out_target,
+            "output_json": json_target,
+            "compile_cmd": compile_cmd,
+            "compile_command": compile_cmd,
+            "prompt_sha256": prompt_sha256,
+        }
         item_data = {
             "TypeName": "c2c_cta_architect",
             "Role": "Cognitive Task Analysis Architect",
             "Model": "flash",
             "Workspace": "inherit",
             "Prompt": prompt_full,
-            "work_order": prompt_full,
+            "work_order": work_order_meta,
             "output_python": out_target,
             "output_json": json_target,
             "compile_command": compile_cmd,
@@ -951,7 +971,9 @@ def dispatch_cta_reduce(
         f"{shard_json_lines}\n\n"
         f"## 2. INSTRUCCIONES DE EJECUCIÓN\n"
         f"0. FAST-PATH: lee en paralelo SOLO `cta_outline.json` + `duplicate_candidates.json`, escribe `cta_harmonize.json` de una vez y ejecuta el merge. PROHIBIDO listar/buscar directorios o leer los shards. Si el merge falla, corrige `cta_harmonize.json` con `edit_file` y re-ejecuta.\n"
-        f"1. Analiza el currículo global en `{work_rel}/cta_outline.json` y los pares en `{work_rel}/duplicate_candidates.json`.\n"
+        f"1. Analiza el currículo global en `{work_rel}/cta_outline.json` y los pares en `{work_rel}/duplicate_candidates.json`. "
+        f"Cada candidato trae `score`, `strength` (`strong`/`weak`; los `strong` primero) y `c1_description`/`c2_description` truncadas: úsalos para decidir sin leer los shards. "
+        f"Un par `strong` del mismo `type` es `merge` salvo que las descripciones muestren claramente un alcance distinto.\n"
         f"2. Realiza deduplicación semántica libre sobre TODO `{work_rel}/cta_outline.json` (no te limites a candidate pairs).\n"
         f"{delta_note}"
         f"3. Si existen componentes disconexos o islas curriculares, usa `add_prerequisites` hasta garantizar grafo conexo "
@@ -976,13 +998,21 @@ def dispatch_cta_reduce(
         f"6. Si el merge reporta error, edita `cta_harmonize.json` según el mensaje y re-ejecuta. Al terminar con `SUCCESS`, responde estrictamente `DONE: {work_rel}/cta.json`.\n"
     )
 
+    prompt_sha256 = hashlib.sha256(prompt_text.encode("utf-8")).hexdigest()
     item_file = items_dir / "cta_reduce_01.json"
+    work_order_meta = {
+        "role": "CTA Harmonizer",
+        "output_json": f"{work_rel}/cta.json",
+        "compile_cmd": compile_cmd,
+        "compile_command": compile_cmd,
+        "prompt_sha256": prompt_sha256,
+    }
     item_data = {
         "TypeName": "c2c_cta_harmonizer",
         "Role": "CTA Harmonizer",
         "Model": "flash",
         "Prompt": prompt_text,
-        "work_order": prompt_text,
+        "work_order": work_order_meta,
         "output_json": f"{work_rel}/cta.json",
         "compile_command": compile_cmd,
     }
@@ -1117,19 +1147,19 @@ def dispatch_authors(
     shard_manifest_data = json.loads(shard_manifest_path.read_text(encoding="utf-8"))
     manifest_dirty = False
     if isinstance(shard_manifest_data, dict):
-        if "min_archetypes" not in shard_manifest_data or shard_manifest_data.get("min_archetypes") != 3:
-            shard_manifest_data["min_archetypes"] = 3
+        if "min_archetypes" not in shard_manifest_data or shard_manifest_data.get("min_archetypes") != 4:
+            shard_manifest_data["min_archetypes"] = 4
             manifest_dirty = True
         raw_shards = shard_manifest_data.get("shards")
         if isinstance(raw_shards, list):
             for s_item in raw_shards:
-                if isinstance(s_item, dict) and s_item.get("min_archetypes") != 3:
-                    s_item["min_archetypes"] = 3
+                if isinstance(s_item, dict) and s_item.get("min_archetypes") != 4:
+                    s_item["min_archetypes"] = 4
                     manifest_dirty = True
         elif isinstance(raw_shards, dict):
             for s_key, s_val in raw_shards.items():
-                if isinstance(s_val, dict) and s_val.get("min_archetypes") != 3:
-                    s_val["min_archetypes"] = 3
+                if isinstance(s_val, dict) and s_val.get("min_archetypes") != 4:
+                    s_val["min_archetypes"] = 4
                     manifest_dirty = True
         if manifest_dirty:
             try:
@@ -1303,7 +1333,7 @@ def dispatch_authors(
             done_signal=f"DONE: {target_json}",
         )
 
-        compile_cmd = f"{cmd_prefix} .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes 3"
+        compile_cmd = f"{cmd_prefix} .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes 4"
 
         prompt_lines = [
             f"# Asignación de Tarea: Shard Exercise Author `{s_id}` (C2C v3.21 Load Inversion)",
@@ -1328,7 +1358,7 @@ def dispatch_authors(
             "## 3. INSTRUCCIONES DE EJECUCIÓN",
             f"0. **AUTOSUFICIENCIA TURN-0 (CERO LECTURA INNECESARIA DE PDFs):** La Sección 2 de esta orden ya contiene el 100% de las definiciones, fórmulas canónicas (correct_belief), manifestaciones de error (manifestation) y distractores de cta.json. NO abras ni leas los documentos fuente de content/ en Turno 1; empieza directamente escribiendo {s_id}_data.py con write_file (el archivo `{out_py}` NO existe previamente; PROHIBIDO llamar a `view_file` o `read_file` sobre archivos inexistentes o sobre `templates/<cid>.json` antes de compilar; Zero-Probing y No-Overthinking obligatorios).",
             f"1. Escribe en `{out_py}` (`TEMPLATES = [...]`) las funciones generadoras y tuplas de plantillas de forma concisa (<= 80-110 líneas por competencia, <= 180-220 líneas totales por shard, funciones gen_* concisas de ~15 líneas).",
-            f"2. **Contrato Form-B Tri-Banda Multimodal OBLIGATORIO (`min_archetypes = 3`, `[M3-ARCHETYPES]`):** Define exactamente **3 tuplas en `TEMPLATES` por cada competencia asignada** bajo la 9-tupla Form-B: `(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution)`. Cobertura obligatoria de tres bandas de dificultad (`'easy'`, `'medium'`, `'hard'`) abarcando al menos 2 niveles taxonómicos Bloom distintos. Se exige práctica activa multimodal: mínimo 2 plantillas interactivas `fill_in_the_blank` (FIB) o `multiple_select` (MS) en competencias de habilidad (`Hab-*`), y mínimo 1 `FIB` o `MS` en competencias de concepto/hecho (`C-*`/`H-*`). En `fill_in_the_blank`, el valor esperado no debe llevar signos de dólar externos `$ ... $` (`[FIB-NAKED]`).",
+            f"2. **Contrato Form-C / Form-B Multimodal OBLIGATORIO (`min_archetypes = 4`, `[M3-ARCHETYPES]`):** Define exactamente **4 tuplas en `TEMPLATES` por cada competencia asignada** bajo la 9-tupla Form-B/Form-C: `(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution)` cubriendo los 4 arquetipos ortogonales (`direct`, `inverse`, `perturbation`, `boundary_or_edge_case`). Cobertura obligatoria de tres bandas de dificultad (`'easy'`, `'medium'`, `'hard'`) abarcando al menos 2 niveles taxonómicos Bloom distintos. Se exige práctica activa multimodal: mínimo 2 plantillas interactivas `fill_in_the_blank` (FIB) o `multiple_select` (MS) en competencias de habilidad (`Hab-*`), y mínimo 1 `FIB` o `MS` en competencias de concepto/hecho (`C-*`/`H-*`). En `fill_in_the_blank`, el valor esperado no debe llevar signos de dólar externos `$ ... $` (`[FIB-NAKED]`).",
             f"3. **[TPL-DYNAMIC-RATIONALE & ANTI-MAGIC-MULT Obligatorio]:** En plantillas MC7, cada distractor devuelto en `gen_*(rng)` DEBE ser una **3-tupla obligatoria `(did, val, error_rationale_con_@var@)`** con longitud de rationale >= 20 caracteres interpolando variables paramétricas del error específico. En MS, las opciones falsas deben incluir `'error_rationale'` interpolando `@var@`. PROHIBIDO multiplicar 'ans' por factores constantes (ans * 1.333, ans * 0.333, etc.) o usar deltas numéricos ciegos (`[DIAG-MAGIC-MULT]`); deriva cada distractor de una fórmula algebraica cerrada concreta.",
             f"4. **[TPL-VAR & ANTI-MONO-CLAVE Obligatorio]:** Cada `gen_*(rng)` DEBE tener espacio paramétrico >= 500 combinaciones (`rng.randint` amplios, NUNCA listas pequeñas `rng.choice`) para producir >= {_S4_QUOTA_SKILL} instancias únicas (`Hab-*`) o >= {_S4_QUOTA_OTHER} (`C-*`/`H-*`) en 50 semillas. PROHIBIDO fijar respuestas correctas invariantes (`ans = 1`) en competencias teóricas (`[TPL-STATIC-OPT]`); la clave debe depender de al menos un parámetro dinámico (@var@).",
             f"5. **[R-18 / R-15 / R-20 / KATEX-PROSE-OVERFLOW]:** Usa siempre `r\"...\"` con `@var@` (PROHIBIDO `rf\"...\"`/`fr\"...\"`/`{{{{...}}}}`; formato `@var:fmt@` permitido, p. ej. `@b:.4f@`; todo `@var@` de stem/stem_variants/options/correct debe existir en `vars`; `\\implies` -> usa `\\Rightarrow`, o `hat{{\\theta}}` sin barra). En `distractors`, `\"val\"` contiene el resultado matemático limpio sin gerundios sesgados ni texto explicativo. PROHIBIDO desbordamiento en KaTeX: no coloques texto explicativo mayor a 45 caracteres dentro de `\\text{{...}}` (`[KATEX-PROSE-OVERFLOW]`); ubica la prosa explicativa fuera de `$ ... $`. PROHIBIDO comandos LaTeX expuestos fuera de delimitadores `$ ... $` (`[KATEX-RAW-SYNTAX]`).",
@@ -1343,9 +1373,21 @@ def dispatch_authors(
         ])
         prompt_full = "\n".join(prompt_lines)
 
+        prompt_sha256 = hashlib.sha256(prompt_full.encode("utf-8")).hexdigest()
         m_snum = re.search(r"(\d+)$", str(s_id))
         s_num_str = f"{int(m_snum.group(1)):02d}" if m_snum else f"{idx:02d}"
         item_file = items_dir / f"author_{s_num_str}.json"
+        work_order_meta = {
+            "role": f"Shard Author {s_id}",
+            "shard_id": s_id,
+            "assigned_competencies": c_ids,
+            "output_python": out_py,
+            "output_json": target_json,
+            "compile_cmd": compile_cmd,
+            "compile_command": compile_cmd,
+            "min_archetypes": 4,
+            "prompt_sha256": prompt_sha256,
+        }
         item_data = {
             "TypeName": "c2c_shard_author",
             "Role": f"Shard Author {s_id}",
@@ -1356,8 +1398,10 @@ def dispatch_authors(
             "output_python": out_py,
             "output_json": target_json,
             "compile_command": compile_cmd,
+            "compile_cmd": compile_cmd,
+            "min_archetypes": 4,
             "Prompt": prompt_full,
-            "work_order": prompt_full,
+            "work_order": work_order_meta,
         }
         item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
@@ -1397,6 +1441,15 @@ def dispatch_authors(
     author_compat_file = dispatch_dir / "author.json"
     author_compat_file.write_text(json.dumps(authors_audit, indent=2, ensure_ascii=False), encoding="utf-8")
 
+    # Persist author_snapshot.json prior to return for strict scope auditing
+    snap = snapshot_work_dir(work)
+    snap_payload = {k: list(v) for k, v in snap.items()}
+    snap_json = json.dumps(snap_payload, indent=2, ensure_ascii=False)
+    (dispatch_dir / "author_snapshot.json").write_text(snap_json, encoding="utf-8")
+    (dispatch_dir / "authors_snapshot.json").write_text(snap_json, encoding="utf-8")
+    (work / "author_snapshot.json").write_text(snap_json, encoding="utf-8")
+    (work / "authors_snapshot.json").write_text(snap_json, encoding="utf-8")
+
     return {"Subagents": subagents, "item_files": item_files}
 
 
@@ -1419,14 +1472,20 @@ def dispatch_judges(
     work_rel = get_work_rel(work)
     use_pointer = pointer if pointer is not None else (os.getenv("C2C_POINTER_PROMPTS", "1").lower() in ("1", "true", "yes"))
 
-    if ids or ready_only:
+    has_existing_batch = (
+        ((work / "verification" / "judge_batch.json").is_file() or (work / "judge_batch.json").is_file())
+        and ((work / "verification" / "judge_ground_truth.json").is_file() or (work / "judge_ground_truth.json").is_file())
+    )
+
+    if ids or ready_only or not has_existing_batch:
         from judge import generate_judge_batch, split_judge_batch
         templates_path = work / "templates"
-        if templates_path.is_dir():
+        if templates_path.is_dir() and any(templates_path.glob("*.json")):
+            cta_file = work / "cta.json"
             generate_judge_batch(
                 templates_path=templates_path,
                 work_dir=work,
-                cta_path=work / "cta.json",
+                cta_path=cta_file if cta_file.is_file() else None,
                 ready_only=ready_only,
                 max_judges=max_judges,
                 max_items_per_judge=max_items_per_judge,
@@ -1631,6 +1690,17 @@ def dispatch_judges(
         ])
         prompt_full = "\n".join(prompt_lines)
 
+        prompt_sha256 = hashlib.sha256(prompt_full.encode("utf-8")).hexdigest()
+        item_ids = [it.get("question_id") or it.get("id") or f"item_{i}" for i, it in enumerate(items_payload)]
+        work_order_meta = {
+            "role": f"Blind Judge {j_id}",
+            "batch_id": j_id,
+            "batch_file": bf.name,
+            "items_count": len(items_payload),
+            "item_ids": item_ids,
+            "output_target": out_target,
+            "prompt_sha256": prompt_sha256,
+        }
         item_file = items_dir / item_filename
         item_data = {
             "TypeName": "c2c_judge",
@@ -1638,10 +1708,12 @@ def dispatch_judges(
             "Model": "flash",
             "Workspace": "inherit",
             "batch_file": bf.name,
+            "batch_id": j_id,
             "items_count": len(items_payload),
+            "item_ids": item_ids,
             "output_target": out_target,
             "Prompt": prompt_full,
-            "work_order": prompt_full,
+            "work_order": work_order_meta,
             "items": items_payload,
         }
         item_file.write_text(json.dumps(item_data, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -2185,8 +2257,27 @@ def build_dispatch(
         items_dir.mkdir(parents=True, exist_ok=True)
         prompts_repair_dir = work / "prompts" / "repair"
         prompts_repair_dir.mkdir(parents=True, exist_ok=True)
+        repair_slices_dir = work / "dispatch" / "repair_slices"
+        repair_slices_dir.mkdir(parents=True, exist_ok=True)
         item_files: List[str] = []
         cleared_attempt_files: List[str] = []
+
+        cta_comps_by_id: Dict[str, Dict[str, Any]] = {}
+        cta_file = work / "cta.json"
+        if cta_file.is_file():
+            try:
+                cta_raw = json.loads(cta_file.read_text(encoding="utf-8"))
+                c_list = cta_raw.get("competencies", []) if isinstance(cta_raw, dict) else (cta_raw if isinstance(cta_raw, list) else [])
+                if isinstance(c_list, dict):
+                    for k_cid, c_val in c_list.items():
+                        if isinstance(c_val, dict):
+                            cta_comps_by_id[k_cid] = c_val
+                elif isinstance(c_list, list):
+                    for c_val in c_list:
+                        if isinstance(c_val, dict) and c_val.get("id"):
+                            cta_comps_by_id[c_val["id"]] = c_val
+            except Exception as e:
+                logger.warning("Could not index cta.json for repair slices: %s", e)
 
         _, _, cmd_prefix = _resolve_repo_python_and_env()
         for idx, (cid, diag) in enumerate(failing_targets.items(), start=1):
@@ -2260,13 +2351,57 @@ def build_dispatch(
             shard_fix_path = f"{work_rel}/shards/shard_fixes/{shard_id}/{cid}.py"
             compile_cmd = (
                 f"{cmd_prefix} .agents/skills/content-to-course/compile_shard.py "
-                f"--input {out_py} --output {out_json} --cta {cta_rel} --manifest {manifest_rel} --shard {shard_id} --strict --min-archetypes 3"
+                f"--input {out_py} --output {out_json} --work {work_rel} --shard {shard_id} --strict --min-archetypes 4"
             )
+
+            # Generate compact Competence Slice (< 2 KB) for isolated Turn-0 repair
+            comp_info = cta_comps_by_id.get(cid, {})
+            spec_locs = diag.get("specific_error_locations") or []
+            slice_data = {
+                "id": cid,
+                "title": str(comp_info.get("name") or comp_info.get("title") or cid)[:100],
+                "description": str(comp_info.get("description_latex") or comp_info.get("description") or "")[:200],
+                "assumptions": comp_info.get("assumptions", [])[:4],
+                "distractors": [
+                    {
+                        "id": d.get("id"),
+                        "name": str(d.get("name") or "")[:50],
+                        "wrong_belief": str(d.get("wrong_belief") or "")[:100],
+                        "omitted_step": str(d.get("omitted_step") or "")[:100] if d.get("omitted_step") else None,
+                    }
+                    for d in (comp_info.get("distractors") or [])[:6]
+                ],
+                "diagnostics": {
+                    "errors": (diag.get("errors") or [])[:6],
+                    "template_errors": (diag.get("template_errors") or [])[:6],
+                    "disagreements": (diag.get("judge_disagreements") or [])[:4],
+                },
+                "line_range": {
+                    "start": spec_locs[0].get("offending_line_start") if spec_locs else None,
+                    "end": spec_locs[0].get("offending_line_end") if spec_locs else None,
+                    "locations_count": len(spec_locs),
+                },
+            }
+            slice_json_str = json.dumps(slice_data, indent=2, ensure_ascii=False)
+            if len(slice_json_str.encode("utf-8")) > 2000:
+                slice_data["description"] = slice_data["description"][:80]
+                slice_json_str = json.dumps(slice_data, indent=2, ensure_ascii=False)
+
+            safe_cid = re.sub(r"[^\w-]", "_", str(cid))
+            slice_file = repair_slices_dir / f"{shard_id}_{cid}.json"
+            slice_safe_file = repair_slices_dir / f"{shard_id}_{safe_cid}.json"
+            slice_file.write_text(slice_json_str, encoding="utf-8")
+            if slice_safe_file != slice_file:
+                slice_safe_file.write_text(slice_json_str, encoding="utf-8")
+            slice_rel = f"{work_rel}/dispatch/repair_slices/{slice_file.name}"
+
             scope_header = build_scope_header(
                 role="repair",
-                read_paths=[out_py, f"{work_rel}/templates/{cid}.json", cta_rel],
+                read_paths=[out_py, f"{work_rel}/templates/{cid}.json", slice_rel],
                 write_paths=[out_py, out_json, shard_fix_path, f"{work_rel}/shards/shard_fixes/{shard_id}/<CID>.py", f"{work_rel}/shards/shard_fixes/<CID>.py"],
                 forbidden_paths=[
+                    cta_rel,
+                    f"{work_rel}/shards/pre_shard_manifest.json",
                     ".agents/skills/content-to-course/compile_shard.py",
                     "scratch/**",
                     "work/scratch/**",
@@ -2299,7 +2434,6 @@ def build_dispatch(
             error_bullets = ""
             if all_active:
                 error_bullets = "### Diagnóstico Consolidado de Fallos y Discordancias:\n" + "\n".join(f"- `{e}`" for e in all_active[:25]) + "\n\n"
-            spec_locs = diag.get("specific_error_locations") or []
             if spec_locs:
                 loc_blocks: List[str] = ["### Líneas Exactas y Contexto Infractor (`specific_error_report`):"]
                 for s_loc in spec_locs[:10]:
@@ -2338,12 +2472,13 @@ def build_dispatch(
                 f"- **Archivo Python Objetivo:** `{out_py}`\n"
                 f"- **Destino JSON Final:** `{out_json}`\n"
                 f"- **Módulo de Parche Quirúrgico:** `{shard_fix_path}`\n"
+                f"- **Competence Slice (< 2 KB):** `{slice_rel}`\n"
                 f"- **Circuit Breaker Reset:** Se han limpiado automáticamente los contadores previos en `.check_attempts/`.\n\n"
-                f"## 2. DIAGNÓSTICO DEL FALLO\n"
+                f"## 2. DIAGNÓSTICO DEL FALLO & COMPETENCE SLICE\n"
                 f"{error_bullets}"
-                f"```json\n{diag_str}\n```\n\n"
-                f"## 3. INSTRUCCIONES DE REPARACIÓN\n"
-                f"1. [ORDEN ESTRICTO]: Aplica corrección quirúrgica con edit_file sobre las líneas señaladas de `{out_py}` (o parche modular en `{shard_fix_path}`). PROHIBIDO ejecutar compile_shard.py antes de editar. Cumple Form-B Tri-Banda (min_archetypes=3: 'easy','medium','hard', 3-tuplas `(did, val, rationale_con_@var@)` len >= 20, FIB sin `$`, verificador real, `\\text{{...}}` <= 45 chars, sin coletillas parentéticas delatoras tipo '(sesgo/error...)').\n"
+                f"Consulta el slice de competencia en `{slice_rel}` con `view_file` para ver la especificación completa.\n\n"
+                f"## 3. INSTRUCCIONES DE REPARACIÓN (MATRIZ 2D)\n"
+                f"1. [ORDEN ESTRICTO & MATRIZ 2D]: Usa `edit_file` si errores < 6 y líneas <= 5; usa ModularSplicing `{shard_fix_path}` si errores >= 6 o líneas > 5. PROHIBIDO ejecutar compile_shard.py antes de editar. PROHIBIDO leer `cta.json` o `pre_shard_manifest.json` (usa el slice compacto `{slice_rel}`). Cumple Form-C / Form-B (min_archetypes=4: 'direct','inverse','perturbation','boundary_or_edge_case', 3-tuplas `(did, val, rationale_con_@var@)` len >= 20, FIB sin `$`, verificador real, `\\text{{...}}` <= 45 chars, sin coletillas parentéticas delatoras tipo '(sesgo/error...)').\n"
                 f"2. Compila ÚNICAMENTE DESPUÉS de editar para certificar:\n"
                 f"   ```bash\n"
                 f"   {compile_cmd}\n"
@@ -2351,7 +2486,6 @@ def build_dispatch(
                 f"3. **[AUTO-REPARACIÓN]:** Corrige SOLO con salida del compilador (línea + `[CÓDIGO]`). PROHIBIDO leer `cta.json`, `pre_shard_manifest.json`, otros shards o `report.json`. `ver_*`: valida identidad analítica (`abs(v[\"ans\"] - expr(v)) < 1e-6`); variables en `sol`/stems/distractores en `vars` como `@var@`. LaTeX: `\\Rightarrow`/`\\Leftrightarrow`, `\\text{{...}}` <= 45 chars. `[TPL-VAR]`: `param_space >= 500`. Revisa `hints` (3..5), `stem_variants` (>= {_S4_VARIANTS_OTHER} por plantilla; stems únicos >= {_S4_UNIQ_SKILL} en Hab-*, >= {_S4_UNIQ_OTHER} en C-*/H-*), FIB sin `$`, `distractor_ids` del work order.\n"
                 f"4. Sigue directivas de System Prompt `c2c_repair` y finaliza con: `DONE: {out_json}`.\n"
             )
-            safe_cid = re.sub(r"[^\w-]", "_", str(cid))
             cid_norm = re.sub(r"[^\w]", "", str(cid)).lower()
             item_file = items_dir / f"repair_{idx:02d}.json"
             cid_item_file = items_dir / f"repair_{safe_cid}.json"
@@ -2360,18 +2494,34 @@ def build_dispatch(
             prompts_safe_file = prompts_repair_dir / f"repair_{safe_cid}.json"
             prompts_idx_file = prompts_repair_dir / f"repair_{idx:02d}.json"
 
+            prompt_sha256 = hashlib.sha256(prompt_text.encode("utf-8")).hexdigest()
+            work_order_meta = {
+                "role": f"Repair Engineer {cid}",
+                "shard_id": shard_id,
+                "competency_id": cid,
+                "output_python": out_py,
+                "output_json": out_json,
+                "compile_cmd": compile_cmd,
+                "compile_command": compile_cmd,
+                "min_archetypes": 4,
+                "repair_slice": slice_rel,
+                "prompt_sha256": prompt_sha256,
+            }
             item_data = {
                 "TypeName": spec["type_name"],
                 "Role": f"Repair Engineer {cid}",
                 "Model": spec["model"],
                 "competency_id": cid,
+                "assigned_competency": cid,
                 "shard_id": shard_id,
                 "output_python": out_py,
                 "output_json": out_json,
+                "compile_cmd": compile_cmd,
                 "compile_command": compile_cmd,
+                "min_archetypes": 4,
                 "diagnostics": diag,
                 "Prompt": prompt_text,
-                "work_order": prompt_text,
+                "work_order": work_order_meta,
             }
             item_json_str = json.dumps(item_data, indent=2, ensure_ascii=False)
             item_file.write_text(item_json_str, encoding="utf-8")
@@ -2493,7 +2643,9 @@ def _is_allowed_path(rel_path: str, role: str) -> bool:
         norm.startswith("dispatch/")
         or norm.startswith("work/dispatch/")
         or norm in ("timings.json", "work/timings.json", "order.json", "work/order.json")
-        or norm.startswith("__pycache__/")
+        or "/__pycache__/" in f"/{norm}/"
+        or norm.endswith(".pyc")
+        or norm.endswith(".cert.json")
         or norm.startswith(".pytest_cache/")
         or norm.startswith(".git/")
         # Pipeline-internal artifacts written by the orchestrator/check tooling, not by subagents
@@ -2502,6 +2654,7 @@ def _is_allowed_path(rel_path: str, role: str) -> bool:
         or norm.startswith("telemetry/")
         or norm.startswith("prompts/")
         or norm.startswith(".c2c_")
+        or (("cta_fixes/" in norm or norm.startswith("cta_fixes/")) and norm.endswith(".py"))
     ):
         return True
 
@@ -2601,7 +2754,8 @@ def main() -> None:
     # define-types subcommand
     dt = subparsers.add_parser("define-types", help="Print and persist define_subagent payloads for all c2c types")
     dt.add_argument("--work-dir", default=None, help="Optional course working directory to persist type files")
-    dt.add_argument("--lean", action="store_true", help="Use lean static system prompts (<= 5 KB)")
+    dt.add_argument("--lean", action="store_true", default=True, help="Use lean static system prompts (<= 5 KB, default: True)")
+    dt.add_argument("--full-prompts", "--no-lean", action="store_false", dest="lean", help="Use full uncompressed system prompts (opt-out of lean)")
 
     # dispatch-cta subcommand
     dc = subparsers.add_parser("dispatch-cta", help="Dispatch CTA Architect using pre_cta_manifest.json")

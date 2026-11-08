@@ -29,6 +29,33 @@ logger = logging.getLogger("budget_guard")
 DEFAULT_MAX_TURNS = 40
 DEFAULT_MAX_TOKENS = 5_000_000
 DEFAULT_MAX_SCRIPT_LOOPS = 5
+DEFAULT_MAX_ERROR_STREAK = 3
+
+
+def check_lock_budget(lock_data: Dict[str, Any]) -> Tuple[bool, Optional[str]]:
+    """Evaluates synchronous budget constraints from active subagent lockfile data.
+
+    Returns (is_breached, failure_reason).
+    """
+    if not isinstance(lock_data, dict) or not lock_data.get("active"):
+        return False, None
+
+    max_turns = lock_data.get("max_turns", DEFAULT_MAX_TURNS)
+    max_tokens = lock_data.get("max_tokens", DEFAULT_MAX_TOKENS)
+    max_streak = lock_data.get("max_error_streak", DEFAULT_MAX_ERROR_STREAK)
+
+    turn_count = lock_data.get("turn_count", 0)
+    est_tokens = lock_data.get("est_tokens", 0)
+    error_streak = lock_data.get("error_sha256_streak", 0)
+
+    if turn_count > max_turns:
+        return True, f"HARD_ABORT: Turn count SLA limit exceeded ({turn_count} > {max_turns})."
+    if est_tokens > max_tokens:
+        return True, f"HARD_ABORT: Token burn SLA limit exceeded ({est_tokens:,} > {max_tokens:,})."
+    if error_streak >= max_streak:
+        return True, f"HARD_ABORT: Consecutive identical error streak limit reached ({error_streak} >= {max_streak})."
+
+    return False, None
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 

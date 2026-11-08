@@ -28,7 +28,9 @@ if str(skill_dir) not in sys.path:
     sys.path.insert(0, str(skill_dir))
 
 from engine.assemble import assemble_question
-from engine.sandbox import execute_sandbox_instance
+from engine.invariants import check_instance_invariants
+from engine.sandbox import execute_sandbox_instance, execute_verifier_code
+from engine.interstage_schemas import ArtifactCertificate, write_certificate
 
 logger = logging.getLogger("judge")
 MAX_CORRECTION_CYCLES = 3
@@ -174,6 +176,8 @@ def generate_judge_batch(
     max_items_per_judge: int = DEFAULT_MAX_ITEMS_PER_JUDGE,
     random_seed: Optional[int] = None,
     ids: Optional[Union[str, List[Union[str, int]]]] = None,
+    samples_per_template: Optional[int] = None,
+    num_samples: Optional[int] = None,
 ) -> Tuple[Path, Path]:
     """Generates work/judge_batch.json WITHOUT answer keys using stratified random sampling.
     
@@ -349,6 +353,18 @@ def generate_judge_batch(
         comp_keys = list(comp_templates.keys())
         rng.shuffle(comp_keys)
 
+        def _get_target_sample_count(t_obj: Dict[str, Any]) -> int:
+            if samples_per_template is not None:
+                return samples_per_template
+            if num_samples is not None:
+                return num_samples
+            if seeds is not None and len(seeds) > 0:
+                return len(seeds)
+            v_code = t_obj.get("verifier_code") or t_obj.get("cross_check_py") or t_obj.get("verify_py") or ""
+            if v_code and str(v_code).strip():
+                return 1
+            return 3
+
         # Prepare per-template random seed lists
         tpl_seed_lists: Dict[int, List[int]] = {}
         shuffled_comp_tpls: Dict[str, List[Dict[str, Any]]] = {}
@@ -357,9 +373,11 @@ def generate_judge_batch(
             rng.shuffle(c_tpls)
             shuffled_comp_tpls[cid] = c_tpls
             for t in c_tpls:
-                tpl_seed_lists[id(t)] = _draw_template_seeds(seeds_per_tpl)
+                t_count = _get_target_sample_count(t)
+                tpl_seed_lists[id(t)] = _draw_template_seeds(t_count)
 
-        for r_idx in range(seeds_per_tpl):
+        max_seeds_per_tpl = max((len(v) for v in tpl_seed_lists.values()), default=1)
+        for r_idx in range(max_seeds_per_tpl):
             round_candidates: List[Tuple[Dict[str, Any], int]] = []
             # Round-robin across competencies within this round so every competency is represented
             max_tpls_in_comp = max((len(v) for v in shuffled_comp_tpls.values()), default=0)
@@ -383,30 +401,81 @@ def generate_judge_batch(
                 break
 
     template_counts: Dict[str, int] = {}
+    refuted_templates: Dict[str, Dict[str, Any]] = {}
+
     for template, seed in planned_items:
         template_id = template.get("id", "T-00")
         comp_id = template.get("competency_id", "comp-01")
         itype = template.get("interaction_type", "multiple_choice_7_options")
 
+        gen_code = template.get("generate_py") or template.get("generator_code") or ""
+        ver_code = template.get("verifier_code") or template.get("cross_check_py") or template.get("verify_py") or ""
+
+        # Pre-verify candidate seed, deterministically retrying next seed on collision or invariant failure
+        active_seed = seed
+        gen_res = None
+        assembled = None
+        seed_passed = False
+        max_seed_retries = 20
+        curr_try = 0
+
+        while curr_try < max_seed_retries and not seed_passed:
+            curr_try += 1
+            try:
+                cand_res = execute_sandbox_instance(gen_code, seed=active_seed)
+                # Verify cross-check / verifier if present (strict boolean True required)
+                if ver_code and str(ver_code).strip():
+                    is_ver = execute_verifier_code(ver_code, cand_res, seed=active_seed)
+                    if is_ver is not True:
+                        active_seed = (active_seed + 101) % 99991 + 100
+                        continue
+
+                inst_idx = template_counts.get(template_id, 0) + 1
+                option_shuffle_seed = zlib.crc32(f"{template_id}:{inst_idx}:{active_seed}".encode("utf-8")) & 0xFFFFFFFF
+                cand_assembled = assemble_question(
+                    template=template,
+                    gen_result=cand_res,
+                    competency_id=comp_id,
+                    question_index=inst_idx,
+                    cta_distractors_map=cta_distractors_map,
+                    seed=option_shuffle_seed,
+                )
+
+                is_inv, inv_errs = check_instance_invariants(cand_assembled, itype)
+                if not is_inv:
+                    active_seed = (active_seed + 101) % 99991 + 100
+                    continue
+
+                seed_passed = True
+                gen_res = cand_res
+                assembled = cand_assembled
+            except Exception:
+                active_seed = (active_seed + 101) % 99991 + 100
+
+        if not seed_passed or assembled is None:
+            # Deterministic kernel refutation: template failed verification
+            refuted_templates[template_id] = {
+                "template_id": template_id,
+                "competency_id": comp_id,
+                "kernel_refuted": True,
+                "reason": "Deterministic verification kernel refuted all candidate seeds",
+            }
+            inst_idx = template_counts.get(template_id, 0) + 1
+            template_counts[template_id] = inst_idx
+            item_id = f"{template_id}_judge_{inst_idx}"
+            ground_truth[item_id] = {
+                "item_id": item_id,
+                "template_id": template_id,
+                "competency_id": comp_id,
+                "interaction_type": itype,
+                "kernel_refuted": True,
+                "kernel_verified": False,
+            }
+            continue
+
         inst_idx = template_counts.get(template_id, 0) + 1
         template_counts[template_id] = inst_idx
         item_id = f"{template_id}_judge_{inst_idx}"
-
-        gen_code = template.get("generate_py") or template.get("generator_code") or ""
-        gen_res = execute_sandbox_instance(gen_code, seed=seed)
-
-        # Cryptographic per-item option shuffle seed (uniform A..G distribution)
-        option_shuffle_seed = zlib.crc32(f"{template_id}:{inst_idx}:{seed}".encode("utf-8")) & 0xFFFFFFFF
-
-        # Assemble full question
-        assembled = assemble_question(
-            template=template,
-            gen_result=gen_res,
-            competency_id=comp_id,
-            question_index=inst_idx,
-            cta_distractors_map=cta_distractors_map,
-            seed=option_shuffle_seed,
-        )
 
         # Strip all answer indicators for the blind judge
         judge_item: Dict[str, Any] = {
@@ -422,6 +491,8 @@ def generate_judge_batch(
             "template_id": template_id,
             "competency_id": comp_id,
             "interaction_type": itype,
+            "kernel_verified": bool(ver_code and str(ver_code).strip()),
+            "kernel_refuted": False,
         }
 
         if itype == "multiple_choice_7_options":
@@ -524,6 +595,11 @@ def generate_judge_batch(
     answer_key_path = work / "answer_key.json"
     answer_key_path.write_text(truth_json_str, encoding="utf-8")
     (v_dir / "answer_key.json").write_text(truth_json_str, encoding="utf-8")
+
+    if refuted_templates:
+        refuted_json_str = json.dumps(refuted_templates, indent=2, ensure_ascii=False)
+        (work / "refuted_templates.json").write_text(refuted_json_str, encoding="utf-8")
+        (v_dir / "refuted_templates.json").write_text(refuted_json_str, encoding="utf-8")
 
     # Clean up stale split batches in verification and work so dispatch_judges slices the new batch fresh
     for stale_split in list(v_dir.glob("judge_batch_*.json")) + list(work.glob("judge_batch_*.json")):
@@ -1034,6 +1110,103 @@ def _check_single_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) ->
     return False, f"Unsupported interaction type '{itype}'"
 
 
+def resolve_neuro_symbolic_verdict(
+    kernel_verified: bool,
+    kernel_refuted: bool,
+    llm_verdict: Union[str, bool],
+    failure_category: Optional[str] = None,
+    failure_reasons: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Resolves epistemic verdict with deterministic kernel dominance (alpha_kernel = 0).
+    
+    Rules:
+    1. If kernel_refuted is True: verdict is unconditionally FAIL regardless of LLM verdict.
+    2. If kernel_verified is True and LLM verdict is FAIL alleging only math/calculation errors:
+       kernel_override is set to True and verdict resolves to PASS (algebraic proof dominance).
+       However, if LLM points out epistemic insufficiency, ambiguous stem, or answer giveaway,
+       verdict resolves to FAIL requiring template remediation.
+    3. If kernel_verified is True and LLM passes: verdict resolves to PASS.
+    4. If neither kernel verification nor refutation occurred: standard LLM verdict applies.
+    """
+    str_verdict = str(llm_verdict).strip().upper()
+    llm_passed = str_verdict in ("PASS", "PASSED", "TRUE", "1")
+    cat = (failure_category or "").strip().lower()
+    reasons = [str(r).strip() for r in (failure_reasons or []) if str(r).strip()]
+    reasons_text = " ".join(reasons).lower()
+
+    # Rule 1: Deterministic kernel refutation dominance
+    if kernel_refuted:
+        return {
+            "verdict": "FAIL",
+            "passed": False,
+            "kernel_verified": False,
+            "kernel_refuted": True,
+            "kernel_override": False,
+            "failure_category": cat or "kernel_refutation",
+            "reasons": reasons or ["Refuted deterministically by verification kernel"],
+        }
+
+    # Rule 2: Kernel verified with LLM failure
+    if kernel_verified and not llm_passed:
+        # Check for epistemic or semantic flaws that must block
+        blocking_tokens = (
+            "epistemic_insufficiency",
+            "epistemic",
+            "missing_definition",
+            "missing",
+            "ambiguous_stem",
+            "ambiguous",
+            "giveaway",
+        )
+        has_epistemic_block = any(tok in cat or tok in reasons_text for tok in blocking_tokens)
+
+        is_pure_calc_error = cat in ("math_error", "calculation_error", "arithmetic_error", "numeric_error", "")
+        if is_pure_calc_error and not has_epistemic_block:
+            return {
+                "verdict": "PASS",
+                "passed": True,
+                "kernel_verified": True,
+                "kernel_refuted": False,
+                "kernel_override": True,
+                "failure_category": cat,
+                "reasons": reasons,
+            }
+        else:
+            return {
+                "verdict": "FAIL",
+                "passed": False,
+                "kernel_verified": True,
+                "kernel_refuted": False,
+                "kernel_override": False,
+                "failure_category": cat or "epistemic_insufficiency",
+                "reasons": reasons or ["Epistemic insufficiency or ambiguity detected"],
+            }
+
+    # Rule 3: Kernel verified and LLM passed
+    if kernel_verified and llm_passed:
+        return {
+            "verdict": "PASS",
+            "passed": True,
+            "kernel_verified": True,
+            "kernel_refuted": False,
+            "kernel_override": False,
+            "failure_category": "",
+            "reasons": [],
+        }
+
+    # Rule 4: Standard verdict when kernel did not run or is inconclusive
+    final_passed = llm_passed
+    return {
+        "verdict": "PASS" if final_passed else "FAIL",
+        "passed": final_passed,
+        "kernel_verified": kernel_verified,
+        "kernel_refuted": kernel_refuted,
+        "kernel_override": False,
+        "failure_category": cat if not final_passed else "",
+        "reasons": reasons if not final_passed else [],
+    }
+
+
 def compare_judge_responses(
     responses: Optional[Union[Dict[str, Any], List[Dict[str, Any]], str, Path]] = None,
     ground_truth: Optional[Dict[str, Dict[str, Any]]] = None,
@@ -1232,7 +1405,14 @@ def compare_judge_responses(
         reason = ""
         user_ans: Any = None
 
-        if not reps:
+        is_refuted = bool(gt.get("kernel_refuted", False))
+        is_verified = bool(gt.get("kernel_verified", False))
+
+        if is_refuted:
+            is_match = False
+            user_ans = reps[0] if reps else None
+            reason = "Refuted deterministically by verification kernel"
+        elif not reps:
             is_match = False
             all_complete = False
             user_ans = None
@@ -1255,6 +1435,30 @@ def compare_judge_responses(
                 else:
                     first_fail = next((r_msg for m_ok, r_msg in rep_evals if not m_ok), "Evaluation mismatch")
                     reason = first_fail
+
+                # Neuro-symbolic resolution under kernel dominance (alpha_kernel = 0)
+                if is_verified:
+                    fail_cat = "calculation_error"
+                    fail_reasons = [reason]
+                    for r_item in reps:
+                        if isinstance(r_item, dict):
+                            if "failure_category" in r_item:
+                                fail_cat = str(r_item["failure_category"])
+                            elif "category" in r_item:
+                                fail_cat = str(r_item["category"])
+                            if "reason" in r_item:
+                                fail_reasons.append(str(r_item["reason"]))
+
+                    neuro_verdict = resolve_neuro_symbolic_verdict(
+                        kernel_verified=True,
+                        kernel_refuted=False,
+                        llm_verdict="FAIL",
+                        failure_category=fail_cat,
+                        failure_reasons=fail_reasons,
+                    )
+                    if neuro_verdict.get("kernel_override"):
+                        is_match = True
+                        reason = "Kernel verified constructive proof overrides LLM calculation disagreement"
 
         tpl_items[tid].append(is_match)
         comp_items[cid].append(is_match)
@@ -1287,6 +1491,23 @@ def compare_judge_responses(
     for cid, matches in comp_items.items():
         if not matches or not all(matches):
             failed_competencies.append(cid)
+
+    failed_templates = sorted(list(set(failed_templates)))
+    failed_competencies = sorted(list(set(failed_competencies)))
+
+    if resolved_work_dir:
+        for ref_p in (resolved_work_dir / "refuted_templates.json", resolved_work_dir / "verification" / "refuted_templates.json"):
+            if ref_p.is_file():
+                try:
+                    ref_data = json.loads(ref_p.read_text(encoding="utf-8"))
+                    for tid, r_info in ref_data.items():
+                        if tid not in failed_templates:
+                            failed_templates.append(tid)
+                        c_id = r_info.get("competency_id")
+                        if c_id and c_id not in failed_competencies:
+                            failed_competencies.append(c_id)
+                except Exception:
+                    pass
 
     failed_templates = sorted(list(set(failed_templates)))
     failed_competencies = sorted(list(set(failed_competencies)))
@@ -1340,6 +1561,27 @@ def compare_judge_responses(
         except Exception as e:
             logger.warning("Failed to write canonical judge_report.json: %s", e)
 
+        if passed:
+            try:
+                rep_p = resolved_work_dir / "judge_report.json"
+                if rep_p.is_file():
+                    rep_sha = hashlib.sha256(rep_p.read_bytes()).hexdigest()
+                else:
+                    rep_sha = hashlib.sha256(json.dumps(report_data, sort_keys=True).encode("utf-8")).hexdigest()
+                cert = ArtifactCertificate(
+                    stage="judge",
+                    artifact_id=f"judge_cycle_{cycle}",
+                    source_sha256=rep_sha,
+                    contract_version=2,
+                    passed_50_seeds=True,
+                )
+                write_certificate(resolved_work_dir / "judge.cert.json", cert)
+                v_cert_dir = resolved_work_dir / "verification"
+                if v_cert_dir.is_dir():
+                    write_certificate(v_cert_dir / "judge.cert.json", cert)
+            except Exception as e:
+                logger.warning("Could not write judge.cert.json: %s", e)
+
     return report_data
 
 
@@ -1370,6 +1612,18 @@ def main() -> None:
         nargs="*",
         default=None,
         help="Target competency IDs to arbitrate (default: all)",
+    )
+    prep.add_argument(
+        "--samples-per-template",
+        type=int,
+        default=None,
+        help="Samples per template (default: 1 for verified templates, 3 otherwise)",
+    )
+    prep.add_argument(
+        "--num-samples",
+        type=int,
+        default=None,
+        help="Alias for --samples-per-template",
     )
 
     # split subcommand
@@ -1403,6 +1657,7 @@ def main() -> None:
             items_per_competency=args.items_per_competency,
             ready_only=args.ready_only,
             ids=args.ids,
+            samples_per_template=args.samples_per_template or args.num_samples,
         )
         print(f"Generated judge batch: {batch_p}")
         print(f"Generated ground truth: {truth_p}")

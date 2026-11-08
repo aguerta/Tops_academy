@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import datetime
+import hashlib
 import io
 import json
 import logging
@@ -40,8 +41,11 @@ if hasattr(sys.stdout, "reconfigure"):
 
 # Ensure skill directory is in sys.path
 skill_dir = Path(__file__).parent.resolve()
+repo_root = skill_dir.parents[2]
 if str(skill_dir) not in sys.path:
     sys.path.insert(0, str(skill_dir))
+
+from engine.interstage_schemas import ArtifactCertificate, RejectionSpec, verify_certificate
 
 try:
     from check_cta import check_cta_file, validate_cta_rules
@@ -291,7 +295,9 @@ class PipelineRunner:
         source_dir: Optional[Union[str, Path]] = None,
         unlock: bool = False,
         base_course: Optional[Union[str, Path]] = None,
+        force_recheck: bool = False,
     ) -> None:
+        self.force_recheck = force_recheck
         if pdf is not None:
             self.raw_pdf = pdf
         elif sources is not None:
@@ -869,13 +875,13 @@ class PipelineRunner:
                         continue
 
                 if compile_shard_mod and hasattr(compile_shard_mod, "compile_shard"):
-                    ok, errs = compile_shard_mod.compile_shard(self.work_dir, shard_id=shard_id, strict=True, min_archetypes=3)
+                    ok, errs = compile_shard_mod.compile_shard(self.work_dir, shard_id=shard_id, strict=True, min_archetypes=4)
                     if not ok:
                         logger.warning("Compilation for %s reported issues: %s", shard_id, errs[:3] if errs else "unknown")
                 elif compile_shard_script.is_file():
                     import subprocess
                     subprocess.run(
-                        [sys.executable, str(compile_shard_script), "--work", str(self.work_dir), "--shard", shard_id, "--strict", "--min-archetypes", "3"],
+                        [sys.executable, str(compile_shard_script), "--work", str(self.work_dir), "--shard", shard_id, "--strict", "--min-archetypes", "4"],
                         check=False,
                     )
 
@@ -885,7 +891,88 @@ class PipelineRunner:
                 f"Strict fail-fast: Exercise creator subagents must author templates before this stage."
             )
 
-        is_valid, errors = check_templates_file_or_dir(templates_dir, cta_path=cta_file)
+        all_template_files = sorted(list(templates_dir.glob("*.json")))
+
+        # Cryptographic fast-path: verify shard_XX.cert.json receipts (< 5 ms)
+        certified_cids: Set[str] = set()
+        certified_template_files: Set[Path] = set()
+
+        if not getattr(self, "force_recheck", False) and cta_file.is_file():
+            cta_bytes = cta_file.read_bytes()
+            cta_sha = hashlib.sha256(cta_bytes).hexdigest()
+
+            cert_files = sorted(list(shards_dir.glob("shard_*.cert.json")))
+            for cert_f in cert_files:
+                try:
+                    c_data = json.loads(cert_f.read_text(encoding="utf-8"))
+                    if not c_data.get("passed_50_seeds"):
+                        continue
+                    if c_data.get("cta_sha256") and c_data["cta_sha256"] != cta_sha:
+                        continue
+
+                    s_id = c_data.get("artifact_id") or re.sub(r"\.cert$", "", cert_f.stem)
+                    s_id_clean = re.sub(r"_data$", "", s_id)
+                    s_py = shards_dir / f"{s_id_clean}_data.py"
+                    if not s_py.is_file():
+                        continue
+                    s_sha = hashlib.sha256(s_py.read_bytes()).hexdigest()
+                    if c_data.get("source_sha256") != s_sha:
+                        continue
+
+                    # Check if any surgical fix is newer than the certificate
+                    cert_mtime = cert_f.stat().st_mtime
+                    s_cids = shard_to_cids.get(s_id_clean, [])
+                    has_newer_fix = False
+                    for cid_item in s_cids:
+                        for fix_cand in (
+                            shards_dir / "shard_fixes" / s_id_clean / f"{cid_item}.py",
+                            shards_dir / "shard_fixes" / f"{cid_item}.py",
+                            self.work_dir / "shard_fixes" / f"{cid_item}.py",
+                        ):
+                            if fix_cand.is_file() and fix_cand.stat().st_mtime > cert_mtime:
+                                has_newer_fix = True
+                                break
+                        if has_newer_fix:
+                            break
+                    if has_newer_fix:
+                        continue
+
+                    # Verify each template hash declared in the certificate
+                    tpl_shas = c_data.get("template_shas", {})
+                    if not tpl_shas:
+                        continue
+                    shard_tpls_valid = True
+                    shard_cids = set()
+                    shard_files = set()
+                    for t_name, expected_sha in tpl_shas.items():
+                        t_path = templates_dir / t_name if t_name.endswith(".json") else templates_dir / f"{t_name}.json"
+                        if not t_path.is_file():
+                            shard_tpls_valid = False
+                            break
+                        actual_sha = hashlib.sha256(t_path.read_bytes()).hexdigest()
+                        if actual_sha != expected_sha:
+                            shard_tpls_valid = False
+                            break
+                        shard_cids.add(t_path.stem)
+                        shard_files.add(t_path)
+
+                    if shard_tpls_valid:
+                        certified_cids.update(shard_cids)
+                        certified_template_files.update(shard_files)
+                except Exception as ex:
+                    logger.debug("Certificate check error on %s: %s", cert_f.name, ex)
+
+        uncertified_templates = [tf for tf in all_template_files if tf not in certified_template_files]
+
+        if not getattr(self, "force_recheck", False) and len(certified_template_files) == len(all_template_files) and len(all_template_files) > 0:
+            print(f"  [+] Fast-path < 5 ms: All {len(all_template_files)} template(s) cryptographically certified via shard_XX.cert.json.")
+            is_valid = True
+            errors = []
+        elif uncertified_templates and len(certified_template_files) > 0 and not getattr(self, "force_recheck", False):
+            print(f"  [+] Fast-path < 5 ms: Skipping {len(certified_template_files)} pre-certified template(s). Checking {len(uncertified_templates)} pending template(s)...")
+            is_valid, errors = check_templates_file_or_dir(uncertified_templates, cta_path=cta_file)
+        else:
+            is_valid, errors = check_templates_file_or_dir(templates_dir, cta_path=cta_file)
 
         # Build errors_by_cid mapping
         errors_by_cid: Dict[str, List[str]] = {}
@@ -949,6 +1036,31 @@ class PipelineRunner:
             print("\n[ERROR] Templates validation failed:", file=sys.stderr)
             for err in errors[:10]:
                 print(f"  - {err}", file=sys.stderr)
+
+            # Persist rejection spec for downstream repair
+            try:
+                fail_cids = sorted(errors_by_cid.keys())
+                shard_to_cids_rev = {cid: sid for sid, cids in shard_to_cids.items() for cid in cids}
+                fail_shards = sorted({shard_to_cids_rev.get(c, "shard_01") for c in fail_cids})
+                repair_cmd = (
+                    f'& ".venv\\Scripts\\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-repair '
+                    f'--work-dir "{self.work_dir.as_posix()}" --ids {" ".join(fail_cids)}'
+                ) if fail_cids else ""
+                rej = RejectionSpec(
+                    status="REJECTED",
+                    course_id=self.course_id,
+                    total_issues=len(errors),
+                    failing_competencies=fail_cids,
+                    failing_shards=fail_shards,
+                    affected_shards=fail_shards,
+                    proposed_repair_command=repair_cmd,
+                    diagnostics_by_competency=errors_by_cid,
+                    report_text="\n".join([str(e) for e in errors[:50]]),
+                )
+                rej.write_json(self.work_dir / "template_failures.json")
+            except Exception as rej_ex:
+                logger.debug("Could not write template_failures.json: %s", rej_ex)
+
             if any("CIRCUIT BREAKER" in err for err in errors):
                 raise RuntimeError(
                     f"Circuit Breaker tripped in {templates_dir}: 3 consecutive identical validation failures. "
@@ -963,7 +1075,7 @@ class PipelineRunner:
         record_stage_timing(self.work_dir, "templates", elapsed)
         record_stage_telemetry(self.work_dir, "03", "templates", status="completed", metadata={"duration_seconds": elapsed, "count": len(template_files)})
         print("  [+] Stage 3 (templates) completed successfully.")
-        return {"templates_dir": str(templates_dir.resolve()), "count": len(template_files)}
+        return {"status": "PASS", "templates_dir": str(templates_dir.resolve()), "count": len(template_files)}
 
     # -------------------------------------------------------------------------
     # STAGE 4: Build (Instantiation)
@@ -1185,26 +1297,44 @@ class PipelineRunner:
                             md_lines.append(f"      {cl}")
             md_lines.append("======================================================================")
             md_text = "\n".join(md_lines)
-            spec_payload = {
-                "status": "REJECTED",
-                "stage": "build",
-                "failing_competencies": fail_cids,
-                "failing_shards": fail_shards,
-                "proposed_repair_command": repair_cmd,
-                "groups": [
-                    {
-                        "linter": "build_stem_diversity_gate",
-                        "rule_tag": "STEM-DIVERSITY-GATE",
-                        "severity": "CRITICAL",
-                        "description": "Ratio de diversidad estructural de enunciados (unique_masked / quota) menor a 0.50.",
-                        "cause": "Las plantillas de la competencia definen muy pocas variantes sintácticas en `stems`.",
-                        "action": "En `s1`, `s2`, `s3` de `shard_XX_data.py`, provee " + stems_advice_text() + "",
-                        "locations": locations_list,
-                    }
-                ],
-                "formatted_report": md_text,
-            }
-            (self.work_dir / "specific_error_report.json").write_text(json.dumps(spec_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            rej = RejectionSpec(
+                status="REJECTED",
+                course_id=self.course_id,
+                total_issues=len(stem_gate_failures),
+                failing_competencies=fail_cids,
+                failing_shards=fail_shards,
+                affected_shards=fail_shards,
+                proposed_repair_command=repair_cmd,
+                groups={
+                    "build_stem_diversity_gate": [
+                        {
+                            "linter": "build_stem_diversity_gate",
+                            "rule_tag": "STEM-DIVERSITY-GATE",
+                            "severity": "CRITICAL",
+                            "description": "Ratio de diversidad estructural de enunciados (unique_masked / quota) menor a 0.50.",
+                            "cause": "Las plantillas de la competencia definen muy pocas variantes sintácticas en `stems`.",
+                            "action": "En `s1`, `s2`, `s3` de `shard_XX_data.py`, provee " + stems_advice_text(),
+                            "locations": locations_list,
+                        }
+                    ]
+                },
+                grouped_by_rule={
+                    "build_stem_diversity_gate": [
+                        {
+                            "linter": "build_stem_diversity_gate",
+                            "rule_tag": "STEM-DIVERSITY-GATE",
+                            "severity": "CRITICAL",
+                            "description": "Ratio de diversidad estructural de enunciados (unique_masked / quota) menor a 0.50.",
+                            "cause": "Las plantillas de la competencia definen muy pocas variantes sintácticas en `stems`.",
+                            "action": "En `s1`, `s2`, `s3` de `shard_XX_data.py`, provee " + stems_advice_text(),
+                            "locations": locations_list,
+                        }
+                    ]
+                },
+                report_text=md_text,
+            )
+            rej.write_json(self.work_dir / "specific_error_report.json")
+            rej.write_json(self.work_dir / "template_failures.json")
             (self.work_dir / "specific_error_report.md").write_text(md_text + "\n", encoding="utf-8")
             first_f = stem_gate_failures[0]
             raise ValueError(
@@ -1660,13 +1790,17 @@ class PipelineRunner:
         print("=" * 70)
 
         cid_to_shard: Dict[str, str] = {}
+        shard_to_cids: Dict[str, List[str]] = {}
         for mp in (self.work_dir / "shards" / "pre_shard_manifest.json", self.work_dir / "pre_shard_manifest.json"):
             if mp.is_file():
                 try:
                     for s_item in (json.loads(mp.read_text(encoding="utf-8")).get("shards") or []):
                         if isinstance(s_item, dict) and s_item.get("shard_id"):
-                            for c in (s_item.get("competency_ids") or []):
-                                cid_to_shard[str(c)] = str(s_item["shard_id"])
+                            s_id = str(s_item["shard_id"])
+                            c_ids = [str(c) for c in (s_item.get("competency_ids") or [])]
+                            for c in c_ids:
+                                cid_to_shard[c] = s_id
+                            shard_to_cids.setdefault(s_id, []).extend(c_ids)
                     break
                 except Exception:
                     pass
@@ -1683,20 +1817,82 @@ class PipelineRunner:
             if detail and detail not in entry["findings"] and len(entry["findings"]) < 12:
                 entry["findings"].append(detail)
 
-        # 1. Linter / build gate findings (Stage 4 scanners)
-        spec_p = self.work_dir / "specific_error_report.json"
-        if spec_p.is_file():
+        # 1. Linter / build gate / publication / template failure findings
+        report_candidates = [
+            self.work_dir / "specific_error_report.json",
+            self.work_dir / "publish_rejection_spec.json",
+            self.work_dir / "template_failures.json",
+        ]
+        for rep_p in report_candidates:
+            if not rep_p.is_file():
+                continue
             try:
-                spec = json.loads(spec_p.read_text(encoding="utf-8"))
-                for cid in spec.get("failing_competencies") or []:
+                spec = json.loads(rep_p.read_text(encoding="utf-8"))
+                for cid in (spec.get("failing_competencies") or []):
                     _add(cid, "linter", "")
-                for grp in spec.get("groups") or []:
-                    tag = grp.get("rule_tag") or grp.get("linter") or "LINTER"
-                    for loc in grp.get("locations") or []:
-                        msgs = loc.get("sample_findings") or [""]
-                        _add(loc.get("competency_id"), "linter", f"[{tag}] {loc.get('template_id', '')}: {msgs[0]}"[:400])
+
+                # Read grouped_by_rule or groups
+                grps = spec.get("grouped_by_rule") or spec.get("groups") or {}
+                if isinstance(grps, list):
+                    for grp in grps:
+                        tag = grp.get("rule_tag") or grp.get("linter") or "LINTER"
+                        for loc in (grp.get("locations") or []):
+                            msgs = loc.get("sample_findings") or [""]
+                            _add(loc.get("competency_id"), "linter", f"[{tag}] {loc.get('template_id', '')}: {msgs[0]}"[:400])
+                elif isinstance(grps, dict):
+                    for rule_name, rule_items in grps.items():
+                        if isinstance(rule_items, list):
+                            for ent in rule_items:
+                                if isinstance(ent, dict):
+                                    tag = ent.get("rule_tag") or ent.get("linter") or rule_name
+                                    if ent.get("locations"):
+                                        for loc in ent["locations"]:
+                                            msgs = loc.get("sample_findings") or [""]
+                                            _add(loc.get("competency_id"), "linter", f"[{tag}] {loc.get('template_id', '')}: {msgs[0]}"[:400])
+                                    else:
+                                        cid = ent.get("competency_id") or ent.get("cid")
+                                        msg = ent.get("message") or ent.get("detail") or str(ent)
+                                        _add(cid, "linter", f"[{tag}] {msg}"[:400])
+                                elif isinstance(ent, str):
+                                    _add("", "linter", f"[{rule_name}] {ent}"[:400])
+                        elif isinstance(rule_items, dict):
+                            tag = rule_items.get("rule_tag") or rule_items.get("linter") or rule_name
+                            cids = rule_items.get("competencies") or rule_items.get("competency_ids") or []
+                            sample = rule_items.get("sample") or rule_items.get("message") or rule_name
+                            if cids:
+                                for cid in cids:
+                                    _add(cid, "linter", f"[{tag}] {sample}"[:400])
+                            else:
+                                cid = rule_items.get("competency_id") or rule_items.get("cid")
+                                _add(cid, "linter", f"[{tag}] {sample}"[:400])
+
+                # Read diagnostics_by_competency
+                diag = spec.get("diagnostics_by_competency") or {}
+                if isinstance(diag, dict):
+                    for cid, diag_entries in diag.items():
+                        if isinstance(diag_entries, list):
+                            for d_item in diag_entries:
+                                if isinstance(d_item, dict):
+                                    msg = d_item.get("message") or (d_item.get("messages", [""])[0] if isinstance(d_item.get("messages"), list) else "") or str(d_item)
+                                    tag = d_item.get("rule_tag") or d_item.get("linter") or "DIAG"
+                                    _add(cid, "linter", f"[{tag}] {msg}"[:400])
+                                else:
+                                    _add(cid, "linter", str(d_item)[:400])
+                        elif isinstance(diag_entries, str):
+                            _add(cid, "linter", diag_entries[:400])
+                        elif isinstance(diag_entries, dict):
+                            _add(cid, "linter", str(diag_entries)[:400])
+
+                # Read failing_shards / affected_shards
+                for s_id in (spec.get("failing_shards") or spec.get("affected_shards") or []):
+                    cids_for_s = shard_to_cids.get(s_id, [])
+                    if cids_for_s:
+                        for c_id in cids_for_s:
+                            _add(c_id, "linter", f"[SHARD] {s_id} marked as failing/affected")
+                    elif str(s_id).startswith("C-"):
+                        _add(str(s_id), "linter", f"[SHARD] {s_id} marked as failing/affected")
             except Exception as e:
-                logger.warning("Could not read specific_error_report.json: %s", e)
+                logger.warning("Could not read %s: %s", rep_p.name, e)
 
         # 2. Blind judge objections
         jr_p = self.work_dir / "judge_report.json"
@@ -1753,22 +1949,108 @@ class PipelineRunner:
         return result
 
     def run_stage_gates(self) -> Dict[str, Any]:
-        """Auxiliary Stage: Run Stage 4 scanners non-fatally (concurrent with blind judges) and consolidate into one repair matrix."""
+        """Auxiliary Stage: Full deterministic gates sequence (build + verify + publication QA dry-run + repair-matrix)."""
         print("\n" + "=" * 70)
-        print("[AUX STAGE: GATES] Stage 4 build/linter scan (non-fatal) + repair matrix")
+        print("[AUX STAGE: GATES] Full deterministic quality gates (build + verify + QA dry-run + repair-matrix)")
         print("=" * 70)
-        build_ok = True
-        # Drop stale build findings so a now-passing build does not resurrect old failures.
-        for stale in ("specific_error_report.json", "specific_error_report.md"):
+        for stale in (
+            "specific_error_report.json",
+            "specific_error_report.md",
+            "publish_rejection_spec.json",
+            "publish_rejection_spec.md",
+            "audit_gate_report.json",
+        ):
             (self.work_dir / stale).unlink(missing_ok=True)
+
+        build_ok = True
+        verify_ok = True
+        qa_ok = True
+
+        # 1. Step 1: build
         try:
             self.run_stage_build()
         except Exception as e:
             build_ok = False
-            print(f"  [!] Build gate reported findings (captured, not aborting): {str(e).splitlines()[0] if str(e) else type(e).__name__}")
-        res = self.run_stage_repair_matrix()
-        res["build_ok"] = build_ok
-        return res
+            print(f"  [!] Build gate reported findings: {str(e).splitlines()[0] if str(e) else type(e).__name__}")
+
+        # 2. Step 2: verify (lexical and psychometric content validation)
+        course_file = self.work_dir / "course.json"
+        if course_file.is_file():
+            try:
+                self.run_stage_verify()
+            except Exception as e:
+                verify_ok = False
+                print(f"  [!] Verify gate reported findings: {str(e).splitlines()[0] if str(e) else type(e).__name__}")
+        else:
+            verify_ok = False
+
+        # 3. Step 3: QA deterministic publication dry-run (CoursePublisher / standardized_audit_engine)
+        course_candidate = self.work_dir / "course_verified.json"
+        if not course_candidate.is_file():
+            course_candidate = course_file
+
+        if course_candidate.is_file():
+            try:
+                publisher = CoursePublisher(courses_dir=self.output_dir, project_root=repo_root)
+                from course_publisher import _load_run_full_audit, build_specific_error_report
+                audit_fn = _load_run_full_audit(publisher.project_root)
+                if audit_fn:
+                    course_parsed = json.loads(course_candidate.read_text(encoding="utf-8"))
+                    audit_rep = audit_fn(course_parsed)
+                    num_q = len(course_parsed.get("questions", []))
+                    mastery_readiness = audit_rep.get("mastery_path_readiness", {})
+                    mpri_val = audit_rep.get("mpri_score")
+                    mpri_score = mpri_val if mpri_val is not None else mastery_readiness.get("mpri_score", 0.0)
+                    pillars = audit_rep.get("pillars", mastery_readiness.get("pillars", {}))
+                    zpd_score = pillars.get("zpd_adaptive_progression", {}).get("score", 0.0)
+                    hard_penalties = audit_rep.get("hard_penalties", [])
+                    all_issues = audit_rep.get("all_issues", [])
+                    risk_clusters = audit_rep.get("risk_clusters", {})
+                    length_padded = risk_clusters.get("length_padded_options", [])
+
+                    qa_failures = []
+                    if num_q >= 20 and mpri_score < 75.0:
+                        qa_failures.append(f"MPRI score below threshold: {mpri_score} < 75.0 (with {num_q} questions)")
+                    if num_q >= 6 and zpd_score <= 0.0:
+                        qa_failures.append(f"ZPD progression score collapsed: {zpd_score} <= 0.0 (with {num_q} questions)")
+                    if hard_penalties:
+                        qa_failures.append(f"Hard penalties detected ({len(hard_penalties)})")
+                    crit_issues = [i for i in all_issues if i.get("severity") == "critical"]
+                    if crit_issues:
+                        qa_failures.append(f"Critical audit issues detected ({len(crit_issues)})")
+                    if length_padded:
+                        qa_failures.append(f"Length-padded options detected in {len(length_padded)} items")
+
+                    if qa_failures:
+                        qa_ok = False
+                        print(f"  [!] QA publication audit dry-run detected {len(qa_failures)} blocking issue(s).")
+                        build_specific_error_report(
+                            parsed=course_parsed,
+                            audit_report=audit_rep,
+                            gate_failures=qa_failures,
+                            work_dir=self.work_dir,
+                        )
+            except Exception as ex:
+                qa_ok = False
+                print(f"  [!] QA gate evaluation encountered error: {ex}")
+        else:
+            qa_ok = False
+
+        # 4. Step 4: repair-matrix consolidating all findings
+        matrix_res = self.run_stage_repair_matrix()
+        all_passed = bool(build_ok and verify_ok and qa_ok and (matrix_res.get("status") == "CLEAN") and not matrix_res.get("failing_competencies"))
+        matrix_res["build_ok"] = build_ok
+        matrix_res["verify_ok"] = verify_ok
+        matrix_res["qa_ok"] = qa_ok
+        matrix_res["gates_passed"] = all_passed
+        matrix_res["status"] = "PASS" if all_passed else "FAIL"
+
+        if not all_passed:
+            print("  [!] Gates reported failures. Repair matrix populated.")
+        else:
+            print("  [+] All quality gates passed cleanly.")
+
+        return matrix_res
 
     def _detect_changed_competencies(self) -> List[str]:
         """Competencies whose template hash differs from the one recorded when last judged (i.e. repaired since)."""
@@ -1961,6 +2243,14 @@ class PipelineRunner:
             "course_id": self.course_id,
             "work_dir": self.work_dir.resolve().as_posix(),
             "created_at": now_utc,
+            "fsm_state": "bootstrap",
+            "turn_count": 0,
+            "max_turns": 40,
+            "est_tokens": 0,
+            "max_tokens": 5000000,
+            "last_error_sha256": "",
+            "error_sha256_streak": 0,
+            "max_error_streak": 3,
             "exempt_conversation_ids": [],
         }
         lock_file.write_text(json.dumps(lock_payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -2258,6 +2548,8 @@ class PipelineRunner:
             stage_slug = str(target_stage).lower()
             with cap_stdout_to_log(self.work_dir, stage_slug):
                 res = method()
+            if stage_slug == "gates" and isinstance(res, dict) and not res.get("gates_passed", True):
+                raise RuntimeError("Quality gates failed. Blocking issues found in build, verify, or QA audit; repair matrix populated.")
             return {stage_slug: res, "elapsed_seconds": round(time.time() - start_time, 2)}
 
         if from_stage is not None:
@@ -2300,8 +2592,27 @@ class PipelineRunner:
         return results
 
 
+def _require_pykatex() -> None:
+    """Fail fast if PyKaTeX is missing (otherwise KaTeX validation silently degrades).
+
+    Explicit opt-out: set C2C_PYKATEX=off.
+    """
+    if os.environ.get("C2C_PYKATEX", "").lower() == "off":
+        return
+    try:
+        import pykatex  # noqa: F401
+    except ImportError:
+        sys.stderr.write(
+            "[ERROR] PyKaTeX is not installed: KaTeX validation would be silently skipped.\n"
+            "        Install it with `pip install PyKaTeX` (or `pip install -e .[dev]`), "
+            "or set C2C_PYKATEX=off to skip it explicitly.\n"
+        )
+        sys.exit(2)
+
+
 def main() -> None:
     """CLI Entry Point."""
+    _require_pykatex()
     parser = argparse.ArgumentParser(
         description="Modular Content-to-Course v3 Pipeline Runner."
     )
@@ -2462,6 +2773,12 @@ def main() -> None:
         default=False,
         help="Bypass independent blind judge report verification on publish stage.",
     )
+    parser.add_argument(
+        "--force-recheck",
+        action="store_true",
+        default=False,
+        help="Bypass certificate caching and force full re-execution.",
+    )
 
     sanitized_argv = [sys.argv[0]] + [sanitize_cli_arg(a) for a in sys.argv[1:]]
     args = parser.parse_args(sanitized_argv[1:])
@@ -2504,6 +2821,7 @@ def main() -> None:
         no_pointer=args.no_pointer,
         unlock=args.unlock,
         base_course=sanitize_cli_arg(args.base_course),
+        force_recheck=args.force_recheck,
     )
 
     if args.unlock:

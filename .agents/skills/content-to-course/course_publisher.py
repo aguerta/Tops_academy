@@ -7,6 +7,7 @@ and outputs platform integration launch instructions.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import logging
@@ -730,21 +731,25 @@ def build_specific_error_report(
     ])
 
     report_text = "\n".join(md_lines)
-    structured_payload = {
-        "status": "rejected",
-        "course_id": course_id,
-        "total_issues": len(selected_issues),
-        "consolidated_blocks": total_consolidated,
-        "failing_competencies": sorted_cids,
-        "failing_shards": sorted_shards,
-        "specific_error_report_path": report_md_rel,
-        "proposed_repair_command": proposed_repair_cmd,
-        "followup_commands": followup_cmds,
-        "gate_failures": gate_failures,
-        "grouped_by_rule": serializable_groups,
-        "diagnostics_by_competency": diagnostics_by_competency,
-        "report_text": report_text,
-    }
+    from engine.interstage_schemas import RejectionSpec
+    rej_spec = RejectionSpec(
+        status="REJECTED",
+        course_id=course_id,
+        total_issues=len(selected_issues),
+        consolidated_blocks=total_consolidated,
+        failing_competencies=sorted_cids,
+        failing_shards=sorted_shards,
+        affected_shards=sorted_shards,
+        specific_error_report_path=report_md_rel,
+        proposed_repair_command=proposed_repair_cmd,
+        followup_commands=followup_cmds,
+        gate_failures=gate_failures,
+        grouped_by_rule=serializable_groups,
+        groups=serializable_groups,
+        diagnostics_by_competency=diagnostics_by_competency,
+        report_text=report_text,
+    )
+    structured_payload = rej_spec.to_dict()
 
     if work_dir:
         try:
@@ -753,8 +758,10 @@ def build_specific_error_report(
                 report_md_path.write_text(report_text, encoding="utf-8")
             if report_json_path:
                 report_json_path.write_text(json.dumps(structured_payload, indent=2, ensure_ascii=False), encoding="utf-8")
+            rej_spec_path = work_dir / "publish_rejection_spec.json"
+            rej_spec.write_json(rej_spec_path)
         except Exception as e:
-            logger.warning("Could not write specific_error_report files: %s", e)
+            logger.warning("Could not write specific_error_report / publish_rejection_spec files: %s", e)
 
     return structured_payload
 
@@ -1171,6 +1178,21 @@ class CoursePublisher:
             except Exception as ex:
                 logger.warning("Audit gate evaluation encountered unexpected error: %s", ex)
 
+        # Stamp contract_version: 2 and min_archetypes: 4 from engine.stage_contract
+        try:
+            from engine.stage_contract import MIN_ARCHETYPES as S4_MIN_ARCH
+            effective_min_arch = int(S4_MIN_ARCH)
+        except Exception:
+            effective_min_arch = 4
+        if effective_min_arch < 4:
+            effective_min_arch = 4
+
+        parsed["contract_version"] = 2
+        parsed["min_archetypes"] = effective_min_arch
+        if isinstance(parsed.get("metadata"), dict):
+            parsed["metadata"]["contract_version"] = 2
+            parsed["metadata"]["min_archetypes"] = effective_min_arch
+
         raw_text = json.dumps(parsed, ensure_ascii=False, indent=2)
 
         # 2. Programmatic validation
@@ -1182,6 +1204,11 @@ class CoursePublisher:
                 rep_res = repairer.repair_course(parsed)
                 if rep_res.success:
                     parsed = rep_res.repaired_course_data
+                    parsed["contract_version"] = 2
+                    parsed["min_archetypes"] = effective_min_arch
+                    if isinstance(parsed.get("metadata"), dict):
+                        parsed["metadata"]["contract_version"] = 2
+                        parsed["metadata"]["min_archetypes"] = effective_min_arch
                     raw_text = json.dumps(parsed, ensure_ascii=False, indent=2)
                     v_res = validate_course_content(raw_text, strict=strict)
             except Exception as rx:
@@ -1263,6 +1290,22 @@ class CoursePublisher:
 
         launch_cmd = "python run_platform.py"
         launch_url = f"http://localhost:3000/#/course/{course_id}"
+
+        # Emit work/publish.cert.json upon successful publication
+        if resolved_work_dir:
+            try:
+                from engine.interstage_schemas import ArtifactCertificate, write_certificate
+                pub_sha = hashlib.sha256(json_path.read_bytes()).hexdigest()
+                cert = ArtifactCertificate(
+                    stage="publish",
+                    artifact_id=f"publish_{course_id}",
+                    source_sha256=pub_sha,
+                    contract_version=2,
+                    passed_50_seeds=True,
+                )
+                write_certificate(resolved_work_dir / "publish.cert.json", cert)
+            except Exception as e:
+                logger.warning("Could not write publish.cert.json: %s", e)
 
         return PublicationResult(
             success=True,

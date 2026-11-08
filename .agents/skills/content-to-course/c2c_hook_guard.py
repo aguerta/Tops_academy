@@ -215,6 +215,84 @@ PYTHON_EXEC_PATTERN = re.compile(
 )
 
 
+def decidir_estrategia_edicion(
+    error_count: Optional[int],
+    affected_line_count: Optional[int] = None,
+    has_syntax_error: bool = False,
+    existing_lines: int = 0,
+) -> str:
+    """Certified 2D Matrix for determining file edition strategy.
+
+    Returns:
+        'write_file': Allow monolithic write_file rewrite.
+        'edit_file': Require surgical edit_file (block monolithic write_file).
+        'modular_splicing': Block monolithic write_file and redirect to modular fix.
+        'legacy_over_250': Legacy fallback for > 250 lines when error_count is absent.
+    """
+    if has_syntax_error or existing_lines < 40:
+        return "write_file"
+
+    if error_count is not None:
+        eff_affected = affected_line_count if affected_line_count is not None else error_count
+        if 1 <= error_count < 6 and eff_affected <= 5:
+            return "edit_file"
+        if error_count >= 6 or eff_affected > 5:
+            return "modular_splicing"
+
+    if existing_lines > 250:
+        return "legacy_over_250"
+
+    return "write_file"
+
+
+def _is_target_rejected(wd: Path, target_type: str, target_id: str) -> bool:
+    """Checks if a shard or CTA is actively marked as REJECTED in failure reports."""
+    report_candidates = [
+        wd / "specific_error_report.json",
+        wd / "publish_rejection_spec.json",
+        wd / "template_failures.json",
+        wd.parent / "specific_error_report.json",
+        wd.parent / "publish_rejection_spec.json",
+        wd.parent / "template_failures.json",
+    ]
+    aliases = _shard_id_aliases(target_id) if target_type == "shard" else _cta_id_aliases(target_id)
+    alias_set = {a.lower().strip() for a in aliases}
+
+    for rep_file in report_candidates:
+        if not rep_file.is_file():
+            continue
+        try:
+            raw = rep_file.read_text(encoding="utf-8", errors="ignore")
+            if not raw.strip():
+                continue
+            spec = json.loads(raw)
+            if not isinstance(spec, dict):
+                continue
+            st = str(spec.get("status", "")).strip().upper()
+            if st in ("REJECTED", "FAIL", "FAILED"):
+                if target_type == "shard":
+                    failing = {str(x).lower().strip() for x in (spec.get("failing_shards") or [])}
+                    affected = {str(x).lower().strip() for x in (spec.get("affected_shards") or [])}
+                    combined = failing | affected
+                    for a in alias_set:
+                        clean_a = a.replace("shard_", "")
+                        if a in combined or f"shard_{clean_a}" in combined or clean_a in combined:
+                            return True
+                else:
+                    if spec.get("affected_cta") or spec.get("failing_cta"):
+                        return True
+                    failing = {str(x).lower().strip() for x in (spec.get("failing_cta_parts") or spec.get("failing_shards") or [])}
+                    affected = {str(x).lower().strip() for x in (spec.get("affected_cta_parts") or spec.get("affected_shards") or [])}
+                    combined = failing | affected
+                    for a in alias_set:
+                        clean_a = a.replace("part_", "")
+                        if a in combined or f"part_{clean_a}" in combined or clean_a in combined:
+                            return True
+        except Exception:
+            continue
+    return False
+
+
 def find_active_c2c_lock(custom_lock_file: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """Finds an active, non-stale .c2c_subagent_lock.json file."""
     now = time.time()
@@ -497,6 +575,66 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
     read_tools = ("read_file", "view_file", "read_resource", "grep_search", "find_by_name", "file_search")
     write_tools = _WRITE_TOOLS
 
+    # Synchronous Budget Governance SLA Limits
+    max_turns = active_lock.get("max_turns", 40)
+    max_tokens = active_lock.get("max_tokens", 5_000_000)
+    max_streak = active_lock.get("max_error_streak", 3)
+
+    turn_count = active_lock.get("turn_count", 0)
+    est_tokens = active_lock.get("est_tokens", 0)
+    error_streak = active_lock.get("error_sha256_streak", 0)
+
+    if isinstance(turn_count, int) and turn_count > max_turns:
+        return {
+            "decision": "deny",
+            "reason": f"HARD_ABORT: Turn count limit exceeded ({turn_count} > {max_turns}). STOP, report to orchestrator.",
+        }
+    if isinstance(est_tokens, int) and est_tokens > max_tokens:
+        return {
+            "decision": "deny",
+            "reason": f"HARD_ABORT: Token burn limit exceeded ({est_tokens:,} > {max_tokens:,}). STOP, report to orchestrator.",
+        }
+    if isinstance(error_streak, int) and error_streak >= max_streak:
+        return {
+            "decision": "deny",
+            "reason": f"HARD_ABORT: Consecutive identical error streak limit reached ({error_streak} >= {max_streak}). STOP, report to orchestrator.",
+        }
+
+    # REPAIR Worker Barrier: Block full cta.json and manifest inspection [REPAIR-NO-FULL-CTA]
+    lock_role = str(active_lock.get("role") or active_lock.get("subagent_role") or "").strip().lower()
+    if lock_role == "repair" and tool_name in ("read_file", "view_file", "read_resource"):
+        for p in paths:
+            norm_p = p.lower()
+            if norm_p.endswith("pre_shard_manifest.json") or norm_p.endswith("pre_cta_manifest.json"):
+                return {
+                    "decision": "deny",
+                    "reason": (
+                        "BLOCKER:: [REPAIR-NO-FULL-CTA] Repair subagents are forbidden from reading full manifests. "
+                        "Use the provided competence slice or modular fix specification."
+                    ),
+                }
+            if norm_p.endswith("cta.json"):
+                cand_p = Path(norm_p)
+                sz = 0
+                check_list = [cand_p]
+                if not cand_p.is_absolute():
+                    check_list.extend([REPO_ROOT / cand_p, Path.cwd() / cand_p])
+                for cp in check_list:
+                    if cp.is_file():
+                        try:
+                            sz = cp.stat().st_size
+                            break
+                        except Exception:
+                            pass
+                if sz > 20_000:
+                    return {
+                        "decision": "deny",
+                        "reason": (
+                            "BLOCKER:: [REPAIR-NO-FULL-CTA] Repair subagents are forbidden from reading full cta.json (> 20 KB). "
+                            "Use the provided competence slice."
+                        ),
+                    }
+
     # 0. Cross-Course Isolation Guard: prevent workers from reading/copying from sibling courses/<other_id>/
     active_course_id = str(active_lock.get("course_id") or "").strip().lower()
     if active_course_id:
@@ -668,19 +806,7 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                                 st = str(p_data.get("status", "")).strip().upper()
                                                 if st == "PASS":
                                                     # Exemption: Do not deny edits when the shard is actively marked REJECTED/under repair
-                                                    is_rejected = False
-                                                    spec_rep = wd / "specific_error_report.json"
-                                                    if spec_rep.is_file():
-                                                        try:
-                                                            s_raw = spec_rep.read_text(encoding="utf-8", errors="ignore")
-                                                            s_data = json.loads(s_raw) if s_raw.strip() else {}
-                                                            if isinstance(s_data, dict) and s_data.get("status") in ("REJECTED", "FAIL", "FAILED"):
-                                                                aff_shards = [str(x).lower() for x in s_data.get("affected_shards", [])]
-                                                                if any(alias.lower() in aff_shards or f"shard_{alias.lower()}" in aff_shards for alias in _shard_id_aliases(target_id)):
-                                                                    is_rejected = True
-                                                        except Exception:
-                                                            pass
-                                                    if is_rejected:
+                                                    if _is_target_rejected(wd, "shard", target_id):
                                                         continue
 
                                                     return {
@@ -706,18 +832,7 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                                     st = str(p_data.get("status", "")).strip().upper()
                                                     if st == "PASS":
                                                         # Exemption: Do not deny edits when CTA is actively marked REJECTED/under repair
-                                                        is_rejected = False
-                                                        spec_rep = wd / "specific_error_report.json"
-                                                        if spec_rep.is_file():
-                                                            try:
-                                                                s_raw = spec_rep.read_text(encoding="utf-8", errors="ignore")
-                                                                s_data = json.loads(s_raw) if s_raw.strip() else {}
-                                                                if isinstance(s_data, dict) and s_data.get("status") in ("REJECTED", "FAIL", "FAILED"):
-                                                                    if s_data.get("affected_cta"):
-                                                                        is_rejected = True
-                                                            except Exception:
-                                                                pass
-                                                        if is_rejected:
+                                                        if _is_target_rejected(wd, "cta", target_id):
                                                             continue
 
                                                         return {
@@ -732,7 +847,8 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
 
                     # Rule C: Anti-monolithic rewrite guard after compile failure (write_file vs edit_file)
                     full_write_tools = ("write_file", "write_to_file")
-                    if tool_name in full_write_tools:
+                    edit_tools = ("edit_file", "replace_file_content", "multi_replace_file_content")
+                    if tool_name in full_write_tools or tool_name in edit_tools:
                         target_file_on_disk: Optional[Path] = None
                         p_norm = Path(norm_target)
                         check_paths = [p_norm]
@@ -831,7 +947,7 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
 
                                 if has_compile_attempt:
                                     has_syntax_error = bool(c_data.get("has_syntax_error", False))
-                                    if has_syntax_error:
+                                    if has_syntax_error and tool_name in full_write_tools:
                                         return {"decision": "allow"}
 
                                     try:
@@ -848,61 +964,62 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                         new_lines = len(str(new_content).splitlines())
 
                                     error_count = c_data.get("error_count")
+                                    affected_lines = c_data.get("affected_line_count")
+                                    streak = c_data.get("same_error_streak", 0)
 
-                                    # Case 2: error_count is positive int (v3.5 contract)
-                                    if isinstance(error_count, int) and error_count >= 1:
-                                        if error_count < 6 and (existing_lines >= 40 or new_lines >= 40):
-                                            extra_250 = " y supera las 250 líneas" if (existing_lines > 250 or new_lines > 250) else ""
-                                            if target_type == "shard":
-                                                return {
-                                                    "decision": "deny",
-                                                    "reason": (
-                                                        f"BLOCKER:: El archivo {target_id}_data.py ya fue compilado ({existing_lines} líneas){extra_250} "
-                                                        f"y registra {error_count} errores (< 6, umbral oficial). "
-                                                        "Para menos de 6 errores está prohibido reescribir todo el archivo desde cero con write_file: "
-                                                        "usa edit_file quirúrgico (replace_file_content) sobre las líneas reportadas "
-                                                        "(ej. para actualizar tuplas en TEMPLATES al nuevo contrato Form-B Tri-Banda: --min-archetypes 3, bandas easy/medium/hard, "
-                                                        ">= 2 Bloom, FIB/MS obligatorio y 3-tuplas (did, val, error_rationale_@var@) como en [M3-ARCHETYPES]), "
-                                                        "o escribe un parche modular aislado en work/shards/shard_fixes/<CID>.py."
-                                                    ),
-                                                }
-                                            else:
-                                                return {
-                                                    "decision": "deny",
-                                                    "reason": (
-                                                        f"BLOCKER:: El archivo {target_file_on_disk.name} ya fue compilado ({existing_lines} líneas){extra_250} "
-                                                        f"y registra {error_count} errores (< 6, umbral oficial). "
-                                                        "Para menos de 6 errores está prohibido reescribir todo el archivo desde cero con write_file: "
-                                                        "usa edit_file quirúrgico (replace_file_content) sobre las líneas reportadas, "
-                                                        "o escribe un parche modular aislado en work/cta_fixes/<CID>.py."
-                                                    ),
-                                                }
-                                        elif error_count >= 6:
-                                            return {"decision": "allow"}
+                                    strategy = decidir_estrategia_edicion(
+                                        error_count=error_count,
+                                        affected_line_count=affected_lines,
+                                        has_syntax_error=has_syntax_error,
+                                        existing_lines=existing_lines,
+                                    )
 
-                                    # Case 3: error_count is None or <= 0 (legacy fallback: > 250 lines deny, <= 250 lines allow)
-                                    else:
-                                        if existing_lines > 250 or new_lines > 250:
-                                            if target_type == "shard":
-                                                return {
-                                                    "decision": "deny",
-                                                    "reason": (
-                                                        f"BLOCKER:: El archivo {target_id}_data.py ya fue compilado y supera las 250 líneas. "
-                                                        "Para corregir errores de validación usa edit_file quirúrgico sobre las líneas indicadas "
-                                                        "por el compilador o escribe un override modular en work/shards/shard_fixes/<CID>.py "
-                                                        "en lugar de reescribir todo el archivo con write_file."
-                                                    ),
-                                                }
-                                            else:
-                                                return {
-                                                    "decision": "deny",
-                                                    "reason": (
-                                                        f"BLOCKER:: El archivo {target_file_on_disk.name} ya fue compilado y supera las 250 líneas. "
-                                                        "Para corregir errores de validación usa edit_file quirúrgico sobre las líneas indicadas "
-                                                        "por el compilador o escribe un override modular en work/cta_fixes/<CID>.py "
-                                                        "en lugar de reescribir todo el archivo con write_file."
-                                                    ),
-                                                }
+                                    extra_250 = " y supera las 250 líneas" if (existing_lines > 250 or new_lines > 250) else ""
+                                    target_desc = f"{target_id}_data.py" if target_type == "shard" else target_file_on_disk.name
+                                    fix_target = "work/shards/shard_fixes/<CID>.py" if target_type == "shard" else "work/cta_fixes/<CID>.py"
+
+                                    if tool_name in full_write_tools:
+                                        if strategy == "legacy_over_250":
+                                            return {
+                                                "decision": "deny",
+                                                "reason": (
+                                                    f"BLOCKER:: El archivo {target_file_on_disk.name} ya fue compilado y supera las 250 líneas. "
+                                                    "Para corregir errores de validación usa edit_file quirúrgico sobre las líneas indicadas "
+                                                    f"por el compilador o escribe un override modular en {fix_target} "
+                                                    "en lugar de reescribir todo el archivo con write_file."
+                                                ),
+                                            }
+                                        elif strategy == "edit_file":
+                                            return {
+                                                "decision": "deny",
+                                                "reason": (
+                                                    f"BLOCKER:: El archivo {target_file_on_disk.name} ya fue compilado ({existing_lines} líneas){extra_250} "
+                                                    f"y registra {error_count or 1} errores (< 6, umbral oficial). "
+                                                    "Para menos de 6 errores está prohibido reescribir todo el archivo desde cero con write_file: "
+                                                    "usa edit_file quirúrgico (replace_file_content) sobre las líneas reportadas "
+                                                    "(ej. para actualizar tuplas en TEMPLATES al nuevo contrato Form-C / Form-B Tri-Banda: --min-archetypes 4, bandas easy/medium/hard, "
+                                                    ">= 2 Bloom, FIB/MS obligatorio y 3-tuplas (did, val, error_rationale_@var@) como en [M3-ARCHETYPES]), "
+                                                    f"o escribe un parche modular aislado en {fix_target}."
+                                                ),
+                                            }
+                                        elif strategy == "modular_splicing":
+                                            return {
+                                                "decision": "deny",
+                                                "reason": (
+                                                    f"BLOCKER:: El archivo {target_file_on_disk.name} registra {error_count or 6} errores (o líneas afectadas > 5) sin SyntaxError. "
+                                                    f"Está prohibido reescribir todo el archivo con write_file monolítico. "
+                                                    f"Aplica ModularSplicing creando o editando un parche modular aislado en {fix_target}."
+                                                ),
+                                            }
+                                    elif tool_name in edit_tools:
+                                        if strategy == "modular_splicing" and streak >= 2:
+                                            return {
+                                                "decision": "deny",
+                                                "reason": (
+                                                    f"BLOCKER:: Se detectó un bucle repetitivo de edit_file in-place ({streak} intentos fallidos) sobre {target_file_on_disk.name}. "
+                                                    f"Redirige inmediatamente a ModularSplicing en {fix_target}."
+                                                ),
+                                            }
 
     # 3. Deny circumventing via shell commands
     if tool_name in cmd_tools:
