@@ -2623,5 +2623,129 @@
       "output_tokens_per_question": 1682.1
     },
     "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261108_033353_estadistica_3_s9_vmapreduce17_d637aaa6",
+    "timestamp": "2026-11-08T08:33:53.037872+00:00",
+    "course_id": "estadistica_3_s9_vmapreduce17",
+    "course_title": "Estadistica 3 S9 Vmapreduce17",
+    "conversation_id": "d637aaa6-f977-44c7-961d-85cf210c88f6",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 80,
+      "input_mb": 0.93,
+      "competencies": 44,
+      "questions": 0,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1599.0,
+      "agent_compute_seconds": 18334.0,
+      "speedup": 11.47,
+      "total_tokens": 48928639,
+      "total_active_tokens": 7490526,
+      "input_tokens": 4728243,
+      "output_tokens": 2313896,
+      "cache_read_tokens": 41438113,
+      "total_turns": 637,
+      "subagents_count": 38,
+      "tool_errors": 100,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 594.0,
+      "stage_3_max_wall": 773.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 88,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (0 operaciones)**: Operaciones sobre archivos de reactivos.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 88 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 611608.0,
+      "active_tokens_per_page": 93631.6,
+      "tokens_per_input_kb": 51517.8,
+      "tokens_per_competency": 1112014.5,
+      "active_tokens_per_competency": 170239.2,
+      "author_tokens_per_competency": 140348.4,
+      "tokens_per_question": 0.0,
+      "active_tokens_per_question": 0.0,
+      "seconds_per_page": 19.99,
+      "seconds_per_question": 0.0,
+      "questions_per_minute": 0.0,
+      "agent_seconds_per_question": 0.0,
+      "output_tokens_per_question": 0.0
+    },
+    "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261108_112602_estadistica_3_s9_vmapreduce16_238df59a",
+    "timestamp": "2026-11-08T16:26:02.237559+00:00",
+    "course_id": "estadistica_3_s9_vmapreduce16",
+    "course_title": "Estadistica 3 S9 Vmapreduce16",
+    "conversation_id": "238df59a-ffa1-4e03-b262-1cdb266ef15f",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 80,
+      "input_mb": 0.93,
+      "competencies": 50,
+      "questions": 1160,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 7044.0,
+      "agent_compute_seconds": 22826.0,
+      "speedup": 3.24,
+      "total_tokens": 73582235,
+      "total_active_tokens": 9993306,
+      "input_tokens": 5097345,
+      "output_tokens": 2315922,
+      "cache_read_tokens": 63588929,
+      "total_turns": 834,
+      "subagents_count": 51,
+      "tool_errors": 110,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 638.0,
+      "stage_3_max_wall": 688.0,
+      "orchestrator_interventions": 23,
+      "blind_judges": {
+        "passed_first_attempt": false,
+        "badge": "❌ NO PASARON AL PRIMER INTENTO (REQUIRIÓ INTERVENCIONES)",
+        "batch_items_count": 120,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 23,
+        "summary_desc": "Los blind judges y la verificación psicométrica registraron discrepancias que requirieron correcciones. La validación previa operó con discrepancias detectadas, requiriendo rondas de auto-reparación o intervención técnica.",
+        "actions_taken": [
+          "1. **Bucle de Auto-Reparación**: Se ejecutó RepairLoop sobre el lote de evaluación.",
+          "2. **Intervenciones de Supervisor (23 operaciones)**: Operaciones sobre `FUTURE_MILESTONES.md`, `compute_tokens.py`, `diag_lock.py`, `dispatch.py`, `find_hang_expr.py`.",
+          "3. **Certificación y Verificación Final**: Se concluyó la validación tras 1 iteraciones sobre el lote de 120 reactivos."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 919777.9,
+      "active_tokens_per_page": 124916.3,
+      "tokens_per_input_kb": 77476.0,
+      "tokens_per_competency": 1471644.7,
+      "active_tokens_per_competency": 199866.1,
+      "author_tokens_per_competency": 112302.3,
+      "tokens_per_question": 63433.0,
+      "active_tokens_per_question": 8614.9,
+      "seconds_per_page": 88.05,
+      "seconds_per_question": 6.07,
+      "questions_per_minute": 9.88,
+      "agent_seconds_per_question": 19.68,
+      "output_tokens_per_question": 2159.5
+    },
+    "bottlenecks_count": 4
   }
 ]
