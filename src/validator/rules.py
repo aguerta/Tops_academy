@@ -19,6 +19,10 @@ Extended Quality Rules:
 - R-20: LaTeX Syntax, Delimiters, Double Braces, Unreplaced Vars, and Prose Overflow (ERR_LATEX_SYNTAX, ERR_KATEX_PROSE_OVERFLOW)
 - R-22: Mandatory Diagnostic Error Rationale in Multiple Select (ERR_MS_MISSING_RATIONALE)
 - R-23: KaTeX Over-escape, Unsupported Macros, and Inline Linebreak (ERR_LATEX_OVERESCAPE, ERR_LATEX_INLINE_NEWLINE, ERR_LATEX_UNSUPPORTED_MACRO)
+- R-24: Vacuous Quantifiers bound to Numeric Constants (ERR_VACUOUS_QUANTIFIER)
+- R-25: Socratic Hint Answer Leak in Hints 1-2 (ERR_HINT_ANSWER_LEAK_S12)
+- R-26: Option Parenthetical Design Telltales (ERR_OPTION_PARENTHETICAL_TELLTALE)
+- R-27: Newton Differential Dot over Numeric Literals (ERR_NUMERIC_NEWTON_DOT)
 Strict Mode Rules:
 - S-01: Step-by-step solution required (ERR_STRICT_MISSING_SOLUTION)
 - S-02: Misconception warning required (ERR_STRICT_MISSING_MISCONCEPTION)
@@ -285,6 +289,73 @@ def check_strict_rules(data: dict[str, Any]) -> list[ValidationError]:
     return errors
 
 
+def check_vacuous_quantifiers(text: str) -> list[str]:
+    """Detects quantifiers tied directly to numeric constants (Rule R-24).
+    e.g. \\forall \\varepsilon = 0.05 or \\exists \\delta = 0.1
+    """
+    if not isinstance(text, str):
+        return []
+    pattern = re.compile(r"\\(?:forall|exists)\s*(?:\\[a-zA-Z]+|[a-zA-Z])\s*=\s*[-+]?\d+(?:\.\d+)?")
+    return [m.group(0) for m in pattern.finditer(text)]
+
+
+def check_hint_answer_leak(hints: list[Any], correct_text: str) -> list[tuple[int, str]]:
+    """Checks if hints[0] or hints[1] leak the correct answer when len(correct_text) >= 15 (Rule R-25).
+    Returns list of (hint_index, leaked_snippet).
+    """
+    leaks: list[tuple[int, str]] = []
+    if not isinstance(hints, list) or not isinstance(correct_text, str):
+        return leaks
+
+    clean_correct = correct_text.replace("$", " ")
+    norm_correct = re.sub(r"\s+", " ", clean_correct).strip()
+    if len(norm_correct) < 15:
+        return leaks
+
+    norm_correct_low = norm_correct.lower()
+    norm_correct_nospace = re.sub(r"\s+", "", clean_correct).lower()
+
+    for idx in range(min(2, len(hints))):
+        h = hints[idx]
+        if isinstance(h, str):
+            h_text = h
+        elif isinstance(h, dict):
+            h_text = str(h.get("text") or h.get("content") or h.get("hint") or "")
+        else:
+            continue
+
+        clean_h = h_text.replace("$", " ")
+        norm_h_low = re.sub(r"\s+", " ", clean_h).strip().lower()
+        norm_h_nospace = re.sub(r"\s+", "", clean_h).lower()
+
+        if norm_correct_low in norm_h_low or (len(norm_correct_nospace) >= 15 and norm_correct_nospace in norm_h_nospace):
+            leaks.append((idx, norm_correct))
+    return leaks
+
+
+def check_option_parenthetical_telltale(option_text: str) -> list[str]:
+    """Detects parenthetical self-incriminating design notes in option text (Rule R-26).
+    e.g. (sesgo...), (confusión con...), (error al...), (omitiendo...), (despeje erróneo...)
+    """
+    if not isinstance(option_text, str):
+        return []
+    pattern = re.compile(
+        r"\([^)]*?\b(?:sesgo\b|confusi[oó]n\s+con\b|error\s+al\b|omitiendo\b|despeje\s+err[oó]neo\b)[^)]*?\)",
+        re.IGNORECASE
+    )
+    return [m.group(0) for m in pattern.finditer(option_text)]
+
+
+def check_numeric_newton_dot(text: str) -> list[str]:
+    """Detects Newton differential dots over numeric literals (Rule R-27).
+    e.g. \\dot{5}, \\ddot{12}, \\dot{-3.5}, or \\dot5
+    """
+    if not isinstance(text, str):
+        return []
+    pattern = re.compile(r"\\d?dot\{\s*[-+]?\d+(?:\.\d+)?\s*\}|\\d?dot\s*[-+]?\d+(?:\.\d+)?")
+    return [m.group(0) for m in pattern.finditer(text)]
+
+
 def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
     """Validates extended pedagogical and structural quality rules:
     - R-17: Placeholder/Generic Error Rationale (ERR_PLACEHOLDER_RATIONALE)
@@ -292,6 +363,11 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
     - R-19: Answer Leak in fill_in_the_blank question stem (ERR_ANSWER_LEAK)
     - R-20: LaTeX Syntax, Delimiters, Residual Double Braces, and Template Variables (ERR_LATEX_SYNTAX)
     - R-22: Mandatory Diagnostic Error Rationale in multiple_select (ERR_MS_MISSING_RATIONALE)
+    - R-23: KaTeX Over-escape, Unsupported Macros, and Inline Linebreak (ERR_LATEX_OVERESCAPE, ERR_LATEX_INLINE_NEWLINE, ERR_LATEX_UNSUPPORTED_MACRO)
+    - R-24: Vacuous Quantifiers directly bound to numeric constants (ERR_VACUOUS_QUANTIFIER)
+    - R-25: Socratic Hint Answer Leak in Hints 1-2 (ERR_HINT_ANSWER_LEAK_S12)
+    - R-26: Option Parenthetical Design Telltales (ERR_OPTION_PARENTHETICAL_TELLTALE)
+    - R-27: Newton Differential Dot over Numeric Literals (ERR_NUMERIC_NEWTON_DOT)
     """
     errors: list[ValidationError] = []
 
@@ -640,6 +716,24 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                 rule_id="R-19",
                 code="ERR_ANSWER_LEAK_SYNTAX",
                 message=f"Question '{q_id}' in {field_desc}: Corrupted differential operator or answer leak detected (e.g. \\dot<number>)",
+                item_id=q_id
+            ))
+
+        # Rule R-27: Newton differential dots over numeric literals (\dot{5}, \ddot{12})
+        for nd in check_numeric_newton_dot(text):
+            text_errors.append(ValidationError(
+                rule_id="R-27",
+                code="ERR_NUMERIC_NEWTON_DOT",
+                message=f"Question '{q_id}' in {field_desc}: Corrupted differential operator Newton dot over numeric literal detected: '{nd}'",
+                item_id=q_id
+            ))
+
+        # Rule R-24: Vacuous quantifiers bound directly to numerical constant (\forall \varepsilon = 0.05)
+        for vq in check_vacuous_quantifiers(text):
+            text_errors.append(ValidationError(
+                rule_id="R-24",
+                code="ERR_VACUOUS_QUANTIFIER",
+                message=f"Question '{q_id}' in {field_desc}: Vacuous quantifier bound directly to numerical constant detected: '{vq}'",
                 item_id=q_id
             ))
 
@@ -992,6 +1086,39 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                             ))
                             break
 
+            # --- Rule R-25: Hint Answer Leak in Hints 1-2 (ERR_HINT_ANSWER_LEAK_S12) ---
+            candidate_correct_texts: list[str] = []
+            if isinstance(options, list):
+                for opt in options:
+                    if isinstance(opt, dict) and opt.get("is_correct") is True:
+                        c_text = opt.get("content")
+                        if isinstance(c_text, str) and c_text.strip():
+                            candidate_correct_texts.append(c_text)
+            elif itype == "fill_in_the_blank":
+                ans = q.get("correct_answer")
+                if isinstance(ans, str) and ans.strip():
+                    candidate_correct_texts.append(ans)
+                elif isinstance(ans, dict):
+                    v = ans.get("value") or ans.get("expression")
+                    if isinstance(v, str) and v.strip():
+                        candidate_correct_texts.append(v)
+                elif isinstance(ans, (int, float)) and not isinstance(ans, bool):
+                    candidate_correct_texts.append(str(ans))
+
+            for c_text in candidate_correct_texts:
+                leaks = check_hint_answer_leak(hints, c_text)
+                for h_idx, leaked_snippet in leaks:
+                    errors.append(ValidationError(
+                        rule_id="R-25",
+                        code="ERR_HINT_ANSWER_LEAK_S12",
+                        message=(
+                            f"Question '{q_id}' in hints[{h_idx}]: Socratic hint mechanically leaks "
+                            f"correct answer string: '{leaked_snippet[:60]}...'"
+                        ),
+                        item_id=q_id,
+                        details={"hint_index": h_idx, "leaked_text": leaked_snippet}
+                    ))
+
         sol = q.get("solution")
         if isinstance(sol, str):
             errors.extend(check_latex_and_templates(sol, q_id, "solution"))
@@ -1062,6 +1189,20 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
                                 details={"phrase": m_pad.group(0), "option_id": opt_id}
                             ))
                             break
+
+                # R-26: Option Parenthetical Design Telltales (ERR_OPTION_PARENTHETICAL_TELLTALE)
+                if isinstance(opt_content, str):
+                    for tell in check_option_parenthetical_telltale(opt_content):
+                        errors.append(ValidationError(
+                            rule_id="R-26",
+                            code="ERR_OPTION_PARENTHETICAL_TELLTALE",
+                            message=(
+                                f"Question '{q_id}': Option '{opt_id}' contains self-incriminating "
+                                f"parenthetical design telltale in visible content: '{tell}'"
+                            ),
+                            item_id=q_id,
+                            details={"telltale": tell, "option_id": opt_id}
+                        ))
 
                 # R-17 & R-22: Error rationales on distractors (is_correct is False)
                 if is_correct is False:

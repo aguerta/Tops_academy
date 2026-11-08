@@ -10,6 +10,20 @@ from __future__ import annotations
 
 from typing import Any
 from .models import ValidationError
+from .rules import (
+    check_vacuous_quantifiers,
+    check_hint_answer_leak,
+    check_option_parenthetical_telltale,
+    check_numeric_newton_dot,
+)
+
+__all__ = [
+    "check_psychometrics",
+    "check_vacuous_quantifiers",
+    "check_hint_answer_leak",
+    "check_option_parenthetical_telltale",
+    "check_numeric_newton_dot",
+]
 
 
 def check_psychometrics(data: dict[str, Any]) -> list[ValidationError]:

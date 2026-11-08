@@ -677,6 +677,23 @@ class ArchetypeEntropyLinter(BaseLinter):
     MIN_ARCHETYPES = 3
 
     def run(self, course_data: dict, issues: list[LintIssue]) -> dict:
+        meta = course_data.get("metadata", {}) if isinstance(course_data.get("metadata"), dict) else {}
+        contract_ver = course_data.get("contract_version", meta.get("contract_version"))
+        explicit_min_arch = course_data.get("min_archetypes", meta.get("min_archetypes"))
+
+        if explicit_min_arch is not None:
+            try:
+                req_arch = int(explicit_min_arch)
+            except (ValueError, TypeError):
+                req_arch = 4 if (contract_ver is not None and int(contract_ver) >= 2) else 3
+        elif contract_ver is not None:
+            try:
+                req_arch = 4 if int(contract_ver) >= 2 else 3
+            except (ValueError, TypeError):
+                req_arch = 3
+        else:
+            req_arch = 3
+
         questions = course_data.get("questions", [])
         q_by_comp: dict[str, list[dict]] = {}
         for q in questions:
@@ -713,7 +730,7 @@ class ArchetypeEntropyLinter(BaseLinter):
 
             if ratio > 0.85:
                 monotonous_comps.append(cid)
-                if distinct_skeletons < self.MIN_ARCHETYPES:
+                if distinct_skeletons < req_arch:
                     low_archetype_variety_comps.append(cid)
                 issues.append(LintIssue(
                     linter=self.name,
@@ -726,7 +743,7 @@ class ArchetypeEntropyLinter(BaseLinter):
                         f"comparten la misma plantilla estructural ({distinct_skeletons} esqueleto(s) distinto(s))"
                     ),
                 ))
-            elif distinct_skeletons < self.MIN_ARCHETYPES:
+            elif distinct_skeletons < req_arch:
                 monotonous_comps.append(cid)
                 low_archetype_variety_comps.append(cid)
                 issues.append(LintIssue(
@@ -738,10 +755,10 @@ class ArchetypeEntropyLinter(BaseLinter):
                     message=(
                         f"Variedad insuficiente de arquetipos en competencia '{cid}': solo {distinct_skeletons} "
                         f"esqueleto(s) estructural(es) distinto(s) en {len(qlist)} preguntas "
-                        f"(mínimo requerido: {self.MIN_ARCHETYPES} bajo contrato Tri-Banda)"
+                        f"(mínimo requerido: {req_arch} bajo contrato Tri-Banda)"
                     ),
                 ))
-            elif tpl_ids and len(tpl_ids) < self.MIN_ARCHETYPES:
+            elif tpl_ids and len(tpl_ids) < req_arch:
                 monotonous_comps.append(cid)
                 low_archetype_variety_comps.append(cid)
                 issues.append(LintIssue(
@@ -753,12 +770,12 @@ class ArchetypeEntropyLinter(BaseLinter):
                     message=(
                         f"Variedad insuficiente de plantillas en competencia '{cid}': solo {len(tpl_ids)} "
                         f"template_id distinto(s) en {len(qlist)} preguntas "
-                        f"(mínimo requerido: {self.MIN_ARCHETYPES} bajo contrato Tri-Banda)"
+                        f"(mínimo requerido: {req_arch} bajo contrato Tri-Banda)"
                     ),
                 ))
 
         return {
-            "min_required_archetypes": self.MIN_ARCHETYPES,
+            "min_required_archetypes": req_arch,
             "monotonous_competencies_count": len(monotonous_comps),
             "monotonous_competencies": monotonous_comps,
             "low_archetype_variety_competencies_count": len(low_archetype_variety_comps),
