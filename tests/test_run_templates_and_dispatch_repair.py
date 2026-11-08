@@ -490,6 +490,133 @@ class TestRunTemplatesAndDispatchRepair(unittest.TestCase):
             self.assertIn("T-C16-01", prompt)
             self.assertNotIn("T-C01-01", prompt)
 
+    def test_templates_fast_path_cert_verification_and_invalidation(self) -> None:
+        """Fast-path cryptographic verification checks shard_XX.cert.json (< 5 ms) and invalidates on source delta."""
+        import hashlib
+        from engine.interstage_schemas import ArtifactCertificate, write_certificate
+
+        shards_dir = self.work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+        shard_file = shards_dir / "shard_01_data.py"
+        shard_content = "# Shard 01 data file\nTEMPLATES = []\n"
+        shard_file.write_text(shard_content, encoding="utf-8")
+
+        templates_dir = self.work_dir / "templates"
+        templates_dir.mkdir(parents=True, exist_ok=True)
+        tpl_file = templates_dir / "C-05.json"
+        tpl_bytes = b'[{"id": "T-C05-01", "template_id": "T-C05-01"}]'
+        tpl_file.write_bytes(tpl_bytes)
+
+        cta_file = self.work_dir / "cta.json"
+        cta_bytes = cta_file.read_bytes()
+        cta_hash = hashlib.sha256(cta_bytes).hexdigest()
+        src_hash = hashlib.sha256(shard_file.read_bytes()).hexdigest()
+        tpl_hash = hashlib.sha256(tpl_bytes).hexdigest()
+
+        cert = ArtifactCertificate(
+            stage="templates",
+            artifact_id="shard_01",
+            source_sha256=src_hash,
+            cta_sha256=cta_hash,
+            template_shas={"C-05.json": tpl_hash},
+            passed_50_seeds=True,
+        )
+        cert_path = shards_dir / "shard_01.cert.json"
+        write_certificate(cert_path, cert)
+
+        runner = PipelineRunner(work_dir=self.work_dir, strict=False)
+
+        with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            t0 = time.time()
+            res = runner.run_stage_templates()
+            elapsed = time.time() - t0
+            output = mock_stdout.getvalue()
+
+        self.assertIn("Fast-path < 5 ms", output)
+        self.assertLess(elapsed, 1.0)
+        self.assertEqual(res["status"], "PASS")
+
+        # Invalidate by altering 1 byte in shard_01_data.py
+        shard_file.write_text(shard_content + "# mutated\n", encoding="utf-8")
+        with patch("run.check_templates_file_or_dir", return_value=(True, [])):
+            with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout2:
+                runner.run_stage_templates()
+                output2 = mock_stdout2.getvalue()
+        # Fast path must be bypassed when source sha changes
+        self.assertNotIn("Fast-path < 5 ms", output2)
+
+    def test_stage_gates_build_verify_qa_and_blocking(self) -> None:
+        """Stage gates executes build, verify, QA dry-run, and repair-matrix, failing when checks fail."""
+        runner = PipelineRunner(work_dir=self.work_dir)
+        course_file = self.work_dir / "course.json"
+        course_file.write_text(json.dumps({"course_id": "test_c", "questions": []}), encoding="utf-8")
+
+        # Case 1: verification failure in gates
+        with patch.object(runner, "run_stage_build", return_value={"status": "passed"}):
+            with patch.object(runner, "run_stage_verify", side_effect=RuntimeError("Mock invariant failure")):
+                with patch.object(runner, "run_stage_repair_matrix", return_value={"status": "CLEAN", "matrix": {}}):
+                    with patch("sys.stdout", new_callable=io.StringIO):
+                        res = runner.run_stage_gates()
+                        self.assertEqual(res["status"], "FAIL")
+                        self.assertFalse(res["gates_passed"])
+                        self.assertFalse(res["verify_ok"])
+
+        # Case 2: publish dry-run failure in gates
+        mock_audit_res = {
+            "mastery_path_readiness": {"mpri_score": 50.0},
+            "hard_penalties": ["Low MPRI failure"],
+            "all_issues": [{"severity": "critical", "message": "Critical failure"}],
+            "risk_clusters": {},
+        }
+        with patch.object(runner, "run_stage_build", return_value={"status": "passed"}):
+            with patch.object(runner, "run_stage_verify", return_value={"status": "passed"}):
+                with patch("course_publisher._load_run_full_audit", return_value=lambda parsed: mock_audit_res):
+                    with patch.object(runner, "run_stage_repair_matrix", return_value={"status": "REPAIR_NEEDED", "failing_competencies": ["C-05"], "matrix": {}}):
+                        with patch("sys.stdout", new_callable=io.StringIO):
+                            res = runner.run_stage_gates()
+                            self.assertEqual(res["status"], "FAIL")
+                            self.assertFalse(res["gates_passed"])
+                            self.assertFalse(res["qa_ok"])
+                            self.assertTrue((self.work_dir / "publish_rejection_spec.json").is_file())
+
+    def test_stage_repair_matrix_reads_grouped_by_rule_and_diagnostics(self) -> None:
+        """Stage repair-matrix reads grouped_by_rule and diagnostics_by_competency across spec files."""
+        runner = PipelineRunner(work_dir=self.work_dir)
+
+        spec_data = {
+            "stage": "publish_qa_dry_run",
+            "failing_shards": ["shard_01"],
+            "affected_shards": ["shard_01"],
+            "failing_competencies": ["C-05"],
+            "grouped_by_rule": {
+                "R-15": {
+                    "shards": ["shard_01"],
+                    "competencies": ["C-05"],
+                    "count": 1,
+                    "sample": "Length parity bias",
+                }
+            },
+            "diagnostics_by_competency": {
+                "C-05": ["Distractor length out of bounds"]
+            },
+        }
+        (self.work_dir / "publish_rejection_spec.json").write_text(
+            json.dumps(spec_data, indent=2), encoding="utf-8"
+        )
+
+        with patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+            res = runner.run_stage_repair_matrix()
+            output = mock_stdout.getvalue()
+
+        self.assertEqual(res["status"], "REPAIR_NEEDED")
+        self.assertIn("C-05", res.get("failing_competencies", []))
+        self.assertIn("shard_01", res.get("by_shard", {}))
+        self.assertIn("C-05", res.get("matrix", {}))
+        findings = res["matrix"]["C-05"]["findings"]
+        self.assertTrue(any("R-15" in f for f in findings))
+        self.assertTrue(any("Distractor length out of bounds" in f for f in findings))
+        self.assertTrue((self.work_dir / "repair_matrix.json").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -604,16 +604,25 @@ def test_calibrated_stem_diversity_passes():
             "Determine el valor analítico para el parámetro {k} en el sistema.",
             "Para el sistema analizado, halle el parámetro {k} correspondiente.",
             "Obtenga el valor numérico exacto de {k} en la formulación.",
+            "Encuentre la magnitud formal del término {k} analizado.",
+            "Calcule con precisión analítica el parámetro {k}.",
+            "Deduzca el coeficiente correspondiente a {k} en el modelo.",
         ],
         [
             "Calcule la magnitud escalar correspondiente a {k} en el sistema.",
             "Estime la magnitud física dada por {k} según las condiciones.",
             "A partir de la ecuación, determine la magnitud {k} del modelo.",
+            "Obtenga la estimación escalar asociada al parámetro {k}.",
+            "Evalúe directamente el escalar {k} bajo las hipótesis dadas.",
+            "Cuantifique numéricamente la magnitud de {k} en el contexto.",
         ],
         [
             "Evalúe la expresión del parámetro {k} en el sistema.",
             "Efectúe la evaluación del término {k} para los datos provistos.",
             "Computar el valor específico de {k} satisfaciendo las restricciones.",
+            "Determine analíticamente la expresión resultante de {k}.",
+            "Halle el valor de la función dependiente de {k}.",
+            "Compruebe el valor cuantitativo asignado a {k}.",
         ],
     ]
     templates = [
@@ -718,7 +727,7 @@ def test_examples_templates_strict_validation():
     valid_edo, errs_edo = check_templates_file_or_dir(
         target_path=edo_dir / "templates",
         cta_path=edo_dir / "cta.json",
-        num_dry_run_seeds=15,
+        num_dry_run_seeds=50,
         strict=True,
     )
     assert valid_edo, f"EDO templates failed in strict=True mode: {errs_edo}"
@@ -727,7 +736,7 @@ def test_examples_templates_strict_validation():
     valid_edp, errs_edp = check_templates_file_or_dir(
         target_path=edp_dir / "templates",
         cta_path=edp_dir / "cta.json",
-        num_dry_run_seeds=15,
+        num_dry_run_seeds=50,
         strict=True,
     )
     assert valid_edp, f"EDP templates failed in strict=True mode: {errs_edp}"

@@ -186,9 +186,9 @@ COMPETENCIES = [
         1,
         [],
         [
-            ("D1", r"$\\frac{1}$", r"$\\sigma$", "Cero", "rh1", None),  # Error 1: KaTeX macro \\frac requires 2 args
-            ("D2", r"$\\frac{2}$", r"$\\sigma$", "Cero", "rh2", None),  # Error 2: KaTeX macro \\frac requires 2 args
-            ("D3", r"$\\frac{3}$", r"$\\sigma$", "Cero", "rh3", None),  # Error 3: KaTeX macro \\frac requires 2 args
+            ("D1", r"$\\sigma_{1$", r"$\\sigma$", "Cero", "rh1", None),  # Error 1: KaTeX parse error unclosed brace (produces 3 errors)
+            ("D2", r"$\\sigma$", r"$\\sigma$", "Cero", "rh2", None),
+            ("D3", r"$\\sigma$", r"$\\sigma$", "Cero", "rh3", None),
             ("D4", r"$\\sigma$", r"$\\sigma$", "Cero", "rh4", None),
             ("D5", r"$\\sigma$", r"$\\sigma$", "Cero", "rh5", None),
             ("D6", r"$\\sigma$", r"$\\sigma$", "Cero", "rh6", None),
@@ -467,8 +467,8 @@ class TestSweetSpotCrossContractCTA(unittest.TestCase):
                 "name": "edit_file",
                 "args": {
                     "Path": str(part_01_py),
-                    "Target": r"$\frac{1}$",
-                    "Replacement": r"$\frac{1}{2}$",
+                    "Target": r"$\sigma_{1$",
+                    "Replacement": r"$\sigma_{1}$",
                 },
             },
         }
@@ -757,7 +757,7 @@ class TestSweetSpotCrossContractShards(unittest.TestCase):
                         {"id": "D-C06-01", "remediation_hint": "Considere la varianza asintótica en la cota de Cramér-Rao."},
                         {"id": "D-C06-02", "remediation_hint": "Verifique el inverso de la información de Fisher observada."},
                         {"id": "D-C06-03", "remediation_hint": "Compruebe la normalización adecuada bajo la raíz cuadrada de n."},
-                        {"id": "D-C06-04", "remediation_hint": "Evalúe las condiciones de regularidad de las derivadas del log-verosimilitud."},
+                        {"id": "D-C06-04", "remediation_hint": "Evalúe las condiciones de regularidad de los gradientes del log-verosimilitud."},
                         {"id": "D-C06-05", "remediation_hint": "Revise el sesgo de segundo orden del estimador extremo."},
                         {"id": "D-C06-06", "remediation_hint": "Verifique la convergencia uniforme en probabilidad del gradiente."},
                     ],
@@ -801,15 +801,15 @@ class TestSweetSpotCrossContractShards(unittest.TestCase):
 
         # Verify stamping in pre_shard_manifest.json
         manifest_on_disk = json.loads((self.shards_dir / "pre_shard_manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual(manifest_on_disk.get("min_archetypes"), 3, "Root min_archetypes must be 3")
-        self.assertEqual(manifest_on_disk["shards"][0].get("min_archetypes"), 3, "Shard item min_archetypes must be 3")
+        self.assertEqual(manifest_on_disk.get("min_archetypes"), 4, "Root min_archetypes must be 4")
+        self.assertEqual(manifest_on_disk["shards"][0].get("min_archetypes"), 4, "Shard item min_archetypes must be 4")
 
         # Verify compile_cmd in item file
         item_file = self.work_dir / "dispatch" / "items" / "author_09.json"
         self.assertTrue(item_file.is_file(), f"Missing item file: {item_file}")
         item_data = json.loads(item_file.read_text(encoding="utf-8"))
         compile_cmd = item_data.get("compile_command", "")
-        self.assertIn("--min-archetypes 3", compile_cmd, f"compile_cmd missing --min-archetypes 3: {compile_cmd}")
+        self.assertIn("--min-archetypes 4", compile_cmd, f"compile_cmd missing --min-archetypes 4: {compile_cmd}")
         self.assertIn("--strict", compile_cmd)
         self.assertIn("--shard shard_09", compile_cmd)
 
@@ -844,7 +844,9 @@ def gen_c06(rng):
 
 def ver_c06(res):
     v = res.get("vars", {})
-    return v.get("ans") == v.get("n") * 2
+    expected = f"$@ans@$"
+    corr = str(res.get("correct", "")).strip()
+    return (corr in (expected, f"${v.get('ans')}$", str(v.get('ans')))) and v.get("ans") == v.get("n") * 2
 
 TEMPLATES = [
     (
@@ -987,10 +989,25 @@ def gen_c06_2(rng): return _gen_c06(rng, 2)
 def gen_c06_3(rng): return _gen_c06(rng, 3)
 def gen_c06_4(rng): return _gen_c06(rng, 4)
 
-def ver_c06_1(res): return res["vars"]["ans"] == res["vars"]["n"] + 10
-def ver_c06_2(res): return res["vars"]["ans"] == res["vars"]["n"] * 2
-def ver_c06_3(res): return res["vars"]["ans"] == res["vars"]["n"] + 5
-def ver_c06_4(res): return res["vars"]["ans"] == res["vars"]["n"] * 3
+def ver_c06_1(res):
+    expected = f"$@ans@$"
+    corr = str(res.get("correct", "")).strip()
+    return (corr in (expected, f"${res.get('vars', {}).get('ans')}$", str(res.get('vars', {}).get('ans')))) and res["vars"]["ans"] == res["vars"]["n"] + 10
+
+def ver_c06_2(res):
+    expected = f"$@ans@$"
+    corr = str(res.get("correct", "")).strip()
+    return (corr in (expected, f"${res.get('vars', {}).get('ans')}$", str(res.get('vars', {}).get('ans')))) and res["vars"]["ans"] == res["vars"]["n"] * 2
+
+def ver_c06_3(res):
+    expected = str(res.get("vars", {}).get("ans"))
+    corr = str(res.get("correct", "")).strip()
+    return corr == expected and res["vars"]["ans"] == res["vars"]["n"] + 5
+
+def ver_c06_4(res):
+    expected = str(res.get("vars", {}).get("ans"))
+    corr = str(res.get("correct", "")).strip()
+    return corr == expected and res["vars"]["ans"] == res["vars"]["n"] * 3
 
 # 4 Form-B 9-element tuples: covering easy, medium, hard and active modalities
 TEMPLATES = [
@@ -1001,6 +1018,8 @@ TEMPLATES = [
             r"Arquetipo 1: Calcule la varianza asintótica directa para $n = @n@$:",
             r"Arquetipo 1 Variante B: Determine el valor asintótico frontal con $n = @n@$:",
             r"Arquetipo 1 Variante C: Para tamaño $n = @n@$, halle la dispersión directa:",
+            r"Arquetipo 1 Variante D: Obtenga el resultado escalar asintótico dado $n = @n@$:",
+            r"Arquetipo 1 Variante E: Evalue analíticamente la cota de varianza con $n = @n@$:",
         ],
         [
             r"Multiplique el valor base por la constante de dispersión.",
@@ -1016,6 +1035,8 @@ TEMPLATES = [
             r"Arquetipo 2: Inverso: A partir de la dispersión dada con $n = @n@$, determine el parámetro:",
             r"Arquetipo 2 Variante B: Diagnóstico inverso de varianza asintótica con $n = @n@$:",
             r"Arquetipo 2 Variante C: Deduzca el parámetro subyacente para $n = @n@$:",
+            r"Arquetipo 2 Variante D: Resuelva la relación inversa calculando el factor para $n = @n@$:",
+            r"Arquetipo 2 Variante E: Despeje el parámetro estructural en función de $n = @n@$:",
         ],
         [
             r"Invierta analíticamente la expresión de la varianza asintótica.",
@@ -1031,6 +1052,8 @@ TEMPLATES = [
             r"Arquetipo 3: Perturbación: Analice el cambio incremental en la varianza con $n = @n@$:",
             r"Arquetipo 3 Variante B: Estática comparativa de la varianza límite bajo $n = @n@$:",
             r"Arquetipo 3 Variante C: Evalúe la perturbación de primer orden para $n = @n@$:",
+            r"Arquetipo 3 Variante D: Calcule el desplazamiento marginal sobre la varianza con $n = @n@$:",
+            r"Arquetipo 3 Variante E: Mida la sensibilidad analítica del sistema fijando $n = @n@$:",
         ],
         [
             r"Calcule la perturbación incremental sumando cinco al tamaño de muestra.",
@@ -1046,6 +1069,8 @@ TEMPLATES = [
             r"Arquetipo 4: Frontera: Evalúe el comportamiento en el régimen límite con $n = @n@$:",
             r"Arquetipo 4 Variante B: Caso extremo de cota asintótica para $n = @n@$:",
             r"Arquetipo 4 Variante C: En la condición de frontera con $n = @n@$, halle la dispersión:",
+            r"Arquetipo 4 Variante D: Analice la cota asintótica terminal cuando la muestra es $n = @n@$:",
+            r"Arquetipo 4 Variante E: Verifique el límite extremo de la distribución con $n = @n@$:",
         ],
         [
             r"Multiplique el tamaño muestral n por el factor tres de frontera.",
@@ -1199,10 +1224,25 @@ def gen_c06_2(rng): return _gen_c06(rng, 2)
 def gen_c06_3(rng): return _gen_c06(rng, 3)
 def gen_c06_4(rng): return _gen_c06(rng, 4)
 
-def ver_c06_1(res): return res["vars"]["ans"] == res["vars"]["n"] + 10
-def ver_c06_2(res): return res["vars"]["ans"] == res["vars"]["n"] * 2
-def ver_c06_3(res): return res["vars"]["ans"] == res["vars"]["n"] + 5
-def ver_c06_4(res): return res["vars"]["ans"] == res["vars"]["n"] * 3
+def ver_c06_1(res):
+    expected = f"$@ans@$"
+    corr = str(res.get("correct", "")).strip()
+    return (corr in (expected, f"${res.get('vars', {}).get('ans')}$", str(res.get('vars', {}).get('ans')))) and res["vars"]["ans"] == res["vars"]["n"] + 10
+
+def ver_c06_2(res):
+    expected = f"$@ans@$"
+    corr = str(res.get("correct", "")).strip()
+    return (corr in (expected, f"${res.get('vars', {}).get('ans')}$", str(res.get('vars', {}).get('ans')))) and res["vars"]["ans"] == res["vars"]["n"] * 2
+
+def ver_c06_3(res):
+    expected = str(res.get("vars", {}).get("ans"))
+    corr = str(res.get("correct", "")).strip()
+    return corr == expected and res["vars"]["ans"] == res["vars"]["n"] + 5
+
+def ver_c06_4(res):
+    expected = str(res.get("vars", {}).get("ans"))
+    corr = str(res.get("correct", "")).strip()
+    return corr == expected and res["vars"]["ans"] == res["vars"]["n"] * 3
 
 TEMPLATES = [
     (
@@ -1212,6 +1252,8 @@ TEMPLATES = [
             r"Arquetipo 1: Calcule la varianza asintótica directa para $n = @n@$:",
             r"Arquetipo 1 Variante B: Determine el valor asintótico frontal con $n = @n@$:",
             r"Arquetipo 1 Variante C: Para tamaño $n = @n@$, halle la dispersión directa:",
+            r"Arquetipo 1 Variante D: Obtenga el resultado escalar asintótico dado $n = @n@$:",
+            r"Arquetipo 1 Variante E: Evalue analíticamente la cota de varianza con $n = @n@$:",
         ],
         [
             r"Multiplique el valor base por la constante de dispersión.",
@@ -1227,6 +1269,8 @@ TEMPLATES = [
             r"Arquetipo 2: Inverso: A partir de la dispersión dada con $n = @n@$, determine el parámetro:",
             r"Arquetipo 2 Variante B: Diagnóstico inverso de varianza asintótica con $n = @n@$:",
             r"Arquetipo 2 Variante C: Deduzca el parámetro subyacente para $n = @n@$:",
+            r"Arquetipo 2 Variante D: Resuelva la relación inversa calculando el factor para $n = @n@$:",
+            r"Arquetipo 2 Variante E: Despeje el parámetro estructural en función de $n = @n@$:",
         ],
         [
             r"Invierta analíticamente la expresión de la varianza asintótica.",
@@ -1242,6 +1286,8 @@ TEMPLATES = [
             r"Arquetipo 3: Perturbación: Analice el cambio incremental en la varianza con $n = @n@$:",
             r"Arquetipo 3 Variante B: Estática comparativa de la varianza límite bajo $n = @n@$:",
             r"Arquetipo 3 Variante C: Evalúe la perturbación de primer orden para $n = @n@$:",
+            r"Arquetipo 3 Variante D: Calcule el desplazamiento marginal sobre la varianza con $n = @n@$:",
+            r"Arquetipo 3 Variante E: Mida la sensibilidad analítica del sistema fijando $n = @n@$:",
         ],
         [
             r"Calcule la perturbación incremental sumando cinco al tamaño de muestra.",
@@ -1257,6 +1303,8 @@ TEMPLATES = [
             r"Arquetipo 4: Frontera: Evalúe el comportamiento en el régimen límite con $n = @n@$:",
             r"Arquetipo 4 Variante B: Caso extremo de cota asintótica para $n = @n@$:",
             r"Arquetipo 4 Variante C: En la condición de frontera con $n = @n@$, halle la dispersión:",
+            r"Arquetipo 4 Variante D: Analice la cota asintótica terminal cuando la muestra es $n = @n@$:",
+            r"Arquetipo 4 Variante E: Verifique el límite extremo de la distribución con $n = @n@$:",
         ],
         [
             r"Multiplique el tamaño muestral n por el factor tres de frontera.",
@@ -1320,8 +1368,9 @@ TEMPLATES = [
         self.assertIn("BLOCKER:: El shard shard_09 ya aprobó", res_blocked_edit.get("reason", ""))
 
     def test_shard_failure_over_threshold_allows_full_rewrite(self) -> None:
-        """5. Shard Cross-Contract Edge Case: When compile_shard.py records error_count >= 6:
-        - c2c_hook_guard.py allows write_file on shard_09_data.py for rescue rewrite.
+        """5. Shard Cross-Contract Edge Case: When compile_shard.py records error_count >= 6 without syntax error:
+        - v4.0 2D Matrix enforces ModularSplicing: monolithic write_file on shard_09_data.py is DENIED.
+        - Modular fix write_file on shard_fixes/C-06.py is ALLOWED.
         """
         shard_09_py = self.shards_dir / "shard_09_data.py"
         shard_09_py.write_text("# Shard data file\n" * 50, encoding="utf-8")
@@ -1338,26 +1387,41 @@ TEMPLATES = [
             json.dumps(att_state, indent=2), encoding="utf-8"
         )
 
-        # Hook Guard Rule C: write_file on shard_09_data.py is ALLOWED for rescue rewrite
+        # Hook Guard Rule C: monolithic write_file on shard_09_data.py is DENIED under 2D matrix
         write_payload = {
             "conversationId": self.worker_id,
             "toolCall": {
                 "name": "write_file",
                 "args": {
                     "Path": str(shard_09_py),
-                    "Content": "# Fresh rescue rewrite after >= 6 errors",
+                    "Content": "# Monolithic rewrite attempt after >= 6 errors",
                 },
             },
         }
         res_write = process_hook(write_payload, custom_lock_file=str(self.lock_file))
-        self.assertEqual(res_write.get("decision"), "allow")
+        self.assertEqual(res_write.get("decision"), "deny")
+        self.assertIn("ModularSplicing", res_write.get("reason", ""))
+
+        # Modular fix in shard_fixes/C-06.py is ALLOWED
+        fix_payload = {
+            "conversationId": self.worker_id,
+            "toolCall": {
+                "name": "write_file",
+                "args": {
+                    "Path": str(self.shard_fixes_dir / "C-06.py"),
+                    "Content": "# Modular fix for C-06",
+                },
+            },
+        }
+        res_fix = process_hook(fix_payload, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_fix.get("decision"), "allow")
 
 
 class TestCatalogAndPromptsAlignment(unittest.TestCase):
     """Verifies subagent_types.json catalog and system_prompts/lean synchronization and encoding."""
 
     def test_subagent_types_json_exact_sync_and_lf_encoding(self) -> None:
-        """subagent_types.json is strictly LF encoded and matches dispatch.get_type_definitions(lean=False) byte-by-byte."""
+        """subagent_types.json is strictly LF encoded and matches dispatch.get_type_definitions(lean=True) byte-by-byte."""
         types_file = SKILL_DIR / "subagent_types.json"
         self.assertTrue(types_file.is_file(), f"subagent_types.json missing from {SKILL_DIR}")
 
@@ -1368,12 +1432,12 @@ class TestCatalogAndPromptsAlignment(unittest.TestCase):
         self.assertGreater(raw_bytes.count(b"\n"), 0, "subagent_types.json must have LF (\\n)")
 
         disk_content = json.loads(raw_bytes.decode("utf-8"))
-        mem_types = get_type_definitions(lean=False)
+        mem_types = get_type_definitions(lean=True)
 
         self.assertEqual(
             disk_content,
             mem_types,
-            "subagent_types.json on disk is out of sync with dispatch.get_type_definitions(lean=False)",
+            "subagent_types.json on disk is out of sync with dispatch.get_type_definitions(lean=True)",
         )
         self.assertEqual(len(disk_content), 4)
         names = {t["name"] for t in disk_content}

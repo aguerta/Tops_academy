@@ -452,26 +452,33 @@ def gen_h01(rng):
     tc = rng.randint(250, 350)
     delta = rng.randint(150, 450)
     th = tc + delta
-    ans_val = round(1.0 - (tc / th), 3)
+    eff = round(1.0 - (tc / th), 3)
 
+    offsets = [0.028, -0.028, 0.054, -0.054, 0.082, -0.082]
     distractors = [
-        {"value": rf"$\\eta = {round(ans_val + 0.10, 3)}$", "distractor_id": "D-H01-01", "error_rationale": "Inversión errónea en foco caliente @th@ y frío @tc@"},
-        {"value": rf"$\\eta = {round(ans_val + 0.20, 3)}$", "distractor_id": "D-H01-02", "error_rationale": "Calor residual no disipado desde foco @th@"},
-        {"value": rf"$\\eta = {round(ans_val + 0.30, 3)}$", "distractor_id": "D-H01-03", "error_rationale": "Desplazamiento anómalo en temperatura fría @tc@"},
-        {"value": rf"$\\eta = {round(ans_val + 0.40, 3)}$", "distractor_id": "D-H01-04", "error_rationale": "Factor espurio aplicado al foco térmico @th@"},
-        {"value": rf"$\\eta = {round(ans_val - 0.10, 3)}$", "distractor_id": "D-H01-05", "error_rationale": "Suma errónea en lugar de resta con temperatura @tc@"},
-        {"value": rf"$\\eta = {round(ans_val - 0.20, 3)}$", "distractor_id": "D-H01-06", "error_rationale": "Semidiferencia incorrecta entre focos @th@ y @tc@"},
+        {"value": rf"$\eta = {round(eff + off, 3)}$", "distractor_id": f"D-H01-0{i}", "error_rationale": rat}
+        for i, (off, rat) in enumerate(zip(offsets, [
+            "Inversión errónea en foco caliente @th@ y frío @tc@",
+            "Calor residual no disipado desde foco @th@",
+            "Desplazamiento anómalo en temperatura fría @tc@",
+            "Factor espurio aplicado al foco térmico @th@",
+            "Suma errónea en lugar de resta con temperatura @tc@",
+            "Semidiferencia incorrecta entre focos @th@ y @tc@",
+        ]), 1)
     ]
     return {
-        "vars": {"th": th, "tc": tc, "ans": ans_val},
-        "correct": rf"$\\eta = {ans_val}$",
+        "vars": {"th": th, "tc": tc, "ans": eff},
+        "correct": rf"$\eta = {eff}$",
         "distractors": distractors
     }
 
 def ver_h01(res):
-    v = res.get("vars", {})
-    expected = round(1.0 - (v["tc"] / v["th"]), 3)
-    return v.get("ans") == expected
+    c = res.get("correct", "") if isinstance(res, dict) else str(res)
+    v = res.get("vars", {}) if isinstance(res, dict) else {}
+    raw = "".join(ch for ch in str(c) if ch.isdigit() or ch in ".-")
+    val = float(raw) if raw else -999.0
+    expected = round(1.0 - (v["tc"] / v["th"]), 3) if ("tc" in v and "th" in v) else -999.0
+    return abs(val - expected) < 1e-3
 
 TEMPLATES = [
     (
@@ -494,6 +501,10 @@ TEMPLATES = [
             r"Verifique la cota superior del rendimiento de Carnot para depósitos a $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
             r"Halle el valor de la eficiencia térmica ideal entre temperaturas $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
             r"Compruebe la razón de rendimiento para la máquina de Carnot entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Calcule la tasa de rendimiento para la máquina térmica entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Determine la relación de Carnot dados los focos térmicos $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Examine el ciclo reversible y obtenga la eficiencia entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Calcule el factor térmico óptimo de Carnot con fuentes $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
         ],
         [
             "Recuerde que el rendimiento térmico depende de la relación entre temperaturas.",
@@ -581,7 +592,11 @@ def gen_h01(rng):
     }
 
 def ver_h01(res):
-    return res.get("vars", {}).get("k") is not None
+    c = res.get("correct", "") if isinstance(res, dict) else str(res)
+    v = res.get("vars", {}) if isinstance(res, dict) else {}
+    raw = "".join(ch for ch in str(c) if ch.isdigit() or ch in ".-")
+    val = int(raw) if raw else -999
+    return val == v.get("k")
 
 TEMPLATES = [
     (
@@ -604,6 +619,10 @@ TEMPLATES = [
             r"Examine el cociente límite mediante la regla de L'Hopital para la tasa $k = {k}$:",
             r"Identifique el límite indeterminado aplicando la regla de L'Hopital en $k = {k}$:",
             r"Calcule la cota del límite con la regla de L'Hopital para el nivel $k = {k}$:",
+            r"Evalúe la expresión límite aplicando la regla de L'Hopital con $k = {k}$:",
+            r"Determine el balance del cociente con la regla de L'Hopital fijando $k = {k}$:",
+            r"Calcule el valor asintótico bajo la regla de L'Hopital para la tasa $k = {k}$:",
+            r"Obtenga la solución formal del límite con la regla de L'Hopital dado $k = {k}$:",
         ],
         [
             "Verifique las condiciones para aplicar la regla de L'Hopital de forma directa.",

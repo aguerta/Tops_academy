@@ -7,6 +7,7 @@ Tests:
 4. Platform frontend build validation & component keyboard hooks
 """
 
+import hashlib
 import json
 import os
 import sys
@@ -24,8 +25,15 @@ from plan_shards import plan_shards
 from engine.assemble import assemble_question
 from engine.diversity import evaluate_competency_diversity
 from check_templates import check_single_template
-from judge import compare_judge_responses, generate_judge_batch
-from course_publisher import CoursePublisher, check_prerequisites_dag, are_competencies_duplicate
+from judge import compare_judge_responses, generate_judge_batch, resolve_neuro_symbolic_verdict
+from course_publisher import CoursePublisher, check_prerequisites_dag, are_competencies_duplicate, build_specific_error_report
+from engine.interstage_schemas import (
+    ArtifactCertificate,
+    CompileAttemptRecord,
+    RejectionSpec,
+    write_certificate,
+    verify_certificate,
+)
 from validator.models import ValidationResult
 
 
@@ -566,5 +574,248 @@ def test_append_prerequisites_remap_avoids_self_loop_and_duplicates(tmp_path, mo
 
     dag_errs = check_prerequisites_dag(merged["competencies"])
     assert len(dag_errs) == 0
+
+
+# ==============================================================================
+# 5. STREAM 1E: INTERSTAGE SCHEMAS, JUDGE DOMINANCE, & PUBLISHER TESTS
+# ==============================================================================
+
+def test_artifact_certificate_tamper_detection(tmp_path):
+    """Verify ArtifactCertificate SHA-256 seal and source tamper detection."""
+    source_file = tmp_path / "course.json"
+    source_content = b'{"course_id": "math101", "valid": true}'
+    source_file.write_bytes(source_content)
+    source_sha = hashlib.sha256(source_content).hexdigest()
+
+    cert_path = tmp_path / "work" / "publish.cert.json"
+    cert = ArtifactCertificate(
+        stage="publish",
+        artifact_id="publish_math101",
+        source_sha256=source_sha,
+        contract_version=2,
+        passed_50_seeds=True,
+    )
+    written_path = write_certificate(cert_path, cert)
+    assert written_path.is_file()
+
+    # Valid certificate check
+    assert verify_certificate(written_path, expected_source_bytes=source_content) is True
+    assert verify_certificate(written_path, expected_source_path=source_file) is True
+
+    # Tampered source content -> FAILS
+    tampered_bytes = b'{"course_id": "math101", "tampered": true}'
+    assert verify_certificate(written_path, expected_source_bytes=tampered_bytes) is False
+
+    # Tampered certificate content (hash mismatch) -> FAILS
+    cert_data = json.loads(written_path.read_text(encoding="utf-8"))
+    cert_data["contract_version"] = 999
+    written_path.write_text(json.dumps(cert_data), encoding="utf-8")
+    assert verify_certificate(written_path, expected_source_bytes=source_content) is False
+
+
+def test_rejection_spec_dual_keys_and_status_normalization(tmp_path):
+    """Verify RejectionSpec normalizes status to REJECTED and synchronizes dual keys bidirectionally."""
+    # Case 1: Input with lowercase status, only affected_shards, only groups
+    raw_spec = {
+        "status": "failed",
+        "course_id": "test_sync",
+        "affected_shards": ["shard_02", "shard_01"],
+        "groups": {"R-20": [{"issue": "syntax"}]},
+    }
+    spec = RejectionSpec.from_dict(raw_spec)
+    dumped = spec.to_dict()
+
+    assert dumped["status"] == "REJECTED"
+    assert dumped["failing_shards"] == ["shard_01", "shard_02"]
+    assert dumped["affected_shards"] == ["shard_01", "shard_02"]
+    assert "R-20" in dumped["grouped_by_rule"]
+    assert dumped["grouped_by_rule"] == dumped["groups"]
+
+    # Case 2: Round-trip file persistence
+    out_file = tmp_path / "publish_rejection_spec.json"
+    spec.write_json(out_file)
+    loaded = RejectionSpec.from_file(out_file)
+    assert loaded.status == "REJECTED"
+    assert loaded.failing_shards == ["shard_01", "shard_02"]
+    assert loaded.affected_shards == ["shard_01", "shard_02"]
+
+
+def test_judge_canonical_one_seed_default_for_verified_templates(tmp_path):
+    """Verify generate_judge_batch uses 1 verified canonical seed by default when verifier_code is present."""
+    verified_template = {
+        "id": "T-VERIF-01",
+        "competency_id": "C-01",
+        "interaction_type": "fill_in_the_blank",
+        "stem": "Determine the value of @x@.",
+        "hints": ["Hint 1", "Hint 2", "Hint 3"],
+        "detailed_solution": "Solution is @x@.",
+        "generate_py": (
+            "def generate(rng):\n"
+            "    x = rng.randint(10, 50)\n"
+            "    return {'vars': {'x': x}, 'correct': x, 'equivalents': [str(x)]}\n"
+        ),
+        "verifier_code": (
+            "def verify(res):\n"
+            "    v = res.get('vars', {}).get('x')\n"
+            "    return v is not None and v == res.get('correct')\n"
+        ),
+    }
+
+    tpl_file = tmp_path / "verified_templates.json"
+    tpl_file.write_text(json.dumps([verified_template]), encoding="utf-8")
+
+    batch_path, gt_path = generate_judge_batch(tpl_file, work_dir=tmp_path)
+    batch = json.loads(batch_path.read_text(encoding="utf-8"))
+    gt = json.loads(gt_path.read_text(encoding="utf-8"))
+
+    # Exactly 1 item sampled because template has non-empty verifier_code!
+    assert len(batch) == 1
+    assert len(gt) == 1
+    first_item = list(gt.values())[0]
+    assert first_item["kernel_verified"] is True
+    assert first_item["kernel_refuted"] is False
+
+
+def test_judge_kernel_refutation_on_broken_template(tmp_path):
+    """Verify that templates failing verification across all candidate seeds are marked kernel_refuted = True."""
+    broken_template = {
+        "id": "T-BROKEN-01",
+        "competency_id": "C-FAIL",
+        "interaction_type": "fill_in_the_blank",
+        "stem": "Broken stem @x@.",
+        "hints": ["Hint 1", "Hint 2", "Hint 3"],
+        "detailed_solution": "Sol",
+        "generate_py": "def generate(rng): return {'vars': {'x': 1}, 'correct': 1}\n",
+        # Verifier strictly returns False on every seed!
+        "verifier_code": "def verify(res): return False\n",
+    }
+
+    tpl_file = tmp_path / "broken_templates.json"
+    tpl_file.write_text(json.dumps([broken_template]), encoding="utf-8")
+
+    batch_path, gt_path = generate_judge_batch(tpl_file, work_dir=tmp_path)
+    batch = json.loads(batch_path.read_text(encoding="utf-8"))
+    gt = json.loads(gt_path.read_text(encoding="utf-8"))
+
+    # Not emitted to blind judge batch (zero token waste!)
+    assert len(batch) == 0
+    # Recorded in ground truth as refuted
+    assert len(gt) == 1
+    gt_record = list(gt.values())[0]
+    assert gt_record["kernel_refuted"] is True
+    assert gt_record["kernel_verified"] is False
+
+    # Comparison fails immediately
+    rep = compare_judge_responses(responses={}, ground_truth=gt, work_dir=tmp_path)
+    assert rep["passed"] is False
+    assert "T-BROKEN-01" in rep["failed_templates"]
+
+
+def test_judge_resolve_neuro_symbolic_verdict_alpha_kernel_dominance():
+    """Verify Bayesian dominance (alpha_kernel = 0) in resolve_neuro_symbolic_verdict."""
+    # 1. Deterministic kernel refuted -> Unconditionally FAIL even if LLM voted PASS
+    res1 = resolve_neuro_symbolic_verdict(
+        kernel_verified=False,
+        kernel_refuted=True,
+        llm_verdict="PASS",
+    )
+    assert res1["passed"] is False
+    assert res1["verdict"] == "FAIL"
+
+    # 2. Kernel verified constructive proof overrides pure math calculation error
+    res2 = resolve_neuro_symbolic_verdict(
+        kernel_verified=True,
+        kernel_refuted=False,
+        llm_verdict="FAIL",
+        failure_category="math_error",
+        failure_reasons=["Numerical rounding mismatch at 4th decimal place"],
+    )
+    assert res2["passed"] is True
+    assert res2["verdict"] == "PASS"
+    assert res2["kernel_override"] is True
+
+    # 3. Kernel verified BUT LLM flags epistemic insufficiency / missing definition -> BLOCKS (FAIL)
+    res3 = resolve_neuro_symbolic_verdict(
+        kernel_verified=True,
+        kernel_refuted=False,
+        llm_verdict="FAIL",
+        failure_category="epistemic_insufficiency",
+        failure_reasons=["Stem does not define parameter theta prior to calculation"],
+    )
+    assert res3["passed"] is False
+    assert res3["verdict"] == "FAIL"
+    assert res3["kernel_override"] is False
+
+
+def test_course_publisher_rejection_spec_and_publish_cert(tmp_path, monkeypatch):
+    """Verify CoursePublisher writes publish_rejection_spec.json on gate failure and emits publish.cert.json on success."""
+    courses_dir = tmp_path / "courses"
+    work_dir = tmp_path / "work"
+    work_dir.mkdir(parents=True)
+
+    # A. Test Rejection Spec Emission via build_specific_error_report
+    course_payload = {
+        "course_id": "test_gate_fail",
+        "title": "Gate Fail Course",
+        "competencies": [{"id": "C-01", "name": "Concept 1"}],
+        "questions": [{"id": "Q-01", "competency_id": "C-01", "stem": "Test stem"}],
+    }
+    audit_report = {
+        "all_issues": [
+            {
+                "linter": "anti_gaming_psychometric_linter",
+                "severity": "critical",
+                "item_id": "Q-01",
+                "competency_id": "C-01",
+                "message": "Opción correcta con relleno artificial de longitud.",
+            }
+        ]
+    }
+    structured = build_specific_error_report(
+        parsed=course_payload,
+        audit_report=audit_report,
+        gate_failures=["Length-padded options detected"],
+        work_dir=work_dir,
+    )
+    spec_file = work_dir / "publish_rejection_spec.json"
+    assert spec_file.is_file()
+    spec_data = json.loads(spec_file.read_text(encoding="utf-8"))
+    assert spec_data["status"] == "REJECTED"
+    assert "failing_shards" in spec_data
+    assert "affected_shards" in spec_data
+    assert "grouped_by_rule" in spec_data
+    assert "groups" in spec_data
+
+    # B. Test Successful Publication Stamping & Certificate Emission
+    publisher = CoursePublisher(courses_dir=courses_dir)
+    publisher._run_cli_validator = lambda p, strict=True: True
+    monkeypatch.setattr(
+        "course_publisher.validate_course_content",
+        lambda raw, file_path=None, strict=False: ValidationResult(is_valid=True, file_path=file_path, errors=[]),
+    )
+    monkeypatch.setattr(
+        "course_publisher._load_run_full_audit",
+        lambda project_root=None: lambda data: {"mpri_score": 95.0, "hard_penalties": [], "all_issues": []},
+    )
+
+    valid_payload = {
+        "course_id": "cert_course",
+        "course_title": "Certified Course",
+        "competencies": [{"id": "C-01", "name": "C1", "category": "Concept"}],
+        "questions": [{"id": "Q-01", "competency_id": "C-01", "stem": "Stem", "interaction_type": "multiple_choice_7_options"}],
+    }
+    res = publisher.publish(valid_payload, work_dir=work_dir, strict=False)
+    assert res.success is True
+
+    # Verify stamped contract_version and min_archetypes
+    pub_file = courses_dir / "cert_course.json"
+    pub_data = json.loads(pub_file.read_text(encoding="utf-8"))
+    assert pub_data["contract_version"] == 2
+    assert pub_data["min_archetypes"] >= 4
+
+    # Verify publish.cert.json emission and cryptographic validity
+    cert_file = work_dir / "publish.cert.json"
+    assert cert_file.is_file()
+    assert verify_certificate(cert_file, expected_source_path=pub_file) is True
 
 

@@ -158,7 +158,7 @@ def gen_directo(rng):
     }
 
 def ver_directo(res):
-    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+    return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == r"$@ans@$")
 
 # Archetype 2: Inverso (MC7, medium, Apply)
 def gen_inverso(rng):
@@ -183,7 +183,7 @@ def gen_inverso(rng):
     }
 
 def ver_inverso(res):
-    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+    return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == r"$@ans@$")
 
 # Archetype 3: Perturbacion (FIB, medium, Analyze)
 def gen_perturbacion(rng):
@@ -199,7 +199,7 @@ def gen_perturbacion(rng):
     }
 
 def ver_perturbacion(res):
-    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+    return bool(res and isinstance(res.get("vars"), dict) and str(res.get("vars", {}).get("ans")) == str(res.get("correct")))
 
 # Archetype 4: Frontera (FIB, hard, Evaluate)
 def gen_frontera(rng):
@@ -214,7 +214,7 @@ def gen_frontera(rng):
     }
 
 def ver_frontera(res):
-    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+    return bool(res and isinstance(res.get("vars"), dict) and str(res.get("vars", {}).get("ans")) == str(res.get("correct")))
 
 hints_common = [
     "Identifique con precision los parametros iniciales del modelo estimado.",
@@ -325,7 +325,7 @@ def gen_hetero(rng):
     ]
     return (v_dict, "$@v@$", dists)
 
-def ver_hetero(res): return bool(res and isinstance(res.get("vars"), dict) and "v" in res["vars"])
+def ver_hetero(res): return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == "$@v@$")
 
 hints_h = [
     "Identifique con precision los parametros iniciales del modelo estimado.",
@@ -348,6 +348,11 @@ TEMPLATES = [
             "Halle el resultado asintotico para el estado {v}.",
             "Identifique la respuesta calculada a partir de la entrada {v}.",
             "Estime la magnitud resultante empleando el factor {v}.",
+            "Establezca el valor cuantitativo asociado a la medicion {v}.",
+            "Compute el parametro del modelo bajo la condicion {v}.",
+            "Verifique la cota superior del modelo para el dato {v}.",
+            "Determine el valor esperado con parametro observado {v}.",
+            "Halle la prediccion puntual resultante de {v}.",
         ],
         hints_h,
         "Solucion heterogenea con {v}."
@@ -393,7 +398,7 @@ def gen(rng):
             ("D-Hab06-06", str(v+6), "Error al estimar con valor @v@ en paso seis."),
         ],
     }
-def ver(r): return bool(r and isinstance(r.get("vars"), dict) and "v" in r["vars"])
+def ver(r): return bool(r and isinstance(r.get("vars"), dict) and str(r.get("vars", {}).get("v")) == str(r.get("correct")))
 hints = [
     "Identifique con precision los parametros iniciales del modelo estimado.",
     "Aplique la expresion algebraica formal correspondiente al regimen analizado.",
@@ -408,6 +413,10 @@ TEMPLATES = [
          "Variante stem D con {v}",
          "Variante stem E con {v}",
          "Variante stem F con {v}",
+         "Variante stem G con {v}",
+         "Variante stem H con {v}",
+         "Variante stem I con {v}",
+         "Variante stem J con {v}",
      ],
      hints, "Solucion formal con {v}")
 ]
@@ -656,6 +665,9 @@ class TestRealShard06Compilation:
         ).replace(
             '("D-Hab06-06", r"H = @d6@"),',
             '("D-Hab06-06", r"H = @d6@", "Error al estimar con varianza @v_ls@ en paso seis."),'
+        ).replace(
+            "return abs(ans - expected) < 1e-3",
+            'return abs(ans - expected) < 1e-3 and res.get("correct") == r"H = @ans@"',
         )
 
         # Replace TEMPLATES with Form-B 9-tuples
@@ -773,7 +785,7 @@ def gen(rng):
             ("D-Hab06-06", str(v+6), "Error al computar con valor @v@ en paso seis."),
         ],
     }
-def ver(r): return bool(r and "vars" in r)
+def ver(r): return bool(r and str(r.get("vars", {}).get("v")) == str(r.get("correct")))
 hints = [
     "Identifique con precision los parametros iniciales del modelo estimado.",
     "Aplique la expresion algebraica formal correspondiente al regimen analizado.",
@@ -886,7 +898,7 @@ def gen_{idx}(rng):
             ("D-Hab06-06", str(v+6), "Error al computar con valor @v@ en paso seis."),
         ],
     }}
-def ver_{idx}(r): return bool(r and "vars" in r)
+def ver_{idx}(r): return bool(r and str(r.get("vars", {{}}).get("v")) == str(r.get("correct")))
 """)
         shard_code = "import random\n" + "\n".join(templates_defs) + "\nhints = ['Pista uno con suficiente longitud formal.', 'Pista dos con suficiente longitud formal.', 'Pista tres con suficiente longitud formal.']\nTEMPLATES = [\n"
         for idx in range(6):
@@ -1024,7 +1036,7 @@ def gen_single(rng):
     }
 
 def ver_single(res):
-    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+    return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == r"$@ans@$")
 
 hints_s = [
     "Identifique con precision los parametros iniciales del modelo estimado.",
@@ -1106,7 +1118,7 @@ def gen_cloned(rng):
     }
 
 def ver_cloned(res):
-    return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+    return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == r"$@ans@$")
 
 hints_cloned = [
     "Identifique con precision los parametros iniciales del modelo estimado.",
@@ -1252,10 +1264,10 @@ def gen_c01_2(rng): return _gen_c01(rng, 2)
 def gen_c01_3(rng): return _gen_c01(rng, 3)
 def gen_c01_4(rng): return _gen_c01(rng, 4)
 
-def ver_c01_1(res): return bool(res and isinstance(res.get("vars"), dict) and res["vars"]["ans"] == res["vars"]["n"] + 10)
-def ver_c01_2(res): return bool(res and isinstance(res.get("vars"), dict) and res["vars"]["ans"] == res["vars"]["n"] * 2)
-def ver_c01_3(res): return bool(res and isinstance(res.get("vars"), dict) and res["vars"]["ans"] == res["vars"]["n"] + 5)
-def ver_c01_4(res): return bool(res and isinstance(res.get("vars"), dict) and res["vars"]["ans"] == res["vars"]["n"] * 3)
+def ver_c01_1(res): return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == "$@ans@$" and res["vars"]["ans"] == res["vars"]["n"] + 10)
+def ver_c01_2(res): return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == "$@ans@$" and res["vars"]["ans"] == res["vars"]["n"] * 2)
+def ver_c01_3(res): return bool(res and isinstance(res.get("vars"), dict) and str(res.get("correct")) == str(res["vars"]["ans"]) and res["vars"]["ans"] == res["vars"]["n"] + 5)
+def ver_c01_4(res): return bool(res and isinstance(res.get("vars"), dict) and str(res.get("correct")) == str(res["vars"]["ans"]) and res["vars"]["ans"] == res["vars"]["n"] * 3)
 
 stem_c01_1 = [
     "Calcule la estimacion directa del modelo lineal para parametro base @n@.",

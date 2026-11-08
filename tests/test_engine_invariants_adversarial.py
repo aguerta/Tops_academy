@@ -1512,6 +1512,103 @@ class TestTplVarAndStemVariants:
         assert any("Synthetic boilerplate distractor pattern detected" in e for e in errs)
 
 
+class TestKaTeXASTInvariantsAndRejectionSampling:
+    """Tests for pykatex AST rules, algebraic sign collapse, and deterministic sub-seed rejection sampling."""
+
+    def test_pykatex_parse_error_detected(self):
+        errs = validate_katex_syntax(r"$\unknownCommandXYZ{1}$", "stem")
+        assert any("KaTeX parse error" in e for e in errs)
+
+    def test_vacuous_quantifier_detected(self):
+        errs_forall = validate_katex_syntax(r"$\forall x = 1, f(x) > 0$", "stem")
+        assert any("Vacuous quantifier detected" in e for e in errs_forall)
+
+        errs_exists = validate_katex_syntax(r"$\exists y = -2$", "stem")
+        assert any("Vacuous quantifier detected" in e for e in errs_exists)
+
+    def test_newtonian_dot_on_digits_detected(self):
+        errs = validate_katex_syntax(r"$\dot{0}$", "stem")
+        assert any("Newtonian dot accent on digits detected" in e for e in errs)
+
+        errs_two = validate_katex_syntax(r"$\dot{2}$", "stem")
+        assert any("Newtonian dot accent on digits detected" in e for e in errs_two)
+
+    def test_empty_double_curly_braces_detected(self):
+        errs = validate_katex_syntax("Considere {{}} en el texto", "stem")
+        assert any("Empty double curly braces" in e for e in errs)
+
+    def test_algebraic_double_signs_collapsed(self):
+        assert sanitize_katex_syntax(r"$x + -5$") == r"$x - 5$"
+        assert sanitize_katex_syntax(r"$x - -5$") == r"$x + 5$"
+        assert sanitize_katex_syntax(r"$x + - 5$") == r"$x - 5$"
+        assert sanitize_katex_syntax(r"$x - - 5$") == r"$x + 5$"
+        assert sanitize_katex_syntax(r"$$y + -3x$$") == r"$$y - 3x$$"
+
+    def test_subseed_rejection_sampling_success_on_incidental_collision(self):
+        from engine.instantiate import instantiate_verified_seed
+        # Template where seed=100 produces distractor collision, but other seeds do not
+        tpl = {
+            "id": "TPL-INCIDENTAL-COLLISION",
+            "interaction_type": "multiple_choice_7_options",
+            "stem": "Determine x = {a}",
+            "hints": ["H1" * 10, "H2" * 10, "H3" * 10],
+            "detailed_solution": "Sol",
+            "distractor_ids": ["D1", "D2", "D3", "D4", "D5", "D6"],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    a = rng.randint(1, 100)\n"
+                "    # Cause collision only when a == 19 (which happens on seed 100 with default rng)\n"
+                "    d1 = a if a == 19 else a + 1\n"
+                "    return {\n"
+                "        'vars': {'a': a},\n"
+                "        'correct': str(a),\n"
+                "        'distractors': [\n"
+                "            {'value': str(d1), 'distractor_id': 'D1', 'error_rationale': 'E1'},\n"
+                "            {'value': str(a + 2), 'distractor_id': 'D2', 'error_rationale': 'E2'},\n"
+                "            {'value': str(a + 3), 'distractor_id': 'D3', 'error_rationale': 'E3'},\n"
+                "            {'value': str(a + 4), 'distractor_id': 'D4', 'error_rationale': 'E4'},\n"
+                "            {'value': str(a + 5), 'distractor_id': 'D5', 'error_rationale': 'E5'},\n"
+                "            {'value': str(a + 6), 'distractor_id': 'D6', 'error_rationale': 'E6'},\n"
+                "        ]\n"
+                "    }\n"
+            ),
+        }
+        q, res, k = instantiate_verified_seed(tpl, seed=100, max_subseeds=8)
+        assert q is not None
+        assert res is not None
+
+    def test_subseed_rejection_anti_cloning_raises_tpl_d4_on_structural_identity(self):
+        from engine.instantiate import instantiate_verified_seed, InvariantViolationError
+        # Template with systematically identical distractor (d1 == correct on ALL seeds)
+        tpl_structural = {
+            "id": "TPL-STRUCTURAL-IDENTITY",
+            "interaction_type": "multiple_choice_7_options",
+            "stem": "Determine x = {a}",
+            "hints": ["H1" * 10, "H2" * 10, "H3" * 10],
+            "detailed_solution": "Sol",
+            "distractor_ids": ["D1", "D2", "D3", "D4", "D5", "D6"],
+            "generate_py": (
+                "def generate(rng):\n"
+                "    a = rng.randint(1, 100)\n"
+                "    return {\n"
+                "        'vars': {'a': a},\n"
+                "        'correct': str(a),\n"
+                "        'distractors': [\n"
+                "            {'value': str(a), 'distractor_id': 'D1', 'error_rationale': 'Identical'},\n"
+                "            {'value': str(a + 2), 'distractor_id': 'D2', 'error_rationale': 'E2'},\n"
+                "            {'value': str(a + 3), 'distractor_id': 'D3', 'error_rationale': 'E3'},\n"
+                "            {'value': str(a + 4), 'distractor_id': 'D4', 'error_rationale': 'E4'},\n"
+                "            {'value': str(a + 5), 'distractor_id': 'D5', 'error_rationale': 'E5'},\n"
+                "            {'value': str(a + 6), 'distractor_id': 'D6', 'error_rationale': 'E6'},\n"
+                "        ]\n"
+                "    }\n"
+            ),
+        }
+        with pytest.raises(InvariantViolationError) as excinfo:
+            instantiate_verified_seed(tpl_structural, seed=42, max_subseeds=8)
+        assert "TPL-D4" in str(excinfo.value)
+
+
 
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

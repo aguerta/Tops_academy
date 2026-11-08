@@ -579,3 +579,78 @@ def test_publish_quality_gate_healthy_course_passes(tmp_path: Path, monkeypatch:
     assert result.success is True
 
 
+def test_archetype_entropy_linter_dynamic_contract_v2():
+    """Verify ArchetypeEntropyLinter enforces 4 archetypes for contract_version >= 2,
+    while retaining req_arch = 3 for legacy courses without contract_version >= 2."""
+    linter = ArchetypeEntropyLinter()
+
+    # 1. Course with 3 distinct skeletons under contract_version = 2 -> FAILS (requires 4)
+    three_arch_qs = []
+    for i in range(6):
+        three_arch_qs.append({"id": f"Q-A-{i}", "competency_id": "C-01", "template_id": "T1", "stem": f"First skeleton with ${i}$."})
+        three_arch_qs.append({"id": f"Q-B-{i}", "competency_id": "C-01", "template_id": "T2", "stem": f"Second pattern involving ${i + 5}$."})
+        three_arch_qs.append({"id": f"Q-C-{i}", "competency_id": "C-01", "template_id": "T3", "stem": f"Third formulation calculating ${i + 10}$."})
+
+    issues_v2_failing = []
+    course_v2_failing = {
+        "course_id": "v40_course",
+        "contract_version": 2,
+        "competencies": [{"id": "C-01"}],
+        "questions": three_arch_qs,
+    }
+    summary_v2 = linter.run(course_v2_failing, issues_v2_failing)
+    assert summary_v2["min_required_archetypes"] == 4
+    assert summary_v2["low_archetype_variety_competencies_count"] == 1
+    assert any("mínimo requerido: 4" in iss.message for iss in issues_v2_failing)
+
+    # 2. Same 3 skeletons under legacy course (no contract_version or contract_version = 1) -> PASSES (requires 3)
+    issues_legacy = []
+    course_legacy = {
+        "course_id": "legacy_v38_course",
+        "competencies": [{"id": "C-01"}],
+        "questions": three_arch_qs,
+    }
+    summary_legacy = linter.run(course_legacy, issues_legacy)
+    assert summary_legacy["min_required_archetypes"] == 3
+    assert summary_legacy["low_archetype_variety_competencies_count"] == 0
+    assert len(issues_legacy) == 0
+
+    # 3. Modern course with 4 distinct skeletons under contract_version = 2 -> PASSES (requires 4)
+    four_arch_qs = list(three_arch_qs)
+    for i in range(5):
+        four_arch_qs.append({"id": f"Q-D-{i}", "competency_id": "C-01", "template_id": "T4", "stem": f"Fourth orthogonal structure analyzing ${i * 3}$."})
+
+    issues_v2_passing = []
+    course_v2_passing = {
+        "course_id": "v40_course_ok",
+        "contract_version": 2,
+        "competencies": [{"id": "C-01"}],
+        "questions": four_arch_qs,
+    }
+    summary_v2_pass = linter.run(course_v2_passing, issues_v2_passing)
+    assert summary_v2_pass["min_required_archetypes"] == 4
+    assert summary_v2_pass["low_archetype_variety_competencies_count"] == 0
+    assert len(issues_v2_passing) == 0
+
+
+def test_archetype_entropy_linter_historical_courses_backward_compatibility():
+    """Historical v3.8 courses in courses/*.json must evaluate with req_arch = 3 without variety warnings."""
+    import json
+    linter = ArchetypeEntropyLinter()
+    historical_courses = [
+        "courses/solow_growth_model.json",
+        "courses/gavilano_pre_parcial.json",
+        "courses/asymptotic_statistics_v7.json",
+        "courses/saul_control_optimo.json",
+    ]
+    for c_rel in historical_courses:
+        p = Path(c_rel)
+        if p.is_file():
+            data = json.loads(p.read_text(encoding="utf-8"))
+            issues = []
+            summary = linter.run(data, issues)
+            assert summary["min_required_archetypes"] == 3
+            assert summary["low_archetype_variety_competencies_count"] == 0
+
+
+

@@ -642,3 +642,178 @@ class TestCtaMergePrereqScoping:
         for item in draft_json["competencies"] + final_json["competencies"]:
             assert "_part_key" not in item, f"Leaked _part_key in {item.get('id')}"
             assert "_sort_key" not in item, f"Leaked _sort_key in {item.get('id')}"
+
+
+class TestPrereqDagCyclePathsAndEpistemicMonotonicity:
+    """Verifies deterministic exact cycle paths, assumption renumbering, and epistemic monotonicity."""
+
+    def test_exact_directed_cycle_path_output(self):
+        """Cycle detection must output the exact closed cycle path in sorted order."""
+        comps = [
+            {
+                "id": "C-01",
+                "type": "concept",
+                "name": "Concept One",
+                "prerequisites": ["C-02"],
+            },
+            {
+                "id": "C-02",
+                "type": "concept",
+                "name": "Concept Two",
+                "prerequisites": ["C-01"],
+            },
+        ]
+        errors = check_prerequisites_dag(comps)
+        assert any(
+            "Cycle detected in prerequisites: C-01 -> C-02 -> C-01" in err for err in errors
+        ), f"Expected exact cycle path, got: {errors}"
+
+    def test_merge_cta_parts_preserves_and_renumbers_assumptions(self, tmp_path: Path):
+        """Multi-part CTA merge must preserve assumptions and renumber them to match global competency IDs."""
+        work_dir = tmp_path / "work"
+        parts_dir = work_dir / "cta_parts"
+        parts_dir.mkdir(parents=True, exist_ok=True)
+
+        part_01 = {
+            "course_id": "test_course",
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "type": "concept",
+                    "name": "Part 1 Concept",
+                    "evidence": [{"doc": "textbook.pdf", "page": 1}],
+                    "prerequisites": [],
+                    "distractors": [
+                        {"id": "D-C01-01", "manifestation": "$0$", "wrong_belief": "wb"},
+                        {"id": "D-C01-02", "manifestation": "$0$", "wrong_belief": "wb"},
+                        {"id": "D-C01-03", "manifestation": "$0$", "wrong_belief": "wb"},
+                    ],
+                    "assumptions": [
+                        {
+                            "id": "A-C01-01",
+                            "statement_latex": "$x > 0$ strictly positive",
+                            "violation_consequence": "Breakdown of convergence",
+                        }
+                    ],
+                }
+            ],
+        }
+        (parts_dir / "part_01.json").write_text(json.dumps(part_01), encoding="utf-8")
+
+        part_02 = {
+            "course_id": "test_course",
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "type": "concept",
+                    "name": "Part 2 Concept",
+                    "evidence": [{"doc": "textbook.pdf", "page": 5}],
+                    "prerequisites": ["part_01:C-01"],
+                    "distractors": [
+                        {"id": "D-C01-01", "manifestation": "$0$", "wrong_belief": "wb"},
+                        {"id": "D-C01-02", "manifestation": "$0$", "wrong_belief": "wb"},
+                        {"id": "D-C01-03", "manifestation": "$0$", "wrong_belief": "wb"},
+                    ],
+                    "assumptions": [
+                        {
+                            "id": "A-C01-01",
+                            "statement_latex": "$\\det(M) \\neq 0$ invertibility",
+                            "violation_consequence": "Singular matrix failure",
+                        }
+                    ],
+                }
+            ],
+        }
+        (parts_dir / "part_02.json").write_text(json.dumps(part_02), encoding="utf-8")
+
+        manifest = {
+            "course_id": "test_course",
+            "files": [{"doc": "textbook.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+            "subparts": [
+                {"subpart_id": "part_01", "subpart_index": 0, "page_map": {1: 1}},
+                {"subpart_id": "part_02", "subpart_index": 1, "page_map": {5: 5}},
+            ],
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        merged = merge_cta_parts(work_dir)
+        comps = merged.get("competencies", [])
+        assert len(comps) == 2
+        c1 = next(c for c in comps if c["name"] == "Part 1 Concept")
+        c2 = next(c for c in comps if c["name"] == "Part 2 Concept")
+
+        assert c1["id"] == "C-01"
+        assert c2["id"] == "C-02"
+
+        # Verify assumption preservation and renumbering
+        assert len(c1.get("assumptions", [])) == 1
+        assert c1["assumptions"][0]["id"] == "A-C01-01"
+
+        assert len(c2.get("assumptions", [])) == 1
+        assert c2["assumptions"][0]["id"] == "A-C02-01"
+
+    def test_epistemic_monotonicity_base_competencies_preserved(self, tmp_path: Path):
+        """Epistemic monotonicity forbids dropping or absorbing existing base competencies."""
+        work_dir = tmp_path / "work"
+        work_dir.mkdir(parents=True, exist_ok=True)
+
+        comps_chain = []
+        for i in range(1, 6):
+            cid = f"C-{i:02d}"
+            prereqs = [f"C-{i-1:02d}"] if i > 1 else []
+            c_obj = _make_comp(cid, "concept", f"Concept Chain {cid}", unit_index=i, prerequisites=prereqs, doc="lecture.pdf", page=i)
+            c_obj["assumptions"] = [
+                {
+                    "id": f"A-{cid.replace('-', '')}-01",
+                    "statement_latex": "$x > 0$ strictly positive",
+                    "violation_consequence": "Breakdown of convergence",
+                }
+            ]
+            comps_chain.append(c_obj)
+
+        cta_draft = {
+            "course_id": "test_monotonicity",
+            "competencies": comps_chain,
+        }
+        order_list = [c["id"] for c in comps_chain]
+        (work_dir / "cta_draft.json").write_text(json.dumps(cta_draft), encoding="utf-8")
+        (work_dir / "cta_order.json").write_text(json.dumps({"order": order_list}), encoding="utf-8")
+        (work_dir / "duplicate_candidates.json").write_text(
+            json.dumps({"candidates": [{"pair": ["C-01", "C-02"], "similarity": 0.95}]}), encoding="utf-8"
+        )
+        manifest = {
+            "course_id": "test_monotonicity",
+            "files": [{"doc": "lecture.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        # LLM harmonization attempt trying to absorb base C-01 into incoming C-02
+        harmonize_spec = {
+            "merges": [
+                {
+                    "survivor_id": "C-02",
+                    "absorbed_ids": ["C-01"],
+                    "rationale": "Attempt to absorb existing base competency into newly generated concept",
+                }
+            ]
+        }
+        (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_spec), encoding="utf-8")
+
+        # Pass existing_competency_ids containing base C-01
+        final_cta = apply_harmonize(work_dir, existing_competency_ids={"C-01"})
+        final_ids = [c["id"] for c in final_cta["competencies"]]
+
+        # C-01 MUST be preserved due to monotonicity!
+        assert "C-01" in final_ids, "Base competency C-01 was unlawfully dropped or absorbed!"
+        assert "C-02" in final_ids
+
+        # Verify decisions log rejected the merge
+        report_path = work_dir / "merge_report.json"
+        assert report_path.is_file()
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        decisions = report.get("decisions", [])
+        assert any(
+            d.get("status") == "rejected_by_monotonicity" and "C-01" in d.get("reason", "")
+            for d in decisions
+        )
+

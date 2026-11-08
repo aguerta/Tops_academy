@@ -1022,4 +1022,250 @@ class TestStream1EEnhancements:
         assert repaired_options == orig_options
 
 
+# =============================================================================
+# 8. Stream 1F: Anti-Gaming Linters (R-24..R-27), Competence Slicing & 2D Matrix
+# =============================================================================
+
+class TestStream1FQualityRulesAndRemediation:
+    """Tests for:
+    - R-24: Vacuous quantifiers tied directly to numeric constants (ERR_VACUOUS_QUANTIFIER)
+    - R-25: Socratic hint answer leak in hints[0] or hints[1] (ERR_HINT_ANSWER_LEAK_S12)
+    - R-26: Option parenthetical design telltales (ERR_OPTION_PARENTHETICAL_TELLTALE)
+    - R-27: Newton dot over numeric literals (ERR_NUMERIC_NEWTON_DOT)
+    - Competence Slicing (< 2 KB context)
+    - 2D Matrix recommendation (edit_file vs ModularSplicing)
+    - Dual schema parsing ('grouped_by_rule'/'groups', 'failing_shards'/'affected_shards')
+    """
+
+    # --- R-24: Vacuous Quantifiers ---
+    def test_check_vacuous_quantifiers_pure_function(self) -> None:
+        from validator.rules import check_vacuous_quantifiers
+
+        # Positive matches
+        assert len(check_vacuous_quantifiers(r"\forall \varepsilon = 0.05")) == 1
+        assert len(check_vacuous_quantifiers(r"\exists \delta = 0.1")) == 1
+        assert len(check_vacuous_quantifiers(r"Sea $\forall x = -3$ una cota")) == 1
+        assert len(check_vacuous_quantifiers(r"$\exists y = +2.5$ en el dominio")) == 1
+
+        # Negative clean
+        assert len(check_vacuous_quantifiers(r"\forall \varepsilon > 0, \exists \delta > 0")) == 0
+        assert len(check_vacuous_quantifiers(r"\forall x \in \mathbb{R}")) == 0
+        assert len(check_vacuous_quantifiers(r"\exists y \notin S")) == 0
+        assert len(check_vacuous_quantifiers("Texto ordinario sin cuantificadores")) == 0
+
+    def test_vacuous_quantifiers_validation_rule_r24(self, base_valid_course: dict) -> None:
+        course = copy.deepcopy(base_valid_course)
+        course["questions"][0]["stem"] = r"Dado el modelo con $\forall \varepsilon = 0.05$, determine la convergencia."
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        vq_errs = [e for e in res.errors if e.rule_id == "R-24" and e.code == "ERR_VACUOUS_QUANTIFIER"]
+        assert len(vq_errs) == 1
+        assert r"\forall \varepsilon = 0.05" in vq_errs[0].message
+
+    # --- R-25: Hint Answer Leak ---
+    def test_check_hint_answer_leak_pure_function(self) -> None:
+        from validator.rules import check_hint_answer_leak
+
+        correct = "x^2 + 2x + 1 = 0"  # len 16 >= 15
+        hints_leak_0 = ["La solución exacta es x^2 + 2x + 1 = 0.", "Pista 2", "Pista 3"]
+        leaks_0 = check_hint_answer_leak(hints_leak_0, correct)
+        assert len(leaks_0) == 1
+        assert leaks_0[0][0] == 0
+
+        hints_leak_1 = ["Pista inicial 1", "Recuerde que x^2 + 2x + 1 = 0", "Pista 3"]
+        leaks_1 = check_hint_answer_leak(hints_leak_1, correct)
+        assert len(leaks_1) == 1
+        assert leaks_1[0][0] == 1
+
+        # Allowed in hint 2 (index 2 is hint 3)
+        hints_allowed_2 = ["Pista inicial 1", "Pista conceptual 2", "La solución es x^2 + 2x + 1 = 0"]
+        leaks_2 = check_hint_answer_leak(hints_allowed_2, correct)
+        assert len(leaks_2) == 0
+
+        # Short correct answer (< 15 chars) is not flagged
+        short_correct = "x = 5"
+        leaks_short = check_hint_answer_leak(["El valor es x = 5", "Verifique x = 5"], short_correct)
+        assert len(leaks_short) == 0
+
+    def test_hint_answer_leak_validation_rule_r25(self, base_valid_course: dict) -> None:
+        course = copy.deepcopy(base_valid_course)
+        q = course["questions"][0]
+        # MC question with elaborate correct answer (>= 15 chars)
+        c_opt = next(opt for opt in q["options"] if opt.get("is_correct"))
+        target_answer = c_opt["content"]
+        assert len(target_answer.replace("$", "").strip()) >= 15
+
+        # Leak in hint 0
+        q["hints"][0] = f"Note que la respuesta correcta es {target_answer}"
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        leak_errs = [e for e in res.errors if e.rule_id == "R-25" and e.code == "ERR_HINT_ANSWER_LEAK_S12"]
+        assert len(leak_errs) >= 1
+        assert "Socratic hint mechanically leaks" in leak_errs[0].message
+
+    # --- R-26: Option Parenthetical Telltale ---
+    def test_check_option_parenthetical_telltale_pure_function(self) -> None:
+        from validator.rules import check_option_parenthetical_telltale
+
+        # Positive matches
+        assert len(check_option_parenthetical_telltale("Resultado (sesgo por omisión de variables)")) == 1
+        assert len(check_option_parenthetical_telltale("Valor $x=2$ (confusión con la media muestral)")) == 1
+        assert len(check_option_parenthetical_telltale("Fórmula (error al derivar el producto)")) == 1
+        assert len(check_option_parenthetical_telltale("Parámetro (omitiendo la restricción)")) == 1
+        assert len(check_option_parenthetical_telltale("Ecuación (despeje erróneo del modelo)")) == 1
+        assert len(check_option_parenthetical_telltale("Ecuación (despeje erroneo)")) == 1
+
+        # Negative clean
+        assert len(check_option_parenthetical_telltale("Estimación al (95% de confianza)")) == 0
+        assert len(check_option_parenthetical_telltale("Modelo (caso general)")) == 0
+        assert len(check_option_parenthetical_telltale("Error estándar de la estimación")) == 0
+
+    def test_option_parenthetical_telltale_validation_rule_r26(self, base_valid_course: dict) -> None:
+        course = copy.deepcopy(base_valid_course)
+        q = course["questions"][0]
+        # Distractor with parenthetical telltale
+        dist = next(opt for opt in q["options"] if not opt.get("is_correct"))
+        dist["content"] = "$\\hat{\\beta} = 1.25$ (confusión con el estimador OLS simple)"
+
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        tell_errs = [e for e in res.errors if e.rule_id == "R-26" and e.code == "ERR_OPTION_PARENTHETICAL_TELLTALE"]
+        assert len(tell_errs) == 1
+        assert "parenthetical design telltale" in tell_errs[0].message
+
+    # --- R-27: Newton Dot over Numeric Literals ---
+    def test_check_numeric_newton_dot_pure_function(self) -> None:
+        from validator.rules import check_numeric_newton_dot
+
+        # Positive matches
+        assert len(check_numeric_newton_dot(r"\dot{5}")) == 1
+        assert len(check_numeric_newton_dot(r"\ddot{12}")) == 1
+        assert len(check_numeric_newton_dot(r"\dot{-3.5}")) == 1
+        assert len(check_numeric_newton_dot(r"\ddot{+0.1}")) == 1
+        assert len(check_numeric_newton_dot(r"\dot5")) == 1
+        assert len(check_numeric_newton_dot(r"\ddot10")) == 1
+
+        # Negative clean (variables/symbols)
+        assert len(check_numeric_newton_dot(r"\dot{x}")) == 0
+        assert len(check_numeric_newton_dot(r"\ddot{y}")) == 0
+        assert len(check_numeric_newton_dot(r"\dot{\theta}")) == 0
+        assert len(check_numeric_newton_dot(r"\ddot{k}")) == 0
+
+    def test_numeric_newton_dot_validation_rule_r27(self, base_valid_course: dict) -> None:
+        course = copy.deepcopy(base_valid_course)
+        course["questions"][0]["stem"] = r"Considere la trayectoria con $\dot{5} = 0$ en el equilibrio."
+        res = validate_course_content(json.dumps(course))
+        assert not res.is_valid
+        dot_errs = [e for e in res.errors if e.rule_id == "R-27" and e.code == "ERR_NUMERIC_NEWTON_DOT"]
+        assert len(dot_errs) == 1
+        assert r"\dot{5}" in dot_errs[0].message
+
+    # --- Psychometric Checker Export Parity ---
+    def test_psychometric_checker_reexports_all_pure_functions(self) -> None:
+        import validator.psychometric_checker as pc
+
+        assert callable(getattr(pc, "check_vacuous_quantifiers", None))
+        assert callable(getattr(pc, "check_hint_answer_leak", None))
+        assert callable(getattr(pc, "check_option_parenthetical_telltale", None))
+        assert callable(getattr(pc, "check_numeric_newton_dot", None))
+
+    # --- Competence Slicing (< 2 KB) ---
+    def test_competence_slice_under_2kb(self) -> None:
+        from repair_loop import slice_competence_context
+
+        huge_comp = {
+            "id": "COMP-99",
+            "name": "Competencia con extenso marco teorico",
+            "definition": "Definicion detallada de la competencia pedagógica " * 50,
+            "assumptions": [f"Supuesto {i}: restriccion analitica de prueba" for i in range(20)],
+            "distractors": [f"Distractor {i}: justificacion psicometrica de distractor" for i in range(30)],
+            "unneeded_bloat": {"full_syllabus": ["topic" * 200] * 50},
+        }
+
+        sliced = slice_competence_context(huge_comp, max_bytes=2048)
+        serialized = json.dumps(sliced, ensure_ascii=False)
+        byte_len = len(serialized.encode("utf-8"))
+
+        assert byte_len <= 2048, f"Slice exceeded 2048 bytes: {byte_len}"
+        assert sliced["competence_id"] == "COMP-99"
+        assert "unneeded_bloat" not in sliced
+        assert "definition" in sliced
+        assert "assumptions" in sliced
+        assert "distractor_guidelines" in sliced
+
+    # --- 2D Matrix Remediation Recommendation ---
+    def test_2d_matrix_recommendation(self) -> None:
+        from repair_loop import evaluate_2d_matrix_recommendation
+
+        # Case A: 1 <= errors < 6 and lines <= 5 -> edit_file
+        rec_a = evaluate_2d_matrix_recommendation(error_count=3, affected_line_count=3, shard_id="shard_1", competence_id="C-01")
+        assert rec_a["strategy"] == "edit_file"
+        assert rec_a["recommendation"] == "edit_file"
+
+        # Case B: errors >= 6 and lines <= 5 -> ModularSplicing
+        rec_b = evaluate_2d_matrix_recommendation(error_count=7, affected_line_count=2, shard_id="shard_1", competence_id="C-01")
+        assert rec_b["strategy"] == "ModularSplicing"
+        assert rec_b["recommendation"] == "ModularSplicing shard_fixes/shard_1/C-01.py"
+
+        # Case C: errors < 6 and lines > 5 -> ModularSplicing
+        rec_c = evaluate_2d_matrix_recommendation(error_count=2, affected_line_count=8, shard_id="shard_2", competence_id="C-02")
+        assert rec_c["strategy"] == "ModularSplicing"
+        assert rec_c["recommendation"] == "ModularSplicing shard_fixes/shard_2/C-02.py"
+
+        # Case D: errors >= 6 and lines > 5 -> ModularSplicing
+        rec_d = evaluate_2d_matrix_recommendation(error_count=10, affected_line_count=12, shard_id="shard_3", competence_id="C-03")
+        assert rec_d["strategy"] == "ModularSplicing"
+        assert rec_d["recommendation"] == "ModularSplicing shard_fixes/shard_3/C-03.py"
+
+    # --- Dual Schema Remediation Order Building ---
+    def test_build_remediation_order_dual_schemas(self) -> None:
+        from repair_loop import build_remediation_order
+
+        cta_data = {
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "name": "Competencia 1",
+                    "definition": "Definicion base",
+                    "assumptions": ["A1"],
+                    "distractors": ["D1"],
+                }
+            ]
+        }
+
+        # Schema 1: 'grouped_by_rule', 'failing_shards', 'REJECTED'
+        audit_1 = {
+            "status": "REJECTED",
+            "failing_shards": ["shard_1"],
+            "failing_competencies": ["C-01"],
+            "grouped_by_rule": {
+                "R-20": [{"competency_id": "C-01", "rule": "R-20"}, {"competency_id": "C-01", "rule": "R-20"}]
+            }
+        }
+        order_1 = build_remediation_order(audit_1, cta_data=cta_data, affected_lines_by_comp={"C-01": 2})
+        assert order_1["is_remediation_required"] is True
+        assert order_1["shards"] == ["shard_1"]
+        assert len(order_1["competence_orders"]) == 1
+        comp_ord_1 = order_1["competence_orders"][0]
+        assert comp_ord_1["competence_id"] == "C-01"
+        assert comp_ord_1["matrix_recommendation"]["strategy"] == "edit_file"
+
+        # Schema 2: 'groups', 'affected_shards', 'fail' (case-insensitive)
+        audit_2 = {
+            "status": "fail",
+            "affected_shards": ["shard_2"],
+            "affected_competencies": ["C-01"],
+            "groups": {
+                "R-23": [{"competency_id": "C-01"}] * 7
+            }
+        }
+        order_2 = build_remediation_order(audit_2, cta_data=cta_data, affected_lines_by_comp={"C-01": 10})
+        assert order_2["is_remediation_required"] is True
+        assert order_2["shards"] == ["shard_2"]
+        comp_ord_2 = order_2["competence_orders"][0]
+        assert comp_ord_2["matrix_recommendation"]["strategy"] == "ModularSplicing"
+        assert "shard_fixes/shard_2/C-01.py" in comp_ord_2["matrix_recommendation"]["recommendation"]
+
+
+
 

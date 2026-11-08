@@ -605,3 +605,84 @@ class TestR4MapReducePartitioning:
         c2 = next(c for c in merged["competencies"] if "Concept 2" in c["name"])
         # In part 2, local page 3 was mapped to global page 7!
         assert c2["evidence"][0]["page"] == 7
+
+
+class TestSymmetricalMathRepairAndKatexSanitization:
+    """Verifies non-destructive symmetrical math repairs and Windows cp1252 KaTeX sanitization."""
+
+    def test_try_symmetrical_math_repair_success(self):
+        from cta_merge import try_symmetrical_math_repair
+
+        bad_text = r"Sea P(Y \ge $\delta) = 0.95$"
+        repaired = try_symmetrical_math_repair(bad_text)
+        assert repaired is not None
+        assert repaired == r"Sea $P(Y \ge \delta) = 0.95$"
+
+    def test_try_symmetrical_math_repair_already_valid_unchanged(self):
+        from cta_merge import try_symmetrical_math_repair
+
+        valid_text = r"Given that $\alpha + \beta = 1$ and $x > 0$ holds."
+        repaired = try_symmetrical_math_repair(valid_text)
+        assert repaired is None
+
+    def test_try_symmetrical_math_repair_unresolvable_unchanged(self):
+        from cta_merge import try_symmetrical_math_repair
+
+        unresolvable = r"Invalid syntax $ \frac{incomplete "
+        repaired = try_symmetrical_math_repair(unresolvable)
+        assert repaired is None
+
+    def test_auto_wrap_bare_latex_symmetrical_integration(self):
+        from cta_merge import auto_wrap_bare_latex_in_cta_field
+
+        bad_text = r"Sea P(Y \ge $\delta) = 0.95$"
+        result = auto_wrap_bare_latex_in_cta_field(bad_text)
+        assert result == r"Sea $P(Y \ge \delta) = 0.95$"
+
+    def test_check_cta_katex_sanitizes_combining_character(self):
+        from check_cta import check_cta_katex
+
+        # KaTeX error with invalid macro that triggers pykatex parse error
+        bad_comp = {
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "name": "Invalid Macro $\\invalidMacroNameInsideMath$",
+                    "description_latex": "Valid desc",
+                }
+            ]
+        }
+        errs = check_cta_katex(bad_comp)
+        assert len(errs) > 0
+        for e in errs:
+            assert "\u0332" not in e, "Found raw combining character \\u0332 in error message"
+
+    def test_check_cta_katex_assumptions_validation(self):
+        from check_cta import check_cta_katex
+
+        # Test assumption prose overflow (>45 chars) and syntax error
+        long_prose = "x" * 50
+        comp_with_assumptions = {
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "name": "Valid Math $x=1$",
+                    "assumptions": [
+                        {
+                            "id": "A-C01-01",
+                            "statement_latex": f"$\\text{{{long_prose}}}$",
+                            "violation_consequence": "Finite sample breakdown.",
+                        },
+                        {
+                            "id": "A-C01-02",
+                            "statement_latex": "$x > 0",
+                            "violation_consequence": "Unbalanced math dollar test.",
+                        },
+                    ],
+                }
+            ]
+        }
+        errs = check_cta_katex(comp_with_assumptions)
+        assert any("[KATEX-PROSE-OVERFLOW]" in e and "A-C01-01" in e for e in errs)
+        assert any("Unbalanced inline math delimiter" in e or "parse error" in e.lower() for e in errs)
+

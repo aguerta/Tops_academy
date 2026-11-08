@@ -74,18 +74,25 @@ def create_mock_template_file(template_file: Path, cid: str) -> None:
                 "template_id": f"T-{cid}-01",
                 "competency_id": cid,
                 "interaction_type": "multiple_choice_7_options",
-                "stem": f"Calculate the optimal value for {cid}: parameter ${{k}}$",
+                "stem": f"Calculate the target output value for {cid} given parameter $n = @k@$.",
+                "hints": [
+                    "Consider the definition of optimal value for this competency.",
+                    "Evaluate each of the candidate choices against the input parameter $n$.",
+                    "Verify the exact index and bounds before selecting the final answer.",
+                ],
+                "solution": f"The correct option is derived by evaluating the target for {cid}.",
                 "generate_py": (
                     "def generate(rng):\n"
                     "    k = rng.randint(2, 20)\n"
-                    "    correct = f'Option {k}'\n"
+                    "    ans = k + 10\n"
+                    "    correct = f'$y = {ans}$'\n"
                     "    distractors = [\n"
-                    "        {'value': f'Distractor {k+1}', 'distractor_id': 'D-01', 'error_rationale': 'off by 1'},\n"
-                    "        {'value': f'Distractor {k+2}', 'distractor_id': 'D-02', 'error_rationale': 'off by 2'},\n"
-                    "        {'value': f'Distractor {k+3}', 'distractor_id': 'D-03', 'error_rationale': 'off by 3'},\n"
-                    "        {'value': f'Distractor {k+4}', 'distractor_id': 'D-04', 'error_rationale': 'off by 4'},\n"
-                    "        {'value': f'Distractor {k+5}', 'distractor_id': 'D-05', 'error_rationale': 'off by 5'},\n"
-                    "        {'value': f'Distractor {k+6}', 'distractor_id': 'D-06', 'error_rationale': 'off by 6'},\n"
+                    "        {'value': f'$y = {ans+1}$', 'distractor_id': 'D-01', 'error_rationale': 'off by 1 in the evaluation'},\n"
+                    "        {'value': f'$y = {ans+2}$', 'distractor_id': 'D-02', 'error_rationale': 'off by 2 in the evaluation'},\n"
+                    "        {'value': f'$y = {ans+3}$', 'distractor_id': 'D-03', 'error_rationale': 'off by 3 in the evaluation'},\n"
+                    "        {'value': f'$y = {ans+4}$', 'distractor_id': 'D-04', 'error_rationale': 'off by 4 in the evaluation'},\n"
+                    "        {'value': f'$y = {ans+5}$', 'distractor_id': 'D-05', 'error_rationale': 'off by 5 in the evaluation'},\n"
+                    "        {'value': f'$y = {ans+6}$', 'distractor_id': 'D-06', 'error_rationale': 'off by 6 in the evaluation'},\n"
                     "    ]\n"
                     "    return {'vars': {'k': k}, 'correct': correct, 'distractors': distractors}\n"
                 ),
@@ -310,7 +317,7 @@ def test_python_auto_resolution_delta_injection_and_role_specs(tmp_path: Path):
     assert len(item_data["delta_context"]["existing_competencies_outline"]) == 2
 
     # Assert work_order text explicitly forbids duplicating existing base competencies
-    work_order_text = item_data.get("work_order", "")
+    work_order_text = item_data.get("Prompt") or item_data.get("instructions") or str(item_data.get("work_order", ""))
     assert "APPEND DELTA MODE" in work_order_text
     assert "PROHIBIDO reiniciar la numeración en 01 o duplicar competencias base" in work_order_text
 

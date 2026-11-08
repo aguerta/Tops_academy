@@ -19,6 +19,7 @@ Tests:
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -230,7 +231,14 @@ class TestKatexOverescapeSafeguards:
                         return
                     sanitized = sanitize_katex_syntax(obj)
                     if sanitized != obj:
-                        diffs.append(f"{course_name} at {path}: orig={obj[:60]!r} != sanitized={sanitized[:60]!r}")
+                        # Allow intentional canonicalization of interpolation double signs (+ -, - -, etc.)
+                        # but ensure strict idempotency: sanitizing an already sanitized string must be a no-op.
+                        if sanitize_katex_syntax(sanitized) != sanitized:
+                            diffs.append(f"{course_name} at {path} (not idempotent): orig={obj[:60]!r} != sanitized={sanitized[:60]!r}")
+                        elif not any(op in obj for op in ("+ -", "- -", "+ +", "- +", "+-", "--", "++", "-+")):
+                            diffs.append(f"{course_name} at {path}: orig={obj[:60]!r} != sanitized={sanitized[:60]!r}")
+                        else:
+                            seen_clean.add(obj)
                     else:
                         seen_clean.add(obj)
                 elif isinstance(obj, list):

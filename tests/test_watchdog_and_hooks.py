@@ -42,6 +42,7 @@ from budget_guard import (  # noqa: E402
     scan_work_transcripts,
 )
 from c2c_hook_guard import (  # noqa: E402
+    decidir_estrategia_edicion,
     find_active_c2c_lock,
     process_hook,
 )
@@ -699,6 +700,223 @@ class TestLifecycleHookGuard(unittest.TestCase):
                 "allow",
                 f"Director should be allowed to view {p}, got: {res}",
             )
+
+    def test_rule_b_rejection_spec_allows_editing_post_pass(self) -> None:
+        """When publish_rejection_spec.json marks a shard as rejected, Rule B allows repair edits."""
+        work_dir = Path(self.test_dir) / "courses" / "test_course" / "work"
+        shards_dir = work_dir / "shards"
+        att_dir = work_dir / ".check_attempts"
+        att_dir.mkdir(parents=True, exist_ok=True)
+        shards_dir.mkdir(parents=True, exist_ok=True)
+
+        shard_data = shards_dir / "shard_01_data.py"
+        shard_data.write_text("# Initial code\n", encoding="utf-8")
+
+        # Shard previously marked PASS
+        pass_marker = att_dir / "pass_shard_01.json"
+        pass_marker.write_text(json.dumps({"shard_id": "shard_01", "status": "PASS"}), encoding="utf-8")
+
+        self.lock_file.write_text(
+            json.dumps({
+                "active": True,
+                "course_id": "test_course",
+                "director_conversation_id": "director-conv-id",
+                "work_dir": str(work_dir),
+            }),
+            encoding="utf-8",
+        )
+
+        payload = {
+            "conversationId": "worker-sub-1",
+            "toolCall": {
+                "name": "edit_file",
+                "args": {
+                    "Path": str(shard_data),
+                    "Target": "# Initial code",
+                    "Replacement": "# Fixed code",
+                },
+            },
+        }
+
+        # 1. Without rejection spec, edit is denied by post-PASS guard
+        res_before = process_hook(payload, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_before.get("decision"), "deny")
+        self.assertIn("ya aprobó todas las validaciones estrictas", res_before.get("reason", ""))
+
+        # 2. Add publish_rejection_spec.json with status rejected
+        rejection_spec = {
+            "status": "rejected",
+            "failing_shards": ["shard_01"],
+            "reason": "Auditor rejected psychometric consistency",
+        }
+        (work_dir / "publish_rejection_spec.json").write_text(json.dumps(rejection_spec), encoding="utf-8")
+
+        # 3. Now the edit is allowed because the shard is actively marked rejected
+        res_after = process_hook(payload, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res_after.get("decision"), "allow")
+
+    def test_2d_matrix_modular_splicing_redirection(self) -> None:
+        """2D edition matrix directs to modular_splicing when affected_lines > 5 or error_count >= 6."""
+        # 1. Unit evaluation of 2D matrix function
+        strat_high_affected = decidir_estrategia_edicion(error_count=2, affected_line_count=6, existing_lines=100)
+        self.assertEqual(strat_high_affected, "modular_splicing")
+
+        strat_high_errors = decidir_estrategia_edicion(error_count=6, affected_line_count=2, existing_lines=100)
+        self.assertEqual(strat_high_errors, "modular_splicing")
+
+        strat_low_errors = decidir_estrategia_edicion(error_count=3, affected_line_count=3, existing_lines=100)
+        self.assertEqual(strat_low_errors, "edit_file")
+
+        strat_syntax = decidir_estrategia_edicion(error_count=10, affected_line_count=10, has_syntax_error=True, existing_lines=100)
+        self.assertEqual(strat_syntax, "write_file")
+
+        strat_small_file = decidir_estrategia_edicion(error_count=8, affected_line_count=8, existing_lines=30)
+        self.assertEqual(strat_small_file, "write_file")
+
+        # 2. Hook evaluation: monolithic write_file denied when modular_splicing required
+        work_dir = Path(self.test_dir) / "courses" / "test_course" / "work"
+        shards_dir = work_dir / "shards"
+        att_dir = work_dir / ".check_attempts"
+        att_dir.mkdir(parents=True, exist_ok=True)
+        shards_dir.mkdir(parents=True, exist_ok=True)
+
+        shard_data = shards_dir / "shard_01_data.py"
+        shard_data.write_text("# Line\n" * 100, encoding="utf-8")
+
+        compile_marker = att_dir / "compile_shard_01.json"
+        compile_marker.write_text(
+            json.dumps({
+                "distinct_compiles": 1,
+                "error_count": 2,
+                "affected_line_count": 6,
+                "has_syntax_error": False,
+            }),
+            encoding="utf-8",
+        )
+
+        self.lock_file.write_text(
+            json.dumps({
+                "active": True,
+                "course_id": "test_course",
+                "director_conversation_id": "director-conv-id",
+                "work_dir": str(work_dir),
+            }),
+            encoding="utf-8",
+        )
+
+        payload = {
+            "conversationId": "worker-sub-1",
+            "toolCall": {
+                "name": "write_file",
+                "args": {
+                    "Path": str(shard_data),
+                    "Content": "# Rewritten\n" * 100,
+                },
+            },
+        }
+
+        res = process_hook(payload, custom_lock_file=str(self.lock_file))
+        self.assertEqual(res.get("decision"), "deny")
+        self.assertIn("líneas afectadas > 5", res.get("reason", ""))
+        self.assertIn("Está prohibido reescribir todo el archivo con write_file monolítico", res.get("reason", ""))
+
+    def test_synchronous_sla_budget_enforcement(self) -> None:
+        """Lock exceeding turn_count, est_tokens, or error streak triggers HARD_ABORT immediately."""
+        work_dir = Path(self.test_dir) / "work"
+        work_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. Turn count SLA breach
+        self.lock_file.write_text(
+            json.dumps({
+                "active": True,
+                "director_conversation_id": "director-conv-id",
+                "work_dir": str(work_dir),
+                "turn_count": 41,
+                "max_turns": 40,
+            }),
+            encoding="utf-8",
+        )
+        res_turns = process_hook(
+            {"conversationId": "worker-1", "toolCall": {"name": "run_command", "args": {"CommandLine": "python"}}},
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_turns.get("decision"), "deny")
+        self.assertIn("HARD_ABORT: Turn count limit exceeded", res_turns.get("reason", ""))
+
+        # 2. Token burn SLA breach
+        self.lock_file.write_text(
+            json.dumps({
+                "active": True,
+                "director_conversation_id": "director-conv-id",
+                "work_dir": str(work_dir),
+                "est_tokens": 5_500_000,
+                "max_tokens": 5_000_000,
+            }),
+            encoding="utf-8",
+        )
+        res_tokens = process_hook(
+            {"conversationId": "worker-1", "toolCall": {"name": "run_command", "args": {"CommandLine": "python"}}},
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_tokens.get("decision"), "deny")
+        self.assertIn("HARD_ABORT: Token burn limit exceeded", res_tokens.get("reason", ""))
+
+        # 3. Error streak SLA breach
+        self.lock_file.write_text(
+            json.dumps({
+                "active": True,
+                "director_conversation_id": "director-conv-id",
+                "work_dir": str(work_dir),
+                "error_sha256_streak": 3,
+                "max_error_streak": 3,
+            }),
+            encoding="utf-8",
+        )
+        res_streak = process_hook(
+            {"conversationId": "worker-1", "toolCall": {"name": "run_command", "args": {"CommandLine": "python"}}},
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_streak.get("decision"), "deny")
+        self.assertIn("HARD_ABORT: Consecutive identical error streak limit reached", res_streak.get("reason", ""))
+
+    def test_repair_role_no_full_cta_barrier(self) -> None:
+        """Repair subagents are forbidden from viewing full manifests or large cta.json (> 20 KB)."""
+        work_dir = Path(self.test_dir) / "work"
+        work_dir.mkdir(parents=True, exist_ok=True)
+
+        manifest_file = work_dir / "pre_shard_manifest.json"
+        manifest_file.write_text('{"shards": []}', encoding="utf-8")
+
+        cta_large = work_dir / "cta.json"
+        cta_large.write_text('{"competencies": []}' + (" " * 25000), encoding="utf-8")
+
+        self.lock_file.write_text(
+            json.dumps({
+                "active": True,
+                "role": "repair",
+                "director_conversation_id": "director-conv-id",
+                "work_dir": str(work_dir),
+            }),
+            encoding="utf-8",
+        )
+
+        # 1. Reading manifest is blocked
+        res_man = process_hook(
+            {"conversationId": "repair-worker", "toolCall": {"name": "view_file", "args": {"AbsolutePath": str(manifest_file)}}},
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_man.get("decision"), "deny")
+        self.assertIn("[REPAIR-NO-FULL-CTA]", res_man.get("reason", ""))
+        self.assertIn("forbidden from reading full manifests", res_man.get("reason", ""))
+
+        # 2. Reading large cta.json is blocked
+        res_cta = process_hook(
+            {"conversationId": "repair-worker", "toolCall": {"name": "read_file", "args": {"AbsolutePath": str(cta_large)}}},
+            custom_lock_file=str(self.lock_file),
+        )
+        self.assertEqual(res_cta.get("decision"), "deny")
+        self.assertIn("[REPAIR-NO-FULL-CTA]", res_cta.get("reason", ""))
+        self.assertIn("forbidden from reading full cta.json (> 20 KB)", res_cta.get("reason", ""))
 
 
 class TestBudgetWatchdogBrainAndRedispatch(unittest.TestCase):

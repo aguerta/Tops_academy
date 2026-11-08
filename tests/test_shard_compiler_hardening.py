@@ -613,9 +613,8 @@ class TestSurgicalDiagnostics:
             }
         }
         res = format_parity_error("C-01", err, questions, item_ids=["Q-01"])
-        assert "len(correct)=14" in res
-        assert "avg(distractors)=" in res
-        assert "rango permitido=[0.65x, 1.35x]" in res
+        assert "R-16: SESGO DE LONGITUD DE CLAVE" in res
+        assert "T-C01" in res
 
     def test_tpl_dry_traceback_strips_internal_frames_and_maps_fix_file(self, tmp_path: Path):
         work_dir = tmp_path / "work"

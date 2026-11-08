@@ -360,26 +360,33 @@ def gen_c01(rng):
     tc = rng.randint(250, 350)
     delta = rng.randint(150, 450)
     th = tc + delta
-    ans_val = round(1.0 - (tc / th), 3)
+    eff = round(1.0 - (tc / th), 3)
 
+    offsets = [0.028, -0.028, 0.054, -0.054, 0.082, -0.082]
     distractors = [
-        {"value": rf"$\\eta = {round(ans_val + 0.10, 3)}$", "distractor_id": "D-C01-01", "error_rationale": "Inversión errónea en foco caliente @th@ y frío @tc@"},
-        {"value": rf"$\\eta = {round(ans_val + 0.20, 3)}$", "distractor_id": "D-C01-02", "error_rationale": "Calor residual no disipado desde foco @th@"},
-        {"value": rf"$\\eta = {round(ans_val + 0.30, 3)}$", "distractor_id": "D-C01-03", "error_rationale": "Desplazamiento anómalo en temperatura fría @tc@"},
-        {"value": rf"$\\eta = {round(ans_val + 0.40, 3)}$", "distractor_id": "D-C01-04", "error_rationale": "Factor espurio aplicado al foco térmico @th@"},
-        {"value": rf"$\\eta = {round(ans_val - 0.10, 3)}$", "distractor_id": "D-C01-05", "error_rationale": "Suma errónea en lugar de resta con temperatura @tc@"},
-        {"value": rf"$\\eta = {round(ans_val - 0.20, 3)}$", "distractor_id": "D-C01-06", "error_rationale": "Semidiferencia incorrecta entre focos @th@ y @tc@"},
+        {"value": rf"$\eta = {round(eff + off, 3)}$", "distractor_id": f"D-C01-0{i}", "error_rationale": rat}
+        for i, (off, rat) in enumerate(zip(offsets, [
+            "Inversión errónea en foco caliente @th@ y frío @tc@",
+            "Calor residual no disipado desde foco @th@",
+            "Desplazamiento anómalo en temperatura fría @tc@",
+            "Factor espurio aplicado al foco térmico @th@",
+            "Suma errónea en lugar de resta con temperatura @tc@",
+            "Semidiferencia incorrecta entre focos @th@ y @tc@",
+        ]), 1)
     ]
     return {
-        "vars": {"th": th, "tc": tc, "ans": ans_val},
-        "correct": rf"$\\eta = {ans_val}$",
+        "vars": {"th": th, "tc": tc, "ans": eff},
+        "correct": rf"$\eta = {eff}$",
         "distractors": distractors
     }
 
 def ver_c01(res):
-    v = res.get("vars", {})
-    expected = round(1.0 - (v["tc"] / v["th"]), 3)
-    return v.get("ans") == expected
+    c = res.get("correct", "") if isinstance(res, dict) else str(res)
+    v = res.get("vars", {}) if isinstance(res, dict) else {}
+    raw = "".join(ch for ch in str(c) if ch.isdigit() or ch in ".-")
+    val = float(raw) if raw else -999.0
+    expected = round(1.0 - (v["tc"] / v["th"]), 3) if ("tc" in v and "th" in v) else -999.0
+    return abs(val - expected) < 1e-3
 
 TEMPLATES = [
     (
@@ -402,6 +409,10 @@ TEMPLATES = [
             r"Verifique la cota superior del rendimiento de Carnot para depósitos a $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
             r"Halle el valor de la eficiencia térmica ideal entre temperaturas $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
             r"Compruebe la razón de rendimiento para la máquina de Carnot entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Calcule la tasa de rendimiento para la máquina térmica entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Determine la relación de Carnot dados los focos térmicos $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Examine el ciclo reversible y obtenga la eficiencia entre $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
+            r"Calcule el factor térmico óptimo de Carnot con fuentes $T_H = {th}\\text{ K}$ y $T_C = {tc}\\text{ K}$:",
         ],
         [
             "Recuerde que el rendimiento térmico depende de la relación entre temperaturas.",

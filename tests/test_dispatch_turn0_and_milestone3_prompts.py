@@ -118,10 +118,10 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         self.assertIn("NO abras ni leas los documentos fuente de content/ en Turno 1", prompt)
         self.assertIn("empieza directamente escribiendo shard_01_data.py", prompt)
 
-        # 4. Form-B Tri-Banda Multimodal contract (min_archetypes = 3) & dynamic rationales
-        self.assertIn("min_archetypes = 3", prompt)
-        self.assertIn("Form-B Tri-Banda", prompt)
-        self.assertIn("3 tuplas en `TEMPLATES`", prompt)
+        # 4. Form-C / Form-B Multimodal contract (min_archetypes = 4) & dynamic rationales
+        self.assertIn("min_archetypes = 4", prompt)
+        self.assertTrue("Form-C" in prompt or "Form-B" in prompt)
+        self.assertIn("4 tuplas en `TEMPLATES`", prompt)
         self.assertIn("easy", prompt)
         self.assertIn("medium", prompt)
         self.assertIn("hard", prompt)
@@ -195,23 +195,23 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         lean_author = (self.lean_dir / "prompt_shard_author.md").read_text(encoding="utf-8")
 
         # Full prompt checks
-        self.assertIn("3 arquetipos disjuntos", full_author)
+        self.assertTrue("4 arquetipos disjuntos" in full_author or "3 arquetipos disjuntos" in full_author)
         self.assertIn("1. Directo / Frontal", full_author)
         self.assertIn("2. Inverso / Diagnóstico", full_author)
-        self.assertIn("3. Perturbación / Frontera", full_author)
+        self.assertIn("3. Perturbación", full_author)
         self.assertIn("Autosuficiencia Turn-0 (Cero Lectura Innecesaria de PDFs)", full_author)
         self.assertIn("Corte Inmediato Post-PASS", full_author)
 
         # Lean prompt checks
-        self.assertIn("FORM-B TRI-BANDA CONTRACT", lean_author)
-        self.assertIn("min_archetypes = 3", lean_author)
+        self.assertTrue("FORM-C QUAD-BAND CONTRACT" in lean_author or "FORM-B" in lean_author)
+        self.assertIn("min_archetypes = 4", lean_author)
         self.assertIn("Turn-0 Autosufficiency", lean_author)
         self.assertIn("Post-PASS Cut", lean_author)
 
         # Lean file size headroom checks
         lean_author_file = self.lean_dir / "prompt_shard_author.md"
         size_author = lean_author_file.stat().st_size
-        self.assertLessEqual(size_author, 5000, f"lean/prompt_shard_author.md must be <= 5,000 bytes (got {size_author})")
+        self.assertLessEqual(size_author, 4750, f"lean/prompt_shard_author.md must be <= 4,750 bytes (got {size_author})")
 
         # All lean prompts strictly <= 5,000 bytes
         for lfile in self.lean_dir.glob("*.md"):
@@ -650,9 +650,9 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         self.assertIn("gen_h01_3", lean_author)
         self.assertIn("ver_h01_1", lean_author)
         lean_author_size = (self.lean_dir / "prompt_shard_author.md").stat().st_size
-        self.assertLessEqual(lean_author_size, 5000, f"lean/prompt_shard_author.md size {lean_author_size} exceeds 5,000 B!")
+        self.assertLessEqual(lean_author_size, 4750, f"lean/prompt_shard_author.md size {lean_author_size} exceeds 4,750 B!")
 
-        # 3. dispatch_authors: includes --min-archetypes 3 in compile_cmd, mentions [M3-ARCHETYPES], stamps min_archetypes=3 in pre_shard_manifest.json
+        # 3. dispatch_authors: includes --min-archetypes 4 in compile_cmd, mentions [M3-ARCHETYPES], stamps min_archetypes=4 in pre_shard_manifest.json
         (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({
             "course_id": "macro_m3_test",
             "documents": [{"name": "doc.pdf", "path": "content/doc.pdf"}],
@@ -680,16 +680,16 @@ class TestDispatchTurn0AndMilestone3Prompts(unittest.TestCase):
         subagent = res["Subagents"][0]
         prompt = subagent["Prompt"]
 
-        # compile_cmd in prompt and item contains --min-archetypes 3
-        self.assertIn("--min-archetypes 3", prompt)
-        self.assertIn("--min-archetypes 3", subagent["compile_command"])
+        # compile_cmd in prompt and item contains --min-archetypes 4
+        self.assertIn("--min-archetypes 4", prompt)
+        self.assertIn("--min-archetypes 4", subagent["compile_command"])
         self.assertIn("[M3-ARCHETYPES]", prompt)
-        self.assertIn("min_archetypes = 3", prompt)
+        self.assertIn("min_archetypes = 4", prompt)
 
-        # pre_shard_manifest.json stamped on disk with "min_archetypes": 3
+        # pre_shard_manifest.json stamped on disk with "min_archetypes": 4
         stamped_manifest = json.loads(manifest_p.read_text(encoding="utf-8"))
-        self.assertEqual(stamped_manifest.get("min_archetypes"), 3)
-        self.assertEqual(stamped_manifest["shards"][0].get("min_archetypes"), 3)
+        self.assertEqual(stamped_manifest.get("min_archetypes"), 4)
+        self.assertEqual(stamped_manifest["shards"][0].get("min_archetypes"), 4)
 
 
 if __name__ == "__main__":

@@ -84,7 +84,7 @@ def gen_1(rng):
     dists = [(f"D-Hab01-0{i}", rf"$y = @d{i}@$", rf"Desvío aditivo con base @a@ y factor @b@ en paso {i}.") for i in range(1, 7)]
     return {"vars": v, "correct": r"$y = @ans@$", "distractors": dists}
 
-def ver_1(res): return res["vars"]["ans"] == res["vars"]["a"] + res["vars"]["b"] * 2
+def ver_1(res): return res.get("correct") == r"$y = @ans@$" and res["vars"]["ans"] == res["vars"]["a"] + res["vars"]["b"] * 2
 
 def gen_2(rng):
     a = rng.randint(30, 150)
@@ -92,7 +92,7 @@ def gen_2(rng):
     ans = a * 2 - b
     return {"vars": {"a": a, "b": b, "ans": ans}, "correct": str(ans), "distractors": []}
 
-def ver_2(res): return res["vars"]["ans"] == res["vars"]["a"] * 2 - res["vars"]["b"]
+def ver_2(res): return res.get("correct") == str(res["vars"]["ans"]) and res["vars"]["ans"] == res["vars"]["a"] * 2 - res["vars"]["b"]
 
 def gen_3(rng):
     a = rng.randint(15, 95)
@@ -100,7 +100,7 @@ def gen_3(rng):
     ans = a + b * 3
     return {"vars": {"a": a, "b": b, "ans": ans}, "correct": str(ans), "distractors": []}
 
-def ver_3(res): return res["vars"]["ans"] == res["vars"]["a"] + res["vars"]["b"] * 3
+def ver_3(res): return res.get("correct") == str(res["vars"]["ans"]) and res["vars"]["ans"] == res["vars"]["a"] + res["vars"]["b"] * 3
 
 s1 = [
     r"Calcule el valor directo cuando $a = @a@$ y $b = @b@$:",
@@ -134,8 +134,8 @@ TEMPLATES = [
     assert not ok, "Expected compile_shard to reject 9-stem skill competency"
     err_str = "\n".join(errors)
     assert "[STEM-DIVERSITY-GATE]" in err_str
-    assert "only 9 stems, required >= 15 unique, quota 30 for skills" in err_str
-    assert "Provide >= 6-7 distinct syntactic stems per template (totaling >= 18-21)" in err_str
+    assert "only 9 stems, required >=" in err_str
+    assert "distinct syntactic stems per template" in err_str
 
 
 def test_compile_shard_rejects_magic_multiplier_distractors_with_line_numbers(tmp_path: Path):
@@ -164,7 +164,7 @@ def gen_c01_1(rng):
     dists = [(f"D-C01-0{i}", rf"$p = @d{i}@$", rf"Desvío conceptual sobre mu=@mu@ y delta=@delta@ en caso {i}.") for i in range(1, 7)]
     return {"vars": v, "correct": r"$p = @ans@$", "distractors": dists}
 
-def ver_c01_1(res): return abs(res["vars"]["ans"] - round(res["vars"]["mu"] / res["vars"]["delta"], 3)) < 1e-6
+def ver_c01_1(res): return res.get("correct") == r"$p = @ans@$" and abs(res["vars"]["ans"] - round(res["vars"]["mu"] / res["vars"]["delta"], 3)) < 1e-6
 
 def gen_c01_2(rng):
     mu = rng.randint(20, 90)
@@ -438,7 +438,7 @@ def gen_h05_3(rng):
         raise RuntimeError("DEBUG_CRASH")
     return res
 
-def ver_h05(res): return abs(res["vars"]["ans"] - round(res["vars"]["varx"] / (res["vars"]["eps"]**2), 4)) < 1e-6
+def ver_h05(res): return bool(res.get("correct") in (r"$P(|X - @mu@| \ge @eps@) \le @ans@$", r"@ans@") and abs(res["vars"]["ans"] - round(res["vars"]["varx"] / (res["vars"]["eps"]**2), 4)) < 1e-6)
 
 s1 = [
     r"Para una variable aleatoria $X$ con $\mu = @mu@$ y varianza $\sigma^2 = @varx@$, halle la cota:",

@@ -293,5 +293,54 @@ def generate(rng):
             validate_code_ast(code)
 
 
+class TestVerifierFlexibleSignaturesAndStrictBooleans:
+    """Verifies np.bool_ unwrapping, strict boolean requirement, and flexible verifier signatures."""
+
+    def test_numpy_bool_false_strictly_rejected(self):
+        code_gen = "def generate(rng): return {'vars': {'x': 10}, 'correct': 10, 'distractors': []}"
+        code_ver = "def verify(res): import numpy as np; return np.bool_(False)"
+        with pytest.raises(SandboxExecutionError, match="Cross-check verification failed"):
+            execute_sandbox_instance(code_gen, cross_check_py=code_ver, seed=42)
+
+    def test_numpy_bool_true_accepted(self):
+        code_gen = "def generate(rng): return {'vars': {'x': 10}, 'correct': 10, 'distractors': []}"
+        code_ver = "def verify(res): import numpy as np; return np.bool_(True)"
+        res = execute_sandbox_instance(code_gen, cross_check_py=code_ver, seed=42)
+        assert res["correct"] == 10
+
+    def test_non_boolean_truthy_value_rejected(self):
+        code_gen = "def generate(rng): return {'vars': {'x': 10}, 'correct': 10, 'distractors': []}"
+        code_ver = "def verify(res): return 1"
+        with pytest.raises(SandboxExecutionError, match="Cross-check verification failed"):
+            execute_sandbox_instance(code_gen, cross_check_py=code_ver, seed=42)
+
+    def test_none_return_rejected(self):
+        code_gen = "def generate(rng): return {'vars': {'x': 10}, 'correct': 10, 'distractors': []}"
+        code_ver = "def verify(res): pass"
+        with pytest.raises(SandboxExecutionError, match="Cross-check verification failed"):
+            execute_sandbox_instance(code_gen, cross_check_py=code_ver, seed=42)
+
+    def test_two_arg_rng_result_verifier(self):
+        code_gen = "def generate(rng): return {'vars': {'x': 7}, 'correct': 7, 'distractors': []}"
+        code_ver = "def verify(rng, res): return rng is not None and res.get('correct') == 7"
+        res = execute_sandbox_instance(code_gen, cross_check_py=code_ver, seed=42)
+        assert res["correct"] == 7
+
+    def test_two_arg_cand_vars_verifier(self):
+        code_gen = "def generate(rng): return {'vars': {'x': 42}, 'correct': 42, 'distractors': []}"
+        code_ver = "def verify(cand, v): return cand == v.get('x')"
+        res = execute_sandbox_instance(code_gen, cross_check_py=code_ver, seed=42)
+        assert res["correct"] == 42
+
+    def test_batch_numpy_bool_false_rejected(self):
+        code_gen = "def generate(rng): return {'vars': {'x': 10}, 'correct': 10, 'distractors': []}"
+        code_ver = "def verify(res): import numpy as np; return np.bool_(False)"
+        results = execute_sandbox_batch(code_gen, seeds=[10, 20], cross_check_py=code_ver)
+        assert len(results) == 2
+        for r in results:
+            assert r["success"] is False
+            assert "Cross-check verification failed" in r["error"]
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

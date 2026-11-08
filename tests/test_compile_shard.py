@@ -497,3 +497,509 @@ class TestHardenedRemediations:
         assert not success, "Expected compile_shard to fail due to parenthetical telltale clue"
         assert any("parenthetical_telltale_linter" in e for e in errors), f"Expected parenthetical_telltale_linter error, got: {errors}"
         assert any("(sesgo negativo hacia abajo)" in e for e in errors), f"Expected offending snippet in errors, got: {errors}"
+
+
+class TestStream1BCompilerFeatures:
+    """Explicit tests for Stream 1B Form-C DSL, AST hygiene, tautology rejection, and certification."""
+
+    def _setup_work_dir(self, tmp_path: Path):
+        work_dir = tmp_path / "work"
+        shards_dir = work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+
+        manifest_data = {
+            "shards": [
+                {"shard_id": "shard_01", "competency_ids": ["C-01"]}
+            ]
+        }
+        (shards_dir / "pre_shard_manifest.json").write_text(json.dumps(manifest_data), encoding="utf-8")
+
+        cta_data = {
+            "course_id": "course_stream1b",
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "type": "concept",
+                    "distractors": [{"id": f"D-01-{i:02d}", "name": f"D{i}"} for i in range(1, 7)]
+                }
+            ]
+        }
+        (work_dir / "cta.json").write_text(json.dumps(cta_data), encoding="utf-8")
+        return work_dir, shards_dir
+
+    def test_form_c_dsl_and_certification(self, tmp_path: Path):
+        """Form-C DSL dict entry compiles cleanly, prunes AST (< 15 KB), and emits shard cert."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def gen_c01_1(rng):
+    x = rng.randint(10, 50)
+    return {"vars": {"X": x}, "ans": f"{x}", "ds": [(f"D-01-{i:02d}", f"{x + i}") for i in range(1, 7)]}
+
+def ver_c01_1(cand, v):
+    expected = rf"$\\eta = {v.get('X')}$"
+    return str(cand) == expected
+
+def gen_c01_2(rng):
+    y = rng.randint(20, 60)
+    ans = y * 2
+    return {"vars": {"y": y}, "correct": str(ans)}
+
+def ver_c01_2(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return str(res.get("correct")) == str(v.get("y", 0) * 2)
+
+def gen_c01_3(rng):
+    z = rng.randint(10, 40)
+    opts = [
+        {"value": f"Option A {z + 1}", "is_correct": True, "rationale": "Valid first option with parameter @z@"},
+        {"value": f"Option B {z + 2}", "is_correct": True, "rationale": "Valid second option with parameter @z@"},
+        {"value": f"Option C {z + 3}", "is_correct": False, "distractor_id": "D-01-01", "rationale": "Invalid third option with parameter @z@"},
+        {"value": f"Option D {z + 4}", "is_correct": False, "distractor_id": "D-01-02", "rationale": "Invalid fourth option with parameter @z@"},
+    ]
+    return {"vars": {"z": z}, "options": opts}
+
+def ver_c01_3(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    opts = res.get("options", [])
+    corr_count = sum(1 for o in opts if isinstance(o, dict) and o.get("is_correct"))
+    return corr_count == 2 and v.get("z", 0) > 0
+
+def gen_c01_4(rng):
+    w = rng.randint(15, 55)
+    return {"vars": {"w": w}, "correct": f"Opt {w}", "distractors": [(f"D-01-{i:02d}", f"Opt {w + i}", f"Rationale {i} with parameter @w@.") for i in range(1, 7)]}
+
+def ver_c01_4(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return res.get("correct") == f"Opt {v.get('w')}"
+
+stems_2 = [
+    "Variant A calculating intermediate response @y@.",
+    "Variant B evaluating application parameter @y@.",
+    "Variant C identifying structural equation @y@.",
+    "Variant D checking consistency across terms @y@.",
+    "Variant E concluding quantitative derivation @y@.",
+]
+hints_2 = [
+    "First socratic hint analyzing input parameter @y@.",
+    "Second socratic hint multiplying by the scalar ratio.",
+    "Third socratic hint confirming final numeric format.",
+]
+
+stems_3 = [
+    "Analysis question one investigating dual components @z@.",
+    "Analysis question two comparing structural factors @z@.",
+    "Analysis question three determining valid statements @z@.",
+    "Analysis question four selecting matching criteria @z@.",
+    "Analysis question five checking systemic properties @z@.",
+]
+hints_3 = [
+    "First analytical hint breaking down multiple choices @z@.",
+    "Second analytical hint inspecting conditions for truth.",
+    "Third analytical hint verifying combined selections.",
+]
+
+stems_4 = [
+    "Evaluation premise one testing overall validity @w@.",
+    "Evaluation premise two verifying robust behavior @w@.",
+    "Evaluation premise three comparing against benchmarks @w@.",
+    "Evaluation premise four justifying optimal decisions @w@.",
+    "Evaluation premise five synthesizing final judgments @w@.",
+]
+hints_4 = [
+    "First evaluative hint identifying target metrics @w@.",
+    "Second evaluative hint contrasting theoretical models.",
+    "Third evaluative hint checking boundaries and conclusions.",
+]
+
+TEMPLATES = [
+    {
+        "id": "T-C01-01",
+        "cid": "C-01",
+        "qtype": "MC7",
+        "fmt": r"$\\eta = @X@$",
+        "rats": {
+            "D-01-01": "Rationale 1 with parameter @X@.",
+            "D-01-02": "Rationale 2 with parameter @X@.",
+            "D-01-03": "Rationale 3 with parameter @X@.",
+            "D-01-04": "Rationale 4 with parameter @X@.",
+            "D-01-05": "Rationale 5 with parameter @X@.",
+            "D-01-06": "Rationale 6 with parameter @X@.",
+        },
+        "gen": gen_c01_1,
+        "ver": ver_c01_1,
+        "band": ("easy", "Remember"),
+        "stems": (
+            ["Context Alpha with parameter @X@.", "Context Beta with parameter @X@."],
+            ["Calculate the primary index.", "Determine the baseline value."]
+        ),
+        "hints": [
+            "First hint scaffolding the variable identification.",
+            "Second hint applying the foundational formula.",
+            "Third hint validating the numeric simplification.",
+        ],
+        "sol": "Sol @X@",
+    },
+    ("T-C01-02", "C-01", "fill_in_the_blank", gen_c01_2, ver_c01_2, ("medium", "Apply"), stems_2, hints_2, "Sol @y@"),
+    ("T-C01-03", "C-01", "multiple_select", gen_c01_3, ver_c01_3, ("hard", "Analyze"), stems_3, hints_3, "Sol @z@"),
+    ("T-C01-04", "C-01", "multiple_choice_7_options", gen_c01_4, ver_c01_4, ("hard", "Evaluate"), stems_4, hints_4, "Sol @w@"),
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert success, f"Expected compile_shard to succeed, got errors: {errors}"
+        assert errors == []
+
+        # 1. Verify certification file emitted
+        cert_path = shards_dir / "shard_01.cert.json"
+        assert cert_path.is_file(), "Certification file shard_01.cert.json was not created"
+        cert_data = json.loads(cert_path.read_text(encoding="utf-8"))
+        assert cert_data.get("schema_version") == 1
+        assert cert_data.get("stage") == "shard"
+        assert cert_data.get("artifact_id") == "shard_01"
+        assert cert_data.get("contract_version") == 2
+        assert cert_data.get("passed_50_seeds") is True
+
+        # 2. Verify AST pruning (< 15 KB)
+        out_json = work_dir / "templates" / "C-01.json"
+        assert out_json.is_file(), "Compiled C-01.json not found"
+        json_size = out_json.stat().st_size
+        assert json_size < 15 * 1024, f"C-01.json size exceeds 15 KB: {json_size} bytes"
+
+        # 3. Verify Cartesian stems expansion in compiled output (2x2 = 4 variants)
+        tpl_data = json.loads(out_json.read_text(encoding="utf-8"))
+        t1 = tpl_data["templates"][0]
+        assert len(t1["stem_variants"]) == 4
+        assert "Context Alpha with parameter @X@. Calculate the primary index." in t1["stem_variants"]
+
+    def test_verifier_tautology_detected(self, tmp_path: Path):
+        """Tautological verifier returning True for distractors is rejected with [VERIFIER-TAUTOLOGY-DETECTED]."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def gen_c01_1(rng):
+    v = rng.randint(10, 50)
+    dists = [
+        ("D-01-01", f"Val {v + 1}", "Rationale 1 with v=@v@"),
+        ("D-01-02", f"Val {v + 2}", "Rationale 2 with v=@v@"),
+        ("D-01-03", f"Val {v + 3}", "Rationale 3 with v=@v@"),
+        ("D-01-04", f"Val {v + 4}", "Rationale 4 with v=@v@"),
+        ("D-01-05", f"Val {v + 5}", "Rationale 5 with v=@v@"),
+        ("D-01-06", f"Val {v + 6}", "Rationale 6 with v=@v@"),
+    ]
+    return {"vars": {"v": v}, "correct": f"Val {v}", "distractors": dists}
+
+def ver_c01_1(res):
+    # Tautological verifier: ignores correct answer and always returns True
+    return bool(res and "vars" in res)
+
+stems = [
+    "Stem variant one with variable @v@.",
+    "Stem variant two with variable @v@.",
+    "Stem variant three with variable @v@.",
+]
+hints = [
+    "First socratic hint explaining terms @v@.",
+    "Second socratic hint applying fundamental laws.",
+    "Third socratic hint calculating final output.",
+]
+
+TEMPLATES = [
+    ("T-C01-01", "C-01", "multiple_choice_7_options", gen_c01_1, ver_c01_1, ("easy", "Remember"), stems, hints, "Sol @v@")
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success
+        assert any("[VERIFIER-TAUTOLOGY-DETECTED]" in e for e in errors), f"Expected tautology error, got: {errors}"
+
+    def test_verifier_swallowed_exception_detected(self, tmp_path: Path):
+        """Verifier containing try/except returning True in handler is rejected with [VERIFIER-SWALLOWED-EXCEPTION]."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def gen_c01_1(rng):
+    v = rng.randint(10, 50)
+    dists = [
+        ("D-01-01", f"Val {v + 1}", "Rationale 1 with v=@v@"),
+        ("D-01-02", f"Val {v + 2}", "Rationale 2 with v=@v@"),
+        ("D-01-03", f"Val {v + 3}", "Rationale 3 with v=@v@"),
+        ("D-01-04", f"Val {v + 4}", "Rationale 4 with v=@v@"),
+        ("D-01-05", f"Val {v + 5}", "Rationale 5 with v=@v@"),
+        ("D-01-06", f"Val {v + 6}", "Rationale 6 with v=@v@"),
+    ]
+    return {"vars": {"v": v}, "correct": f"Val {v}", "distractors": dists}
+
+def ver_c01_1(res):
+    try:
+        val = int(res.get("correct", "").split()[-1])
+        return val == res.get("vars", {}).get("v")
+    except Exception:
+        return True
+
+stems = [
+    "Stem variant one with variable @v@.",
+    "Stem variant two with variable @v@.",
+    "Stem variant three with variable @v@.",
+]
+hints = [
+    "First socratic hint explaining terms @v@.",
+    "Second socratic hint applying fundamental laws.",
+    "Third socratic hint calculating final output.",
+]
+
+TEMPLATES = [
+    ("T-C01-01", "C-01", "multiple_choice_7_options", gen_c01_1, ver_c01_1, ("easy", "Remember"), stems, hints, "Sol @v@")
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success
+        assert any("[VERIFIER-SWALLOWED-EXCEPTION]" in e for e in errors), f"Expected swallowed exception error, got: {errors}"
+
+    def test_generator_debug_artifact_detected(self, tmp_path: Path):
+        """Generator containing raise statement is rejected with [TPL-DEBUG-ARTIFACT]."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def gen_c01_1(rng):
+    v = rng.randint(10, 50)
+    if v < 0:
+        raise RuntimeError("Debug assertion failed")
+    dists = [
+        ("D-01-01", f"Val {v + 1}", "Rationale 1 with v=@v@"),
+        ("D-01-02", f"Val {v + 2}", "Rationale 2 with v=@v@"),
+        ("D-01-03", f"Val {v + 3}", "Rationale 3 with v=@v@"),
+        ("D-01-04", f"Val {v + 4}", "Rationale 4 with v=@v@"),
+        ("D-01-05", f"Val {v + 5}", "Rationale 5 with v=@v@"),
+        ("D-01-06", f"Val {v + 6}", "Rationale 6 with v=@v@"),
+    ]
+    return {"vars": {"v": v}, "correct": f"Val {v}", "distractors": dists}
+
+def ver_c01_1(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return res.get("correct") == f"Val {v.get('v')}"
+
+stems = [
+    "Stem variant one with variable @v@.",
+    "Stem variant two with variable @v@.",
+    "Stem variant three with variable @v@.",
+]
+hints = [
+    "First socratic hint explaining terms @v@.",
+    "Second socratic hint applying fundamental laws.",
+    "Third socratic hint calculating final output.",
+]
+
+TEMPLATES = [
+    ("T-C01-01", "C-01", "multiple_choice_7_options", gen_c01_1, ver_c01_1, ("easy", "Remember"), stems, hints, "Sol @v@")
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success
+        assert any("[TPL-DEBUG-ARTIFACT]" in e for e in errors), f"Expected debug artifact error, got: {errors}"
+
+    def test_generator_ad_hoc_perturbation_detected(self, tmp_path: Path):
+        """Generator using clean_ds function is rejected with [TPL-AD-HOC-PERTURBATION]."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def clean_ds(dists):
+    return dists
+
+def gen_c01_1(rng):
+    v = rng.randint(10, 50)
+    dists = [
+        ("D-01-01", f"Val {v + 1}", "Rationale 1 with v=@v@"),
+        ("D-01-02", f"Val {v + 2}", "Rationale 2 with v=@v@"),
+        ("D-01-03", f"Val {v + 3}", "Rationale 3 with v=@v@"),
+        ("D-01-04", f"Val {v + 4}", "Rationale 4 with v=@v@"),
+        ("D-01-05", f"Val {v + 5}", "Rationale 5 with v=@v@"),
+        ("D-01-06", f"Val {v + 6}", "Rationale 6 with v=@v@"),
+    ]
+    cleaned = clean_ds(dists)
+    return {"vars": {"v": v}, "correct": f"Val {v}", "distractors": cleaned}
+
+def ver_c01_1(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return res.get("correct") == f"Val {v.get('v')}"
+
+stems = [
+    "Stem variant one with variable @v@.",
+    "Stem variant two with variable @v@.",
+    "Stem variant three with variable @v@.",
+]
+hints = [
+    "First socratic hint explaining terms @v@.",
+    "Second socratic hint applying fundamental laws.",
+    "Third socratic hint calculating final output.",
+]
+
+TEMPLATES = [
+    ("T-C01-01", "C-01", "multiple_choice_7_options", gen_c01_1, ver_c01_1, ("easy", "Remember"), stems, hints, "Sol @v@")
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success
+        assert any("[TPL-AD-HOC-PERTURBATION]" in e for e in errors), f"Expected ad-hoc perturbation error, got: {errors}"
+
+    def test_generator_magic_mult_ast_divisor_detected(self, tmp_path: Path):
+        """Generator computing distractors via arbitrary division (ans / 3) is flagged with [DIAG-MAGIC-MULT]."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def gen_c01_1(rng):
+    v = rng.randint(10, 50) * 6
+    ans = v
+    d_div = ans / 3
+    d_mult = ans * 1.333
+    dists = [
+        ("D-01-01", f"{round(d_div, 2)}", "Rationale 1 with v=@v@"),
+        ("D-01-02", f"{round(d_mult, 2)}", "Rationale 2 with v=@v@"),
+        ("D-01-03", f"{ans + 3}", "Rationale 3 with v=@v@"),
+        ("D-01-04", f"{ans + 4}", "Rationale 4 with v=@v@"),
+        ("D-01-05", f"{ans + 5}", "Rationale 5 with v=@v@"),
+        ("D-01-06", f"{ans + 6}", "Rationale 6 with v=@v@"),
+    ]
+    return {"vars": {"v": v}, "correct": f"{ans}", "distractors": dists}
+
+def ver_c01_1(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return res.get("correct") == f"{v.get('v')}"
+
+def gen_c01_2(rng):
+    y = rng.randint(20, 60)
+    ans = y * 2
+    return {"vars": {"y": y}, "correct": str(ans)}
+
+def ver_c01_2(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return str(res.get("correct")) == str(v.get("y", 0) * 2)
+
+def gen_c01_3(rng):
+    z = rng.randint(10, 40)
+    opts = [
+        {"value": f"Option A {z + 1}", "is_correct": True, "rationale": "Valid first option with parameter @z@"},
+        {"value": f"Option B {z + 2}", "is_correct": True, "rationale": "Valid second option with parameter @z@"},
+        {"value": f"Option C {z + 3}", "is_correct": False, "distractor_id": "D-01-01", "rationale": "Invalid third option with parameter @z@"},
+        {"value": f"Option D {z + 4}", "is_correct": False, "distractor_id": "D-01-02", "rationale": "Invalid fourth option with parameter @z@"},
+    ]
+    return {"vars": {"z": z}, "options": opts}
+
+def ver_c01_3(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    opts = res.get("options", [])
+    corr_count = sum(1 for o in opts if isinstance(o, dict) and o.get("is_correct"))
+    return corr_count == 2 and v.get("z", 0) > 0
+
+def gen_c01_4(rng):
+    w = rng.randint(15, 55)
+    dists = [
+        ("D-01-01", f"Opt {w + 1}", "Rationale 1 with parameter @w@."),
+        ("D-01-02", f"Opt {w + 2}", "Rationale 2 with parameter @w@."),
+        ("D-01-03", f"Opt {w + 3}", "Rationale 3 with parameter @w@."),
+        ("D-01-04", f"Opt {w + 4}", "Rationale 4 with parameter @w@."),
+        ("D-01-05", f"Opt {w + 5}", "Rationale 5 with parameter @w@."),
+        ("D-01-06", f"Opt {w + 6}", "Rationale 6 with parameter @w@."),
+    ]
+    return {"vars": {"w": w}, "correct": f"Opt {w}", "distractors": dists}
+
+def ver_c01_4(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return res.get("correct") == f"Opt {v.get('w')}"
+
+stems_1 = [
+    "Variant 1 analyzing multiplier effects with value @v@.",
+    "Variant 2 calculating response with value @v@.",
+    "Variant 3 checking structural ratio with value @v@.",
+    "Variant 4 determining equilibrium state with value @v@.",
+    "Variant 5 evaluating final parameter with value @v@.",
+]
+hints_1 = [
+    "First socratic hint explaining terms @v@.",
+    "Second socratic hint applying fundamental laws.",
+    "Third socratic hint calculating final output.",
+]
+
+stems_2 = [
+    "Variant A calculating intermediate response @y@.",
+    "Variant B evaluating application parameter @y@.",
+    "Variant C identifying structural equation @y@.",
+    "Variant D checking consistency across terms @y@.",
+    "Variant E concluding quantitative derivation @y@.",
+]
+hints_2 = [
+    "First socratic hint analyzing input parameter @y@.",
+    "Second socratic hint multiplying by the scalar ratio.",
+    "Third socratic hint confirming final numeric format.",
+]
+
+stems_3 = [
+    "Analysis question one investigating dual components @z@.",
+    "Analysis question two comparing structural factors @z@.",
+    "Analysis question three determining valid statements @z@.",
+    "Analysis question four selecting matching criteria @z@.",
+    "Analysis question five checking systemic properties @z@.",
+]
+hints_3 = [
+    "First analytical hint breaking down multiple choices @z@.",
+    "Second analytical hint inspecting conditions for truth.",
+    "Third analytical hint verifying combined selections.",
+]
+
+stems_4 = [
+    "Evaluation premise one testing overall validity @w@.",
+    "Evaluation premise two verifying robust behavior @w@.",
+    "Evaluation premise three comparing against benchmarks @w@.",
+    "Evaluation premise four justifying optimal decisions @w@.",
+    "Evaluation premise five synthesizing final judgments @w@.",
+]
+hints_4 = [
+    "First evaluative hint identifying target metrics @w@.",
+    "Second evaluative hint contrasting theoretical models.",
+    "Third evaluative hint checking boundaries and conclusions.",
+]
+
+TEMPLATES = [
+    ("T-C01-01", "C-01", "multiple_choice_7_options", gen_c01_1, ver_c01_1, ("easy", "Remember"), stems_1, hints_1, "Sol @v@"),
+    ("T-C01-02", "C-01", "fill_in_the_blank", gen_c01_2, ver_c01_2, ("medium", "Apply"), stems_2, hints_2, "Sol @y@"),
+    ("T-C01-03", "C-01", "multiple_select", gen_c01_3, ver_c01_3, ("hard", "Analyze"), stems_3, hints_3, "Sol @z@"),
+    ("T-C01-04", "C-01", "multiple_choice_7_options", gen_c01_4, ver_c01_4, ("hard", "Evaluate"), stems_4, hints_4, "Sol @w@"),
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success
+        assert any("[DIAG-MAGIC-MULT]" in e for e in errors), f"Expected magic mult error, got: {errors}"

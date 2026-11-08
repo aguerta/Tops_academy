@@ -566,3 +566,60 @@ def test_katex_prose_overflow_boundary_45_vs_46_separation() -> None:
     assert not any(e.rule_id == "R-23" for e in errs_46)
 
 
+# =============================================================================
+# 7. Anti-Gaming Rule Separation (R-24, R-25, R-26, R-27 vs R-23 Invariant)
+# =============================================================================
+
+def test_antigaming_rules_emit_correct_rule_ids_never_r23() -> None:
+    """R-24, R-25, R-26, and R-27 violations emit their dedicated rule_ids and NEVER R-23."""
+    # 1. R-24: Vacuous quantifier
+    data_r24 = {
+        "questions": [{"id": "Q-24", "stem": r"$\forall \varepsilon = 0.05$"}]
+    }
+    errs_24 = check_extended_quality_rules(data_r24)
+    assert any(e.rule_id == "R-24" and e.code == "ERR_VACUOUS_QUANTIFIER" for e in errs_24)
+    assert not any(e.rule_id == "R-23" for e in errs_24)
+
+    # 2. R-25: Hint leak
+    data_r25 = {
+        "questions": [
+            {
+                "id": "Q-25",
+                "interaction_type": "multiple_choice_7_options",
+                "options": [
+                    {"id": "opt_c", "content": "Solución analítica con deducción paso a paso", "is_correct": True},
+                    {"id": "opt_d", "content": "Distractor", "is_correct": False, "error_rationale": "Error"},
+                ],
+                "hints": ["Solución analítica con deducción paso a paso", "Pista 2"],
+            }
+        ]
+    }
+    errs_25 = check_extended_quality_rules(data_r25)
+    assert any(e.rule_id == "R-25" and e.code == "ERR_HINT_ANSWER_LEAK_S12" for e in errs_25)
+    assert not any(e.rule_id == "R-23" for e in errs_25)
+
+    # 3. R-26: Option parenthetical telltale
+    data_r26 = {
+        "questions": [
+            {
+                "id": "Q-26",
+                "options": [
+                    {"id": "opt_t", "content": "$x = 10$ (sesgo por omisión de variable relevante)", "is_correct": False, "error_rationale": "Error"},
+                ],
+            }
+        ]
+    }
+    errs_26 = check_extended_quality_rules(data_r26)
+    assert any(e.rule_id == "R-26" and e.code == "ERR_OPTION_PARENTHETICAL_TELLTALE" for e in errs_26)
+    assert not any(e.rule_id == "R-23" for e in errs_26)
+
+    # 4. R-27: Newton dot over numeric literal
+    data_r27 = {
+        "questions": [{"id": "Q-27", "stem": r"$\dot{5} + \ddot{12} = 0$"}]
+    }
+    errs_27 = check_extended_quality_rules(data_r27)
+    assert any(e.rule_id == "R-27" and e.code == "ERR_NUMERIC_NEWTON_DOT" for e in errs_27)
+    assert not any(e.rule_id == "R-23" for e in errs_27)
+
+
+

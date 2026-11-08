@@ -37,7 +37,7 @@ from dispatch import generate_define_subagent_specs
 # ==============================================================================
 
 def test_no_contradiction_in_prompt_shard_author():
-    """Verify prompt_shard_author.md specifies exactly 1 tuple per competency covering 6 distractors."""
+    """Verify prompt_shard_author.md specifies Form-C Quad-Band and Form-B schema covering 4 archetypes."""
     pf = PROMPTS_DIR / "prompt_shard_author.md"
     assert pf.is_file(), f"Missing {pf}"
     content = pf.read_text(encoding="utf-8")
@@ -47,14 +47,14 @@ def test_no_contradiction_in_prompt_shard_author():
     assert "Load Inversion" in content
     assert "BLOCKER:: No existe pre_shard_manifest.json" in content
 
-    # 1 tuple per competency covering 6 distractors D-XX-01..06
-    assert "1 tupla paramétrica por competencia" in content.lower() or "1 tupla por competencia" in content.lower()
+    # Form-C / Form-B Quad-Band covering 4 archetypes and 6 distractors D-XX-01..06
+    assert "min_archetypes = 4" in content or "4 arquetipos" in content.lower()
     assert "D-XX-01..06" in content
     assert "TEMPLATES = [" in content
 
-    # Documents both 9-element and 10-element tuples
-    assert "9 Elementos" in content or "9 elementos" in content
-    assert "10 Elementos" in content or "10 elementos" in content
+    # Documents Form-C and Form-B 9-element tuples
+    assert "form-c" in content.lower()
+    assert "form-b" in content.lower() or "9 elementos" in content.lower()
     assert "hints" in content.lower()
 
     # Contradiction check: NO mention of creating 6 separate templates per competency
@@ -330,9 +330,9 @@ def test_define_subagent_specs_all_roles_under_45kb(tmp_path: Path):
 # ==============================================================================
 
 def test_subagent_types_json_exact_lf_parity():
-    """Verify subagent_types.json has pure LF, 4 base types, and matches dispatch.get_type_definitions(lean=False)."""
+    """Verify subagent_types.json has pure LF, 4 base types, and matches dispatch.get_type_definitions(lean=True)."""
     from dispatch import get_type_definitions
-    types_def = get_type_definitions(lean=False)
+    types_def = get_type_definitions(lean=True)
     assert len(types_def) == 4
 
     types_path = SKILL_DIR / "subagent_types.json"
@@ -369,7 +369,7 @@ def test_all_system_prompts_pure_lf_and_byte_budgets():
     lean_author = LEAN_DIR / "prompt_shard_author.md"
     assert lean_author.is_file()
     author_sz = len(lean_author.read_bytes())
-    assert author_sz <= 5000, f"lean/prompt_shard_author.md size {author_sz} B exceeds 5,000 B!"
+    assert author_sz <= 4750, f"lean/prompt_shard_author.md size {author_sz} B exceeds 4,750 B!"
 
     for l_path in LEAN_DIR.glob("*.md"):
         sz = len(l_path.read_bytes())

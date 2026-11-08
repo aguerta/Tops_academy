@@ -523,7 +523,8 @@ def test_v5_shard_06_katex_sandwich_and_delta_placeholder_block():
         "cross_check_py": (
             "def verify(r):\n"
             "    v = r.get('vars', {})\n"
-            "    return v.get('a11', 0) > 0 and v.get('k_dim', 0) >= 2\n"
+            "    expected = f'Varianza asintótica eficiente con $V_{{11}} = {v.get(\"a11\")}$'\n"
+            "    return r.get('correct') == expected and v.get('a11', 0) > 0 and v.get('k_dim', 0) >= 2\n"
         ),
     }
 
@@ -931,8 +932,8 @@ def test_v7_dual_hook_guard_and_budget_guard_planner_response(tmp_path: Path):
     types_json_path = SKILL_ROOT / "subagent_types.json"
     assert types_json_path.is_file(), f"subagent_types.json missing from {SKILL_ROOT}"
     disk_types = json.loads(types_json_path.read_text(encoding="utf-8"))
-    mem_types = get_type_definitions(lean=False)
-    assert disk_types == mem_types, "subagent_types.json on disk is out of sync with dispatch.get_type_definitions(lean=False)"
+    mem_types = get_type_definitions(lean=True)
+    assert disk_types == mem_types, "subagent_types.json on disk is out of sync with dispatch.get_type_definitions(lean=True)"
 
     type_prompts = {t["name"]: t.get("system_prompt", "") for t in disk_types}
     assert {"c2c_cta_architect", "c2c_shard_author", "c2c_judge", "c2c_repair"}.issubset(type_prompts.keys())
@@ -1060,12 +1061,12 @@ def test_v9_tri_band_multimodal_contract_and_lean_prompt_budget(tmp_path: Path):
     prompt_bytes = len(lean_author_prompt.read_bytes())
     assert prompt_bytes <= 5000, f"prompt_shard_author.md exceeded 5,000 B limit: {prompt_bytes} B"
 
-    # Also verify prompt contains Form-B Tri-Banda directive and min_archetypes = 3
+    # Also verify prompt contains Form-C Quad-Band directive and min_archetypes = 4
     prompt_text = lean_author_prompt.read_text(encoding="utf-8")
-    assert "min_archetypes = 3" in prompt_text or "min_archetypes == 3" in prompt_text or "3" in prompt_text
-    assert "TRI-BANDA" in prompt_text.upper()
+    assert "min_archetypes = 4" in prompt_text or "min_archetypes == 4" in prompt_text or "4" in prompt_text
+    assert "QUAD-BAND" in prompt_text.upper() or "TRI-BANDA" in prompt_text.upper()
 
-    # 2. Tri-Band Contract enforcement in compile_shard
+    # 2. Tri-Band / Quad-Band Contract enforcement in compile_shard
     work_dir = tmp_path / "work_v9"
     shards_dir = work_dir / "shards"
     templates_dir = work_dir / "templates"
@@ -1089,25 +1090,25 @@ def test_v9_tri_band_multimodal_contract_and_lean_prompt_budget(tmp_path: Path):
 
     manifest_path = shards_dir / "pre_shard_manifest.json"
     manifest_path.write_text(json.dumps({
-        "min_archetypes": 3,
+        "min_archetypes": 4,
         "shards": [{"shard_id": "shard_99", "competency_ids": ["Hab-99"]}],
     }), encoding="utf-8")
 
-    # A) Failure on < 3 archetypes (e.g. 2 archetypes)
+    # A) Failure on < 4 archetypes (e.g. 2 archetypes)
     two_arch_code = '''
 def gen_1(rng):
     k = rng.randint(10, 40)
     return {"vars": {"k": k, "ans": k * 2}, "correct": str(k * 2), "distractors": []}
 
 def ver_1(r):
-    return r["vars"]["ans"] == r["vars"]["k"] * 2
+    return str(r.get("correct", "")).strip() == str(r.get("vars", {}).get("ans")) and r["vars"]["ans"] == r["vars"]["k"] * 2
 
 def gen_2(rng):
     k = rng.randint(10, 40)
     return {"vars": {"k": k, "ans": k + 10}, "correct": str(k + 10), "distractors": []}
 
 def ver_2(r):
-    return r["vars"]["ans"] == r["vars"]["k"] + 10
+    return str(r.get("correct", "")).strip() == str(r.get("vars", {}).get("ans")) and r["vars"]["ans"] == r["vars"]["k"] + 10
 
 TEMPLATES = [
     ("T-Hab99-01", "Hab-99", "fill_in_the_blank", gen_1, ver_1, ("easy", "Remember"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
@@ -1120,9 +1121,9 @@ TEMPLATES = [
     ok_2, errs_2 = compile_shard(work_dir_or_path=work_dir, shard_id="shard_99", strict=True)
     assert ok_2 is False
     assert any("[M3-ARCHETYPES]" in e for e in errs_2)
-    assert any("mínimo 3 plantillas" in e or "define solo 2" in e for e in errs_2)
+    assert any("mínimo 4 plantillas" in e or "mínimo 3 plantillas" in e or "define solo 2" in e for e in errs_2)
 
-    # B) Failure on incomplete difficulty bands (3 archetypes but easy, medium, medium - missing hard)
+    # B) Failure on incomplete difficulty bands (4 archetypes but easy, medium, medium, medium - missing hard)
     missing_hard_code = '''
 def gen_1(rng):
     k = rng.randint(10, 40)
@@ -1145,10 +1146,18 @@ def gen_3(rng):
 def ver_3(r):
     return r["vars"]["ans"] == r["vars"]["k"] + 20
 
+def gen_4(rng):
+    k = rng.randint(10, 40)
+    return {"vars": {"k": k, "ans": k + 30}, "correct": str(k + 30), "distractors": []}
+
+def ver_4(r):
+    return r["vars"]["ans"] == r["vars"]["k"] + 30
+
 TEMPLATES = [
     ("T-Hab99-01", "Hab-99", "fill_in_the_blank", gen_1, ver_1, ("easy", "Remember"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
     ("T-Hab99-02", "Hab-99", "fill_in_the_blank", gen_2, ver_2, ("medium", "Understand"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
     ("T-Hab99-03", "Hab-99", "fill_in_the_blank", gen_3, ver_3, ("medium", "Apply"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-Hab99-04", "Hab-99", "fill_in_the_blank", gen_4, ver_4, ("medium", "Analyze"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
 ]
 '''
     shard_file.write_text(missing_hard_code, encoding="utf-8")
@@ -1180,10 +1189,18 @@ def gen_3(rng):
 def ver_3(r):
     return r["vars"]["ans"] == r["vars"]["k"] + 20
 
+def gen_4(rng):
+    k = rng.randint(10, 40)
+    return {"vars": {"k": k, "ans": k + 30}, "correct": str(k + 30), "distractors": []}
+
+def ver_4(r):
+    return r["vars"]["ans"] == r["vars"]["k"] + 30
+
 TEMPLATES = [
     ("T-Hab99-01", "Hab-99", "fill_in_the_blank", gen_1, ver_1, ("easy", "Apply"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
     ("T-Hab99-02", "Hab-99", "fill_in_the_blank", gen_2, ver_2, ("medium", "Apply"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
     ("T-Hab99-03", "Hab-99", "fill_in_the_blank", gen_3, ver_3, ("hard", "Apply"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
+    ("T-Hab99-04", "Hab-99", "fill_in_the_blank", gen_4, ver_4, ("hard", "Apply"), [r"Stem 1 @k@:", r"Stem 2 @k@:", r"Stem 3 @k@:"], ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"], "Sol @ans@."),
 ]
 '''
     shard_file.write_text(single_bloom_code, encoding="utf-8")
@@ -1191,7 +1208,7 @@ TEMPLATES = [
     assert ok_bloom is False
     assert any("Diversidad cognitiva insuficiente" in e for e in errs_bloom)
 
-    # D) Clean Pass on valid 3-archetype Tri-Band (easy/medium/hard, Remember/Apply/Analyze, 2 FIB + 1 MC7)
+    # D) Clean Pass on valid 4-archetype Quad-Band (easy/medium/hard, Remember/Apply/Analyze/Evaluate, 3 FIB + 1 MC7)
     valid_triband_code = '''
 def gen_mc7(rng):
     k = rng.randint(100, 999)
@@ -1199,12 +1216,15 @@ def gen_mc7(rng):
     v = {"k": k, "ans": ans}
     dists = []
     for i in range(1, 7):
-        v[f"d{i}"] = ans + i * 50
-        dists.append((f"D-Hab99-{i:02d}", f"@d{i}@", f"Desvio parametrico con factor @k@ y delta @d{i}@."))
-    return {"vars": v, "correct": "@ans@", "distractors": dists}
+        d_val = ans + i * 50
+        v[f"d{i}"] = d_val
+        dists.append((f"D-Hab99-{i:02d}", f"${d_val}$", f"Desvio parametrico con factor @k@ y delta ${d_val}$."))
+    return {"vars": v, "correct": f"${ans}$", "distractors": dists}
 
 def ver_mc7(r):
-    return r["vars"]["ans"] == r["vars"]["k"] * 10
+    expected = f"${r.get('vars', {}).get('ans')}$"
+    corr = str(r.get("correct", "")).strip()
+    return corr == expected and r["vars"]["ans"] == r["vars"]["k"] * 10
 
 def gen_fib1(rng):
     k = rng.randint(100, 999)
@@ -1212,7 +1232,9 @@ def gen_fib1(rng):
     return {"vars": {"k": k, "ans": ans}, "correct": str(ans), "distractors": []}
 
 def ver_fib1(r):
-    return r["vars"]["ans"] == r["vars"]["k"] + 10
+    expected = str(r.get("vars", {}).get("ans"))
+    corr = str(r.get("correct", "")).strip()
+    return corr == expected and r["vars"]["ans"] == r["vars"]["k"] + 10
 
 def gen_fib2(rng):
     k = rng.randint(100, 999)
@@ -1220,7 +1242,19 @@ def gen_fib2(rng):
     return {"vars": {"k": k, "ans": ans}, "correct": str(ans), "distractors": []}
 
 def ver_fib2(r):
-    return r["vars"]["ans"] == r["vars"]["k"] + 50
+    expected = str(r.get("vars", {}).get("ans"))
+    corr = str(r.get("correct", "")).strip()
+    return corr == expected and r["vars"]["ans"] == r["vars"]["k"] + 50
+
+def gen_fib3(rng):
+    k = rng.randint(100, 999)
+    ans = k + 100
+    return {"vars": {"k": k, "ans": ans}, "correct": str(ans), "distractors": []}
+
+def ver_fib3(r):
+    expected = str(r.get("vars", {}).get("ans"))
+    corr = str(r.get("correct", "")).strip()
+    return corr == expected and r["vars"]["ans"] == r["vars"]["k"] + 100
 
 TEMPLATES = [
     (
@@ -1259,9 +1293,21 @@ TEMPLATES = [
         ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"],
         "Solucion @ans@."
     ),
+    (
+        "T-Hab99-04", "Hab-99", "fill_in_the_blank", gen_fib3, ver_fib3, ("medium", "Evaluate"),
+        [
+            r"En el regimen de prueba con base @k@, determine el parametro:",
+            r"Realice el calculo de comprobacion para el valor @k@:",
+            r"Deduzca el resultado final de evaluacion para la muestra @k@:",
+            r"Obtenga la cota de estimacion directa cuando la entrada es @k@:",
+            r"Establezca el diagnostico numerico empleando la base @k@:",
+        ],
+        ["Pista 1 identificacion conceptual", "Pista 2 procedimiento analitico", "Pista 3 comprobacion numerica"],
+        "Solucion @ans@."
+    ),
 ]
 '''
     shard_file.write_text(valid_triband_code, encoding="utf-8")
     ok_valid, errs_valid = compile_shard(work_dir_or_path=work_dir, shard_id="shard_99", strict=True)
-    assert ok_valid is True, f"Expected clean pass for valid 3-archetype Tri-Band, got errors: {errs_valid}"
+    assert ok_valid is True, f"Expected clean pass for valid 4-archetype Quad-Band, got errors: {errs_valid}"
     assert len(errs_valid) == 0

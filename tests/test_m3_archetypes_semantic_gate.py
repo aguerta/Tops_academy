@@ -99,7 +99,7 @@ def _gen_h01(rng, arch=1):
     delta = rng.randint(100, 200) * arch
     th = tc + delta
     ans = round(1.0 - (tc / th), 3)
-    dists = [round(ans + 0.05 * i, 3) for i in range(1, 7)]
+    dists = [round(1.0 - (tc / (th + 50 * i + 10)), 3) for i in range(1, 7)]
     v = {"tc": tc, "th": th, "ans": ans, **{f"d{i}": d for i, d in enumerate(dists, 1)}}
     return {
         "vars": v,
@@ -115,7 +115,7 @@ def gen_h01_2(rng): return _gen_h01(rng, 2)
 def gen_h01_3(rng): return _gen_h01(rng, 3)
 def gen_h01_4(rng): return _gen_h01(rng, 4)
 
-def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == r"$\eta = @ans@$")
 
 stems_reused = [
     r"Una máquina térmica opera entre focos a $T_H = @th@$ y $T_C = @tc@$. Calcule el rendimiento:",
@@ -183,7 +183,7 @@ def gen_h01_2(rng): return _gen_h01(rng, 2)
 def gen_h01_3(rng): return _gen_h01(rng, 3)
 def gen_h01_4(rng): return _gen_h01(rng, 4)
 
-def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == r"$\eta = @ans@$")
 
 stems_1 = [
     "Calcule la eficiencia directa con $T_H=@th@$ y $T_C=@tc@$:",
@@ -262,7 +262,7 @@ def _gen_h01(rng, arch=1):
 
     th = tc + delta
     ans = round(1.0 - (tc / th), 3)
-    dists = [round(ans + 0.05 * i, 3) for i in range(1, 7)]
+    dists = [round(1.0 - (tc / (th + 50 * i + 10)), 3) for i in range(1, 7)]
     v = {"tc": tc, "th": th, "ans": ans, **{f"d{i}": d for i, d in enumerate(dists, 1)}}
     if arch in (3, 4):
         # FIB format: correct is plain number string without surrounding dollar delimiters
@@ -285,7 +285,7 @@ def gen_h01_2(rng): return _gen_h01(rng, 2)
 def gen_h01_3(rng): return _gen_h01(rng, 3)
 def gen_h01_4(rng): return _gen_h01(rng, 4)
 
-def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and (res.get("correct") == r"$\eta = @ans@$" or str(res.get("vars", {}).get("ans")) == str(res.get("correct"))))
 
 stems_1 = [
     r"Calcule la eficiencia directa de Carnot con focos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
@@ -366,7 +366,7 @@ def _gen_h01(rng, arch=1):
     delta = rng.randint(150, 450)
     th = tc + delta
     ans = round(1.0 - (tc / th), 3)
-    dists = [round(ans + 0.05 * i, 3) for i in range(1, 7)]
+    dists = [round(1.0 - (tc / (th + 50 * i + 10)), 3) for i in range(1, 7)]
     v = {"tc": tc, "th": th, "ans": ans, **{f"d{i}": d for i, d in enumerate(dists, 1)}}
     return {
         "vars": v,
@@ -382,7 +382,7 @@ def gen_h01_2(rng): return _gen_h01(rng, 2)
 def gen_h01_3(rng): return _gen_h01(rng, 3)
 def gen_h01_4(rng): return _gen_h01(rng, 4)
 
-def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and res.get("correct") == r"$\eta = @ans@$")
 
 stems_1 = [
     r"Calcule la eficiencia directa con focos $T_H = @th@$ y $T_C = @tc@$:",
@@ -480,7 +480,7 @@ def _gen_h01_modular(rng, arch=1):
 
     th = tc + delta
     ans = round(1.0 - (tc / th), 3)
-    dists = [round(ans + 0.05 * i, 3) for i in range(1, 7)]
+    dists = [round(1.0 - (tc / (th + 50 * i + 10)), 3) for i in range(1, 7)]
     v = {"tc": tc, "th": th, "ans": ans, **{f"d{i}": d for i, d in enumerate(dists, 1)}}
     if arch in (3, 4):
         return {
@@ -502,7 +502,7 @@ def gen_h01_2(rng): return _gen_h01_modular(rng, 2)
 def gen_h01_3(rng): return _gen_h01_modular(rng, 3)
 def gen_h01_4(rng): return _gen_h01_modular(rng, 4)
 
-def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and "ans" in res["vars"])
+def ver_h01(res): return bool(res and isinstance(res.get("vars"), dict) and (res.get("correct") == r"$\eta = @ans@$" or str(res.get("vars", {}).get("ans")) == str(res.get("correct"))))
 
 stems_1 = [
     r"Calcule la eficiencia directa con focos $T_H = @th@\text{ K}$ y $T_C = @tc@\text{ K}$:",
@@ -781,7 +781,7 @@ def _gen(rng, arch=1):
 def g1(rng): return _gen(rng, 1)
 def g2(rng): return _gen(rng, 2)
 def g3(rng): return _gen(rng, 3)
-def ver(res): return bool(res and "vars" in res)
+def ver(res): return bool(res and (res.get("correct") == r"$\eta = @v@$" or res.get("correct") == str(res.get("vars", {}).get("v"))))
 s1 = ["Stem uno A @v@", "Stem uno B @v@", "Stem uno C @v@"]
 s2 = ["Stem dos A @v@", "Stem dos B @v@", "Stem dos C @v@"]
 s3 = ["Stem tres A @v@", "Stem tres B @v@", "Stem tres C @v@"]
@@ -816,7 +816,7 @@ def _gen(rng, arch=1):
 def g1(rng): return _gen(rng, 1)
 def g2(rng): return _gen(rng, 2)
 def g3(rng): return _gen(rng, 3)
-def ver(res): return bool(res and "vars" in res)
+def ver(res): return bool(res and (res.get("correct") == r"$\eta = @v@$" or res.get("correct") == str(res.get("vars", {}).get("v"))))
 s1 = ["Stem uno A @v@", "Stem uno B @v@", "Stem uno C @v@"]
 s2 = ["Stem dos A @v@", "Stem dos B @v@", "Stem dos C @v@"]
 s3 = ["Stem tres A @v@", "Stem tres B @v@", "Stem tres C @v@"]
@@ -875,12 +875,14 @@ import random
 def g1(rng):
     v = rng.randint(10, 500)
     return {"vars": {"v": v}, "correct": str(v), "distractors": []}
-def ver(res): return bool(res and "vars" in res)
+def ver(res): return bool(res and res.get("correct") == str(res.get("vars", {}).get("v")))
 s1 = [
     "Consigna A uno @v@ con formulación distintiva",
     "Consigna A dos @v@ con variación estructural",
     "Consigna A tres @v@ con consigna analítica",
     "Consigna A cuatro @v@ con planteamiento formal",
+    "Consigna A cinco @v@ con derivación directa",
+    "Consigna A seis @v@ con cálculo sistemático",
 ]
 hints = ["Pista uno con suficiente longitud", "Pista dos con suficiente longitud", "Pista tres con suficiente longitud"]
 TEMPLATES = [
@@ -902,7 +904,7 @@ def _gen(rng, arch=1):
 def g1(rng): return _gen(rng, 1)
 def g2(rng): return _gen(rng, 2)
 def g3(rng): return _gen(rng, 3)
-def ver(res): return bool(res and "vars" in res)
+def ver(res): return bool(res and res.get("correct") == str(res.get("vars", {}).get("v")))
 s1 = ["Consigna A uno @v@", "Consigna A dos @v@", "Consigna A tres @v@"]
 s2 = ["Consigna B uno @v@", "Consigna B dos @v@", "Consigna B tres @v@"]
 s3 = ["Consigna C uno @v@", "Consigna C dos @v@", "Consigna C tres @v@"]
@@ -1067,16 +1069,22 @@ s1 = [
     r"Calcule la suma básica nominal sabiendo que los sumandos son $a = @a@$ y $b = @b@$:",
     r"Determine la adición del proceso para los parámetros $a = @a@$ y $b = @b@$:",
     r"Halle la cantidad combinada correspondiente a $a = @a@$ y $b = @b@$:",
+    r"Establezca el total acumulado considerando las magnitudes $a = @a@$ y $b = @b@$:",
+    r"Deduzca el resultado de la agregación de las magnitudes $a = @a@$ y $b = @b@$:",
 ]
 s2 = [
     r"En el régimen asintótico superior con escala $w = @w@$, halle el doble del valor:",
     r"Evalúe el doble del sistema térmico cuando el valor base es $w = @w@$:",
     r"Determine el factor doble del límite asintótico con escala térmica $w = @w@$:",
+    r"Calcule el valor duplicado resultante bajo el parámetro de escala $w = @w@$:",
+    r"Halle el resultado del doble de la magnitud escalada con $w = @w@$:",
 ]
 s3 = [
     r"Seleccione todas las afirmaciones válidas respecto al parámetro de escala $k = @k@$:",
     r"Identifique las proposiciones analíticas verdaderas para el régimen con $k = @k@$:",
     r"Determine cuáles de las siguientes propiedades se verifican para $k = @k@$:",
+    r"Indique el conjunto de enunciados correctos asociados al valor $k = @k@$:",
+    r"Elija las aseveraciones matemáticamente rigurosas para la escala $k = @k@$:",
 ]
 
 hints = [

@@ -749,8 +749,8 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
             res_fix = process_hook(payload_fix, custom_lock_file=str(self.lock_file))
             self.assertEqual(res_fix.get("decision"), "allow")
 
-    def test_rule_c_error_count_6_or_more_allows_write_file_on_shard(self) -> None:
-        """When error_count >= 6 (e.g. 6, 10), official sweet spot allows write_file rewrite."""
+    def test_rule_c_error_count_6_or_more_blocks_monolithic_write_file_on_shard(self) -> None:
+        """When error_count >= 6 (e.g. 6, 10) or affected_line_count > 5, 2D matrix blocks monolithic write_file and directs to ModularSplicing."""
         shard_py = self.shards_dir / "shard_01_data.py"
         shard_content = "".join([f"# Line {i}\n" for i in range(120)])
         shard_py.write_text(shard_content, encoding="utf-8")
@@ -777,7 +777,9 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
                 },
             }
             res_write = process_hook(payload_write, custom_lock_file=str(self.lock_file))
-            self.assertEqual(res_write.get("decision"), "allow")
+            self.assertEqual(res_write.get("decision"), "deny")
+            self.assertIn("ModularSplicing", res_write.get("reason", ""))
+            self.assertIn("work/shards/shard_fixes/<CID>.py", res_write.get("reason", ""))
 
     def test_rule_c_has_syntax_error_allows_write_file_recovery(self) -> None:
         """When has_syntax_error is True, write_file is allowed even with error_count=1."""
@@ -879,7 +881,7 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
                 res_fix = process_hook(payload_fix, custom_lock_file=str(self.lock_file))
                 self.assertEqual(res_fix.get("decision"), "allow")
 
-            # 2. error_count = 6 -> write_file ALLOWED
+            # 2. error_count = 6 -> write_file BLOCKED with ModularSplicing redirection
             compile_file = self.check_attempts_dir / compile_name
             compile_file.write_text(
                 json.dumps({
@@ -900,7 +902,8 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
                 },
             }
             res_write_6 = process_hook(payload_write, custom_lock_file=str(self.lock_file))
-            self.assertEqual(res_write_6.get("decision"), "allow")
+            self.assertEqual(res_write_6.get("decision"), "deny")
+            self.assertIn("ModularSplicing", res_write_6.get("reason", ""))
 
             # 3. has_syntax_error = True (with error_count = 2) -> write_file ALLOWED for recovery
             compile_file.write_text(

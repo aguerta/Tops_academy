@@ -189,7 +189,7 @@ def test_deterministic_crc32_seeding():
 
 
 def test_triband_min_archetypes_three_contract():
-    """Verify that Form-B Tri-Banda specifies min_archetypes = 3."""
+    """Verify that Form-C / Form-B specifies min_archetypes = 4."""
     from plan_shards import DSL_REFERENCE
-    assert DSL_REFERENCE.get("min_archetypes") == 3
+    assert DSL_REFERENCE.get("min_archetypes") == 4
     assert DSL_REFERENCE.get("canonical_template_schema") is not None

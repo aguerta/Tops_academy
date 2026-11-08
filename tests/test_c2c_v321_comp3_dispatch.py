@@ -56,7 +56,7 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
     def test_load_inversion_invariant_specs_vs_item_prompts(self) -> None:
         """Type specs in work/dispatch/types/ contain 100% full system prompts while items are concise and non-duplicating."""
         # 1. Generate type specifications
-        specs_summary = generate_define_subagent_specs(self.work_dir)
+        specs_summary = generate_define_subagent_specs(self.work_dir, lean=False)
         type_files = specs_summary.get("type_files", [])
         self.assertGreaterEqual(len(type_files), 5, "Expected at least 5 type definitions including c2c_cta_harmonizer")
 
@@ -275,6 +275,10 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
         self.assertIn("--output", prompt)
         self.assertIn("DONE: work/shards/shard_01.json", prompt)
 
+        # Verify author snapshot persistence
+        snapshot_exists = (self.work_dir / "author_snapshot.json").is_file() or (self.work_dir / "authors_snapshot.json").is_file()
+        self.assertTrue(snapshot_exists, "author_snapshot.json or authors_snapshot.json must exist after dispatch_authors")
+
     # =========================================================================
     # 3. Robustness: cta.json formats (dict with mapping, dict with list, pure list)
     # =========================================================================
@@ -424,6 +428,12 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
         self.assertIn("Judge answered B vs Ground Truth A", c02_agent["Prompt"])
         self.assertIn("DONE: work/shards/shard_02.json", c02_agent["Prompt"])
 
+        # Absence of cta.json in read_paths and presence of compact competence slice
+        self.assertNotIn("cta.json", c01_agent.get("read_paths", []))
+        slices_dir = self.work_dir / "dispatch" / "repair_slices"
+        self.assertTrue(slices_dir.is_dir())
+        self.assertTrue(any("C-01" in f.name for f in slices_dir.glob("*.json")))
+
     # =========================================================================
     # 6. dispatch_judges Zero-Warmup payload and path consistency
     # =========================================================================
@@ -553,8 +563,8 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
         self.assertIn("FIB dollar wrap error", prompt)
         self.assertIn("Judge discrepancy on root computation", prompt)
         self.assertIn("Ambiguous options formulation", prompt)
-        self.assertIn("--min-archetypes 3", prompt)
-        self.assertIn("--min-archetypes 3", subagent.get("compile_command", ""))
+        self.assertIn("--min-archetypes 4", prompt)
+        self.assertIn("--min-archetypes 4", subagent.get("compile_command", ""))
 
     # =========================================================================
     # 9. CLI parity and schema verification for dispatch-cta-reduce
@@ -625,9 +635,9 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
         self.assertIn("R-16 length parity failure", prompt_c02)
         self.assertIn("Option C distractor collision", prompt_c02)
         self.assertIn("FIB dollar wrap violation", prompt_hab03)
-        self.assertIn("--min-archetypes 3", sub_c02.get("compile_command", ""))
+        self.assertIn("--min-archetypes 4", sub_c02.get("compile_command", ""))
         self.assertIn("--strict", sub_c02.get("compile_command", ""))
-        self.assertIn("--min-archetypes 3", sub_hab03.get("compile_command", ""))
+        self.assertIn("--min-archetypes 4", sub_hab03.get("compile_command", ""))
         self.assertIn("--strict", sub_hab03.get("compile_command", ""))
 
 

@@ -69,17 +69,17 @@ from engine.invariants import check_instance_invariants, validate_katex_syntax
 # ==============================================================================
 
 class TestCatalogSynchronization:
-    """Verifies subagent_types.json is in complete parity with dispatch.get_type_definitions(lean=False)."""
+    """Verifies subagent_types.json is in complete parity with dispatch.get_type_definitions(lean=True)."""
 
     def test_subagent_types_json_matches_get_type_definitions(self):
         types_file = SKILL_DIR / "subagent_types.json"
         assert types_file.is_file(), f"subagent_types.json missing from {SKILL_DIR}"
 
         disk_content = json.loads(types_file.read_text(encoding="utf-8"))
-        mem_types = get_type_definitions(lean=False)
+        mem_types = get_type_definitions(lean=True)
 
         assert disk_content == mem_types, (
-            "subagent_types.json on disk is out of sync with dispatch.get_type_definitions(lean=False)"
+            "subagent_types.json on disk is out of sync with dispatch.get_type_definitions(lean=True)"
         )
         assert len(disk_content) >= 4
         names = {t["name"] for t in disk_content}
@@ -227,10 +227,12 @@ class TestF01AndF02KaTeXAndRationale:
         manifest_file = shards_dir / "pre_shard_manifest.json"
         manifest_payload = {
             "course_id": "asyntotic_estatistics_v4",
+            "min_archetypes": 3,
             "shards": [
                 {
                     "shard_id": "shard_06",
                     "competency_ids": ["Hab-06"],
+                    "min_archetypes": 3,
                     "shard_data_path": str(shard_py.resolve().as_posix()),
                     "templates_dir": str(templates_dir.resolve().as_posix()),
                     "competencies": hab06_comp,
@@ -325,7 +327,8 @@ def ver_hab06_1(res):
         return False
     diff = round(b_iv - b_ls, 3)
     expected = round((diff ** 2) / denom, 3)
-    return abs(ans - expected) < 1e-3
+    corr = str(res.get("correct", "")).strip()
+    return corr in (r"H = @ans@", f"H = {ans}", f"H = {expected}") and abs(ans - expected) < 1e-3
 
 
 def gen_hab06_2(rng):
@@ -339,7 +342,9 @@ def gen_hab06_2(rng):
 
 def ver_hab06_2(res):
     v = res.get("vars", {})
-    return abs(v.get("ans", 0) - round(v.get("v_iv", 0) - v.get("v_ls", 0), 4)) < 1e-4
+    expected = str(v.get("ans"))
+    corr = str(res.get("correct", "")).strip()
+    return corr == expected and abs(v.get("ans", 0) - round(v.get("v_iv", 0) - v.get("v_ls", 0), 4)) < 1e-4
 
 
 def gen_hab06_3(rng):
@@ -353,7 +358,9 @@ def gen_hab06_3(rng):
 
 def ver_hab06_3(res):
     v = res.get("vars", {})
-    return abs(v.get("ans", 0) - round(round(v.get("b_iv", 0) - v.get("b_ls", 0), 3) ** 2, 4)) < 1e-4
+    expected = str(v.get("ans"))
+    corr = str(res.get("correct", "")).strip()
+    return corr == expected and abs(v.get("ans", 0) - round(round(v.get("b_iv", 0) - v.get("b_ls", 0), 3) ** 2, 4)) < 1e-4
 
 
 TEMPLATES = [
@@ -431,6 +438,7 @@ TEMPLATES = [
             seeds=50,
             cta_path=cta_file,
             manifest_path=manifest_file,
+            min_archetypes=3,
         )
         assert success, f"Expected successful compile of legacy shard_06, got errors: {errors}"
         assert len(errors) == 0
@@ -539,15 +547,19 @@ def gen_directo(rng):
 
 def ver_directo(res):
     v = res.get("vars", {})
-    return v.get("ans") == v.get("base") * v.get("step")
+    expected = f"$@ans@$"
+    corr = str(res.get("correct", "")).strip()
+    return (corr in (expected, f"${v.get('ans')}$", str(v.get('ans')))) and v.get("ans") == v.get("base") * v.get("step")
 
 def gen_inverso(rng):
-    ans = rng.randint(10, 50)
     div = rng.choice([2, 4, 5, 10])
-    total = ans * div
+    factor = rng.randint(150, 450)
+    total = factor * div
+    ans = factor
     v = {"total": total, "div": div, "ans": ans}
-    for i in range(1, 7):
-        v[f"d{i}"] = ans + (i * 3)
+    offsets = [-42, -22, -12, 14, 26, 48]
+    for i, off in enumerate(offsets, start=1):
+        v[f"d{i}"] = ans + off
     dists = [
         ("D-HabM3-01", f"$@d1@$", "Inversión de signo en el estimador. Con parámetro @d1@."),
         ("D-HabM3-02", f"$@d2@$", "Omitir la covarianza entre regresores. Con parámetro @d2@."),
@@ -560,7 +572,9 @@ def gen_inverso(rng):
 
 def ver_inverso(res):
     v = res.get("vars", {})
-    return v.get("ans") * v.get("div") == v.get("total")
+    expected = f"$@ans@$"
+    corr = str(res.get("correct", "")).strip()
+    return (corr in (expected, f"${v.get('ans')}$", str(v.get('ans')))) and v.get("total") == v.get("ans") * v.get("div")
 
 def gen_perturbacion(rng):
     x = rng.randint(10, 40)
@@ -571,7 +585,9 @@ def gen_perturbacion(rng):
 
 def ver_perturbacion(res):
     v = res.get("vars", {})
-    return v.get("ans") == (v.get("x") + v.get("delta")) ** 2
+    expected = str(v.get("ans"))
+    corr = str(res.get("correct", "")).strip()
+    return corr == expected and v.get("ans") == (v.get("x") + v.get("delta")) ** 2
 
 def gen_frontera(rng):
     k = rng.randint(5, 25)
@@ -581,7 +597,9 @@ def gen_frontera(rng):
 
 def ver_frontera(res):
     v = res.get("vars", {})
-    return abs(v.get("ans", 0) * v.get("k", 1) - 100.0) < 0.5
+    expected = str(v.get("ans"))
+    corr = str(res.get("correct", "")).strip()
+    return corr == expected and abs(v.get("ans", 0) * v.get("k", 1) - 100.0) < 0.5
 
 TEMPLATES = [
     (
@@ -659,7 +677,7 @@ TEMPLATES = [
         ],
         [
             r"Divida la constante cien entre el parametro de frontera k.",
-            r"Redondee el cociente a dos decimales de precision numerica.",
+            r"Aproxime el cociente a dos decimales de precision numerica.",
             r"El valor en el regimen de frontera asintotico es @ans@."
         ],
         r"El valor de frontera es @ans@."

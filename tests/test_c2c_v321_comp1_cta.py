@@ -429,3 +429,309 @@ class TestCtaProseOverflowFailFast:
         assert len(res_errs) == len(set(res_errs)), "check_cta_katex emitted duplicate error messages"
 
 
+class TestFormalAssumptionsAndCertification:
+    """Verifies formal assumptions support, 2D error metrics, certificate emission, and modular splicing."""
+
+    def test_compile_cta_assumptions_tuples_and_dicts(self):
+        from compile_cta import compile_cta_module, count_evaluated_fields
+
+        comps_data = [
+            # 7-tuple with assumptions
+            (
+                "concept",
+                "C-01",
+                "Formal Basis",
+                "Definition of vector space basis.",
+                "Understand",
+                [],
+                [
+                    ("D1", "$0$", "wb", "$0$", "hint", None),
+                    ("D2", "$0$", "wb", "$0$", "hint", None),
+                    ("D3", "$0$", "wb", "$0$", "hint", None),
+                ],
+                [
+                    ("A-C01-01", "$x > 0$ strictly positive", "Breakdown of convergence", "Positivity", "Premise"),
+                ],
+            ),
+            # Dict competency with assumptions
+            {
+                "id": "Hab-01",
+                "type": "skill",
+                "name": "Solve System",
+                "description_latex": "Solve linear system $Ax = b$.",
+                "bloom": "Apply",
+                "evidence": [{"doc": "text.pdf", "page": 1}],
+                "prerequisites": ["C-01"],
+                "distractors": [
+                    ("D1", "$0$", "wb", "$0$", "hint", "omit"),
+                    ("D2", "$0$", "wb", "$0$", "hint", "omit"),
+                    ("D3", "$0$", "wb", "$0$", "hint", None),
+                    ("D4", "$0$", "wb", "$0$", "hint", None),
+                    ("D5", "$0$", "wb", "$0$", "hint", None),
+                    ("D6", "$0$", "wb", "$0$", "hint", None),
+                ],
+                "assumptions": [
+                    ("A-Hab01-01", "$\\det(A) \\neq 0$ non-singular", "No unique solution exists"),
+                ],
+            },
+        ]
+
+        compiled = compile_cta_module(
+            competencies_data=comps_data,
+            course_id="formal_algebra",
+            title="Linear Systems",
+        )
+
+        comps = compiled.get("competencies", [])
+        assert len(comps) == 2
+
+        c1 = comps[0]
+        assert c1["id"] == "C-01"
+        assert len(c1.get("assumptions", [])) == 1
+        assert c1["assumptions"][0]["id"] == "A-C01-01"
+        assert c1["assumptions"][0]["statement_latex"] == "$x > 0$ strictly positive"
+        assert c1["assumptions"][0]["name"] == "Positivity"
+
+        c2 = comps[1]
+        assert c2["id"] == "Hab-01"
+        assert len(c2.get("assumptions", [])) == 1
+        assert c2["assumptions"][0]["id"] == "A-Hab01-01"
+        assert c2["assumptions"][0]["violation_consequence"] == "No unique solution exists"
+
+        field_count = count_evaluated_fields(compiled)
+        assert field_count >= 20
+
+    def test_require_assumptions_enforcement_and_line_mapping(self, tmp_path: Path):
+        from compile_cta import compile_cta, CtaDataLineLocator
+
+        work_dir = tmp_path / "work"
+        work_dir.mkdir(parents=True, exist_ok=True)
+        manifest = {
+            "course_id": "test_assumptions",
+            "files": [{"doc": "book.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        # cta_data.py with Concept lacking assumptions
+        cta_code = (
+            'COURSE_ID = "test_assumptions"\n'
+            'TITLE = "Formal Test"\n\n'
+            'COMPETENCIES = [\n'
+            '    (\n'
+            '        "concept",\n'
+            '        "C-01",\n'
+            '        "Basis Concept",\n'
+            '        "Definition of basis in vector space.",\n'
+            '        "Understand",\n'
+            '        "book.pdf",\n'
+            '        1,\n'
+            '        [],\n'
+            '        [\n'
+            '            ("D-01-01", "Wrong 1", "Correct 1", "$0$", "Hint 1", None),\n'
+            '            ("D-01-02", "Wrong 2", "Correct 2", "$0$", "Hint 2", None),\n'
+            '            ("D-01-03", "Wrong 3", "Correct 3", "$0$", "Hint 3", None),\n'
+            '        ],\n'
+            '    ),\n'
+            ']\n'
+        )
+        data_path = work_dir / "cta_data.py"
+        data_path.write_text(cta_code, encoding="utf-8")
+
+        valid, cta_dict, errors, elapsed = compile_cta(
+            cta_data_path=data_path,
+            output_dir=work_dir,
+            require_assumptions=True,
+            allow_degrade=False,
+        )
+
+        assert valid is False
+        assert any("[CTA-ASSUMPTIONS-MISSING]" in e and "C-01" in e for e in errors)
+
+        # Verify CtaDataLineLocator resolves CTA-ASSUMPTIONS-MISSING to competency line
+        locator = CtaDataLineLocator(cta_code)
+        target_err = next(e for e in errors if "[CTA-ASSUMPTIONS-MISSING]" in e)
+        start_l, end_l, snip = locator.resolve_error_location(target_err)
+        assert start_l >= 4
+        assert "concept" in snip or "C-01" in snip
+
+    def test_2d_attempt_failure_persistence_and_line_count(self, tmp_path: Path):
+        from compile_cta import compile_cta
+
+        work_dir = tmp_path / "work"
+        work_dir.mkdir(parents=True, exist_ok=True)
+        manifest = {
+            "course_id": "test_persistence",
+            "files": [{"doc": "book.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        # Create cta_data.py with >5 separate errors across distinct lines
+        cta_code = (
+            'COURSE_ID = "test_persistence"\n'
+            'TITLE = "Persistence Test"\n\n'
+            'COMPETENCIES = [\n'
+            '    (\n'
+            '        "concept",\n'
+            '        "C-01",\n'
+            '        "Valid Title",\n'
+            '        "Valid description.",\n'
+            '        "Understand",\n'
+            '        "book.pdf",\n'
+            '        1,\n'
+            '        [],\n'
+            '        [\n'
+            '            ("D-01-01", r"Wrong 1 $\\frac{w}{k", "Correct 1", "$0$", "Hint 1", None),\n'
+            '            ("D-01-02", r"Wrong 2 $\\frac{w}{k", "Correct 2", "$0$", "Hint 2", None),\n'
+            '            ("D-01-03", r"Wrong 3 $\\frac{w}{k", "Correct 3", "$0$", "Hint 3", None),\n'
+            '            ("D-01-04", r"Wrong 4 $\\frac{w}{k", "Correct 4", "$0$", "Hint 4", None),\n'
+            '            ("D-01-05", r"Wrong 5 $\\frac{w}{k", "Correct 5", "$0$", "Hint 5", None),\n'
+            '            ("D-01-06", r"Wrong 6 $\\frac{w}{k", "Correct 6", "$0$", "Hint 6", None),\n'
+            '        ],\n'
+            '    ),\n'
+            ']\n'
+        )
+        data_path = work_dir / "cta_data.py"
+        data_path.write_text(cta_code, encoding="utf-8")
+
+        valid, cta_dict, errors, elapsed = compile_cta(
+            cta_data_path=data_path,
+            output_dir=work_dir,
+            allow_degrade=False,
+        )
+        assert valid is False
+
+        # Verify state persistence file
+        attempt_file = work_dir / ".check_attempts" / "compile_cta_cta_data.json"
+        if not attempt_file.is_file():
+            attempt_file = work_dir / ".check_attempts" / "compile_cta_data.json"
+        assert attempt_file.is_file()
+        state = json.loads(attempt_file.read_text(encoding="utf-8"))
+        assert "affected_line_count" in state
+        assert state["affected_line_count"] > 5
+        assert "has_syntax_error" in state
+        assert "error_sha256" in state
+        assert len(state["error_sha256"]) == 64
+
+    def test_cta_certification_emission(self, tmp_path: Path):
+        from compile_cta import compile_cta
+
+        work_dir = tmp_path / "work"
+        work_dir.mkdir(parents=True, exist_ok=True)
+        manifest = {
+            "course_id": "test_certification",
+            "files": [{"doc": "book.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        cta_code = (
+            'COURSE_ID = "test_certification"\n'
+            'TITLE = "Certification Test"\n\n'
+            'COMPETENCIES = [\n'
+            '    (\n'
+            '        "concept",\n'
+            '        "C-01",\n'
+            '        "Valid Concept",\n'
+            '        "Formal definition of mathematical structure.",\n'
+            '        "Understand",\n'
+            '        "book.pdf",\n'
+            '        1,\n'
+            '        [],\n'
+            '        [\n'
+            '            ("D-01-01", "Wrong belief 1", "Correct truth 1", "$0$", "Hint 1", None),\n'
+            '            ("D-01-02", "Wrong belief 2", "Correct truth 2", "$0$", "Hint 2", None),\n'
+            '            ("D-01-03", "Wrong belief 3", "Correct truth 3", "$0$", "Hint 3", None),\n'
+            '        ],\n'
+            '    ),\n'
+            ']\n'
+        )
+        data_path = work_dir / "cta_data.py"
+        data_path.write_text(cta_code, encoding="utf-8")
+
+        valid, cta_dict, errors, elapsed = compile_cta(
+            cta_data_path=data_path,
+            output_dir=work_dir,
+        )
+        assert valid is True
+
+        # Verify cta.cert.json is emitted alongside cta.json
+        cert_path = work_dir / "cta.cert.json"
+        assert cert_path.is_file(), "cta.cert.json was not written upon successful compilation"
+        cert = json.loads(cert_path.read_text(encoding="utf-8"))
+
+        assert cert["schema_version"] == 1
+        assert cert["stage"] == "cta"
+        assert cert["artifact_id"] == "cta"
+        assert cert["contract_version"] == 2
+        assert cert["passed_50_seeds"] is True
+        assert len(cert["source_sha256"]) == 64
+        assert len(cert["cta_sha256"]) == 64
+        assert len(cert["compiler_sha256"]) == 64
+
+    def test_modular_splicing_from_cta_fixes(self, tmp_path: Path):
+        from compile_cta import compile_cta
+
+        work_dir = tmp_path / "work"
+        work_dir.mkdir(parents=True, exist_ok=True)
+        fixes_dir = work_dir / "cta_fixes"
+        fixes_dir.mkdir(parents=True, exist_ok=True)
+
+        manifest = {
+            "course_id": "test_splicing",
+            "files": [{"doc": "book.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+        }
+        (work_dir / "pre_cta_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        # cta_data.py with broken distractor in C-01
+        cta_code = (
+            'COURSE_ID = "test_splicing"\n'
+            'TITLE = "Splicing Test"\n\n'
+            'COMPETENCIES = [\n'
+            '    (\n'
+            '        "concept",\n'
+            '        "C-01",\n'
+            '        "Concept To Fix",\n'
+            '        "Definition of structure.",\n'
+            '        "Understand",\n'
+            '        "book.pdf",\n'
+            '        1,\n'
+            '        [],\n'
+            '        [\n'
+            '            ("D-01-01", None, None, "$0$", "Hint 1", None),\n'
+            '        ],\n'
+            '    ),\n'
+            ']\n'
+        )
+        data_path = work_dir / "cta_data.py"
+        data_path.write_text(cta_code, encoding="utf-8")
+
+        # Place override in cta_fixes/C-01.py using tuple format
+        fix_code = (
+            'COMPETENCY = (\n'
+            '    "concept",\n'
+            '    "C-01",\n'
+            '    "Spliced Fixed Concept",\n'
+            '    "Formal definition of fixed structure.",\n'
+            '    "Understand",\n'
+            '    "book.pdf",\n'
+            '    1,\n'
+            '    [],\n'
+            '    [\n'
+            '        ("D-01-01", "Fixed wrong belief 1", "Fixed truth 1", "$0$", "Hint 1", None),\n'
+            '        ("D-01-02", "Fixed wrong belief 2", "Fixed truth 2", "$0$", "Hint 2", None),\n'
+            '        ("D-01-03", "Fixed wrong belief 3", "Fixed truth 3", "$0$", "Hint 3", None),\n'
+            '    ],\n'
+            ')\n'
+        )
+        (fixes_dir / "C-01.py").write_text(fix_code, encoding="utf-8")
+
+        valid, cta_dict, errors, elapsed = compile_cta(
+            cta_data_path=data_path,
+            output_dir=work_dir,
+        )
+        assert valid is True, f"Modular splicing failed with errors: {errors}"
+        comps = cta_dict.get("competencies", [])
+        assert len(comps) == 1
+        assert comps[0]["name"] == "Spliced Fixed Concept"
+
+
+
