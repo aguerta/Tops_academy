@@ -1,8 +1,12 @@
 {
+  "contract_version": "2.0",
   "competency_id": "C-02",
   "templates": [
     {
       "id": "T-C02-01",
+      "contract_version": "2.0",
+      "archetype": "direct",
+      "assumption_tested_id": "A-C02-01",
       "competency_id": "C-02",
       "interaction_type": "multiple_choice_7_options",
       "difficulty": "medium",
@@ -11,10 +15,13 @@
       "stem_variants": [
         "Considere la matriz lineal de un sistema plano $$\\mathbf{A} = \\begin{bmatrix} {a} & 0 \\\\ 0 & {d} \\end{bmatrix}$$. Sabiendo que $a = {a} < 0$ y $d = {d} > 0$, determine la clasificación y estabilidad del punto de equilibrio en el origen:",
         "Para el sistema plano con matriz diagonal $$\\mathbf{A} = \\begin{bmatrix} {a} & 0 \\\\ 0 & {d} \\end{bmatrix}$$ donde $a = {a} < 0$ y $d = {d} > 0$, clasifique el equilibrio en el origen:",
-        "Dada la matriz de coeficientes desacoplada $$\\mathbf{A} = \\begin{bmatrix} {a} & 0 \\\\ 0 & {d} \\end{bmatrix}$$ con $a = {a} < 0$ y $d = {d} > 0$, establezca la dinámica y estabilidad en el origen:"
+        "Dada la matriz de coeficientes desacoplada $$\\mathbf{A} = \\begin{bmatrix} {a} & 0 \\\\ 0 & {d} \\end{bmatrix}$$ con $a = {a} < 0$ y $d = {d} > 0$, establezca la dinámica y estabilidad en el origen:",
+        "Analice la matriz desacoplada $$\\mathbf{A} = \\begin{bmatrix} {a} & 0 \\\\ 0 & {d} \\end{bmatrix}$$ con $a = {a} < 0$ y $d = {d} > 0$ e identifique el tipo de equilibrio en el origen:",
+        "Determine la naturaleza cualitativa del equilibrio en el origen para la matriz $$\\mathbf{A} = \\begin{bmatrix} {a} & 0 \\\\ 0 & {d} \\end{bmatrix}$$ con $a = {a} < 0$ y $d = {d} > 0$:",
+        "Establezca la clasificación espectral en el origen del sistema con matriz diagonal $$\\mathbf{A} = \\begin{bmatrix} {a} & 0 \\\\ 0 & {d} \\end{bmatrix}$$ ($a = {a} < 0, d = {d} > 0$):"
       ],
-      "generate_py": "def generate(rng):\n    a = -rng.randint(2, 9)\n    d = rng.randint(2, 9)\n    det_val = a * d\n    tr_val = a + d\n    correct_str = f'Punto de silla inestable en el plano, ya que el determinante evaluado resulta estrictamente negativo: $\\\\det(\\\\mathbf{{A}}) = {det_val} < 0$.'\n    d1 = f'Nodo asintóticamente estable en el plano, ya que la traza evaluada resulta negativa: $\\\\mathrm{{tr}}(\\\\mathbf{{A}}) = {tr_val}$.'\n    d2 = f'Foco asintóticamente estable en el plano, debido a que el discriminante es negativo: $\\\\Delta = {tr_val**2 - 4*det_val}$.'\n    d3 = f'Centro conservativo en el espacio plano, dado que la matriz tiene diagonal $\\\\mathrm{{diag}}({a}, {d})$.'\n    d4 = f'Nodo inestable en el espacio plano, presentando dos autovalores positivos basados en $\\\\det(\\\\mathbf{{A}}) = {abs(det_val)}$.'\n    d5 = f'Punto de equilibrio no hiperbólico plano, caracterizado por determinante igual a cero con producto $ad = {det_val}$.'\n    d6 = f'Foco inestable en el espacio plano, exhibiendo rotación divergente con traza $\\\\mathrm{{tr}}(\\\\mathbf{{A}}) = {abs(tr_val)}$.'\n    return {\n        'vars': {'a': a, 'd': d, 'det_val': det_val, 'tr_val': tr_val},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-C02-01', 'error_rationale': f'Con a={a} y d={d}, el determinante es det(A) = {det_val} < 0, lo que define un punto de silla sin importar la traza.'},\n            {'value': d2, 'distractor_id': 'D-C02-02', 'error_rationale': f'El discriminante con det(A) = {det_val} < 0 no produce foco porque los autovalores son reales de signo opuesto.'},\n            {'value': d3, 'distractor_id': 'D-C02-03', 'error_rationale': f'Para ser centro se requeriría tr(A) = 0 y det(A) > 0, pero aquí det(A) = {det_val} < 0.'},\n            {'value': d4, 'distractor_id': 'D-C02-04', 'error_rationale': f'Los autovalores son lambda_1 = {a} < 0 y lambda_2 = {d} > 0, por lo que tienen signos distintos, no ambos positivos.'},\n            {'value': d5, 'distractor_id': 'D-C02-05', 'error_rationale': f'El punto es hiperbólico ya que det(A) = {det_val} != 0 y ningún autovalor tiene parte real nula.'},\n            {'value': d6, 'distractor_id': 'D-C02-06', 'error_rationale': f'La matriz es diagonal sin acoplamiento cruzado, por lo que no hay oscilación ni foco con a={a} y d={d}.'},\n        ]\n    }",
-      "cross_check_py": "def verify(result):\n    return result['vars']['det_val'] < 0 and 'silla' in result['correct']",
+      "generate_py": "def generate(rng):\n    a = -rng.randint(2, 9)\n    d = rng.randint(2, 9)\n    det_val = a * d\n    tr_val = a + d\n    correct_str = f'Punto de silla inestable en el plano, ya que el determinante evaluado resulta estrictamente negativo: $\\\\det(\\\\mathbf{{A}}) = {det_val} < 0$.'\n    d1 = f'Nodo asintóticamente estable en el plano, ya que la traza evaluada resulta negativa: $\\\\mathrm{{tr}}(\\\\mathbf{{A}}) = {tr_val}$.'\n    d2 = f'Foco asintóticamente estable en el plano de fases continuo, debido a que el discriminante espectral del sistema resulta negativo: $\\\\Delta = {tr_val**2 - 4*det_val}$.'\n    d3 = f'Centro conservativo en el espacio plano, dado que la matriz de coeficientes tiene diagonal $\\\\mathrm{{diag}}({a}, {d})$.'\n    d4 = f'Nodo inestable en el espacio plano, presentando dos autovalores reales positivos basados en $\\\\det(\\\\mathbf{{A}}) = {abs(det_val)}$.'\n    d5 = f'Punto de equilibrio no hiperbólico plano, caracterizado por determinante nulo en el origen con producto $ad = {det_val}$.'\n    d6 = f'Foco inestable en el espacio plano continuo, exhibiendo una rotación espiral divergente en las trayectorias con $\\\\mathrm{{tr}}(\\\\mathbf{{A}}) = {abs(tr_val)}$.'\n    return {\n        'vars': {'a': a, 'd': d, 'det_val': det_val, 'tr_val': tr_val},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-C02-01', 'error_rationale': f'Con a={a} y d={d}, el determinante es det(A) = {det_val} < 0, lo que define un punto de silla sin importar la traza.'},\n            {'value': d2, 'distractor_id': 'D-C02-02', 'error_rationale': f'El discriminante con det(A) = {det_val} < 0 no produce foco porque los autovalores son reales de signo opuesto.'},\n            {'value': d3, 'distractor_id': 'D-C02-03', 'error_rationale': f'Para ser centro se requeriría tr(A) = 0 y det(A) > 0, pero aquí det(A) = {det_val} < 0.'},\n            {'value': d4, 'distractor_id': 'D-C02-04', 'error_rationale': f'Los autovalores son lambda_1 = {a} < 0 y lambda_2 = {d} > 0, por lo que tienen signos distintos, no ambos positivos.'},\n            {'value': d5, 'distractor_id': 'D-C02-05', 'error_rationale': f'El punto es hiperbólico ya que det(A) = {det_val} != 0 y ningún autovalor tiene parte real nula.'},\n            {'value': d6, 'distractor_id': 'D-C02-06', 'error_rationale': f'La matriz es diagonal sin acoplamiento cruzado, por lo que no hay oscilación ni foco con a={a} y d={d}.'},\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    cand = result.get('correct', '') if isinstance(result, dict) else str(result)\n    det_val = result['vars']['det_val']\n    return det_val < 0 and ('silla' in cand) and ('nodo' not in cand) and ('foco' not in cand) and ('centro' not in cand)",
       "hints": [
         "Calcule el determinante de la matriz A multiplicando los elementos diagonales: det(A) = a * d.",
         "Observe los signos de a y d: uno es estrictamente negativo y el otro positivo, por lo que det(A) < 0.",
@@ -32,6 +39,9 @@
     },
     {
       "id": "T-C02-02",
+      "contract_version": "2.0",
+      "archetype": "inverse",
+      "assumption_tested_id": "A-C02-02",
       "competency_id": "C-02",
       "interaction_type": "fill_in_the_blank",
       "difficulty": "easy",
@@ -40,9 +50,12 @@
       "stem_variants": [
         "Dada la matriz de coeficientes $$\\mathbf{A} = \\begin{bmatrix} {a} & {b} \\\\ {c} & {d} \\end{bmatrix}$$, calcule el valor escalar de su determinante $\\det(\\mathbf{A})$.",
         "Para la matriz de orden 2 $$\\mathbf{A} = \\begin{bmatrix} {a} & {b} \\\\ {c} & {d} \\end{bmatrix}$$, determine el valor del determinante escalar $\\det(\\mathbf{A})$.",
-        "Evalúe directamente el determinante escalar $\\det(\\mathbf{A})$ para la matriz $$\\mathbf{A} = \\begin{bmatrix} {a} & {b} \\\\ {c} & {d} \\end{bmatrix}$$."
+        "Evalúe directamente el determinante escalar $\\det(\\mathbf{A})$ para la matriz $$\\mathbf{A} = \\begin{bmatrix} {a} & {b} \\\\ {c} & {d} \\end{bmatrix}$$.",
+        "Obtenga la magnitud escalar exacta de $\\det(\\mathbf{A})$ para la matriz plana $$\\mathbf{A} = \\begin{bmatrix} {a} & {b} \\\\ {c} & {d} \\end{bmatrix}$$.",
+        "Halle el valor algebraico del determinante $\\det(\\mathbf{A})$ asociado a la matriz $$\\mathbf{A} = \\begin{bmatrix} {a} & {b} \\\\ {c} & {d} \\end{bmatrix}$$.",
+        "Calcule analíticamente el escalar correspondiente a $\\det(\\mathbf{A})$ en la matriz $$\\mathbf{A} = \\begin{bmatrix} {a} & {b} \\\\ {c} & {d} \\end{bmatrix}$$."
       ],
-      "generate_py": "def generate(rng):\n    a = rng.randint(1, 6)\n    b = rng.randint(1, 6)\n    c = rng.randint(1, 6)\n    d = rng.randint(1, 6)\n    det_val = a * d - b * c\n    return {\n        'vars': {'a': a, 'b': b, 'c': c, 'd': d, 'det_val': det_val, 'ad': a*d, 'bc': b*c},\n        'correct': det_val,\n        'value': str(det_val),\n        'canonical_algebraic': str(det_val),\n        'accepted_equivalents': [str(det_val), f'{det_val}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "generate_py": "def generate(rng):\n    a = rng.randint(1, 8)\n    b = rng.randint(1, 8)\n    c = rng.randint(1, 8)\n    d = rng.randint(1, 8)\n    while a * d - b * c == 0:\n        d = rng.randint(1, 9)\n    det_val = a * d - b * c\n    return {\n        'vars': {'a': a, 'b': b, 'c': c, 'd': d, 'det_val': det_val, 'ad': a*d, 'bc': b*c},\n        'correct': det_val,\n        'value': str(det_val),\n        'canonical_algebraic': str(det_val),\n        'accepted_equivalents': [str(det_val), f'{det_val}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
       "cross_check_py": "def verify(result):\n    a = result['vars']['a']\n    b = result['vars']['b']\n    c = result['vars']['c']\n    d = result['vars']['d']\n    return int(result['correct']) == (a*d - b*c)",
       "hints": [
         "Recuerde la fórmula del determinante en dimensión 2: det(A) = a*d - b*c.",
@@ -54,6 +67,9 @@
     },
     {
       "id": "T-C02-03",
+      "contract_version": "2.0",
+      "archetype": "perturbation",
+      "assumption_tested_id": "A-C02-01",
       "competency_id": "C-02",
       "interaction_type": "multiple_select",
       "difficulty": "hard",
@@ -62,9 +78,12 @@
       "stem_variants": [
         "Para un sistema plano lineal cuya matriz satisface $\\det(\\mathbf{A}) = {det_val} > 0$ y $\\mathrm{tr}(\\mathbf{A}) = {tr_val} < 0$, seleccione todas las afirmaciones verdaderas:",
         "Considere una matriz lineal en el plano con condiciones $\\det(\\mathbf{A}) = {det_val} > 0$ y $\\mathrm{tr}(\\mathbf{A}) = {tr_val} < 0$. Marque todas las propiedades correctas:",
-        "En un sistema lineal plano con invariantes $\\det(\\mathbf{A}) = {det_val} > 0$ y $\\mathrm{tr}(\\mathbf{A}) = {tr_val} < 0$, determine todas las proposiciones teóricas válidas:"
+        "En un sistema lineal plano con invariantes $\\det(\\mathbf{A}) = {det_val} > 0$ y $\\mathrm{tr}(\\mathbf{A}) = {tr_val} < 0$, determine todas las proposiciones teóricas válidas:",
+        "Analice un sistema plano bajo las condiciones espectrales $\\det(\\mathbf{A}) = {det_val} > 0$ y $\\mathrm{tr}(\\mathbf{A}) = {tr_val} < 0$, y seleccione las afirmaciones correctas:",
+        "Identifique las afirmaciones verdaderas sobre la estabilidad para $\\det(\\mathbf{A}) = {det_val} > 0$ y $\\mathrm{tr}(\\mathbf{A}) = {tr_val} < 0$:",
+        "Evalúe la dinámica local plana con $\\det(\\mathbf{A}) = {det_val} > 0$ y $\\mathrm{tr}(\\mathbf{A}) = {tr_val} < 0$, marcando las propiedades válidas:"
       ],
-      "generate_py": "def generate(rng):\n    det_val = rng.randint(4, 15)\n    tr_val = -rng.randint(2, 9)\n    opts = [\n        {'content': f'El origen es asintóticamente estable en el plano con traza {tr_val}.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'Todos los autovalores de la matriz tienen parte real negativa dada la traza {tr_val}.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'El origen es un punto de silla inestable con determinante {det_val}.', 'is_correct': False, 'distractor_id': 'D-C02-03', 'error_rationale': f'Un punto de silla exige det(A) < 0, pero aquí det(A) = {det_val} > 0.'},\n        {'content': f'El sistema carece de estabilidad por tener determinante {det_val} > 0.', 'is_correct': False, 'distractor_id': 'D-C02-01', 'error_rationale': f'Al contrario, det(A) = {det_val} > 0 y tr(A) = {tr_val} < 0 garantizan estabilidad asintótica.'},\n    ]\n    return {\n        'vars': {'det_val': det_val, 'tr_val': tr_val},\n        'options': opts,\n        'distractors': []\n    }",
+      "generate_py": "def generate(rng):\n    det_val = rng.randint(4, 30)\n    tr_val = -rng.randint(2, 12)\n    disc = tr_val**2 - 4 * det_val\n    opts = [\n        {'content': f'El origen es asintóticamente estable en el plano con traza {tr_val}.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'Todos los autovalores de la matriz tienen parte real negativa dada la traza {tr_val}.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'El origen es un punto de silla inestable con determinante {det_val}.', 'is_correct': False, 'distractor_id': 'D-C02-03', 'error_rationale': f'Un punto de silla exige det(A) < 0, pero aquí det(A) = {det_val} > 0.'},\n        {'content': f'El sistema carece de estabilidad por tener determinante {det_val} > 0.', 'is_correct': False, 'distractor_id': 'D-C02-01', 'error_rationale': f'Al contrario, det(A) = {det_val} > 0 y tr(A) = {tr_val} < 0 garantizan estabilidad asintótica.'},\n    ]\n    return {\n        'vars': {'det_val': det_val, 'tr_val': tr_val, 'disc': disc},\n        'options': opts,\n        'distractors': []\n    }",
       "cross_check_py": "def verify(result):\n    v = result['vars']\n    return v['det_val'] > 0 and v['tr_val'] < 0 and any(opt['is_correct'] for opt in result['options'])",
       "hints": [
         "Analice las condiciones de Routh-Hurwitz para dimensión 2: det(A) > 0 y tr(A) < 0.",
@@ -75,6 +94,41 @@
       "distractor_ids": [
         "D-C02-01",
         "D-C02-03"
+      ]
+    },
+    {
+      "id": "T-C02-04",
+      "contract_version": "2.0",
+      "archetype": "boundary_or_edge_case",
+      "assumption_tested_id": "A-C02-01",
+      "competency_id": "C-02",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "bloom": "Evaluate",
+      "stem": "Considere la matriz de un sistema lineal conservativo plano $$\\mathbf{A} = \\begin{bmatrix} 0 & -{w} \\\\ {w} & 0 \\end{bmatrix}$$ con $w = {w} > 0$. Evalúe la traza $\\mathrm{tr}(\\mathbf{A}) = 0$ y el determinante $\\det(\\mathbf{A}) = {w2} > 0$ para clasificar el punto de equilibrio en el origen:",
+      "stem_variants": [
+        "Considere la matriz de un sistema lineal conservativo plano $$\\mathbf{A} = \\begin{bmatrix} 0 & -{w} \\\\ {w} & 0 \\end{bmatrix}$$ con $w = {w} > 0$. Evalúe la traza $\\mathrm{tr}(\\mathbf{A}) = 0$ y el determinante $\\det(\\mathbf{A}) = {w2} > 0$ para clasificar el punto de equilibrio en el origen:",
+        "Para el oscilador armónico lineal plano con matriz $$\\mathbf{A} = \\begin{bmatrix} 0 & -{w} \\\\ {w} & 0 \\end{bmatrix}$$ ($w = {w} > 0$), clasifique el comportamiento cualitativo en el origen:",
+        "Dada la matriz antisimétrica $$\\mathbf{A} = \\begin{bmatrix} 0 & -{w} \\\\ {w} & 0 \\end{bmatrix}$$ con frecuencia $w = {w} > 0$, determine la clasificación y estabilidad del equilibrio:",
+        "Analice el equilibrio en el origen para el sistema plano con matriz $$\\mathbf{A} = \\begin{bmatrix} 0 & -{w} \\\\ {w} & 0 \\end{bmatrix}$$ ($w = {w} > 0$) sabiendo que $\\mathrm{tr}(\\mathbf{A}) = 0$:",
+        "Establezca el tipo de punto fijo en el origen para la matriz con rotación pura $$\\mathbf{A} = \\begin{bmatrix} 0 & -{w} \\\\ {w} & 0 \\end{bmatrix}$$ ($w = {w} > 0$):",
+        "Clasifique el punto de equilibrio en el origen del plano de fases asociado a $$\\mathbf{A} = \\begin{bmatrix} 0 & -{w} \\\\ {w} & 0 \\end{bmatrix}$$ con $w = {w} > 0$:"
+      ],
+      "generate_py": "def generate(rng):\n    w = rng.randint(2, 16)\n    w2 = w * w\n    correct_str = f'Centro lineal en el plano, con órbitas periódicas cerradas basadas en $\\\\det(\\\\mathbf{{A}}) = {w2} > 0$ y $\\\\mathrm{{tr}}(\\\\mathbf{{A}}) = 0$.'\n    d1 = f'Nodo asintóticamente estable en el plano continuo, debido a que el determinante evaluado resulta estrictamente positivo: $\\\\det(\\\\mathbf{{A}}) = {w2}$.'\n    d2 = f'Foco asintóticamente estable en el plano, ya que la frecuencia angular de rotación espectral vale $w = {w}$.'\n    d3 = f'Punto de silla inestable en el plano, afirmando que los autovalores tienen signos opuestos basados en $w = {w}$.'\n    d4 = f'Nodo inestable en el plano, por poseer elementos no diagonales iguales a $-{w}$ y ${w}$ en la matriz.'\n    d5 = f'Punto de equilibrio asintóticamente estable en el plano de fases, asegurando convergencia exponencial con $w^2 = {w2}$.'\n    d6 = f'Foco inestable en el plano de fases continuo, exhibiendo trayectorias espirales divergentes con determinante $\\\\det(\\\\mathbf{{A}}) = {w2}$.'\n    return {\n        'vars': {'w': w, 'w2': w2},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-C02-01', 'error_rationale': f'Con tr(A) = 0 y det(A) = {w2} > 0, los autovalores son imaginarios puros +-i*{w}, lo que define un centro, no un nodo estable.'},\n            {'value': d2, 'distractor_id': 'D-C02-02', 'error_rationale': f'La parte real de los autovalores es nula (tr(A) = 0), por lo que no hay atracción asintótica ni foco estable con w={w}.'},\n            {'value': d3, 'distractor_id': 'D-C02-03', 'error_rationale': f'El determinante det(A) = {w2} > 0 es positivo, descartando categoricamente un punto de silla.'},\n            {'value': d4, 'distractor_id': 'D-C02-04', 'error_rationale': f'La matriz no tiene autovalores reales ni divergencia positiva; los autovalores son imaginarios puros +-i*{w}.'},\n            {'value': d5, 'distractor_id': 'D-C02-05', 'error_rationale': f'Un centro lineal es neutralmente estable con w={w}, pero no asintóticamente estable porque w2={w2} no induce convergencia.'},\n            {'value': d6, 'distractor_id': 'D-C02-06', 'error_rationale': f'No hay espirales divergentes porque la parte real de los autovalores es exactamente cero con det(A) = {w2}.'},\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    cand = result.get('correct', '') if isinstance(result, dict) else str(result)\n    w2 = result['vars']['w2']\n    return w2 > 0 and ('Centro' in cand or 'centro' in cand) and ('Nodo' not in cand) and ('Foco' not in cand) and ('silla' not in cand)",
+      "hints": [
+        "Calcule el polinomio característico de la matriz antisimétrica: lambda^2 + w^2 = 0.",
+        "Observe que las raíces son imaginarias puras: lambda = +- i*w.",
+        "Con autovalores imaginarios puros y traza nula tr(A) = 0, el punto de equilibrio lineal es un centro."
+      ],
+      "solution": "El polinomio característico es lambda^2 + {w2} = 0, cuyas raíces son lambda = +- i*{w}. La parte real es nula y la imaginaria no nula, definiendo un centro lineal con órbitas periódicas cerradas.",
+      "distractor_ids": [
+        "D-C02-01",
+        "D-C02-02",
+        "D-C02-03",
+        "D-C02-04",
+        "D-C02-05",
+        "D-C02-06"
       ]
     }
   ]

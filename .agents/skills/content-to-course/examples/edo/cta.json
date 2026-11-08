@@ -18,6 +18,22 @@
       "evidence": [
         { "doc": "edos_lecture.pdf", "page": 10 }
       ],
+      "assumptions": [
+        {
+          "id": "A-C02-01",
+          "name": "Hiperbolicidad del equilibrio",
+          "statement_latex": "\\mathrm{Re}(\\lambda_i) \\neq 0 \\quad \\forall i \\in \\{1, 2\\}",
+          "role_in_proof": "Garantiza la aplicabilidad del teorema de Hartman-Grobman para linealización.",
+          "violation_consequence": "Si Re(lambda) = 0, el punto no es hiperbólico y la linealización no determina la estabilidad del sistema no lineal."
+        },
+        {
+          "id": "A-C02-02",
+          "name": "No degeneración de la matriz",
+          "statement_latex": "\\det(\\mathbf{A}) \\neq 0",
+          "role_in_proof": "Asegura que el punto fijo sea aislado.",
+          "violation_consequence": "Si det(A) = 0, existe una recta de equilibrios no aislados y autovalor nulo."
+        }
+      ],
       "distractors": [
         {
           "id": "D-C02-01",
@@ -117,6 +133,22 @@
       ],
       "evidence": [
         { "doc": "edos_lecture.pdf", "page": 18 }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab02-01",
+          "name": "Diferenciabilidad continua del campo vectorial",
+          "statement_latex": "\\mathbf{F} \\in C^1(\\mathbb{R}^2)",
+          "role_in_proof": "Permite el desarrollo en serie de Taylor de primer orden alrededor del punto de equilibrio.",
+          "violation_consequence": "Si el campo no es de clase C1, la aproximación lineal carece de validez local."
+        },
+        {
+          "id": "A-Hab02-02",
+          "name": "Punto de equilibrio nulo del campo",
+          "statement_latex": "\\mathbf{F}(x^*, y^*) = \\mathbf{0}",
+          "role_in_proof": "Condición necesaria para evaluar la estabilidad local estacionaria.",
+          "violation_consequence": "Evaluar la jacobiana en un punto donde el campo no se anula no proporciona información sobre equilibrios."
+        }
       ],
       "distractors": [
         {

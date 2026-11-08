@@ -1,26 +1,33 @@
 {
+  "contract_version": "2.0",
   "competency_id": "Hab-01",
   "templates": [
     {
       "id": "T-Hab01-01",
+      "contract_version": "2.0",
+      "archetype": "direct",
+      "assumption_tested_id": "A-Hab01-01",
       "competency_id": "Hab-01",
       "interaction_type": "multiple_choice_7_options",
       "difficulty": "medium",
       "bloom": "Apply",
-      "stem": "Al aplicar el método de curvas características de Lagrange a la ecuación cuasilineal $${a} x u_x + {b} y u_y = {c} u$$, ¿cuál es la forma correcta de la primera integral característica $C_1$ obtenida de $\\frac{dx}{@a@ x} = \\frac{dy}{@b@ y}$?",
+      "stem": "Al aplicar el método de curvas características de Lagrange a la ecuación cuasilineal ${a} x u_x + {b} y u_y = {c} u$ en la región abierta $x > 0, y > 0$, ¿cuál es la forma correcta de la primera integral característica $C_1$ obtenida de $\\frac{dx}{@a@ x} = \\frac{dy}{@b@ y}$?",
       "stem_variants": [
-        "Al aplicar el método de curvas características de Lagrange a la ecuación cuasilineal $${a} x u_x + {b} y u_y = {c} u$$, ¿cuál es la forma correcta de la primera integral característica $C_1$ obtenida de $\\frac{dx}{@a@ x} = \\frac{dy}{@b@ y}$?",
-        "Para la ecuación cuasilineal $${a} x u_x + {b} y u_y = {c} u$$, determine la primera integral característica $C_1$ resultante de la ecuación diferencial $\\frac{dx}{@a@ x} = \\frac{dy}{@b@ y}$:",
-        "Utilizando el método de características sobre $${a} x u_x + {b} y u_y = {c} u$$, halle la curva invariante $C_1$ derivada del par $\\frac{dx}{@a@ x} = \\frac{dy}{@b@ y}$:"
+        "Al aplicar el método de curvas características de Lagrange a la ecuación cuasilineal ${a} x u_x + {b} y u_y = {c} u$ en la región abierta $x > 0, y > 0$, ¿cuál es la forma correcta de la primera integral característica $C_1$ obtenida de $\\frac{dx}{@a@ x} = \\frac{dy}{@b@ y}$?",
+        "Para la ecuación cuasilineal ${a} x u_x + {b} y u_y = {c} u$ en el primer cuadrante $x > 0, y > 0$, determine la primera integral característica $C_1$ resultante de $\\frac{dx}{@a@ x} = \\frac{dy}{@b@ y}$:",
+        "Utilizando el método de características sobre ${a} x u_x + {b} y u_y = {c} u$ con $x > 0, y > 0$, halle la curva invariante $C_1$ derivada del par $\\frac{dx}{@a@ x} = \\frac{dy}{@b@ y}$:",
+        "En la región $x > 0, y > 0$, integre el sistema característico $\\frac{dx}{@a@ x} = \\frac{dy}{@b@ y}$ para la ecuación ${a} x u_x + {b} y u_y = {c} u$ y obtenga la primera constante $C_1$:",
+        "Resuelva la ecuación diferencial característica $\\frac{dx}{@a@ x} = \\frac{dy}{@b@ y}$ asociada a ${a} x u_x + {b} y u_y = {c} u$ para $x > 0, y > 0$ y determine $C_1$:",
+        "Obtenga la familia de curvas características $C_1$ en el dominio positivo $x > 0, y > 0$ correspondiente a ${a} x u_x + {b} y u_y = {c} u$ a partir de $\\frac{dx}{@a@ x} = \\frac{dy}{@b@ y}$:"
       ],
-      "generate_py": "def generate(rng):\n    a = rng.randint(1, 6)\n    b = rng.randint(1, 6)\n    while b == a:\n        b = rng.randint(1, 7)\n    c = rng.randint(1, 6)\n    correct_str = f'La primera curva característica es $x^{{{b}}} / y^{{{a}}} = C_1$, según el método analítico.'\n    d1 = f'La primera curva característica es $x^{{{b}}} \\\\cdot y^{{{a}}} = C_1$, según el método analítico.'\n    d2 = f'La primera curva característica es $x^{{{a+b}}} / y = C_1$, según el método analítico.'\n    d3 = f'La primera curva característica es ${a}x - {b}y = C_1$, según el método analítico.'\n    d4 = f'La primera curva característica es $x / y = {a+b} C_1$, según el método analítico.'\n    d5 = f'La primera curva característica es $y / x^{{{b}}} = C_1$, según el método analítico.'\n    d6 = f'La primera curva característica es $x^{{{b}}} + y^{{{a}}} = C_1$, según el método analítico.'\n    return {\n        'vars': {'a': a, 'b': b, 'c': c},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab01-01', 'error_rationale': f'La integración de dx/({a}x) = dy/({b}y) da b ln(x) - a ln(y) = k, resultando en un cociente x^{b}/y^{a}, no un producto.'},\n            {'value': d2, 'distractor_id': 'D-Hab01-02', 'error_rationale': f'El exponente de y es a={a} y el de x es b={b}, no se suman a {a+b} en el numerador.'},\n            {'value': d3, 'distractor_id': 'D-Hab01-03', 'error_rationale': f'La ecuación auxiliar contiene x e y en los denominadores ({a}x y {b}y), generando logaritmos y no términos lineales.'},\n            {'value': d4, 'distractor_id': 'D-Hab01-04', 'error_rationale': f'Los coeficientes a={a} y b={b} pasan como exponentes en los argumentos logarítmicos, no como factor {a+b}.'},\n            {'value': d5, 'distractor_id': 'D-Hab01-05', 'error_rationale': f'La relación correcta mantiene y elevado a la potencia a={a}, no a la primera potencia unitaria.'},\n            {'value': d6, 'distractor_id': 'D-Hab01-06', 'error_rationale': f'Al restar logaritmos b ln(x) - a ln(y) se forma un cociente x^{b}/y^{a}, no una suma de potencias.'},\n        ]\n    }",
-      "cross_check_py": "def verify(result):\n    a = result['vars']['a']\n    b = result['vars']['b']\n    return f'x^{{{b}}} / y^{{{a}}}' in result['correct']",
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 6)\n    b = rng.randint(2, 6)\n    while b == a:\n        b = rng.randint(2, 7)\n    c = rng.randint(1, 6)\n    correct_str = f'La primera curva característica es $x^{{{b}}} / y^{{{a}}} = C_1$, según el método analítico en $x > 0, y > 0$.'\n    d1 = f'La primera curva característica es $x^{{{b}}} \\\\cdot y^{{{a}}} = C_1$, según el método analítico en $x > 0, y > 0$.'\n    d2 = f'La primera curva característica es $x^{{{a+b}}} / y = C_1$, según el método analítico en $x > 0, y > 0$.'\n    d3 = f'La primera curva característica es ${a}x - {b}y = C_1$, según el método analítico en $x > 0, y > 0$.'\n    d4 = f'La primera curva característica es $x / y = {a+b} C_1$, según el método analítico en $x > 0, y > 0$.'\n    d5 = f'La primera curva característica es $y / x^{{{b}}} = C_1$, según el método analítico en $x > 0, y > 0$.'\n    d6 = f'La primera curva característica es $x^{{{b}}} + y^{{{a}}} = C_1$, según el método analítico en $x > 0, y > 0$.'\n    return {\n        'vars': {'a': a, 'b': b, 'c': c},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab01-01', 'error_rationale': f'La integración de dx/({a}x) = dy/({b}y) da b ln(x) - a ln(y) = k, resultando en un cociente x^{b}/y^{a}, no un producto.'},\n            {'value': d2, 'distractor_id': 'D-Hab01-02', 'error_rationale': f'El exponente de y es a={a} y el de x es b={b}, no se suman a {a+b} en el numerador.'},\n            {'value': d3, 'distractor_id': 'D-Hab01-03', 'error_rationale': f'La ecuación auxiliar contiene x e y en los denominadores ({a}x y {b}y), generando logaritmos y no términos lineales.'},\n            {'value': d4, 'distractor_id': 'D-Hab01-04', 'error_rationale': f'Los coeficientes a={a} y b={b} pasan como exponentes en los argumentos logarítmicos, no como factor {a+b}.'},\n            {'value': d5, 'distractor_id': 'D-Hab01-05', 'error_rationale': f'La relación correcta mantiene y elevado a la potencia a={a}, no a la primera potencia unitaria.'},\n            {'value': d6, 'distractor_id': 'D-Hab01-06', 'error_rationale': f'Al restar logaritmos b ln(x) - a ln(y) se forma un cociente x^{b}/y^{a}, no una suma de potencias.'},\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    cand = result.get('correct', '') if isinstance(result, dict) else str(result)\n    v = result.get('vars', {})\n    a = v.get('a', 2)\n    b = v.get('b', 3)\n    target = f'x^{{{b}}} / y^{{{a}}} = C_1'\n    wrong_prod = f'x^{{{b}}} \\\\cdot y^{{{a}}}'\n    wrong_swap = f'x^{{{a}}} / y^{{{b}}}'\n    return (target in cand) and (wrong_prod not in cand) and (wrong_swap not in cand) and ('+' not in cand)",
       "hints": [
         "Plantee el sistema auxiliar de Lagrange dx/(a x) = dy/(b y) = du/(c u).",
         "Tome la primera igualdad dx/(a x) = dy/(b y) e integre ambos lados: (1/a) ln(x) = (1/b) ln(y) + C.",
         "Multiplique por a*b y aplique propiedades de logaritmos: b ln(x) - a ln(y) = k, luego exponente: x^b / y^a = C_1."
       ],
-      "solution": "Integrando (1/{a}) ln(x) = (1/{b}) ln(y) + C obtenemos ln(x^{b}) - ln(y^{a}) = k, de donde se desprende inmediatamente la curva característica x^{b} / y^{a} = C_1.",
+      "solution": "Integrando (1/{a}) ln(x) = (1/{b}) ln(y) + C obtenemos ln(x^{b}) - ln(y^{a}) = k, de donde se desprende inmediatamente la curva característica x^{b} / y^{a} = C_1 para x > 0, y > 0.",
       "distractor_ids": [
         "D-Hab01-01",
         "D-Hab01-02",
@@ -32,15 +39,21 @@
     },
     {
       "id": "T-Hab01-02",
+      "contract_version": "2.0",
+      "archetype": "inverse",
+      "assumption_tested_id": "A-Hab01-02",
       "competency_id": "Hab-01",
       "interaction_type": "fill_in_the_blank",
       "difficulty": "medium",
       "bloom": "Apply",
-      "stem": "Para la ecuación cuasilineal $${a} x u_x + y u_y = {c} u$$, la segunda integral característica tiene la forma $u / x^p = C_2$. ¿Cuál es el exponente escalar $p$ en dicha expresión?",
+      "stem": "Para la ecuación cuasilineal ${a} x u_x + y u_y = {c} u$, la segunda integral característica tiene la forma $u / x^p = C_2$. ¿Cuál es el exponente escalar $p$ en dicha expresión?",
       "stem_variants": [
-        "Para la ecuación cuasilineal $${a} x u_x + y u_y = {c} u$$, la segunda integral característica tiene la forma $u / x^p = C_2$. ¿Cuál es el exponente escalar $p$ en dicha expresión?",
-        "Considere la ecuación $${a} x u_x + y u_y = {c} u$$ con segunda curva característica $u / x^p = C_2$. Determine el valor numérico del exponente $p$:",
-        "Halle el exponente escalar $p$ en la relación invariante $u / x^p = C_2$ asociada a la ecuación $${a} x u_x + y u_y = {c} u$$:"
+        "Para la ecuación cuasilineal ${a} x u_x + y u_y = {c} u$, la segunda integral característica tiene la forma $u / x^p = C_2$. ¿Cuál es el exponente escalar $p$ en dicha expresión?",
+        "Considere la ecuación ${a} x u_x + y u_y = {c} u$ con segunda curva característica $u / x^p = C_2$. Determine el valor numérico del exponente $p$:",
+        "Halle el exponente escalar $p$ en la relación invariante $u / x^p = C_2$ asociada a la ecuación ${a} x u_x + y u_y = {c} u$:",
+        "Calcule el exponente analítico $p$ tal que $u / x^p = C_2$ sea una integral primera de ${a} x u_x + y u_y = {c} u$:",
+        "Obtenga la potencia escalar $p$ que satisface la relación invariante $u / x^p = C_2$ en ${a} x u_x + y u_y = {c} u$:",
+        "Determine el valor numérico de la potencia $p$ en la segunda integral primera $u / x^p = C_2$ de ${a} x u_x + y u_y = {c} u$:"
       ],
       "generate_py": "def generate(rng):\n    a = rng.randint(2, 6)\n    mult = rng.randint(1, 15)\n    c = mult * a\n    p = c // a\n    return {\n        'vars': {'a': a, 'c': c, 'p': p},\n        'correct': p,\n        'value': str(p),\n        'canonical_algebraic': str(p),\n        'accepted_equivalents': [str(p), f'{p}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
       "cross_check_py": "def verify(result):\n    return int(result['correct']) == (result['vars']['c'] // result['vars']['a'])",
@@ -54,18 +67,24 @@
     },
     {
       "id": "T-Hab01-03",
+      "contract_version": "2.0",
+      "archetype": "perturbation",
+      "assumption_tested_id": "A-Hab01-01",
       "competency_id": "Hab-01",
       "interaction_type": "multiple_select",
       "difficulty": "hard",
       "bloom": "Analyze",
-      "stem": "Dada la ecuación cuasilineal de Lagrange $${a} x u_x + {b} y u_y = {c} u$$, seleccione todas las afirmaciones operativas correctas sobre el proceso de resolución:",
+      "stem": "Dada la ecuación cuasilineal de Lagrange ${a} x u_x + {b} y u_y = {c} u$, seleccione todas las afirmaciones operativas correctas sobre el proceso de resolución:",
       "stem_variants": [
-        "Dada la ecuación cuasilineal de Lagrange $${a} x u_x + {b} y u_y = {c} u$$, seleccione todas las afirmaciones operativas correctas sobre el proceso de resolución:",
-        "Para el problema cuasilineal $${a} x u_x + {b} y u_y = {c} u$$ analizado por características, marque todas las propiedades metodológicas verdaderas:",
-        "En la resolución de $${a} x u_x + {b} y u_y = {c} u$$ mediante curvas características, identifique todas las proposiciones analíticas válidas:"
+        "Dada la ecuación cuasilineal de Lagrange ${a} x u_x + {b} y u_y = {c} u$, seleccione todas las afirmaciones operativas correctas sobre el proceso de resolución:",
+        "Para el problema cuasilineal ${a} x u_x + {b} y u_y = {c} u$ analizado por características, marque todas las propiedades metodológicas verdaderas:",
+        "En la resolución de ${a} x u_x + {b} y u_y = {c} u$ mediante curvas características, identifique todas las proposiciones analíticas válidas:",
+        "Analice el método de características aplicado a ${a} x u_x + {b} y u_y = {c} u$, marcando las afirmaciones procedimentales correctas:",
+        "Determine todas las propiedades válidas de integración del sistema característico para ${a} x u_x + {b} y u_y = {c} u$:",
+        "Seleccione las afirmaciones teóricas y operativas ciertas asociadas a la ecuación de Lagrange ${a} x u_x + {b} y u_y = {c} u$:"
       ],
-      "generate_py": "def generate(rng):\n    a = rng.randint(1, 6)\n    b = rng.randint(1, 6)\n    c = rng.randint(1, 6)\n    opts = [\n        {'content': f'El sistema característico de Lagrange asocia dx con el coeficiente {a}x y dy con {b}y.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'La solución general puede expresarse como relación funcional entre dos integrales primeras con c={c}.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'Basta con una única constante de integración para fijar unívocamente la solución general con a={a}.', 'is_correct': False, 'distractor_id': 'D-Hab01-03', 'error_rationale': f'Con coeficientes a={a}, b={b}, c={c} se requieren dos integrales primeras independientes.'},\n        {'content': f'El sistema característico intercambia dx con {b}y y dy con {a}x en el planteo.', 'is_correct': False, 'distractor_id': 'D-Hab01-02', 'error_rationale': f'El sistema característico asocia dx con P={a}x y dy con Q={b}y sin intercambiarlos.'},\n    ]\n    return {\n        'vars': {'a': a, 'b': b, 'c': c},\n        'options': opts,\n        'distractors': []\n    }",
-      "cross_check_py": "def verify(result):\n    v = result['vars']\n    return v['a'] > 0 and v['b'] > 0 and v['c'] > 0 and len([o for o in result['options'] if o['is_correct']]) >= 2",
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 9)\n    b = rng.randint(2, 9)\n    c = rng.randint(2, 9)\n    opts = [\n        {'content': f'El sistema característico de Lagrange asocia dx con el coeficiente {a}x y dy con {b}y.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'La solución general puede expresarse como relación funcional entre dos integrales primeras con c={c}.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'Basta con una única constante de integración para fijar unívocamente la solución general con a={a}.', 'is_correct': False, 'distractor_id': 'D-Hab01-03', 'error_rationale': f'Con coeficientes a={a}, b={b}, c={c} se requieren dos integrales primeras independientes.'},\n        {'content': f'El sistema característico intercambia dx con {b}y y dy con {a}x en el planteo.', 'is_correct': False, 'distractor_id': 'D-Hab01-02', 'error_rationale': f'El sistema característico asocia dx con P={a}x y dy con Q={b}y sin intercambiarlos.'},\n    ]\n    return {\n        'vars': {'a': a, 'b': b, 'c': c},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    v = result['vars']\n    return v['a'] >= 2 and v['b'] >= 2 and v['c'] >= 2 and len([o for o in result['options'] if o['is_correct']]) >= 2",
       "hints": [
         "Recuerde la estructura del sistema característico dx/P = dy/Q = du/R.",
         "Considere el número de constantes necesarias para definir la solución general.",
@@ -75,6 +94,41 @@
       "distractor_ids": [
         "D-Hab01-02",
         "D-Hab01-03"
+      ]
+    },
+    {
+      "id": "T-Hab01-04",
+      "contract_version": "2.0",
+      "archetype": "boundary_or_edge_case",
+      "assumption_tested_id": "A-Hab01-01",
+      "competency_id": "Hab-01",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "bloom": "Apply",
+      "stem": "Considere la ecuación diferencial cuasilineal con coeficientes de transporte constantes ${a} u_x + {b} u_y = 0$ con $a = {a} > 0$ y $b = {b} > 0$. ¿Cuál es la forma de la familia de curvas características $C_1$ obtenida al integrar $\\frac{dx}{@a@} = \\frac{dy}{@b@}$?",
+      "stem_variants": [
+        "Considere la ecuación diferencial cuasilineal con coeficientes de transporte constantes ${a} u_x + {b} u_y = 0$ con $a = {a} > 0$ y $b = {b} > 0$. ¿Cuál es la forma de la familia de curvas características $C_1$ obtenida al integrar $\\frac{dx}{@a@} = \\frac{dy}{@b@}$?",
+        "Para la ecuación de transporte homogénea ${a} u_x + {b} u_y = 0$ ($a={a}, b={b}$), halle la primera integral característica $C_1$ derivada de $\\frac{dx}{@a@} = \\frac{dy}{@b@}$:",
+        "Determine la curva característica plana $C_1$ asociada a las direcciones características constantes de ${a} u_x + {b} u_y = 0$:",
+        "Integre el sistema característico auxiliar $\\frac{dx}{@a@} = \\frac{dy}{@b@}$ para la ecuación diferencial ${a} u_x + {b} u_y = 0$ y determine $C_1$:",
+        "Obtenga la familia de rectas características $C_1$ correspondientes al operador de transporte ${a} u_x + {b} u_y = 0$:",
+        "Calcule la solución analítica de la ecuación de trayectorias $\\frac{dx}{@a@} = \\frac{dy}{@b@}$ para ${a} u_x + {b} u_y = 0$ ($a = {a}, b = {b}$):"
+      ],
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 7)\n    b = rng.randint(2, 7)\n    while b == a:\n        b = rng.randint(2, 8)\n    correct_str = f'La curva característica invariante en el plano es ${b}x - {a}y = C_1$, según el método diferencial de Lagrange.'\n    d1 = f'La curva característica invariante en el plano es ${b}x \\\\cdot {a}y = C_1$, según el método diferencial de Lagrange.'\n    d2 = f'La curva característica invariante en el plano es ${a}x + {b}y = C_1$, según el método diferencial de Lagrange.'\n    d3 = f'La curva característica invariante en el plano es $x / y = {a+b} C_1$, según el método diferencial de Lagrange.'\n    d4 = f'La curva característica invariante en el plano es ${a}x - {b}y = C_1$, según el método diferencial de Lagrange.'\n    d5 = f'La curva característica invariante en el plano es $x / {a} - y / {b} = 0$, según el método diferencial de Lagrange.'\n    d6 = f'La curva característica invariante en el plano es ${b}x^2 + {a}y^2 = C_1$, según el método diferencial de Lagrange.'\n    return {\n        'vars': {'a': a, 'b': b},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab01-01', 'error_rationale': f'La integración de dx/{a} = dy/{b} genera una diferencia lineal {b}x - {a}y = C, no un producto de variables.'},\n            {'value': d2, 'distractor_id': 'D-Hab01-02', 'error_rationale': f'Al transponer {b}*dx - {a}*dy = 0 el signo entre los términos es negativo, no una suma positiva con {a}x + {b}y.'},\n            {'value': d3, 'distractor_id': 'D-Hab01-03', 'error_rationale': f'Los coeficientes no están en los denominadores como potencias, la solución es lineal {b}x - {a}y.'},\n            {'value': d4, 'distractor_id': 'D-Hab01-04', 'error_rationale': f'El coeficiente {b} acompaña a x y {a} acompaña a y: b*dx = a*dy implica {b}x - {a}y = C, no {a}x - {b}y.'},\n            {'value': d5, 'distractor_id': 'D-Hab01-05', 'error_rationale': f'La constante de integración C_1 debe ser arbitraria para a={a} y b={b}, no igualada rígidamente a cero como en x/{a} - y/{b} = 0.'},\n            {'value': d6, 'distractor_id': 'D-Hab01-06', 'error_rationale': f'La ecuación auxiliar dx/{a} = dy/{b} es de primer orden y coeficientes constantes, no genera términos cuadráticos como {b}x^2 + {a}y^2.'},\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    cand = result.get('correct', '') if isinstance(result, dict) else str(result)\n    a = result['vars']['a']\n    b = result['vars']['b']\n    target = f'{b}x - {a}y = C_1'\n    swapped = f'{a}x - {b}y = C_1'\n    return (target in cand) and (swapped not in cand) and ('\\\\cdot' not in cand) and ('+' not in cand) and ('^2' not in cand)",
+      "hints": [
+        "Plantee la ecuación característica de Lagrange: dx/a = dy/b.",
+        "Multiplique cruzado: b*dx = a*dy o b*dx - a*dy = 0.",
+        "Integre directamente ambos términos: b*x - a*y = C_1."
+      ],
+      "solution": "De dx/{a} = dy/{b} multiplicamos en cruz para obtener {b} dx = {a} dy. Integrando directamente resulta la curva característica lineal {b}x - {a}y = C_1.",
+      "distractor_ids": [
+        "D-Hab01-01",
+        "D-Hab01-02",
+        "D-Hab01-03",
+        "D-Hab01-04",
+        "D-Hab01-05",
+        "D-Hab01-06"
       ]
     }
   ]

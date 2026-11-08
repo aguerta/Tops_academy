@@ -1,8 +1,12 @@
 {
+  "contract_version": "2.0",
   "competency_id": "C-01",
   "templates": [
     {
       "id": "T-C01-01",
+      "contract_version": "2.0",
+      "archetype": "direct",
+      "assumption_tested_id": "A-C01-01",
       "competency_id": "C-01",
       "interaction_type": "multiple_choice_7_options",
       "difficulty": "medium",
@@ -11,10 +15,13 @@
       "stem_variants": [
         "Considere la ecuación en derivadas parciales dada por ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$. Calcule su discriminante $\\Delta = B^2 - 4AC$ y determine su clasificación:",
         "Dada la ecuación de segundo orden ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, evalúe el discriminante $\\Delta = B^2 - 4AC$ para establecer su tipo:",
-        "Para el operador diferencial ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, obtenga el discriminante formal $\\Delta = B^2 - 4AC$ y clasifique la ecuación:"
+        "Para el operador diferencial ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, obtenga el discriminante formal $\\Delta = B^2 - 4AC$ y clasifique la ecuación:",
+        "Clasifique la ecuación lineal de segundo orden ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$ evaluando el signo de su discriminante $\\Delta$:",
+        "Determine la clasificación analítica de ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$ a partir del valor de $\\Delta = B^2 - 4AC$:",
+        "Evalúe la naturaleza cualitativa de la ecuación diferencial ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$ mediante $\\Delta = B^2 - 4AC$:"
       ],
       "generate_py": "def generate(rng):\n    A = rng.randint(2, 6)\n    C = rng.randint(2, 6)\n    B = rng.choice([0, 1, 2, 3])\n    delta = B**2 - 4 * A * C\n    correct_str = f'Discriminante $\\\\Delta = {delta} < 0$, de modo que la ecuación es elíptica en el plano.'\n    d1 = f'Discriminante $\\\\Delta = {delta} < 0$, de modo que la ecuación es hiperbólica en el plano.'\n    d2 = f'Discriminante $\\\\Delta = {B**2 - A*C}$, por lo que la ecuación es parabólica en el plano.'\n    d3 = f'Discriminante $\\\\Delta = {abs(delta)} > 0$, de modo que la ecuación es hiperbólica en el plano.'\n    d4 = f'Discriminante $\\\\Delta = {-delta}$, por lo que la ecuación es parabólica degenerada plana.'\n    d5 = f'Discriminante $\\\\Delta = {(2*B)**2 - 4*A*C}$, indicando indeterminación analítica global.'\n    d6 = f'Discriminante $\\\\Delta = 0$, concluyendo que la ecuación pertenece al tipo parabólico.'\n    return {\n        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-C01-01', 'error_rationale': f'Con discriminante Delta={delta} < 0 la ecuación es elíptica, la hiperbólica requiere Delta > 0.'},\n            {'value': d2, 'distractor_id': 'D-C01-02', 'error_rationale': f'La fórmula es B^2 - 4AC={delta}, omitir el factor 4 genera el valor incorrecto {B**2 - A*C}.'},\n            {'value': d3, 'distractor_id': 'D-C01-03', 'error_rationale': f'El valor algebraico es {delta} < 0, no se debe tomar el valor absoluto {abs(delta)}.'},\n            {'value': d4, 'distractor_id': 'D-C01-04', 'error_rationale': f'El signo correcto de B^2 - 4AC es negativo ({delta}), invertirlo a {-delta} es incorrecto.'},\n            {'value': d5, 'distractor_id': 'D-C01-05', 'error_rationale': f'El coeficiente B={B} no se duplica en la fórmula Delta = B^2 - 4AC={delta}.'},\n            {'value': d6, 'distractor_id': 'D-C01-06', 'error_rationale': f'Delta = {delta} es estrictamente distinto de cero para A={A} y C={C}, no es parabólica.'},\n        ]\n    }",
-      "cross_check_py": "def verify(result):\n    delta = result['vars']['delta']\n    return delta < 0 and 'elíptica' in result['correct']",
+      "cross_check_py": "def verify(result):\n    cand = result.get('correct', '') if isinstance(result, dict) else str(result)\n    delta = result['vars']['delta']\n    return delta < 0 and ('elíptica' in cand) and ('hiperbólica' not in cand) and ('parabólica' not in cand)",
       "hints": [
         "Identifique los coeficientes de las derivadas de segundo orden: A acompaña a u_xx, B a u_xy y C a u_yy.",
         "Calcule el discriminante formal utilizando la expresión Delta = B^2 - 4AC.",
@@ -32,6 +39,9 @@
     },
     {
       "id": "T-C01-02",
+      "contract_version": "2.0",
+      "archetype": "inverse",
+      "assumption_tested_id": "A-C01-01",
       "competency_id": "C-01",
       "interaction_type": "fill_in_the_blank",
       "difficulty": "easy",
@@ -40,9 +50,12 @@
       "stem_variants": [
         "Determine el valor numérico del discriminante $\\Delta = B^2 - 4AC$ para la ecuación ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$.",
         "Calcule la magnitud escalar de $\\Delta = B^2 - 4AC$ correspondiente al modelo ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$.",
-        "Evalúe numéricamente el discriminante $\\Delta = B^2 - 4AC$ asociado a los coeficientes de ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$."
+        "Evalúe numéricamente el discriminante $\\Delta = B^2 - 4AC$ asociado a los coeficientes de ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$.",
+        "Obtenga el valor exacto de $\\Delta = B^2 - 4AC$ para la ecuación diferencial ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$:",
+        "Halle el escalar $\\Delta = B^2 - 4AC$ a partir de los coeficientes de ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$:",
+        "Calcule el discriminante $\\Delta$ evaluando $B^2 - 4AC$ en la ecuación ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$:"
       ],
-      "generate_py": "def generate(rng):\n    A = rng.randint(1, 7)\n    B = rng.randint(1, 8)\n    C = rng.randint(1, 7)\n    delta = B**2 - 4 * A * C\n    return {\n        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta, 'B2': B**2, 'fourAC': 4*A*C},\n        'correct': delta,\n        'value': str(delta),\n        'canonical_algebraic': str(delta),\n        'accepted_equivalents': [str(delta), f'{delta}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "generate_py": "def generate(rng):\n    A = rng.randint(1, 9)\n    B = rng.randint(1, 9)\n    C = rng.randint(1, 9)\n    delta = B**2 - 4 * A * C\n    return {\n        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta, 'B2': B**2, 'fourAC': 4*A*C},\n        'correct': delta,\n        'value': str(delta),\n        'canonical_algebraic': str(delta),\n        'accepted_equivalents': [str(delta), f'{delta}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
       "cross_check_py": "def verify(result):\n    A = result['vars']['A']\n    B = result['vars']['B']\n    C = result['vars']['C']\n    return int(result['correct']) == (B**2 - 4*A*C)",
       "hints": [
         "Identifique los valores de A, B y C dados en la ecuación diferencial.",
@@ -54,6 +67,9 @@
     },
     {
       "id": "T-C01-03",
+      "contract_version": "2.0",
+      "archetype": "perturbation",
+      "assumption_tested_id": "A-C01-02",
       "competency_id": "C-01",
       "interaction_type": "multiple_select",
       "difficulty": "hard",
@@ -62,9 +78,12 @@
       "stem_variants": [
         "Para la ecuación diferencial ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, seleccione todas las afirmaciones teóricas que son matemáticamente verdaderas:",
         "Considere el modelo diferencial lineal ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$. ¿Cuáles de las siguientes propiedades sobre su clasificación y curvas características son correctas?",
-        "Dada la ecuación de segundo orden ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, identifique todas las proposiciones verdaderas respecto a su discriminante Delta = {B}^2 - 4({A})({C}) = {delta}:"
+        "Dada la ecuación de segundo orden ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, identifique todas las proposiciones verdaderas respecto a su discriminante Delta = {B}^2 - 4({A})({C}) = {delta}:",
+        "Analice la clasificación y curvas características de ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, marcando las propiedades correctas:",
+        "Determine todas las conclusiones válidas sobre el carácter hiperbólico de ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$:",
+        "Identifique las proposiciones correctas sobre la ecuación diferencial ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$ y su discriminante $\\Delta$:"
       ],
-      "generate_py": "def generate(rng):\n    A = 1\n    C = 1\n    B = rng.randint(4, 15)\n    delta = B**2 - 4 * A * C\n    opts = [\n        {'content': f'El discriminante Delta = {delta} es estrictamente positivo en todo el dominio.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'La ecuación admite dos familias reales y distintas de curvas características con Delta={delta}.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'La ecuación es de tipo elíptico en todo el plano dado Delta={delta}.', 'is_correct': False, 'distractor_id': 'D-C01-01', 'error_rationale': f'Un discriminante positivo Delta={delta} > 0 define tipo hiperbólico, no elíptico.'},\n        {'content': f'El discriminante se calcula como B^2 - AC = {B**2 - A*C} sin el factor cuatro.', 'is_correct': False, 'distractor_id': 'D-C01-02', 'error_rationale': f'La fórmula correcta incluye el factor 4: Delta = {B}^2 - 4(1)(1) = {delta}.'},\n    ]\n    return {\n        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta},\n        'options': opts,\n        'distractors': []\n    }",
+      "generate_py": "def generate(rng):\n    A = 1\n    C = 1\n    B = rng.randint(4, 20)\n    delta = B**2 - 4 * A * C\n    opts = [\n        {'content': f'El discriminante Delta = {delta} es estrictamente positivo en todo el dominio.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'La ecuación admite dos familias reales y distintas de curvas características con Delta={delta}.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'La ecuación es de tipo elíptico en todo el plano dado Delta={delta}.', 'is_correct': False, 'distractor_id': 'D-C01-01', 'error_rationale': f'Un discriminante positivo Delta={delta} > 0 define tipo hiperbólico, no elíptico.'},\n        {'content': f'El discriminante se calcula como B^2 - AC = {B**2 - A*C} sin el factor cuatro.', 'is_correct': False, 'distractor_id': 'D-C01-02', 'error_rationale': f'La fórmula correcta incluye el factor 4: Delta = {B}^2 - 4(1)(1) = {delta}.'},\n    ]\n    return {\n        'vars': {'A': A, 'B': B, 'C': C, 'delta': delta},\n        'options': opts,\n        'distractors': []\n    }",
       "cross_check_py": "def verify(result):\n    v = result['vars']\n    return v['delta'] > 0 and len([o for o in result['options'] if o['is_correct']]) >= 2",
       "hints": [
         "Calcule el signo de Delta = B^2 - 4AC evaluando los coeficientes dados.",
@@ -75,6 +94,41 @@
       "distractor_ids": [
         "D-C01-01",
         "D-C01-02"
+      ]
+    },
+    {
+      "id": "T-C01-04",
+      "contract_version": "2.0",
+      "archetype": "boundary_or_edge_case",
+      "assumption_tested_id": "A-C01-01",
+      "competency_id": "C-01",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Considere la ecuación diferencial en el caso frontera donde los coeficientes forman un trinomio cuadrado perfecto: ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, con $A = {k}^2 = {A}$, $C = {m}^2 = {C}$ y $B = 2({k})({m}) = {B}$. Calcule el discriminante $\\Delta$ y determine su clasificación:",
+      "stem_variants": [
+        "Considere la ecuación diferencial en el caso frontera donde los coeficientes forman un trinomio cuadrado perfecto: ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$, con $A = {k}^2 = {A}$, $C = {m}^2 = {C}$ y $B = 2({k})({m}) = {B}$. Calcule el discriminante $\\Delta$ y determine su clasificación:",
+        "Para la ecuación con coeficientes en resonancia cuadrática ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$ ($A={A}, B={B}, C={C}$), determine la clasificación y curvas características:",
+        "Dada la ecuación diferencial de frontera ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$ con $B^2 = 4AC$, obtenga el valor exacto de $\\Delta$ y clasifique la ecuación:",
+        "Analice la ecuación diferencial ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$ ($A={A}, B={B}, C={C}$) en el caso límite de discriminante nulo e identifique su tipo:",
+        "Clasifique la ecuación de segundo orden ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$ sabiendo que los coeficientes satisfacen $B^2 - 4AC = 0$:",
+        "Evalúe la naturaleza analítica de ${A} u_{xx} + {B} u_{xy} + {C} u_{yy} = 0$ ($A={A}, B={B}, C={C}$) calculando su discriminante $\\Delta$:"
+      ],
+      "generate_py": "def generate(rng):\n    k = rng.randint(1, 5)\n    m = rng.randint(1, 5)\n    A = k * k\n    C = m * m\n    B = 2 * k * m\n    delta = B**2 - 4 * A * C\n    correct_str = f'Discriminante $\\\\Delta = {B}^2 - 4({A})({C}) = 0$, por lo que la ecuación es parabólica en el plano.'\n    d1 = f'Discriminante $\\\\Delta = {B}^2 - 4({A})({C}) = 0$, por lo que la ecuación resulta hiperbólica degenerada en el plano.'\n    d2 = f'Discriminante $\\\\Delta = {B}^2 - ({A})({C}) = {B**2 - A*C} > 0$, clasificándola como de tipo hiperbólico al omitir el factor cuatro.'\n    d3 = f'Discriminante $\\\\Delta = {B} > 0$, clasificándola como de tipo elíptico en el plano cartesiano.'\n    d4 = f'Discriminante $\\\\Delta = -{B**2} < 0$, de modo que la ecuación es elíptica en todo el dominio.'\n    d5 = f'Discriminante $\\\\Delta = (2\\\\cdot{B})^2 - 4({A})({C}) = {(2*B)**2 - 4*A*C} > 0$, indicando indeterminación hiperbólica.'\n    d6 = f'Discriminante $\\\\Delta = 4({A})({C}) = {4*A*C} > 0$, concluyendo que la ecuación pertenece al tipo hiperbólico.'\n    return {\n        'vars': {'k': k, 'm': m, 'A': A, 'B': B, 'C': C, 'delta': delta},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-C01-01', 'error_rationale': f'Con coeficientes A={A}, B={B}, C={C}, el discriminante Delta = {B}^2 - 4({A})({C}) = 0 define exactamente el tipo parabólico; la hiperbólica exige Delta > 0.'},\n            {'value': d2, 'distractor_id': 'D-C01-02', 'error_rationale': f'Omitir el factor 4 da B^2 - AC = {B**2 - A*C}, pero la fórmula canónica es B^2 - 4AC = {delta}.'},\n            {'value': d3, 'distractor_id': 'D-C01-03', 'error_rationale': f'El discriminante es B^2 - 4AC = 0 para B={B}, no el valor aislado de B={B}, y elíptica requiere Delta < 0.'},\n            {'value': d4, 'distractor_id': 'D-C01-04', 'error_rationale': f'Los términos se cancelan exactamente: ({B})^2 - 4({A})({C}) = 0, no resulta negativo -{B**2}.'},\n            {'value': d5, 'distractor_id': 'D-C01-05', 'error_rationale': f'El coeficiente B={B} con A={A} y C={C} no debe multiplicarse por dos dentro del discriminante.'},\n            {'value': d6, 'distractor_id': 'D-C01-06', 'error_rationale': f'Delta = B^2 - 4AC = {B**2} - {4*A*C} = 0, no se reduce únicamente al término positivo {4*A*C}.'},\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    cand = result.get('correct', '') if isinstance(result, dict) else str(result)\n    delta = result['vars']['delta']\n    return delta == 0 and ('parabólica' in cand or 'parabólico' in cand) and ('hiperbólica' not in cand) and ('hiperbólico' not in cand) and ('elíptica' not in cand)",
+      "hints": [
+        "Calcule el discriminante formal: Delta = B^2 - 4AC.",
+        "Observe que B^2 = (2*k*m)^2 = 4*k^2*m^2 y 4*A*C = 4*k^2*m^2.",
+        "Al restarse, Delta = 0, lo que define inequívocamente una ecuación parabólica."
+      ],
+      "solution": "Evaluando Delta = ({B})^2 - 4({A})({C}) = {B**2} - {4*A*C} = 0. Al ser Delta = 0, la ecuación es parabólica y admite una única familia de curvas características.",
+      "distractor_ids": [
+        "D-C01-01",
+        "D-C01-02",
+        "D-C01-03",
+        "D-C01-04",
+        "D-C01-05",
+        "D-C01-06"
       ]
     }
   ]

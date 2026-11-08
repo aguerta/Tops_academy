@@ -18,6 +18,22 @@
       "evidence": [
         { "doc": "edp_lecture.pdf", "page": 5 }
       ],
+      "assumptions": [
+        {
+          "id": "A-C01-01",
+          "name": "No degeneración del operador diferencial",
+          "statement_latex": "A^2 + B^2 + C^2 > 0",
+          "role_in_proof": "Garantiza que la ecuación sea genuinamente de segundo orden.",
+          "violation_consequence": "Si A = B = C = 0, la ecuación degenera a primer orden y el discriminante carece de sentido."
+        },
+        {
+          "id": "A-C01-02",
+          "name": "Continuidad de los coeficientes principales",
+          "statement_latex": "A, B, C \\in C^0(\\Omega)",
+          "role_in_proof": "Asegura la invariancia del tipo en subdominios conexos donde Delta no cambia de signo.",
+          "violation_consequence": "Discontinuidades en los coeficientes pueden provocar cambios abruptos de tipo sin frontera suave."
+        }
+      ],
       "distractors": [
         {
           "id": "D-C01-01",
@@ -117,6 +133,22 @@
       ],
       "evidence": [
         { "doc": "edp_lecture.pdf", "page": 18 }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab01-01",
+          "name": "No anulación simultánea de coeficientes característicos",
+          "statement_latex": "P^2 + Q^2 > 0 \\quad \\text{en } \\Omega",
+          "role_in_proof": "Garantiza que las curvas características no degeneren en puntos singulares.",
+          "violation_consequence": "Si P = Q = 0, el campo característico se anula y no define trayectorias en el plano base."
+        },
+        {
+          "id": "A-Hab01-02",
+          "name": "Independencia funcional de las integrales primeras",
+          "statement_latex": "\\nabla C_1 \\times \\nabla C_2 \\neq \\mathbf{0}",
+          "role_in_proof": "Asegura que las superficies características C1 = const y C2 = const no sean tangentes ni colineales.",
+          "violation_consequence": "Si son funcionalmente dependientes, no se puede construir la solución general u(x,y)."
+        }
       ],
       "distractors": [
         {

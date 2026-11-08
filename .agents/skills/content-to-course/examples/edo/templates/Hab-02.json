@@ -1,8 +1,12 @@
 {
+  "contract_version": "2.0",
   "competency_id": "Hab-02",
   "templates": [
     {
       "id": "T-Hab02-01",
+      "contract_version": "2.0",
+      "archetype": "direct",
+      "assumption_tested_id": "A-Hab02-01",
       "competency_id": "Hab-02",
       "interaction_type": "multiple_choice_7_options",
       "difficulty": "medium",
@@ -11,10 +15,13 @@
       "stem_variants": [
         "Considere el sistema no lineal plano $$\\dot{x} = {a} x - x^2 - x y, \\quad \\dot{y} = {b} y - y^2 - x y$$. Calcule la matriz Jacobiana evaluada en el punto de equilibrio en el origen $(0,0)$:",
         "Para el modelo diferencial plano $$\\dot{x} = {a} x - x^2 - x y, \\quad \\dot{y} = {b} y - y^2 - x y$$, determine la matriz Jacobiana evaluada en el origen $(0,0)$:",
-        "Halle la matriz Jacobiana en el equilibrio $(0,0)$ correspondiente al sistema plano $$\\dot{x} = {a} x - x^2 - x y, \\quad \\dot{y} = {b} y - y^2 - x y$$:"
+        "Halle la matriz Jacobiana en el equilibrio $(0,0)$ correspondiente al sistema plano $$\\dot{x} = {a} x - x^2 - x y, \\quad \\dot{y} = {b} y - y^2 - x y$$:",
+        "Evalúe analíticamente la matriz Jacobiana en $(0,0)$ para las ecuaciones de derivadas $\\dot{x} = {a} x - x^2 - x y, \\dot{y} = {b} y - y^2 - x y$:",
+        "Obtenga la matriz Jacobiana linealizada en el origen $(0,0)$ del sistema plano $\\dot{x} = {a} x - x^2 - x y, \\dot{y} = {b} y - y^2 - x y$:",
+        "Calcule la matriz de derivadas parciales Jacobiana en $(0,0)$ asociada al sistema $\\dot{x} = {a} x - x^2 - x y, \\dot{y} = {b} y - y^2 - x y$:"
       ],
-      "generate_py": "def generate(rng):\n    a = rng.randint(2, 9)\n    b = rng.randint(2, 9)\n    correct_str = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {a} & 0 \\\\\\\\ 0 & {b} \\\\end{{bmatrix}}$, diagonal positiva.'\n    d1 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} 0 & {a} \\\\\\\\ {b} & 0 \\\\end{{bmatrix}}$, antidiagonal pura con elementos {a} y {b}.'\n    d2 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} -{a} & 0 \\\\\\\\ 0 & -{b} \\\\end{{bmatrix}}$, diagonal negativa invertida con -{a}.'\n    d3 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {a} & 1 \\\\\\\\ 1 & {b} \\\\end{{bmatrix}}$, matriz con unos fuera y diagonal {a},{b}.'\n    d4 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {2*a} & 0 \\\\\\\\ 0 & {2*b} \\\\end{{bmatrix}}$, con valores dobles {2*a} y {2*b}.'\n    d5 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} 1 & {a} \\\\\\\\ {b} & 1 \\\\end{{bmatrix}}$, diagonal unitaria fija y fuera {a},{b}.'\n    d6 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {a} & -1 \\\\\\\\ -1 & {b} \\\\end{{bmatrix}}$, signos cruzados con diagonal {a},{b}.'\n    return {\n        'vars': {'a': a, 'b': b},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab02-01', 'error_rationale': f'Al evaluar en (0,0), las derivadas df/dx={a} y dg/dy={b} ocupan la diagonal principal, no la antidiagonal.'},\n            {'value': d2, 'distractor_id': 'D-Hab02-02', 'error_rationale': f'El signo del término lineal es positivo (+{a}x y +{b}y), por lo que las derivadas diagonales son +{a} y +{b}.'},\n            {'value': d3, 'distractor_id': 'D-Hab02-03', 'error_rationale': f'Las derivadas cruzadas df/dy = -x y dg/dx = -y se anulan en (0,0), no toman valor 1 con a={a}.'},\n            {'value': d4, 'distractor_id': 'D-Hab02-04', 'error_rationale': f'La derivada del término lineal {a}x es {a}, no se duplica a {2*a} porque no es cuadrático.'},\n            {'value': d5, 'distractor_id': 'D-Hab02-05', 'error_rationale': f'La diagonal contiene los coeficientes a={a} y b={b}, no valores unitarios fijos 1.'},\n            {'value': d6, 'distractor_id': 'D-Hab02-06', 'error_rationale': f'Los términos de acoplamiento -xy dan derivadas parciales -y y -x que en el origen son 0, no -1 con b={b}.'},\n        ]\n    }",
-      "cross_check_py": "def verify(result):\n    a = result['vars']['a']\n    b = result['vars']['b']\n    return f'{a} & 0' in result['correct'] and f'0 & {b}' in result['correct']",
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 9)\n    b = rng.randint(2, 9)\n    correct_str = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {a} & 0 \\\\\\\\ 0 & {b} \\\\end{{bmatrix}}$, diagonal con entradas positivas.'\n    d1 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} 0 & {a} \\\\\\\\ {b} & 0 \\\\end{{bmatrix}}$, antidiagonal pura con elementos transpuestos {a} y {b}.'\n    d2 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} -{a} & 0 \\\\\\\\ 0 & -{b} \\\\end{{bmatrix}}$, diagonal negativa invertida.'\n    d3 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {a} & 1 \\\\\\\\ 1 & {b} \\\\end{{bmatrix}}$, matriz con unos fuera y diagonal {a},{b}.'\n    d4 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {2*a} & 0 \\\\\\\\ 0 & {2*b} \\\\end{{bmatrix}}$, con valores dobles {2*a} y {2*b}.'\n    d5 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} 1 & {a} \\\\\\\\ {b} & 1 \\\\end{{bmatrix}}$, diagonal unitaria fija y fuera {a},{b}.'\n    d6 = f'$\\\\mathbf{{J}}(0,0) = \\\\begin{{bmatrix}} {a} & -1 \\\\\\\\ -1 & {b} \\\\end{{bmatrix}}$, signos cruzados con diagonal {a},{b}.'\n    return {\n        'vars': {'a': a, 'b': b},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab02-01', 'error_rationale': f'Al evaluar en (0,0), las derivadas df/dx={a} y dg/dy={b} ocupan la diagonal principal, no la antidiagonal.'},\n            {'value': d2, 'distractor_id': 'D-Hab02-02', 'error_rationale': f'El signo del término lineal es positivo (+{a}x y +{b}y), por lo que las derivadas diagonales son +{a} y +{b}.'},\n            {'value': d3, 'distractor_id': 'D-Hab02-03', 'error_rationale': f'Las derivadas cruzadas df/dy = -x y dg/dx = -y se anulan en (0,0), no toman valor 1 con a={a}.'},\n            {'value': d4, 'distractor_id': 'D-Hab02-04', 'error_rationale': f'La derivada del término lineal {a}x es {a}, no se duplica a {2*a} porque no es cuadrático.'},\n            {'value': d5, 'distractor_id': 'D-Hab02-05', 'error_rationale': f'La diagonal contiene los coeficientes a={a} y b={b}, no valores unitarios fijos 1.'},\n            {'value': d6, 'distractor_id': 'D-Hab02-06', 'error_rationale': f'Los términos de acoplamiento -xy dan derivadas parciales -y y -x que en el origen son 0, no -1 con b={b}.'},\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    cand = result.get('correct', '') if isinstance(result, dict) else str(result)\n    a = result['vars']['a']\n    b = result['vars']['b']\n    target = f'{a} & 0 \\\\\\\\ 0 & {b}'\n    return (target in cand) and ('antidiagonal' not in cand) and ('invertida' not in cand) and ('unos' not in cand) and ('dobles' not in cand) and ('unitaria' not in cand)",
       "hints": [
         "Obtenga las derivadas parciales de f(x,y) = a x - x^2 - x y respecto de x e y.",
         "Obtenga las derivadas parciales de g(x,y) = b y - y^2 - x y respecto de x e y.",
@@ -32,6 +39,9 @@
     },
     {
       "id": "T-Hab02-02",
+      "contract_version": "2.0",
+      "archetype": "inverse",
+      "assumption_tested_id": "A-Hab02-02",
       "competency_id": "Hab-02",
       "interaction_type": "fill_in_the_blank",
       "difficulty": "medium",
@@ -40,9 +50,12 @@
       "stem_variants": [
         "Para el sistema $\\dot{x} = {a} x - x^2, \\quad \\dot{y} = {b} y - y^2$, determine el valor escalar de la traza de la matriz Jacobiana $\\mathrm{tr}(\\mathbf{J})$ evaluada en el origen $(0,0)$.",
         "Calcule la traza de la matriz Jacobiana $\\mathrm{tr}(\\mathbf{J})$ en el origen $(0,0)$ para el sistema no acoplado $\\dot{x} = {a} x - x^2, \\quad \\dot{y} = {b} y - y^2$.",
-        "Evalúe el valor escalar $\\mathrm{tr}(\\mathbf{J})$ en el equilibrio $(0,0)$ asociado a las ecuaciones $\\dot{x} = {a} x - x^2, \\quad \\dot{y} = {b} y - y^2$."
+        "Evalúe el valor escalar $\\mathrm{tr}(\\mathbf{J})$ en el equilibrio $(0,0)$ asociado a las ecuaciones $\\dot{x} = {a} x - x^2, \\quad \\dot{y} = {b} y - y^2$.",
+        "Obtenga la magnitud escalar de $\\mathrm{tr}(\\mathbf{J}(0,0))$ para el sistema desacoplado $\\dot{x} = {a} x - x^2, \\dot{y} = {b} y - y^2$:",
+        "Halle el valor de la traza de la Jacobiana en el origen $(0,0)$ correspondiente a $\\dot{x} = {a} x - x^2, \\dot{y} = {b} y - y^2$:",
+        "Determine analíticamente la traza $\\mathrm{tr}(\\mathbf{J}(0,0))$ de la matriz Jacobiana en $\\dot{x} = {a} x - x^2, \\dot{y} = {b} y - y^2$:"
       ],
-      "generate_py": "def generate(rng):\n    a = rng.randint(2, 9)\n    b = rng.randint(2, 9)\n    tr_val = a + b\n    return {\n        'vars': {'a': a, 'b': b, 'tr_val': tr_val},\n        'correct': tr_val,\n        'value': str(tr_val),\n        'canonical_algebraic': str(tr_val),\n        'accepted_equivalents': [str(tr_val), f'{tr_val}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 12)\n    b = rng.randint(2, 12)\n    tr_val = a + b\n    return {\n        'vars': {'a': a, 'b': b, 'tr_val': tr_val},\n        'correct': tr_val,\n        'value': str(tr_val),\n        'canonical_algebraic': str(tr_val),\n        'accepted_equivalents': [str(tr_val), f'{tr_val}.0'],\n        'tolerance': 0.0001,\n        'distractors': []\n    }",
       "cross_check_py": "def verify(result):\n    return int(result['correct']) == (result['vars']['a'] + result['vars']['b'])",
       "hints": [
         "Calcule la matriz Jacobiana evaluando df/dx y dg/dy en el origen.",
@@ -54,6 +67,9 @@
     },
     {
       "id": "T-Hab02-03",
+      "contract_version": "2.0",
+      "archetype": "perturbation",
+      "assumption_tested_id": "A-Hab02-01",
       "competency_id": "Hab-02",
       "interaction_type": "multiple_select",
       "difficulty": "hard",
@@ -62,10 +78,13 @@
       "stem_variants": [
         "Para un sistema plano con matriz Jacobiana $\\mathbf{J}(x_0, y_0) = \\begin{bmatrix} -{a} & 0 \\\\ 0 & -{b} \\end{bmatrix}$ donde $a = {a} > 0$ y $b = {b} > 0$, seleccione todas las afirmaciones correctas sobre la estabilidad local:",
         "Considere la matriz Jacobiana linealizada $\\mathbf{J}(x_0, y_0) = \\begin{bmatrix} -{a} & 0 \\\\ 0 & -{b} \\end{bmatrix}$ con $a = {a} > 0$ y $b = {b} > 0$. Marque todas las propiedades válidas de estabilidad local:",
-        "En un equilibrio plano con Jacobiana diagonal $\\mathbf{J}(x_0, y_0) = \\begin{bmatrix} -{a} & 0 \\\\ 0 & -{b} \\end{bmatrix}$ ($a = {a} > 0$, $b = {b} > 0$), identifique todas las proposiciones verdaderas:"
+        "En un equilibrio plano con Jacobiana diagonal $\\mathbf{J}(x_0, y_0) = \\begin{bmatrix} -{a} & 0 \\\\ 0 & -{b} \\end{bmatrix}$ ($a = {a} > 0$, $b = {b} > 0$), identifique todas las proposiciones verdaderas:",
+        "Analice la estabilidad local para la Jacobiana evaluada $\\mathbf{J} = \\mathrm{diag}(-{a}, -{b})$ con $a = {a} > 0, b = {b} > 0$, marcando las propiedades ciertas:",
+        "Determine todas las conclusiones cualitativas válidas asociadas a la Jacobiana $\\mathbf{J}(x_0, y_0) = \\mathrm{diag}(-{a}, -{b})$ ($a = {a} > 0, b = {b} > 0$):",
+        "Evalúe la dinámica linealizada en $(x_0, y_0)$ con matriz Jacobiana $\\mathbf{J} = \\begin{bmatrix} -{a} & 0 \\\\ 0 & -{b} \\end{bmatrix}$ ($a = {a} > 0, b = {b} > 0$):"
       ],
-      "generate_py": "def generate(rng):\n    a = rng.randint(2, 8)\n    b = rng.randint(2, 8)\n    opts = [\n        {'content': f'La traza de la Jacobiana es estrictamente negativa: tr(J) = -{a+b} < 0.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'El determinante de la Jacobiana es estrictamente positivo: det(J) = {a*b} > 0.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'El punto de equilibrio es asintóticamente estable en el plano con autovalores -{a} y -{b}.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'El punto es un punto de silla inestable debido a coeficientes a={a} y b={b}.', 'is_correct': False, 'distractor_id': 'D-Hab02-04', 'error_rationale': f'Los autovalores son -{a} y -{b}, ambos negativos, lo que garantiza estabilidad y descarta punto de silla.'},\n    ]\n    return {\n        'vars': {'a': a, 'b': b},\n        'options': opts,\n        'distractors': []\n    }",
-      "cross_check_py": "def verify(result):\n    v = result['vars']\n    return v['a'] > 0 and v['b'] > 0 and len([o for o in result['options'] if o['is_correct']]) >= 2",
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 10)\n    b = rng.randint(2, 10)\n    tr_val = -(a + b)\n    det_val = a * b\n    opts = [\n        {'content': f'La traza de la Jacobiana es estrictamente negativa: tr(J) = {tr_val} < 0.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'El determinante de la Jacobiana es estrictamente positivo: det(J) = {det_val} > 0.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'El punto de equilibrio es asintóticamente estable en el plano con autovalores -{a} y -{b}.', 'is_correct': True, 'distractor_id': None},\n        {'content': f'El punto es un punto de silla inestable debido a coeficientes a={a} y b={b}.', 'is_correct': False, 'distractor_id': 'D-Hab02-04', 'error_rationale': f'Los autovalores son -{a} y -{b}, ambos negativos, lo que garantiza estabilidad y descarta punto de silla.'},\n    ]\n    return {\n        'vars': {'a': a, 'b': b, 'tr_val': tr_val, 'det_val': det_val},\n        'options': opts,\n        'distractors': []\n    }",
+      "cross_check_py": "def verify(result):\n    v = result['vars']\n    return v['a'] > 0 and v['b'] > 0 and v['tr_val'] < 0 and v['det_val'] > 0 and len([o for o in result['options'] if o['is_correct']]) >= 2",
       "hints": [
         "Examine los signos de los elementos diagonales -a y -b.",
         "Calcule tr(J) = -a - b < 0 y det(J) = (-a)(-b) = a*b > 0.",
@@ -74,6 +93,41 @@
       "solution": "Los autovalores son lambda_1 = -{a} < 0 y lambda_2 = -{b} < 0. Ambos son reales negativos, garantizando que el equilibrio es un nodo asintóticamente estable.",
       "distractor_ids": [
         "D-Hab02-04"
+      ]
+    },
+    {
+      "id": "T-Hab02-04",
+      "contract_version": "2.0",
+      "archetype": "boundary_or_edge_case",
+      "assumption_tested_id": "A-Hab02-02",
+      "competency_id": "Hab-02",
+      "interaction_type": "multiple_choice_7_options",
+      "difficulty": "hard",
+      "bloom": "Analyze",
+      "stem": "Considere el sistema plano $\\dot{x} = {a} x - x^2, \\quad \\dot{y} = -{b} y + x y$ con $a = {a} > 0$ y $b = {b} > 0$. Calcule la matriz Jacobiana evaluada en el punto de equilibrio no trivial de frontera $(x^*, y^*) = ({a}, 0)$:",
+      "stem_variants": [
+        "Considere el sistema plano $\\dot{x} = {a} x - x^2, \\quad \\dot{y} = -{b} y + x y$ con $a = {a} > 0$ y $b = {b} > 0$. Calcule la matriz Jacobiana evaluada en el punto de equilibrio no trivial de frontera $(x^*, y^*) = ({a}, 0)$:",
+        "Para el modelo plano $\\dot{x} = {a} x - x^2, \\dot{y} = -{b} y + x y$ ($a = {a} > 0, b = {b} > 0$), halle la matriz Jacobiana en el equilibrio no nulo $({a}, 0)$:",
+        "Determine la matriz Jacobiana linealizada en el punto fijo de frontera $({a}, 0)$ para $\\dot{x} = {a} x - x^2, \\dot{y} = -{b} y + x y$ ($a = {a}, b = {b}$):",
+        "Evalúe la matriz Jacobiana en las coordenadas del punto de equilibrio $({a}, 0)$ para el sistema $\\dot{x} = {a} x - x^2, \\dot{y} = -{b} y + x y$:",
+        "Obtenga la matriz Jacobiana evaluada en el equilibrio $({a}, 0)$ del plano de fases asociado a $\\dot{x} = {a} x - x^2, \\dot{y} = -{b} y + x y$:",
+        "Calcule la matriz Jacobiana en el equilibrio axial $({a}, 0)$ correspondiente a $\\dot{x} = {a} x - x^2, \\dot{y} = -{b} y + x y$ ($a = {a}, b = {b}$):"
+      ],
+      "generate_py": "def generate(rng):\n    a = rng.randint(2, 9)\n    b = rng.randint(2, 9)\n    while b == a:\n        b = rng.randint(2, 10)\n    diff = a - b\n    correct_str = f'$\\\\mathbf{{J}}({a}, 0) = \\\\begin{{bmatrix}} -{a} & 0 \\\\\\\\ 0 & {diff} \\\\end{{bmatrix}}$, matriz triangular diagonal en el eje plano.'\n    d1 = f'$\\\\mathbf{{J}}({a}, 0) = \\\\begin{{bmatrix}} {a} & 0 \\\\\\\\ 0 & -{b} \\\\end{{bmatrix}}$, evaluada en el origen.'\n    d2 = f'$\\\\mathbf{{J}}({a}, 0) = \\\\begin{{bmatrix}} 0 & -{a} \\\\\\\\ {diff} & 0 \\\\end{{bmatrix}}$, antidiagonal transpuesta con elementos $-{a}$ y ${diff}$ en el plano.'\n    d3 = f'$\\\\mathbf{{J}}({a}, 0) = \\\\begin{{bmatrix}} -{a} & {a} \\\\\\\\ {a} & {diff} \\\\end{{bmatrix}}$, con elementos cruzados no nulos ${a}$.'\n    d4 = f'$\\\\mathbf{{J}}({a}, 0) = \\\\begin{{bmatrix}} {2*a} & 0 \\\\\\\\ 0 & {a+b} \\\\end{{bmatrix}}$, duplicando la derivada cuadrática positiva.'\n    d5 = f'$\\\\mathbf{{J}}({a}, 0) = \\\\begin{{bmatrix}} 1 & 0 \\\\\\\\ 0 & 1 \\\\end{{bmatrix}}$, matriz identidad unitaria fija sin parámetros.'\n    d6 = f'$\\\\mathbf{{J}}({a}, 0) = \\\\begin{{bmatrix}} -{a} & -1 \\\\\\\\ -1 & {diff} \\\\end{{bmatrix}}$, con perturbaciones unitarias fuera de la diagonal con diff={diff}.'\n    return {\n        'vars': {'a': a, 'b': b, 'diff': diff},\n        'correct': correct_str,\n        'distractors': [\n            {'value': d1, 'distractor_id': 'D-Hab02-01', 'error_rationale': f'La Jacobiana debe evaluarse en (x*, y*) = ({a}, 0), no en el origen (0,0).'},\n            {'value': d2, 'distractor_id': 'D-Hab02-02', 'error_rationale': f'Las derivadas df/dx=-{a} y dg/dy={diff} están en la diagonal principal, no en la antidiagonal.'},\n            {'value': d3, 'distractor_id': 'D-Hab02-03', 'error_rationale': f'En ({a}, 0), df/dy = 0 y dg/dx = y = 0, por lo que las entradas cruzadas se anulan.'},\n            {'value': d4, 'distractor_id': 'D-Hab02-04', 'error_rationale': f'La derivada de {a}x - x^2 evaluada en x={a} es {a} - 2({a}) = -{a}, no positiva {2*a}.'},\n            {'value': d5, 'distractor_id': 'D-Hab02-05', 'error_rationale': f'La matriz Jacobiana retiene los coeficientes dependientes de a={a} y b={b}, no es la identidad.'},\n            {'value': d6, 'distractor_id': 'D-Hab02-06', 'error_rationale': f'Los términos fuera de la diagonal son estrictamente cero al evaluar en y=0, no -1 con diff={diff} y b={b}.'},\n        ]\n    }",
+      "cross_check_py": "def verify(result):\n    cand = result.get('correct', '') if isinstance(result, dict) else str(result)\n    a = result['vars']['a']\n    diff = result['vars']['diff']\n    target = f'-{a} & 0 \\\\\\\\ 0 & {diff}'\n    return (target in cand) and ('origen' not in cand) and ('antidiagonal' not in cand) and ('cruzados' not in cand) and ('identidad' not in cand)",
+      "hints": [
+        "Calcule las derivadas parciales de f(x,y) = a*x - x^2 y g(x,y) = -b*y + x*y.",
+        "Evalúe df/dx = a - 2*x y df/dy = 0 en el punto (x=a, y=0).",
+        "Evalúe dg/dx = y y dg/dy = -b + x en el punto (x=a, y=0)."
+      ],
+      "solution": "Las derivadas parciales son df/dx = {a} - 2x, df/dy = 0, dg/dx = y, dg/dy = -{b} + x. Al sustituir (x, y) = ({a}, 0), obtenemos J({a}, 0) = [[-{a}, 0], [0, {diff}]].",
+      "distractor_ids": [
+        "D-Hab02-01",
+        "D-Hab02-02",
+        "D-Hab02-03",
+        "D-Hab02-04",
+        "D-Hab02-05",
+        "D-Hab02-06"
       ]
     }
   ]
