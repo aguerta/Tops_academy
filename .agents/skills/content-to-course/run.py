@@ -885,8 +885,22 @@ class PipelineRunner:
         templates_dir = self.work_dir / "templates"
         templates_dir.mkdir(parents=True, exist_ok=True)
 
-        # 2. Si existen work/shards/shard_XX_data.py y compile_shard.py está disponible, compilar shards pendientes
         shards_dir = self.work_dir / "shards"
+
+        # Concurrency barrier: ensure authors are not actively writing / compiling
+        if not getattr(self, "force", False):
+            check_attempts_dir = self.work_dir / ".check_attempts"
+            active_locks = list(shards_dir.glob("*.lock"))
+            if check_attempts_dir.is_dir():
+                active_locks.extend(list(check_attempts_dir.glob("*.lock")))
+            if active_locks:
+                lock_names = [l.name for l in active_locks]
+                raise RuntimeError(
+                    f"[CONCURRENCY BARRIER] Active shard author lock(s) detected: {lock_names}. "
+                    f"Stage 3 (templates) cannot run while authors are actively compiling or modifying shards."
+                )
+
+        # 2. Si existen work/shards/shard_XX_data.py y compile_shard.py está disponible, compilar shards pendientes
         shard_data_files = sorted(list(shards_dir.glob("shard_*_data.py")))
         compile_shard_mod = None
         try:
@@ -1075,6 +1089,9 @@ class PipelineRunner:
             print(f"  [+] Fast-path < 5 ms: All {len(all_template_files)} template(s) cryptographically certified via shard_XX.cert.json.")
             is_valid = True
             errors = []
+            (self.work_dir / "template_failures.json").unlink(missing_ok=True)
+            (self.work_dir / "specific_error_report.json").unlink(missing_ok=True)
+            (self.work_dir / "specific_error_report.md").unlink(missing_ok=True)
         elif uncertified_templates and len(certified_template_files) > 0 and not getattr(self, "force_recheck", False):
             print(f"  [+] Fast-path < 5 ms: Skipping {len(certified_template_files)} pre-certified template(s). Checking {len(uncertified_templates)} pending template(s)...")
             is_valid, errors = check_templates_file_or_dir(uncertified_templates, cta_path=cta_file)
@@ -1176,6 +1193,10 @@ class PipelineRunner:
             raise ValueError(f"Templates in {templates_dir} contain {len(errors)} errors.")
 
         template_files = list(templates_dir.glob("*.json"))
+        # Unconditionally purge stale failure artifacts upon successful validation
+        (self.work_dir / "template_failures.json").unlink(missing_ok=True)
+        (self.work_dir / "specific_error_report.json").unlink(missing_ok=True)
+        (self.work_dir / "specific_error_report.md").unlink(missing_ok=True)
         print(f"  [+] Validated templates across {len(template_files)} competency file(s).")
         print("  [+] AST whitelist, 50-seed dry-run, invariants, and TPL-D1..D4 passed.")
         elapsed = time.time() - t0

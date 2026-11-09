@@ -351,6 +351,24 @@ _telltale_patterns = [
 _synthetic_prefix_re = re.compile(r"^\s*(?:Opci[oó]n|Alternativa|Variante)\s+(?:alterna\s+)?\d+\s*:?", re.IGNORECASE)
 
 
+def parse_katex_number(val: Any) -> float:
+    """Robustly parse a float from strings containing LaTeX formatting, delimiters, percentages, inequalities or macros."""
+    if isinstance(val, (int, float)):
+        return float(val)
+    if not isinstance(val, str):
+        val = str(val)
+    s = val.replace(r"\le", "=").replace(r"\ge", "=").replace(r"\approx", "=").replace("<=", "=").replace(">=", "=")
+    # Strip LaTeX formatting macros like \mathbf{...}, \operatorname{...}, \frac, etc.
+    s = re.sub(r"\\[a-zA-Z]+", "", s)
+    s = s.replace("$", "").replace(r"\%", "").replace("%", "").replace("{", "").replace("}", "").replace("\\", "").strip()
+    s = s.split("=")[-1].strip()
+    m = re.findall(r"-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?", s)
+    if m:
+        return float(m[-1])
+    return float(s)
+
+
+
 def _find_telltale_in_option(text: Any, is_distractor: bool = True) -> Optional[str]:
     """Find parenthetical cues, distractor confessions, or synthetic clone prefixes in option text."""
     if not isinstance(text, str) or not text.strip():
@@ -2091,6 +2109,8 @@ def _compile_shard_body(
     mod_name = f"c2c_shard_mod_{norm_shard_id}_{uuid.uuid4().hex[:6]}"
     mod = types.ModuleType(mod_name)
     mod.__file__ = str(shard_data_path)
+    mod.__dict__["parse_katex_number"] = parse_katex_number
+    mod.__dict__["_pv"] = parse_katex_number
     if healed_source and not skip_base_module:
         try:
             code_obj = compile(healed_source, str(shard_data_path), "exec")
@@ -2148,6 +2168,8 @@ def _compile_shard_body(
             fix_mod_name = f"c2c_fix_mod_{cid_fix.replace('-', '_')}_{uuid.uuid4().hex[:6]}"
             fix_mod = types.ModuleType(fix_mod_name)
             fix_mod.__file__ = str(fix_path)
+            fix_mod.__dict__["parse_katex_number"] = parse_katex_number
+            fix_mod.__dict__["_pv"] = parse_katex_number
             fix_code_obj = compile(healed_fix_text, str(fix_path), "exec")
             sys.modules[fix_mod_name] = fix_mod
             exec(fix_code_obj, fix_mod.__dict__)
@@ -2809,7 +2831,8 @@ cross_check=verify
                             if cta_declared_ids and did not in cta_declared_ids:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did)
                                 return _fail(
-                                    f"FAIL: Distractor ID '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) no está declarado en cta.json para la competencia '{cid}'."
+                                    f"FAIL: Distractor ID '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) no está declarado en cta.json para la competencia '{cid}'. "
+                                    f"Distractores obligatorios declarados en cta.json: {sorted(cta_declared_ids)}."
                                 )
 
                         if strict:
@@ -3059,6 +3082,30 @@ cross_check=verify
 
         templates_by_cid.setdefault(cid, []).append(canonical_dict)
         gen_callables_by_cid.setdefault(cid, []).append(gen_raw)
+
+    # Pre-check: Ensure full distractor coverage per competency with explicit set-difference
+    if cta_p and Path(cta_p).is_file():
+        try:
+            cta_info = json.loads(Path(cta_p).read_text(encoding="utf-8"))
+            cta_comp_dids = {}
+            for comp_entry in cta_info.get("competencies", []):
+                if isinstance(comp_entry, dict) and "id" in comp_entry:
+                    c_dids = [str(d.get("id")) for d in comp_entry.get("distractors", []) if isinstance(d, dict) and d.get("id")]
+                    if c_dids:
+                        cta_comp_dids[comp_entry["id"]] = set(c_dids)
+            for cid, tpls in templates_by_cid.items():
+                if cid in cta_comp_dids:
+                    used_dids = set()
+                    for t in tpls:
+                        used_dids.update([str(d) for d in t.get("distractor_ids", [])])
+                    missing_dids = cta_comp_dids[cid] - used_dids
+                    if missing_dids and strict:
+                        return _fail(
+                            f"FAIL: [TPL-D3: COBERTURA COMPLETA DE DISTRACTORES] FALTAN DISTRACTORES OBLIGATORIOS en '{cid}': {sorted(missing_dids)}. "
+                            f"Distractores declarados: {sorted(cta_comp_dids[cid])}. Debes asignarlos a las plantillas de tu shard."
+                        )
+        except Exception:
+            pass
 
     # 6. Write templates atomically grouped by competency
     compiled_paths: List[Path] = []
@@ -3560,7 +3607,10 @@ cross_check=verify
                         c_nums = _num_re.findall(corr_txt)
                         if not c_nums:
                             continue
-                        c_val = float(c_nums[-1])
+                        try:
+                            c_val = parse_katex_number(c_nums[-1])
+                        except Exception:
+                            continue
                         if abs(c_val) <= 1e-6 or abs(c_val) in (1.0, 2.0, 4.0):
                             continue
                         matched_m: List[float] = []
@@ -3581,7 +3631,10 @@ cross_check=verify
                             d_nums = _num_re.findall(d_txt)
                             if not d_nums:
                                 continue
-                            d_val = float(d_nums[-1])
+                            try:
+                                d_val = parse_katex_number(d_nums[-1])
+                            except Exception:
+                                continue
                             # Guard 1: Skip conceptual distractors sharing the same numerical value as correct answer
                             if abs(d_val - c_val) <= 1e-4:
                                 continue

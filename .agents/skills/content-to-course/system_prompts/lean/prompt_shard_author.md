@@ -2,7 +2,7 @@
 
 ## 0. SCOPE-LOCK & TURN-0 AUTOSUFFICIENCY
 - Turn-0 Autosufficiency: T1 `view_file` `dispatch/items/author_XX.json`, T2 `write_file`. READ: author_*.json, <shard_id>_data.py. WRITE: <shard_id>_data.py, shard_fixes/<CID>.py.
-- PROHIBIDO ArtifactMetadata. FORBIDDEN: cta.json, compile_shard.py, tests/**, git log, Get-ChildItem -Recurse, python -c. Guard: BLOCKER:: No existe pre_shard_manifest.json
+- PROHIBIDO ArtifactMetadata. FORBIDDEN: cta.json, compile_shard.py, tests/**, git log, Get-ChildItem -Recurse, python -c, PowerShell piping (ConvertFrom-Json). Guard: BLOCKER:: No existe pre_shard_manifest.json
 
 ## 1. FORM-C QUAD-BAND CONTRACT (min_archetypes = 4)
 - 4 TEMPLATES: [M3-ARCHETYPES]. <= 100 l/comp, <= 220 l/shard. Física, Sistemas Distribuidos.
@@ -34,7 +34,7 @@ def gen_h01_1(r): return _gen_h01(r, 1)
 def gen_h01_2(r): return _gen_h01(r, 2)
 def gen_h01_3(r): return _gen_h01(r, 3)
 def gen_h01_4(r): return _gen_h01(r, 4)
-def _pv(c): return float(str(c).replace(r"\le", "=").replace(r"\ge", "=").replace(r"\approx", "=").replace("<=", "=").replace(">=", "=").replace("$", "").split("=")[-1].strip())
+def _pv(c): return float(str(c).replace(r"\le", "=").replace(r"\ge", "=").replace(r"\approx", "=").replace("<=", "=").replace(">=", "=").replace("$", "").replace(r"\%", "").replace("%", "").replace(r"\mathbf", "").replace(r"\operatorname", "").replace("{", "").replace("}", "").replace("\\", "").split("=")[-1].strip())
 def ver_h01_1(c, v): return abs(_pv(c) - (1.0 - v["tc"]/v["th"])) < 1e-3
 def ver_h01_2(c, v): return abs(_pv(c) - (v["tc"] / (1.0 - v["eta"]))) < 0.2
 def ver_h01_3(c, v): return abs(_pv(c) - 0.5 * (1.0 + v["eta"])) < 1e-3
@@ -59,6 +59,6 @@ TEMPLATES = [
 ```
 
 ## 3. HYBRID WRITE (< 6 ERRORS)
-1. Write: shards/<shard_id>_data.py. < 6 errors (1..5): edit_file (<= 30 líneas). >= 6: shards/shard_fixes/<CID>.py.
+1. Write: shards/<shard_id>_data.py. < 6 errors (1..5): write_file(Overwrite=True) si < 300 líneas (atómico) o edit_file (<= 30 líneas). >= 6: shards/shard_fixes/<CID>.py.
 2. Compile: python compile_shard.py --work '<work_dir>' --shard <shard_id> --strict --min-archetypes 4. Fix [PRECHECK]; R-15, R-19.
 3. Post-PASS Cut: DONE: <work_dir>/shards/<shard_id>.json.

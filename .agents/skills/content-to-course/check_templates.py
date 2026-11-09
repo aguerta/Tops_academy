@@ -1522,7 +1522,7 @@ def render_compact_aggregated_errors(
     hunk_count = max(1, total_items)
 
     if hunk_count < 6:
-        directive_line = f"[UMBRAL < 6 ({hunk_count}/5 errores)]: Usa edit_file (replace_file_content) quirúrgico en las líneas indicadas; PROHIBIDO write_file completo."
+        directive_line = f"[UMBRAL < 6 ({hunk_count}/5 errores)]: Usa edit_file quirúrgico o write_file(Overwrite=True) si el archivo tiene < 300 líneas para corregir todo en 1 turno atómico."
     else:
         directive_line = f"[UMBRAL >= 6 ({hunk_count} errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(Overwrite=True) completo."
 
@@ -3634,8 +3634,9 @@ def check_templates_file_or_dir(
                 uncovered = declared_set - referenced_set
                 if uncovered:
                     tpl_d3_failed = True
-                    snippet_msg = f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})"
-                    cause_msg = "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando."
+                    missing_list = sorted(uncovered)
+                    snippet_msg = f"Distractores sin cubrir: {missing_list} ({len(uncovered)}/{len(declared_set)})"
+                    cause_msg = f"FALTAN DISTRACTORES OBLIGATORIOS: {missing_list}. Existen distractores definidos en cta.json sin asignar en las plantillas de '{cid}'."
 
             if tpl_d3_failed:
                 err_diag = format_diagnostic_error(
@@ -3647,9 +3648,9 @@ def check_templates_file_or_dir(
                     snippet=snippet_msg,
                     cause=cause_msg,
                     actions=[
-                        f"Asignar los distractores correspondientes en las plantillas existentes de '{cid}'.",
+                        f"Asignar los distractores obligatorios faltantes {missing_list} a las plantillas existentes de '{cid}'.",
                         "O crear plantillas adicionales que ejerciten los conceptos erróneos representados por estos distractores.",
-                        "Asegurar la cobertura de distractores requerida por el contrato psicométrico.",
+                        "Asegurar la cobertura del 100% de distractores requerida por el contrato psicométrico.",
                     ],
                 )
                 errors.append(err_diag)

@@ -1,0 +1,521 @@
+{
+  "course_id": "solow_new_pipeline_direct",
+  "conversation_id": "539b37fa-3efe-4464-a86d-0ec0a8f8130b",
+  "run_dir": "reports\\c2c_audits\\20261108_231241_solow_new_pipeline_direct_539b37fa",
+  "total_shards": 10,
+  "total_repairs": 0,
+  "median_wall_time_s": 339.0,
+  "median_repair_wall_time_s": 0.0,
+  "gold_standard_cleanroom": {
+    "shard_id": "shard_08",
+    "label": "Shard Author shard_08",
+    "conversation_id": "ec19583f-78e7-4f60-829f-0ff5cdca24f7",
+    "wall_time_s": 230.0,
+    "pre_1st_compile_s": 217.0,
+    "post_1st_compile_s": 19.0,
+    "compile_runs": 1,
+    "compile_fails": 0,
+    "edits_count": 0,
+    "turns_count": 5,
+    "active_tokens": 124748,
+    "thinking_tokens": 7210,
+    "competencies_count": 2,
+    "error_codes": [],
+    "error_snippets": [],
+    "has_micro_loop": false,
+    "micro_loop_reason": "",
+    "cross_course_explorations": [],
+    "first_thinking_snippet": "I'm thinking through how to approach this.   "
+  },
+  "top_5_stragglers": [
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "1d7b6add-39f6-43e7-b0cd-e35665a78f48",
+      "wall_time_s": 472.0,
+      "pre_1st_compile_s": 268.0,
+      "post_1st_compile_s": 211.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 4,
+      "turns_count": 15,
+      "active_tokens": 226797,
+      "thinking_tokens": 14161,
+      "competencies_count": 2,
+      "error_codes": [
+        "[R-19]",
+        "[TPL-CROSS]"
+      ],
+      "error_snippets": [
+        "FAIL: [TPL-DYNAMIC-RATIONALE] El distractor 'D-C05-03' en la plantilla param�trica 'TPL-C05-01' (L�n",
+        "[UMBRAL >= 6 (9 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O",
+        "FAIL: [TPL-DYNAMIC-RATIONALE] La opci�n falsa 'D-C06-03' en la plantilla param�trica 'TPL-C06-04' (L"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Analyzing instructions and scope lock details, focusing on autosufficiency constraints. The instructions mention reading and writing specific file types with a scope lock defining access. This suggests a task involving data processing or modification"
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "d22e2d3a-9d50-4484-a0f9-e843a6d43eef",
+      "wall_time_s": 448.0,
+      "pre_1st_compile_s": 215.0,
+      "post_1st_compile_s": 235.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 6,
+      "turns_count": 19,
+      "active_tokens": 205193,
+      "thinking_tokens": 14097,
+      "competencies_count": 1,
+      "error_codes": [
+        "[R-18]"
+      ],
+      "error_snippets": [
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;",
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "4f3126e5-cbf3-42f3-a890-a9d520db753f",
+      "wall_time_s": 404.0,
+      "pre_1st_compile_s": 321.0,
+      "post_1st_compile_s": 88.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 4,
+      "turns_count": 13,
+      "active_tokens": 196192,
+      "thinking_tokens": 15682,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [
+        "FAIL: [TPL-VERIFIER-UNSOUND] El verificador ver_fn 'ver_c03_4' en 'TPL-C03-04' (L�nea 71 en shard_09",
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   Analyzing the task instructions to identify key constraints and requirements for the code generation process. Determined the need to adhere to a \"QUAD-BAND CONTRACT\" with specific template and line count l"
+    },
+    {
+      "shard_id": "shard_10",
+      "label": "Shard Author shard_10",
+      "conversation_id": "caac767a-6482-43a2-9f4d-f354154b43fc",
+      "wall_time_s": 355.0,
+      "pre_1st_compile_s": 252.0,
+      "post_1st_compile_s": 107.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 10,
+      "active_tokens": 165240,
+      "thinking_tokens": 8972,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-DRY]"
+      ],
+      "error_snippets": [
+        "[UMBRAL < 6 (2/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial task is to process a work order and create a Python file. The instructions specify reading a JSON file, then writing and compiling a Python file, and finally fixing compiler errors. The files and functions are specified; the goal is to implem"
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "e52572f6-d4da-4b77-b73c-c7f62c1f5125",
+      "wall_time_s": 339.0,
+      "pre_1st_compile_s": 221.0,
+      "post_1st_compile_s": 120.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 10,
+      "active_tokens": 163178,
+      "thinking_tokens": 11103,
+      "competencies_count": 1,
+      "error_codes": [
+        "[R-16]"
+      ],
+      "error_snippets": [
+        "[UMBRAL < 6 (4/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;",
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    }
+  ],
+  "top_5_fastest": [
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "35477ae1-0994-450f-8c57-06729bb119a1",
+      "wall_time_s": 223.0,
+      "pre_1st_compile_s": 195.0,
+      "post_1st_compile_s": 29.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 8,
+      "active_tokens": 122870,
+      "thinking_tokens": 6851,
+      "competencies_count": 1,
+      "error_codes": [
+        "SyntaxError en shard_05_data.py (L�nea 185, Columna 95): unterminated string literal (detected at line 185)\r"
+      ],
+      "error_snippets": [
+        "Rango: StartLine: 185, EndLine: 185"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The work order references an author JSON file. Need to examine this file to understand the task. Applying the `view_file` command to inspect the specified JSON. The autosufficiency rule suggests a file format pattern.   "
+    },
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "ec19583f-78e7-4f60-829f-0ff5cdca24f7",
+      "wall_time_s": 230.0,
+      "pre_1st_compile_s": 217.0,
+      "post_1st_compile_s": 19.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 5,
+      "active_tokens": 124748,
+      "thinking_tokens": 7210,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "f846e0ab-1dc5-4363-bbe1-9119e10fc354",
+      "wall_time_s": 248.0,
+      "pre_1st_compile_s": 237.0,
+      "post_1st_compile_s": 14.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 5,
+      "active_tokens": 131869,
+      "thinking_tokens": 9784,
+      "competencies_count": 1,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial inspection reveals the work order specifies writing a Python file (`shard_01_data.py`) and compiling it. The instruction explicitly states to only address errors reported by the compiler. Focusing on the compiler output is the key to completi"
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "66fe0562-65a8-40ef-a1e9-53d0a6077bde",
+      "wall_time_s": 279.0,
+      "pre_1st_compile_s": 235.0,
+      "post_1st_compile_s": 45.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 8,
+      "active_tokens": 142903,
+      "thinking_tokens": 8566,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-KATEX]"
+      ],
+      "error_snippets": [
+        "FAIL: [TPL-KATEX] En 'TPL-H04-01' (L�nea 44 en shard_04_data.py): LaTeX command '\\cdot' exposed outs"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The task involves reading an input file and writing a new data file, with several restrictions in place. The core requirement is to process the input file for author `author_04` and output to the shard data file `shard_04_data.py`. A pre-shard manife"
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "b80dc582-85e5-4726-8e53-52049daedcce",
+      "wall_time_s": 300.0,
+      "pre_1st_compile_s": 288.0,
+      "post_1st_compile_s": 19.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 5,
+      "active_tokens": 157003,
+      "thinking_tokens": 10884,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial focus is on the work order, specifically the instruction to write and compile a Python file. The specific file paths and tools are irrelevant to the underlying process. The task's core is creating and compiling a Python shard. No immediate co"
+    }
+  ],
+  "all_shards": [
+    {
+      "shard_id": "shard_06",
+      "label": "Shard Author shard_06",
+      "conversation_id": "1d7b6add-39f6-43e7-b0cd-e35665a78f48",
+      "wall_time_s": 472.0,
+      "pre_1st_compile_s": 268.0,
+      "post_1st_compile_s": 211.0,
+      "compile_runs": 4,
+      "compile_fails": 3,
+      "edits_count": 4,
+      "turns_count": 15,
+      "active_tokens": 226797,
+      "thinking_tokens": 14161,
+      "competencies_count": 2,
+      "error_codes": [
+        "[R-19]",
+        "[TPL-CROSS]"
+      ],
+      "error_snippets": [
+        "FAIL: [TPL-DYNAMIC-RATIONALE] El distractor 'D-C05-03' en la plantilla param�trica 'TPL-C05-01' (L�n",
+        "[UMBRAL >= 6 (9 errores)]: Usa write_file modular en shard_fixes/<CID>.py (1-2 comps) o write_file(O",
+        "FAIL: [TPL-DYNAMIC-RATIONALE] La opci�n falsa 'D-C06-03' en la plantilla param�trica 'TPL-C06-04' (L"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Analyzing instructions and scope lock details, focusing on autosufficiency constraints. The instructions mention reading and writing specific file types with a scope lock defining access. This suggests a task involving data processing or modification"
+    },
+    {
+      "shard_id": "shard_03",
+      "label": "Shard Author shard_03",
+      "conversation_id": "d22e2d3a-9d50-4484-a0f9-e843a6d43eef",
+      "wall_time_s": 448.0,
+      "pre_1st_compile_s": 215.0,
+      "post_1st_compile_s": 235.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 6,
+      "turns_count": 19,
+      "active_tokens": 205193,
+      "thinking_tokens": 14097,
+      "competencies_count": 1,
+      "error_codes": [
+        "[R-18]"
+      ],
+      "error_snippets": [
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;",
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_09",
+      "label": "Shard Author shard_09",
+      "conversation_id": "4f3126e5-cbf3-42f3-a890-a9d520db753f",
+      "wall_time_s": 404.0,
+      "pre_1st_compile_s": 321.0,
+      "post_1st_compile_s": 88.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 4,
+      "turns_count": 13,
+      "active_tokens": 196192,
+      "thinking_tokens": 15682,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [
+        "FAIL: [TPL-VERIFIER-UNSOUND] El verificador ver_fn 'ver_c03_4' en 'TPL-C03-04' (L�nea 71 en shard_09",
+        "[UMBRAL < 6 (3/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   Analyzing the task instructions to identify key constraints and requirements for the code generation process. Determined the need to adhere to a \"QUAD-BAND CONTRACT\" with specific template and line count l"
+    },
+    {
+      "shard_id": "shard_10",
+      "label": "Shard Author shard_10",
+      "conversation_id": "caac767a-6482-43a2-9f4d-f354154b43fc",
+      "wall_time_s": 355.0,
+      "pre_1st_compile_s": 252.0,
+      "post_1st_compile_s": 107.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 10,
+      "active_tokens": 165240,
+      "thinking_tokens": 8972,
+      "competencies_count": 2,
+      "error_codes": [
+        "[TPL-DRY]"
+      ],
+      "error_snippets": [
+        "[UMBRAL < 6 (2/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial task is to process a work order and create a Python file. The instructions specify reading a JSON file, then writing and compiling a Python file, and finally fixing compiler errors. The files and functions are specified; the goal is to implem"
+    },
+    {
+      "shard_id": "shard_02",
+      "label": "Shard Author shard_02",
+      "conversation_id": "e52572f6-d4da-4b77-b73c-c7f62c1f5125",
+      "wall_time_s": 339.0,
+      "pre_1st_compile_s": 221.0,
+      "post_1st_compile_s": 120.0,
+      "compile_runs": 3,
+      "compile_fails": 2,
+      "edits_count": 2,
+      "turns_count": 10,
+      "active_tokens": 163178,
+      "thinking_tokens": 11103,
+      "competencies_count": 1,
+      "error_codes": [
+        "[R-16]"
+      ],
+      "error_snippets": [
+        "[UMBRAL < 6 (4/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;",
+        "[UMBRAL < 6 (1/5 errores)]: Usa edit_file (replace_file_content) quir�rgico en las l�neas indicadas;"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_07",
+      "label": "Shard Author shard_07",
+      "conversation_id": "b80dc582-85e5-4726-8e53-52049daedcce",
+      "wall_time_s": 300.0,
+      "pre_1st_compile_s": 288.0,
+      "post_1st_compile_s": 19.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 5,
+      "active_tokens": 157003,
+      "thinking_tokens": 10884,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial focus is on the work order, specifically the instruction to write and compile a Python file. The specific file paths and tools are irrelevant to the underlying process. The task's core is creating and compiling a Python shard. No immediate co"
+    },
+    {
+      "shard_id": "shard_04",
+      "label": "Shard Author shard_04",
+      "conversation_id": "66fe0562-65a8-40ef-a1e9-53d0a6077bde",
+      "wall_time_s": 279.0,
+      "pre_1st_compile_s": 235.0,
+      "post_1st_compile_s": 45.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 2,
+      "turns_count": 8,
+      "active_tokens": 142903,
+      "thinking_tokens": 8566,
+      "competencies_count": 1,
+      "error_codes": [
+        "[TPL-KATEX]"
+      ],
+      "error_snippets": [
+        "FAIL: [TPL-KATEX] En 'TPL-H04-01' (L�nea 44 en shard_04_data.py): LaTeX command '\\cdot' exposed outs"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The task involves reading an input file and writing a new data file, with several restrictions in place. The core requirement is to process the input file for author `author_04` and output to the shard data file `shard_04_data.py`. A pre-shard manife"
+    },
+    {
+      "shard_id": "shard_01",
+      "label": "Shard Author shard_01",
+      "conversation_id": "f846e0ab-1dc5-4363-bbe1-9119e10fc354",
+      "wall_time_s": 248.0,
+      "pre_1st_compile_s": 237.0,
+      "post_1st_compile_s": 14.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 5,
+      "active_tokens": 131869,
+      "thinking_tokens": 9784,
+      "competencies_count": 1,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "Initial inspection reveals the work order specifies writing a Python file (`shard_01_data.py`) and compiling it. The instruction explicitly states to only address errors reported by the compiler. Focusing on the compiler output is the key to completi"
+    },
+    {
+      "shard_id": "shard_08",
+      "label": "Shard Author shard_08",
+      "conversation_id": "ec19583f-78e7-4f60-829f-0ff5cdca24f7",
+      "wall_time_s": 230.0,
+      "pre_1st_compile_s": 217.0,
+      "post_1st_compile_s": 19.0,
+      "compile_runs": 1,
+      "compile_fails": 0,
+      "edits_count": 0,
+      "turns_count": 5,
+      "active_tokens": 124748,
+      "thinking_tokens": 7210,
+      "competencies_count": 2,
+      "error_codes": [],
+      "error_snippets": [],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "I'm thinking through how to approach this.   "
+    },
+    {
+      "shard_id": "shard_05",
+      "label": "Shard Author shard_05",
+      "conversation_id": "35477ae1-0994-450f-8c57-06729bb119a1",
+      "wall_time_s": 223.0,
+      "pre_1st_compile_s": 195.0,
+      "post_1st_compile_s": 29.0,
+      "compile_runs": 2,
+      "compile_fails": 1,
+      "edits_count": 1,
+      "turns_count": 8,
+      "active_tokens": 122870,
+      "thinking_tokens": 6851,
+      "competencies_count": 1,
+      "error_codes": [
+        "SyntaxError en shard_05_data.py (L�nea 185, Columna 95): unterminated string literal (detected at line 185)\r"
+      ],
+      "error_snippets": [
+        "Rango: StartLine: 185, EndLine: 185"
+      ],
+      "has_micro_loop": false,
+      "micro_loop_reason": "",
+      "cross_course_explorations": [],
+      "first_thinking_snippet": "The work order references an author JSON file. Need to examine this file to understand the task. Applying the `view_file` command to inspect the specified JSON. The autosufficiency rule suggests a file format pattern.   "
+    }
+  ],
+  "repairs": []
+}

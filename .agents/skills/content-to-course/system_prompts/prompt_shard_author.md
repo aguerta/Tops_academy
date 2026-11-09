@@ -33,7 +33,7 @@ Trabaja únicamente con los archivos autorizados para tu shard:
   - 🚫 **PROHIBIDO borrar o modificar `.check_attempts/`:** Este directorio mantiene el registro forense de intentos de compilación.
   - 🚫 **PROHIBIDO emitir JSON o plantillas en el texto del chat:** No satures el chat con plantillas; termina estrictamente con `DONE: <archivos>`.
   - 🚫 **PROHIBIDO alterar o modificar compilers o scripts de validación:** Está terminantemente prohibido editar `compile_shard.py` o linters para eludir validaciones.
-  - 🚫 **PROHIBIDO ejecutar `python -c` inline en PowerShell:** Todos los comandos deben ser llamadas directas a scripts como `.agents/skills/content-to-course/compile_shard.py`.
+  - 🚫 **PROHIBIDO ejecutar `python -c` inline o tuberías de PowerShell (`ConvertFrom-Json`, `Select-String`, `ForEach-Object`):** Todos los comandos deben ser llamadas directas a scripts como `.agents/skills/content-to-course/compile_shard.py`. Toda la información de esquemas y distractores está en tu work order; queda terminantemente prohibido usar scripts de shell para inspeccionar o parsear archivos JSON.
 
 ### 🛑 CONTROL DE BLOQUEO PREVIO (MANDATORIO)
 Si no existe `<work_dir>/shards/pre_shard_manifest.json`, el subagente DEBE detenerse inmediatamente y reportar al orquestador:
@@ -117,7 +117,7 @@ def gen_h01_2(rng): return _gen_h01(rng, 2)
 def gen_h01_3(rng): return _gen_h01(rng, 3)
 def gen_h01_4(rng): return _gen_h01(rng, 4)
 
-def _pv(c): return float(str(c).replace(r"\le", "=").replace(r"\ge", "=").replace(r"\approx", "=").replace("<=", "=").replace(">=", "=").replace("$", "").split("=")[-1].strip())
+def _pv(c): return float(str(c).replace(r"\le", "=").replace(r"\ge", "=").replace(r"\approx", "=").replace("<=", "=").replace(">=", "=").replace("$", "").replace(r"\%", "").replace("%", "").replace(r"\mathbf", "").replace(r"\operatorname", "").replace("{", "").replace("}", "").replace("\\", "").split("=")[-1].strip())
 
 def ver_h01_1(cand, v):
     return abs(_pv(cand) - (1.0 - v["tc"] / v["th"])) < 1e-3
@@ -458,8 +458,10 @@ TEMPLATES += [
 
 ### Protocolo Oficial de Creación y Reparación (< 6 Errores vs >= 6 Errores)
 1. **Creación Turno 1:** Utiliza `write_file(Overwrite=True)` para escribir `<work_dir>/shards/<shard_id>_data.py` con constantes, funciones y la lista `TEMPLATES = [...]` (PROHIBIDO el uso de `Append=True` en la creación de plantillas).
-2. **Reparación bajo Umbral < 6 Errores (1..5 errores, sin SyntaxError):** Uso **OBLIGATORIO** de `edit_file` (`replace_file_content`) quirúrgico en 1 turno paralelo sobre las líneas exactas `StartLine..EndLine` señaladas por `compile_shard.py`.
-   - **Paginación Inteligente en `edit_file`**: Prohibido aplicar `edit_file` sobre bloques mayores a 30 líneas tras lecturas truncadas. Exige leer previamente con `read_file` el bloque específico indicando líneas exactas (`StartLine` y `EndLine`, máximo 30 líneas) para asegurar coincidencia idéntica del `Target`. Queda **TERMINANTEMENTE PROHIBIDO** reescribir todo el archivo desde cero con `write_file`.
+2. **Reparación bajo Umbral < 6 Errores (1..5 errores, sin SyntaxError):**
+   - En archivos de datos pequeños (< 300 líneas), se **PERMITE** corregir todo de forma atómica en 1 único turno con `write_file(Overwrite=True)` para erradicar micro-bucles de edición iterativa.
+   - Alternativamente, en archivos extensos (>= 300 líneas) o para ajustes puntuales de 1–2 líneas, utiliza `edit_file` (`replace_file_content`) quirúrgico en 1 turno paralelo sobre las líneas exactas señaladas por `compile_shard.py`.
+   - **Paginación Inteligente en `edit_file`**: Prohibido aplicar `edit_file` sobre bloques mayores a 30 líneas tras lecturas truncadas. Exige leer previamente con `read_file` el bloque específico indicando líneas exactas (`StartLine` y `EndLine`, máximo 30 líneas) para asegurar coincidencia idéntica del `Target`.
 3. **Reparación bajo >= 6 Errores:**
    - **Acotados a 1–2 competencias:** Escribe exclusivamente el bloque modular aislado en `<work_dir>/shards/shard_fixes/<CID>.py` con `write_file(Overwrite=True)`. El compilador `compile_shard.py` detecta e integra automáticamente `shard_fixes/<CID>.py` en memoria durante la compilación.
    - **Sistémicos (>= 3 competencias) o SyntaxError:** Permitido `write_file(Overwrite=True)` atómico completo sobre `<work_dir>/shards/<shard_id>_data.py` o anulación modular vía `shard_fixes/<CID>.py`.
@@ -494,7 +496,7 @@ Bajo la arquitectura Load Inversion, las reglas de introspección son estrictas 
 3. **Turno 3:** Compila ejecutando la orden exacta recibida:
    `python .agents/skills/content-to-course/compile_shard.py --work "<work_dir>" --shard <shard_id> --strict --min-archetypes 4`
 4. **Si reporta errores:**
-   - Si reporta `< 6` errores (`1..5` errores, sin `SyntaxError`): corrígelos OBLIGATORIAMENTE de forma quirúrgica con `edit_file` (`replace_file_content`) sobre las líneas exactas señaladas en 1 turno paralelo (PROHIBIDO reescribir con `write_file`).
+   - Si reporta `< 6` errores (`1..5` errores, sin `SyntaxError`): corrígelos de forma atómica en 1 único turno con `write_file(Overwrite=True)` si el archivo tiene < 300 líneas, o quirúrgicamente con `edit_file` sobre las líneas exactas señaladas.
    - Si reporta `>= 6` errores: escribe el bloque modular en `work/shards/shard_fixes/<shard_id>/<CID>.py` (1–2 competencias) o reescribe con `write_file` si es sistémico.
 5. **Cierre (Corte Inmediato Post-PASS):** Al obtener `PASS` (código de salida 0 y marcador de aprobación), cesa inmediatamente toda edición adicional en archivos Python o JSON y finaliza estrictamente con:
    `DONE: <work_dir>/shards/<shard_id>_data.py`
