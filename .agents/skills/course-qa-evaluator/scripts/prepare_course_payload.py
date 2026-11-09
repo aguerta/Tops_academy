@@ -161,11 +161,17 @@ def summarize_course(course_entry: dict) -> dict:
         "questions_per_competency": {cid: len(ql) for cid, ql in q_by_comp.items()},
         "stage5_judge_audit": judge_audit,
         "evaluator_guidance": {
-            "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0 y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
+            "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0, la Rúbrica Determinista de 20 puntos y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
             "risk_score": telemetry.get("risk_score", 0.0),
+            "final_score": telemetry.get("final_score", 20.0),
+            "quality_tier": telemetry.get("quality_tier", "EXCELENTE (PLATINUM MASTERY)"),
+            "deterministic_rubric": telemetry.get("deterministic_rubric", {}),
             "mastery_path_readiness": telemetry.get("mastery_path_readiness", {}),
             "hard_penalties_precalculated": telemetry.get("hard_penalties", []),
         },
+        "deterministic_rubric": telemetry.get("deterministic_rubric", {}),
+        "final_score": telemetry.get("final_score", 20.0),
+        "quality_tier": telemetry.get("quality_tier", "EXCELENTE (PLATINUM MASTERY)"),
         "audit_telemetry": telemetry,
         "competencies": [
             {
