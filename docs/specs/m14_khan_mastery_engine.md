@@ -3,7 +3,7 @@
 
 > **Documento de Especificación Técnica y Psicométrica**  
 > **Hito Vinculado:** Milestone 14 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md)  
-> **Estado:** 🎯 P1 — Prioridad Psicométrica y Pedagógica (~1.5 a 2 d).  
+> **Estado:** ✅ **COMPLETADO / VERIFICADO (Nov 2026) — Componentes Core, Fluidez y Recomendantes.**  
 > **Regla de Sincronización:** Cualquier ajuste en la lógica de transiciones de maestría, penalización por fallo, cálculo global o componentes de `platform/src/utils/masteryStorage.ts` debe registrarse en este archivo y en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md).
 
 ---
@@ -113,26 +113,56 @@ export function updateCourseChallengeWithSkillCalibration(
 
 ---
 
-## 4. Las 6 Extensiones Estructurales del Motor Khan Academy 2.0
+## 4. Las Extensiones Estructurales del Motor Khan Academy 2.0
 
 1. **Calibración Cross-Skill en `Quiz` y `Unit Test` Intercalados:**
-   - Dado que `sessionShuffler.ts` inyecta ~40–45% de preguntas de prerrequisitos y unidades previas en `Quiz` y `Unit Test`, `handleCompleteSession` aplica actualización por `question.competency_id` en toda sesión intercalada.
+   - Dado que `sessionShuffler.ts` inyecta preguntas de prerrequisitos y unidades previas en `Quiz` y `Unit Test`, `handleCompleteSession` aplica actualización atómica por `question.competency_id` en toda sesión intercalada.
 2. **Fórmula Híbrida 80/20 en `calculateCourseProgress`:**
-   - Barra de progreso global combinando **80% suma continua de `comp.points / (N * 100)`** + **20% proporción de competencias en `Proficient`/`Mastered`**, evitando que alumnos con múltiples habilidades en `Familiar` (50 pts) vean la barra congelada en 0%.
+   - Promedio de Unit Tests aporta 0–80% y Course Challenge (100% requerido) aporta el 20% restante, requiriendo 100% en ambos para el estatus *Completed* (Verde Fuerte).
 3. **Maestría Autónoma vs. Asistida por Pistas (*Hint-Assisted Cap*):**
    - Consultar la Pista 1 (recordatorio suave) no penaliza; abrir las Pistas 2 a 5 marca el reactivo como `assisted = true`, topando el ascenso máximo en `Familiar` (50 pts) hasta demostrar evocación autónoma.
 4. **Degradación en Práctica/Quiz + Indicador *Red Dot* (`needs_review`):**
-   - Obtener $< 50\%$ en una práctica o quiz degrada 1 escalón la competencia y enciende un indicador ámbar/rojo (*"Needs Review"*) en `MasteryGrid.tsx`.
-5. **Recomendador Inteligente *"Up Next for You"* Basado en el DAG:**
-   - Selecciona automáticamente la siguiente micro-destreza óptima priorizando: (a) prerrequisitos degradados, (b) competencias con *Red Dot*, y (c) frontera ZPD desbloqueada en el DAG.
-6. **Simulador Cronometrado Adaptativo de Examen Parcial en 2 Módulos (Estilo SAT Bluebook / Khan Academy):**
-   - Módulo 1 diagnóstico balanceado (12–15 reactivos con reloj visible/ocultable) cuyo desempeño enruta dinámicamente a un Módulo 2 Estándar (`easy`/`medium`) o Módulo 2 Avanzado (`hard` + Arquetipo 4), entrenando gestión de tiempo real bajo presión universitaria.
+   - Cometer errores en una práctica o quiz enciende el indicador ámbar/rojo (*"Needs Review"*) en `MasteryGrid.tsx` y en el header de la unidad.
+5. **Motor Persistente *"Up Next for You"* con Jerarquía Pedagógica de 5 Niveles (`CourseOverview.tsx`):**
+   - El banner no desaparece y guía continuamente al estudiante:
+     - **Prioridad 1 (Remediación):** Si existen unidades con `needs_review: true` (rojo/ámbar), recomienda `"Repasar ahora ➔"` para la primera unidad afectada.
+     - **Prioridad 2 (Nueva Unidad):** Recomienda la primera unidad en orden ordinal no iniciada (`Not started`) con `"Comenzar práctica ➔"`.
+     - **Prioridad 3 (Unit Test Pendiente):** Recomienda la primera unidad cuyo Unit Test no esté al 100% con `"Rendir Unit Test ➔"`.
+     - **Prioridad 4 (Course Challenge):** Recomienda `"Rendir Course Challenge ➔"` una vez que todos los Unit Tests están al 100%.
+     - **Prioridad 5 (Maestría Total):** Banner de felicitación por alcanzar el 100% con botón `"Darle otra repasada ➔"`.
+6. **Sistema de Fluidez y Telemetría de Tiempos:**
+   - Medición de latencia por reactivo en `PracticeSession.tsx` (con tope de seguridad de 300 s contra abandono y sin pausa por cambio de pestaña).
+   - Récord personal (`best_avg_seconds_per_question`) actualizado **únicamente con 100% de aciertos**.
+   - Pantalla previa unificada `PreExerciseModal.tsx` con metas de récord de tiempo.
+   - Evaluación estricta en `CompletionScreen.tsx`: `⬆️ Leveled Up`, `🔻 Leveled Down` o `⏸️ No change` basados en `TIER_POINTS`.
+   - Consolidación por unidad de las áreas a reforzar evitando filas duplicadas.
+7. **[POSTERGADO / FUERA DE ALCANCE] Simulador Adaptativo de Examen Parcial en 2 Módulos (SAT Bluebook):**
+   - El enrutamiento dinámico a mitad de prueba (Módulo 1 diagnóstico $\to$ Módulo 2 Estándar vs. Avanzado) y el cronómetro de examen con cuenta regresiva universitario fueron postergados y desacoplados formalmente hacia **Milestone 14-B**.
 
 ---
 
-## 5. Criterios de Aceptación (AC-32 a AC-36)
-- **AC-32 (Calibración Granular por Skill):** Actualización atómica de `record.competencies[comp_id]` tras Course Challenge.
-- **AC-33 (Degradación Obligatoria ante Fallo):** Todo error en `Mastered` degrada a `Proficient` ($100 \to 80$ pts); en `Proficient` degrada a `Familiar` ($80 \to 50$ pts).
+## 5. Criterios de Aceptación Cumplidos (AC-32 a AC-36)
+- **AC-32 (Calibración Granular por Skill):** Actualización atómica de `record.competencies[comp_id]` tras Course Challenge (`updateCourseChallengeWithSkillCalibration`).
+- **AC-33 (Degradación Obligatoria ante Fallo):** Todo error en `Mastered` degrada a `Proficient` ($100 \to 80$ pts); en `Proficient` degrada a `Familiar` ($80 \to 50$ pts); en `Familiar` degrada a `Attempted` ($50 \to 25$ pts).
 - **AC-34 (Promoción Progresiva ante Acierto):** Ningún Challenge individual promueve de `Not started` a `Mastered` directamente (*Assessment, Not Full Mastery*).
-- **AC-35 (Desglose Visual en UI):** `CompletionScreen.tsx` despliega bloques diferenciados `Leveled Up` y `Leveled Down` con acceso directo a práctica correctiva.
-- **AC-36 (Trazabilidad y Pruebas Unitarias):** Registro en `history` del evento `{ date, score, total, type: 'challenge', previous_tier, new_tier }`.
+- **AC-35 (Desglose Visual en UI):** `CompletionScreen.tsx` despliega bloques diferenciados `Leveled Up`, `Leveled Down` y `No change`, tiempo promedio, tiempo total y áreas a reforzar consolidadas.
+- **AC-36 (Trazabilidad y Pruebas Unitarias):** Registro en `history` del evento `{ date, score, total, type, previous_tier, new_tier, total_seconds, avg_seconds_per_question }`. Verificado con [`tests/test_mastery_calibration_bidirectional.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/test_mastery_calibration_bidirectional.py).
+
+---
+
+## 6. Registro de Decisiones de Alcance y Elementos Obviados en la Sesión de Desarrollo (Nov 2026)
+
+Durante el alineamiento técnico de la sesión de desarrollo (ronda *Grill-Me* y plan de ejecución aprobado), se establecieron los siguientes límites explícitos de alcance:
+
+| Componente | Estado en esta Entrega | Justificación Técnica / Pedagógica | Hito Destino |
+| :--- | :---: | :--- | :---: |
+| **Calibración Bidireccional de Maestría** | ✅ **Implementado** | Núcleo psicométrico esencial de Khan Academy en `masteryStorage.ts`. | Milestone 14 |
+| **Degradación Inmediata por Fallo** | ✅ **Implementado** | Erradica la maestría como trofeo inmutable; degradación de $-20$ y $-30$ pts. | Milestone 14 |
+| **Hint-Cap (Tope en Familiar por pistas 2–5)** | ✅ **Implementado** | Honestidad cognitiva: penaliza la dependencia de muletas. | Milestone 14 |
+| **Telemetría de Tiempos y Récord (100% aciertos)** | ✅ **Implementado** | Fluidez de Sistema 1: `best_avg_seconds_per_question` y `last_avg`. | Milestone 14 |
+| **Pantalla Previa Unificada (`PreExerciseModal`)** | ✅ **Implementado** | Visualización de récords antes de Practice, Quiz, Test y Challenge. | Milestone 14 |
+| **Motor Persistente 'Up Next for You' (5 Niveles)** | ✅ **Implementado** | Jerarquía pedagógica ininterrumpida orientada al menor ordinal y remediación. | Milestone 14 |
+| **Consolidación de Áreas a Reforzar** | ✅ **Implementado** | Agrupa fallos por unidad eliminando filas duplicadas en `CompletionScreen`. | Milestone 14 |
+| **Simulador Cronometrado 2 Módulos (SAT Bluebook)** | ⏳ **Obviado / Postergado** | Desacoplado para evitar sobrecargar el hito; requiere arnés de router adaptativo M1 $\to$ M2. | **Milestone 14-B** |
+| **Decaimiento Temporal Ebbinghaus (SRS)** | ⏳ **Obviado / Delegado** | La degradación por paso de días (14 y 45 días sin práctica) pertenece a retención espaciada. | **Milestone 8** |
+| **Mastery Challenge con Cooldown de 12 Horas** | ⏳ **Obviado / Delegado** | Tarjeta de evocación rápida con bloqueo temporal para retención a largo plazo. | **Milestone 8** |

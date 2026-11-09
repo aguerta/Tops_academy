@@ -2,7 +2,7 @@
 ## Manual Canónico de Física de Inferencia, Arquitectura de Sistemas End-to-End, Gobernanza Agéntica y Ergonomía
 
 > **Documento Canónico de Conocimiento Tribal ("Tribal Knowledge")**  
-> **Fecha de Actualización:** 2026-11-08 (Branch: `main` / `optimizaciones_test`)  
+> **Fecha de Actualización:** 2026-11-09 (Branch: `main` / `optimizaciones_test`)  
 > **Áreas:** Pipeline Multi-Agente C2C (`.agents/skills/content-to-course/`), Motor Determinista y Simbólico (`engine/` + `SymPy`/`Z3`/`Lean 4`), Evaluador de Calidad (`course-qa-evaluator`), Plataforma Web (`React 18 + Vite + TypeScript + PWA`) y Ergonomía de Hardware Real.  
 > **Propósito:** Condensar el **por qué** el ecosistema funciona como funciona, fundamentado en leyes físicas de inferencia, mediciones empíricas en hardware de referencia, causas raíz de patologías superadas y convenciones inviolables de calidad pedagógica y psicométrica.  
 > **Archivos Relacionados:**
@@ -182,6 +182,38 @@ Evaluar únicamente `erroresConsolidados < 6` sin acotar `lineasInfractoras <= 5
 | **Nivel 1: `1 <= errores < 6` Y `lineasInfractoras <= 5` (sin `SyntaxError`)** | **`edit_file` (`replace_file_content`) OBLIGATORIO** | Reemplazo quirúrgico en 1 turno paralelo sobre `StartLine..EndLine`. `write_file` monolítico bloqueado por hook. | **`10 – 25 s`** |
 | **Nivel 2: (`errores >= 6` O `lineasInfractoras > 5`) acotados a 1–2 competencias** | **`ModularSplicing` OBLIGATORIO (`cta_fixes/<CID>.py` o `shard_fixes/<shard>/<CID>.py`)** | Sobrescritura atómica aislada del módulo `<CID>.py` (~60 líneas), ensamblada en memoria por el compilador. Bloquea edición in-place sobre el monolito. | **`20 – 40 s`** |
 | **Nivel 3: `SyntaxError` global o Creación Inicial en Turno 0** | **`write_file(Overwrite=True)` Atómico Completo** | Creación inicial en Turno 0 o reescritura atómica completa únicamente si el AST global del archivo colapsó. | **`60 – 120 s`** |
+
+### 4.3. Física de Captura de Salida, Límites de Stdout y Truncación en Antigravity Runtime (`run_command`)
+La captura de salida estándar (`stdout`) de comandos en el runtime de Google Antigravity opera bajo restricciones binarias duras implementadas a nivel del servidor de lenguaje y ejecución (`language_server.exe` en Go). Comprender esta física evita pérdidas de información forense durante auditorías o compilaciones de cursos masivos:
+
+1. **Límite Absoluto del Runtime ($10\text{ KiB}$):**
+   - **Umbral de corte:** **$10,240\text{ bytes}$** ($10\text{ KiB} = 10 \times 1024\text{ bytes}$).
+   - **Sobrecarga del Wrapper en Windows:** El ejecutor del sistema añade un prefijo/sufijo determinista con el código de salida: `Command exited with code 0.\r\n\r\nCommand output:\r\n` ($47\text{ bytes}$ en Windows con terminaciones CRLF).
+   - **Capacidad Neta de Emisión:** El comando puede emitir a `stdout` un máximo de **$10,193\text{ caracteres}$** (en texto ASCII / UTF-8 de 1 byte).
+     * $\le 10,193\text{ chars} + 47\text{ bytes} \le 10,240\text{ bytes} \implies$ **Salida completa garantizada**.
+     * $\ge 10,194\text{ chars} + 47\text{ bytes} \ge 10,241\text{ bytes} \implies$ **Activación automática de truncación**.
+
+2. **Mecánica de Truncación Central Simétrica:**
+   - Cuando se excede el umbral, el sistema **no** trunca únicamente al final; realiza una poda simétrica del núcleo del texto para preservar el contexto de arranque y las líneas finales:
+     * **Inicio retenido:** $\approx 4,947\text{ a }4,948\text{ bytes}$.
+     * **Marcador central inyectado:** `<truncated X of Y bytes from the middle of the output>`.
+     * **Final retenido:** $\approx 4,947\text{ a }4,948\text{ bytes}$.
+     * **Buffer visible en contexto:** $\approx 9,892\text{ a }9,896\text{ bytes}$ en total.
+   - **Persistencia Forense Cero-Pérdida:** El volcado íntegro ($100\%$ sin truncar) se preserva automáticamente en disco en:  
+     `<appDataDir>/brain/<conversation_id>/.system_generated/steps/<step_id>/output.txt`.
+
+3. **Matriz Comparativa de Límites de Buffer en el Ecosistema:**
+
+| Componente / Herramienta | Límite Máximo de Retención | Comportamiento al Exceder |
+| :--- | :---: | :--- |
+| **`run_command` (stdout)** | **$10,240\text{ bytes}$ ($10\text{ KiB}$)** | Truncación central simétrica (~4.9 KB inicio + ~4.9 KB fin); volcado completo en `.system_generated/steps/<id>/output.txt`. |
+| **`read_file`** | **$46,080\text{ bytes}$ ($45\text{ KiB}$) u $800$ líneas** | Retorna hasta el límite y exige paginación manual mediante `ByteOffset`, `StartLine` y `EndLine`. |
+| **Reglas de Agente (`rules.md` / `.agents/rules`)** | **$24,000\text{ bytes}$** | Truncación dura tras expandir inclusiones `@[label](path)`. |
+| **Buffers de Flujo en Orquestación SDK / CLI** | **$200,000\text{ caracteres}$** | Límite superior de seguridad en variables de salida de workflows y subagentes. |
+
+4. **Gobernanza Agéntica para Pipelines y Subagentes:**
+   - **Peligro de la Truncación Central:** La poda del centro es crítica en diagnósticos de compilación o auditoría: si un script de linting (`pytest`, `validate_shard.py`, `judge.py`) emite un log masivo, la truncación oculta precisamente las fallas intermedias (`the middle of the output`), obligando al agente a hacer inferencias a ciegas.
+   - **Regla Inviolable para Comandos Extensos:** Todo comando de análisis o reporte con potencial de emitir $>10\text{ KiB}$ debe redirigir su salida a un archivo en `work/` (ej. `python run.py --stage audit > work/audit_full.log 2>&1`) y luego inspeccionar secciones quirúrgicas mediante `read_file` con `StartLine` y `EndLine`.
 
 ---
 

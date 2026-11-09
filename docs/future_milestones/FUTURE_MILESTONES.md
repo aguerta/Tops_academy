@@ -121,6 +121,7 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 | **Milestone 1-T: Deuda de Pruebas Ergonomía E2E** | QA / E2E | **Regresión automática de viewports reales.** Matriz 125%/150%, tablets y AC-CORE medido por código en modo estándar y modo *Blank-First*. | 2 a 4 h | ⏳ **P3 — Regresión UI** | [FUTURE_MILESTONES.md](#milestone-1-t-deuda-de-pruebas-de-ergonomía-e2e-matriz-125150-tablets-y-ac-core) |
 | **Milestone 12: Resiliencia ante Suspensión** | Frontend / Servidor | **Restaura pregunta exacta tras sleep.** Persistencia reactiva en `sessionStore.ts` (`sessionStorage`) + endpoint `/healthz` + script `npm run study`. | 1 d | ⏳ **P3 — Post-PWA** | [FUTURE_MILESTONES.md](#milestone-12-resiliencia-ante-suspensión-de-la-laptop-sessionstorage) |
 | **Milestone 19: Banco de Preguntas 2x–3x (`40/60` a `100`)** | Backlog / Expansión | **Escalamiento volumétrico sin degradar Form-C.** Matrices tri-axiales $3\times 2\times 2 = 12$, pools combinatorios MS y *Hybrid Seeded Runtime*. | 2 a 3 d | 📦 **Backlog** | [FUTURE_MILESTONES.md](#milestone-19-no-urgente--backlog-de-expansión-escalamiento-proporcional-2x3x-del-banco-de-preguntas-sin-degradar-calidad-form-c) |
+| **Milestone 20: Arquitectura Epistémica de Excelencia (Sobresaliente 20)** | Full-Stack / Pedagogía Élite | **Salto de 'Aprobado/Bueno' a 'Sobresaliente' en GitHub Pages.** Motor de deducción en DAG, arena adversarial de contraejemplos, formulación no estructurada (Stage 0), lienzo topológico SVG y examen de fricción metacognitiva a libro cerrado con CAS client-side (`mathjs`) y Shift-Left $0. | 3 a 5 d | 🎓 **P1 — Excelencia Académica** | [FUTURE_MILESTONES.md](#milestone-20-arquitectura-epistémica-de-excelencia-sobresaliente-20--el-arnés-cognitivo-para-github-pages) |
 | *Opcionales A y B: Daemon RAM y Capacitor APK* | Infra / Empaquetado | *Daemon de memoria persistente y empaquetado para tiendas móviles.* | 3 a 6 h | ⏳ **Backlog** | [FUTURE_MILESTONES.md](#módulos-opcionales-y-de-backlog-secundario) |
 
 ---
@@ -171,17 +172,28 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 
 ---
 
-### Milestone 14: Motor de Maestría Integral 2.0 Estilo Khan Academy (Calibración Bidireccional, Híbrido 80/20 y Simulador Adaptativo)
-* **Estado:** 🎯 **P1 — Prioridad Psicométrica y Pedagógica (~1.5 a 2 d).**
-* **Objetivo:** Elevar el motor de maestría ([`masteryStorage.ts`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/utils/masteryStorage.ts)) al estándar completo de Khan Academy: evaluación formativa bidireccional, degradación obligatoria ante fallo, fórmula híbrida de progreso y simulador adaptativo en 2 módulos.
-* **Criterios de Aceptación (AC-32 a AC-36):**
-  - **AC-32:** Calibración granular por `competency_id` en Course Challenge, Unit Tests y Quizzes intercalados.
-  - **AC-33:** Todo fallo en `Mastered` degrada a `Proficient` ($-20$ pts); en `Proficient` degrada a `Familiar` ($-30$ pts).
+### Milestone 14: Motor de Maestría Integral 2.0 Estilo Khan Academy (Calibración Bidireccional, Híbrido 80/20, Fluidez y Motor 'Up Next')
+* **Estado:** ✅ **COMPLETADO / VERIFICADO (Nov 2026) — Componentes Core, Fluidez y Recomendantes.**
+* **Objetivo:** Elevar el motor de maestría ([`masteryStorage.ts`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/utils/masteryStorage.ts)) al estándar completo de Khan Academy: evaluación formativa bidireccional, degradación obligatoria ante fallo, fórmula híbrida de progreso, sistema de fluidez de tiempos (mejor/último tiempo por pregunta), diagnóstico granular consolidado por unidad y motor persistente de recomendación pedagógica *"Up Next for You"*.
+* **Criterios de Aceptación Cumplidos (AC-32 a AC-36):**
+  - **AC-32:** Calibración granular por `competency_id` en Course Challenge, Unit Tests y Quizzes intercalados (`updateCourseChallengeWithSkillCalibration`).
+  - **AC-33:** Todo fallo en `Mastered` degrada a `Proficient` ($-20$ pts); en `Proficient` degrada a `Familiar` ($-30$ pts); en `Familiar` degrada a `Attempted` ($-25$ pts).
   - **AC-34:** Promoción escalonada ante acierto; ningún Challenge individual promueve de `Not started` a `Mastered` directamente (*Assessment, Not Full Mastery*).
-  - **AC-35:** `CompletionScreen.tsx` despliega paneles diferenciados `Leveled Up` y `Leveled Down` con acceso directo a práctica correctiva.
-  - **AC-36:** Trazabilidad histórica completa `{ date, score, total, type, previous_tier, new_tier }`.
-  - **Extensiones:** Barra híbrida 80/20 en `calculateCourseProgress`, tope en `Familiar` si se usan pistas (Pistas 2–5), indicador *Red Dot* por $< 50\%$ y recomendador *"Up Next"*.
-> 📄 **Especificación Técnica Completa:** Consultar [`docs/specs/m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) para la matriz psicométrica de 12 filas y los tipos TypeScript.
+  - **AC-35:** `CompletionScreen.tsx` despliega paneles diferenciados `Leveled Up` (verde), `Leveled Down` (rojo) y `No change` (gris) basados estrictamente en `TIER_POINTS`, con acceso directo a práctica correctiva, resumen de fluidez y consolidación por unidad de áreas a reforzar.
+  - **AC-36:** Trazabilidad histórica completa `{ date, score, total, type, previous_tier, new_tier, total_seconds, avg_seconds_per_question }`.
+  - **Extensiones Implementadas:** Barra híbrida 80/20 en `calculateCourseProgress`, tope en `Familiar` si se usan pistas (Pistas 2–5), indicador *Red Dot* (`needs_review`), pantalla previa unificada `PreExerciseModal.tsx` con metas de récord de tiempo, y telemetría de latencia por reactivo en `PracticeSession.tsx`.
+  - **Motor Persistente 'Up Next for You' (Jerarquía de 5 Niveles en `CourseOverview.tsx`):**
+    1. *Prioridad 1 (Remediación):* Si hay unidades con `needs_review: true` (rojo/ámbar), recomienda `"Repasar ahora ➔"` para la primera unidad afectada.
+    2. *Prioridad 2 (Nueva Unidad):* Recomienda la primera unidad en orden ordinal no iniciada (`Not started`) con `"Comenzar práctica ➔"`.
+    3. *Prioridad 3 (Unit Test Pendiente):* Si todas están iniciadas pero alguna no tiene Unit Test al 100%, recomienda `"Rendir Unit Test ➔"`.
+    4. *Prioridad 4 (Course Challenge):* Si todos los Unit Tests están al 100%, recomienda `"Rendir Course Challenge ➔"`.
+    5. *Prioridad 5 (Maestría Total 100%):* Banner celebratorio con `"Darle otra repasada ➔"`.
+* **Componentes Obviados / Postergados en esta Sesión de Desarrollo:**
+  - ⏳ **Simulador Cronometrado Adaptativo de Examen Parcial en 2 Módulos (SAT Bluebook):** Postergado y desacoplado hacia **Milestone 14-B**. Se obvió el enrutamiento dinámico a mitad de prueba (Módulo 1 diagnóstico $\to$ Módulo 2 Estándar vs. Avanzado) y el temporizador con reloj de cuenta regresiva de examen universitario para priorizar el motor psicométrico, la telemetría de fluidez y la UX de remediación.
+  - ⏳ **Modelo de Decaimiento Temporal Ebbinghaus en Memoria (SRS):** Obviado de este hito; pertenece formalmente a la especificación de **Milestone 8** (degradación a los 14 y 45 días sin práctica).
+  - ⏳ **Tarjeta 'Mastery Challenge' de 6 Reactivos con Cooldown de 12 Horas:** Obviado de este hito; reservado para **Milestone 8**.
+* **Suite de Verificación:** [`tests/test_mastery_calibration_bidirectional.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/test_mastery_calibration_bidirectional.py) (3/3 PASS) + [`tests/test_mastery_progress_80_20.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/test_mastery_progress_80_20.py) (5/5 PASS).
+> 📄 **Especificación Técnica Completa:** Consultar [`docs/specs/m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) para la matriz psicométrica de 12 filas, interfaces y registro de decisiones.
 
 ---
 
@@ -261,6 +273,112 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 * **Estado:** 📦 **Backlog / No Urgente (P3).**
 * **Objetivo:** Duplicar o triplicar el volumen de preguntas por competencia (`20/30` $\to$ `40/60` y hasta `100`) preservando la densidad de los 4 arquetipos `Form-C` sin inflación de tokens ni colisiones numéricas.
 * **Componentes:** Matrices tri-axiales composicionales $3\times 2\times 2 = 12$ esqueletos por arquetipo (48 por competencia), pools combinatorios en `Multiple Select`, reparto asimétrico orientado a fluidez y alternativa de *Hybrid Seeded Runtime*.
+
+---
+
+### Milestone 20: Arquitectura Epistémica de Excelencia (Sobresaliente 20) — El Arnés Cognitivo para GitHub Pages ($0 Cost)
+* **Estado:** 🎓 **P1 — Excelencia Académica y Demanda Cognitiva Avanzada (~3 a 5 d).**
+* **Objetivo:** Cerrar definitivamente la brecha entre el estudiante promedio que aprueba por reconocimiento mecánico (11–14) y el estudiante **sobresaliente (18–20, nivel honores)** en cursos de alta densidad analítica (Microeconomía I/II, Dinámica Macroeconómica, Análisis Real y Econometría Teórica). La arquitectura opera bajo la **restricción innegociable de GitHub Pages**: costo \$0 de infraestructura, cero servidores backend persistentes y compatibilidad offline total como PWA estática.
+
+#### 1. Delimitación Estricta de Frontera Técnica (Factibilidad en GitHub Pages vs. Lo Inviable)
+
+| Componente de Excelencia | Factibilidad en GitHub Pages ($0 Infra) | Implementación Técnica Concreta | Estado de Viabilidad |
+| :--- | :---: | :--- | :---: |
+| **Deducción y Demostraciones Paso a Paso** | ✅ **100% Factible** | **Shift-Left en Python + Validador Topológico en React/TS:** Las demostraciones se precompilan offline en el pipeline como grafos dirigidos acíclicos (`proof_dag`). El frontend en TypeScript (`ProofDAG.tsx`) valida en tiempo real la conectividad y validez de la ruta elegida por el alumno sin invocar ningún servidor. | **Dentro de Alcance** |
+| **Álgebra Simbólica Libre (`open_symbolic`)** | ✅ **100% Factible** | **Client-Side CAS con `mathjs` AST:** Ya instalado en `platform/package.json` (`mathjs ^14.3.1`). Permite parseo simbólico, derivación, simplificación algebraica y comparación de árboles AST directamente en el navegador con 0 ms de latencia. Alternativa modular: Pyodide en WebWorker si se requiere SymPy puro. | **Dentro de Alcance** |
+| **Canal Visoespacial y Diagramas con Invariantes** | ✅ **100% Factible** | **Lienzo React SVG Reactivo (`InvariantCanvas.tsx`):** Componentes visuales puros para construir árboles de decisión (agrupación de conjuntos de información) o trazar curvas de nivel/isocuantas. El motor valida invariantes topológicos (conexidad, signos de derivadas de pendientes, asintoticidad). | **Dentro de Alcance** |
+| **Modo Adversarial y Detección de Errores (Bug Hunt)** | ✅ **100% Factible** | **Arena Adversarial (`AdversarialArena.tsx`):** Selección del paso fallido en pruebas con falacias matemáticas premeditadas (ej. dividir por cero, asumir concavidad sin verificar hessiana) o inserción de contraejemplos acotados. | **Dentro de Alcance** |
+| **Formulación No Estructurada (Stage 0)** | ✅ **100% Factible** | **Stepper de Modelado en 3 Fases (`Stage0Modeler.tsx`):** Transición guiada desde la narrativa difusa hasta el modelo matemático limpio (Variables $\to$ Restricciones $\to$ Función Objetivo $\to$ CPO). | **Dentro de Alcance** |
+| **Simulador de Fricción Cognitiva a Libro Cerrado** | ✅ **100% Factible** | **Modo Hierro (`IronExamSession.tsx`):** Lógica pura de cliente en React + `sessionStore.ts`. Examen cronometrado con cero pistas, retención total del feedback hasta la entrega final y formulario obligatorio de auditoría metacognitiva previa. | **Dentro de Alcance** |
+| **Daemon Interactivo Lean 4 en Vivo (`lean --server`)** | ❌ **Inviable** | Exige VPS Linux dedicado con 4–8 GB de RAM por sesión para compilar pruebas Lean 4 interactivas. Prohibitivo en GitHub Pages estático y económicamente inviable para un estudiante. | **FUERA DE ALCANCE** *(Reemplazado por Shift-Left DAG precompilado)* |
+| **Servidores de Backend C# / LINQ o Python FastAPI** | ❌ **Inviable** | GitHub Pages es un CDN de archivos estáticos puros. No permite procesos de fondo ni motores en C# (.NET/LINQ) ni microservicios Python activos. | **FUERA DE ALCANCE** *(Reemplazado por lógica isomórfica TS/WASM)* |
+| **Sandbox de Código Remoto Arbitrario en la Nube** | ❌ **Inviable** | Servidores Jupyter/Julia multiusuario en cloud implican riesgos severos de seguridad (minería/abuso) y costos mensuales altos. | **FUERA DE ALCANCE** *(Reemplazado por scripts locales de laboratorio)* |
+
+#### 2. Reestructuración Concreta a Nivel de Código
+
+```
+Tops_academy/
+├── schemas/
+│   └── course.schema.json         <-- Extensión: tipos "proof_dag", "adversarial_break", "unstructured_model", "invariant_canvas"
+├── engine/
+│   ├── proof_compiler.py         <-- Compilador Shift-Left en Python: genera DAGs válidos y distractores algebraicos
+│   └── adversarial_generator.py  <-- Generador de pruebas con falacias matemáticas deliberadas
+├── platform/
+│   ├── package.json              <-- mathjs ya instalado; integración ligera de mathlive para input LaTeX
+│   └── src/
+│       ├── types.ts              <-- Interfaces ProofStep, DAGEdge, MetacognitiveAudit, Stage0Data
+│       ├── components/
+│       │   ├── proof/
+│       │   │   ├── ProofDAG.tsx          <-- UI de encadenamiento de demostraciones con justificación de lemas
+│       │   │   └── StepTile.tsx          <-- Bloques lógicos interactivos (Parsons Prover)
+│       │   ├── canvas/
+│       │   │   ├── InvariantCanvas.tsx   <-- SVG interactivo para árboles de juegos e isocuantas
+│       │   │   └── TopologyValidator.ts  <-- Validador de invariantes geométricos en TypeScript
+│       │   ├── arena/
+│       │   │   └── AdversarialArena.tsx  <-- Interfaz de caza de falacias matemáticas y contraejemplos
+│       │   ├── modeling/
+│       │   │   └── Stage0Modeler.tsx     <-- Stepper de formalización de narrativa difusa
+│       │   └── session/
+│       │       ├── IronExamSession.tsx    <-- Arnés de examen a libro cerrado con feedback diferido
+│       │       └── MetacognitiveModal.tsx <-- Formulario de calibración y grado de certeza antes de calificar
+│       └── services/
+│           └── symbolicValidator.ts      <-- Comparador AST con mathjs (simplify(user - sol) == 0 en cliente)
+```
+
+#### 3. Criterios de Aceptación (AC):
+1. **AC-1 (Verificación Topológica de Pruebas en $< 5\text{ ms}$):** El componente `ProofDAG.tsx` valida la secuencia y justificación de una demostración de hasta 10 pasos en tiempo real en el cliente, detectando ciclos, pasos huérfanos o justificaciones inválidas sin consultar a la red.
+2. **AC-2 (Equivalencia Simbólica Client-Side):** `symbolicValidator.ts` compara expresiones algebraicas libres ingresadas por el usuario frente a la solución canónica usando `mathjs.simplify` con una tasa de acierto del 100% sobre identidades estándar de microeconomía y cálculo.
+3. **AC-3 (Invariante Geométrico SVG):** `InvariantCanvas.tsx` permite al usuario conectar nodos de decisión y agrupar conjuntos de información; `TopologyValidator.ts` verifica matemáticamente si la partición respeta el supuesto de memoria perfecta o imperfecta.
+4. **AC-4 (Blindaje de Examen a Libro Cerrado):** `IronExamSession.tsx` desactiva completamente pistas, opciones y toasts durante una sesión cronometrada; almacena las respuestas y la autoevaluación metacognitiva del usuario antes de calcular la nota real.
+5. **AC-5 (Compatibilidad Estricta PWA / GitHub Pages):** El bundle de producción (`npm run build`) no incrementa el App Shell en más de 120 KB gzip y corre al 100% sin conexión a internet ni dependencias de servidores backend.
+6. **AC-6 (Shift-Left Pipeline):** `engine/proof_compiler.py` genera automáticamente los esquemas `proof_dag` en la etapa de compilación de cursos con validación previa en SymPy/Z3 en la máquina local.
+
+#### 4. Banco de Casos Canónicos: Cómo la Plataforma Entrena Frente a Exámenes de Alta Demanda (San Marcos / Eloy Ávalos)
+
+A continuación se detallan los 4 casos arquetípicos extraídos de los exámenes reales de Microeconomía I y el flujo pedagógico exacto con el que la nueva plataforma entrena al estudiante:
+
+##### Caso 1: Trampas de Segundo Orden y Rendimientos Crecientes (Examen 2, Pregunta 2.1)
+* **Enunciado de Examen:** *«Una empresa precio-aceptante opera con una tecnología dada por $c(x) = \sqrt{x} + F$. ¿Qué acontece con la empresa en el nivel óptimo de producción? Luego, explique lo que ocurriría hacia el largo plazo.»*
+* **Falla Común del 85% de Alumnos:** Despeje mecánico $p = CMg \implies p = \frac{1}{2\sqrt{x}} \implies x^* = \frac{1}{4p^2}$. Calificación: 00/05 por ignorar que $CMg$ es estrictamente decreciente y que la condición de 2do orden $\frac{d^2\pi}{dx^2} > 0$ convierte la tangencia en un **mínimo local de beneficios**.
+* **Entrenamiento en la Plataforma:**
+  1. *Fase Stage 0:* Bloqueo de cálculo hasta auditar la tecnología. Clasificación obligatoria: rendimientos crecientes, $c''(x) < 0$ y $\pi''(x) > 0$. Identificación de que $d\pi/dx = 0$ representa el punto de **menor beneficio posible**.
+  2. *Trampa Adversarial Guiada:* Si el alumno introduce $x = 1/(4p^2)$, la plataforma evalúa numéricamente con $p=1, F=10$: beneficio en la supuesta solución $x=0.25$ es $\pi = -10.25$, mientras que para $x=100$ es $\pi = +80$. Diagnóstico en Toast: *«Has maximizado las pérdidas. Al ser el costo marginal decreciente, cada unidad adicional es más barata de producir que la anterior.»*
+  3. *Lienzo SVG de Invariantes:* Gráfica dinámica de $CMg(x)$ y $CMe(x)$ mostrando que el precio corta la curva de costo marginal por debajo. Deducción asistida de monopolio natural y colapso del equilibrio competitivo de largo plazo.
+
+##### Caso 2: Restricción Presupuestaria No Convexa con Descuento por Volumen (Examen 1, Pregunta 2.2)
+* **Enunciado de Examen:** *«Un hogar posee preferencias regulares $u(x_1, x_2)$ con $p_2 = 1$. Por cada unidad adicional del bien $B_1$ recibe un descuento de $r\%$ hasta $\bar{x}_1$. Si posee ingreso $m$, explique las condiciones del óptimo del hogar.»*
+* **Falla Común:** Aplicar un Lagrangiano global o asumir que existe una única tangencia interior.
+* **Entrenamiento en la Plataforma:**
+  1. *Formalización por Tramos (Stage 0):* Construcción de la restricción presupuestaria por partes: Tramo A ($x_1 \le \bar{x}_1$) con pendiente $-p_1$ y Tramo B ($x_1 > \bar{x}_1$) con pendiente más plana $-p_1(1-r)$.
+  2. *Diagnóstico Visual de No Convexidad:* El lienzo SVG muestra el ángulo entrante (quiebre no convexo) en $(\bar{x}_1, m - p_1\bar{x}_1)$. La plataforma permite arrastrar una curva de indiferencia convexa y evidencia que **pueden existir dos tangencias locales simultáneas** en distintos tramos.
+  3. *Protocolo Analítico Exhaustivo (DAG):* El estudiante encadena las condiciones de optimalidad global:
+     $$x^* = \arg\max \{ u(x^A), u(x^{\text{kink}}), u(x^B) \}$$
+     con la condición obligatoria en el vértice no diferenciable: $p_1(1-r) \le TMS(x^{\text{kink}}) \le p_1$.
+  4. *Ruptura de Continuidad de la Demanda:* Slider paramétrico de renta $m$ donde un incremento marginal de $m=100 \to 102$ hace saltar el óptimo bruscamente de $x_1 = 2$ a $x_1 = 15$, demostrando la pérdida de continuidad de la función de demanda ordinaria.
+
+##### Caso 3: Ruptura Axiomática y Contraejemplos en el Contorno Superior (2da PC, Pregunta 2)
+* **Enunciado de Examen:** *«Sea $u(x_1, x_2) = \lfloor x_1 \rfloor + \lfloor x_2 \rfloor$. Determine analíticamente si es cuasiconcava demostrando si su conjunto contorno superior $MI(x) = \{x' : u(x') \ge u(x)\}$ es convexo para $x = (1.5, 1.5)$.»*
+* **Falla Común:** Intentar calcular el orlado de la matriz hessiana en una función discontinua donde no existen derivadas.
+* **Entrenamiento en la Plataforma:**
+  1. *Evaluación de la Base:* Cálculo de la cota $u(1.5, 1.5) = 1 + 1 = 2$.
+  2. *Arena Adversarial de Búsqueda de Contraejemplos:* El alumno debe ingresar dos canastas $A$ y $B$ que pertenezcan a un contorno superior superior ($u \ge 3$):
+     * Canasta $A = (1.0, 2.0) \implies u(A) = 1 + 2 = 3 \ge 3$.
+     * Canasta $B = (2.0, 1.0) \implies u(B) = 2 + 1 = 3 \ge 3$.
+  3. *Verificación de la Combinación Convexa:* La plataforma calcula el punto medio con $\lambda = 0.5$:
+     $$M = 0.5 A + 0.5 B = (1.5, 1.5)$$
+     y evalúa la utilidad: $u(M) = \lfloor 1.5 \rfloor + \lfloor 1.5 \rfloor = 1 + 1 = 2 < 3$.
+  4. *Conclusión Formal:* El punto medio $M$ queda **fuera** del conjunto contorno superior $MI$, demostrando formal y analíticamente que el conjunto no es convexo y que la función **no es cuasicóncava**.
+
+##### Caso 4: Deducción Analítica General en Cadena Lógica (3ra PC, Pregunta 6.1)
+* **Enunciado de Examen:** *«A partir de la identidad $m \equiv e(p, v(p,m))$, derive analíticamente la Identidad de Roy sin suponer una forma funcional para $v$.»*
+* **Falla Común:** Saltar pasos intermedios, olvidar el Lema de Shephard o asumir implícitamente que $\partial e / \partial u = 1$.
+* **Entrenamiento en la Plataforma (ProofDAG):**
+  1. *Paso 1:* Diferenciación respecto a $p_i$ vía Regla de la Cadena multivariable: $0 = \partial e / \partial p_i + (\partial e / \partial u)(\partial v / \partial p_i)$.
+  2. *Paso 2:* Invocación del Lema de Shephard: $\partial e / \partial p_i = x_i^h(p,u) = x_i^d(p,m)$.
+  3. *Paso 3:* Diferenciación de la identidad respecto a la renta $m$ para despejar el término marginal: $1 = (\partial e / \partial u)(\partial v / \partial m) \implies \partial e / \partial u = 1 / (\partial v / \partial m)$.
+  4. *Paso 4:* Sustitución algebraica de los Lemas 2 y 3 en el Paso 1.
+  5. *Paso 5:* Despeje riguroso de la demanda ordinaria: $x_i^d(p,m) = - \frac{\partial v / \partial p_i}{\partial v / \partial m}$ (Q.E.D.).
+  * *Refutación Inmediata ante Falacias:* Si el alumno elige el distractor con signo positivo o salta el Paso 3, la plataforma diagnostica con precisión el error conceptual antes de permitirle avanzar.
 
 ---
 
