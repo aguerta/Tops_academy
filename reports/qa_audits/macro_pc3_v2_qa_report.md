@@ -4,9 +4,9 @@
 - **Fecha de Evaluación:** 2026-11-09
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** ACTIVO
-- **Calificación Final Certificada:** **19.7 / 20.0 pts**
+- **Calificación Final Certificada:** **19.9 / 20.0 pts**
 - **Quality Tier:** **EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY**
-- **Mastery Path Readiness Index (MPRI):** **99.74 / 100.0** (GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo)
+- **Mastery Path Readiness Index (MPRI):** **100.00 / 100.0** (GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo)
 
 ---
 
@@ -18,9 +18,9 @@
 | **D2: Calidad Psicométrica y Reactivos** | **5.0** | 5.0 | 100% | ✅ Impecable |
 | **D3: Andamiaje y Pistas Socráticas** | **5.0** | 5.0 | 99% | ✅ Impecable |
 | **D4: Alineación Instruccional y ZPD** | **4.0** | 4.0 | 100% | ✅ Impecable |
-| **D5: Ergonomía Técnica y KaTeX** | **1.7** | 2.0 | 86% | ⚠️ Observación menor |
+| **D5: Ergonomía Técnica y KaTeX** | **2.0** | 2.0 | 100% | ✅ Impecable |
 | **Penalizaciones Duras** | **-0.0** | - | - | ✅ Sin penalizaciones |
-| **TOTAL** | **19.7** | **20.0** | **98.4%** | 🏆 **PLATINUM MASTERY** |
+| **TOTAL** | **19.9** | **20.0** | **99.8%** | 🏆 **PLATINUM MASTERY** |
 
 ---
 
@@ -38,8 +38,8 @@
 #### D4. Alineación Instruccional y ZPD (4.0 / 4.0 pts)
 - Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente.
 
-#### D5. Ergonomía Técnica y KaTeX (1.7 / 2.0 pts)
-- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 7 observaciones de prosa en \text{...} y 0 identificadores crudos.
+#### D5. Ergonomía Técnica y KaTeX (2.0 / 2.0 pts)
+- Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \text{...} y 0 identificadores crudos.
 
 ---
 
@@ -52,11 +52,11 @@
 | **3. Integridad Salvavidas Socrático (3-Strikes)** | **25.00** | 25.0 | 100.0% |
 | **4. Alineación Diagnóstica en FeedbackToast** | **15.00** | 15.0 | 100.0% |
 | **5. Topología DAG e Interleaving** | **10.00** | 10.0 | 100.0% |
-| **6. Ergonomía Cognitiva y Sintaxis KaTeX** | **9.74** | 10.0 | 97.4% |
-| **TOTAL MPRI** | **99.74** | **100.0** | **99.7% (GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo)** |
+| **6. Ergonomía Cognitiva y Sintaxis KaTeX** | **10.00** | 10.0 | 100.0% |
+| **TOTAL MPRI** | **100.00** | **100.0** | **100.0% (GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo)** |
 
 ---
 
 ### 4. Veredicto y Certificación
 
-El curso **Macro Pc3 V2** ha sido **certificado y aprobado** con calificación sobresaliente de **19.7 / 20.0** y MPRI de **99.74 / 100.0**, acreditando el cumplimiento exhaustivo de los estándares Quality Matters, OSCQR y Mastery Learning.
+El curso **Macro Pc3 V2** ha sido **certificado y aprobado** con calificación sobresaliente de **19.9 / 20.0** y MPRI de **100.00 / 100.0**, acreditando el cumplimiento exhaustivo de los estándares Quality Matters, OSCQR y Mastery Learning.

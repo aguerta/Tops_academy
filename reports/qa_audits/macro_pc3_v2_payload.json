@@ -36,8 +36,8 @@
   },
   "evaluator_guidance": {
     "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0, la Rúbrica Determinista de 20 puntos y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
-    "risk_score": 4.38,
-    "final_score": 19.67,
+    "risk_score": 0.0,
+    "final_score": 19.95,
     "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY",
     "deterministic_rubric": {
       "dimension_scores": {
@@ -62,19 +62,19 @@
           "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
         },
         "technical_ergonomics": {
-          "score": 1.72,
+          "score": 2.0,
           "max": 2.0,
-          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 7 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
         }
       },
-      "raw_subtotal": 19.67,
+      "raw_subtotal": 19.95,
       "penalties_applied": [],
       "hard_penalties_total": 0,
-      "final_score": 19.67,
+      "final_score": 19.95,
       "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY"
     },
     "mastery_path_readiness": {
-      "mpri_score": 99.74,
+      "mpri_score": 100.0,
       "mpri_max": 100.0,
       "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
       "pillars": {
@@ -99,7 +99,7 @@
           "max": 10.0
         },
         "cognitive_ergonomics_and_framing": {
-          "score": 9.74,
+          "score": 10.0,
           "max": 10.0
         }
       }
@@ -129,18 +129,18 @@
         "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
       },
       "technical_ergonomics": {
-        "score": 1.72,
+        "score": 2.0,
         "max": 2.0,
-        "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 7 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
       }
     },
-    "raw_subtotal": 19.67,
+    "raw_subtotal": 19.95,
     "penalties_applied": [],
     "hard_penalties_total": 0,
-    "final_score": 19.67,
+    "final_score": 19.95,
     "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY"
   },
-  "final_score": 19.67,
+  "final_score": 19.95,
   "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY",
   "audit_telemetry": {
     "course_id": "macro_pc3_v2",
@@ -292,24 +292,16 @@
         "skills_without_prerequisites": []
       },
       "katex_frontend_ergonomics_linter": {
-        "prose_in_katex_text_items_count": 7,
-        "prose_in_katex_text_sample_items": [
-          "Q-Hab01-105",
-          "Q-Hab01-109",
-          "Q-Hab01-110",
-          "Q-Hab01-107",
-          "Q-Hab01-108",
-          "Q-Hab01-106",
-          "Q-Hab01-104"
-        ],
+        "prose_in_katex_text_items_count": 0,
+        "prose_in_katex_text_sample_items": [],
         "raw_identifier_math_items_count": 0,
         "raw_identifier_math_sample_items": []
       }
     },
     "hard_penalties": [],
-    "risk_score": 4.38,
+    "risk_score": 0.0,
     "mastery_path_readiness": {
-      "mpri_score": 99.74,
+      "mpri_score": 100.0,
       "mpri_max": 100.0,
       "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
       "pillars": {
@@ -334,7 +326,7 @@
           "max": 10.0
         },
         "cognitive_ergonomics_and_framing": {
-          "score": 9.74,
+          "score": 10.0,
           "max": 10.0
         }
       }
@@ -362,29 +354,21 @@
           "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
         },
         "technical_ergonomics": {
-          "score": 1.72,
+          "score": 2.0,
           "max": 2.0,
-          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 7 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
         }
       },
-      "raw_subtotal": 19.67,
+      "raw_subtotal": 19.95,
       "penalties_applied": [],
       "hard_penalties_total": 0,
-      "final_score": 19.67,
+      "final_score": 19.95,
       "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY"
     },
-    "final_score": 19.67,
+    "final_score": 19.95,
     "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY",
     "risk_clusters": {
-      "katex_issues": [
-        "Q-Hab01-104",
-        "Q-Hab01-105",
-        "Q-Hab01-106",
-        "Q-Hab01-107",
-        "Q-Hab01-108",
-        "Q-Hab01-109",
-        "Q-Hab01-110"
-      ],
+      "katex_issues": [],
       "telltale_distractors": [],
       "fstring_residues": [],
       "scaffolding_flaws": [],
@@ -399,314 +383,10 @@
       "length_padded_options": [],
       "cross_domain_prefixes": [],
       "vacuous_quantifiers": [],
-      "katex_ergonomics": [
-        "Q-Hab01-104",
-        "Q-Hab01-105",
-        "Q-Hab01-106",
-        "Q-Hab01-107",
-        "Q-Hab01-108",
-        "Q-Hab01-109",
-        "Q-Hab01-110"
-      ]
+      "katex_ergonomics": []
     },
-    "all_issues": [
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-104",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-104",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.59 - 0.07}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-104",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-104",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.59 - 0.07}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-105",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-105",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.62 - 0.09}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-105",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-105",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.62 - 0.09}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-106",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.64 - 0.1}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-106",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-106",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-106",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.64 - 0.1}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-107",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-107",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.53 - 0.05}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-107",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.53 - 0.05}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-107",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-108",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-108",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.7 - 0.11}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-108",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-108",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.7 - 0.11}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-109",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.68 - 0.06}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-109",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.68 - 0.06}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-109",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.68 - 0.06}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-109",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.68 - 0.06}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-110",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.56 - 0.06}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-110",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.56 - 0.06}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-110",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.56 - 0.06}$"
-      },
-      {
-        "linter": "katex_frontend_ergonomics_linter",
-        "dimension": "D5_katex",
-        "severity": "warning",
-        "item_id": "Q-Hab01-110",
-        "competency_id": "Hab-01",
-        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
-        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.56 - 0.06}$"
-      }
-    ],
-    "issues_by_item": {
-      "Q-Hab01-104": [
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-      ],
-      "Q-Hab01-105": [
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-      ],
-      "Q-Hab01-106": [
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-      ],
-      "Q-Hab01-107": [
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-      ],
-      "Q-Hab01-108": [
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-      ],
-      "Q-Hab01-109": [
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-      ],
-      "Q-Hab01-110": [
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-      ]
-    }
+    "all_issues": [],
+    "issues_by_item": {}
   },
   "competencies": [
     {
@@ -1469,7 +1149,7 @@
       "type": "multiple_choice_7_options",
       "difficulty": "easy",
       "bloom": "Apply",
-      "stem": "Considere el equilibrio simultáneo IS-LM, obtenga el valor de equilibrio $Y^*$ con gasto $A=3580$ y saldos $M/P=530$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.64$, $d_1=0.12$, $d_2=8$, $f_1=2$, $f_2=6$ y $M/P=530$, obtenga el valor de equilibrio $Y^*$ correspondiente a $A=3580$:",
       "options": [
         {
           "id": "opt_a",
@@ -1546,7 +1226,7 @@
       "type": "multiple_choice_7_options",
       "difficulty": "easy",
       "bloom": "Apply",
-      "stem": "En el modelo IS-LM cerrado, calcule el producto de equilibrio $Y^*$ con $A=4500$, $M=3000$, $P=5$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.61$, $d_1=0.05$, $d_2=4$, $f_1=5$, $f_2=8$ y saldos reales $M/P=600$, calcule el producto de equilibrio $Y^*$ si el gasto autónomo es $A=4500$:",
       "options": [
         {
           "id": "opt_a",
@@ -2989,263 +2669,7 @@
     }
   ],
   "risk_cluster_samples": {
-    "katex_issues": [
-      {
-        "id": "Q-Hab01-104",
-        "competency_id": "Hab-01",
-        "stem": "En el modelo IS-LM cerrado, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.59 - 0.07}$",
-            "is_correct": false,
-            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
-            "distractor_id": "D-Hab01-06"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.59 - 0.07}$",
-            "is_correct": false,
-            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.59$ y $d_1=0.07$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
-            "distractor_id": "D-Hab01-01"
-          }
-        ],
-        "hints": [
-          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
-          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
-          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
-          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
-        ],
-        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$.",
-        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
-        "detected_issues": [
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-        ]
-      },
-      {
-        "id": "Q-Hab01-105",
-        "competency_id": "Hab-01",
-        "stem": "Considere el equilibrio simultáneo IS-LM, evalúe la validez de las siguientes proposiciones sobre el multiplicador fiscal $\\alpha_A$:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.62 - 0.09}$",
-            "is_correct": false,
-            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.62$ y $d_1=0.09$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
-            "distractor_id": "D-Hab01-01"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.62 - 0.09}$",
-            "is_correct": false,
-            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=5$, aumentando la tasa y contrayendo inversión.",
-            "distractor_id": "D-Hab01-06"
-          }
-        ],
-        "hints": [
-          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
-          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
-          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
-          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
-        ],
-        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$.",
-        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
-        "detected_issues": [
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-        ]
-      },
-      {
-        "id": "Q-Hab01-106",
-        "competency_id": "Hab-01",
-        "stem": "Considere el equilibrio simultáneo IS-LM, analice el impacto de la retroalimentación monetaria sobre el multiplicador del gasto $\\alpha_A$:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.64 - 0.1}$",
-            "is_correct": false,
-            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=2$, aumentando la tasa y contrayendo inversión.",
-            "distractor_id": "D-Hab01-06"
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.64 - 0.1}$",
-            "is_correct": false,
-            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.64$ y $d_1=0.1$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
-            "distractor_id": "D-Hab01-01"
-          }
-        ],
-        "hints": [
-          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
-          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
-          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
-          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
-        ],
-        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$.",
-        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
-        "detected_issues": [
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-        ]
-      },
-      {
-        "id": "Q-Hab01-107",
-        "competency_id": "Hab-01",
-        "stem": "Considere el equilibrio simultáneo IS-LM, seleccione las afirmaciones correctas respecto al efecto expulsión en el multiplicador $\\alpha_A$:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.53 - 0.05}$",
-            "is_correct": false,
-            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.53$ y $d_1=0.05$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
-            "distractor_id": "D-Hab01-01"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.53 - 0.05}$",
-            "is_correct": false,
-            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
-            "distractor_id": "D-Hab01-06"
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
-            "is_correct": true,
-            "error_rationale": null
-          }
-        ],
-        "hints": [
-          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
-          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
-          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
-          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
-        ],
-        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$.",
-        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
-        "detected_issues": [
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-        ]
-      },
-      {
-        "id": "Q-Hab01-108",
-        "competency_id": "Hab-01",
-        "stem": "Considere el equilibrio simultáneo IS-LM, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.7 - 0.11}$",
-            "is_correct": false,
-            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.7$ y $d_1=0.11$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
-            "distractor_id": "D-Hab01-01"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.7 - 0.11}$",
-            "is_correct": false,
-            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=4$, aumentando la tasa y contrayendo inversión.",
-            "distractor_id": "D-Hab01-06"
-          }
-        ],
-        "hints": [
-          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
-          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
-          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
-          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
-        ],
-        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$.",
-        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
-        "detected_issues": [
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-        ]
-      }
-    ],
+    "katex_issues": [],
     "telltale_distractors": [],
     "fstring_residues": [],
     "scaffolding_flaws": [],
@@ -3260,262 +2684,6 @@
     "length_padded_options": [],
     "cross_domain_prefixes": [],
     "vacuous_quantifiers": [],
-    "katex_ergonomics": [
-      {
-        "id": "Q-Hab01-104",
-        "competency_id": "Hab-01",
-        "stem": "En el modelo IS-LM cerrado, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.59 - 0.07}$",
-            "is_correct": false,
-            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
-            "distractor_id": "D-Hab01-06"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.59 - 0.07}$",
-            "is_correct": false,
-            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.59$ y $d_1=0.07$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
-            "distractor_id": "D-Hab01-01"
-          }
-        ],
-        "hints": [
-          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
-          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
-          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
-          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
-        ],
-        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$.",
-        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
-        "detected_issues": [
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-        ]
-      },
-      {
-        "id": "Q-Hab01-105",
-        "competency_id": "Hab-01",
-        "stem": "Considere el equilibrio simultáneo IS-LM, evalúe la validez de las siguientes proposiciones sobre el multiplicador fiscal $\\alpha_A$:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.62 - 0.09}$",
-            "is_correct": false,
-            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.62$ y $d_1=0.09$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
-            "distractor_id": "D-Hab01-01"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.62 - 0.09}$",
-            "is_correct": false,
-            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=5$, aumentando la tasa y contrayendo inversión.",
-            "distractor_id": "D-Hab01-06"
-          }
-        ],
-        "hints": [
-          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
-          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
-          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
-          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
-        ],
-        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$.",
-        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
-        "detected_issues": [
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-        ]
-      },
-      {
-        "id": "Q-Hab01-106",
-        "competency_id": "Hab-01",
-        "stem": "Considere el equilibrio simultáneo IS-LM, analice el impacto de la retroalimentación monetaria sobre el multiplicador del gasto $\\alpha_A$:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.64 - 0.1}$",
-            "is_correct": false,
-            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=2$, aumentando la tasa y contrayendo inversión.",
-            "distractor_id": "D-Hab01-06"
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.64 - 0.1}$",
-            "is_correct": false,
-            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.64$ y $d_1=0.1$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
-            "distractor_id": "D-Hab01-01"
-          }
-        ],
-        "hints": [
-          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
-          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
-          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
-          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
-        ],
-        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$.",
-        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
-        "detected_issues": [
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-        ]
-      },
-      {
-        "id": "Q-Hab01-107",
-        "competency_id": "Hab-01",
-        "stem": "Considere el equilibrio simultáneo IS-LM, seleccione las afirmaciones correctas respecto al efecto expulsión en el multiplicador $\\alpha_A$:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.53 - 0.05}$",
-            "is_correct": false,
-            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.53$ y $d_1=0.05$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
-            "distractor_id": "D-Hab01-01"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.53 - 0.05}$",
-            "is_correct": false,
-            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
-            "distractor_id": "D-Hab01-06"
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
-            "is_correct": true,
-            "error_rationale": null
-          }
-        ],
-        "hints": [
-          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
-          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
-          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
-          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
-        ],
-        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$.",
-        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
-        "detected_issues": [
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-        ]
-      },
-      {
-        "id": "Q-Hab01-108",
-        "competency_id": "Hab-01",
-        "stem": "Considere el equilibrio simultáneo IS-LM, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
-        "options": [
-          {
-            "id": "opt_a",
-            "option_id": "A",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_b",
-            "option_id": "B",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.7 - 0.11}$",
-            "is_correct": false,
-            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.7$ y $d_1=0.11$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
-            "distractor_id": "D-Hab01-01"
-          },
-          {
-            "id": "opt_c",
-            "option_id": "C",
-            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
-            "is_correct": true,
-            "error_rationale": null
-          },
-          {
-            "id": "opt_d",
-            "option_id": "D",
-            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.7 - 0.11}$",
-            "is_correct": false,
-            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=4$, aumentando la tasa y contrayendo inversión.",
-            "distractor_id": "D-Hab01-06"
-          }
-        ],
-        "hints": [
-          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
-          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
-          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
-          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
-        ],
-        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$.",
-        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
-        "detected_issues": [
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
-          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
-        ]
-      }
-    ]
+    "katex_ergonomics": []
   }
 }

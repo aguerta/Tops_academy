@@ -36,17 +36,17 @@
       "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
     },
     "technical_ergonomics": {
-      "score": 1.72,
+      "score": 2.0,
       "max": 2.0,
-      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 7 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+      "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
     }
   },
   "penalties_applied": [],
-  "raw_subtotal": 19.67,
-  "final_score": 19.67,
+  "raw_subtotal": 19.95,
+  "final_score": 19.95,
   "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY",
   "mastery_path_readiness": {
-    "mpri_score": 99.74,
+    "mpri_score": 100.0,
     "mpri_max": 100.0,
     "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
     "pillars": {
@@ -71,7 +71,7 @@
         "max": 10.0
       },
       "cognitive_ergonomics_and_framing": {
-        "score": 9.74,
+        "score": 10.0,
         "max": 10.0
       }
     }

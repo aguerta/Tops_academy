@@ -6,7 +6,7 @@
   "title": "Macro Pc3 V2",
   "description": "Dominio y aplicación analítica integral de Macro Pc3 V2",
   "language": "es",
-  "created_at": "2026-11-09T19:20:18.053943+00:00",
+  "created_at": "2026-11-09T20:39:57.269752+00:00",
   "competencies": [
     {
       "id": "H-01",
@@ -4414,7 +4414,7 @@
       "interaction_type": "multiple_choice_7_options",
       "type": "multiple_choice_7_options",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, obtenga el valor de equilibrio $Y^*$ con gasto $A=3580$ y saldos $M/P=530$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.64$, $d_1=0.12$, $d_2=8$, $f_1=2$, $f_2=6$ y $M/P=530$, obtenga el valor de equilibrio $Y^*$ correspondiente a $A=3580$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -4498,7 +4498,7 @@
       "interaction_type": "multiple_choice_7_options",
       "type": "multiple_choice_7_options",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, calcule el producto de equilibrio $Y^*$ con $A=4500$, $M=3000$, $P=5$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.61$, $d_1=0.05$, $d_2=4$, $f_1=5$, $f_2=8$ y saldos reales $M/P=600$, calcule el producto de equilibrio $Y^*$ si el gasto autónomo es $A=4500$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -4582,7 +4582,7 @@
       "interaction_type": "multiple_choice_7_options",
       "type": "multiple_choice_7_options",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, halle el nivel de renta $Y^*$ con $A=4310$, $M/P=420$ y $c_1=0.54$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.54$, $d_1=0.09$, $d_2=8$, $f_1=5$, $f_2=12$ y saldos reales $M/P=420$, halle el nivel de renta de equilibrio $Y^*$ con gasto autónomo $A=4310$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -4666,7 +4666,7 @@
       "interaction_type": "multiple_choice_7_options",
       "type": "multiple_choice_7_options",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, determine el producto de equilibrio macroeconómico $Y^*$ con $A=2460$ y $M=1480$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.51$, $d_1=0.11$, $d_2=9$, $f_1=4$, $f_2=12$ y saldos reales $M/P=740$, determine el producto macroeconómico $Y^*$ para un gasto autónomo $A=2460$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -4750,7 +4750,7 @@
       "interaction_type": "multiple_choice_7_options",
       "type": "multiple_choice_7_options",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, obtenga el valor de equilibrio $Y^*$ con gasto $A=3010$ y saldos $M/P=330$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.5$, $d_1=0.13$, $d_2=7$, $f_1=3$, $f_2=10$ y saldos reales $M/P=330$, obtenga el valor de equilibrio $Y^*$ correspondiente a $A=3010$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -4834,7 +4834,7 @@
       "interaction_type": "multiple_choice_7_options",
       "type": "multiple_choice_7_options",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, calcule el producto de equilibrio $Y^*$ con $A=2720$, $M=1420$, $P=2$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.58$, $d_1=0.12$, $d_2=8$, $f_1=5$, $f_2=9$ y $M/P=710$, calcule el producto de equilibrio $Y^*$ si el gasto autónomo es $A=2720$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -4918,7 +4918,7 @@
       "interaction_type": "multiple_choice_7_options",
       "type": "multiple_choice_7_options",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, halle el nivel de renta $Y^*$ con $A=3780$, $M/P=300$ y $c_1=0.7$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.7$, $d_1=0.05$, $d_2=7$, $f_1=2$, $f_2=6$ y $M/P=300$, halle el nivel de renta de equilibrio $Y^*$ con gasto autónomo $A=3780$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5002,7 +5002,7 @@
       "interaction_type": "multiple_choice_7_options",
       "type": "multiple_choice_7_options",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, determine el producto de equilibrio macroeconómico $Y^*$ con $A=4130$ y $M=920$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.65$, $d_1=0.15$, $d_2=5$, $f_1=2$, $f_2=11$ y $M/P=460$, determine el producto macroeconómico $Y^*$ para un gasto autónomo $A=4130$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5086,7 +5086,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, halle el volumen de gasto autónomo $A$ compatible con un producto $Y^*=1294.9$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.53$, $d_1=0.13$, $d_2=6$, $f_1=4$, $f_2=12$ y saldos reales $M/P=800$, halle el volumen de gasto autónomo $A$ compatible con un producto $Y^*=1294.9$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5121,7 +5121,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, para alcanzar un producto meta $Y^*=720.2$, determine el gasto autónomo requerido $A$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.59$, $d_1=0.15$, $d_2=8$, $f_1=5$, $f_2=10$ y $M/P=460$, para alcanzar un producto meta $Y^*=720.2$, determine el gasto autónomo requerido $A$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5156,7 +5156,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, calcule el nivel de gasto autónomo $A$ necesario para fijar el producto en $Y^*=922.5$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.5$, $d_1=0.05$, $d_2=6$, $f_1=3$, $f_2=7$ y $M/P=510$, calcule el nivel de gasto autónomo $A$ necesario para fijar el producto en $Y^*=922.5$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5191,7 +5191,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, despeje el valor del gasto autónomo $A$ que genera un ingreso de equilibrio $Y^*=2010.1$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.56$, $d_1=0.13$, $d_2=4$, $f_1=4$, $f_2=9$ y $M/P=780$, despeje el valor del gasto autónomo $A$ que genera un ingreso de equilibrio $Y^*=2010.1$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5226,7 +5226,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, halle el volumen de gasto autónomo $A$ compatible con un producto $Y^*=1565.1$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.59$, $d_1=0.08$, $d_2=8$, $f_1=2$, $f_2=12$ y $M/P=620$, halle el volumen de gasto autónomo $A$ compatible con un producto $Y^*=1565.1$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5261,7 +5261,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, para alcanzar un producto meta $Y^*=1009.0$, determine el gasto autónomo requerido $A$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.68$, $d_1=0.05$, $d_2=6$, $f_1=4$, $f_2=10$ y saldos reales $M/P=590$, para alcanzar un producto meta $Y^*=1009.0$, determine el gasto autónomo requerido $A$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5296,7 +5296,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, calcule el nivel de gasto autónomo $A$ necesario para fijar el producto en $Y^*=1521.4$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.6$, $d_1=0.14$, $d_2=6$, $f_1=3$, $f_2=10$ y saldos reales $M/P=340$, calcule el nivel de gasto autónomo $A$ necesario para fijar el producto en $Y^*=1521.4$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5331,7 +5331,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, despeje el valor del gasto autónomo $A$ que genera un ingreso de equilibrio $Y^*=1025.1$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.7$, $d_1=0.05$, $d_2=9$, $f_1=3$, $f_2=10$ y saldos reales $M/P=360$, despeje el valor del gasto autónomo $A$ que genera un ingreso de equilibrio $Y^*=1025.1$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5366,7 +5366,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, halle la magnitud del cambio en el ingreso $\\Delta Y^*$ generado por un impulso fiscal $\\Delta A=770$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.65$, $d_1=0.1$, $d_2=9$, $f_1=5$, $f_2=11$ y $M/P=500$, halle la magnitud del cambio en el ingreso $\\Delta Y^*$ generado por un impulso fiscal $\\Delta A=770$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5401,7 +5401,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, si el gasto autónomo aumenta en $\\Delta A=510$, calcule la variación en el producto $\\Delta Y^*$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.65$, $d_1=0.11$, $d_2=4$, $f_1=5$, $f_2=6$ y saldos reales $M/P=640$, si el gasto autónomo aumenta en $\\Delta A=510$, calcule la variación en el producto $\\Delta Y^*$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5436,7 +5436,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, calcule el incremento en la renta de equilibrio $\\Delta Y^*$ ante un choque fiscal $\\Delta A=560$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.61$, $d_1=0.06$, $d_2=4$, $f_1=5$, $f_2=7$ y saldos reales $M/P=520$, calcule el incremento en la renta de equilibrio $\\Delta Y^*$ ante un choque fiscal $\\Delta A=560$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5471,7 +5471,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, determine la variación inducida en el producto $\\Delta Y^*$ si el gasto autónomo se expande en $\\Delta A=270$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.69$, $d_1=0.07$, $d_2=7$, $f_1=4$, $f_2=12$ y saldos reales $M/P=620$, determine la variación inducida en el producto $\\Delta Y^*$ si el gasto autónomo se expande en $\\Delta A=270$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5506,7 +5506,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, halle la magnitud del cambio en el ingreso $\\Delta Y^*$ generado por un impulso fiscal $\\Delta A=660$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.54$, $d_1=0.1$, $d_2=8$, $f_1=4$, $f_2=6$ y saldos reales $M/P=550$, halle la magnitud del cambio en el ingreso $\\Delta Y^*$ generado por un impulso fiscal $\\Delta A=660$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5541,7 +5541,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, si el gasto autónomo aumenta en $\\Delta A=520$, calcule la variación en el producto $\\Delta Y^*$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.52$, $d_1=0.1$, $d_2=5$, $f_1=3$, $f_2=6$ y $M/P=650$, si el gasto autónomo aumenta en $\\Delta A=520$, calcule la variación en el producto $\\Delta Y^*$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5576,7 +5576,7 @@
       "interaction_type": "fill_in_the_blank",
       "type": "fill_in_the_blank",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, calcule el incremento en la renta de equilibrio $\\Delta Y^*$ ante un choque fiscal $\\Delta A=760$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.55$, $d_1=0.12$, $d_2=7$, $f_1=5$, $f_2=8$ y $M/P=440$, calcule el incremento en la renta de equilibrio $\\Delta Y^*$ ante un choque fiscal $\\Delta A=760$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5611,7 +5611,7 @@
       "interaction_type": "multiple_select",
       "type": "multiple_select",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.59$, $d_1=0.07$, $d_2=9$, $f_1=3$, $f_2=7$ y saldos reales $M/P=610$, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5631,14 +5631,14 @@
         {
           "id": "opt_a",
           "option_id": "A",
-          "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
+          "content": "Efecto expulsión: $\\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
           "is_correct": true,
           "error_rationale": null
         },
         {
           "id": "opt_b",
           "option_id": "B",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.59 - 0.07}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A > \\frac{1}{1 - 0.59 - 0.07}$",
           "is_correct": false,
           "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
           "distractor_id": "D-Hab01-06"
@@ -5646,14 +5646,14 @@
         {
           "id": "opt_c",
           "option_id": "C",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
           "is_correct": true,
           "error_rationale": null
         },
         {
           "id": "opt_d",
           "option_id": "D",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.59 - 0.07}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A = \\frac{1}{1 - 0.59 - 0.07}$",
           "is_correct": false,
           "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.59$ y $d_1=0.07$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
           "distractor_id": "D-Hab01-01"
@@ -5673,7 +5673,7 @@
       "interaction_type": "multiple_select",
       "type": "multiple_select",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, evalúe la validez de las siguientes proposiciones sobre el multiplicador fiscal $\\alpha_A$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.62$, $d_1=0.09$, $d_2=8$, $f_1=5$, $f_2=10$ y $M/P=760$, evalúe la validez de las siguientes proposiciones sobre el multiplicador fiscal $\\alpha_A$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5693,14 +5693,14 @@
         {
           "id": "opt_a",
           "option_id": "A",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
           "is_correct": true,
           "error_rationale": null
         },
         {
           "id": "opt_b",
           "option_id": "B",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.62 - 0.09}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A = \\frac{1}{1 - 0.62 - 0.09}$",
           "is_correct": false,
           "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.62$ y $d_1=0.09$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
           "distractor_id": "D-Hab01-01"
@@ -5708,14 +5708,14 @@
         {
           "id": "opt_c",
           "option_id": "C",
-          "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
+          "content": "Efecto expulsión: $\\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
           "is_correct": true,
           "error_rationale": null
         },
         {
           "id": "opt_d",
           "option_id": "D",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.62 - 0.09}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A > \\frac{1}{1 - 0.62 - 0.09}$",
           "is_correct": false,
           "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=5$, aumentando la tasa y contrayendo inversión.",
           "distractor_id": "D-Hab01-06"
@@ -5735,7 +5735,7 @@
       "interaction_type": "multiple_select",
       "type": "multiple_select",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, analice el impacto de la retroalimentación monetaria sobre el multiplicador del gasto $\\alpha_A$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.64$, $d_1=0.1$, $d_2=5$, $f_1=2$, $f_2=6$ y $M/P=590$, analice el impacto de la retroalimentación monetaria sobre el multiplicador del gasto $\\alpha_A$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5755,7 +5755,7 @@
         {
           "id": "opt_a",
           "option_id": "A",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.64 - 0.1}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A > \\frac{1}{1 - 0.64 - 0.1}$",
           "is_correct": false,
           "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=2$, aumentando la tasa y contrayendo inversión.",
           "distractor_id": "D-Hab01-06"
@@ -5763,21 +5763,21 @@
         {
           "id": "opt_b",
           "option_id": "B",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
           "is_correct": true,
           "error_rationale": null
         },
         {
           "id": "opt_c",
           "option_id": "C",
-          "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
+          "content": "Efecto expulsión: $\\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
           "is_correct": true,
           "error_rationale": null
         },
         {
           "id": "opt_d",
           "option_id": "D",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.64 - 0.1}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A = \\frac{1}{1 - 0.64 - 0.1}$",
           "is_correct": false,
           "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.64$ y $d_1=0.1$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
           "distractor_id": "D-Hab01-01"
@@ -5797,7 +5797,7 @@
       "interaction_type": "multiple_select",
       "type": "multiple_select",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, seleccione las afirmaciones correctas respecto al efecto expulsión en el multiplicador $\\alpha_A$:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.53$, $d_1=0.05$, $d_2=6$, $f_1=3$, $f_2=11$ y $M/P=700$, seleccione las afirmaciones correctas respecto al efecto expulsión en el multiplicador $\\alpha_A$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5817,14 +5817,14 @@
         {
           "id": "opt_a",
           "option_id": "A",
-          "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
+          "content": "Efecto expulsión: $\\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
           "is_correct": true,
           "error_rationale": null
         },
         {
           "id": "opt_b",
           "option_id": "B",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.53 - 0.05}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A = \\frac{1}{1 - 0.53 - 0.05}$",
           "is_correct": false,
           "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.53$ y $d_1=0.05$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
           "distractor_id": "D-Hab01-01"
@@ -5832,7 +5832,7 @@
         {
           "id": "opt_c",
           "option_id": "C",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.53 - 0.05}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A > \\frac{1}{1 - 0.53 - 0.05}$",
           "is_correct": false,
           "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
           "distractor_id": "D-Hab01-06"
@@ -5840,7 +5840,7 @@
         {
           "id": "opt_d",
           "option_id": "D",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
           "is_correct": true,
           "error_rationale": null
         }
@@ -5859,7 +5859,7 @@
       "interaction_type": "multiple_select",
       "type": "multiple_select",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "Considere el equilibrio simultáneo IS-LM, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
+      "stem": "Considere el equilibrio simultáneo IS-LM con parámetros $c_1=0.7$, $d_1=0.11$, $d_2=7$, $f_1=4$, $f_2=12$ y $M/P=680$, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5879,14 +5879,14 @@
         {
           "id": "opt_a",
           "option_id": "A",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
           "is_correct": true,
           "error_rationale": null
         },
         {
           "id": "opt_b",
           "option_id": "B",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.7 - 0.11}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A = \\frac{1}{1 - 0.7 - 0.11}$",
           "is_correct": false,
           "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.7$ y $d_1=0.11$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
           "distractor_id": "D-Hab01-01"
@@ -5894,14 +5894,14 @@
         {
           "id": "opt_c",
           "option_id": "C",
-          "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
+          "content": "Efecto expulsión: $\\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
           "is_correct": true,
           "error_rationale": null
         },
         {
           "id": "opt_d",
           "option_id": "D",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.7 - 0.11}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A > \\frac{1}{1 - 0.7 - 0.11}$",
           "is_correct": false,
           "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=4$, aumentando la tasa y contrayendo inversión.",
           "distractor_id": "D-Hab01-06"
@@ -5921,7 +5921,7 @@
       "interaction_type": "multiple_select",
       "type": "multiple_select",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, evalúe la validez de las siguientes proposiciones sobre el multiplicador fiscal $\\alpha_A$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.68$, $d_1=0.06$, $d_2=9$, $f_1=3$, $f_2=12$ y saldos reales $M/P=800$, evalúe la validez de las siguientes proposiciones sobre el multiplicador fiscal $\\alpha_A$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -5941,14 +5941,14 @@
         {
           "id": "opt_a",
           "option_id": "A",
-          "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.68 - 0.06}$",
+          "content": "Efecto expulsión: $\\alpha_A < \\frac{1}{1 - 0.68 - 0.06}$",
           "is_correct": true,
           "error_rationale": null
         },
         {
           "id": "opt_b",
           "option_id": "B",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.68 - 0.06}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A = \\frac{1}{1 - 0.68 - 0.06}$",
           "is_correct": false,
           "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.68$ y $d_1=0.06$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
           "distractor_id": "D-Hab01-01"
@@ -5956,7 +5956,7 @@
         {
           "id": "opt_c",
           "option_id": "C",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.68 - 0.06}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A > \\frac{1}{1 - 0.68 - 0.06}$",
           "is_correct": false,
           "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
           "distractor_id": "D-Hab01-06"
@@ -5964,7 +5964,7 @@
         {
           "id": "opt_d",
           "option_id": "D",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.68 - 0.06}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A < \\frac{1}{1 - 0.68 - 0.06}$",
           "is_correct": true,
           "error_rationale": null
         }
@@ -5983,7 +5983,7 @@
       "interaction_type": "multiple_select",
       "type": "multiple_select",
       "context_application": "Evaluación conceptual y procedimental para Hab-01",
-      "stem": "En el modelo IS-LM cerrado, analice el impacto de la retroalimentación monetaria sobre el multiplicador del gasto $\\alpha_A$:",
+      "stem": "En el modelo IS-LM cerrado con $c_1=0.56$, $d_1=0.06$, $d_2=9$, $f_1=3$, $f_2=10$ y saldos reales $M/P=320$, analice el impacto de la retroalimentación monetaria sobre el multiplicador del gasto $\\alpha_A$:",
       "hints": [
         "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
         "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
@@ -6003,7 +6003,7 @@
         {
           "id": "opt_a",
           "option_id": "A",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.56 - 0.06}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A > \\frac{1}{1 - 0.56 - 0.06}$",
           "is_correct": false,
           "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
           "distractor_id": "D-Hab01-06"
@@ -6011,7 +6011,7 @@
         {
           "id": "opt_b",
           "option_id": "B",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.56 - 0.06}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A = \\frac{1}{1 - 0.56 - 0.06}$",
           "is_correct": false,
           "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.56$ y $d_1=0.06$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
           "distractor_id": "D-Hab01-01"
@@ -6019,14 +6019,14 @@
         {
           "id": "opt_c",
           "option_id": "C",
-          "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.56 - 0.06}$",
+          "content": "Equilibrio IS-LM: $\\alpha_A < \\frac{1}{1 - 0.56 - 0.06}$",
           "is_correct": true,
           "error_rationale": null
         },
         {
           "id": "opt_d",
           "option_id": "D",
-          "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.56 - 0.06}$",
+          "content": "Efecto expulsión: $\\alpha_A < \\frac{1}{1 - 0.56 - 0.06}$",
           "is_correct": true,
           "error_rationale": null
         }
