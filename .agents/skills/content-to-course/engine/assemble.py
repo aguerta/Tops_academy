@@ -21,6 +21,14 @@ try:
 except ImportError:
     from .invariants import validate_katex_syntax
 
+try:
+    from engine.katex_ast import canonicalize_algebraic_katex
+except ImportError:
+    try:
+        from .katex_ast import canonicalize_algebraic_katex
+    except ImportError:
+        canonicalize_algebraic_katex = None
+
 _PL_TOKEN_PATTERN = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)(?::([^@\s{}]+))?@")
 
 
@@ -230,7 +238,7 @@ def render_template(template_str: str, variables: Dict[str, Any]) -> str:
     return format_template_string(template_str, variables)
 
 
-def sanitize_katex_syntax(text: str) -> str:
+def sanitize_katex_syntax(text: str, canonicalize_coefficients: bool = False) -> str:
     r"""Sanitize KaTeX syntax by fixing f-string artifacts, unclosed nested macros, and delimiter issues.
     
     - Collapses overescaped LaTeX commands (e.g. \\frac, \\text -> \frac, \text) preserving matrix breaks (R-23).
@@ -290,27 +298,30 @@ def sanitize_katex_syntax(text: str) -> str:
 
     text = re.sub(r"\\text\s*\{([^{}$]*)\}", _escape_text_underscores, text)
 
-    # 0d. Canonicalize algebraic double signs inside math blocks $...$ and $$...$$
-    def _collapse_algebraic_signs(math_body: str) -> str:
-        # Collapses double signs from template interpolation: + -5 -> - 5, - -5 -> + 5, etc.
-        for _ in range(5):
-            orig_body = math_body
-            math_body = re.sub(r"(?<![a-zA-Z\\])\+\s*-\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
-            math_body = re.sub(r"(?<![a-zA-Z\\])-\s*-\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
-            math_body = re.sub(r"(?<![a-zA-Z\\])\+\s*\+\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
-            math_body = re.sub(r"(?<![a-zA-Z\\])-\s*\+\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
-            if math_body == orig_body:
-                break
-        return math_body
+    # 0d. Canonicalize algebraic double signs and unitary coefficients inside math blocks $...$ and $$...$$
+    if canonicalize_algebraic_katex is not None:
+        text = canonicalize_algebraic_katex(text, collapse_unit_coeffs=canonicalize_coefficients)
+    else:
+        def _collapse_algebraic_signs(math_body: str) -> str:
+            # Collapses double signs from template interpolation: + -5 -> - 5, - -5 -> + 5, etc.
+            for _ in range(5):
+                orig_body = math_body
+                math_body = re.sub(r"(?<![a-zA-Z\\])\+\s*-\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
+                math_body = re.sub(r"(?<![a-zA-Z\\])-\s*-\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
+                math_body = re.sub(r"(?<![a-zA-Z\\])\+\s*\+\s*(?=[0-9a-zA-Z\\({])", "+ ", math_body)
+                math_body = re.sub(r"(?<![a-zA-Z\\])-\s*\+\s*(?=[0-9a-zA-Z\\({])", "- ", math_body)
+                if math_body == orig_body:
+                    break
+            return math_body
 
-    def _canonicalize_math_signs(match: re.Match) -> str:
-        raw_span = match.group(0)
-        is_display = raw_span.startswith("$$")
-        delim = "$$" if is_display else "$"
-        inner = raw_span[len(delim):-len(delim)]
-        return f"{delim}{_collapse_algebraic_signs(inner)}{delim}"
+        def _canonicalize_math_signs(match: re.Match) -> str:
+            raw_span = match.group(0)
+            is_display = raw_span.startswith("$$")
+            delim = "$$" if is_display else "$"
+            inner = raw_span[len(delim):-len(delim)]
+            return f"{delim}{_collapse_algebraic_signs(inner)}{delim}"
 
-    text = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", _canonicalize_math_signs, text)
+        text = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]+?\$", _canonicalize_math_signs, text)
 
     # Replace '$$$' with '$$'
     while "$$$" in text:

@@ -22,6 +22,16 @@ try:
 except ImportError:
     pykatex = None
 
+try:
+    from engine.katex_ast import KaTeXAST, validate_katex_ast, pykatex_validate_with_column
+except ImportError:
+    try:
+        from .katex_ast import KaTeXAST, validate_katex_ast, pykatex_validate_with_column
+    except ImportError:
+        KaTeXAST = None  # type: ignore
+        validate_katex_ast = None  # type: ignore
+        pykatex_validate_with_column = None  # type: ignore
+
 
 _KATEX_LOCK = threading.Lock()
 _KATEX_NUM_SKELETON_RE = re.compile(r"(?<![\\#'\"a-zA-Z0-9_])\d+(?:\.\d+)?")
@@ -39,6 +49,16 @@ def _render_katex_raw(math_content: str, is_display: bool) -> Tuple[bool, Option
     """Thread-safe native call to pykatex.renderToString without C stderr warning pipe stalls."""
     if pykatex is None:
         return True, None
+    if pykatex_validate_with_column is not None:
+        ok, clean_msg, col_int = pykatex_validate_with_column(math_content, is_display)
+        if ok:
+            return True, None
+        if col_int is not None and f"(col {col_int})" not in (clean_msg or ""):
+            formatted_err = f"{clean_msg} (col {col_int})"
+        else:
+            formatted_err = clean_msg
+        return False, formatted_err
+
     strict_mode = getattr(pykatex, "STRICT_IGNORE", "ignore")
     with _KATEX_LOCK:
         try:

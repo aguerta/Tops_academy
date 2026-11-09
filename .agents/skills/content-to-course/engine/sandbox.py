@@ -420,7 +420,8 @@ def call_with_timeout(
 
         total_steps = [0]
         user_steps = [0]
-        target_code = getattr(func, "__code__", None)
+        unwrapped_func = getattr(func, "__wrapped__", func)
+        target_code = getattr(unwrapped_func, "__code__", getattr(func, "__code__", None))
         target_filename = getattr(target_code, "co_filename", None)
 
         def _timeout_tracer(frame, event, arg):
@@ -430,7 +431,7 @@ def call_with_timeout(
             if (
                 f_code is target_code
                 or (target_filename and fn == target_filename)
-                or fn in ("<sandbox>", "<generate_py>", "<cross_check_py>")
+                or fn in ("<sandbox>", "<generate_py>", "<cross_check_py>", "<gen_auto_vars>", "<auto_vars>")
             ):
                 user_steps[0] += 1
                 if max_user_steps and timeout_val is None and user_steps[0] > max_user_steps:
