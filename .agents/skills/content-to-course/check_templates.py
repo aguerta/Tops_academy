@@ -286,11 +286,13 @@ def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, A
             "file_path": None,
         }
 
-    if "[STEM-DIVERSITY-GATE]" in err_str or "[DIAG-MAGIC-MULT]" in err_str or "[PSYCHOMETRIC-OPTIONS" in err_str:
+    if "[STEM-DIVERSITY-GATE]" in err_str or "[DIAG-MAGIC-MULT]" in err_str or "[PSYCHOMETRIC-OPTIONS" in err_str or "[VERIFIER-TAUTOLOGY-DETECTED]" in err_str:
         if "[STEM-DIVERSITY-GATE]" in err_str:
             rule_tag = "STEM-DIVERSITY-GATE"
         elif "[DIAG-MAGIC-MULT]" in err_str:
             rule_tag = "DIAG-MAGIC-MULT"
+        elif "[VERIFIER-TAUTOLOGY-DETECTED]" in err_str:
+            rule_tag = "VERIFIER-TAUTOLOGY-DETECTED"
         elif "parenthetical_telltale_linter" in err_str:
             rule_tag = "PSYCHOMETRIC-OPTIONS / parenthetical_telltale_linter"
         else:
@@ -300,18 +302,32 @@ def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, A
             or re.search(r"^([A-Za-z0-9_-]+)\.json", err_str)
         )
         comp = m_cid.group(1).strip() if m_cid else ""
-        m_tpl = re.search(r"En\s+'([^']+)'", err_str)
+        m_tpl = re.search(r"[Ee]n\s+'([^']+)'", err_str)
         tpl = m_tpl.group(1).strip() if m_tpl else (f"T-{comp}" if comp else "")
-        m_body = re.search(r"\[(?:STEM-DIVERSITY-GATE|DIAG-MAGIC-MULT|PSYCHOMETRIC-OPTIONS)(?:[ /A-Za-z0-9_-]*)\]\s*(.+)", err_str)
+        m_body = re.search(r"\[(?:STEM-DIVERSITY-GATE|DIAG-MAGIC-MULT|PSYCHOMETRIC-OPTIONS|VERIFIER-TAUTOLOGY-DETECTED)(?:[ /A-Za-z0-9_-]*)\]\s*(.+)", err_str)
         body_txt = m_body.group(1).strip() if m_body else err_str
-        if "Provide >=" in body_txt:
+        lines: List[int] = []
+        m_line_direct = re.search(r"L[íi]neas?\s*(\d+)", err_str)
+        if m_line_direct:
+            lines = [int(m_line_direct.group(1))]
+
+        if rule_tag == "VERIFIER-TAUTOLOGY-DETECTED":
+            m_fn = re.search(r"ver_fn\s*'([^']+)'", err_str)
+            fn_name = m_fn.group(1).strip() if m_fn else "ver_fn"
+            m_dist = re.search(r"distractor falso\s*'([^']*)'", err_str)
+            dist_val = m_dist.group(1).strip() if m_dist else ""
+            line_str = f" (Línea {lines[0]})" if lines else ""
+            dist_str = f" '{dist_val}'" if dist_val else " incorrecto"
+            cause = f"[{rule_tag}] Verificador ver_fn '{fn_name}' en '{tpl}'{line_str} no refuta distractor{dist_str}."
+            action = "Modificar ver_fn para refutar este distractor falso (verificar propiedades analíticas reales, sin tautología)."
+        elif "Provide >=" in body_txt:
             parts = body_txt.split("Provide >=", 1)
             cause = f"[{rule_tag}] {parts[0].strip()}"
             action = f"Provide >= {parts[1].strip()}"
-        elif "Reemplaza los multiplicadores" in body_txt:
-            parts = body_txt.split("Reemplaza los multiplicadores", 1)
+        elif "PROHIBIDO ajustar multiplicadores" in body_txt or "Reemplaza los multiplicadores" in body_txt:
+            parts = re.split(r"(?:PROHIBIDO ajustar multiplicadores.*?|Reemplaza los multiplicadores.*)", body_txt)
             cause = f"[{rule_tag}] {parts[0].strip()}"
-            action = f"Reemplaza los multiplicadores {parts[1].strip()}"
+            action = "PROHIBIDO ajustar multiplicadores decimales; reemplace la expresión por la fórmula algebraica del error conceptual."
         elif "Elimina coletillas parentéticas" in body_txt:
             parts = body_txt.split("Elimina coletillas parentéticas", 1)
             cause = f"[{rule_tag}] {parts[0].strip()}"
@@ -327,7 +343,7 @@ def extract_diagnostic_metadata(err: Union[str, DiagnosticError]) -> Dict[str, A
             "snippet": tpl or comp,
             "cause": cause,
             "action": action,
-            "lines": [],
+            "lines": lines,
             "file_path": None,
         }
 
@@ -1451,11 +1467,15 @@ def build_compact_diagnostic_groups(
         fp = r["file_path"]
         s_ref = r.get("shard_ref", "")
         scause = r["cause"]
-        max_cause_len = 240 if any(k in rtag for k in ("STEM-DIVERSITY-GATE", "DIAG-MAGIC-MULT", "PSYCHOMETRIC-OPTIONS")) else 95
+        is_expanded_cause = (
+            any(k in rtag for k in ("STEM-DIVERSITY-GATE", "DIAG-MAGIC-MULT", "PSYCHOMETRIC-OPTIONS", "VERIFIER-TAUTOLOGY-DETECTED"))
+            or any(k in scause for k in ("VERIFIER-TAUTOLOGY-DETECTED", "[DIAG-MAGIC-MULT]", "ver_fn"))
+        )
+        max_cause_len = 240 if is_expanded_cause else 95
         if len(scause) > max_cause_len:
             scause = scause[:max_cause_len - 3] + "..."
         sact = r["action"]
-        max_act_len = 220 if any(k in rtag for k in ("STEM-DIVERSITY-GATE", "DIAG-MAGIC-MULT", "PSYCHOMETRIC-OPTIONS")) else 85
+        max_act_len = 220 if is_expanded_cause else 85
         if len(sact) > max_act_len:
             sact = sact[:max_act_len - 3] + "..."
 
@@ -3520,12 +3540,24 @@ def check_templates_file_or_dir(
         fresh: Dict[Path, Any] = {}
         if pending:
             # Validation is CPU-bound (GIL): prefer processes, fall back to threads if
-            # the pool cannot be used (e.g. unpicklable args or restricted environment).
+            # the pool cannot be used (e.g. virtual stdout without fileno, unpicklable args, or restricted environment).
             workers = min(os.cpu_count() or 4, len(pending))
-            try:
-                res_list = _run_pool(ProcessPoolExecutor, workers, pending) if len(pending) > 1 else _run_pool(ThreadPoolExecutor, 1, pending)
-            except Exception:
-                res_list = _run_pool(ThreadPoolExecutor, min(4, workers), pending)
+            stdout_is_virtual = False
+            if not hasattr(sys.stdout, "fileno"):
+                stdout_is_virtual = True
+            else:
+                try:
+                    sys.stdout.fileno()
+                except Exception:
+                    stdout_is_virtual = True
+
+            if stdout_is_virtual or len(pending) <= 1:
+                res_list = _run_pool(ThreadPoolExecutor, min(8, workers) if stdout_is_virtual else 1, pending)
+            else:
+                try:
+                    res_list = _run_pool(ProcessPoolExecutor, workers, pending)
+                except Exception:
+                    res_list = _run_pool(ThreadPoolExecutor, min(8, workers), pending)
             fresh = dict(zip(pending, res_list))
             if cache_dir is not None:
                 for tf, res in fresh.items():
@@ -3679,15 +3711,27 @@ def check_templates_file_or_dir(
                     for cid, fut in futs.items():
                         comp_results[cid] = fut.result()
             w = min(os.cpu_count() or 4, len(to_run))
-            try:
-                _submit_all(ProcessPoolExecutor, w)
-            except Exception:
-                comp_results.clear()
-                for cid in sorted_comps:
-                    dp = _div_cache_path(cid)
-                    if dp is not None and dp.is_file():
-                        comp_results[cid] = []
-                _submit_all(ThreadPoolExecutor, min(4, w))
+            stdout_is_virtual = False
+            if not hasattr(sys.stdout, "fileno"):
+                stdout_is_virtual = True
+            else:
+                try:
+                    sys.stdout.fileno()
+                except Exception:
+                    stdout_is_virtual = True
+
+            if stdout_is_virtual:
+                _submit_all(ThreadPoolExecutor, min(8, w))
+            else:
+                try:
+                    _submit_all(ProcessPoolExecutor, w)
+                except Exception:
+                    comp_results.clear()
+                    for cid in sorted_comps:
+                        dp = _div_cache_path(cid)
+                        if dp is not None and dp.is_file():
+                            comp_results[cid] = []
+                    _submit_all(ThreadPoolExecutor, min(8, w))
         else:
             for cid in to_run:
                 comp_results[cid] = _evaluate_comp_diversity_and_parity(cid)

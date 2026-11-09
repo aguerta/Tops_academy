@@ -21,11 +21,22 @@ import os
 import re
 import sys
 import textwrap
+import threading
+import time
 import traceback
 import types
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
+
+# Force unbuffered standard streams to ensure immediate error reporting and avoid NTFS / Windows pipe deadlocks
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(line_buffering=True)
+except Exception:
+    pass
 
 # Ensure skill root is in sys.path
 _skill_root = Path(__file__).parent.resolve()
@@ -41,6 +52,117 @@ from engine.stage_contract import (
     is_skill_type as _s4_is_skill_type,
     stems_advice as _s4_stems_advice,
 )
+
+
+class EvaluationContext:
+    """Thread-safe context tracking active template, generator callable and seed during compilation."""
+
+    _lock = threading.Lock()
+    _current: Dict[str, Any] = {
+        "shard_id": "unknown",
+        "cid": "unknown",
+        "template_id": "unknown",
+        "gen_fn": "_gen_unknown",
+        "archetype": "?",
+        "seed": None,
+        "start_time": 0.0,
+    }
+
+    @classmethod
+    def set(
+        cls,
+        shard_id: Optional[str] = None,
+        cid: Optional[str] = None,
+        template_id: Optional[str] = None,
+        gen_fn: Optional[str] = None,
+        archetype: Optional[Any] = None,
+        seed: Optional[int] = None,
+    ) -> None:
+        with cls._lock:
+            if shard_id is not None:
+                cls._current["shard_id"] = str(shard_id)
+            if cid is not None:
+                cls._current["cid"] = str(cid)
+            if template_id is not None:
+                cls._current["template_id"] = str(template_id)
+            if gen_fn is not None:
+                cls._current["gen_fn"] = str(gen_fn)
+            if archetype is not None:
+                cls._current["archetype"] = archetype
+            if seed is not None:
+                cls._current["seed"] = seed
+
+    @classmethod
+    def get(cls) -> Dict[str, Any]:
+        with cls._lock:
+            return dict(cls._current)
+
+    @classmethod
+    def reset(cls, shard_id: str = "unknown") -> None:
+        with cls._lock:
+            cls._current = {
+                "shard_id": shard_id,
+                "cid": "unknown",
+                "template_id": "unknown",
+                "gen_fn": "_gen_unknown",
+                "archetype": "?",
+                "seed": None,
+                "start_time": time.time(),
+            }
+
+
+class _CompilationWatchdog:
+    """Watchdog daemon thread enforcing strict hard timeout budget (< 15.0s) on shard compilation."""
+
+    def __init__(self, timeout: float = 15.0, shard_id: str = "unknown"):
+        self.timeout = float(timeout)
+        self.shard_id = shard_id
+        self._stop_event = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        self.start_time = 0.0
+
+    def start(self) -> None:
+        if self.timeout <= 0:
+            return
+        self.start_time = time.time()
+        EvaluationContext.reset(self.shard_id)
+        self._thread = threading.Thread(target=self._run, daemon=True, name="c2c_compile_watchdog")
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop_event.set()
+
+    def _run(self) -> None:
+        while not self._stop_event.wait(0.2):
+            elapsed = time.time() - self.start_time
+            if elapsed >= self.timeout:
+                ctx = EvaluationContext.get()
+                shard_str = ctx.get("shard_id") or self.shard_id or "unknown"
+                tpl_str = ctx.get("template_id") or "unknown"
+                fn_str = ctx.get("gen_fn") or "_gen_unknown"
+                arch_str = ctx.get("archetype") or "?"
+                seed_str = str(ctx.get("seed")) if ctx.get("seed") is not None else "?"
+
+                diag_msg = (
+                    f"\n[-] CRITICAL ERROR: [TIMEOUT_INFINITE_LOOP]\n"
+                    f"    Shard:          {shard_str}\n"
+                    f"    Template ID:    {tpl_str}\n"
+                    f"    Generator Func: {fn_str} (Archetype {arch_str}, Seed {seed_str})\n"
+                    f"    Execution Time: {elapsed:.2f}s (Exceeded hard budget of {self.timeout:.1f}s)\n"
+                    f"    Diagnostic:     Detected potential infinite loop, unbounded while-loop, \n"
+                    f"                    or exhausted rejection sampling. Verify termination predicates \n"
+                    f"                    and unbuffered output (-u).\n"
+                    f"[-] FAIL: [TIMEOUT_INFINITE_LOOP] En '{tpl_str}' (función '{fn_str}', semilla {seed_str}): "
+                    f"Tiempo de ejecución excedió el límite de {self.timeout:.1f}s.\n"
+                )
+                try:
+                    sys.stderr.write(diag_msg)
+                    sys.stderr.flush()
+                    sys.stdout.write(diag_msg)
+                    sys.stdout.flush()
+                except Exception:
+                    pass
+                os._exit(1)
 
 
 def _atomic_write_json(target_path: Path, data: Any) -> None:
@@ -129,8 +251,19 @@ def pykatex_warnings(text: Any, context: str, whole_is_math: bool = False) -> Li
         try:
             _pykatex.renderToString(probe, display)
         except Exception as exc:
-            msg = str(exc).replace("\u0332", "^").strip().splitlines()[0][:160]
-            out.append(f"[!] Warning: [PYKATEX-WARN] {context}: {msg} (span: {span[:60]!r})")
+            raw_msg = str(exc)
+            col = None
+            m_pos = re.search(r"position\s+(\d+)", raw_msg, re.IGNORECASE)
+            if m_pos:
+                col = m_pos.group(1)
+            elif "\u0332" in raw_msg:
+                colon_idx = raw_msg.rfind(":")
+                snippet = raw_msg[colon_idx + 1:] if colon_idx != -1 else raw_msg
+                clean_before = snippet[:snippet.find("\u0332")].replace("\u0332", "")
+                col = str(len(clean_before))
+            col_info = f" [col={col}]" if col is not None else ""
+            msg = raw_msg.replace("\u0332", "^").strip().splitlines()[0][:160]
+            out.append(f"[!] Warning: [PYKATEX-WARN] {context}: {msg}{col_info} (span: {span[:60]!r})")
     return out
 
 
@@ -1009,6 +1142,228 @@ def prune_ast_preamble(source_text: str, target_fn_name: str) -> str:
     return ""
 
 
+def normalize_form_c_template(t: Any) -> Any:
+    """Normalizes template entry: converts ShardCompetenceContract or Pydantic BaseModel to Form-C dict.
+
+    Transparently supports:
+    1. Instances of ShardCompetenceContract (with to_form_c_dict())
+    2. Pydantic BaseModel instances (with model_dump())
+    3. Form-C dicts (unchanged)
+    4. Form-B 9-tuples (unchanged)
+    """
+    if hasattr(t, "to_form_c_dict") and callable(getattr(t, "to_form_c_dict")):
+        return t.to_form_c_dict()
+    if hasattr(t, "model_dump") and callable(getattr(t, "model_dump")):
+        data = dict(t.model_dump())
+        field_mapping = {
+            "competence_id": "cid",
+            "archetype": "archetype",
+            "assumption_tested_id": "assumption_id",
+            "statement_variants_markdown": "stems",
+            "hints_markdown": "hints",
+            "solution_markdown": "sol",
+        }
+        out = {}
+        for k, v in data.items():
+            mapped_k = field_mapping.get(k, k)
+            out[mapped_k] = v
+        # Preserve non-dumped callables or attributes on the model
+        for attr in ("gen", "ver", "generator_code", "verifier_code", "fmt", "rats", "band", "qtype", "id", "cid"):
+            if attr not in out and hasattr(t, attr):
+                out[attr] = getattr(t, attr)
+        return out
+    return t
+
+
+_RESERVED_VAR_NAMES = {
+    "rng", "r", "arch", "ans", "correct", "ds", "distractors", "options", "v1", "vl", "_"
+}
+
+
+def inject_ast_auto_vars(code_or_fn: Any) -> Any:
+    """AST helper that auto-injects 'vars': {name: name, ...} into return dicts of generator functions.
+
+    M4.5: Eliminates the repetitive boilerplate of 'vars': {...} in Form-C generator functions.
+    If a generator function returns a dict with at least one output key ('ans', 'correct', 'ds', 'distractors', 'options')
+    and lacks 'vars', local variables assigned in the function body are automatically collected and injected.
+
+    Accepts either:
+    - code_or_fn as callable: extracts source, injects AST auto-vars, recompiles and returns the transformed callable.
+    - code_or_fn as str: parses, injects AST auto-vars, and returns the transformed code string.
+    """
+    if callable(code_or_fn):
+        try:
+            fn_src = textwrap.dedent(inspect.getsource(code_or_fn))
+            transformed_src = inject_ast_auto_vars(fn_src)
+            fn_globals = getattr(code_or_fn, "__globals__", {})
+            ns = dict(fn_globals)
+            exec(compile(transformed_src, "<auto_vars>", "exec"), ns)
+            fn_name = getattr(code_or_fn, "__name__", "")
+            candidate = ns.get(fn_name)
+            if callable(candidate):
+                return candidate
+            return _wrap_gen_raw_with_auto_vars(code_or_fn, transformed_src)
+        except Exception:
+            return _wrap_gen_raw_with_auto_vars(code_or_fn, "")
+
+    if not isinstance(code_or_fn, str) or not code_or_fn.strip():
+        return code_or_fn
+
+    code_str = code_or_fn
+    try:
+        tree = ast.parse(code_str)
+    except Exception:
+        return code_str
+
+    class _AutoVarsTransformer(ast.NodeTransformer):
+        def __init__(self):
+            self.modified = False
+
+        def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
+            return self._transform_fn(node)
+
+        def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AsyncFunctionDef:
+            return self._transform_fn(node)
+
+        def _transform_fn(self, fn_node):
+            parent = self
+            local_var_names: List[str] = []
+            seen = set()
+
+            def _collect_assignments(stmts):
+                for stmt in stmts:
+                    if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        continue
+                    if isinstance(stmt, ast.Assign):
+                        for tgt in stmt.targets:
+                            self._extract_names(tgt, local_var_names, seen)
+                    elif isinstance(stmt, ast.AnnAssign):
+                        self._extract_names(stmt.target, local_var_names, seen)
+                    for _, child_val in ast.iter_fields(stmt):
+                        if isinstance(child_val, list):
+                            _collect_assignments(child_val)
+                        elif isinstance(child_val, ast.AST) and not isinstance(child_val, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                            _collect_assignments([child_val])
+
+            _collect_assignments(fn_node.body)
+
+            class _ReturnTransformer(ast.NodeTransformer):
+                def __init__(self, vars_list: List[str]):
+                    self.vars_list = vars_list
+
+                def visit_FunctionDef(self, n):
+                    return n
+
+                def visit_AsyncFunctionDef(self, n):
+                    return n
+
+                def visit_Return(self, ret_node: ast.Return) -> ast.Return:
+                    if not isinstance(ret_node.value, ast.Dict):
+                        return ret_node
+                    dict_node = ret_node.value
+                    str_keys = []
+                    for k in dict_node.keys:
+                        if isinstance(k, ast.Constant) and isinstance(k.value, str):
+                            str_keys.append(k.value)
+                        else:
+                            str_keys.append(None)
+
+                    output_keys = {"ans", "correct", "ds", "distractors", "options"}
+                    has_output = any(k in output_keys for k in str_keys if k)
+                    has_vars = "vars" in str_keys
+
+                    if has_output and not has_vars:
+                        v_keys = [ast.Constant(value=v) for v in self.vars_list]
+                        v_vals = [ast.Name(id=v, ctx=ast.Load()) for v in self.vars_list]
+
+                        if "ans" not in self.vars_list:
+                            if "ans" in str_keys:
+                                idx_ans = str_keys.index("ans")
+                                v_keys.append(ast.Constant(value="ans"))
+                                v_vals.append(dict_node.values[idx_ans])
+                            elif "correct" in str_keys:
+                                idx_corr = str_keys.index("correct")
+                                v_keys.append(ast.Constant(value="ans"))
+                                v_vals.append(dict_node.values[idx_corr])
+
+                        if v_keys:
+                            vars_dict_node = ast.Dict(keys=v_keys, values=v_vals)
+                            dict_node.keys.insert(0, ast.Constant(value="vars"))
+                            dict_node.values.insert(0, vars_dict_node)
+                            parent.modified = True
+
+                    return ret_node
+
+            ret_trans = _ReturnTransformer(local_var_names)
+            fn_node.body = [ret_trans.visit(stmt) for stmt in fn_node.body]
+            self.generic_visit(fn_node)
+            return fn_node
+
+        def _extract_names(self, tgt, out_list, seen):
+            if isinstance(tgt, ast.Name):
+                name = tgt.id
+                if name not in seen and name not in _RESERVED_VAR_NAMES and not name.startswith("_"):
+                    seen.add(name)
+                    out_list.append(name)
+            elif isinstance(tgt, (ast.Tuple, ast.List)):
+                for elt in tgt.elts:
+                    self._extract_names(elt, out_list, seen)
+
+    try:
+        transformer = _AutoVarsTransformer()
+        new_tree = transformer.visit(tree)
+        if not transformer.modified:
+            return code_str
+        ast.fix_missing_locations(new_tree)
+        return ast.unparse(new_tree)
+    except Exception:
+        return code_str
+
+
+def _wrap_gen_raw_with_auto_vars(raw_fn: Any, transformed_code: str) -> Any:
+    """Wraps gen_raw callable so calls in compile_shard dry-runs return auto-exported 'vars'."""
+    if not callable(raw_fn):
+        return raw_fn
+    compiled_fn = None
+    if transformed_code and ("def generate_params(" in transformed_code or "def generate(" in transformed_code):
+        try:
+            fn_globals = getattr(raw_fn, "__globals__", None)
+            ns = dict(fn_globals) if fn_globals is not None else {}
+            exec(compile(transformed_code, "<gen_auto_vars>", "exec"), ns)
+            candidate = ns.get("generate_params") or ns.get("generate")
+            if callable(candidate):
+                compiled_fn = candidate
+        except Exception:
+            compiled_fn = None
+
+    def _auto_vars_wrapper(*args, **kwargs):
+        res = None
+        if compiled_fn is not None:
+            try:
+                res = compiled_fn(*args, **kwargs)
+            except Exception as exc:
+                if type(exc).__name__ in ("SandboxTimeoutError", "SecurityViolationError", "SandboxSecurityError"):
+                    raise
+                res = None
+        if res is None:
+            res = raw_fn(*args, **kwargs)
+
+        if isinstance(res, dict) and "vars" not in res:
+            c_val = res.get("correct") or res.get("ans") or ""
+            res["vars"] = {"ans": c_val} if c_val else {}
+        return res
+
+    for attr in ("__name__", "__doc__", "__module__", "__qualname__"):
+        if hasattr(raw_fn, attr):
+            try:
+                setattr(_auto_vars_wrapper, attr, getattr(raw_fn, attr))
+            except Exception:
+                pass
+    target_for_trace = compiled_fn if compiled_fn is not None else raw_fn
+    setattr(_auto_vars_wrapper, "__wrapped__", target_for_trace)
+    return _auto_vars_wrapper
+
+
 def extract_function_code(
     fn_or_str: Any,
     target_name: str,
@@ -1087,6 +1442,9 @@ def extract_function_code(
     if not converted_lambda:
         # Rename first function definition to target_name
         code_str = re.sub(r"^def\s+[A-Za-z0-9_]+\s*\(", f"def {target_name}(", raw_src, count=1)
+
+    if target_name == "generate_params":
+        code_str = inject_ast_auto_vars(code_str)
 
     # Alias bindings for sandbox execution
     if target_name == "generate_params":
@@ -1401,6 +1759,63 @@ def compile_shard(
     att_dir = work_p / ".check_attempts"
     pass_marker = att_dir / f"pass_{norm_shard_id}.json"
 
+    # Watchdog timer enforcement: hard budget <= 15.0 seconds
+    watchdog_timeout_val = kwargs.get("watchdog_timeout")
+    if watchdog_timeout_val is None:
+        env_timeout = os.getenv("C2C_COMPILE_WATCHDOG_TIMEOUT")
+        if env_timeout is not None:
+            try:
+                watchdog_timeout_val = float(env_timeout)
+            except ValueError:
+                watchdog_timeout_val = 15.0
+        else:
+            watchdog_timeout_val = 15.0
+    else:
+        watchdog_timeout_val = float(watchdog_timeout_val)
+
+    watchdog = _CompilationWatchdog(timeout=watchdog_timeout_val, shard_id=norm_shard_id)
+    watchdog.start()
+
+    try:
+        return _compile_shard_body(
+            work_p=work_p,
+            shards_dir=shards_dir,
+            shard_data_path=shard_data_path,
+            templates_dir=templates_dir,
+            receipt_p=receipt_p,
+            shard_id=shard_id,
+            norm_shard_id=norm_shard_id,
+            att_dir=att_dir,
+            pass_marker=pass_marker,
+            strict=strict,
+            seeds=seeds,
+            cta_path=cta_path,
+            manifest_path=manifest_path,
+            min_archetypes=min_archetypes,
+            **kwargs,
+        )
+    finally:
+        watchdog.stop()
+
+
+def _compile_shard_body(
+    work_p: Path,
+    shards_dir: Path,
+    shard_data_path: Optional[Path],
+    templates_dir: Path,
+    receipt_p: Optional[Path],
+    shard_id: str,
+    norm_shard_id: str,
+    att_dir: Path,
+    pass_marker: Path,
+    strict: bool,
+    seeds: int,
+    cta_path: Optional[Union[str, Path]],
+    manifest_path: Optional[Union[str, Path]],
+    min_archetypes: Optional[int],
+    **kwargs,
+) -> Tuple[bool, List[str]]:
+
     def _cleanup_stale_pass_marker():
         if pass_marker.is_file():
             try:
@@ -1702,6 +2117,7 @@ def compile_shard(
     # Map tuples to their origin file and line locator
     tuple_records: List[Dict[str, Any]] = []
     for orig_idx, t in enumerate(base_templates):
+        t = normalize_form_c_template(t)
         tuple_records.append({
             "tuple": t,
             "file_path": shard_data_path,
@@ -1743,7 +2159,8 @@ def compile_shard(
                 new_records = []
                 replaced = False
                 for rec in tuple_records:
-                    t_cand = rec["tuple"]
+                    t_cand = normalize_form_c_template(rec["tuple"])
+                    rec["tuple"] = t_cand
                     t_cid = None
                     if isinstance(t_cand, dict):
                         t_cid = str(t_cand.get("cid") or t_cand.get("competency_id") or "").strip()
@@ -1757,6 +2174,7 @@ def compile_shard(
                     if t_cid == cid_fix or t_cid.replace("-", "_") == cid_fix.replace("-", "_"):
                         if not replaced:
                             for fix_idx, ft in enumerate(fix_templates):
+                                ft = normalize_form_c_template(ft)
                                 new_records.append({
                                     "tuple": ft,
                                     "file_path": fix_path,
@@ -1769,6 +2187,7 @@ def compile_shard(
 
                 if not replaced:
                     for fix_idx, ft in enumerate(fix_templates):
+                        ft = normalize_form_c_template(ft)
                         new_records.append({
                             "tuple": ft,
                             "file_path": fix_path,
@@ -1793,7 +2212,8 @@ def compile_shard(
     # 4. Identify competencies and verify parity (Form-C dict or Form-B 9-tuple)
     found_cids = []
     for rec_idx, rec in enumerate(tuple_records):
-        t = rec["tuple"]
+        t = normalize_form_c_template(rec["tuple"])
+        rec["tuple"] = t
         curr_loc = rec["locator"]
         curr_p = rec["file_path"]
         orig_idx = rec["orig_idx"]
@@ -1882,7 +2302,8 @@ def compile_shard(
     deferred_verifier_errors: List[str] = []
 
     for t_idx, rec in enumerate(tuple_records):
-        t = rec["tuple"]
+        t = normalize_form_c_template(rec["tuple"])
+        rec["tuple"] = t
         curr_loc = rec["locator"]
         curr_p = rec["file_path"]
         orig_idx = rec["orig_idx"]
@@ -1980,6 +2401,7 @@ def compile_shard(
         ver_fn_name = tuple_info.get("ver_fn_name") or getattr(ver_raw, "__name__", None)
 
         gen_code = extract_function_code(gen_raw, "generate_params", locator=curr_loc, fn_name_hint=gen_fn_name)
+        gen_raw = _wrap_gen_raw_with_auto_vars(gen_raw, gen_code)
         ver_code = extract_function_code(ver_raw, "verify", locator=curr_loc, fn_name_hint=ver_fn_name)
 
         # Check if ver_raw is a 2-argument verifier ver(cand, v)
@@ -2223,6 +2645,9 @@ cross_check=verify
                 sample_res["correct"] = sample_res["ans"]
             if "ds" in sample_res and "distractors" not in sample_res:
                 sample_res["distractors"] = sample_res["ds"]
+            if "vars" not in sample_res:
+                c_val = sample_res.get("correct") or sample_res.get("ans") or ""
+                sample_res["vars"] = {"ans": c_val} if c_val else {}
             if "vars" in sample_res and isinstance(sample_res["vars"], dict):
                 declared_vars = set(str(k) for k in sample_res["vars"].keys())
         elif isinstance(sample_res, (tuple, list)) and len(sample_res) >= 1 and isinstance(sample_res[0], dict):
@@ -2475,7 +2900,9 @@ cross_check=verify
             for test_seed in (42, 43, 44):
                 try:
                     rng_test = random.Random(test_seed)
-                    res_test = gen_raw(rng_test)
+                    EvaluationContext.set(template_id=tpl_id, gen_fn=gen_fn_name, archetype=orig_idx, seed=test_seed)
+                    from engine.sandbox import call_with_timeout
+                    res_test = call_with_timeout(gen_raw, args=(rng_test,), timeout=0.8, seed=test_seed)
                 except Exception:
                     continue
                 if not isinstance(res_test, dict):
@@ -2484,6 +2911,9 @@ cross_check=verify
                     res_test["correct"] = res_test["ans"]
                 if "ds" in res_test and "distractors" not in res_test:
                     res_test["distractors"] = res_test["ds"]
+                if "vars" not in res_test:
+                    c_val = res_test.get("correct") or res_test.get("ans") or ""
+                    res_test["vars"] = {"ans": c_val} if c_val else {}
                 c_test = str(res_test.get("correct", "")).strip()
                 v_test = res_test.get("vars", {}) if isinstance(res_test.get("vars"), dict) else {}
                 if fmt_str and "@X@" in fmt_str and c_test:
@@ -2496,7 +2926,8 @@ cross_check=verify
                 if callable(ver_raw) and not c_test and isinstance(res_test.get("options"), list):
                     # Multiple Select: sin clave "correct"; el verificador recibe la instancia completa.
                     try:
-                        sound_res = ver_raw(res_test)
+                        from engine.sandbox import call_with_timeout
+                        sound_res = call_with_timeout(ver_raw, args=(res_test,), timeout=0.8, seed=test_seed)
                     except TypeError:
                         sound_res = run_ver(c_test, v_test, res_test)
                 else:
@@ -2535,7 +2966,7 @@ cross_check=verify
                             if refute_res is True:
                                 line_no = _find_diagnostic_line(curr_loc, ver_fn_name, orig_idx, d_val)
                                 deferred_verifier_errors.append(
-                                    f"{cid}.json ({curr_p.name}): [VERIFIER-TAUTOLOGY-DETECTED] El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) "
+                                    f"[-] [VERIFIER-TAUTOLOGY-DETECTED] {cid}.json ({curr_p.name}): El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) "
                                     f"retornó True para el distractor falso '{d_val}'. El verificador no refuta respuestas incorrectas (tautología)."
                                 )
                                 tautology_recorded = True
@@ -2919,6 +3350,9 @@ cross_check=verify
                                     seed=seed_val,
                                 )
                                 if isinstance(res, dict):
+                                    if "vars" not in res:
+                                        c_val = res.get("correct") or res.get("ans") or ""
+                                        res["vars"] = {"ans": c_val} if c_val else {}
                                     c_v = str(res.get("correct", ""))
                                     v_d = res.get("vars", {})
                                     v_s = json.dumps(v_d, sort_keys=True, default=str) if isinstance(v_d, dict) else str(v_d)
@@ -2944,6 +3378,9 @@ cross_check=verify
                                 from engine.sandbox import run_code_in_env
                                 res = run_code_in_env(gen_c, "generate", seed=seed_val, timeout=0.5)
                                 if isinstance(res, dict):
+                                    if "vars" not in res:
+                                        c_val = res.get("correct") or res.get("ans") or ""
+                                        res["vars"] = {"ans": c_val} if c_val else {}
                                     c_v = str(res.get("correct", ""))
                                     v_d = res.get("vars", {})
                                     v_s = json.dumps(v_d, sort_keys=True, default=str) if isinstance(v_d, dict) else str(v_d)
@@ -3084,10 +3521,15 @@ cross_check=verify
                 for s_val in eval_seeds:
                     try:
                         import random
+                        EvaluationContext.set(template_id=tpl_id_m, gen_fn=gen_fn_m, archetype=t_idx_m + 1, seed=s_val)
+                        from engine.sandbox import call_with_timeout
                         rng_m = random.Random(s_val)
-                        res_m = c_call_m(rng_m)
+                        res_m = call_with_timeout(c_call_m, args=(rng_m,), timeout=0.8, seed=s_val)
                         if not isinstance(res_m, dict):
                             continue
+                        if "vars" not in res_m:
+                            c_val = res_m.get("correct") or res_m.get("ans") or ""
+                            res_m["vars"] = {"ans": c_val} if c_val else {}
                         vars_m = res_m.get("vars", {}) if isinstance(res_m.get("vars"), dict) else {}
 
                         if itype_curr == "multiple_select":
@@ -3199,7 +3641,7 @@ cross_check=verify
                     m3_errors.append(
                         f"{cid}.json ({source_name}): [DIAG-MAGIC-MULT] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}), "
                         f"los distractores numéricos en {len(hit_seeds)}/{iso_valid_seeds or len(eval_seeds)} semillas (>{_MAGIC_MULT_MIN_FRACTION*100:.0f}%, ej. seed={hit_seeds[0]}) coinciden con multiplicadores arbitrarios prohibidos ({hit_mults_sample}) respecto a la respuesta correcta. "
-                        f"Reemplaza los multiplicadores sintéticos sobre 'ans' por las fórmulas algebraicas reales de cada error_rationale."
+                        f"PROHIBIDO ajustar multiplicadores decimales; reemplace la expresión por la fórmula algebraica del error conceptual."
                     )
                 if iso_valid_seeds >= 10 and len(iso_hit_seeds) >= _ISO_MIN_FRACTION * iso_valid_seeds and len(hit_seeds) == 0:
                     eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
@@ -3209,7 +3651,7 @@ cross_check=verify
                     m3_errors.append(
                         f"{cid}.json ({source_name}): [DIAG-MAGIC-MULT] En '{tpl_id_m}' (funcion '{gen_fn_m}', Lineas {s_off}..{e_off} en {source_name}), "
                         f"un distractor numerico equivale a {iso_hit_ratio} x respuesta correcta en {len(iso_hit_seeds)}/{iso_valid_seeds} semillas (razon fija sistematica, colisiona con el linter final). "
-                        f"Cambia parametros estructurales (p. ej. otro cuantil z o otra razon de muestras) o reemplaza ese distractor por un error algebraico real cuya razon no sea constante."
+                        f"PROHIBIDO ajustar multiplicadores decimales; reemplace la expresión por la fórmula algebraica del error conceptual."
                     )
                 if strict and len(set(corr_answers_sample)) <= 1 and len(corr_answers_sample) >= 10:
                     first_ans_str = str(corr_answers_sample[0]) if corr_answers_sample else ""
@@ -3500,6 +3942,7 @@ def main():
     parser.add_argument("--no-strict", dest="strict", action="store_false", help="Bypass strict validation")
     parser.add_argument("--seeds", type=int, default=50, help="Number of dry-run seeds (default: 50)")
     parser.add_argument("--min-archetypes", dest="min_archetypes", type=int, default=None, help="Minimum disjoint archetypes (tuples) required per competency in TEMPLATES (default: 3)")
+    parser.add_argument("--watchdog-timeout", type=float, default=15.0, help="Watchdog hard timeout budget in seconds (default: 15.0)")
     args = parser.parse_args()
 
     work_or_path = args.input_path or args.shard_data_path or args.work
@@ -3527,7 +3970,13 @@ def main():
         cta_path=args.cta,
         manifest_path=args.manifest,
         min_archetypes=args.min_archetypes,
+        watchdog_timeout=args.watchdog_timeout,
     )
+    try:
+        sys.stdout.flush()
+        sys.stderr.flush()
+    except Exception:
+        pass
     sys.exit(0 if success else 1)
 
 

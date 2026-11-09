@@ -19,7 +19,7 @@ _skills_root = Path(__file__).parent.parent / ".agents" / "skills" / "content-to
 if str(_skills_root) not in sys.path:
     sys.path.insert(0, str(_skills_root))
 
-from check_templates import check_single_template, format_diagnostic_error
+from check_templates import check_single_template, format_diagnostic_error, render_compact_aggregated_errors
 from engine.invariants import check_instance_invariants, validate_katex_syntax
 from course_publisher import CoursePublisher, PublishQualityGateError
 from validator.models import ValidationResult
@@ -445,4 +445,29 @@ class TestCoursePublisherQualityGateStrict:
         assert report_data["mpri_score"] == 90.0
         assert report_data["gate_passed"] is True
         assert report_data["gate_failures"] == []
+
+    def test_verifier_tautology_detected_preserves_function_name_without_truncation(self):
+        """Verifies that verifier tautology diagnostics preserve full ver_fn name (e.g. ver_h06_1) without truncation."""
+        raw_err = (
+            "[-] [VERIFIER-TAUTOLOGY-DETECTED] Hab-06.json (shard_06_data.py): El verificador ver_fn 'ver_h06_1' en 'T-Hab-06-01' (Línea 118 en shard_06_data.py) "
+            "retornó True para el distractor falso '0.333'. El verificador no refuta respuestas incorrectas (tautología)."
+        )
+        rendered = render_compact_aggregated_errors([raw_err])
+        # Function name must not be truncated with '...'
+        assert "ver_h06_1" in rendered
+        assert "ver_h06..." not in rendered
+        # Must show verifier tautology rule tag
+        assert "VERIFIER-TAUTOLOGY-DETECTED" in rendered
+
+    def test_diag_magic_mult_pedagogical_action_message(self):
+        """Verifies that [DIAG-MAGIC-MULT] displays the pedagogical imperative warning."""
+        raw_err = (
+            "Hab-09.json (shard_09_data.py): [DIAG-MAGIC-MULT] En 'T-Hab-09-01' (función 'gen_h09_1', Líneas 118..118 en shard_09_data.py), "
+            "los distractores numéricos en 31/300 semillas coinciden con multiplicadores arbitrarios prohibidos ([0.333, 0.45]) respecto a la respuesta correcta. "
+            "PROHIBIDO ajustar multiplicadores decimales; reemplace la expresión por la fórmula algebraica del error conceptual."
+        )
+        rendered = render_compact_aggregated_errors([raw_err])
+        assert "DIAG-MAGIC-MULT" in rendered
+        assert "PROHIBIDO ajustar multiplicadores decimales" in rendered
+        assert "fórmula algebraica del error conceptual" in rendered
 
