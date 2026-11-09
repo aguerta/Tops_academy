@@ -10,9 +10,10 @@
       "fill_in_the_blank": 635,
       "multiple_select": 306
     },
-    "platform_status": "ACTIVO",
+    "platform_status": "ELIMINADO",
     "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
-    "evaluation_date": "2026-11-09"
+    "evaluation_date": "2026-11-09",
+    "deleted_at": "2026-11-09 11:19:36"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -81,5 +82,7 @@
     "El banco de 1270 reactivos y 52 competencias cumple con los estándares Quality Matters, OSCQR y Mastery Learning."
   ],
   "discovered_lint_rules": [],
-  "platform_status": "ACTIVO"
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-09 11:19:36",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }
