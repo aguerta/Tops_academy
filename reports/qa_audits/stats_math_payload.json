@@ -1,0 +1,691 @@
+{
+  "course_id": "stats_math",
+  "filename": "stats_math.json",
+  "title": "Mathematical Statistics",
+  "description": "",
+  "total_competencies": 2,
+  "total_questions": 3,
+  "question_types_distribution": {
+    "unknown": 3
+  },
+  "questions_per_competency": {
+    "C-01": 2,
+    "C-02": 1
+  },
+  "stage5_judge_audit": {
+    "available": false
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0, la Rúbrica Determinista de 20 puntos y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 100.0,
+    "final_score": 11.6,
+    "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)",
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 3.2,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 2 competencias (0 Hechos, 1 Conceptos, 1 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 0/2 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 5.0,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=0.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 0 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.0,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 0/3 ítems. Unicidad diagnóstica de rationales: 100.0%."
+        },
+        "instructional_alignment": {
+          "score": 2.4,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 0.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 2.0,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 16.6,
+      "penalties_applied": [
+        {
+          "rule": "bank_lt_3_exercises",
+          "deduction": 2.0,
+          "reason": "2 competencia(s) tienen menos de 3 ejercicios prácticos."
+        },
+        {
+          "rule": "hints_zero",
+          "deduction": 3.0,
+          "reason": "3 reactivo(s) carecen por completo de pistas progresivas (hints = 0)."
+        }
+      ],
+      "hard_penalties_total": 5.0,
+      "final_score": 11.6,
+      "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)"
+    },
+    "mastery_path_readiness": {
+      "mpri_score": 67.0,
+      "mpri_max": 100.0,
+      "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 12.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 0.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 15.0,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 10.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 10.0,
+          "max": 10.0
+        }
+      }
+    },
+    "hard_penalties_precalculated": [
+      {
+        "rule": "bank_lt_3_exercises",
+        "deduction": 2.0,
+        "reason": "2 competencia(s) tienen menos de 3 ejercicios prácticos."
+      },
+      {
+        "rule": "hints_zero",
+        "deduction": 3.0,
+        "reason": "3 reactivo(s) carecen por completo de pistas progresivas (hints = 0)."
+      }
+    ]
+  },
+  "deterministic_rubric": {
+    "dimension_scores": {
+      "architecture_granularity": {
+        "score": 3.2,
+        "max": 4.0,
+        "feedback": "Estructura curricular con 2 competencias (0 Hechos, 1 Conceptos, 1 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 0/2 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+      },
+      "assessment_quality": {
+        "score": 5.0,
+        "max": 5.0,
+        "feedback": "Modalidad: MC7=0.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 0 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+      },
+      "scaffolding_hints": {
+        "score": 4.0,
+        "max": 5.0,
+        "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 0/3 ítems. Unicidad diagnóstica de rationales: 100.0%."
+      },
+      "instructional_alignment": {
+        "score": 2.4,
+        "max": 4.0,
+        "feedback": "Alineación cognitiva de Bloom: 0.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+      },
+      "technical_ergonomics": {
+        "score": 2.0,
+        "max": 2.0,
+        "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+      }
+    },
+    "raw_subtotal": 16.6,
+    "penalties_applied": [
+      {
+        "rule": "bank_lt_3_exercises",
+        "deduction": 2.0,
+        "reason": "2 competencia(s) tienen menos de 3 ejercicios prácticos."
+      },
+      {
+        "rule": "hints_zero",
+        "deduction": 3.0,
+        "reason": "3 reactivo(s) carecen por completo de pistas progresivas (hints = 0)."
+      }
+    ],
+    "hard_penalties_total": 5.0,
+    "final_score": 11.6,
+    "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)"
+  },
+  "final_score": 11.6,
+  "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)",
+  "audit_telemetry": {
+    "course_id": "stats_math",
+    "title": "Mathematical Statistics",
+    "total_competencies": 2,
+    "total_questions": 3,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 2,
+        "category_distribution": {
+          "Fact": 0,
+          "Concept": 1,
+          "Skill": 1,
+          "Other": 0
+        },
+        "competencies_missing_prerequisites_count": 1,
+        "underpopulated_competencies_count": 2,
+        "underpopulated_competencies": [
+          "C-01",
+          "C-02"
+        ],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 1,
+        "max_questions_per_comp": 2
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 0,
+        "distractors_with_rationale_count": 0,
+        "rationale_coverage_pct": 100.0,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 3,
+        "zero_hints_items": [
+          "Q-C01-01",
+          "Q-C01-app-002",
+          "Q-C02-01"
+        ],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 0,
+        "missing_solutions_count": 3
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 0,
+        "unclosed_braces_items": [],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 0,
+        "template_variable_residue_items": []
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 0,
+        "blind_string_replacement_items": []
+      },
+      "cloned_distractor_value_linter": {
+        "cloned_distractor_items_count": 0,
+        "cloned_distractor_sample_items": []
+      },
+      "parenthetical_telltale_linter": {
+        "parenthetical_telltale_count": 0,
+        "parenthetical_telltale_items": []
+      },
+      "archetype_entropy_linter": {
+        "min_required_archetypes": 4,
+        "monotonous_competencies_count": 0,
+        "monotonous_competencies": [],
+        "low_archetype_variety_competencies_count": 0,
+        "low_archetype_variety_competencies": [],
+        "min_distinct_skeletons_observed": 0
+      },
+      "uninterpolated_math_variable_linter": {
+        "uninterpolated_math_items_count": 0,
+        "uninterpolated_math_sample_items": []
+      },
+      "zpd_progression_linter": {
+        "difficulty_distribution": {
+          "easy": 0,
+          "medium": 3,
+          "hard": 0
+        },
+        "bloom_distribution": {
+          "unspecified": 3
+        },
+        "eligible_competencies_evaluated": 0,
+        "zpd_dead_competencies_count": 0,
+        "zpd_dead_competencies": [],
+        "two_band_competencies_count": 0,
+        "three_band_competencies_count": 0,
+        "missing_hard_tier_competencies_count": 0,
+        "missing_easy_tier_competencies_count": 0,
+        "skill_questions_total": 1,
+        "skill_higher_bloom_count": 0,
+        "skill_higher_bloom_pct": 0.0
+      },
+      "retrieval_modality_linter": {
+        "mc7_count": 0,
+        "fib_count": 0,
+        "ms_count": 0,
+        "mc7_share_pct": 0.0,
+        "fib_share_pct": 0.0,
+        "ms_share_pct": 0.0,
+        "active_generation_or_discrimination_pct": 0.0,
+        "recognition_only_skill_competencies_count": 0,
+        "recognition_only_skill_competencies": []
+      },
+      "socratic_scaffolding_integrity_linter": {
+        "boilerplate_hints_items_count": 0,
+        "boilerplate_hints_pct": 0.0,
+        "boilerplate_sample_items": [],
+        "poisoned_hints_items_count": 0,
+        "poisoned_hints_pct": 0.0,
+        "poisoned_hints_sample_items": [],
+        "hint_answer_leak_items_count": 0,
+        "genuine_socratic_hints_pct": 100.0
+      },
+      "diagnostic_rationale_alignment_linter": {
+        "total_rationales": 0,
+        "unique_rationales": 0,
+        "rationale_uniqueness_pct": 100.0,
+        "magic_multiplier_distractor_items_count": 0,
+        "magic_multiplier_sample_items": []
+      },
+      "anti_gaming_psychometric_linter": {
+        "memorizable_competencies_count": 0,
+        "memorizable_competencies": [],
+        "length_padded_items_count": 0,
+        "length_padded_sample_items": [],
+        "cross_domain_prefix_items_count": 0,
+        "cross_domain_prefix_sample_items": [],
+        "vacuous_quantifier_items_count": 0,
+        "vacuous_quantifier_sample_items": []
+      },
+      "dag_mastery_topology_linter": {
+        "has_cycle": false,
+        "max_dag_depth": 1,
+        "connected_components_count": 1,
+        "multi_node_subgraphs_count": 1,
+        "inverted_prerequisite_edges_count": 0,
+        "inverted_prerequisite_edges": [],
+        "dangling_prerequisites_count": 0,
+        "isolated_competencies_count": 0,
+        "isolated_competencies": [],
+        "skills_without_prerequisites_count": 0,
+        "skills_without_prerequisites": []
+      },
+      "katex_frontend_ergonomics_linter": {
+        "prose_in_katex_text_items_count": 0,
+        "prose_in_katex_text_sample_items": [],
+        "raw_identifier_math_items_count": 0,
+        "raw_identifier_math_sample_items": []
+      }
+    },
+    "hard_penalties": [
+      {
+        "rule": "bank_lt_3_exercises",
+        "deduction": 2.0,
+        "reason": "2 competencia(s) tienen menos de 3 ejercicios prácticos."
+      },
+      {
+        "rule": "hints_zero",
+        "deduction": 3.0,
+        "reason": "3 reactivo(s) carecen por completo de pistas progresivas (hints = 0)."
+      }
+    ],
+    "risk_score": 100.0,
+    "mastery_path_readiness": {
+      "mpri_score": 67.0,
+      "mpri_max": 100.0,
+      "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 12.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 0.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 15.0,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 10.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 10.0,
+          "max": 10.0
+        }
+      }
+    },
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 3.2,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 2 competencias (0 Hechos, 1 Conceptos, 1 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 0/2 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 5.0,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=0.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 0 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.0,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 0/3 ítems. Unicidad diagnóstica de rationales: 100.0%."
+        },
+        "instructional_alignment": {
+          "score": 2.4,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 0.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 2.0,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 16.6,
+      "penalties_applied": [
+        {
+          "rule": "bank_lt_3_exercises",
+          "deduction": 2.0,
+          "reason": "2 competencia(s) tienen menos de 3 ejercicios prácticos."
+        },
+        {
+          "rule": "hints_zero",
+          "deduction": 3.0,
+          "reason": "3 reactivo(s) carecen por completo de pistas progresivas (hints = 0)."
+        }
+      ],
+      "hard_penalties_total": 5.0,
+      "final_score": 11.6,
+      "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)"
+    },
+    "final_score": 11.6,
+    "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)",
+    "risk_clusters": {
+      "katex_issues": [],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [
+        "Q-C01-01",
+        "Q-C01-app-002",
+        "Q-C02-01"
+      ],
+      "template_residues": [],
+      "blind_replacements": [],
+      "cloned_distractors": [],
+      "archetype_monotony": [],
+      "poisoned_hints": [],
+      "boilerplate_hints": [],
+      "magic_multiplier_distractors": [],
+      "memorizable_answers": [],
+      "length_padded_options": [],
+      "cross_domain_prefixes": [],
+      "vacuous_quantifiers": [],
+      "katex_ergonomics": []
+    },
+    "all_issues": [
+      {
+        "linter": "architecture_dag_linter",
+        "dimension": "D1_architecture",
+        "severity": "critical",
+        "item_id": "comp_C-01",
+        "competency_id": "C-01",
+        "message": "Banco < 3 ejercicios prácticos en competencia 'C-01' (2 reactivos). Aplica penalización dura de -2.0 pts.",
+        "snippet": null
+      },
+      {
+        "linter": "architecture_dag_linter",
+        "dimension": "D1_architecture",
+        "severity": "critical",
+        "item_id": "comp_C-02",
+        "competency_id": "C-02",
+        "message": "Banco < 3 ejercicios prácticos en competencia 'C-02' (1 reactivos). Aplica penalización dura de -2.0 pts.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-C01-01",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-C01-01",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-C01-app-002",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-C01-app-002",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-C02-01",
+        "competency_id": "C-02",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-C02-01",
+        "competency_id": "C-02",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      }
+    ],
+    "issues_by_item": {
+      "comp_C-01": [
+        "[CRITICAL] Banco < 3 ejercicios prácticos en competencia 'C-01' (2 reactivos). Aplica penalización dura de -2.0 pts."
+      ],
+      "comp_C-02": [
+        "[CRITICAL] Banco < 3 ejercicios prácticos en competencia 'C-02' (1 reactivos). Aplica penalización dura de -2.0 pts."
+      ],
+      "Q-C01-01": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-C01-app-002": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-C02-01": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ]
+    }
+  },
+  "competencies": [
+    {
+      "id": "C-01",
+      "name": "Estimador BLUE y teorema de Gauss-Markov en $Y = X\\beta + u$",
+      "category": "Concept",
+      "description": "Demostración de insesgadez y varianza mínima para estimadores lineales en modelos con $\\beta$.",
+      "prerequisites": [],
+      "question_count": 2
+    },
+    {
+      "id": "C-02",
+      "name": "Contraste de hipótesis lineal para $\\beta$",
+      "category": "Skill",
+      "description": "Prueba de significancia individual mediante estadístico t.",
+      "prerequisites": [
+        "C-01"
+      ],
+      "question_count": 1
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-C01-01",
+      "competency_id": "C-01",
+      "competency_name": "Estimador BLUE y teorema de Gauss-Markov en $Y = X\\beta + u$",
+      "category": "Concept",
+      "type": null,
+      "difficulty": null,
+      "bloom": null,
+      "stem": "Determine the property of the OLS estimator.",
+      "options": [
+        {
+          "id": "A",
+          "content": "It is BLUE under classical assumptions.",
+          "is_correct": true
+        }
+      ],
+      "correct_answer": "It is BLUE under classical assumptions.",
+      "hints_count": 0,
+      "hints": null,
+      "detailed_solution": null,
+      "misconception_warning": null
+    },
+    {
+      "id": "Q-C01-app-002",
+      "competency_id": "C-01",
+      "competency_name": "Estimador BLUE y teorema de Gauss-Markov en $Y = X\\beta + u$",
+      "category": "Concept",
+      "type": null,
+      "difficulty": null,
+      "bloom": null,
+      "stem": "Question about BLUE property.",
+      "options": [
+        {
+          "id": "A",
+          "content": "Valid ans",
+          "is_correct": true
+        }
+      ],
+      "correct_answer": "Valid ans",
+      "hints_count": 0,
+      "hints": null,
+      "detailed_solution": null,
+      "misconception_warning": null
+    },
+    {
+      "id": "Q-C02-01",
+      "competency_id": "C-02",
+      "competency_name": "Contraste de hipótesis lineal para $\\beta$",
+      "category": "Skill",
+      "type": null,
+      "difficulty": null,
+      "bloom": null,
+      "stem": "Question about hypothesis test.",
+      "options": [
+        {
+          "id": "A",
+          "content": "Valid ans 2",
+          "is_correct": true
+        }
+      ],
+      "correct_answer": "Valid ans 2",
+      "hints_count": 0,
+      "hints": null,
+      "detailed_solution": null,
+      "misconception_warning": null
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [
+      {
+        "id": "Q-C01-01",
+        "competency_id": "C-01",
+        "stem": "Determine the property of the OLS estimator.",
+        "options": [
+          {
+            "id": "A",
+            "content": "It is BLUE under classical assumptions.",
+            "is_correct": true
+          }
+        ],
+        "hints": null,
+        "detailed_solution": null,
+        "misconception_warning": null,
+        "detected_issues": [
+          "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+          "[CRITICAL] Reactivo carece de detailed_solution"
+        ]
+      },
+      {
+        "id": "Q-C01-app-002",
+        "competency_id": "C-01",
+        "stem": "Question about BLUE property.",
+        "options": [
+          {
+            "id": "A",
+            "content": "Valid ans",
+            "is_correct": true
+          }
+        ],
+        "hints": null,
+        "detailed_solution": null,
+        "misconception_warning": null,
+        "detected_issues": [
+          "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+          "[CRITICAL] Reactivo carece de detailed_solution"
+        ]
+      },
+      {
+        "id": "Q-C02-01",
+        "competency_id": "C-02",
+        "stem": "Question about hypothesis test.",
+        "options": [
+          {
+            "id": "A",
+            "content": "Valid ans 2",
+            "is_correct": true
+          }
+        ],
+        "hints": null,
+        "detailed_solution": null,
+        "misconception_warning": null,
+        "detected_issues": [
+          "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+          "[CRITICAL] Reactivo carece de detailed_solution"
+        ]
+      }
+    ],
+    "template_residues": [],
+    "blind_replacements": [],
+    "cloned_distractors": [],
+    "archetype_monotony": [],
+    "poisoned_hints": [],
+    "boilerplate_hints": [],
+    "magic_multiplier_distractors": [],
+    "memorizable_answers": [],
+    "length_padded_options": [],
+    "cross_domain_prefixes": [],
+    "vacuous_quantifiers": [],
+    "katex_ergonomics": []
+  }
+}

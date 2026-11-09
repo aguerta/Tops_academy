@@ -2807,5 +2807,185 @@
       "output_tokens_per_question": 2024.6
     },
     "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261108_165103_estadistica_3_s9_vmapreduce22_25225ed7",
+    "timestamp": "2026-11-08T21:51:03.776344+00:00",
+    "course_id": "estadistica_3_s9_vmapreduce22",
+    "course_title": "Estadistica 3 S9 Vmapreduce22",
+    "conversation_id": "25225ed7-9449-49b6-870c-c3d001019177",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 80,
+      "input_mb": 0.93,
+      "competencies": 48,
+      "questions": 1110,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 2988.0,
+      "agent_compute_seconds": 14653.0,
+      "speedup": 4.9,
+      "total_tokens": 48234362,
+      "total_active_tokens": 6394176,
+      "input_tokens": 3952892,
+      "output_tokens": 1779535,
+      "cache_read_tokens": 41840186,
+      "total_turns": 541,
+      "subagents_count": 48,
+      "tool_errors": 49,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 406.0,
+      "stage_3_max_wall": 865.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (120/120 REACTIVOS)",
+        "batch_items_count": 120,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 10 Blind Judges evaluaron el lote estratificado de 120 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (120/120) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 120/120 acuerdos (`100.0% agreement rate`, `0 discrepancias`)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 602929.5,
+      "active_tokens_per_page": 79927.2,
+      "tokens_per_input_kb": 50786.8,
+      "tokens_per_competency": 1004882.5,
+      "active_tokens_per_competency": 133212.0,
+      "author_tokens_per_competency": 96638.8,
+      "tokens_per_question": 43454.4,
+      "active_tokens_per_question": 5760.5,
+      "seconds_per_page": 37.35,
+      "seconds_per_question": 2.69,
+      "questions_per_minute": 22.29,
+      "agent_seconds_per_question": 13.2,
+      "output_tokens_per_question": 1672.4
+    },
+    "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261108_183247_estadistica_3_s9_vmapreduce23_85744fc3",
+    "timestamp": "2026-11-08T23:32:47.342676+00:00",
+    "course_id": "estadistica_3_s9_vmapreduce23",
+    "course_title": "Estadistica 3 S9 Vmapreduce23",
+    "conversation_id": "85744fc3-04ee-4493-a455-f3ac1e9cf47a",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 80,
+      "input_mb": 0.93,
+      "competencies": 45,
+      "questions": 1070,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 3025.0,
+      "agent_compute_seconds": 15761.0,
+      "speedup": 5.21,
+      "total_tokens": 50073335,
+      "total_active_tokens": 6796628,
+      "input_tokens": 4097614,
+      "output_tokens": 1920901,
+      "cache_read_tokens": 43276707,
+      "total_turns": 629,
+      "subagents_count": 47,
+      "tool_errors": 42,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 451.0,
+      "stage_3_max_wall": 689.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (120/120 REACTIVOS)",
+        "batch_items_count": 120,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 10 Blind Judges evaluaron el lote estratificado de 120 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (120/120) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 120/120 acuerdos (`100.0% agreement rate`, `0 discrepancias`)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 625916.7,
+      "active_tokens_per_page": 84957.9,
+      "tokens_per_input_kb": 52723.1,
+      "tokens_per_competency": 1112740.8,
+      "active_tokens_per_competency": 151036.2,
+      "author_tokens_per_competency": 106187.3,
+      "tokens_per_question": 46797.5,
+      "active_tokens_per_question": 6352.0,
+      "seconds_per_page": 37.81,
+      "seconds_per_question": 2.83,
+      "questions_per_minute": 21.22,
+      "agent_seconds_per_question": 14.73,
+      "output_tokens_per_question": 1859.8
+    },
+    "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261108_193727_estadistica_3_s9_vmapreduce23_32731599",
+    "timestamp": "2026-11-09T00:37:27.479950+00:00",
+    "course_id": "estadistica_3_s9_vmapreduce23",
+    "course_title": "Estadistica 3 S9 Vmapreduce23",
+    "conversation_id": "32731599-c54c-42d5-8f22-3f6484771cea",
+    "workload": {
+      "source_files_count": 2,
+      "pages_or_slides": 80,
+      "input_mb": 0.93,
+      "competencies": 45,
+      "questions": 1070,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 1104.0,
+      "agent_compute_seconds": 11020.0,
+      "speedup": 9.98,
+      "total_tokens": 14415068,
+      "total_active_tokens": 5179589,
+      "input_tokens": 3289786,
+      "output_tokens": 1581830,
+      "cache_read_tokens": 9235479,
+      "total_turns": 274,
+      "subagents_count": 46,
+      "tool_errors": 36,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 271.0,
+      "stage_3_max_wall": 333.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (120/120 REACTIVOS)",
+        "batch_items_count": 120,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 10 Blind Judges evaluaron el lote estratificado de 120 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (120/120) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 120/120 acuerdos (`100.0% agreement rate`, `0 discrepancias`)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 180188.4,
+      "active_tokens_per_page": 64744.9,
+      "tokens_per_input_kb": 15177.9,
+      "tokens_per_competency": 320334.8,
+      "active_tokens_per_competency": 115102.0,
+      "author_tokens_per_competency": 84073.7,
+      "tokens_per_question": 13472.0,
+      "active_tokens_per_question": 4840.7,
+      "seconds_per_page": 13.8,
+      "seconds_per_question": 1.03,
+      "questions_per_minute": 58.15,
+      "agent_seconds_per_question": 10.3,
+      "output_tokens_per_question": 1510.9
+    },
+    "bottlenecks_count": 0
   }
 ]

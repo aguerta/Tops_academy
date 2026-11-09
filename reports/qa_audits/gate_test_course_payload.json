@@ -1,0 +1,802 @@
+{
+  "course_id": "gate_test_course",
+  "filename": "gate_test_course.json",
+  "title": "Quality Gate Verification Unit Test Course",
+  "description": "",
+  "total_competencies": 3,
+  "total_questions": 25,
+  "question_types_distribution": {
+    "multiple_choice_7_options": 25
+  },
+  "questions_per_competency": {
+    "C-01": 9,
+    "C-02": 8,
+    "C-03": 8
+  },
+  "stage5_judge_audit": {
+    "available": false
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0, la Rúbrica Determinista de 20 puntos y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 14.0,
+    "final_score": 15.8,
+    "quality_tier": "ACEPTABLE (14.0 - 16.9 pts) — SILVER MASTERY",
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 1.0,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 3 competencias (0 Hechos, 3 Conceptos, 0 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=3). ZPD: 0/3 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 3.8,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=100.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 75 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 5.0,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 25/25 ítems. Unicidad diagnóstica de rationales: 100.0%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 2.0,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 15.8,
+      "penalties_applied": [],
+      "hard_penalties_total": 0,
+      "final_score": 15.8,
+      "quality_tier": "ACEPTABLE (14.0 - 16.9 pts) — SILVER MASTERY"
+    },
+    "mastery_path_readiness": {
+      "mpri_score": 73.5,
+      "mpri_max": 100.0,
+      "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 8.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 10.0,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 25.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 15.0,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 5.5,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 10.0,
+          "max": 10.0
+        }
+      }
+    },
+    "hard_penalties_precalculated": []
+  },
+  "deterministic_rubric": {
+    "dimension_scores": {
+      "architecture_granularity": {
+        "score": 1.0,
+        "max": 4.0,
+        "feedback": "Estructura curricular con 3 competencias (0 Hechos, 3 Conceptos, 0 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=3). ZPD: 0/3 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+      },
+      "assessment_quality": {
+        "score": 3.8,
+        "max": 5.0,
+        "feedback": "Modalidad: MC7=100.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 75 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+      },
+      "scaffolding_hints": {
+        "score": 5.0,
+        "max": 5.0,
+        "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 25/25 ítems. Unicidad diagnóstica de rationales: 100.0%."
+      },
+      "instructional_alignment": {
+        "score": 4.0,
+        "max": 4.0,
+        "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+      },
+      "technical_ergonomics": {
+        "score": 2.0,
+        "max": 2.0,
+        "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+      }
+    },
+    "raw_subtotal": 15.8,
+    "penalties_applied": [],
+    "hard_penalties_total": 0,
+    "final_score": 15.8,
+    "quality_tier": "ACEPTABLE (14.0 - 16.9 pts) — SILVER MASTERY"
+  },
+  "final_score": 15.8,
+  "quality_tier": "ACEPTABLE (14.0 - 16.9 pts) — SILVER MASTERY",
+  "audit_telemetry": {
+    "course_id": "gate_test_course",
+    "title": "Quality Gate Verification Unit Test Course",
+    "total_competencies": 3,
+    "total_questions": 25,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 3,
+        "category_distribution": {
+          "Fact": 0,
+          "Concept": 3,
+          "Skill": 0,
+          "Other": 0
+        },
+        "competencies_missing_prerequisites_count": 3,
+        "underpopulated_competencies_count": 0,
+        "underpopulated_competencies": [],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 8,
+        "max_questions_per_comp": 9
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 75,
+        "distractors_with_rationale_count": 75,
+        "rationale_coverage_pct": 100.0,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 0,
+        "zero_hints_items": [],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 0,
+        "missing_solutions_count": 0
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 0,
+        "unclosed_braces_items": [],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 0,
+        "template_variable_residue_items": []
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 0,
+        "blind_string_replacement_items": []
+      },
+      "cloned_distractor_value_linter": {
+        "cloned_distractor_items_count": 0,
+        "cloned_distractor_sample_items": []
+      },
+      "parenthetical_telltale_linter": {
+        "parenthetical_telltale_count": 0,
+        "parenthetical_telltale_items": []
+      },
+      "archetype_entropy_linter": {
+        "min_required_archetypes": 4,
+        "monotonous_competencies_count": 0,
+        "monotonous_competencies": [],
+        "low_archetype_variety_competencies_count": 0,
+        "low_archetype_variety_competencies": [],
+        "min_distinct_skeletons_observed": 0
+      },
+      "uninterpolated_math_variable_linter": {
+        "uninterpolated_math_items_count": 0,
+        "uninterpolated_math_sample_items": []
+      },
+      "zpd_progression_linter": {
+        "difficulty_distribution": {
+          "easy": 0,
+          "medium": 25,
+          "hard": 0
+        },
+        "bloom_distribution": {
+          "Analyze": 25
+        },
+        "eligible_competencies_evaluated": 3,
+        "zpd_dead_competencies_count": 3,
+        "zpd_dead_competencies": [
+          "C-01",
+          "C-02",
+          "C-03"
+        ],
+        "two_band_competencies_count": 0,
+        "three_band_competencies_count": 0,
+        "missing_hard_tier_competencies_count": 3,
+        "missing_easy_tier_competencies_count": 3,
+        "skill_questions_total": 0,
+        "skill_higher_bloom_count": 0,
+        "skill_higher_bloom_pct": 100.0
+      },
+      "retrieval_modality_linter": {
+        "mc7_count": 25,
+        "fib_count": 0,
+        "ms_count": 0,
+        "mc7_share_pct": 100.0,
+        "fib_share_pct": 0.0,
+        "ms_share_pct": 0.0,
+        "active_generation_or_discrimination_pct": 0.0,
+        "recognition_only_skill_competencies_count": 0,
+        "recognition_only_skill_competencies": []
+      },
+      "socratic_scaffolding_integrity_linter": {
+        "boilerplate_hints_items_count": 0,
+        "boilerplate_hints_pct": 0.0,
+        "boilerplate_sample_items": [],
+        "poisoned_hints_items_count": 0,
+        "poisoned_hints_pct": 0.0,
+        "poisoned_hints_sample_items": [],
+        "hint_answer_leak_items_count": 0,
+        "genuine_socratic_hints_pct": 100.0
+      },
+      "diagnostic_rationale_alignment_linter": {
+        "total_rationales": 75,
+        "unique_rationales": 75,
+        "rationale_uniqueness_pct": 100.0,
+        "magic_multiplier_distractor_items_count": 0,
+        "magic_multiplier_sample_items": []
+      },
+      "anti_gaming_psychometric_linter": {
+        "memorizable_competencies_count": 0,
+        "memorizable_competencies": [],
+        "length_padded_items_count": 0,
+        "length_padded_sample_items": [],
+        "cross_domain_prefix_items_count": 0,
+        "cross_domain_prefix_sample_items": [],
+        "vacuous_quantifier_items_count": 0,
+        "vacuous_quantifier_sample_items": []
+      },
+      "dag_mastery_topology_linter": {
+        "has_cycle": false,
+        "max_dag_depth": 0,
+        "connected_components_count": 3,
+        "multi_node_subgraphs_count": 0,
+        "inverted_prerequisite_edges_count": 0,
+        "inverted_prerequisite_edges": [],
+        "dangling_prerequisites_count": 0,
+        "isolated_competencies_count": 3,
+        "isolated_competencies": [
+          "C-01",
+          "C-02",
+          "C-03"
+        ],
+        "skills_without_prerequisites_count": 0,
+        "skills_without_prerequisites": []
+      },
+      "katex_frontend_ergonomics_linter": {
+        "prose_in_katex_text_items_count": 0,
+        "prose_in_katex_text_sample_items": [],
+        "raw_identifier_math_items_count": 0,
+        "raw_identifier_math_sample_items": []
+      }
+    },
+    "hard_penalties": [],
+    "risk_score": 14.0,
+    "mastery_path_readiness": {
+      "mpri_score": 73.5,
+      "mpri_max": 100.0,
+      "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 8.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 10.0,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 25.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 15.0,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 5.5,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 10.0,
+          "max": 10.0
+        }
+      }
+    },
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 1.0,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 3 competencias (0 Hechos, 3 Conceptos, 0 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=3). ZPD: 0/3 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 3.8,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=100.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 75 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 5.0,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 25/25 ítems. Unicidad diagnóstica de rationales: 100.0%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 2.0,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 15.8,
+      "penalties_applied": [],
+      "hard_penalties_total": 0,
+      "final_score": 15.8,
+      "quality_tier": "ACEPTABLE (14.0 - 16.9 pts) — SILVER MASTERY"
+    },
+    "final_score": 15.8,
+    "quality_tier": "ACEPTABLE (14.0 - 16.9 pts) — SILVER MASTERY",
+    "risk_clusters": {
+      "katex_issues": [],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [],
+      "template_residues": [],
+      "blind_replacements": [],
+      "cloned_distractors": [],
+      "archetype_monotony": [],
+      "poisoned_hints": [],
+      "boilerplate_hints": [],
+      "magic_multiplier_distractors": [],
+      "memorizable_answers": [],
+      "length_padded_options": [],
+      "cross_domain_prefixes": [],
+      "vacuous_quantifiers": [],
+      "katex_ergonomics": []
+    },
+    "all_issues": [
+      {
+        "linter": "zpd_progression_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "Q-001",
+        "competency_id": "C-01",
+        "message": "Colapso de calibración ZPD en 'C-01': 100% de sus 9 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma.",
+        "snippet": null
+      },
+      {
+        "linter": "zpd_progression_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "Q-002",
+        "competency_id": "C-02",
+        "message": "Colapso de calibración ZPD en 'C-02': 100% de sus 8 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma.",
+        "snippet": null
+      },
+      {
+        "linter": "zpd_progression_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "Q-003",
+        "competency_id": "C-03",
+        "message": "Colapso de calibración ZPD en 'C-03': 100% de sus 8 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma.",
+        "snippet": null
+      },
+      {
+        "linter": "retrieval_modality_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-001",
+        "competency_id": "C-01",
+        "message": "Monocultivo absoluto de reconocimiento pasivo: 25/25 (100%) son opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select.",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-01",
+        "competency_id": "C-01",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-01' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-02",
+        "competency_id": "C-02",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-02' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-03",
+        "competency_id": "C-03",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-03' (in_degree=0, out_degree=0).",
+        "snippet": null
+      }
+    ],
+    "issues_by_item": {
+      "Q-001": [
+        "[WARNING] Colapso de calibración ZPD en 'C-01': 100% de sus 9 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma.",
+        "[WARNING] Monocultivo absoluto de reconocimiento pasivo: 25/25 (100%) son opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select."
+      ],
+      "Q-002": [
+        "[WARNING] Colapso de calibración ZPD en 'C-02': 100% de sus 8 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma."
+      ],
+      "Q-003": [
+        "[WARNING] Colapso de calibración ZPD en 'C-03': 100% de sus 8 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma."
+      ],
+      "comp_C-01": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-01' (in_degree=0, out_degree=0)."
+      ],
+      "comp_C-02": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-02' (in_degree=0, out_degree=0)."
+      ],
+      "comp_C-03": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-03' (in_degree=0, out_degree=0)."
+      ]
+    }
+  },
+  "competencies": [
+    {
+      "id": "C-01",
+      "name": "Competency 1",
+      "category": "Concept",
+      "description": null,
+      "prerequisites": [],
+      "question_count": 9
+    },
+    {
+      "id": "C-02",
+      "name": "Competency 2",
+      "category": "Concept",
+      "description": null,
+      "prerequisites": [],
+      "question_count": 8
+    },
+    {
+      "id": "C-03",
+      "name": "Competency 3",
+      "category": "Concept",
+      "description": null,
+      "prerequisites": [],
+      "question_count": 8
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-001",
+      "competency_id": "C-01",
+      "competency_name": "Competency 1",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": null,
+      "bloom": "Analyze",
+      "stem": "Question stem text for item Q-001 with sufficient descriptive wording.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Option A is correct",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Option B distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-001 B"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Option C distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-001 C"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Option D distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-001 D"
+        }
+      ],
+      "correct_answer": "Option A is correct",
+      "hints_count": 3,
+      "hints": [
+        "Hint 1 step scaffolding",
+        "Hint 2 check calculations",
+        "Hint 3 dimensional analysis"
+      ],
+      "detailed_solution": "Step by step solution for question Q-001.",
+      "misconception_warning": null
+    },
+    {
+      "id": "Q-004",
+      "competency_id": "C-01",
+      "competency_name": "Competency 1",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": null,
+      "bloom": "Analyze",
+      "stem": "Question stem text for item Q-004 with sufficient descriptive wording.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Option A is correct",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Option B distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-004 B"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Option C distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-004 C"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Option D distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-004 D"
+        }
+      ],
+      "correct_answer": "Option A is correct",
+      "hints_count": 3,
+      "hints": [
+        "Hint 1 step scaffolding",
+        "Hint 2 check calculations",
+        "Hint 3 dimensional analysis"
+      ],
+      "detailed_solution": "Step by step solution for question Q-004.",
+      "misconception_warning": null
+    },
+    {
+      "id": "Q-002",
+      "competency_id": "C-02",
+      "competency_name": "Competency 2",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": null,
+      "bloom": "Analyze",
+      "stem": "Question stem text for item Q-002 with sufficient descriptive wording.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Option A is correct",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Option B distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-002 B"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Option C distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-002 C"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Option D distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-002 D"
+        }
+      ],
+      "correct_answer": "Option A is correct",
+      "hints_count": 3,
+      "hints": [
+        "Hint 1 step scaffolding",
+        "Hint 2 check calculations",
+        "Hint 3 dimensional analysis"
+      ],
+      "detailed_solution": "Step by step solution for question Q-002.",
+      "misconception_warning": null
+    },
+    {
+      "id": "Q-005",
+      "competency_id": "C-02",
+      "competency_name": "Competency 2",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": null,
+      "bloom": "Analyze",
+      "stem": "Question stem text for item Q-005 with sufficient descriptive wording.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Option A is correct",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Option B distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-005 B"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Option C distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-005 C"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Option D distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-005 D"
+        }
+      ],
+      "correct_answer": "Option A is correct",
+      "hints_count": 3,
+      "hints": [
+        "Hint 1 step scaffolding",
+        "Hint 2 check calculations",
+        "Hint 3 dimensional analysis"
+      ],
+      "detailed_solution": "Step by step solution for question Q-005.",
+      "misconception_warning": null
+    },
+    {
+      "id": "Q-003",
+      "competency_id": "C-03",
+      "competency_name": "Competency 3",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": null,
+      "bloom": "Analyze",
+      "stem": "Question stem text for item Q-003 with sufficient descriptive wording.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Option A is correct",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Option B distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-003 B"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Option C distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-003 C"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Option D distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-003 D"
+        }
+      ],
+      "correct_answer": "Option A is correct",
+      "hints_count": 3,
+      "hints": [
+        "Hint 1 step scaffolding",
+        "Hint 2 check calculations",
+        "Hint 3 dimensional analysis"
+      ],
+      "detailed_solution": "Step by step solution for question Q-003.",
+      "misconception_warning": null
+    },
+    {
+      "id": "Q-006",
+      "competency_id": "C-03",
+      "competency_name": "Competency 3",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": null,
+      "bloom": "Analyze",
+      "stem": "Question stem text for item Q-006 with sufficient descriptive wording.",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Option A is correct",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Option B distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-006 B"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Option C distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-006 C"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Option D distractor content with sufficient text length",
+          "is_correct": false,
+          "error_rationale": "Misconception explanation for item Q-006 D"
+        }
+      ],
+      "correct_answer": "Option A is correct",
+      "hints_count": 3,
+      "hints": [
+        "Hint 1 step scaffolding",
+        "Hint 2 check calculations",
+        "Hint 3 dimensional analysis"
+      ],
+      "detailed_solution": "Step by step solution for question Q-006.",
+      "misconception_warning": null
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [],
+    "template_residues": [],
+    "blind_replacements": [],
+    "cloned_distractors": [],
+    "archetype_monotony": [],
+    "poisoned_hints": [],
+    "boilerplate_hints": [],
+    "magic_multiplier_distractors": [],
+    "memorizable_answers": [],
+    "length_padded_options": [],
+    "cross_domain_prefixes": [],
+    "vacuous_quantifiers": [],
+    "katex_ergonomics": []
+  }
+}

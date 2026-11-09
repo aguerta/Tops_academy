@@ -1,0 +1,111 @@
+{
+  "course_metadata": {
+    "course_id": "estadistica_3_s9_vmapreduce22",
+    "unit_title": "Estadistica 3 S9 Vmapreduce22",
+    "detected_objective": "Dominio y aplicación analítica integral de la Inferencia Asintótica, Propiedades de Muestras Finitas, Leyes de los Grandes Números, Teoremas Límites y Método Delta en Estadística y Econometría",
+    "total_competencies": 48,
+    "total_questions": 1110,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-08 19:44:53"
+  },
+  "dimension_scores": {
+    "architecture_granularity": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Arquitectura curricular impecable con 48 micro-competencias atómicas perfectamente equilibradas (5 Hechos, 28 Conceptos, 15 Habilidades). Grafo DAG estrictamente acíclico y conexo (1 componente, profundidad 23), sin aristas invertidas ni nodos huérfanos. Calibración ZPD 100% activa en las 48 competencias con presencia garantizada de las 3 bandas de dificultad (285 easy, 285 medium, 540 hard), habilitando de manera óptima el algoritmo calibrateByMasteryDifficulty en todas las transiciones hacia Mastered."
+    },
+    "assessment_quality": {
+      "score": 5.0,
+      "max": 5.0,
+      "feedback": "Sobresaliente calidad psicométrica y diversidad multimodal: 50.00% fill_in_the_blank (555 reactivos) y 24.32% multiple_select (270 reactivos), alcanzando un 74.32% de evocación activa y discriminación condicional. Mínimo de 12 esqueletos analíticos distintos por competencia. Cobertura del 100% en error_rationale sobre 2,250 distractores evaluados con 92.89% de unicidad (2,090 rationales únicos). Cero multiplicadores mágicos sintéticos (1.333x), cero relleno [R-15], cero sesgo por longitud y 100% de acuerdo en la auditoría de jueces ciegos (120/120 ítems consensuados)."
+    },
+    "scaffolding_hints": {
+      "score": 4.9,
+      "max": 5.0,
+      "feedback": "Andamiaje socrático escalonado en el 100% de los reactivos (3 a 4 pistas por ítem: Conceptual -> Procedimental -> Operativa) con 0% de boilerplate Mad-Libs y 0% de pistas envenenadas, protegiendo de forma efectiva el límite de 3 strikes en PracticeSession.tsx. Soluciones detalladas paso a paso en el 100% del banco. Se deduce una fracción menor de 0.10 pts debido a que las advertencias de misconceptions en los 555 reactivos fill_in_the_blank están estandarizadas a nivel de competencia en lugar de variar por semilla paramétrica."
+    },
+    "instructional_alignment": {
+      "score": 4.0,
+      "max": 4.0,
+      "feedback": "Alineación pedagógica rigurosa y congruente con el dominio de la econometría teórica. El 95.05% del banco (1,055 reactivos) evalúa niveles cognitivos superiores de Bloom (Apply, Analyze, Evaluate), y el 100% de los reactivos de Habilidad (450/450) pertenece a Bloom Apply+. Registro formal auténtico, notación simbólica canónica y ausencia total de contaminación léxica inter-dominio o prefijos robóticos."
+    },
+    "technical_ergonomics": {
+      "score": 1.8,
+      "max": 2.0,
+      "feedback": "Sintaxis KaTeX limpia: cero delimitadores desbalanceados, cero triples dólares, cero llaves rotas y cero identificadores crudos de Python. La verificación semántica demostró que los 287 avisos de uninterpolated_math_variable_linter son 100% falsos positivos de comandos matemáticos KaTeX válidos (\\text{Var}, \\bar{Y}, \\operatorname{plim}, \\text{ECM}, \\text{MSE}, \\text{Cota}, \\sigma_{XY}). Se aplica una deducción de 0.20 pts por 5 reactivos en C-01 (Q-C01-036 a Q-C01-040) donde oraciones en prosa dentro de \\text{...} están embebidas en $...$, lo cual impone nowrap en KaTeX y puede causar fricción visual en viewports móviles estrechos."
+    }
+  },
+  "penalties_applied": [],
+  "raw_subtotal": 19.7,
+  "final_score": 19.7,
+  "quality_tier": "EXCELENTE (17-20)",
+  "mastery_path_readiness": {
+    "mpri_score": 99.95,
+    "mpri_max": 100.0,
+    "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
+    "pillars": {
+      "zpd_adaptive_progression": {
+        "score": 20.0,
+        "max": 20.0
+      },
+      "retrieval_modality_and_anti_gaming": {
+        "score": 20.0,
+        "max": 20.0
+      },
+      "socratic_scaffolding_lifeline": {
+        "score": 25.0,
+        "max": 25.0
+      },
+      "diagnostic_remediation_alignment": {
+        "score": 15.0,
+        "max": 15.0
+      },
+      "dag_and_interleaving_topology": {
+        "score": 10.0,
+        "max": 10.0
+      },
+      "cognitive_ergonomics_and_framing": {
+        "score": 9.95,
+        "max": 10.0
+      }
+    },
+    "student_journey_verdict": "El estudiante experimenta una trayectoria instruccional fluida y rigurosa en Top's Academy. En PracticeSession.tsx, el andamiaje progresivo de 3-4 pistas socráticas específicas por problema evita el bloqueo cognitivo y previene la pérdida prematura de los 3 strikes. En FeedbackToast.tsx, el 100% de los distractores provee un rationale explicativo de alta fidelidad que diagnostica el error algebraico puntual en lugar de entregar mensajes genéricos. La predominancia de fill_in_the_blank (50%) y multiple_select (24.32%) neutraliza cualquier estrategia de adivinación o gaming por descarte visual, asegurando un aprendizaje de dominio adaptativo genuino y robusto."
+  },
+  "discovered_lint_rules": [
+    {
+      "rule_id": "LINT-FALSE-POSITIVE-TEMPLATE-VAR-IN-LATEX",
+      "severity": "info",
+      "regex_pattern": "(?<!\\\\(?:bar|text|operatorname|hat|tilde|mathbf|mathcal|sigma_))\\{[A-Z][a-zA-Z0-9_]*\\}",
+      "description": "Previene falsos positivos en uninterpolated_math_variable_linter. La coincidencia simple de patrones \\{[A-Za-z0-9_]+\\} disparó 287 advertencias espurias sobre macros y comandos estándar de KaTeX (\\text{Var}, \\bar{Y}, \\operatorname{plim}, \\text{ECM}, \\text{MSE}, \\text{Cota}, \\sigma_{XY}). La regla exige un negative lookbehind para comandos LaTeX antes de clasificar llaves como variables de plantilla no interpoladas.",
+      "evidence_items": [
+        "Q-C01-021",
+        "Q-H02-136",
+        "Q-C03-141",
+        "Q-Hab02-091",
+        "Q-Hab07-473",
+        "Q-C28-1062"
+      ]
+    },
+    {
+      "rule_id": "LINT-KATEX-PROSE-WRAP",
+      "severity": "warning",
+      "regex_pattern": "\\$(?:[^\\$]*\\\\text\\{[^\\}]{25,}\\}[^\\$]*)\\$",
+      "description": "Detecta oraciones explicativas en prosa de 25 o más caracteres dentro de delimitadores KaTeX $...$. En dispositivos móviles o componentes de opción en tarjeta, esto inhibe el ajuste de línea automático (white-space: nowrap) y puede inducir desbordamiento horizontal en pantalla estrecha.",
+      "evidence_items": [
+        "Q-C01-036",
+        "Q-C01-037",
+        "Q-C01-038",
+        "Q-C01-039",
+        "Q-C01-040"
+      ]
+    }
+  ],
+  "remediation_actions": [
+    "Separar la prosa del bloque matemático KaTeX en las 5 opciones identificadas de la competencia C-01 (Q-C01-036 a Q-C01-040), extrayendo el texto explicativo fuera de los delimitadores $...$ para optimizar el ajuste de línea responsivo en pantallas móviles.",
+    "Actualizar el linter de variables matemáticas no interpoladas en el motor de QA de Top's Academy incorporando la lista blanca de comandos LaTeX canónicos (\\bar, \\text, \\operatorname, \\sigma_) para eliminar los 287 falsos positivos en futuras pasadas automatizadas.",
+    "Para futuras ampliaciones del banco de preguntas, parametrizar la advertencia de common_misconception_warning en el lote fill_in_the_blank incorporando valores numéricos específicos según la variante paramétrica generada."
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-08 19:44:53",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
+}

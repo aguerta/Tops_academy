@@ -1,0 +1,1305 @@
+{
+  "course_id": "test_strict_pass",
+  "filename": "test_strict_pass.json",
+  "title": "Strict Mode Test Course Pass",
+  "description": "",
+  "total_competencies": 1,
+  "total_questions": 25,
+  "question_types_distribution": {
+    "unknown": 25
+  },
+  "questions_per_competency": {
+    "C-01": 25
+  },
+  "stage5_judge_audit": {
+    "available": false
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0, la Rúbrica Determinista de 20 puntos y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 100.0,
+    "final_score": 0.0,
+    "quality_tier": "CRÍTICO (0.0 - 10.9 pts)",
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 2.5,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 1 competencias (0 Hechos, 0 Conceptos, 0 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 0/1 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 3.8,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=0.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 0 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.0,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 0/25 ítems. Unicidad diagnóstica de rationales: 100.0%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 2.0,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 16.3,
+      "penalties_applied": [
+        {
+          "rule": "hints_zero",
+          "deduction": 25.0,
+          "reason": "25 reactivo(s) carecen por completo de pistas progresivas (hints = 0)."
+        },
+        {
+          "rule": "answer_memorization_exploit",
+          "deduction": 0.5,
+          "reason": "1 competencia(s) permiten alcanzar 'Mastered' por memorización visual (<= 4 respuestas correctas únicas en >= 15 reactivos)."
+        }
+      ],
+      "hard_penalties_total": 25.5,
+      "final_score": 0.0,
+      "quality_tier": "CRÍTICO (0.0 - 10.9 pts)"
+    },
+    "mastery_path_readiness": {
+      "mpri_score": 48.5,
+      "mpri_max": 100.0,
+      "mpri_tier": "ILLUSION OF MASTERY (40-64): Riesgo de Memorización / Mecanización Superficial",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 8.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 5.5,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 0.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 15.0,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 10.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 10.0,
+          "max": 10.0
+        }
+      }
+    },
+    "hard_penalties_precalculated": [
+      {
+        "rule": "hints_zero",
+        "deduction": 25.0,
+        "reason": "25 reactivo(s) carecen por completo de pistas progresivas (hints = 0)."
+      },
+      {
+        "rule": "answer_memorization_exploit",
+        "deduction": 0.5,
+        "reason": "1 competencia(s) permiten alcanzar 'Mastered' por memorización visual (<= 4 respuestas correctas únicas en >= 15 reactivos)."
+      }
+    ]
+  },
+  "deterministic_rubric": {
+    "dimension_scores": {
+      "architecture_granularity": {
+        "score": 2.5,
+        "max": 4.0,
+        "feedback": "Estructura curricular con 1 competencias (0 Hechos, 0 Conceptos, 0 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 0/1 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+      },
+      "assessment_quality": {
+        "score": 3.8,
+        "max": 5.0,
+        "feedback": "Modalidad: MC7=0.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 0 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+      },
+      "scaffolding_hints": {
+        "score": 4.0,
+        "max": 5.0,
+        "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 0/25 ítems. Unicidad diagnóstica de rationales: 100.0%."
+      },
+      "instructional_alignment": {
+        "score": 4.0,
+        "max": 4.0,
+        "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+      },
+      "technical_ergonomics": {
+        "score": 2.0,
+        "max": 2.0,
+        "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+      }
+    },
+    "raw_subtotal": 16.3,
+    "penalties_applied": [
+      {
+        "rule": "hints_zero",
+        "deduction": 25.0,
+        "reason": "25 reactivo(s) carecen por completo de pistas progresivas (hints = 0)."
+      },
+      {
+        "rule": "answer_memorization_exploit",
+        "deduction": 0.5,
+        "reason": "1 competencia(s) permiten alcanzar 'Mastered' por memorización visual (<= 4 respuestas correctas únicas en >= 15 reactivos)."
+      }
+    ],
+    "hard_penalties_total": 25.5,
+    "final_score": 0.0,
+    "quality_tier": "CRÍTICO (0.0 - 10.9 pts)"
+  },
+  "final_score": 0.0,
+  "quality_tier": "CRÍTICO (0.0 - 10.9 pts)",
+  "audit_telemetry": {
+    "course_id": "test_strict_pass",
+    "title": "Strict Mode Test Course Pass",
+    "total_competencies": 1,
+    "total_questions": 25,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 1,
+        "category_distribution": {
+          "Fact": 0,
+          "Concept": 0,
+          "Skill": 0,
+          "Other": 1
+        },
+        "competencies_missing_prerequisites_count": 1,
+        "underpopulated_competencies_count": 0,
+        "underpopulated_competencies": [],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 25,
+        "max_questions_per_comp": 25
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 0,
+        "distractors_with_rationale_count": 0,
+        "rationale_coverage_pct": 100.0,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 25,
+        "zero_hints_items": [
+          "Q-00",
+          "Q-01",
+          "Q-02",
+          "Q-03",
+          "Q-04",
+          "Q-05",
+          "Q-06",
+          "Q-07",
+          "Q-08",
+          "Q-09",
+          "Q-10",
+          "Q-11",
+          "Q-12",
+          "Q-13",
+          "Q-14",
+          "Q-15",
+          "Q-16",
+          "Q-17",
+          "Q-18",
+          "Q-19",
+          "Q-20",
+          "Q-21",
+          "Q-22",
+          "Q-23",
+          "Q-24"
+        ],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 0,
+        "missing_solutions_count": 25
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 0,
+        "unclosed_braces_items": [],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 0,
+        "template_variable_residue_items": []
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 0,
+        "blind_string_replacement_items": []
+      },
+      "cloned_distractor_value_linter": {
+        "cloned_distractor_items_count": 0,
+        "cloned_distractor_sample_items": []
+      },
+      "parenthetical_telltale_linter": {
+        "parenthetical_telltale_count": 0,
+        "parenthetical_telltale_items": []
+      },
+      "archetype_entropy_linter": {
+        "min_required_archetypes": 4,
+        "monotonous_competencies_count": 1,
+        "monotonous_competencies": [
+          "C-01"
+        ],
+        "low_archetype_variety_competencies_count": 1,
+        "low_archetype_variety_competencies": [
+          "C-01"
+        ],
+        "min_distinct_skeletons_observed": 1
+      },
+      "uninterpolated_math_variable_linter": {
+        "uninterpolated_math_items_count": 0,
+        "uninterpolated_math_sample_items": []
+      },
+      "zpd_progression_linter": {
+        "difficulty_distribution": {
+          "easy": 0,
+          "medium": 25,
+          "hard": 0
+        },
+        "bloom_distribution": {
+          "unspecified": 25
+        },
+        "eligible_competencies_evaluated": 1,
+        "zpd_dead_competencies_count": 1,
+        "zpd_dead_competencies": [
+          "C-01"
+        ],
+        "two_band_competencies_count": 0,
+        "three_band_competencies_count": 0,
+        "missing_hard_tier_competencies_count": 1,
+        "missing_easy_tier_competencies_count": 1,
+        "skill_questions_total": 0,
+        "skill_higher_bloom_count": 0,
+        "skill_higher_bloom_pct": 100.0
+      },
+      "retrieval_modality_linter": {
+        "mc7_count": 0,
+        "fib_count": 0,
+        "ms_count": 0,
+        "mc7_share_pct": 0.0,
+        "fib_share_pct": 0.0,
+        "ms_share_pct": 0.0,
+        "active_generation_or_discrimination_pct": 0.0,
+        "recognition_only_skill_competencies_count": 0,
+        "recognition_only_skill_competencies": []
+      },
+      "socratic_scaffolding_integrity_linter": {
+        "boilerplate_hints_items_count": 0,
+        "boilerplate_hints_pct": 0.0,
+        "boilerplate_sample_items": [],
+        "poisoned_hints_items_count": 0,
+        "poisoned_hints_pct": 0.0,
+        "poisoned_hints_sample_items": [],
+        "hint_answer_leak_items_count": 0,
+        "genuine_socratic_hints_pct": 100.0
+      },
+      "diagnostic_rationale_alignment_linter": {
+        "total_rationales": 0,
+        "unique_rationales": 0,
+        "rationale_uniqueness_pct": 100.0,
+        "magic_multiplier_distractor_items_count": 0,
+        "magic_multiplier_sample_items": []
+      },
+      "anti_gaming_psychometric_linter": {
+        "memorizable_competencies_count": 1,
+        "memorizable_competencies": [
+          {
+            "competency_id": "C-01",
+            "unique_answers": 1,
+            "total_items": 25
+          }
+        ],
+        "length_padded_items_count": 0,
+        "length_padded_sample_items": [],
+        "cross_domain_prefix_items_count": 0,
+        "cross_domain_prefix_sample_items": [],
+        "vacuous_quantifier_items_count": 0,
+        "vacuous_quantifier_sample_items": []
+      },
+      "dag_mastery_topology_linter": {
+        "has_cycle": false,
+        "max_dag_depth": 0,
+        "connected_components_count": 1,
+        "multi_node_subgraphs_count": 0,
+        "inverted_prerequisite_edges_count": 0,
+        "inverted_prerequisite_edges": [],
+        "dangling_prerequisites_count": 0,
+        "isolated_competencies_count": 0,
+        "isolated_competencies": [],
+        "skills_without_prerequisites_count": 0,
+        "skills_without_prerequisites": []
+      },
+      "katex_frontend_ergonomics_linter": {
+        "prose_in_katex_text_items_count": 0,
+        "prose_in_katex_text_sample_items": [],
+        "raw_identifier_math_items_count": 0,
+        "raw_identifier_math_sample_items": []
+      }
+    },
+    "hard_penalties": [
+      {
+        "rule": "hints_zero",
+        "deduction": 25.0,
+        "reason": "25 reactivo(s) carecen por completo de pistas progresivas (hints = 0)."
+      },
+      {
+        "rule": "answer_memorization_exploit",
+        "deduction": 0.5,
+        "reason": "1 competencia(s) permiten alcanzar 'Mastered' por memorización visual (<= 4 respuestas correctas únicas en >= 15 reactivos)."
+      }
+    ],
+    "risk_score": 100.0,
+    "mastery_path_readiness": {
+      "mpri_score": 48.5,
+      "mpri_max": 100.0,
+      "mpri_tier": "ILLUSION OF MASTERY (40-64): Riesgo de Memorización / Mecanización Superficial",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 8.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 5.5,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 0.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 15.0,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 10.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 10.0,
+          "max": 10.0
+        }
+      }
+    },
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 2.5,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 1 competencias (0 Hechos, 0 Conceptos, 0 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 0/1 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 3.8,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=0.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 0 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.0,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 0/25 ítems. Unicidad diagnóstica de rationales: 100.0%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 2.0,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 16.3,
+      "penalties_applied": [
+        {
+          "rule": "hints_zero",
+          "deduction": 25.0,
+          "reason": "25 reactivo(s) carecen por completo de pistas progresivas (hints = 0)."
+        },
+        {
+          "rule": "answer_memorization_exploit",
+          "deduction": 0.5,
+          "reason": "1 competencia(s) permiten alcanzar 'Mastered' por memorización visual (<= 4 respuestas correctas únicas en >= 15 reactivos)."
+        }
+      ],
+      "hard_penalties_total": 25.5,
+      "final_score": 0.0,
+      "quality_tier": "CRÍTICO (0.0 - 10.9 pts)"
+    },
+    "final_score": 0.0,
+    "quality_tier": "CRÍTICO (0.0 - 10.9 pts)",
+    "risk_clusters": {
+      "katex_issues": [],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [
+        "Q-00",
+        "Q-01",
+        "Q-02",
+        "Q-03",
+        "Q-04",
+        "Q-05",
+        "Q-06",
+        "Q-07",
+        "Q-08",
+        "Q-09",
+        "Q-10",
+        "Q-11",
+        "Q-12",
+        "Q-13",
+        "Q-14",
+        "Q-15",
+        "Q-16",
+        "Q-17",
+        "Q-18",
+        "Q-19",
+        "Q-20",
+        "Q-21",
+        "Q-22",
+        "Q-23",
+        "Q-24"
+      ],
+      "template_residues": [],
+      "blind_replacements": [],
+      "cloned_distractors": [],
+      "archetype_monotony": [
+        "Q-00"
+      ],
+      "poisoned_hints": [],
+      "boilerplate_hints": [],
+      "magic_multiplier_distractors": [],
+      "memorizable_answers": [
+        "Q-00"
+      ],
+      "length_padded_options": [],
+      "cross_domain_prefixes": [],
+      "vacuous_quantifiers": [],
+      "katex_ergonomics": []
+    },
+    "all_issues": [
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-00",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-00",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-01",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-01",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-02",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-02",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-03",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-03",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-04",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-04",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-05",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-05",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-06",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-06",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-07",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-07",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-08",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-08",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-09",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-09",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-10",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-10",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-11",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-11",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-12",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-12",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-13",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-13",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-14",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-14",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-15",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-15",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-16",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-16",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-17",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-17",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-18",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-18",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-19",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-19",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-20",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-20",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-21",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-21",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-22",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-22",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-23",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-23",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-24",
+        "competency_id": "C-01",
+        "message": "Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "snippet": null
+      },
+      {
+        "linter": "scaffolding_hints_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "critical",
+        "item_id": "Q-24",
+        "competency_id": "C-01",
+        "message": "Reactivo carece de detailed_solution",
+        "snippet": null
+      },
+      {
+        "linter": "archetype_entropy_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-00",
+        "competency_id": "C-01",
+        "message": "Monocultivo de arquetipo en competencia 'C-01': 100.0% de las preguntas comparten la misma plantilla estructural (1 esqueleto(s) distinto(s))",
+        "snippet": null
+      },
+      {
+        "linter": "zpd_progression_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "Q-00",
+        "competency_id": "C-01",
+        "message": "Colapso de calibración ZPD en 'C-01': 100% de sus 25 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma.",
+        "snippet": null
+      },
+      {
+        "linter": "retrieval_modality_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-00",
+        "competency_id": "C-01",
+        "message": "Monocultivo absoluto de reconocimiento pasivo: 0/25 (100%) son opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select.",
+        "snippet": null
+      },
+      {
+        "linter": "anti_gaming_psychometric_linter",
+        "dimension": "D2_assessment",
+        "severity": "critical",
+        "item_id": "Q-00",
+        "competency_id": "C-01",
+        "message": "Vulnerabilidad de memorización mecánica en 'C-01': solo 1 clave(s) correcta(s) única(s) en 25 reactivos (el alumno memoriza la cadena sin leer el problema).",
+        "snippet": null
+      }
+    ],
+    "issues_by_item": {
+      "Q-00": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution",
+        "[WARNING] Monocultivo de arquetipo en competencia 'C-01': 100.0% de las preguntas comparten la misma plantilla estructural (1 esqueleto(s) distinto(s))",
+        "[WARNING] Colapso de calibración ZPD en 'C-01': 100% de sus 25 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma.",
+        "[WARNING] Monocultivo absoluto de reconocimiento pasivo: 0/25 (100%) son opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select.",
+        "[CRITICAL] Vulnerabilidad de memorización mecánica en 'C-01': solo 1 clave(s) correcta(s) única(s) en 25 reactivos (el alumno memoriza la cadena sin leer el problema)."
+      ],
+      "Q-01": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-02": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-03": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-04": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-05": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-06": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-07": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-08": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-09": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-10": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-11": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-12": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-13": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-14": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-15": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-16": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-17": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-18": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-19": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-20": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-21": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-22": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-23": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ],
+      "Q-24": [
+        "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+        "[CRITICAL] Reactivo carece de detailed_solution"
+      ]
+    }
+  },
+  "competencies": [
+    {
+      "id": "C-01",
+      "name": "Concept 1",
+      "category": null,
+      "description": null,
+      "prerequisites": [],
+      "question_count": 25
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-00",
+      "competency_id": "C-01",
+      "competency_name": "Concept 1",
+      "category": "",
+      "type": null,
+      "difficulty": null,
+      "bloom": null,
+      "stem": "Stem 0 with sufficient context length.",
+      "options": [
+        {
+          "id": "A",
+          "content": "Ans",
+          "is_correct": true
+        }
+      ],
+      "correct_answer": "Ans",
+      "hints_count": 0,
+      "hints": null,
+      "detailed_solution": null,
+      "misconception_warning": null
+    },
+    {
+      "id": "Q-01",
+      "competency_id": "C-01",
+      "competency_name": "Concept 1",
+      "category": "",
+      "type": null,
+      "difficulty": null,
+      "bloom": null,
+      "stem": "Stem 1 with sufficient context length.",
+      "options": [
+        {
+          "id": "A",
+          "content": "Ans",
+          "is_correct": true
+        }
+      ],
+      "correct_answer": "Ans",
+      "hints_count": 0,
+      "hints": null,
+      "detailed_solution": null,
+      "misconception_warning": null
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [
+      {
+        "id": "Q-00",
+        "competency_id": "C-01",
+        "stem": "Stem 0 with sufficient context length.",
+        "options": [
+          {
+            "id": "A",
+            "content": "Ans",
+            "is_correct": true
+          }
+        ],
+        "hints": null,
+        "detailed_solution": null,
+        "misconception_warning": null,
+        "detected_issues": [
+          "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+          "[CRITICAL] Reactivo carece de detailed_solution",
+          "[WARNING] Monocultivo de arquetipo en competencia 'C-01': 100.0% de las preguntas comparten la misma plantilla estructural (1 esqueleto(s) distinto(s))",
+          "[WARNING] Colapso de calibración ZPD en 'C-01': 100% de sus 25 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma.",
+          "[WARNING] Monocultivo absoluto de reconocimiento pasivo: 0/25 (100%) son opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select.",
+          "[CRITICAL] Vulnerabilidad de memorización mecánica en 'C-01': solo 1 clave(s) correcta(s) única(s) en 25 reactivos (el alumno memoriza la cadena sin leer el problema)."
+        ]
+      },
+      {
+        "id": "Q-01",
+        "competency_id": "C-01",
+        "stem": "Stem 1 with sufficient context length.",
+        "options": [
+          {
+            "id": "A",
+            "content": "Ans",
+            "is_correct": true
+          }
+        ],
+        "hints": null,
+        "detailed_solution": null,
+        "misconception_warning": null,
+        "detected_issues": [
+          "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+          "[CRITICAL] Reactivo carece de detailed_solution"
+        ]
+      },
+      {
+        "id": "Q-02",
+        "competency_id": "C-01",
+        "stem": "Stem 2 with sufficient context length.",
+        "options": [
+          {
+            "id": "A",
+            "content": "Ans",
+            "is_correct": true
+          }
+        ],
+        "hints": null,
+        "detailed_solution": null,
+        "misconception_warning": null,
+        "detected_issues": [
+          "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+          "[CRITICAL] Reactivo carece de detailed_solution"
+        ]
+      },
+      {
+        "id": "Q-03",
+        "competency_id": "C-01",
+        "stem": "Stem 3 with sufficient context length.",
+        "options": [
+          {
+            "id": "A",
+            "content": "Ans",
+            "is_correct": true
+          }
+        ],
+        "hints": null,
+        "detailed_solution": null,
+        "misconception_warning": null,
+        "detected_issues": [
+          "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+          "[CRITICAL] Reactivo carece de detailed_solution"
+        ]
+      },
+      {
+        "id": "Q-04",
+        "competency_id": "C-01",
+        "stem": "Stem 4 with sufficient context length.",
+        "options": [
+          {
+            "id": "A",
+            "content": "Ans",
+            "is_correct": true
+          }
+        ],
+        "hints": null,
+        "detailed_solution": null,
+        "misconception_warning": null,
+        "detected_issues": [
+          "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+          "[CRITICAL] Reactivo carece de detailed_solution"
+        ]
+      }
+    ],
+    "template_residues": [],
+    "blind_replacements": [],
+    "cloned_distractors": [],
+    "archetype_monotony": [
+      {
+        "id": "Q-00",
+        "competency_id": "C-01",
+        "stem": "Stem 0 with sufficient context length.",
+        "options": [
+          {
+            "id": "A",
+            "content": "Ans",
+            "is_correct": true
+          }
+        ],
+        "hints": null,
+        "detailed_solution": null,
+        "misconception_warning": null,
+        "detected_issues": [
+          "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+          "[CRITICAL] Reactivo carece de detailed_solution",
+          "[WARNING] Monocultivo de arquetipo en competencia 'C-01': 100.0% de las preguntas comparten la misma plantilla estructural (1 esqueleto(s) distinto(s))",
+          "[WARNING] Colapso de calibración ZPD en 'C-01': 100% de sus 25 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma.",
+          "[WARNING] Monocultivo absoluto de reconocimiento pasivo: 0/25 (100%) son opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select.",
+          "[CRITICAL] Vulnerabilidad de memorización mecánica en 'C-01': solo 1 clave(s) correcta(s) única(s) en 25 reactivos (el alumno memoriza la cadena sin leer el problema)."
+        ]
+      }
+    ],
+    "poisoned_hints": [],
+    "boilerplate_hints": [],
+    "magic_multiplier_distractors": [],
+    "memorizable_answers": [
+      {
+        "id": "Q-00",
+        "competency_id": "C-01",
+        "stem": "Stem 0 with sufficient context length.",
+        "options": [
+          {
+            "id": "A",
+            "content": "Ans",
+            "is_correct": true
+          }
+        ],
+        "hints": null,
+        "detailed_solution": null,
+        "misconception_warning": null,
+        "detected_issues": [
+          "[CRITICAL] Reactivo carece por completo de pistas (hints = 0). Aplica penalización dura de -1.0 pt.",
+          "[CRITICAL] Reactivo carece de detailed_solution",
+          "[WARNING] Monocultivo de arquetipo en competencia 'C-01': 100.0% de las preguntas comparten la misma plantilla estructural (1 esqueleto(s) distinto(s))",
+          "[WARNING] Colapso de calibración ZPD en 'C-01': 100% de sus 25 reactivos tienen dificultad 'medium', desactivando calibrateByMasteryDifficulty en la plataforma.",
+          "[WARNING] Monocultivo absoluto de reconocimiento pasivo: 0/25 (100%) son opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select.",
+          "[CRITICAL] Vulnerabilidad de memorización mecánica en 'C-01': solo 1 clave(s) correcta(s) única(s) en 25 reactivos (el alumno memoriza la cadena sin leer el problema)."
+        ]
+      }
+    ],
+    "length_padded_options": [],
+    "cross_domain_prefixes": [],
+    "vacuous_quantifiers": [],
+    "katex_ergonomics": []
+  }
+}

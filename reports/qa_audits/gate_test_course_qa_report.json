@@ -1,0 +1,27 @@
+{
+  "course_metadata": {
+    "course_id": "gate_test_course",
+    "unit_title": "Quality Gate Verification Unit Test Course",
+    "detected_objective": "",
+    "total_competencies": 3,
+    "total_questions": 25,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 25
+    },
+    "platform_status": "ACTIVO",
+    "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
+    "evaluation_date": "2026-11-08"
+  },
+  "dimension_scores": {},
+  "penalties_applied": [],
+  "raw_subtotal": 20.0,
+  "final_score": 20.0,
+  "quality_tier": "EXCELENTE (PLATINUM MASTERY)",
+  "mastery_path_readiness": {},
+  "remediation_actions": [
+    "Certificación plena para despliegue en plataforma Top's Academy con Nivel EXCELENTE (PLATINUM MASTERY).",
+    "El banco de 25 reactivos y 3 competencias cumple con los estándares Quality Matters, OSCQR y Mastery Learning."
+  ],
+  "discovered_lint_rules": [],
+  "platform_status": "ACTIVO"
+}

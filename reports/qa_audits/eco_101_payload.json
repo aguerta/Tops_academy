@@ -1,0 +1,3286 @@
+{
+  "course_id": "eco_101",
+  "filename": "eco_101.json",
+  "title": "Economía Abierta y Balanza de Pagos",
+  "description": "Curso completo de Economía Abierta y Balanza de Pagos con validación psicométrica estricta.",
+  "total_competencies": 21,
+  "total_questions": 63,
+  "question_types_distribution": {
+    "multiple_choice_7_options": 63
+  },
+  "questions_per_competency": {
+    "C-01": 3,
+    "C-02": 3,
+    "C-03": 3,
+    "C-04": 3,
+    "C-05": 3,
+    "C-06": 3,
+    "C-07": 3,
+    "C-08": 3,
+    "C-09": 3,
+    "C-10": 3,
+    "Hab-01": 3,
+    "Hab-02": 3,
+    "Hab-03": 3,
+    "Hab-04": 3,
+    "Hab-05": 3,
+    "Hab-06": 3,
+    "H-01": 3,
+    "H-02": 3,
+    "H-03": 3,
+    "H-04": 3,
+    "H-05": 3
+  },
+  "stage5_judge_audit": {
+    "available": false
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0, la Rúbrica Determinista de 20 puntos y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 18.25,
+    "final_score": 13.95,
+    "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)",
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 0.0,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 21 competencias (5 Hechos, 10 Conceptos, 6 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=21). ZPD: 0/21 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 3.8,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=100.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 189 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.15,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 63/63 ítems. Unicidad diagnóstica de rationales: 1.59%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 2.0,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 13.95,
+      "penalties_applied": [],
+      "hard_penalties_total": 0,
+      "final_score": 13.95,
+      "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)"
+    },
+    "mastery_path_readiness": {
+      "mpri_score": 75.23,
+      "mpri_max": 100.0,
+      "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 10.0,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 25.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 10.23,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 0.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 10.0,
+          "max": 10.0
+        }
+      }
+    },
+    "hard_penalties_precalculated": []
+  },
+  "deterministic_rubric": {
+    "dimension_scores": {
+      "architecture_granularity": {
+        "score": 0.0,
+        "max": 4.0,
+        "feedback": "Estructura curricular con 21 competencias (5 Hechos, 10 Conceptos, 6 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=21). ZPD: 0/21 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+      },
+      "assessment_quality": {
+        "score": 3.8,
+        "max": 5.0,
+        "feedback": "Modalidad: MC7=100.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 189 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+      },
+      "scaffolding_hints": {
+        "score": 4.15,
+        "max": 5.0,
+        "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 63/63 ítems. Unicidad diagnóstica de rationales: 1.59%."
+      },
+      "instructional_alignment": {
+        "score": 4.0,
+        "max": 4.0,
+        "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+      },
+      "technical_ergonomics": {
+        "score": 2.0,
+        "max": 2.0,
+        "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+      }
+    },
+    "raw_subtotal": 13.95,
+    "penalties_applied": [],
+    "hard_penalties_total": 0,
+    "final_score": 13.95,
+    "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)"
+  },
+  "final_score": 13.95,
+  "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)",
+  "audit_telemetry": {
+    "course_id": "eco_101",
+    "title": "Economía Abierta y Balanza de Pagos",
+    "total_competencies": 21,
+    "total_questions": 63,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 21,
+        "category_distribution": {
+          "Fact": 5,
+          "Concept": 10,
+          "Skill": 6,
+          "Other": 0
+        },
+        "competencies_missing_prerequisites_count": 21,
+        "underpopulated_competencies_count": 0,
+        "underpopulated_competencies": [],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 3,
+        "max_questions_per_comp": 3
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 189,
+        "distractors_with_rationale_count": 189,
+        "rationale_coverage_pct": 100.0,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 0,
+        "zero_hints_items": [],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 0,
+        "missing_solutions_count": 0
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 0,
+        "unclosed_braces_items": [],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 0,
+        "template_variable_residue_items": []
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 0,
+        "blind_string_replacement_items": []
+      },
+      "cloned_distractor_value_linter": {
+        "cloned_distractor_items_count": 0,
+        "cloned_distractor_sample_items": []
+      },
+      "parenthetical_telltale_linter": {
+        "parenthetical_telltale_count": 0,
+        "parenthetical_telltale_items": []
+      },
+      "archetype_entropy_linter": {
+        "min_required_archetypes": 4,
+        "monotonous_competencies_count": 0,
+        "monotonous_competencies": [],
+        "low_archetype_variety_competencies_count": 0,
+        "low_archetype_variety_competencies": [],
+        "min_distinct_skeletons_observed": 0
+      },
+      "uninterpolated_math_variable_linter": {
+        "uninterpolated_math_items_count": 0,
+        "uninterpolated_math_sample_items": []
+      },
+      "zpd_progression_linter": {
+        "difficulty_distribution": {
+          "easy": 0,
+          "medium": 63,
+          "hard": 0
+        },
+        "bloom_distribution": {
+          "Understand": 30,
+          "Apply": 18,
+          "Remember": 15
+        },
+        "eligible_competencies_evaluated": 0,
+        "zpd_dead_competencies_count": 0,
+        "zpd_dead_competencies": [],
+        "two_band_competencies_count": 0,
+        "three_band_competencies_count": 0,
+        "missing_hard_tier_competencies_count": 0,
+        "missing_easy_tier_competencies_count": 0,
+        "skill_questions_total": 18,
+        "skill_higher_bloom_count": 18,
+        "skill_higher_bloom_pct": 100.0
+      },
+      "retrieval_modality_linter": {
+        "mc7_count": 63,
+        "fib_count": 0,
+        "ms_count": 0,
+        "mc7_share_pct": 100.0,
+        "fib_share_pct": 0.0,
+        "ms_share_pct": 0.0,
+        "active_generation_or_discrimination_pct": 0.0,
+        "recognition_only_skill_competencies_count": 0,
+        "recognition_only_skill_competencies": []
+      },
+      "socratic_scaffolding_integrity_linter": {
+        "boilerplate_hints_items_count": 0,
+        "boilerplate_hints_pct": 0.0,
+        "boilerplate_sample_items": [],
+        "poisoned_hints_items_count": 0,
+        "poisoned_hints_pct": 0.0,
+        "poisoned_hints_sample_items": [],
+        "hint_answer_leak_items_count": 0,
+        "genuine_socratic_hints_pct": 100.0
+      },
+      "diagnostic_rationale_alignment_linter": {
+        "total_rationales": 189,
+        "unique_rationales": 3,
+        "rationale_uniqueness_pct": 1.59,
+        "magic_multiplier_distractor_items_count": 0,
+        "magic_multiplier_sample_items": []
+      },
+      "anti_gaming_psychometric_linter": {
+        "memorizable_competencies_count": 0,
+        "memorizable_competencies": [],
+        "length_padded_items_count": 0,
+        "length_padded_sample_items": [],
+        "cross_domain_prefix_items_count": 0,
+        "cross_domain_prefix_sample_items": [],
+        "vacuous_quantifier_items_count": 0,
+        "vacuous_quantifier_sample_items": []
+      },
+      "dag_mastery_topology_linter": {
+        "has_cycle": false,
+        "max_dag_depth": 0,
+        "connected_components_count": 21,
+        "multi_node_subgraphs_count": 0,
+        "inverted_prerequisite_edges_count": 0,
+        "inverted_prerequisite_edges": [],
+        "dangling_prerequisites_count": 0,
+        "isolated_competencies_count": 21,
+        "isolated_competencies": [
+          "C-01",
+          "C-02",
+          "C-03",
+          "C-04",
+          "C-05",
+          "C-06",
+          "C-07",
+          "C-08",
+          "C-09",
+          "C-10",
+          "Hab-01",
+          "Hab-02",
+          "Hab-03",
+          "Hab-04",
+          "Hab-05",
+          "Hab-06",
+          "H-01",
+          "H-02",
+          "H-03",
+          "H-04",
+          "H-05"
+        ],
+        "skills_without_prerequisites_count": 0,
+        "skills_without_prerequisites": []
+      },
+      "katex_frontend_ergonomics_linter": {
+        "prose_in_katex_text_items_count": 0,
+        "prose_in_katex_text_sample_items": [],
+        "raw_identifier_math_items_count": 0,
+        "raw_identifier_math_sample_items": []
+      }
+    },
+    "hard_penalties": [],
+    "risk_score": 18.25,
+    "mastery_path_readiness": {
+      "mpri_score": 75.23,
+      "mpri_max": 100.0,
+      "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 10.0,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 25.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 10.23,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 0.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 10.0,
+          "max": 10.0
+        }
+      }
+    },
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 0.0,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 21 competencias (5 Hechos, 10 Conceptos, 6 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=21). ZPD: 0/21 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 3.8,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=100.0%, FIB=0.0%, MS=0.0% (0.0% evocación activa/discriminación). Distractores: 189 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.15,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 63/63 ítems. Unicidad diagnóstica de rationales: 1.59%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 2.0,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 13.95,
+      "penalties_applied": [],
+      "hard_penalties_total": 0,
+      "final_score": 13.95,
+      "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)"
+    },
+    "final_score": 13.95,
+    "quality_tier": "DEFICIENTE (11.0 - 13.9 pts)",
+    "risk_clusters": {
+      "katex_issues": [],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [
+        "Q-C01-01"
+      ],
+      "template_residues": [],
+      "blind_replacements": [],
+      "cloned_distractors": [],
+      "archetype_monotony": [],
+      "poisoned_hints": [],
+      "boilerplate_hints": [],
+      "magic_multiplier_distractors": [],
+      "memorizable_answers": [],
+      "length_padded_options": [],
+      "cross_domain_prefixes": [],
+      "vacuous_quantifiers": [],
+      "katex_ergonomics": []
+    },
+    "all_issues": [
+      {
+        "linter": "retrieval_modality_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-C01-01",
+        "competency_id": "C-01",
+        "message": "Monocultivo absoluto de reconocimiento pasivo: 63/63 (100%) son opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select.",
+        "snippet": null
+      },
+      {
+        "linter": "diagnostic_rationale_alignment_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-C01-01",
+        "competency_id": "C-01",
+        "message": "Reciclaje masivo de error_rationale: solo 3/189 (1.59%) justificaciones diagnósticas son únicas en todo el curso.",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-01",
+        "competency_id": "C-01",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-01' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-02",
+        "competency_id": "C-02",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-02' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-03",
+        "competency_id": "C-03",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-03' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-04",
+        "competency_id": "C-04",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-04' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-05",
+        "competency_id": "C-05",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-05' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-06",
+        "competency_id": "C-06",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-06' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-07",
+        "competency_id": "C-07",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-07' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-08",
+        "competency_id": "C-08",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-08' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-09",
+        "competency_id": "C-09",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-09' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_C-10",
+        "competency_id": "C-10",
+        "message": "Nodo isla desconectado del grafo de dominio: 'C-10' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_Hab-01",
+        "competency_id": "Hab-01",
+        "message": "Nodo isla desconectado del grafo de dominio: 'Hab-01' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_Hab-02",
+        "competency_id": "Hab-02",
+        "message": "Nodo isla desconectado del grafo de dominio: 'Hab-02' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_Hab-03",
+        "competency_id": "Hab-03",
+        "message": "Nodo isla desconectado del grafo de dominio: 'Hab-03' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_Hab-04",
+        "competency_id": "Hab-04",
+        "message": "Nodo isla desconectado del grafo de dominio: 'Hab-04' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_Hab-05",
+        "competency_id": "Hab-05",
+        "message": "Nodo isla desconectado del grafo de dominio: 'Hab-05' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_Hab-06",
+        "competency_id": "Hab-06",
+        "message": "Nodo isla desconectado del grafo de dominio: 'Hab-06' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_H-01",
+        "competency_id": "H-01",
+        "message": "Nodo isla desconectado del grafo de dominio: 'H-01' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_H-02",
+        "competency_id": "H-02",
+        "message": "Nodo isla desconectado del grafo de dominio: 'H-02' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_H-03",
+        "competency_id": "H-03",
+        "message": "Nodo isla desconectado del grafo de dominio: 'H-03' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_H-04",
+        "competency_id": "H-04",
+        "message": "Nodo isla desconectado del grafo de dominio: 'H-04' (in_degree=0, out_degree=0).",
+        "snippet": null
+      },
+      {
+        "linter": "dag_mastery_topology_linter",
+        "dimension": "D1_architecture",
+        "severity": "warning",
+        "item_id": "comp_H-05",
+        "competency_id": "H-05",
+        "message": "Nodo isla desconectado del grafo de dominio: 'H-05' (in_degree=0, out_degree=0).",
+        "snippet": null
+      }
+    ],
+    "issues_by_item": {
+      "Q-C01-01": [
+        "[WARNING] Monocultivo absoluto de reconocimiento pasivo: 63/63 (100%) son opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select.",
+        "[WARNING] Reciclaje masivo de error_rationale: solo 3/189 (1.59%) justificaciones diagnósticas son únicas en todo el curso."
+      ],
+      "comp_C-01": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-01' (in_degree=0, out_degree=0)."
+      ],
+      "comp_C-02": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-02' (in_degree=0, out_degree=0)."
+      ],
+      "comp_C-03": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-03' (in_degree=0, out_degree=0)."
+      ],
+      "comp_C-04": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-04' (in_degree=0, out_degree=0)."
+      ],
+      "comp_C-05": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-05' (in_degree=0, out_degree=0)."
+      ],
+      "comp_C-06": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-06' (in_degree=0, out_degree=0)."
+      ],
+      "comp_C-07": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-07' (in_degree=0, out_degree=0)."
+      ],
+      "comp_C-08": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-08' (in_degree=0, out_degree=0)."
+      ],
+      "comp_C-09": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-09' (in_degree=0, out_degree=0)."
+      ],
+      "comp_C-10": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'C-10' (in_degree=0, out_degree=0)."
+      ],
+      "comp_Hab-01": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'Hab-01' (in_degree=0, out_degree=0)."
+      ],
+      "comp_Hab-02": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'Hab-02' (in_degree=0, out_degree=0)."
+      ],
+      "comp_Hab-03": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'Hab-03' (in_degree=0, out_degree=0)."
+      ],
+      "comp_Hab-04": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'Hab-04' (in_degree=0, out_degree=0)."
+      ],
+      "comp_Hab-05": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'Hab-05' (in_degree=0, out_degree=0)."
+      ],
+      "comp_Hab-06": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'Hab-06' (in_degree=0, out_degree=0)."
+      ],
+      "comp_H-01": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'H-01' (in_degree=0, out_degree=0)."
+      ],
+      "comp_H-02": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'H-02' (in_degree=0, out_degree=0)."
+      ],
+      "comp_H-03": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'H-03' (in_degree=0, out_degree=0)."
+      ],
+      "comp_H-04": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'H-04' (in_degree=0, out_degree=0)."
+      ],
+      "comp_H-05": [
+        "[WARNING] Nodo isla desconectado del grafo de dominio: 'H-05' (in_degree=0, out_degree=0)."
+      ]
+    }
+  },
+  "competencies": [
+    {
+      "id": "C-01",
+      "name": "Concepto Teórico #1",
+      "category": "Concept",
+      "description": "Descripción completa del concepto teórico #1 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "C-02",
+      "name": "Concepto Teórico #2",
+      "category": "Concept",
+      "description": "Descripción completa del concepto teórico #2 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "C-03",
+      "name": "Concepto Teórico #3",
+      "category": "Concept",
+      "description": "Descripción completa del concepto teórico #3 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "C-04",
+      "name": "Concepto Teórico #4",
+      "category": "Concept",
+      "description": "Descripción completa del concepto teórico #4 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "C-05",
+      "name": "Concepto Teórico #5",
+      "category": "Concept",
+      "description": "Descripción completa del concepto teórico #5 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "C-06",
+      "name": "Concepto Teórico #6",
+      "category": "Concept",
+      "description": "Descripción completa del concepto teórico #6 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "C-07",
+      "name": "Concepto Teórico #7",
+      "category": "Concept",
+      "description": "Descripción completa del concepto teórico #7 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "C-08",
+      "name": "Concepto Teórico #8",
+      "category": "Concept",
+      "description": "Descripción completa del concepto teórico #8 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "C-09",
+      "name": "Concepto Teórico #9",
+      "category": "Concept",
+      "description": "Descripción completa del concepto teórico #9 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "C-10",
+      "name": "Concepto Teórico #10",
+      "category": "Concept",
+      "description": "Descripción completa del concepto teórico #10 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "Hab-01",
+      "name": "Habilidad Práctica #1",
+      "category": "Skill",
+      "description": "Descripción completa de la habilidad práctica #1 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "Hab-02",
+      "name": "Habilidad Práctica #2",
+      "category": "Skill",
+      "description": "Descripción completa de la habilidad práctica #2 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "Hab-03",
+      "name": "Habilidad Práctica #3",
+      "category": "Skill",
+      "description": "Descripción completa de la habilidad práctica #3 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "Hab-04",
+      "name": "Habilidad Práctica #4",
+      "category": "Skill",
+      "description": "Descripción completa de la habilidad práctica #4 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "Hab-05",
+      "name": "Habilidad Práctica #5",
+      "category": "Skill",
+      "description": "Descripción completa de la habilidad práctica #5 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "Hab-06",
+      "name": "Habilidad Práctica #6",
+      "category": "Skill",
+      "description": "Descripción completa de la habilidad práctica #6 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "H-01",
+      "name": "Hecho Empírico #1",
+      "category": "Fact",
+      "description": "Descripción completa del hecho empírico #1 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "H-02",
+      "name": "Hecho Empírico #2",
+      "category": "Fact",
+      "description": "Descripción completa del hecho empírico #2 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "H-03",
+      "name": "Hecho Empírico #3",
+      "category": "Fact",
+      "description": "Descripción completa del hecho empírico #3 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "H-04",
+      "name": "Hecho Empírico #4",
+      "category": "Fact",
+      "description": "Descripción completa del hecho empírico #4 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    },
+    {
+      "id": "H-05",
+      "name": "Hecho Empírico #5",
+      "category": "Fact",
+      "description": "Descripción completa del hecho empírico #5 para validación psicométrica.",
+      "prerequisites": [],
+      "question_count": 3
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-C01-01",
+      "competency_id": "C-01",
+      "competency_name": "Concepto Teórico #1",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C01-01. ¿Cuál es la propiedad de C-01?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C01-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C01-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C01-01 correspondiente a la competencia C-01.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-01."
+    },
+    {
+      "id": "Q-C01-02",
+      "competency_id": "C-01",
+      "competency_name": "Concepto Teórico #1",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C01-02. ¿Cuál es la propiedad de C-01?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C01-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C01-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C01-02 correspondiente a la competencia C-01.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-01."
+    },
+    {
+      "id": "Q-C02-01",
+      "competency_id": "C-02",
+      "competency_name": "Concepto Teórico #2",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C02-01. ¿Cuál es la propiedad de C-02?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C02-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C02-01 correspondiente a la competencia C-02.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-02."
+    },
+    {
+      "id": "Q-C02-02",
+      "competency_id": "C-02",
+      "competency_name": "Concepto Teórico #2",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C02-02. ¿Cuál es la propiedad de C-02?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C02-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C02-02 correspondiente a la competencia C-02.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-02."
+    },
+    {
+      "id": "Q-C03-01",
+      "competency_id": "C-03",
+      "competency_name": "Concepto Teórico #3",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C03-01. ¿Cuál es la propiedad de C-03?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C03-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C03-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C03-01 correspondiente a la competencia C-03.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-03."
+    },
+    {
+      "id": "Q-C03-02",
+      "competency_id": "C-03",
+      "competency_name": "Concepto Teórico #3",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C03-02. ¿Cuál es la propiedad de C-03?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C03-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C03-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C03-02 correspondiente a la competencia C-03.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-03."
+    },
+    {
+      "id": "Q-C04-01",
+      "competency_id": "C-04",
+      "competency_name": "Concepto Teórico #4",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C04-01. ¿Cuál es la propiedad de C-04?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C04-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C04-01 correspondiente a la competencia C-04.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-04."
+    },
+    {
+      "id": "Q-C04-02",
+      "competency_id": "C-04",
+      "competency_name": "Concepto Teórico #4",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C04-02. ¿Cuál es la propiedad de C-04?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C04-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C04-02 correspondiente a la competencia C-04.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-04."
+    },
+    {
+      "id": "Q-C05-01",
+      "competency_id": "C-05",
+      "competency_name": "Concepto Teórico #5",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C05-01. ¿Cuál es la propiedad de C-05?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C05-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C05-01 correspondiente a la competencia C-05.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-05."
+    },
+    {
+      "id": "Q-C05-02",
+      "competency_id": "C-05",
+      "competency_name": "Concepto Teórico #5",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C05-02. ¿Cuál es la propiedad de C-05?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C05-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C05-02 correspondiente a la competencia C-05.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-05."
+    },
+    {
+      "id": "Q-C06-01",
+      "competency_id": "C-06",
+      "competency_name": "Concepto Teórico #6",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C06-01. ¿Cuál es la propiedad de C-06?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C06-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C06-01 correspondiente a la competencia C-06.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-06."
+    },
+    {
+      "id": "Q-C06-02",
+      "competency_id": "C-06",
+      "competency_name": "Concepto Teórico #6",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C06-02. ¿Cuál es la propiedad de C-06?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C06-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C06-02 correspondiente a la competencia C-06.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-06."
+    },
+    {
+      "id": "Q-C07-01",
+      "competency_id": "C-07",
+      "competency_name": "Concepto Teórico #7",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C07-01. ¿Cuál es la propiedad de C-07?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C07-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C07-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C07-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C07-01 correspondiente a la competencia C-07.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-07."
+    },
+    {
+      "id": "Q-C07-02",
+      "competency_id": "C-07",
+      "competency_name": "Concepto Teórico #7",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C07-02. ¿Cuál es la propiedad de C-07?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C07-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C07-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C07-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C07-02 correspondiente a la competencia C-07.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-07."
+    },
+    {
+      "id": "Q-C08-01",
+      "competency_id": "C-08",
+      "competency_name": "Concepto Teórico #8",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C08-01. ¿Cuál es la propiedad de C-08?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C08-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C08-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C08-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C08-01 correspondiente a la competencia C-08.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-08."
+    },
+    {
+      "id": "Q-C08-02",
+      "competency_id": "C-08",
+      "competency_name": "Concepto Teórico #8",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C08-02. ¿Cuál es la propiedad de C-08?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C08-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C08-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C08-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C08-02 correspondiente a la competencia C-08.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-08."
+    },
+    {
+      "id": "Q-C09-01",
+      "competency_id": "C-09",
+      "competency_name": "Concepto Teórico #9",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C09-01. ¿Cuál es la propiedad de C-09?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C09-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C09-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C09-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C09-01 correspondiente a la competencia C-09.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-09."
+    },
+    {
+      "id": "Q-C09-02",
+      "competency_id": "C-09",
+      "competency_name": "Concepto Teórico #9",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C09-02. ¿Cuál es la propiedad de C-09?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C09-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C09-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C09-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C09-02 correspondiente a la competencia C-09.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-09."
+    },
+    {
+      "id": "Q-C10-01",
+      "competency_id": "C-10",
+      "competency_name": "Concepto Teórico #10",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C10-01. ¿Cuál es la propiedad de C-10?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C10-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C10-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C10-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C10-01 correspondiente a la competencia C-10.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-10."
+    },
+    {
+      "id": "Q-C10-02",
+      "competency_id": "C-10",
+      "competency_name": "Concepto Teórico #10",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Understand",
+      "stem": "Considere el modelo teórico fundamental en el reactivo Q-C10-02. ¿Cuál es la propiedad de C-10?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-C10-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-C10-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-C10-03"
+        }
+      ],
+      "correct_answer": "Opción teórica correcta del modelo de equilibrio",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-C10-02 correspondiente a la competencia C-10.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-10."
+    },
+    {
+      "id": "Q-Hab01-01",
+      "competency_id": "Hab-01",
+      "competency_name": "Habilidad Práctica #1",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab01-01. ¿Cómo se aplica la regla de Hab-01?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab01-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab01-01 correspondiente a la competencia Hab-01.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-01."
+    },
+    {
+      "id": "Q-Hab01-02",
+      "competency_id": "Hab-01",
+      "competency_name": "Habilidad Práctica #1",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab01-02. ¿Cómo se aplica la regla de Hab-01?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab01-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab01-02 correspondiente a la competencia Hab-01.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-01."
+    },
+    {
+      "id": "Q-Hab02-01",
+      "competency_id": "Hab-02",
+      "competency_name": "Habilidad Práctica #2",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab02-01. ¿Cómo se aplica la regla de Hab-02?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab02-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab02-01 correspondiente a la competencia Hab-02.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-02."
+    },
+    {
+      "id": "Q-Hab02-02",
+      "competency_id": "Hab-02",
+      "competency_name": "Habilidad Práctica #2",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab02-02. ¿Cómo se aplica la regla de Hab-02?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab02-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab02-02 correspondiente a la competencia Hab-02.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-02."
+    },
+    {
+      "id": "Q-Hab03-01",
+      "competency_id": "Hab-03",
+      "competency_name": "Habilidad Práctica #3",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab03-01. ¿Cómo se aplica la regla de Hab-03?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab03-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab03-01 correspondiente a la competencia Hab-03.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-03."
+    },
+    {
+      "id": "Q-Hab03-02",
+      "competency_id": "Hab-03",
+      "competency_name": "Habilidad Práctica #3",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab03-02. ¿Cómo se aplica la regla de Hab-03?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab03-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab03-02 correspondiente a la competencia Hab-03.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-03."
+    },
+    {
+      "id": "Q-Hab04-01",
+      "competency_id": "Hab-04",
+      "competency_name": "Habilidad Práctica #4",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab04-01. ¿Cómo se aplica la regla de Hab-04?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab04-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab04-01 correspondiente a la competencia Hab-04.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-04."
+    },
+    {
+      "id": "Q-Hab04-02",
+      "competency_id": "Hab-04",
+      "competency_name": "Habilidad Práctica #4",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab04-02. ¿Cómo se aplica la regla de Hab-04?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab04-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab04-02 correspondiente a la competencia Hab-04.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-04."
+    },
+    {
+      "id": "Q-Hab05-01",
+      "competency_id": "Hab-05",
+      "competency_name": "Habilidad Práctica #5",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab05-01. ¿Cómo se aplica la regla de Hab-05?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab05-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab05-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab05-01 correspondiente a la competencia Hab-05.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-05."
+    },
+    {
+      "id": "Q-Hab05-02",
+      "competency_id": "Hab-05",
+      "competency_name": "Habilidad Práctica #5",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab05-02. ¿Cómo se aplica la regla de Hab-05?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab05-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab05-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab05-02 correspondiente a la competencia Hab-05.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-05."
+    },
+    {
+      "id": "Q-Hab06-01",
+      "competency_id": "Hab-06",
+      "competency_name": "Habilidad Práctica #6",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab06-01. ¿Cómo se aplica la regla de Hab-06?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab06-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab06-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab06-01 correspondiente a la competencia Hab-06.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-06."
+    },
+    {
+      "id": "Q-Hab06-02",
+      "competency_id": "Hab-06",
+      "competency_name": "Habilidad Práctica #6",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Apply",
+      "stem": "Considere el ejercicio práctico en el reactivo Q-Hab06-02. ¿Cómo se aplica la regla de Hab-06?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "text": "Resultado del procedimiento algorítmico y derivación práctica (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-Hab06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-Hab06-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-Hab06-03"
+        }
+      ],
+      "correct_answer": "Resultado del procedimiento algorítmico y derivación práctica",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-Hab06-02 correspondiente a la competencia Hab-06.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a Hab-06."
+    },
+    {
+      "id": "Q-H01-01",
+      "competency_id": "H-01",
+      "competency_name": "Hecho Empírico #1",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "Considere la evidencia empírica en el reactivo Q-H01-01. ¿Cuál es el hecho estilizado en H-01?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "text": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-H01-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-H01-03"
+        }
+      ],
+      "correct_answer": "Constatación empírica demostrada en series históricas de datos",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-H01-01 correspondiente a la competencia H-01.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a H-01."
+    },
+    {
+      "id": "Q-H01-02",
+      "competency_id": "H-01",
+      "competency_name": "Hecho Empírico #1",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "Considere la evidencia empírica en el reactivo Q-H01-02. ¿Cuál es el hecho estilizado en H-01?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "text": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-H01-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-H01-03"
+        }
+      ],
+      "correct_answer": "Constatación empírica demostrada en series históricas de datos",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-H01-02 correspondiente a la competencia H-01.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a H-01."
+    },
+    {
+      "id": "Q-H02-01",
+      "competency_id": "H-02",
+      "competency_name": "Hecho Empírico #2",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "Considere la evidencia empírica en el reactivo Q-H02-01. ¿Cuál es el hecho estilizado en H-02?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "text": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-H02-03"
+        }
+      ],
+      "correct_answer": "Constatación empírica demostrada en series históricas de datos",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-H02-01 correspondiente a la competencia H-02.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a H-02."
+    },
+    {
+      "id": "Q-H02-02",
+      "competency_id": "H-02",
+      "competency_name": "Hecho Empírico #2",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "Considere la evidencia empírica en el reactivo Q-H02-02. ¿Cuál es el hecho estilizado en H-02?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "text": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-H02-03"
+        }
+      ],
+      "correct_answer": "Constatación empírica demostrada en series históricas de datos",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-H02-02 correspondiente a la competencia H-02.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a H-02."
+    },
+    {
+      "id": "Q-H03-01",
+      "competency_id": "H-03",
+      "competency_name": "Hecho Empírico #3",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "Considere la evidencia empírica en el reactivo Q-H03-01. ¿Cuál es el hecho estilizado en H-03?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "text": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-H03-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-H03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-H03-03"
+        }
+      ],
+      "correct_answer": "Constatación empírica demostrada en series históricas de datos",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-H03-01 correspondiente a la competencia H-03.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a H-03."
+    },
+    {
+      "id": "Q-H03-02",
+      "competency_id": "H-03",
+      "competency_name": "Hecho Empírico #3",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "Considere la evidencia empírica en el reactivo Q-H03-02. ¿Cuál es el hecho estilizado en H-03?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "text": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-H03-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-H03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-H03-03"
+        }
+      ],
+      "correct_answer": "Constatación empírica demostrada en series históricas de datos",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-H03-02 correspondiente a la competencia H-03.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a H-03."
+    },
+    {
+      "id": "Q-H04-01",
+      "competency_id": "H-04",
+      "competency_name": "Hecho Empírico #4",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "Considere la evidencia empírica en el reactivo Q-H04-01. ¿Cuál es el hecho estilizado en H-04?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "text": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-H04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-H04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-H04-03"
+        }
+      ],
+      "correct_answer": "Constatación empírica demostrada en series históricas de datos",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-H04-01 correspondiente a la competencia H-04.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a H-04."
+    },
+    {
+      "id": "Q-H04-02",
+      "competency_id": "H-04",
+      "competency_name": "Hecho Empírico #4",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "Considere la evidencia empírica en el reactivo Q-H04-02. ¿Cuál es el hecho estilizado en H-04?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "text": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-H04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-H04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-H04-03"
+        }
+      ],
+      "correct_answer": "Constatación empírica demostrada en series históricas de datos",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-H04-02 correspondiente a la competencia H-04.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a H-04."
+    },
+    {
+      "id": "Q-H05-01",
+      "competency_id": "H-05",
+      "competency_name": "Hecho Empírico #5",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "Considere la evidencia empírica en el reactivo Q-H05-01. ¿Cuál es el hecho estilizado en H-05?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "text": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-H05-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-H05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-H05-03"
+        }
+      ],
+      "correct_answer": "Constatación empírica demostrada en series históricas de datos",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-H05-01 correspondiente a la competencia H-05.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a H-05."
+    },
+    {
+      "id": "Q-H05-02",
+      "competency_id": "H-05",
+      "competency_name": "Hecho Empírico #5",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Remember",
+      "stem": "Considere la evidencia empírica en el reactivo Q-H05-02. ¿Cuál es el hecho estilizado en H-05?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "text": "Constatación empírica demostrada en series históricas de datos (Opción correcta con texto suficiente)",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 1",
+          "distractor_id": "D-H05-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 2",
+          "distractor_id": "D-H05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+          "is_correct": false,
+          "error_rationale": "Error 3",
+          "distractor_id": "D-H05-03"
+        }
+      ],
+      "correct_answer": "Constatación empírica demostrada en series históricas de datos",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+        "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+        "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+      ],
+      "detailed_solution": "Solución paso a paso detallada del reactivo Q-H05-02 correspondiente a la competencia H-05.",
+      "misconception_warning": "Advertencia sobre el error o misconception típica asociada a H-05."
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [
+      {
+        "id": "Q-C01-01",
+        "competency_id": "C-01",
+        "stem": "Considere el modelo teórico fundamental en el reactivo Q-C01-01. ¿Cuál es la propiedad de C-01?",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+            "text": "Opción teórica correcta del modelo de equilibrio (Opción correcta con texto suficiente)",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+            "text": "Distractor B con suficiente longitud de texto explicativo para pasar.",
+            "is_correct": false,
+            "error_rationale": "Error 1",
+            "distractor_id": "D-C01-01"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+            "text": "Distractor C con suficiente longitud de texto explicativo para pasar.",
+            "is_correct": false,
+            "error_rationale": "Error 2",
+            "distractor_id": "D-C01-02"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+            "text": "Distractor D con suficiente longitud de texto explicativo para pasar.",
+            "is_correct": false,
+            "error_rationale": "Error 3",
+            "distractor_id": "D-C01-03"
+          }
+        ],
+        "hints": [
+          "Primer paso de andamiaje analítico para resolver el ejercicio paso a paso.",
+          "Segundo paso de andamiaje analítico para verificar los cálculos intermedios.",
+          "Tercer paso: comprobar la consistencia teórica y dimensional del resultado."
+        ],
+        "detailed_solution": "Solución paso a paso detallada del reactivo Q-C01-01 correspondiente a la competencia C-01.",
+        "misconception_warning": "Advertencia sobre el error o misconception típica asociada a C-01.",
+        "detected_issues": [
+          "[WARNING] Monocultivo absoluto de reconocimiento pasivo: 63/63 (100%) son opción múltiple (MC7), con 0% fill_in_the_blank (evocación activa) y 0% multiple_select.",
+          "[WARNING] Reciclaje masivo de error_rationale: solo 3/189 (1.59%) justificaciones diagnósticas son únicas en todo el curso."
+        ]
+      }
+    ],
+    "template_residues": [],
+    "blind_replacements": [],
+    "cloned_distractors": [],
+    "archetype_monotony": [],
+    "poisoned_hints": [],
+    "boilerplate_hints": [],
+    "magic_multiplier_distractors": [],
+    "memorizable_answers": [],
+    "length_padded_options": [],
+    "cross_domain_prefixes": [],
+    "vacuous_quantifiers": [],
+    "katex_ergonomics": []
+  }
+}

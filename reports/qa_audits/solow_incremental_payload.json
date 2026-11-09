@@ -1,0 +1,859 @@
+{
+  "course_id": "solow_incremental",
+  "filename": "solow_incremental.json",
+  "title": "Modelo de Crecimiento de Solow",
+  "description": "Banco de ejercicios canonico y completo para validacion del sistema Top's Academy.",
+  "total_competencies": 2,
+  "total_questions": 61,
+  "question_types_distribution": {
+    "multiple_choice_7_options": 53,
+    "multiple_select": 4,
+    "fill_in_the_blank": 4
+  },
+  "questions_per_competency": {
+    "Hab-01": 31,
+    "Hab-02": 30
+  },
+  "stage5_judge_audit": {
+    "available": false
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0, la Rúbrica Determinista de 20 puntos y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 1.64,
+    "final_score": 17.86,
+    "quality_tier": "EXCELENTE (17.0 - 18.9 pts) — GOLD MASTERY",
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 3.25,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 2 competencias (0 Hechos, 0 Conceptos, 2 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=2). ZPD: 0/2 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 4.43,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=86.89%, FIB=6.56%, MS=6.56% (13.11% evocación activa/discriminación). Distractores: 330 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.18,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 61/61 ítems. Unicidad diagnóstica de rationales: 2.73%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 93.44% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 2.0,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 17.86,
+      "penalties_applied": [],
+      "hard_penalties_total": 0,
+      "final_score": 17.86,
+      "quality_tier": "EXCELENTE (17.0 - 18.9 pts) — GOLD MASTERY"
+    },
+    "mastery_path_readiness": {
+      "mpri_score": 83.81,
+      "mpri_max": 100.0,
+      "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 14.68,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 13.74,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 25.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 10.39,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 10.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 10.0,
+          "max": 10.0
+        }
+      }
+    },
+    "hard_penalties_precalculated": []
+  },
+  "deterministic_rubric": {
+    "dimension_scores": {
+      "architecture_granularity": {
+        "score": 3.25,
+        "max": 4.0,
+        "feedback": "Estructura curricular con 2 competencias (0 Hechos, 0 Conceptos, 2 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=2). ZPD: 0/2 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+      },
+      "assessment_quality": {
+        "score": 4.43,
+        "max": 5.0,
+        "feedback": "Modalidad: MC7=86.89%, FIB=6.56%, MS=6.56% (13.11% evocación activa/discriminación). Distractores: 330 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+      },
+      "scaffolding_hints": {
+        "score": 4.18,
+        "max": 5.0,
+        "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 61/61 ítems. Unicidad diagnóstica de rationales: 2.73%."
+      },
+      "instructional_alignment": {
+        "score": 4.0,
+        "max": 4.0,
+        "feedback": "Alineación cognitiva de Bloom: 93.44% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+      },
+      "technical_ergonomics": {
+        "score": 2.0,
+        "max": 2.0,
+        "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+      }
+    },
+    "raw_subtotal": 17.86,
+    "penalties_applied": [],
+    "hard_penalties_total": 0,
+    "final_score": 17.86,
+    "quality_tier": "EXCELENTE (17.0 - 18.9 pts) — GOLD MASTERY"
+  },
+  "final_score": 17.86,
+  "quality_tier": "EXCELENTE (17.0 - 18.9 pts) — GOLD MASTERY",
+  "audit_telemetry": {
+    "course_id": "solow_incremental",
+    "title": "Modelo de Crecimiento de Solow",
+    "total_competencies": 2,
+    "total_questions": 61,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 2,
+        "category_distribution": {
+          "Fact": 0,
+          "Concept": 0,
+          "Skill": 2,
+          "Other": 0
+        },
+        "competencies_missing_prerequisites_count": 2,
+        "underpopulated_competencies_count": 0,
+        "underpopulated_competencies": [],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 30,
+        "max_questions_per_comp": 31
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 330,
+        "distractors_with_rationale_count": 330,
+        "rationale_coverage_pct": 100.0,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 0,
+        "zero_hints_items": [],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 0,
+        "missing_solutions_count": 0
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 0,
+        "unclosed_braces_items": [],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 0,
+        "template_variable_residue_items": []
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 0,
+        "blind_string_replacement_items": []
+      },
+      "cloned_distractor_value_linter": {
+        "cloned_distractor_items_count": 0,
+        "cloned_distractor_sample_items": []
+      },
+      "parenthetical_telltale_linter": {
+        "parenthetical_telltale_count": 0,
+        "parenthetical_telltale_items": []
+      },
+      "archetype_entropy_linter": {
+        "min_required_archetypes": 4,
+        "monotonous_competencies_count": 1,
+        "monotonous_competencies": [
+          "Hab-02"
+        ],
+        "low_archetype_variety_competencies_count": 1,
+        "low_archetype_variety_competencies": [
+          "Hab-02"
+        ],
+        "min_distinct_skeletons_observed": 3
+      },
+      "uninterpolated_math_variable_linter": {
+        "uninterpolated_math_items_count": 0,
+        "uninterpolated_math_sample_items": []
+      },
+      "zpd_progression_linter": {
+        "difficulty_distribution": {
+          "easy": 0,
+          "medium": 57,
+          "hard": 4
+        },
+        "bloom_distribution": {
+          "Analyze": 53,
+          "Understand": 4,
+          "Apply": 4
+        },
+        "eligible_competencies_evaluated": 2,
+        "zpd_dead_competencies_count": 0,
+        "zpd_dead_competencies": [],
+        "two_band_competencies_count": 2,
+        "three_band_competencies_count": 0,
+        "missing_hard_tier_competencies_count": 0,
+        "missing_easy_tier_competencies_count": 2,
+        "skill_questions_total": 61,
+        "skill_higher_bloom_count": 57,
+        "skill_higher_bloom_pct": 93.44
+      },
+      "retrieval_modality_linter": {
+        "mc7_count": 53,
+        "fib_count": 4,
+        "ms_count": 4,
+        "mc7_share_pct": 86.89,
+        "fib_share_pct": 6.56,
+        "ms_share_pct": 6.56,
+        "active_generation_or_discrimination_pct": 13.11,
+        "recognition_only_skill_competencies_count": 0,
+        "recognition_only_skill_competencies": []
+      },
+      "socratic_scaffolding_integrity_linter": {
+        "boilerplate_hints_items_count": 0,
+        "boilerplate_hints_pct": 0.0,
+        "boilerplate_sample_items": [],
+        "poisoned_hints_items_count": 0,
+        "poisoned_hints_pct": 0.0,
+        "poisoned_hints_sample_items": [],
+        "hint_answer_leak_items_count": 0,
+        "genuine_socratic_hints_pct": 100.0
+      },
+      "diagnostic_rationale_alignment_linter": {
+        "total_rationales": 330,
+        "unique_rationales": 9,
+        "rationale_uniqueness_pct": 2.73,
+        "magic_multiplier_distractor_items_count": 0,
+        "magic_multiplier_sample_items": []
+      },
+      "anti_gaming_psychometric_linter": {
+        "memorizable_competencies_count": 0,
+        "memorizable_competencies": [],
+        "length_padded_items_count": 0,
+        "length_padded_sample_items": [],
+        "cross_domain_prefix_items_count": 0,
+        "cross_domain_prefix_sample_items": [],
+        "vacuous_quantifier_items_count": 0,
+        "vacuous_quantifier_sample_items": []
+      },
+      "dag_mastery_topology_linter": {
+        "has_cycle": false,
+        "max_dag_depth": 0,
+        "connected_components_count": 2,
+        "multi_node_subgraphs_count": 0,
+        "inverted_prerequisite_edges_count": 0,
+        "inverted_prerequisite_edges": [],
+        "dangling_prerequisites_count": 0,
+        "isolated_competencies_count": 0,
+        "isolated_competencies": [],
+        "skills_without_prerequisites_count": 0,
+        "skills_without_prerequisites": []
+      },
+      "katex_frontend_ergonomics_linter": {
+        "prose_in_katex_text_items_count": 0,
+        "prose_in_katex_text_sample_items": [],
+        "raw_identifier_math_items_count": 0,
+        "raw_identifier_math_sample_items": []
+      }
+    },
+    "hard_penalties": [],
+    "risk_score": 1.64,
+    "mastery_path_readiness": {
+      "mpri_score": 83.81,
+      "mpri_max": 100.0,
+      "mpri_tier": "PARTIAL MASTERY PATH (65-84): Funcional con Brechas ZPD/Modalidad",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 14.68,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 13.74,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 25.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 10.39,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 10.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 10.0,
+          "max": 10.0
+        }
+      }
+    },
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 3.25,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 2 competencias (0 Hechos, 0 Conceptos, 2 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=2). ZPD: 0/2 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 4.43,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=86.89%, FIB=6.56%, MS=6.56% (13.11% evocación activa/discriminación). Distractores: 330 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.18,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 61/61 ítems. Unicidad diagnóstica de rationales: 2.73%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 93.44% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 2.0,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 0 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 17.86,
+      "penalties_applied": [],
+      "hard_penalties_total": 0,
+      "final_score": 17.86,
+      "quality_tier": "EXCELENTE (17.0 - 18.9 pts) — GOLD MASTERY"
+    },
+    "final_score": 17.86,
+    "quality_tier": "EXCELENTE (17.0 - 18.9 pts) — GOLD MASTERY",
+    "risk_clusters": {
+      "katex_issues": [],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [
+        "Q-001"
+      ],
+      "template_residues": [],
+      "blind_replacements": [],
+      "cloned_distractors": [],
+      "archetype_monotony": [
+        "Q-Hab02-app-031"
+      ],
+      "poisoned_hints": [],
+      "boilerplate_hints": [],
+      "magic_multiplier_distractors": [],
+      "memorizable_answers": [],
+      "length_padded_options": [],
+      "cross_domain_prefixes": [],
+      "vacuous_quantifiers": [],
+      "katex_ergonomics": []
+    },
+    "all_issues": [
+      {
+        "linter": "archetype_entropy_linter",
+        "dimension": "D2_assessment",
+        "severity": "warning",
+        "item_id": "Q-Hab02-app-031",
+        "competency_id": "Hab-02",
+        "message": "Monocultivo de arquetipo en competencia 'Hab-02': 86.7% de las preguntas comparten la misma plantilla estructural (3 esqueleto(s) distinto(s))",
+        "snippet": null
+      },
+      {
+        "linter": "diagnostic_rationale_alignment_linter",
+        "dimension": "D3_scaffolding",
+        "severity": "warning",
+        "item_id": "Q-001",
+        "competency_id": "Hab-01",
+        "message": "Reciclaje masivo de error_rationale: solo 9/330 (2.73%) justificaciones diagnósticas son únicas en todo el curso.",
+        "snippet": null
+      }
+    ],
+    "issues_by_item": {
+      "Q-Hab02-app-031": [
+        "[WARNING] Monocultivo de arquetipo en competencia 'Hab-02': 86.7% de las preguntas comparten la misma plantilla estructural (3 esqueleto(s) distinto(s))"
+      ],
+      "Q-001": [
+        "[WARNING] Reciclaje masivo de error_rationale: solo 9/330 (2.73%) justificaciones diagnósticas son únicas en todo el curso."
+      ]
+    }
+  },
+  "competencies": [
+    {
+      "id": "Hab-01",
+      "name": "Analisis Cualitativo de Sistemas Dinamicos Planos",
+      "category": "Skill",
+      "description": "Determinacion de estabilidad asintotica y retratos de fase en sistemas bidimensionales.",
+      "prerequisites": [],
+      "question_count": 31
+    },
+    {
+      "id": "Hab-02",
+      "name": "Regla de Oro de Phelps Parte 1",
+      "category": "Skill",
+      "description": "Determinacion de estabilidad asintotica y retratos de fase en sistemas bidimensionales.",
+      "prerequisites": [],
+      "question_count": 30
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-001",
+      "competency_id": "Hab-01",
+      "competency_name": "Analisis Cualitativo de Sistemas Dinamicos Planos",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Analyze",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-001. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-001.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-001.",
+        "Tercer paso: verificar el discriminante espectral para Q-001."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-001. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "misconception_warning": "Advertencia sobre misconception comun en Q-001: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-002",
+      "competency_id": "Hab-01",
+      "competency_name": "Analisis Cualitativo de Sistemas Dinamicos Planos",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Analyze",
+      "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-002. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-002.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-002.",
+        "Tercer paso: verificar el discriminante espectral para Q-002."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-002. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "misconception_warning": "Advertencia sobre misconception comun en Q-002: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-Hab02-app-031",
+      "competency_id": "Hab-02",
+      "competency_name": "Regla de Oro de Phelps Parte 1",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Analyze",
+      "stem": "[Nuevo Módulo Phelps #1] Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-001. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-001.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-001.",
+        "Tercer paso: verificar el discriminante espectral para Q-001."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-001. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "misconception_warning": "Advertencia sobre misconception comun en Q-001: no confundir foco estable con centro conservativo."
+    },
+    {
+      "id": "Q-Hab02-app-032",
+      "competency_id": "Hab-02",
+      "competency_name": "Regla de Oro de Phelps Parte 1",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "medium",
+      "bloom": "Analyze",
+      "stem": "[Nuevo Módulo Phelps #2] Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-002. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "Distractor A para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error A para analisis cualitativo."
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "Distractor B para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error B para analisis cualitativo."
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "Respuesta correcta C para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "Distractor D para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error D para analisis cualitativo."
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "Distractor E para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error E para analisis cualitativo."
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "Distractor F para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error F para analisis cualitativo."
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "Distractor G para Q-002 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "is_correct": false,
+          "error_rationale": "Razonamiento del error G para analisis cualitativo."
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Primer paso de andamiaje analitico para resolver Q-002.",
+        "Segundo paso: evaluar los signos de la traza y el determinante para Q-002.",
+        "Tercer paso: verificar el discriminante espectral para Q-002."
+      ],
+      "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-002. Se calculan autovalores complejos conjugados con parte real negativa.",
+      "misconception_warning": "Advertencia sobre misconception comun en Q-002: no confundir foco estable con centro conservativo."
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [
+      {
+        "id": "Q-001",
+        "competency_id": "Hab-01",
+        "stem": "Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-001. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "Distractor A para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error A para analisis cualitativo."
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "Distractor B para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error B para analisis cualitativo."
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "Respuesta correcta C para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "Distractor D para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error D para analisis cualitativo."
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "Distractor E para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error E para analisis cualitativo."
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "Distractor F para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error F para analisis cualitativo."
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "Distractor G para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error G para analisis cualitativo."
+          }
+        ],
+        "hints": [
+          "Primer paso de andamiaje analitico para resolver Q-001.",
+          "Segundo paso: evaluar los signos de la traza y el determinante para Q-001.",
+          "Tercer paso: verificar el discriminante espectral para Q-001."
+        ],
+        "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-001. Se calculan autovalores complejos conjugados con parte real negativa.",
+        "misconception_warning": "Advertencia sobre misconception comun en Q-001: no confundir foco estable con centro conservativo.",
+        "detected_issues": [
+          "[WARNING] Reciclaje masivo de error_rationale: solo 9/330 (2.73%) justificaciones diagnósticas son únicas en todo el curso."
+        ]
+      }
+    ],
+    "template_residues": [],
+    "blind_replacements": [],
+    "cloned_distractors": [],
+    "archetype_monotony": [
+      {
+        "id": "Q-Hab02-app-031",
+        "competency_id": "Hab-02",
+        "stem": "[Nuevo Módulo Phelps #1] Considere el sistema dinamico $\\dot{x} = Ax$ para el item Q-001. Si $\\text{tr}(A) < 0$, $\\det(A) > 0$ y $\\Delta < 0$, ¿cual es la estabilidad?",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "Distractor A para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error A para analisis cualitativo."
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "Distractor B para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error B para analisis cualitativo."
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "Respuesta correcta C para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "Distractor D para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error D para analisis cualitativo."
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "Distractor E para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error E para analisis cualitativo."
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "Distractor F para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error F para analisis cualitativo."
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "Distractor G para Q-001 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+            "is_correct": false,
+            "error_rationale": "Razonamiento del error G para analisis cualitativo."
+          }
+        ],
+        "hints": [
+          "Primer paso de andamiaje analitico para resolver Q-001.",
+          "Segundo paso: evaluar los signos de la traza y el determinante para Q-001.",
+          "Tercer paso: verificar el discriminante espectral para Q-001."
+        ],
+        "detailed_solution": "Solucion paso a paso analitica del ejercicio Q-001. Se calculan autovalores complejos conjugados con parte real negativa.",
+        "misconception_warning": "Advertencia sobre misconception comun en Q-001: no confundir foco estable con centro conservativo.",
+        "detected_issues": [
+          "[WARNING] Monocultivo de arquetipo en competencia 'Hab-02': 86.7% de las preguntas comparten la misma plantilla estructural (3 esqueleto(s) distinto(s))"
+        ]
+      }
+    ],
+    "poisoned_hints": [],
+    "boilerplate_hints": [],
+    "magic_multiplier_distractors": [],
+    "memorizable_answers": [],
+    "length_padded_options": [],
+    "cross_domain_prefixes": [],
+    "vacuous_quantifiers": [],
+    "katex_ergonomics": []
+  }
+}

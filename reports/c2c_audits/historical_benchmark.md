@@ -1,12 +1,15 @@
 # Content-to-Course: Registro Histórico y Evolución de Rendimiento
 
 > [!NOTE]
-> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-08 14:17:05`. Total de ejecuciones auditadas: **46**.
+> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-08 19:37:27`. Total de ejecuciones auditadas: **49**.
 
 ## 1. Matriz de Evolución Temporal (Normalizada por Carga de Contenido)
 
 | Fecha | Run / Curso | Input (Pág / MB) | Output (Comp / Preg) | Tiempo de Pared | Speedup | Tokens Totales | Tok / Preg | Seg / Preg | Blind Judges (1st) | Intervenciones | Bottlenecks |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-11-09 00:37` | **estadistica_3_s9_vmapreduce23** (`32731599`) | 80 pág (0.93 MB) | 45 comp / 1070 preg | 18.4 min (1104.0s) | **9.98x** | 14,415,068 | **13,472.0** | **1.03s** | ✅ Limpio | 🛠️ 0 | ✅ 0 |
+| `2026-11-08 23:32` | **estadistica_3_s9_vmapreduce23** (`85744fc3`) | 80 pág (0.93 MB) | 45 comp / 1070 preg | 50.4 min (3025.0s) | **5.21x** | 50,073,335 | **46,797.5** | **2.83s** | ✅ Limpio | 🛠️ 0 | ⚠️ 2 |
+| `2026-11-08 21:51` | **estadistica_3_s9_vmapreduce22** (`25225ed7`) | 80 pág (0.93 MB) | 48 comp / 1110 preg | 49.8 min (2988.0s) | **4.9x** | 48,234,362 | **43,454.4** | **2.69s** | ✅ Limpio | 🛠️ 0 | ⚠️ 2 |
 | `2026-11-08 19:17` | **estadistica_3_s9_vmapreduce21** (`119c07de`) | 80 pág (0.93 MB) | 47 comp / 1080 preg | 24.6 min (1475.0s) | **10.73x** | 31,955,300 | **29,588.2** | **1.37s** | ✅ Limpio | 🛠️ 0 | ⚠️ 2 |
 | `2026-11-08 16:26` | **estadistica_3_s9_vmapreduce16** (`238df59a`) | 80 pág (0.93 MB) | 50 comp / 1160 preg | 117.4 min (7044.0s) | **3.24x** | 73,582,235 | **63,433.0** | **6.07s** | ❌ Falló | 🛠️ 23 | ⚠️ 4 |
 | `2026-11-08 08:33` | **estadistica_3_s9_vmapreduce17** (`d637aaa6`) | 80 pág (0.93 MB) | 44 comp / 0 preg | 26.6 min (1599.0s) | **11.47x** | 48,928,639 | **0.0** | **0.0s** | ❌ Falló | 🛠️ 0 | ⚠️ 2 |
@@ -58,10 +61,10 @@
 
 ## 2. Métricas Promedio del Sistema (Baselines Globales)
 
-- **Factor de Aceleración Paralela Promedio**: `5.02x`
-- **Densidad de Tokens Promedio por Pregunta**: `63,889.3 tokens/pregunta`
-- **Latencia Promedio por Pregunta Validada**: `7.67 s/pregunta`
-- **Rendimiento Promedio de Generación**: `21.44 preguntas/minuto`
+- **Factor de Aceleración Paralela Promedio**: `5.13x`
+- **Densidad de Tokens Promedio por Pregunta**: `61,575.0 tokens/pregunta`
+- **Latencia Promedio por Pregunta Validada**: `7.24 s/pregunta`
+- **Rendimiento Promedio de Generación**: `22.42 preguntas/minuto`
 
 ---
 *Generado por el motor forense `c2c-run-auditor`.*
