@@ -6,6 +6,10 @@ import {
   UnitTestRecord,
   CourseProgressDetails,
   CourseProgressStatus,
+  TimingStats,
+  QuestionTelemetry,
+  ChallengeSkillResult,
+  ChallengeExecutionSummary,
 } from '../types';
 
 const STORAGE_KEY = 'tops_academic_progress_v1';
@@ -26,6 +30,108 @@ export const TIER_COLORS: Record<MasteryTier, { bg: string; border: string; text
   'Attempted': { bg: '#ffffff', border: '#f3801e', text: '#f3801e' },
   'Not started': { bg: '#ffffff', border: '#88939e', text: '#88939e' },
 };
+
+export function formatTimingSeconds(seconds?: number): string {
+  if (seconds === undefined || seconds === null || isNaN(seconds)) return '--';
+  if (seconds < 60) return `${seconds}s`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return secs === 0 ? `${mins}m` : `${mins}m ${secs}s`;
+}
+
+export function getTierDowngrade(tier: MasteryTier): MasteryTier {
+  switch (tier) {
+    case 'Mastered':
+      return 'Proficient';
+    case 'Proficient':
+      return 'Familiar';
+    case 'Familiar':
+      return 'Attempted';
+    case 'Attempted':
+      return 'Attempted';
+    case 'Not started':
+    default:
+      return 'Attempted';
+  }
+}
+
+export function calculateTierTransition(
+  prevTier: MasteryTier,
+  score: number,
+  total: number,
+  sessionType: 'practice' | 'quiz' | 'test' | 'challenge',
+  hintsUsed: number = 0
+): MasteryTier {
+  if (total <= 0) return prevTier;
+  const ratio = score / total;
+  const isHintCapped = hintsUsed >= 2;
+
+  // Single question evaluation (Course Challenge slice or single item)
+  if (total === 1) {
+    if (score === 0) {
+      // Degradación obligatoria ante fallo individual
+      return getTierDowngrade(prevTier);
+    }
+    // Acierto (score === 1)
+    if (isHintCapped) {
+      if (prevTier === 'Not started' || prevTier === 'Attempted') {
+        return 'Familiar';
+      }
+      return prevTier; // Capped at Familiar
+    }
+    switch (prevTier) {
+      case 'Not started':
+        return 'Familiar'; // Aceleración diagnóstica
+      case 'Attempted':
+        return 'Familiar';
+      case 'Familiar':
+        return 'Proficient';
+      case 'Proficient':
+        return sessionType === 'test' ? 'Mastered' : 'Proficient';
+      case 'Mastered':
+        return 'Mastered';
+    }
+  }
+
+  // Multi-question evaluation
+  if (ratio >= 0.8) {
+    if (isHintCapped) {
+      if (prevTier === 'Not started' || prevTier === 'Attempted') {
+        return 'Familiar';
+      }
+      return prevTier;
+    }
+    if (sessionType === 'test') {
+      if (ratio === 1) return 'Mastered';
+      return 'Proficient';
+    }
+    if (sessionType === 'challenge') {
+      if (ratio === 1 && prevTier === 'Proficient') return 'Mastered';
+      if (prevTier === 'Mastered') return 'Mastered';
+      if (prevTier === 'Not started') return 'Familiar';
+      return 'Proficient';
+    }
+    // Practice or quiz
+    if (ratio === 1) {
+      return prevTier === 'Mastered' ? 'Mastered' : 'Proficient';
+    }
+    return prevTier === 'Not started' || prevTier === 'Attempted' ? 'Familiar' : prevTier;
+  }
+
+  if (ratio >= 0.5) {
+    // Si estaba en Mastered, cualquier error en evaluación acumulativa degrada a Proficient
+    if (prevTier === 'Mastered') {
+      return 'Proficient';
+    }
+    if (prevTier === 'Not started') {
+      return 'Attempted';
+    }
+    return prevTier;
+  }
+
+  // ratio < 0.5: Degradación estricta de 1 nivel hacia abajo
+  return getTierDowngrade(prevTier);
+}
 
 function getAllStoredData(): Record<string, CourseMasteryRecord> {
   try {
@@ -91,8 +197,16 @@ export function updateCompetencyScore(
   competencyId: string,
   score: number,
   total: number,
-  sessionType: 'practice' | 'quiz' | 'test' | 'challenge'
-): CourseMasteryRecord {
+  sessionType: 'practice' | 'quiz' | 'test' | 'challenge',
+  timingData?: { totalSeconds: number; hintsUsed?: number },
+  questionTelemetries?: QuestionTelemetry[]
+): CourseMasteryRecord & {
+  isNewRecord?: boolean;
+  previousTier?: MasteryTier;
+  newTier?: MasteryTier;
+  totalSeconds?: number;
+  avgSeconds?: number;
+} {
   const all = getAllStoredData();
   const record = loadCourseMastery(course);
 
@@ -105,52 +219,63 @@ export function updateCompetencyScore(
 
   const ratio = total > 0 ? score / total : 0;
   const percentage = Math.round(ratio * 100);
-  let newTier: MasteryTier = prev.status;
+  const hintsUsed = timingData?.hintsUsed ?? 0;
+  const previousTier = prev.status;
+  const newTier = calculateTierTransition(previousTier, score, total, sessionType, hintsUsed);
 
   let unitTestRecord: UnitTestRecord | undefined = prev.unit_test;
-
   if (sessionType === 'test') {
-    // Record latest Unit Test attempt
     unitTestRecord = {
       last_score: score,
       total_questions: total,
       percentage,
       completed_at: new Date().toISOString(),
     };
+  }
 
-    if (ratio === 1) {
-      newTier = 'Mastered';
-    } else if (ratio >= 0.8) {
-      newTier = 'Proficient';
-    } else if (ratio >= 0.5) {
-      newTier = 'Familiar';
-    } else {
-      newTier = 'Attempted';
-    }
-  } else if (sessionType === 'practice') {
-    if (ratio === 1) {
-      if (prev.status !== 'Mastered') {
-        newTier = 'Proficient';
-      }
-    } else if (ratio >= 0.7) {
-      if (prev.status === 'Not started' || prev.status === 'Attempted') {
-        newTier = 'Familiar';
-      }
-    } else {
-      if (prev.status === 'Not started') {
-        newTier = 'Attempted';
+  // Timing recording
+  const rawSec = timingData?.totalSeconds ?? 0;
+  const safeTotalSeconds = Math.min(rawSec, Math.max(1, total) * 300);
+  const avgSeconds = total > 0 ? Math.round(safeTotalSeconds / total) : 0;
+  let isNewRecord = false;
+
+  const timing = prev.timing ? { ...prev.timing } : {};
+  if (sessionType !== 'challenge') {
+    const currentTiming = timing[sessionType] ? { ...timing[sessionType] } : {};
+    // Only update best time in sessions with 100% approval
+    if (total > 0 && score === total) {
+      if (
+        currentTiming.best_avg_seconds_per_question === undefined ||
+        avgSeconds < currentTiming.best_avg_seconds_per_question
+      ) {
+        currentTiming.best_avg_seconds_per_question = avgSeconds;
+        currentTiming.best_total_seconds = safeTotalSeconds;
+        isNewRecord = true;
       }
     }
-  } else if (sessionType === 'quiz') {
-    if (ratio >= 0.8) {
-      if (prev.status !== 'Mastered') {
-        newTier = 'Proficient';
-      }
-    } else if (ratio >= 0.6) {
-      if (prev.status === 'Not started' || prev.status === 'Attempted') {
-        newTier = 'Familiar';
-      }
+    currentTiming.last_avg_seconds_per_question = avgSeconds;
+    currentTiming.last_total_seconds = safeTotalSeconds;
+    timing[sessionType] = currentTiming;
+  }
+
+  // Needs review & Misconceptions:
+  let needsReview = prev.needs_review || false;
+  let recentMisconceptions = prev.recent_misconceptions ? [...prev.recent_misconceptions] : [];
+  if (total > 0 && score < total) {
+    needsReview = true;
+    if (questionTelemetries && questionTelemetries.length > 0) {
+      const failed = questionTelemetries.filter((t) => !t.is_correct);
+      const newItems = failed.map((f) => ({
+        date: new Date().toISOString(),
+        question_id: f.question_id,
+        concept_name: f.question_text || f.question_id,
+      }));
+      recentMisconceptions = [...recentMisconceptions, ...newItems].slice(-5);
     }
+  } else if (total > 0 && score === total) {
+    // 100% clean session heals the competency
+    needsReview = false;
+    recentMisconceptions = [];
   }
 
   record.competencies[competencyId] = {
@@ -158,6 +283,9 @@ export function updateCompetencyScore(
     points: TIER_POINTS[newTier],
     last_practiced: new Date().toISOString(),
     unit_test: unitTestRecord,
+    timing,
+    needs_review: needsReview,
+    recent_misconceptions: recentMisconceptions,
     history: [
       ...prev.history,
       {
@@ -165,6 +293,10 @@ export function updateCompetencyScore(
         score,
         total,
         type: sessionType,
+        total_seconds: safeTotalSeconds,
+        avg_seconds_per_question: avgSeconds,
+        previous_tier: previousTier,
+        new_tier: newTier,
       },
     ],
   };
@@ -175,7 +307,177 @@ export function updateCompetencyScore(
 
   all[course.course_id] = record;
   saveAllStoredData(all);
-  return record;
+
+  return {
+    ...record,
+    isNewRecord,
+    previousTier,
+    newTier,
+    totalSeconds: safeTotalSeconds,
+    avgSeconds,
+  };
+}
+
+export function updateCourseChallengeWithSkillCalibration(
+  course: Course,
+  telemetry: QuestionTelemetry[],
+  totalSeconds: number
+): ChallengeExecutionSummary {
+  const all = getAllStoredData();
+  const record = loadCourseMastery(course);
+
+  const overallTotal = telemetry.length;
+  const overallScore = telemetry.filter((t) => t.is_correct).length;
+  const overallRatio = overallTotal > 0 ? overallScore / overallTotal : 0;
+  const overallPercentage = Math.round(overallRatio * 100);
+  const isCompleted = overallRatio === 1 && overallTotal > 0;
+
+  // Group by competency_id
+  const byComp: Record<
+    string,
+    { total: number; correct: number; hintsUsed: number; questions: QuestionTelemetry[] }
+  > = {};
+  for (const t of telemetry) {
+    if (!byComp[t.competency_id]) {
+      byComp[t.competency_id] = { total: 0, correct: 0, hintsUsed: 0, questions: [] };
+    }
+    byComp[t.competency_id].total++;
+    if (t.is_correct) byComp[t.competency_id].correct++;
+    byComp[t.competency_id].hintsUsed += t.hints_used;
+    byComp[t.competency_id].questions.push(t);
+  }
+
+  const skillsLeveledUp: ChallengeSkillResult[] = [];
+  const skillsLeveledDown: ChallengeSkillResult[] = [];
+  const skillsMaintained: ChallengeSkillResult[] = [];
+  const misconceptions: ChallengeExecutionSummary['misconceptions'] = [];
+
+  for (const comp of course.competencies) {
+    const compData = byComp[comp.id];
+    if (!compData) continue;
+
+    const prev = record.competencies[comp.id] || {
+      status: 'Not started',
+      points: 0,
+      last_practiced: new Date().toISOString(),
+      history: [],
+    };
+    const prevTier = prev.status;
+    const newTier = calculateTierTransition(
+      prevTier,
+      compData.correct,
+      compData.total,
+      'challenge',
+      compData.hintsUsed
+    );
+
+    const prevPoints = TIER_POINTS[prevTier];
+    const newPoints = TIER_POINTS[newTier];
+    const deltaPoints = newPoints - prevPoints;
+
+    let direction: 'up' | 'down' | 'maintained' = 'maintained';
+    if (deltaPoints > 0) direction = 'up';
+    else if (deltaPoints < 0) direction = 'down';
+
+    const skillResult: ChallengeSkillResult = {
+      competency_id: comp.id,
+      competency_name: comp.name,
+      total_questions: compData.total,
+      correct_questions: compData.correct,
+      previous_tier: prevTier,
+      new_tier: newTier,
+      direction,
+      delta_points: deltaPoints,
+    };
+
+    if (direction === 'up') skillsLeveledUp.push(skillResult);
+    else if (direction === 'down') skillsLeveledDown.push(skillResult);
+    else skillsMaintained.push(skillResult);
+
+    // Collect misconceptions
+    for (const q of compData.questions) {
+      if (!q.is_correct) {
+        misconceptions.push({
+          question_id: q.question_id,
+          competency_id: comp.id,
+          competency_name: comp.name,
+          text: q.question_text || q.question_id,
+        });
+      }
+    }
+
+    // Update competency record
+    const hasErrors = compData.correct < compData.total;
+    record.competencies[comp.id] = {
+      ...prev,
+      status: newTier,
+      points: newPoints,
+      last_practiced: new Date().toISOString(),
+      needs_review: hasErrors ? true : prev.needs_review && direction === 'maintained',
+      history: [
+        ...prev.history,
+        {
+          date: new Date().toISOString(),
+          score: compData.correct,
+          total: compData.total,
+          type: 'challenge',
+          previous_tier: prevTier,
+          new_tier: newTier,
+        },
+      ],
+    };
+  }
+
+  // Update course challenge record & timing
+  const prevCc = record.course_challenge;
+  const timing: TimingStats = prevCc?.timing ? { ...prevCc.timing } : {};
+  const safeTotalSeconds = Math.min(totalSeconds, Math.max(1, overallTotal) * 300);
+  const avgSeconds = overallTotal > 0 ? Math.round(safeTotalSeconds / overallTotal) : 0;
+  let isNewRecord = false;
+
+  // Only update best time in sessions with 100% approval
+  if (isCompleted) {
+    if (
+      timing.best_avg_seconds_per_question === undefined ||
+      avgSeconds < timing.best_avg_seconds_per_question
+    ) {
+      timing.best_avg_seconds_per_question = avgSeconds;
+      timing.best_total_seconds = safeTotalSeconds;
+      isNewRecord = true;
+    }
+  }
+  timing.last_avg_seconds_per_question = avgSeconds;
+  timing.last_total_seconds = safeTotalSeconds;
+
+  record.course_challenge = {
+    completed: isCompleted,
+    last_score: overallScore,
+    total_questions: overallTotal,
+    percentage: overallPercentage,
+    completed_at: new Date().toISOString(),
+    timing,
+  };
+
+  // Recalculate course progress
+  const progress = calculateCourseProgress(record, course.competencies.length);
+  record.mastery_points = progress.percentage;
+
+  all[course.course_id] = record;
+  saveAllStoredData(all);
+
+  return {
+    record,
+    overall_score: overallScore,
+    overall_total: overallTotal,
+    overall_percentage: overallPercentage,
+    total_seconds: safeTotalSeconds,
+    avg_seconds_per_question: avgSeconds,
+    is_new_record: isNewRecord,
+    skills_leveled_up: skillsLeveledUp,
+    skills_leveled_down: skillsLeveledDown,
+    skills_maintained: skillsMaintained,
+    misconceptions,
+  };
 }
 
 export function updateCourseChallengeCompleted(
@@ -196,6 +498,7 @@ export function updateCourseChallengeCompleted(
     total_questions: total,
     percentage,
     completed_at: new Date().toISOString(),
+    timing: record.course_challenge?.timing,
   };
 
   // Recalculate total course progress using the 80/20 formula
@@ -205,6 +508,20 @@ export function updateCourseChallengeCompleted(
   all[course.course_id] = record;
   saveAllStoredData(all);
   return record;
+}
+
+export function getTimingForCompetency(
+  courseId: string,
+  competencyId: string,
+  sessionType: 'practice' | 'quiz' | 'test'
+): TimingStats | undefined {
+  const all = getAllStoredData();
+  return all[courseId]?.competencies?.[competencyId]?.timing?.[sessionType];
+}
+
+export function getTimingForChallenge(courseId: string): TimingStats | undefined {
+  const all = getAllStoredData();
+  return all[courseId]?.course_challenge?.timing;
 }
 
 export function getCourseMasteryRecord(courseId: string): CourseMasteryRecord | undefined {

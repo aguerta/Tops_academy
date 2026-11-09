@@ -1,12 +1,16 @@
 import React, { useEffect } from 'react';
-import { Competency } from '../types';
+import { Competency, TimingStats } from '../types';
 import { MathText } from './MathText';
+import { formatTimingSeconds } from '../utils/masteryStorage';
 
 interface PreExerciseModalProps {
-  competency: Competency;
+  competency?: Competency | null;
   questionCount: number;
   onStart: () => void;
   onBack: () => void;
+  sessionType?: 'practice' | 'quiz' | 'test' | 'challenge';
+  timingRecord?: TimingStats;
+  courseTitle?: string;
 }
 
 export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
@@ -14,6 +18,9 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
   questionCount,
   onStart,
   onBack,
+  sessionType = 'practice',
+  timingRecord,
+  courseTitle,
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -36,6 +43,35 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
     };
   }, [onStart, onBack]);
 
+  const displayTitle =
+    sessionType === 'challenge'
+      ? 'Course challenge'
+      : sessionType === 'test'
+      ? 'Unit test'
+      : sessionType === 'quiz'
+      ? 'Quiz'
+      : 'Practice';
+
+  const heading =
+    sessionType === 'challenge'
+      ? 'Ready for the Course Challenge?'
+      : sessionType === 'test'
+      ? 'Ready for the Unit Test?'
+      : sessionType === 'quiz'
+      ? 'Ready for the Quiz?'
+      : 'Ready to practice?';
+
+  const subtitle =
+    sessionType === 'challenge'
+      ? 'Test your cumulative mastery across the entire course.'
+      : sessionType === 'test'
+      ? 'Prove your full mastery of this unit!'
+      : sessionType === 'quiz'
+      ? 'Check your understanding and retention.'
+      : 'Okay, show us what you can do!';
+
+  const subjectName = competency ? competency.name : courseTitle || 'Course';
+
   return (
     <div className="min-h-screen min-h-[100dvh] bg-slate-50 flex flex-col justify-between overflow-x-hidden">
       {/* Top Header Bar */}
@@ -50,10 +86,10 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
           ←
         </button>
         <h1 className="text-sm sm:text-lg font-bold text-ka-text-primary text-center truncate min-w-0 px-2 flex-1">
-          <MathText text={competency.name} inline />
+          <MathText text={subjectName} inline />
         </h1>
-        <div className="w-9 shrink-0 text-right text-xs text-ka-blue font-semibold cursor-pointer">
-          Share
+        <div className="w-9 shrink-0 text-right text-xs text-ka-blue font-semibold">
+          {displayTitle}
         </div>
       </header>
 
@@ -63,8 +99,16 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
         <div className="w-full max-w-2xl mb-4 bg-white border border-ka-border-card rounded-lg p-3 text-xs text-ka-text-secondary flex items-center gap-2 shadow-sm min-w-0">
           <span className="text-ka-blue font-bold text-sm shrink-0">ⓘ</span>
           <span className="min-w-0 break-words [overflow-wrap:anywhere]">
-            Practice session for <strong><MathText text={competency.name} inline /></strong> ({competency.category}).
-            Complete questions to earn mastery points!
+            {sessionType === 'challenge' ? (
+              <span>Comprehensive <strong>Course Challenge</strong> covering all competencies.</span>
+            ) : competency ? (
+              <span>
+                {displayTitle} for <strong><MathText text={competency.name} inline /></strong> ({competency.category}).
+                Complete questions to earn mastery points!
+              </span>
+            ) : (
+              <span>{displayTitle} session.</span>
+            )}
           </span>
         </div>
 
@@ -72,14 +116,41 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
         <div className="w-full max-w-2xl bg-ka-blue rounded-xl p-6 sm:p-10 text-center text-white relative overflow-hidden shadow-lg flex flex-col items-center justify-between min-h-[320px] sm:min-h-[380px] min-w-0">
           <div className="min-w-0">
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight break-words">
-              Ready to practice?
+              {heading}
             </h2>
             <p className="text-base sm:text-xl text-blue-100 mt-2 font-medium break-words">
-              Okay, show us what you can do!
+              {subtitle}
             </p>
-            <div className="mt-5 inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold tracking-wide">
-              {questionCount} questions
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <span className="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold tracking-wide">
+                {questionCount} questions
+              </span>
+
+              {/* Timing Personal Best Badge */}
+              {timingRecord?.best_avg_seconds_per_question !== undefined && (
+                <span
+                  data-testid="pre-exercise-best-time"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-400/90 text-amber-950 rounded-full text-xs sm:text-sm font-bold shadow-sm"
+                  title="Tu mejor marca en sesiones 100% correctas"
+                >
+                  <span>🏆 Récord:</span>
+                  <span>{timingRecord.best_avg_seconds_per_question}s/preg</span>
+                  {timingRecord.best_total_seconds && (
+                    <span className="opacity-80">
+                      ({formatTimingSeconds(timingRecord.best_total_seconds)})
+                    </span>
+                  )}
+                </span>
+              )}
             </div>
+
+            {/* Last attempt comparison */}
+            {timingRecord?.last_avg_seconds_per_question !== undefined && (
+              <p className="text-xs text-blue-200 mt-2">
+                Último intento: {timingRecord.last_avg_seconds_per_question}s/preg
+                {timingRecord.last_total_seconds && ` (${formatTimingSeconds(timingRecord.last_total_seconds)})`}
+              </p>
+            )}
           </div>
 
           {/* Polygon Mascot Illustrations with smiling eyes */}
@@ -87,39 +158,32 @@ export const PreExerciseModal: React.FC<PreExerciseModalProps> = ({
             {/* Mascot 1: Navy/Indigo angled polygon */}
             <svg width="84" height="84" viewBox="0 0 100 100" className="drop-shadow-md">
               <polygon points="15,85 85,85 95,30 50,10 5,40" fill="#1e3a8a" />
-              {/* Cartoon Eyes looking up */}
               <circle cx="42" cy="45" r="7" fill="#ffffff" />
               <circle cx="44" cy="43" r="3.5" fill="#1e1b4b" />
               <circle cx="62" cy="45" r="7" fill="#ffffff" />
               <circle cx="64" cy="43" r="3.5" fill="#1e1b4b" />
-              {/* Smiling mouth */}
               <path d="M 46 62 Q 53 70 60 62" stroke="#ffffff" strokeWidth="3" fill="none" strokeLinecap="round" />
             </svg>
 
             {/* Mascot 2: Cyan rounded trapezoid (smiling) */}
             <svg width="100" height="100" viewBox="0 0 100 100" className="drop-shadow-md">
               <polygon points="10,90 90,90 80,20 20,20" fill="#06b6d4" />
-              {/* Cute Eyes */}
               <circle cx="38" cy="48" r="8" fill="#ffffff" />
               <circle cx="40" cy="46" r="4" fill="#083344" />
               <circle cx="62" cy="48" r="8" fill="#ffffff" />
               <circle cx="64" cy="46" r="4" fill="#083344" />
-              {/* Blushing cheeks */}
               <circle cx="28" cy="58" r="4" fill="#fda4af" opacity="0.8" />
               <circle cx="72" cy="58" r="4" fill="#fda4af" opacity="0.8" />
-              {/* Big happy smile */}
               <path d="M 42 63 Q 50 74 58 63" stroke="#083344" strokeWidth="3.5" fill="#ffffff" strokeLinecap="round" />
             </svg>
 
             {/* Mascot 3: Lavender/Periwinkle polygon */}
             <svg width="80" height="80" viewBox="0 0 100 100" className="drop-shadow-md">
               <polygon points="20,85 80,85 90,40 50,15 10,40" fill="#818cf8" />
-              {/* Eyes */}
               <circle cx="40" cy="45" r="6.5" fill="#ffffff" />
               <circle cx="42" cy="43" r="3" fill="#312e81" />
               <circle cx="60" cy="45" r="6.5" fill="#ffffff" />
               <circle cx="62" cy="43" r="3" fill="#312e81" />
-              {/* Smile */}
               <path d="M 45 60 Q 51 67 57 60" stroke="#312e81" strokeWidth="2.5" fill="none" strokeLinecap="round" />
             </svg>
           </div>

@@ -155,6 +155,181 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
         <MathText text={course.description} />
       </div>
 
+      {/* Up Next for You — Persistent Pedagogical Recommender (Milestone 14) */}
+      {(() => {
+        if (!course.competencies || course.competencies.length === 0) return null;
+
+        // Priority 1: Remediation (needs_review / lagunas detectadas)
+        const needsReviewComp = course.competencies.find(
+          (c) => mastery.competencies?.[c.id]?.needs_review
+        );
+        if (needsReviewComp) {
+          return (
+            <div
+              data-testid="up-next-banner"
+              className="mt-4 p-4 bg-rose-50 border border-rose-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-2xl shrink-0">🩹</span>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold uppercase tracking-wide text-rose-800">
+                    Up Next for You • Reparar Maestría
+                  </div>
+                  <div className="text-sm font-bold text-rose-950 truncate">
+                    <MathText text={needsReviewComp.name} inline />
+                  </div>
+                  <p className="text-xs text-rose-700 mt-0.5">
+                    Se detectaron errores en esta competencia. Repásala para restaurar tu nivel antes de continuar.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onStartPractice(needsReviewComp)}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0"
+              >
+                Repasar ahora ➔
+              </button>
+            </div>
+          );
+        }
+
+        // Priority 2: Siguiente unidad no iniciada (Menor orden ordinal no empezado)
+        const nextNotStartedComp = course.competencies.find((c) => {
+          const m = mastery.competencies?.[c.id];
+          return !m || m.status === 'Not started' || !isUnitStarted(m);
+        });
+        if (nextNotStartedComp) {
+          return (
+            <div
+              data-testid="up-next-banner"
+              className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-2xl shrink-0">🚀</span>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold uppercase tracking-wide text-ka-blue">
+                    Up Next for You • Siguiente Unidad
+                  </div>
+                  <div className="text-sm font-bold text-blue-950 truncate">
+                    <MathText text={nextNotStartedComp.name} inline />
+                  </div>
+                  <p className="text-xs text-blue-700 mt-0.5">
+                    Comienza la práctica de esta nueva unidad para ganar tus primeros puntos de maestría.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onStartPractice(nextNotStartedComp)}
+                className="px-4 py-2 bg-ka-blue hover:bg-ka-blue-hover text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0"
+              >
+                Comenzar práctica ➔
+              </button>
+            </div>
+          );
+        }
+
+        // Priority 3: Rendir Unit Test (Todas las unidades fueron iniciadas, pero faltan Unit Tests al 100%)
+        const nextIncompleteTestComp = course.competencies.find((c) => {
+          const m = mastery.competencies?.[c.id];
+          return !isUnitCompleted(m);
+        });
+        if (nextIncompleteTestComp) {
+          return (
+            <div
+              data-testid="up-next-banner"
+              className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-2xl shrink-0">📝</span>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold uppercase tracking-wide text-amber-800">
+                    Up Next for You • Unit Test Pendiente
+                  </div>
+                  <div className="text-sm font-bold text-amber-950 truncate">
+                    <MathText text={nextIncompleteTestComp.name} inline />
+                  </div>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    Lleva esta unidad al 100% rindiendo su Unit Test para consolidar tu avance.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onStartUnitTest(nextIncompleteTestComp)}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0"
+              >
+                Rendir Unit Test ➔
+              </button>
+            </div>
+          );
+        }
+
+        // Priority 4: Course Challenge (Todos los Unit Tests completados al 100%, pero Challenge pendiente)
+        const isChallengeCompleted = mastery.course_challenge?.completed === true;
+        if (!isChallengeCompleted) {
+          return (
+            <div
+              data-testid="up-next-banner"
+              className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-2xl shrink-0">🏆</span>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold uppercase tracking-wide text-purple-800">
+                    Up Next for You • Desafío del Curso
+                  </div>
+                  <div className="text-sm font-bold text-purple-950 truncate">
+                    Course Challenge: <MathText text={course.title} inline />
+                  </div>
+                  <p className="text-xs text-purple-700 mt-0.5">
+                    ¡Todos los Unit Tests están dominados! Rinde el Course Challenge para completar el curso al 100%.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onStartCourseChallenge}
+                className="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0"
+              >
+                Rendir Course Challenge ➔
+              </button>
+            </div>
+          );
+        }
+
+        // Priority 5: Maestría Total 100% (Curso completado)
+        return (
+          <div
+            data-testid="up-next-banner"
+            className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="text-2xl shrink-0">🎓</span>
+              <div className="min-w-0">
+                <div className="text-xs font-bold uppercase tracking-wide text-emerald-800">
+                  Up Next for You • ¡Maestría Total Conquistada!
+                </div>
+                <div className="text-sm font-bold text-emerald-950 truncate">
+                  ¡Felicitaciones! Has logrado completar este curso al 100%
+                </div>
+                <p className="text-xs text-emerald-700 mt-0.5">
+                  Has dominado todos los conceptos y exámenes. Mantén tu fluidez dándole otra repasada cuando quieras.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onStartCourseChallenge}
+              className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold rounded shadow-sm transition-colors whitespace-nowrap self-start sm:self-auto shrink-0"
+            >
+              Darle otra repasada ➔
+            </button>
+          </div>
+        );
+      })()}
+
       {/* Competency Blocks / Units Completion Status Overview */}
       <div
         ref={summaryRef}
@@ -306,6 +481,11 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
                 {challengeCompleted && (
                   <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded shrink-0">
                     ✓ Completed
+                  </span>
+                )}
+                {mastery.course_challenge?.timing?.best_avg_seconds_per_question !== undefined && (
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded border border-slate-200 shrink-0">
+                    ⏱️ Récord: {mastery.course_challenge.timing.best_avg_seconds_per_question}s/preg
                   </span>
                 )}
               </div>

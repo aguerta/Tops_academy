@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
-import { Question } from '../types';
+import { Question, QuestionTelemetry } from '../types';
 import { QuestionCard } from './QuestionCard';
 import { FeedbackToast } from './FeedbackToast';
 import { MathText } from './MathText';
@@ -10,7 +10,12 @@ import { isOptionCorrect, getCorrectOptionIds } from '../utils/questionUtils';
 interface PracticeSessionProps {
   sessionTitle: string;
   questions: Question[];
-  onComplete: (score: number, total: number) => void;
+  onComplete: (
+    score: number,
+    total: number,
+    telemetry?: QuestionTelemetry[],
+    totalSeconds?: number
+  ) => void;
   onQuit: () => void;
   onRestart?: () => void;
   sessionType?: 'practice' | 'quiz' | 'test' | 'challenge';
@@ -69,6 +74,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const [results, setResults] = useState<QuestionResult[]>([]);
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const mainRef = useRef<HTMLElement | null>(null);
+  const questionStartTimeRef = useRef<number>(Date.now());
+  const telemetryRef = useRef<QuestionTelemetry[]>([]);
 
   const resetScroll = () => {
     window.scrollTo(0, 0);
@@ -82,6 +89,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   useEffect(() => {
     resetScroll();
     setIsCurtainLifted(false);
+    questionStartTimeRef.current = Date.now();
   }, [currentIndex]);
 
   const clearAutoAdvanceTimer = () => {
@@ -253,6 +261,26 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     clearAutoAdvanceTimer();
     resetScroll();
     const correctVal = overrideIsCorrect !== undefined ? overrideIsCorrect : isCorrect === true;
+    const now = Date.now();
+    const elapsedMs = now - questionStartTimeRef.current;
+    const spentSeconds = Math.min(300, Math.max(1, Math.round(elapsedMs / 1000)));
+
+    const qTelemetry: QuestionTelemetry = {
+      question_id: currentQuestion.id,
+      competency_id: currentQuestion.competency_id,
+      is_correct: correctVal,
+      hints_used: hintsRevealed,
+      seconds_spent: spentSeconds,
+      question_text: currentQuestion.stem,
+    };
+
+    const existingTelIdx = telemetryRef.current.findIndex((t) => t.question_id === currentQuestion.id);
+    if (existingTelIdx >= 0) {
+      telemetryRef.current[existingTelIdx] = qTelemetry;
+    } else {
+      telemetryRef.current.push(qTelemetry);
+    }
+
     let newResults = results;
     const existingIdx = results.findIndex((r) => r.questionId === currentQuestion.id);
     if (existingIdx >= 0) {
@@ -276,7 +304,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
     if (currentIndex + 1 >= total) {
       const finalScore = newResults.filter((r) => r.isCorrect).length;
-      onComplete(finalScore, total);
+      const totalSessionSeconds = telemetryRef.current.reduce((acc, t) => acc + t.seconds_spent, 0);
+      onComplete(finalScore, total, [...telemetryRef.current], totalSessionSeconds);
     } else {
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(null);
@@ -294,6 +323,27 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   const handleSkip = () => {
     clearAutoAdvanceTimer();
     resetScroll();
+
+    const now = Date.now();
+    const elapsedMs = now - questionStartTimeRef.current;
+    const spentSeconds = Math.min(300, Math.max(1, Math.round(elapsedMs / 1000)));
+
+    const qTelemetry: QuestionTelemetry = {
+      question_id: currentQuestion.id,
+      competency_id: currentQuestion.competency_id,
+      is_correct: false,
+      hints_used: hintsRevealed,
+      seconds_spent: spentSeconds,
+      question_text: currentQuestion.stem,
+    };
+
+    const existingTelIdx = telemetryRef.current.findIndex((t) => t.question_id === currentQuestion.id);
+    if (existingTelIdx >= 0) {
+      telemetryRef.current[existingTelIdx] = qTelemetry;
+    } else {
+      telemetryRef.current.push(qTelemetry);
+    }
+
     const newResults = [
       ...results,
       {
@@ -306,7 +356,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
     if (currentIndex + 1 >= total) {
       const finalScore = newResults.filter((r) => r.isCorrect).length;
-      onComplete(finalScore, total);
+      const totalSessionSeconds = telemetryRef.current.reduce((acc, t) => acc + t.seconds_spent, 0);
+      onComplete(finalScore, total, [...telemetryRef.current], totalSessionSeconds);
     } else {
       setCurrentIndex((prev) => prev + 1);
       setSelectedOption(null);

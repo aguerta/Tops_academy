@@ -51,6 +51,13 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
                     <span>Unit {idx + 1}</span>
                     <span>•</span>
                     <span>{unit.category}</span>
+                    {compMastery?.needs_review && (
+                      <span
+                        data-testid={`red-dot-${unit.id}`}
+                        className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shadow-sm animate-pulse"
+                        title="Requiere repaso (laguna conceptual detectada)"
+                      />
+                    )}
                   </div>
                   {/* Unit Completion Status Badge */}
                   {isCompleted ? (
@@ -115,6 +122,46 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
                     Status: {statusLabel}
                   </span>
                 </div>
+
+                {/* Milestone 14: Fluency Timing line and Needs Review Badge */}
+                {(() => {
+                  const allTimings = Object.values(compMastery?.timing || {});
+                  const bestAvg = allTimings
+                    .map((t) => t.best_avg_seconds_per_question)
+                    .filter((n): n is number => n !== undefined)
+                    .sort((a, b) => a - b)[0];
+                  const lastAvg = allTimings
+                    .map((t) => t.last_avg_seconds_per_question)
+                    .filter((n): n is number => n !== undefined)[0];
+
+                  if (bestAvg === undefined && lastAvg === undefined && !compMastery?.needs_review) {
+                    return null;
+                  }
+
+                  return (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      {bestAvg !== undefined && (
+                        <span className="inline-flex items-center gap-1 font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                          <span>⏱️ Récord:</span>
+                          <strong className="text-slate-900">{bestAvg}s/preg</strong>
+                        </span>
+                      )}
+                      {lastAvg !== undefined && (
+                        <span className="text-slate-500 font-medium text-[11px]">
+                          Último: {lastAvg}s/preg
+                        </span>
+                      )}
+                      {compMastery?.needs_review && (
+                        <span
+                          data-testid={`needs-review-badge-${unit.id}`}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300"
+                        >
+                          <span>🔴 Requiere repaso</span>
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Assessment & Practice Triggers */}

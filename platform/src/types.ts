@@ -123,6 +123,52 @@ export interface UnitTestRecord {
   completed_at: string;
 }
 
+export interface TimingStats {
+  best_avg_seconds_per_question?: number;
+  best_total_seconds?: number;
+  last_avg_seconds_per_question?: number;
+  last_total_seconds?: number;
+}
+
+export interface QuestionTelemetry {
+  question_id: string;
+  competency_id: string;
+  is_correct: boolean;
+  hints_used: number;
+  seconds_spent: number;
+  question_text?: string;
+}
+
+export interface ChallengeSkillResult {
+  competency_id: string;
+  competency_name: string;
+  total_questions: number;
+  correct_questions: number;
+  previous_tier: MasteryTier;
+  new_tier: MasteryTier;
+  direction: 'up' | 'down' | 'maintained';
+  delta_points: number;
+}
+
+export interface ChallengeExecutionSummary {
+  record: CourseMasteryRecord;
+  overall_score: number;
+  overall_total: number;
+  overall_percentage: number;
+  total_seconds: number;
+  avg_seconds_per_question: number;
+  is_new_record: boolean;
+  skills_leveled_up: ChallengeSkillResult[];
+  skills_leveled_down: ChallengeSkillResult[];
+  skills_maintained: ChallengeSkillResult[];
+  misconceptions: Array<{
+    question_id: string;
+    competency_id: string;
+    competency_name: string;
+    text: string;
+  }>;
+}
+
 export interface CompetencyMastery {
   status: MasteryTier;
   points: number;
@@ -133,6 +179,21 @@ export interface CompetencyMastery {
     score: number;
     total: number;
     type: 'practice' | 'quiz' | 'test' | 'challenge';
+    total_seconds?: number;
+    avg_seconds_per_question?: number;
+    previous_tier?: MasteryTier;
+    new_tier?: MasteryTier;
+  }>;
+  timing?: {
+    practice?: TimingStats;
+    quiz?: TimingStats;
+    test?: TimingStats;
+  };
+  needs_review?: boolean;
+  recent_misconceptions?: Array<{
+    date: string;
+    question_id: string;
+    concept_name: string;
   }>;
 }
 
@@ -146,6 +207,7 @@ export interface CourseMasteryRecord {
     total_questions: number;
     percentage?: number;
     completed_at: string;
+    timing?: TimingStats;
   };
 }
 
