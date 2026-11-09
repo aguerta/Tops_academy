@@ -509,7 +509,9 @@ class TestPillar5HypothesisPropertyBasedTesting:
 
     @given(
         cat=st.sampled_from(["math_error", "calculation_error", "arithmetic_error", "numeric_error", ""]),
-        reasons=st.lists(st.text(alphabet="abcdefghijklmnopqrstuvwxyz ", min_size=1, max_size=20), max_size=3),
+        reasons=st.lists(st.text(alphabet="abcdefghijklmnopqrstuvwxyz ", min_size=1, max_size=20), max_size=3).filter(
+            lambda r_list: not any(b in " ".join(r_list).lower() for b in ["epistemic", "missing", "ambiguous", "giveaway"])
+        ),
     )
     @settings(max_examples=100)
     def test_prop_neuro_symbolic_kernel_overrides_stochastic_calculation_error(

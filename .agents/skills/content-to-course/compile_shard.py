@@ -208,7 +208,7 @@ def check_ast_rf_triple_braces(source_text: str) -> List[str]:
     warnings = []
     for m in re.finditer(r"(?i)\b(rf|fr)(['\"]{1,3})([\s\S]*?)\2", source_text):
         if "{{{" in m.group(3):
-            snippet = m.group(0)[:60] + ("..." if len(m.group(0)) > 60 else "")
+            snippet = m.group(0)
             warnings.append(
                 f"[!] Warning: Se detectó {m.group(1)}{m.group(2)}...{m.group(2)} conteniendo '{{{{{{' ({snippet}). "
                 "Recomendación: Utilice raw strings r\"...\" con tokens @var@ para evitar la corrupción de llaves KaTeX."
@@ -262,8 +262,8 @@ def pykatex_warnings(text: Any, context: str, whole_is_math: bool = False) -> Li
                 clean_before = snippet[:snippet.find("\u0332")].replace("\u0332", "")
                 col = str(len(clean_before))
             col_info = f" [col={col}]" if col is not None else ""
-            msg = raw_msg.replace("\u0332", "^").strip().splitlines()[0][:160]
-            out.append(f"[!] Warning: [PYKATEX-WARN] {context}: {msg}{col_info} (span: {span[:60]!r})")
+            msg = raw_msg.replace("\u0332", "^").strip().splitlines()[0]
+            out.append(f"[!] Warning: [PYKATEX-WARN] {context}: {msg}{col_info} (span: {span!r})")
     return out
 
 
@@ -2029,6 +2029,37 @@ def _compile_shard_body(
 
         _cleanup_stale_pass_marker()
 
+        # Write un-truncated failure log to disk (updated on every failed compile)
+        log_dir = shard_data_path.parent if (shard_data_path and hasattr(shard_data_path, "parent") and shard_data_path.parent.is_dir()) else shards_dir
+        log_file = log_dir / f"{shard_id}_compile_error.log"
+        try:
+            rel_log = log_file.resolve().relative_to(Path.cwd().resolve()).as_posix()
+        except Exception:
+            rel_log = log_file.as_posix()
+        try:
+            log_file.write_text(f"FAIL: Compilación fallida para {shard_id}:\n\n{msg}\n", encoding="utf-8")
+        except Exception:
+            pass
+
+        # Per CONOCIMIENTO_TRIBAL.md §4.3: Only show banner if stdout will truncate (>= 9,700 bytes)
+        ANTIGRAVITY_STDOUT_SAFE_LIMIT = 9700
+        will_truncate = len(res_msg.encode("utf-8")) >= ANTIGRAVITY_STDOUT_SAFE_LIMIT
+        top_banner = ""
+        if will_truncate:
+            top_banner = (
+                f"\n"
+                f"================================================================================\n"
+                f"[!] AVISO: LA SALIDA DE STDOUT EXCEDE EL BUFFER ({len(res_msg.encode('utf-8'))}B >= {ANTIGRAVITY_STDOUT_SAFE_LIMIT}B).\n"
+                f"    >> INFORME ÍNTEGRO Y COMPLETO EN: {rel_log} <<\n"
+                f"[!] ACCIÓN MANDATORIA: Ejecuta `read_file('{rel_log}')` para ver el error completo sin recortes.\n"
+                f"================================================================================\n"
+            )
+            print(top_banner, file=sys.stdout)
+            try:
+                sys.stdout.flush()
+            except Exception:
+                pass
+
         if receipt_p:
             try:
                 import time
@@ -2041,6 +2072,7 @@ def _compile_shard_body(
                 r_data["shard_id"] = shard_id
                 r_data["compiled_status"] = "FAIL"
                 r_data["compilation_errors"] = [res_msg]
+                r_data["full_error_log"] = rel_log
                 r_data["error_count"] = error_count
                 r_data["has_syntax_error"] = bool(has_syntax_error)
                 r_data["compiled_at"] = time.time()
@@ -2048,10 +2080,11 @@ def _compile_shard_body(
             except Exception:
                 pass
 
-        state["last_errors"] = [res_msg]
+        full_err_out = (top_banner + "\n" + res_msg) if will_truncate else res_msg
+        state["last_errors"] = [full_err_out]
         _atomic_write_json(compile_att_file, state)
         print(msg, file=sys.stderr)
-        return False, [res_msg]
+        return False, [full_err_out]
 
     # Dual Calibrated Halt Threshold: distinct_compiles > 10
     if distinct_compiles > 10:
@@ -3083,29 +3116,6 @@ cross_check=verify
         templates_by_cid.setdefault(cid, []).append(canonical_dict)
         gen_callables_by_cid.setdefault(cid, []).append(gen_raw)
 
-    # Pre-check: Ensure full distractor coverage per competency with explicit set-difference
-    if cta_p and Path(cta_p).is_file():
-        try:
-            cta_info = json.loads(Path(cta_p).read_text(encoding="utf-8"))
-            cta_comp_dids = {}
-            for comp_entry in cta_info.get("competencies", []):
-                if isinstance(comp_entry, dict) and "id" in comp_entry:
-                    c_dids = [str(d.get("id")) for d in comp_entry.get("distractors", []) if isinstance(d, dict) and d.get("id")]
-                    if c_dids:
-                        cta_comp_dids[comp_entry["id"]] = set(c_dids)
-            for cid, tpls in templates_by_cid.items():
-                if cid in cta_comp_dids:
-                    used_dids = set()
-                    for t in tpls:
-                        used_dids.update([str(d) for d in t.get("distractor_ids", [])])
-                    missing_dids = cta_comp_dids[cid] - used_dids
-                    if missing_dids and strict:
-                        return _fail(
-                            f"FAIL: [TPL-D3: COBERTURA COMPLETA DE DISTRACTORES] FALTAN DISTRACTORES OBLIGATORIOS en '{cid}': {sorted(missing_dids)}. "
-                            f"Distractores declarados: {sorted(cta_comp_dids[cid])}. Debes asignarlos a las plantillas de tu shard."
-                        )
-        except Exception:
-            pass
 
     # 6. Write templates atomically grouped by competency
     compiled_paths: List[Path] = []
@@ -3563,6 +3573,8 @@ cross_check=verify
                 iso_hit_seeds: List[int] = []
                 iso_hit_ratio: Optional[float] = None
                 hit_mults_sample: List[float] = []
+                hit_evidence_sample: Optional[Dict[str, Any]] = None
+                iso_hit_evidence: Optional[Dict[str, Any]] = None
                 corr_answers_sample: List[str] = []
                 telltale_sample: Optional[Tuple[str, str]] = None
                 for s_val in eval_seeds:
@@ -3616,7 +3628,7 @@ cross_check=verify
                         matched_m: List[float] = []
                         iso_valid_seeds += 1
                         _iso_hit_here = False
-                        for d_item in dists_raw:
+                        for d_idx, d_item in enumerate(dists_raw):
                             if isinstance(d_item, (tuple, list)) and len(d_item) >= 2:
                                 d_raw = str(d_item[1])
                             elif isinstance(d_item, dict):
@@ -3654,11 +3666,33 @@ cross_check=verify
                                     expected_div = expected_round
                                 if abs(actual_ratio - m_factor) <= 0.05 and (abs(d_val - expected_round) <= 0.0015 or abs(d_val - expected_div) <= 0.0015):
                                     matched_m.append(m_factor)
+                                    if not hit_evidence_sample and m_factor in _distinctive_magic:
+                                        hit_evidence_sample = {
+                                            "seed": s_val,
+                                            "dist_idx": d_idx + 1,
+                                            "dist_raw": d_raw,
+                                            "dist_txt": d_txt,
+                                            "d_val": d_val,
+                                            "c_val": c_val,
+                                            "factor": m_factor,
+                                            "ratio": actual_ratio,
+                                        }
                                     break
                             for m_iso in _isolated_exact_mults:
                                 if abs(actual_ratio - m_iso) <= 0.05 and abs(d_val - round(c_val * m_iso, 3)) <= 0.0015:
                                     _iso_hit_here = True
                                     iso_hit_ratio = m_iso
+                                    if not iso_hit_evidence:
+                                        iso_hit_evidence = {
+                                            "seed": s_val,
+                                            "dist_idx": d_idx + 1,
+                                            "dist_raw": d_raw,
+                                            "dist_txt": d_txt,
+                                            "d_val": d_val,
+                                            "c_val": c_val,
+                                            "factor": m_iso,
+                                            "ratio": actual_ratio,
+                                        }
                                     break
                         if _iso_hit_here:
                             iso_hit_seeds.append(s_val)
@@ -3667,6 +3701,17 @@ cross_check=verify
                             hit_seeds.append(s_val)
                             if not hit_mults_sample:
                                 hit_mults_sample = dist_hits[:3] or matched_m[:3]
+                                if not hit_evidence_sample and matched_m:
+                                    hit_evidence_sample = {
+                                        "seed": s_val,
+                                        "dist_idx": 1,
+                                        "dist_raw": "",
+                                        "dist_txt": "",
+                                        "d_val": 0.0,
+                                        "c_val": c_val,
+                                        "factor": matched_m[0],
+                                        "ratio": 0.0,
+                                    }
                     except Exception as e_seed:
                         m3_errors.append(
                             f"{cid}.json ({source_name}): [TPL-EXEC-ERROR] En '{tpl_id_m}' (semilla {s_val}), la función generadora falló con excepción: {type(e_seed).__name__}: {e_seed}"
@@ -3691,9 +3736,16 @@ cross_check=verify
                     loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
                     t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
                     s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "diagnostic_rationale_alignment_linter", "multiplicador") if loc_obj else (1, 1, [])
+                    evid_str = ""
+                    if hit_evidence_sample and hit_evidence_sample.get("dist_txt"):
+                        evid_str = (
+                            f" [Evidencia semilla {hit_evidence_sample['seed']}: distractor #{hit_evidence_sample['dist_idx']} "
+                            f"'{hit_evidence_sample['dist_txt']}' (val={hit_evidence_sample['d_val']}) vs correcto={hit_evidence_sample['c_val']} "
+                            f"-> ratio={hit_evidence_sample['ratio']:.3f} (~x{hit_evidence_sample['factor']})]"
+                        )
                     m3_errors.append(
                         f"{cid}.json ({source_name}): [DIAG-MAGIC-MULT] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}), "
-                        f"los distractores numéricos en {len(hit_seeds)}/{iso_valid_seeds or len(eval_seeds)} semillas (>{_MAGIC_MULT_MIN_FRACTION*100:.0f}%, ej. seed={hit_seeds[0]}) coinciden con multiplicadores arbitrarios prohibidos ({hit_mults_sample}) respecto a la respuesta correcta. "
+                        f"los distractores numéricos en {len(hit_seeds)}/{iso_valid_seeds or len(eval_seeds)} semillas (>{_MAGIC_MULT_MIN_FRACTION*100:.0f}%, ej. seed={hit_seeds[0]}) coinciden con multiplicadores arbitrarios prohibidos ({hit_mults_sample}) respecto a la respuesta correcta.{evid_str} "
                         f"PROHIBIDO ajustar multiplicadores decimales; reemplace la expresión por la fórmula algebraica del error conceptual."
                     )
                 if iso_valid_seeds >= 10 and len(iso_hit_seeds) >= _ISO_MIN_FRACTION * iso_valid_seeds and len(hit_seeds) == 0:
@@ -3701,15 +3753,20 @@ cross_check=verify
                     loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
                     t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
                     s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "diagnostic_rationale_alignment_linter", "multiplicador") if loc_obj else (1, 1, [])
+                    iso_evid_str = ""
+                    if iso_hit_evidence and iso_hit_evidence.get("dist_txt"):
+                        iso_evid_str = (
+                            f" [Evidencia semilla {iso_hit_evidence['seed']}: distractor #{iso_hit_evidence['dist_idx']} "
+                            f"'{iso_hit_evidence['dist_txt']}' (val={iso_hit_evidence['d_val']}) vs correcto={iso_hit_evidence['c_val']} "
+                            f"-> ratio={iso_hit_evidence['ratio']:.3f} (~x{iso_hit_evidence['factor']})]"
+                        )
                     m3_errors.append(
                         f"{cid}.json ({source_name}): [DIAG-MAGIC-MULT] En '{tpl_id_m}' (funcion '{gen_fn_m}', Lineas {s_off}..{e_off} en {source_name}), "
-                        f"un distractor numerico equivale a {iso_hit_ratio} x respuesta correcta en {len(iso_hit_seeds)}/{iso_valid_seeds} semillas (razon fija sistematica, colisiona con el linter final). "
+                        f"un distractor numerico equivale a {iso_hit_ratio} x respuesta correcta en {len(iso_hit_seeds)}/{iso_valid_seeds} semillas (razon fija sistematica, colisiona con el linter final).{iso_evid_str} "
                         f"PROHIBIDO ajustar multiplicadores decimales; reemplace la expresión por la fórmula algebraica del error conceptual."
                     )
                 if strict and len(set(corr_answers_sample)) <= 1 and len(corr_answers_sample) >= 10:
                     first_ans_str = str(corr_answers_sample[0]) if corr_answers_sample else ""
-                    if len(first_ans_str) > 50:
-                        first_ans_str = first_ans_str[:47] + "..."
                     eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
                     loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
                     t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
@@ -3756,8 +3813,6 @@ cross_check=verify
                             pass
                     if len(set(corr_samples)) <= 1 and len(corr_samples) >= 10:
                         first_ans_str = str(corr_samples[0]) if corr_samples else ""
-                        if len(first_ans_str) > 50:
-                            first_ans_str = first_ans_str[:47] + "..."
                         eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
                         loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
                         t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
@@ -3848,7 +3903,7 @@ cross_check=verify
             raw_errors, targets=compiled_paths, shard_py=shard_data_path
         )
         compact_report = render_compact_aggregated_errors(
-            raw_errors, targets=compiled_paths, shard_py=shard_data_path, max_output_lines=28
+            raw_errors, targets=compiled_paths, shard_py=shard_data_path, max_output_lines=60
         )
         from check_templates import normalize_error_string_for_hash
         normalized_errs = sorted([normalize_error_string_for_hash(str(e)) for e in raw_errors])
@@ -3867,6 +3922,73 @@ cross_check=verify
 
         _cleanup_stale_pass_marker()
 
+        # Write un-truncated complete diagnostics to disk (<shard_id>_compile_error.log)
+        log_dir = shard_data_path.parent if (shard_data_path and hasattr(shard_data_path, "parent") and shard_data_path.parent.is_dir()) else shards_dir
+        log_file = log_dir / f"{shard_id}_compile_error.log"
+        try:
+            rel_log = log_file.resolve().relative_to(Path.cwd().resolve()).as_posix()
+        except Exception:
+            rel_log = log_file.as_posix()
+
+        full_report_lines = [
+            "=" * 80,
+            f"INFORME COMPLETO DE ERRORES DE COMPILACIÓN (SIN TRUNCAR / SIN ELIPSIS)",
+            f"Shard ID:       {shard_id}",
+            f"Archivo Fuente: {shard_data_path}",
+            f"Total Errores:  {len(raw_errors)} ({error_count} consolidados)",
+            "=" * 80,
+            "",
+            "--- RESUMEN CONSOLIDADO ---",
+            compact_report,
+            "",
+            "--- DETALLE EXHAUSTIVO DE DIAGNÓSTICOS (COMPLETO Y SIN RECORTES) ---",
+        ]
+        for idx_e, err_item in enumerate(raw_errors, 1):
+            full_report_lines.append(f"\n[DIAGNÓSTICO #{idx_e}]")
+            full_report_lines.append(str(err_item).strip())
+        full_report_lines.append("\n" + "=" * 80)
+        full_report_text = "\n".join(full_report_lines)
+        try:
+            log_file.write_text(full_report_text, encoding="utf-8")
+        except Exception:
+            try:
+                fallback_log = shards_dir / f"{shard_id}_compile_error.log"
+                fallback_log.parent.mkdir(parents=True, exist_ok=True)
+                fallback_log.write_text(full_report_text, encoding="utf-8")
+                rel_log = fallback_log.as_posix()
+            except Exception:
+                pass
+
+        fail_summary = f"[-] FAIL: {len(raw_errors)} errores detectados ({error_count} errores consolidados) al compilar {shard_id}:\n{compact_report}"
+        total_output_bytes = len(fail_summary.encode("utf-8"))
+
+        # Per CONOCIMIENTO_TRIBAL.md §4.3:
+        # Runtime stdout truncation limit is 10,240 bytes (10 KiB) - 47 bytes wrapper = 10,193 bytes.
+        # Safe threshold is 9,700 bytes. Also check if compact_report truncated items internally.
+        ANTIGRAVITY_STDOUT_SAFE_LIMIT = 9700
+        is_compact_truncated = (
+            "diagnósticos adicionales consolidados" in compact_report
+            or "errores totales consolidados en formato compacto" in compact_report
+        )
+        will_truncate = is_compact_truncated or (total_output_bytes >= ANTIGRAVITY_STDOUT_SAFE_LIMIT)
+
+        top_banner = ""
+        if will_truncate:
+            top_banner = (
+                f"\n"
+                f"================================================================================\n"
+                f"[!] AVISO: LA SALIDA DE STDOUT SUPERA EL BUFFER ({total_output_bytes}B >= {ANTIGRAVITY_STDOUT_SAFE_LIMIT}B) O FUE TRUNCADA.\n"
+                f"    >> INFORME ÍNTEGRO Y COMPLETO EN: {rel_log} <<\n"
+                f"[!] ACCIÓN MANDATORIA: Ejecuta `read_file('{rel_log}')` para ver todos los\n"
+                f"    diagnósticos exhaustivos, valores numéricos y fórmulas sin recortes ni elipsis.\n"
+                f"================================================================================\n"
+            )
+            print(top_banner, file=sys.stdout)
+            try:
+                sys.stdout.flush()
+            except Exception:
+                pass
+
         if receipt_p:
             try:
                 import time
@@ -3879,6 +4001,7 @@ cross_check=verify
                 r_data["shard_id"] = shard_id
                 r_data["compiled_status"] = "FAIL"
                 r_data["compilation_errors"] = [compact_report]
+                r_data["full_error_log"] = rel_log
                 r_data["error_count"] = error_count
                 r_data["has_syntax_error"] = False
                 r_data["compiled_at"] = time.time()
@@ -3892,17 +4015,25 @@ cross_check=verify
                 f"STOP, send_message the Director."
             )
             compact_report = compact_report + terminal_stop
+            fail_summary = fail_summary + terminal_stop
             print(terminal_stop, file=sys.stderr)
 
-        print(f"\n[-] FAIL: {len(raw_errors)} errores detectados ({error_count} errores consolidados) al compilar {shard_id}:\n{compact_report}", file=sys.stderr)
-        state["last_errors"] = [compact_report]
+        print(f"\n{fail_summary}", file=sys.stderr)
+        full_err_out = (top_banner + "\n" + fail_summary) if will_truncate else fail_summary
+        state["last_errors"] = [full_err_out]
         _atomic_write_json(compile_att_file, state)
-        return False, [compact_report]
+        return False, [full_err_out]
 
     # Clear compilation attempts on success (pass clears the halt)
     if compile_att_file.is_file():
         try:
             compile_att_file.unlink()
+        except Exception:
+            pass
+    clean_log = (shard_data_path.parent if (shard_data_path and hasattr(shard_data_path, "parent") and shard_data_path.parent.is_dir()) else shards_dir) / f"{shard_id}_compile_error.log"
+    if clean_log.is_file():
+        try:
+            clean_log.unlink()
         except Exception:
             pass
 

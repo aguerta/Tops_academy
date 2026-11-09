@@ -1092,7 +1092,7 @@ def check_ast_rf_triple_braces(source_text: str) -> List[str]:
         return warnings
     for m in re.finditer(r"(?i)\b(rf|fr)(['\"]{1,3})([\s\S]*?)\2", source_text):
         if "{{{" in m.group(3):
-            snippet = m.group(0)[:60] + ("..." if len(m.group(0)) > 60 else "")
+            snippet = m.group(0)
             warnings.append(
                 f"[!] Warning: Se detectó {m.group(1)}{m.group(2)}...{m.group(2)} conteniendo '{{{{{{' ({snippet}). "
                 "Recomendación: Utilice raw strings r\"...\" con tokens @var@ para evitar la corrupción de llaves KaTeX."
@@ -1466,18 +1466,9 @@ def build_compact_diagnostic_groups(
         rtag = r["rule_tag"]
         fp = r["file_path"]
         s_ref = r.get("shard_ref", "")
+        # Zero artificial limits: causes and actions are preserved 100% in full
         scause = r["cause"]
-        is_expanded_cause = (
-            any(k in rtag for k in ("STEM-DIVERSITY-GATE", "DIAG-MAGIC-MULT", "PSYCHOMETRIC-OPTIONS", "VERIFIER-TAUTOLOGY-DETECTED"))
-            or any(k in scause for k in ("VERIFIER-TAUTOLOGY-DETECTED", "[DIAG-MAGIC-MULT]", "ver_fn"))
-        )
-        max_cause_len = 240 if is_expanded_cause else 95
-        if len(scause) > max_cause_len:
-            scause = scause[:max_cause_len - 3] + "..."
         sact = r["action"]
-        max_act_len = 220 if is_expanded_cause else 85
-        if len(sact) > max_act_len:
-            sact = sact[:max_act_len - 3] + "..."
 
         grouped[rtag][(fp, s_ref)][(scause, sact)].extend(r["lines"])
 
@@ -1504,7 +1495,7 @@ def count_distinct_shard_error_hunks(
 def render_compact_aggregated_errors(
     errors: List[Union[str, DiagnosticError]],
     targets: Optional[List[Path]] = None,
-    max_output_lines: int = 28,
+    max_output_lines: int = 60,
     shard_py: Optional[Union[str, Path]] = None,
 ) -> str:
     """Render canonical LLM-optimized single-line aggregated error output grouped by rule (< 30 lines)."""
@@ -2418,7 +2409,7 @@ def validate_template_schema(data: Dict[str, Any]) -> List[str]:
     for err in validator.iter_errors(data):
         for leaf in _leaf_errors(err):
             loc = " -> ".join(str(p) for p in list(err.path) + list(leaf.path))
-            msg = leaf.message if len(leaf.message) <= 220 else leaf.message[:217] + "..."
+            msg = leaf.message
             errors.append(f"Template schema violation at [{loc}]: {msg}")
     seen = set()
     errors = [e for e in errors if not (e in seen or seen.add(e))]
@@ -2827,8 +2818,6 @@ def check_single_template(
         if N_eval >= 2 and len(unique_correct) == 1:
             first_ans = list(unique_correct)[0]
             first_str = str(first_ans)
-            if len(first_str) > 60:
-                first_str = first_str[:57] + "..."
             errors.append(format_diagnostic_error(
                 "TPL-STATIC-OPT: MONO-CLAVE DETECTADA",
                 competency_id,
@@ -2908,8 +2897,6 @@ def check_single_template(
             u_rats = set(rats_list)
             if len(u_contents) > 1 and len(u_rats) == 1:
                 rat_sample = list(u_rats)[0] if u_rats else "(vacío)"
-                if len(rat_sample) > 60:
-                    rat_sample = rat_sample[:57] + "..."
                 errors.append(format_diagnostic_error(
                     "TPL-DYNAMIC-RATIONALE: RATIONALE ESTÁTICO EN DISTRACTOR DINÁMICO",
                     competency_id,
@@ -2953,7 +2940,7 @@ def check_single_template(
     if not (has_placeholder or has_variants):
         errors.append(format_diagnostic_error(
             "TPL-VAR: DIVERSIDAD DE REACTIVOS", competency_id, tpl_id, "template", "stem / stem_variants",
-            f"stem: '{stem[:60]}...'",
+            f"stem: '{stem}'",
             f"TPL-VAR violation in '{tpl_id}': stem must contain at least one placeholder '{{var}}' or '@var@' or 'stem_variants' must be present.",
             [
                 "Insertar al menos un placeholder dinámico como '{a}' o '{x}' en el campo 'stem'.",
@@ -3160,8 +3147,6 @@ def check_competency_diversity(
             pct = max_cnt / len(questions)
             if pct > 0.20:
                 k_str = str(most_common_key)
-                if len(k_str) > 50:
-                    k_str = k_str[:47] + "..."
                 errors.append(format_diagnostic_error(
                     rule_tag="TPL-STATIC-OPT: CONCENTRACIÓN EXCESIVA DE CLAVE CORRECTA",
                     competency=cid,
@@ -3634,9 +3619,8 @@ def check_templates_file_or_dir(
                 uncovered = declared_set - referenced_set
                 if uncovered:
                     tpl_d3_failed = True
-                    missing_list = sorted(uncovered)
-                    snippet_msg = f"Distractores sin cubrir: {missing_list} ({len(uncovered)}/{len(declared_set)})"
-                    cause_msg = f"FALTAN DISTRACTORES OBLIGATORIOS: {missing_list}. Existen distractores definidos en cta.json sin asignar en las plantillas de '{cid}'."
+                    snippet_msg = f"Distractores sin cubrir: {sorted(uncovered)} ({len(uncovered)}/{len(declared_set)})"
+                    cause_msg = "Existen distractores definidos en cta.json que ninguna plantilla de la competencia está utilizando."
 
             if tpl_d3_failed:
                 err_diag = format_diagnostic_error(
@@ -3648,9 +3632,9 @@ def check_templates_file_or_dir(
                     snippet=snippet_msg,
                     cause=cause_msg,
                     actions=[
-                        f"Asignar los distractores obligatorios faltantes {missing_list} a las plantillas existentes de '{cid}'.",
+                        f"Asignar los distractores correspondientes en las plantillas existentes de '{cid}'.",
                         "O crear plantillas adicionales que ejerciten los conceptos erróneos representados por estos distractores.",
-                        "Asegurar la cobertura del 100% de distractores requerida por el contrato psicométrico.",
+                        "Asegurar la cobertura de distractores requerida por el contrato psicométrico.",
                     ],
                 )
                 errors.append(err_diag)

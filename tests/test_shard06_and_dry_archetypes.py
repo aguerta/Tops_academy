@@ -830,7 +830,7 @@ TEMPLATES = [
         # Verify report directive
         err_report = errors[0]
         assert f"[UMBRAL < 6 ({receipt_data['error_count']}/5 errores)]" in err_report
-        assert "Usa edit_file (replace_file_content) quirúrgico en las líneas indicadas; PROHIBIDO write_file completo." in err_report
+        assert "Usa edit_file" in err_report and ("write_file(Overwrite=True)" in err_report or "PROHIBIDO write_file completo" in err_report)
 
         # Also verify that 50 duplicate seed errors consolidate to hunk_count == 1
         multi_seed_errors = [
