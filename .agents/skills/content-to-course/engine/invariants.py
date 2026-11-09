@@ -1,4 +1,4 @@
-"""Question invariant evaluation for content-to-course v2.
+﻿"""Question invariant evaluation for content-to-course v2.
 
 Evaluates 100% of instances against strict psychometric and correctness rules:
 - 1 correct answer (for MC7)
@@ -33,7 +33,10 @@ except ImportError:
         pykatex_validate_with_column = None  # type: ignore
 
 
-_KATEX_LOCK = threading.Lock()
+try:
+    from engine.katex_ast import _KATEX_LOCK
+except Exception:
+    _KATEX_LOCK = threading.Lock()
 _KATEX_NUM_SKELETON_RE = re.compile(r"(?<![\\#'\"a-zA-Z0-9_])\d+(?:\.\d+)?")
 
 

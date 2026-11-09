@@ -416,16 +416,16 @@ def generate_judge_batch(
         gen_res = None
         assembled = None
         seed_passed = False
-        max_seed_retries = 20
+        max_seed_retries = 5
         curr_try = 0
 
         while curr_try < max_seed_retries and not seed_passed:
             curr_try += 1
             try:
-                cand_res = execute_sandbox_instance(gen_code, seed=active_seed)
+                cand_res = execute_sandbox_instance(gen_code, seed=active_seed, timeout=1.5)
                 # Verify cross-check / verifier if present (strict boolean True required)
                 if ver_code and str(ver_code).strip():
-                    is_ver = execute_verifier_code(ver_code, cand_res, seed=active_seed)
+                    is_ver = execute_verifier_code(ver_code, cand_res, seed=active_seed, timeout=1.5)
                     if is_ver is not True:
                         active_seed = (active_seed + 101) % 99991 + 100
                         continue

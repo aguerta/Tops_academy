@@ -145,11 +145,41 @@ class _LogCaptureStream(io.StringIO):
 
     Prevents multiprocessing.spawn and ProcessPoolExecutor on Windows from crashing
     or hanging when sys.stdout is redirected during stage execution.
+    Streams incremental output to log_file and sends periodic console heartbeats.
     """
 
-    def __init__(self, target_stream=None):
+    def __init__(self, target_stream=None, log_file: Optional[Path] = None):
         super().__init__()
         self._target_stream = target_stream or sys.__stdout__
+        self._log_file = log_file
+        self._last_heartbeat = time.time()
+        if self._log_file:
+            try:
+                self._log_file.write_text("", encoding="utf-8")
+            except Exception:
+                pass
+
+    def write(self, s: str) -> int:
+        ret = super().write(s)
+        if self._log_file and s:
+            try:
+                with open(self._log_file, "a", encoding="utf-8") as f:
+                    f.write(s)
+                    f.flush()
+            except Exception:
+                pass
+        now = time.time()
+        if now - self._last_heartbeat > 5.0 and s and ("\n" in s or "\r" in s):
+            self._last_heartbeat = now
+            if self._target_stream and hasattr(self._target_stream, "write"):
+                try:
+                    last_line = s.strip().splitlines()[-1] if s.strip() else ""
+                    if last_line:
+                        self._target_stream.write(f"  [stage-heartbeat] {last_line[:80]}\n")
+                        self._target_stream.flush()
+                except Exception:
+                    pass
+        return ret
 
     def fileno(self) -> int:
         if self._target_stream and hasattr(self._target_stream, "fileno"):
@@ -190,7 +220,7 @@ def cap_stdout_to_log(work_dir: Path, stage_name: str, max_bytes: int = 16000):
     log_file = logs_dir / f"{clean_stage}.log"
 
     old_stdout = sys.stdout
-    buffer = _LogCaptureStream(old_stdout)
+    buffer = _LogCaptureStream(old_stdout, log_file=log_file)
     sys.stdout = buffer
     try:
         yield
@@ -1242,13 +1272,11 @@ class PipelineRunner:
             div_res = evaluate_competency_diversity(stems)
             return course_comp_dict, comp_questions, div_res
 
-        max_workers = min(16, (os.cpu_count() or 4) * 2, len(competencies))
+        # Sequential execution: PyKaTeX QuickJS C-extension is not thread-safe.
+        # Sequential instantiation takes < 3s for 21 competencies and avoids C-level GIL deadlock.
         comp_results_map: Dict[str, Any] = {}
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_cid = {executor.submit(_instantiate_single_comp, comp): comp["id"] for comp in competencies}
-            for fut in future_to_cid:
-                cid_key = future_to_cid[fut]
-                comp_results_map[cid_key] = fut.result()
+        for comp in competencies:
+            comp_results_map[comp["id"]] = _instantiate_single_comp(comp)
 
         # Strictly preserve the exact pedagogical sequence of competencies as declared in cta.json
         all_questions: List[Dict[str, Any]] = []
@@ -2023,6 +2051,26 @@ class PipelineRunner:
             if detail and detail not in entry["findings"] and len(entry["findings"]) < 12:
                 entry["findings"].append(detail)
 
+        def _is_failure_stale(c: Any, rep_mtime: float) -> bool:
+            if not c:
+                return False
+            c_str = str(c)
+            s_id = cid_to_shard.get(c_str)
+            cand_certs = []
+            if s_id:
+                cand_certs.extend([
+                    self.work_dir / "shards" / f"{s_id}.cert.json",
+                    self.work_dir / f"{s_id}.cert.json",
+                ])
+            cand_certs.extend([
+                self.work_dir / "templates" / f"{c_str}.cert.json",
+                self.work_dir / "templates.cert.json",
+            ])
+            for cp in cand_certs:
+                if cp.is_file() and cp.stat().st_mtime > rep_mtime:
+                    return True
+            return False
+
         # 1. Linter / build gate / publication / template failure findings
         report_candidates = [
             self.work_dir / "specific_error_report.json",
@@ -2033,8 +2081,12 @@ class PipelineRunner:
             if not rep_p.is_file():
                 continue
             try:
+                rep_mtime = rep_p.stat().st_mtime
+                is_tpl_rep = (rep_p.name == "template_failures.json")
                 spec = json.loads(rep_p.read_text(encoding="utf-8"))
                 for cid in (spec.get("failing_competencies") or []):
+                    if is_tpl_rep and _is_failure_stale(cid, rep_mtime):
+                        continue
                     _add(cid, "linter", "")
 
                 # Read grouped_by_rule or groups
@@ -2043,8 +2095,11 @@ class PipelineRunner:
                     for grp in grps:
                         tag = grp.get("rule_tag") or grp.get("linter") or "LINTER"
                         for loc in (grp.get("locations") or []):
+                            target_cid = loc.get("competency_id")
+                            if is_tpl_rep and _is_failure_stale(target_cid, rep_mtime):
+                                continue
                             msgs = loc.get("sample_findings") or [""]
-                            _add(loc.get("competency_id"), "linter", f"[{tag}] {loc.get('template_id', '')}: {msgs[0]}"[:400])
+                            _add(target_cid, "linter", f"[{tag}] {loc.get('template_id', '')}: {msgs[0]}"[:400])
                 elif isinstance(grps, dict):
                     for rule_name, rule_items in grps.items():
                         if isinstance(rule_items, list):
@@ -2053,10 +2108,15 @@ class PipelineRunner:
                                     tag = ent.get("rule_tag") or ent.get("linter") or rule_name
                                     if ent.get("locations"):
                                         for loc in ent["locations"]:
+                                            target_cid = loc.get("competency_id")
+                                            if is_tpl_rep and _is_failure_stale(target_cid, rep_mtime):
+                                                continue
                                             msgs = loc.get("sample_findings") or [""]
-                                            _add(loc.get("competency_id"), "linter", f"[{tag}] {loc.get('template_id', '')}: {msgs[0]}"[:400])
+                                            _add(target_cid, "linter", f"[{tag}] {loc.get('template_id', '')}: {msgs[0]}"[:400])
                                     else:
                                         cid = ent.get("competency_id") or ent.get("cid")
+                                        if is_tpl_rep and _is_failure_stale(cid, rep_mtime):
+                                            continue
                                         msg = ent.get("message") or ent.get("detail") or str(ent)
                                         _add(cid, "linter", f"[{tag}] {msg}"[:400])
                                 elif isinstance(ent, str):
@@ -2067,15 +2127,21 @@ class PipelineRunner:
                             sample = rule_items.get("sample") or rule_items.get("message") or rule_name
                             if cids:
                                 for cid in cids:
+                                    if is_tpl_rep and _is_failure_stale(cid, rep_mtime):
+                                        continue
                                     _add(cid, "linter", f"[{tag}] {sample}"[:400])
                             else:
                                 cid = rule_items.get("competency_id") or rule_items.get("cid")
+                                if is_tpl_rep and _is_failure_stale(cid, rep_mtime):
+                                    continue
                                 _add(cid, "linter", f"[{tag}] {sample}"[:400])
 
                 # Read diagnostics_by_competency
                 diag = spec.get("diagnostics_by_competency") or {}
                 if isinstance(diag, dict):
                     for cid, diag_entries in diag.items():
+                        if is_tpl_rep and _is_failure_stale(cid, rep_mtime):
+                            continue
                         if isinstance(diag_entries, list):
                             for d_item in diag_entries:
                                 if isinstance(d_item, dict):
@@ -2094,8 +2160,12 @@ class PipelineRunner:
                     cids_for_s = shard_to_cids.get(s_id, [])
                     if cids_for_s:
                         for c_id in cids_for_s:
+                            if is_tpl_rep and _is_failure_stale(c_id, rep_mtime):
+                                continue
                             _add(c_id, "linter", f"[SHARD] {s_id} marked as failing/affected")
                     elif str(s_id).startswith("C-"):
+                        if is_tpl_rep and _is_failure_stale(str(s_id), rep_mtime):
+                            continue
                         _add(str(s_id), "linter", f"[SHARD] {s_id} marked as failing/affected")
             except Exception as e:
                 logger.warning("Could not read %s: %s", rep_p.name, e)
@@ -2165,6 +2235,7 @@ class PipelineRunner:
             "publish_rejection_spec.json",
             "publish_rejection_spec.md",
             "audit_gate_report.json",
+            "template_failures.json",
         ):
             (self.work_dir / stale).unlink(missing_ok=True)
 

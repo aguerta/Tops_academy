@@ -95,6 +95,10 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 8. 🔁 **Motor SRS, *Mastery Challenge* (12h), *Misconception Ledger* y Fluidez ([Milestone 8](#milestone-8-motor-de-decaimiento-en-memoria-srs-mastery-challenge-12h-misconception-ledger-y-fluidez)):** Decaimiento temporal Ebbinghaus, cuaderno de trampas y compresión de latencia.
 9. 🚀 **Modalidades Interactivas, `Open Symbolic` y Pruebas Paso a Paso ([Milestone 5](#milestone-5-modalidades-interactivas-avanzadas-open-symbolic-y-demostraciones-paso-a-paso)):** Parsons/Reordenamiento, Matching, Manipuladores SVG, `MathLive + SymPy` y verificador de derivaciones con `lean --server`.
 10. 🧹 **Higiene del Repositorio ([Milestone 13](#milestone-13-consolidación-del-repositorio-higiene-de-artefactos-y-reestructuración-de-tests)), Carga Instantánea ([Milestone 11b](#milestone-11b-apertura-instantánea-de-cursos-pesados)), Matriz E2E ([Milestone 1-T](#milestone-1-t-deuda-de-pruebas-de-ergonomía-e2e-matriz-125150-tablets-y-ac-core)) y Resiliencia `sessionStorage` ([Milestone 12](#milestone-12-resiliencia-ante-suspensión-de-la-laptop-sessionstorage)).**
+11. 🔍 **Auditoría Forense y Telemetría Agéntica de Corridas Recientes:** Falta analizar en modo agéntico la auditoría detallada (telemetría de tokens, latencias, descomposición de herramientas, detección de cuellos de botella y calidad pedagógica/psicométrica QM/OSCQR) de las siguientes sesiones de orquestación:
+    - [Content to Course MapReduce Generation](conversation://66915882-b7f8-441f-9fc7-d4a964050a42): Generación y corrida MapReduce v5 (`saul_pc_sistemas_de_ecuaciones_vmapreduce5`).
+    - [Solow Model Course Generation](conversation://3981c7eb-7122-4ba2-9615-2418a55bf657): Generación de curso Solow con pipeline directo (`solow_new_pipeline_direct`).
+    - [Solow Model Course Creation](conversation://539b37fa-3efe-4464-a86d-0ec0a8f8130b): Creación y generación de curso Solow con pipeline MapReduce (`solow_new_pipeline_mapreduce`).
 
 ---
 
@@ -313,6 +317,12 @@ Los estudios técnicos, diagnósticos forenses y análisis comparativos que fund
 - 📄 [`reports/c2c_audits/historical_benchmark.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/c2c_audits/historical_benchmark.md): Historial de 43 corridas del pipeline C2C.
 - 📄 [`reports/c2c_audits/reporte_problemas_reparacion_c2c.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/c2c_audits/reporte_problemas_reparacion_c2c.md): Diagnóstico forense de subagentes reparadores y stragglers.
 - 📄 [`docs/investigaciones/external_analysis/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/investigaciones/external_analysis/): Serie de 4 diagnósticos forenses sobre cuellos de botella sintácticos.
+
+### 7.1. Auditorías Pendientes de Análisis en Modo Agéntico
+Se requiere ejecutar y analizar en modo agéntico la auditoría forense de rendimiento y calidad unificada (vía skills `c2c-run-auditor` y `c2c-unified-auditor`) para las siguientes sesiones de orquestación registradas:
+- ⏳ [Content to Course MapReduce Generation](conversation://66915882-b7f8-441f-9fc7-d4a964050a42) (`saul_pc_sistemas_de_ecuaciones_vmapreduce5`).
+- ⏳ [Solow Model Course Generation](conversation://3981c7eb-7122-4ba2-9615-2418a55bf657) (`solow_new_pipeline_direct`).
+- ⏳ [Solow Model Course Creation](conversation://539b37fa-3efe-4464-a86d-0ec0a8f8130b) (`solow_new_pipeline_mapreduce`).
 
 ---
 *Documento canónico y ejecutivo de hoja de ruta. Cualquier cambio en contratos o alcance técnico debe sincronizarse de forma bidireccional con los archivos en [`docs/specs/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/) y con [`CONOCIMIENTO_TRIBAL.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/CONOCIMIENTO_TRIBAL.md).*
