@@ -1,0 +1,3836 @@
+{
+  "course_id": "solow_new_pipeline_direct",
+  "filename": "solow_new_pipeline_direct.json",
+  "title": "Solow New Pipeline Direct",
+  "description": "Dominio y aplicación analítica integral de Solow New Pipeline Direct",
+  "total_competencies": 15,
+  "total_questions": 350,
+  "question_types_distribution": {
+    "multiple_choice_7_options": 90,
+    "fill_in_the_blank": 175,
+    "multiple_select": 85
+  },
+  "questions_per_competency": {
+    "H-01": 20,
+    "C-01": 20,
+    "H-02": 20,
+    "Hab-01": 30,
+    "C-02": 20,
+    "C-03": 20,
+    "Hab-02": 30,
+    "H-03": 20,
+    "C-04": 20,
+    "Hab-03": 30,
+    "Hab-04": 30,
+    "H-04": 20,
+    "C-05": 20,
+    "Hab-05": 30,
+    "C-06": 20
+  },
+  "stage5_judge_audit": {
+    "available": true,
+    "total_items_judged": 60,
+    "agreed_items": 60,
+    "agreement_rate": 1.0,
+    "unrepaired_disagreements_count": 0,
+    "unrepaired_disagreements": []
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0, la Rúbrica Determinista de 20 puntos y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 4.29,
+    "final_score": 19.75,
+    "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY",
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 15 competencias (4 Hechos, 6 Conceptos, 5 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 15/15 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 5.0,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=25.71%, FIB=50.0%, MS=24.29% (74.29% evocación activa/discriminación). Distractores: 710 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.95,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 350/350 ítems. Unicidad diagnóstica de rationales: 94.51%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 1.8,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 5 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 19.75,
+      "penalties_applied": [],
+      "hard_penalties_total": 0,
+      "final_score": 19.75,
+      "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY"
+    },
+    "mastery_path_readiness": {
+      "mpri_score": 99.83,
+      "mpri_max": 100.0,
+      "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 25.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 15.0,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 10.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 9.83,
+          "max": 10.0
+        }
+      }
+    },
+    "hard_penalties_precalculated": []
+  },
+  "deterministic_rubric": {
+    "dimension_scores": {
+      "architecture_granularity": {
+        "score": 4.0,
+        "max": 4.0,
+        "feedback": "Estructura curricular con 15 competencias (4 Hechos, 6 Conceptos, 5 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 15/15 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+      },
+      "assessment_quality": {
+        "score": 5.0,
+        "max": 5.0,
+        "feedback": "Modalidad: MC7=25.71%, FIB=50.0%, MS=24.29% (74.29% evocación activa/discriminación). Distractores: 710 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+      },
+      "scaffolding_hints": {
+        "score": 4.95,
+        "max": 5.0,
+        "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 350/350 ítems. Unicidad diagnóstica de rationales: 94.51%."
+      },
+      "instructional_alignment": {
+        "score": 4.0,
+        "max": 4.0,
+        "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+      },
+      "technical_ergonomics": {
+        "score": 1.8,
+        "max": 2.0,
+        "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 5 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+      }
+    },
+    "raw_subtotal": 19.75,
+    "penalties_applied": [],
+    "hard_penalties_total": 0,
+    "final_score": 19.75,
+    "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY"
+  },
+  "final_score": 19.75,
+  "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY",
+  "audit_telemetry": {
+    "course_id": "solow_new_pipeline_direct",
+    "title": "Solow New Pipeline Direct",
+    "total_competencies": 15,
+    "total_questions": 350,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 15,
+        "category_distribution": {
+          "Fact": 4,
+          "Concept": 6,
+          "Skill": 5,
+          "Other": 0
+        },
+        "competencies_missing_prerequisites_count": 1,
+        "underpopulated_competencies_count": 0,
+        "underpopulated_competencies": [],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 20,
+        "max_questions_per_comp": 30
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 710,
+        "distractors_with_rationale_count": 710,
+        "rationale_coverage_pct": 100.0,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 0,
+        "zero_hints_items": [],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 175,
+        "missing_solutions_count": 0
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 0,
+        "unclosed_braces_items": [],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 0,
+        "template_variable_residue_items": []
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 0,
+        "blind_string_replacement_items": []
+      },
+      "cloned_distractor_value_linter": {
+        "cloned_distractor_items_count": 0,
+        "cloned_distractor_sample_items": []
+      },
+      "parenthetical_telltale_linter": {
+        "parenthetical_telltale_count": 0,
+        "parenthetical_telltale_items": []
+      },
+      "archetype_entropy_linter": {
+        "min_required_archetypes": 4,
+        "monotonous_competencies_count": 0,
+        "monotonous_competencies": [],
+        "low_archetype_variety_competencies_count": 0,
+        "low_archetype_variety_competencies": [],
+        "min_distinct_skeletons_observed": 20
+      },
+      "uninterpolated_math_variable_linter": {
+        "uninterpolated_math_items_count": 10,
+        "uninterpolated_math_sample_items": [
+          "Q-C04-184",
+          "Q-H02-044",
+          "Q-C04-183",
+          "Q-C04-185",
+          "Q-C04-182",
+          "Q-H02-041",
+          "Q-H02-045",
+          "Q-H02-042",
+          "Q-C04-181",
+          "Q-H02-043"
+        ]
+      },
+      "zpd_progression_linter": {
+        "difficulty_distribution": {
+          "easy": 90,
+          "medium": 90,
+          "hard": 170
+        },
+        "bloom_distribution": {
+          "Apply": 165,
+          "Analyze": 85,
+          "Evaluate": 85,
+          "Understand": 15
+        },
+        "eligible_competencies_evaluated": 15,
+        "zpd_dead_competencies_count": 0,
+        "zpd_dead_competencies": [],
+        "two_band_competencies_count": 0,
+        "three_band_competencies_count": 15,
+        "missing_hard_tier_competencies_count": 0,
+        "missing_easy_tier_competencies_count": 0,
+        "skill_questions_total": 150,
+        "skill_higher_bloom_count": 150,
+        "skill_higher_bloom_pct": 100.0
+      },
+      "retrieval_modality_linter": {
+        "mc7_count": 90,
+        "fib_count": 175,
+        "ms_count": 85,
+        "mc7_share_pct": 25.71,
+        "fib_share_pct": 50.0,
+        "ms_share_pct": 24.29,
+        "active_generation_or_discrimination_pct": 74.29,
+        "recognition_only_skill_competencies_count": 0,
+        "recognition_only_skill_competencies": []
+      },
+      "socratic_scaffolding_integrity_linter": {
+        "boilerplate_hints_items_count": 0,
+        "boilerplate_hints_pct": 0.0,
+        "boilerplate_sample_items": [],
+        "poisoned_hints_items_count": 0,
+        "poisoned_hints_pct": 0.0,
+        "poisoned_hints_sample_items": [],
+        "hint_answer_leak_items_count": 0,
+        "genuine_socratic_hints_pct": 100.0
+      },
+      "diagnostic_rationale_alignment_linter": {
+        "total_rationales": 710,
+        "unique_rationales": 671,
+        "rationale_uniqueness_pct": 94.51,
+        "magic_multiplier_distractor_items_count": 0,
+        "magic_multiplier_sample_items": []
+      },
+      "anti_gaming_psychometric_linter": {
+        "memorizable_competencies_count": 0,
+        "memorizable_competencies": [],
+        "length_padded_items_count": 0,
+        "length_padded_sample_items": [],
+        "cross_domain_prefix_items_count": 0,
+        "cross_domain_prefix_sample_items": [],
+        "vacuous_quantifier_items_count": 0,
+        "vacuous_quantifier_sample_items": []
+      },
+      "dag_mastery_topology_linter": {
+        "has_cycle": false,
+        "max_dag_depth": 7,
+        "connected_components_count": 1,
+        "multi_node_subgraphs_count": 1,
+        "inverted_prerequisite_edges_count": 0,
+        "inverted_prerequisite_edges": [],
+        "dangling_prerequisites_count": 0,
+        "isolated_competencies_count": 0,
+        "isolated_competencies": [],
+        "skills_without_prerequisites_count": 0,
+        "skills_without_prerequisites": []
+      },
+      "katex_frontend_ergonomics_linter": {
+        "prose_in_katex_text_items_count": 5,
+        "prose_in_katex_text_sample_items": [
+          "Q-H03-180",
+          "Q-H03-177",
+          "Q-H03-178",
+          "Q-H03-176",
+          "Q-H03-179"
+        ],
+        "raw_identifier_math_items_count": 0,
+        "raw_identifier_math_sample_items": []
+      }
+    },
+    "hard_penalties": [],
+    "risk_score": 4.29,
+    "mastery_path_readiness": {
+      "mpri_score": 99.83,
+      "mpri_max": 100.0,
+      "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 25.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 15.0,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 10.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 9.83,
+          "max": 10.0
+        }
+      }
+    },
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 15 competencias (4 Hechos, 6 Conceptos, 5 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 15/15 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 5.0,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=25.71%, FIB=50.0%, MS=24.29% (74.29% evocación activa/discriminación). Distractores: 710 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.95,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 350/350 ítems. Unicidad diagnóstica de rationales: 94.51%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 1.8,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 5 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 19.75,
+      "penalties_applied": [],
+      "hard_penalties_total": 0,
+      "final_score": 19.75,
+      "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY"
+    },
+    "final_score": 19.75,
+    "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY",
+    "risk_clusters": {
+      "katex_issues": [
+        "Q-H02-041",
+        "Q-H02-042",
+        "Q-H02-043",
+        "Q-H02-044",
+        "Q-H02-045",
+        "Q-C04-181",
+        "Q-C04-182",
+        "Q-C04-183",
+        "Q-C04-184",
+        "Q-C04-185",
+        "Q-H03-176",
+        "Q-H03-177",
+        "Q-H03-178",
+        "Q-H03-179",
+        "Q-H03-180"
+      ],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [],
+      "template_residues": [],
+      "blind_replacements": [],
+      "cloned_distractors": [],
+      "archetype_monotony": [],
+      "poisoned_hints": [],
+      "boilerplate_hints": [],
+      "magic_multiplier_distractors": [],
+      "memorizable_answers": [],
+      "length_padded_options": [],
+      "cross_domain_prefixes": [],
+      "vacuous_quantifiers": [],
+      "katex_ergonomics": [
+        "Q-H03-176",
+        "Q-H03-177",
+        "Q-H03-178",
+        "Q-H03-179",
+        "Q-H03-180"
+      ]
+    },
+    "all_issues": [
+      {
+        "linter": "uninterpolated_math_variable_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H02-041",
+        "competency_id": "H-02",
+        "message": "Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'",
+        "snippet": "{K}$"
+      },
+      {
+        "linter": "uninterpolated_math_variable_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H02-042",
+        "competency_id": "H-02",
+        "message": "Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'",
+        "snippet": "{K}$"
+      },
+      {
+        "linter": "uninterpolated_math_variable_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H02-043",
+        "competency_id": "H-02",
+        "message": "Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'",
+        "snippet": "{K}$"
+      },
+      {
+        "linter": "uninterpolated_math_variable_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H02-044",
+        "competency_id": "H-02",
+        "message": "Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'",
+        "snippet": "{K}$"
+      },
+      {
+        "linter": "uninterpolated_math_variable_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H02-045",
+        "competency_id": "H-02",
+        "message": "Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'",
+        "snippet": "{K}$"
+      },
+      {
+        "linter": "uninterpolated_math_variable_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-C04-181",
+        "competency_id": "C-04",
+        "message": "Variable de plantilla posiblemente sin interpolar '{r}' en 'stem'",
+        "snippet": "{r}$"
+      },
+      {
+        "linter": "uninterpolated_math_variable_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-C04-182",
+        "competency_id": "C-04",
+        "message": "Variable de plantilla posiblemente sin interpolar '{r}' en 'stem'",
+        "snippet": "{r}$"
+      },
+      {
+        "linter": "uninterpolated_math_variable_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-C04-183",
+        "competency_id": "C-04",
+        "message": "Variable de plantilla posiblemente sin interpolar '{r}' en 'stem'",
+        "snippet": "{r}$"
+      },
+      {
+        "linter": "uninterpolated_math_variable_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-C04-184",
+        "competency_id": "C-04",
+        "message": "Variable de plantilla posiblemente sin interpolar '{r}' en 'stem'",
+        "snippet": "{r}$"
+      },
+      {
+        "linter": "uninterpolated_math_variable_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-C04-185",
+        "competency_id": "C-04",
+        "message": "Variable de plantilla posiblemente sin interpolar '{r}' en 'stem'",
+        "snippet": "{r}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-176",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Harrod-Domar asume: coeficientes } v = 4.4 \\text{ son sust"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-176",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Bajo rigidez técnica: } g_w = 6.3\\% > n \\Rightarrow \\text{"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-176",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Solow resuelve el filo: } v(k) \\text{ ajusta } g_w = n = 1"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-176",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Bajo rigidez técnica: } g_w = 6.3\\% > n \\Rightarrow \\text{"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-177",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Bajo rigidez técnica: } g_w = 5.0\\% > n \\Rightarrow \\text{"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-177",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Bajo rigidez técnica: } g_w = 5.0\\% > n \\Rightarrow \\text{"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-177",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Harrod-Domar asume: coeficientes } v = 4.0 \\text{ son sust"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-177",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Solow resuelve el filo: } v(k) \\text{ ajusta } g_w = n = 1"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-178",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Bajo rigidez técnica: } g_w = 8.3\\% > n \\Rightarrow \\text{"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-178",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Bajo rigidez técnica: } g_w = 8.3\\% > n \\Rightarrow \\text{"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-178",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Harrod-Domar asume: coeficientes } v = 2.8 \\text{ son sust"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-178",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Solow resuelve el filo: } v(k) \\text{ ajusta } g_w = n = 2"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-179",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Solow resuelve el filo: } v(k) \\text{ ajusta } g_w = n = 2"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-179",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Harrod-Domar asume: coeficientes } v = 5.5 \\text{ son sust"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-179",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Bajo rigidez técnica: } g_w = 5.6\\% > n \\Rightarrow \\text{"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-179",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Bajo rigidez técnica: } g_w = 5.6\\% > n \\Rightarrow \\text{"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-180",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Harrod-Domar asume: coeficientes } v = 5.3 \\text{ son sust"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-180",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Solow resuelve el filo: } v(k) \\text{ ajusta } g_w = n = 2"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-180",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Bajo rigidez técnica: } g_w = 5.8\\% > n \\Rightarrow \\text{"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-H03-180",
+        "competency_id": "H-03",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Bajo rigidez técnica: } g_w = 5.8\\% > n \\Rightarrow \\text{"
+      }
+    ],
+    "issues_by_item": {
+      "Q-H02-041": [
+        "[WARNING] Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'"
+      ],
+      "Q-H02-042": [
+        "[WARNING] Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'"
+      ],
+      "Q-H02-043": [
+        "[WARNING] Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'"
+      ],
+      "Q-H02-044": [
+        "[WARNING] Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'"
+      ],
+      "Q-H02-045": [
+        "[WARNING] Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'"
+      ],
+      "Q-C04-181": [
+        "[WARNING] Variable de plantilla posiblemente sin interpolar '{r}' en 'stem'"
+      ],
+      "Q-C04-182": [
+        "[WARNING] Variable de plantilla posiblemente sin interpolar '{r}' en 'stem'"
+      ],
+      "Q-C04-183": [
+        "[WARNING] Variable de plantilla posiblemente sin interpolar '{r}' en 'stem'"
+      ],
+      "Q-C04-184": [
+        "[WARNING] Variable de plantilla posiblemente sin interpolar '{r}' en 'stem'"
+      ],
+      "Q-C04-185": [
+        "[WARNING] Variable de plantilla posiblemente sin interpolar '{r}' en 'stem'"
+      ],
+      "Q-H03-176": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ],
+      "Q-H03-177": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ],
+      "Q-H03-178": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ],
+      "Q-H03-179": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ],
+      "Q-H03-180": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ]
+    }
+  },
+  "competencies": [
+    {
+      "id": "H-01",
+      "name": "Propiedades de la Función de Producción Neoclásica",
+      "category": "Fact",
+      "description": "La función de producción agregada $Q = F(K, L)$ satisface rendimientos constantes a escala $F(\\mu K, \\mu L) = \\mu F(K, L)$, productos marginales positivos $F_K > 0, F_L > 0$ y rendimientos marginales decrecientes $F_{KK} < 0, F_{LL} < 0$.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-01",
+      "name": "Forma Intensiva de la Función de Producción",
+      "category": "Concept",
+      "description": "Al dividir la función homogénea de grado 1 por el factor trabajo $L$, el producto por trabajador $q = Q/L$ se expresa como una función de la relación capital-trabajo $k = K/L$, dada por $q = \\phi(k) = F(k, 1)$, cumpliendo $\\phi'(k) > 0$ y $\\phi''(k) < 0$.",
+      "prerequisites": [
+        "H-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "H-02",
+      "name": "Ecuaciones de Comportamiento del Ahorro y la Fuerza Laboral",
+      "category": "Fact",
+      "description": "La inversión neta coincide con el ahorro agregado a través de una propensión marginal constante $\\dot{K} = s Q$ con $0 < s < 1$, mientras que la fuerza laboral crece a una tasa exógena constante $\\dot{L}/L = \\lambda$, determinando la trayectoria $L(t) = L_0 e^{\\lambda t}$.",
+      "prerequisites": [
+        "H-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-01",
+      "name": "Derivación de la Ecuación Fundamental de Acumulación de Capital",
+      "category": "Skill",
+      "description": "A partir de la definición de capital por trabajador $k = K/L$, se aplica la derivada temporal $\\dot{k} = \\frac{\\dot{K} L - K \\dot{L}}{L^2} = \\frac{\\dot{K}}{L} - k \\frac{\\dot{L}}{L}$ y se sustituyen $\\dot{K} = s L \\phi(k)$ y $\\dot{L}/L = \\lambda$ para deducir $\\dot{k} = s\\phi(k) - \\lambda k$.",
+      "prerequisites": [
+        "C-01",
+        "H-02"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-02",
+      "name": "Existencia y Estabilidad Dinámica del Estado Estacionario",
+      "category": "Concept",
+      "description": "El equilibrio intertemporal de estado uniforme $k^*$ se alcanza cuando $\\dot{k} = 0$, lo que implica $s\\phi(k^*) = \\lambda k^*$. Su estabilidad dinámica asintótica queda garantizada porque la pendiente de la línea de fase en el entorno de $k^*$ es estrictamente negativa: $s\\phi'(k^*) - \\lambda < 0$.",
+      "prerequisites": [
+        "Hab-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-03",
+      "name": "Propiedades del Crecimiento en Estado Uniforme",
+      "category": "Concept",
+      "description": "En el estado uniforme de crecimiento balanceado, la relación capital-trabajo $k^*$ y el producto medio $q^* = \\phi(k^*)$ son constantes en el tiempo, de modo que las variables agregadas $K(t)$, $L(t)$ y $Q(t)$ crecen a la tasa demográfica constante $\\lambda$, resultando en una tasa de crecimiento del ingreso per cápita nula.",
+      "prerequisites": [
+        "C-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-02",
+      "name": "Resolución de la Ecuación de Bernoulli para Cobb-Douglas",
+      "category": "Skill",
+      "description": "Para la función Cobb-Douglas $Q = K^\\alpha L^{1-\\alpha}$ con $\\phi(k) = k^\\alpha$, la ecuación no lineal $\\dot{k} + \\lambda k = s k^\\alpha$ se transforma mediante $z = k^{1-\\alpha}$ en la ecuación diferencial lineal $\\frac{dz}{dt} + (1-\\alpha)\\lambda z = (1-\\alpha)s$, cuya solución analítica revela $k^*(t) = (s/\\lambda)^{1/(1-\\alpha)}$ cuando $t \\to \\infty$.",
+      "prerequisites": [
+        "Hab-01",
+        "C-02"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "H-03",
+      "name": "Crítica Teórica a la Hipótesis del Filo de Navaja de Harrod-Domar",
+      "category": "Fact",
+      "description": "El modelo de Harrod-Domar predice inestabilidad estructural o crecimiento de filo de navaja debido a que la tasa natural impuesta por la demografía $n$ y la tasa garantizada por el ahorro $s/v$ operan de forma desacoplada bajo coeficientes técnicos fijos $v = K/Y$.",
+      "prerequisites": [
+        "C-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-04",
+      "name": "Dinámica con Proporciones Fijas en la Formulación de Solow",
+      "category": "Concept",
+      "description": "Bajo una tecnología de Leontief $Y = \\min(K/a, L/b)$, la ecuación diferencial fundamental adopta la forma $\\dot{r} = s \\min(r/a, 1/b) - n r$. Si la tasa natural supera a la garantizada ($n > s/a$), el ratio capital-trabajo decae provocando desempleo estructural creciente; si $n < s/a$, el capital se vuelve crónicamente redundante.",
+      "prerequisites": [
+        "H-03"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-03",
+      "name": "Análisis de Estabilidad con Múltiples Estados Estacionarios",
+      "category": "Skill",
+      "description": "Evaluar las intersecciones entre la curva de ahorro por trabajador $s F(r, 1)$ y el rayo demográfico $n r$ cuando la función de producción presenta convexidades locales, clasificando los estados estacionarios según el signo de la derivada direccional: las raíces $r_1, r_3$ con $s F'(r, 1) < n$ son dinámicamente estables, mientras que la raíz intermedia $r_2$ con $s F'(r_2, 1) > n$ es inestable y delimita una trampa de pobreza.",
+      "prerequisites": [
+        "C-02",
+        "C-04"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "Hab-04",
+      "name": "Evaluación del Régimen de Crecimiento en Tecnología CES Cuadrática",
+      "category": "Skill",
+      "description": "Para la función de producción con alta sustituibilidad $Y = (a\\sqrt{K} + \\sqrt{L})^2$, formular la ecuación intensiva $\\dot{r} = s(a\\sqrt{r} + 1)^2 - nr$. Analizar algebraicamente la existencia del estado estacionario finito $r^* = \\left(\\frac{1}{\\sqrt{n/s} - a}\\right)^2$ bajo la condición $s a^2 < n$, y demostrar que si $s a^2 > n$ la economía experimenta acumulación infinita sin cota superior.",
+      "prerequisites": [
+        "Hab-01",
+        "C-02"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "H-04",
+      "name": "Condición de No Arbitraje de Activos de Capital y Tasa de Interés",
+      "category": "Fact",
+      "description": "Bajo mercados financieros sin fricciones y previsión perfecta, el rendimiento total por poseer una unidad de capital físico, compuesto por el alquiler real más las ganancias o pérdidas de capital, debe igualar a la tasa de interés monetaria: $i(t) = \\frac{q(t)}{p(t)} + \\frac{\\dot{p}(t)}{p(t)}$.",
+      "prerequisites": [
+        "C-03"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-05",
+      "name": "Ajuste de Precios Factoriales y Pleno Empleo Continuo",
+      "category": "Concept",
+      "description": "En una economía competitiva con retornos constantes a escala, el salario real y el alquiler del capital se determinan instantáneamente por sus productividades marginales: $\\frac{w}{p} = F_L(r) = f(r) - r f'(r)$ y $\\frac{q}{p} = F_K(r) = f'(r)$, dependiendo exclusivamente de la relación capital-trabajo $r$ y garantizando el vaciado continuo de los mercados de factores.",
+      "prerequisites": [
+        "H-04",
+        "C-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-05",
+      "name": "Dinámica con Progreso Técnico Neutral en el Sentido de Hicks",
+      "category": "Skill",
+      "description": "Incorporar el cambio técnico neutral $Y = e^{gt} K^\\alpha L^{1-\\alpha}$ en la ecuación de acumulación $\\dot{K} = s Y$, deduciendo que el stock de capital per cápita $k = K/L$ se expande a la tasa secular constante $\\frac{g}{1-\\alpha}$ y el producto agregado a la tasa compuesta $n + \\frac{g}{1-\\alpha}$, superando permanentemente la tasa de crecimiento demográfico $n$.",
+      "prerequisites": [
+        "Hab-02",
+        "C-03"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-06",
+      "name": "Tasa de Ahorro Endógena y Efectos de la Política Tributaria",
+      "category": "Concept",
+      "description": "Cuando la propensión al ahorro depende de la rentabilidad del capital $s = s(r)$, la ecuación de acumulación $\\dot{r} = s(r)F(r, 1) - n r$ puede asegurar estabilidad dinámica si el ahorro se reduce ante excesos de capital; asimismo, un impuesto proporcional sobre la renta a tasa $t$ altera la tasa efectiva de ahorro a $s(1-t) + t v$, donde $v$ representa la fracción del ingreso fiscal canalizada a formación de capital.",
+      "prerequisites": [
+        "C-05",
+        "Hab-05"
+      ],
+      "question_count": 20
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-H01-001",
+      "competency_id": "H-01",
+      "competency_name": "Propiedades de la Función de Producción Neoclásica",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Para una economía con tecnología neoclásica, calcule la participación del capital $\\alpha$ con $Y_K=197$ y $Y_L=721$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\alpha = 0.571$",
+          "is_correct": false,
+          "error_rationale": "Omite complementariedad factorial: computa diferencia neta entre $Y_K=197$ y $Y_L=721$.",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\alpha = 0.464$",
+          "is_correct": false,
+          "error_rationale": "Invierte elasticidades de factores: asigna raíz factorial con $Y_K=197$ y $Y_L=721$.",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\alpha = 0.046$",
+          "is_correct": false,
+          "error_rationale": "Confunde curvatura marginal: usa residuo complementario con $Y_K=197$ y $Y_L=721$.",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\alpha = 0.954$",
+          "is_correct": false,
+          "error_rationale": "Asume estructura aditiva no homogénea: desvía la suma $Y_K=197$ frente a $Y_L=721$.",
+          "distractor_id": "D-H01-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\alpha = 0.215$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\alpha = 0.608$",
+          "is_correct": false,
+          "error_rationale": "Aplica escala sub-lineal: promedia indebidamente retribuciones $Y_K=197$ y $Y_L=721$.",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\alpha = 0.785$",
+          "is_correct": false,
+          "error_rationale": "Confunde rendimientos constantes: evalúa participación errónea con $Y_K=197$ y $Y_L=721$.",
+          "distractor_id": "D-H01-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "La función neoclásica cumple rendimientos constantes a escala $F(\\mu K, \\mu L) = \\mu F(K, L)$.",
+        "Por el teorema de Euler, el producto total agota las retribuciones marginales de factores.",
+        "La ley de rendimientos decrecientes exige derivadas segundas negativas $F_{KK} < 0$."
+      ],
+      "detailed_solution": "$\\alpha = \\frac{Y_K}{Y_K + Y_L} = \\frac{197}{197 + 721} = 0.215$.",
+      "misconception_warning": "El modelo de Solow requiere homogeneidad de primer grado para permitir la agregación y la forma intensiva."
+    },
+    {
+      "id": "Q-H01-002",
+      "competency_id": "H-01",
+      "competency_name": "Propiedades de la Función de Producción Neoclásica",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Para una economía con tecnología neoclásica, halle la elasticidad del capital $\\alpha$ con pagos $Y_K=340$ y $Y_L=755$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\alpha = 0.379$",
+          "is_correct": false,
+          "error_rationale": "Omite complementariedad factorial: computa diferencia neta entre $Y_K=340$ y $Y_L=755$.",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\alpha = 0.097$",
+          "is_correct": false,
+          "error_rationale": "Confunde curvatura marginal: usa residuo complementario con $Y_K=340$ y $Y_L=755$.",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\alpha = 0.558$",
+          "is_correct": false,
+          "error_rationale": "Invierte elasticidades de factores: asigna raíz factorial con $Y_K=340$ y $Y_L=755$.",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\alpha = 0.689$",
+          "is_correct": false,
+          "error_rationale": "Confunde rendimientos constantes: evalúa participación errónea con $Y_K=340$ y $Y_L=755$.",
+          "distractor_id": "D-H01-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\alpha = 0.311$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\alpha = 0.655$",
+          "is_correct": false,
+          "error_rationale": "Aplica escala sub-lineal: promedia indebidamente retribuciones $Y_K=340$ y $Y_L=755$.",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\alpha = 0.903$",
+          "is_correct": false,
+          "error_rationale": "Asume estructura aditiva no homogénea: desvía la suma $Y_K=340$ frente a $Y_L=755$.",
+          "distractor_id": "D-H01-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "La función neoclásica cumple rendimientos constantes a escala $F(\\mu K, \\mu L) = \\mu F(K, L)$.",
+        "Por el teorema de Euler, el producto total agota las retribuciones marginales de factores.",
+        "La ley de rendimientos decrecientes exige derivadas segundas negativas $F_{KK} < 0$."
+      ],
+      "detailed_solution": "$\\alpha = \\frac{Y_K}{Y_K + Y_L} = \\frac{340}{340 + 755} = 0.311$.",
+      "misconception_warning": "El modelo de Solow requiere homogeneidad de primer grado para permitir la agregación y la forma intensiva."
+    },
+    {
+      "id": "Q-C01-021",
+      "competency_id": "C-01",
+      "competency_name": "Forma Intensiva de la Función de Producción",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo la forma per cápita del modelo neoclásico, halle la productividad marginal $F_K=\\phi'(k)$ con $q=51$, $k=11$ y $\\alpha=0.31$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$F_K = 3.2$",
+          "is_correct": false,
+          "error_rationale": "Confunde el producto marginal del capital con el del trabajo usando $q=51$ y $\\alpha=0.31$.",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$F_K = 0.13$",
+          "is_correct": false,
+          "error_rationale": "Invierte el ratio de capital-trabajo: calcula $L/K$ en lugar de $k=11$ con $q=51$.",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$F_K = 6.72$",
+          "is_correct": false,
+          "error_rationale": "Invierte la curvatura intensiva: asume derivada creciente con $k=11$ y $q=51$.",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$F_K = 4.64$",
+          "is_correct": false,
+          "error_rationale": "Confunde producto marginal con producto medio: iguala $\\phi'(k)$ a $q/k=51/11$.",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$F_K = 2.87$",
+          "is_correct": false,
+          "error_rationale": "Omite la normalización factorial: no divide por el trabajo con $k=11$ y $q=51$.",
+          "distractor_id": "D-C01-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$F_K = 0.99$",
+          "is_correct": false,
+          "error_rationale": "Atribuye la derivada directa de la forma intensiva al salario con $q=51$ y $\\alpha=0.31$.",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$F_K = 1.44$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "La forma intensiva expresa el producto por trabajador en función de la relación $k = K/L$.",
+        "La productividad marginal del capital es la derivada directa de la forma intensiva $\\phi'(k)$.",
+        "La concavidad estricta $\\phi''(k) < 0$ asegura que el producto marginal sea menor al medio."
+      ],
+      "detailed_solution": "$F_K = \\alpha \\frac{q}{k} = 0.31 \\cdot \\frac{51}{11} = 1.44$.",
+      "misconception_warning": "La relación capital-trabajo $k = K/L$ es imprescindible para colapsar las dos dimensiones a una sola variable intensiva."
+    },
+    {
+      "id": "Q-C01-022",
+      "competency_id": "C-01",
+      "competency_name": "Forma Intensiva de la Función de Producción",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando la función de producción intensiva, calcule el producto marginal del capital $F_K=\\phi'(k)$ si $q=80$, $k=14$ y $\\alpha=0.33$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$F_K = 8.53$",
+          "is_correct": false,
+          "error_rationale": "Invierte la curvatura intensiva: asume derivada creciente con $k=14$ y $q=80$.",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$F_K = 1.89$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$F_K = 0.12$",
+          "is_correct": false,
+          "error_rationale": "Invierte el ratio de capital-trabajo: calcula $L/K$ en lugar de $k=14$ con $q=80$.",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$F_K = 5.71$",
+          "is_correct": false,
+          "error_rationale": "Confunde producto marginal con producto medio: iguala $\\phi'(k)$ a $q/k=80/14$.",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$F_K = 1.26$",
+          "is_correct": false,
+          "error_rationale": "Atribuye la derivada directa de la forma intensiva al salario con $q=80$ y $\\alpha=0.33$.",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$F_K = 3.83$",
+          "is_correct": false,
+          "error_rationale": "Confunde el producto marginal del capital con el del trabajo usando $q=80$ y $\\alpha=0.33$.",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$F_K = 3.77$",
+          "is_correct": false,
+          "error_rationale": "Omite la normalización factorial: no divide por el trabajo con $k=14$ y $q=80$.",
+          "distractor_id": "D-C01-01"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "La forma intensiva expresa el producto por trabajador en función de la relación $k = K/L$.",
+        "La productividad marginal del capital es la derivada directa de la forma intensiva $\\phi'(k)$.",
+        "La concavidad estricta $\\phi''(k) < 0$ asegura que el producto marginal sea menor al medio."
+      ],
+      "detailed_solution": "$F_K = \\alpha \\frac{q}{k} = 0.33 \\cdot \\frac{80}{14} = 1.89$.",
+      "misconception_warning": "La relación capital-trabajo $k = K/L$ es imprescindible para colapsar las dos dimensiones a una sola variable intensiva."
+    },
+    {
+      "id": "Q-H02-041",
+      "competency_id": "H-02",
+      "competency_name": "Ecuaciones de Comportamiento del Ahorro y la Fuerza Laboral",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el modelo de crecimiento neoclásico de Solow, determine la inversión agregada $\\dot{K}$ para propensión $s=0.19$ y producto $Q=3040$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{K} = 600.7$",
+          "is_correct": false,
+          "error_rationale": "Ahorro variable con $s=0.19$, $\\lambda=0.04$: la propensión $s$ es constante exógena en Solow.",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{K} = 57.76$",
+          "is_correct": false,
+          "error_rationale": "Confusión stock-flujo con $s=0.19$, $Q=3040$: el ahorro genera la variación $\\dot{K}$, no el stock.",
+          "distractor_id": "D-H02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{K} = 1600.0$",
+          "is_correct": false,
+          "error_rationale": "Inversión autónoma con $s=0.19$, $Q=3040$: en el modelo neoclásico la inversión coincide con el ahorro.",
+          "distractor_id": "D-H02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{K} = 465.81$",
+          "is_correct": false,
+          "error_rationale": "Tasa decreciente con $\\lambda=0.04$, $t=6$: Solow postula tasa demográfica constante $\\lambda$.",
+          "distractor_id": "D-H02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{K} = 2462.4$",
+          "is_correct": false,
+          "error_rationale": "Fracción de consumo $(1-s)=0.81$ con $Q=3040$: la inversión proviene del ahorro $s$, no del consumo.",
+          "distractor_id": "D-H02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{K} = 699.2$",
+          "is_correct": false,
+          "error_rationale": "Crecimiento aditivo con $\\lambda=0.04$, $Q=3040$: la acumulación no es lineal ni suma flujos.",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{K} = 577.6$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "La inversión neta $\\dot{K}$ proviene directamente del ahorro constante $s Q$.",
+        "La fuerza de trabajo crece a tasa exponencial exógena según $L(t) = L_0 e^{\\lambda t}$.",
+        "El modelo asume propensión marginal al ahorro $s \\in (0,1)$ constante en el tiempo."
+      ],
+      "detailed_solution": "$\\dot{K} = s Q = 0.19 \\times 3040 = 577.6$",
+      "misconception_warning": "En la versión fundamental de Solow, la propensión al ahorro $s$ se postula como un parámetro exógeno y estrictamente constante."
+    },
+    {
+      "id": "Q-H02-042",
+      "competency_id": "H-02",
+      "competency_name": "Ecuaciones de Comportamiento del Ahorro y la Fuerza Laboral",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo los supuestos de comportamiento del modelo de Solow, calcule la inversión neta $\\dot{K}$ con propensión $s=0.22$ y producto $Q=2380$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{K} = 52.36$",
+          "is_correct": false,
+          "error_rationale": "Confusión stock-flujo con $s=0.22$, $Q=2380$: el ahorro genera la variación $\\dot{K}$, no el stock.",
+          "distractor_id": "D-H02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{K} = 595.0$",
+          "is_correct": false,
+          "error_rationale": "Crecimiento aditivo con $\\lambda=0.03$, $Q=2380$: la acumulación no es lineal ni suma flujos.",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{K} = 523.6$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{K} = 1856.4$",
+          "is_correct": false,
+          "error_rationale": "Fracción de consumo $(1-s)=0.78$ con $Q=2380$: la inversión proviene del ahorro $s$, no del consumo.",
+          "distractor_id": "D-H02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{K} = 1081.82$",
+          "is_correct": false,
+          "error_rationale": "Inversión autónoma con $s=0.22$, $Q=2380$: en el modelo neoclásico la inversión coincide con el ahorro.",
+          "distractor_id": "D-H02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{K} = 539.31$",
+          "is_correct": false,
+          "error_rationale": "Ahorro variable con $s=0.22$, $\\lambda=0.03$: la propensión $s$ es constante exógena en Solow.",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{K} = 467.5$",
+          "is_correct": false,
+          "error_rationale": "Tasa decreciente con $\\lambda=0.03$, $t=4$: Solow postula tasa demográfica constante $\\lambda$.",
+          "distractor_id": "D-H02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "La inversión neta $\\dot{K}$ proviene directamente del ahorro constante $s Q$.",
+        "La fuerza de trabajo crece a tasa exponencial exógena según $L(t) = L_0 e^{\\lambda t}$.",
+        "El modelo asume propensión marginal al ahorro $s \\in (0,1)$ constante en el tiempo."
+      ],
+      "detailed_solution": "$\\dot{K} = s Q = 0.22 \\times 2380 = 523.6$",
+      "misconception_warning": "En la versión fundamental de Solow, la propensión al ahorro $s$ se postula como un parámetro exógeno y estrictamente constante."
+    },
+    {
+      "id": "Q-Hab01-061",
+      "competency_id": "Hab-01",
+      "competency_name": "Derivación de la Ecuación Fundamental de Acumulación de Capital",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo la dinámica del modelo de Solow, obtenga el valor de $\\dot{k}$ a partir de $s=0.39$, $y=6.8$, $\\lambda=0.01$ y $k=11$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{k} = 2.762$",
+          "is_correct": false,
+          "error_rationale": "Suma la dilución demográfica $\\lambda k = 0.01 \\times 11$ en vez de restarla de la inversión.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{k} = 6.690$",
+          "is_correct": false,
+          "error_rationale": "Omite la propensión marginal al ahorro $s = 0.39$ asumiendo inversión unitaria de $y = 6.8$.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{k} = 2.642$",
+          "is_correct": false,
+          "error_rationale": "Omite el stock de capital $k = 11$ en el término de dilución demográfica $\\lambda = 0.01$.",
+          "distractor_id": "D-Hab01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{k} = 2.232$",
+          "is_correct": false,
+          "error_rationale": "Resta la inversión efectiva $s y = 0.39 \\times 6.8$ del término de dilución demográfica.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{k} = 2.542$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{k} = 1.436$",
+          "is_correct": false,
+          "error_rationale": "Usa la productividad marginal en vez del producto medio por trabajador $y = 6.8$ con $s = 0.39$.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{k} = 3.868$",
+          "is_correct": false,
+          "error_rationale": "Confunde el producto intensivo $y = 6.8$ con el agregado duplicado al aplicar la tasa $s = 0.39$.",
+          "distractor_id": "D-Hab01-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "La ecuación fundamental es $\\dot{k} = s\\phi(k) - \\lambda k$.",
+        "El término $\\lambda k$ representa la dilución demográfica del capital.",
+        "La inversión bruta por trabajador proviene del ahorro $s\\phi(k)$."
+      ],
+      "detailed_solution": "$\\dot{k} = s\\phi(k) - \\lambda k = 0.39 \\cdot 6.8 - 0.01 \\cdot 11 = 2.542$",
+      "misconception_warning": "El crecimiento de la mano de obra reduce la dotación de capital por trabajador, por lo que el término $\\lambda k$ entra con signo negativo."
+    },
+    {
+      "id": "Q-Hab01-062",
+      "competency_id": "Hab-01",
+      "competency_name": "Derivación de la Ecuación Fundamental de Acumulación de Capital",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el modelo de crecimiento de Solow, calcule la tasa de acumulación $\\dot{k}$ para $s=0.36$, $y=4.2$, $\\lambda=0.02$ y $k=14$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{k} = 1.036$",
+          "is_correct": false,
+          "error_rationale": "Usa la productividad marginal en vez del producto medio por trabajador $y = 4.2$ con $s = 0.36$.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{k} = 1.490$",
+          "is_correct": false,
+          "error_rationale": "Resta la inversión efectiva $s y = 0.36 \\times 4.2$ del término de dilución demográfica.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{k} = 1.792$",
+          "is_correct": false,
+          "error_rationale": "Suma la dilución demográfica $\\lambda k = 0.02 \\times 14$ en vez de restarla de la inversión.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{k} = 1.988$",
+          "is_correct": false,
+          "error_rationale": "Confunde el producto intensivo $y = 4.2$ con el agregado duplicado al aplicar la tasa $s = 0.36$.",
+          "distractor_id": "D-Hab01-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{k} = 1.232$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{k} = 3.920$",
+          "is_correct": false,
+          "error_rationale": "Omite la propensión marginal al ahorro $s = 0.36$ asumiendo inversión unitaria de $y = 4.2$.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{k} = 1.492$",
+          "is_correct": false,
+          "error_rationale": "Omite el stock de capital $k = 14$ en el término de dilución demográfica $\\lambda = 0.02$.",
+          "distractor_id": "D-Hab01-02"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "La ecuación fundamental es $\\dot{k} = s\\phi(k) - \\lambda k$.",
+        "El término $\\lambda k$ representa la dilución demográfica del capital.",
+        "La inversión bruta por trabajador proviene del ahorro $s\\phi(k)$."
+      ],
+      "detailed_solution": "$\\dot{k} = s\\phi(k) - \\lambda k = 0.36 \\cdot 4.2 - 0.02 \\cdot 14 = 1.232$",
+      "misconception_warning": "El crecimiento de la mano de obra reduce la dotación de capital por trabajador, por lo que el término $\\lambda k$ entra con signo negativo."
+    },
+    {
+      "id": "Q-C02-091",
+      "competency_id": "C-02",
+      "competency_name": "Existencia y Estabilidad Dinámica del Estado Estacionario",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Para una economía de Solow con tecnología per cápita $\\phi(k)=\\sqrt{k}$, calcule el capital per cápita de estado estacionario $k^*$ con $s=0.22$ y $\\lambda=0.048$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$k^* = 1.12$",
+          "is_correct": false,
+          "error_rationale": "Producto de tasas con $s=0.22$, $\\lambda=0.048$: la dilución demográfica requiere dividir por $\\lambda$.",
+          "distractor_id": "D-C02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$k^* = 0.05$",
+          "is_correct": false,
+          "error_rationale": "Inversión de ratio con $s=0.22$, $\\lambda=0.048$: la estabilidad exige pendiente negativa.",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$k^* = 2.14$",
+          "is_correct": false,
+          "error_rationale": "Exponente invertido con $s=0.22$, $\\lambda=0.048$: para $\\phi(k)=\\sqrt{k}$ se despeja con cuadrado.",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$k^* = 9.81$",
+          "is_correct": false,
+          "error_rationale": "Potencia errónea con $s=0.22$, $\\lambda=0.048$: en 1D la trayectoria hacia $k^*$ es monótona sin ciclos.",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$k^* = 7.18$",
+          "is_correct": false,
+          "error_rationale": "Suma de tasas con $s=0.22$, $\\lambda=0.048$: $k^*$ depende del cociente entre ahorro y demografía.",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$k^* = 4.58$",
+          "is_correct": false,
+          "error_rationale": "Equilibrio lineal con $s=0.22$, $\\lambda=0.048$: omite el equilibrio interior $k^*>0$.",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$k^* = 21.01$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "El estado estacionario $k^*$ anula la variación neta del capital per cápita: $\\dot{k}=0$.",
+        "La condición de estabilidad dinámica exige pendiente negativa: $s\\phi'(k^*) - \\lambda < 0$.",
+        "La curva de ahorro efectivo $s\\phi(k)$ intersecta la recta de ensanchamiento demográfico $\\lambda k$."
+      ],
+      "detailed_solution": "$k^* = \\left(\\frac{s}{\\lambda}\\right)^2 = \\left(\\frac{0.22}{0.048}\\right)^2 = 21.01$",
+      "misconception_warning": "Para que un equilibrio dinámico continuo sea estable, la derivada de $\\dot{k}$ respecto a $k$ debe ser estrictamente negativa en el equilibrio."
+    },
+    {
+      "id": "Q-C02-092",
+      "competency_id": "C-02",
+      "competency_name": "Existencia y Estabilidad Dinámica del Estado Estacionario",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Para una economía de Solow con tecnología per cápita $\\phi(k)=\\sqrt{k}$, determine el nivel de equilibrio intertemporal $k^*$ si $s=0.32$ y $\\lambda=0.058$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$k^* = 14.29$",
+          "is_correct": false,
+          "error_rationale": "Suma de tasas con $s=0.32$, $\\lambda=0.058$: $k^*$ depende del cociente entre ahorro y demografía.",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$k^* = 5.52$",
+          "is_correct": false,
+          "error_rationale": "Equilibrio lineal con $s=0.32$, $\\lambda=0.058$: omite el equilibrio interior $k^*>0$.",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$k^* = 12.96$",
+          "is_correct": false,
+          "error_rationale": "Potencia errónea con $s=0.32$, $\\lambda=0.058$: en 1D la trayectoria hacia $k^*$ es monótona sin ciclos.",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$k^* = 0.03$",
+          "is_correct": false,
+          "error_rationale": "Inversión de ratio con $s=0.32$, $\\lambda=0.058$: la estabilidad exige pendiente negativa.",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$k^* = 30.44$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$k^* = 2.35$",
+          "is_correct": false,
+          "error_rationale": "Exponente invertido con $s=0.32$, $\\lambda=0.058$: para $\\phi(k)=\\sqrt{k}$ se despeja con cuadrado.",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$k^* = 3.44$",
+          "is_correct": false,
+          "error_rationale": "Producto de tasas con $s=0.32$, $\\lambda=0.058$: la dilución demográfica requiere dividir por $\\lambda$.",
+          "distractor_id": "D-C02-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "El estado estacionario $k^*$ anula la variación neta del capital per cápita: $\\dot{k}=0$.",
+        "La condición de estabilidad dinámica exige pendiente negativa: $s\\phi'(k^*) - \\lambda < 0$.",
+        "La curva de ahorro efectivo $s\\phi(k)$ intersecta la recta de ensanchamiento demográfico $\\lambda k$."
+      ],
+      "detailed_solution": "$k^* = \\left(\\frac{s}{\\lambda}\\right)^2 = \\left(\\frac{0.32}{0.058}\\right)^2 = 30.44$",
+      "misconception_warning": "Para que un equilibrio dinámico continuo sea estable, la derivada de $\\dot{k}$ respecto a $k$ debe ser estrictamente negativa en el equilibrio."
+    },
+    {
+      "id": "Q-C03-111",
+      "competency_id": "C-03",
+      "competency_name": "Propiedades del Crecimiento en Estado Uniforme",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "Bajo crecimiento balanceado, determine el coeficiente $v^*=K/Q$ si $s=0.279\\%$ y la población crece a $\\lambda=0.011\\%$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$v^* = 25.36$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$v^* = 20.82$",
+          "is_correct": false,
+          "error_rationale": "Un cambio en $s=0.279\\%$ genera efectos de nivel, pero no altera la tasa secular $\\lambda=0.011\\%$.",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$v^* = 30.82$",
+          "is_correct": false,
+          "error_rationale": "La inversión neta no es nula; debe reponer capital a tasa $\\lambda=0.011\\%$ con ahorro $s=0.279\\%$.",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$v^* = 18.6$",
+          "is_correct": false,
+          "error_rationale": "Las variables agregadas crecen todas a tasa $\\lambda=0.011\\%$, no a tasas desacopladas.",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$v^* = 31.0$",
+          "is_correct": false,
+          "error_rationale": "El consumo per cápita es constante; no crece a tasa dependiente de la tasa de ahorro $s=0.279\\%$.",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$v^* = 45.06$",
+          "is_correct": false,
+          "error_rationale": "La relación capital-producto converge al valor finito $s/\\lambda$ con $s=0.279\\%$ y $\\lambda=0.011\\%$.",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$v^* = 65.55$",
+          "is_correct": false,
+          "error_rationale": "El producto por trabajador no crece a tasa $\\lambda=0.011\\%$; su tasa secular es nula.",
+          "distractor_id": "D-C03-01"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "La relación capital-producto en estado estacionario satisface $v^* = s / \\lambda$.",
+        "Las magnitudes agregadas $K$ y $Q$ crecen a la tasa poblacional constante $\\lambda$.",
+        "El producto y el capital por trabajador permanecen estrictamente constantes en el tiempo."
+      ],
+      "detailed_solution": "$v^* = \\frac{s}{\\lambda} = \\frac{0.279}{0.011} = 25.36$",
+      "misconception_warning": "En ausencia de progreso tecnológico, los rendimientos decrecientes del capital frenan el crecimiento del ingreso per cápita en el estado estacionario."
+    },
+    {
+      "id": "Q-C03-112",
+      "competency_id": "C-03",
+      "competency_name": "Propiedades del Crecimiento en Estado Uniforme",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "En el modelo de Solow, calcule la relación capital-producto $v^*=K/Q$ con $s=0.268\\%$ y $\\lambda=0.01\\%$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$v^* = 33.5$",
+          "is_correct": false,
+          "error_rationale": "El consumo per cápita es constante; no crece a tasa dependiente de la tasa de ahorro $s=0.268\\%$.",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$v^* = 32.8$",
+          "is_correct": false,
+          "error_rationale": "La inversión neta no es nula; debe reponer capital a tasa $\\lambda=0.01\\%$ con ahorro $s=0.268\\%$.",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$v^* = 19.14$",
+          "is_correct": false,
+          "error_rationale": "Las variables agregadas crecen todas a tasa $\\lambda=0.01\\%$, no a tasas desacopladas.",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$v^* = 21.8$",
+          "is_correct": false,
+          "error_rationale": "Un cambio en $s=0.268\\%$ genera efectos de nivel, pero no altera la tasa secular $\\lambda=0.01\\%$.",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$v^* = 73.2$",
+          "is_correct": false,
+          "error_rationale": "El producto por trabajador no crece a tasa $\\lambda=0.01\\%$; su tasa secular es nula.",
+          "distractor_id": "D-C03-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$v^* = 48.8$",
+          "is_correct": false,
+          "error_rationale": "La relación capital-producto converge al valor finito $s/\\lambda$ con $s=0.268\\%$ y $\\lambda=0.01\\%$.",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$v^* = 26.8$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "La relación capital-producto en estado estacionario satisface $v^* = s / \\lambda$.",
+        "Las magnitudes agregadas $K$ y $Q$ crecen a la tasa poblacional constante $\\lambda$.",
+        "El producto y el capital por trabajador permanecen estrictamente constantes en el tiempo."
+      ],
+      "detailed_solution": "$v^* = \\frac{s}{\\lambda} = \\frac{0.268}{0.01} = 26.8$",
+      "misconception_warning": "En ausencia de progreso tecnológico, los rendimientos decrecientes del capital frenan el crecimiento del ingreso per cápita en el estado estacionario."
+    },
+    {
+      "id": "Q-Hab02-131",
+      "competency_id": "Hab-02",
+      "competency_name": "Resolución de la Ecuación de Bernoulli para Cobb-Douglas",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo la ecuación de acumulación de capital de Solow, calcule el capital per cápita estacionario $k^*$ con $s=0.24$, $\\lambda=0.06$, $\\alpha=0.46$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$k^* = 40.78$",
+          "is_correct": false,
+          "error_rationale": "Omite factor $(1-\\alpha)$ en linealización: $\\lambda=0.06$, $\\alpha=0.46$",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$k^* = 2.58$",
+          "is_correct": false,
+          "error_rationale": "Signo divergente en solución temporal: $\\lambda=0.06$, $\\alpha=0.46$",
+          "distractor_id": "D-Hab02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$k^* = 13.03$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$k^* = 20.36$",
+          "is_correct": false,
+          "error_rationale": "Invierte cociente $\\lambda/s$ con potencia $1/\\alpha$: $s=0.24$, $\\lambda=0.06$",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$k^* = 26.26$",
+          "is_correct": false,
+          "error_rationale": "Tasa de convergencia distorsionada a $\\lambda$: $\\lambda=0.06$, $\\alpha=0.46$",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$k^* = 2.11$",
+          "is_correct": false,
+          "error_rationale": "Invierte exponente $1-\\alpha$ al despejar: $s=0.24$, $\\lambda=0.06$, $\\alpha=0.46$",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$k^* = 3.26$",
+          "is_correct": false,
+          "error_rationale": "Confunde producto $q^*$ con capital $k^*$: $s=0.24$, $\\lambda=0.06$",
+          "distractor_id": "D-Hab02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Aplique la sustitución de variable $z = k^{1-\\alpha}$ a la ecuación de Bernoulli.",
+        "Derive $\\dot{z} = (1-\\alpha) k^{-\\alpha} \\dot{k}$ para transformar la dinámica.",
+        "El capital estacionario satisface $k^* = (s/\\lambda)^{1/(1-\\alpha)}$ con $\\alpha \\in (0,1)$."
+      ],
+      "detailed_solution": "$k^* = \\left(\\frac{s}{\\lambda}\\right)^{\\frac{1}{1-\\alpha}} = \\left(\\frac{0.24}{0.06}\\right)^{\\frac{1}{1-0.46}} = 13.03$",
+      "misconception_warning": "Como $z = k^{1-\\alpha}$ y $z^* = s/\\lambda$, la variable original requiere la raíz $(1-\\alpha)$-ésima: $k^* = (s/\\lambda)^{1/(1-\\alpha)}$."
+    },
+    {
+      "id": "Q-Hab02-132",
+      "competency_id": "Hab-02",
+      "competency_name": "Resolución de la Ecuación de Bernoulli para Cobb-Douglas",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo la ecuación de acumulación de capital de Solow, halle el valor de equilibrio de largo plazo $k^*$ para $s=0.21$, $\\lambda=0.06$, $\\alpha=0.46$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$k^* = 31.85$",
+          "is_correct": false,
+          "error_rationale": "Omite factor $(1-\\alpha)$ en linealización: $\\lambda=0.06$, $\\alpha=0.46$",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$k^* = 1.97$",
+          "is_correct": false,
+          "error_rationale": "Invierte exponente $1-\\alpha$ al despejar: $s=0.21$, $\\lambda=0.06$, $\\alpha=0.46$",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$k^* = 20.51$",
+          "is_correct": false,
+          "error_rationale": "Tasa de convergencia distorsionada a $\\lambda$: $\\lambda=0.06$, $\\alpha=0.46$",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$k^* = 2.91$",
+          "is_correct": false,
+          "error_rationale": "Confunde producto $q^*$ con capital $k^*$: $s=0.21$, $\\lambda=0.06$",
+          "distractor_id": "D-Hab02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$k^* = 15.23$",
+          "is_correct": false,
+          "error_rationale": "Invierte cociente $\\lambda/s$ con potencia $1/\\alpha$: $s=0.21$, $\\lambda=0.06$",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$k^* = 10.17$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$k^* = 2.36$",
+          "is_correct": false,
+          "error_rationale": "Signo divergente en solución temporal: $\\lambda=0.06$, $\\alpha=0.46$",
+          "distractor_id": "D-Hab02-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "Aplique la sustitución de variable $z = k^{1-\\alpha}$ a la ecuación de Bernoulli.",
+        "Derive $\\dot{z} = (1-\\alpha) k^{-\\alpha} \\dot{k}$ para transformar la dinámica.",
+        "El capital estacionario satisface $k^* = (s/\\lambda)^{1/(1-\\alpha)}$ con $\\alpha \\in (0,1)$."
+      ],
+      "detailed_solution": "$k^* = \\left(\\frac{s}{\\lambda}\\right)^{\\frac{1}{1-\\alpha}} = \\left(\\frac{0.21}{0.06}\\right)^{\\frac{1}{1-0.46}} = 10.17$",
+      "misconception_warning": "Como $z = k^{1-\\alpha}$ y $z^* = s/\\lambda$, la variable original requiere la raíz $(1-\\alpha)$-ésima: $k^* = (s/\\lambda)^{1/(1-\\alpha)}$."
+    },
+    {
+      "id": "Q-H03-161",
+      "competency_id": "H-03",
+      "competency_name": "Crítica Teórica a la Hipótesis del Filo de Navaja de Harrod-Domar",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "Bajo la tecnología de Harrod-Domar, si la economía presenta $s=28.6\\%$ y coeficiente técnico $v=1.8$, determine la tasa garantizada $g_w$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$g_w = 20.43\\%$",
+          "is_correct": false,
+          "error_rationale": "La tasa natural depende del crecimiento demográfico, no del desgaste del capital $v=1.8$.",
+          "distractor_id": "D-H03-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$g_w = 14.31\\%$",
+          "is_correct": false,
+          "error_rationale": "Bajo proporciones fijas $v=1.8$, no hay ajuste automático de precios hacia el pleno empleo.",
+          "distractor_id": "D-H03-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$g_w = 39.67\\%$",
+          "is_correct": false,
+          "error_rationale": "La tasa garantizada se define como $s/v$ con $s=28.6\\%$ y $v=1.8$, nunca como producto $s\\cdot v$.",
+          "distractor_id": "D-H03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$g_w = 18.38\\%$",
+          "is_correct": false,
+          "error_rationale": "Solow resuelve la rigidez con coeficientes flexibles $v$, no fijando el ahorro $s=28.6\\%$.",
+          "distractor_id": "D-H03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$g_w = 15.89\\%$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$g_w = 27.0\\%$",
+          "is_correct": false,
+          "error_rationale": "Harrod y Domar suponen coeficientes fijos $v=1.8$, descartando la sustitución entre insumos.",
+          "distractor_id": "D-H03-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$g_w = 51.48\\%$",
+          "is_correct": false,
+          "error_rationale": "La inestabilidad proviene de la rigidez de proporciones $v=1.8$, no de la tasa de interés.",
+          "distractor_id": "D-H03-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "La tasa garantizada de Harrod se define analíticamente mediante el cociente $g_w = s / v$.",
+        "La inestabilidad del filo de navaja proviene de la rigidez de proporciones tecnológicas.",
+        "Solow resuelve el filo de navaja permitiendo la variación continua de la relación capital-producto."
+      ],
+      "detailed_solution": "$g_w = \\frac{s}{v} = \\frac{28.6}{1.8} = 15.89\\%$.",
+      "misconception_warning": "Solow demuestra formalmente que la rigidez de proporciones tecnológicas es la que impide el ajuste continuo entre las tasas natural y garantizada."
+    },
+    {
+      "id": "Q-H03-162",
+      "competency_id": "H-03",
+      "competency_name": "Crítica Teórica a la Hipótesis del Filo de Navaja de Harrod-Domar",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "Bajo la tecnología de Harrod-Domar, para parámetros de producción $s=34.4\\%$ y $v=1.8$, halle la tasa de crecimiento garantizada $g_w$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$g_w = 18.77\\%$",
+          "is_correct": false,
+          "error_rationale": "Bajo proporciones fijas $v=1.8$, no hay ajuste automático de precios hacia el pleno empleo.",
+          "distractor_id": "D-H03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$g_w = 24.57\\%$",
+          "is_correct": false,
+          "error_rationale": "La tasa natural depende del crecimiento demográfico, no del desgaste del capital $v=1.8$.",
+          "distractor_id": "D-H03-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$g_w = 19.11\\%$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$g_w = 21.14\\%$",
+          "is_correct": false,
+          "error_rationale": "Solow resuelve la rigidez con coeficientes flexibles $v$, no fijando el ahorro $s=34.4\\%$.",
+          "distractor_id": "D-H03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$g_w = 61.92\\%$",
+          "is_correct": false,
+          "error_rationale": "La inestabilidad proviene de la rigidez de proporciones $v=1.8$, no de la tasa de interés.",
+          "distractor_id": "D-H03-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$g_w = 30.22\\%$",
+          "is_correct": false,
+          "error_rationale": "Harrod y Domar suponen coeficientes fijos $v=1.8$, descartando la sustitución entre insumos.",
+          "distractor_id": "D-H03-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$g_w = 36.44\\%$",
+          "is_correct": false,
+          "error_rationale": "La tasa garantizada se define como $s/v$ con $s=34.4\\%$ y $v=1.8$, nunca como producto $s\\cdot v$.",
+          "distractor_id": "D-H03-02"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "La tasa garantizada de Harrod se define analíticamente mediante el cociente $g_w = s / v$.",
+        "La inestabilidad del filo de navaja proviene de la rigidez de proporciones tecnológicas.",
+        "Solow resuelve el filo de navaja permitiendo la variación continua de la relación capital-producto."
+      ],
+      "detailed_solution": "$g_w = \\frac{s}{v} = \\frac{34.4}{1.8} = 19.11\\%$.",
+      "misconception_warning": "Solow demuestra formalmente que la rigidez de proporciones tecnológicas es la que impide el ajuste continuo entre las tasas natural y garantizada."
+    },
+    {
+      "id": "Q-C04-181",
+      "competency_id": "C-04",
+      "competency_name": "Dinámica con Proporciones Fijas en la Formulación de Solow",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Para una economía de proporciones fijas donde $\\dot{r} = s \\min(r/a, 1/b) - n r$, determine la acumulación neta $\\dot{r}$ para $a=4$, $b=3$, $s=0.39$, $n=0.05$, $r=2.5$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{r} = -0.092$",
+          "is_correct": false,
+          "error_rationale": "Aplica cociente $s/(a b)$ con $s=0.39$, $a=4$ ignorando tope",
+          "distractor_id": "D-C04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{r} = -0.069$",
+          "is_correct": false,
+          "error_rationale": "Suma coeficientes $a=4$ y $b=3$ en denominador de producto",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{r} = 0.099$",
+          "is_correct": false,
+          "error_rationale": "Divide depreciación por $a=4$ suponiendo alquiler positivo",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{r} = 0.005$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{r} = 0.119$",
+          "is_correct": false,
+          "error_rationale": "Invierte cuellos con $r=2.5 > 4/3$, asumiendo $K$ escaso",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{r} = -0.027$",
+          "is_correct": false,
+          "error_rationale": "Usa requerimiento $a=4$ en vez de $b=3$ en tramo plano",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{r} = 0.053$",
+          "is_correct": false,
+          "error_rationale": "Modela ahorro como curva cóncava $\\sqrt{r/(a b)}$ con $r=2.5$",
+          "distractor_id": "D-C04-05"
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "Identifique el factor escaso: si $r > a/b$, la mano de obra limita el producto per cápita a $1/b$.",
+        "La tasa de acumulación de capital en el tramo horizontal es $\\dot{r} = s/b - n r$.",
+        "Bajo proporciones fijas, el factor en exceso no genera producto marginal adicional en el margen."
+      ],
+      "detailed_solution": "$\\dot{r} = \\frac{s}{b} - n r = \\frac{0.39}{3} - 0.05(2.5) = 0.005$",
+      "misconception_warning": "Si la dotación de capital por trabajador supera la razón técnica $a/b$, existe más capital del que la mano de obra disponible puede operar."
+    },
+    {
+      "id": "Q-C04-182",
+      "competency_id": "C-04",
+      "competency_name": "Dinámica con Proporciones Fijas en la Formulación de Solow",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando la dinámica de acumulación con coeficientes fijos de Solow, calcule $\\dot{r}$ con $a=4$, $b=5$, $s=0.42$, $n=0.03$ y $r=2.7$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\dot{r} = 0.203$",
+          "is_correct": false,
+          "error_rationale": "Invierte cuellos con $r=2.7 > 4/5$, asumiendo $K$ escaso",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\dot{r} = 0.073$",
+          "is_correct": false,
+          "error_rationale": "Modela ahorro como curva cóncava $\\sqrt{r/(a b)}$ con $r=2.7$",
+          "distractor_id": "D-C04-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\dot{r} = 0.064$",
+          "is_correct": false,
+          "error_rationale": "Divide depreciación por $a=4$ suponiendo alquiler positivo",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\dot{r} = -0.034$",
+          "is_correct": false,
+          "error_rationale": "Suma coeficientes $a=4$ y $b=5$ en denominador de producto",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\dot{r} = 0.003$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\dot{r} = 0.024$",
+          "is_correct": false,
+          "error_rationale": "Usa requerimiento $a=4$ en vez de $b=5$ en tramo plano",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\dot{r} = -0.06$",
+          "is_correct": false,
+          "error_rationale": "Aplica cociente $s/(a b)$ con $s=0.42$, $a=4$ ignorando tope",
+          "distractor_id": "D-C04-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Identifique el factor escaso: si $r > a/b$, la mano de obra limita el producto per cápita a $1/b$.",
+        "La tasa de acumulación de capital en el tramo horizontal es $\\dot{r} = s/b - n r$.",
+        "Bajo proporciones fijas, el factor en exceso no genera producto marginal adicional en el margen."
+      ],
+      "detailed_solution": "$\\dot{r} = \\frac{s}{b} - n r = \\frac{0.42}{5} - 0.03(2.7) = 0.003$",
+      "misconception_warning": "Si la dotación de capital por trabajador supera la razón técnica $a/b$, existe más capital del que la mano de obra disponible puede operar."
+    },
+    {
+      "id": "Q-Hab03-201",
+      "competency_id": "Hab-03",
+      "competency_name": "Análisis de Estabilidad con Múltiples Estados Estacionarios",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo dinámicas con convexidades locales en Solow, determine la velocidad de escape $\\lambda_2$ en el punto crítico $r_2=7$ sabiendo que $s F'(r_2, 1)=0.137$ y la dilución poblacional es $n=0.046$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\lambda = 0.664$",
+          "is_correct": false,
+          "error_rationale": "Escala foco $s_2=0.137$, $n$",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\lambda = 0.017$",
+          "is_correct": false,
+          "error_rationale": "Cuadrado $s_2=0.137$, $n=0.046$",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\lambda = 0.749$",
+          "is_correct": false,
+          "error_rationale": "Residuo $s F'=0.137$, foco",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\lambda = 0.183$",
+          "is_correct": false,
+          "error_rationale": "Inv $s F'=0.137$, $n=0.046$",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\lambda = 0.131$",
+          "is_correct": false,
+          "error_rationale": "Suma $s F'=0.137$, $n=0.046$",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\lambda = 0.091$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\lambda = 2.978$",
+          "is_correct": false,
+          "error_rationale": "Dif $s F'=0.137$, $n=0.046$",
+          "distractor_id": "D-Hab03-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 4,
+      "hints": [
+        "En equilibrios múltiples, la estabilidad depende de comparar $s F'(r, 1)$ con la recta $n r$.",
+        "Si la curva de ahorro corta a la dilución desde abajo ($s F' > n$), el equilibrio es inestable.",
+        "La raíz intermedia $r_2$ actúa como umbral crítico para la acumulación de capital.",
+        "Para valores de capital por debajo de $r_2$, la dinámica converge hacia el equilibrio $r_1$."
+      ],
+      "detailed_solution": "$\\lambda_2 = s F'(r_2, 1) - n = 0.137 - 0.046 = 0.091$",
+      "misconception_warning": "Cuando la curva de ahorro cruza la recta de dilución desde abajo, $sF' > n$, cualquier perturbación positiva acelera la acumulación alejándose del punto."
+    },
+    {
+      "id": "Q-Hab03-202",
+      "competency_id": "Hab-03",
+      "competency_name": "Análisis de Estabilidad con Múltiples Estados Estacionarios",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando una curva de ahorro sigmoide en Solow, calcule la tasa de divergencia local $\\lambda_2 = s F'(r_2, 1) - n$ en el umbral inestable $r_2=10$ con pendiente de ahorro $s F'=0.247$ y crecimiento demográfico $n=0.026$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\lambda = 9.5$",
+          "is_correct": false,
+          "error_rationale": "Dif $s F'=0.247$, $n=0.026$",
+          "distractor_id": "D-Hab03-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\lambda = 0.905$",
+          "is_correct": false,
+          "error_rationale": "Residuo $s F'=0.247$, foco",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\lambda = 0.273$",
+          "is_correct": false,
+          "error_rationale": "Inv $s F'=0.247$, $n=0.026$",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\lambda = 0.06$",
+          "is_correct": false,
+          "error_rationale": "Cuadrado $s_2=0.247$, $n=0.026$",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\lambda = 0.895$",
+          "is_correct": false,
+          "error_rationale": "Escala foco $s_2=0.247$, $n$",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\lambda = 0.241$",
+          "is_correct": false,
+          "error_rationale": "Suma $s F'=0.247$, $n=0.026$",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\lambda = 0.221$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 4,
+      "hints": [
+        "En equilibrios múltiples, la estabilidad depende de comparar $s F'(r, 1)$ con la recta $n r$.",
+        "Si la curva de ahorro corta a la dilución desde abajo ($s F' > n$), el equilibrio es inestable.",
+        "La raíz intermedia $r_2$ actúa como umbral crítico para la acumulación de capital.",
+        "Para valores de capital por debajo de $r_2$, la dinámica converge hacia el equilibrio $r_1$."
+      ],
+      "detailed_solution": "$\\lambda_2 = s F'(r_2, 1) - n = 0.247 - 0.026 = 0.221$",
+      "misconception_warning": "Cuando la curva de ahorro cruza la recta de dilución desde abajo, $sF' > n$, cualquier perturbación positiva acelera la acumulación alejándose del punto."
+    },
+    {
+      "id": "Q-Hab04-231",
+      "competency_id": "Hab-04",
+      "competency_name": "Evaluación del Régimen de Crecimiento en Tecnología CES Cuadrática",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Para una economía de Solow con función intensiva $\\phi(r)=(a\\sqrt{r}+1)^2$: calcule la intensidad de capital de estado estacionario $r^*$ con $s=0.29$, $n=0.071$, $a=0.1$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$r^* = 6.42$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$r^* = 2.83$",
+          "is_correct": false,
+          "error_rationale": "Invierte condición: $0.29 \\cdot 0.1^2 < 0.071$ predice estado estacionario finito",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$r^* = 0.16$",
+          "is_correct": false,
+          "error_rationale": "Invierte cociente: $(\\sqrt{0.071/0.29} - 0.1)^2$ omite el numerador unitario",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$r^* = 4.08$",
+          "is_correct": false,
+          "error_rationale": "Límite erróneo: cuando $r \\to 0$ con $0.1=0.1$ el producto marginal es finito",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$r^* = 2.53$",
+          "is_correct": false,
+          "error_rationale": "Omite cuadrado: $q^* = 1/(\\sqrt{0.071/0.29} - 0.1)$ olvida elevar al cuadrado",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$r^* = 3.69$",
+          "is_correct": false,
+          "error_rationale": "Sensibilidad errónea: incrementar $0.29=0.29$ expande el capital estacionario",
+          "distractor_id": "D-Hab04-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$r^* = 16.68$",
+          "is_correct": false,
+          "error_rationale": "Invarianza falsa: con ahorro $0.29$ y dilución $0.071$ las cuotas factoriales varían",
+          "distractor_id": "D-Hab04-04"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "La condición de acumulación infinita requiere que s a^2 supere a la tasa de dilución n.",
+        "El estado estacionario finito existe únicamente si la tasa de dilución n satisface s a^2 < n.",
+        "Al resolver $s(a\\sqrt{r} + 1)^2 = n r$, despeje $\\sqrt{r}$ para obtener $r^* = (1 / (\\sqrt{n/s} - a))^2$."
+      ],
+      "detailed_solution": "$r^* = \\left(\\frac{1}{\\sqrt{0.071/0.29} - 0.1}\\right)^2 = 6.42$",
+      "misconception_warning": "Cuando la asíntota de la productividad marginal del capital $s a^2$ supera la dilución $n$, la curva de ahorro jamás corta a la recta de dilución desde arriba."
+    },
+    {
+      "id": "Q-Hab04-232",
+      "competency_id": "Hab-04",
+      "competency_name": "Evaluación del Régimen de Crecimiento en Tecnología CES Cuadrática",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Para una economía de Solow con función intensiva $\\phi(r)=(a\\sqrt{r}+1)^2$: halle el valor de equilibrio $r^*$ para los parámetros $s=0.22$, $n=0.049$, $a=0.07$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$r^* = 2.49$",
+          "is_correct": false,
+          "error_rationale": "Omite cuadrado: $q^* = 1/(\\sqrt{0.049/0.22} - 0.07)$ olvida elevar al cuadrado",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$r^* = 0.16$",
+          "is_correct": false,
+          "error_rationale": "Invierte cociente: $(\\sqrt{0.049/0.22} - 0.07)^2$ omite el numerador unitario",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$r^* = 20.16$",
+          "is_correct": false,
+          "error_rationale": "Invarianza falsa: con ahorro $0.22$ y dilución $0.049$ las cuotas factoriales varían",
+          "distractor_id": "D-Hab04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$r^* = 4.49$",
+          "is_correct": false,
+          "error_rationale": "Límite erróneo: cuando $r \\to 0$ con $0.07=0.07$ el producto marginal es finito",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$r^* = 6.19$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$r^* = 3.40$",
+          "is_correct": false,
+          "error_rationale": "Invierte condición: $0.22 \\cdot 0.07^2 < 0.049$ predice estado estacionario finito",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$r^* = 4.20$",
+          "is_correct": false,
+          "error_rationale": "Sensibilidad errónea: incrementar $0.22=0.22$ expande el capital estacionario",
+          "distractor_id": "D-Hab04-06"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "La condición de acumulación infinita requiere que s a^2 supere a la tasa de dilución n.",
+        "El estado estacionario finito existe únicamente si la tasa de dilución n satisface s a^2 < n.",
+        "Al resolver $s(a\\sqrt{r} + 1)^2 = n r$, despeje $\\sqrt{r}$ para obtener $r^* = (1 / (\\sqrt{n/s} - a))^2$."
+      ],
+      "detailed_solution": "$r^* = \\left(\\frac{1}{\\sqrt{0.049/0.22} - 0.07}\\right)^2 = 6.19$",
+      "misconception_warning": "Cuando la asíntota de la productividad marginal del capital $s a^2$ supera la dilución $n$, la curva de ahorro jamás corta a la recta de dilución desde arriba."
+    },
+    {
+      "id": "Q-H04-261",
+      "competency_id": "H-04",
+      "competency_name": "Condición de No Arbitraje de Activos de Capital y Tasa de Interés",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo la condición de no arbitraje financiero de Solow para bienes de capital, determine el retorno financiero $i$ para $p=333$, $q=15$ y $\\dot{p}=14$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$i = 22.242$",
+          "is_correct": false,
+          "error_rationale": "Invierte el cociente del alquiler propio $p/q=333/15$ en vez de $q/p$",
+          "distractor_id": "D-H04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$i = 0.045$",
+          "is_correct": false,
+          "error_rationale": "Omite la apreciación de capital $\\dot{p}/p$ con $p=333$, usando solo $q/p$",
+          "distractor_id": "D-H04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$i = 0.042$",
+          "is_correct": false,
+          "error_rationale": "Omite el flujo de alquiler $q=15$ computando únicamente ganancia de capital",
+          "distractor_id": "D-H04-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$i = 0.003$",
+          "is_correct": false,
+          "error_rationale": "Resta la ganancia de capital $\\dot{p}=14$ en lugar de sumarla al retorno",
+          "distractor_id": "D-H04-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$i = 0.0871$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$i = 0.0432$",
+          "is_correct": false,
+          "error_rationale": "Suma la variación $\\dot{p}=14$ en el denominador del precio de compra",
+          "distractor_id": "D-H04-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$i = 0.0435$",
+          "is_correct": false,
+          "error_rationale": "Promedia erróneamente dividiendo el rendimiento total entre $2p=666$",
+          "distractor_id": "D-H04-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "El retorno total comprende el alquiler propio $q/p$ más la tasa de apreciación $\\dot{p}/p$.",
+        "La condición de no arbitraje establece la igualdad: $i(t) = q(t)/p(t) + \\dot{p}(t)/p(t)$.",
+        "Si el precio del capital varía en el tiempo, omitir la ganancia de capital falsea el rendimiento."
+      ],
+      "detailed_solution": "$i = \\frac{q}{p} + \\frac{\\dot{p}}{p} = \\frac{15}{333} + \\frac{14}{333} = 0.0871$",
+      "misconception_warning": "Si el precio del bien de capital cambia a lo largo del tiempo, los tenedores perciben una apreciación o depreciación que altera el rendimiento total."
+    },
+    {
+      "id": "Q-H04-262",
+      "competency_id": "H-04",
+      "competency_name": "Condición de No Arbitraje de Activos de Capital y Tasa de Interés",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando activos de capital con precio de compra $p$ y canon de alquiler $q$, calcule la tasa de interés nominal $i$ con $p=328$, $q=38$ y $\\dot{p}=14$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$i = 0.1585$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$i = 8.6743$",
+          "is_correct": false,
+          "error_rationale": "Invierte el cociente del alquiler propio $p/q=328/38$ en vez de $q/p$",
+          "distractor_id": "D-H04-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$i = 0.1159$",
+          "is_correct": false,
+          "error_rationale": "Omite la apreciación de capital $\\dot{p}/p$ con $p=328$, usando solo $q/p$",
+          "distractor_id": "D-H04-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$i = 0.1111$",
+          "is_correct": false,
+          "error_rationale": "Suma la variación $\\dot{p}=14$ en el denominador del precio de compra",
+          "distractor_id": "D-H04-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$i = 0.0732$",
+          "is_correct": false,
+          "error_rationale": "Resta la ganancia de capital $\\dot{p}=14$ en lugar de sumarla al retorno",
+          "distractor_id": "D-H04-02"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$i = 0.0427$",
+          "is_correct": false,
+          "error_rationale": "Omite el flujo de alquiler $q=38$ computando únicamente ganancia de capital",
+          "distractor_id": "D-H04-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$i = 0.0793$",
+          "is_correct": false,
+          "error_rationale": "Promedia erróneamente dividiendo el rendimiento total entre $2p=656$",
+          "distractor_id": "D-H04-05"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "El retorno total comprende el alquiler propio $q/p$ más la tasa de apreciación $\\dot{p}/p$.",
+        "La condición de no arbitraje establece la igualdad: $i(t) = q(t)/p(t) + \\dot{p}(t)/p(t)$.",
+        "Si el precio del capital varía en el tiempo, omitir la ganancia de capital falsea el rendimiento."
+      ],
+      "detailed_solution": "$i = \\frac{q}{p} + \\frac{\\dot{p}}{p} = \\frac{38}{328} + \\frac{14}{328} = 0.1585$",
+      "misconception_warning": "Si el precio del bien de capital cambia a lo largo del tiempo, los tenedores perciben una apreciación o depreciación que altera el rendimiento total."
+    },
+    {
+      "id": "Q-C05-281",
+      "competency_id": "C-05",
+      "competency_name": "Ajuste de Precios Factoriales y Pleno Empleo Continuo",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "En el marco del modelo neoclásico, obtenga el valor de $w/p$ con $Y=2700$, $L=120$, $\\alpha=0.43$ y $K=550$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$w/p = 2.11$",
+          "is_correct": false,
+          "error_rationale": "Invierte fórmulas: asigna $f'(r)$ al salario en vez del alquiler con $\\alpha=0.43$.",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$w/p = 9.68$",
+          "is_correct": false,
+          "error_rationale": "Participación fija por elasticidad unitaria con participación $\\alpha=0.43$.",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$w/p = 2.61$",
+          "is_correct": false,
+          "error_rationale": "Menor capital relativo $r=4.58$ eleva el alquiler $q/p$ y abarata el salario.",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$w/p = 1539.0$",
+          "is_correct": false,
+          "error_rationale": "Escala absoluta $K=550$, $L=120$ no altera productividades marginales.",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$w/p = 22.5$",
+          "is_correct": false,
+          "error_rationale": "Euler garantiza que $(w/p)L + (q/p)K = Y=2700$ sin residuo alguno.",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$w/p = 6.07$",
+          "is_correct": false,
+          "error_rationale": "Ratio $w/q$ es proporcional a $r=4.58$, por lo que aumenta con el capital.",
+          "distractor_id": "D-C05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$w/p = 12.83$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "Bajo retornos constantes, las productividades marginales dependen solo de r=K/L.",
+        "La masa salarial cumple (w/p) = (1 - \\alpha) Y / L según el teorema de Euler.",
+        "El producto total se agota íntegramente: (w/p) L + (q/p) K = Y en equilibrio."
+      ],
+      "detailed_solution": "El salario real es $w/p = (1 - 0.43) \\frac{2700}{120} = 12.83$.",
+      "misconception_warning": "Por el teorema de Euler en funciones homogéneas de grado 1, las productividades marginales son funciones homogéneas de grado cero en las cantidades."
+    },
+    {
+      "id": "Q-C05-282",
+      "competency_id": "C-05",
+      "competency_name": "Ajuste de Precios Factoriales y Pleno Empleo Continuo",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "En equilibrio competitivo, calcule el salario real $w/p$ si $Y=5800$, $L=140$, $\\alpha=0.21$ y $K=470$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$w/p = 4582.0$",
+          "is_correct": false,
+          "error_rationale": "Escala absoluta $K=470$, $L=140$ no altera productividades marginales.",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$w/p = 2.59$",
+          "is_correct": false,
+          "error_rationale": "Invierte fórmulas: asigna $f'(r)$ al salario en vez del alquiler con $\\alpha=0.21$.",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$w/p = 32.73$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$w/p = 2.65$",
+          "is_correct": false,
+          "error_rationale": "Menor capital relativo $r=3.36$ eleva el alquiler $q/p$ y abarata el salario.",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$w/p = 41.43$",
+          "is_correct": false,
+          "error_rationale": "Euler garantiza que $(w/p)L + (q/p)K = Y=5800$ sin residuo alguno.",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$w/p = 8.7$",
+          "is_correct": false,
+          "error_rationale": "Participación fija por elasticidad unitaria con participación $\\alpha=0.21$.",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$w/p = 12.64$",
+          "is_correct": false,
+          "error_rationale": "Ratio $w/q$ es proporcional a $r=3.36$, por lo que aumenta con el capital.",
+          "distractor_id": "D-C05-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Bajo retornos constantes, las productividades marginales dependen solo de r=K/L.",
+        "La masa salarial cumple (w/p) = (1 - \\alpha) Y / L según el teorema de Euler.",
+        "El producto total se agota íntegramente: (w/p) L + (q/p) K = Y en equilibrio."
+      ],
+      "detailed_solution": "El salario real es $w/p = (1 - 0.21) \\frac{5800}{140} = 32.73$.",
+      "misconception_warning": "Por el teorema de Euler en funciones homogéneas de grado 1, las productividades marginales son funciones homogéneas de grado cero en las cantidades."
+    },
+    {
+      "id": "Q-Hab05-301",
+      "competency_id": "Hab-05",
+      "competency_name": "Dinámica con Progreso Técnico Neutral en el Sentido de Hicks",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo la dinámica de acumulación de Solow (1956) con avance tecnológico $A(t) = e^{gt}$, determine la tasa asintótica a la que se expande $k = K/L$ si $g=2.7\\%$ y $\\alpha=0.25$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\gamma_k = 10.80\\%$",
+          "is_correct": false,
+          "error_rationale": "Aplica la tasa de crecimiento del capital al producto con divisor $\\alpha=0.25$.",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\gamma_k = 0.00\\%$",
+          "is_correct": false,
+          "error_rationale": "Asume incorrectamente tasa nula por convergencia estacionaria con $g=2.7\\%$.",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\gamma_k = 5.30\\%$",
+          "is_correct": false,
+          "error_rationale": "Suma linealmente $n=2.6\\%$ y $g=2.7\\%$ sin considerar el multiplicador.",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\gamma_k = 4.80\\%$",
+          "is_correct": false,
+          "error_rationale": "Eleva al cuadrado el denominador o usa escala errónea con $g=2.7\\%$ y $\\alpha=0.25$.",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\gamma_k = 2.03\\%$",
+          "is_correct": false,
+          "error_rationale": "Multiplica por $(1-\\alpha)$ en vez de dividir: $g(1-\\alpha)$ para $\\alpha=0.25$.",
+          "distractor_id": "D-Hab05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\gamma_k = 3.60\\%$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\gamma_k = 2.70\\%$",
+          "is_correct": false,
+          "error_rationale": "Omite el factor de acumulación $1/(1-\\alpha)$ con $g=2.7\\%$ y $\\alpha=0.25$.",
+          "distractor_id": "D-Hab05-01"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 4,
+      "hints": [
+        "La tasa secular del capital per cápita es el cociente g/(1 - alpha).",
+        "El divisor (1 - alpha) refleja la retroalimentación de acumulación.",
+        "En el largo plazo tanto k como y crecen a la tasa g/(1 - alpha).",
+        "El producto agregado crece a la tasa combinada n + g/(1 - alpha)."
+      ],
+      "detailed_solution": "La tasa secular de crecimiento del capital per cápita es $\\gamma_k = \\frac{g}{1-\\alpha} = \\frac{2.7\\%}{1 - 0.25} = 3.60\\%$.",
+      "misconception_warning": "El incremento de eficiencia genera mayor producto, lo que a su vez genera más ahorro y capital, acelerando la tasa en un factor $1/(1-\\alpha)$."
+    },
+    {
+      "id": "Q-Hab05-302",
+      "competency_id": "Hab-05",
+      "competency_name": "Dinámica con Progreso Técnico Neutral en el Sentido de Hicks",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo la dinámica de acumulación de Solow (1956) con avance tecnológico $A(t) = e^{gt}$, halle la tasa de expansión de largo plazo de la dotación $k$ dado $g=5.2\\%$ y $\\alpha=0.69$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\gamma_k = 8.00\\%$",
+          "is_correct": false,
+          "error_rationale": "Suma linealmente $n=2.8\\%$ y $g=5.2\\%$ sin considerar el multiplicador.",
+          "distractor_id": "D-Hab05-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\gamma_k = 16.77\\%$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\gamma_k = 5.20\\%$",
+          "is_correct": false,
+          "error_rationale": "Omite el factor de acumulación $1/(1-\\alpha)$ con $g=5.2\\%$ y $\\alpha=0.69$.",
+          "distractor_id": "D-Hab05-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\gamma_k = 0.00\\%$",
+          "is_correct": false,
+          "error_rationale": "Asume incorrectamente tasa nula por convergencia estacionaria con $g=5.2\\%$.",
+          "distractor_id": "D-Hab05-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\gamma_k = 54.11\\%$",
+          "is_correct": false,
+          "error_rationale": "Eleva al cuadrado el denominador o usa escala errónea con $g=5.2\\%$ y $\\alpha=0.69$.",
+          "distractor_id": "D-Hab05-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\gamma_k = 7.54\\%$",
+          "is_correct": false,
+          "error_rationale": "Aplica la tasa de crecimiento del capital al producto con divisor $\\alpha=0.69$.",
+          "distractor_id": "D-Hab05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\gamma_k = 1.61\\%$",
+          "is_correct": false,
+          "error_rationale": "Multiplica por $(1-\\alpha)$ en vez de dividir: $g(1-\\alpha)$ para $\\alpha=0.69$.",
+          "distractor_id": "D-Hab05-04"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 4,
+      "hints": [
+        "La tasa secular del capital per cápita es el cociente g/(1 - alpha).",
+        "El divisor (1 - alpha) refleja la retroalimentación de acumulación.",
+        "En el largo plazo tanto k como y crecen a la tasa g/(1 - alpha).",
+        "El producto agregado crece a la tasa combinada n + g/(1 - alpha)."
+      ],
+      "detailed_solution": "La tasa secular de crecimiento del capital per cápita es $\\gamma_k = \\frac{g}{1-\\alpha} = \\frac{5.2\\%}{1 - 0.69} = 16.77\\%$.",
+      "misconception_warning": "El incremento de eficiencia genera mayor producto, lo que a su vez genera más ahorro y capital, acelerando la tasa en un factor $1/(1-\\alpha)$."
+    },
+    {
+      "id": "Q-C06-331",
+      "competency_id": "C-06",
+      "competency_name": "Tasa de Ahorro Endógena y Efectos de la Política Tributaria",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando una política fiscal con tasa impositiva $t$, determine el ahorro efectivo $s_{\\text{eff}}$ con $s=0.23$, $t=0.13$ y $v=0.64$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$s_{\\text{eff}} = 0.23$",
+          "is_correct": false,
+          "error_rationale": "Con tasa $t=0.13$, reducir el ahorro efectivo desplaza la curva hacia abajo y reduce $r^*$.",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$s_{\\text{eff}} = 0.177$",
+          "is_correct": false,
+          "error_rationale": "Un ahorro decreciente con propensión $s=0.23$ frena la acumulación excesiva y estabiliza.",
+          "distractor_id": "D-C06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$s_{\\text{eff}} = 0.2$",
+          "is_correct": false,
+          "error_rationale": "Si $v=1$, se añade toda la recaudación fiscal: $s(1-t) + t = 0.23(1-0.13) + 0.13$.",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$s_{\\text{eff}} = 0.083$",
+          "is_correct": false,
+          "error_rationale": "El crecimiento poblacional $n=0.06$ continúa diluyendo el capital per cápita.",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$s_{\\text{eff}} = 0.283$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$s_{\\text{eff}} = 0.33$",
+          "is_correct": false,
+          "error_rationale": "Si $v=0$, el ahorro efectivo es solo $s(1-t) = 0.23 \\cdot (1-0.13)$.",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$s_{\\text{eff}} = 0.753$",
+          "is_correct": false,
+          "error_rationale": "Si $v=0.64$ iguala a $s=0.23$, la política fiscal es completamente neutral.",
+          "distractor_id": "D-C06-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "La tasa efectiva de ahorro combina el ahorro privado residual y la inversión pública.",
+        "La fórmula canónica es s_{eff} = s(1 - t) + t v ponderando los recursos fiscales.",
+        "Cuando el gobierno invierte la misma tasa privada (v = s), la política fiscal es neutral."
+      ],
+      "detailed_solution": "La tasa efectiva de ahorro es $s_{\\text{eff}} = s(1 - t) + t v = 0.283$.",
+      "misconception_warning": "Al caer el ahorro cuando el stock de capital es elevado, se frena la acumulación excesiva, garantizando la convergencia hacia el estado estacionario."
+    },
+    {
+      "id": "Q-C06-332",
+      "competency_id": "C-06",
+      "competency_name": "Tasa de Ahorro Endógena y Efectos de la Política Tributaria",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando una política fiscal con tasa impositiva $t$, obtenga el valor de $s_{\\text{eff}}$ para $s=0.21$, $t=0.11$ y $v=0.59$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$s_{\\text{eff}} = 0.297$",
+          "is_correct": false,
+          "error_rationale": "Si $v=0$, el ahorro efectivo es solo $s(1-t) = 0.21 \\cdot (1-0.11)$.",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$s_{\\text{eff}} = 0.189$",
+          "is_correct": false,
+          "error_rationale": "Con tasa $t=0.11$, reducir el ahorro efectivo desplaza la curva hacia abajo y reduce $r^*$.",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$s_{\\text{eff}} = 0.187$",
+          "is_correct": false,
+          "error_rationale": "Si $v=1$, se añade toda la recaudación fiscal: $s(1-t) + t = 0.21(1-0.11) + 0.11$.",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$s_{\\text{eff}} = 0.065$",
+          "is_correct": false,
+          "error_rationale": "El crecimiento poblacional $n=0.05$ continúa diluyendo el capital per cápita.",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$s_{\\text{eff}} = 0.252$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$s_{\\text{eff}} = 0.768$",
+          "is_correct": false,
+          "error_rationale": "Si $v=0.59$ iguala a $s=0.21$, la política fiscal es completamente neutral.",
+          "distractor_id": "D-C06-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$s_{\\text{eff}} = 0.168$",
+          "is_correct": false,
+          "error_rationale": "Un ahorro decreciente con propensión $s=0.21$ frena la acumulación excesiva y estabiliza.",
+          "distractor_id": "D-C06-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "La tasa efectiva de ahorro combina el ahorro privado residual y la inversión pública.",
+        "La fórmula canónica es s_{eff} = s(1 - t) + t v ponderando los recursos fiscales.",
+        "Cuando el gobierno invierte la misma tasa privada (v = s), la política fiscal es neutral."
+      ],
+      "detailed_solution": "La tasa efectiva de ahorro es $s_{\\text{eff}} = s(1 - t) + t v = 0.252$.",
+      "misconception_warning": "Al caer el ahorro cuando el stock de capital es elevado, se frena la acumulación excesiva, garantizando la convergencia hacia el estado estacionario."
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [
+      {
+        "id": "Q-H02-041",
+        "competency_id": "H-02",
+        "stem": "En el modelo de crecimiento neoclásico de Solow, determine la inversión agregada $\\dot{K}$ para propensión $s=0.19$ y producto $Q=3040$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\dot{K} = 600.7$",
+            "is_correct": false,
+            "error_rationale": "Ahorro variable con $s=0.19$, $\\lambda=0.04$: la propensión $s$ es constante exógena en Solow.",
+            "distractor_id": "D-H02-01"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\dot{K} = 57.76$",
+            "is_correct": false,
+            "error_rationale": "Confusión stock-flujo con $s=0.19$, $Q=3040$: el ahorro genera la variación $\\dot{K}$, no el stock.",
+            "distractor_id": "D-H02-03"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\dot{K} = 1600.0$",
+            "is_correct": false,
+            "error_rationale": "Inversión autónoma con $s=0.19$, $Q=3040$: en el modelo neoclásico la inversión coincide con el ahorro.",
+            "distractor_id": "D-H02-06"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\dot{K} = 465.81$",
+            "is_correct": false,
+            "error_rationale": "Tasa decreciente con $\\lambda=0.04$, $t=6$: Solow postula tasa demográfica constante $\\lambda$.",
+            "distractor_id": "D-H02-05"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$\\dot{K} = 2462.4$",
+            "is_correct": false,
+            "error_rationale": "Fracción de consumo $(1-s)=0.81$ con $Q=3040$: la inversión proviene del ahorro $s$, no del consumo.",
+            "distractor_id": "D-H02-04"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$\\dot{K} = 699.2$",
+            "is_correct": false,
+            "error_rationale": "Crecimiento aditivo con $\\lambda=0.04$, $Q=3040$: la acumulación no es lineal ni suma flujos.",
+            "distractor_id": "D-H02-02"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$\\dot{K} = 577.6$",
+            "is_correct": true,
+            "error_rationale": null
+          }
+        ],
+        "hints": [
+          "La inversión neta $\\dot{K}$ proviene directamente del ahorro constante $s Q$.",
+          "La fuerza de trabajo crece a tasa exponencial exógena según $L(t) = L_0 e^{\\lambda t}$.",
+          "El modelo asume propensión marginal al ahorro $s \\in (0,1)$ constante en el tiempo."
+        ],
+        "detailed_solution": "$\\dot{K} = s Q = 0.19 \\times 3040 = 577.6$",
+        "misconception_warning": "En la versión fundamental de Solow, la propensión al ahorro $s$ se postula como un parámetro exógeno y estrictamente constante.",
+        "detected_issues": [
+          "[WARNING] Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-H02-042",
+        "competency_id": "H-02",
+        "stem": "Bajo los supuestos de comportamiento del modelo de Solow, calcule la inversión neta $\\dot{K}$ con propensión $s=0.22$ y producto $Q=2380$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\dot{K} = 52.36$",
+            "is_correct": false,
+            "error_rationale": "Confusión stock-flujo con $s=0.22$, $Q=2380$: el ahorro genera la variación $\\dot{K}$, no el stock.",
+            "distractor_id": "D-H02-03"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\dot{K} = 595.0$",
+            "is_correct": false,
+            "error_rationale": "Crecimiento aditivo con $\\lambda=0.03$, $Q=2380$: la acumulación no es lineal ni suma flujos.",
+            "distractor_id": "D-H02-02"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\dot{K} = 523.6$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\dot{K} = 1856.4$",
+            "is_correct": false,
+            "error_rationale": "Fracción de consumo $(1-s)=0.78$ con $Q=2380$: la inversión proviene del ahorro $s$, no del consumo.",
+            "distractor_id": "D-H02-04"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$\\dot{K} = 1081.82$",
+            "is_correct": false,
+            "error_rationale": "Inversión autónoma con $s=0.22$, $Q=2380$: en el modelo neoclásico la inversión coincide con el ahorro.",
+            "distractor_id": "D-H02-06"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$\\dot{K} = 539.31$",
+            "is_correct": false,
+            "error_rationale": "Ahorro variable con $s=0.22$, $\\lambda=0.03$: la propensión $s$ es constante exógena en Solow.",
+            "distractor_id": "D-H02-01"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$\\dot{K} = 467.5$",
+            "is_correct": false,
+            "error_rationale": "Tasa decreciente con $\\lambda=0.03$, $t=4$: Solow postula tasa demográfica constante $\\lambda$.",
+            "distractor_id": "D-H02-05"
+          }
+        ],
+        "hints": [
+          "La inversión neta $\\dot{K}$ proviene directamente del ahorro constante $s Q$.",
+          "La fuerza de trabajo crece a tasa exponencial exógena según $L(t) = L_0 e^{\\lambda t}$.",
+          "El modelo asume propensión marginal al ahorro $s \\in (0,1)$ constante en el tiempo."
+        ],
+        "detailed_solution": "$\\dot{K} = s Q = 0.22 \\times 2380 = 523.6$",
+        "misconception_warning": "En la versión fundamental de Solow, la propensión al ahorro $s$ se postula como un parámetro exógeno y estrictamente constante.",
+        "detected_issues": [
+          "[WARNING] Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-H02-043",
+        "competency_id": "H-02",
+        "stem": "Bajo los supuestos de comportamiento del modelo de Solow, halle el flujo de acumulación de capital $\\dot{K}$ si $s=0.28$ y producto $Q=2030$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\dot{K} = 56.84$",
+            "is_correct": false,
+            "error_rationale": "Confusión stock-flujo con $s=0.28$, $Q=2030$: el ahorro genera la variación $\\dot{K}$, no el stock.",
+            "distractor_id": "D-H02-03"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\dot{K} = 568.4$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\dot{K} = 1461.6$",
+            "is_correct": false,
+            "error_rationale": "Fracción de consumo $(1-s)=0.72$ con $Q=2030$: la inversión proviene del ahorro $s$, no del consumo.",
+            "distractor_id": "D-H02-04"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\dot{K} = 473.67$",
+            "is_correct": false,
+            "error_rationale": "Tasa decreciente con $\\lambda=0.04$, $t=5$: Solow postula tasa demográfica constante $\\lambda$.",
+            "distractor_id": "D-H02-05"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$\\dot{K} = 725.0$",
+            "is_correct": false,
+            "error_rationale": "Inversión autónoma con $s=0.28$, $Q=2030$: en el modelo neoclásico la inversión coincide con el ahorro.",
+            "distractor_id": "D-H02-06"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$\\dot{K} = 591.14$",
+            "is_correct": false,
+            "error_rationale": "Ahorro variable con $s=0.28$, $\\lambda=0.04$: la propensión $s$ es constante exógena en Solow.",
+            "distractor_id": "D-H02-01"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$\\dot{K} = 649.6$",
+            "is_correct": false,
+            "error_rationale": "Crecimiento aditivo con $\\lambda=0.04$, $Q=2030$: la acumulación no es lineal ni suma flujos.",
+            "distractor_id": "D-H02-02"
+          }
+        ],
+        "hints": [
+          "La inversión neta $\\dot{K}$ proviene directamente del ahorro constante $s Q$.",
+          "La fuerza de trabajo crece a tasa exponencial exógena según $L(t) = L_0 e^{\\lambda t}$.",
+          "El modelo asume propensión marginal al ahorro $s \\in (0,1)$ constante en el tiempo."
+        ],
+        "detailed_solution": "$\\dot{K} = s Q = 0.28 \\times 2030 = 568.4$",
+        "misconception_warning": "En la versión fundamental de Solow, la propensión al ahorro $s$ se postula como un parámetro exógeno y estrictamente constante.",
+        "detected_issues": [
+          "[WARNING] Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-H02-044",
+        "competency_id": "H-02",
+        "stem": "Bajo los supuestos de comportamiento del modelo de Solow, determine la inversión agregada $\\dot{K}$ para propensión $s=0.27$ y producto $Q=1410$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\dot{K} = 1029.3$",
+            "is_correct": false,
+            "error_rationale": "Fracción de consumo $(1-s)=0.73$ con $Q=1410$: la inversión proviene del ahorro $s$, no del consumo.",
+            "distractor_id": "D-H02-04"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\dot{K} = 522.22$",
+            "is_correct": false,
+            "error_rationale": "Inversión autónoma con $s=0.27$, $Q=1410$: en el modelo neoclásico la inversión coincide con el ahorro.",
+            "distractor_id": "D-H02-06"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\dot{K} = 399.74$",
+            "is_correct": false,
+            "error_rationale": "Ahorro variable con $s=0.27$, $\\lambda=0.05$: la propensión $s$ es constante exógena en Solow.",
+            "distractor_id": "D-H02-01"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\dot{K} = 317.25$",
+            "is_correct": false,
+            "error_rationale": "Tasa decreciente con $\\lambda=0.05$, $t=4$: Solow postula tasa demográfica constante $\\lambda$.",
+            "distractor_id": "D-H02-05"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$\\dot{K} = 38.07$",
+            "is_correct": false,
+            "error_rationale": "Confusión stock-flujo con $s=0.27$, $Q=1410$: el ahorro genera la variación $\\dot{K}$, no el stock.",
+            "distractor_id": "D-H02-03"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$\\dot{K} = 380.7$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$\\dot{K} = 451.2$",
+            "is_correct": false,
+            "error_rationale": "Crecimiento aditivo con $\\lambda=0.05$, $Q=1410$: la acumulación no es lineal ni suma flujos.",
+            "distractor_id": "D-H02-02"
+          }
+        ],
+        "hints": [
+          "La inversión neta $\\dot{K}$ proviene directamente del ahorro constante $s Q$.",
+          "La fuerza de trabajo crece a tasa exponencial exógena según $L(t) = L_0 e^{\\lambda t}$.",
+          "El modelo asume propensión marginal al ahorro $s \\in (0,1)$ constante en el tiempo."
+        ],
+        "detailed_solution": "$\\dot{K} = s Q = 0.27 \\times 1410 = 380.7$",
+        "misconception_warning": "En la versión fundamental de Solow, la propensión al ahorro $s$ se postula como un parámetro exógeno y estrictamente constante.",
+        "detected_issues": [
+          "[WARNING] Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'"
+        ]
+      },
+      {
+        "id": "Q-H02-045",
+        "competency_id": "H-02",
+        "stem": "En el modelo de crecimiento neoclásico de Solow, calcule la inversión neta $\\dot{K}$ con propensión $s=0.21$ y producto $Q=2650$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\dot{K} = 55.65$",
+            "is_correct": false,
+            "error_rationale": "Confusión stock-flujo con $s=0.21$, $Q=2650$: el ahorro genera la variación $\\dot{K}$, no el stock.",
+            "distractor_id": "D-H02-03"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\dot{K} = 2093.5$",
+            "is_correct": false,
+            "error_rationale": "Fracción de consumo $(1-s)=0.79$ con $Q=2650$: la inversión proviene del ahorro $s$, no del consumo.",
+            "distractor_id": "D-H02-04"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\dot{K} = 567.63$",
+            "is_correct": false,
+            "error_rationale": "Ahorro variable con $s=0.21$, $\\lambda=0.02$: la propensión $s$ es constante exógena en Solow.",
+            "distractor_id": "D-H02-01"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\dot{K} = 488.16$",
+            "is_correct": false,
+            "error_rationale": "Tasa decreciente con $\\lambda=0.02$, $t=7$: Solow postula tasa demográfica constante $\\lambda$.",
+            "distractor_id": "D-H02-05"
+          },
+          {
+            "id": "opt_e",
+            "option_id": "E",
+            "content": "$\\dot{K} = 1261.9$",
+            "is_correct": false,
+            "error_rationale": "Inversión autónoma con $s=0.21$, $Q=2650$: en el modelo neoclásico la inversión coincide con el ahorro.",
+            "distractor_id": "D-H02-06"
+          },
+          {
+            "id": "opt_f",
+            "option_id": "F",
+            "content": "$\\dot{K} = 609.5$",
+            "is_correct": false,
+            "error_rationale": "Crecimiento aditivo con $\\lambda=0.02$, $Q=2650$: la acumulación no es lineal ni suma flujos.",
+            "distractor_id": "D-H02-02"
+          },
+          {
+            "id": "opt_g",
+            "option_id": "G",
+            "content": "$\\dot{K} = 556.5$",
+            "is_correct": true,
+            "error_rationale": null
+          }
+        ],
+        "hints": [
+          "La inversión neta $\\dot{K}$ proviene directamente del ahorro constante $s Q$.",
+          "La fuerza de trabajo crece a tasa exponencial exógena según $L(t) = L_0 e^{\\lambda t}$.",
+          "El modelo asume propensión marginal al ahorro $s \\in (0,1)$ constante en el tiempo."
+        ],
+        "detailed_solution": "$\\dot{K} = s Q = 0.21 \\times 2650 = 556.5$",
+        "misconception_warning": "En la versión fundamental de Solow, la propensión al ahorro $s$ se postula como un parámetro exógeno y estrictamente constante.",
+        "detected_issues": [
+          "[WARNING] Variable de plantilla posiblemente sin interpolar '{K}' en 'stem'"
+        ]
+      }
+    ],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [],
+    "template_residues": [],
+    "blind_replacements": [],
+    "cloned_distractors": [],
+    "archetype_monotony": [],
+    "poisoned_hints": [],
+    "boilerplate_hints": [],
+    "magic_multiplier_distractors": [],
+    "memorizable_answers": [],
+    "length_padded_options": [],
+    "cross_domain_prefixes": [],
+    "vacuous_quantifiers": [],
+    "katex_ergonomics": [
+      {
+        "id": "Q-H03-176",
+        "competency_id": "H-03",
+        "stem": "Bajo la tecnología de Harrod-Domar, ante una discrepancia estructural donde $g_w=6.3\\% > n=1.9\\%$ en Harrod-Domar, identifique las dos proposiciones correctas:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Harrod-Domar asume: coeficientes } v = 4.4 \\text{ son sustituibles}$",
+            "is_correct": false,
+            "error_rationale": "Harrod y Domar suponen coeficientes fijos $v=4.4$, descartando la sustitución entre insumos.",
+            "distractor_id": "D-H03-03"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Bajo rigidez técnica: } g_w = 6.3\\% > n \\Rightarrow \\text{maquinaria ociosa}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Solow resuelve el filo: } v(k) \\text{ ajusta } g_w = n = 1.9\\% \\text{ secular}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Bajo rigidez técnica: } g_w = 6.3\\% > n \\Rightarrow \\text{pleno empleo pleno}$",
+            "is_correct": false,
+            "error_rationale": "Bajo proporciones fijas $v=4.4$, no hay ajuste automático de precios hacia el pleno empleo.",
+            "distractor_id": "D-H03-04"
+          }
+        ],
+        "hints": [
+          "La tasa garantizada de Harrod se define analíticamente mediante el cociente $g_w = s / v$.",
+          "La inestabilidad del filo de navaja proviene de la rigidez de proporciones tecnológicas.",
+          "Solow resuelve el filo de navaja permitiendo la variación continua de la relación capital-producto."
+        ],
+        "detailed_solution": "$g_w = 6.3\\% > n = 1.9\\% \\Rightarrow \\text{maquinaria ociosa}$.",
+        "misconception_warning": "Cuando la tasa de acumulación garantizada sobrepasa el crecimiento laboral, la incapacidad de sustitución genera maquinaria inactiva.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-H03-177",
+        "competency_id": "H-03",
+        "stem": "Bajo la tecnología de Harrod-Domar, en una situación de desacople entre tasas con $g_w=5.0\\% > n=1.7\\%$, evalúe y escoja las dos conclusiones teóricas certeras:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Bajo rigidez técnica: } g_w = 5.0\\% > n \\Rightarrow \\text{pleno empleo pleno}$",
+            "is_correct": false,
+            "error_rationale": "Bajo proporciones fijas $v=4.0$, no hay ajuste automático de precios hacia el pleno empleo.",
+            "distractor_id": "D-H03-04"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Bajo rigidez técnica: } g_w = 5.0\\% > n \\Rightarrow \\text{maquinaria ociosa}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Harrod-Domar asume: coeficientes } v = 4.0 \\text{ son sustituibles}$",
+            "is_correct": false,
+            "error_rationale": "Harrod y Domar suponen coeficientes fijos $v=4.0$, descartando la sustitución entre insumos.",
+            "distractor_id": "D-H03-03"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Solow resuelve el filo: } v(k) \\text{ ajusta } g_w = n = 1.7\\% \\text{ secular}$",
+            "is_correct": true,
+            "error_rationale": null
+          }
+        ],
+        "hints": [
+          "La tasa garantizada de Harrod se define analíticamente mediante el cociente $g_w = s / v$.",
+          "La inestabilidad del filo de navaja proviene de la rigidez de proporciones tecnológicas.",
+          "Solow resuelve el filo de navaja permitiendo la variación continua de la relación capital-producto."
+        ],
+        "detailed_solution": "$g_w = 5.0\\% > n = 1.7\\% \\Rightarrow \\text{maquinaria ociosa}$.",
+        "misconception_warning": "Cuando la tasa de acumulación garantizada sobrepasa el crecimiento laboral, la incapacidad de sustitución genera maquinaria inactiva.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-H03-178",
+        "competency_id": "H-03",
+        "stem": "En el modelo de Harrod-Domar, cuando la tasa garantizada supera a la natural ($g_w=8.3\\% > n=2.0\\%$) con coeficientes fijos, seleccione las dos opciones válidas:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Bajo rigidez técnica: } g_w = 8.3\\% > n \\Rightarrow \\text{pleno empleo pleno}$",
+            "is_correct": false,
+            "error_rationale": "Bajo proporciones fijas $v=2.8$, no hay ajuste automático de precios hacia el pleno empleo.",
+            "distractor_id": "D-H03-04"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Bajo rigidez técnica: } g_w = 8.3\\% > n \\Rightarrow \\text{maquinaria ociosa}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Harrod-Domar asume: coeficientes } v = 2.8 \\text{ son sustituibles}$",
+            "is_correct": false,
+            "error_rationale": "Harrod y Domar suponen coeficientes fijos $v=2.8$, descartando la sustitución entre insumos.",
+            "distractor_id": "D-H03-03"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Solow resuelve el filo: } v(k) \\text{ ajusta } g_w = n = 2.0\\% \\text{ secular}$",
+            "is_correct": true,
+            "error_rationale": null
+          }
+        ],
+        "hints": [
+          "La tasa garantizada de Harrod se define analíticamente mediante el cociente $g_w = s / v$.",
+          "La inestabilidad del filo de navaja proviene de la rigidez de proporciones tecnológicas.",
+          "Solow resuelve el filo de navaja permitiendo la variación continua de la relación capital-producto."
+        ],
+        "detailed_solution": "$g_w = 8.3\\% > n = 2.0\\% \\Rightarrow \\text{maquinaria ociosa}$.",
+        "misconception_warning": "Cuando la tasa de acumulación garantizada sobrepasa el crecimiento laboral, la incapacidad de sustitución genera maquinaria inactiva.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-H03-179",
+        "competency_id": "H-03",
+        "stem": "En el modelo de Harrod-Domar, ante una discrepancia estructural donde $g_w=5.6\\% > n=2.7\\%$ en Harrod-Domar, identifique las dos proposiciones correctas:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Solow resuelve el filo: } v(k) \\text{ ajusta } g_w = n = 2.7\\% \\text{ secular}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Harrod-Domar asume: coeficientes } v = 5.5 \\text{ son sustituibles}$",
+            "is_correct": false,
+            "error_rationale": "Harrod y Domar suponen coeficientes fijos $v=5.5$, descartando la sustitución entre insumos.",
+            "distractor_id": "D-H03-03"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Bajo rigidez técnica: } g_w = 5.6\\% > n \\Rightarrow \\text{pleno empleo pleno}$",
+            "is_correct": false,
+            "error_rationale": "Bajo proporciones fijas $v=5.5$, no hay ajuste automático de precios hacia el pleno empleo.",
+            "distractor_id": "D-H03-04"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Bajo rigidez técnica: } g_w = 5.6\\% > n \\Rightarrow \\text{maquinaria ociosa}$",
+            "is_correct": true,
+            "error_rationale": null
+          }
+        ],
+        "hints": [
+          "La tasa garantizada de Harrod se define analíticamente mediante el cociente $g_w = s / v$.",
+          "La inestabilidad del filo de navaja proviene de la rigidez de proporciones tecnológicas.",
+          "Solow resuelve el filo de navaja permitiendo la variación continua de la relación capital-producto."
+        ],
+        "detailed_solution": "$g_w = 5.6\\% > n = 2.7\\% \\Rightarrow \\text{maquinaria ociosa}$.",
+        "misconception_warning": "Cuando la tasa de acumulación garantizada sobrepasa el crecimiento laboral, la incapacidad de sustitución genera maquinaria inactiva.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-H03-180",
+        "competency_id": "H-03",
+        "stem": "En el modelo de Harrod-Domar, en una situación de desacople entre tasas con $g_w=5.8\\% > n=2.2\\%$, evalúe y escoja las dos conclusiones teóricas certeras:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Harrod-Domar asume: coeficientes } v = 5.3 \\text{ son sustituibles}$",
+            "is_correct": false,
+            "error_rationale": "Harrod y Domar suponen coeficientes fijos $v=5.3$, descartando la sustitución entre insumos.",
+            "distractor_id": "D-H03-03"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Solow resuelve el filo: } v(k) \\text{ ajusta } g_w = n = 2.2\\% \\text{ secular}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Bajo rigidez técnica: } g_w = 5.8\\% > n \\Rightarrow \\text{pleno empleo pleno}$",
+            "is_correct": false,
+            "error_rationale": "Bajo proporciones fijas $v=5.3$, no hay ajuste automático de precios hacia el pleno empleo.",
+            "distractor_id": "D-H03-04"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Bajo rigidez técnica: } g_w = 5.8\\% > n \\Rightarrow \\text{maquinaria ociosa}$",
+            "is_correct": true,
+            "error_rationale": null
+          }
+        ],
+        "hints": [
+          "La tasa garantizada de Harrod se define analíticamente mediante el cociente $g_w = s / v$.",
+          "La inestabilidad del filo de navaja proviene de la rigidez de proporciones tecnológicas.",
+          "Solow resuelve el filo de navaja permitiendo la variación continua de la relación capital-producto."
+        ],
+        "detailed_solution": "$g_w = 5.8\\% > n = 2.2\\% \\Rightarrow \\text{maquinaria ociosa}$.",
+        "misconception_warning": "Cuando la tasa de acumulación garantizada sobrepasa el crecimiento laboral, la incapacidad de sustitución genera maquinaria inactiva.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      }
+    ]
+  }
+}
