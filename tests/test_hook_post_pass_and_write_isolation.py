@@ -930,6 +930,33 @@ class TestHookPostPassAndWriteIsolation(unittest.TestCase):
             res_syntax = process_hook(payload_syntax, custom_lock_file=str(self.lock_file))
             self.assertEqual(res_syntax.get("decision"), "allow")
 
+            # 4. Exception: >= 3 errors across >= 3 distinct competencies -> write_file ALLOWED for monolithic rewrite
+            compile_file.write_text(
+                json.dumps({
+                    "distinct_compiles": 1,
+                    "error_count": 4,
+                    "last_errors": [
+                        "Error in competency C-01: invalid format",
+                        "Error in competency C-02: missing distractor",
+                        "Error in competency C-03: invalid variable",
+                        "Error in competency C-04: unescaped latex",
+                    ],
+                }),
+                encoding="utf-8",
+            )
+            payload_multi_comp = {
+                "conversationId": self.worker_id,
+                "toolCall": {
+                    "name": "write_file",
+                    "args": {
+                        "Path": str(target_path),
+                        "Content": target_content,
+                    },
+                },
+            }
+            res_multi = process_hook(payload_multi_comp, custom_lock_file=str(self.lock_file))
+            self.assertEqual(res_multi.get("decision"), "allow")
+
     def test_rule_b_cta_post_pass_early_cut(self) -> None:
         """When pass_cta_{target_id}.json has PASS, writes and edits to CTA files are blocked."""
         cta_parts_dir = self.work_dir / "cta_parts"

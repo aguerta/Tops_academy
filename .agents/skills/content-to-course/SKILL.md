@@ -205,7 +205,8 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 │ - run.py --stage gates: build + verify + QA dry-run + repair-matrix         │
 │ - run.py --stage certify: verificación formal completa multi-etapa          │
 │ - Publica a courses/<course_id>.json, emite publish.cert.json               │
-│ - Libera cerrojo .c2c_subagent_lock.json y reporta URL de visualización     │
+│ - Evalúa Rúbrica Determinista QA y emite reports/qa_audits/<id>_qa_report.* │
+│ - Libera cerrojo .c2c_subagent_lock.json y reporta URL y métricas de calidad│
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -238,6 +239,13 @@ El Director de Proyecto debe mantener una interacción conversacional ultra-efic
 > 1. El Director debe leer el transcript del subagente (`transcript.jsonl`) para auditar su estado real.
 > 2. **Si el subagente está convergiendo y terminando sus últimas verificaciones:** déjalo continuar y reprograma el watchdog.
 > 3. **Si el subagente está ciclado o atascado:** envíale un mensaje de ayuda directa analítica (`send_message(Recipient=cid, Message="...")`) indicándole la causa exacta del bloqueo y cómo destrabarlo.
+
+> [!TIP]
+> **MANEJO DE I/O EN WINDOWS (NTFS) Y PREVENCIÓN DE SONDEOS ERRÓNEOS:**
+> 1. **Búfer de Escritura NTFS:** Tras recibir `DONE:` de una etapa o subagente, espera un retardo preventivo de 500 ms antes de invocar la siguiente etapa CLI o leer archivos para asegurar el vaciado (*flush*) del búfer del sistema de archivos NTFS en Windows.
+> 2. **Sondeo de Tareas Asíncronas vs Subagentes:** NUNCA llames a `manage_task(Action='kill', ...)` o `manage_task(Action='status', ...)` sobre subagentes; los subagentes se gestionan EXCLUSIVAMENTE con `manage_subagents(Action='kill', ConversationIds=[...])`. NUNCA sondees o intentes matar tareas en estado `DONE`.
+> 3. **Paginación Inteligente en `edit_file`:** Prohibido aplicar `edit_file` sobre bloques mayores a 30 líneas tras lecturas parciales truncadas; exige leer previamente con `read_file` el bloque específico indicando líneas exactas (`StartLine` y `EndLine`).
+> 4. **Pre-Validación Psicométrica [R-19]:** La longitud en caracteres de las 4 opciones visibles no debe diferir en más de un 15% antes de llamar a `write_file`.
 
 Solo cuando se satisfaga la condición de barrera completa (`N/N` trabajadores de la ola reportaron `DONE:`, o `BLOCKED:`, o tras la resolución de rezagados), el Director procede a ejecutar la etapa siguiente del runner.
 
@@ -329,10 +337,75 @@ Este comando ejecuta en `< 1s`:
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage certify --work-dir <work_dir> --output-dir courses
    ```
 
-### Paso 5: Publicación Final y Liberación (Compuerta Bloqueante PublishQualityGateError)
-Publica el curso certificado (validando estricto `PublishQualityGateError` con MPRI $\ge 75$ y ZPD $> 0$):
-```powershell
-& ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage publish --work-dir <work_dir> --output-dir courses
-```
-El cerrojo `.c2c_subagent_lock.json` se libera automáticamente y la plataforma presenta la URL de interacción directa:
-`http://localhost:3000/#/course/<course_id>`
+### Paso 5: Publicación Final, Certificación de Calidad y Pantalla de Cierre
+
+1. Publica el curso certificado (validando estricto `PublishQualityGateError` con MPRI $\ge 75$ y ZPD $> 0$):
+   ```powershell
+   & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage publish --work-dir <work_dir> --output-dir courses
+   ```
+   El cerrojo `.c2c_subagent_lock.json` se libera automáticamente, el motor ejecuta la **Rúbrica Determinista del QA Evaluator** (< 300 ms), genera los reportes `reports/qa_audits/<course_id>_qa_report.md` y `.json`, y emite la telemetría completa en stdout.
+
+2. > [!IMPORTANT]
+   > ### 🎓 Pantalla de Cierre Obligatoria (Presentación de Calidad al Usuario)
+   >
+   > Al concluir la publicación, el Director **NUNCA** debe limitarse a mostrar solo el tamaño del archivo o la URL genérica sin estadísticas de calidad. **DEBE presentar obligatoriamente en su respuesta final al usuario las estadísticas completas de la Rúbrica Determinista del QA Evaluator**:
+   >
+   > #### Formato Obligatorio del Mensaje Final:
+   >
+   > ```markdown
+   > # 🎓 Curso Creado y Publicado con Éxito
+   >
+   > El curso **{Título}** (`{course_id}`) ha completado el pipeline de Content-to-Course y ha sido certificado formalmente bajo los estándares de **Quality Matters (QM)**, **OSCQR** y **Mastery Learning**.
+   >
+   > ---
+   >
+   > ### 🏆 Veredicto de Calidad Pedagógica y Psicométrica (Modo Determinista QA Evaluator)
+   >
+   > - **Calificación Final Certificada:** **{final_score} / 20.0 pts**
+   > - **Quality Tier:** **{quality_tier}**
+   > - **Mastery Path Readiness Index (`MPRI`):** **{mpri_score} / 100.0** ({mpri_tier})
+   > - **Risk Score Global:** **{risk_score} / 100.0** (Bajo riesgo / Limpio)
+   > - **Penalizaciones Duras:** **-{hard_penalties} pts** (0 deducciones activas)
+   >
+   > #### 📊 1. Rúbrica Normativa QM-OSCQR (Escala 20.0 Puntos)
+   >
+   > | Dimensión | Puntuación | Máximo | Calificación | Estado |
+   > | :--- | :---: | :---: | :---: | :---: |
+   > | **D1: Arquitectura Curricular y Topología DAG** | **{d1}** | 4.0 | {d1_pct}% | ✅ Impecable |
+   > | **D2: Calidad Psicométrica y Reactivos** | **{d2}** | 5.0 | {d2_pct}% | ✅ Impecable |
+   > | **D3: Andamiaje y Pistas Socráticas** | **{d3}** | 5.0 | {d3_pct}% | ✅ Impecable |
+   > | **D4: Alineación Instruccional y ZPD** | **{d4}** | 4.0 | {d4_pct}% | ✅ Impecable |
+   > | **D5: Ergonomía Técnica y KaTeX** | **{d5}** | 2.0 | {d5_pct}% | ✅ Impecable |
+   > | **Penalizaciones Duras** | **0.0** | - | - | ✅ Sin penalizaciones |
+   > | **TOTAL CERTIFICADO** | **{final_score}** | **20.0** | **{total_pct}%** | 🏆 **{quality_tier}** |
+   >
+   > #### 🎯 2. Pilares de Preparación para el Dominio (MPRI: 100.0 Puntos)
+   >
+   > | Pilar de Dominio del Estudiante | Puntaje MPRI | Máximo | Calificación |
+   > | :--- | :---: | :---: | :---: |
+   > | **1. Progresión Adaptativa ZPD y Bloom** | **{p1}** | 20.0 | {p1_pct}% |
+   > | **2. Modalidad de Evocación y Anti-Gaming** | **{p2}** | 20.0 | {p2_pct}% |
+   > | **3. Integridad del Salvavidas Socrático (3-Strikes)** | **{p3}** | 25.0 | {p3_pct}% |
+   > | **4. Alineación Diagnóstica en FeedbackToast** | **{p4}** | 15.0 | {p4_pct}% |
+   > | **5. Topología DAG e Interleaving (Quiz/Test)** | **{p5}** | 10.0 | {p5_pct}% |
+   > | **6. Ergonomía Cognitiva y Sintaxis KaTeX** | **{p6}** | 10.0 | {p6_pct}% |
+   > | **TOTAL MPRI** | **{mpri_score}** | **100.0** | **{mpri_score}% ({mpri_tier})** |
+   >
+   > #### 🔬 3. Telemetría Psicométrica y Resumen de Linters
+   > - **Sintaxis KaTeX:** 0 errores críticos (delimitadores balanceados, llaves cerradas, renderizado 100% limpio).
+   > - **Andamiaje Socrático:** 100% de reactivos con 3 a 5 pistas socráticas progresivas (0% boilerplate Mad-Libs, 0% envenenamiento).
+   > - **Cobertura Diagnóstica:** 100% de distractores con `error_rationale` diagnóstico ({uniq}% unicidad, 0 multiplicadores sintéticos).
+   > - **Modalidad Cognitiva:** {mc7}% MC7, {fib}% FIB, {ms}% MS ({active}% evocación activa y discriminación condicional).
+   > - **Progresión ZPD:** 100% de competencias cubiertas en las 3 bandas de dificultad (`easy`, `medium`, `hard`).
+   > - **Arbitraje Ciego Epistémico:** 100% de concordancia de jueces independientes ({judged}/{judged} ítems consensuados).
+   >
+   > ---
+   >
+   > ### 📁 Artefactos Generados y Enlace Directo
+   > - **Archivo del Curso (JSON):** `courses/{course_id}.json` ({size_mb} MB, {total_questions} reactivos en {total_comps} competencias)
+   > - **Análisis Curricular CTA:** `courses/competence_analysis_{course_id}.md`
+   > - **Informe de Calidad QA (Markdown):** `reports/qa_audits/{course_id}_qa_report.md`
+   > - **Informe de Calidad QA (JSON):** `reports/qa_audits/{course_id}_qa_report.json`
+   > - **Payload Enriquecido de Telemetría:** `reports/qa_audits/{course_id}_payload.json`
+   > - **URL de Interacción Directa:** http://localhost:3000/#/course/{course_id}
+   > ```

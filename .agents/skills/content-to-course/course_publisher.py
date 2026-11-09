@@ -782,6 +782,8 @@ class PublicationResult:
     launch_command: str
     launch_url: str
     error_message: Optional[str] = None
+    audit_report: Optional[dict[str, Any]] = None
+    published_qa_report_path: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -1071,6 +1073,8 @@ class CoursePublisher:
                     resolved_work_dir = cand_w
                     break
 
+        audit_report: Optional[dict[str, Any]] = None
+        qa_report_path_str: Optional[str] = None
         audit_fn = _load_run_full_audit(self.project_root)
         if audit_fn:
             try:
@@ -1229,7 +1233,9 @@ class CoursePublisher:
                 validation_passed=False,
                 launch_command="",
                 launch_url="",
-                error_message=f"Course failed validation before publishing: {err_summary}"
+                error_message=f"Course failed validation before publishing: {err_summary}",
+                audit_report=audit_report,
+                published_qa_report_path=None,
             )
 
         # 3. Write course JSON to disk
@@ -1274,7 +1280,9 @@ class CoursePublisher:
                 validation_passed=False,
                 launch_command="",
                 launch_url="",
-                error_message="External CLI validator check failed."
+                error_message="External CLI validator check failed.",
+                audit_report=audit_report,
+                published_qa_report_path=None,
             )
 
         # 6. Compute metric breakdowns
@@ -1307,6 +1315,45 @@ class CoursePublisher:
             except Exception as e:
                 logger.warning("Could not write publish.cert.json: %s", e)
 
+        # 7. Write QA evaluation artifacts in reports/qa_audits/
+        if audit_report:
+            try:
+                qa_reports_dir = self.project_root / "reports" / "qa_audits"
+                qa_reports_dir.mkdir(parents=True, exist_ok=True)
+
+                # Generate deterministic QA report JSON and Markdown
+                try:
+                    import standardized_audit_engine
+                    if hasattr(standardized_audit_engine, "generate_deterministic_qa_report"):
+                        qa_json, qa_md = standardized_audit_engine.generate_deterministic_qa_report(audit_report, parsed)
+                        qa_json_file = qa_reports_dir / f"{course_id}_qa_report.json"
+                        qa_md_file = qa_reports_dir / f"{course_id}_qa_report.md"
+                        qa_json_file.write_text(json.dumps(qa_json, indent=2, ensure_ascii=False), encoding="utf-8")
+                        qa_md_file.write_text(qa_md, encoding="utf-8")
+                        qa_report_path_str = str(qa_md_file.resolve())
+                        logger.info("Published QA audit report to %s", qa_report_path_str)
+                except Exception as ex_gen:
+                    logger.debug("Could not generate full deterministic QA markdown: %s", ex_gen)
+
+                # Also write payload file
+                try:
+                    import prepare_course_payload
+                    if hasattr(prepare_course_payload, "summarize_course"):
+                        entry = {
+                            "id": course_id,
+                            "filename": json_path.name,
+                            "title": course_title,
+                            "status": "valid",
+                            "data": parsed,
+                        }
+                        payload_pkg = prepare_course_payload.summarize_course(entry)
+                        payload_file = qa_reports_dir / f"{course_id}_payload.json"
+                        payload_file.write_text(json.dumps(payload_pkg, indent=2, ensure_ascii=False), encoding="utf-8")
+                except Exception as ex_pkg:
+                    logger.debug("Could not write course payload: %s", ex_pkg)
+            except Exception as ex_qa:
+                logger.warning("Error saving QA reports to reports/qa_audits: %s", ex_qa)
+
         return PublicationResult(
             success=True,
             course_id=course_id,
@@ -1319,7 +1366,9 @@ class CoursePublisher:
             interaction_type_breakdown=itype_breakdown,
             validation_passed=True,
             launch_command=launch_cmd,
-            launch_url=launch_url
+            launch_url=launch_url,
+            audit_report=audit_report,
+            published_qa_report_path=qa_report_path_str,
         )
 
     def _resolve_python_executable(self) -> str:

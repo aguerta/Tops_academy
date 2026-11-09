@@ -715,12 +715,20 @@ class TestFewShotRegressionEDP_EDO:
         ]
         assert len(py_files) >= 15, f"Expected >= 15 skill python files, found {len(py_files)}"
 
+        import re
         for py_file in py_files:
             content = py_file.read_text(encoding="utf-8").lower()
             for term in domain_terms:
-                assert term not in content, (
-                    f"Domain term '{term}' found in skill module {py_file.relative_to(SKILL_DIR)}"
-                )
+                if len(term) <= 3:
+                    # Acronyms ('edo', 'pde') require non-alpha boundaries to avoid false positives on standard library words (e.g. io.UnsupportedOperation)
+                    pattern = rf"(?<![a-z]){re.escape(term)}s?(?![a-z])"
+                    assert not re.search(pattern, content), (
+                        f"Domain term '{term}' found in skill module {py_file.relative_to(SKILL_DIR)}"
+                    )
+                else:
+                    assert term not in content, (
+                        f"Domain term '{term}' found in skill module {py_file.relative_to(SKILL_DIR)}"
+                    )
 
 
 # =============================================================================

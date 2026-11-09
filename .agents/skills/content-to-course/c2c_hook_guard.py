@@ -220,6 +220,8 @@ def decidir_estrategia_edicion(
     affected_line_count: Optional[int] = None,
     has_syntax_error: bool = False,
     existing_lines: int = 0,
+    target_type: str = "shard",
+    affected_competencies_count: int = 0,
 ) -> str:
     """Certified 2D Matrix for determining file edition strategy.
 
@@ -230,6 +232,10 @@ def decidir_estrategia_edicion(
         'legacy_over_250': Legacy fallback for > 250 lines when error_count is absent.
     """
     if has_syntax_error or existing_lines < 40:
+        return "write_file"
+
+    # Excepción aprobada: subagentes CTA (Stage 1B) cuando los fallos afecten simultáneamente a >= 3 competencias
+    if target_type == "cta" and error_count is not None and error_count >= 3 and affected_competencies_count >= 3:
         return "write_file"
 
     if error_count is not None:
@@ -967,11 +973,19 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                     affected_lines = c_data.get("affected_line_count")
                                     streak = c_data.get("same_error_streak", 0)
 
+                                    affected_cids = set()
+                                    for err_msg in c_data.get("last_errors", []):
+                                        for m in re.finditer(r"\b(?:H|C|Hab|Fact|Concept|Skill)-?\d+\b", str(err_msg), re.IGNORECASE):
+                                            affected_cids.add(m.group(0).upper())
+                                    aff_comp_cnt = max(len(affected_cids), int(c_data.get("affected_competencies_count", 0) or 0))
+
                                     strategy = decidir_estrategia_edicion(
                                         error_count=error_count,
                                         affected_line_count=affected_lines,
                                         has_syntax_error=has_syntax_error,
                                         existing_lines=existing_lines,
+                                        target_type=target_type,
+                                        affected_competencies_count=aff_comp_cnt,
                                     )
 
                                     extra_250 = " y supera las 250 líneas" if (existing_lines > 250 or new_lines > 250) else ""
@@ -979,6 +993,13 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                     fix_target = "work/shards/shard_fixes/<CID>.py" if target_type == "shard" else "work/cta_fixes/<CID>.py"
 
                                     if tool_name in full_write_tools:
+                                        # Excepción aprobada: subagentes CTA (Stage 1B) cuando los fallos afecten simultáneamente a >= 3 competencias
+                                        if target_type == "cta" and error_count is not None and error_count >= 3 and aff_comp_cnt >= 3:
+                                            return {"decision": "allow"}
+
+                                        if strategy == "write_file":
+                                            return {"decision": "allow"}
+
                                         if strategy == "legacy_over_250":
                                             return {
                                                 "decision": "deny",
@@ -1008,6 +1029,8 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                             _role = str(active_lock.get("role") or active_lock.get("subagent_role") or "").strip().lower()
                                             _compiles = int(c_data.get("total_compiles", 0) or 0)
                                             if target_type == "shard" and _role != "repair" and _compiles < 3 and streak < 3:
+                                                return {"decision": "allow"}
+                                            if target_type == "cta" and aff_comp_cnt >= 3:
                                                 return {"decision": "allow"}
                                             return {
                                                 "decision": "deny",

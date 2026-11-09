@@ -22,7 +22,7 @@ Trabaja únicamente con los archivos autorizados para tu shard:
   - 🚫 **PROHIBIDO el sondeo ciego de archivos (Zero-Probing):** El archivo `<work_dir>/shards/<shard_id>_data.py` NO existe al inicio; debes crearlo tú directamente usando `write_file(Overwrite=True)`. Queda terminantemente prohibido llamar a `view_file` o `read_file` sobre archivos que aún no has creado o sobre `<work_dir>/templates/<cid>.json` antes de compilar.
   - 🚫 **PROHIBIDO el sobre-pensamiento (No-Overthinking):** Prohibido deducir fórmulas analíticas complejas o calcular probabilidades a mano en el bloque de pensamiento (`thinking`). Delega todo el cómputo numérico y álgebra de momentos directamente al código Python de `gen_*` y `ver_*`.
   - 🚫 **PROHIBIDO definir alias globales a nivel de módulo:** Prohibido escribir `ver_h01_2 = ver_h01_1`. Toda función verificadora debe declararse explícitamente como función independiente: `def ver_h01_2(res): return ver_h01_1(res)`.
-  - 🚫 **PROHIBIDO el uso de multiplicadores escalares arbitrarios o deltas sintéticos en distractores ([DIAG-MAGIC-MULT]):** Prohibido multiplicar la respuesta correcta por constantes fijas (`1.333, 0.667, 1.667, 0.333, 1.25, 0.75, 1.5, 0.5, 2.1, 0.45, 1.85, 0.15`) o usar bucles de deltas numéricos. El compilador evalúa 50 semillas estocásticas y bloquea cualquier proporción fija recurrente entre la respuesta y los distractores. Todo distractor debe derivarse de una fórmula algebraica cerrada que modele un error conceptual específico.
+  - 🚫 **PROHIBIDO el uso de multiplicadores escalares arbitrarios o deltas sintéticos en distractores ([DIAG-MAGIC-MULT]):** Prohibido TERMINANTEMENTE calcular distractores como cualquier múltiplo escalar directo o delta sobre la respuesta correcta (ej. `ans * 1.333`, `ans * 0.333`, `ans * k`, `ans / k`, `ans + delta`). PROHIBIDO intentar burlar el linter ajustando decimales o perturbando ligeramente constantes numéricas. Todo distractor numérico DEBE derivarse de una fórmula algebraica independiente y cerrada que modele un error conceptual específico (ej. omitir la raíz de $n$, confundir varianza con desviación típica, usar signo opuesto en cotas o invertir numerador y denominador). El compilador evalúa 50 semillas estocásticas y bloquea cualquier proporción fija recurrente entre la respuesta y los distractores. Si el compilador reporta `[DIAG-MAGIC-MULT]`, está terminantemente prohibido hacer micro-tanteo de decimales: reemplace la expresión infractora por la fórmula algebraica de la concepción errónea.
   - 🚫 **PROHIBIDO incluir metainformación conceptual o diagnóstica parentética en opciones o stems ([PSYCHOMETRIC-OPTIONS / parenthetical_telltale_linter]):** Prohibido texto explicativo visible como `(sesgo negativo...)`, `(confusión con...)`, `(omisión...)`, `(error de cálculo...)`. Las opciones visibles deben ser plausibles e indistinguibles en formato de la respuesta correcta. Toda la justificación pedagógica pertenece exclusivamente a `error_rationale` o `sol`.
   - 🚫 **PROHIBIDO el uso de claves correctas estáticas (Anti-Mono-Clave `[TPL-STATIC-OPT]`):** En competencias teóricas, la respuesta correcta jamás debe ser una constante fija idéntica en todas las semillas (`ans = 1`). La clave debe depender de al menos un parámetro dinámico (`@var@`).
   - 🚫 **PROHIBIDO pasar `ArtifactMetadata` a `write_file` o `edit_file`:** Los archivos de trabajo no son artefactos del cerebro.
@@ -49,12 +49,12 @@ Bajo el estándar **Form-C Quad-Band & Form-B Multimodal (`min_archetypes = 4`)*
 - **4 Arquetipos Disjuntos por Competencia (`[M3-ARCHETYPES]`):** CADA competencia asignada DEBE definir exactamente 4 tuplas en `TEMPLATES` (las 4 bandas: 1. Directo / Frontal `("easy", ...)`, 2. Inverso / Diagnóstico `("medium", ...)`, 3. Perturbación `("hard", ...)`, 4. Frontera / Edge-case `("hard", ...)` abarcando al menos 2 niveles Bloom), validado por `compile_shard.py --strict --min-archetypes 4` (`[M3-ARCHETYPES]`). **PROHIBIDO emitir 1 sola tupla por competencia; `compile_shard.py` rechazará con `FAIL: [M3-ARCHETYPES]` cualquier competencia con `< 4` tuplas en `TEMPLATES`.** Cada arquetipo define su generador `gen_<cid>_*(rng)` y verificador `ver_<cid>_*(res)`.
 - **Práctica Activa Multimodal Obligatoria:** Mínimo 2 plantillas interactivas `fill_in_the_blank` (FIB) o `multiple_select` (MS) en competencias de habilidad (`Hab-*`), y mínimo 1 `FIB` o `MS` en competencias de concepto/hecho (`C-*`/`H-*`).
 - **Naked FIB (`[FIB-NAKED]`):** En plantillas `fill_in_the_blank`, la respuesta esperada `correct` DEBE ser limpia sin signos de dólar externos `$ ... $` (ej. `r"@ans@"` en vez de `r"$@ans@$"`).
-- **Distractores Dinámicos (`[TPL-DYNAMIC-RATIONALE]`):** En plantillas MC7, cada distractor devuelto en `gen_*(rng)` DEBE ser una **3-tupla obligatoria `(did, val, error_rationale_con_@var@)`** con longitud de rationale >= 20 caracteres interpolando variables paramétricas. En MS, las opciones falsas llevan `'error_rationale'` interpolando `@var@`.
+- **Distractores Dinámicos (`[TPL-DYNAMIC-RATIONALE]`):** En plantillas MC7, puedes usar **2-tuplas `("D-XX-01", val)` en `ds` pasando `rats=RATS` en la plantilla (formato nativo preferido Form-C; `compile_shard.py` inyecta `RATS[did]` automáticamente)** o **3-tuplas `(did, val, error_rationale_con_@var@)`**, siempre con longitud de rationale >= 20 caracteres interpolando variables paramétricas. En MS, las opciones falsas llevan `'error_rationale'` interpolando `@var@`.
 - **Prohibición de Desbordamiento KaTeX (`[KATEX-PROSE-OVERFLOW]`):** Prohibido texto explicativo mayor a 45 caracteres dentro de `\text{...}`. La prosa explicativa va fuera de `$ ... $`. Usa `\Rightarrow` en vez de `\implies`.
 - **Firma de verificadores (EXACTA):** MC7/FIB `def ver_X_N(c, v)`; MS `def ver_X_4(res)` (instancia completa con `vars`/`options`). PROHIBIDO `(res, v=None)`, `*args`, `raise`/`assert`. Define `_pv(c)` canónico puro Python (sin `import re`) como en el ejemplo. Compila con `WaitMsBeforeAsync: 10000`.
 - **Verificadores Reales:** Cada `ver_*(result)` debe validar analíticamente las variables en `result["vars"]` contra la respuesta (prohibido `return True` trivial). Cada plantilla debe incluir >= 3 `stems` y entre 3 y 5 `hints` socráticos de >= 25 caracteres.
-- **Dimensionamiento Compacto Clean-Room Anti-Bloat:** Mantén cada archivo en **`<= 80–110` líneas por competencia (`<= 180–220` líneas totales por shard)**. Cada función generadora `gen_*` debe ser **ultra-concisa (~12–18 líneas)** utilizando 3-tuplas `("D-XX-01", r"$@d1@$", r"Rationale con @var@")`.
-- **Formato Canónico Obligatorio de Distractores en `gen_*(rng)`:** En modo estricto (`--strict`), cada distractor devuelto en `gen_*(rng)` para MC7 DEBE ser una **3-tupla obligatoria `("D-XX-01", r"$\eta = @d1@$", r"Rationale con @var@")`** o diccionario `{"distractor_id": "D-XX-01", "value": r"$\eta = @d1@$", "error_rationale": r"..."}` con longitud de rationale >= 20 caracteres interpolando variables dinámicas (`@var@`). Las 2-tuplas sin rationale están terminantemente prohibidas en modo estricto (`[TPL-MC7-STRICT]`). Prohibido multiplicar `ans` por constantes o usar deltas numéricos ciegos (`[DIAG-MAGIC-MULT]`).
+- **Dimensionamiento Compacto Clean-Room Anti-Bloat:** Mantén cada archivo en **`<= 80–110` líneas por competencia (`<= 180–220` líneas totales por shard)**. Cada función generadora `gen_*` debe ser **ultra-concisa (~12–18 líneas)** utilizando 2-tuplas `("D-XX-01", d1)` con `rats=RATS` en `_t(...)` (o 3-tuplas).
+- **Formato Canónico Obligatorio de Distractores en `gen_*(rng)`:** En modo estricto (`--strict`), cada distractor devuelto en `gen_*(rng)` para MC7 puede ser una **2-tupla `("D-XX-01", d1)` acompañada de `rats=RATS` en la plantilla** (recomendado Form-C), una **3-tupla `("D-XX-01", r"$\eta = @d1@$", r"Rationale con @var@")`** o diccionario `{"distractor_id": "D-XX-01", "value": r"$\eta = @d1@$", "error_rationale": r"..."}` con longitud de rationale >= 20 caracteres interpolando variables dinámicas (`@var@`). Las 2-tuplas sin `rats=RATS` están prohibidas en modo estricto (`[TPL-MC7-STRICT]`). Prohibido multiplicar `ans` por constantes o usar deltas numéricos ciegos (`[DIAG-MAGIC-MULT]`).
 - **Cobertura de Distractores y Neutralidad (`R-15` / `R-18` / `[PSYCHOMETRIC-OPTIONS]`):** Las plantillas de cada competencia deben cubrir el 100% de los 6 distractores asignados (`D-XX-01..06`). En `distractor_map`, el campo `"value"` DEBE contener **únicamente** el resultado numérico o la expresión matemática neutral (`r"@d1@"` o `r"$@d1@$"`), **jamás** texto explicativo del error como `"Valor obtenido al omitir..."` ni coletillas parentéticas delatoras tipo `(sesgo...)` (toda la explicación pedagógica va exclusivamente en `"error_rationale"`).
 - **Cuota `TPL-VAR` y Dominio Paramétrico Amplio (`param_space` $\ge 500$):** El validador evalúa `50` semillas estocásticas por competencia y exige **$\ge 30$ reactivos únicos para `Hab-*`** y **$\ge 20$ reactivos únicos para `C-*` / `H-*`**, además de `param_space >= 500` y **3 a 5 `stem_variants`** estructuralmente distintos que interpolen `@var@` dinámicos.
 - **LaTeX Seguro (`pr_string` + Raw Strings):** Usa siempre raw strings `r"..."` y escribe `\Rightarrow` en vez de `\implies`, `\Leftrightarrow` en vez de `\iff`, y nunca mezcles `$$` con `$` simple en fórmulas inline.
@@ -81,20 +81,16 @@ RATS = {
 }
 
 def _gen_h01(rng, arch=1):
-    tc = rng.randint(200, 280)
-    th = tc + rng.randint(460, 650)
-    eta = round(1.0 - (tc / th), 3)
+    for _ in range(30):
+        tc = rng.randint(200, 280)
+        th = tc + rng.randint(460, 650)
+        eta = round(1.0 - (tc / th), 3)
+        v1 = [round(x, 3) for x in (th / tc, tc / th, 1.0 - (tc / th)**2, 1.0 - 0.6 * tc / th, (th - tc) / (th + tc), (tc / th)**2)]
+        if len({eta, *v1}) == 7 and all(abs(d / eta - m) > 0.06 for d in v1 for m in (0.15, 0.333, 0.45, 0.5, 0.667, 0.75, 1.25, 1.333, 1.5, 1.667, 1.85, 2.1)):
+            break
     if arch == 1:
-        # MC7: Directo (cadena algebraica disjunta v1 libre de multiplicadores mágicos)
-        v1 = (th / tc, tc / th, 1.0 - (tc / th)**2, 1.0 - 0.6 * tc / th, (th - tc) / (th + tc), (tc / th)**2)
-        ds = [
-            ("D-H01-01", round(v1[0], 3)),
-            ("D-H01-02", round(v1[1], 3)),
-            ("D-H01-03", round(v1[2], 3)),
-            ("D-H01-04", round(v1[3], 3)),
-            ("D-H01-05", round(v1[4], 3)),
-            ("D-H01-06", round(v1[5], 3)),
-        ]
+        # MC7: Directo (cadena algebraica disjunta v1 libre de multiplicadores mágicos y colisiones)
+        ds = [(f"D-H01-0{i}", x) for i, x in enumerate(v1, 1)]
         return {"vars": {"tc": tc, "th": th, "ans": eta}, "ans": str(eta), "correct": str(eta), "ds": ds}
     if arch == 2:
         # FIB: Inverso (despeje TH = TC / (1 - eta), sin $ externos)
@@ -243,8 +239,9 @@ La longitud en caracteres de la opción `correct` DEBE mantenerse balanceada res
 - **Adverbios de Validez Sesgados:** Queda prohibido usar adverbios que delaten la respuesta correcta exclusivamente en `correct`:
   - 🚫 `"correctamente"`, `"adecuadamente"`, `"exactamente"`, `"rigurosamente"`, `"únicamente"`
 
-### Reglas R-19 y R-22: Unicidad Numérica y Textual de Distractores
+### Reglas R-19 y R-22: Unicidad Numérica y Textual de Distractores + Paridad Psicométrica
 - Todas las opciones de distractores (`D-01..06`) deben evaluar a valores estrictamente distintos de `correct` y distintos entre sí en todas las semillas.
+- **[Pre-comprobación Psicométrica R-19 Obligatoria]**: La longitud en caracteres de las 4 opciones visibles no debe diferir en más de un 15% entre sí antes de llamar a `write_file`. Opciones asimétricas en longitud delatan visualmente la respuesta correcta e incurren en violaciones `[R-19]`.
 
 ### Regla R-20: Delimitadores Balanceados
 - Todo bloque KaTeX `$ ... $` y toda llave `{ ... }` deben estar matemáticamente balanceados. La prosa dentro de ecuaciones debe utilizar `\text{...}`.
@@ -461,7 +458,8 @@ TEMPLATES += [
 
 ### Protocolo Oficial de Creación y Reparación (< 6 Errores vs >= 6 Errores)
 1. **Creación Turno 1:** Utiliza `write_file(Overwrite=True)` para escribir `<work_dir>/shards/<shard_id>_data.py` con constantes, funciones y la lista `TEMPLATES = [...]` (PROHIBIDO el uso de `Append=True` en la creación de plantillas).
-2. **Reparación bajo Umbral < 6 Errores (1..5 errores, sin SyntaxError):** Uso **OBLIGATORIO** de `edit_file` (`replace_file_content`) quirúrgico en 1 turno paralelo sobre las líneas exactas `StartLine..EndLine` señaladas por `compile_shard.py`. Queda **TERMINANTEMENTE PROHIBIDO** reescribir todo el archivo desde cero con `write_file`.
+2. **Reparación bajo Umbral < 6 Errores (1..5 errores, sin SyntaxError):** Uso **OBLIGATORIO** de `edit_file` (`replace_file_content`) quirúrgico en 1 turno paralelo sobre las líneas exactas `StartLine..EndLine` señaladas por `compile_shard.py`.
+   - **Paginación Inteligente en `edit_file`**: Prohibido aplicar `edit_file` sobre bloques mayores a 30 líneas tras lecturas truncadas. Exige leer previamente con `read_file` el bloque específico indicando líneas exactas (`StartLine` y `EndLine`, máximo 30 líneas) para asegurar coincidencia idéntica del `Target`. Queda **TERMINANTEMENTE PROHIBIDO** reescribir todo el archivo desde cero con `write_file`.
 3. **Reparación bajo >= 6 Errores:**
    - **Acotados a 1–2 competencias:** Escribe exclusivamente el bloque modular aislado en `<work_dir>/shards/shard_fixes/<CID>.py` con `write_file(Overwrite=True)`. El compilador `compile_shard.py` detecta e integra automáticamente `shard_fixes/<CID>.py` en memoria durante la compilación.
    - **Sistémicos (>= 3 competencias) o SyntaxError:** Permitido `write_file(Overwrite=True)` atómico completo sobre `<work_dir>/shards/<shard_id>_data.py` o anulación modular vía `shard_fixes/<CID>.py`.

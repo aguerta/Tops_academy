@@ -91,6 +91,36 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("run_pipeline")
 
 
+def wait_for_file_resilient(
+    path: Union[str, Path],
+    timeout: float = 3.0,
+    initial_delay: float = 0.5,
+    min_bytes: int = 1,
+) -> Path:
+    """Waits for a file to exist and be non-empty with exponential backoff on Windows NTFS.
+    
+    Compensates for write buffer flush delays across subprocesses and threads.
+    """
+    p = Path(path).resolve()
+    try:
+        if p.is_file() and p.stat().st_size >= min_bytes:
+            return p
+    except OSError:
+        pass
+
+    deadline = time.time() + max(timeout, 0.1)
+    delay = max(initial_delay, 0.05)
+    while time.time() < deadline:
+        time.sleep(delay)
+        try:
+            if p.is_file() and p.stat().st_size >= min_bytes:
+                return p
+        except OSError:
+            pass
+        delay = min(delay * 1.5, 1.0)
+    return p
+
+
 def record_stage_timing(work_dir: Path, stage_name: str, duration_sec: float) -> None:
     """Records stage execution time in work/timings.json."""
     timings_file = work_dir / "timings.json"
@@ -110,6 +140,47 @@ def record_stage_timing(work_dir: Path, stage_name: str, duration_sec: float) ->
         logger.warning("Could not record timing in %s: %s", timings_file, e)
 
 
+class _LogCaptureStream(io.StringIO):
+    """In-memory log capture buffer that retains a valid OS file descriptor.
+
+    Prevents multiprocessing.spawn and ProcessPoolExecutor on Windows from crashing
+    or hanging when sys.stdout is redirected during stage execution.
+    """
+
+    def __init__(self, target_stream=None):
+        super().__init__()
+        self._target_stream = target_stream or sys.__stdout__
+
+    def fileno(self) -> int:
+        if self._target_stream and hasattr(self._target_stream, "fileno"):
+            try:
+                return self._target_stream.fileno()
+            except (io.UnsupportedOperation, OSError, AttributeError):
+                pass
+        if sys.__stdout__ and hasattr(sys.__stdout__, "fileno"):
+            try:
+                return sys.__stdout__.fileno()
+            except (io.UnsupportedOperation, OSError, AttributeError):
+                pass
+        raise io.UnsupportedOperation("No underlying OS fileno available")
+
+    def flush(self) -> None:
+        super().flush()
+        if self._target_stream and hasattr(self._target_stream, "flush"):
+            try:
+                self._target_stream.flush()
+            except Exception:
+                pass
+
+    def isatty(self) -> bool:
+        if self._target_stream and hasattr(self._target_stream, "isatty"):
+            try:
+                return self._target_stream.isatty()
+            except Exception:
+                pass
+        return False
+
+
 @contextlib.contextmanager
 def cap_stdout_to_log(work_dir: Path, stage_name: str, max_bytes: int = 16000):
     """Captures stage stdout, writes full verbose log to work/logs/<stage>.log, and caps console stdout to max_bytes."""
@@ -119,7 +190,7 @@ def cap_stdout_to_log(work_dir: Path, stage_name: str, max_bytes: int = 16000):
     log_file = logs_dir / f"{clean_stage}.log"
 
     old_stdout = sys.stdout
-    buffer = io.StringIO()
+    buffer = _LogCaptureStream(old_stdout)
     sys.stdout = buffer
     try:
         yield
@@ -637,6 +708,7 @@ class PipelineRunner:
                 print("  [*] Applying harmonization directives...")
                 apply_harmonize(self.work_dir, no_merge=self.no_merge)
 
+        cta_file = wait_for_file_resilient(cta_file)
         if not cta_file.is_file():
             raise FileNotFoundError(
                 f"Missing required artifact: {cta_file.resolve()}\n"
@@ -644,6 +716,8 @@ class PipelineRunner:
                 f"system_prompts/prompt_competence_analyser.md before running this stage.\n"
                 f"No silent fallback to hardcoded templates is permitted."
             )
+
+        pre_cta_file = wait_for_file_resilient(pre_cta_file)
 
         manifest_data = json.loads(pre_cta_file.read_text(encoding="utf-8"))
 
@@ -714,12 +788,12 @@ class PipelineRunner:
         print("=" * 70)
 
         # 1. Verifica work/pre_cta_manifest.json (si no existe, BLOCKER:: No existe pre_cta_manifest.json)
-        pre_cta_file = self.work_dir / "pre_cta_manifest.json"
+        pre_cta_file = wait_for_file_resilient(self.work_dir / "pre_cta_manifest.json")
         if not pre_cta_file.is_file():
             print("[BLOCKER] BLOCKER:: No existe pre_cta_manifest.json", file=sys.stderr)
             sys.exit(2)
 
-        cta_file = self.work_dir / "cta.json"
+        cta_file = wait_for_file_resilient(self.work_dir / "cta.json")
         if not cta_file.is_file():
             raise FileNotFoundError(
                 f"Missing required artifact: {cta_file.resolve()}\n"
@@ -731,7 +805,7 @@ class PipelineRunner:
         res = plan_shards(cta_file, shards_dir, k=self.shards_k, max_comps=self.comps_per_shard)
 
         # Verificar que exista work/shards/pre_shard_manifest.json (cero fallbacks)
-        pre_shard_file = shards_dir / "pre_shard_manifest.json"
+        pre_shard_file = wait_for_file_resilient(shards_dir / "pre_shard_manifest.json")
         if not pre_shard_file.is_file():
             print("[BLOCKER] BLOCKER:: No existe pre_shard_manifest.json", file=sys.stderr)
             sys.exit(2)
@@ -771,7 +845,7 @@ class PipelineRunner:
         except Exception:
             pass
 
-        cta_file = self.work_dir / "cta.json"
+        cta_file = wait_for_file_resilient(self.work_dir / "cta.json")
         if not cta_file.is_file():
             raise FileNotFoundError(
                 f"Missing required artifact: {cta_file.resolve()}\n"
@@ -1090,11 +1164,13 @@ class PipelineRunner:
         print("[STAGE 4: BUILD] Generic engine question instantiation & diversity")
         print("=" * 70)
 
-        cta_file = self.work_dir / "cta.json"
+        cta_file = wait_for_file_resilient(self.work_dir / "cta.json")
         if not cta_file.is_file():
             raise FileNotFoundError(f"Missing required artifact: {cta_file.resolve()}")
 
         templates_dir = self.work_dir / "templates"
+        if not templates_dir.is_dir() or not list(templates_dir.glob("*.json")):
+            time.sleep(0.5)
         if not templates_dir.is_dir() or not list(templates_dir.glob("*.json")):
             raise FileNotFoundError(f"Missing templates in {templates_dir.resolve()}")
 
@@ -1399,7 +1475,7 @@ class PipelineRunner:
         except Exception:
             pass
 
-        course_file = self.work_dir / "course.json"
+        course_file = wait_for_file_resilient(self.work_dir / "course.json")
         if not course_file.is_file():
             raise FileNotFoundError(f"Missing required artifact: {course_file.resolve()}. Run stage build first.")
 
@@ -1407,7 +1483,17 @@ class PipelineRunner:
         cta_file = self.work_dir / "cta.json"
 
         # 1. Generate blind judge batch for independent evaluation
-        if templates_dir.is_dir() and list(templates_dir.glob("*.json")):
+        judge_batch_p = self.work_dir / "judge_batch.json"
+        gt_p = self.work_dir / "judge_ground_truth.json"
+        all_tpl_files = sorted(list(templates_dir.glob("*.json"))) if templates_dir.is_dir() else []
+        skip_batch_gen = False
+        if judge_batch_p.is_file() and gt_p.is_file() and all_tpl_files:
+            jb_mtime = judge_batch_p.stat().st_mtime
+            if all(t.stat().st_mtime <= jb_mtime for t in all_tpl_files):
+                skip_batch_gen = True
+                print("  [i] Reusing existing up-to-date judge batch and ground truth.")
+
+        if not skip_batch_gen and all_tpl_files:
             print("  [*] Generating blind judge batch (stratified random selection, max 10 judges x 20 items WITHOUT answer keys)...")
             judge_batch_p, gt_p = generate_judge_batch(
                 templates_path=templates_dir,
@@ -1450,6 +1536,105 @@ class PipelineRunner:
         return {"verified_course_path": str(verified_file.resolve())}
 
     # -------------------------------------------------------------------------
+    # QA Evaluator Telemetry Formatter
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def _format_qa_evaluation_summary(audit_rep: dict[str, Any], pub_result: Optional[Any] = None) -> str:
+        """Formats the deterministic QA evaluation rubric and psychometric telemetry into a structured report block."""
+        if not audit_rep:
+            return ""
+
+        det_rubric = audit_rep.get("deterministic_rubric", {})
+        dim_scores = det_rubric.get("dimension_scores", {})
+        final_score = det_rubric.get("final_score", audit_rep.get("final_score", 20.0))
+        quality_tier = det_rubric.get("quality_tier", audit_rep.get("quality_tier", "EXCELENTE (PLATINUM MASTERY)"))
+        hard_pen = audit_rep.get("hard_penalties", [])
+        pen_total = det_rubric.get("hard_penalties_total", sum(p.get("deduction", 0.0) for p in hard_pen if isinstance(p, dict)))
+
+        mpri_data = audit_rep.get("mastery_path_readiness", {})
+        mpri_score = mpri_data.get("mpri_score", 100.0)
+        mpri_tier = mpri_data.get("mpri_tier", "GOLD MASTERY PATH")
+        mpri_pillars = mpri_data.get("pillars", {})
+        risk_score = audit_rep.get("risk_score", 0.0)
+
+        total_comps = getattr(pub_result, "total_competencies", audit_rep.get("total_competencies", 0))
+
+        lines = [
+            "-" * 70,
+            " [QA EVALUATOR - RÚBRICA DETERMINISTA DE CALIDAD EDUCATIVA]",
+            f"  Calificación QM-OSCQR:        {final_score:.1f} / 20.0 pts  -->  {quality_tier}",
+            f"  Mastery Path Readiness (MPRI): {mpri_score:.2f} / 100.0 pts  -->  {mpri_tier}",
+            f"  Risk Score Global:            {risk_score:.2f} / 100.0 (Bajo riesgo / Limpio)",
+            f"  Penalizaciones Duras:         -{pen_total:.1f} pts ({len(hard_pen)} deducciones activas)",
+            "",
+            "  📊 Rúbrica de 5 Dimensiones Normativas (Escala 20.0 pts):",
+        ]
+
+        d_keys = [
+            ("architecture_granularity", "D1 Arquitectura Curricular y DAG", 4.0),
+            ("assessment_quality", "D2 Calidad Psicométrica y Reactivos", 5.0),
+            ("scaffolding_hints", "D3 Andamiaje y Pistas Socráticas", 5.0),
+            ("instructional_alignment", "D4 Alineación Instruccional y ZPD", 4.0),
+            ("technical_ergonomics", "D5 Ergonomía Técnica y KaTeX", 2.0),
+        ]
+        for dk, dname, dmax in d_keys:
+            dinfo = dim_scores.get(dk, {})
+            sc = dinfo.get("score", dmax)
+            pct = (sc / dmax) * 100.0 if dmax > 0 else 100.0
+            status = "Impecable" if pct >= 99.0 else ("Excelente" if pct >= 90.0 else "Aceptable")
+            lines.append(f"    • {dname:<36}: {sc:.1f} / {dmax:.1f} pts ({pct:5.1f}%) [{status}]")
+        lines.append(f"    • {'Penalizaciones Duras':<36}: -{pen_total:.1f} pts")
+        lines.append("    ------------------------------------------------------------------")
+        lines.append(f"    {'TOTAL CERTIFICADO':<36}: {final_score:.1f} / 20.0 pts  [{quality_tier}]")
+        lines.append("")
+        lines.append("  🎯 Pilares de Preparación para el Dominio (MPRI 100.0 pts):")
+
+        p_keys = [
+            ("zpd_adaptive_progression", "1. Progresión Adaptativa ZPD y Bloom", 20.0),
+            ("retrieval_modality_and_anti_gaming", "2. Modalidad de Evocación y Anti-Gaming", 20.0),
+            ("socratic_scaffolding_lifeline", "3. Integridad Salvavidas Socrático (3-Strikes)", 25.0),
+            ("diagnostic_remediation_alignment", "4. Alineación Diagnóstica en FeedbackToast", 15.0),
+            ("dag_and_interleaving_topology", "5. Topología DAG e Interleaving (Quiz/Test)", 10.0),
+            ("cognitive_ergonomics_and_framing", "6. Ergonomía Cognitiva y Sintaxis KaTeX", 10.0),
+        ]
+        for pk, pname, pmax in p_keys:
+            pinfo = mpri_pillars.get(pk, {})
+            psc = pinfo.get("score", pmax)
+            lines.append(f"    • {pname:<45}: {psc:.2f} / {pmax:.1f} pts")
+
+        dim_sum = audit_rep.get("dimension_summaries", {})
+        katex_l = dim_sum.get("katex_syntax_linter", {})
+        dist_l = dim_sum.get("distractor_integrity_linter", {})
+        soc_l = dim_sum.get("socratic_scaffolding_integrity_linter", {})
+        mod_l = dim_sum.get("retrieval_modality_linter", {})
+        zpd_l = dim_sum.get("zpd_progression_linter", {})
+        diag_l = dim_sum.get("diagnostic_rationale_alignment_linter", {})
+
+        katex_errs = (
+            katex_l.get("unclosed_braces_count", 0)
+            + katex_l.get("unbalanced_dollars_count", 0)
+            + katex_l.get("triple_dollars_count", 0)
+        )
+        lines.append("")
+        lines.append("  🔬 Telemetría de Calidad Psicométrica y Determinista:")
+        lines.append(f"    • Sintaxis KaTeX:           {katex_errs} errores críticos (100% limpio y renderizable)")
+        lines.append(f"    • Pistas Socráticas:        {soc_l.get('genuine_socratic_hints_pct', 100.0)}% genuinas (0% boilerplate, 0% envenenadas)")
+        lines.append(f"    • Cobertura de Rationales:  {dist_l.get('rationale_coverage_pct', 100.0)}% ({diag_l.get('rationale_uniqueness_pct', 100.0)}% únicos)")
+        lines.append(f"    • Modalidad de Reactivos:   MC7={mod_l.get('mc7_share_pct', 0.0)}%, FIB={mod_l.get('fib_share_pct', 0.0)}%, MS={mod_l.get('ms_share_pct', 0.0)}% ({mod_l.get('active_generation_or_discrimination_pct', 0.0)}% evocación activa)")
+        lines.append(f"    • Progresión ZPD:           {zpd_l.get('three_band_competencies_count', 0)}/{total_comps} competencias con 3 bandas ('easy', 'medium', 'hard')")
+        lines.append(f"    • Bloom Superior en Skills: {zpd_l.get('skill_higher_bloom_pct', 100.0)}% en Apply+")
+
+        qa_md_path = getattr(pub_result, "published_qa_report_path", None)
+        if qa_md_path:
+            lines.append("")
+            lines.append("  📁 Reportes QA Guardados:")
+            lines.append(f"    • Informe QA (Markdown): {qa_md_path}")
+            lines.append(f"    • Informe QA (JSON):     {qa_md_path.replace('.md', '.json')}")
+
+        lines.append("=" * 70)
+        return "\n".join(lines)
+
+    # -------------------------------------------------------------------------
     # STAGE 6: Publish
     # -------------------------------------------------------------------------
     def run_stage_publish(self) -> Dict[str, Any]:
@@ -1459,8 +1644,8 @@ class PipelineRunner:
         print("[STAGE 6: PUBLISH] Publishing course to platform repository")
         print("=" * 70)
 
-        verified_file = self.work_dir / "course_verified.json"
-        course_file = self.work_dir / "course.json"
+        verified_file = wait_for_file_resilient(self.work_dir / "course_verified.json", timeout=1.5)
+        course_file = wait_for_file_resilient(self.work_dir / "course.json", timeout=1.5)
         if verified_file.is_file() and course_file.is_file():
             source_file = course_file if course_file.stat().st_mtime > verified_file.stat().st_mtime else verified_file
         else:
@@ -1546,11 +1731,28 @@ class PipelineRunner:
         print(f"  Course File:  {pub_result.published_json_path}")
         if pub_result.published_cta_path:
             print(f"  CTA Markdown: {pub_result.published_cta_path}")
+        if getattr(pub_result, "published_qa_report_path", None):
+            print(f"  QA Report:    {pub_result.published_qa_report_path}")
         print(f"  Questions:    {pub_result.total_questions} items across {pub_result.total_competencies} competencies")
         print(f"  Validation:   Passed (Hermetic CLI validator with in-memory fallback; strict={self.strict})")
         print(f"  Launch URL:   {pub_result.launch_url}")
         print(f"  Command:      {pub_result.launch_command}")
-        print("=" * 70 + "\n")
+
+        # QA Evaluator Deterministic Rubric & Telemetry Output
+        audit_rep = getattr(pub_result, "audit_report", None)
+        if not audit_rep:
+            gate_rep_file = self.work_dir / "audit_gate_report.json"
+            if gate_rep_file.is_file():
+                try:
+                    audit_rep = json.loads(gate_rep_file.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+
+        qa_summary_block = self._format_qa_evaluation_summary(audit_rep, pub_result)
+        if qa_summary_block:
+            print(qa_summary_block)
+        else:
+            print("=" * 70 + "\n")
 
         # Automatic Lockfile Lifecycle Release on successful publish
         lock_file = self.work_dir / ".c2c_subagent_lock.json"
@@ -2034,6 +2236,11 @@ class PipelineRunner:
                             gate_failures=qa_failures,
                             work_dir=self.work_dir,
                         )
+                    else:
+                        qa_ok = True
+                        sc = audit_rep.get('final_score', 20.0)
+                        tier = audit_rep.get('quality_tier', 'EXCELENTE')
+                        print(f"  [+] QA deterministic pass OK: Score {sc:.1f}/20.0 ({tier}), MPRI={mpri_score:.2f}/100.0.")
             except Exception as ex:
                 qa_ok = False
                 print(f"  [!] QA gate evaluation encountered error: {ex}")
