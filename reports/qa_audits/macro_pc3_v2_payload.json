@@ -1,0 +1,3521 @@
+{
+  "course_id": "macro_pc3_v2",
+  "filename": "macro_pc3_v2.json",
+  "title": "Macro Pc3 V2",
+  "description": "Dominio y aplicación analítica integral de Macro Pc3 V2",
+  "total_competencies": 14,
+  "total_questions": 320,
+  "question_types_distribution": {
+    "multiple_choice_7_options": 82,
+    "fill_in_the_blank": 160,
+    "multiple_select": 78
+  },
+  "questions_per_competency": {
+    "H-01": 20,
+    "C-01": 20,
+    "C-02": 20,
+    "C-03": 20,
+    "Hab-01": 30,
+    "C-04": 20,
+    "Hab-02": 30,
+    "H-02": 20,
+    "Hab-03": 30,
+    "C-05": 20,
+    "C-06": 20,
+    "H-03": 20,
+    "C-07": 20,
+    "Hab-04": 30
+  },
+  "stage5_judge_audit": {
+    "available": true,
+    "total_items_judged": 56,
+    "agreed_items": 56,
+    "agreement_rate": 1.0,
+    "unrepaired_disagreements_count": 0,
+    "unrepaired_disagreements": []
+  },
+  "evaluator_guidance": {
+    "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0, la Rúbrica Determinista de 20 puntos y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
+    "risk_score": 4.38,
+    "final_score": 19.67,
+    "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY",
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 14 competencias (3 Hechos, 7 Conceptos, 4 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 14/14 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 5.0,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=25.62%, FIB=50.0%, MS=24.38% (74.38% evocación activa/discriminación). Distractores: 648 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.95,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 320/320 ítems. Unicidad diagnóstica de rationales: 91.82%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 1.72,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 7 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 19.67,
+      "penalties_applied": [],
+      "hard_penalties_total": 0,
+      "final_score": 19.67,
+      "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY"
+    },
+    "mastery_path_readiness": {
+      "mpri_score": 99.74,
+      "mpri_max": 100.0,
+      "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 25.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 15.0,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 10.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 9.74,
+          "max": 10.0
+        }
+      }
+    },
+    "hard_penalties_precalculated": []
+  },
+  "deterministic_rubric": {
+    "dimension_scores": {
+      "architecture_granularity": {
+        "score": 4.0,
+        "max": 4.0,
+        "feedback": "Estructura curricular con 14 competencias (3 Hechos, 7 Conceptos, 4 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 14/14 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+      },
+      "assessment_quality": {
+        "score": 5.0,
+        "max": 5.0,
+        "feedback": "Modalidad: MC7=25.62%, FIB=50.0%, MS=24.38% (74.38% evocación activa/discriminación). Distractores: 648 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+      },
+      "scaffolding_hints": {
+        "score": 4.95,
+        "max": 5.0,
+        "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 320/320 ítems. Unicidad diagnóstica de rationales: 91.82%."
+      },
+      "instructional_alignment": {
+        "score": 4.0,
+        "max": 4.0,
+        "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+      },
+      "technical_ergonomics": {
+        "score": 1.72,
+        "max": 2.0,
+        "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 7 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+      }
+    },
+    "raw_subtotal": 19.67,
+    "penalties_applied": [],
+    "hard_penalties_total": 0,
+    "final_score": 19.67,
+    "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY"
+  },
+  "final_score": 19.67,
+  "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY",
+  "audit_telemetry": {
+    "course_id": "macro_pc3_v2",
+    "title": "Macro Pc3 V2",
+    "total_competencies": 14,
+    "total_questions": 320,
+    "dimension_summaries": {
+      "architecture_dag_linter": {
+        "total_competencies": 14,
+        "category_distribution": {
+          "Fact": 3,
+          "Concept": 7,
+          "Skill": 4,
+          "Other": 0
+        },
+        "competencies_missing_prerequisites_count": 2,
+        "underpopulated_competencies_count": 0,
+        "underpopulated_competencies": [],
+        "orphan_questions_count": 0,
+        "orphan_questions_items": [],
+        "min_questions_per_comp": 20,
+        "max_questions_per_comp": 30
+      },
+      "distractor_integrity_linter": {
+        "total_distractors_evaluated": 648,
+        "distractors_with_rationale_count": 648,
+        "rationale_coverage_pct": 100.0,
+        "telltale_distractor_items_count": 0,
+        "telltale_distractor_sample_items": [],
+        "missing_rationales_count": 0
+      },
+      "scaffolding_hints_linter": {
+        "zero_hints_count": 0,
+        "zero_hints_items": [],
+        "insufficient_hints_count": 0,
+        "fstring_placeholders_count": 0,
+        "fstring_placeholders_sample_items": [],
+        "generic_misconception_count": 160,
+        "missing_solutions_count": 0
+      },
+      "katex_syntax_linter": {
+        "unclosed_braces_count": 0,
+        "unclosed_braces_items": [],
+        "triple_dollars_count": 0,
+        "double_braces_count": 0,
+        "unbalanced_dollars_count": 0,
+        "orphan_latex_plain_text_count": 0
+      },
+      "template_variable_residue_linter": {
+        "template_variable_residue_count": 0,
+        "template_variable_residue_items": []
+      },
+      "blind_string_replacement_linter": {
+        "blind_string_replacement_count": 0,
+        "blind_string_replacement_items": []
+      },
+      "cloned_distractor_value_linter": {
+        "cloned_distractor_items_count": 0,
+        "cloned_distractor_sample_items": []
+      },
+      "parenthetical_telltale_linter": {
+        "parenthetical_telltale_count": 0,
+        "parenthetical_telltale_items": []
+      },
+      "archetype_entropy_linter": {
+        "min_required_archetypes": 4,
+        "monotonous_competencies_count": 0,
+        "monotonous_competencies": [],
+        "low_archetype_variety_competencies_count": 0,
+        "low_archetype_variety_competencies": [],
+        "min_distinct_skeletons_observed": 20
+      },
+      "uninterpolated_math_variable_linter": {
+        "uninterpolated_math_items_count": 0,
+        "uninterpolated_math_sample_items": []
+      },
+      "zpd_progression_linter": {
+        "difficulty_distribution": {
+          "easy": 82,
+          "medium": 82,
+          "hard": 156
+        },
+        "bloom_distribution": {
+          "Apply": 159,
+          "Analyze": 78,
+          "Evaluate": 78,
+          "Understand": 5
+        },
+        "eligible_competencies_evaluated": 14,
+        "zpd_dead_competencies_count": 0,
+        "zpd_dead_competencies": [],
+        "two_band_competencies_count": 0,
+        "three_band_competencies_count": 14,
+        "missing_hard_tier_competencies_count": 0,
+        "missing_easy_tier_competencies_count": 0,
+        "skill_questions_total": 120,
+        "skill_higher_bloom_count": 120,
+        "skill_higher_bloom_pct": 100.0
+      },
+      "retrieval_modality_linter": {
+        "mc7_count": 82,
+        "fib_count": 160,
+        "ms_count": 78,
+        "mc7_share_pct": 25.62,
+        "fib_share_pct": 50.0,
+        "ms_share_pct": 24.38,
+        "active_generation_or_discrimination_pct": 74.38,
+        "recognition_only_skill_competencies_count": 0,
+        "recognition_only_skill_competencies": []
+      },
+      "socratic_scaffolding_integrity_linter": {
+        "boilerplate_hints_items_count": 0,
+        "boilerplate_hints_pct": 0.0,
+        "boilerplate_sample_items": [],
+        "poisoned_hints_items_count": 0,
+        "poisoned_hints_pct": 0.0,
+        "poisoned_hints_sample_items": [],
+        "hint_answer_leak_items_count": 0,
+        "genuine_socratic_hints_pct": 100.0
+      },
+      "diagnostic_rationale_alignment_linter": {
+        "total_rationales": 648,
+        "unique_rationales": 595,
+        "rationale_uniqueness_pct": 91.82,
+        "magic_multiplier_distractor_items_count": 0,
+        "magic_multiplier_sample_items": []
+      },
+      "anti_gaming_psychometric_linter": {
+        "memorizable_competencies_count": 0,
+        "memorizable_competencies": [],
+        "length_padded_items_count": 0,
+        "length_padded_sample_items": [],
+        "cross_domain_prefix_items_count": 0,
+        "cross_domain_prefix_sample_items": [],
+        "vacuous_quantifier_items_count": 0,
+        "vacuous_quantifier_sample_items": []
+      },
+      "dag_mastery_topology_linter": {
+        "has_cycle": false,
+        "max_dag_depth": 3,
+        "connected_components_count": 1,
+        "multi_node_subgraphs_count": 1,
+        "inverted_prerequisite_edges_count": 0,
+        "inverted_prerequisite_edges": [],
+        "dangling_prerequisites_count": 0,
+        "isolated_competencies_count": 0,
+        "isolated_competencies": [],
+        "skills_without_prerequisites_count": 0,
+        "skills_without_prerequisites": []
+      },
+      "katex_frontend_ergonomics_linter": {
+        "prose_in_katex_text_items_count": 7,
+        "prose_in_katex_text_sample_items": [
+          "Q-Hab01-105",
+          "Q-Hab01-109",
+          "Q-Hab01-110",
+          "Q-Hab01-107",
+          "Q-Hab01-108",
+          "Q-Hab01-106",
+          "Q-Hab01-104"
+        ],
+        "raw_identifier_math_items_count": 0,
+        "raw_identifier_math_sample_items": []
+      }
+    },
+    "hard_penalties": [],
+    "risk_score": 4.38,
+    "mastery_path_readiness": {
+      "mpri_score": 99.74,
+      "mpri_max": 100.0,
+      "mpri_tier": "GOLD MASTERY PATH (85-100): Certificado para Dominio Adaptativo",
+      "pillars": {
+        "zpd_adaptive_progression": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "retrieval_modality_and_anti_gaming": {
+          "score": 20.0,
+          "max": 20.0
+        },
+        "socratic_scaffolding_lifeline": {
+          "score": 25.0,
+          "max": 25.0
+        },
+        "diagnostic_remediation_alignment": {
+          "score": 15.0,
+          "max": 15.0
+        },
+        "dag_and_interleaving_topology": {
+          "score": 10.0,
+          "max": 10.0
+        },
+        "cognitive_ergonomics_and_framing": {
+          "score": 9.74,
+          "max": 10.0
+        }
+      }
+    },
+    "deterministic_rubric": {
+      "dimension_scores": {
+        "architecture_granularity": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Estructura curricular con 14 competencias (3 Hechos, 7 Conceptos, 4 Habilidades). DAG acíclico y conexo (ciclos=False, comp. conexos=1). ZPD: 14/14 competencias con calibración tri-banda ('easy', 'medium', 'hard')."
+        },
+        "assessment_quality": {
+          "score": 5.0,
+          "max": 5.0,
+          "feedback": "Modalidad: MC7=25.62%, FIB=50.0%, MS=24.38% (74.38% evocación activa/discriminación). Distractores: 648 evaluados con 100.0% cobertura de error_rationale. Cero distractores delatores (telltale=0) y 0 multiplicadores sintéticos."
+        },
+        "scaffolding_hints": {
+          "score": 4.95,
+          "max": 5.0,
+          "feedback": "Andamiaje formativo: 100% de reactivos con 3 a 5 pistas socráticas escalonadas (100.0% pistas genuinas, 0.0% boilerplate Mad-Libs, 0.0% envenenadas). Soluciones formales paso a paso presentes en 320/320 ítems. Unicidad diagnóstica de rationales: 91.82%."
+        },
+        "instructional_alignment": {
+          "score": 4.0,
+          "max": 4.0,
+          "feedback": "Alineación cognitiva de Bloom: 100.0% de habilidades prácticas en niveles superiores (Apply+). Registro disciplinar auténtico y alta fidelidad con los contenidos fuente."
+        },
+        "technical_ergonomics": {
+          "score": 1.72,
+          "max": 2.0,
+          "feedback": "Sintaxis KaTeX: 0 errores críticos (delimitadores balanceados, llaves cerradas, cero $$$). Ergonomía: 7 observaciones de prosa en \\text{...} y 0 identificadores crudos."
+        }
+      },
+      "raw_subtotal": 19.67,
+      "penalties_applied": [],
+      "hard_penalties_total": 0,
+      "final_score": 19.67,
+      "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY"
+    },
+    "final_score": 19.67,
+    "quality_tier": "EXCELENTE (19.0 - 20.0 pts) — PLATINUM MASTERY",
+    "risk_clusters": {
+      "katex_issues": [
+        "Q-Hab01-104",
+        "Q-Hab01-105",
+        "Q-Hab01-106",
+        "Q-Hab01-107",
+        "Q-Hab01-108",
+        "Q-Hab01-109",
+        "Q-Hab01-110"
+      ],
+      "telltale_distractors": [],
+      "fstring_residues": [],
+      "scaffolding_flaws": [],
+      "template_residues": [],
+      "blind_replacements": [],
+      "cloned_distractors": [],
+      "archetype_monotony": [],
+      "poisoned_hints": [],
+      "boilerplate_hints": [],
+      "magic_multiplier_distractors": [],
+      "memorizable_answers": [],
+      "length_padded_options": [],
+      "cross_domain_prefixes": [],
+      "vacuous_quantifiers": [],
+      "katex_ergonomics": [
+        "Q-Hab01-104",
+        "Q-Hab01-105",
+        "Q-Hab01-106",
+        "Q-Hab01-107",
+        "Q-Hab01-108",
+        "Q-Hab01-109",
+        "Q-Hab01-110"
+      ]
+    },
+    "all_issues": [
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-104",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-104",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.59 - 0.07}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-104",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-104",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.59 - 0.07}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-105",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-105",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.62 - 0.09}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-105",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-105",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.62 - 0.09}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-106",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.64 - 0.1}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-106",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-106",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-106",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.64 - 0.1}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-107",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-107",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.53 - 0.05}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-107",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.53 - 0.05}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-107",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-108",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-108",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.7 - 0.11}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-108",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-108",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.7 - 0.11}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-109",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.68 - 0.06}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-109",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.68 - 0.06}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-109",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.68 - 0.06}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-109",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.68 - 0.06}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-110",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.56 - 0.06}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-110",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.56 - 0.06}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-110",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "snippet": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.56 - 0.06}$"
+      },
+      {
+        "linter": "katex_frontend_ergonomics_linter",
+        "dimension": "D5_katex",
+        "severity": "warning",
+        "item_id": "Q-Hab01-110",
+        "competency_id": "Hab-01",
+        "message": "Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'",
+        "snippet": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.56 - 0.06}$"
+      }
+    ],
+    "issues_by_item": {
+      "Q-Hab01-104": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ],
+      "Q-Hab01-105": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ],
+      "Q-Hab01-106": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ],
+      "Q-Hab01-107": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ],
+      "Q-Hab01-108": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ],
+      "Q-Hab01-109": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ],
+      "Q-Hab01-110": [
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+        "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+      ]
+    }
+  },
+  "competencies": [
+    {
+      "id": "H-01",
+      "name": "Condición de Estabilidad Macroeconómica del Gasto Agregado",
+      "category": "Fact",
+      "description": "La condición de estabilidad macroeconómica exige que la propensión marginal total a gastar sea estrictamente menor que la unidad, $c_1 + d_1 < 1$, garantizando un denominador positivo $1 - c_1 - d_1 > 0$ en el multiplicador keynesiano $\\alpha = \\frac{1}{1 - c_1 - d_1}$.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "C-01",
+      "name": "Pendiente y Desplazamientos de la Curva IS en Economía Cerrada",
+      "category": "Concept",
+      "description": "La curva IS representa las combinaciones de producto $Y$ y tasa de interés $i$ que equilibran el mercado de bienes ($Y = Z$). Su ecuación directa es $Y = \\alpha A - \\alpha d_2 i$, con pendiente negativa en el plano $(Y, i)$ dada por $\\frac{\\partial i}{\\partial Y} = -\\frac{1 - c_1 - d_1}{d_2} < 0$, desplazándose horizontalmente en $\\Delta Y = \\alpha \\Delta A$ ante variaciones del gasto autónomo.",
+      "prerequisites": [
+        "H-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-02",
+      "name": "Equilibrio del Mercado Monetario y Pendiente de la Curva LM",
+      "category": "Concept",
+      "description": "La curva LM refleja el equilibrio en el mercado monetario donde la oferta real de dinero iguala la demanda de saldos reales: $\\frac{M}{P} = f_1 Y - f_2 i$. En el plano $(Y, i)$, su pendiente es positiva, $\\frac{\\partial i}{\\partial Y} = \\frac{f_1}{f_2} > 0$, desplazándose a la derecha y hacia abajo ante incrementos de la oferta monetaria real en una magnitud $\\Delta Y = \\frac{1}{f_1}\\Delta(M/P)$ a tasa constante.",
+      "prerequisites": [
+        "H-01"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-03",
+      "name": "Casos Extremos de la Curva LM: Trampa de Liquidez y Caso Clásico",
+      "category": "Concept",
+      "description": "En la trampa de liquidez ($f_2 \\to \\infty$), la curva LM es horizontal con $\\frac{\\partial i}{\\partial Y} = 0$, otorgando máxima eficacia a la política fiscal ($\\Delta Y = \\alpha \\Delta A$) y esterilidad a la política monetaria. En el caso clásico ($f_2 \\to 0$), la LM es vertical con $\\frac{\\partial i}{\\partial Y} \\to \\infty$, anulando el impacto fiscal sobre el producto ($\\Delta Y = 0$) y maximizando la efectividad monetaria con crowding-out total.",
+      "prerequisites": [
+        "C-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-01",
+      "name": "Derivación Analítica del Equilibrio Simultáneo IS-LM y Multiplicadores de Política",
+      "category": "Skill",
+      "description": "Derivar la solución analítica del sistema $2 \\times 2$ igualando las curvas IS y LM para obtener el producto de equilibrio $Y^* = \\alpha_A A + \\alpha_M \\frac{M}{P}$, donde $\\alpha_A = \\frac{f_2}{(1 - c_1 - d_1)f_2 + d_2 f_1} = \\frac{1}{(1 - c_1 - d_1) + d_2(f_1 / f_2)}$ y $\\alpha_M = \\frac{d_2}{(1 - c_1 - d_1)f_2 + d_2 f_1}$.",
+      "prerequisites": [
+        "C-01",
+        "C-02"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-04",
+      "name": "Efecto Desplazamiento (Crowding-Out) y Acomodación Monetaria",
+      "category": "Concept",
+      "description": "El crowding-out mide la pérdida de producto inducida por el alza en la tasa de interés que desincentiva la inversión privada tras un choque fiscal: $\\text{Pérdida} = \\Delta Y_{\\text{sin } \\Delta i} - \\Delta Y^* = (\\alpha - \\alpha_A)\\Delta A > 0$. Para neutralizar este efecto y mantener $\\Delta i = 0$, el banco central debe aplicar una regla de acomodación monetaria inyectando liquidez por $\\Delta(M/P) = \\frac{f_1}{1 - c_1 - d_1}\\Delta A = f_1 \\Delta Y_{\\text{sin } \\Delta i}$.",
+      "prerequisites": [
+        "C-01",
+        "C-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-02",
+      "name": "Medición de Brechas Horizontales y Calibración Numérica BCRP",
+      "category": "Skill",
+      "description": "Calcular la brecha horizontal entre curvas IS ($\\Delta Y|_{i=\\text{cte}} = \\alpha \\Delta A$) y LM ($\\Delta Y|_{i=\\text{cte}} = \\frac{1}{f_1}\\Delta(M/P)$), y cuantificar los multiplicadores generales de equilibrio con parámetros empíricos del BCRP para la economía peruana ($c_1 \\approx 0.6226, d_1 \\approx 0.2461, d_2 \\approx 2.4821, f_1 \\approx 1.0, f_2 \\approx 0.0010$).",
+      "prerequisites": [
+        "Hab-01",
+        "C-04"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "H-02",
+      "name": "Tipo de Cambio Real Bilateral y Tasa de Variación Logarítmica",
+      "category": "Fact",
+      "description": "El tipo de cambio real $\\epsilon = \\frac{E \\cdot P^*}{P}$ mide el precio relativo de los bienes extranjeros expresados en términos de bienes nacionales; su tasa de variación porcentual se aproxima diferenciando logarítmicamente como $\\frac{\\Delta\\epsilon}{\\epsilon} \\approx \\frac{\\Delta E}{E} + \\pi^* - \\pi$, donde $\\pi$ y $\\pi^*$ son las inflaciones local y externa.",
+      "prerequisites": [],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-03",
+      "name": "Evaluación Numérica de Desviaciones de la Paridad del Poder Adquisitivo (PPA)",
+      "category": "Skill",
+      "description": "Calcular el tipo de cambio real bilateral entre bienes comerciables mediante la conversión monetaria al tipo de cambio nominal ($\\epsilon = \\frac{P_{\\text{extranjero en moneda local}}}{P_{\\text{nacional}}}$) y diagnosticar situaciones de sobrevaluación o subvaluación cambiaria (ejemplo Blanchard Mercedes-Benz vs. Jaguar).",
+      "prerequisites": [
+        "H-02"
+      ],
+      "question_count": 30
+    },
+    {
+      "id": "C-05",
+      "name": "Valor Agregado vs. Valor Bruto en Apertura Comercial: Caso Japonés",
+      "category": "Concept",
+      "description": "El índice de apertura comercial bruta $ACX = \\frac{X}{Y}$ puede superar el $100\\%$ sin violar identidades contables porque el PBI ($Y$) mide valor agregado interno mientras las exportaciones ($X$) registran el valor de venta bruto con insumos importados. En contraste, las exportaciones netas $XN = X - IM$ nunca exceden al PBI; economías grandes y diversificadas como Japón presentan $ACX$ bajo ($\\approx 15\\%$) al absorber internamente gran parte de su cadena productiva.",
+      "prerequisites": [
+        "H-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-06",
+      "name": "Causalidad Acumulativa de Myrdal y Economía de los Flujos Migratorios",
+      "category": "Concept",
+      "description": "La teoría de causalidad acumulativa de Myrdal explica que las disparidades salariales generan flujos migratorios impulsados por ilusión salarial que desatienden el costo de vida foráneo. En el país receptor, shocks migratorios no absorbidos durante fases contractivas causan 'artritis esclerósica laboral', deprimiendo salarios no calificados, impulsando la informalidad y presionando las finanzas públicas vía mayor gasto en orden y bienes públicos.",
+      "prerequisites": [
+        "C-05"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "H-03",
+      "name": "Paridad Descubierta de Tasas de Interés (UIP)",
+      "category": "Fact",
+      "description": "La condición exacta de arbitraje financiero internacional iguala los rendimientos esperados en moneda común: $1 + i_t = (1 + i^*_t)\\frac{E_t}{E^e_{t+1}}$, cuya aproximación lineal es $i_t \\approx i^*_t + \\frac{E^e_{t+1} - E_t}{E_t}$, implicando que un alza en la tasa de interés local provoca una apreciación nominal inmediata de la divisa nacional ($E_t \\downarrow$) dada una expectativa futura $E^e_{t+1}$ constante.",
+      "prerequisites": [
+        "H-02"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "C-07",
+      "name": "Curva IS en Economía Abierta y Doble Canal de Transmisión",
+      "category": "Concept",
+      "description": "En economía abierta bajo tipo de cambio flexible, la demanda agregada incorpora las exportaciones netas $NX(Y, Y^*, \\epsilon)$ sujetas a la condición Marshall-Lerner. La tasa de interés opera mediante un doble canal contractivo: el canal directo de inversión ($i \\uparrow \\Rightarrow I \\downarrow$) y el canal cambiario-comercial ($i \\uparrow \\Rightarrow E \\downarrow \\Rightarrow \\epsilon \\downarrow \\Rightarrow NX \\downarrow$), volviendo a la curva IS abierta sustancialmente más plana que en autarquía.",
+      "prerequisites": [
+        "C-01",
+        "H-02",
+        "H-03"
+      ],
+      "question_count": 20
+    },
+    {
+      "id": "Hab-04",
+      "name": "Estática Comparativa de Shocks Macroeconómicos en Economía Abierta con Tipo Flexible",
+      "category": "Skill",
+      "description": "Determinar la dirección de ajuste y equilibrio general de $Y$, $i$, $E$, $C$, $I$ y $NX$ en el modelo Mundell-Fleming con flotación limpia ante shocks fiscales ($\\Delta G > 0$), monetarios ($\\Delta M > 0$), externos ($\\Delta Y^* > 0, \\Delta i^* > 0$) y de expectativas cambiarias ($\\Delta E^e > 0$).",
+      "prerequisites": [
+        "C-07",
+        "Hab-01"
+      ],
+      "question_count": 30
+    }
+  ],
+  "stratified_samples": [
+    {
+      "id": "Q-H01-001",
+      "competency_id": "H-01",
+      "competency_name": "Condición de Estabilidad Macroeconómica del Gasto Agregado",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo la condición de estabilidad del gasto agregado, halle el multiplicador del gasto $\\alpha$ si $c_1=0.56$ y $d_1=0.11$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\alpha = 0.599$",
+          "is_correct": false,
+          "error_rationale": "Condición $c_1+d_1 \\le 0$ con $c_1=0.56$: ignora que las propensiones son positivas.",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\alpha = 1.818$",
+          "is_correct": false,
+          "error_rationale": "Invierte el signo del acelerador $+d_1$ con $d_1=0.11$, restando en lugar de sumar.",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\alpha = 2.273$",
+          "is_correct": false,
+          "error_rationale": "Omite la inversión inducida $d_1=0.11$, usando solo $c_1=0.56$ en el multiplicador.",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\alpha = 3.226$",
+          "is_correct": false,
+          "error_rationale": "Confunde $d_1=0.11$ con sensibilidad a la tasa de interés $d_2=0.13$.",
+          "distractor_id": "D-H01-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\alpha = 3.03$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\alpha = 2.103$",
+          "is_correct": false,
+          "error_rationale": "Aplica tasa impositiva $t=0.26$ inexistente con $c_1=0.56$ en impuestos fijos.",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\alpha = 1.493$",
+          "is_correct": false,
+          "error_rationale": "Suma $c_1+d_1 \\ge 1$ con $c_1=0.56$ y $d_1=0.11$ desestabiliza el gasto.",
+          "distractor_id": "D-H01-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "La estabilidad exige que la propensión marginal total a gastar sea menor que la unidad: $c_1 + d_1 < 1$.",
+        "El multiplicador keynesiano con inversión inducida es $\\alpha = \\frac{1}{1 - c_1 - d_1}$.",
+        "Si la suma de propensiones alcanza o supera 1, el proceso de ajuste multiplicador se vuelve divergente."
+      ],
+      "detailed_solution": "El multiplicador es $\\alpha = \\frac{1}{1 - 0.56 - 0.11} = 3.03$.",
+      "misconception_warning": "Si la suma supera la unidad, cualquier incremento autónomo generaría un proceso divergente o explosivo del producto."
+    },
+    {
+      "id": "Q-H01-002",
+      "competency_id": "H-01",
+      "competency_name": "Condición de Estabilidad Macroeconómica del Gasto Agregado",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo la condición de estabilidad del gasto agregado, determine el valor del multiplicador $\\alpha$ dados $c_1=0.65$ y $d_1=0.19$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\alpha = 0.543$",
+          "is_correct": false,
+          "error_rationale": "Condición $c_1+d_1 \\le 0$ con $c_1=0.65$: ignora que las propensiones son positivas.",
+          "distractor_id": "D-H01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\alpha = 2.857$",
+          "is_correct": false,
+          "error_rationale": "Omite la inversión inducida $d_1=0.19$, usando solo $c_1=0.65$ en el multiplicador.",
+          "distractor_id": "D-H01-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\alpha = 1.852$",
+          "is_correct": false,
+          "error_rationale": "Invierte el signo del acelerador $+d_1$ con $d_1=0.19$, restando en lugar de sumar.",
+          "distractor_id": "D-H01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\alpha = 1.19$",
+          "is_correct": false,
+          "error_rationale": "Suma $c_1+d_1 \\ge 1$ con $c_1=0.65$ y $d_1=0.19$ desestabiliza el gasto.",
+          "distractor_id": "D-H01-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\alpha = 6.25$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\alpha = 3.61$",
+          "is_correct": false,
+          "error_rationale": "Aplica tasa impositiva $t=0.18$ inexistente con $c_1=0.65$ en impuestos fijos.",
+          "distractor_id": "D-H01-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\alpha = 3.333$",
+          "is_correct": false,
+          "error_rationale": "Confunde $d_1=0.19$ con sensibilidad a la tasa de interés $d_2=0.05$.",
+          "distractor_id": "D-H01-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "La estabilidad exige que la propensión marginal total a gastar sea menor que la unidad: $c_1 + d_1 < 1$.",
+        "El multiplicador keynesiano con inversión inducida es $\\alpha = \\frac{1}{1 - c_1 - d_1}$.",
+        "Si la suma de propensiones alcanza o supera 1, el proceso de ajuste multiplicador se vuelve divergente."
+      ],
+      "detailed_solution": "El multiplicador es $\\alpha = \\frac{1}{1 - 0.65 - 0.19} = 6.25$.",
+      "misconception_warning": "Si la suma supera la unidad, cualquier incremento autónomo generaría un proceso divergente o explosivo del producto."
+    },
+    {
+      "id": "Q-C01-021",
+      "competency_id": "C-01",
+      "competency_name": "Pendiente y Desplazamientos de la Curva IS en Economía Cerrada",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En una economía cerrada con curva IS, calcule la pendiente $\\frac{\\partial i}{\\partial Y}$ con $c_1=0.45$, $d_1=0.1$ y $d_2=48$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -106.6667$",
+          "is_correct": false,
+          "error_rationale": "Inversión de ejes en la pendiente con $d_2=48$: confunde la derivada con $-\\alpha d_2$.",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.0135$",
+          "is_correct": false,
+          "error_rationale": "Confusión con gasto autónomo: con $c_1=0.45$ el efecto de impuestos fijos resta $c_1 \\Delta T$.",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.0115$",
+          "is_correct": false,
+          "error_rationale": "Aplanamiento erróneo: con $d_2=48$ bajo, la curva IS se vuelve vertical y no horizontal.",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.0187$",
+          "is_correct": false,
+          "error_rationale": "Desplazamiento horizontal erróneo con $d_2=48$: no considera el multiplicador keynesiano.",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 0.0094$",
+          "is_correct": false,
+          "error_rationale": "Invierte el signo de la pendiente con $d_2=48$: la curva IS tiene pendiente negativa.",
+          "distractor_id": "D-C01-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.0208$",
+          "is_correct": false,
+          "error_rationale": "Efecto de la propensión erróneo: mayor $c_1=0.45$ eleva el multiplicador y aplana la IS.",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.0094$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "La curva IS se deriva de la condición de equilibrio $Y = Z$ en el mercado de bienes de economía cerrada.",
+        "La pendiente en el plano $(Y, i)$ es negativa e igual a $\\frac{\\partial i}{\\partial Y} = -\\frac{1 - c_1 - d_1}{d_2}$.",
+        "Un aumento en el gasto autónomo desplaza la curva IS horizontalmente en $\\Delta Y = \\alpha \\Delta A$."
+      ],
+      "detailed_solution": "La pendiente es $\\frac{\\partial i}{\\partial Y} = -\\frac{1 - 0.45 - 0.1}{48} = -0.0094$.",
+      "misconception_warning": "Un alza en la tasa de interés encarece el financiamiento y deprime la inversión, requiriendo menor producto para vaciar el mercado de bienes."
+    },
+    {
+      "id": "Q-C01-022",
+      "competency_id": "C-01",
+      "competency_name": "Pendiente y Desplazamientos de la Curva IS en Economía Cerrada",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En una economía cerrada con curva IS, halle la pendiente de la curva IS en el plano $(Y, i)$ si $c_1=0.53$, $d_1=0.1$ y $d_2=35$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.0134$",
+          "is_correct": false,
+          "error_rationale": "Aplanamiento erróneo: con $d_2=35$ bajo, la curva IS se vuelve vertical y no horizontal.",
+          "distractor_id": "D-C01-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.0106$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.0163$",
+          "is_correct": false,
+          "error_rationale": "Confusión con gasto autónomo: con $c_1=0.53$ el efecto de impuestos fijos resta $c_1 \\Delta T$.",
+          "distractor_id": "D-C01-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.0257$",
+          "is_correct": false,
+          "error_rationale": "Desplazamiento horizontal erróneo con $d_2=35$: no considera el multiplicador keynesiano.",
+          "distractor_id": "D-C01-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.0286$",
+          "is_correct": false,
+          "error_rationale": "Efecto de la propensión erróneo: mayor $c_1=0.53$ eleva el multiplicador y aplana la IS.",
+          "distractor_id": "D-C01-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -94.5946$",
+          "is_correct": false,
+          "error_rationale": "Inversión de ejes en la pendiente con $d_2=35$: confunde la derivada con $-\\alpha d_2$.",
+          "distractor_id": "D-C01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 0.0106$",
+          "is_correct": false,
+          "error_rationale": "Invierte el signo de la pendiente con $d_2=35$: la curva IS tiene pendiente negativa.",
+          "distractor_id": "D-C01-01"
+        }
+      ],
+      "correct_answer": "B",
+      "hints_count": 3,
+      "hints": [
+        "La curva IS se deriva de la condición de equilibrio $Y = Z$ en el mercado de bienes de economía cerrada.",
+        "La pendiente en el plano $(Y, i)$ es negativa e igual a $\\frac{\\partial i}{\\partial Y} = -\\frac{1 - c_1 - d_1}{d_2}$.",
+        "Un aumento en el gasto autónomo desplaza la curva IS horizontalmente en $\\Delta Y = \\alpha \\Delta A$."
+      ],
+      "detailed_solution": "La pendiente es $\\frac{\\partial i}{\\partial Y} = -\\frac{1 - 0.53 - 0.1}{35} = -0.0106$.",
+      "misconception_warning": "Un alza en la tasa de interés encarece el financiamiento y deprime la inversión, requiriendo menor producto para vaciar el mercado de bienes."
+    },
+    {
+      "id": "Q-C02-041",
+      "competency_id": "C-02",
+      "competency_name": "Equilibrio del Mercado Monetario y Pendiente de la Curva LM",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando el equilibrio monetario, calcule la pendiente de la curva LM si $f_1=24$ y $f_2=285$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 0.0777$",
+          "is_correct": false,
+          "error_rationale": "Confusión de parámetros para $f_1=24$, $f_2=285$: $f_1$ acompaña al producto y $f_2$ a la tasa de interés.",
+          "distractor_id": "D-C02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.0842$",
+          "is_correct": false,
+          "error_rationale": "Pendiente con signo incorrecto para $f_1=24$, $f_2=285$: la curva LM tiene pendiente positiva en el plano $(Y, i)$.",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 0.9158$",
+          "is_correct": false,
+          "error_rationale": "Error en choque monetario con $f_1=24$, $f_2=285$: el incremento de saldos desplaza la LM hacia la derecha.",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 1.0842$",
+          "is_correct": false,
+          "error_rationale": "Error de escala con $f_1=24$, $f_2=285$: el aumento de precios reduce saldos reales contrayendo la LM.",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 0.0071$",
+          "is_correct": false,
+          "error_rationale": "Sensibilidad errónea ante $f_2=285 \\to 0$: cuando la demanda no responde a la tasa, la LM tiende a ser vertical.",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 11.875$",
+          "is_correct": false,
+          "error_rationale": "Cociente invertido para $f_1=24$, $f_2=285$: la pendiente respecto a $Y$ es $\\frac{f_1}{f_2}$ y no $\\frac{f_2}{f_1}$.",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 0.0842$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "En el plano $(Y, i)$, la curva LM tiene pendiente positiva $\\frac{f_1}{f_2}$.",
+        "El parámetro $f_1$ mide la sensibilidad de demanda de dinero a la renta real.",
+        "El parámetro $f_2$ mide la sensibilidad de demanda monetaria a la tasa de interés."
+      ],
+      "detailed_solution": "$\\frac{\\partial i}{\\partial Y} = \\frac{f_1}{f_2} = \\frac{24}{285} = 0.0842$",
+      "misconception_warning": "Un mayor producto eleva la demanda de dinero por transacción; ante oferta fija, la tasa de interés debe subir para reequilibrar el mercado."
+    },
+    {
+      "id": "Q-C02-042",
+      "competency_id": "C-02",
+      "competency_name": "Equilibrio del Mercado Monetario y Pendiente de la Curva LM",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando el equilibrio monetario, halle la pendiente $\\frac{\\partial i}{\\partial Y}$ con $f_1=45$ y $f_2=367$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 0.015$",
+          "is_correct": false,
+          "error_rationale": "Sensibilidad errónea ante $f_2=367 \\to 0$: cuando la demanda no responde a la tasa, la LM tiende a ser vertical.",
+          "distractor_id": "D-C02-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 8.1556$",
+          "is_correct": false,
+          "error_rationale": "Cociente invertido para $f_1=45$, $f_2=367$: la pendiente respecto a $Y$ es $\\frac{f_1}{f_2}$ y no $\\frac{f_2}{f_1}$.",
+          "distractor_id": "D-C02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 1.1226$",
+          "is_correct": false,
+          "error_rationale": "Error de escala con $f_1=45$, $f_2=367$: el aumento de precios reduce saldos reales contrayendo la LM.",
+          "distractor_id": "D-C02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\frac{\\partial i}{\\partial Y} = -0.1226$",
+          "is_correct": false,
+          "error_rationale": "Pendiente con signo incorrecto para $f_1=45$, $f_2=367$: la curva LM tiene pendiente positiva en el plano $(Y, i)$.",
+          "distractor_id": "D-C02-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 0.1226$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 0.8774$",
+          "is_correct": false,
+          "error_rationale": "Error en choque monetario con $f_1=45$, $f_2=367$: el incremento de saldos desplaza la LM hacia la derecha.",
+          "distractor_id": "D-C02-04"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\frac{\\partial i}{\\partial Y} = 0.1092$",
+          "is_correct": false,
+          "error_rationale": "Confusión de parámetros para $f_1=45$, $f_2=367$: $f_1$ acompaña al producto y $f_2$ a la tasa de interés.",
+          "distractor_id": "D-C02-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "En el plano $(Y, i)$, la curva LM tiene pendiente positiva $\\frac{f_1}{f_2}$.",
+        "El parámetro $f_1$ mide la sensibilidad de demanda de dinero a la renta real.",
+        "El parámetro $f_2$ mide la sensibilidad de demanda monetaria a la tasa de interés."
+      ],
+      "detailed_solution": "$\\frac{\\partial i}{\\partial Y} = \\frac{f_1}{f_2} = \\frac{45}{367} = 0.1226$",
+      "misconception_warning": "Un mayor producto eleva la demanda de dinero por transacción; ante oferta fija, la tasa de interés debe subir para reequilibrar el mercado."
+    },
+    {
+      "id": "Q-C03-061",
+      "competency_id": "C-03",
+      "competency_name": "Casos Extremos de la Curva LM: Trampa de Liquidez y Caso Clásico",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "Bajo los regímenes extremos de la LM, determine la respuesta del producto $\\Delta Y$ en trampa de liquidez cuando $\\Delta G = 83$ y $\\alpha=1.89$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\Delta Y = 156.9$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\Delta Y = 73.9$",
+          "is_correct": false,
+          "error_rationale": "Error en tasa para $\\alpha=1.89$, $f_2=500$: en la trampa de liquidez la tasa queda fija en su nivel mínimo.",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\Delta Y = 43.9$",
+          "is_correct": false,
+          "error_rationale": "Ineficacia monetaria para $\\alpha=1.89$, $f_2=500$: en la trampa de liquidez expandir dinero no reactiva el producto.",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\Delta Y = 83.0$",
+          "is_correct": false,
+          "error_rationale": "Eficacia errónea para $\\alpha=1.89$, $f_2=500$: en el caso clásico la política fiscal sufre crowding-out total.",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\Delta Y = 114.1$",
+          "is_correct": false,
+          "error_rationale": "Multiplicador incorrecto para $\\alpha=1.89$, $f_2=500$: sin desplazamiento de tasa el multiplicador es idéntico a $\\alpha$.",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\Delta Y = 84.9$",
+          "is_correct": false,
+          "error_rationale": "Parámetro erróneo para $\\alpha=1.89$, $f_2=500$: el régimen cuantitativista clásico se define cuando $f_2 \\to 0$.",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\Delta Y = 0.0$",
+          "is_correct": false,
+          "error_rationale": "Inversión de régimen para $\\alpha=1.89$, $f_2=500$: en la trampa de liquidez la curva LM es horizontal, no vertical.",
+          "distractor_id": "D-C03-01"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "En la trampa de liquidez la curva LM es horizontal y la tasa permanece constante.",
+        "En el caso clásico la curva LM es vertical y la política fiscal genera crowding-out total.",
+        "La efectividad de la política monetaria es nula en la trampa y máxima en el caso clásico."
+      ],
+      "detailed_solution": "$\\Delta Y = \\alpha \\cdot \\Delta G = 1.89 \\cdot 83 = 156.9$",
+      "misconception_warning": "En la trampa de liquidez el público retiene cualquier incremento monetario, dejando la tasa inmóvil y la curva totalmente plana."
+    },
+    {
+      "id": "Q-C03-062",
+      "competency_id": "C-03",
+      "competency_name": "Casos Extremos de la Curva LM: Trampa de Liquidez y Caso Clásico",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Understand",
+      "stem": "En el marco analítico IS-LM, calcule la variación del producto $\\Delta Y$ en trampa de liquidez ante un choque $\\Delta G = 48$ con $\\alpha=1.78$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\Delta Y = 64.0$",
+          "is_correct": false,
+          "error_rationale": "Multiplicador incorrecto para $\\alpha=1.78$, $f_2=500$: sin desplazamiento de tasa el multiplicador es idéntico a $\\alpha$.",
+          "distractor_id": "D-C03-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\Delta Y = 27.0$",
+          "is_correct": false,
+          "error_rationale": "Ineficacia monetaria para $\\alpha=1.78$, $f_2=500$: en la trampa de liquidez expandir dinero no reactiva el producto.",
+          "distractor_id": "D-C03-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\Delta Y = 48.0$",
+          "is_correct": false,
+          "error_rationale": "Eficacia errónea para $\\alpha=1.78$, $f_2=500$: en el caso clásico la política fiscal sufre crowding-out total.",
+          "distractor_id": "D-C03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\Delta Y = 37.4$",
+          "is_correct": false,
+          "error_rationale": "Error en tasa para $\\alpha=1.78$, $f_2=500$: en la trampa de liquidez la tasa queda fija en su nivel mínimo.",
+          "distractor_id": "D-C03-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\Delta Y = 0.0$",
+          "is_correct": false,
+          "error_rationale": "Inversión de régimen para $\\alpha=1.78$, $f_2=500$: en la trampa de liquidez la curva LM es horizontal, no vertical.",
+          "distractor_id": "D-C03-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\Delta Y = 49.8$",
+          "is_correct": false,
+          "error_rationale": "Parámetro erróneo para $\\alpha=1.78$, $f_2=500$: el régimen cuantitativista clásico se define cuando $f_2 \\to 0$.",
+          "distractor_id": "D-C03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\Delta Y = 85.4$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "En la trampa de liquidez la curva LM es horizontal y la tasa permanece constante.",
+        "En el caso clásico la curva LM es vertical y la política fiscal genera crowding-out total.",
+        "La efectividad de la política monetaria es nula en la trampa y máxima en el caso clásico."
+      ],
+      "detailed_solution": "$\\Delta Y = \\alpha \\cdot \\Delta G = 1.78 \\cdot 48 = 85.4$",
+      "misconception_warning": "En la trampa de liquidez el público retiene cualquier incremento monetario, dejando la tasa inmóvil y la curva totalmente plana."
+    },
+    {
+      "id": "Q-Hab01-081",
+      "competency_id": "Hab-01",
+      "competency_name": "Derivación Analítica del Equilibrio Simultáneo IS-LM y Multiplicadores de Política",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considere el equilibrio simultáneo IS-LM, obtenga el valor de equilibrio $Y^*$ con gasto $A=3580$ y saldos $M/P=530$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$Y^* = 14916.7$",
+          "is_correct": false,
+          "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.64$ y $d_1=0.12$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$Y^* = 1416.3$",
+          "is_correct": false,
+          "error_rationale": "Omisión de la inversión inducida $d_1=0.12$: el acelerador incrementa el multiplicador y debe restarse en las filtraciones netas.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$Y^* = 530.5$",
+          "is_correct": false,
+          "error_rationale": "Error algebraico en denominador con $f_1=2$ y $f_2=6$: los coeficientes cruzados agrupan $f_2$ con gasto autónomo y $d_2$ con dinero.",
+          "distractor_id": "D-Hab01-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$Y^* = 1717.9$",
+          "is_correct": false,
+          "error_rationale": "Confusión de saldos reales con $P=2$: el equilibrio exige saldos reales $M/P=530$ y no el acervo nominal de dinero $M=1060$.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$Y^* = 1474.8$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$Y^* = 988.5$",
+          "is_correct": false,
+          "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=2$, aumentando la tasa y contrayendo inversión.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$Y^* = 1824.5$",
+          "is_correct": false,
+          "error_rationale": "Inversión de multiplicadores con $d_2=8$ y $f_2=6$: el impacto fiscal depende de $f_2$ y el monetario del canal de inversión $d_2$.",
+          "distractor_id": "D-Hab01-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 4,
+      "hints": [
+        "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+        "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+        "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+        "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+      ],
+      "detailed_solution": "Sustituyendo $i^*$ en la IS se obtiene $Y^* = \\frac{f_2 A + d_2(M/P)}{(1 - c_1 - d_1)f_2 + d_2 f_1} = 1474.8$.",
+      "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable."
+    },
+    {
+      "id": "Q-Hab01-082",
+      "competency_id": "Hab-01",
+      "competency_name": "Derivación Analítica del Equilibrio Simultáneo IS-LM y Multiplicadores de Política",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el modelo IS-LM cerrado, calcule el producto de equilibrio $Y^*$ con $A=4500$, $M=3000$, $P=5$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$Y^* = 1478.9$",
+          "is_correct": false,
+          "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=5$, aumentando la tasa y contrayendo inversión.",
+          "distractor_id": "D-Hab01-06"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$Y^* = 2112.7$",
+          "is_correct": false,
+          "error_rationale": "Confusión de saldos reales con $P=5$: el equilibrio exige saldos reales $M/P=600$ y no el acervo nominal de dinero $M=3000$.",
+          "distractor_id": "D-Hab01-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$Y^* = 13235.3$",
+          "is_correct": false,
+          "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.61$ y $d_1=0.05$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+          "distractor_id": "D-Hab01-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$Y^* = 1003.5$",
+          "is_correct": false,
+          "error_rationale": "Inversión de multiplicadores con $d_2=4$ y $f_2=8$: el impacto fiscal depende de $f_2$ y el monetario del canal de inversión $d_2$.",
+          "distractor_id": "D-Hab01-03"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$Y^* = 1690.1$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$Y^* = 1660.9$",
+          "is_correct": false,
+          "error_rationale": "Omisión de la inversión inducida $d_1=0.05$: el acelerador incrementa el multiplicador y debe restarse en las filtraciones netas.",
+          "distractor_id": "D-Hab01-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$Y^* = 1139.5$",
+          "is_correct": false,
+          "error_rationale": "Error algebraico en denominador con $f_1=5$ y $f_2=8$: los coeficientes cruzados agrupan $f_2$ con gasto autónomo y $d_2$ con dinero.",
+          "distractor_id": "D-Hab01-02"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 4,
+      "hints": [
+        "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+        "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+        "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+        "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+      ],
+      "detailed_solution": "Sustituyendo $i^*$ en la IS se obtiene $Y^* = \\frac{f_2 A + d_2(M/P)}{(1 - c_1 - d_1)f_2 + d_2 f_1} = 1690.1$.",
+      "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable."
+    },
+    {
+      "id": "Q-C04-111",
+      "competency_id": "C-04",
+      "competency_name": "Efecto Desplazamiento (Crowding-Out) y Acomodación Monetaria",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el modelo IS-LM con acelerador de inversión, halle el incremento en la oferta real $\\Delta(M/P)$ para neutralizar el crowding-out con $\\Delta A = 521$, $c_1=0.59$, $d_1=0.13$ y $f_1=0.22$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\Delta(M/P) = 279.56$",
+          "is_correct": false,
+          "error_rationale": "Omite acelerador 0.13 en denominador con $c_1=0.59$.",
+          "distractor_id": "D-C04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\Delta(M/P) = 1860.71$",
+          "is_correct": false,
+          "error_rationale": "Omite demanda dinero $f_1=0.22$ calculando solo $\\Delta Y$.",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\Delta(M/P) = 8457.79$",
+          "is_correct": false,
+          "error_rationale": "Invierte sensibilidad monetaria $f_1=0.22$ en el cociente.",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\Delta(M/P) = 409.36$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\Delta(M/P) = 32.09$",
+          "is_correct": false,
+          "error_rationale": "Multiplica por 0.28 en vez de dividir con $\\Delta A=521$.",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\Delta(M/P) = 66.64$",
+          "is_correct": false,
+          "error_rationale": "Invierte signo del acelerador 0.13 en el multiplicador.",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\Delta(M/P) = 114.62$",
+          "is_correct": false,
+          "error_rationale": "Omite multiplicador $\\alpha$ con gasto $\\Delta A=521$.",
+          "distractor_id": "D-C04-05"
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "El efecto desplazamiento mide la pérdida de producto por alza en la tasa de interés.",
+        "Para mantener la tasa constante, la oferta monetaria debe igualar la nueva demanda.",
+        "La fórmula de acomodación es Delta(M/P) = f1 * Delta A / (1 - c1 - d1) con multiplicador."
+      ],
+      "detailed_solution": "$\\Delta(M/P) = \\frac{f_1}{1 - c_1 - d_1}\\Delta A = \\frac{0.22}{0.28} \\cdot 521 = 409.36$",
+      "misconception_warning": "La acomodación debe expandir la oferta monetaria en exactamente la nueva demanda transaccional generada por la expansión plena del producto."
+    },
+    {
+      "id": "Q-C04-112",
+      "competency_id": "C-04",
+      "competency_name": "Efecto Desplazamiento (Crowding-Out) y Acomodación Monetaria",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo una política fiscal expansiva con retroalimentación monetaria, calcule la inyección monetaria $\\Delta(M/P)$ requerida para acomodar un choque fiscal $\\Delta A = 401$ con $c_1=0.58$, $d_1=0.1$ y $f_1=0.34$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\Delta(M/P) = 43.63$",
+          "is_correct": false,
+          "error_rationale": "Multiplica por 0.32 en vez de dividir con $\\Delta A=401$.",
+          "distractor_id": "D-C04-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\Delta(M/P) = 136.34$",
+          "is_correct": false,
+          "error_rationale": "Omite multiplicador $\\alpha$ con gasto $\\Delta A=401$.",
+          "distractor_id": "D-C04-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\Delta(M/P) = 3685.66$",
+          "is_correct": false,
+          "error_rationale": "Invierte sensibilidad monetaria $f_1=0.34$ en el cociente.",
+          "distractor_id": "D-C04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\Delta(M/P) = 1253.12$",
+          "is_correct": false,
+          "error_rationale": "Omite demanda dinero $f_1=0.34$ calculando solo $\\Delta Y$.",
+          "distractor_id": "D-C04-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\Delta(M/P) = 426.06$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\Delta(M/P) = 81.15$",
+          "is_correct": false,
+          "error_rationale": "Invierte signo del acelerador 0.1 en el multiplicador.",
+          "distractor_id": "D-C04-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\Delta(M/P) = 324.62$",
+          "is_correct": false,
+          "error_rationale": "Omite acelerador 0.1 en denominador con $c_1=0.58$.",
+          "distractor_id": "D-C04-03"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "El efecto desplazamiento mide la pérdida de producto por alza en la tasa de interés.",
+        "Para mantener la tasa constante, la oferta monetaria debe igualar la nueva demanda.",
+        "La fórmula de acomodación es Delta(M/P) = f1 * Delta A / (1 - c1 - d1) con multiplicador."
+      ],
+      "detailed_solution": "$\\Delta(M/P) = \\frac{f_1}{1 - c_1 - d_1}\\Delta A = \\frac{0.34}{0.32} \\cdot 401 = 426.06$",
+      "misconception_warning": "La acomodación debe expandir la oferta monetaria en exactamente la nueva demanda transaccional generada por la expansión plena del producto."
+    },
+    {
+      "id": "Q-Hab02-131",
+      "competency_id": "Hab-02",
+      "competency_name": "Medición de Brechas Horizontales y Calibración Numérica BCRP",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo la calibración estructural del BCRP, calcule el multiplicador del gasto autónomo $\\alpha$ si $c_1=0.639$ y $d_1=0.21$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\alpha = 0.38$",
+          "is_correct": false,
+          "error_rationale": "Confundir la escala $f_2=1$ con $c_1=0.639$ altera la retroalimentación monetaria en tasa.",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\alpha = 0.15$",
+          "is_correct": false,
+          "error_rationale": "Invertir la fórmula calcula la pendiente $1-0.639-0.21$ en vez de $\\alpha$.",
+          "distractor_id": "D-Hab02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\alpha = 6.62$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\alpha = 4.23$",
+          "is_correct": false,
+          "error_rationale": "Ponderar numerador por propensión $c_1=0.639$ confunde gasto con transferencias.",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\alpha = 1.72$",
+          "is_correct": false,
+          "error_rationale": "Tomar razón de filtraciones $(1-0.639)/0.21$ confunde pendientes relativas.",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\alpha = 2.77$",
+          "is_correct": false,
+          "error_rationale": "Omitir el acelerador $d_1=0.21$ subestima el multiplicador a $1/(1-0.639)$.",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\alpha = 1.27$",
+          "is_correct": false,
+          "error_rationale": "Omitir propensión $c_1=0.639$ con $d_1=0.21$ ignora el consumo inducido en IS.",
+          "distractor_id": "D-Hab02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "El multiplicador simple de la curva IS depende de $c_1$ y $d_1$: $\\alpha = \\frac{1}{1 - c_1 - d_1}$.",
+        "La brecha horizontal es el desplazamiento a tasa fija: $\\Delta Y|_{\\Delta i=0} = \\alpha \\Delta A$.",
+        "En equilibrio general la retroalimentación monetaria comprime el multiplicador: $\\alpha_A < \\alpha$."
+      ],
+      "detailed_solution": "$\\alpha = \\frac{1}{1 - 0.639 - 0.21} = 6.62$",
+      "misconception_warning": "Omitir el coeficiente acelerador subestima dramáticamente la expansión potencial del producto a tasa fija."
+    },
+    {
+      "id": "Q-Hab02-132",
+      "competency_id": "Hab-02",
+      "competency_name": "Medición de Brechas Horizontales y Calibración Numérica BCRP",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo la calibración estructural del BCRP, determine el multiplicador keynesiano $\\alpha$ de la IS cuando $c_1=0.611$ y $d_1=0.184$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\alpha = 0.37$",
+          "is_correct": false,
+          "error_rationale": "Confundir la escala $f_2=1$ con $c_1=0.611$ altera la retroalimentación monetaria en tasa.",
+          "distractor_id": "D-Hab02-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\alpha = 2.57$",
+          "is_correct": false,
+          "error_rationale": "Omitir el acelerador $d_1=0.184$ subestima el multiplicador a $1/(1-0.611)$.",
+          "distractor_id": "D-Hab02-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\alpha = 2.11$",
+          "is_correct": false,
+          "error_rationale": "Tomar razón de filtraciones $(1-0.611)/0.184$ confunde pendientes relativas.",
+          "distractor_id": "D-Hab02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\alpha = 1.23$",
+          "is_correct": false,
+          "error_rationale": "Omitir propensión $c_1=0.611$ con $d_1=0.184$ ignora el consumo inducido en IS.",
+          "distractor_id": "D-Hab02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\alpha = 2.98$",
+          "is_correct": false,
+          "error_rationale": "Ponderar numerador por propensión $c_1=0.611$ confunde gasto con transferencias.",
+          "distractor_id": "D-Hab02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\alpha = 4.88$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\alpha = 0.2$",
+          "is_correct": false,
+          "error_rationale": "Invertir la fórmula calcula la pendiente $1-0.611-0.184$ en vez de $\\alpha$.",
+          "distractor_id": "D-Hab02-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "El multiplicador simple de la curva IS depende de $c_1$ y $d_1$: $\\alpha = \\frac{1}{1 - c_1 - d_1}$.",
+        "La brecha horizontal es el desplazamiento a tasa fija: $\\Delta Y|_{\\Delta i=0} = \\alpha \\Delta A$.",
+        "En equilibrio general la retroalimentación monetaria comprime el multiplicador: $\\alpha_A < \\alpha$."
+      ],
+      "detailed_solution": "$\\alpha = \\frac{1}{1 - 0.611 - 0.184} = 4.88$",
+      "misconception_warning": "Omitir el coeficiente acelerador subestima dramáticamente la expansión potencial del producto a tasa fija."
+    },
+    {
+      "id": "Q-H02-161",
+      "competency_id": "H-02",
+      "competency_name": "Tipo de Cambio Real Bilateral y Tasa de Variación Logarítmica",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En una economía abierta con comercio bilateral, determine el precio relativo $\\epsilon$ de la canasta extranjera con $E = 3.26$, $P^* = 138$ y $P = 109$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\epsilon = 2.575$",
+          "is_correct": false,
+          "error_rationale": "Invierte precios $P^*=138$ y $P=109$ en el cociente.",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\epsilon = 3.26$",
+          "is_correct": false,
+          "error_rationale": "Confunde tipo nominal $E=3.26$ con tipo de cambio real.",
+          "distractor_id": "D-H02-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\epsilon = 0.79$",
+          "is_correct": false,
+          "error_rationale": "Omite tipo nominal $E=3.26$ calculando solo ratio inverso de precios.",
+          "distractor_id": "D-H02-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\epsilon = 1.296$",
+          "is_correct": false,
+          "error_rationale": "Suma nivel de precios externos a $E=3.26$ en lugar de multiplicar.",
+          "distractor_id": "D-H02-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\epsilon = 0.388$",
+          "is_correct": false,
+          "error_rationale": "Aplica cotización invertida $1/E$ con $E=3.26$ por unidad.",
+          "distractor_id": "D-H02-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\epsilon = 0.242$",
+          "is_correct": false,
+          "error_rationale": "Invierte la fórmula total con $E=3.26$ y precios externos.",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\epsilon = 4.127$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "El tipo de cambio real epsilon mide el precio relativo de bienes foráneos en moneda local.",
+        "La variación logarítmica linealiza el cociente transformándolo en suma y resta de tasas.",
+        "La fórmula aproximada es Delta epsilon / epsilon = Delta E / E + pi_ext - pi_loc."
+      ],
+      "detailed_solution": "$\\epsilon = \\frac{E \\cdot P^*}{P} = \\frac{3.26 \\cdot 138}{109} = 4.127$",
+      "misconception_warning": "El producto del tipo nominal por el nivel de precios foráneo convierte los precios externos a moneda local, dividiéndose entre los nacionales."
+    },
+    {
+      "id": "Q-H02-162",
+      "competency_id": "H-02",
+      "competency_name": "Tipo de Cambio Real Bilateral y Tasa de Variación Logarítmica",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Para el análisis de competitividad y precios relativos, calcule el tipo de cambio real bilateral $\\epsilon$ si $E = 4.12$, $P^* = 123$ y $P = 103$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\epsilon = 4.12$",
+          "is_correct": false,
+          "error_rationale": "Confunde tipo nominal $E=4.12$ con tipo de cambio real.",
+          "distractor_id": "D-H02-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\epsilon = 0.203$",
+          "is_correct": false,
+          "error_rationale": "Invierte la fórmula total con $E=4.12$ y precios externos.",
+          "distractor_id": "D-H02-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\epsilon = 4.92$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\epsilon = 0.29$",
+          "is_correct": false,
+          "error_rationale": "Aplica cotización invertida $1/E$ con $E=4.12$ por unidad.",
+          "distractor_id": "D-H02-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\epsilon = 0.837$",
+          "is_correct": false,
+          "error_rationale": "Omite tipo nominal $E=4.12$ calculando solo ratio inverso de precios.",
+          "distractor_id": "D-H02-06"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\epsilon = 3.45$",
+          "is_correct": false,
+          "error_rationale": "Invierte precios $P^*=123$ y $P=103$ en el cociente.",
+          "distractor_id": "D-H02-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\epsilon = 1.234$",
+          "is_correct": false,
+          "error_rationale": "Suma nivel de precios externos a $E=4.12$ en lugar de multiplicar.",
+          "distractor_id": "D-H02-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "El tipo de cambio real epsilon mide el precio relativo de bienes foráneos en moneda local.",
+        "La variación logarítmica linealiza el cociente transformándolo en suma y resta de tasas.",
+        "La fórmula aproximada es Delta epsilon / epsilon = Delta E / E + pi_ext - pi_loc."
+      ],
+      "detailed_solution": "$\\epsilon = \\frac{E \\cdot P^*}{P} = \\frac{4.12 \\cdot 123}{103} = 4.92$",
+      "misconception_warning": "El producto del tipo nominal por el nivel de precios foráneo convierte los precios externos a moneda local, dividiéndose entre los nacionales."
+    },
+    {
+      "id": "Q-Hab03-181",
+      "competency_id": "Hab-03",
+      "competency_name": "Evaluación Numérica de Desviaciones de la Paridad del Poder Adquisitivo (PPA)",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el mercado cambiario bilateral, calcule el ratio real $\\epsilon$ entre el bien foráneo ($P^*=60000$ €) y local ($P=26000$ £) con $E=1.14$ €/£:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\epsilon = 0.38$",
+          "is_correct": false,
+          "error_rationale": "Omite fricciones y divide precio local $P=26000$ entre el producto foráneo $P^* \\cdot E$.",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\epsilon = 0.88$",
+          "is_correct": false,
+          "error_rationale": "Confunde el tipo de cambio real bilateral con el tipo nominal inverso $E' = 1/1.14$.",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\epsilon = 0.49$",
+          "is_correct": false,
+          "error_rationale": "Invierte la paridad relativa colocando $P=26000$ en el numerador sobre $P^*_L$.",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\epsilon = 2.63$",
+          "is_correct": false,
+          "error_rationale": "Multiplica $P^*=60000$ por $E=1.14$ en lugar de dividir para convertir divisa.",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\epsilon = 0.43$",
+          "is_correct": false,
+          "error_rationale": "Confunde con ratio nominal directo $P=26000 / P^*=60000$ sin ajustar monedas.",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\epsilon = 2.02$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\epsilon = 2.31$",
+          "is_correct": false,
+          "error_rationale": "Calcula el cociente directo $P^*=60000 / P=26000$ omitiendo el tipo de cambio $E=1.14$.",
+          "distractor_id": "D-Hab03-03"
+        }
+      ],
+      "correct_answer": "F",
+      "hints_count": 3,
+      "hints": [
+        "El tipo de cambio real bilateral se define como $\\epsilon = \\frac{P^* / E}{P} = \\frac{P^*}{E \\cdot P}$.",
+        "Para homogeneizar monedas, divida el precio foráneo entre el tipo de cambio nominal $E$.",
+        "Un valor $\\epsilon > 1$ señala que el bien extranjero es relativamente más caro que el nacional."
+      ],
+      "detailed_solution": "$\\epsilon = \\frac{P^*}{E \\cdot P} = \\frac{60000}{1.14 \\cdot 26000} = 2.02$",
+      "misconception_warning": "Si la libra cotiza a $1.15 €$, un monto en euros debe dividirse entre el tipo de cambio para expresarse en libras esterlinas."
+    },
+    {
+      "id": "Q-Hab03-182",
+      "competency_id": "Hab-03",
+      "competency_name": "Evaluación Numérica de Desviaciones de la Paridad del Poder Adquisitivo (PPA)",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo paridad del poder adquisitivo, con $P^*=50000$ €, $P=35000$ £ y $E=1.29$ €/£, calcule el tipo de cambio real $\\epsilon$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\epsilon = 1.43$",
+          "is_correct": false,
+          "error_rationale": "Calcula el cociente directo $P^*=50000 / P=35000$ omitiendo el tipo de cambio $E=1.29$.",
+          "distractor_id": "D-Hab03-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\epsilon = 0.9$",
+          "is_correct": false,
+          "error_rationale": "Invierte la paridad relativa colocando $P=35000$ en el numerador sobre $P^*_L$.",
+          "distractor_id": "D-Hab03-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\epsilon = 1.84$",
+          "is_correct": false,
+          "error_rationale": "Multiplica $P^*=50000$ por $E=1.29$ en lugar de dividir para convertir divisa.",
+          "distractor_id": "D-Hab03-01"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\epsilon = 0.78$",
+          "is_correct": false,
+          "error_rationale": "Confunde el tipo de cambio real bilateral con el tipo nominal inverso $E' = 1/1.29$.",
+          "distractor_id": "D-Hab03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\epsilon = 0.54$",
+          "is_correct": false,
+          "error_rationale": "Omite fricciones y divide precio local $P=35000$ entre el producto foráneo $P^* \\cdot E$.",
+          "distractor_id": "D-Hab03-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\epsilon = 0.7$",
+          "is_correct": false,
+          "error_rationale": "Confunde con ratio nominal directo $P=35000 / P^*=50000$ sin ajustar monedas.",
+          "distractor_id": "D-Hab03-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\epsilon = 1.11$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 3,
+      "hints": [
+        "El tipo de cambio real bilateral se define como $\\epsilon = \\frac{P^* / E}{P} = \\frac{P^*}{E \\cdot P}$.",
+        "Para homogeneizar monedas, divida el precio foráneo entre el tipo de cambio nominal $E$.",
+        "Un valor $\\epsilon > 1$ señala que el bien extranjero es relativamente más caro que el nacional."
+      ],
+      "detailed_solution": "$\\epsilon = \\frac{P^*}{E \\cdot P} = \\frac{50000}{1.29 \\cdot 35000} = 1.11$",
+      "misconception_warning": "Si la libra cotiza a $1.15 €$, un monto en euros debe dividirse entre el tipo de cambio para expresarse en libras esterlinas."
+    },
+    {
+      "id": "Q-C05-211",
+      "competency_id": "C-05",
+      "competency_name": "Valor Agregado vs. Valor Bruto en Apertura Comercial: Caso Japonés",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Según el marco de cuentas externas, determine la apertura comercial con $X=452$ y producto $Y=228$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$ACX = 296.1\\%$",
+          "is_correct": false,
+          "error_rationale": "Suma insumos con $X=452$ e $IM=223$ sobre $Y=228$.",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$ACX = 202.7\\%$",
+          "is_correct": false,
+          "error_rationale": "Compara contra importaciones $IM=223$ con $X=452$.",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$ACX = 100.4\\%$",
+          "is_correct": false,
+          "error_rationale": "Usa saldo neto con $X=452$, $IM=223$ sobre $Y=228$.",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$ACX = 50.4\\%$",
+          "is_correct": false,
+          "error_rationale": "Invierte ratio con $Y=228$ y $X=452$ erróneamente.",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$ACX = 66.5\\%$",
+          "is_correct": false,
+          "error_rationale": "Divide entre $Y+X=228+452$ en lugar de PBI $Y=228$.",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$ACX = 33.9\\%$",
+          "is_correct": false,
+          "error_rationale": "Calcula saldo relativo con $X=452$ e $IM=223$.",
+          "distractor_id": "D-C05-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$ACX = 198.2\\%$",
+          "is_correct": true,
+          "error_rationale": null
+        }
+      ],
+      "correct_answer": "G",
+      "hints_count": 4,
+      "hints": [
+        "El PBI mide exclusivamente valor agregado generado internamente.",
+        "Las exportaciones brutas registran valor total con insumos importados.",
+        "El índice bruto de apertura comercial puede superar el cien por ciento.",
+        "El saldo de exportaciones netas jamás puede sobrepasar el producto total."
+      ],
+      "detailed_solution": "$ACX = \\frac{X}{Y} \\times 100\\% = \\frac{452}{228} \\times 100\\% = 198.2\\%$",
+      "misconception_warning": "Un país que ensambla componentes importados caros puede exportar un monto bruto superior a todo su producto generado internamente."
+    },
+    {
+      "id": "Q-C05-212",
+      "competency_id": "C-05",
+      "competency_name": "Valor Agregado vs. Valor Bruto en Apertura Comercial: Caso Japonés",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En apertura comercial, calcule el ratio $ACX$ si $X=616$ e $Y=385$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$ACX = 62.5\\%$",
+          "is_correct": false,
+          "error_rationale": "Invierte ratio con $Y=385$ y $X=616$ erróneamente.",
+          "distractor_id": "D-C05-01"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$ACX = 260.5\\%$",
+          "is_correct": false,
+          "error_rationale": "Suma insumos con $X=616$ e $IM=387$ sobre $Y=385$.",
+          "distractor_id": "D-C05-03"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$ACX = 160.0\\%$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$ACX = 59.5\\%$",
+          "is_correct": false,
+          "error_rationale": "Usa saldo neto con $X=616$, $IM=387$ sobre $Y=385$.",
+          "distractor_id": "D-C05-02"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$ACX = 61.5\\%$",
+          "is_correct": false,
+          "error_rationale": "Divide entre $Y+X=385+616$ en lugar de PBI $Y=385$.",
+          "distractor_id": "D-C05-04"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$ACX = 159.2\\%$",
+          "is_correct": false,
+          "error_rationale": "Compara contra importaciones $IM=387$ con $X=616$.",
+          "distractor_id": "D-C05-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$ACX = 22.8\\%$",
+          "is_correct": false,
+          "error_rationale": "Calcula saldo relativo con $X=616$ e $IM=387$.",
+          "distractor_id": "D-C05-05"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 4,
+      "hints": [
+        "El PBI mide exclusivamente valor agregado generado internamente.",
+        "Las exportaciones brutas registran valor total con insumos importados.",
+        "El índice bruto de apertura comercial puede superar el cien por ciento.",
+        "El saldo de exportaciones netas jamás puede sobrepasar el producto total."
+      ],
+      "detailed_solution": "$ACX = \\frac{X}{Y} \\times 100\\% = \\frac{616}{385} \\times 100\\% = 160.0\\%$",
+      "misconception_warning": "Un país que ensambla componentes importados caros puede exportar un monto bruto superior a todo su producto generado internamente."
+    },
+    {
+      "id": "Q-C06-231",
+      "competency_id": "C-06",
+      "competency_name": "Causalidad Acumulativa de Myrdal y Economía de los Flujos Migratorios",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el análisis de flujos migratorios, halle el cociente de salarios reales $\\omega$ con $W_D=1352$, $W_O=443$, $P_D=219$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\omega = 2.04$",
+          "is_correct": false,
+          "error_rationale": "Suma aditivamente $W_O=443$ con nivel de precios $P_D=219$.",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\omega = 3.05$",
+          "is_correct": false,
+          "error_rationale": "Ignora precios $P_D=219$ y compara salarios nominales brutos.",
+          "distractor_id": "D-C06-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\omega = 6.68$",
+          "is_correct": false,
+          "error_rationale": "Multiplica por precios $P_D=219$ inflando el cociente real.",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\omega = 27.35$",
+          "is_correct": false,
+          "error_rationale": "Multiplica ambos salarios $W_D=1352$ y $W_O=443$ en el numerador.",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\omega = 1.39$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\omega = 0.33$",
+          "is_correct": false,
+          "error_rationale": "Invierte ratio salarial con $W_D=1352$ y $W_O=443$.",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\omega = 4.15$",
+          "is_correct": false,
+          "error_rationale": "Resta salarios $W_D=1352$, $W_O=443$ sin cociente base.",
+          "distractor_id": "D-C06-05"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 4,
+      "hints": [
+        "Los migrantes suelen comparar salarios nominales sin descontar costo de vida.",
+        "El salario real en destino requiere deflactar por el índice de precios foráneo.",
+        "En contracción económica la oferta laboral excedente deriva en informalidad.",
+        "Las remesas constituyen una salida de divisas del flujo circular receptor."
+      ],
+      "detailed_solution": "$\\omega = \\frac{W_D / P_D}{W_O / 100} = \\frac{1352 / 219}{443 / 100} = 1.39$",
+      "misconception_warning": "Los migrantes suelen comparar salarios nominales brutos sin descontar alquileres elevados, seguros obligatorios y presión tributaria."
+    },
+    {
+      "id": "Q-C06-232",
+      "competency_id": "C-06",
+      "competency_name": "Causalidad Acumulativa de Myrdal y Economía de los Flujos Migratorios",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "En el análisis de flujos migratorios, determine la paridad salarial real $\\omega$ dados $W_D=1853$, $W_O=410$, $P_D=187$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\omega = 0.22$",
+          "is_correct": false,
+          "error_rationale": "Invierte ratio salarial con $W_D=1853$ y $W_O=410$.",
+          "distractor_id": "D-C06-02"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\omega = 3.1$",
+          "is_correct": false,
+          "error_rationale": "Suma aditivamente $W_O=410$ con nivel de precios $P_D=187$.",
+          "distractor_id": "D-C06-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\omega = 8.45$",
+          "is_correct": false,
+          "error_rationale": "Multiplica por precios $P_D=187$ inflando el cociente real.",
+          "distractor_id": "D-C06-03"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\omega = 40.63$",
+          "is_correct": false,
+          "error_rationale": "Multiplica ambos salarios $W_D=1853$ y $W_O=410$ en el numerador.",
+          "distractor_id": "D-C06-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\omega = 2.42$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\omega = 7.72$",
+          "is_correct": false,
+          "error_rationale": "Resta salarios $W_D=1853$, $W_O=410$ sin cociente base.",
+          "distractor_id": "D-C06-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\omega = 4.52$",
+          "is_correct": false,
+          "error_rationale": "Ignora precios $P_D=187$ y compara salarios nominales brutos.",
+          "distractor_id": "D-C06-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 4,
+      "hints": [
+        "Los migrantes suelen comparar salarios nominales sin descontar costo de vida.",
+        "El salario real en destino requiere deflactar por el índice de precios foráneo.",
+        "En contracción económica la oferta laboral excedente deriva en informalidad.",
+        "Las remesas constituyen una salida de divisas del flujo circular receptor."
+      ],
+      "detailed_solution": "$\\omega = \\frac{W_D / P_D}{W_O / 100} = \\frac{1853 / 187}{410 / 100} = 2.42$",
+      "misconception_warning": "Los migrantes suelen comparar salarios nominales brutos sin descontar alquileres elevados, seguros obligatorios y presión tributaria."
+    },
+    {
+      "id": "Q-H03-251",
+      "competency_id": "H-03",
+      "competency_name": "Paridad Descubierta de Tasas de Interés (UIP)",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando el arbitraje financiero internacional (UIP), calcule la tasa doméstica $i_t$ (en %) para $i^*_t=3\\%$, $E_t=3.54$ y $E^e_{t+1}=3.62$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$i_t = 3.07\\%$",
+          "is_correct": false,
+          "error_rationale": "Aplica producto directo $E^e/E$ a la tasa en vez de la paridad aditiva $i^*=3\\%$.",
+          "distractor_id": "D-H03-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$i_t = 2.26\\%$",
+          "is_correct": false,
+          "error_rationale": "Omite sumar el rendimiento del bono externo $i^*=3\\%$ al arbitraje UIP.",
+          "distractor_id": "D-H03-04"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$i_t = 5.21\\%$",
+          "is_correct": false,
+          "error_rationale": "Invierte cociente base: divide entre $E^e=3.62$ en vez del contado $E_t=3.54$.",
+          "distractor_id": "D-H03-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$i_t = 3.08\\%$",
+          "is_correct": false,
+          "error_rationale": "Expectativa futura alcista $E^e=3.62$ presiona al alza al contado $E_t=3.54$.",
+          "distractor_id": "D-H03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$i_t = 5.26\\%$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$i_t = 0.74\\%$",
+          "is_correct": false,
+          "error_rationale": "Resta la depreciación esperada en vez de sumarla a la tasa externa $i^*=3\\%$.",
+          "distractor_id": "D-H03-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$i_t = -0.74\\%$",
+          "is_correct": false,
+          "error_rationale": "Invierte efecto spot: $i_t=5.26\\%$ aprecia la divisa a $E_t=3.54$, no la deprecia.",
+          "distractor_id": "D-H03-01"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "Aplique la paridad descubierta de tasas UIP en su aproximación lineal.",
+        "La tasa local iguala la externa más la depreciación porcentual esperada.",
+        "Una mayor tasa doméstica atrae capitales y aprecia la moneda local."
+      ],
+      "detailed_solution": "$i_t \\approx i^*_t + \\frac{E^e_{t+1} - E_t}{E_t} \\cdot 100\\% = 5.26\\%$",
+      "misconception_warning": "Un mayor rendimiento de los bonos locales atrae capitales financieros que demandan moneda nacional, apreciándola de inmediato."
+    },
+    {
+      "id": "Q-H03-252",
+      "competency_id": "H-03",
+      "competency_name": "Paridad Descubierta de Tasas de Interés (UIP)",
+      "category": "Fact",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando el arbitraje financiero internacional (UIP), determine la tasa local $i_t$ (en %) si $i^*_t=4\\%$, $E_t=3.5$ y $E^e_{t+1}=3.6$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$i_t = 2.86\\%$",
+          "is_correct": false,
+          "error_rationale": "Omite sumar el rendimiento del bono externo $i^*=4\\%$ al arbitraje UIP.",
+          "distractor_id": "D-H03-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$i_t = 4.11\\%$",
+          "is_correct": false,
+          "error_rationale": "Aplica producto directo $E^e/E$ a la tasa en vez de la paridad aditiva $i^*=4\\%$.",
+          "distractor_id": "D-H03-05"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$i_t = 6.86\\%$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$i_t = 4.1\\%$",
+          "is_correct": false,
+          "error_rationale": "Expectativa futura alcista $E^e=3.6$ presiona al alza al contado $E_t=3.5$.",
+          "distractor_id": "D-H03-06"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$i_t = -1.14\\%$",
+          "is_correct": false,
+          "error_rationale": "Invierte efecto spot: $i_t=6.86\\%$ aprecia la divisa a $E_t=3.5$, no la deprecia.",
+          "distractor_id": "D-H03-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$i_t = 1.14\\%$",
+          "is_correct": false,
+          "error_rationale": "Resta la depreciación esperada en vez de sumarla a la tasa externa $i^*=4\\%$.",
+          "distractor_id": "D-H03-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$i_t = 6.78\\%$",
+          "is_correct": false,
+          "error_rationale": "Invierte cociente base: divide entre $E^e=3.6$ en vez del contado $E_t=3.5$.",
+          "distractor_id": "D-H03-02"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "Aplique la paridad descubierta de tasas UIP en su aproximación lineal.",
+        "La tasa local iguala la externa más la depreciación porcentual esperada.",
+        "Una mayor tasa doméstica atrae capitales y aprecia la moneda local."
+      ],
+      "detailed_solution": "$i_t \\approx i^*_t + \\frac{E^e_{t+1} - E_t}{E_t} \\cdot 100\\% = 6.86\\%$",
+      "misconception_warning": "Un mayor rendimiento de los bonos locales atrae capitales financieros que demandan moneda nacional, apreciándola de inmediato."
+    },
+    {
+      "id": "Q-C07-271",
+      "competency_id": "C-07",
+      "competency_name": "Curva IS en Economía Abierta y Doble Canal de Transmisión",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando la curva IS abierta bajo condición Marshall-Lerner, calcule la sensibilidad total del producto $|\\Delta Y|$ ante $\\Delta i = 1$ con $c_1=0.69$, $m_1=0.16$, $d_2=30$ y $\\mu=18$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$|\\Delta Y| = 320.0$",
+          "is_correct": false,
+          "error_rationale": "Resta $m_1=0.16$ en vez de sumarlo en el denominador del multiplicador.",
+          "distractor_id": "D-C07-05"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$|\\Delta Y| = 25.53$",
+          "is_correct": false,
+          "error_rationale": "Viola Marshall-Lerner: resta la sensibilidad cambiaria $\\mu=18$ en vez de sumarla al ajuste de inversión.",
+          "distractor_id": "D-C07-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$|\\Delta Y| = 102.13$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$|\\Delta Y| = 154.84$",
+          "is_correct": false,
+          "error_rationale": "Omite la fuga por importaciones $m_1=0.16$ usando el multiplicador cerrado.",
+          "distractor_id": "D-C07-04"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$|\\Delta Y| = 63.83$",
+          "is_correct": false,
+          "error_rationale": "Ignora el canal cambiario que vuelve a la IS más plana ante $d_2=30$ y $\\mu=18$.",
+          "distractor_id": "D-C07-01"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$|\\Delta Y| = -25.53$",
+          "is_correct": false,
+          "error_rationale": "Asume erróneamente que $i=4\\%$ deprecia la divisa cuando en realidad la aprecia.",
+          "distractor_id": "D-C07-03"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$|\\Delta Y| = 38.3$",
+          "is_correct": false,
+          "error_rationale": "Omite el impacto de la inversión $d_2=30$ creyendo que solo opera la divisa.",
+          "distractor_id": "D-C07-06"
+        }
+      ],
+      "correct_answer": "C",
+      "hints_count": 3,
+      "hints": [
+        "En economía abierta la tasa afecta la inversión y el tipo de cambio.",
+        "Bajo Marshall-Lerner, la apreciación cambiaria deteriora la balanza NX.",
+        "El doble canal contractivo hace que la curva IS abierta sea más plana."
+      ],
+      "detailed_solution": "$|\\Delta Y| = \\frac{d_2 + \\mu}{1 - c_1 + m_1} = 102.13$",
+      "misconception_warning": "Ante una variación de tasas, el producto reacciona con mayor intensidad en economía abierta porque al ajuste en inversión se suma el del comercio exterior."
+    },
+    {
+      "id": "Q-C07-272",
+      "competency_id": "C-07",
+      "competency_name": "Curva IS en Economía Abierta y Doble Canal de Transmisión",
+      "category": "Concept",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Considerando la curva IS abierta bajo condición Marshall-Lerner, halle el impacto contractivo total en el producto $|\\Delta Y|$ ante $\\Delta i = 1$ ($c_1=0.59$, $m_1=0.22$, $d_2=26$, $\\mu=25$):",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$|\\Delta Y| = 124.39$",
+          "is_correct": false,
+          "error_rationale": "Omite la fuga por importaciones $m_1=0.22$ usando el multiplicador cerrado.",
+          "distractor_id": "D-C07-04"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$|\\Delta Y| = 1.59$",
+          "is_correct": false,
+          "error_rationale": "Viola Marshall-Lerner: resta la sensibilidad cambiaria $\\mu=25$ en vez de sumarla al ajuste de inversión.",
+          "distractor_id": "D-C07-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$|\\Delta Y| = 39.68$",
+          "is_correct": false,
+          "error_rationale": "Omite el impacto de la inversión $d_2=26$ creyendo que solo opera la divisa.",
+          "distractor_id": "D-C07-06"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$|\\Delta Y| = 80.95$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$|\\Delta Y| = -1.59$",
+          "is_correct": false,
+          "error_rationale": "Asume erróneamente que $i=6\\%$ deprecia la divisa cuando en realidad la aprecia.",
+          "distractor_id": "D-C07-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$|\\Delta Y| = 268.42$",
+          "is_correct": false,
+          "error_rationale": "Resta $m_1=0.22$ en vez de sumarlo en el denominador del multiplicador.",
+          "distractor_id": "D-C07-05"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$|\\Delta Y| = 41.27$",
+          "is_correct": false,
+          "error_rationale": "Ignora el canal cambiario que vuelve a la IS más plana ante $d_2=26$ y $\\mu=25$.",
+          "distractor_id": "D-C07-01"
+        }
+      ],
+      "correct_answer": "D",
+      "hints_count": 3,
+      "hints": [
+        "En economía abierta la tasa afecta la inversión y el tipo de cambio.",
+        "Bajo Marshall-Lerner, la apreciación cambiaria deteriora la balanza NX.",
+        "El doble canal contractivo hace que la curva IS abierta sea más plana."
+      ],
+      "detailed_solution": "$|\\Delta Y| = \\frac{d_2 + \\mu}{1 - c_1 + m_1} = 80.95$",
+      "misconception_warning": "Ante una variación de tasas, el producto reacciona con mayor intensidad en economía abierta porque al ajuste en inversión se suma el del comercio exterior."
+    },
+    {
+      "id": "Q-Hab04-291",
+      "competency_id": "Hab-04",
+      "competency_name": "Estática Comparativa de Shocks Macroeconómicos en Economía Abierta con Tipo Flexible",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo el modelo Mundell-Fleming con flotación limpia y libre movilidad ($i=i^*$), calcule la variación del producto $\\Delta Y$ ante $\\Delta M=783$, $k=0.8$ y $P=2$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\Delta Y = 489.4$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\Delta Y = 391.5$",
+          "is_correct": false,
+          "error_rationale": "Omitió sensibilidad $k=0.8$ con shock $\\Delta M=783$",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\Delta Y = 313.2$",
+          "is_correct": false,
+          "error_rationale": "Multiplicó por $k=0.8$ en vez de dividir ($\\Delta M=783$)",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\Delta Y = 1838.0$",
+          "is_correct": false,
+          "error_rationale": "Diferencia errónea entre $k=0.8$ y $h=587$",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\Delta Y = 667.0$",
+          "is_correct": false,
+          "error_rationale": "Usó sensibilidad $h=587$ en lugar de $k=0.8$",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\Delta Y = 611.7$",
+          "is_correct": false,
+          "error_rationale": "Dividió por el cuadrado $k^2$ con $k=0.8$",
+          "distractor_id": "D-Hab04-06"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\Delta Y = 282.3$",
+          "is_correct": false,
+          "error_rationale": "Sumó sensibilidades $k=0.8$ y $h=587$ indebidamente",
+          "distractor_id": "D-Hab04-04"
+        }
+      ],
+      "correct_answer": "A",
+      "hints_count": 3,
+      "hints": [
+        "En flotación limpia con movilidad perfecta, la LM determina el producto dado $i=i^*$.",
+        "El tipo de cambio absorbe shocks ajustando las exportaciones netas en el equilibrio.",
+        "La política fiscal sufre desplazamiento total mientras la monetaria es máxima."
+      ],
+      "detailed_solution": "$\\Delta Y = \\frac{\\Delta M}{k \\cdot P} = \\frac{783}{0.8 \\cdot 2} = 489.4$",
+      "misconception_warning": "La expansión fiscal presiona al alza la tasa de interés atrayendo capitales masivos; la apreciación cambiaria destruye $NX$ compensando el impulso fiscal."
+    },
+    {
+      "id": "Q-Hab04-292",
+      "competency_id": "Hab-04",
+      "competency_name": "Estática Comparativa de Shocks Macroeconómicos en Economía Abierta con Tipo Flexible",
+      "category": "Skill",
+      "type": "multiple_choice_7_options",
+      "difficulty": "easy",
+      "bloom": "Apply",
+      "stem": "Bajo el modelo Mundell-Fleming con flotación limpia y libre movilidad ($i=i^*$), halle el cambio en el nivel de actividad $\\Delta Y$ con $\\Delta M=441$, $k=0.24$ y $P=1$:",
+      "options": [
+        {
+          "id": "opt_a",
+          "option_id": "A",
+          "content": "$\\Delta Y = 1670.5$",
+          "is_correct": false,
+          "error_rationale": "Usó sensibilidad $h=264$ en lugar de $k=0.24$",
+          "distractor_id": "D-Hab04-03"
+        },
+        {
+          "id": "opt_b",
+          "option_id": "B",
+          "content": "$\\Delta Y = 105.8$",
+          "is_correct": false,
+          "error_rationale": "Multiplicó por $k=0.24$ en vez de dividir ($\\Delta M=441$)",
+          "distractor_id": "D-Hab04-02"
+        },
+        {
+          "id": "opt_c",
+          "option_id": "C",
+          "content": "$\\Delta Y = 875.0$",
+          "is_correct": false,
+          "error_rationale": "Sumó sensibilidades $k=0.24$ y $h=264$ indebidamente",
+          "distractor_id": "D-Hab04-04"
+        },
+        {
+          "id": "opt_d",
+          "option_id": "D",
+          "content": "$\\Delta Y = 4410.0$",
+          "is_correct": false,
+          "error_rationale": "Diferencia errónea entre $k=0.24$ y $h=264$",
+          "distractor_id": "D-Hab04-05"
+        },
+        {
+          "id": "opt_e",
+          "option_id": "E",
+          "content": "$\\Delta Y = 1837.5$",
+          "is_correct": true,
+          "error_rationale": null
+        },
+        {
+          "id": "opt_f",
+          "option_id": "F",
+          "content": "$\\Delta Y = 441.0$",
+          "is_correct": false,
+          "error_rationale": "Omitió sensibilidad $k=0.24$ con shock $\\Delta M=441$",
+          "distractor_id": "D-Hab04-01"
+        },
+        {
+          "id": "opt_g",
+          "option_id": "G",
+          "content": "$\\Delta Y = 7656.2$",
+          "is_correct": false,
+          "error_rationale": "Dividió por el cuadrado $k^2$ con $k=0.24$",
+          "distractor_id": "D-Hab04-06"
+        }
+      ],
+      "correct_answer": "E",
+      "hints_count": 3,
+      "hints": [
+        "En flotación limpia con movilidad perfecta, la LM determina el producto dado $i=i^*$.",
+        "El tipo de cambio absorbe shocks ajustando las exportaciones netas en el equilibrio.",
+        "La política fiscal sufre desplazamiento total mientras la monetaria es máxima."
+      ],
+      "detailed_solution": "$\\Delta Y = \\frac{\\Delta M}{k \\cdot P} = \\frac{441}{0.24 \\cdot 1} = 1837.5$",
+      "misconception_warning": "La expansión fiscal presiona al alza la tasa de interés atrayendo capitales masivos; la apreciación cambiaria destruye $NX$ compensando el impulso fiscal."
+    }
+  ],
+  "risk_cluster_samples": {
+    "katex_issues": [
+      {
+        "id": "Q-Hab01-104",
+        "competency_id": "Hab-01",
+        "stem": "En el modelo IS-LM cerrado, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.59 - 0.07}$",
+            "is_correct": false,
+            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
+            "distractor_id": "D-Hab01-06"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.59 - 0.07}$",
+            "is_correct": false,
+            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.59$ y $d_1=0.07$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+            "distractor_id": "D-Hab01-01"
+          }
+        ],
+        "hints": [
+          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+        ],
+        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$.",
+        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-105",
+        "competency_id": "Hab-01",
+        "stem": "Considere el equilibrio simultáneo IS-LM, evalúe la validez de las siguientes proposiciones sobre el multiplicador fiscal $\\alpha_A$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.62 - 0.09}$",
+            "is_correct": false,
+            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.62$ y $d_1=0.09$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+            "distractor_id": "D-Hab01-01"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.62 - 0.09}$",
+            "is_correct": false,
+            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=5$, aumentando la tasa y contrayendo inversión.",
+            "distractor_id": "D-Hab01-06"
+          }
+        ],
+        "hints": [
+          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+        ],
+        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$.",
+        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-106",
+        "competency_id": "Hab-01",
+        "stem": "Considere el equilibrio simultáneo IS-LM, analice el impacto de la retroalimentación monetaria sobre el multiplicador del gasto $\\alpha_A$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.64 - 0.1}$",
+            "is_correct": false,
+            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=2$, aumentando la tasa y contrayendo inversión.",
+            "distractor_id": "D-Hab01-06"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.64 - 0.1}$",
+            "is_correct": false,
+            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.64$ y $d_1=0.1$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+            "distractor_id": "D-Hab01-01"
+          }
+        ],
+        "hints": [
+          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+        ],
+        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$.",
+        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-107",
+        "competency_id": "Hab-01",
+        "stem": "Considere el equilibrio simultáneo IS-LM, seleccione las afirmaciones correctas respecto al efecto expulsión en el multiplicador $\\alpha_A$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.53 - 0.05}$",
+            "is_correct": false,
+            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.53$ y $d_1=0.05$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+            "distractor_id": "D-Hab01-01"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.53 - 0.05}$",
+            "is_correct": false,
+            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
+            "distractor_id": "D-Hab01-06"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
+            "is_correct": true,
+            "error_rationale": null
+          }
+        ],
+        "hints": [
+          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+        ],
+        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$.",
+        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-108",
+        "competency_id": "Hab-01",
+        "stem": "Considere el equilibrio simultáneo IS-LM, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.7 - 0.11}$",
+            "is_correct": false,
+            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.7$ y $d_1=0.11$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+            "distractor_id": "D-Hab01-01"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.7 - 0.11}$",
+            "is_correct": false,
+            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=4$, aumentando la tasa y contrayendo inversión.",
+            "distractor_id": "D-Hab01-06"
+          }
+        ],
+        "hints": [
+          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+        ],
+        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$.",
+        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      }
+    ],
+    "telltale_distractors": [],
+    "fstring_residues": [],
+    "scaffolding_flaws": [],
+    "template_residues": [],
+    "blind_replacements": [],
+    "cloned_distractors": [],
+    "archetype_monotony": [],
+    "poisoned_hints": [],
+    "boilerplate_hints": [],
+    "magic_multiplier_distractors": [],
+    "memorizable_answers": [],
+    "length_padded_options": [],
+    "cross_domain_prefixes": [],
+    "vacuous_quantifiers": [],
+    "katex_ergonomics": [
+      {
+        "id": "Q-Hab01-104",
+        "competency_id": "Hab-01",
+        "stem": "En el modelo IS-LM cerrado, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.59 - 0.07}$",
+            "is_correct": false,
+            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
+            "distractor_id": "D-Hab01-06"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.59 - 0.07}$",
+            "is_correct": false,
+            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.59$ y $d_1=0.07$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+            "distractor_id": "D-Hab01-01"
+          }
+        ],
+        "hints": [
+          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+        ],
+        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.59 - 0.07}$.",
+        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-105",
+        "competency_id": "Hab-01",
+        "stem": "Considere el equilibrio simultáneo IS-LM, evalúe la validez de las siguientes proposiciones sobre el multiplicador fiscal $\\alpha_A$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.62 - 0.09}$",
+            "is_correct": false,
+            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.62$ y $d_1=0.09$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+            "distractor_id": "D-Hab01-01"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.62 - 0.09}$",
+            "is_correct": false,
+            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=5$, aumentando la tasa y contrayendo inversión.",
+            "distractor_id": "D-Hab01-06"
+          }
+        ],
+        "hints": [
+          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+        ],
+        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.62 - 0.09}$.",
+        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-106",
+        "competency_id": "Hab-01",
+        "stem": "Considere el equilibrio simultáneo IS-LM, analice el impacto de la retroalimentación monetaria sobre el multiplicador del gasto $\\alpha_A$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.64 - 0.1}$",
+            "is_correct": false,
+            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=2$, aumentando la tasa y contrayendo inversión.",
+            "distractor_id": "D-Hab01-06"
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.64 - 0.1}$",
+            "is_correct": false,
+            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.64$ y $d_1=0.1$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+            "distractor_id": "D-Hab01-01"
+          }
+        ],
+        "hints": [
+          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+        ],
+        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.64 - 0.1}$.",
+        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-107",
+        "competency_id": "Hab-01",
+        "stem": "Considere el equilibrio simultáneo IS-LM, seleccione las afirmaciones correctas respecto al efecto expulsión en el multiplicador $\\alpha_A$:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.53 - 0.05}$",
+            "is_correct": false,
+            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.53$ y $d_1=0.05$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+            "distractor_id": "D-Hab01-01"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.53 - 0.05}$",
+            "is_correct": false,
+            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=3$, aumentando la tasa y contrayendo inversión.",
+            "distractor_id": "D-Hab01-06"
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$",
+            "is_correct": true,
+            "error_rationale": null
+          }
+        ],
+        "hints": [
+          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+        ],
+        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.53 - 0.05}$.",
+        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      },
+      {
+        "id": "Q-Hab01-108",
+        "competency_id": "Hab-01",
+        "stem": "Considere el equilibrio simultáneo IS-LM, examine las propiedades analíticas del multiplicador fiscal $\\alpha_A$ en presencia de mercado de dinero:",
+        "options": [
+          {
+            "id": "opt_a",
+            "option_id": "A",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_b",
+            "option_id": "B",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A = \\frac{1}{1 - 0.7 - 0.11}$",
+            "is_correct": false,
+            "error_rationale": "Omitir retroalimentación monetaria con $c_1=0.7$ y $d_1=0.11$ sobredimensiona el multiplicador fiscal al ignorar el alza de tasas.",
+            "distractor_id": "D-Hab01-01"
+          },
+          {
+            "id": "opt_c",
+            "option_id": "C",
+            "content": "$\\text{Efecto expulsion: } \\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$",
+            "is_correct": true,
+            "error_rationale": null
+          },
+          {
+            "id": "opt_d",
+            "option_id": "D",
+            "content": "$\\text{Equilibrio IS-LM: } \\alpha_A > \\frac{1}{1 - 0.7 - 0.11}$",
+            "is_correct": false,
+            "error_rationale": "Signo erróneo en tasa de interés: mayor producto eleva demanda de dinero con $f_1=4$, aumentando la tasa y contrayendo inversión.",
+            "distractor_id": "D-Hab01-06"
+          }
+        ],
+        "hints": [
+          "Sustituya la tasa de interés de la curva LM dentro de la ecuación de demanda agregada de la curva IS.",
+          "El denominador común agrupa las filtraciones netas $(1 - c_1 - d_1)$ ponderadas por $f_2$ más el término cruzado $d_2 f_1$.",
+          "Recuerde que el mercado monetario equilibra la oferta real de saldos $M/P$ con la demanda de liquidez.",
+          "La retroalimentación monetaria eleva la tasa de interés y reduce el multiplicador fiscal frente al caso simple."
+        ],
+        "detailed_solution": "Dado que $d_2 f_1 > 0$, la retroalimentación monetaria eleva la tasa de interés, de modo que $\\alpha_A < \\frac{1}{1 - 0.7 - 0.11}$.",
+        "misconception_warning": "Ignorar la interacción monetaria sobredimensiona el multiplicador fiscal al asumir una tasa de interés invariable.",
+        "detected_issues": [
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_0_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_1_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_2_text'",
+          "[WARNING] Oración completa en prosa envuelta en '$\\text{...}$' (rompe ajuste de línea en UI) en 'opt_3_text'"
+        ]
+      }
+    ]
+  }
+}
