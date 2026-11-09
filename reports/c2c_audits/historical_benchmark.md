@@ -1,12 +1,13 @@
 # Content-to-Course: Registro Histórico y Evolución de Rendimiento
 
 > [!NOTE]
-> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-08 23:12:41`. Total de ejecuciones auditadas: **52**.
+> Este documento se actualiza automáticamente con cada auditoría ejecutada. Última actualización: `2026-11-09 02:10:01`. Total de ejecuciones auditadas: **53**.
 
 ## 1. Matriz de Evolución Temporal (Normalizada por Carga de Contenido)
 
 | Fecha | Run / Curso | Input (Pág / MB) | Output (Comp / Preg) | Tiempo de Pared | Speedup | Tokens Totales | Tok / Preg | Seg / Preg | Blind Judges (1st) | Intervenciones | Bottlenecks |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `2026-11-09 07:10` | **saul_pc_sistemas_de_ecuaciones_vmapreduce6** (`12fe6d7c`) | 93 pág (4.23 MB) | 60 comp / 1410 preg | 38.1 min (2289.0s) | **12.55x** | 44,440,969 | **31,518.4** | **1.62s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
 | `2026-11-09 04:12` | **solow_new_pipeline_direct** (`539b37fa`) | 36 pág (1.49 MB) | 15 comp / 350 preg | 18.8 min (1130.0s) | **4.5x** | 11,155,512 | **31,872.9** | **3.23s** | ✅ Limpio | 🛠️ 0 | ⚠️ 2 |
 | `2026-11-09 04:12` | **solow_new_pipeline_mapreduce** (`3981c7eb`) | 36 pág (1.49 MB) | 21 comp / 500 preg | 41.9 min (2513.0s) | **3.88x** | 33,418,639 | **66,837.3** | **5.03s** | ✅ Limpio | 🛠️ 0 | ⚠️ 3 |
 | `2026-11-09 04:12` | **saul_pc_sistemas_de_ecuaciones_vmapreduce5** (`66915882`) | 93 pág (4.23 MB) | 61 comp / 1490 preg | 67.6 min (4058.0s) | **6.2x** | 83,906,248 | **56,312.9** | **2.72s** | ✅ Limpio | 🛠️ 8 | ⚠️ 4 |
@@ -64,10 +65,10 @@
 
 ## 2. Métricas Promedio del Sistema (Baselines Globales)
 
-- **Factor de Aceleración Paralela Promedio**: `5.11x`
-- **Densidad de Tokens Promedio por Pregunta**: `60,850.5 tokens/pregunta`
-- **Latencia Promedio por Pregunta Validada**: `6.97 s/pregunta`
-- **Rendimiento Promedio de Generación**: `22.07 preguntas/minuto`
+- **Factor de Aceleración Paralela Promedio**: `5.25x`
+- **Densidad de Tokens Promedio por Pregunta**: `60,152.2 tokens/pregunta`
+- **Latencia Promedio por Pregunta Validada**: `6.85 s/pregunta`
+- **Rendimiento Promedio de Generación**: `22.42 preguntas/minuto`
 
 ---
 *Generado por el motor forense `c2c-run-auditor`.*

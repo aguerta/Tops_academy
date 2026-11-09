@@ -3168,5 +3168,65 @@
       "output_tokens_per_question": 1944.8
     },
     "bottlenecks_count": 2
+  },
+  {
+    "run_id": "20261109_021001_saul_pc_sistemas_de_ecuaciones_vmapreduce6_12fe6d7c",
+    "timestamp": "2026-11-09T07:10:01.700446+00:00",
+    "course_id": "saul_pc_sistemas_de_ecuaciones_vmapreduce6",
+    "course_title": "Saul Pc Sistemas De Ecuaciones Vmapreduce6",
+    "conversation_id": "12fe6d7c-1c14-4288-912b-6d276c02d194",
+    "workload": {
+      "source_files_count": 6,
+      "pages_or_slides": 93,
+      "input_mb": 4.23,
+      "competencies": 60,
+      "questions": 1410,
+      "handouts": 0
+    },
+    "metrics": {
+      "wall_clock_seconds": 2289.0,
+      "agent_compute_seconds": 28726.0,
+      "speedup": 12.55,
+      "total_tokens": 44440969,
+      "total_active_tokens": 9067394,
+      "input_tokens": 5830667,
+      "output_tokens": 2749852,
+      "cache_read_tokens": 35373575,
+      "total_turns": 633,
+      "subagents_count": 59,
+      "tool_errors": 82,
+      "stage_1a_max_wall": 0.0,
+      "stage_1b_total_wall": 434.0,
+      "stage_3_max_wall": 1289.0,
+      "orchestrator_interventions": 0,
+      "blind_judges": {
+        "passed_first_attempt": true,
+        "badge": "✅ 100% ACUERDO AL PRIMER INTENTO (120/120 REACTIVOS)",
+        "batch_items_count": 120,
+        "initial_errors_count": 0,
+        "repair_iterations": 0,
+        "supervisor_interventions_count": 0,
+        "summary_desc": "Los 10 Blind Judges evaluaron el lote estratificado de 120 reactivos en 1 turno de razonamiento puro cada uno (0 búsquedas web, 100% aislamiento epistémico), logrando un acuerdo psicométrico del 100.0% (120/120) con 0 discrepancias frente al ground truth.",
+        "actions_taken": [
+          "1. **Arbitraje Ciego (`05b_judge_compare.json`)**: 120/120 acuerdos (`100.0% agreement rate`, `0 discrepancias`)."
+        ]
+      }
+    },
+    "unit_economics": {
+      "tokens_per_page": 477859.9,
+      "active_tokens_per_page": 97498.9,
+      "tokens_per_input_kb": 10256.8,
+      "tokens_per_competency": 740682.8,
+      "active_tokens_per_competency": 151123.2,
+      "author_tokens_per_competency": 117163.3,
+      "tokens_per_question": 31518.4,
+      "active_tokens_per_question": 6430.8,
+      "seconds_per_page": 24.61,
+      "seconds_per_question": 1.62,
+      "questions_per_minute": 36.96,
+      "agent_seconds_per_question": 20.37,
+      "output_tokens_per_question": 1979.5
+    },
+    "bottlenecks_count": 3
   }
 ]

@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Strict Mode Test Course Pass (`test_strict_pass`)
 
-- **Fecha de Evaluación:** 2026-11-08
+- **Fecha de Evaluación:** 2026-11-09
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** ACTIVO
 - **Calificación Final Certificada:** **20.0 / 20.0 pts**

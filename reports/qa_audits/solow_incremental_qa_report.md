@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Modelo de Crecimiento de Solow (`solow_incremental`)
 
-- **Fecha de Evaluación:** 2026-11-08
+- **Fecha de Evaluación:** 2026-11-09
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** ACTIVO
 - **Calificación Final Certificada:** **17.9 / 20.0 pts**
