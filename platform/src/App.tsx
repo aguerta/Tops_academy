@@ -489,6 +489,7 @@ export const App: React.FC = () => {
               ? `Unit test • ${sessionCompetency?.name || 'Unit'}`
               : sessionCompetency?.name || 'Practice'
           }
+          sessionType={sessionType}
           questions={sessionQuestions}
           onRestart={() => launchSession(sessionType, sessionCompetency, true)}
           onComplete={handleCompleteSession}

@@ -239,7 +239,7 @@ export const FeedbackToast: React.FC<FeedbackToastProps> = ({
               <div className="min-w-0">
                 <h4 className="text-base font-bold text-ka-text-primary leading-tight">
                   {isExhausted
-                    ? 'Maximum attempts reached (3/3)'
+                    ? 'Maximum attempts reached (4/4)'
                     : 'Not quite yet.'}
                 </h4>
                 <p className="text-xs text-ka-text-secondary mt-1">

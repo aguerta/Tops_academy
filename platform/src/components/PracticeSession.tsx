@@ -13,6 +13,7 @@ interface PracticeSessionProps {
   onComplete: (score: number, total: number) => void;
   onQuit: () => void;
   onRestart?: () => void;
+  sessionType?: 'practice' | 'quiz' | 'test' | 'challenge';
 }
 
 interface QuestionResult {
@@ -32,6 +33,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   onComplete,
   onQuit,
   onRestart,
+  sessionType,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -41,6 +43,26 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   const [wrongAttemptsCount, setWrongAttemptsCount] = useState<number>(0);
   const [isExhausted, setIsExhausted] = useState<boolean>(false);
+
+  // Milestone 6: Blank-First Curtain and Socratic Transfer (enabled for Practice, Quizzes, Unit Tests, and Challenges)
+  const [blankFirstEnabled, setBlankFirstEnabled] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('tops_blank_first_enabled') !== 'false';
+    } catch {
+      return true;
+    }
+  });
+  const [isCurtainLifted, setIsCurtainLifted] = useState<boolean>(false);
+
+  const handleToggleBlankFirst = () => {
+    setBlankFirstEnabled((prev) => {
+      const nextVal = !prev;
+      try {
+        sessionStorage.setItem('tops_blank_first_enabled', String(nextVal));
+      } catch {}
+      return nextVal;
+    });
+  };
 
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -59,6 +81,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   useEffect(() => {
     resetScroll();
+    setIsCurtainLifted(false);
   }, [currentIndex]);
 
   const clearAutoAdvanceTimer = () => {
@@ -106,11 +129,11 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   const handleSelectOption = (id: string) => {
     if (isExhausted || (isChecked && isCorrect === true)) return;
-    setSelectedOption(id);
     if (isChecked && !isCorrect) {
       setIsChecked(false);
       setIsCorrect(null);
     }
+    setSelectedOption((prev) => (prev === id ? null : id));
   };
 
   const handleToggleMultiOption = (id: string) => {
@@ -177,7 +200,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       const nextWrongCount = wrongAttemptsCount + 1;
       setWrongAttemptsCount(nextWrongCount);
 
-      if (nextWrongCount >= 3) {
+      if (nextWrongCount >= 4) {
         setIsExhausted(true);
         // Register question as failed (isCorrect: false, skipped: false)
         setResults((prev) => {
@@ -264,6 +287,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       setIsCorrect(null);
       setWrongAttemptsCount(0);
       setIsExhausted(false);
+      setIsCurtainLifted(false);
     }
   };
 
@@ -293,6 +317,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       setIsCorrect(null);
       setWrongAttemptsCount(0);
       setIsExhausted(false);
+      setIsCurtainLifted(false);
     }
   };
 
@@ -300,6 +325,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.isComposing) return;
+
+      const typing = isTypingTarget(e.target);
 
       if (
         (e.key === 's' || e.key === 'S') &&
@@ -316,6 +343,12 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       if (e.key === 'Enter') {
         e.preventDefault();
 
+        // Milestone 6: If Blank-First curtain is active, Enter lifts the curtain
+        if (blankFirstEnabled && !isCurtainLifted) {
+          setIsCurtainLifted(true);
+          return;
+        }
+
         if (isExhausted) {
           clearAutoAdvanceTimer();
           handleNext(false);
@@ -329,6 +362,32 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         } else if (isCorrect === false) {
           clearAutoAdvanceTimer();
           handleRetry();
+        }
+        return;
+      }
+
+      // Mouseless hotkeys for option selection (A-I and 1-9)
+      if (!typing && !e.altKey && !e.ctrlKey && !e.metaKey && !isChecked && (!blankFirstEnabled || isCurtainLifted)) {
+        const OPTION_KEYS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
+        const NUMBER_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+        const keyLower = e.key.toLowerCase();
+        let optIdx = OPTION_KEYS.indexOf(keyLower);
+        if (optIdx === -1) {
+          optIdx = NUMBER_KEYS.indexOf(keyLower);
+        }
+
+        if (optIdx !== -1 && currentQuestion.options && optIdx < currentQuestion.options.length) {
+          const targetOpt = currentQuestion.options[optIdx];
+          if (currentQuestion.type === 'multiple_choice_7_options') {
+            e.preventDefault();
+            handleSelectOption(targetOpt.id);
+            return;
+          } else if (currentQuestion.type === 'multiple_select') {
+            e.preventDefault();
+            handleToggleMultiOption(targetOpt.id);
+            return;
+          }
         }
       }
     };
@@ -351,6 +410,8 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     total,
     isExhausted,
     wrongAttemptsCount,
+    blankFirstEnabled,
+    isCurtainLifted,
   ]);
 
   return (
@@ -375,24 +436,48 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         <div className="text-sm font-bold text-ka-text-primary text-center truncate px-2 min-w-0">
           <MathText text={sessionTitle} inline />
         </div>
-        {onRestart ? (
+        <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => {
-              clearAutoAdvanceTimer();
-              resetScroll();
-              onRestart();
-            }}
-            data-testid="restart-session-btn"
-            className="text-xs font-semibold text-ka-blue hover:text-ka-blue-hover flex items-center gap-1.5 transition-colors px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 shadow-sm cursor-pointer shrink-0"
-            title="Restart session with new shuffled questions"
-            aria-label="Restart practice session"
+            type="button"
+            data-testid="toggle-blank-first-btn"
+            onClick={handleToggleBlankFirst}
+            aria-pressed={blankFirstEnabled}
+            title={
+              blankFirstEnabled
+                ? 'Modo Blank-First activo: oculta las opciones hasta que formulas tu respuesta (clic para desactivar)'
+                : 'Modo Blank-First desactivado (clic para activar)'
+            }
+            className={`text-xs font-semibold px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${
+              blankFirstEnabled
+                ? 'bg-blue-50 border-blue-300 text-ka-blue hover:bg-blue-100'
+                : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+            }`}
           >
-            <span aria-hidden="true">🔄</span>
-            <span className="hidden sm:inline">Restart</span>
+            <span aria-hidden="true">🧠</span>
+            <span className="hidden sm:inline text-[11px]">
+              {blankFirstEnabled ? 'Blank-First: ON' : 'Blank-First: OFF'}
+            </span>
           </button>
-        ) : (
-          <div className="w-8 sm:w-9 shrink-0" />
-        )}
+
+          {onRestart ? (
+            <button
+              onClick={() => {
+                clearAutoAdvanceTimer();
+                resetScroll();
+                onRestart();
+              }}
+              data-testid="restart-session-btn"
+              className="text-xs font-semibold text-ka-blue hover:text-ka-blue-hover flex items-center gap-1.5 transition-colors px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 shadow-sm cursor-pointer shrink-0"
+              title="Restart session with new shuffled questions"
+              aria-label="Restart practice session"
+            >
+              <span aria-hidden="true">🔄</span>
+              <span className="hidden sm:inline">Restart</span>
+            </button>
+          ) : (
+            <div className="w-2 sm:w-3 shrink-0" />
+          )}
+        </div>
       </header>
 
       {/* Main Question Surface */}
@@ -413,6 +498,12 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           onChangeFillBlank={handleChangeFillBlank}
           hintsRevealed={hintsRevealed}
           onRevealHint={() => setHintsRevealed((prev) => prev + 1)}
+          blankFirstEnabled={blankFirstEnabled}
+          isCurtainLifted={isCurtainLifted}
+          onLiftCurtain={() => setIsCurtainLifted(true)}
+          courseTitle={sessionTitle}
+          wrongAttemptsCount={wrongAttemptsCount}
+          isPracticeMode={true}
         />
       </main>
 
@@ -580,17 +671,23 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
           ) : (
             <button
               data-testid="check-btn"
-              disabled={!hasAnswer}
-              onClick={() => handleCheck(true)}
-              aria-label="Check answer"
+              disabled={blankFirstEnabled && !isCurtainLifted ? false : !hasAnswer}
+              onClick={() => {
+                if (blankFirstEnabled && !isCurtainLifted) {
+                  setIsCurtainLifted(true);
+                } else {
+                  handleCheck(true);
+                }
+              }}
+              aria-label={blankFirstEnabled && !isCurtainLifted ? 'Reveal options' : 'Check answer'}
               className={`px-4 sm:px-6 py-1.5 sm:py-2 [@media(min-height:851px)]:sm:py-2.5 text-sm font-bold rounded transition-colors flex items-center gap-2 ${
-                hasAnswer
+                (blankFirstEnabled && !isCurtainLifted) || hasAnswer
                   ? 'bg-ka-blue hover:bg-ka-blue-hover text-white cursor-pointer shadow-md'
                   : 'bg-slate-300 text-white cursor-not-allowed'
               }`}
             >
-              <span>Check</span>
-              {hasAnswer && (
+              <span>{blankFirstEnabled && !isCurtainLifted ? 'Reveal options' : 'Check'}</span>
+              {((blankFirstEnabled && !isCurtainLifted) || hasAnswer) && (
                 <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] bg-blue-700/60 text-white rounded font-mono border border-blue-400/30" aria-hidden="true">↵ Enter</kbd>
               )}
             </button>
