@@ -3,7 +3,7 @@
 
 > **Documento de Especificación Técnica y Diseño de UI/UX**  
 > **Hito Vinculado:** Milestone 6 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md)  
-> **Estado:** Fase 1 (layout adaptativo y container queries) ✅ CERRADA; Fase 2 (Micro-Harness cognitivo) 🛠️ EN PROGRESO.  
+> **Estado:** Fase 1 (layout adaptativo y container queries) ✅ CERRADA; Fase 2 (Micro-Harness cognitivo: Cortina Blank-First y Transferencia Socrática $0 API) ✅ CERRADA Y CERTIFICADA.  
 > **Regla de Sincronización:** Toda modificación sobre la interacción de usuario, la máquina de estados de la cortina *Blank-First*, la suite de prompts o los componentes de `platform/` debe reflejarse en este archivo y en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md).
 
 ---
@@ -206,8 +206,33 @@ Diseña un micro-plan de estudio de 15 minutos enfocado en reparar los conceptos
 
 ---
 
-## 7. Plan de Ejecución de la Fase 2 del Micro-Harness
-1. **Paso 1:** Agregar selector de tabs en cabecera de `PracticeSession.tsx` (`[ 📝 Reactivo ]`, `[ ⬜ Pizarra ]`, `[ 📖 Ficha Teórica ]`).
-2. **Paso 2:** Implementar la cortina *Blank-First* como un flag configurable en sesión (`showBlankFirst: boolean`), con persistencia del texto en `sessionStorage`.
-3. **Paso 3:** Implementar compuerta estricta: `isExhausted || (hintsViewedCount >= 3 && wrongAttempts >= 2)` para habilitar el botón de copiado de prompt socrático.
-4. **Paso 4:** Superposición de `<canvas>` táctil/ratón sobre `<CoordinatePlane />` con `PointerEvents`.
+## 7. Plan de Ejecución y Entrega Certificada del Micro-Harness
+1. **Cortina Blank-First Universal (Free Recall):** Implementada en `QuestionCard.tsx` y `PracticeSession.tsx` con atajo `Enter` para replegar, toggle en cabecera (`tops_blank_first_enabled` en `sessionStorage`) y cobertura en Práctica, Quizzes, Unit Tests y Course Challenges.
+2. **Navegación 100% Mouseless y Hotkeys Ergonómicos:**
+   - Selección directa mediante teclas `A`–`G` y `1`–`7`.
+   - **Toggle Deselección:** Pulsar la misma letra o número deselecciona la alternativa en preguntas de opción única (MC7) o commuta su estado en selección múltiple.
+   - **Auto-Focus Inmediato:** En preguntas de tipo `fill_in_the_blank`, el campo de entrada recibe foco automáticamente (`fillInputRef.current?.focus({ preventScroll: true })`) sin requerir clic de ratón.
+3. **Desbloqueo Adaptativo del Tutor Socrático ($0 API):**
+   - Compuerta adaptativa: se desbloquea al **3er fallo** si la pregunta dispone de pistas (`totalHints > 0`), o al **2do fallo** si carece de pistas (`totalHints === 0`).
+   - Límite de intentos extendido a 4 (`Maximum attempts reached 4/4`) para permitir la interacción formativa con la IA externa antes del reveal de solución.
+   - Banner con instrucciones directas: *"Haz click en el botón y Copia y pega el text en tu IA favorita para ayuda especializada para que te ayude."*
+4. **Pizarra Canvas y Pestañas Complejas:** Descartadas deliberadamente tras análisis de impacto ergonómico para preservar la estabilidad de los 97 contratos de responsividad (14" 150% scaling y Mobile).
+
+---
+
+## 8. Bitácora de Entrega y Cierre de Sesión (2026-11-08 / 2026-11-09)
+
+### 8.1. Archivos Modificados y Creados
+* **`platform/src/utils/socraticPrompt.ts` (NUEVO):** Generador de prompt anti-giveaway estructurado con KaTeX, opciones y error rationale.
+* **`platform/src/components/QuestionCard.tsx` (MODIFICADO):** Cortina `blank-first-curtain`, botón de revelado con `Enter`, banner de tutor socrático adaptativo (3er fallo con hints / 2do sin hints), auto-focus para `fill_in_the_blank`.
+* **`platform/src/components/PracticeSession.tsx` (MODIFICADO):** Máquina de estados de la cortina, tecla `Enter` unificada, hotkeys `A`–`G` / `1`–`7` con toggle para deseleccionar, límite extendido a 4 intentos, persistencia `sessionStorage`.
+* **`platform/src/components/FeedbackToast.tsx` (MODIFICADO):** Reflejo del límite de fallos `Maximum attempts reached (4/4)`.
+* **`platform/src/components/ShortcutHelp.tsx` (MODIFICADO):** Documentación interactiva de atajos de opción `A`–`G` / `1`–`7` y auto-foco.
+* **`platform/src/App.tsx` (MODIFICADO):** Propagación de `sessionType` a `PracticeSession`.
+* **`tests/test_m6_study_harness_contract.py` (NUEVO):** Suite de contratos estáticos y de comportamiento para M6.
+
+### 8.2. Resultados de Validación
+* **Contratos M6:** `tests/test_m6_study_harness_contract.py` (3/3 PASSED).
+* **Contratos M1 Ergonomía:** `tests/test_m1_zoomfix_contract.py` (97/97 PASSED).
+* **Build de Producción:** `npm run build` en `platform` con 0 errores TypeScript/Vite/PWA.
+* **Dev Server:** Activo en `http://127.0.0.1:5173/` con sincronización HMR instantánea.

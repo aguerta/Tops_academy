@@ -75,7 +75,7 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 
 | Pilar de Pericia | Mecanismo Cognitivo Requerido | Estado Actual en Producción | Brecha Remanente (Gap hacia la Pericia) |
 | :--- | :--- | :--- | :--- |
-| **1. Chunking y Patrones** | Evocación frente a hoja en blanco (*free recall*). | Formatos MC7, FIB y MS activos con higiene psicométrica. | ⚠️ Falta `open_symbolic` con MathLive + SymPy y cortina *Blank-First* ([Milestone 5](#milestone-5-modalidades-interactivas-avanzadas-open-symbolic-y-demostraciones-paso-a-paso), [Milestone 6](#milestone-6-antigravity-study-harness-20-multi-panel-split-view-modo-blank-first-y-transferencia-khanmigo-0-api)). |
+| **1. Chunking y Patrones** | Evocación frente a hoja en blanco (*free recall*). | Formatos MC7, FIB y MS activos con higiene psicométrica. Cortina *Blank-First* y Navegación Mouseless activas ([Milestone 6](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-6-antigravity-study-harness-20-modo-blank-first-y-transferencia-khanmigo-0-api)). | ⚠️ Resta `open_symbolic` con MathLive + SymPy ([Milestone 5](#milestone-5-modalidades-interactivas-avanzadas-open-symbolic-y-demostraciones-paso-a-paso)). |
 | **2. Alta Validez Interna** | Desempeño que refleje comprensión del fenómeno real. | Patrón PrairieLearn `@var@`, compilador AST `KaTeXAST` y contrato Pydantic. | ✅ **Cerrado al 100% por Milestone 4.** Próximo paso: demostraciones formales Lean 4 ([Milestone 15](#milestone-15-fase-2-kernel-nativo-perceus-c-lean-4-ffi-05-ms-y-drt-industrial)). |
 | **3. Variedad sin Overfitting** | Miles de intentos sobre el principio sin mecanizar molde. | Contrato 4 arquetipos obligatorios (`direct`, `inverse`, `perturbation`, `boundary`). | ✅ **Fase 1 cerrada por Milestone 16.** Próximo escalón: deducción SMT Z3 ([Milestone 16 Fase 2](#milestone-16-fase-2-deducción-algebraica-automática-con-z3-y-lemas-lean-4)). |
 | **4. Feedback Inmediato** | Diagnóstico instantáneo de por qué falló el razonamiento. | Refutation Feedback en Toast (`FeedbackToast.tsx`) con `error_rationale`. | ⚠️ Falta bifurcación de remediación en DAG inmediato ante fallos específicos ([Milestone 14](#milestone-14-motor-de-maestría-integral-20-estilo-khan-academy-calibración-bidireccional-híbrido-8020-y-simulador-adaptativo)). |
@@ -90,7 +90,7 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 3. 🧠 **Certificación Formal del DAG Curricular, Clausura Epistémica y Arbitraje Bayesiano ([Milestone 17](#milestone-17-certificación-formal-del-dag-curricular-clausura-epistémica-y-arbitraje-neuro-simbólico)):** Conectividad y aciclicidad formal en `cta_merge.py`; juez 1-seed con dominancia bayesiana ($\alpha_{\text{Kernel}} = 0$) y clausura estricta de símbolos libres.
 4. 🔒 **Arnés de Certificación Continua, Anti-Drift y Auditoría `#print axioms` ([Milestone 18](#milestone-18-arnés-de-certificación-continua-anti-drift-de-contratos-y-auditoría-print-axioms)):** Schemas Pydantic inter-etapa (`interstage_schemas.py`), auto-compilación CI de prompts y auditoría `#print axioms` con nonce criptográfico.
 5. 🎯 **Motor de Maestría Integral 2.0 Estilo Khan Academy ([Milestone 14](#milestone-14-motor-de-maestría-integral-20-estilo-khan-academy-calibración-bidireccional-híbrido-8020-y-simulador-adaptativo)):** Calibración bidireccional en Challenge/Test/Quiz, degradación estricta por fallo, fórmula híbrida 80/20, *Hint-Cap*, *Red Dot* y Simulador Adaptativo de Parcial.
-6. 🎯 **Study Harness 2.0 + Transferencia Khanmigo \$0 API ([Milestone 6](#milestone-6-antigravity-study-harness-20-multi-panel-split-view-modo-blank-first-y-transferencia-khanmigo-0-api)):** Cortina *Blank-First* con *Audit Trail*, Suite de 4 Prompts Khanmigo \$0, Pizarra Canvas y *Worked Examples*.
+6. 🟢 **Study Harness 2.0 + Transferencia Khanmigo $0 API ([Milestone 6](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-6-antigravity-study-harness-20-modo-blank-first-y-transferencia-khanmigo-0-api)):** Completado y certificado al 100% (Cortina *Blank-First*, navegación mouseless con hotkeys y auto-focus, compuerta socrática adaptativa a 3er/2do fallo y límite a 4 intentos).
 7. 🏛️ **Jerarquía PPT + ContentCore en 5 Bloques + Unidad 0 `PRE-XX` ([Milestone 9](#milestone-9-arquitectura-jerárquica-de-contenido-ppt-glosario-contentcore-khanmigo-en-5-bloques-y-unidad-0-pre-xx)):** Organización curricular en 3 niveles, glosario, supuestos explícitos y nivelación diagnóstica inicial.
 8. 🔁 **Motor SRS, *Mastery Challenge* (12h), *Misconception Ledger* y Fluidez ([Milestone 8](#milestone-8-motor-de-decaimiento-en-memoria-srs-mastery-challenge-12h-misconception-ledger-y-fluidez)):** Decaimiento temporal Ebbinghaus, cuaderno de trampas y compresión de latencia.
 9. 🚀 **Modalidades Interactivas, `Open Symbolic` y Pruebas Paso a Paso ([Milestone 5](#milestone-5-modalidades-interactivas-avanzadas-open-symbolic-y-demostraciones-paso-a-paso)):** Parsons/Reordenamiento, Matching, Manipuladores SVG, `MathLive + SymPy` y verificador de derivaciones con `lean --server`.
@@ -104,7 +104,7 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 
 ## 3. Matriz Maestra de Priorización de Ingeniería (Hitos Activos)
 
-> *Nota: Los hitos completados y certificados (1, 2, 2a, 3, 4, 7, 10, 11 [núcleo], 15 [F1], 16 [F1]) viven en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md).*
+> *Nota: Los hitos completados y certificados (1, 2, 2a, 3, 4, 6, 7, 10, 11 [núcleo], 15 [F1], 16 [F1]) viven en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md).*
 
 | Hito / Milestone | Área | Impacto Cognitivo, Formal y de Eficiencia | Esfuerzo | Estado / Prioridad | Especificación Técnica |
 | :--- | :--- | :--- | :---: | :---: | :--- |
@@ -114,7 +114,6 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 | **Milestone 18: Arnés de Certificación Continua** | CI / Anti-Regresión | **Inmunidad permanente ante drift inter-etapa.** Schemas Pydantic inter-etapa (`interstage_schemas.py`), auto-compilación CI de prompts y auditoría `#print axioms` con nonce. | 1 a 1.5 d | 🔒 **P0 — En Progreso** | [Spec Formal Lean 4](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
 | **Milestone 14: Motor de Maestría Khan Academy 2.0** | Motor Maestría / Frontend | **Calibración bidireccional y degradación por fallo.** Extiende recalibración granular a Challenge/Test/Quiz; barra híbrida 80/20; *Hint-Cap*; *Red Dot* y Simulador Adaptativo. | 1.5 a 2 d | 🎯 **P1 — Psicométrica** | [Spec Khan Mastery](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) |
 | **Milestone 9: Jerarquía PPT y ContentCore Khanmigo** | Curricular / Schema | **Alineación con material real y Unidad 0 PRE-XX.** PPT $\to$ Glosario + `ContentCore` en 5 bloques + Subtemas + Unidad 0 *Get Ready*. | 5 a 7 h | 🏛️ **P1 — Curricular** | [Spec Jerarquía PPT](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) |
-| **Milestone 6: Study Harness 2.0 + Prompts \$0 API** | Arquitectura UI | **Estación de ultra-aprendizaje en split-view.** Cortina *Blank-First* con *Audit Trail*, Suite de 4 Prompts Khanmigo \$0, Pizarra Canvas y *Worked Examples*. | 2.5 a 4 h | 🧠 **P1 — Estudio Activo** | [Spec Study Harness](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m06_study_harness.md) |
 | **Milestone 8: Motor SRS, Retención y Fluidez** | Motor de Sesión | **Retención longitudinal y metacognición del error.** Decaimiento Ebbinghaus, tarjeta *Mastery Challenge* 12h, Cuaderno de Trampas y curva de compresión de latencia. | 2 a 3 d | 🔁 **P2 — Ciclo de Pericia** | [FUTURE_MILESTONES.md](#milestone-8-motor-de-decaimiento-en-memoria-srs-mastery-challenge-12h-misconception-ledger-y-fluidez) |
 | **Milestone 5: Modalidades Interactivas y Open Symbolic** | Full-Stack / Lean 4 Server | **Trascendencia del reconocimiento pasivo.** Parsons / Reordenamiento, Matching, Manipuladores SVG, `MathLive + SymPy` y calificador paso a paso con `lean --server`. | 2.5 a 4 d | 🚀 **P2 — Impacto Cognitivo** | [FUTURE_MILESTONES.md](#milestone-5-modalidades-interactivas-avanzadas-open-symbolic-y-demostraciones-paso-a-paso) |
 | **Milestone 13: Higiene y Consolidación de Tests** | DevOps / Arquitectura | **Erradicación del repo bloat.** Política *Clean Artifacts*, purga de payloads efímeros y estructuración de 1,400 tests en 4 dominios (`quality/`, `pipeline/`, `engine/`, `platform/`). | 1.5 a 2 d | 🧹 **P2 — Higiene** | [FUTURE_MILESTONES.md](#milestone-13-consolidación-del-repositorio-higiene-de-artefactos-y-reestructuración-de-tests) |
@@ -195,19 +194,6 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
   2. Implementación de `ContentCore` en 5 bloques pedagógicos (Prerrequisitos, Analogía intuitiva, Teoremas y supuestos explícitos, Ejemplo resuelto paso a paso y Trampas de examen).
   3. Quizzes formativos por subtema (3–5 preguntas) y Challenges integradores por PPT (8–12 preguntas).
 > 📄 **Especificación Técnica Completa:** Consultar [`docs/specs/m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) para las interfaces TypeScript y esquemas JSON.
-
----
-
-### Milestone 6: "Antigravity Study Harness 2.0" (Multi-Panel Split-View, Modo Blank-First y Transferencia Khanmigo \$0 API)
-* **Estado:** 🧠 **P1 — Estudio Activo (~2.5 a 4 h).** *(Fase 1 de layout adaptativo y container queries 100% completada en M1/M2a; Fase 2 pendiente).*
-* **Objetivo:** Convertir la plataforma en una estación de ultra-aprendizaje en split-view (1/3 y 1/2 de pantalla horizontal) conectada con la fuente original y tutoría socrática externa sin costo de API para el proyecto.
-* **Criterios de Aceptación:**
-  1. **Cortina *Blank-First*:** Pantalla previa en blanco que oculta las opciones múltiples hasta que el alumno reflexiona o anota su planteamiento inicial (*Free Recall* activo).
-  2. **Audit Trail Cognitivo:** El planteamiento de la cortina persiste en `sessionStorage` y se inyecta en el prompt socrático.
-  3. **Suite de 4 Prompts Especializados Khanmigo (\$0 API):** Botón de copiado con compuerta estricta (solo tras agotar intentos/pistas).
-  4. **Pizarra Canvas Superpuesta:** Capa ligera con `PointerEvents` sobre `<CoordinatePlane />`.
-  5. **Worked Examples en `PreExerciseModal.tsx`:** Acordeón con ejemplo canónico resuelto citando supuestos.
-> 📄 **Especificación Técnica Completa:** Consultar [`docs/specs/m06_study_harness.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m06_study_harness.md) para los wireframes, estados y templates de prompts.
 
 ---
 
