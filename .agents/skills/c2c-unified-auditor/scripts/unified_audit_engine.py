@@ -166,57 +166,77 @@ def resolve_pair(
 # Data Loading & Archiving Engine
 # ---------------------------------------------------------------------------
 
+def _extract_embedded_qa_json(md_text: str) -> Dict[str, Any]:
+    """Extract embedded structured JSON metadata from a self-contained *_qa_report.md file."""
+    if not md_text:
+        return {}
+    # Prefer the last ```json ... ``` block (typically inside <details> at the end of the report)
+    matches = re.findall(r"```json\s*(\{.*?\})\s*```", md_text, re.DOTALL)
+    for raw_json in reversed(matches):
+        try:
+            parsed = json.loads(raw_json)
+            if isinstance(parsed, dict) and ("dimension_scores" in parsed or "course_metadata" in parsed):
+                return parsed
+        except Exception:
+            continue
+    return {}
+
+
 def load_or_generate_qa_data(course_id: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-    """Load or generate course payload and QA report data."""
+    """Load or generate course payload (in-memory) and QA report data from self-contained .md."""
     qa_reports_dir = ROOT_DIR / "reports" / "qa_audits"
     archive_dir = ROOT_DIR / "reports" / "audits_archive" / course_id
     courses_dir = ROOT_DIR / "courses"
 
-    payload_file = qa_reports_dir / f"{course_id}_payload.json"
-    qa_report_file = qa_reports_dir / f"{course_id}_qa_report.json"
-
-    # Fallback to archive if exists
-    if not payload_file.exists() and (archive_dir / "qa_payload.json").exists():
-        payload_file = archive_dir / "qa_payload.json"
-    if not qa_report_file.exists() and (archive_dir / "qa_report.json").exists():
-        qa_report_file = archive_dir / "qa_report.json"
-
     payload_data: Dict[str, Any] = {}
     qa_report_data: Dict[str, Any] = {}
 
-    # If payload doesn't exist, try generating from course json
-    if not payload_file.exists():
-        course_file = courses_dir / f"{course_id}.json"
-        if course_file.exists() and summarize_course:
+    # 1. Compute payload in-memory from course JSON (zero _payload.json disk bloat)
+    course_file = courses_dir / f"{course_id}.json"
+    if course_file.exists() and summarize_course:
+        try:
+            c_data = json.loads(course_file.read_text(encoding="utf-8"))
+            entry = {
+                "id": course_id,
+                "filename": course_file.name,
+                "title": c_data.get("title") or c_data.get("course_title", course_id),
+                "status": "valid",
+                "data": c_data,
+            }
+            payload_data = summarize_course(entry)
+        except Exception as ex:
+            print(f"[!] Warning computing in-memory payload: {ex}", file=sys.stderr)
+
+    # Legacy fallback if course file is absent
+    if not payload_data:
+        for cand in [qa_reports_dir / f"{course_id}_payload.json", archive_dir / "qa_payload.json"]:
+            if cand.exists():
+                try:
+                    payload_data = json.loads(cand.read_text(encoding="utf-8"))
+                    break
+                except Exception:
+                    pass
+
+    # 2. Load QA report from self-contained Markdown first, then legacy JSON fallback
+    for md_cand in [qa_reports_dir / f"{course_id}_qa_report.md", archive_dir / "qa_report.md"]:
+        if md_cand.exists():
             try:
-                c_data = json.loads(course_file.read_text(encoding="utf-8"))
-                entry = {
-                    "id": course_id,
-                    "filename": course_file.name,
-                    "title": c_data.get("title") or c_data.get("course_title", course_id),
-                    "status": "valid",
-                    "data": c_data
-                }
-                payload_data = summarize_course(entry)
-                payload_file = qa_reports_dir / f"{course_id}_payload.json"
-                qa_reports_dir.mkdir(parents=True, exist_ok=True)
-                payload_file.write_text(json.dumps(payload_data, indent=2, ensure_ascii=False), encoding="utf-8")
-            except Exception as ex:
-                print(f"[!] Warning generating payload: {ex}", file=sys.stderr)
+                qa_report_data = _extract_embedded_qa_json(md_cand.read_text(encoding="utf-8"))
+                if qa_report_data:
+                    break
+            except Exception:
+                pass
 
-    if payload_file.exists():
-        try:
-            payload_data = json.loads(payload_file.read_text(encoding="utf-8"))
-        except Exception:
-            pass
+    if not qa_report_data:
+        for json_cand in [qa_reports_dir / f"{course_id}_qa_report.json", archive_dir / "qa_report.json"]:
+            if json_cand.exists():
+                try:
+                    qa_report_data = json.loads(json_cand.read_text(encoding="utf-8"))
+                    break
+                except Exception:
+                    pass
 
-    if qa_report_file.exists():
-        try:
-            qa_report_data = json.loads(qa_report_file.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-
-    # If qa_report_data is still empty, expose only deterministic telemetry from payload
+    # 3. If qa_report_data is still empty, expose deterministic telemetry from payload
     if not qa_report_data and payload_data:
         audit_tel = payload_data.get("audit_telemetry", {})
         qa_report_data = {
@@ -305,10 +325,8 @@ def archive_original_files(
     c2c_dir = ROOT_DIR / "reports" / "c2c_audits"
     short_cid = conv_id[:8]
 
-    # 1. Copy QA individual original files
+    # 1. Copy QA individual original file (self-contained .md only)
     qa_source_files = [
-        (qa_dir / f"{course_id}_payload.json", archive_dir / "qa_payload.json"),
-        (qa_dir / f"{course_id}_qa_report.json", archive_dir / "qa_report.json"),
         (qa_dir / f"{course_id}_qa_report.md", archive_dir / "qa_report.md"),
     ]
     for src, dst in qa_source_files:
@@ -327,7 +345,6 @@ def archive_original_files(
         run_source_files = [
             (effective_run_dir / "telemetry.json", archive_dir / "telemetry.json"),
             (effective_run_dir / "report.md", archive_dir / "telemetry_report.md"),
-            (effective_run_dir / "dashboard.html", archive_dir / "dashboard.html"),
             (effective_run_dir / f"traceback_deepdive_{short_cid}.json", archive_dir / "traceback_deepdive.json"),
             (effective_run_dir / f"traceback_deepdive_{short_cid}.md", archive_dir / "traceback_deepdive.md"),
             (effective_run_dir / "shard_timing_profile.json", archive_dir / "shard_timing_profile.json"),
@@ -371,13 +388,10 @@ Este directorio consolida el paquete completo y permanente de auditoría del cur
 | Documento | Formato | Descripción |
 | :--- | :---: | :--- |
 | [**`merged_quality_and_performance.md`**](file:///{archive_dir.as_posix()}/merged_quality_and_performance.md) | Markdown | **Reporte Consolidado Integral:** Fusión completa y estructural de la auditoría de calidad pedagógica (QM-OSCQR + Path-to-Mastery v2.0) y la auditoría forense de rendimiento y traceback, con Tabla de Contenidos. |
-| [**`qa_report.md`**](file:///{archive_dir.as_posix()}/qa_report.md) | Markdown | **Auditoría de Calidad Pedagógica (Argon):** Análisis cualitativo profundo por 5 dimensiones, MPRI y verificación semántica de muestras. |
-| [**`qa_report.json`**](file:///{archive_dir.as_posix()}/qa_report.json) | JSON | Dataset estructurado de la evaluación de calidad pedagógica y rúbrica normativa Path-to-Mastery v2.0. |
-| [**`qa_payload.json`**](file:///{archive_dir.as_posix()}/qa_payload.json) | JSON | Muestras estratificadas y 16 clusters evaluados por `StandardizedAuditEngine`. |
+| [**`qa_report.md`**](file:///{archive_dir.as_posix()}/qa_report.md) | Markdown | **Auditoría de Calidad Pedagógica (Argon):** Informe autocontenido con análisis cualitativo por 5 dimensiones, MPRI, verificación semántica de muestras y metadatos JSON embebidos. |
 {extra_rows}| [**`traceback_deepdive.md`**](file:///{archive_dir.as_posix()}/traceback_deepdive.md) | Markdown | **Auditoría Forense Granular de Traceback:** Análisis turno por turno, inferencia vs. herramientas y taxonomía de errores. |
 | [**`telemetry_report.md`**](file:///{archive_dir.as_posix()}/telemetry_report.md) | Markdown | Informe ejecutivo emitido por `audit_engine.py` con unit economics. |
 | [**`telemetry.json`**](file:///{archive_dir.as_posix()}/telemetry.json) | JSON | Árbol completo de subagentes, consumos de tokens de entrada, salida, caché y desglose de herramientas. |
-| [**`dashboard.html`**](file:///{archive_dir.as_posix()}/dashboard.html) | HTML | Dashboard interactivo visual con líneas de tiempo, gráficos de etapas y distribución de cómputo. |
 
 ---
 
@@ -809,10 +823,9 @@ DISTRIBUCIÓN DEL TIEMPO DE PARED POR SUBAGENTE (INFERENCIA LLM vs TOOLS)
 
 Todos los artefactos originales individuales generados por los auditores especializados se preservan íntegros en [`reports/audits_archive/{course_id}/`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id).as_posix()}/):
 
-- **Auditoría Cualitativa Profunda de Calidad (Gemini 4 Argon):** [`qa_report.md`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'qa_report.md').as_posix()}) | [`qa_report.json`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'qa_report.json').as_posix()})
+- **Auditoría Cualitativa Profunda de Calidad (Gemini 4 Argon):** [`qa_report.md`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'qa_report.md').as_posix()}) *(autocontenido con metadatos JSON embebidos)*
 - **Informe Maestro Agéntico del Pipeline (Gemini Flash Lead + 3 Subagentes):** [`agentic_pipeline_audit.md`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'agentic_pipeline_audit.md').as_posix()})
 - **Sub-Auditorías del Clúster Agéntico (`agentic_batches/`):** [`agentic_batches/`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'agentic_batches').as_posix()}/)
-- **Dashboard Visual Interactivo:** [`dashboard.html`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'dashboard.html').as_posix()})
 - **Índice Completo del Archivo Persistente:** [`README.md`](file:///{(ROOT_DIR / 'reports' / 'audits_archive' / course_id / 'README.md').as_posix()})
 """
     return md
@@ -875,7 +888,6 @@ def run_unified_audit(
 
                 (run_dir / "telemetry.json").write_text(json.dumps(audit_result, indent=2, ensure_ascii=False), encoding="utf-8")
                 (run_dir / "report.md").write_text(ReportGenerator.generate_markdown(audit_result), encoding="utf-8")
-                (run_dir / "dashboard.html").write_text(ReportGenerator.generate_html_dashboard(audit_result), encoding="utf-8")
 
                 reg_mgr = HistoricalRegistry(output_base=c2c_base)
                 reg_mgr.register_run(audit_result, run_dir.name)

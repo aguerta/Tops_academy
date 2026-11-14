@@ -1,0 +1,1010 @@
+"""Comprehensive Unit Tests for Shard Compiler, Diagnostics & Circuit Breakers (Stream B).
+
+Covers:
+1. Graceful Missing-File Error Handling:
+   - A .py path input that does not exist returns a clear error and never calls mkdir.
+   - Auto-infers shard_id and work_dir from path.
+2. Bounded Compilation [COMPILE n/6]:
+   - Tracks compilation attempts per shard in work/.check_attempts/.
+   - Prints [COMPILE n/6] on each invocation.
+   - Emits terminal STOP at limit: "STOP, send_message the Director".
+   - Clears attempt tracking on clean pass.
+3. Dry-Run Diagnostics (_format_dry_failure):
+   - Prints first failing seed, parameters, type(exc).__name__: str(exc),
+     and last 3 traceback frames mapped to shard_XX_data.py source lines.
+4. Stateful SHA-256 Circuit Breaker:
+   - Tracks per-competency state {attempts, last_hash, halted}.
+   - Same-hash repeat failures trigger terminal STOP: "STOP, send_message the Director".
+   - Changed source hash re-evaluates and resets halt.
+   - Clean pass clears the halt (unlinks attempt file).
+5. Adaptive Shard Sizing in plan_shards.py:
+   - comps_per_shard = clamp(ceil(N / 8), 2, 6) with up to 8 concurrent authors.
+"""
+
+import hashlib
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any, Dict
+
+import pytest
+
+# Ensure skills root is in sys.path
+_skill_root = Path(__file__).resolve().parents[2] / ".agents" / "skills" / "content-to-course"
+if str(_skill_root) not in sys.path:
+    sys.path.insert(0, str(_skill_root))
+
+from check_templates import _format_dry_failure, check_templates_file_or_dir
+from compile_shard import compile_shard, ShardDataLineLocator
+from plan_shards import determine_shard_count
+
+
+class TestMissingFileHandling:
+    """Tests that missing .py file inputs fail gracefully without creating directories."""
+
+    def test_missing_py_file_never_creates_directory(self, tmp_path: Path):
+        """Calling compile_shard with a non-existent .py file must NOT create it as a directory."""
+        work_dir = tmp_path / "work"
+        shards_dir = work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+        missing_file = shards_dir / "shard_03_data.py"
+
+        assert not missing_file.exists()
+
+        success, errors = compile_shard(missing_file)
+        assert not success
+        assert len(errors) > 0
+        assert any("No existe el archivo de datos" in e for e in errors)
+
+        # CRITICAL: Verify the missing file path was NOT created as a directory
+        assert not missing_file.exists(), f"BUG DETECTED: {missing_file} was created as a directory!"
+
+    def test_infer_shard_id_and_work_dir_from_missing_path(self, tmp_path: Path):
+        """Verify shard_id and work_p are inferred properly even when the file is missing."""
+        work_dir = tmp_path / "test_course" / "work"
+        target_path = work_dir / "shards" / "shard_07_data.py"
+
+        success, errors = compile_shard(target_path)
+        assert not success
+        assert "shard_07_data.py" in errors[0]
+        assert not target_path.exists()
+
+
+class TestBoundedCompilation:
+    """Tests bounded compilation counter [COMPILE n/6] and terminal STOP."""
+
+    def _setup_minimal_workspace(self, tmp_path: Path, shard_id: str = "shard_01"):
+        work_dir = tmp_path / "work"
+        shards_dir = work_dir / "shards"
+        templates_dir = work_dir / "templates"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+        templates_dir.mkdir(parents=True, exist_ok=True)
+
+        # Write pre_shard_manifest.json
+        manifest_payload = {
+            "total_competencies": 1,
+            "total_shards": 1,
+            "shards": [
+                {
+                    "shard_id": shard_id,
+                    "shard_index": 0,
+                    "competency_ids": ["C-01"],
+                    "competencies": [{"id": "C-01", "name": "Concepto 1", "type": "concept", "distractors": []}],
+                    "shard_data_path": str((shards_dir / f"{shard_id}_data.py").resolve().as_posix()),
+                    "templates_dir": str(templates_dir.resolve().as_posix()),
+                }
+            ],
+        }
+        (shards_dir / "pre_shard_manifest.json").write_text(json.dumps(manifest_payload), encoding="utf-8")
+        return work_dir, shards_dir
+
+    def test_compile_counter_increments_and_halts_at_limit(self, tmp_path: Path, capsys):
+        """Verify unified circuit breaker increments distinct compiles, handles [NO-CHANGE], and halts on 3 repeat errors."""
+        work_dir, shards_dir = self._setup_minimal_workspace(tmp_path, "shard_01")
+        shard_py = shards_dir / "shard_01_data.py"
+
+        # Create broken shard data that fails syntax/parity
+        shard_py.write_text("TEMPLATES = 'broken'\n", encoding="utf-8")
+
+        # Attempt 1: First distinct compile
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=False)
+        assert not success
+        captured = capsys.readouterr()
+        assert "[COMPILE 1/10]" in captured.out or "[COMPILE 1/10]" in captured.err
+
+        # Attempt 2: Re-run with UNCHANGED code -> Idempotent [NO-CHANGE]
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=False)
+        assert not success
+        assert any("[NO-CHANGE" in e for e in errors)
+        captured = capsys.readouterr()
+        # Does NOT increment to [COMPILE 2/10]
+        assert "[COMPILE 2/10]" not in captured.out
+
+        # Distinct Attempt 2: modify code slightly but produce same error
+        shard_py.write_text("TEMPLATES = 'broken'  # distinct try 2\n", encoding="utf-8")
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=False)
+        assert not success
+        captured = capsys.readouterr()
+        assert "[COMPILE 2/10]" in captured.out or "[COMPILE 2/10]" in captured.err
+
+        # Distinct Attempt 3: modify code slightly, 3rd consecutive identical error -> HALT!
+        shard_py.write_text("TEMPLATES = 'broken'  # distinct try 3\n", encoding="utf-8")
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=False)
+        assert not success
+        assert any("STOP, send_message the Director" in e for e in errors)
+
+    def test_compile_counter_resets_on_success(self, tmp_path: Path):
+        """Verify successful compilation removes the attempt tracker file."""
+        work_dir, shards_dir = self._setup_minimal_workspace(tmp_path, "shard_01")
+        att_dir = work_dir / ".check_attempts"
+        att_dir.mkdir(parents=True, exist_ok=True)
+        compile_att_file = att_dir / "compile_shard_01.json"
+        compile_att_file.write_text(json.dumps({"count": 3}), encoding="utf-8")
+
+        # Create a valid shard with 1 template
+        shard_py = shards_dir / "shard_01_data.py"
+        shard_code = (
+            "import random\n"
+            "def gen_c01(rng):\n"
+            "    v = rng.randint(10, 50)\n"
+            "    return {'vars': {'v': v}, 'correct': str(v), 'distractors': []}\n"
+            "def ver_c01(res):\n"
+            "    return res is not None and 'v' in res.get('vars', {}) and int(res['vars']['v']) >= 10\n"
+            "TEMPLATES = [\n"
+            "    ('T-C01-01', 'C-01', 'fill_in_the_blank', gen_c01, ver_c01, ('easy', 'Remember'), "
+            "['Stem 1 @v@ para análisis formal.', 'Stem 2 @v@ para cálculo cuantitativo.', 'Stem 3 @v@ en contexto del modelo.'], "
+            "['Pista socrática 1 identificando variables.', 'Pista socrática 2 deduciendo fórmula requerida.', 'Pista socrática 3 evaluando el resultado numérico.'], "
+            "'Sol @v@')\n"
+            "]\n"
+        )
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=False)
+        assert success, f"Expected success but got errors: {errors}"
+        # On success, compile_att_file should be cleared
+        assert not compile_att_file.exists()
+
+
+class TestDryRunDiagnostics:
+    """Tests for _format_dry_failure reporting seeds, parameters, exceptions, and mapped lines."""
+
+    def test_format_dry_failure_output(self, tmp_path: Path):
+        """Verify _format_dry_failure outputs failing seed, parameters, exception, and traceback."""
+        shard_py = tmp_path / "shard_02_data.py"
+        shard_code = (
+            "# Line 1\n"
+            "# Line 2\n"
+            "def gen_test(rng):\n"
+            "    A = rng.randint(1, 10)\n"
+            "    B = 0\n"
+            "    result = A / B  # Division by zero\n"
+            "    return {'vars': {'A': A}, 'correct': '1', 'distractors': []}\n"
+            "\n"
+            "def ver_test(res):\n"
+            "    return True\n"
+            "\n"
+            "TEMPLATES = [\n"
+            "    ('C-02', 'fill_in_the_blank', 'Stem', gen_test, ver_test, 'Sol', 'KC', [], ('doc', 1, ''))\n"
+            "]\n"
+        )
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        gen_code = (
+            "def generate(rng):\n"
+            "    A = rng.randint(1, 10)\n"
+            "    B = 0\n"
+            "    result = A / B\n"
+            "    return {'vars': {'A': A}, 'correct': '1', 'distractors': []}\n"
+        )
+
+        report = _format_dry_failure(
+            competency_id="C-02",
+            tpl_id="T-C-02",
+            generate_py=gen_code,
+            failing_seed=42,
+            shard_py=shard_py,
+            print_output=False,
+        )
+
+        assert "[-] [TPL-DRY: FALLO EN EJECUCIÓN DRY-RUN]" in report
+        assert "Primer seed fallido: 42" in report
+        assert "Parámetros:" in report
+        assert "ZeroDivisionError: division by zero" in report
+        assert "shard_02_data.py" in report
+        assert "Traceback" in report
+
+
+class TestStatefulSHA256CircuitBreaker:
+    """Tests for stateful SHA-256 circuit breaker {attempts, last_hash, halted}."""
+
+    def test_stateful_circuit_breaker_cycle(self, tmp_path: Path):
+        """Verify circuit breaker tracks hash, halts on repeat failures, and clears on change or pass."""
+        templates_dir = tmp_path / "templates"
+        attempts_dir = tmp_path / ".check_attempts"
+        templates_dir.mkdir(parents=True, exist_ok=True)
+        attempts_dir.mkdir(parents=True, exist_ok=True)
+
+        tpl_file = templates_dir / "C-01.json"
+
+        # Broken template 1 (fails AST/schema or dry-run)
+        broken_tpl_1 = {
+            "id": "T-C01-01",
+            "competency_id": "C-01",
+            "interaction_type": "fill_in_the_blank",
+            "difficulty": "medium",
+            "bloom": "Understand",
+            "stem": "Stem",
+            "generate_py": "def generate(rng):\n    x = 1 / 0\n    return {'vars': {}, 'correct': '1'}\n",
+            "cross_check_py": "def verify(r):\n    return True\n",
+            "solution": "Sol",
+            "distractor_ids": [],
+            "hints": ["H1", "H2", "H3"],
+        }
+        tpl_file.write_text(json.dumps(broken_tpl_1), encoding="utf-8")
+
+        # 1st run: fails, attempts=1
+        clean, errs = check_templates_file_or_dir(
+            [tpl_file],
+            attempts_dir=attempts_dir,
+            shard_id="shard_01",
+            strict=False,
+            auto_fix=False,
+        )
+        assert not clean
+        att_file = attempts_dir / "shard_01_C-01.json"
+        assert att_file.is_file()
+        att_data = json.loads(att_file.read_text(encoding="utf-8"))
+        assert att_data["attempts"] == 1
+        assert att_data["last_hash"] is not None
+        assert not att_data["halted"]
+
+        # 2nd run with SAME hash: attempts=2
+        clean, errs = check_templates_file_or_dir(
+            [tpl_file],
+            attempts_dir=attempts_dir,
+            shard_id="shard_01",
+            strict=False,
+            auto_fix=False,
+        )
+        assert not clean
+        att_data = json.loads(att_file.read_text(encoding="utf-8"))
+        assert att_data["attempts"] == 2
+        assert not att_data["halted"]
+
+        # 3rd run with SAME hash: attempts=3 -> HALTED with terminal STOP
+        clean, errs = check_templates_file_or_dir(
+            [tpl_file],
+            attempts_dir=attempts_dir,
+            shard_id="shard_01",
+            strict=False,
+            auto_fix=False,
+        )
+        assert not clean
+        att_data = json.loads(att_file.read_text(encoding="utf-8"))
+        assert att_data["attempts"] == 3
+        assert att_data["halted"]
+        assert any("STOP, send_message the Director" in e for e in errs)
+
+        # 4th run: AUTHOR MODIFIES CODE (different hash): re-evaluates and resets halt!
+        broken_tpl_2 = dict(broken_tpl_1)
+        broken_tpl_2["stem"] = "Modified stem for C-01"
+        tpl_file.write_text(json.dumps(broken_tpl_2), encoding="utf-8")
+
+        clean, errs = check_templates_file_or_dir(
+            [tpl_file],
+            attempts_dir=attempts_dir,
+            shard_id="shard_01",
+            strict=False,
+            auto_fix=False,
+        )
+        assert not clean
+        att_data = json.loads(att_file.read_text(encoding="utf-8"))
+        assert att_data["attempts"] == 1  # Reset to 1 on code change!
+        assert not att_data["halted"]     # Halt cleared!
+
+        # 5th run: AUTHOR FIXES THE CODE (clean pass): clears attempt file!
+        fixed_tpl = {
+            "id": "T-C01-01",
+            "competency_id": "C-01",
+            "interaction_type": "fill_in_the_blank",
+            "difficulty": "medium",
+            "bloom": "Understand",
+            "stem": "Calcule el valor de {x} dado el enunciado formal.",
+            "generate_py": (
+                "def generate(rng):\n"
+                "    x = rng.randint(10, 100)\n"
+                "    return {'vars': {'x': x}, 'correct': str(x), 'distractors': []}\n"
+            ),
+            "cross_check_py": "def verify(r):\n    return True\n",
+            "solution": "La solución detallada para el valor de {x} es directa.",
+            "distractor_ids": [],
+            "hints": ["H1 contextualizada", "H2 procedimiento", "H3 verificacion"],
+        }
+        tpl_file.write_text(json.dumps(fixed_tpl), encoding="utf-8")
+
+        clean, errs = check_templates_file_or_dir(
+            [tpl_file],
+            attempts_dir=attempts_dir,
+            shard_id="shard_01",
+            strict=False,
+            auto_fix=False,
+        )
+        assert clean, f"Expected clean pass, got: {errs}"
+        assert not att_file.exists(), "Pass must clear the halt and remove attempt file!"
+
+
+
+class TestAdaptiveShardSizing:
+    """Tests for adaptive shard sizing in plan_shards.py: clamp(ceil(N / 8), 2, DEFAULT_COMPS_PER_SHARD)."""
+
+    def test_determine_shard_count_adaptive(self):
+        """Verify clamp(ceil(N / 8), 2, 2) in Case 2B across various course sizes."""
+        # N = 1 -> 1 shard
+        assert determine_shard_count(1) == 1
+
+        # N = 8: ceil(8/8) = 1 -> clamped to 2 -> ceil(8/2) = 4 shards
+        assert determine_shard_count(8) == 4
+
+        # N = 16: ceil(16/8) = 2 -> 2/shard -> ceil(16/2) = 8 shards
+        assert determine_shard_count(16) == 8
+
+        # N = 24: under Case 2B (max 2/shard) -> ceil(24/2) = 12 shards
+        assert determine_shard_count(24) == 12
+
+        # N = 32: under Case 2B (max 2/shard) -> ceil(32/2) = 16 shards
+        assert determine_shard_count(32) == 16
+
+        # N = 43: under Case 2B (max 2/shard) -> ceil(43/2) = 22 shards
+        assert determine_shard_count(43) == 22
+
+        # N = 60: under Case 2B (max 2/shard) -> ceil(60/2) = 30 shards
+        assert determine_shard_count(60) == 30
+
+        # Parametric override: Case 2A (max_comps_per_shard=3)
+        assert determine_shard_count(24, max_comps_per_shard=3) == 8
+
+        # Parametric override: legacy v3.22 (max_comps_per_shard=6)
+        assert determine_shard_count(43, max_comps_per_shard=6) == 8
+        assert determine_shard_count(60, max_comps_per_shard=6) == 10
+
+    def test_requested_k_overrides_adaptive(self):
+        """Explicit requested_k takes precedence."""
+        assert determine_shard_count(24, requested_k=4) == 4
+
+    def test_max_comps_per_shard_overrides_adaptive(self):
+        """Explicit max_comps_per_shard takes precedence."""
+        assert determine_shard_count(24, max_comps_per_shard=2) == 12
+
+
+class TestHardenedRemediations:
+    """Tests for template ID normalization, AST preamble dedent, and shard_fixes isolation."""
+
+    def test_template_id_normalization_and_locator_matching(self, tmp_path: Path):
+        """Templates with non-prefixed IDs like C01_T1 are normalized to T-C01-01 and matched by locator."""
+        from compile_shard import ShardDataLineLocator, is_trivial_verifier
+
+        sample_src = (
+            "import math\n\n"
+            "def gen_c01_1(rng):\n"
+            "    x = rng.randint(10, 50)\n"
+            "    return {'vars': {'x': x, 'ans': x * 2}, 'correct': '@ans@', 'distractors': []}\n\n"
+            "def ver_c01_1(res):\n"
+            "    import math\n"  # Indented import inside function!
+            "    v = res.get('vars', {})\n"
+            "    return v.get('ans') == v.get('x', 0) * 2\n\n"
+            "TEMPLATES = [\n"
+            "    ('C01_T1', 'C-01', 'fill_in_the_blank', gen_c01_1, ver_c01_1, ('easy', 'Remember'), ['Enunciado 1'], ['H1'], 'Sol'),\n"
+            "    ('C01_T2', 'C-01', 'fill_in_the_blank', gen_c01_1, ver_c01_1, ('medium', 'Understand'), ['Enunciado 2'], ['H1'], 'Sol'),\n"
+            "]\n"
+        )
+        data_py = tmp_path / "shard_01_data.py"
+        data_py.write_text(sample_src, encoding="utf-8")
+
+        locator = ShardDataLineLocator(data_py)
+
+        # 1. Verify preamble extraction ignores indented import inside ver_c01_1
+        preamble = locator.get_preamble_code()
+        assert "import math" in preamble
+        for line in preamble.splitlines():
+            assert not line.startswith(" "), f"Indented line found in preamble: '{line}'"
+
+        # 2. Verify is_trivial_verifier accepts verifier with indented function and internal import
+        ver_src = "    def ver_c01_1(res):\n        import math\n        v = res.get('vars', {})\n        return v.get('ans') == v.get('x', 0) * 2"
+        is_triv, reason = is_trivial_verifier(ver_src)
+        assert not is_triv, f"Valid verifier flagged as trivial: {reason}"
+
+        # 3. Verify find_tuple_for_question resolves cross-mapped IDs (T-C01-01 -> C01_T1)
+        t_info1 = locator.find_tuple_for_question("C-01", template_id="T-C01-01")
+        assert t_info1 is not None
+        assert t_info1.get("template_id") == "C01_T1"
+
+        t_info2 = locator.find_tuple_for_question("C-01", template_id="T-C-01-02")
+        assert t_info2 is not None
+        assert t_info2.get("template_id") == "C01_T2"
+
+    def test_discover_fix_files_shard_isolation(self, tmp_path: Path):
+        """discover_fix_files respects per-shard directory isolation."""
+        from compile_shard import discover_fix_files
+
+        fixes_root = tmp_path / "shard_fixes"
+        s01_dir = fixes_root / "shard_01"
+        s02_dir = fixes_root / "shard_02"
+        s01_dir.mkdir(parents=True, exist_ok=True)
+        s02_dir.mkdir(parents=True, exist_ok=True)
+
+        fix_c01 = s01_dir / "C-01.py"
+        fix_c01.write_text("# fix C01\n", encoding="utf-8")
+        fix_c02 = s02_dir / "C-02.py"
+        fix_c02.write_text("# fix C02\n", encoding="utf-8")
+
+        # Querying shard_01 fixes with expected competency C-01
+        fixes_by_cid, rel_files = discover_fix_files(fixes_root, expected_cids=["C-01"], shard_id="shard_01")
+        assert "C-01" in fixes_by_cid
+        assert fixes_by_cid["C-01"] == fix_c01
+        assert "C-02" not in fixes_by_cid
+        assert fix_c02 not in rel_files
+
+    def test_parenthetical_telltale_linter_early_detection(self, tmp_path: Path):
+        """compile_shard flags parenthetical telltale clues in options during Stage 4."""
+        from compile_shard import compile_shard
+
+        work_dir = tmp_path / "work"
+        shards_dir = work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+
+        manifest_data = {
+            "shards": [
+                {"shard_id": "shard_01", "competency_ids": ["C-01"]}
+            ]
+        }
+        (shards_dir / "pre_shard_manifest.json").write_text(json.dumps(manifest_data), encoding="utf-8")
+
+        cta_data = {
+            "course_id": "test_course",
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "type": "knowledge",
+                    "distractors": [{"id": f"D-01-{i:02d}", "name": f"D{i}"} for i in range(1, 7)]
+                }
+            ]
+        }
+        (work_dir / "cta.json").write_text(json.dumps(cta_data), encoding="utf-8")
+
+        shard_py = shards_dir / "shard_01_data.py"
+        shard_code = (
+            "def gen_c01_1(rng):\n"
+            "    v = rng.randint(10, 50)\n"
+            "    dists = [('D-01-01', f'Valor {v + 1} (sesgo negativo hacia abajo)', 'Rationale 1 con v=@v@'),\n"
+            "             ('D-01-02', f'Valor {v + 2}', 'Rationale 2 con v=@v@'),\n"
+            "             ('D-01-03', f'Valor {v + 3}', 'Rationale 3 con v=@v@'),\n"
+            "             ('D-01-04', f'Valor {v + 4}', 'Rationale 4 con v=@v@'),\n"
+            "             ('D-01-05', f'Valor {v + 5}', 'Rationale 5 con v=@v@'),\n"
+            "             ('D-01-06', f'Valor {v + 6}', 'Rationale 6 con v=@v@')]\n"
+            "    return {'vars': {'v': v}, 'correct': f'Valor {v}', 'distractors': dists}\n"
+            "def ver_c01_1(res):\n"
+            "    return res is not None and 'v' in res.get('vars', {})\n"
+            "stems = ['Stem 1 @v@ para análisis formal.', 'Stem 2 @v@ para cálculo cuantitativo.', 'Stem 3 @v@ en contexto del modelo.']\n"
+            "hints = ['Pista socrática 1 identificando variables.', 'Pista socrática 2 deduciendo fórmula requerida.', 'Pista socrática 3 evaluando el resultado numérico.']\n"
+            "TEMPLATES = [\n"
+            "    ('T-C01-01', 'C-01', 'multiple_choice_7_options', gen_c01_1, ver_c01_1, ('easy', 'Remember'), stems, hints, 'Sol @v@')\n"
+            "]\n"
+        )
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success, "Expected compile_shard to fail due to parenthetical telltale clue"
+        assert any("parenthetical_telltale_linter" in e for e in errors), f"Expected parenthetical_telltale_linter error, got: {errors}"
+        assert any("(sesgo negativo hacia abajo)" in e for e in errors), f"Expected offending snippet in errors, got: {errors}"
+
+
+class TestStream1BCompilerFeatures:
+    """Explicit tests for Stream 1B Form-C DSL, AST hygiene, tautology rejection, and certification."""
+
+    def _setup_work_dir(self, tmp_path: Path):
+        work_dir = tmp_path / "work"
+        shards_dir = work_dir / "shards"
+        shards_dir.mkdir(parents=True, exist_ok=True)
+
+        manifest_data = {
+            "shards": [
+                {"shard_id": "shard_01", "competency_ids": ["C-01"]}
+            ]
+        }
+        (shards_dir / "pre_shard_manifest.json").write_text(json.dumps(manifest_data), encoding="utf-8")
+
+        cta_data = {
+            "course_id": "course_stream1b",
+            "competencies": [
+                {
+                    "id": "C-01",
+                    "type": "concept",
+                    "distractors": [{"id": f"D-01-{i:02d}", "name": f"D{i}"} for i in range(1, 7)]
+                }
+            ]
+        }
+        (work_dir / "cta.json").write_text(json.dumps(cta_data), encoding="utf-8")
+        return work_dir, shards_dir
+
+    def test_form_c_dsl_and_certification(self, tmp_path: Path):
+        """Form-C DSL dict entry compiles cleanly, prunes AST (< 15 KB), and emits shard cert."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def gen_c01_1(rng):
+    x = rng.randint(10, 50)
+    return {"vars": {"X": x}, "ans": f"{x}", "ds": [(f"D-01-{i:02d}", f"{x + i}") for i in range(1, 7)]}
+
+def ver_c01_1(cand, v):
+    expected = rf"$\\eta = {v.get('X')}$"
+    return str(cand) == expected
+
+def gen_c01_2(rng):
+    y = rng.randint(20, 60)
+    ans = y * 2
+    return {"vars": {"y": y}, "correct": str(ans)}
+
+def ver_c01_2(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return str(res.get("correct")) == str(v.get("y", 0) * 2)
+
+def gen_c01_3(rng):
+    z = rng.randint(10, 40)
+    opts = [
+        {"value": f"Option A {z + 1}", "is_correct": True, "rationale": "Valid first option verifying the structural condition with parameter @z@."},
+        {"value": f"Option B {z + 2}", "is_correct": True, "rationale": "Valid second option verifying the structural condition with parameter @z@."},
+        {"value": f"Option C {z + 3}", "is_correct": False, "distractor_id": "D-01-01", "rationale": "Invalid third option caused by misapplying sign on parameter @z@."},
+        {"value": f"Option D {z + 4}", "is_correct": False, "distractor_id": "D-01-02", "rationale": "Invalid fourth option caused by omitting coefficient on parameter @z@."},
+    ]
+    return {"vars": {"z": z}, "options": opts}
+
+def ver_c01_3(res):
+    if not isinstance(res, dict): return False
+    z = res.get("vars", {}).get("z", 0)
+    opts = res.get("options", [])
+    if {o.get("value") for o in opts if o.get("is_correct")} != {f"Option A {z + 1}", f"Option B {z + 2}"}: return False
+    exp_f = {f"Option C {z + 3}": "D-01-01", f"Option D {z + 4}": "D-01-02"}
+    return all(
+        o.get("value") in exp_f
+        and o.get("distractor_id") == exp_f[o.get("value")]
+        and len(str(o.get("error_rationale") or o.get("rationale") or "")) >= 20
+        for o in opts if not o.get("is_correct")
+    )
+
+def gen_c01_4(rng):
+    w = rng.randint(15, 55)
+    return {"vars": {"w": w}, "correct": f"Opt {w}", "distractors": [(f"D-01-{i:02d}", f"Opt {w + i}", f"Diagnostic rationale {i}: misapplied algebraic step on parameter @w@.") for i in range(1, 7)]}
+
+def ver_c01_4(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return res.get("correct") == f"Opt {v.get('w')}"
+
+stems_2 = [
+    "Variant A calculating intermediate response @y@.",
+    "Variant B evaluating application parameter @y@.",
+    "Variant C identifying structural equation @y@.",
+    "Variant D checking consistency across terms @y@.",
+    "Variant E concluding quantitative derivation @y@.",
+]
+hints_2 = [
+    "First socratic hint analyzing input parameter @y@.",
+    "Second socratic hint multiplying by the scalar ratio.",
+    "Third socratic hint confirming final numeric format.",
+]
+
+stems_3 = [
+    "Analysis question one investigating dual components @z@.",
+    "Analysis question two comparing structural factors @z@.",
+    "Analysis question three determining valid statements @z@.",
+    "Analysis question four selecting matching criteria @z@.",
+    "Analysis question five checking systemic properties @z@.",
+]
+hints_3 = [
+    "First analytical hint breaking down multiple choices @z@.",
+    "Second analytical hint inspecting conditions for truth.",
+    "Third analytical hint verifying combined selections.",
+]
+
+stems_4 = [
+    "Evaluation premise one testing overall validity @w@.",
+    "Evaluation premise two verifying robust behavior @w@.",
+    "Evaluation premise three comparing against benchmarks @w@.",
+    "Evaluation premise four justifying optimal decisions @w@.",
+    "Evaluation premise five synthesizing final judgments @w@.",
+]
+hints_4 = [
+    "First evaluative hint identifying target metrics @w@.",
+    "Second evaluative hint contrasting theoretical models.",
+    "Third evaluative hint checking boundaries and conclusions.",
+]
+
+TEMPLATES = [
+    {
+        "id": "T-C01-01",
+        "cid": "C-01",
+        "qtype": "MC7",
+        "fmt": r"$\\eta = @X@$",
+        "rats": {
+            "D-01-01": "Rationale 1 explaining coefficient error with parameter @X@.",
+            "D-01-02": "Rationale 2 explaining sign inversion with parameter @X@.",
+            "D-01-03": "Rationale 3 explaining missing factor with parameter @X@.",
+            "D-01-04": "Rationale 4 explaining boundary error with parameter @X@.",
+            "D-01-05": "Rationale 5 explaining scaling error with parameter @X@.",
+            "D-01-06": "Rationale 6 explaining constant offset with parameter @X@.",
+        },
+        "gen": gen_c01_1,
+        "ver": ver_c01_1,
+        "band": ("easy", "Remember"),
+        "stems": (
+            ["Context Alpha with parameter @X@.", "Context Beta with parameter @X@."],
+            ["Calculate the primary index.", "Determine the baseline value."]
+        ),
+        "hints": [
+            "First hint scaffolding the variable identification.",
+            "Second hint applying the foundational formula.",
+            "Third hint validating the numeric simplification.",
+        ],
+        "sol": "Step-by-step formal solution computing @X@ from the linear parameters.",
+    },
+    ("T-C01-02", "C-01", "fill_in_the_blank", gen_c01_2, ver_c01_2, ("medium", "Apply"), stems_2, hints_2, "Step-by-step formal solution evaluating expression @y@ in detail."),
+    ("T-C01-03", "C-01", "multiple_select", gen_c01_3, ver_c01_3, ("hard", "Analyze"), stems_3, hints_3, "Step-by-step formal solution verifying each statement for @z@."),
+    ("T-C01-04", "C-01", "multiple_choice_7_options", gen_c01_4, ver_c01_4, ("hard", "Evaluate"), stems_4, hints_4, "Step-by-step formal solution deriving final value @w@ carefully."),
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert success, f"Expected compile_shard to succeed, got errors: {errors}"
+        assert errors == []
+
+        # 1. Verify certification file emitted
+        cert_path = shards_dir / "shard_01.cert.json"
+        assert cert_path.is_file(), "Certification file shard_01.cert.json was not created"
+        cert_data = json.loads(cert_path.read_text(encoding="utf-8"))
+        assert cert_data.get("schema_version") == 1
+        assert cert_data.get("stage") == "shard"
+        assert cert_data.get("artifact_id") == "shard_01"
+        assert cert_data.get("contract_version") == 2
+        assert cert_data.get("passed_50_seeds") is True
+
+        # 2. Verify AST pruning (< 20 KB)
+        out_json = work_dir / "templates" / "C-01.json"
+        assert out_json.is_file(), "Compiled C-01.json not found"
+        json_size = out_json.stat().st_size
+        assert json_size < 20 * 1024, f"C-01.json size exceeds 20 KB: {json_size} bytes"
+
+        # 3. Verify Cartesian stems expansion in compiled output (2x2 = 4 variants)
+        tpl_data = json.loads(out_json.read_text(encoding="utf-8"))
+        t1 = tpl_data["templates"][0]
+        assert len(t1["stem_variants"]) == 4
+        assert "Context Alpha with parameter @X@. Calculate the primary index." in t1["stem_variants"]
+
+    def test_verifier_tautology_detected(self, tmp_path: Path):
+        """Tautological verifier returning True for distractors is rejected with [VERIFIER-TAUTOLOGY-DETECTED]."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def gen_c01_1(rng):
+    v = rng.randint(10, 50)
+    dists = [
+        ("D-01-01", f"Val {v + 1}", "Rationale 1 with v=@v@"),
+        ("D-01-02", f"Val {v + 2}", "Rationale 2 with v=@v@"),
+        ("D-01-03", f"Val {v + 3}", "Rationale 3 with v=@v@"),
+        ("D-01-04", f"Val {v + 4}", "Rationale 4 with v=@v@"),
+        ("D-01-05", f"Val {v + 5}", "Rationale 5 with v=@v@"),
+        ("D-01-06", f"Val {v + 6}", "Rationale 6 with v=@v@"),
+    ]
+    return {"vars": {"v": v}, "correct": f"Val {v}", "distractors": dists}
+
+def ver_c01_1(res):
+    # Tautological verifier: ignores correct answer and always returns True
+    return bool(res and "vars" in res)
+
+stems = [
+    "Stem variant one with variable @v@.",
+    "Stem variant two with variable @v@.",
+    "Stem variant three with variable @v@.",
+]
+hints = [
+    "First socratic hint explaining terms @v@.",
+    "Second socratic hint applying fundamental laws.",
+    "Third socratic hint calculating final output.",
+]
+
+TEMPLATES = [
+    ("T-C01-01", "C-01", "multiple_choice_7_options", gen_c01_1, ver_c01_1, ("easy", "Remember"), stems, hints, "Sol @v@")
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success
+        assert any("[VERIFIER-TAUTOLOGY-DETECTED]" in e for e in errors), f"Expected tautology error, got: {errors}"
+
+    def test_verifier_swallowed_exception_detected(self, tmp_path: Path):
+        """Verifier containing try/except returning True in handler is rejected with [VERIFIER-SWALLOWED-EXCEPTION]."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def gen_c01_1(rng):
+    v = rng.randint(10, 50)
+    dists = [
+        ("D-01-01", f"Val {v + 1}", "Rationale 1 with v=@v@"),
+        ("D-01-02", f"Val {v + 2}", "Rationale 2 with v=@v@"),
+        ("D-01-03", f"Val {v + 3}", "Rationale 3 with v=@v@"),
+        ("D-01-04", f"Val {v + 4}", "Rationale 4 with v=@v@"),
+        ("D-01-05", f"Val {v + 5}", "Rationale 5 with v=@v@"),
+        ("D-01-06", f"Val {v + 6}", "Rationale 6 with v=@v@"),
+    ]
+    return {"vars": {"v": v}, "correct": f"Val {v}", "distractors": dists}
+
+def ver_c01_1(res):
+    try:
+        val = int(res.get("correct", "").split()[-1])
+        return val == res.get("vars", {}).get("v")
+    except Exception:
+        return True
+
+stems = [
+    "Stem variant one with variable @v@.",
+    "Stem variant two with variable @v@.",
+    "Stem variant three with variable @v@.",
+]
+hints = [
+    "First socratic hint explaining terms @v@.",
+    "Second socratic hint applying fundamental laws.",
+    "Third socratic hint calculating final output.",
+]
+
+TEMPLATES = [
+    ("T-C01-01", "C-01", "multiple_choice_7_options", gen_c01_1, ver_c01_1, ("easy", "Remember"), stems, hints, "Sol @v@")
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success
+        assert any("[VERIFIER-SWALLOWED-EXCEPTION]" in e for e in errors), f"Expected swallowed exception error, got: {errors}"
+
+    def test_generator_debug_artifact_detected(self, tmp_path: Path):
+        """Generator containing raise statement is rejected with [TPL-DEBUG-ARTIFACT]."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def gen_c01_1(rng):
+    v = rng.randint(10, 50)
+    if v < 0:
+        raise RuntimeError("Debug assertion failed")
+    dists = [
+        ("D-01-01", f"Val {v + 1}", "Rationale 1 with v=@v@"),
+        ("D-01-02", f"Val {v + 2}", "Rationale 2 with v=@v@"),
+        ("D-01-03", f"Val {v + 3}", "Rationale 3 with v=@v@"),
+        ("D-01-04", f"Val {v + 4}", "Rationale 4 with v=@v@"),
+        ("D-01-05", f"Val {v + 5}", "Rationale 5 with v=@v@"),
+        ("D-01-06", f"Val {v + 6}", "Rationale 6 with v=@v@"),
+    ]
+    return {"vars": {"v": v}, "correct": f"Val {v}", "distractors": dists}
+
+def ver_c01_1(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return res.get("correct") == f"Val {v.get('v')}"
+
+stems = [
+    "Stem variant one with variable @v@.",
+    "Stem variant two with variable @v@.",
+    "Stem variant three with variable @v@.",
+]
+hints = [
+    "First socratic hint explaining terms @v@.",
+    "Second socratic hint applying fundamental laws.",
+    "Third socratic hint calculating final output.",
+]
+
+TEMPLATES = [
+    ("T-C01-01", "C-01", "multiple_choice_7_options", gen_c01_1, ver_c01_1, ("easy", "Remember"), stems, hints, "Sol @v@")
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success
+        assert any("[TPL-DEBUG-ARTIFACT]" in e for e in errors), f"Expected debug artifact error, got: {errors}"
+
+    def test_generator_ad_hoc_perturbation_detected(self, tmp_path: Path):
+        """Generator using clean_ds function is rejected with [TPL-AD-HOC-PERTURBATION]."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def clean_ds(dists):
+    return dists
+
+def gen_c01_1(rng):
+    v = rng.randint(10, 50)
+    dists = [
+        ("D-01-01", f"Val {v + 1}", "Rationale 1 with v=@v@"),
+        ("D-01-02", f"Val {v + 2}", "Rationale 2 with v=@v@"),
+        ("D-01-03", f"Val {v + 3}", "Rationale 3 with v=@v@"),
+        ("D-01-04", f"Val {v + 4}", "Rationale 4 with v=@v@"),
+        ("D-01-05", f"Val {v + 5}", "Rationale 5 with v=@v@"),
+        ("D-01-06", f"Val {v + 6}", "Rationale 6 with v=@v@"),
+    ]
+    cleaned = clean_ds(dists)
+    return {"vars": {"v": v}, "correct": f"Val {v}", "distractors": cleaned}
+
+def ver_c01_1(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return res.get("correct") == f"Val {v.get('v')}"
+
+stems = [
+    "Stem variant one with variable @v@.",
+    "Stem variant two with variable @v@.",
+    "Stem variant three with variable @v@.",
+]
+hints = [
+    "First socratic hint explaining terms @v@.",
+    "Second socratic hint applying fundamental laws.",
+    "Third socratic hint calculating final output.",
+]
+
+TEMPLATES = [
+    ("T-C01-01", "C-01", "multiple_choice_7_options", gen_c01_1, ver_c01_1, ("easy", "Remember"), stems, hints, "Sol @v@")
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success
+        assert any("[TPL-AD-HOC-PERTURBATION]" in e for e in errors), f"Expected ad-hoc perturbation error, got: {errors}"
+
+    def test_generator_magic_mult_ast_divisor_detected(self, tmp_path: Path):
+        """Generator computing distractors via arbitrary division (ans / 3) is flagged with [DIAG-MAGIC-MULT]."""
+        work_dir, shards_dir = self._setup_work_dir(tmp_path)
+        shard_py = shards_dir / "shard_01_data.py"
+
+        shard_code = '''
+def gen_c01_1(rng):
+    v = rng.randint(10, 50) * 6
+    ans = v
+    d_div = ans / 3
+    d_mult = ans * 1.333
+    dists = [
+        ("D-01-01", f"{round(d_div, 2)}", "Rationale 1 with v=@v@"),
+        ("D-01-02", f"{round(d_mult, 2)}", "Rationale 2 with v=@v@"),
+        ("D-01-03", f"{ans + 3}", "Rationale 3 with v=@v@"),
+        ("D-01-04", f"{ans + 4}", "Rationale 4 with v=@v@"),
+        ("D-01-05", f"{ans + 5}", "Rationale 5 with v=@v@"),
+        ("D-01-06", f"{ans + 6}", "Rationale 6 with v=@v@"),
+    ]
+    return {"vars": {"v": v}, "correct": f"{ans}", "distractors": dists}
+
+def ver_c01_1(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return res.get("correct") == f"{v.get('v')}"
+
+def gen_c01_2(rng):
+    y = rng.randint(20, 60)
+    ans = y * 2
+    return {"vars": {"y": y}, "correct": str(ans)}
+
+def ver_c01_2(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return str(res.get("correct")) == str(v.get("y", 0) * 2)
+
+def gen_c01_3(rng):
+    z = rng.randint(10, 40)
+    opts = [
+        {"value": f"Option A {z + 1}", "is_correct": True, "rationale": "Valid first option with parameter @z@"},
+        {"value": f"Option B {z + 2}", "is_correct": True, "rationale": "Valid second option with parameter @z@"},
+        {"value": f"Option C {z + 3}", "is_correct": False, "distractor_id": "D-01-01", "rationale": "Invalid third option with parameter @z@"},
+        {"value": f"Option D {z + 4}", "is_correct": False, "distractor_id": "D-01-02", "rationale": "Invalid fourth option with parameter @z@"},
+    ]
+    return {"vars": {"z": z}, "options": opts}
+
+def ver_c01_3(res):
+    if not isinstance(res, dict): return False
+    z = res.get("vars", {}).get("z", 0)
+    opts = res.get("options", [])
+    if {o.get("value") for o in opts if o.get("is_correct")} != {f"Option A {z + 1}", f"Option B {z + 2}"}: return False
+    exp_f = {f"Option C {z + 3}": "D-01-01", f"Option D {z + 4}": "D-01-02"}
+    return all(o.get("value") in exp_f and o.get("distractor_id") == exp_f[o.get("value")] for o in opts if not o.get("is_correct"))
+
+def gen_c01_4(rng):
+    w = rng.randint(15, 55)
+    dists = [
+        ("D-01-01", f"Opt {w + 1}", "Rationale 1 with parameter @w@."),
+        ("D-01-02", f"Opt {w + 2}", "Rationale 2 with parameter @w@."),
+        ("D-01-03", f"Opt {w + 3}", "Rationale 3 with parameter @w@."),
+        ("D-01-04", f"Opt {w + 4}", "Rationale 4 with parameter @w@."),
+        ("D-01-05", f"Opt {w + 5}", "Rationale 5 with parameter @w@."),
+        ("D-01-06", f"Opt {w + 6}", "Rationale 6 with parameter @w@."),
+    ]
+    return {"vars": {"w": w}, "correct": f"Opt {w}", "distractors": dists}
+
+def ver_c01_4(res):
+    if not isinstance(res, dict):
+        return False
+    v = res.get("vars", {})
+    return res.get("correct") == f"Opt {v.get('w')}"
+
+stems_1 = [
+    "Variant 1 analyzing multiplier effects with value @v@.",
+    "Variant 2 calculating response with value @v@.",
+    "Variant 3 checking structural ratio with value @v@.",
+    "Variant 4 determining equilibrium state with value @v@.",
+    "Variant 5 evaluating final parameter with value @v@.",
+]
+hints_1 = [
+    "First socratic hint explaining terms @v@.",
+    "Second socratic hint applying fundamental laws.",
+    "Third socratic hint calculating final output.",
+]
+
+stems_2 = [
+    "Variant A calculating intermediate response @y@.",
+    "Variant B evaluating application parameter @y@.",
+    "Variant C identifying structural equation @y@.",
+    "Variant D checking consistency across terms @y@.",
+    "Variant E concluding quantitative derivation @y@.",
+]
+hints_2 = [
+    "First socratic hint analyzing input parameter @y@.",
+    "Second socratic hint multiplying by the scalar ratio.",
+    "Third socratic hint confirming final numeric format.",
+]
+
+stems_3 = [
+    "Analysis question one investigating dual components @z@.",
+    "Analysis question two comparing structural factors @z@.",
+    "Analysis question three determining valid statements @z@.",
+    "Analysis question four selecting matching criteria @z@.",
+    "Analysis question five checking systemic properties @z@.",
+]
+hints_3 = [
+    "First analytical hint breaking down multiple choices @z@.",
+    "Second analytical hint inspecting conditions for truth.",
+    "Third analytical hint verifying combined selections.",
+]
+
+stems_4 = [
+    "Evaluation premise one testing overall validity @w@.",
+    "Evaluation premise two verifying robust behavior @w@.",
+    "Evaluation premise three comparing against benchmarks @w@.",
+    "Evaluation premise four justifying optimal decisions @w@.",
+    "Evaluation premise five synthesizing final judgments @w@.",
+]
+hints_4 = [
+    "First evaluative hint identifying target metrics @w@.",
+    "Second evaluative hint contrasting theoretical models.",
+    "Third evaluative hint checking boundaries and conclusions.",
+]
+
+TEMPLATES = [
+    ("T-C01-01", "C-01", "multiple_choice_7_options", gen_c01_1, ver_c01_1, ("easy", "Remember"), stems_1, hints_1, "Sol @v@"),
+    ("T-C01-02", "C-01", "fill_in_the_blank", gen_c01_2, ver_c01_2, ("medium", "Apply"), stems_2, hints_2, "Sol @y@"),
+    ("T-C01-03", "C-01", "multiple_select", gen_c01_3, ver_c01_3, ("hard", "Analyze"), stems_3, hints_3, "Sol @z@"),
+    ("T-C01-04", "C-01", "multiple_choice_7_options", gen_c01_4, ver_c01_4, ("hard", "Evaluate"), stems_4, hints_4, "Sol @w@"),
+]
+'''
+        shard_py.write_text(shard_code, encoding="utf-8")
+
+        success, errors = compile_shard(work_dir, shard_id="shard_01", strict=True)
+        assert not success
+        assert any("[DIAG-MAGIC-MULT]" in e for e in errors), f"Expected magic mult error, got: {errors}"

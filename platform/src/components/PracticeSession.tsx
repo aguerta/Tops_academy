@@ -6,6 +6,11 @@ import { FeedbackToast } from './FeedbackToast';
 import { MathText } from './MathText';
 import { checkMathEquivalence } from '../utils/mathEquivalence';
 import { isOptionCorrect, getCorrectOptionIds } from '../utils/questionUtils';
+import {
+  saveActiveSession,
+  clearActiveSession,
+  ActiveSessionSnapshot,
+} from '../utils/sessionStore';
 
 interface PracticeSessionProps {
   sessionTitle: string;
@@ -19,6 +24,10 @@ interface PracticeSessionProps {
   onQuit: () => void;
   onRestart?: () => void;
   sessionType?: 'practice' | 'quiz' | 'test' | 'challenge';
+  courseId?: string;
+  competencyId?: string | null;
+  unitIndex?: number | null;
+  initialSnapshot?: ActiveSessionSnapshot | null;
 }
 
 interface QuestionResult {
@@ -39,15 +48,19 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
   onQuit,
   onRestart,
   sessionType,
+  courseId,
+  competencyId,
+  unitIndex,
+  initialSnapshot,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
-  const [fillBlankValue, setFillBlankValue] = useState<string>('');
-  const [hintsRevealed, setHintsRevealed] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() => initialSnapshot?.currentIndex ?? 0);
+  const [selectedOption, setSelectedOption] = useState<string | null>(() => initialSnapshot?.selectedOption ?? null);
+  const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>(() => initialSnapshot?.selectedMultiOptions ?? []);
+  const [fillBlankValue, setFillBlankValue] = useState<string>(() => initialSnapshot?.fillBlankValue ?? '');
+  const [hintsRevealed, setHintsRevealed] = useState(() => initialSnapshot?.hintsRevealed ?? 0);
 
-  const [wrongAttemptsCount, setWrongAttemptsCount] = useState<number>(0);
-  const [isExhausted, setIsExhausted] = useState<boolean>(false);
+  const [wrongAttemptsCount, setWrongAttemptsCount] = useState<number>(() => initialSnapshot?.wrongAttemptsCount ?? 0);
+  const [isExhausted, setIsExhausted] = useState<boolean>(() => initialSnapshot?.isExhausted ?? false);
 
   // Milestone 6: Blank-First Curtain and Socratic Transfer (enabled for Practice, Quizzes, Unit Tests, and Challenges)
   const [blankFirstEnabled, setBlankFirstEnabled] = useState<boolean>(() => {
@@ -57,7 +70,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
       return true;
     }
   });
-  const [isCurtainLifted, setIsCurtainLifted] = useState<boolean>(false);
+  const [isCurtainLifted, setIsCurtainLifted] = useState<boolean>(() => initialSnapshot?.isCurtainLifted ?? false);
 
   const handleToggleBlankFirst = () => {
     setBlankFirstEnabled((prev) => {
@@ -69,13 +82,14 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     });
   };
 
-  const [isChecked, setIsChecked] = useState(false);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [results, setResults] = useState<QuestionResult[]>([]);
+  const [isChecked, setIsChecked] = useState(() => initialSnapshot?.isChecked ?? false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(() => initialSnapshot ? initialSnapshot.isCorrect : null);
+  const [results, setResults] = useState<QuestionResult[]>(() => initialSnapshot?.results ?? []);
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const mainRef = useRef<HTMLElement | null>(null);
   const questionStartTimeRef = useRef<number>(Date.now());
-  const telemetryRef = useRef<QuestionTelemetry[]>([]);
+  const telemetryRef = useRef<QuestionTelemetry[]>(initialSnapshot?.telemetry ? [...initialSnapshot.telemetry] : []);
+  const isInitialHydrationRef = useRef<boolean>(!!initialSnapshot);
 
   const resetScroll = () => {
     window.scrollTo(0, 0);
@@ -88,9 +102,62 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
 
   useEffect(() => {
     resetScroll();
+    if (isInitialHydrationRef.current) {
+      isInitialHydrationRef.current = false;
+      return;
+    }
     setIsCurtainLifted(false);
     questionStartTimeRef.current = Date.now();
   }, [currentIndex]);
+
+  // Milestone 12: Reactive session snapshot persistence
+  useEffect(() => {
+    if (!courseId || questions.length === 0) return;
+    const currentQ = questions[currentIndex];
+    if (!currentQ) return;
+
+    saveActiveSession({
+      version: 1,
+      courseId,
+      sessionType: sessionType || 'practice',
+      competencyId: competencyId ?? null,
+      unitIndex: unitIndex ?? null,
+      sessionTitle,
+      questions,
+      currentIndex,
+      selectedOption,
+      selectedMultiOptions,
+      fillBlankValue,
+      hintsRevealed,
+      wrongAttemptsCount,
+      isExhausted,
+      isChecked,
+      isCorrect,
+      isCurtainLifted,
+      results,
+      telemetry: telemetryRef.current,
+      elapsedSeconds: Math.max(1, Math.round((Date.now() - questionStartTimeRef.current) / 1000)),
+      savedAt: Date.now(),
+    });
+  }, [
+    courseId,
+    competencyId,
+    unitIndex,
+    sessionType,
+    sessionTitle,
+    questions,
+    currentIndex,
+    selectedOption,
+    selectedMultiOptions,
+    fillBlankValue,
+    hintsRevealed,
+    wrongAttemptsCount,
+    isExhausted,
+    isChecked,
+    isCorrect,
+    isCurtainLifted,
+    results,
+  ]);
 
   const clearAutoAdvanceTimer = () => {
     if (autoAdvanceTimerRef.current) {
@@ -303,6 +370,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     setResults(newResults);
 
     if (currentIndex + 1 >= total) {
+      clearActiveSession();
       const finalScore = newResults.filter((r) => r.isCorrect).length;
       const totalSessionSeconds = telemetryRef.current.reduce((acc, t) => acc + t.seconds_spent, 0);
       onComplete(finalScore, total, [...telemetryRef.current], totalSessionSeconds);
@@ -355,6 +423,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
     setResults(newResults);
 
     if (currentIndex + 1 >= total) {
+      clearActiveSession();
       const finalScore = newResults.filter((r) => r.isCorrect).length;
       const totalSessionSeconds = telemetryRef.current.reduce((acc, t) => acc + t.seconds_spent, 0);
       onComplete(finalScore, total, [...telemetryRef.current], totalSessionSeconds);
@@ -476,6 +545,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
         <button
           onClick={() => {
             clearAutoAdvanceTimer();
+            clearActiveSession();
             onQuit();
           }}
           className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-ka-text-secondary text-base transition-colors shrink-0"
@@ -514,6 +584,7 @@ export const PracticeSession: React.FC<PracticeSessionProps> = ({
             <button
               onClick={() => {
                 clearAutoAdvanceTimer();
+                clearActiveSession();
                 resetScroll();
                 onRestart();
               }}

@@ -12,11 +12,13 @@ Validates parametric exercise templates against template.schema.json and enforce
 
 import argparse
 import ast
+import copy
 import hashlib
 import json
 import os
 import re
 import sys
+import textwrap
 import uuid
 import zlib
 from collections import defaultdict
@@ -567,6 +569,151 @@ def _extract_template_placeholders(text: str) -> Set[str]:
 
         placeholders.add(var_name)
     return placeholders
+
+
+def _check_stem_derivative_giveaway(text: str) -> Optional[Tuple[str, str]]:
+    """Detect if stem defines an explicit function AND gives away its evaluated derivative.
+    
+    Returns (fn_def_snippet, deriv_snippet) if giveaway detected, else None.
+    Excludes critical point conditions (f'(x) = 0) and abstract functions without formula.
+    """
+    if not isinstance(text, str) or "'" not in text:
+        return None
+    fn_def_re = re.compile(
+        r"([a-zA-Z])\s*\(\s*(\\?[a-zA-Z][a-zA-Z0-9_]*)\s*\)\s*=\s*([^\n,;\$]+)"
+    )
+    deriv_re = re.compile(
+        r"([a-zA-Z])'\s*\(\s*([^\n\)=]+)\s*\)\s*=\s*([^\n,;\$]+)"
+    )
+    defs = {}
+    for m in fn_def_re.finditer(text):
+        fname = m.group(1)
+        arg = m.group(2).strip()
+        rhs = m.group(3).strip()
+        if any(op in rhs for op in ("+", "-", "*", "/", "^", "\\frac", "\\sqrt", "\\ln", "\\exp", "\\sin", "\\cos")) or any(char in rhs for char in arg.lstrip("\\")):
+            defs[fname] = m.group(0).strip()
+            
+    if not defs:
+        return None
+
+    for m in deriv_re.finditer(text):
+        fname = m.group(1)
+        arg = m.group(2).strip()
+        rhs = m.group(3).strip()
+        if fname in defs:
+            clean_rhs = rhs.strip().strip("$").strip()
+            if clean_rhs in ("0", "0.0", "00", "\\mathbf{0}", "\\vec{0}"):
+                continue
+            return (defs[fname], m.group(0).strip())
+
+    return None
+
+
+def _check_orphan_vars(
+    template: Dict[str, Any],
+    batch_results: List[Dict[str, Any]],
+    cross_check_py: str,
+    comp_templates: Optional[List[Dict[str, Any]]] = None,
+    cta_distractors_map: Optional[Dict[str, Dict[str, Any]]] = None,
+) -> Set[str]:
+    """Find unused keys in 'vars' returned by generate_py."""
+    raw_vars_keys: Set[str] = set()
+    for r in batch_results:
+        if r.get("success") and isinstance(r.get("result"), dict):
+            v_dict = r["result"].get("vars")
+            if isinstance(v_dict, dict):
+                raw_vars_keys.update(v_dict.keys())
+    if not raw_vars_keys:
+        return set()
+
+    used_tokens: Set[str] = set()
+
+    def _extract_from_text(txt: Any) -> None:
+        if not isinstance(txt, str) or not txt:
+            return
+        for m in re.finditer(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", txt):
+            used_tokens.add(m.group(1))
+        used_tokens.update(_extract_template_placeholders(txt))
+
+    def _extract_from_tpl(tpl_obj: Dict[str, Any]) -> None:
+        if not isinstance(tpl_obj, dict):
+            return
+        _extract_from_text(tpl_obj.get("stem", ""))
+        for sv in tpl_obj.get("stem_variants") or []:
+            _extract_from_text(sv)
+        for h in tpl_obj.get("hints") or []:
+            _extract_from_text(h.get("text", "") if isinstance(h, dict) else str(h))
+        _extract_from_text(tpl_obj.get("solution", ""))
+        _extract_from_text(tpl_obj.get("sol", ""))
+        _extract_from_text(tpl_obj.get("detailed_solution", ""))
+        _extract_from_text(tpl_obj.get("explanation_es", ""))
+        _extract_from_text(tpl_obj.get("generate_py", ""))
+        _extract_from_text(tpl_obj.get("generator_code", ""))
+        for opt in (tpl_obj.get("options") or tpl_obj.get("distractors") or []):
+            if isinstance(opt, dict):
+                for val in opt.values():
+                    if isinstance(val, str):
+                        _extract_from_text(val)
+            elif isinstance(opt, (tuple, list)):
+                for val in opt:
+                    if isinstance(val, str):
+                        _extract_from_text(val)
+        dmap = tpl_obj.get("distractor_map") or {}
+        if isinstance(dmap, dict):
+            for val in dmap.values():
+                if isinstance(val, str):
+                    _extract_from_text(val)
+                elif isinstance(val, dict):
+                    for subval in val.values():
+                        if isinstance(subval, str):
+                            _extract_from_text(subval)
+
+    _extract_from_tpl(template)
+    if comp_templates:
+        for other_tpl in comp_templates:
+            _extract_from_tpl(other_tpl)
+
+    if cta_distractors_map and isinstance(cta_distractors_map, dict):
+        for cd in cta_distractors_map.values():
+            if isinstance(cd, dict):
+                for v in cd.values():
+                    if isinstance(v, str):
+                        _extract_from_text(v)
+
+    # Generated results options/distractors/error_rationale
+    for r in batch_results:
+        if r.get("success") and isinstance(r.get("result"), dict):
+            res_obj = r["result"]
+            for opt in (res_obj.get("options") or res_obj.get("distractors") or []):
+                if isinstance(opt, dict):
+                    for val in opt.values():
+                        if isinstance(val, str):
+                            _extract_from_text(val)
+
+    # Cross check py inspection
+    cross_keys: Set[str] = set()
+    if cross_check_py and isinstance(cross_check_py, str):
+        try:
+            tree = ast.parse(textwrap.dedent(cross_check_py.strip()))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, str):
+                    cross_keys.add(node.slice.value)
+                elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "get" and node.args:
+                    if isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
+                        cross_keys.add(node.args[0].value)
+                elif isinstance(node, ast.Name):
+                    if node.id in raw_vars_keys:
+                        cross_keys.add(node.id)
+                elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    if node.value in raw_vars_keys:
+                        cross_keys.add(node.value)
+        except Exception:
+            for k in raw_vars_keys:
+                if k in cross_check_py:
+                    cross_keys.add(k)
+
+    allowlist = {"ans", "correct", "val"}
+    return raw_vars_keys - used_tokens - cross_keys - allowlist
 
 
 _GIVEAWAY_PREFIX_RE = re.compile(
@@ -1921,8 +2068,9 @@ def format_invariant_error_diagnostic(
 
     # Case H: Length anti-giveaway violation (R-15)
     if "Length anti-giveaway violation" in inv_clean:
-        cause = "La longitud de la respuesta correcta difiere significativamente del rango de los distractores (fuera de 0.80x - 1.20x)."
+        cause = f"La longitud de la respuesta correcta difiere significativamente del rango de los distractores (fuera de 0.80x - 1.20x): {inv_clean}"
         actions = [
+            f"Detalles observados: {inv_clean}",
             "Calibrar la longitud de la respuesta correcta o de los distractores para que tengan una extensión homogénea.",
             "Homogeneizar el nivel de detalle y formato matemático entre todas las opciones.",
             "Asegurar que 0.80 * min(len(D)) <= len(correct) <= 1.20 * max(len(D)).",
@@ -2137,6 +2285,17 @@ def format_parity_error(
 
     # Rule R-18
     if rule_id == "R-18":
+        if "boilerplate" in msg.lower() or "antonym" in msg.lower() or "synthetic" in msg.lower():
+            m_q = re.search(r"Question '([^']+)'", msg)
+            field_name = "options"
+            snippet = msg
+            cause = f"Patrón sintético / boilerplate o pares antónimos detectados en opciones de '{m_q.group(1) if m_q else item_id}': {msg}"
+            actions = [
+                "Variar la formulación y estructura de cada distractor basándose en errores conceptuales reales del estudiante en lugar de invertir palabras clave o usar plantillas repetitivas.",
+                "Evitar pares simétricos mecánicos (ej. 'estable' vs 'inestable') sin explicación física/matemática diferenciada.",
+                "Asegurar que cada opción distractora corresponda a un misconception específico de cta.json.",
+            ]
+            return format_diagnostic_error("R-18: BOILERPLATE / PATRÓN SINTÉTICO", cid, tpl_id, item_id, field_name, snippet, cause, actions)
         m_field = re.search(r"Option '([^']+)'", msg)
         opt_id = m_field.group(1) if m_field else "option"
         field_name = f"options[{opt_id}].content"
@@ -2460,6 +2619,8 @@ def check_single_template(
     num_dry_run_seeds: int = 50,
     shard_py: Optional[Union[str, Path]] = None,
     strict: bool = True,
+    comp_templates: Optional[List[Dict[str, Any]]] = None,
+    warnings_out: Optional[List[str]] = None,
 ) -> List[str]:
     """Validate a single template including AST, dry-run, invariants, and TPL rules."""
     errors = []
@@ -2486,6 +2647,51 @@ def check_single_template(
                             "Revisar las directrices de andamiaje socrático.",
                         ]
                     ))
+
+    # Check derivative giveaway in stem and stem_variants
+    all_stems = [template.get("stem", "")] + (template.get("stem_variants") or [])
+    for s_idx, st_txt in enumerate(all_stems):
+        if isinstance(st_txt, str):
+            dg = _check_stem_derivative_giveaway(st_txt)
+            if dg:
+                fn_snippet, deriv_snippet = dg
+                field_label = "stem" if s_idx == 0 else f"stem_variants[{s_idx - 1}]"
+                errors.append(format_diagnostic_error(
+                    "R-19: FUGA DE RESPUESTA / DERIVADA RESUELTA EN STEM",
+                    competency_id,
+                    tpl_id,
+                    tpl_id,
+                    field_label,
+                    f"Definición: '{fn_snippet}' | Derivada entregada: '{deriv_snippet}'",
+                    f"[-] [R-19] [TPL-STEM-DERIV-GIVEAWAY] violation in '{tpl_id}': El enunciado define explícitamente la función ('{fn_snippet}') y además entrega su derivada evaluada ('{deriv_snippet}'), anulando la demanda cognitiva del reactivo.",
+                    [
+                        "Remover la derivada evaluada del enunciado para que el estudiante deba calcularla.",
+                        "Si el ejercicio evalúa cálculo diferencial, exigir al estudiante derivar la función en lugar de regalar el valor de la derivada.",
+                        "Si solo se busca evaluar álgebra posterior sin derivación, enunciar directamente la función derivada o formular la consigna conceptualmente.",
+                    ]
+                ))
+                break
+
+    # Concise explanation check (blocking under strict=True)
+    sol_text = str(template.get("solution") or template.get("sol") or template.get("explanation_es") or "").strip()
+    if 0 < len(sol_text) < 60:
+        if strict:
+            errors.append(format_diagnostic_error(
+                "TPL-EXP-SHORT: EXPLICACIÓN INSUFICIENTE", competency_id, tpl_id, tpl_id, "explanation_es",
+                f"'{sol_text[:30]}...' ({len(sol_text)} chars)",
+                f"[-] [TPL-EXP-SHORT] violation in '{tpl_id}': explanation_es tiene {len(sol_text)} caracteres (< 60 chars requeridos en --strict).",
+                [
+                    "Ampliar 'sol' / 'explanation_es' a al menos 60 caracteres detallando el razonamiento paso a paso.",
+                    "Incluir la derivación o interpretación conceptual que justifica la respuesta correcta.",
+                    "Evitar explicaciones telegráficas o placeholders.",
+                ]
+            ))
+        else:
+            print(
+                f"WARNING: [TPL-EXP-SHORT] En '{tpl_id}': explanation_es ('{sol_text[:30]}...') tiene {len(sol_text)} caracteres (< 60 chars). "
+                f"Se recomienda enriquecer la retroalimentación formativa y detallar el paso a paso.",
+                file=sys.stderr,
+            )
 
     # 1. AST Sandbox validation & LaTeX corruption check
     try:
@@ -2688,6 +2894,94 @@ def check_single_template(
                         "Refinar los distractores para que no satisfagan accidentalmente el invariante de la respuesta correcta.",
                     ]
                 ))
+
+    # Strict Verifier Tautology Check for MS templates with verifier
+    if strict and cross_check_py and interaction_type == "multiple_select":
+        first_succ = next((r for r in batch_results if r.get("success")), None)
+        if first_succ:
+            gen_res = first_succ.get("result", {})
+            seed_val = first_succ.get("seed", 100)
+            opts = gen_res.get("options")
+            if isinstance(opts, list) and len(opts) >= 2:
+                t_idxs = [i for i, o in enumerate(opts) if isinstance(o, dict) and o.get("is_correct")]
+                f_idxs = [i for i, o in enumerate(opts) if isinstance(o, dict) and not o.get("is_correct")]
+                if t_idxs and f_idxs:
+                    # Mutation (a): invert is_correct
+                    cand_a = copy.deepcopy(gen_res)
+                    cand_a["options"][t_idxs[0]]["is_correct"] = False
+                    cand_a["options"][f_idxs[0]]["is_correct"] = True
+                    try:
+                        passed_a = execute_verifier_code(cross_check_py, cand_a, seed=seed_val)
+                    except Exception:
+                        passed_a = False
+
+                    # Mutation (b): invalidate distractor_id
+                    passed_b = False
+                    did_idx = next((i for i in f_idxs if opts[i].get("distractor_id")), None)
+                    if did_idx is not None:
+                        cand_b = copy.deepcopy(gen_res)
+                        cand_b["options"][did_idx]["distractor_id"] = "__INVALID_DID__"
+                        try:
+                            passed_b = execute_verifier_code(cross_check_py, cand_b, seed=seed_val)
+                        except Exception:
+                            passed_b = False
+
+                    # Mutation (c1): empty error_rationale in false option only
+                    cand_c1 = copy.deepcopy(gen_res)
+                    cand_c1["options"][f_idxs[0]]["error_rationale"] = ""
+                    try:
+                        passed_c1 = execute_verifier_code(cross_check_py, cand_c1, seed=seed_val)
+                    except Exception:
+                        passed_c1 = False
+
+                    # Mutation (c2): mutate value/content to sentinel in true option only
+                    cand_c2 = copy.deepcopy(gen_res)
+                    cand_c2["options"][t_idxs[0]]["value"] = "__MUTATED__"
+                    if "content" in cand_c2["options"][t_idxs[0]]:
+                        cand_c2["options"][t_idxs[0]]["content"] = "__MUTATED__"
+                    try:
+                        passed_c2 = execute_verifier_code(cross_check_py, cand_c2, seed=seed_val)
+                    except Exception:
+                        passed_c2 = False
+
+                    # Mutation (c3): mutate value/content to syntactically valid but false LaTeX assertion
+                    false_latex = "$1 = 2$" if str(opts[t_idxs[0]].get("value", "")).strip() == "$0 = 1$" else "$0 = 1$"
+                    cand_c3 = copy.deepcopy(gen_res)
+                    cand_c3["options"][t_idxs[0]]["value"] = false_latex
+                    if "content" in cand_c3["options"][t_idxs[0]]:
+                        cand_c3["options"][t_idxs[0]]["content"] = false_latex
+                    try:
+                        passed_c3 = execute_verifier_code(cross_check_py, cand_c3, seed=seed_val)
+                    except Exception:
+                        passed_c3 = False
+
+                    is_taut = (passed_a is True) or (passed_c2 is True) or (passed_c3 is True)
+                    if is_taut:
+                        errors.append(format_diagnostic_error(
+                            "TPL-CROSS: VERIFICADOR MS TAUTOLOGICO",
+                            competency_id,
+                            tpl_id,
+                            tpl_id,
+                            "cross_check_py / options",
+                            "El verificador multiple_select aceptó mutaciones inválidas (inversión de is_correct / opciones mutadas).",
+                            f"[-] [TPL-CROSS] violation in '{tpl_id}': cross_check_py / verifier did not refute mutated options in multiple_select. The verifier is tautological and must reject incorrect option assignments.",
+                            [
+                                "Asegurar que verify(result) verifique rigurosamente cuáles opciones en 'options' son correctas e incorrectas.",
+                                "Validar que las opciones correctas e incorrectas cumplan o violen las condiciones de la pregunta.",
+                                "No limitarse a contar la cantidad de opciones (ej. len(options)==4 and sum(...)==2).",
+                            ]
+                        ))
+                    else:
+                        if passed_b is True:
+                            warn_msg = f"WARNING: [TPL-CROSS-DID] En '{tpl_id}': El verificador multiple_select no validó 'distractor_id' en opciones incorrectas."
+                            if warnings_out is not None:
+                                warnings_out.append(warn_msg)
+                            print(warn_msg, file=sys.stderr)
+                        if passed_c1 is True:
+                            warn_msg = f"WARNING: [TPL-CROSS-RATIONALE] En '{tpl_id}': El verificador multiple_select no validó 'error_rationale' en opciones incorrectas."
+                            if warnings_out is not None:
+                                warnings_out.append(warn_msg)
+                            print(warn_msg, file=sys.stderr)
 
     # Check invariants on all generated instances (Full Sweep: NO premature break)
     raw_asm_failures: Dict[str, List[str]] = {}
@@ -2987,6 +3281,20 @@ def check_single_template(
             ]
         ))
 
+    # 6. Rule TPL-ORPHAN-VARS: Reject unreferenced leftover keys in 'vars' (warn-only to accommodate auxiliary vars like d1..d6)
+    orphan_keys = _check_orphan_vars(
+        template,
+        batch_results,
+        cross_check_py,
+        comp_templates=comp_templates,
+        cta_distractors_map=cta_distractors_map,
+    )
+    if orphan_keys:
+        print(
+            f"WARNING: [TPL-ORPHAN-VARS] En '{tpl_id}': claves retornadas en 'vars' que no se usan en placeholders (@var@, {{var}}), ni en stems, hints, solution/explanation_es, distractores, ni en cross_check_py: {sorted(list(orphan_keys))}",
+            file=sys.stderr,
+        )
+
     return errors
 
 
@@ -3232,6 +3540,7 @@ def _validate_single_template_file(
     num_dry_run_seeds: int,
     shard_py: Optional[Union[str, Path]] = None,
     strict: bool = True,
+    warnings_out: Optional[List[str]] = None,
 ) -> Tuple[List[str], Optional[str], Set[str], List[Dict[str, Any]]]:
     """Validate a single template file and return (errors, comp_id, referenced_distractor_ids, templates_list)."""
     file_errors = []
@@ -3279,8 +3588,37 @@ def _validate_single_template_file(
             num_dry_run_seeds=num_dry_run_seeds,
             shard_py=shard_py,
             strict=strict,
+            comp_templates=templates_list,
+            warnings_out=warnings_out,
         )
         file_errors.extend(single_errs)
+
+    # Check [TPL-HINTS-DUPLICATE] across templates in the competency
+    if templates_list and len(templates_list) > 1:
+        hints_by_tpl = {}
+        for tpl in templates_list:
+            tid = tpl.get("id", "UNKNOWN")
+            h_list = tpl.get("hints", [])
+            if isinstance(h_list, list) and h_list:
+                norm_h = tuple(
+                    re.sub(r"\s+", " ", (h.get("text") if isinstance(h, dict) else str(h)).strip().lower())
+                    for h in h_list
+                )
+                hints_by_tpl[tid] = norm_h
+        seen_hints = {}
+        for tid, nh in hints_by_tpl.items():
+            seen_hints.setdefault(nh, []).append(tid)
+        for nh, tids in seen_hints.items():
+            if len(tids) > 1:
+                if strict:
+                    file_errors.append(
+                        f"FAIL: [TPL-HINTS-DUPLICATE] Competencia '{comp_id}': Múltiples plantillas ({', '.join(tids)}) reutilizan exactamente el mismo arreglo de pistas (hints). Cada plantilla requiere andamiaje socrático diferenciado."
+                    )
+                else:
+                    print(
+                        f"WARNING: [TPL-HINTS-DUPLICATE] Competencia '{comp_id}': Múltiples plantillas ({', '.join(tids)}) reutilizan exactamente el mismo arreglo de pistas (hints). Se recomienda andamiaje socrático diferenciado por plantilla.",
+                        file=sys.stderr,
+                    )
 
     return file_errors, comp_id, referenced_dids, templates_list
 
@@ -3328,6 +3666,7 @@ def check_templates_file_or_dir(
     shard_py: Optional[Union[str, Path]] = None,
     shard_id: Optional[str] = None,
     from_compile_shard: bool = False,
+    warnings_out: Optional[List[str]] = None,
 ) -> Tuple[bool, List[str]]:
     """Validate all templates in file(s) or directory against CTA with production contract parity."""
     # warm_up_sandbox()  # Omit blind warmup: in-process execution is already instant

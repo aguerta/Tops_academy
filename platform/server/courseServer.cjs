@@ -197,10 +197,12 @@ const server = http.createServer((req, res) => {
     res.end(
       JSON.stringify({
         status: 'ok',
-        pid: process.pid,
+        uptime: Math.floor(process.uptime()),
         uptime_seconds: Math.floor(process.uptime()),
-        index_version: 1,
         courses_count: courseIndex.getManifest().courses.length,
+        timestamp: new Date().toISOString(),
+        pid: process.pid,
+        index_version: 1,
         stats: courseIndex.getStats(),
       })
     );

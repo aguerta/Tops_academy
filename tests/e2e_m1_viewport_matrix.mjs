@@ -1,27 +1,27 @@
 /**
- * E2E Viewport Matrix Verification Suite — Milestone 1: Split-View 50% & Laptop Zoom-Fix
+ * E2E Viewport Matrix Verification Suite — Milestone 1 & 1-T: Split-View 50%, Laptop Zoom-Fix & Blank-First AC-CORE
  *
- * Hardened Improver Edition (Stream 2B):
+ * Hardened Dual-Mode Edition (Stream 2A):
  * 1. Non-trivial assertions:
  *    - Verifies MC7 questions have EXACTLY 7 options (no trivial pass on missing/corrupt options).
  *    - Verifies 4+3 column-first distribution by coordinates:
  *      * In 2-col mode: Col 1 has items 0..3 (4 items) vertically stacked, Col 2 has items 4..6 (3 items) vertically stacked.
  *      * In 1-col mode (mobile 390x844): all 7 items vertically stacked in a single column.
- * 2. Port availability & collision fallback:
- *    - Dynamically detects open ports and retries automatically on EADDRINUSE or bind failures.
- * 3. Robust timeouts & diagnostics:
- *    - 15s server readiness with 200ms polling, 15s page navigation, 12s selector waits.
- * 4. Guaranteed process lifecycle cleanup:
- *    - Tree-kill on Windows via `taskkill /pid <PID> /T /F` to prevent orphan node/server processes.
- *    - Process exit hooks on SIGINT, SIGTERM, uncaughtException, and unhandledRejection.
- * 5. Windows path resolution resilience:
- *    - Searches %LOCALAPPDATA% and %USERPROFILE% for Chromium v1243 and Playwright npx global cache.
- * 6. Mathematical KaTeX & long stem resilience:
- *    - Validates real mathematical stem with LaTeX integrals and KaTeX display elements.
- *    - Asserts that all rendered .katex elements respect horizontal viewport boundaries (zero layout-breaking overflow).
- * 7. Viewport 683x768 toast feedback non-occlusion:
- *    - Validates both error feedback toast ("Not quite yet.") and success toast ("Good work!").
- *    - Asserts that the action buttons (#check-btn / #next-question-btn / #quick-redo-btn) remain completely visible inside viewport bounds (<= 768px height) and are NOT occluded by the floating feedback toast.
+ * 2. Milestone 1-T Expanded Viewport Matrix (12 Viewports):
+ *    - Standard & Split: 683x768, 720x900, 800x900, 960x1080, 1366x768, 1440x900, 390x844.
+ *    - High-DPI Zoom & Tablets: 1280x590 (14" 150%), 610x590 (Split 14" 150%), 1536x740 (ASUS TUF 125%), 768x1024 (Tablet Portrait), 1024x768 (Tablet Landscape).
+ * 3. Dual-Mode AC-CORE Verification:
+ *    - Mode Blank-First: ON (Default):
+ *      * Evocation curtain & lift button rendered; options hidden.
+ *      * AC-CORE under curtain: no horizontal overflow, KaTeX within bounds, footer check-btn visible.
+ *      * Enter key (or lift button) drops curtain and reveals exactly 7 options with 4+3 distribution.
+ *      * Toast feedback non-occlusion and answered no-scroll.
+ *    - Mode Blank-First: OFF (Standard):
+ *      * Toggled via [data-testid="toggle-blank-first-btn"].
+ *      * Curtain absent; 7 options rendered immediately.
+ *      * AC-CORE validated: no horizontal scroll, KaTeX within bounds, footer check-btn visible, 4+3 distribution.
+ * 4. Process lifecycle & port resilience:
+ *    - Automatic free port detection with retries, Windows taskkill tree cleanup, global interruption handlers.
  */
 
 import fs from 'node:fs';
@@ -418,7 +418,11 @@ async function verifyMc7OptionPositions(page, expectColumns) {
   }
 }
 
+/**
+ * Milestone 1 & Milestone 1-T Complete Viewport Matrix (12 Viewports)
+ */
 const VIEWPORT_MATRIX = [
+  // Original Milestone 1
   { width: 683, height: 768, label: '683x768 (Split 50% 1366)', expectColumns: 2 },
   { width: 720, height: 900, label: '720x900 (Split 50% 1440)', expectColumns: 2 },
   { width: 800, height: 900, label: '800x900 (Split 50% 1600)', expectColumns: 2 },
@@ -426,11 +430,17 @@ const VIEWPORT_MATRIX = [
   { width: 1366, height: 768, label: '1366x768 (Laptop HD Full)', expectColumns: 2 },
   { width: 1440, height: 900, label: '1440x900 (Desktop Full)', expectColumns: 2 },
   { width: 390, height: 844, label: '390x844 (Mobile Phone)', expectColumns: 1 },
+  // Milestone 1-T: High-DPI Zoom 150%/125% & Tablets
+  { width: 1280, height: 590, label: '1280x590 (Laptop 14" 150%)', expectColumns: 2 },
+  { width: 610, height: 590, label: '610x590 (Split 50% 14" 150%)', expectColumns: 2 },
+  { width: 1536, height: 740, label: '1536x740 (ASUS TUF 15.6" 125%)', expectColumns: 2 },
+  { width: 768, height: 1024, label: '768x1024 (Tablet Portrait)', expectColumns: 2 },
+  { width: 1024, height: 768, label: '1024x768 (Tablet Landscape)', expectColumns: 2 },
 ];
 
 async function runMatrix() {
   console.log('================================================================');
-  console.log(' STARTING MILESTONE 1 VIEWPORT MATRIX E2E SUITE (HARDENED)');
+  console.log(' STARTING MILESTONE 1-T VIEWPORT MATRIX E2E SUITE (DUAL-MODE)');
   console.log('================================================================\n');
 
   const pw = resolvePlaywright();
@@ -474,15 +484,37 @@ async function runMatrix() {
         label: vp.label,
         overviewScrollOk: false,
         sidebarBehaviorOk: false,
-        practiceScrollOk: false,
-        checkButtonVisibleOk: false,
-        optionsDistributionOk: false,
-        actualColumns: 0,
-        distribution: '',
-        katexOverflowOk: false,
-        toastFeedbackOk: false,
-        actionButtonVisibleAfterToast: false,
-        answeredScrollOk: false,
+        // Mode 1: Blank-First: ON (Default state)
+        bfOn: {
+          curtainVisible: false,
+          liftBtnVisible: false,
+          optionsHiddenInitially: false,
+          curtainScrollOk: false,
+          curtainCheckBtnOk: false,
+          curtainKatexOk: false,
+          curtainLiftOk: false,
+          optionsRevealedCount: 0,
+          optionsDistributionOk: false,
+          actualColumns: 0,
+          distribution: '',
+          toastFeedbackOk: false,
+          actionButtonVisibleAfterToast: false,
+          answeredScrollOk: false,
+          passed: false,
+        },
+        // Mode 2: Blank-First: OFF (Standard mode)
+        bfOff: {
+          curtainHidden: false,
+          optionsImmediateCount: 0,
+          optionsImmediateOk: false,
+          practiceScrollOk: false,
+          checkButtonVisibleOk: false,
+          katexOverflowOk: false,
+          optionsDistributionOk: false,
+          actualColumns: 0,
+          distribution: '',
+          passed: false,
+        },
         passed: false,
         notes: [],
       };
@@ -551,11 +583,10 @@ async function runMatrix() {
         const overviewShot = path.join(screensDir, `overview_${vp.width}x${vp.height}.png`);
         await page.screenshot({ path: overviewShot });
 
-        // 3. Enter Practice Session with an MC7 question
+        // 3. Enter Practice Session (Blank-First: ON is active by default)
         const practiceBtn = page.locator('button[data-testid^="competency-"]').first();
         await practiceBtn.click();
 
-        // Check if PreExerciseModal appeared
         const startPracticeBtn = page.locator('[data-testid="start-practice-btn"]');
         try {
           await startPracticeBtn.waitFor({ state: 'visible', timeout: 5000 });
@@ -568,24 +599,45 @@ async function runMatrix() {
         await page.waitForSelector('[data-testid="question-card"]', { timeout: SELECTOR_TIMEOUT });
         await page.waitForTimeout(300);
 
-        // 4. Practice checks: scrollWidth
-        const practiceMetrics = await page.evaluate(() => ({
+        // =================================================================
+        // MODE 1: BLANK-FIRST: ON (AC-CORE + Evocation Curtain Flow)
+        // =================================================================
+
+        // 3.1 Verify Curtain & Lift Button visibility, options hidden initially
+        const curtain = page.locator('[data-testid="blank-first-curtain"]');
+        const liftBtn = page.locator('[data-testid="lift-curtain-btn"]');
+        await curtain.waitFor({ state: 'visible', timeout: 5000 });
+        await liftBtn.waitFor({ state: 'visible', timeout: 5000 });
+
+        testRecord.bfOn.curtainVisible = await curtain.isVisible();
+        testRecord.bfOn.liftBtnVisible = await liftBtn.isVisible();
+        const initialOptionsCount = await page.locator('[data-testid^="option-"]').count();
+        testRecord.bfOn.optionsHiddenInitially = initialOptionsCount === 0;
+
+        if (!testRecord.bfOn.curtainVisible || !testRecord.bfOn.liftBtnVisible || !testRecord.bfOn.optionsHiddenInitially) {
+          testRecord.notes.push(
+            `BF-ON initial state error: curtain=${testRecord.bfOn.curtainVisible}, liftBtn=${testRecord.bfOn.liftBtnVisible}, optsCount=${initialOptionsCount}`
+          );
+        }
+
+        // 3.2 AC-CORE with Curtain Active: scrollWidth
+        const curtainScrollMetrics = await page.evaluate(() => ({
           scrollWidth: document.documentElement.scrollWidth,
           innerWidth: window.innerWidth,
           bodyScrollWidth: document.body.scrollWidth,
         }));
 
-        testRecord.practiceScrollOk =
-          practiceMetrics.scrollWidth <= practiceMetrics.innerWidth &&
-          practiceMetrics.bodyScrollWidth <= practiceMetrics.innerWidth;
+        testRecord.bfOn.curtainScrollOk =
+          curtainScrollMetrics.scrollWidth <= curtainScrollMetrics.innerWidth &&
+          curtainScrollMetrics.bodyScrollWidth <= curtainScrollMetrics.innerWidth;
 
-        if (!testRecord.practiceScrollOk) {
+        if (!testRecord.bfOn.curtainScrollOk) {
           testRecord.notes.push(
-            `Practice overflow: scrollWidth=${practiceMetrics.scrollWidth} > innerWidth=${practiceMetrics.innerWidth}`
+            `BF-ON Curtain overflow: scrollWidth=${curtainScrollMetrics.scrollWidth} > innerWidth=${curtainScrollMetrics.innerWidth}`
           );
         }
 
-        // 5. Initial Check Button visibility within viewport bounds
+        // 3.3 Check button visible within viewport bounds during curtain
         const checkBtn = page.locator('[data-testid="check-btn"]');
         const checkBtnBox = await checkBtn.boundingBox();
         if (checkBtnBox) {
@@ -594,22 +646,18 @@ async function runMatrix() {
             checkBtnBox.y + checkBtnBox.height <= vp.height + 2 &&
             checkBtnBox.x >= 0 &&
             checkBtnBox.x + checkBtnBox.width <= vp.width + 2;
-          testRecord.checkButtonVisibleOk = withinVp;
+          testRecord.bfOn.curtainCheckBtnOk = withinVp;
           if (!withinVp) {
             testRecord.notes.push(
-              `check-btn outside viewport: top=${checkBtnBox.y}, height=${checkBtnBox.height}, vpHeight=${vp.height}`
+              `BF-ON check-btn outside viewport: top=${checkBtnBox.y}, height=${checkBtnBox.height}, vpHeight=${vp.height}`
             );
           }
         } else {
-          testRecord.checkButtonVisibleOk = false;
-          testRecord.notes.push('check-btn boundingBox is null');
+          testRecord.bfOn.curtainCheckBtnOk = false;
+          testRecord.notes.push('BF-ON check-btn boundingBox is null');
         }
 
-        // 6. Mathematical KaTeX & Long Stem Verification
-        const stemLocator = page.locator('.qc-stem');
-        const stemText = await stemLocator.innerText();
-        const katexElements = await page.locator('.katex, .katex-display').all();
-
+        // 3.4 Mathematical KaTeX overflow guard during curtain
         const katexMetrics = await page.evaluate(() => {
           const els = document.querySelectorAll('.katex, .katex-display');
           let overflowing = 0;
@@ -622,54 +670,69 @@ async function runMatrix() {
           return { total: els.length, overflowing };
         });
 
-        testRecord.katexOverflowOk = katexMetrics.total > 0 && katexMetrics.overflowing === 0;
-        if (!testRecord.katexOverflowOk) {
+        testRecord.bfOn.curtainKatexOk = katexMetrics.total > 0 && katexMetrics.overflowing === 0;
+        if (!testRecord.bfOn.curtainKatexOk) {
           testRecord.notes.push(
-            `KaTeX overflow: total=${katexMetrics.total}, overflowing=${katexMetrics.overflowing}`
+            `BF-ON KaTeX overflow: total=${katexMetrics.total}, overflowing=${katexMetrics.overflowing}`
           );
         }
 
-        // Dedicated screenshot for KaTeX dense stem in 683x768
         if (vp.width === 683 && vp.height === 768) {
           const katexShot = path.join(screensDir, `katex_dense_683x768.png`);
           await page.screenshot({ path: katexShot });
         }
 
-        // 7. Non-trivial MC7 4+3 Options Distribution Check
-        const distCheck = await verifyMc7OptionPositions(page, vp.expectColumns);
-        testRecord.optionsDistributionOk = distCheck.ok;
-        testRecord.actualColumns = distCheck.actualColumns;
-        testRecord.distribution = distCheck.distribution;
-
-        if (!distCheck.ok) {
-          testRecord.notes.push(`Options distribution error: ${distCheck.reason}`);
+        // 3.5 Lift Curtain via Enter key (with fallback to lift-curtain-btn click)
+        await page.keyboard.press('Enter');
+        try {
+          await curtain.waitFor({ state: 'detached', timeout: 2500 });
+        } catch {
+          if (await liftBtn.isVisible()) {
+            await liftBtn.click();
+            await curtain.waitFor({ state: 'detached', timeout: 3000 });
+          }
         }
 
-        // Screenshot: Practice Initial State
+        await page.waitForSelector('[data-testid^="option-"]', { timeout: 5000 });
+        await page.waitForTimeout(200);
+
+        const revealedOptions = await page.locator('[data-testid^="option-"]').all();
+        testRecord.bfOn.optionsRevealedCount = revealedOptions.length;
+        testRecord.bfOn.curtainLiftOk = revealedOptions.length === 7;
+        if (!testRecord.bfOn.curtainLiftOk) {
+          testRecord.notes.push(`BF-ON curtain lift error: expected 7 options, found ${revealedOptions.length}`);
+        }
+
+        // 3.6 Non-trivial MC7 4+3 Options Distribution Check
+        const distCheckOn = await verifyMc7OptionPositions(page, vp.expectColumns);
+        testRecord.bfOn.optionsDistributionOk = distCheckOn.ok;
+        testRecord.bfOn.actualColumns = distCheckOn.actualColumns;
+        testRecord.bfOn.distribution = distCheckOn.distribution;
+
+        if (!distCheckOn.ok) {
+          testRecord.notes.push(`BF-ON options distribution error: ${distCheckOn.reason}`);
+        }
+
+        // Screenshot: Practice Initial State (Curtain Lifted)
         const practiceShot = path.join(screensDir, `practice_${vp.width}x${vp.height}.png`);
         await page.screenshot({ path: practiceShot });
 
-        // 8. Interaction: Select option, trigger Check Answer, and verify Toast + Action Button
-        const options = await page.locator('[data-testid^="option-"]').all();
-        if (options.length === 7) {
-          // Click Option 0 (Option A)
-          await options[0].click();
+        // 3.7 Interaction: Select option 0, trigger Check Answer, verify Toast + Action Button non-occlusion
+        if (revealedOptions.length === 7) {
+          await revealedOptions[0].click();
           await page.waitForTimeout(100);
 
-          // Click Check Answer
           await checkBtn.click();
           await page.waitForTimeout(400); // Allow toast fade-in and feedback state
 
-          // Locate Feedback Toast
           const toastLocator = page.locator('[data-testid="feedback-toast"], [data-testid="good-work-toast"]');
           const isToastVisible = (await toastLocator.count()) > 0 && (await toastLocator.first().isVisible());
-          testRecord.toastFeedbackOk = isToastVisible;
+          testRecord.bfOn.toastFeedbackOk = isToastVisible;
 
           if (!isToastVisible) {
-            testRecord.notes.push('Feedback toast was not visible after checking answer');
+            testRecord.notes.push('BF-ON feedback toast was not visible after checking answer');
           }
 
-          // Locate the active action button in footer (Try again or Next question)
           const nextBtn = page.locator('[data-testid="next-question-btn"]');
           const tryAgainBtn = page.locator('[data-testid="check-btn"]');
           const activeActionBtn = (await nextBtn.count()) > 0 && (await nextBtn.isVisible()) ? nextBtn : tryAgainBtn;
@@ -684,29 +747,27 @@ async function runMatrix() {
               actionBtnBox.x >= 0 &&
               actionBtnBox.x + actionBtnBox.width <= vp.width + 2;
 
-            // Assert that toast does NOT occlude the action button (toast sits strictly above footer)
             let noOverlap = true;
             if (toastBox) {
               noOverlap = toastBox.y + toastBox.height <= actionBtnBox.y + 2;
             }
 
-            testRecord.actionButtonVisibleAfterToast = btnWithinVp && noOverlap;
+            testRecord.bfOn.actionButtonVisibleAfterToast = btnWithinVp && noOverlap;
             if (!btnWithinVp) {
               testRecord.notes.push(
-                `Action button outside viewport after toast: top=${actionBtnBox.y}, height=${actionBtnBox.height}, vpHeight=${vp.height}`
+                `BF-ON Action button outside viewport after toast: top=${actionBtnBox.y}, height=${actionBtnBox.height}, vpHeight=${vp.height}`
               );
             }
             if (!noOverlap) {
               testRecord.notes.push(
-                `Toast overlaps action button: toastBottom=${toastBox.y + toastBox.height}, actionTop=${actionBtnBox.y}`
+                `BF-ON Toast overlaps action button: toastBottom=${toastBox.y + toastBox.height}, actionTop=${actionBtnBox.y}`
               );
             }
           } else {
-            testRecord.actionButtonVisibleAfterToast = false;
-            testRecord.notes.push('Action button boundingBox is null after toast');
+            testRecord.bfOn.actionButtonVisibleAfterToast = false;
+            testRecord.notes.push('BF-ON action button boundingBox is null after toast');
           }
 
-          // In 683x768, capture dedicated toast non-occlusion screenshot
           if (vp.width === 683 && vp.height === 768) {
             const toastShot = path.join(screensDir, 'toast_feedback_683x768.png');
             await page.screenshot({ path: toastShot });
@@ -718,29 +779,159 @@ async function runMatrix() {
             innerWidth: window.innerWidth,
           }));
 
-          testRecord.answeredScrollOk = answeredMetrics.scrollWidth <= answeredMetrics.innerWidth;
-          if (!testRecord.answeredScrollOk) {
+          testRecord.bfOn.answeredScrollOk = answeredMetrics.scrollWidth <= answeredMetrics.innerWidth;
+          if (!testRecord.bfOn.answeredScrollOk) {
             testRecord.notes.push(
-              `Answered state overflow: scrollWidth=${answeredMetrics.scrollWidth} > innerWidth=${answeredMetrics.innerWidth}`
+              `BF-ON Answered state overflow: scrollWidth=${answeredMetrics.scrollWidth} > innerWidth=${answeredMetrics.innerWidth}`
             );
           }
 
-          // Screenshot: Answered State
           const answeredShot = path.join(screensDir, `answered_${vp.width}x${vp.height}.png`);
           await page.screenshot({ path: answeredShot });
         }
 
-        // Overall pass decision for this viewport
+        testRecord.bfOn.passed =
+          testRecord.bfOn.curtainVisible &&
+          testRecord.bfOn.liftBtnVisible &&
+          testRecord.bfOn.optionsHiddenInitially &&
+          testRecord.bfOn.curtainScrollOk &&
+          testRecord.bfOn.curtainCheckBtnOk &&
+          testRecord.bfOn.curtainKatexOk &&
+          testRecord.bfOn.curtainLiftOk &&
+          testRecord.bfOn.optionsDistributionOk &&
+          testRecord.bfOn.toastFeedbackOk &&
+          testRecord.bfOn.actionButtonVisibleAfterToast &&
+          testRecord.bfOn.answeredScrollOk;
+
+        // =================================================================
+        // MODE 2: BLANK-FIRST: OFF (AC-CORE Standard Flow)
+        // =================================================================
+
+        // 3.8 Toggle Blank-First to OFF using the header toggle button
+        const toggleBtn = page.locator('[data-testid="toggle-blank-first-btn"]');
+        await toggleBtn.click();
+        await page.waitForTimeout(150);
+
+        // 3.9 Return to overview and re-enter practice (sessionStorage persists tops_blank_first_enabled = 'false')
+        const quitBtn = page.locator('button[aria-label="Quit practice"]');
+        await quitBtn.click();
+
+        const quitConfirmExit = page.locator('[data-testid="quit-confirm-exit"]');
+        try {
+          await quitConfirmExit.waitFor({ state: 'visible', timeout: 3000 });
+          await quitConfirmExit.click();
+        } catch {
+          // If modal did not appear or was dismissed
+        }
+
+        await page.waitForSelector('[data-testid="completion-tracker-summary"]', { timeout: SELECTOR_TIMEOUT });
+        await page.waitForTimeout(200);
+
+        const practiceBtnOff = page.locator('button[data-testid^="competency-"]').first();
+        await practiceBtnOff.click();
+
+        const startPracticeBtnOff = page.locator('[data-testid="start-practice-btn"]');
+        try {
+          await startPracticeBtnOff.waitFor({ state: 'visible', timeout: 3000 });
+          await startPracticeBtnOff.click();
+        } catch {}
+
+        await page.waitForSelector('[data-testid="question-card"]', { timeout: SELECTOR_TIMEOUT });
+        await page.waitForTimeout(300);
+
+        // 3.10 In Blank-First: OFF, curtain must NOT be rendered / visible
+        const curtainOffCount = await page.locator('[data-testid="blank-first-curtain"]').count();
+        testRecord.bfOff.curtainHidden = curtainOffCount === 0 || !(await page.locator('[data-testid="blank-first-curtain"]').isVisible());
+        if (!testRecord.bfOff.curtainHidden) {
+          testRecord.notes.push('BF-OFF error: curtain is still visible in OFF mode');
+        }
+
+        // 3.11 Exactly 7 options must be immediately rendered without curtain interaction
+        const optionsOff = await page.locator('[data-testid^="option-"]').all();
+        testRecord.bfOff.optionsImmediateCount = optionsOff.length;
+        testRecord.bfOff.optionsImmediateOk = optionsOff.length === 7;
+        if (!testRecord.bfOff.optionsImmediateOk) {
+          testRecord.notes.push(`BF-OFF error: expected 7 immediate options, found ${optionsOff.length}`);
+        }
+
+        // 3.12 AC-CORE validation in Blank-First: OFF
+        const practiceMetricsOff = await page.evaluate(() => ({
+          scrollWidth: document.documentElement.scrollWidth,
+          innerWidth: window.innerWidth,
+          bodyScrollWidth: document.body.scrollWidth,
+        }));
+
+        testRecord.bfOff.practiceScrollOk =
+          practiceMetricsOff.scrollWidth <= practiceMetricsOff.innerWidth &&
+          practiceMetricsOff.bodyScrollWidth <= practiceMetricsOff.innerWidth;
+
+        if (!testRecord.bfOff.practiceScrollOk) {
+          testRecord.notes.push(
+            `BF-OFF practice overflow: scrollWidth=${practiceMetricsOff.scrollWidth} > innerWidth=${practiceMetricsOff.innerWidth}`
+          );
+        }
+
+        const checkBtnOff = page.locator('[data-testid="check-btn"]');
+        const checkBtnBoxOff = await checkBtnOff.boundingBox();
+        if (checkBtnBoxOff) {
+          const withinVp =
+            checkBtnBoxOff.y >= 0 &&
+            checkBtnBoxOff.y + checkBtnBoxOff.height <= vp.height + 2 &&
+            checkBtnBoxOff.x >= 0 &&
+            checkBtnBoxOff.x + checkBtnBoxOff.width <= vp.width + 2;
+          testRecord.bfOff.checkButtonVisibleOk = withinVp;
+          if (!withinVp) {
+            testRecord.notes.push(
+              `BF-OFF check-btn outside viewport: top=${checkBtnBoxOff.y}, height=${checkBtnBoxOff.height}, vpHeight=${vp.height}`
+            );
+          }
+        } else {
+          testRecord.bfOff.checkButtonVisibleOk = false;
+          testRecord.notes.push('BF-OFF check-btn boundingBox is null');
+        }
+
+        const katexMetricsOff = await page.evaluate(() => {
+          const els = document.querySelectorAll('.katex, .katex-display');
+          let overflowing = 0;
+          for (const el of els) {
+            const r = el.getBoundingClientRect();
+            if (r.right > window.innerWidth + 2 || r.left < -2) {
+              overflowing++;
+            }
+          }
+          return { total: els.length, overflowing };
+        });
+
+        testRecord.bfOff.katexOverflowOk = katexMetricsOff.total > 0 && katexMetricsOff.overflowing === 0;
+        if (!testRecord.bfOff.katexOverflowOk) {
+          testRecord.notes.push(
+            `BF-OFF KaTeX overflow: total=${katexMetricsOff.total}, overflowing=${katexMetricsOff.overflowing}`
+          );
+        }
+
+        const distCheckOff = await verifyMc7OptionPositions(page, vp.expectColumns);
+        testRecord.bfOff.optionsDistributionOk = distCheckOff.ok;
+        testRecord.bfOff.actualColumns = distCheckOff.actualColumns;
+        testRecord.bfOff.distribution = distCheckOff.distribution;
+
+        if (!distCheckOff.ok) {
+          testRecord.notes.push(`BF-OFF options distribution error: ${distCheckOff.reason}`);
+        }
+
+        testRecord.bfOff.passed =
+          testRecord.bfOff.curtainHidden &&
+          testRecord.bfOff.optionsImmediateOk &&
+          testRecord.bfOff.practiceScrollOk &&
+          testRecord.bfOff.checkButtonVisibleOk &&
+          testRecord.bfOff.katexOverflowOk &&
+          testRecord.bfOff.optionsDistributionOk;
+
+        // Overall pass decision for this viewport across both modes
         testRecord.passed =
           testRecord.overviewScrollOk &&
           testRecord.sidebarBehaviorOk &&
-          testRecord.practiceScrollOk &&
-          testRecord.checkButtonVisibleOk &&
-          testRecord.katexOverflowOk &&
-          testRecord.optionsDistributionOk &&
-          testRecord.toastFeedbackOk &&
-          testRecord.actionButtonVisibleAfterToast &&
-          testRecord.answeredScrollOk;
+          testRecord.bfOn.passed &&
+          testRecord.bfOff.passed;
 
         if (!testRecord.passed) allPassed = false;
       } catch (err) {
@@ -756,15 +947,26 @@ async function runMatrix() {
       console.log(`Result: ${statusIcon}`);
       console.log(`- Overview No-Scroll: ${testRecord.overviewScrollOk ? 'OK' : 'FAIL'}`);
       console.log(`- Sidebar Responsive: ${testRecord.sidebarBehaviorOk ? 'OK' : 'FAIL'}`);
-      console.log(`- Practice No-Scroll: ${testRecord.practiceScrollOk ? 'OK' : 'FAIL'}`);
-      console.log(`- KaTeX Overflow Guard: ${testRecord.katexOverflowOk ? 'OK' : 'FAIL'}`);
-      console.log(
-        `- Options Distribution: ${testRecord.optionsDistributionOk ? 'OK' : 'FAIL'} (${testRecord.distribution})`
-      );
-      console.log(`- Check Button Visible: ${testRecord.checkButtonVisibleOk ? 'OK' : 'FAIL'}`);
-      console.log(`- Toast Feedback Rendered: ${testRecord.toastFeedbackOk ? 'OK' : 'FAIL'}`);
-      console.log(`- Action Button Visible After Toast: ${testRecord.actionButtonVisibleAfterToast ? 'OK' : 'FAIL'}`);
-      console.log(`- Answered No-Scroll: ${testRecord.answeredScrollOk ? 'OK' : 'FAIL'}`);
+      console.log(`[Blank-First: ON]`);
+      console.log(`  - Curtain & Lift Button Visible: ${testRecord.bfOn.curtainVisible && testRecord.bfOn.liftBtnVisible ? 'OK' : 'FAIL'}`);
+      console.log(`  - Options Hidden Initially: ${testRecord.bfOn.optionsHiddenInitially ? 'OK' : 'FAIL'}`);
+      console.log(`  - Curtain No-Scroll: ${testRecord.bfOn.curtainScrollOk ? 'OK' : 'FAIL'}`);
+      console.log(`  - KaTeX Overflow Guard: ${testRecord.bfOn.curtainKatexOk ? 'OK' : 'FAIL'}`);
+      console.log(`  - Check Button Visible: ${testRecord.bfOn.curtainCheckBtnOk ? 'OK' : 'FAIL'}`);
+      console.log(`  - Enter Lifts Curtain (7 Options): ${testRecord.bfOn.curtainLiftOk ? 'OK' : 'FAIL'}`);
+      console.log(`  - Options Distribution: ${testRecord.bfOn.optionsDistributionOk ? 'OK' : 'FAIL'} (${testRecord.bfOn.distribution})`);
+      console.log(`  - Toast Feedback Rendered: ${testRecord.bfOn.toastFeedbackOk ? 'OK' : 'FAIL'}`);
+      console.log(`  - Action Button Visible After Toast: ${testRecord.bfOn.actionButtonVisibleAfterToast ? 'OK' : 'FAIL'}`);
+      console.log(`  - Answered No-Scroll: ${testRecord.bfOn.answeredScrollOk ? 'OK' : 'FAIL'}`);
+      console.log(`  - Blank-First ON Status: ${testRecord.bfOn.passed ? 'PASS' : 'FAIL'}`);
+      console.log(`[Blank-First: OFF]`);
+      console.log(`  - Curtain Hidden: ${testRecord.bfOff.curtainHidden ? 'OK' : 'FAIL'}`);
+      console.log(`  - 7 Options Immediate: ${testRecord.bfOff.optionsImmediateOk ? 'OK' : 'FAIL'}`);
+      console.log(`  - Practice No-Scroll: ${testRecord.bfOff.practiceScrollOk ? 'OK' : 'FAIL'}`);
+      console.log(`  - KaTeX Overflow Guard: ${testRecord.bfOff.katexOverflowOk ? 'OK' : 'FAIL'}`);
+      console.log(`  - Check Button Visible: ${testRecord.bfOff.checkButtonVisibleOk ? 'OK' : 'FAIL'}`);
+      console.log(`  - Options Distribution: ${testRecord.bfOff.optionsDistributionOk ? 'OK' : 'FAIL'} (${testRecord.bfOff.distribution})`);
+      console.log(`  - Blank-First OFF Status: ${testRecord.bfOff.passed ? 'PASS' : 'FAIL'}`);
       if (testRecord.notes.length > 0) {
         console.log(`  Notes: ${testRecord.notes.join(' | ')}`);
       }
@@ -774,20 +976,47 @@ async function runMatrix() {
   }
 
   console.log('\n================================================================');
-  console.log(' MATRIX SUMMARY (HARDENED)');
+  console.log(' MILESTONE 1-T: VIEWPORT MATRIX DUAL MODE SUMMARY');
   console.log('================================================================');
+
+  console.log('\n--- MODE 1: BLANK-FIRST: ON (AC-CORE + Evocation Curtain Flow) ---');
   console.table(
     results.map((r) => ({
       Viewport: r.viewport,
       Overview: r.overviewScrollOk ? 'PASS' : 'FAIL',
       Sidebar: r.sidebarBehaviorOk ? 'PASS' : 'FAIL',
-      Practice: r.practiceScrollOk ? 'PASS' : 'FAIL',
-      KaTeX: r.katexOverflowOk ? 'PASS' : 'FAIL',
-      Distribution: `${r.distribution} (${r.optionsDistributionOk ? 'PASS' : 'FAIL'})`,
-      'Check-Btn': r.checkButtonVisibleOk ? 'PASS' : 'FAIL',
-      Toast: r.toastFeedbackOk ? 'PASS' : 'FAIL',
-      'Btn-After-Toast': r.actionButtonVisibleAfterToast ? 'PASS' : 'FAIL',
-      Answered: r.answeredScrollOk ? 'PASS' : 'FAIL',
+      Curtain: r.bfOn.curtainVisible ? 'PASS' : 'FAIL',
+      Lift: r.bfOn.curtainLiftOk ? 'PASS' : 'FAIL',
+      Distribution: `${r.bfOn.distribution} (${r.bfOn.optionsDistributionOk ? 'PASS' : 'FAIL'})`,
+      'Check-Btn': r.bfOn.curtainCheckBtnOk ? 'PASS' : 'FAIL',
+      Toast: r.bfOn.toastFeedbackOk ? 'PASS' : 'FAIL',
+      'Btn-After-Toast': r.bfOn.actionButtonVisibleAfterToast ? 'PASS' : 'FAIL',
+      Answered: r.bfOn.answeredScrollOk ? 'PASS' : 'FAIL',
+      Status: r.bfOn.passed ? 'PASS' : 'FAIL',
+    }))
+  );
+
+  console.log('\n--- MODE 2: BLANK-FIRST: OFF (AC-CORE Standard Flow) ---');
+  console.table(
+    results.map((r) => ({
+      Viewport: r.viewport,
+      'Curtain-Hidden': r.bfOff.curtainHidden ? 'PASS' : 'FAIL',
+      'Immediate-Opts': r.bfOff.optionsImmediateOk ? 'PASS' : 'FAIL',
+      PracticeScroll: r.bfOff.practiceScrollOk ? 'PASS' : 'FAIL',
+      KaTeX: r.bfOff.katexOverflowOk ? 'PASS' : 'FAIL',
+      Distribution: `${r.bfOff.distribution} (${r.bfOff.optionsDistributionOk ? 'PASS' : 'FAIL'})`,
+      'Check-Btn': r.bfOff.checkButtonVisibleOk ? 'PASS' : 'FAIL',
+      Status: r.bfOff.passed ? 'PASS' : 'FAIL',
+    }))
+  );
+
+  console.log('\n--- OVERALL VIEWPORT MATRIX PASS/FAIL DECISION (12 VIEWPORTS) ---');
+  console.table(
+    results.map((r) => ({
+      Viewport: r.viewport,
+      Label: r.label,
+      'Blank-First: ON': r.bfOn.passed ? 'PASS' : 'FAIL',
+      'Blank-First: OFF': r.bfOff.passed ? 'PASS' : 'FAIL',
       Status: r.passed ? 'PASS' : 'FAIL',
     }))
   );
@@ -796,7 +1025,7 @@ async function runMatrix() {
     console.error('\nMatrix suite finished with failures.');
     process.exit(1);
   } else {
-    console.log('\nMatrix suite PASSED 100% across all 7 viewports with non-trivial hardened assertions!');
+    console.log('\nMatrix suite PASSED 100% across all 12 viewports in both Blank-First: ON and Blank-First: OFF modes with non-trivial hardened assertions!');
     process.exit(0);
   }
 }

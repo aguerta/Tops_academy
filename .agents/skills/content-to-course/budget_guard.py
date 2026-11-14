@@ -685,7 +685,7 @@ def generate_repair_redispatch(
         work_order_data = {
             "TypeName": "c2c_repair",
             "Role": f"Watchdog Repair Engineer {cid}",
-            "Model": "flash",
+            "Model": "inherit",
             "Workspace": "inherit",
             "unit_id": unit_id,
             "competency_id": cid,
@@ -720,7 +720,7 @@ def generate_repair_redispatch(
         subagent_spec = {
             "TypeName": "c2c_repair",
             "Role": f"Watchdog Repair Engineer {cid}",
-            "Model": "flash",
+            "Model": "inherit",
             "Prompt": pointer_prompt,
         }
         subagents.append(subagent_spec)

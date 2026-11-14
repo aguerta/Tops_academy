@@ -45,6 +45,11 @@ import {
   setupNavigationHistory,
   registerBackInterceptor,
 } from './utils/navigationHistory';
+import {
+  loadActiveSession,
+  clearActiveSession,
+  ActiveSessionSnapshot,
+} from './utils/sessionStore';
 
 // Instant manifest detection for 0ms initial render
 const getInitialManifest = (): CourseSummary[] | null => {
@@ -87,6 +92,19 @@ export const App: React.FC = () => {
   const [sessionScore, setSessionScore] = useState(0);
   const [sessionTotal, setSessionTotal] = useState(0);
   const [sessionKey, setSessionKey] = useState(0);
+  const [restoredSnapshot, setRestoredSnapshot] = useState<ActiveSessionSnapshot | null>(null);
+
+  const resolveCourseSummary = (courseId: string): CourseSummary => {
+    return (
+      courses.find((c) => c.id === courseId) || {
+        id: courseId,
+        title: courseId,
+        filename: `${courseId}.json`,
+        description: '',
+        status: 'valid',
+      }
+    );
+  };
 
   // Milestone 14: Timing, Telemetry & Challenge Execution Summary
   const [challengeSummary, setChallengeSummary] = useState<ChallengeExecutionSummary | null>(null);
@@ -260,6 +278,67 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  // Milestone 12: Hydrate active practice session on mount if active session snapshot exists in sessionStorage
+  useEffect(() => {
+    const snapshot = loadActiveSession();
+    if (!snapshot || !snapshot.courseId || !snapshot.questions || snapshot.questions.length === 0) {
+      return;
+    }
+
+    let isMounted = true;
+    const summary = resolveCourseSummary(snapshot.courseId);
+
+    loadCourse(summary)
+      .then((fullCourse) => {
+        if (!isMounted || !fullCourse) return;
+        const normalizedCourse: Course = {
+          ...fullCourse,
+          questions: (fullCourse.questions || []).map(normalizeQuestion),
+        };
+        setActiveCourse(normalizedCourse);
+        const m = loadCourseMastery(normalizedCourse);
+        setMastery(m);
+        setSessionType(snapshot.sessionType);
+        const comp = snapshot.competencyId
+          ? normalizedCourse.competencies.find((c) => c.id === snapshot.competencyId) || null
+          : null;
+        setSessionCompetency(comp);
+        setSelectedUnitIndex(snapshot.unitIndex ?? 0);
+        setSessionQuestions(snapshot.questions.map(normalizeQuestion));
+        setRestoredSnapshot(snapshot);
+        setViewMode('practice');
+        replaceNavState({
+          viewMode: 'practice',
+          courseId: normalizedCourse.course_id,
+          competencyId: comp?.id,
+        });
+      })
+      .catch((err) => {
+        console.warn('[App] Failed to hydrate active session from snapshot:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Milestone 12: Silent ETag reconciliation on laptop sleep wake-up
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && activeCourse) {
+        const summary = resolveCourseSummary(activeCourse.course_id);
+        loadCourse(summary).catch((err) => {
+          console.warn('[App] Silent ETag reconciliation on wake-up failed:', err);
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [activeCourse, courses]);
+
   const selectCourse = async (summary: CourseSummary) => {
     if (summary.status === 'error') return;
 
@@ -295,6 +374,9 @@ export const App: React.FC = () => {
     directToPractice: boolean = true
   ) => {
     if (!activeCourse) return;
+
+    clearActiveSession();
+    setRestoredSnapshot(null);
 
     let targetComp = comp;
     // In practice/quiz/test, if comp is not passed, attempt recovery from sessionCompetency or selectedUnitIndex
@@ -380,6 +462,8 @@ export const App: React.FC = () => {
 
   // Safe quit from session: replaces current transient state with overview so back never re-enters quizzes
   const handleQuitSession = () => {
+    clearActiveSession();
+    setRestoredSnapshot(null);
     setShowQuitConfirm(false);
     setFocusCompetencyId(sessionType === 'challenge' ? null : sessionCompetency?.id ?? null);
     setViewMode('overview');
@@ -396,6 +480,8 @@ export const App: React.FC = () => {
     telemetryData?: QuestionTelemetry[],
     totalSeconds?: number
   ) => {
+    clearActiveSession();
+    setRestoredSnapshot(null);
     setSessionScore(score);
     setSessionTotal(total);
 
@@ -564,17 +650,26 @@ export const App: React.FC = () => {
         <PracticeSession
           key={sessionKey}
           sessionTitle={
-            sessionType === 'challenge'
+            restoredSnapshot?.sessionTitle ||
+            (sessionType === 'challenge'
               ? 'Course challenge'
               : sessionType === 'quiz'
               ? `Quiz • ${sessionCompetency?.name || 'Unit'}`
               : sessionType === 'test'
               ? `Unit test • ${sessionCompetency?.name || 'Unit'}`
-              : sessionCompetency?.name || 'Practice'
+              : sessionCompetency?.name || 'Practice')
           }
           sessionType={sessionType}
           questions={sessionQuestions}
-          onRestart={() => launchSession(sessionType, sessionCompetency, true)}
+          courseId={activeCourse?.course_id}
+          competencyId={sessionCompetency?.id ?? null}
+          unitIndex={selectedUnitIndex}
+          initialSnapshot={restoredSnapshot}
+          onRestart={() => {
+            clearActiveSession();
+            setRestoredSnapshot(null);
+            launchSession(sessionType, sessionCompetency, true);
+          }}
           onComplete={handleCompleteSession}
           onQuit={() => setShowQuitConfirm(true)}
         />

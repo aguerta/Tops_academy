@@ -19,7 +19,7 @@ inputs:
     required: false
   output_dir:
     type: string
-    description: Carpeta destino para los reportes JSON y Markdown (default 'reports/qa_audits').
+    description: Carpeta destino para el reporte único en Markdown (default 'reports/qa_audits').
     default: reports/qa_audits
   model:
     type: string
@@ -62,7 +62,7 @@ flowchart TD
         TelemetryReadyAll --> LaunchBatch["2. Invocar Subagentes 'course_qa_auditor' EN PARALELO"]
         LaunchSingle --> SemanticVerify["3. Evaluar rigor conceptual en Clusters de Riesgo"]
         LaunchBatch --> SemanticVerifyAll["3. Evaluar rigor conceptual en paralelo"]
-        SemanticVerify --> GenerateSingleReport["4. Generar reportes JSON y Markdown"]
+        SemanticVerify --> GenerateSingleReport["4. Generar reporte único autocontenido (.md)"]
         SemanticVerifyAll --> ConsolidateMaster["4. Orquestador consolida Matriz y Reporte Maestro"]
     end
 
@@ -96,8 +96,8 @@ flowchart TD
      ```
    - Preguntar al usuario con `ask_question` para seleccionar el curso.
 
-### Paso 2: Generación del Payload Enriquecido
-El script ejecuta internamente `StandardizedAuditEngine`, evaluando el 100% de las preguntas y generando `reports/qa_audits/<course_id>_payload.json` con:
+### Paso 2: Generación del Payload Transitorio (Sin Bloat en Repositorio)
+El script ejecuta internamente `StandardizedAuditEngine`, evaluando el 100% de las preguntas y escribiendo un payload transitorio en el directorio temporal del sistema (`%TEMP%/tops_academy_qa/<course_id>_payload.json`, cuya ruta exacta imprime por consola) para no generar *bloat* en el repositorio:
 - `audit_telemetry`: Conteo exacto de KaTeX corrupto, distractores delatores, pistas faltantes, placeholders f-string, penalizaciones duras y risk score.
 - `risk_cluster_samples`: Muestras de reactivos afectados listas para citar.
 - `stratified_samples`: Muestras de control por competencia.
@@ -108,7 +108,7 @@ Invocar a un único subagente mediante `invoke_subagent`:
 - **TypeName**: `course_qa_auditor`
 - **Model**: `inherit` (Gemini 3.8 Flash High)
 - **Prompt**:
-  > *"Audita la calidad técnica y pedagógica del curso '<course_id>'. Lee el payload enriquecido en 'reports/qa_audits/<course_id>_payload.json'. Toda la telemetría métrica determinista ha sido calculada en 'audit_telemetry'; NO escribas scripts de Python para escanear el curso. Aplica el Loop de Verificación Semántica sobre los 'risk_clusters', evalúa el rigor conceptual y pedagógico según la rúbrica normativa de 20 puntos en '.agents/skills/course-qa-evaluator/references/qa_rubric.md' y genera directamente 'reports/qa_audits/<course_id>_qa_report.json' y 'reports/qa_audits/<course_id>_qa_report.md'. Si detectas nuevos patrones de error no cubiertos por los linters, inclúyelos en 'discovered_lint_rules'."*
+  > *"Audita la calidad técnica y pedagógica del curso '<course_id>'. Lee el payload transitorio en '<ruta_payload_temporal>'. Toda la telemetría métrica determinista ha sido calculada en 'audit_telemetry'; NO escribas scripts de Python para escanear el curso. Aplica el Loop de Verificación Semántica sobre los 'risk_clusters', evalúa el rigor conceptual y pedagógico según la rúbrica normativa de 20 puntos en '.agents/skills/course-qa-evaluator/references/qa_rubric.md' y genera ÚNICAMENTE el reporte autocontenido en Markdown 'reports/qa_audits/<course_id>_qa_report.md' (con el bloque colapsado `<details>` de metadatos JSON al final). NO generes archivos .json ni .html separados. Si detectas nuevos patrones de error no cubiertos por los linters, inclúyelos en 'discovered_lint_rules' dentro del bloque estructurado."*
 
 ### Paso 4: Presentación del Veredicto
 Presentar al usuario:
@@ -136,13 +136,13 @@ Invocar concurrentemente un subagente por cada curso en una **única llamada** a
       "Role": "Course QA Auditor - Curso A",
       "TypeName": "course_qa_auditor",
       "Model": "inherit",
-      "Prompt": "Audita el curso 'curso_a' usando 'reports/qa_audits/curso_a_payload.json' de forma directa sin crear scripts de Python..."
+      "Prompt": "Audita el curso 'curso_a' usando su payload transitorio en '%TEMP%/tops_academy_qa/curso_a_payload.json' de forma directa sin crear scripts de Python y emite únicamente 'reports/qa_audits/curso_a_qa_report.md' autocontenido..."
     },
     {
       "Role": "Course QA Auditor - Curso B",
       "TypeName": "course_qa_auditor",
       "Model": "inherit",
-      "Prompt": "Audita el curso 'curso_b' usando 'reports/qa_audits/curso_b_payload.json' de forma directa sin crear scripts de Python..."
+      "Prompt": "Audita el curso 'curso_b' usando su payload transitorio en '%TEMP%/tops_academy_qa/curso_b_payload.json' de forma directa sin crear scripts de Python y emite únicamente 'reports/qa_audits/curso_b_qa_report.md' autocontenido..."
     }
   ]
 }
@@ -150,7 +150,7 @@ Invocar concurrentemente un subagente por cada curso en una **única llamada** a
 
 ### Paso 3: Consolidación de Findings y Loop de Aprendizaje
 Al recibir las notificaciones de finalización:
-1. El orquestador lee los reportes JSON individuales en `reports/qa_audits/*_qa_report.json`.
+1. El orquestador lee los reportes Markdown autocontenidos en `reports/qa_audits/*_qa_report.md` (extrayendo los metadatos del bloque `<details>` JSON embebido).
 2. Genera la **Matriz Comparativa Consolidada** en `reports/qa_audits/SUITE_QA_AUDIT_REPORT.md`.
 3. Revisa los campos `discovered_lint_rules` reportados por los subagentes para retroalimentar `scripts/standardized_audit_engine.py` en caso de nuevos patrones.
 
@@ -162,11 +162,11 @@ Al registrar el subagente vía `define_subagent`:
 - **Name**: `course_qa_auditor`
 - **Description**: *"Auditor Técnico Pedagógico y Validador de Calidad Instruccional (Fast Hybrid Evaluation) bajo estándares QM, OSCQR y Mastery Learning."*
 - **System Prompt**:
-  - Ingerir directamente `audit_telemetry` de `<course_id>_payload.json`.
+  - Ingerir directamente `audit_telemetry` del payload transitorio `<course_id>_payload.json`.
   - **Prohibición estricta:** NO crear ni ejecutar scripts temporales en disco para escanear el JSON.
   - Ejecutar el Loop de Verificación Semántica sobre los `risk_clusters` y muestras estratificadas.
   - Evaluar la veracidad y solidez del dominio pedagógico.
-  - Generar el JSON y Markdown en 1 o 2 turnos eficientes.
+  - Generar **únicamente** el reporte Markdown autocontenido `<course_id>_qa_report.md` (con el bloque `<details>` JSON al final) en 1 o 2 turnos eficientes, sin emitir archivos `.json` ni `.html` adicionales.
 - **Tools**: Herramientas de lectura y escritura de archivos.
 
 ---

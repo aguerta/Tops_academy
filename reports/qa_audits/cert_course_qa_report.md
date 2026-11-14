@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Certified Course (`cert_course`)
 
-- **Fecha de Evaluación:** 2026-11-09
+- **Fecha de Evaluación:** 2026-11-14
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** ACTIVO
 - **Calificación Final Certificada:** **20.0 / 20.0 pts**
@@ -60,3 +60,40 @@
 ### 4. Veredicto y Certificación
 
 El curso **Certified Course** ha sido **certificado y aprobado** con calificación sobresaliente de **20.0 / 20.0** y MPRI de **100.00 / 100.0**, acreditando el cumplimiento exhaustivo de los estándares Quality Matters, OSCQR y Mastery Learning.
+
+---
+
+<details>
+<summary>Metadatos Estructurados (JSON)</summary>
+
+```json
+{
+  "course_metadata": {
+    "course_id": "cert_course",
+    "unit_title": "Certified Course",
+    "detected_objective": "",
+    "total_competencies": 1,
+    "total_questions": 1,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 1
+    },
+    "platform_status": "ACTIVO",
+    "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
+    "evaluation_date": "2026-11-14"
+  },
+  "dimension_scores": {},
+  "penalties_applied": [],
+  "raw_subtotal": 20.0,
+  "final_score": 20.0,
+  "quality_tier": "EXCELENTE (PLATINUM MASTERY)",
+  "mastery_path_readiness": {},
+  "remediation_actions": [
+    "Certificación plena para despliegue en plataforma Top's Academy con Nivel EXCELENTE (PLATINUM MASTERY).",
+    "El banco de 1 reactivos y 1 competencias cumple con los estándares Quality Matters, OSCQR y Mastery Learning."
+  ],
+  "discovered_lint_rules": [],
+  "platform_status": "ACTIVO"
+}
+```
+
+</details>

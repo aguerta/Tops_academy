@@ -2091,6 +2091,17 @@ def generate_deterministic_qa_report(telemetry: dict, course_data: dict) -> tupl
         "### 4. Veredicto y Certificación",
         "",
         f"El curso **{title}** ha sido **certificado y aprobado** con calificación sobresaliente de **{final_score:.1f} / 20.0** y MPRI de **{mpri_score:.2f} / 100.0**, acreditando el cumplimiento exhaustivo de los estándares Quality Matters, OSCQR y Mastery Learning.",
+        "",
+        "---",
+        "",
+        "<details>",
+        "<summary>Metadatos Estructurados (JSON)</summary>",
+        "",
+        "```json",
+        json.dumps(qa_report_json, indent=2, ensure_ascii=False),
+        "```",
+        "",
+        "</details>",
     ]
     qa_report_md = "\n".join(md_lines)
     return qa_report_json, qa_report_md

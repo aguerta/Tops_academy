@@ -13,6 +13,8 @@ Compiles work/shards/<shard_id>_data.py into canonical template JSON files in < 
 
 import argparse
 import ast
+import collections
+from collections import defaultdict, Counter
 import hashlib
 import importlib.util
 import inspect
@@ -1532,9 +1534,9 @@ def build_adapted_mc7_generator(
             f_c = 'str(r.get("correct") or r.get("ans","")).strip()'
             f_w = 'str(d[1])'
         wrapper = f"""{base}
-_g=generate_params
+_c2c_gen_inner=generate_params
 def generate_params(rng):
- r=_g(rng)
+ r=_c2c_gen_inner(rng)
  if isinstance(r,(tuple,list)):r={{"vars":r[0] if isinstance(r[0],dict) else {{"val":r[0]}},"correct":str(r[1]),"distractors":r[2] if len(r)>2 else []}}
  elif not isinstance(r,dict):return r
  {fmt_def}
@@ -1548,7 +1550,7 @@ def generate_params(rng):
   elif isinstance(d,dict):ds.append(d)
   elif st:raise ValueError(f"[TPL-MC7-STRICT] 3-tupla requerida: {{d!r}}")
  c={f_c}
- r["distractors"],r["options"]=ds,[{{"value":c,"content":c,"is_correct":True}}]+ds
+ r["correct"],r["distractors"],r["options"]=c,ds,[{{"value":c,"content":c,"is_correct":True}}]+ds
  return r
 generate=generate_params
 """
@@ -1556,9 +1558,9 @@ generate=generate_params
         rats_map_repr = json.dumps(relevant_rats, separators=(",", ":"))
         ids_code = "set(rats)" if (set(relevant_rats) >= set(declared_ids_list)) else f"{declared_ids_repr}|set(rats)"
         wrapper = f"""{base}
-_g=generate_params
+_c2c_gen_inner=generate_params
 def generate_params(rng):
- r=_g(rng)
+ r=_c2c_gen_inner(rng)
  if isinstance(r,(tuple,list)):r={{"vars":r[0] if isinstance(r[0],dict) else {{"val":r[0]}},"correct":str(r[1]),"distractors":r[2] if len(r)>2 else []}}
  elif not isinstance(r,dict):return r
  rats,st,f={rats_map_repr},{strict_repr},{fmt_helper}
@@ -1713,6 +1715,7 @@ def compile_shard(
     cta_path: Optional[Union[str, Path]] = None,
     manifest_path: Optional[Union[str, Path]] = None,
     min_archetypes: Optional[int] = None,
+    fail_total: bool = False,
     **kwargs,
 ) -> Tuple[bool, List[str]]:
     """Compiles shard data into canonical template JSON files with strict verification.
@@ -1810,6 +1813,7 @@ def compile_shard(
             cta_path=cta_path,
             manifest_path=manifest_path,
             min_archetypes=min_archetypes,
+            fail_total=fail_total,
             **kwargs,
         )
     finally:
@@ -1831,6 +1835,7 @@ def _compile_shard_body(
     cta_path: Optional[Union[str, Path]],
     manifest_path: Optional[Union[str, Path]],
     min_archetypes: Optional[int],
+    fail_total: bool = False,
     **kwargs,
 ) -> Tuple[bool, List[str]]:
 
@@ -2264,70 +2269,101 @@ def _compile_shard_body(
         err_msg = f"FAIL: {shard_data_path.name} no define la lista 'TEMPLATES = [...]'."
         return _fail(err_msg)
 
+    class _FailFastAbort(Exception):
+        def __init__(self, msg: str, has_syntax_error: bool = False, error_count: int = 1):
+            super().__init__(msg)
+            self.msg = msg
+            self.has_syntax_error = has_syntax_error
+            self.error_count = error_count
+
+    def _emit_or_abort(
+        bucket: List[str],
+        msg: str,
+        has_syntax_error: bool = False,
+        error_count: int = 1,
+    ) -> None:
+        if not fail_total:
+            raise _FailFastAbort(msg, has_syntax_error=has_syntax_error, error_count=error_count)
+        bucket.append(msg)
+
     # 4. Identify competencies and verify parity (Form-C dict or Form-B 9-tuple)
+    step4_errors: List[str] = []
+    step5_errors: List[str] = []
     found_cids = []
-    for rec_idx, rec in enumerate(tuple_records):
-        t = normalize_form_c_template(rec["tuple"])
-        rec["tuple"] = t
-        curr_loc = rec["locator"]
-        curr_p = rec["file_path"]
-        orig_idx = rec["orig_idx"]
-        if isinstance(t, dict):
-            c_candidate = str(t.get("cid") or t.get("competency_id") or "").strip()
-            if not c_candidate:
+    valid_tuple_records: List[Dict[str, Any]] = []
+    try:
+        for rec_idx, rec in enumerate(tuple_records):
+            t = normalize_form_c_template(rec["tuple"])
+            rec["tuple"] = t
+            curr_loc = rec["locator"]
+            curr_p = rec["file_path"]
+            orig_idx = rec["orig_idx"]
+            if isinstance(t, dict):
+                c_candidate = str(t.get("cid") or t.get("competency_id") or "").strip()
+                if not c_candidate:
+                    s_t, e_t, snip = curr_loc.get_tuple_snippet(orig_idx)
+                    err_msg = (
+                        f"FAIL: El diccionario Form-C en índice {orig_idx} no define 'cid' ni 'competency_id'.\n"
+                        f"  Ubicación: Líneas {s_t}..{e_t} en {curr_p.name}\n"
+                        f"{snip}"
+                    )
+                    _emit_or_abort(step4_errors, err_msg)
+                    continue
+                found_cids.append(c_candidate)
+                valid_tuple_records.append(rec)
+            elif isinstance(t, (list, tuple)):
+                if len(t) != 9:
+                    s_t, e_t, snip = curr_loc.get_tuple_snippet(orig_idx)
+                    err_msg = (
+                        f"FAIL: La tupla en índice {orig_idx} tiene {len(t) if isinstance(t, (list, tuple)) else 0} elementos "
+                        f"(se requieren exactamente 9 elementos según el contrato Form-B: "
+                        f"tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution).\n"
+                        f"  Ubicación: Líneas {s_t}..{e_t} en {curr_p.name}\n"
+                        f"{snip}"
+                    )
+                    _emit_or_abort(step4_errors, err_msg)
+                    continue
+
+                if str(t[1]).lower().strip() in known_types or str(t[2]).lower().strip() not in known_types:
+                    s_t, e_t, snip = curr_loc.get_tuple_snippet(orig_idx)
+                    err_msg = (
+                        f"FAIL: Se detectó formato legacy Form-A o tipo inválido en la tupla {orig_idx}. "
+                        f"El compilador solo admite el contrato Form-B de 9 elementos: "
+                        f"(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution).\n"
+                        f"  Ubicación: Líneas {s_t}..{e_t} en {curr_p.name}\n"
+                        f"{snip}"
+                    )
+                    _emit_or_abort(step4_errors, err_msg)
+                    continue
+
+                c_candidate = str(t[1]).strip()
+                found_cids.append(c_candidate)
+                valid_tuple_records.append(rec)
+            else:
                 s_t, e_t, snip = curr_loc.get_tuple_snippet(orig_idx)
                 err_msg = (
-                    f"FAIL: El diccionario Form-C en índice {orig_idx} no define 'cid' ni 'competency_id'.\n"
+                    f"FAIL: Entrada inválida en TEMPLATES en índice {orig_idx}: se esperaba una 9-tupla Form-B o un dict Form-C, "
+                    f"se recibió: {type(t).__name__}.\n"
                     f"  Ubicación: Líneas {s_t}..{e_t} en {curr_p.name}\n"
                     f"{snip}"
                 )
-                return _fail(err_msg)
-            found_cids.append(c_candidate)
-        elif isinstance(t, (list, tuple)):
-            if len(t) != 9:
-                s_t, e_t, snip = curr_loc.get_tuple_snippet(orig_idx)
-                err_msg = (
-                    f"FAIL: La tupla en índice {orig_idx} tiene {len(t) if isinstance(t, (list, tuple)) else 0} elementos "
-                    f"(se requieren exactamente 9 elementos según el contrato Form-B: "
-                    f"tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution).\n"
-                    f"  Ubicación: Líneas {s_t}..{e_t} en {curr_p.name}\n"
-                    f"{snip}"
-                )
-                return _fail(err_msg)
+                _emit_or_abort(step4_errors, err_msg)
+                continue
 
-            if str(t[1]).lower().strip() in known_types or str(t[2]).lower().strip() not in known_types:
-                s_t, e_t, snip = curr_loc.get_tuple_snippet(orig_idx)
-                err_msg = (
-                    f"FAIL: Se detectó formato legacy Form-A o tipo inválido en la tupla {orig_idx}. "
-                    f"El compilador solo admite el contrato Form-B de 9 elementos: "
-                    f"(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution).\n"
-                    f"  Ubicación: Líneas {s_t}..{e_t} en {curr_p.name}\n"
-                    f"{snip}"
-                )
-                return _fail(err_msg)
+        missing_cids = [cid for cid in expected_cids if cid not in found_cids]
+        unexpected_cids = [cid for cid in found_cids if cid not in expected_cids]
+        if missing_cids or unexpected_cids:
+            err_parts = []
+            if missing_cids:
+                err_parts.append(f"Competencias faltantes en TEMPLATES: {', '.join(missing_cids)}")
+            if unexpected_cids:
+                err_parts.append(f"Competencias no asignadas a este shard: {', '.join(unexpected_cids)}")
+            err_msg = f"FAIL: Paridad de competencias violada en {shard_data_path.name}: " + " | ".join(err_parts)
+            _emit_or_abort(step4_errors, err_msg)
+    except _FailFastAbort as abort:
+        return _fail(abort.msg, has_syntax_error=abort.has_syntax_error, error_count=abort.error_count)
 
-            c_candidate = str(t[1]).strip()
-            found_cids.append(c_candidate)
-        else:
-            s_t, e_t, snip = curr_loc.get_tuple_snippet(orig_idx)
-            err_msg = (
-                f"FAIL: Entrada inválida en TEMPLATES en índice {orig_idx}: se esperaba una 9-tupla Form-B o un dict Form-C, "
-                f"se recibió: {type(t).__name__}.\n"
-                f"  Ubicación: Líneas {s_t}..{e_t} en {curr_p.name}\n"
-                f"{snip}"
-            )
-            return _fail(err_msg)
-
-    missing_cids = [cid for cid in expected_cids if cid not in found_cids]
-    unexpected_cids = [cid for cid in found_cids if cid not in expected_cids]
-    if missing_cids or unexpected_cids:
-        err_parts = []
-        if missing_cids:
-            err_parts.append(f"Competencias faltantes en TEMPLATES: {', '.join(missing_cids)}")
-        if unexpected_cids:
-            err_parts.append(f"Competencias no asignadas a este shard: {', '.join(unexpected_cids)}")
-        err_msg = f"FAIL: Paridad de competencias violada en {shard_data_path.name}: " + " | ".join(err_parts)
-        return _fail(err_msg)
+    tuple_records = valid_tuple_records
 
     from check_templates import auto_heal_template_data, check_templates_file_or_dir
 
@@ -2344,10 +2380,13 @@ def _compile_shard_body(
             for c in cta_data.get("competencies", []):
                 if isinstance(c, dict) and "id" in c:
                     cid_key = c["id"]
-                    if cid_key not in cta_comp_map or not cta_comp_map[cid_key].get("distractors"):
+                    if cid_key not in cta_comp_map:
                         cta_comp_map[cid_key] = c
-                    elif c.get("distractors") and not cta_comp_map[cid_key].get("distractors"):
-                        cta_comp_map[cid_key]["distractors"] = c["distractors"]
+                    else:
+                        if c.get("distractors") and not cta_comp_map[cid_key].get("distractors"):
+                            cta_comp_map[cid_key]["distractors"] = c["distractors"]
+                        if "assumptions" in c and not cta_comp_map[cid_key].get("assumptions"):
+                            cta_comp_map[cid_key]["assumptions"] = c["assumptions"]
         except Exception:
             pass
 
@@ -2355,6 +2394,48 @@ def _compile_shard_body(
     templates_by_cid: Dict[str, List[Dict[str, Any]]] = {}
     gen_callables_by_cid: Dict[str, List[Any]] = {}
     deferred_verifier_errors: List[str] = []
+
+    def _step5_err(msg: str) -> bool:
+        if not fail_total:
+            return True
+        step5_errors.append(msg)
+        return False
+
+    hints_by_comp: Dict[str, Dict[str, Tuple[str, ...]]] = {}
+    for rec in tuple_records:
+        rec_t = rec["tuple"]
+        if isinstance(rec_t, dict):
+            c_cid = str(rec_t.get("cid") or rec_t.get("competency_id") or "").strip()
+            c_tid = str(rec_t.get("id") or rec_t.get("tpl_id") or "").strip()
+            c_hints = rec_t.get("hints")
+        elif isinstance(rec_t, (list, tuple)) and len(rec_t) == 9:
+            c_cid = str(rec_t[1]).strip()
+            c_tid = str(rec_t[0]).strip()
+            c_hints = rec_t[7]
+        else:
+            continue
+        if c_cid and c_tid and isinstance(c_hints, (list, tuple)) and c_hints:
+            norm_h = tuple(re.sub(r"\s+", " ", str(h).strip().lower()) for h in c_hints)
+            hints_by_comp.setdefault(c_cid, {})[c_tid] = norm_h
+
+    deferred_hints_dup_errors: List[str] = []
+    for c_cid, comp_hints in hints_by_comp.items():
+        if len(comp_hints) > 1:
+            seen_h: Dict[Tuple[str, ...], List[str]] = {}
+            for c_tid, nh in comp_hints.items():
+                seen_h.setdefault(nh, []).append(c_tid)
+            for nh, tids in seen_h.items():
+                if len(tids) > 1:
+                    if strict:
+                        deferred_hints_dup_errors.append(
+                            f"FAIL: [TPL-HINTS-DUPLICATE] Competencia '{c_cid}': Múltiples plantillas ({', '.join(tids)}) reutilizan exactamente el mismo arreglo de pistas (hints). "
+                            f"Cada plantilla debe proporcionar pistas socráticas diferenciadas."
+                        )
+                    else:
+                        print(
+                            f"WARNING: [TPL-HINTS-DUPLICATE] Competencia '{c_cid}': Múltiples plantillas ({', '.join(tids)}) reutilizan exactamente el mismo arreglo de pistas (hints).",
+                            file=sys.stderr,
+                        )
 
     for t_idx, rec in enumerate(tuple_records):
         t = normalize_form_c_template(rec["tuple"])
@@ -2404,9 +2485,10 @@ def _compile_shard_body(
             fmt_str = None
             tpl_rats = {}
         else:
-            return _fail(
-                f"FAIL: Entrada en índice {orig_idx} no cumple el contrato Form-B de 9 elementos ni Form-C dict: {repr(t)}"
-            )
+            err_msg = f"FAIL: Entrada en índice {orig_idx} no cumple el contrato Form-B de 9 elementos ni Form-C dict: {repr(t)}"
+            if _step5_err(err_msg):
+                return _fail(err_msg)
+            continue
 
         target_kc = cid
         target_misc = []
@@ -2414,24 +2496,32 @@ def _compile_shard_body(
 
         # Determine difficulty and bloom (element must be 2-tuple (difficulty, bloom))
         if not isinstance(diff_raw, (list, tuple)) or len(diff_raw) != 2:
-            return _fail(
+            err_msg = (
                 f"FAIL: El elemento de dificultad en tupla {orig_idx} ('{tpl_id}') debe ser explícitamente "
                 f"una 2-tupla (difficulty, bloom) (ej. ('easy', 'Remember')), se recibió: {repr(diff_raw)}."
             )
+            if _step5_err(err_msg):
+                return _fail(err_msg)
+            difficulty = "easy"
+            bloom = "Remember"
+        else:
+            difficulty = str(diff_raw[0]).lower().strip()
+            bloom = str(diff_raw[1]).capitalize().strip()
 
-        difficulty = str(diff_raw[0]).lower().strip()
-        bloom = str(diff_raw[1]).capitalize().strip()
-
-        if difficulty not in ("easy", "medium", "hard"):
-            return _fail(
-                f"FAIL: Dificultad inválida '{difficulty}' en tupla {orig_idx} ('{tpl_id}'). "
-                f"Debe ser 'easy', 'medium' o 'hard'."
-            )
-        if bloom not in ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"):
-            return _fail(
-                f"FAIL: Nivel de Bloom inválido '{bloom}' en tupla {orig_idx} ('{tpl_id}'). "
-                f"Debe ser Remember, Understand, Apply, Analyze, Evaluate o Create."
-            )
+            if difficulty not in ("easy", "medium", "hard"):
+                err_msg = (
+                    f"FAIL: Dificultad inválida '{difficulty}' en tupla {orig_idx} ('{tpl_id}'). "
+                    f"Debe ser 'easy', 'medium' o 'hard'."
+                )
+                if _step5_err(err_msg):
+                    return _fail(err_msg)
+            if bloom not in ("Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"):
+                err_msg = (
+                    f"FAIL: Nivel de Bloom inválido '{bloom}' en tupla {orig_idx} ('{tpl_id}'). "
+                    f"Debe ser Remember, Understand, Apply, Analyze, Evaluate o Create."
+                )
+                if _step5_err(err_msg):
+                    return _fail(err_msg)
 
         # Determine interaction_type
         if qtype in ("multiple_choice", "multiple_choice_7_options", "mc7"):
@@ -2504,10 +2594,12 @@ cross_check=verify
         # Check non-trivial verifier
         ver_is_trivial, ver_reason = is_trivial_verifier(ver_code, ver_raw)
         if ver_is_trivial:
-            return _fail(
+            err_msg = (
                 f"FAIL: [TPL-VERIFIER] El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' es trivial ({ver_reason}). "
                 f"Debe evaluar condiciones lógicas o matemáticas reales sobre el resultado generado."
             )
+            if _step5_err(err_msg):
+                return _fail(err_msg)
 
         # Verifier AST Hygiene checks
         if ver_fn_name and curr_loc and hasattr(curr_loc, "functions") and ver_fn_name in curr_loc.functions:
@@ -2520,103 +2612,209 @@ cross_check=verify
                         for h in sub.handlers:
                             for s in h.body:
                                 if isinstance(s, ast.Return) and isinstance(s.value, ast.Constant) and bool(s.value.value) is True:
-                                    return _fail(
+                                    err_msg = (
                                         f"FAIL: [VERIFIER-SWALLOWED-EXCEPTION] El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' (Líneas {s_v}..{e_v} en {curr_p.name}) "
                                         f"contiene un bloque try/except que retorna True en el manejador de excepción. Los errores de validación deben resultar en False."
                                     )
+                                    if _step5_err(err_msg):
+                                        return _fail(err_msg)
                     elif isinstance(sub, ast.Raise):
                         exc_n = ""
                         if isinstance(sub.exc, ast.Call) and isinstance(sub.exc.func, ast.Name):
                             exc_n = sub.exc.func.id
                         elif isinstance(sub.exc, ast.Name):
                             exc_n = sub.exc.id
-                        return _fail(
+                        err_msg = (
                             f"FAIL: [TPL-DEBUG-ARTIFACT] El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' contiene una sentencia 'raise {exc_n}'. "
                             f"Los verificadores deben retornar booleanos sin sentencias 'raise' de depuración."
                         )
+                        if _step5_err(err_msg):
+                            return _fail(err_msg)
                     elif isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name) and sub.func.id in ("breakpoint", "print"):
-                        return _fail(
-                            f"FAIL: [TPL-DEBUG-ARTIFACT] El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' contiene una llamada a '{sub.func.id}()'."
-                        )
+                        err_msg = f"FAIL: [TPL-DEBUG-ARTIFACT] El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' contiene una llamada a '{sub.func.id}()'."
+                        if _step5_err(err_msg):
+                            return _fail(err_msg)
                     elif isinstance(sub, ast.Import) and any(a.name == "pdb" for a in sub.names):
-                        return _fail(
-                            f"FAIL: [TPL-DEBUG-ARTIFACT] El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' importa 'pdb'."
-                        )
+                        err_msg = f"FAIL: [TPL-DEBUG-ARTIFACT] El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' importa 'pdb'."
+                        if _step5_err(err_msg):
+                            return _fail(err_msg)
             except Exception:
                 pass
 
-        # Generator AST Hygiene checks
+        # Generator AST Hygiene checks (tracing call graph from gen_fn to local private helpers)
         if gen_fn_name and curr_loc and hasattr(curr_loc, "functions") and gen_fn_name in curr_loc.functions:
-            s_g, e_g = curr_loc.functions[gen_fn_name]
-            g_src = "\n".join(curr_loc.lines[s_g - 1 : e_g])
-            try:
-                g_ast = ast.parse(textwrap.dedent(g_src))
-                for sub in ast.walk(g_ast):
-                    if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name) and sub.func.id in ("breakpoint", "print"):
-                        return _fail(
-                            f"FAIL: [TPL-DEBUG-ARTIFACT] La función generadora '{gen_fn_name}' en '{tpl_id}' contiene una llamada a '{sub.func.id}()'."
+            reachable_fns = []
+            queue = [gen_fn_name]
+            seen_fns = set()
+            from shard_precheck import is_bounded_while
+            while queue:
+                curr_fn = queue.pop(0)
+                if curr_fn in seen_fns:
+                    continue
+                seen_fns.add(curr_fn)
+                if curr_fn in curr_loc.functions:
+                    reachable_fns.append(curr_fn)
+                    s_fn, e_fn = curr_loc.functions[curr_fn]
+                    fn_src = "\n".join(curr_loc.lines[s_fn - 1 : e_fn])
+                    try:
+                        parsed_fn = ast.parse(textwrap.dedent(fn_src))
+                        for child in ast.walk(parsed_fn):
+                            if isinstance(child, ast.Call) and isinstance(child.func, ast.Name):
+                                callee = child.func.id
+                                if callee in curr_loc.functions and callee not in seen_fns:
+                                    queue.append(callee)
+                    except Exception:
+                        pass
+
+            for curr_fn in reachable_fns:
+                s_g, e_g = curr_loc.functions[curr_fn]
+                g_src = "\n".join(curr_loc.lines[s_g - 1 : e_g])
+                try:
+                    g_ast = ast.parse(textwrap.dedent(g_src))
+                    for sub in ast.walk(g_ast):
+                        if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name) and sub.func.id in ("breakpoint", "print"):
+                            err_msg = f"FAIL: [TPL-DEBUG-ARTIFACT] La función '{curr_fn}' en '{tpl_id}' contiene una llamada a '{sub.func.id}()'."
+                            if _step5_err(err_msg):
+                                return _fail(err_msg)
+                        elif isinstance(sub, ast.Import) and any(a.name == "pdb" for a in sub.names):
+                            err_msg = f"FAIL: [TPL-DEBUG-ARTIFACT] La función '{curr_fn}' en '{tpl_id}' importa 'pdb'."
+                            if _step5_err(err_msg):
+                                return _fail(err_msg)
+                        elif isinstance(sub, ast.Raise):
+                            exc_n = ""
+                            if isinstance(sub.exc, ast.Call) and isinstance(sub.exc.func, ast.Name):
+                                exc_n = sub.exc.func.id
+                            elif isinstance(sub.exc, ast.Name):
+                                exc_n = sub.exc.id
+                            err_msg = (
+                                f"FAIL: [TPL-DEBUG-ARTIFACT] La función '{curr_fn}' en '{tpl_id}' contiene una sentencia 'raise {exc_n}'. "
+                                f"Las funciones generadoras de ítems deben retornar un diccionario de variables y opciones, sin sentencias 'raise' de depuración."
+                            )
+                            if _step5_err(err_msg):
+                                return _fail(err_msg)
+                    if "clean_ds" in curr_fn:
+                        err_msg = (
+                            f"FAIL: [TPL-AD-HOC-PERTURBATION] La función '{curr_fn}' en '{tpl_id}' utiliza perturbación ad-hoc ('clean_ds'). "
+                            f"Los distractores deben originarse en modelos de error conceptuales o algebraicos."
                         )
-                    elif isinstance(sub, ast.Import) and any(a.name == "pdb" for a in sub.names):
-                        return _fail(
-                            f"FAIL: [TPL-DEBUG-ARTIFACT] La función generadora '{gen_fn_name}' en '{tpl_id}' importa 'pdb'."
-                        )
-                    elif isinstance(sub, ast.Raise):
-                        exc_n = ""
-                        if isinstance(sub.exc, ast.Call) and isinstance(sub.exc.func, ast.Name):
-                            exc_n = sub.exc.func.id
-                        elif isinstance(sub.exc, ast.Name):
-                            exc_n = sub.exc.id
-                        return _fail(
-                            f"FAIL: [TPL-DEBUG-ARTIFACT] La función generadora '{gen_fn_name}' en '{tpl_id}' contiene una sentencia 'raise {exc_n}'. "
-                            f"Las funciones generadoras de ítems deben retornar un diccionario de variables y opciones, sin sentencias 'raise' de depuración."
-                        )
-                if "clean_ds" in gen_fn_name:
-                    return _fail(
-                        f"FAIL: [TPL-AD-HOC-PERTURBATION] La función generadora '{gen_fn_name}' en '{tpl_id}' utiliza perturbación ad-hoc ('clean_ds'). "
-                        f"Los distractores deben originarse en modelos de error conceptuales o algebraicos."
-                    )
-                for sub in ast.walk(g_ast):
-                    if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name) and "clean_ds" in sub.func.id:
-                        return _fail(
-                            f"FAIL: [TPL-AD-HOC-PERTURBATION] La función generadora '{gen_fn_name}' en '{tpl_id}' invoca la función de perturbación '{sub.func.id}'."
-                        )
-                    elif isinstance(sub, ast.While):
-                        for w_sub in ast.walk(sub):
-                            if isinstance(w_sub, ast.BinOp) and isinstance(w_sub.op, ast.Add):
-                                if isinstance(w_sub.right, ast.Constant) and isinstance(w_sub.right.value, float):
-                                    return _fail(
-                                        f"FAIL: [TPL-AD-HOC-PERTURBATION] Bucle while de perturbación numérica ad-hoc detectado en '{gen_fn_name}' de '{tpl_id}'."
+                        if _step5_err(err_msg):
+                            return _fail(err_msg)
+                    for sub in ast.walk(g_ast):
+                        if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name) and "clean_ds" in sub.func.id:
+                            err_msg = f"FAIL: [TPL-AD-HOC-PERTURBATION] La función '{curr_fn}' en '{tpl_id}' invoca la función de perturbación '{sub.func.id}'."
+                            if _step5_err(err_msg):
+                                return _fail(err_msg)
+                        elif isinstance(sub, ast.While):
+                            for w_sub in ast.walk(sub):
+                                if isinstance(w_sub, ast.BinOp) and isinstance(w_sub.op, ast.Add):
+                                    if isinstance(w_sub.right, ast.Constant) and isinstance(w_sub.right.value, float):
+                                        err_msg = f"FAIL: [TPL-AD-HOC-PERTURBATION] Bucle while de perturbación numérica ad-hoc detectado en '{curr_fn}' de '{tpl_id}'."
+                                        if _step5_err(err_msg):
+                                            return _fail(err_msg)
+                                    if isinstance(w_sub.right, ast.Call) and getattr(w_sub.right.func, "id", "") in ("uniform", "random"):
+                                        err_msg = f"FAIL: [TPL-AD-HOC-PERTURBATION] Bucle while con perturbación flotante aleatoria detectado en '{curr_fn}' de '{tpl_id}'."
+                                        if _step5_err(err_msg):
+                                            return _fail(err_msg)
+                            if not is_bounded_while(sub):
+                                is_const_true = isinstance(sub.test, ast.Constant) and bool(sub.test.value) is True
+                                if is_const_true:
+                                    line_no = _find_diagnostic_line(curr_loc, curr_fn, orig_idx)
+                                    err_msg = (
+                                        f"FAIL: [TPL-UNBOUNDED-LOOP] [TPL-DRY] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): "
+                                        f"Bucle while constante sin cota iterativa explícita verificable (while True) detectado en '{curr_fn}'. "
+                                        f"Use 'for _ in range(N):' o bucles con cota iterativa verificable (ej. 'while tries < 50: tries += 1') para evitar timeouts."
                                     )
-                                if isinstance(w_sub.right, ast.Call) and getattr(w_sub.right.func, "id", "") in ("uniform", "random"):
-                                    return _fail(
-                                        f"FAIL: [TPL-AD-HOC-PERTURBATION] Bucle while con perturbación flotante aleatoria detectado en '{gen_fn_name}' de '{tpl_id}'."
+                                    if _step5_err(err_msg):
+                                        return _fail(err_msg)
+                                else:
+                                    print(
+                                        f"WARNING: [TPL-UNBOUNDED-LOOP] En '{tpl_id}': Bucle while en '{curr_fn}' sin contador explícito verificado. "
+                                        f"Asegúrese de que el bucle converge rápidamente.",
+                                        file=sys.stderr,
                                     )
-            except Exception:
-                pass
+                except Exception:
+                    pass
 
         # Stems validation: require at least 3 distinct author-written stems
         if not isinstance(stems_raw, (list, tuple)) or len(stems_raw) < 3:
-            return _fail(
+            err_msg = (
                 f"FAIL: La plantilla '{tpl_id}' debe proporcionar al menos 3 enunciados distintos en stems "
                 f"(se recibieron {len(stems_raw) if isinstance(stems_raw, (list, tuple)) else 0})."
             )
-        cleaned_stems = [str(s).strip() for s in stems_raw if str(s).strip()]
-        if len(set(cleaned_stems)) < 3:
-            return _fail(
-                f"FAIL: La plantilla '{tpl_id}' contiene enunciados duplicados en stems "
-                f"(se encontraron {len(set(cleaned_stems))} únicos, se requieren >= 3)."
-            )
-        stem_es = cleaned_stems[0]
+            if _step5_err(err_msg):
+                return _fail(err_msg)
+            cleaned_stems = [str(s).strip() for s in stems_raw if str(s).strip()] if isinstance(stems_raw, (list, tuple)) else []
+        else:
+            cleaned_stems = [str(s).strip() for s in stems_raw if str(s).strip()]
+            if len(set(cleaned_stems)) < 3:
+                err_msg = (
+                    f"FAIL: La plantilla '{tpl_id}' contiene enunciados duplicados en stems "
+                    f"(se encontraron {len(set(cleaned_stems))} únicos, se requieren >= 3)."
+                )
+                if _step5_err(err_msg):
+                    return _fail(err_msg)
+        stem_es = cleaned_stems[0] if cleaned_stems else ""
         stem_variants = cleaned_stems
+
+        # Strict stem grammar & LaTeX symbol consistency check [TPL-STEM-GRAMMAR]
+        if strict and stem_variants:
+            for s_idx, sv in enumerate(stem_variants):
+                clean_sv = re.sub(r"\$\$[\s\S]*?\$\$", " ", sv)
+                clean_sv = re.sub(r"\$[^\$]*?\$", " ", clean_sv)
+                clean_for_punct = re.sub(r"\b(?:p\.\s*ej|ej|etc|vs|cap|pág|pag|vol|art|inc)\.", "ABBR", clean_sv, flags=re.IGNORECASE)
+                m_dot = re.search(r"\.\s+[a-záéíóúñ]", clean_for_punct)
+                if m_dot:
+                    line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, sv)
+                    err_msg = (
+                        f"FAIL: [TPL-STEM-GRAMMAR] Error mecánico de puntuación en stem_variants[{s_idx}] de '{tpl_id}' "
+                        f"(Línea {line_no} en {curr_p.name}): punto seguido de minúscula ('{m_dot.group(0)}'). "
+                        f"Revise la unión o puntuación del enunciado."
+                    )
+                    if _step5_err(err_msg):
+                        return _fail(err_msg)
+                m_comma = re.search(r",\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}", clean_for_punct)
+                if m_comma:
+                    line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, sv)
+                    err_msg = (
+                        f"FAIL: [TPL-STEM-GRAMMAR] Error mecánico de puntuación en stem_variants[{s_idx}] de '{tpl_id}' "
+                        f"(Línea {line_no} en {curr_p.name}): coma seguida de mayúscula ('{m_comma.group(0)}'). "
+                        f"Revise la unión mecánica o puntuación del enunciado."
+                    )
+                    if _step5_err(err_msg):
+                        return _fail(err_msg)
+
+            if len(stem_variants) > 1:
+                var_sym_sets = []
+                for sv in stem_variants:
+                    raw_syms = set(re.findall(r"\$([A-Za-z]_[A-Za-z0-9{}]+)\$", sv))
+                    norm_syms = {s.replace("{", "").replace("}", "") for s in raw_syms}
+                    var_sym_sets.append(norm_syms)
+                all_syms = set().union(*var_sym_sets)
+                if all_syms:
+                    for sym in sorted(all_syms):
+                        missing_in = [
+                            i for i, sym_set in enumerate(var_sym_sets)
+                            if sym not in sym_set and f"@{sym}@" not in stem_variants[i] and f"@{sym.lower()}@" not in stem_variants[i] and sym not in stem_variants[i]
+                        ]
+                        if missing_in and len(missing_in) < len(stem_variants):
+                            line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, stem_variants[missing_in[0]])
+                            err_msg = (
+                                f"FAIL: [TPL-STEM-GRAMMAR] Inconsistencia de símbolos LaTeX entre stem_variants en '{tpl_id}' "
+                                f"(Línea {line_no} en {curr_p.name}): el símbolo '${sym}$' está presente en unas variantes pero ausente en la variante {missing_in[0]} sin parámetro @...@ equivalente."
+                            )
+                            if _step5_err(err_msg):
+                                return _fail(err_msg)
 
         # Hints validation: require 3 to 5 author hints, >= 25 chars, no anti-socratic catchphrases, no literal wrong_belief copy
         cta_comp = cta_comp_map.get(cid, {})
         cta_distractors = cta_comp.get("distractors", [])
         if not isinstance(hints_raw, (list, tuple)) or not (3 <= len(hints_raw) <= 5):
-            return _fail(
+            err_msg = (
                 f"FAIL: La plantilla '{tpl_id}' debe definir entre 3 y 5 pistas explícitas (hints) "
                 f"(se recibieron {len(hints_raw) if isinstance(hints_raw, (list, tuple)) else 0})."
             )
+            if _step5_err(err_msg):
+                return _fail(err_msg)
 
         from check_templates import _strip_giveaway_prefix
         hints = []
@@ -2632,24 +2830,25 @@ cross_check=verify
             str(d.get("wrong_belief") or "").strip().lower()
             for d in cta_distractors if isinstance(d, dict) and d.get("wrong_belief")
         ]
-        for h_idx, h_item in enumerate(hints_raw, start=1):
-            h_text = _strip_giveaway_prefix(str(h_item).strip())
-            if len(h_text) < 25:
-                return _fail(
-                    f"FAIL: La pista {h_idx} de '{tpl_id}' tiene menos de 25 caracteres ({len(h_text)} < 25): '{h_text}'."
-                )
-            h_lower = h_text.lower()
-            for pat in anti_socratic_patterns:
-                if pat in h_lower:
-                    return _fail(
-                        f"FAIL: La pista {h_idx} de '{tpl_id}' contiene una muletilla anti-socrática prohibida ('{pat}'): '{h_text}'."
-                    )
-            for wb in cta_wrong_beliefs:
-                if len(wb) >= 12 and wb in h_lower:
-                    return _fail(
-                        f"FAIL: La pista {h_idx} de '{tpl_id}' copia literalmente la concepción errónea de cta.json ('{wb}')."
-                    )
-            hints.append(h_text)
+        if isinstance(hints_raw, (list, tuple)):
+            for h_idx, h_item in enumerate(hints_raw, start=1):
+                h_text = _strip_giveaway_prefix(str(h_item).strip())
+                if len(h_text) < 25:
+                    err_msg = f"FAIL: La pista {h_idx} de '{tpl_id}' tiene menos de 25 caracteres ({len(h_text)} < 25): '{h_text}'."
+                    if _step5_err(err_msg):
+                        return _fail(err_msg)
+                h_lower = h_text.lower()
+                for pat in anti_socratic_patterns:
+                    if pat in h_lower:
+                        err_msg = f"FAIL: La pista {h_idx} de '{tpl_id}' contiene una muletilla anti-socrática prohibida ('{pat}'): '{h_text}'."
+                        if _step5_err(err_msg):
+                            return _fail(err_msg)
+                for wb in cta_wrong_beliefs:
+                    if len(wb) >= 12 and wb in h_lower:
+                        err_msg = f"FAIL: La pista {h_idx} de '{tpl_id}' copia literalmente la concepción errónea de cta.json ('{wb}')."
+                        if _step5_err(err_msg):
+                            return _fail(err_msg)
+                hints.append(h_text)
 
         # Retrieve CTA declared distractor IDs
         clean_cta_distractors = []
@@ -2766,14 +2965,18 @@ cross_check=verify
                 corr_str = str(sample_dict.get("correct", "")).strip()
                 if corr_str.startswith("$") and corr_str.endswith("$") and len(corr_str) >= 2:
                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, corr_str)
-                    return _fail(
+                    err_msg = (
                         f"FAIL: [TPL-FIB-KATEX] La respuesta FIB en '{tpl_id}' ('{corr_str}') (Línea {line_no} en {curr_p.name}) contiene delimitadores '$' externos. "
                         f"En Frontend (FeedbackToast) se formatea automáticamente en modo matemático; retire los '$' externos."
                     )
+                    if _step5_err(err_msg):
+                        return _fail(err_msg)
                 fib_katex_errs = validate_katex_syntax(corr_str, f"FIB correct answer in '{tpl_id}'", allow_template_vars=True)
                 if fib_katex_errs:
                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, corr_str)
-                    return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {fib_katex_errs[0]}")
+                    err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {fib_katex_errs[0]}"
+                    if _step5_err(err_msg):
+                        return _fail(err_msg)
 
             # Warn-only PyKaTeX render check (does not affect pass/fail)
             _is_fib = interaction_type == "fill_in_the_blank"
@@ -2784,6 +2987,46 @@ cross_check=verify
                 for _w in pykatex_warnings(_dv, f"distractor in '{tpl_id}'"):
                     print(_w, file=sys.stderr)
 
+            # Orphan vars check (calibrated warn-only)
+            if sample_dict and isinstance(sample_dict.get("vars"), dict):
+                raw_vars_keys = set(sample_dict["vars"].keys())
+                used_tokens: Set[str] = set()
+                for text_field in (stem_variants or []) + [sol_raw] + (hints or []):
+                    if text_field:
+                        used_tokens.update(re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", str(text_field)))
+                for opt_item in (sample_dict.get("distractors") or sample_dict.get("options") or []):
+                    if isinstance(opt_item, dict):
+                        for v_val in opt_item.values():
+                            if isinstance(v_val, str):
+                                used_tokens.update(re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", v_val))
+                    elif isinstance(opt_item, (tuple, list)):
+                        for v_val in opt_item:
+                            if isinstance(v_val, str):
+                                used_tokens.update(re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", v_val))
+                for r_text in (combined_rats or {}).values():
+                    if isinstance(r_text, str):
+                        used_tokens.update(re.findall(r"@([a-zA-Z0-9_]+)(?::[^@]*)?@", r_text))
+
+                ast_inspected_keys: Set[str] = set()
+                if ver_code:
+                    try:
+                        v_ast = ast.parse(textwrap.dedent(ver_code.strip()))
+                        for v_node in ast.walk(v_ast):
+                            if isinstance(v_node, ast.Subscript) and isinstance(v_node.slice, ast.Constant) and isinstance(v_node.slice.value, str):
+                                ast_inspected_keys.add(v_node.slice.value)
+                            elif isinstance(v_node, ast.Call) and isinstance(v_node.func, ast.Attribute) and v_node.func.attr == "get" and v_node.args:
+                                if isinstance(v_node.args[0], ast.Constant) and isinstance(v_node.args[0].value, str):
+                                    ast_inspected_keys.add(v_node.args[0].value)
+                    except Exception:
+                        pass
+
+                orphan_keys = raw_vars_keys - used_tokens - ast_inspected_keys - {"ans", "correct", "val"}
+                if orphan_keys:
+                    print(
+                        f"[!] Warning: [TPL-ORPHAN-VARS] En '{tpl_id}': claves retornadas en 'vars' que no se usan en placeholders @...@ ni en ver_fn: {sorted(list(orphan_keys))}",
+                        file=sys.stderr,
+                    )
+
             # MC7 checks
             if interaction_type == "multiple_choice_7_options":
                 s_corr_raw = str(sample_dict.get("correct", "")).strip()
@@ -2791,16 +3034,20 @@ cross_check=verify
                     corr_katex_errs = validate_katex_syntax(s_corr_raw, f"correct answer in '{tpl_id}'", allow_template_vars=True)
                     if corr_katex_errs:
                         line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, s_corr_raw)
-                        return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {corr_katex_errs[0]}")
+                        err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {corr_katex_errs[0]}"
+                        if _step5_err(err_msg):
+                            return _fail(err_msg)
                     if strict:
                         m_tt = _find_telltale_in_option(s_corr_raw, is_distractor=False)
                         if m_tt:
                             line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, s_corr_raw)
-                            return _fail(
+                            err_msg = (
                                 f"FAIL: [TPL-TELLTALE / parenthetical_telltale_linter / distractor_integrity_linter] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): "
                                 f"la opción visible contiene metainformación delatora: '{m_tt}'. "
                                 f"Elimina palabras y coletillas delatoras del texto visible de la opción y traslada explicaciones conceptuales a 'error_rationale' o 'sol'."
                             )
+                            if _step5_err(err_msg):
+                                return _fail(err_msg)
                 dists_list = sample_dict.get("distractors") or []
                 if isinstance(dists_list, list) and dists_list:
                     dids_found = []
@@ -2826,10 +3073,14 @@ cross_check=verify
                                     rat = combined_rats.get(did_cand) or combined_rats[orig_did0]
                                 elif strict:
                                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, str(d_item[0]))
-                                    return _fail(
+                                    err_msg = (
                                         f"FAIL: [TPL-MC7-STRICT] En modo estricto, la 2-tupla (distractor_id, value) está prohibida en MC7 ('{tpl_id}') (Línea {line_no} en {curr_p.name}). "
                                         f"Cada distractor debe ser una 3-tupla (distractor_id, value, error_rationale) con error_rationale >= 20 caracteres: {repr(d_item)}"
                                     )
+                                    if _step5_err(err_msg):
+                                        return _fail(err_msg)
+                                    did = did_cand
+                                    val = str(d_item[1]).strip()
                                 else:
                                     did = did_cand
                                     val = str(d_item[1]).strip()
@@ -2843,36 +3094,54 @@ cross_check=verify
                             val_katex_errs = validate_katex_syntax(val, f"distractor '{did}' value in '{tpl_id}'", allow_template_vars=True)
                             if val_katex_errs:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or val)
-                                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {val_katex_errs[0]}")
+                                err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {val_katex_errs[0]}"
+                                if _step5_err(err_msg):
+                                    return _fail(err_msg)
                             if strict:
                                 m_tt = _find_telltale_in_option(val, is_distractor=True)
                                 if m_tt:
                                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or val)
-                                    return _fail(
+                                    err_msg = (
                                         f"FAIL: [TPL-TELLTALE / parenthetical_telltale_linter / distractor_integrity_linter] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): "
                                         f"la opción visible contiene metainformación delatora: '{m_tt}'. "
                                         f"Elimina palabras y coletillas delatoras del texto visible de la opción y traslada explicaciones conceptuales a 'error_rationale' o 'sol'."
                                     )
+                                    if _step5_err(err_msg):
+                                        return _fail(err_msg)
                         if rat:
                             rat_katex_errs = validate_katex_syntax(rat, f"distractor '{did}' rationale in '{tpl_id}'", allow_template_vars=True)
                             if rat_katex_errs:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
-                                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {rat_katex_errs[0]}")
+                                err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {rat_katex_errs[0]}"
+                                if _step5_err(err_msg):
+                                    return _fail(err_msg)
 
                         if did:
                             dids_found.append(did)
                             if cta_declared_ids and did not in cta_declared_ids:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did)
-                                return _fail(
+                                err_msg = (
                                     f"FAIL: Distractor ID '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) no está declarado en cta.json para la competencia '{cid}'. "
                                     f"Distractores obligatorios declarados en cta.json: {sorted(cta_declared_ids)}."
                                 )
+                                if _step5_err(err_msg):
+                                    return _fail(err_msg)
 
                         if strict:
-                            if len(rat.strip()) < 20:
+                            rat_s = rat.strip()
+                            norm_rat_s = re.sub(r"@[A-Za-z0-9_]+@", "X", rat_s)
+                            if len(rat_s) < 20:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
-                                return _fail(
-                                    f"FAIL: [TPL-MC7-RATIONALE] El distractor '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale de longitud {len(rat.strip())} (< 20 caracteres): '{rat}'."
+                                err_msg = (
+                                    f"FAIL: [TPL-MC7-RATIONALE] El distractor '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale de longitud {len(rat_s)} (< 20 caracteres): '{rat}'."
+                                )
+                                if _step5_err(err_msg):
+                                    return _fail(err_msg)
+                            elif len(norm_rat_s) < 50:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
+                                deferred_hints_dup_errors.append(
+                                    f"FAIL: [TPL-MC7-RATIONALE] El distractor '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale demasiado corto tras interpolación de @var@ "
+                                    f"(raw={len(rat_s)}c, normalizado @var@->X={len(norm_rat_s)}c < 50c): '{rat}'."
                                 )
                             # Dynamic rationale check [TPL-DYNAMIC-RATIONALE]
                             if declared_vars:
@@ -2883,10 +3152,12 @@ cross_check=verify
                                     valid_rat_tokens = rat_tokens.intersection(declared_vars)
                                     if not valid_rat_tokens:
                                         line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
-                                        return _fail(
+                                        err_msg = (
                                             f"FAIL: [TPL-DYNAMIC-RATIONALE] El distractor '{did}' en la plantilla paramétrica '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene una explicación estática sin variables ('{rat}'). "
                                             f"Debe incluir al menos un token @var@ declarado en vars ({', '.join(sorted(declared_vars))}) para explicar dinámicamente el desvío."
                                         )
+                                        if _step5_err(err_msg):
+                                            return _fail(err_msg)
                     target_misc = dids_found
 
             # MS checks
@@ -2902,37 +3173,57 @@ cross_check=verify
                             opt_katex_errs = validate_katex_syntax(val, f"option '{did}' value in '{tpl_id}'", allow_template_vars=True)
                             if opt_katex_errs:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or val)
-                                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {opt_katex_errs[0]}")
+                                err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {opt_katex_errs[0]}"
+                                if _step5_err(err_msg):
+                                    return _fail(err_msg)
                             if strict:
                                 m_tt = _find_telltale_in_option(val, is_distractor=True)
                                 if m_tt:
                                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or val)
-                                    return _fail(
+                                    err_msg = (
                                         f"FAIL: [TPL-TELLTALE / parenthetical_telltale_linter / distractor_integrity_linter] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): "
                                         f"la opción visible contiene metainformación delatora: '{m_tt}'. "
                                         f"Elimina palabras y coletillas delatoras del texto visible de la opción y traslada explicaciones conceptuales a 'error_rationale' o 'sol'."
                                     )
+                                    if _step5_err(err_msg):
+                                        return _fail(err_msg)
                         if rat:
                             opt_rat_errs = validate_katex_syntax(rat, f"option '{did}' rationale in '{tpl_id}'", allow_template_vars=True)
                             if opt_rat_errs:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
-                                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {opt_rat_errs[0]}")
+                                err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {opt_rat_errs[0]}"
+                                if _step5_err(err_msg):
+                                    return _fail(err_msg)
                         if did:
                             norm_did = str(did).replace("_", "-")
                             ms_dids.append(norm_did)
                             if cta_declared_ids and norm_did not in cta_declared_ids:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, str(did))
-                                return _fail(
+                                err_msg = (
                                     f"FAIL: Distractor ID '{did}' en opción falsa de '{tpl_id}' (Línea {line_no} en {curr_p.name}) no está declarado en cta.json para la competencia '{cid}'."
                                 )
+                                if _step5_err(err_msg):
+                                    return _fail(err_msg)
                         if strict:
                             if not did:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, val)
-                                return _fail(f"FAIL: [TPL-MS-DISTRACTOR-ID] Opción falsa en multiple_select ('{tpl_id}') (Línea {line_no} en {curr_p.name}) carece de distractor_id.")
-                            if len(rat.strip()) < 20:
+                                err_msg = f"FAIL: [TPL-MS-DISTRACTOR-ID] Opción falsa en multiple_select ('{tpl_id}') (Línea {line_no} en {curr_p.name}) carece de distractor_id."
+                                if _step5_err(err_msg):
+                                    return _fail(err_msg)
+                            rat_s = rat.strip()
+                            norm_rat_s = re.sub(r"@[A-Za-z0-9_]+@", "X", rat_s)
+                            if len(rat_s) < 20:
                                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
-                                return _fail(
-                                    f"FAIL: [TPL-MS-RATIONALE] La opción falsa '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale de longitud {len(rat.strip())} (< 20 caracteres): '{rat}'."
+                                err_msg = (
+                                    f"FAIL: [TPL-MS-RATIONALE] La opción falsa '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale de longitud {len(rat_s)} (< 20 caracteres): '{rat}'."
+                                )
+                                if _step5_err(err_msg):
+                                    return _fail(err_msg)
+                            elif len(norm_rat_s) < 50:
+                                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
+                                deferred_hints_dup_errors.append(
+                                    f"FAIL: [TPL-MS-RATIONALE] La opción falsa '{did}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene error_rationale demasiado corto tras interpolación de @var@ "
+                                    f"(raw={len(rat_s)}c, normalizado @var@->X={len(norm_rat_s)}c < 50c): '{rat}'."
                                 )
                             # Dynamic rationale check [TPL-DYNAMIC-RATIONALE]
                             if declared_vars:
@@ -2943,10 +3234,12 @@ cross_check=verify
                                     valid_rat_tokens = rat_tokens.intersection(declared_vars)
                                     if not valid_rat_tokens:
                                         line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, did or rat)
-                                        return _fail(
+                                        err_msg = (
                                             f"FAIL: [TPL-DYNAMIC-RATIONALE] La opción falsa '{did}' en la plantilla paramétrica '{tpl_id}' (Línea {line_no} en {curr_p.name}) tiene una explicación estática sin variables ('{rat}'). "
                                             f"Debe incluir al menos un token @var@ declarado en vars ({', '.join(sorted(declared_vars))})."
                                         )
+                                        if _step5_err(err_msg):
+                                            return _fail(err_msg)
                 target_misc = list(dict.fromkeys(ms_dids))
 
         # Soundness and Distractor Refutation Dry-Run (seeds 42, 43, 44)
@@ -2992,10 +3285,13 @@ cross_check=verify
                     sound_res = sound_res.item()
                 if sound_res is not True:
                     line_no = _find_diagnostic_line(curr_loc, ver_fn_name, orig_idx)
-                    return _fail(
+                    err_msg = (
                         f"FAIL: [TPL-VERIFIER-UNSOUND] El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) "
                         f"no retornó True para la instancia válida generada (semilla {test_seed}, resultado: {sound_res})."
                     )
+                    if _step5_err(err_msg):
+                        return _fail(err_msg)
+                    break
 
                 # Distractor refutation
                 dists_test = res_test.get("distractors") or []
@@ -3028,6 +3324,78 @@ cross_check=verify
                                 tautology_recorded = True
                                 break
 
+                # Multiple Select adversarial verification
+                is_ms = (interaction_type == "multiple_select") or (isinstance(res_test.get("options"), list) and not res_test.get("distractors"))
+                if is_ms and isinstance(res_test.get("options"), list) and not tautology_recorded:
+                    opts_t = res_test.get("options") or []
+                    t_indices = [i for i, o in enumerate(opts_t) if isinstance(o, dict) and o.get("is_correct") is True]
+                    f_indices = [i for i, o in enumerate(opts_t) if isinstance(o, dict) and o.get("is_correct") is False]
+                    if t_indices and f_indices:
+                        import copy
+                        def _call_ms_ver(cand_res):
+                            try:
+                                from engine.sandbox import call_with_timeout
+                                r_res = call_with_timeout(ver_raw, args=(cand_res,), timeout=0.8, seed=test_seed)
+                            except TypeError:
+                                r_res = run_ver("", cand_res.get("vars", {}), cand_res)
+                            except Exception:
+                                r_res = False
+                            if hasattr(r_res, "item"):
+                                r_res = r_res.item()
+                            return r_res is True
+
+                        # a) Invert is_correct between one True and one False option
+                        mut_a = copy.deepcopy(res_test)
+                        mut_a["options"][t_indices[0]]["is_correct"] = False
+                        mut_a["options"][f_indices[0]]["is_correct"] = True
+                        pass_a = _call_ms_ver(mut_a)
+
+                        # b) Corrupt distractor_id
+                        pass_b = None
+                        did_idx = next((i for i in f_indices if opts_t[i].get("distractor_id")), None)
+                        if did_idx is not None:
+                            mut_b = copy.deepcopy(res_test)
+                            mut_b["options"][did_idx]["distractor_id"] = "__INVALID_DID__"
+                            pass_b = _call_ms_ver(mut_b)
+
+                        # c1) Empty error_rationale (and Form-C alias rationale) in false option only
+                        mut_c1 = copy.deepcopy(res_test)
+                        mut_c1["options"][f_indices[0]]["error_rationale"] = ""
+                        if "rationale" in mut_c1["options"][f_indices[0]]:
+                            mut_c1["options"][f_indices[0]]["rationale"] = ""
+                        pass_c1 = _call_ms_ver(mut_c1)
+
+                        # c2) Mutate value/content to sentinel in true option only
+                        mut_c2 = copy.deepcopy(res_test)
+                        mut_c2["options"][t_indices[0]]["value"] = "__MUTATED__"
+                        if "content" in mut_c2["options"][t_indices[0]]:
+                            mut_c2["options"][t_indices[0]]["content"] = "__MUTATED__"
+                        pass_c2 = _call_ms_ver(mut_c2)
+
+                        # c3) Mutate value/content to syntactically valid but false LaTeX assertion in true option only
+                        false_latex = "$1 = 2$" if str(opts_t[t_indices[0]].get("value", "")).strip() == "$0 = 1$" else "$0 = 1$"
+                        mut_c3 = copy.deepcopy(res_test)
+                        mut_c3["options"][t_indices[0]]["value"] = false_latex
+                        if "content" in mut_c3["options"][t_indices[0]]:
+                            mut_c3["options"][t_indices[0]]["content"] = false_latex
+                        pass_c3 = _call_ms_ver(mut_c3)
+
+                        is_taut = (
+                            (pass_a is True)
+                            or (pass_b is True)
+                            or (pass_c1 is True)
+                            or (pass_c2 is True)
+                            or (pass_c3 is True)
+                        )
+                        if is_taut:
+                            line_no = _find_diagnostic_line(curr_loc, ver_fn_name, orig_idx)
+                            deferred_verifier_errors.append(
+                                f"[-] [VERIFIER-TAUTOLOGY-DETECTED] {cid}.json ({curr_p.name}): El verificador ver_fn '{ver_fn_name}' en '{tpl_id}' (Línea {line_no} en {curr_p.name}) "
+                                f"retornó True para mutaciones adversariales de multiple_select (inversión de is_correct / opciones mutadas). El verificador no refuta respuestas incorrectas (tautología)."
+                            )
+                            tautology_recorded = True
+                            break
+
         # Vacuous quantifier check in stem_variants
         if strict:
             vacuous_re = re.compile(r"(?:\\forall|\bpara\s+todo\b)\s*\\?[a-zA-Z_]+\s*=\s*\d+|(?:\\exists|\bexiste\b)\s*\\?[a-zA-Z_]+\s*=\s*\d+", re.IGNORECASE)
@@ -3035,21 +3403,36 @@ cross_check=verify
                 m_vac = vacuous_re.search(sv)
                 if m_vac:
                     line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, sv)
-                    return _fail(
+                    err_msg = (
                         f"FAIL: [TPL-VACUOUS-QUANTIFIER] Cuantificador vacuo detectado en stem_variants[{s_idx}] de '{tpl_id}' (Línea {line_no} en {curr_p.name}): '{m_vac.group(0)}'. "
                         f"No se permite asignar un valor literal constante a una variable cuantificada."
                     )
+                    if _step5_err(err_msg):
+                        return _fail(err_msg)
+
+            if interaction_type in ("fill_in_the_blank", "multiple_choice_7_options"):
+                for h_idx, h_val in enumerate(hints):
+                    if "@ans@" in str(h_val):
+                        line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, str(h_val))
+                        err_msg = (
+                            f"FAIL: [TPL-HINT-LEAK] La pista {h_idx + 1} de '{tpl_id}' (Línea {line_no} en {curr_p.name}) contiene el token '@ans@'. "
+                            f"Las pistas deben ser de andamiaje socrático y no referenciar la respuesta final."
+                        )
+                        if _step5_err(err_msg):
+                            return _fail(err_msg)
 
             if sample_dict and sample_dict.get("correct"):
                 corr_val_str = str(sample_dict["correct"]).replace("$", "").strip()
                 if len(corr_val_str) >= 15 and corr_val_str.lower() not in ("remember", "understand", "apply"):
-                    for h_idx in range(min(2, len(hints))):
-                        if corr_val_str.lower() in hints[h_idx].lower():
-                            line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, hints[h_idx])
-                            return _fail(
+                    for h_idx, h_val in enumerate(hints):
+                        if corr_val_str.lower() in str(h_val).lower():
+                            line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, str(h_val))
+                            err_msg = (
                                 f"FAIL: [TPL-HINT-LEAK] La pista {h_idx + 1} de '{tpl_id}' (Línea {line_no} en {curr_p.name}) filtra la respuesta correcta ('{corr_val_str}'). "
-                                f"Las pistas tempranas deben ser de andamiaje socrático y no revelar la respuesta final."
+                                f"Las pistas deben ser de andamiaje socrático y no revelar la respuesta final."
                             )
+                            if _step5_err(err_msg):
+                                return _fail(err_msg)
 
         # Normalize non-variable double curly braces {{token}} -> {token} before R-20 validation
         stem_es = normalize_double_braces(stem_es, declared_vars)
@@ -3066,16 +3449,35 @@ cross_check=verify
             sv_katex = validate_katex_syntax(sv, f"stem_variant[{s_idx}] in '{tpl_id}'", allow_template_vars=True)
             if sv_katex:
                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, sv)
-                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {sv_katex[0]}")
+                err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {sv_katex[0]}"
+                if _step5_err(err_msg):
+                    return _fail(err_msg)
         for h_idx, h_text in enumerate(hints):
             h_katex = validate_katex_syntax(h_text, f"hint[{h_idx}] in '{tpl_id}'", allow_template_vars=True)
             if h_katex:
                 line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, h_text)
-                return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {h_katex[0]}")
+                err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {h_katex[0]}"
+                if _step5_err(err_msg):
+                    return _fail(err_msg)
         sol_katex = validate_katex_syntax(healed_solution, f"explanation_es in '{tpl_id}'", allow_template_vars=True)
         if sol_katex:
             line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, sol_raw)
-            return _fail(f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {sol_katex[0]}")
+            err_msg = f"FAIL: [TPL-KATEX] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): {sol_katex[0]}"
+            if _step5_err(err_msg):
+                return _fail(err_msg)
+
+        if 0 < len(sol_raw.strip()) < 60:
+            if strict:
+                line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, sol_raw)
+                deferred_hints_dup_errors.append(
+                    f"FAIL: [TPL-EXP-SHORT] En '{tpl_id}' (Línea {line_no} en {curr_p.name}): sol / explanation_es ('{sol_raw.strip()[:30]}...') "
+                    f"tiene {len(sol_raw.strip())} caracteres (< 60 chars requeridos en --strict)."
+                )
+            else:
+                print(
+                    f"WARNING: [TPL-EXP-SHORT] En '{tpl_id}': sol / explanation_es ('{sol_raw.strip()[:30]}...') tiene {len(sol_raw.strip())} caracteres (< 60 chars).",
+                    file=sys.stderr,
+                )
 
 
         canonical_dict: Dict[str, Any] = {
@@ -3145,16 +3547,19 @@ cross_check=verify
         compiled_paths.append(out_json_path)
 
     # 7. Execute Strict Validation with check_templates (isolated by shard_id)
-    is_clean, raw_errors = check_templates_file_or_dir(
-        target_path=compiled_paths,
-        cta_path=cta_p,
-        num_dry_run_seeds=seeds,
-        strict=strict,
-        auto_fix=True,
-        shard_py=(staged_p if (healed_source and staged_p.is_file()) else shard_data_path),
-        shard_id=norm_shard_id,
-        from_compile_shard=True,
-    )
+    if compiled_paths:
+        is_clean, raw_errors = check_templates_file_or_dir(
+            target_path=compiled_paths,
+            cta_path=cta_p,
+            num_dry_run_seeds=seeds,
+            strict=strict,
+            auto_fix=True,
+            shard_py=(staged_p if (healed_source and staged_p.is_file()) else shard_data_path),
+            shard_id=norm_shard_id,
+            from_compile_shard=True,
+        )
+    else:
+        is_clean, raw_errors = False, []
 
     # Milestone 3 Tri-Band Multimodal Enforcement Gate [M3-ARCHETYPES]
     m3_errors: List[str] = []
@@ -3241,8 +3646,25 @@ cross_check=verify
                     pass
 
             # Assumption link and 4 archetype kinds validation
+            has_cta_truth = cid in cta_comp_map
             cta_comp_raw = cta_comp_map.get(cid, {})
             assumptions_list = cta_comp_raw.get("assumptions") or []
+            decl_assump_ids = {
+                (a.get("id") if isinstance(a, dict) else str(a)).strip()
+                for a in assumptions_list
+                if (a.get("id") if isinstance(a, dict) else a)
+            }
+            if has_cta_truth:
+                for et in tpls:
+                    raw_aid = et.get("assumption_id")
+                    if raw_aid is not None and str(raw_aid).strip() != "":
+                        a_id = str(raw_aid).strip()
+                        if a_id not in decl_assump_ids:
+                            m3_errors.append(
+                                f"{cid}.json ({source_name}): [TPL-ASSUMPTION-LINK] La plantilla '{et.get('id')}' en la competencia '{cid}' "
+                                f"declara assumption_id='{a_id}', pero no existe en los supuestos declarados en cta.json ({sorted(list(decl_assump_ids))})."
+                            )
+
             if assumptions_list and eff_min_arch >= 4:
                 tpl_archs = [t.get("archetype") for t in tpls if t.get("archetype")]
                 if len(tpl_archs) >= 4 or any(t.get("archetype") for t in tpls):
@@ -3253,10 +3675,6 @@ cross_check=verify
                         )
                     edge_tpls = [t for t in tpls if t.get("archetype") == "boundary_or_edge_case"]
                     if edge_tpls:
-                        decl_assump_ids = {
-                            (a.get("id") if isinstance(a, dict) else str(a)).strip()
-                            for a in assumptions_list
-                        }
                         for et in edge_tpls:
                             a_id = et.get("assumption_id")
                             if not a_id or a_id not in decl_assump_ids:
@@ -3270,7 +3688,7 @@ cross_check=verify
                     f"{cid}.json ({source_name}): [M3-ARCHETYPES] La competencia '{cid}' define solo {len(tpls)} plantilla(s) en TEMPLATES, "
                     f"pero el contrato Tri-Banda exige mínimo {eff_min_arch} plantillas/arquetipos por competencia."
                 )
-            elif eff_min_arch >= 3:
+            if eff_min_arch >= 3 and (fail_total or len(tpls) >= eff_min_arch):
                 # Verificación Tri-Banda de dificultad
                 diffs = {t.get("difficulty") for t in tpls}
                 if not {"easy", "medium", "hard"}.issubset(diffs):
@@ -3576,6 +3994,7 @@ cross_check=verify
                 hit_evidence_sample: Optional[Dict[str, Any]] = None
                 iso_hit_evidence: Optional[Dict[str, Any]] = None
                 corr_answers_sample: List[str] = []
+                dist_samples_by_key: Dict[Any, List[str]] = defaultdict(list)
                 telltale_sample: Optional[Tuple[str, str]] = None
                 for s_val in eval_seeds:
                     try:
@@ -3614,6 +4033,23 @@ cross_check=verify
                                 telltale_sample = (tt_c, "correct")
 
                         dists_raw = res_m.get("distractors") or res_m.get("ds") or []
+                        if isinstance(dists_raw, list):
+                            for d_idx, d_item in enumerate(dists_raw):
+                                d_k = f"d_{d_idx}"
+                                if isinstance(d_item, dict):
+                                    d_k = d_item.get("distractor_id") or d_k
+                                    d_v = str(d_item.get("value") if "value" in d_item else (d_item.get("content") or ""))
+                                elif isinstance(d_item, (tuple, list)) and len(d_item) >= 2:
+                                    d_k = str(d_item[0])
+                                    d_v = str(d_item[1])
+                                elif isinstance(d_item, (tuple, list)) and len(d_item) == 1:
+                                    d_k = str(d_item[0])
+                                    d_v = str(d_item[0])
+                                else:
+                                    d_v = str(d_item)
+                                d_txt_fmt = format_template_string(d_v, vars_m) if format_template_string else d_v
+                                dist_samples_by_key[d_k].append(d_txt_fmt.strip())
+
                         if not isinstance(dists_raw, list) or len(dists_raw) < 4:
                             continue
                         c_nums = _num_re.findall(corr_txt)
@@ -3777,6 +4213,37 @@ cross_check=verify
                         f"La respuesta correcta debe ser dinámica y depender de parámetros generados (@var@)."
                     )
 
+                # Constant distractor check [TPL-CONST-DISTRACTOR]
+                def _is_pure_conceptual_prose(val_str: str) -> bool:
+                    if not isinstance(val_str, str):
+                        return False
+                    s = val_str.strip()
+                    if any(ch in s for ch in "0123456789@$=<>*/^_"):
+                        return False
+                    words = [w for w in s.split() if w.isalpha()]
+                    return len(words) >= 4
+
+                if strict and len(set(corr_answers_sample[:50])) >= 5:
+                    for d_k, d_v_list in dist_samples_by_key.items():
+                        eval_vals = d_v_list[:50]
+                        if len(eval_vals) >= 10:
+                            v_counts = collections.Counter(eval_vals)
+                            for s_val_str, freq in v_counts.items():
+                                if _is_pure_conceptual_prose(s_val_str):
+                                    continue
+                                if freq > 5 and len(set(eval_vals)) <= max(2, len(eval_vals) // 10):
+                                    eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
+                                    loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
+                                    t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
+                                    s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "TPL-CONST-DISTRACTOR", "distractor") if loc_obj else (1, 1, [])
+                                    m3_errors.append(
+                                        f"{cid}.json ({source_name}): [TPL-CONST-DISTRACTOR] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}): "
+                                        f"el distractor '{d_k}' devuelve el mismo valor escalar idéntico '{s_val_str}' en {freq} semillas distintas (> 5), "
+                                        f"a pesar de que param_space varía dinámicamente ({len(set(corr_answers_sample[:50]))} respuestas correctas distintas en 50 semillas). "
+                                        f"Los distractores deben ser dinámicos y depender de parámetros generados (@var@)."
+                                    )
+                                    break
+
             # Verificación 4b — Detección Temprana de Mono-Clave [TPL-STATIC-OPT] para FIB y MS
             if strict:
                 for t_idx_m, tpl_m in enumerate(tpls):
@@ -3789,8 +4256,9 @@ cross_check=verify
                     tpl_id_m = tpl_m.get("id") or tpl_m.get("template_id") or f"T-{cid}-{t_idx_m+1:02d}"
                     gen_fn_m = tpl_m.get("gen_fn_name") or getattr(c_call_m, "__name__", "gen_fn")
                     tpl_seed_off = _seed_base + (t_idx_m * 500)
-                    eval_seeds = [tpl_seed_off + s_i for s_i in range(20)]
+                    eval_seeds = [tpl_seed_off + s_i for s_i in range(50 if itype_m == "multiple_select" else 20)]
                     corr_samples: List[str] = []
+                    dist_samples_ms: Dict[str, List[str]] = defaultdict(list)
                     for s_val in eval_seeds:
                         try:
                             import random
@@ -3809,6 +4277,12 @@ cross_check=verify
                                     for o in opts_m if isinstance(o, dict) and o.get("is_correct")
                                 ]))
                                 corr_samples.append(str(corr_set))
+                                for opt_idx, o in enumerate(opts_m):
+                                    if isinstance(o, dict) and not o.get("is_correct"):
+                                        did_o = o.get("distractor_id") or f"opt_{opt_idx}"
+                                        raw_v = str(o.get("content") or o.get("value") or "")
+                                        fmt_v = (format_template_string(raw_v, vars_m) if format_template_string else raw_v).strip()
+                                        dist_samples_ms[did_o].append(fmt_v)
                         except Exception:
                             pass
                     if len(set(corr_samples)) <= 1 and len(corr_samples) >= 10:
@@ -3822,6 +4296,28 @@ cross_check=verify
                             f"mono-clave fija detectada en {len(corr_samples)} semillas: '{first_ans_str}'. "
                             f"La respuesta correcta debe ser dinámica y depender de parámetros generados (@var@)."
                         )
+
+                    # Constant distractor check in MS [TPL-CONST-DISTRACTOR]
+                    if itype_m == "multiple_select" and len(set(corr_samples[:50])) >= 5:
+                        for did_o, d_vals in dist_samples_ms.items():
+                            eval_vals = d_vals[:50]
+                            if len(eval_vals) >= 10:
+                                v_counts = collections.Counter(eval_vals)
+                                for s_val_str, freq in v_counts.items():
+                                    if _is_pure_conceptual_prose(s_val_str):
+                                        continue
+                                    if freq > 5 and len(set(eval_vals)) <= max(2, len(eval_vals) // 10):
+                                        eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
+                                        loc_obj = ShardDataLineLocator(eff_loc) if eff_loc and eff_loc.is_file() else locator
+                                        t_info_m = loc_obj.find_tuple_for_question(cid, template_id=tpl_id_m) if loc_obj else None
+                                        s_off, e_off, _ = loc_obj.find_offending_lines(t_info_m, "TPL-CONST-DISTRACTOR", "distractor") if loc_obj else (1, 1, [])
+                                        m3_errors.append(
+                                            f"{cid}.json ({source_name}): [TPL-CONST-DISTRACTOR] En '{tpl_id_m}' (función '{gen_fn_m}', Líneas {s_off}..{e_off} en {source_name}): "
+                                            f"la opción falsa '{did_o}' devuelve el mismo valor escalar idéntico '{s_val_str}' en {freq} semillas distintas (> 5), "
+                                            f"a pesar de que param_space varía dinámicamente ({len(set(corr_samples[:50]))} respuestas correctas distintas en 50 semillas). "
+                                            f"Las opciones deben ser dinámicas y depender de parámetros generados (@var@)."
+                                        )
+                                        break
 
                 # Verificación 5 — Compuerta de Diversidad de Enunciados [STEM-DIVERSITY-GATE] (Paridad con run.py --stage build)
                 if eff_min_arch >= 3 and len(tpls) >= 3 and seeds >= 30:
@@ -3893,9 +4389,9 @@ cross_check=verify
                             f"Provide >= {req_per_tpl} distinct syntactic stems per template (totaling >= {tot_rec})."
                         )
 
-    if deferred_verifier_errors or m3_errors:
+    if step4_errors or step5_errors or deferred_verifier_errors or m3_errors or deferred_hints_dup_errors:
         is_clean = False
-        raw_errors = deferred_verifier_errors + m3_errors + list(raw_errors)
+        raw_errors = step4_errors + step5_errors + deferred_verifier_errors + m3_errors + list(raw_errors) + deferred_hints_dup_errors
 
     if not is_clean:
         from check_templates import render_compact_aggregated_errors, count_distinct_shard_error_hunks
@@ -4080,6 +4576,9 @@ cross_check=verify
                     r_data = {}
             r_data["shard_id"] = shard_id
             r_data["compiled_status"] = "PASS"
+            r_data["has_syntax_error"] = False
+            r_data["error_count"] = 0
+            r_data["compilation_errors"] = []
             r_data["compiled_templates"] = [p.as_posix() for p in compiled_paths]
             r_data["compiled_at"] = time.time()
             _atomic_write_json(receipt_p, r_data)
@@ -4125,8 +4624,10 @@ def main():
     parser.add_argument("--strict", action="store_true", default=True, help="Enforce strict validation (default: True)")
     parser.add_argument("--no-strict", dest="strict", action="store_false", help="Bypass strict validation")
     parser.add_argument("--seeds", type=int, default=50, help="Number of dry-run seeds (default: 50)")
-    parser.add_argument("--min-archetypes", dest="min_archetypes", type=int, default=None, help="Minimum disjoint archetypes (tuples) required per competency in TEMPLATES (default: 3)")
+    parser.add_argument("--min-archetypes", dest="min_archetypes", type=int, default=None, help="Minimum disjoint archetypes (tuples) required per competency in TEMPLATES (default: 4)")
     parser.add_argument("--watchdog-timeout", type=float, default=15.0, help="Watchdog hard timeout budget in seconds (default: 15.0)")
+    parser.add_argument("--fail-total", dest="fail_total", action="store_true", default=True, help="Accumulate all template/tuple validation diagnostics across the shard instead of aborting on the first failure (default)")
+    parser.add_argument("--fail-fast", dest="fail_total", action="store_false", help="Abort on first Step 4/5 tuple validation error")
     args = parser.parse_args()
 
     work_or_path = args.input_path or args.shard_data_path or args.work
@@ -4155,6 +4656,7 @@ def main():
         manifest_path=args.manifest,
         min_archetypes=args.min_archetypes,
         watchdog_timeout=args.watchdog_timeout,
+        fail_total=args.fail_total,
     )
     try:
         sys.stdout.flush()

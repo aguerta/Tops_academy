@@ -31,6 +31,18 @@ except ImportError:
     pykatex = None
 
 
+class ValidationResult(tuple):
+    """Tuple subclass (valid, errors) with optional warnings property."""
+
+    def __new__(cls, valid: bool, errors: List[str], warnings: Optional[List[str]] = None):
+        return super().__new__(cls, (valid, errors))
+
+    def __init__(self, valid: bool, errors: List[str], warnings: Optional[List[str]] = None):
+        self.valid = valid
+        self.errors = errors
+        self.warnings = warnings or []
+
+
 def _validate_pykatex_math_span(span: str, is_display: bool = False) -> Optional[str]:
     """Render math span using pykatex, safely sanitizing combining characters on ParseError."""
     if not pykatex or not span:
@@ -473,6 +485,24 @@ def check_cta_prose_overflow(text: str, ctx: str) -> List[str]:
     return errors
 
 
+_CTA_MATH_SPAN_RE = re.compile(
+    r"(?<!\\)\$\$(?:\\.|[^$]|(?<!\\)\$(?!\$))*?(?<!\\)\$\$|(?<!\\)\$(?:\\.|[^$\\])+\$",
+    re.DOTALL,
+)
+_CTA_MATH_ITER_RE = re.compile(
+    r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$((?:\\.|[^$\\])+)\$",
+    re.DOTALL,
+)
+
+
+def _validate_katex_syntax_safe(text: str, context: str, allow_template_vars: bool = True) -> List[str]:
+    """Masks odd-backslash escaped dollars (\\$) before calling validate_katex_syntax
+    so monetary spans like $\\$1$ are not split mid-token by legacy [^$] matchers.
+    """
+    masked = re.sub(r"(?<!\\)((?:\\\\)*)\\\$", r"\1USD", text)
+    return validate_katex_syntax(masked, context, allow_template_vars=allow_template_vars)
+
+
 def validate_distractor_math(d: Dict[str, Any], did: str) -> List[str]:
     """Audit all distractor text fields unconditionally for raw/orphaned LaTeX and KaTeX errors."""
     errors: List[str] = []
@@ -486,14 +516,14 @@ def validate_distractor_math(d: Dict[str, Any], did: str) -> List[str]:
                     f"Distractor ({did}): Corrupted ASCII control character (unescaped LaTeX backslash like \\rho, \\frac, \\alpha, \\beta) in '{field}'"
                 )
             # Check for raw LaTeX outside $...$ or $$...$$
-            text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", val, flags=re.DOTALL)
+            text_outside_math = _CTA_MATH_SPAN_RE.sub("", val)
             has_raw_latex = any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS)
             if has_raw_latex:
                 errors.append(f"Distractor '{did}' en '{field}' contiene comandos LaTeX sin delimitar por '$...$': {val}")
 
-            clean_dollars = val.replace(r"\$", "")
+            clean_dollars = re.sub(r"(?<!\\)((?:\\\\)*)\\\$", r"\1", val)
             if "$" in clean_dollars:
-                errors.extend(validate_katex_syntax(val, f"distractor '{did}' {field}", allow_template_vars=True))
+                errors.extend(_validate_katex_syntax_safe(val, f"distractor '{did}' {field}", allow_template_vars=True))
     return errors
 
 
@@ -534,13 +564,13 @@ def check_cta_katex(
                 errors.append(
                     f"Competency ({cid}): Corrupted ASCII control character (unescaped LaTeX backslash like \\rho, \\frac, \\alpha, \\beta) in 'name'"
                 )
-            text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", c_name, flags=re.DOTALL)
+            text_outside_math = _CTA_MATH_SPAN_RE.sub("", c_name)
             if any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS):
                 raw_latex_items.setdefault("name", []).append((cid, c_name))
-            if "$" in c_name.replace(r"\$", ""):
-                for kv in validate_katex_syntax(c_name, f"competency '{cid}' name", allow_template_vars=True):
+            if "$" in re.sub(r"(?<!\\)((?:\\\\)*)\\\$", r"\1", c_name):
+                for kv in _validate_katex_syntax_safe(c_name, f"competency '{cid}' name", allow_template_vars=True):
                     katex_syntax_items.setdefault(kv, []).append((cid, "name"))
-                for m_span in re.finditer(r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$(.*?)(?<!\\)\$", c_name, flags=re.DOTALL):
+                for m_span in _CTA_MATH_ITER_RE.finditer(c_name):
                     m_text = m_span.group(1) if m_span.group(1) is not None else m_span.group(2)
                     m_disp = m_span.group(1) is not None
                     pk_err = _validate_pykatex_math_span(m_text, m_disp)
@@ -556,13 +586,13 @@ def check_cta_katex(
                     errors.append(
                         f"Competency ({cid}): Corrupted ASCII control character (unescaped LaTeX backslash like \\rho, \\frac, \\alpha, \\beta) in '{desc_key}'"
                     )
-                text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", c_desc, flags=re.DOTALL)
+                text_outside_math = _CTA_MATH_SPAN_RE.sub("", c_desc)
                 if any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS):
                     raw_latex_items.setdefault(desc_key, []).append((cid, c_desc))
-                if "$" in c_desc.replace(r"\$", ""):
-                    for kv in validate_katex_syntax(c_desc, f"competency '{cid}' {desc_key}", allow_template_vars=True):
+                if "$" in re.sub(r"(?<!\\)((?:\\\\)*)\\\$", r"\1", c_desc):
+                    for kv in _validate_katex_syntax_safe(c_desc, f"competency '{cid}' {desc_key}", allow_template_vars=True):
                         katex_syntax_items.setdefault(kv, []).append((cid, desc_key))
-                    for m_span in re.finditer(r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$(.*?)(?<!\\)\$", c_desc, flags=re.DOTALL):
+                    for m_span in _CTA_MATH_ITER_RE.finditer(c_desc):
                         m_text = m_span.group(1) if m_span.group(1) is not None else m_span.group(2)
                         m_disp = m_span.group(1) is not None
                         pk_err = _validate_pykatex_math_span(m_text, m_disp)
@@ -591,14 +621,14 @@ def check_cta_katex(
                         errors.append(
                             f"Distractor ({did}): Corrupted ASCII control character (unescaped LaTeX backslash like \\rho, \\frac, \\alpha, \\beta) in '{field}'"
                         )
-                    text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", val, flags=re.DOTALL)
+                    text_outside_math = _CTA_MATH_SPAN_RE.sub("", val)
                     if any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS):
                         raw_latex_items.setdefault(field, []).append((did, val))
-                    clean_dollars = val.replace(r"\$", "")
+                    clean_dollars = re.sub(r"(?<!\\)((?:\\\\)*)\\\$", r"\1", val)
                     if "$" in clean_dollars:
-                        for kv in validate_katex_syntax(val, f"distractor '{did}' {field}", allow_template_vars=True):
+                        for kv in _validate_katex_syntax_safe(val, f"distractor '{did}' {field}", allow_template_vars=True):
                             katex_syntax_items.setdefault(kv, []).append((did, field))
-                        for m_span in re.finditer(r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$(.*?)(?<!\\)\$", val, flags=re.DOTALL):
+                        for m_span in _CTA_MATH_ITER_RE.finditer(val):
                             m_text = m_span.group(1) if m_span.group(1) is not None else m_span.group(2)
                             m_disp = m_span.group(1) is not None
                             pk_err = _validate_pykatex_math_span(m_text, m_disp)
@@ -618,14 +648,14 @@ def check_cta_katex(
                         errors.append(
                             f"Assumption ({aid}): Corrupted ASCII control character (unescaped LaTeX backslash) in '{field}'"
                         )
-                    text_outside_math = re.sub(r"\$\$.*?\$\$|\$.*?\$", "", val, flags=re.DOTALL)
+                    text_outside_math = _CTA_MATH_SPAN_RE.sub("", val)
                     if any(re.search(p, text_outside_math) for p in RAW_LATEX_PATTERNS):
                         raw_latex_items.setdefault(field, []).append((aid, val))
-                    clean_dollars = val.replace(r"\$", "")
+                    clean_dollars = re.sub(r"(?<!\\)((?:\\\\)*)\\\$", r"\1", val)
                     if "$" in clean_dollars:
-                        for kv in validate_katex_syntax(val, f"assumption '{aid}' {field}", allow_template_vars=True):
+                        for kv in _validate_katex_syntax_safe(val, f"assumption '{aid}' {field}", allow_template_vars=True):
                             katex_syntax_items.setdefault(kv, []).append((aid, field))
-                        for m_span in re.finditer(r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$(.*?)(?<!\\)\$", val, flags=re.DOTALL):
+                        for m_span in _CTA_MATH_ITER_RE.finditer(val):
                             m_text = m_span.group(1) if m_span.group(1) is not None else m_span.group(2)
                             m_disp = m_span.group(1) is not None
                             pk_err = _validate_pykatex_math_span(m_text, m_disp)
@@ -682,6 +712,7 @@ def _validate_competencies_rules(
     is_part: bool = False,
     locator: Optional[JsonLineLocator] = None,
     require_assumptions: bool = False,
+    warnings: Optional[List[str]] = None,
 ) -> List[str]:
     errors: List[str] = []
     manifest_pages_set = _build_manifest_pages_set(manifest_data)
@@ -752,6 +783,18 @@ def _validate_competencies_rules(
                         f"[CTA-ASSUMPTIONS-MISSING]{line_tag} Competency '{cid}' ({ctype}) requires at least 1 valid assumption (len >= 10)."
                     )
 
+        # Calibrated competency warnings (no hard-fail):
+        if warnings is not None:
+            desc_val = comp.get("description_latex")
+            if desc_val is not None and isinstance(desc_val, str):
+                desc_str = desc_val.strip()
+                if len(desc_str) < 80:
+                    line_no = locator.get_line(cid, "description_latex") if locator else (locator.get_line(cid) if locator else None)
+                    line_tag = f" (línea {line_no})" if line_no else ""
+                    warnings.append(
+                        f"[CTA-DESC-SHORT]{line_tag} Competency '{cid}' description_latex has fewer than 80 chars ({len(desc_str)}): '{desc_str}'"
+                    )
+
         # Rule CTA-D2: unique IDs within part / global, non-null wrong_belief or omitted_step
         for d in distractors:
             if not isinstance(d, dict):
@@ -769,6 +812,41 @@ def _validate_competencies_rules(
             os_step = d.get("omitted_step")
             if not wb and not os_step:
                 d2_empty_wb_os.append(did)
+
+            # Hard-fail: manifestation == correct_belief
+            manif = str(d.get("manifestation") or "").strip()
+            cb = str(d.get("correct_belief") or "").strip()
+            norm_m = manif.replace("$", "").strip()
+            norm_cb = cb.replace("$", "").strip()
+            if norm_m and norm_cb and norm_m == norm_cb:
+                line_no = locator.get_line(did, "manifestation") if locator else (locator.get_line(did) if locator else None)
+                line_tag = f" (línea {line_no})" if line_no else ""
+                errors.append(
+                    f"CTA-DISTRACTOR violation: Distractor '{did}'{line_tag} manifestation '{manif}' is identical to correct_belief."
+                )
+
+            # Calibrated warnings (no hard-fail):
+            if warnings is not None:
+                # [CTA-MANIF-NEQ]: manifestation contains \ne or \neq appearing to be mechanical inversion of correct_belief
+                if r"\ne" in manif or r"\neq" in manif:
+                    cb_sub_ne = re.sub(r"\s*=\s*", r" \\ne ", norm_cb).replace(" ", "")
+                    cb_sub_neq = re.sub(r"\s*=\s*", r" \\neq ", norm_cb).replace(" ", "")
+                    m_compact = norm_m.replace(" ", "")
+                    if m_compact in (cb_sub_ne, cb_sub_neq):
+                        line_no = locator.get_line(did, "manifestation") if locator else (locator.get_line(did) if locator else None)
+                        line_tag = f" (línea {line_no})" if line_no else ""
+                        warnings.append(
+                            f"[CTA-MANIF-NEQ]{line_tag} Distractor '{did}' manifestation '{manif}' appears to be a mechanical negation of correct_belief."
+                        )
+
+                # [CTA-HINT-SHORT]: calibrated soft-warning band 70..79 chars (< 70 hard-fails via cta.schema.json minLength: 70)
+                hint = str(d.get("remediation_hint") or "").strip()
+                if hint and 70 <= len(hint) < 80:
+                    line_no = locator.get_line(did, "remediation_hint") if locator else (locator.get_line(did) if locator else None)
+                    line_tag = f" (línea {line_no})" if line_no else ""
+                    warnings.append(
+                        f"[CTA-HINT-SHORT]{line_tag} Distractor '{did}' remediation_hint is in calibrated warning band 70-79 chars ({len(hint)} < 80): '{hint}'"
+                    )
 
             # Check distractor evidence
             ev = d.get("evidence")
@@ -861,7 +939,8 @@ def check_cta_part(
     file_path: Optional[Union[str, Path]] = None,
     locator: Optional[JsonLineLocator] = None,
     require_assumptions: bool = False,
-) -> Tuple[bool, List[str]]:
+    warnings_out: Optional[List[str]] = None,
+) -> ValidationResult:
     """Validate sectional CTA part (cta_part_XX.json).
 
     Enforces local competency schema, CTA-D1 & CTA-D2 quotas, and evidence validity
@@ -871,15 +950,20 @@ def check_cta_part(
     if locator is None:
         locator = JsonLineLocator(file_path)
 
+    eff_require_assumptions = bool(
+        require_assumptions
+        or (isinstance(data, dict) and int(data.get("contract_version", data.get("CTA_CONTRACT_VERSION", 1))) >= 2)
+    )
+
     if isinstance(data, list):
         competencies = data
     elif isinstance(data, dict):
         competencies = data.get("competencies", [])
     else:
-        return False, ["cta_part data must be a JSON object with 'competencies' or a JSON array."]
+        return ValidationResult(False, ["cta_part data must be a JSON object with 'competencies' or a JSON array."])
 
     if not competencies:
-        return False, ["cta_part contains zero competencies."]
+        return ValidationResult(False, ["cta_part contains zero competencies."])
 
     base_schema = load_schema("cta.schema.json")
     comp_subschema = base_schema.get("definitions", {}).get("competency", {})
@@ -890,21 +974,26 @@ def check_cta_part(
     }
     comp_validator = jsonschema.Draft7Validator(comp_schema)
 
+    part_warnings: List[str] = []
     part_errors = _validate_competencies_rules(
         competencies=competencies,
         manifest_data=manifest_data,
         comp_validator=comp_validator,
         is_part=True,
         locator=locator,
-        require_assumptions=require_assumptions,
+        require_assumptions=eff_require_assumptions,
+        warnings=part_warnings,
     )
     errors.extend(part_errors)
 
     katex_errors = check_cta_katex(data if isinstance(data, dict) else {"competencies": data}, locator=locator)
     errors.extend(katex_errors)
 
+    if warnings_out is not None:
+        warnings_out.extend(part_warnings)
+
     unique_errors = list(dict.fromkeys(errors))
-    return len(unique_errors) == 0, unique_errors
+    return ValidationResult(len(unique_errors) == 0, unique_errors, part_warnings)
 
 
 def validate_cta_rules(
@@ -914,7 +1003,8 @@ def validate_cta_rules(
     locator: Optional[JsonLineLocator] = None,
     allowed_prereq_ids: Optional[Set[str]] = None,
     require_assumptions: bool = False,
-) -> Tuple[bool, List[str]]:
+    warnings_out: Optional[List[str]] = None,
+) -> ValidationResult:
     """Validate all cognitive and psychometric rules on cta.json."""
     errors = []
     if locator is None:
@@ -932,8 +1022,9 @@ def validate_cta_rules(
     competencies = cta_data.get("competencies", [])
     if not competencies:
         errors.append("cta.json contains zero competencies.")
-        return False, errors
+        return ValidationResult(False, errors)
 
+    comp_warnings: List[str] = []
     comp_errors = _validate_competencies_rules(
         competencies=competencies,
         manifest_data=manifest_data,
@@ -941,6 +1032,7 @@ def validate_cta_rules(
         is_part=False,
         locator=locator,
         require_assumptions=eff_require_assumptions,
+        warnings=comp_warnings,
     )
     errors.extend(comp_errors)
 
@@ -961,8 +1053,11 @@ def validate_cta_rules(
     katex_errors = check_cta_katex(cta_data, locator=locator)
     errors.extend(katex_errors)
 
+    if warnings_out is not None:
+        warnings_out.extend(comp_warnings)
+
     unique_errors = list(dict.fromkeys(errors))
-    return len(unique_errors) == 0, unique_errors
+    return ValidationResult(len(unique_errors) == 0, unique_errors, comp_warnings)
 
 
 def main():
@@ -974,6 +1069,12 @@ def main():
         "--part",
         action="store_true",
         help="Validate sectional CTA part (cta_part_XX.json) without cross-section closing",
+    )
+    parser.add_argument(
+        "--require-assumptions",
+        action="store_true",
+        default=False,
+        help="Require assumptions for Skill and Concept competencies (auto-activated if contract_version >= 2)",
     )
     args = parser.parse_args()
 
@@ -1012,8 +1113,20 @@ def main():
 
     locator = JsonLineLocator(cta_file)
 
+    contract_ver = int(cta_data.get("contract_version", cta_data.get("CTA_CONTRACT_VERSION", 1))) if isinstance(cta_data, dict) else 1
+    eff_req_assumptions = bool(args.require_assumptions or contract_ver >= 2)
+
     if args.part:
-        valid, errors = check_cta_part(cta_data, manifest_data, file_path=cta_file, locator=locator)
+        res = check_cta_part(
+            cta_data,
+            manifest_data,
+            file_path=cta_file,
+            locator=locator,
+            require_assumptions=eff_req_assumptions,
+        )
+        valid, errors = res[0], res[1]
+        for w in getattr(res, "warnings", []):
+            print(f"WARNING: {w}", file=sys.stderr)
         if not valid:
             print(f"FAIL: {len(errors)} validation errors in cta_part:", file=sys.stderr)
             for e in errors:
@@ -1022,7 +1135,16 @@ def main():
         print("PASS: cta_part satisfies local schema, CTA-D1, CTA-D2, and evidence constraints.")
         sys.exit(0)
 
-    valid, errors = validate_cta_rules(cta_data, manifest_data, file_path=cta_file, locator=locator)
+    res = validate_cta_rules(
+        cta_data,
+        manifest_data,
+        file_path=cta_file,
+        locator=locator,
+        require_assumptions=eff_req_assumptions,
+    )
+    valid, errors = res[0], res[1]
+    for w in getattr(res, "warnings", []):
+        print(f"WARNING: {w}", file=sys.stderr)
     if not valid:
         print(f"FAIL: {len(errors)} validation errors in cta.json:", file=sys.stderr)
         for e in errors:

@@ -2,7 +2,7 @@
 ## Elevando la Vara: Certificación Formal Multi-Agente Neuro-Simbólica (Lean 4), Pipeline "Más con Menos", Maestría Estilo Khan Academy y "Antigravity Study Harness"
 
 > **Documento Estratégico y Hoja de Ruta Ejecutiva de Ingeniería**  
-> **Fecha de Actualización:** 2026-11-08 (Branch: `main` / `optimizaciones_test`)  
+> **Fecha de Actualización:** 2026-11-14 (Branch: `main` / `optimizaciones_test` - Consolidación Lean v4.0 + Compuertas A/B 2.0)  
 > **Ubicación Canónica:** [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md) *(espejo byte a byte en [`docs/future_milestones/FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/future_milestones/FUTURE_MILESTONES.md))*.  
 > **Áreas del Ecosistema:** Pipeline Multi-Agente C2C (`.agents/skills/content-to-course/` + Kernel Formal `Lean 4`), Motor Determinista y Simbólico (`engine/` + `SymPy`/`Z3`/`Lean 4`), Evaluador de Calidad (`course-qa-evaluator`), Plataforma Web (`React 18 + Vite + TypeScript + PWA`) y Marco Neurocognitivo de Adquisición de Pericia (*The Expert Myth* + *Khan Academy Mastery*).
 
@@ -24,10 +24,10 @@
 | Archivo de Referencia | Qué Contiene y Cuándo Debe Consultarse / Actualizarse |
 | :--- | :--- |
 | 📘 [`CONOCIMIENTO_TRIBAL.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/CONOCIMIENTO_TRIBAL.md) | **Física de inferencia, causas raíz y arquitectura causal:** Velocidades de streaming de `flash`, Matriz 2D de Gobernanza, las 11 patologías del código, mediciones de hardware (ASUS TUF vs 14" 150%), lecciones KaTeX (no `white-space: normal`) y contratos de los 4 arquetipos. Consultar siempre que se modifiquen hooks, compiladores o reglas de la plataforma. |
-| 📗 [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md) | **Registro histórico de lo ya certificado:** Bitácora forense de entrega de los Milestones 1, 2, 2a, 3, 4, 7, 10, 11 (núcleo), 15 (F1) y 16 (F1), con commits y suites de verificación. Consultar para auditar lo existente y registrar nuevos cierres. |
+| 📗 [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md) | **Registro histórico de lo ya certificado:** Bitácora forense de entrega de los Milestones 1, 1-T, 2, 2a, 3, 4, 6, 7, 10, 11 (núcleo), 12, 13, 14, 15 (F1) y 16 (F1), con commits y suites de verificación. Consultar para auditar lo existente y registrar nuevos cierres. |
 | 📄 [`docs/specs/m06_study_harness.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m06_study_harness.md) | **Especificación del Milestone 6:** Wireframes ASCII de 1/2 pantalla, máquina de estados de la cortina *Blank-First*, diagrama de secuencia, contraste de la Hipótesis Huerta y suite de 4 prompts Khanmigo \$0 API. |
 | 📄 [`docs/specs/m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) | **Especificación del Milestone 9:** Tipados completos de TypeScript (`ContentCore`, `ContentModule`, `ExplicitAssumption`, `SubtopicUnit`), jerarquía de 3 niveles y extractor de Unidad 0 `PRE-XX`. |
-| 📄 [`docs/specs/m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) | **Especificación del Milestone 14:** Matriz canónica de transición psicométrica de 12 filas, interfaces de `masteryStorage.ts`, fórmula híbrida 80/20, *Hint-Cap* y simulador adaptativo de parcial. |
+| 📄 [`docs/specs/m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) | **Especificación del Milestone 14 y 14-B:** Matriz canónica de transición psicométrica de 12 filas, interfaces de `masteryStorage.ts`, fórmula híbrida 80/20, *Hint-Cap* y simulador adaptativo de parcial. |
 | 📄 [`docs/specs/m15_m18_formal_lean4.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) | **Especificación de los Milestones 15 a 18:** Los 6 teoremas constructivos de `TopsAcademyC2C.lean`, compilación Perceus C FFI (`< 0.5 ms`), SMT Z3, arbitraje bicameral con $\alpha_{\text{Kernel}} = 0$ y arnés `#print axioms` con nonce criptográfico. |
 | 📚 [`docs/investigaciones/`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/investigaciones/) | **Estudios fundacionales:** Investigaciones de desacoplamiento KaTeX (01, 02), limitaciones cognitivas de la plataforma (03, 04) y análisis forenses externos. |
 
@@ -78,8 +78,8 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 | **1. Chunking y Patrones** | Evocación frente a hoja en blanco (*free recall*). | Formatos MC7, FIB y MS activos con higiene psicométrica. Cortina *Blank-First* y Navegación Mouseless activas ([Milestone 6](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-6-antigravity-study-harness-20-modo-blank-first-y-transferencia-khanmigo-0-api)). | ⚠️ Resta `open_symbolic` con MathLive + SymPy ([Milestone 5](#milestone-5-modalidades-interactivas-avanzadas-open-symbolic-y-demostraciones-paso-a-paso)). |
 | **2. Alta Validez Interna** | Desempeño que refleje comprensión del fenómeno real. | Patrón PrairieLearn `@var@`, compilador AST `KaTeXAST` y contrato Pydantic. | ✅ **Cerrado al 100% por Milestone 4.** Próximo paso: demostraciones formales Lean 4 ([Milestone 15](#milestone-15-fase-2-kernel-nativo-perceus-c-lean-4-ffi-05-ms-y-drt-industrial)). |
 | **3. Variedad sin Overfitting** | Miles de intentos sobre el principio sin mecanizar molde. | Contrato 4 arquetipos obligatorios (`direct`, `inverse`, `perturbation`, `boundary`). | ✅ **Fase 1 cerrada por Milestone 16.** Próximo escalón: deducción SMT Z3 ([Milestone 16 Fase 2](#milestone-16-fase-2-deducción-algebraica-automática-con-z3-y-lemas-lean-4)). |
-| **4. Feedback Inmediato** | Diagnóstico instantáneo de por qué falló el razonamiento. | Refutation Feedback en Toast (`FeedbackToast.tsx`) con `error_rationale`. | ⚠️ Falta bifurcación de remediación en DAG inmediato ante fallos específicos ([Milestone 14](#milestone-14-motor-de-maestría-integral-20-estilo-khan-academy-calibración-bidireccional-híbrido-8020-y-simulador-adaptativo)). |
-| **5. Práctica Deliberada y Retención** | Operar en ZPD (70–85%), clasificar problemas ciegos y frenar olvido. | Interleaving pedagógico dinámico y ZPD implementados (`sessionShuffler.ts`). | ⚠️ Ausencia de decaimiento temporal SRS ([Milestone 8](#milestone-8-motor-de-decaimiento-en-memoria-srs-mastery-challenge-12h-misconception-ledger-y-fluidez)) y degradación por fallos en Course Challenge ([Milestone 14](#milestone-14-motor-de-maestría-integral-20-estilo-khan-academy-calibración-bidireccional-híbrido-8020-y-simulador-adaptativo)). |
+| **4. Feedback Inmediato** | Diagnóstico instantáneo de por qué falló el razonamiento. | Refutation Feedback en Toast (`FeedbackToast.tsx`) con `error_rationale`. | ⚠️ Falta bifurcación adaptativa de examen parcial en 2 módulos ([Milestone 14-B](#milestone-14-b-simulador-cronometrado-adaptativo-de-examen-parcial-en-2-módulos-sat-bluebook)); remediación y degradación core cerradas en [Milestone 14](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-14-motor-de-maestría-integral-20-estilo-khan-academy-calibración-bidireccional-híbrido-8020-fluidez-y-motor-up-next). |
+| **5. Práctica Deliberada y Retención** | Operar en ZPD (70–85%), clasificar problemas ciegos y frenar olvido. | Interleaving pedagógico dinámico y ZPD implementados (`sessionShuffler.ts`). | ⚠️ Ausencia de decaimiento temporal SRS ([Milestone 8](#milestone-8-motor-de-decaimiento-en-memoria-srs-mastery-challenge-12h-misconception-ledger-y-fluidez)). Degradación y calibración completadas en [Milestone 14](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-14-motor-de-maestría-integral-20-estilo-khan-academy-calibración-bidireccional-híbrido-8020-fluidez-y-motor-up-next); resta simulador adaptativo en 2 módulos ([Milestone 14-B](#milestone-14-b-simulador-cronometrado-adaptativo-de-examen-parcial-en-2-módulos-sat-bluebook)). |
 
 ---
 
@@ -89,22 +89,23 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 2. 📐 **Deducción Algebraica Automática con Z3/Lean 4 en Stage 3 ([Milestone 16 Fase 2](#milestone-16-fase-2-deducción-algebraica-automática-con-z3-y-lemas-lean-4)):** Integrar solver SMT Z3 y tácticas Lean 4 (`omega`/`ring`/`grind`) para demostraciones simbólicas automatizadas de `TPL_D4_Universal`.
 3. 🧠 **Certificación Formal del DAG Curricular, Clausura Epistémica y Arbitraje Bayesiano ([Milestone 17](#milestone-17-certificación-formal-del-dag-curricular-clausura-epistémica-y-arbitraje-neuro-simbólico)):** Conectividad y aciclicidad formal en `cta_merge.py`; juez 1-seed con dominancia bayesiana ($\alpha_{\text{Kernel}} = 0$) y clausura estricta de símbolos libres.
 4. 🔒 **Arnés de Certificación Continua, Anti-Drift y Auditoría `#print axioms` ([Milestone 18](#milestone-18-arnés-de-certificación-continua-anti-drift-de-contratos-y-auditoría-print-axioms)):** Schemas Pydantic inter-etapa (`interstage_schemas.py`), auto-compilación CI de prompts y auditoría `#print axioms` con nonce criptográfico.
-5. 🎯 **Motor de Maestría Integral 2.0 Estilo Khan Academy ([Milestone 14](#milestone-14-motor-de-maestría-integral-20-estilo-khan-academy-calibración-bidireccional-híbrido-8020-y-simulador-adaptativo)):** Calibración bidireccional en Challenge/Test/Quiz, degradación estricta por fallo, fórmula híbrida 80/20, *Hint-Cap*, *Red Dot* y Simulador Adaptativo de Parcial.
+5. 🎯 **Simulador Cronometrado Adaptativo de Examen Parcial en 2 Módulos SAT Bluebook ([Milestone 14-B](#milestone-14-b-simulador-cronometrado-adaptativo-de-examen-parcial-en-2-módulos-sat-bluebook)):** Desacoplado de Milestone 14 (cuyo motor core, degradación estricta por fallo, barra 80/20, fluidez y motor *Up Next for You* fueron completados en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-14-motor-de-maestría-integral-20-estilo-khan-academy-calibración-bidireccional-híbrido-8020-fluidez-y-motor-up-next)). Enrutamiento dinámico en 2 módulos (diagnóstico $\to$ estándar vs. avanzado) y reloj de examen universitario.
 6. 🟢 **Study Harness 2.0 + Transferencia Khanmigo $0 API ([Milestone 6](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-6-antigravity-study-harness-20-modo-blank-first-y-transferencia-khanmigo-0-api)):** Completado y certificado al 100% (Cortina *Blank-First*, navegación mouseless con hotkeys y auto-focus, compuerta socrática adaptativa a 3er/2do fallo y límite a 4 intentos).
 7. 🏛️ **Jerarquía PPT + ContentCore en 5 Bloques + Unidad 0 `PRE-XX` ([Milestone 9](#milestone-9-arquitectura-jerárquica-de-contenido-ppt-glosario-contentcore-khanmigo-en-5-bloques-y-unidad-0-pre-xx)):** Organización curricular en 3 niveles, glosario, supuestos explícitos y nivelación diagnóstica inicial.
 8. 🔁 **Motor SRS, *Mastery Challenge* (12h), *Misconception Ledger* y Fluidez ([Milestone 8](#milestone-8-motor-de-decaimiento-en-memoria-srs-mastery-challenge-12h-misconception-ledger-y-fluidez)):** Decaimiento temporal Ebbinghaus, cuaderno de trampas y compresión de latencia.
 9. 🚀 **Modalidades Interactivas, `Open Symbolic` y Pruebas Paso a Paso ([Milestone 5](#milestone-5-modalidades-interactivas-avanzadas-open-symbolic-y-demostraciones-paso-a-paso)):** Parsons/Reordenamiento, Matching, Manipuladores SVG, `MathLive + SymPy` y verificador de derivaciones con `lean --server`.
-10. 🧹 **Higiene del Repositorio ([Milestone 13](#milestone-13-consolidación-del-repositorio-higiene-de-artefactos-y-reestructuración-de-tests)), Carga Instantánea ([Milestone 11b](#milestone-11b-apertura-instantánea-de-cursos-pesados)), Matriz E2E ([Milestone 1-T](#milestone-1-t-deuda-de-pruebas-de-ergonomía-e2e-matriz-125150-tablets-y-ac-core)) y Resiliencia `sessionStorage` ([Milestone 12](#milestone-12-resiliencia-ante-suspensión-de-la-laptop-sessionstorage)).**
-11. 🔍 **Auditoría Forense y Telemetría Agéntica de Corridas Recientes:** Falta analizar en modo agéntico la auditoría detallada (telemetría de tokens, latencias, descomposición de herramientas, detección de cuellos de botella y calidad pedagógica/psicométrica QM/OSCQR) de las siguientes sesiones de orquestación:
+10. 🔍 **Auditoría Forense y Telemetría Agéntica de Corridas Recientes:** Falta analizar en modo agéntico la auditoría detallada (telemetría de tokens, latencias, descomposición de herramientas, detección de cuellos de botella y calidad pedagógica/psicométrica QM/OSCQR) de las siguientes sesiones de orquestación:
     - [Content to Course MapReduce Generation](conversation://66915882-b7f8-441f-9fc7-d4a964050a42): Generación y corrida MapReduce v5 (`saul_pc_sistemas_de_ecuaciones_vmapreduce5`).
     - [Solow Model Course Generation](conversation://3981c7eb-7122-4ba2-9615-2418a55bf657): Generación de curso Solow con pipeline directo (`solow_new_pipeline_direct`).
     - [Solow Model Course Creation](conversation://539b37fa-3efe-4464-a86d-0ec0a8f8130b): Creación y generación de curso Solow con pipeline MapReduce (`solow_new_pipeline_mapreduce`).
+
+> *(Nota: Los hitos de Higiene del Repositorio [Milestone 13], Matriz E2E [Milestone 1-T] y Resiliencia `sessionStorage` [Milestone 12] fueron completados y trasladados con sus suites de prueba a [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md); Carga Instantánea [Milestone 11b] se ubica en [Módulos Opcionales](#módulos-opcionales-y-de-backlog-secundario)).*
 
 ---
 
 ## 3. Matriz Maestra de Priorización de Ingeniería (Hitos Activos)
 
-> *Nota: Los hitos completados y certificados (1, 2, 2a, 3, 4, 6, 7, 10, 11 [núcleo], 15 [F1], 16 [F1]) viven en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md).*
+> *Nota: Los hitos completados y certificados (1, 1-T, 2, 2a, 3, 4, 6, 7, 10, 11 [núcleo], 12, 13, 14, 15 [F1], 16 [F1]) viven en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md).*
 
 | Hito / Milestone | Área | Impacto Cognitivo, Formal y de Eficiencia | Esfuerzo | Estado / Prioridad | Especificación Técnica |
 | :--- | :--- | :--- | :---: | :---: | :--- |
@@ -112,17 +113,13 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 | **Milestone 16 (Fase 2): Deducción Simbólica Z3 / Lean 4** | Motor / Verificación | **Más calidad matemática con 0 Late-Catches.** Integración de solver SMT Z3 y lemas Lean 4 (`omega`/`ring`/`grind`) para demostraciones automatizadas de `TPL_D4_Universal`. | 1.5 a 2 d | 📐 **P0 — En Roadmap** | [Spec Formal Lean 4](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
 | **Milestone 17: Certificación DAG y Arbitraje Bayesiano** | Curricular / Arbitraje | **Cero ciclos/huérfanos y dominancia $\alpha_{\text{Kernel}} = 0$.** Conectividad/aciclicidad en `cta_merge.py`; juez 1-seed pre-verificado; clausura epistémica de símbolos libres. | 1 a 1.5 d | 🧠 **P0 — En Progreso** | [Spec Formal Lean 4](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
 | **Milestone 18: Arnés de Certificación Continua** | CI / Anti-Regresión | **Inmunidad permanente ante drift inter-etapa.** Schemas Pydantic inter-etapa (`interstage_schemas.py`), auto-compilación CI de prompts y auditoría `#print axioms` con nonce. | 1 a 1.5 d | 🔒 **P0 — En Progreso** | [Spec Formal Lean 4](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m15_m18_formal_lean4.md) |
-| **Milestone 14: Motor de Maestría Khan Academy 2.0** | Motor Maestría / Frontend | **Calibración bidireccional y degradación por fallo.** Extiende recalibración granular a Challenge/Test/Quiz; barra híbrida 80/20; *Hint-Cap*; *Red Dot* y Simulador Adaptativo. | 1.5 a 2 d | 🎯 **P1 — Psicométrica** | [Spec Khan Mastery](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) |
-| **Milestone 9: Jerarquía PPT y ContentCore Khanmigo** | Curricular / Schema | **Alineación con material real y Unidad 0 PRE-XX.** PPT $\to$ Glosario + `ContentCore` en 5 bloques + Subtemas + Unidad 0 *Get Ready*. | 5 a 7 h | 🏛️ **P1 — Curricular** | [Spec Jerarquía PPT](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) |
+| **Milestone 14-B: Simulador Adaptativo de Examen Parcial (SAT Bluebook)** | Motor Maestría / Frontend | **Enrutamiento dinámico en 2 módulos y reloj de examen.** Módulo 1 diagnóstico $\to$ Módulo 2 Estándar vs. Avanzado y temporizador con cuenta regresiva universitaria | 1 d | ⏳ **P2 — Post-M14** | [Spec Khan Mastery](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) |
+| **Milestone 9: Jerarquía PPT y ContentCore Khanmigo** | Curricular / Schema | **Alineación con material real y Unidad 0 PRE-XX.** PPT $\to$ Glosario + `ContentCore` en 5 bloques + Subtemas + Unidad 0 *Get Ready*. | ~25–35 min *(Flash Duet Hydrogen; Quick Win ~10–14 min)* | 🏛️ **P1 — Curricular** | [Spec Jerarquía PPT](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) |
 | **Milestone 8: Motor SRS, Retención y Fluidez** | Motor de Sesión | **Retención longitudinal y metacognición del error.** Decaimiento Ebbinghaus, tarjeta *Mastery Challenge* 12h, Cuaderno de Trampas y curva de compresión de latencia. | 2 a 3 d | 🔁 **P2 — Ciclo de Pericia** | [FUTURE_MILESTONES.md](#milestone-8-motor-de-decaimiento-en-memoria-srs-mastery-challenge-12h-misconception-ledger-y-fluidez) |
 | **Milestone 5: Modalidades Interactivas y Open Symbolic** | Full-Stack / Lean 4 Server | **Trascendencia del reconocimiento pasivo.** Parsons / Reordenamiento, Matching, Manipuladores SVG, `MathLive + SymPy` y calificador paso a paso con `lean --server`. | 2.5 a 4 d | 🚀 **P2 — Impacto Cognitivo** | [FUTURE_MILESTONES.md](#milestone-5-modalidades-interactivas-avanzadas-open-symbolic-y-demostraciones-paso-a-paso) |
-| **Milestone 13: Higiene y Consolidación de Tests** | DevOps / Arquitectura | **Erradicación del repo bloat.** Política *Clean Artifacts*, purga de payloads efímeros y estructuración de 1,400 tests en 4 dominios (`quality/`, `pipeline/`, `engine/`, `platform/`). | 1.5 a 2 d | 🧹 **P2 — Higiene** | [FUTURE_MILESTONES.md](#milestone-13-consolidación-del-repositorio-higiene-de-artefactos-y-reestructuración-de-tests) |
-| **Milestone 11b: Apertura Instantánea de Cursos** | Frontend / Rendimiento | **Elimina micro-bloqueos en cursos de 14 MB.** Desacoplar `saveToIndexedDB` a segundo plano, pausa de prefetch en práctica, marcas de performance y `React.lazy`. | 0.5 a 1 d | ⏳ **P3 — Optimización UX** | [FUTURE_MILESTONES.md](#milestone-11b-apertura-instantánea-de-cursos-pesados) |
-| **Milestone 1-T: Deuda de Pruebas Ergonomía E2E** | QA / E2E | **Regresión automática de viewports reales.** Matriz 125%/150%, tablets y AC-CORE medido por código en modo estándar y modo *Blank-First*. | 2 a 4 h | ⏳ **P3 — Regresión UI** | [FUTURE_MILESTONES.md](#milestone-1-t-deuda-de-pruebas-de-ergonomía-e2e-matriz-125150-tablets-y-ac-core) |
-| **Milestone 12: Resiliencia ante Suspensión** | Frontend / Servidor | **Restaura pregunta exacta tras sleep.** Persistencia reactiva en `sessionStore.ts` (`sessionStorage`) + endpoint `/healthz` + script `npm run study`. | 1 d | ⏳ **P3 — Post-PWA** | [FUTURE_MILESTONES.md](#milestone-12-resiliencia-ante-suspensión-de-la-laptop-sessionstorage) |
 | **Milestone 19: Banco de Preguntas 2x–3x (`40/60` a `100`)** | Backlog / Expansión | **Escalamiento volumétrico sin degradar Form-C.** Matrices tri-axiales $3\times 2\times 2 = 12$, pools combinatorios MS y *Hybrid Seeded Runtime*. | 2 a 3 d | 📦 **Backlog** | [FUTURE_MILESTONES.md](#milestone-19-no-urgente--backlog-de-expansión-escalamiento-proporcional-2x3x-del-banco-de-preguntas-sin-degradar-calidad-form-c) |
 | **Milestone 20: Arquitectura Epistémica de Excelencia (Sobresaliente 20)** | Full-Stack / Pedagogía Élite | **Salto de 'Aprobado/Bueno' a 'Sobresaliente' en GitHub Pages.** Motor de deducción en DAG, arena adversarial de contraejemplos, formulación no estructurada (Stage 0), lienzo topológico SVG y examen de fricción metacognitiva a libro cerrado con CAS client-side (`mathjs`) y Shift-Left $0. | 3 a 5 d | 🎓 **P1 — Excelencia Académica** | [FUTURE_MILESTONES.md](#milestone-20-arquitectura-epistémica-de-excelencia-sobresaliente-20--el-arnés-cognitivo-para-github-pages) |
-| *Opcionales A y B: Daemon RAM y Capacitor APK* | Infra / Empaquetado | *Daemon de memoria persistente y empaquetado para tiendas móviles.* | 3 a 6 h | ⏳ **Backlog** | [FUTURE_MILESTONES.md](#módulos-opcionales-y-de-backlog-secundario) |
+| *Opcionales A, B y C (11b): Daemon RAM, Capacitor y Carga Instantánea* | Infra / Frontend | *Optimizaciones secundarias: pool en memoria RAM, empaquetado móvil nativo y apertura asíncrona de cursos pesados.* | 3 a 8 h | ⏳ **Backlog / Opcional** | [FUTURE_MILESTONES.md](#módulos-opcionales-y-de-backlog-secundario) |
 
 ---
 
@@ -172,40 +169,32 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
 
 ---
 
-### Milestone 14: Motor de Maestría Integral 2.0 Estilo Khan Academy (Calibración Bidireccional, Híbrido 80/20, Fluidez y Motor 'Up Next')
-* **Estado:** ✅ **COMPLETADO / VERIFICADO (Nov 2026) — Componentes Core, Fluidez y Recomendantes.**
-* **Objetivo:** Elevar el motor de maestría ([`masteryStorage.ts`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/utils/masteryStorage.ts)) al estándar completo de Khan Academy: evaluación formativa bidireccional, degradación obligatoria ante fallo, fórmula híbrida de progreso, sistema de fluidez de tiempos (mejor/último tiempo por pregunta), diagnóstico granular consolidado por unidad y motor persistente de recomendación pedagógica *"Up Next for You"*.
-* **Criterios de Aceptación Cumplidos (AC-32 a AC-36):**
-  - **AC-32:** Calibración granular por `competency_id` en Course Challenge, Unit Tests y Quizzes intercalados (`updateCourseChallengeWithSkillCalibration`).
-  - **AC-33:** Todo fallo en `Mastered` degrada a `Proficient` ($-20$ pts); en `Proficient` degrada a `Familiar` ($-30$ pts); en `Familiar` degrada a `Attempted` ($-25$ pts).
-  - **AC-34:** Promoción escalonada ante acierto; ningún Challenge individual promueve de `Not started` a `Mastered` directamente (*Assessment, Not Full Mastery*).
-  - **AC-35:** `CompletionScreen.tsx` despliega paneles diferenciados `Leveled Up` (verde), `Leveled Down` (rojo) y `No change` (gris) basados estrictamente en `TIER_POINTS`, con acceso directo a práctica correctiva, resumen de fluidez y consolidación por unidad de áreas a reforzar.
-  - **AC-36:** Trazabilidad histórica completa `{ date, score, total, type, previous_tier, new_tier, total_seconds, avg_seconds_per_question }`.
-  - **Extensiones Implementadas:** Barra híbrida 80/20 en `calculateCourseProgress`, tope en `Familiar` si se usan pistas (Pistas 2–5), indicador *Red Dot* (`needs_review`), pantalla previa unificada `PreExerciseModal.tsx` con metas de récord de tiempo, y telemetría de latencia por reactivo en `PracticeSession.tsx`.
-  - **Motor Persistente 'Up Next for You' (Jerarquía de 5 Niveles en `CourseOverview.tsx`):**
-    1. *Prioridad 1 (Remediación):* Si hay unidades con `needs_review: true` (rojo/ámbar), recomienda `"Repasar ahora ➔"` para la primera unidad afectada.
-    2. *Prioridad 2 (Nueva Unidad):* Recomienda la primera unidad en orden ordinal no iniciada (`Not started`) con `"Comenzar práctica ➔"`.
-    3. *Prioridad 3 (Unit Test Pendiente):* Si todas están iniciadas pero alguna no tiene Unit Test al 100%, recomienda `"Rendir Unit Test ➔"`.
-    4. *Prioridad 4 (Course Challenge):* Si todos los Unit Tests están al 100%, recomienda `"Rendir Course Challenge ➔"`.
-    5. *Prioridad 5 (Maestría Total 100%):* Banner celebratorio con `"Darle otra repasada ➔"`.
-* **Componentes Obviados / Postergados en esta Sesión de Desarrollo:**
-  - ⏳ **Simulador Cronometrado Adaptativo de Examen Parcial en 2 Módulos (SAT Bluebook):** Postergado y desacoplado hacia **Milestone 14-B**. Se obvió el enrutamiento dinámico a mitad de prueba (Módulo 1 diagnóstico $\to$ Módulo 2 Estándar vs. Avanzado) y el temporizador con reloj de cuenta regresiva de examen universitario para priorizar el motor psicométrico, la telemetría de fluidez y la UX de remediación.
-  - ⏳ **Modelo de Decaimiento Temporal Ebbinghaus en Memoria (SRS):** Obviado de este hito; pertenece formalmente a la especificación de **Milestone 8** (degradación a los 14 y 45 días sin práctica).
-  - ⏳ **Tarjeta 'Mastery Challenge' de 6 Reactivos con Cooldown de 12 Horas:** Obviado de este hito; reservado para **Milestone 8**.
-* **Suite de Verificación:** [`tests/test_mastery_calibration_bidirectional.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/test_mastery_calibration_bidirectional.py) (3/3 PASS) + [`tests/test_mastery_progress_80_20.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/test_mastery_progress_80_20.py) (5/5 PASS).
-> 📄 **Especificación Técnica Completa:** Consultar [`docs/specs/m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) para la matriz psicométrica de 12 filas, interfaces y registro de decisiones.
+### Milestone 14-B: Simulador Cronometrado Adaptativo de Examen Parcial en 2 Módulos (SAT Bluebook)
+* **Estado:** ⏳ **P2 — Post-M14 (Roadmap Activo).** *(El núcleo de Milestone 14 —calibración bidireccional en Challenge/Test/Quiz, degradación estricta por fallo, barra híbrida 80/20, telemetría de fluidez por reactivo y motor 'Up Next for You' de 5 niveles— fue completado y certificado en [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md#milestone-14-motor-de-maestría-integral-20-estilo-khan-academy-calibración-bidireccional-híbrido-8020-fluidez-y-motor-up-next)).*
+* **Objetivo:** Implementar la experiencia de simulador de examen parcial cronometrado adaptativo en dos etapas secuenciales (*Multistage Adaptive Testing* estilo SAT Bluebook / GRE) para evaluar la preparación de examen universitario con enrutamiento dinámico según el desempeño en el primer módulo.
+* **Criterios de Aceptación:**
+  1. **Enrutamiento Adaptativo en 2 Módulos:**
+     - **Módulo 1 (Diagnóstico, 10–12 preguntas):** Muestreo equilibrado de todas las unidades del curso con dificultad heterogénea (ZPD media).
+     - **Compuerta de Puntuación:** Al finalizar el Módulo 1, si el puntaje es $\ge 70\%$, el alumno es enrutado al **Módulo 2 Avanzado** (ZPD alta/experto); si es $< 70\%$, es enrutado al **Módulo 2 Estándar** (ZPD media/refuerzo).
+  2. **Reloj de Examen Universitario y Condiciones de Prueba:**
+     - Temporizador con cuenta regresiva global por módulo y advertencias visuales a los 5 minutos y 1 minuto.
+     - Modalidad a libro cerrado opcional con deshabilitación de pistas y feedback diferido hasta el envío final del examen.
+  3. **Diagnóstico Post-Examen y Proyección de Nota:**
+     - Panel de resultados con desglose por unidad, tiempo medio por pregunta y proyección de calificación universitaria basada en la dificultad del módulo completado.
+> 📄 **Especificación Técnica Completa:** Consultar [`docs/specs/m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) para el modelo de enrutamiento adaptativo de 2 etapas y diseño del temporizador.
 
 ---
 
 ### Milestone 9: Arquitectura Jerárquica de Contenido (PPT $\to$ Glosario, ContentCore Khanmigo en 5 Bloques y Unidad 0 `PRE-XX`)
-* **Estado:** 🏛️ **P1 — Arquitectura Curricular y Schemas (~5 a 7 h).**
+* **Estado:** 🏛️ **P1 — Arquitectura Curricular y Schemas (~25–35 min en Flash Duet con Gemini 4 Hydrogen Medium/High; Quick Win en ~10–14 min; antes estimado en 5–7 h con 3.8 Flash).**
 * **Objetivo:** Erradicar la fragmentación plana. Reorganizar la plataforma y el pipeline en 3 niveles anclados a las PPT reales, precedidos por la **Unidad 0 (*Get Ready*)**:
   $$\text{Unidad 0 (PRE-XX)} \longrightarrow \text{Contenido PPT (Módulo)} \longrightarrow \text{Familia de Subtemas} \longrightarrow \text{Competencias (4 Arquetipos)}$$
+* **Hallazgo Clave en el Código (`run.py` vs. `cta.json`):** `cta.schema.json` ya captura `evidence` (`doc`/`pdf`/`page`), `assumptions` (`ExplicitAssumption`), `session`, `unit_index` y `source_examples`, pero `run.py` (`_instantiate_single_comp`) los descarta al ensamblar `courses/<course_id>.json`. Propagar esos campos habilita un *Quick Win* inmediato sin re-ejecutar LLMs; la implementación completa end-to-end impacta **16 archivos en 3 streams disjuntos (`9A`, `9B`, `9C`)**.
 * **Criterios de Aceptación:**
   1. Extracción automática de `PRE-XX` en Stage 1 para nivelación diagnóstica (álgebra matricial, cálculo multivariable).
   2. Implementación de `ContentCore` en 5 bloques pedagógicos (Prerrequisitos, Analogía intuitiva, Teoremas y supuestos explícitos, Ejemplo resuelto paso a paso y Trampas de examen).
-  3. Quizzes formativos por subtema (3–5 preguntas) y Challenges integradores por PPT (8–12 preguntas).
-> 📄 **Especificación Técnica Completa:** Consultar [`docs/specs/m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) para las interfaces TypeScript y esquemas JSON.
+  3. Quizzes formativos por subtema (3–5 preguntas) y Challenges integradores por PPT (8–12 preguntas), con adaptador retrocompatible (`hierarchyAdapter.ts`) para cursos planos existentes.
+> 📄 **Especificación Técnica Completa:** Consultar [`docs/specs/m09_hierarchical_content_khanmigo.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m09_hierarchical_content_khanmigo.md) para las interfaces TypeScript, esquemas JSON, comparativa Gemini 4 Hydrogen vs. 3.8 Flash, blast radius de 16 archivos y desglose incremental.
 
 ---
 
@@ -230,42 +219,7 @@ Fundamentados en los estudios [`docs/investigaciones/03_Limitaciones_de_la_plata
   4. **Entrada Simbólica Abierta (`open_symbolic`):** Editor MathLive evaluado con `SymPy`: `simplify(user_expr - correct_expr) == 0`.
   5. **Validador de Demostraciones Bicameral:** Vía rápida CAS/JS ($< 20\text{ ms}$) + Vía formal axiomática vía `lean --server` JSON-RPC con Traductor Socrático Inverso.
 
----
-
-### Milestone 13: Consolidación del Repositorio, Higiene de Artefactos y Reestructuración de Tests
-* **Estado:** 🧹 **P2 — Higiene y De-Bloating (~1.5 a 2 d).**
-* **Objetivo:** Erradicar la proliferación de archivos efímeros (*bloat*), confinar volcados masivos JSON a directorios temporales y reorganizar los 1,400 tests en 4 dominios gobernados por contratos.
-* **Criterios de Aceptación:**
-  1. Política *Clean Artifacts*: los evaluadores de QA solo versionan `*_qa_report.md` y `audit_registry.json`; los volcados `*_payload.json` quedan excluidos por `.gitignore`.
-  2. Purga sistemática de scripts de un solo uso y volcados huérfanos.
-  3. Consolidación de suites de pruebas en 4 dominios: `tests/quality/` (pedagogía/psicometría), `tests/pipeline/` (orquestación/reglas), `tests/engine/` (sandbox/SymPy/KaTeX) y `tests/platform/` (Web/PWA/API).
-
----
-
-### Milestone 11b: Apertura Instantánea de Cursos Pesados
-* **Estado:** ⏳ **P3 — Optimización UX (~0.5 a 1 d).**
-* **Objetivo:** Eliminar micro-bloqueos en laptops de gama media al abrir cursos de más de 14 MB (como Gavilano o Estadística v2).
-* **Criterios de Aceptación:**
-  1. Desacoplar `await saveToIndexedDB` en `courseLoader.ts` hacia ejecución en segundo plano (*fire-and-forget*).
-  2. Pausar la cola de prefetch mientras el usuario interactúa con la práctica o abre un curso.
-  3. Instrumentar con `performance.mark` el clic, descarga, parseo y primer pintado.
-  4. Code-splitting con `React.lazy` para `PracticeSession`, `CompletionScreen` y `CourseChallenge`.
-
----
-
-### Milestone 1-T: Deuda de Pruebas de Ergonomía E2E (Matriz 125%/150%, Tablets y AC-CORE)
-* **Estado:** ⏳ **P3 — Regresión UI (~2 a 4 h).**
-* **Objetivo:** Automatizar la regresión de viewports reales (1280×590 y 610×590 a 150%, 1536×740 a 125%, tablets) con verificación estricta de AC-CORE medido por código en modo estándar y modo *Blank-First*.
-
----
-
-### Milestone 12: Resiliencia ante Suspensión de la Laptop (`sessionStorage`)
-* **Estado:** ⏳ **P3 — Post-PWA (~1 d).**
-* **Objetivo:** Restaurar la pregunta y respuestas exactas en curso si el sistema operativo purga la pestaña durante la suspensión.
-* **Criterios de Aceptación:**
-  1. Persistencia reactiva continua en `sessionStorage` (`sessionStore.ts`).
-  2. Reconciliación silenciosa con `ETag` al despertar sin recargas destructivas de HMR.
-  3. Endpoint ligero `GET /healthz` en `courseServer.cjs` y script dedicado `npm run study` libre de WebSockets HMR.
+> *(Nota: Los Milestones 13 [Consolidación del Repo e Higiene], 1-T [Matriz E2E 12 Viewports] y 12 [Resiliencia SessionStorage] fueron completados, verificados y trasladados a [`MILESTONES_COMPLETED.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/MILESTONES_COMPLETED.md)).*
 
 ---
 
@@ -385,6 +339,7 @@ A continuación se detallan los 4 casos arquetípicos extraídos de los exámene
 ### Módulos Opcionales y de Backlog Secundario
 - **Opcional A: Pipeline Performance Daemon en RAM / SSD:** Pool persistente en memoria para eliminar I/O de disco.
 - **Opcional B: Empaquetado Nativo con Capacitor:** Wrapper binario para publicación en Google Play / App Store (la PWA actual ya cubre el 95% de casos offline).
+- **Opcional C (Milestone 11b): Apertura Instantánea de Cursos Pesados:** Elimina micro-bloqueos en laptops de gama media al abrir cursos de más de 14 MB (desacoplar `await saveToIndexedDB` en `courseLoader.ts` hacia ejecución en segundo plano *fire-and-forget*, pausar la cola de prefetch mientras el usuario interactúa con la práctica, instrumentar marcas con `performance.mark` y code-splitting con `React.lazy` para `PracticeSession`, `CompletionScreen` y `CourseChallenge`). Estado: ⏳ *P3 — Optimización UX / Backlog Opcional (~0.5 a 1 d)*.
 
 ---
 
@@ -395,8 +350,8 @@ A continuación se detallan los 4 casos arquetípicos extraídos de los exámene
    - Triple contrato de verificadores `ver_*`: `soundness` positiva, refutación estricta de los 6 distractores (`ver_fn(d_i) is False`) y veto a `try/except: return True`.
    - Cero bucles ad-hoc `_clean_ds` y cero metainformación visible en opciones.
    - Pistas socráticas en 3–5 niveles libres de respuestas anticipadas.
-2. **Consolidación de System Prompts Lean (`.agents/skills/content-to-course/system_prompts/lean/`):**
-   - Reescribir ejemplos canónicos en `Form-C` (con compuerta CI de auto-compilación) antes de fijar `--lean` por defecto en `dispatch.py`.
+2. **Consolidación de System Prompts Lean v4.0 y Compuertas A/B 2.0 (`.agents/skills/content-to-course/system_prompts/lean/`):** ✅ *IMPLEMENTADA*
+   - Ejemplos canónicos en `Form-C` validados y consolidados; `--lean` fijado por defecto en `dispatch.py` para todos los roles; flags `--fail-total` e inyección de `assumptions` operativas.
 
 ---
 
@@ -407,7 +362,7 @@ A continuación se detallan los 4 casos arquetípicos extraídos de los exámene
 | **Fase 1: Corrección de Bugs Silenciosos, Endurecimiento Isomórfico y Recorte de Tokens/Tiempo** | **Día 1 – 2** | Fix `np.bool_`, refutación estricta `ver_*`, Matriz 2D `decidirEstrategiaEdicion`, deduplicación `-2M` tokens en `dispatch.py`, recibos SHA-256 (`< 5 ms`), precheck AST `< 50 ms` y suite global de 1,404 tests en 27.76s. *(Milestones 7, 15-P1, 16-P1, 18-P1)* | ✅ **CERRADA** |
 | **Fase 2: DSL `Form-C`, Estándar 4 Arquetipos + Supuestos Explícitos y Shift-Left Simbólico** | **Día 3 – 4** | DSL `Form-C` (-65% out tokens), `KaTeXAST` + QuickJS, supuestos explícitos y consecuencias en `cta.json`, 4 arquetipos obligatorios, Rejection Sampling determinista, Z3 SMT y Juez Epistémico 1-Seed ($\alpha_{\text{Kernel}} = 0$). *(Milestones 4, 16-P2, 17)* | 🛠️ **EN CURSO** |
 | **Fase 3: Toolchain Formal Lean 4, Binario Nativo C (`< 0.5 ms`), Auditoría `#print axioms` y DRT** | **Día 5 – 7** | Compilación nativa Perceus C de `TopsAcademyC2C.lean` con 6 teoremas constructivos, invocación FFI en `< 0.5 ms`, arnés `#print axioms` con nonce criptográfico, DRT Python $\leftrightarrow$ Lean 4 y benchmark SLA *Golden Runs*. *(Milestones 15-P2, 17, 18 Completos)* | 🛡️ **ROADMAP** |
-| **Fase 4: Plataforma Khan Academy 2.0, ContentCore Khanmigo y Runtime Neuro-Simbólico** | **Semana 2** | Motor de Maestría 2.0 (calibración bidireccional, híbrido 80/20, *Hint-Cap*, Simulador Adaptativo), Jerarquía PPT + `ContentCore` en 5 bloques + Unidad 0 `PRE-XX`, Study Harness 2.0 (*Blank-First*, 4 prompts \$0, Pizarra Canvas), SRS y `Open Symbolic` con servidor `lean --server`. *(Milestones 14, 9, 6, 8, 5, 13)* | 🎯 **ROADMAP** |
+| **Fase 4: Plataforma Khan Academy 2.0, ContentCore Khanmigo y Runtime Neuro-Simbólico** | **Semana 2** | Motor de Maestría 2.0 (calibración bidireccional, híbrido 80/20, *Hint-Cap* y motor Up Next completados; resta Simulador Adaptativo M14-B), Jerarquía PPT + `ContentCore` en 5 bloques + Unidad 0 `PRE-XX`, Study Harness 2.0 (*Blank-First*, 4 prompts \$0, Pizarra Canvas), SRS y `Open Symbolic` con servidor `lean --server`. *(M14, M13, M12, M6 completados; pendientes: Milestones 14-B, 9, 8, 5)* | 🎯 **ROADMAP** |
 
 ---
 

@@ -854,12 +854,22 @@ def check_judge_completeness(work_dir: Union[str, Path]) -> Dict[str, Any]:
                         if isinstance(r, dict):
                             rid = r.get("item_id") or r.get("question_id") or r.get("id")
                             if rid:
-                                resp_map[str(rid)] = r.get("answer") or r.get("response") or r.get("verdict") or True
+                                ans_val = None
+                                for k in ("answer", "response", "verdict"):
+                                    if r.get(k) is not None:
+                                        ans_val = r[k]
+                                        break
+                                resp_map[str(rid)] = ans_val if ans_val is not None else True
                 elif isinstance(raw_resp, dict):
                     dict_inner = raw_resp.get("responses", raw_resp) if isinstance(raw_resp.get("responses"), dict) else raw_resp
                     for k, v in dict_inner.items():
-                        if isinstance(v, dict) and ("answer" in v or "response" in v or "verdict" in v):
-                            resp_map[str(k)] = v.get("answer") or v.get("response") or v.get("verdict")
+                        if isinstance(v, dict):
+                            ans_val = None
+                            for ak in ("answer", "response", "verdict"):
+                                if v.get(ak) is not None:
+                                    ans_val = v[ak]
+                                    break
+                            resp_map[str(k)] = ans_val if ans_val is not None else v
                         else:
                             resp_map[str(k)] = v
             except Exception as e:
@@ -1010,7 +1020,7 @@ def emit_judge_redispatch(
             subagents.append({
                 "TypeName": "c2c_judge",
                 "Role": f"Blind Judge Re-dispatch Batch {b_idx:02d} - Judge {j_num}",
-                "Model": "flash",
+                "Model": "inherit",
                 "Prompt": (
                     f"You are Blind Judge {j_num} for Re-dispatch Batch {b_idx:02d}. "
                     f"Your work order is `{b_path.as_posix()}`. Read it first with `view_file`. "
@@ -1028,8 +1038,39 @@ def emit_judge_redispatch(
     }
 
 
+def _validate_ground_truth_item(gt: Dict[str, Any], itype: str) -> None:
+    """Enforces strict ground truth schema validation prior to answer matching.
+
+    Raises KeyError or ValueError if ground truth is malformed and not kernel_refuted.
+    """
+    if bool(gt.get("kernel_refuted", False)):
+        return
+
+    eff_type = "multiple_choice_7_options" if itype == "multiple_choice" else itype
+
+    if eff_type == "multiple_choice_7_options":
+        val = gt.get("correct_letter")
+        if not (isinstance(val, str) and val.strip() != ""):
+            raise ValueError(
+                f"Ground truth schema violation for '{eff_type}': 'correct_letter' must be a non-empty string, got {val!r}"
+            )
+    elif eff_type == "fill_in_the_blank":
+        val = gt.get("correct_value")
+        if val is None or str(val).strip() == "":
+            raise ValueError(
+                f"Ground truth schema violation for '{eff_type}': 'correct_value' must be non-None and non-empty (preserving 0/'0'), got {val!r}"
+            )
+    elif eff_type == "multiple_select":
+        val = gt.get("correct_letters")
+        if not (isinstance(val, list) and len(val) > 0):
+            raise ValueError(
+                f"Ground truth schema violation for '{eff_type}': 'correct_letters' must be a non-empty list, got {val!r}"
+            )
+
+
 def _check_single_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) -> Tuple[bool, str]:
     """Evaluates a single judge answer against ground truth for a given interaction type."""
+    _validate_ground_truth_item(gt, itype)
     if user_ans is None:
         return False, "Missing response from judge"
 
@@ -1157,6 +1198,13 @@ def resolve_neuro_symbolic_verdict(
             "ambiguous_stem",
             "ambiguous",
             "giveaway",
+            "carece",
+            "insuficiente",
+            "sin contexto",
+            "bloqueado",
+            "flaw_detected",
+            "blocked",
+            "defective",
         )
         has_epistemic_block = any(tok in cat or tok in reasons_text for tok in blocking_tokens)
 
@@ -1291,7 +1339,9 @@ def compare_judge_responses(
                             resp_meta_map[s_iid] = {
                                 "template_id": r.get("template_id"),
                                 "competency_id": r.get("competency_id") or r.get("cid"),
+                                "raw_items": [],
                             }
+                        resp_meta_map[s_iid].setdefault("raw_items", []).append(r)
         elif isinstance(raw, dict):
             unwrapped = False
             for cand_key in ("evaluations", "responses", "items", "results"):
@@ -1309,7 +1359,9 @@ def compare_judge_responses(
                                         resp_meta_map[s_iid] = {
                                             "template_id": r.get("template_id"),
                                             "competency_id": r.get("competency_id") or r.get("cid"),
+                                            "raw_items": [],
                                         }
+                                    resp_meta_map[s_iid].setdefault("raw_items", []).append(r)
                         unwrapped = True
                         break
                     elif isinstance(sub_val, dict):
@@ -1322,9 +1374,19 @@ def compare_judge_responses(
                                     resp_meta_map[s_k] = {
                                         "template_id": v.get("template_id"),
                                         "competency_id": v.get("competency_id") or v.get("cid"),
+                                        "raw_items": [],
                                     }
+                                resp_meta_map[s_k].setdefault("raw_items", []).append(v)
                             else:
                                 resp_replicates.setdefault(s_k, []).append(v)
+                                if isinstance(v, dict):
+                                    if s_k not in resp_meta_map:
+                                        resp_meta_map[s_k] = {
+                                            "template_id": v.get("template_id"),
+                                            "competency_id": v.get("competency_id") or v.get("cid"),
+                                            "raw_items": [],
+                                        }
+                                    resp_meta_map[s_k].setdefault("raw_items", []).append(v)
                         unwrapped = True
                         break
             if not unwrapped:
@@ -1337,9 +1399,19 @@ def compare_judge_responses(
                             resp_meta_map[s_k] = {
                                 "template_id": v.get("template_id"),
                                 "competency_id": v.get("competency_id") or v.get("cid"),
+                                "raw_items": [],
                             }
+                        resp_meta_map[s_k].setdefault("raw_items", []).append(v)
                     else:
                         resp_replicates.setdefault(s_k, []).append(v)
+                        if isinstance(v, dict):
+                            if s_k not in resp_meta_map:
+                                resp_meta_map[s_k] = {
+                                    "template_id": v.get("template_id"),
+                                    "competency_id": v.get("competency_id") or v.get("cid"),
+                                    "raw_items": [],
+                                }
+                            resp_meta_map[s_k].setdefault("raw_items", []).append(v)
 
     if ground_truth is None:
         if resolved_work_dir:
@@ -1373,6 +1445,7 @@ def compare_judge_responses(
     total = len(ground_truth)
     agreed = 0
     discordances: List[Dict[str, Any]] = []
+    kernel_overridden_items: List[Dict[str, Any]] = []
 
     tpl_items: Dict[str, List[bool]] = {}
     comp_items: Dict[str, List[bool]] = {}
@@ -1382,6 +1455,8 @@ def compare_judge_responses(
         s_iid = str(item_id)
         reps = resp_replicates.get(s_iid, [])
         itype = gt.get("interaction_type", "multiple_choice_7_options")
+        if itype == "multiple_choice":
+            itype = "multiple_choice_7_options"
 
         ak_info = answer_key_map.get(s_iid, {})
         meta_info = resp_meta_map.get(s_iid, {})
@@ -1408,6 +1483,9 @@ def compare_judge_responses(
         is_refuted = bool(gt.get("kernel_refuted", False))
         is_verified = bool(gt.get("kernel_verified", False))
 
+        if not is_refuted:
+            _validate_ground_truth_item(gt, itype)
+
         if is_refuted:
             is_match = False
             user_ans = reps[0] if reps else None
@@ -1422,14 +1500,36 @@ def compare_judge_responses(
             if any(r_ans is None for r_ans in reps):
                 all_complete = False
 
-            if all(m_ok for m_ok, _ in rep_evals):
+            meta_raws = resp_meta_map.get(s_iid, {}).get("raw_items", [])
+            items_to_check = list(reps) + list(meta_raws)
+            flaw_detected = any(
+                isinstance(it, dict) and bool(it.get("flaw_detected"))
+                for it in items_to_check
+            )
+
+            if all(m_ok for m_ok, _ in rep_evals) and not flaw_detected:
                 is_match = True
                 user_ans = reps[0] if len(set(str(x) for x in reps)) == 1 else reps
             else:
                 is_match = False
                 user_ans = reps[0] if len(reps) == 1 else reps
-                exp_val = gt.get("correct_letter") or gt.get("correct_value") or gt.get("correct_letters")
-                if len(reps) > 1 and len(set(str(x) for x in reps)) > 1:
+                exp_val = (
+                    gt.get("correct_letter")
+                    if gt.get("correct_letter") is not None
+                    else (
+                        gt.get("correct_value")
+                        if gt.get("correct_value") is not None
+                        else gt.get("correct_letters")
+                    )
+                )
+                if flaw_detected:
+                    flaw_reasons = []
+                    for it in items_to_check:
+                        if isinstance(it, dict) and it.get("flaw_detected"):
+                            f_rsn = it.get("flaw_description") or it.get("reason") or "Item epistemic flaw reported by judge"
+                            flaw_reasons.append(str(f_rsn))
+                    reason = f"Epistemic flaw detected by judge: {'; '.join(flaw_reasons) if flaw_reasons else 'flaw_detected is True'}"
+                elif len(reps) > 1 and len(set(str(x) for x in reps)) > 1:
                     mismatch_reasons = [r_msg for m_ok, r_msg in rep_evals if not m_ok and r_msg]
                     reason = f"Judge replicas disagreed: {reps} (expected {exp_val}; errors: {'; '.join(mismatch_reasons)})"
                 else:
@@ -1440,14 +1540,21 @@ def compare_judge_responses(
                 if is_verified:
                     fail_cat = "calculation_error"
                     fail_reasons = [reason]
-                    for r_item in reps:
+                    for r_item in items_to_check:
                         if isinstance(r_item, dict):
-                            if "failure_category" in r_item:
+                            if r_item.get("flaw_detected"):
+                                fail_cat = str(r_item.get("failure_category") or "epistemic_insufficiency")
+                            elif "failure_category" in r_item:
                                 fail_cat = str(r_item["failure_category"])
                             elif "category" in r_item:
                                 fail_cat = str(r_item["category"])
                             if "reason" in r_item:
                                 fail_reasons.append(str(r_item["reason"]))
+                        elif isinstance(r_item, str):
+                            lower_r = r_item.lower()
+                            if any(tok in lower_r for tok in ("blocked", "bloqueado", "epistemic", "carece", "insuficiente", "flaw_detected")):
+                                fail_cat = "epistemic_insufficiency"
+                                fail_reasons.append(r_item)
 
                     neuro_verdict = resolve_neuro_symbolic_verdict(
                         kernel_verified=True,
@@ -1459,6 +1566,21 @@ def compare_judge_responses(
                     if neuro_verdict.get("kernel_override"):
                         is_match = True
                         reason = "Kernel verified constructive proof overrides LLM calculation disagreement"
+                        exp_override = (
+                            gt.get("correct_letter")
+                            if gt.get("correct_letter") is not None
+                            else (
+                                gt.get("correct_value")
+                                if gt.get("correct_value") is not None
+                                else gt.get("correct_letters")
+                            )
+                        )
+                        kernel_overridden_items.append({
+                            "item_id": s_iid,
+                            "judge_response": user_ans,
+                            "expected": exp_override,
+                            "reason": reason,
+                        })
 
         tpl_items[tid].append(is_match)
         comp_items[cid].append(is_match)
@@ -1466,6 +1588,15 @@ def compare_judge_responses(
         if is_match:
             agreed += 1
         else:
+            exp_val = (
+                gt.get("correct_letter")
+                if gt.get("correct_letter") is not None
+                else (
+                    gt.get("correct_value")
+                    if gt.get("correct_value") is not None
+                    else gt.get("correct_letters")
+                )
+            )
             discordances.append({
                 "item_id": s_iid,
                 "template_id": tid,
@@ -1473,11 +1604,7 @@ def compare_judge_responses(
                 "cid": cid,
                 "interaction_type": itype,
                 "judge_response": user_ans,
-                "expected": (
-                    gt.get("correct_letter")
-                    or gt.get("correct_value")
-                    or gt.get("correct_letters")
-                ),
+                "expected": exp_val,
                 "reason": reason,
                 "cycle": cycle,
             })
@@ -1524,6 +1651,15 @@ def compare_judge_responses(
     else:
         status = "disagreements"
 
+    kernel_override_count = len(kernel_overridden_items)
+    if kernel_override_count > 0:
+        warning_msg = (
+            f"[WARNING] judge compare_judge_responses: {kernel_override_count} item(s) had "
+            f"kernel_override=True applied (algebraic proof dominance over stochastic LLM calculation disagreement)."
+        )
+        print(warning_msg, file=sys.stderr)
+        logger.warning(warning_msg)
+
     report_data = {
         "cycle": cycle,
         "total": total,
@@ -1538,6 +1674,8 @@ def compare_judge_responses(
         "affected_template_ids": failed_templates,
         "disagreements": discordances,
         "discordances": discordances,
+        "kernel_overridden_items": kernel_overridden_items,
+        "kernel_override_count": kernel_override_count,
         "can_retry": (cycle < MAX_CORRECTION_CYCLES and not passed),
         "max_cycles_reached": (cycle >= MAX_CORRECTION_CYCLES),
     }

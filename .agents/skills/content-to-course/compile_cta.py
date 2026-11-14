@@ -31,6 +31,7 @@ import tokenize
 import re
 import sys
 import time
+import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -876,12 +877,25 @@ def heal_cta_source_file(py_path: Path) -> bool:
 
 
 def load_cta_data_module(cta_data_path: Path) -> Any:
-    """Loads cta_data.py module dynamically without poluting global sys.modules."""
+    """Loads cta_data.py module dynamically without polluting global sys.modules."""
     spec = importlib.util.spec_from_file_location("cta_data", str(cta_data_path))
     if spec is None or spec.loader is None:
         raise ImportError(f"Could not load module specification from {cta_data_path}")
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        warnings.simplefilter("always", SyntaxWarning)
+        spec.loader.exec_module(module)
+        for w in captured_warnings:
+            if issubclass(w.category, SyntaxWarning):
+                w_msg = str(w.message)
+                if "invalid escape sequence" in w_msg.lower():
+                    lineno = w.lineno if w.lineno is not None else 1
+                    err = SyntaxError(
+                        f"Secuencia de escape inválida en {cta_data_path.name} (usa raw string r'...' o doble barra '\\\\'): {w_msg}"
+                    )
+                    err.lineno = lineno
+                    err.filename = str(cta_data_path)
+                    raise err
     return module
 
 
@@ -945,17 +959,6 @@ def _normalize_distractors_list(
             "remediation_hint": hint,
         }
         compiled_distractors.append(d_dict)
-
-    # Auto-satisfy CTA-D2 (at least 2 omitted_step distractors required for 'skill' competencies)
-    if norm_type == "skill" and len(compiled_distractors) >= 2:
-        omitted_count = sum(1 for cd in compiled_distractors if isinstance(cd, dict) and cd.get("omitted_step"))
-        for cd in compiled_distractors:
-            if omitted_count >= 2:
-                break
-            if isinstance(cd, dict) and not cd.get("omitted_step"):
-                cd["omitted_step"] = cd.get("wrong_belief") or f"Omitir paso algebraico en {cd.get('name', comp_name)}"
-                cd["error_type"] = "skipped_step"
-                omitted_count += 1
 
     return compiled_distractors
 
@@ -1091,6 +1094,7 @@ def compile_cta_module(
     initial_counts: Optional[Dict[str, int]] = None,
     existing_competency_ids: Optional[Set[str]] = None,
     require_assumptions: bool = False,
+    contract_version: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Compiles tabular positional tuples into formal cta.json dictionary.
 
@@ -1101,8 +1105,16 @@ def compile_cta_module(
         course_id = getattr(competencies_data, "COURSE_ID", course_id)
         title = getattr(competencies_data, "COURSE_TITLE", getattr(competencies_data, "TITLE", title))
         macro_competency = getattr(competencies_data, "MACRO_COMPETENCY", macro_competency)
+        if contract_version is None:
+            contract_version = getattr(competencies_data, "CTA_CONTRACT_VERSION", getattr(competencies_data, "CONTRACT_VERSION", 2 if require_assumptions else 1))
+    elif isinstance(competencies_data, dict):
+        if contract_version is None:
+            contract_version = competencies_data.get("contract_version", competencies_data.get("CTA_CONTRACT_VERSION", 2 if require_assumptions else 1))
+        competencies_tuples = competencies_data.get("competencies", competencies_data)
     else:
         competencies_tuples = competencies_data
+        if contract_version is None:
+            contract_version = 2 if require_assumptions else 1
 
     competencies_tuples = heal_control_chars_in_obj(competencies_tuples)
     title = heal_control_chars_in_str(str(title))
@@ -1423,6 +1435,7 @@ def compile_cta_module(
         macro_competency = f"Dominio y aplicación analítica integral de {title}"
 
     return heal_control_chars_in_obj({
+        "contract_version": contract_version,
         "course_id": course_id,
         "title": title,
         "macro_competency": macro_competency,
@@ -1993,15 +2006,21 @@ def compile_cta(
     existing_comp_ids: Set[str] = set(delta_info.get("existing_competency_ids", [])) if delta_info else set()
 
     # 3. Compile to dict with continuous IDs
-    cta_dict = compile_cta_module(
-        competencies_data=competencies,
-        course_id=course_id,
-        title=title,
-        macro_competency=macro,
-        initial_counts=initial_counts,
-        existing_competency_ids=existing_comp_ids,
-        require_assumptions=require_assumptions,
-    )
+    cta_contract_ver = int(getattr(mod, "CTA_CONTRACT_VERSION", getattr(mod, "CONTRACT_VERSION", 2 if require_assumptions else 1)))
+    try:
+        cta_dict = compile_cta_module(
+            competencies_data=competencies,
+            course_id=course_id,
+            title=title,
+            macro_competency=macro,
+            initial_counts=initial_counts,
+            existing_competency_ids=existing_comp_ids,
+            require_assumptions=require_assumptions,
+            contract_version=cta_contract_ver,
+        )
+    except ValueError as ve:
+        elapsed = (time.perf_counter() - t0) * 1000.0
+        return False, {}, [f"[CTA-TUPLE-STRUCTURE] {ve}"], elapsed
     cta_dict = heal_control_chars_in_obj(cta_dict)
 
     # 3b. Auto-normalize page numbers before calling validate_cta_rules
@@ -2016,6 +2035,7 @@ def compile_cta(
     target_json_name = output_json_name or "cta.json"
     target_json_path = work_dir / target_json_name
 
+    cta_warnings: List[str] = []
     if is_part:
         is_valid, validation_errors = check_cta_part(
             data=cta_dict,
@@ -2023,6 +2043,7 @@ def compile_cta(
             file_path=target_json_path,
             locator=locator,
             require_assumptions=require_assumptions,
+            warnings_out=cta_warnings,
         )
     else:
         is_valid, validation_errors = validate_cta_rules(
@@ -2032,6 +2053,7 @@ def compile_cta(
             locator=locator,
             allowed_prereq_ids=existing_comp_ids,
             require_assumptions=require_assumptions,
+            warnings_out=cta_warnings,
         )
 
     if not is_valid and existing_comp_ids:
@@ -2044,18 +2066,61 @@ def compile_cta(
         validation_errors = filtered_errors
         is_valid = (len(validation_errors) == 0)
 
-    # L5: Degrade-and-flag failsafe
+    # L5: Degrade-and-flag failsafe (span-scoped, never silently truncates prose)
+    degrade_truncation_errors: List[str] = []
     if not is_valid and allow_degrade:
+        _l5_math_split_re = re.compile(
+            r"((?<!\\)\$\$(?:\\.|[^$]|(?<!\\)\$(?!\$))*?(?<!\\)\$\$|(?<!\\)\$(?:\\.|[^$\\])+\$)",
+            re.DOTALL,
+        )
+
+        def _l5_validate_katex_safe(txt: str, ctx: str) -> List[str]:
+            masked = re.sub(r"(?<!\\)((?:\\\\)*)\\\$", r"\1USD", txt)
+            return validate_katex_syntax(masked, ctx)
+
+        def _l5_degrade_field(val: str) -> Tuple[str, bool]:
+            parts = _l5_math_split_re.split(val)
+            # Check if outside-math segments have no stray unescaped '$'
+            outside_has_stray_dollar = any(
+                "$" in re.sub(r"(?<!\\)((?:\\\\)*)\\\$", r"\1", parts[idx])
+                for idx in range(0, len(parts), 2)
+            )
+            truncated = False
+            if len(parts) > 1 and not outside_has_stray_dollar:
+                out_parts = list(parts)
+                for idx in range(1, len(out_parts), 2):
+                    span = out_parts[idx]
+                    if _l5_validate_katex_safe(span, "L5_span"):
+                        clean_inner = re.sub(r"[$\\{}^_~]", " ", span)
+                        clean_inner = re.sub(r"\s+", " ", clean_inner).strip()
+                        if len(clean_inner) > 40:
+                            truncated = True
+                            clean_inner = clean_inner[:40].rstrip()
+                        out_parts[idx] = f"$\\text{{{clean_inner}}}$"
+                return "".join(out_parts), truncated
+
+            m_first_dollar = re.search(r"(?<!\\)\$", val)
+            if m_first_dollar and m_first_dollar.start() > 0:
+                prefix = val[:m_first_dollar.start()]
+                tail = val[m_first_dollar.start():]
+            else:
+                prefix = ""
+                tail = val
+            clean_inner = re.sub(r"[$\\{}^_~]", " ", tail)
+            clean_inner = re.sub(r"\s+", " ", clean_inner).strip()
+            if len(clean_inner) > 40:
+                truncated = True
+                clean_inner = clean_inner[:40].rstrip()
+            return f"{prefix}$\\text{{{clean_inner}}}$", truncated
+
         for comp in cta_dict.get("competencies", []):
             cid = comp.get("id", "comp")
             for fld in ("description_latex", "name", "description"):
                 val = comp.get(fld)
                 if isinstance(val, str) and val:
-                    k_errs = validate_katex_syntax(val, f"{cid}.{fld}")
+                    k_errs = _l5_validate_katex_safe(val, f"{cid}.{fld}")
                     if k_errs:
-                        clean_inner = re.sub(r"[$\\{}^_~]", " ", val)
-                        clean_inner = re.sub(r"\s+", " ", clean_inner).strip()[:40]
-                        degraded_val = f"$\\text{{{clean_inner}}}$"
+                        degraded_val, was_trunc = _l5_degrade_field(val)
                         comp[fld] = degraded_val
                         record_patch(
                             stage="cta",
@@ -2067,17 +2132,19 @@ def compile_cta(
                             severity="degraded",
                             reason=f"Wrapped unresolvable KaTeX math in \\text{{}}: {k_errs}",
                         )
+                        if was_trunc or (fld == "description_latex" and len(val.strip()) >= 80 and len(degraded_val.strip()) < 80):
+                            degrade_truncation_errors.append(
+                                f"[CTA-L5-DEGRADE-TRUNCATED] {cid}.{fld}: unresolvable KaTeX could not be degraded without truncation or shrinking below 80 chars."
+                            )
 
             for d in comp.get("distractors", []):
                 did = d.get("id", "dist")
                 for dfld in ("wrong_belief", "correct_belief", "manifestation", "name", "remediation_hint"):
                     dval = d.get(dfld)
                     if isinstance(dval, str) and dval:
-                        dk_errs = validate_katex_syntax(dval, f"{did}.{dfld}")
+                        dk_errs = _l5_validate_katex_safe(dval, f"{did}.{dfld}")
                         if dk_errs:
-                            clean_inner = re.sub(r"[$\\{}^_~]", " ", dval)
-                            clean_inner = re.sub(r"\s+", " ", clean_inner).strip()[:40]
-                            degraded_dval = f"$\\text{{{clean_inner}}}$"
+                            degraded_dval, was_trunc = _l5_degrade_field(dval)
                             d[dfld] = degraded_dval
                             record_patch(
                                 stage="cta",
@@ -2089,12 +2156,17 @@ def compile_cta(
                                 severity="degraded",
                                 reason=f"Wrapped unresolvable distractor KaTeX math in \\text{{}}: {dk_errs}",
                             )
+                            if was_trunc:
+                                degrade_truncation_errors.append(
+                                    f"[CTA-L5-DEGRADE-TRUNCATED] {did}.{dfld}: unresolvable KaTeX exceeded 40 chars and could not be degraded without truncation."
+                                )
 
         # Force clamp any residual out-of-range evidence
         if manifest_data:
             cta_dict = auto_normalize_page_numbers(cta_dict, manifest_data, force_clamp=True, work_dir=work_dir)
 
         # Re-validate after L5
+        cta_warnings.clear()
         if is_part:
             is_valid, validation_errors = check_cta_part(
                 data=cta_dict,
@@ -2102,6 +2174,7 @@ def compile_cta(
                 file_path=target_json_path,
                 locator=locator,
                 require_assumptions=require_assumptions,
+                warnings_out=cta_warnings,
             )
         else:
             is_valid, validation_errors = validate_cta_rules(
@@ -2111,6 +2184,7 @@ def compile_cta(
                 locator=locator,
                 allowed_prereq_ids=existing_comp_ids,
                 require_assumptions=require_assumptions,
+                warnings_out=cta_warnings,
             )
 
         if not is_valid and existing_comp_ids:
@@ -2122,6 +2196,15 @@ def compile_cta(
                 filtered_errors.append(err)
             validation_errors = filtered_errors
             is_valid = (len(validation_errors) == 0)
+
+        if degrade_truncation_errors:
+            validation_errors = list(validation_errors) + degrade_truncation_errors
+            is_valid = False
+
+    # Print warnings to sys.stderr with WARNING: prefix without blocking PASS
+    if cta_warnings:
+        for w in cta_warnings:
+            print(f"WARNING: {w}", file=sys.stderr)
 
     # Telemetry and Ledgers
     compiled_comps = cta_dict.get("competencies", [])
@@ -2135,24 +2218,93 @@ def compile_cta(
     except Exception:
         pass
 
-    # Write telemetry/cta_sanitizer_log.json
-    telem_dir = work_dir / "telemetry"
-    telem_dir.mkdir(parents=True, exist_ok=True)
-    sanitizer_log_file = telem_dir / "cta_sanitizer_log.json"
-    sanitizer_log_file.write_text(
-        json.dumps(
-            {
+    # Write telemetry/cta_sanitizer_log.json and per-part telemetry
+    telem_dirs = [work_dir / "telemetry"]
+    if work_dir.name in ("cta_parts", "cta"):
+        telem_dirs.append(work_dir.parent / "telemetry")
+
+    detected_part_id = None
+    if is_part:
+        for cand in (target_json_name, data_file.stem, data_file.name, target_id):
+            if cand:
+                m_pid = re.search(r"part_?\d+", str(cand), re.IGNORECASE)
+                if m_pid:
+                    detected_part_id = m_pid.group(0).lower()
+                    break
+        if not detected_part_id:
+            detected_part_id = target_id if target_id != "cta_data" else "part"
+    else:
+        for cand in (target_json_name, data_file.stem):
+            if cand:
+                m_pid = re.search(r"part_?\d+", str(cand), re.IGNORECASE)
+                if m_pid:
+                    detected_part_id = m_pid.group(0).lower()
+                    break
+
+    for t_dir in dict.fromkeys(telem_dirs):
+        t_dir.mkdir(parents=True, exist_ok=True)
+        sanitizer_log_file = t_dir / "cta_sanitizer_log.json"
+
+        if detected_part_id:
+            part_sanitizer_file = t_dir / f"cta_sanitizer_{detected_part_id}.json"
+            part_entry = {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "course_id": course_id,
+                "part_id": detected_part_id,
                 "sanitized_competencies": len(compiled_comps),
                 "evaluated_fields": total_eval_fields,
                 "patches_applied": get_ledger().total_patches,
-            },
-            indent=2,
-            ensure_ascii=False,
-        ),
-        encoding="utf-8",
-    )
+            }
+            part_sanitizer_file.write_text(
+                json.dumps(part_entry, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+
+            existing_log = {}
+            if sanitizer_log_file.is_file():
+                try:
+                    existing_log = json.loads(sanitizer_log_file.read_text(encoding="utf-8"))
+                    if not isinstance(existing_log, dict):
+                        existing_log = {}
+                except Exception:
+                    existing_log = {}
+
+            parts_index = existing_log.get("parts")
+            if not isinstance(parts_index, dict):
+                parts_index = {}
+            parts_index[detected_part_id] = part_entry
+
+            tot_comps = sum(p.get("sanitized_competencies", 0) for p in parts_index.values())
+            tot_fields = sum(p.get("evaluated_fields", 0) for p in parts_index.values())
+            tot_patches = sum(p.get("patches_applied", 0) for p in parts_index.values())
+
+            consolidated_log = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "course_id": course_id,
+                "sanitized_competencies": tot_comps,
+                "evaluated_fields": tot_fields,
+                "patches_applied": tot_patches,
+                "parts": parts_index,
+            }
+            sanitizer_log_file.write_text(
+                json.dumps(consolidated_log, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+        else:
+            sanitizer_log_file.write_text(
+                json.dumps(
+                    {
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "course_id": course_id,
+                        "sanitized_competencies": len(compiled_comps),
+                        "evaluated_fields": total_eval_fields,
+                        "patches_applied": get_ledger().total_patches,
+                    },
+                    indent=2,
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
 
     # Check 3% degraded alert
     alert, degraded_pct, alert_msg = get_ledger().check_degraded_alert(total_items=total_eval_fields)
@@ -2275,33 +2427,51 @@ def compile_cta(
     return True, cta_dict, [], elapsed_ms
 
 
+def _clean_cta_error_detail(err: str, max_len: int = 700, strip_prefix: Optional[str] = None) -> str:
+    """Normalize a raw CTA error message while preserving IDs, field names, and values."""
+    detail = " ".join(err.splitlines()).strip()
+    if strip_prefix:
+        detail = re.sub(strip_prefix, "", detail, count=1, flags=re.IGNORECASE).strip()
+    detail = re.sub(r"\s*\[[^\]]*L[íi]nea\s+\d+\]\s*", " ", detail)
+    detail = re.sub(r"\s+", " ", detail).strip()
+    if len(detail) > max_len:
+        cut = detail[: max_len - 3].rstrip()
+        if " " in cut and len(cut) > 40:
+            cut = cut.rsplit(" ", 1)[0].rstrip(",;:")
+        detail = cut + "..."
+    return detail
+
+
 def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
     """Categorize raw CTA error into (rule_tag, short_rule, cause, action)."""
     # 0. Python Syntax / Execution errors
     if any(k in err for k in ["Syntax / Execution error", "SyntaxError", "IndentationError"]):
-        rule_tag = "CTA-PYTHON-SYNTAX: ERROR DE SINTAXIS PYTHON"
-        short_rule = "CTA-SYNTAX"
-        first_line = err.splitlines()[0]
-        cause = first_line[:120]
-        action = "Corregir sintaxis de Python (comilla, paréntesis o delimitador sin cerrar)"
-        return rule_tag, short_rule, cause, action
+        first_line = _clean_cta_error_detail(err.splitlines()[0], max_len=700)
+        return (
+            "CTA-PYTHON-SYNTAX: ERROR DE SINTAXIS PYTHON",
+            "CTA-SYNTAX",
+            first_line,
+            "Corregir sintaxis de Python (comilla, paréntesis, coma o delimitador sin cerrar)",
+        )
 
     # KaTeX prose overflow fail-fast (R-23 preventative check)
     if "KATEX-PROSE-OVERFLOW" in err:
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^\[KATEX-PROSE-OVERFLOW\]\s*")
         return (
             "KATEX-PROSE-OVERFLOW: TEXTO EN BLOQUE MATEMATICO EXCEDE 45 CARACTERES",
             "KATEX-PROSE-OVERFLOW",
-            "Bloque \\text{}, \\textrm{} o \\mathrm{} excede 45 caracteres",
-            "Mover el texto en prosa fuera del delimitador '$...$' o acortar a <= 45 caracteres",
+            detail or "Bloque \\text{}, \\textrm{} o \\mathrm{} excede 45 caracteres",
+            "Mover el texto en prosa fuera del delimitador '$...$' o acortar el bloque a <= 45 caracteres",
         )
 
     # 1. Corrupted ASCII control characters (unescaped \rho, \frac, \alpha, etc.)
     if "Corrupted ASCII control character" in err:
+        detail = _clean_cta_error_detail(err)
         return (
             "CTA-ESCAPE: CONTROL CHARACTERS CORRUPTOS",
             "CTA-ESCAPE",
-            "Caracteres de control ASCII por barras LaTeX sin escapar (\\rho, \\frac, \\alpha)",
-            "Prefijar strings con r'...' o usar doble barra '\\\\' en expresiones LaTeX",
+            detail or "Caracteres de control ASCII por barras LaTeX sin escapar (\\rho, \\frac, \\alpha)",
+            "Prefijar strings con r'...' o usar doble barra '\\\\' en expresiones LaTeX del campo señalado",
         )
 
     # 2. KaTeX and LaTeX errors
@@ -2315,94 +2485,163 @@ def categorize_cta_error(err: str) -> Tuple[str, str, str, str]:
     ]):
         short_rule = "CTA-KATEX"
         rule_tag = "CTA-KATEX: SINTAXIS / DELIMITADORES"
-        if "Unbalanced inline math" in err or "delimitador '$' impar" in err.lower():
-            cause = "Delimitador '$' impar en expresión matemática"
-            action = "Cerrar delimitador '$...$' o usar raw string r'...'"
-        elif "sin delimitar" in err:
-            raw_tail = err.split("sin delimitar por '$...$':", 1)[-1].strip() if "sin delimitar por '$...$':" in err else ""
-            raw_tail = re.sub(r"\s*\[[^\]]*L[íi]nea\s+\d+\]\s*$", "", raw_tail).strip()
-            if len(raw_tail) > 90:
-                raw_tail = raw_tail[:87] + "..."
-            cause = f"Comandos LaTeX sin delimitar por '$...$' ({raw_tail})" if raw_tail else "Comandos LaTeX sin delimitar por '$...$'"
-            action = "Encerrar expresión matemática en '$...$'"
-        elif "unescaped latex" in err.lower() or "math command" in err.lower():
+        if "unescaped latex" in err.lower() or "math command" in err.lower():
             cause = "Comandos LaTeX sin barra invertida o sin delimitar (e.g. bar{k}, dot{w})"
             action = "Prefijar con '\\' y encerrar en '$...$' (e.g. '$\\bar{k}$')"
+        elif "Unbalanced inline math" in err or "delimitador '$' impar" in err.lower():
+            cause = _clean_cta_error_detail(err)
+            action = "Cerrar delimitador '$...$' o usar raw string r'...'"
+        elif "sin delimitar" in err:
+            cause = _clean_cta_error_detail(err)
+            action = "Encerrar los comandos/expresiones matemáticas en '$...$'"
         elif "Unbalanced display math" in err:
-            cause = "Delimitador '$$' impar en expresión matemática"
+            cause = _clean_cta_error_detail(err)
             action = "Cerrar delimitador '$$...$$'"
         elif "Triple dollar" in err:
-            cause = "Delimitador '$$$' inválido"
-            action = "Reemplazar por '$$' (display) o '$' (inline)"
+            cause = _clean_cta_error_detail(err)
+            action = "Reemplazar '$$$' por '$$' (display) o '$' (inline)"
         elif "Residual double" in err:
-            cause = "Llaves dobles '{{' o '}}' residuales"
+            cause = _clean_cta_error_detail(err)
             action = "Usar llaves simples '{...}' para KaTeX"
         elif "Unsubstituted template variable" in err:
-            cause = "Llaves '{x}' interpretadas como variable o comando sin barra"
+            cause = _clean_cta_error_detail(err)
             action = "Verificar sintaxis de llaves o comandos KaTeX"
         elif "Unbalanced" in err or "desbalancead" in err.lower():
-            cause = "Delimitadores o llaves desbalanceadas en LaTeX"
+            cause = _clean_cta_error_detail(err)
             action = "Cerrar todas las llaves '{...}' y delimitadores KaTeX"
         elif "scalable delimiter" in err:
-            cause = "Delimitadores escalables \\left / \\right desbalanceados"
+            cause = _clean_cta_error_detail(err)
             action = "Verificar pares de delimitadores escalables (\\left( ... \\right))"
         elif "LaTeX macro" in err:
-            cause = "Argumentos incompletos o faltantes en macro LaTeX"
+            cause = _clean_cta_error_detail(err)
             action = "Completar argumentos requeridos '{...}' de la macro KaTeX"
         elif "environment" in err.lower():
-            cause = "Entorno \\begin{...} / \\end{...} desbalanceado o mal cerrado"
+            cause = _clean_cta_error_detail(err)
             action = "Cerrar entorno con \\end{...} correspondiente"
         else:
-            clean_detail = err.splitlines()[0]
-            clean_detail = re.sub(r"\[(?:.+:)?L[íi]nea\s+\d+\]", "", clean_detail)
-            clean_detail = re.sub(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", "", clean_detail)
-            clean_detail = re.sub(r"['\"][^'\"]*['\"]", "...", clean_detail)
-            clean_detail = re.sub(r"\s+", " ", clean_detail).strip()
-            if len(clean_detail) > 80:
-                clean_detail = clean_detail[:77] + "..."
-            cause = f"Sintaxis LaTeX inválida ({clean_detail})"
-            action = "Verificar sintaxis KaTeX y escapar barras invertidas"
+            cause = _clean_cta_error_detail(err)
+            action = "Verificar sintaxis KaTeX y escapar barras invertidas en el campo indicado"
         return rule_tag, short_rule, cause, action
 
-    # 3. Distractor count
-    if "distractors (minimum" in err or "declarados" in err:
+    # 3. CTA-D1: Distractor & omitted_step quotas
+    if "CTA-D1" in err or "distractors (minimum" in err or "declarados" in err or "omitted_step (<2)" in err or "with omitted_step" in err:
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^(?:\[CTA-D1\]|CTA-D1 violation:)\s*")
+        if "omitted_step" in err:
+            return (
+                "CTA-D1: DISTRACTORES SIN OMITTED_STEP EN SKILL",
+                "CTA-D1",
+                detail,
+                "Completar el campo 'omitted_step' (paso procedimental omitido, no nulo/vacío) en >= 2 distractores de cada Skill",
+            )
+        if "Skill" in err or "<6" in err or "minimum 6" in err or "declarados" in err:
+            return (
+                "CTA-D1: CUOTA DE DISTRACTORES EN SKILL (<6)",
+                "CTA-D1",
+                detail,
+                "Completar la lista de distractores de cada Skill hasta al menos 6 tuplas",
+            )
         return (
-            "CTA-D1: CUOTA DE DISTRACTORES",
+            "CTA-D1: CUOTA DE DISTRACTORES (<3)",
             "CTA-D1",
-            "Competencia declara menos de 6 distractores obligatorios",
-            "Completar la lista con al menos 6 tuplas de distractores",
+            detail,
+            "Completar la lista de distractores hasta al menos 3 tuplas válidas",
         )
 
-    # 4. DAG / Prerequisites
-    if "Cycle detected" in err or "prerequisite" in err.lower():
+    # 3b. CTA-D2: Unique IDs & wrong_belief/omitted_step presence
+    if "CTA-D2" in err or "Duplicate distractor" in err or "missing id" in err.lower() or "both wrong_belief and omitted_step" in err:
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^(?:\[CTA-D2\]|CTA-D2 violation:?)\s*")
+        if "duplicate" in err.lower():
+            action = "Asignar IDs únicos a cada distractor (sin duplicados)"
+        elif "missing" in err.lower():
+            action = "Declarar un 'id' no vacío en cada distractor"
+        else:
+            action = "Completar al menos 'wrong_belief' u 'omitted_step' (no dejar ambos vacíos)"
+        return (
+            "CTA-D2: IDENTIFICADORES Y CREENCIAS DE DISTRACTORES",
+            "CTA-D2",
+            detail,
+            action,
+        )
+
+    # 3c. CTA-DISTRACTOR: manifestation == correct_belief
+    if "CTA-DISTRACTOR" in err or "identical to correct_belief" in err:
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^CTA-DISTRACTOR violation:\s*")
+        return (
+            "CTA-DISTRACTOR: MANIFESTACION IDENTICA A CORRECT_BELIEF",
+            "CTA-DISTRACTOR",
+            detail,
+            "Cambiar 'manifestation' para que represente el resultado/expresión errónea y sea distinta de 'correct_belief'",
+        )
+
+    # 3d. CTA-ASSUMPTIONS-MISSING
+    if "CTA-ASSUMPTIONS-MISSING" in err or ("assumption" in err.lower() and ("requires at least" in err.lower() or "statement_latex" in err.lower() or "not a valid dictionary" in err.lower())):
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^\[CTA-ASSUMPTIONS-MISSING\]\s*")
+        return (
+            "CTA-ASSUMPTIONS: SUPUESTOS MATEMATICOS FALTANTES O INCOMPLETOS",
+            "CTA-ASSUMPTIONS-MISSING",
+            detail,
+            "Agregar al menos 1 supuesto con 'statement_latex' y 'violation_consequence' de >= 10 caracteres en cada Skill/Concept",
+        )
+
+    # 4. DAG / Prerequisites & root ratio
+    if "Cycle detected" in err or "prerequisite" in err.lower() or "DAG" in err or "root competencies" in err.lower():
+        detail = _clean_cta_error_detail(err)
+        if "Cycle detected" in err:
+            action = "Eliminar la dependencia cíclica en 'prerequisites' para mantener un DAG acíclico"
+        elif "disconnected" in err.lower():
+            action = "Conectar los componentes mediante 'prerequisites' para formar un único grafo conexo"
+        elif "root competencies" in err.lower():
+            action = "Agregar 'prerequisites' válidos a competencias raíz excedentes hasta mantener <= 20% de raíces"
+        else:
+            action = "Corregir el ID del prerrequisito inexistente por una competencia válida del curso o de partes previas"
         return (
             "CTA-DAG: GRAFO DE PRERREQUISITOS",
             "CTA-DAG",
-            "Ciclo o identificador de prerrequisito inválido en el grafo",
-            "Corregir la lista de prerrequisitos para mantener un DAG acíclico",
+            detail,
+            action,
         )
 
-    # 5. Evidence
-    if "evidence" in err.lower() or "manifest" in err.lower():
+    # 5. Evidence & Document references
+    if "[CTA-DOCS]" in err or "no existe en pre_cta_manifest" in err:
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^\[CTA-DOCS\]\s*")
         return (
-            "CTA-EV: EVIDENCIA EN CORPUS",
+            "CTA-DOCS: DOCUMENTO DE EVIDENCIA INEXISTENTE",
+            "CTA-DOCS",
+            detail,
+            "Usar exactamente uno de los nombres de documento listados en pre_cta_manifest.json",
+        )
+    if "[CTA-EV]" in err or "evidence" in err.lower() or "pre_cta_manifest" in err.lower():
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^\[CTA-EV\]\s*")
+        return (
+            "CTA-EV: PAGINA DE EVIDENCIA FUERA DE RANGO",
             "CTA-EV",
-            "Página o documento de evidencia fuera de los límites del corpus",
-            "Alinear el número de página y nombre de documento con el corpus",
+            detail,
+            "Corregir 'page' al número de página PDF real dentro del rango válido indicado",
         )
 
-    # 6. Schema fallback
-    m_code = re.match(r"^\[([A-Z0-9_-]+)\]", err)
+    # 5b. Tuple structure / empty module
+    if "CTA-TUPLE-STRUCTURE" in err or "does not define 'COMPETENCIES" in err or "zero competencies" in err.lower():
+        detail = _clean_cta_error_detail(err, strip_prefix=r"^\[CTA-TUPLE-STRUCTURE\]\s*")
+        return (
+            "CTA-STRUCTURE: ESTRUCTURA DE COMPETENCIAS / TUPLAS",
+            "CTA-STRUCTURE",
+            detail,
+            "Asegurar que COMPETENCIES contenga tuplas válidas de competencias (>=6 campos) y distractores (>=3 campos)",
+        )
+
+    # 6. JSON Schema & General Fallback (preserve full context, IDs, and quoted paths/values)
+    m_code = re.match(r"^\[([A-Z0-9_-]+)\]\s*", err)
     code = m_code.group(1) if m_code else "CTA-SCHEMA"
-    clean_msg = re.sub(r"\[(?:.+:)?L[íi]nea\s+\d+\]", "", err.splitlines()[0])
-    clean_msg = re.sub(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", "", clean_msg)
-    clean_msg = re.sub(r"['\"][^'\"]*['\"]", "...", clean_msg)
-    clean_msg = re.sub(r"\s+", " ", clean_msg).strip()[:80]
+    detail = _clean_cta_error_detail(err, strip_prefix=r"^\[[A-Z0-9_-]+\]\s*")
+    if "schema violation" in detail.lower():
+        action = "Corregir el tipo, valor o campo obligatorio indicado en la ruta del esquema"
+    else:
+        action = "Corregir el campo o regla específica indicada en el mensaje"
     return (
-        f"{code}: ESQUEMA FORMAL",
+        f"{code}: ESQUEMA Y REGLAS FORMALES",
         code,
-        clean_msg,
-        "Corregir estructura de campos en la tupla",
+        detail,
+        action,
     )
 
 
@@ -2459,15 +2698,27 @@ def render_compact_cta_errors(
     error_count = len(unique_errors)
     has_syntax_error = any("syntax" in e.lower() or "indentation" in e.lower() for e in unique_errors)
 
-    if 1 <= error_count < 6 and not has_syntax_error:
+    # Extract all unique affected competencies across all unique errors
+    all_affected_comp_ids: Set[str] = set()
+    for e in unique_errors:
+        found_cids = re.findall(r"\b(H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", e)
+        for cid in found_cids:
+            all_affected_comp_ids.add(cid)
+        if not found_cids:
+            for m_sub in re.finditer(r"\b[DA]-([A-Za-z]+)-?(\d+)\b", e):
+                all_affected_comp_ids.add(f"{m_sub.group(1)}-{int(m_sub.group(2)):02d}")
+
+    effective_error_count = max(error_count, len(all_affected_comp_ids))
+
+    if 1 <= effective_error_count < 6 and not has_syntax_error:
         threshold_directive = (
-            f"[UMBRAL OFICIAL < 6 ERRORES ({error_count}/5)]: Usa OBLIGATORIAMENTE edit_file "
+            f"[UMBRAL OFICIAL < 6 ERRORES ({effective_error_count}/5)]: Usa OBLIGATORIAMENTE edit_file "
             f"(replace_file_content) quirúrgico de 1 SOLA LÍNEA por reemplazo en 1 turno paralelo sobre las líneas exactas de '{py_name}' "
             f"indicadas arriba (PROHIBIDO bloques multi-línea en edit_file). PROHIBIDO reescribir todo el archivo con write_file (PROHIBIDO usar 'write_to_file' con Overwrite=True)."
         )
     else:
         threshold_directive = (
-            f"[UMBRAL OFICIAL >= 6 ERRORES ({error_count})]: Si los errores se concentran en 1-2 competencias, "
+            f"[UMBRAL OFICIAL >= 6 ERRORES ({effective_error_count})]: Si los errores se concentran en 1-2 competencias, "
             f"escribe el reemplazo modular en 'cta_fixes/<CID>.py' con write_file(Overwrite=True); "
             f"si abarcan >= 3 competencias, reescribe '{py_name}' en 1 sola llamada write_file(Overwrite=True)."
         )
@@ -2492,22 +2743,8 @@ def render_compact_cta_errors(
                 start_l = line_num or 1
                 end_l = start_l
 
-            m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|A-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", raw_err)
+            m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|A-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", raw_err)
             item_id = m_id.group(1) if m_id else ""
-
-            m_comp = re.search(r"\b(H-\d+|C-\d+|Hab-\d+)\b", raw_err)
-            if m_comp:
-                comp_id = m_comp.group(1)
-            elif item_id.startswith(("D-", "A-")):
-                m_sub = re.match(r"^[DA]-([A-Za-z]+)-?(\d+)", item_id)
-                comp_id = f"{m_sub.group(1)}-{int(m_sub.group(2)):02d}" if m_sub else item_id
-            elif locator and hasattr(locator, "get_competency_for_line") and line_num:
-                comp_id = locator.get_competency_for_line(line_num) or "GENERAL"
-            else:
-                comp_id = item_id or "GENERAL"
-
-            if not item_id:
-                item_id = comp_id
 
             suggested = ""
             if "bar{" in raw_err:
@@ -2525,19 +2762,77 @@ def render_compact_cta_errors(
             elif "delimitador '$' impar" in raw_err.lower():
                 suggested = "Close '$' before trailing punctuation"
 
-            comp_errors[comp_id].append({
-                "item_id": item_id,
-                "rule": short_rule,
-                "rule_tag": rule_tag,
-                "line": line_num,
-                "line_str": line_str,
-                "start_line": start_l,
-                "end_line": end_l,
-                "cause": cause,
-                "action": action,
-                "suggested_replacement": suggested,
-                "raw_error": raw_err,
-            })
+            # Extract ALL competencies mentioned in raw_err
+            found_comps = re.findall(r"\b(H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", raw_err)
+            found_comps = list(dict.fromkeys(found_comps))
+
+            if len(found_comps) > 1:
+                # Disaggregate multi-competency aggregated errors into each affected competency
+                for cid in found_comps:
+                    # Look for per-competency line reference e.g. "Hab-01 (línea 61)"
+                    m_c_line = re.search(rf"\b{re.escape(cid)}\b[^\d\n]*\(l[íi]neas?\s+(\d+)\)", raw_err, re.IGNORECASE)
+                    if m_c_line:
+                        c_line = int(m_c_line.group(1))
+                    elif locator and hasattr(locator, "get_line"):
+                        c_line = locator.get_line(cid) or line_num
+                    else:
+                        c_line = line_num
+                    c_line_str = f"L{c_line}" if c_line else line_str
+                    c_start = c_line or start_l
+                    c_end = c_start
+
+                    comp_errors[cid].append({
+                        "item_id": cid,
+                        "rule": short_rule,
+                        "rule_tag": rule_tag,
+                        "line": c_line,
+                        "line_str": c_line_str,
+                        "start_line": c_start,
+                        "end_line": c_end,
+                        "cause": cause,
+                        "action": action,
+                        "suggested_replacement": suggested,
+                        "raw_error": raw_err,
+                    })
+            elif len(found_comps) == 1:
+                comp_id = found_comps[0]
+                eff_item_id = item_id or comp_id
+                comp_errors[comp_id].append({
+                    "item_id": eff_item_id,
+                    "rule": short_rule,
+                    "rule_tag": rule_tag,
+                    "line": line_num,
+                    "line_str": line_str,
+                    "start_line": start_l,
+                    "end_line": end_l,
+                    "cause": cause,
+                    "action": action,
+                    "suggested_replacement": suggested,
+                    "raw_error": raw_err,
+                })
+            else:
+                if item_id.startswith(("D-", "A-")):
+                    m_sub = re.match(r"^[DA]-([A-Za-z]+)-?(\d+)", item_id)
+                    comp_id = f"{m_sub.group(1)}-{int(m_sub.group(2)):02d}" if m_sub else item_id
+                elif locator and hasattr(locator, "get_competency_for_line") and line_num:
+                    comp_id = locator.get_competency_for_line(line_num) or "GENERAL"
+                else:
+                    comp_id = item_id or "GENERAL"
+
+                eff_item_id = item_id or comp_id
+                comp_errors[comp_id].append({
+                    "item_id": eff_item_id,
+                    "rule": short_rule,
+                    "rule_tag": rule_tag,
+                    "line": line_num,
+                    "line_str": line_str,
+                    "start_line": start_l,
+                    "end_line": end_l,
+                    "cause": cause,
+                    "action": action,
+                    "suggested_replacement": suggested,
+                    "raw_error": raw_err,
+                })
 
         out_lines = [
             f"[CONSOLIDATED ERROR PACK] CTA compilation failed ({len(errors)} errors) [{py_name}]:",
@@ -2549,9 +2844,10 @@ def render_compact_cta_errors(
             out_lines.append(f"=== Competency: {comp_id} ({len(err_list)} errors) ===")
             for item in err_list:
                 l_str = item.get("line_str") or (f"L{item['line']}" if item["line"] else "L?")
+                act_str = f" | Acción: {item['action']}" if item.get("action") else ""
                 sug_str = f" | Suggested Fix: {item['suggested_replacement']}" if item["suggested_replacement"] else ""
                 out_lines.append(
-                    f"  • [{item['rule']}] {py_name}:{l_str} ({item['item_id']}) -> {item['cause']}{sug_str}"
+                    f"  • [{item['rule']}] {py_name}:{l_str} ({item['item_id']}) -> {item['cause']}{act_str}{sug_str}"
                 )
             out_lines.append("")
 
@@ -2599,6 +2895,7 @@ def render_compact_cta_errors(
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                     "total_errors": len(errors),
                     "error_count": error_count,
+                    "effective_error_count": effective_error_count,
                     "data_filename": py_name,
                     "errors_by_competency": comp_errors,
                 }
@@ -2625,16 +2922,16 @@ def render_compact_cta_errors(
             line_str = f"L{line_num}" if line_num else ""
             rng = None
 
-        m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+)\b", raw_err)
-        item_id = m_id.group(1) if m_id else ""
+        found_items = re.findall(r"\b(D-[A-Za-z0-9_-]+|A-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", raw_err)
+        found_items = list(dict.fromkeys(found_items))
 
         key = (short_rule, cause, action)
         if line_num:
             grouped[rule_tag][key]["lines"].append(line_num)
         if line_str:
             grouped[rule_tag][key].setdefault("line_strs", []).append(line_str)
-        if item_id:
-            grouped[rule_tag][key]["items"].append(item_id)
+        if found_items:
+            grouped[rule_tag][key]["items"].extend(found_items)
         if rng:
             grouped[rule_tag][key]["ranges"].append(rng)
 

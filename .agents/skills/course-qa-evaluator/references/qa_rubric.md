@@ -78,7 +78,13 @@ Complementariamente a la nota QM-OSCQR (`/20.0`), toda auditoría reporta el **`
 
 ---
 
-## 4. Esquema JSON de Salida Estructurada (`<course_id>_qa_report.json`)
+## 4. Formato de Salida Autocontenido en Markdown (`<course_id>_qa_report.md`)
+
+Cada auditoría debe generar **únicamente** un archivo Markdown autocontenido (`reports/qa_audits/<course_id>_qa_report.md`), sin emitir archivos `.json` ni `.html` separados. Al final del `.md`, debe incluirse un bloque colapsado `<details>` con el esquema JSON estructurado para consumo programático (ej. consolidación de suite o `c2c-unified-auditor`):
+
+```markdown
+<details>
+<summary>Metadatos Estructurados (JSON)</summary>
 
 ```json
 {
@@ -129,4 +135,7 @@ Complementariamente a la nota QM-OSCQR (`/20.0`), toda auditoría reporta el **`
     "string"
   ]
 }
+```
+
+</details>
 ```

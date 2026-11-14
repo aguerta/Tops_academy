@@ -89,7 +89,7 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 > En cuanto leas este `SKILL.md`, tu **Turno 1** debe ser **EXCLUSIVAMENTE** ejecutar el comando `--stage bootstrap`.
 > - 🚫 **PROHIBIDO** ejecutar `Get-ChildItem`, `dir`, `ls` sobre `.agents/skills/content-to-course/` o sobre `content/`.
 > - 🚫 **PROHIBIDO** ejecutar `run.py --help`, `dispatch.py --help`, `prepare.py --help` o `ingest.py --help`.
-> - 🚫 **PROHIBIDO** usar `read_file`, `view_file` o `python -c "with open(...)"` para inspeccionar `run.py`, `prepare.py`, `ingest.py`, `dispatch.py` o cualquier otro script `.py` del skill (bloqueado activamente por `c2c_hook_guard.py`).
+> - 🚫 **PROHIBIDO** usar `read_file`, `view_file` o `python -c "with open(...)"` para inspeccionar `run.py`, `prepare.py`, `ingest.py`, `dispatch.py` o cualquier otro script `.py` del skill.
 > - 🚫 **PROHIBIDO** usar `python -c "import fitz..."` o `import pypdf` para contar páginas de PDFs manualmente.
 >
 > ### ¿Por qué NO debes inspeccionar nada antes de `bootstrap`?
@@ -109,7 +109,7 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 > - **Turno 2**: Lee en paralelo (en 1 solo turno, solo lecturas = costo de generación casi nulo) todos los archivos devueltos en `type_spec_files` (`c2c_cta_architect.json`, `c2c_shard_author.json`, `c2c_judge.json`, `c2c_repair.json` y, si existe, `c2c_cta_harmonizer.json`).
 > - **Turno 3 (arranque mínimo, solo el CTA Architect)**: En **un único turno paralelo**, realiza únicamente:
 >   1. **UNA** llamada a `define_subagent` para `c2c_cta_architect` (usando exactamente `Name`, `Description`, `SystemPrompt`, `EnableWriteTools=true`, `EnableMCPTools=false`, `EnableSubagentTools=false` de su JSON). **NO registres aún los demás tipos**: copiar sus system prompts (~14 KB) cuesta ~20 s de generación.
->   2. Todas las llamadas a `invoke_subagent` (`Model="flash"`, `Workspace="inherit"`) para cada elemento del arreglo `Subagents` que ya te devolvió `bootstrap` en el Turno 1 (**NO ejecutes `dispatch.py dispatch-cta` de nuevo**).
+>   2. Todas las llamadas a `invoke_subagent` (`Model="inherit"`, `Workspace="inherit"`) para cada elemento del arreglo `Subagents` que ya te devolvió `bootstrap` en el Turno 1 (**NO ejecutes `dispatch.py dispatch-cta` de nuevo**).
 >   3. Una llamada a `schedule` (`DurationSeconds=420` = 7 min, `Prompt="Auditar progreso CTA"`).
 > - **Turno 4 (registro diferido mientras los CTA Architects trabajan, ~5-10 min)**: Inmediatamente después, en **un único turno paralelo**, registra con `define_subagent` los tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair` y `c2c_cta_harmonizer` si su JSON existe) usando los JSON ya leídos en el Turno 2 (**sin volver a leerlos**). Luego detén tu turno y entra en **Barrera Reactiva Silenciosa** (cero herramientas hasta recibir `DONE:` de los architects). Los tipos ya estarán listos antes de `cta-reduce` / `dispatch-authors`.
 
@@ -131,7 +131,9 @@ A universal, subject-agnostic educational engineering pipeline that converts raw
 >   * *Nivel 2 (20–40 s)*: `errores >= 6` O `lineasInfractoras > 5` $\implies$ `ModularSplicing` obligatorio (`shards/shard_fixes/<CID>.py`). Bloquea edición in-place repetitiva.
 >   * *Nivel 3 (60–120 s)*: `SyntaxError` global $\implies$ `write_file(Overwrite=True)` atómico.
 > - **Recibos Criptográficos `*.cert.json` (< 5 ms)**: `compile_shard.py` emite certificados sellados por SHA-256. En `--stage templates` y `--stage certify`, la verificación criptográfica salta por completo re-ejecutar el sandbox sobre shards inalterados.
-> - **`--lean` por Defecto en Despacho**: System prompts ultra-compactos ($\le 5\text{ KB}$), ahorrando ~65% de tokens de salida y tiempo de generación.
+> - **`--lean` por Defecto en Despacho**: System prompts ultra-compactos ($\le 5\text{ KB}$), ahorrando ~65% de tokens de salida y tiempo de generación en todos los roles (`cta`, `author`, `judge`, `repair`, `cta-map`, `cta-reduce`).
+> - **Fail-Total en Compilador (`--fail-total`)**: `compile_shard.py` opera con `--fail-total` tanto en autoría como en reparación para abortar ante errores fatales sin tolerar compilaciones inconsistentes.
+> - **Herramientas Nativas Estándar**: Subagentes y runner operan con herramientas nativas de plataforma (`read_file`, `write_file`, `edit_file`, `run_command`, `send_message`) con soporte retrocompatible.
 > - **Juez Epistémico 1-Seed con Dominancia Bayesiana ($\alpha_{\text{Kernel}} = 0$)**: 1 única semilla pre-verificada por plantilla enfocada en suficiencia epistémica y no-giveaway semántico; ninguna objeción heurística revoca una prueba matemática formal.
 > - **Silent Reactive Barrier Protocol (~12–16 Turnos del Director)**: En despertares reactivos parciales (`k < N`), el Director no ejecuta herramientas, reporta `Progreso de ola: k/N subagentes completados.` y finaliza en `< 2s`.
 > - **Weighted Waves (`1 Hab/shard`, olas ≤ 100)**: Priorización *Heaviest-First*: cada habilidad compleja (`Hab-*`) se aísla en su propio shard individual y se despacha a $t=0$ (soporte continuo de hasta 100 shards concurrentes en una sola ola paralela).
@@ -245,7 +247,7 @@ El Director de Proyecto debe mantener una interacción conversacional ultra-efic
 > 1. **Búfer de Escritura NTFS:** Tras recibir `DONE:` de una etapa o subagente, espera un retardo preventivo de 500 ms antes de invocar la siguiente etapa CLI o leer archivos para asegurar el vaciado (*flush*) del búfer del sistema de archivos NTFS en Windows.
 > 2. **Sondeo de Tareas Asíncronas vs Subagentes:** NUNCA llames a `manage_task(Action='kill', ...)` o `manage_task(Action='status', ...)` sobre subagentes; los subagentes se gestionan EXCLUSIVAMENTE con `manage_subagents(Action='kill', ConversationIds=[...])`. NUNCA sondees o intentes matar tareas en estado `DONE`.
 > 3. **Paginación Inteligente en `edit_file`:** Prohibido aplicar `edit_file` sobre bloques mayores a 30 líneas tras lecturas parciales truncadas; exige leer previamente con `read_file` el bloque específico indicando líneas exactas (`StartLine` y `EndLine`).
-> 4. **Pre-Validación Psicométrica [R-19]:** La longitud en caracteres de las 4 opciones visibles no debe diferir en más de un 15% antes de llamar a `write_file`.
+> 4. **Pre-Validación Psicométrica [R-15]:** La longitud en caracteres de las 4 opciones visibles no debe diferir en más de un 15% antes de llamar a `write_file` ([R-15]).
 
 Solo cuando se satisfaga la condición de barrera completa (`N/N` trabajadores de la ola reportaron `DONE:`, o `BLOCKED:`, o tras la resolución de rezagados), el Director procede a ejecutar la etapa siguiente del runner.
 
@@ -254,13 +256,13 @@ Solo cuando se satisfaga la condición de barrera completa (`N/N` trabajadores d
 ## 🛡️ Dieta Estricta del Director y Cero Depuración Manual
 
 Para evitar saturar el contexto del chat y consumir tokens en inspecciones redundantes:
-1. **Bloqueo Pre-Tool (`c2c_hook_guard.py`)**: Mientras exista `.c2c_subagent_lock.json` (e incluso antes de `bootstrap` para inspecciones `python -c`), el hook previene activamente que el Director lea o modifique archivos de código de shards (`*_data.py`, `shard_fixes/*.py`), respuestas masivas de jueces (`judge_responses_*.json`) o scripts internos del skill (`run.py`, `prepare.py`, `ingest.py`, `dispatch.py`).
+1. **Bloqueo Pre-Tool (`c2c_hook_guard.py`)**: Mientras exista `.c2c_subagent_lock.json`, el hook previene activamente que el Director lea o modifique archivos de código de shards (`*_data.py`, `shard_fixes/*.py`), respuestas masivas de jueces (`judge_responses_*.json`) o scripts internos del skill (`run.py`, `prepare.py`, `ingest.py`, `dispatch.py`).
 2. **Delegación de Reparaciones (`c2c_repair`)**:
    - Si un shard no compila tras los intentos de su autor o activa el Circuit Breaker:
      ```bash
      python .agents/skills/content-to-course/dispatch.py dispatch-repair --work-dir <work_dir> --ids <CID>
      ```
-   - `dispatch-repair` detecta automáticamente fallos de compilación, plantillas faltantes (`work/templates/<CID>.json`) o *circuit breakers* activos, **limpia automáticamente los archivos de bloqueo en `.check_attempts/`** del shard afectado y genera la orden para `c2c_repair` (`Model="flash"`).
+   - `dispatch-repair` detecta automáticamente fallos de compilación, plantillas faltantes (`work/templates/<CID>.json`) o *circuit breakers* activos, **limpia automáticamente los archivos de bloqueo en `.check_attempts/`** del shard afectado y genera la orden para `c2c_repair` (`Model="inherit"`).
    - El subagente `c2c_repair` analiza el diagnóstico inyectado y emite la corrección quirúrgica en `work/shards/<shard_id>_data.py` o `work/shards/shard_fixes/<CID>.py`, la cual es incorporada de inmediato por `compile_shard.py`. El Director NUNCA edita código a mano.
 3. **Liberación de Bloqueo**: Al concluir la publicación exitosa con `run.py --stage publish`, el archivo `.c2c_subagent_lock.json` se elimina automáticamente. En caso de aborto anticipado, ejecutar `python .agents/skills/content-to-course/run.py --stage unlock --work-dir <work_dir>`.
 
@@ -282,7 +284,7 @@ Este comando ejecuta en `< 1s`:
 
 ### Paso 1: Lanzamiento de CTA y Registro Diferido de Subagentes (Turnos 2, 3 y 4)
 1. **Turno 2**: Lee en paralelo los archivos de `<work_dir>/dispatch/types/*.json` listados en `type_spec_files` (solo lecturas).
-2. **Turno 3**: Registra **solo** `c2c_cta_architect` vía `define_subagent`, invoca `invoke_subagent` (`Model="flash"`) para cada elemento de `Subagents` devuelto por `bootstrap`, y agenda el watchdog a 7 minutos mediante `schedule` (`DurationSeconds=420` = 7 min, `Prompt="Auditar progreso CTA"`).
+2. **Turno 3**: Registra **solo** `c2c_cta_architect` vía `define_subagent`, invoca `invoke_subagent` (`Model="inherit"`) para cada elemento de `Subagents` devuelto por `bootstrap`, y agenda el watchdog a 7 minutos mediante `schedule` (`DurationSeconds=420` = 7 min, `Prompt="Auditar progreso CTA"`).
 3. **Turno 4**: Mientras los architects trabajan, registra en un único turno paralelo los tipos restantes (`c2c_shard_author`, `c2c_judge`, `c2c_repair`, `c2c_cta_harmonizer` si existe) con `define_subagent`, y entra a la barrera.
 4. Aplica el Protocolo de Barrera Silenciosa hasta recibir `DONE:` de todos los arquitectos CTA (`1/1` en modo `direct` o `N/N` `part_XX` en modo `mapreduce`).
 
@@ -302,7 +304,7 @@ Este comando ejecuta en `< 1s`:
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/dispatch.py dispatch-authors --work-dir <work_dir> [--wave 1]
    ```
-2. Invoca todos los subagentes en paralelo (`Model="flash"`) y agenda watchdog a 7 minutos (`DurationSeconds=420`).
+2. Invoca todos los subagentes en paralelo (`Model="inherit"`) y agenda watchdog a 7 minutos (`DurationSeconds=420`).
 3. Aplica Barrera Silenciosa: cero herramientas en mensajes parciales (`k < N`).
 4. Al completar la ola (o si un shard activa Circuit Breaker, delegando con `dispatch.py dispatch-repair --work-dir <work_dir> --ids <CID>`), valida los templates aprovechando el fast-path `< 5 ms` de recibos criptográficos `shard_XX.cert.json`:
    ```powershell
@@ -343,12 +345,12 @@ Este comando ejecuta en `< 1s`:
    ```powershell
    & ".venv\Scripts\python.exe" .agents/skills/content-to-course/run.py --stage publish --work-dir <work_dir> --output-dir courses
    ```
-   El cerrojo `.c2c_subagent_lock.json` se libera automáticamente, el motor ejecuta la **Rúbrica Determinista del QA Evaluator** (< 300 ms), genera los reportes `reports/qa_audits/<course_id>_qa_report.md` y `.json`, y emite la telemetría completa en stdout.
+   El cerrojo `.c2c_subagent_lock.json` se libera automáticamente, el motor ejecuta la **Rúbrica Determinista del QA Evaluator** (< 300 ms) y el **Pipeline Auditor Determinista (`c2c-run-auditor`)**, genera los reportes `reports/qa_audits/<course_id>_qa_report.*` y `reports/c2c_audits/<timestamp>_<course_id>_<conv_id[:8]>/`, y emite ambas telemetrías completas en stdout.
 
 2. > [!IMPORTANT]
-   > ### 🎓 Pantalla de Cierre Obligatoria (Presentación de Calidad al Usuario)
+   > ### 🎓 Pantalla de Cierre Obligatoria (Presentación de Calidad y Ejecución al Usuario)
    >
-   > Al concluir la publicación, el Director **NUNCA** debe limitarse a mostrar solo el tamaño del archivo o la URL genérica sin estadísticas de calidad. **DEBE presentar obligatoriamente en su respuesta final al usuario las estadísticas completas de la Rúbrica Determinista del QA Evaluator**:
+   > Al concluir la publicación, el Director **NUNCA** debe limitarse a mostrar solo el tamaño del archivo o la URL genérica sin estadísticas de calidad ni de ejecución. **DEBE presentar obligatoriamente en su respuesta final al usuario las estadísticas completas de la Rúbrica Determinista del QA Evaluator y el Resumen Determinista de Ejecución del Run Auditor emitidos por `--stage publish`**:
    >
    > #### Formato Obligatorio del Mensaje Final:
    >
@@ -401,11 +403,35 @@ Este comando ejecuta en `< 1s`:
    >
    > ---
    >
+   > ### ⏱️ 4. Resumen Determinista de Ejecución (Run Auditor)
+   >
+   > - **Tiempo Total de Pared:** **{wall_min} min** ({wall_sec}s) | **Cómputo Acumulado:** {comp_min} min | **Speedup Paralelo:** **{speedup}x**
+   > - **Subagentes Desplegados:** **{sub_total}** | **Intervenciones Manuales:** {interventions}
+   > - **Consumo de Tokens:** **{tot_tok} totales** (**{act_tok} activos**: In={in_tok}, Out={out_tok}, Think={think_tok} | Cache={cache_tok})
+   > - **Unit Economics:** {tok_per_q} tok/preg ({act_tok_per_q} activos/preg) | {sec_per_q} s/preg ({qpm} preg/min)
+   >
+   > | Etapa / Sección | Duración / Pared | Recursos y Resultado |
+   > | :--- | :---: | :--- |
+   > | **Stage 0 (Bootstrap/Prep)** | {prep_dur}s | CLI |
+   > | **Stage 1A (Visión)** | {s1a_wall}s | {s1a_agents} agentes / {s1a_tok} tok activos |
+   > | **Stage 1B (CTA)** | {s1b_wall}s | {s1b_agents} agentes / {s1b_tok} tok activos ({total_comps} comps) |
+   > | **Stage 2 (Sharding)** | {shard_dur}s | {shards_count} shards |
+   > | **Stage 3 (Autores)** | min={s3_min}s / med={s3_med}s / max={s3_max}s | Straggler: {straggler} / {s3_tok} tok activos |
+   > | **Stage 3B (Reparaciones)** | {s3b_max}s | {s3b_count} reparaciones / {s3b_tok} tok activos |
+   > | **Stage 4 (Templates/Build)** | {s4_dur}s | {total_questions} reactivos |
+   > | **Stage 5 (Blind Judges)** | {s5_wall}s | {s5_judges} jueces / {s5_items} ítems ({s5_agree}% acuerdo) |
+   > | **Stage 6 (Publish)** | {pub_dur}s | CLI + QA + Run Auditor |
+   >
+   > ---
+   >
    > ### 📁 Artefactos Generados y Enlace Directo
    > - **Archivo del Curso (JSON):** `courses/{course_id}.json` ({size_mb} MB, {total_questions} reactivos en {total_comps} competencias)
    > - **Análisis Curricular CTA:** `courses/competence_analysis_{course_id}.md`
    > - **Informe de Calidad QA (Markdown):** `reports/qa_audits/{course_id}_qa_report.md`
    > - **Informe de Calidad QA (JSON):** `reports/qa_audits/{course_id}_qa_report.json`
    > - **Payload Enriquecido de Telemetría:** `reports/qa_audits/{course_id}_payload.json`
+   > - **Informe Run Auditor (Markdown):** `reports/c2c_audits/{run_dir}/report.md`
+   > - **Telemetría Run Auditor (JSON):** `reports/c2c_audits/{run_dir}/telemetry.json`
+   > - **Dashboard Interactivo (HTML):** `reports/c2c_audits/{run_dir}/dashboard.html`
    > - **URL de Interacción Directa:** http://localhost:3000/#/course/{course_id}
    > ```

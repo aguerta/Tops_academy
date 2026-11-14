@@ -191,11 +191,17 @@ def instantiate_template(
         for item in batch_results:
             if not item.get("success"):
                 err_txt = str(item.get("error", ""))
+                if "SecurityViolationError" in err_txt or "SandboxSecurityError" in err_txt:
+                    raise SecurityViolationError(
+                        f"Template {template.get('id', 'UNKNOWN')} security violation on seed {item.get('seed')}: {err_txt}"
+                    )
                 if "SandboxTimeoutError" in err_txt:
                     raise SandboxTimeoutError(
                         f"Template {template.get('id', 'UNKNOWN')} timed out during instantiation: {err_txt}"
                     )
-                continue
+                raise SandboxExecutionError(
+                    f"Template {template.get('id', 'UNKNOWN')} failed on seed {item.get('seed')}: {err_txt}"
+                )
 
             s = item["seed"]
             gen_res = item["result"]
@@ -228,8 +234,10 @@ def instantiate_template(
                     cta_distractors_map=cta_distractors_map,
                     seed=s,
                 )
-            except Exception:
-                continue
+            except Exception as e:
+                raise SandboxExecutionError(
+                    f"Template {template.get('id', 'UNKNOWN')} failed during question assembly on seed {s}: {e}"
+                )
 
             # 4. Invariant validation on candidate
             is_valid, errors = check_instance_invariants(candidate_q, interaction_type, variables=variables)

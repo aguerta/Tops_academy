@@ -92,7 +92,7 @@
           "enum": ["source", "inferred"]
         },
         "evidence": { "$ref": "#/definitions/evidence_ref" },
-        "remediation_hint": { "type": "string", "minLength": 1 }
+        "remediation_hint": { "type": "string", "minLength": 70 }
       },
       "anyOf": [
         {

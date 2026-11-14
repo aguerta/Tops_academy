@@ -124,7 +124,7 @@ def get_type_definitions(lean: bool = True) -> List[Dict[str, Any]]:
     
     When lean=True (default), loads lean static system prompts strictly under 5 KB.
     """
-    repair_prompt = "prompt_repair.md" if lean else "prompt_shard_author.md"
+    repair_prompt = "prompt_repair.md"
     return [
         {
             "name": "c2c_cta_architect",
@@ -178,7 +178,7 @@ def make_pointer_prompt(
     w_rel = item_file_rel or work_order_rel
     parts = [
         f"You are {r_name}.",
-        f"Work order: `{w_rel}`. Read with `view_file`.",
+        f"Work order: `{w_rel}`. Read with `read_file`.",
     ]
     if extra_instructions:
         parts.append(extra_instructions)
@@ -191,8 +191,8 @@ def make_pointer_prompt(
 ROLE_SPECS: Dict[str, Dict[str, Any]] = {
     "cta": {
         "type_name": "c2c_cta_architect",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_cta_architect.md",
+        "model": "inherit",
+        "system_prompt": "system_prompts/lean/prompt_cta_architect.md",
         "read": [
             "work/ingestion_manifest.json",
             "work/pre_cta_manifest.json",
@@ -223,8 +223,8 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
     },
     "cta-direct": {
         "type_name": "c2c_cta_architect",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_cta_architect.md",
+        "model": "inherit",
+        "system_prompt": "system_prompts/lean/prompt_cta_architect.md",
         "read": [
             "work/ingestion_manifest.json",
             "work/pre_cta_manifest.json",
@@ -255,8 +255,8 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
     },
     "author": {
         "type_name": "c2c_shard_author",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_shard_author.md",
+        "model": "inherit",
+        "system_prompt": "system_prompts/lean/prompt_shard_author.md",
         "read": [
             "content/**",
             "work/dispatch/items/author_*.json",
@@ -289,8 +289,8 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
     },
     "judge": {
         "type_name": "c2c_judge",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_blind_judge.md",
+        "model": "inherit",
+        "system_prompt": "system_prompts/lean/prompt_blind_judge.md",
         "read": [
             "work/verification/judge_batch_*.json",
             "work/judge_batch_*.json",
@@ -315,8 +315,8 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
     },
     "repair": {
         "type_name": "c2c_repair",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_shard_author.md",
+        "model": "inherit",
+        "system_prompt": "system_prompts/lean/prompt_repair.md",
         "read": [
             "work/shards/*",
             "work/dispatch/repair_slices/*.json",
@@ -344,8 +344,8 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
     },
     "cta-map": {
         "type_name": "c2c_cta_architect",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_cta_architect.md",
+        "model": "inherit",
+        "system_prompt": "system_prompts/lean/prompt_cta_architect.md",
         "read": [
             "work/parts/part_*/**",
             "work/parts/part_manifest_*.json",
@@ -371,8 +371,8 @@ ROLE_SPECS: Dict[str, Dict[str, Any]] = {
     },
     "cta-reduce": {
         "type_name": "c2c_cta_harmonizer",
-        "model": "flash",
-        "system_prompt": "system_prompts/prompt_cta_harmonizer.md",
+        "model": "inherit",
+        "system_prompt": "system_prompts/lean/prompt_cta_harmonizer.md",
         "read": [
             "work/cta_outline.json",
             "work/duplicate_candidates.json",
@@ -670,7 +670,7 @@ def dispatch_cta(
                 f"> SIEMPRE usa el índice de página 1-indexed del archivo PDF (`{s_p}..{e_p}` según la tabla anterior), NUNCA la numeración impresa del libro o capítulo.",
                 "",
                 "## 3. DIRECTIVAS DE OPERACIÓN",
-                f"1. Abre el material fuente asignado con `view_file`: `{doc_path}`.",
+                f"1. Abre el material fuente asignado con `read_file`: `{doc_path}`.",
                 f"   (Tu primera acción es leer el material fuente. NO abras `compile_cta.py` ni `check_cta.py`: son cajas negras que solo se ejecutan. Secuencia: turno 1 leer fuente en paralelo, turno 2 `write_file` atómico, turno 3 compilar; repara solo con la salida del compilador (línea + `[CÓDIGO]`). No planifiques en voz alta: decide y emite.)",
                 f"2. Escribe las competencias en tuplas tabulares puras de 10 elementos (índice 9 = assumptions, obligatorio con CTA_CONTRACT_VERSION = 2: [] en fact, >=1 supuesto en concept/skill) en `{out_py}` (`COMPETENCIES = [...]`).",
                 f"3. Ejecuta la compilación oficial determinista:",
@@ -696,7 +696,7 @@ def dispatch_cta(
             item_data = {
                 "TypeName": "c2c_cta_architect",
                 "Role": f"Cognitive Task Analysis Architect {subpart_id}",
-                "Model": "flash",
+                "Model": "inherit",
                 "Workspace": "inherit",
                 "Prompt": prompt_full,
                 "work_order": work_order_meta,
@@ -725,7 +725,7 @@ def dispatch_cta(
                 subagent_item = {
                     "TypeName": "c2c_cta_architect",
                     "Role": f"Cognitive Task Analysis Architect {subpart_id}",
-                    "Model": "flash",
+                    "Model": "inherit",
                     "Prompt": pointer_prompt,
                 }
             else:
@@ -822,7 +822,7 @@ def dispatch_cta(
             "> SIEMPRE usa el índice de página 1-indexed del archivo PDF (`1..N` según la tabla anterior), NUNCA la numeración impresa del libro o capítulo.",
             "",
             "## 3. DIRECTIVAS DE OPERACIÓN",
-            f"1. Abre el primer material fuente asignado con `view_file` para extraer conceptos, hechos y habilidades.",
+            f"1. Abre el primer material fuente asignado con `read_file` para extraer conceptos, hechos y habilidades.",
             f"   (NO abras `compile_cta.py` ni `check_cta.py`: son cajas negras que solo se ejecutan. Secuencia: turno 1 leer fuente en paralelo, turno 2 `write_file` atómico, turno 3 compilar; repara solo con la salida del compilador (línea + `[CÓDIGO]`). No planifiques en voz alta: decide y emite.)",
             f"2. Escribe las competencias en tuplas tabulares puras de 10 elementos (índice 9 = assumptions, obligatorio con CTA_CONTRACT_VERSION = 2: [] en fact, >=1 supuesto en concept/skill) en `{out_target}` (`COMPETENCIES = [...]`).",
             f"3. Ejecuta la compilación oficial determinista:",
@@ -847,7 +847,7 @@ def dispatch_cta(
         item_data = {
             "TypeName": "c2c_cta_architect",
             "Role": "Cognitive Task Analysis Architect",
-            "Model": "flash",
+            "Model": "inherit",
             "Workspace": "inherit",
             "Prompt": prompt_full,
             "work_order": work_order_meta,
@@ -875,7 +875,7 @@ def dispatch_cta(
             subagents = [{
                 "TypeName": "c2c_cta_architect",
                 "Role": "Cognitive Task Analysis Architect",
-                "Model": "flash",
+                "Model": "inherit",
                 "Prompt": pointer_prompt,
             }]
         else:
@@ -929,7 +929,7 @@ def dispatch_cta_reduce(
     h_type_file = types_dir / "c2c_cta_harmonizer.json"
     if not h_type_file.is_file():
         try:
-            harmonizer_prompt = load_system_prompt("prompt_cta_harmonizer.md", lean=False)
+            harmonizer_prompt = load_system_prompt("prompt_cta_harmonizer.md", lean=True)
             harmonizer_spec = {
                 "name": "c2c_cta_harmonizer",
                 "description": "Cognitive Task Analysis Harmonizer for deduplicating and merging sectional CTA parts",
@@ -960,7 +960,7 @@ def dispatch_cta_reduce(
 
     scope_header = build_scope_header(
         role="cta-reduce",
-        read_paths=[f"{work_rel}/cta_outline.json", f"{work_rel}/duplicate_candidates.json"] + shard_json_rel_list,
+        read_paths=[f"{work_rel}/cta_outline.json", f"{work_rel}/duplicate_candidates.json"],
         write_paths=[f"{work_rel}/cta_harmonize.json", f"{work_rel}/cta.json", f"{work_rel}/cta.md"],
         done_signal=f"DONE: {work_rel}/cta.json",
     )
@@ -968,9 +968,7 @@ def dispatch_cta_reduce(
     prompt_text = (
         f"# Asignación de Tarea: CTA Harmonizer (MapReduce Harmonization v3.21)\n\n"
         f"{scope_header}\n\n"
-        f"## 1. FRAGMENTOS CTA A FUSIONAR Y ARMONIZAR\n"
-        f"{shard_json_lines}\n\n"
-        f"## 2. INSTRUCCIONES DE EJECUCIÓN\n"
+        f"## 1. INSTRUCCIONES DE EJECUCIÓN\n"
         f"0. FAST-PATH: lee en paralelo SOLO `cta_outline.json` + `duplicate_candidates.json`, escribe `cta_harmonize.json` de una vez y ejecuta el merge. PROHIBIDO listar/buscar directorios o leer los shards. Si el merge falla, corrige `cta_harmonize.json` con `edit_file` y re-ejecuta.\n"
         f"1. Analiza el currículo global en `{work_rel}/cta_outline.json` y los pares en `{work_rel}/duplicate_candidates.json`. "
         f"Cada candidato trae `score`, `strength` (`strong`/`weak`; los `strong` primero) y `c1_description`/`c2_description` truncadas: úsalos para decidir sin leer los shards. "
@@ -1011,7 +1009,7 @@ def dispatch_cta_reduce(
     item_data = {
         "TypeName": "c2c_cta_harmonizer",
         "Role": "CTA Harmonizer",
-        "Model": "flash",
+        "Model": "inherit",
         "Prompt": prompt_text,
         "work_order": work_order_meta,
         "output_json": f"{work_rel}/cta.json",
@@ -1034,7 +1032,7 @@ def dispatch_cta_reduce(
         subagents = [{
             "TypeName": "c2c_cta_harmonizer",
             "Role": "CTA Harmonizer",
-            "Model": "flash",
+            "Model": "inherit",
             "Prompt": pointer_prompt,
         }]
     else:
@@ -1102,9 +1100,12 @@ def dispatch_authors(
 
     cta_file = work / "cta.json"
     cta_comps_by_id: Dict[str, Dict[str, Any]] = {}
+    cta_contract_version = 1
     if cta_file.is_file():
         try:
             cta_data = json.loads(cta_file.read_text(encoding="utf-8"))
+            if isinstance(cta_data, dict):
+                cta_contract_version = int(cta_data.get("contract_version", cta_data.get("CTA_CONTRACT_VERSION", 1)))
             raw_comps = cta_data.get("competencies", []) if isinstance(cta_data, dict) else (cta_data if isinstance(cta_data, list) else [])
             if isinstance(raw_comps, list):
                 for c in raw_comps:
@@ -1235,6 +1236,7 @@ def dispatch_authors(
         # Structured Turn-0 specification for each assigned competency
         comp_blocks = []
         source_doc_set: Set[str] = set()
+        missing_assumptions_cids: List[str] = []
 
         for cid in c_ids:
             c_obj = cta_comps_by_id.get(cid) or manifest_comps_by_id.get(cid, {})
@@ -1298,6 +1300,32 @@ def dispatch_authors(
                 d_lines.append("    - *(Distractores no provistos en manifiesto; sintetizar 6 distractores canónicos D-XX-01..06)*")
             distractors_block = "\n".join(d_lines)
 
+            # Assumptions A-XX-YY (mandatory binding for Archetype 4 boundary_or_edge_case)
+            raw_assumptions = c_obj.get("assumptions", [])
+            a_lines = []
+            if isinstance(raw_assumptions, list):
+                for a in raw_assumptions:
+                    if isinstance(a, dict):
+                        aid = _clean_str(a.get("id")) or "A-XX"
+                        astmt = _clean_str(a.get("statement_latex") or a.get("statement") or a.get("description")) or "Supuesto no especificado"
+                        aconseq = _clean_str(a.get("violation_consequence") or a.get("consequence")) or "Consecuencia no especificada"
+                        a_lines.append(f"    - **`{aid}`**: Enunciado: *\"{astmt}\"* | Consecuencia de violación: *\"{aconseq}\"*")
+            if not a_lines:
+                a_lines.append("    - *(Supuestos no provistos en manifiesto; Arquetipo 4 boundary_or_edge_case debe explorar supuestos o condiciones límite del modelo)*")
+            assumptions_block = "\n".join(a_lines)
+
+            # Warning when assumptions are empty in cta.json for contract_version >= 2 or concept/skill
+            has_assumptions = bool(isinstance(raw_assumptions, list) and len(raw_assumptions) > 0)
+            is_concept_or_skill = raw_type in ("concept", "skill") or is_skill_type(raw_type) or comp_type in ("concept", "skill")
+            if not has_assumptions and (cta_contract_version >= 2 or is_concept_or_skill):
+                missing_assumptions_cids.append(cid)
+                warn_msg = (
+                    f"[WARNING] dispatch_authors: Ausencia de A-ids (assumptions=[]) en cta.json para competencia '{cid}' "
+                    f"(tipo: '{raw_type}', contract_version: {cta_contract_version})."
+                )
+                print(warn_msg, file=sys.stderr)
+                logger.warning(warn_msg)
+
             cb_line = f"- **Modelo/Fórmula Correcta Canónica (correct_belief):** {correct_belief}\n" if correct_belief else ""
             block = (
                 f"### Competencia: `{cid}`\n"
@@ -1309,6 +1337,8 @@ def dispatch_authors(
                 f"- **Descripción (LaTeX):** {desc_latex}\n"
                 f"{cb_line}"
                 f"- **Evidencia Fuente:** {ev_str}\n"
+                f"- **Supuestos Epistémicos (Assumptions A-XX-YY; obligatorio vincular en Arquetipo 4 con `assumption_id=\"<id>\"`):**\n"
+                f"{assumptions_block}\n"
                 f"- **6 Distractores Canónicos (D-XX-01..06):**\n"
                 f"{distractors_block}"
             )
@@ -1334,7 +1364,7 @@ def dispatch_authors(
             done_signal=f"DONE: {target_json}",
         )
 
-        compile_cmd = f"{cmd_prefix} -u .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes 4"
+        compile_cmd = f"{cmd_prefix} -u .agents/skills/content-to-course/compile_shard.py --input {out_py} --output {target_json} --work {work_rel} --shard {s_id} --strict --min-archetypes 4 --fail-total"
 
         prompt_lines = [
             f"# Asignación de Tarea: Shard Exercise Author `{s_id}` (C2C v3.21 Load Inversion)",
@@ -1358,12 +1388,12 @@ def dispatch_authors(
             "\n\n".join(comp_blocks),
             "",
             "## 3. INSTRUCCIONES DE EJECUCIÓN",
-            f"0. **AUTOSUFICIENCIA TURN-0 (CERO LECTURA INNECESARIA DE PDFs):** La Sección 2 de esta orden ya contiene el 100% de las definiciones, fórmulas canónicas (correct_belief), manifestaciones de error (manifestation) y distractores de cta.json. NO abras ni leas los documentos fuente de content/ en Turno 1; empieza directamente escribiendo {s_id}_data.py con write_file (el archivo `{out_py}` NO existe previamente; PROHIBIDO llamar a `view_file` o `read_file` sobre archivos inexistentes o sobre `templates/<cid>.json` antes de compilar; Zero-Probing y No-Overthinking obligatorios). PROHIBIDO ejecutar tuberías de PowerShell (`ConvertFrom-Json`, `Select-String`, `ForEach-Object`) o scripts inline `python -c` para consultar o parsear archivos JSON; toda la información ya está en esta orden.",
+            f"0. **AUTOSUFICIENCIA TURN-0 (CERO LECTURA INNECESARIA DE PDFs):** La Sección 2 de esta orden ya contiene el 100% de las definiciones, fórmulas canónicas (correct_belief), manifestaciones de error (manifestation) y distractores de cta.json. NO abras ni leas los documentos fuente de content/ en Turno 1; empieza directamente escribiendo {s_id}_data.py con write_file (el archivo `{out_py}` NO existe previamente; PROHIBIDO llamar a `read_file` sobre archivos inexistentes o sobre `templates/<cid>.json` antes de compilar; Zero-Probing y No-Overthinking obligatorios). PROHIBIDO ejecutar tuberías de PowerShell (`ConvertFrom-Json`, `Select-String`, `ForEach-Object`) o scripts inline `python -c` para consultar o parsear archivos JSON; toda la información ya está en esta orden.",
             f"1. Escribe en `{out_py}` (`TEMPLATES = [...]`) las funciones generadoras y tuplas de plantillas de forma concisa (<= 80-110 líneas por competencia, <= 180-220 líneas totales por shard, funciones gen_* concisas de ~15 líneas).",
             f"2. **Contrato Form-C / Form-B Multimodal OBLIGATORIO (`min_archetypes = 4`, `[M3-ARCHETYPES]`):** Define exactamente **4 tuplas en `TEMPLATES` por cada competencia asignada** usando el helper Form-C `_t(...)` (recomendado, ver tu system prompt) o la 9-tupla Form-B `(tpl_id, cid, qtype, gen_fn, ver_fn, (difficulty, bloom), stems, hints, solution)`, cubriendo los 4 arquetipos ortogonales (`direct`, `inverse`, `perturbation`, `boundary_or_edge_case`). Cobertura obligatoria de tres bandas de dificultad (`'easy'`, `'medium'`, `'hard'`) abarcando al menos 2 niveles taxonómicos Bloom distintos. Se exige práctica activa multimodal: mínimo 2 plantillas interactivas `fill_in_the_blank` (FIB) o `multiple_select` (MS) en competencias de habilidad (`Hab-*`), y mínimo 1 `FIB` o `MS` en competencias de concepto/hecho (`C-*`/`H-*`). En `fill_in_the_blank`, el valor esperado no debe llevar signos de dólar externos `$ ... $` (`[FIB-NAKED]`).",
             f"3. **[TPL-DYNAMIC-RATIONALE & ANTI-MAGIC-MULT Obligatorio]:** En plantillas MC7, puedes usar **2-tuplas `(did, val)` en `ds` pasando `rats=RATS` en `_t(...)` (formato nativo preferido Form-C; `compile_shard.py` inyecta `RATS[did]` automáticamente)** o **3-tuplas `(did, val, error_rationale_con_@var@)`**, siempre con rationale >= 20 caracteres interpolando `@var@` dinámicos. En MS, las opciones falsas deben incluir `'error_rationale'` interpolando `@var@`. PROHIBIDO TERMINANTEMENTE calcular distractores como cualquier múltiplo escalar directo o delta sobre la respuesta correcta (`ans * 1.333`, `ans * 0.333`, `ans * k`, `ans / k`, `ans + delta`) o usar deltas numéricos ciegos (`[DIAG-MAGIC-MULT]`); PROHIBIDO intentar burlar el linter ajustando decimales: todo distractor numérico DEBE derivarse de una fórmula algebraica independiente y cerrada que modele un error conceptual específico (p. ej. omitir raíz de n, signo invertido en Chebyshev o invertir numerador/denominador). Usa el filtro de 1 línea en `_gen_*` (`for _ in range(30): ... if len(set(vals)) == 7: break`) para garantizar 7 opciones disjuntas sin colisiones.",
             f"4. **[TPL-VAR & ANTI-MONO-CLAVE Obligatorio]:** Cada `gen_*(rng)` DEBE tener espacio paramétrico >= 500 combinaciones (`rng.randint` amplios, NUNCA listas pequeñas `rng.choice`) para producir >= {_S4_QUOTA_SKILL} instancias únicas (`Hab-*`) o >= {_S4_QUOTA_OTHER} (`C-*`/`H-*`) en 50 semillas. PROHIBIDO fijar respuestas correctas invariantes (`ans = 1`) en competencias teóricas (`[TPL-STATIC-OPT]`); la clave debe depender de al menos un parámetro dinámico (@var@).",
-            f"5. **[R-19 Paridad Psicométrica / R-18 / R-15 / R-20 / KATEX-PROSE-OVERFLOW]:** Pre-validación obligatoria: la longitud en caracteres de las 4 opciones no debe diferir en más de un 15% antes de llamar a write_file ([R-19]). Usa siempre `r\"...\"` con `@var@` (PROHIBIDO `rf\"...\"`/`fr\"...\"`/`{{{{...}}}}`; formato `@var:fmt@` permitido, p. ej. `@b:.4f@`; todo `@var@` de stem/stem_variants/options/correct debe existir en `vars`; `\\implies` -> usa `\\Rightarrow`, o `hat{{\\theta}}` sin barra). En `distractors`, `\"val\"` contiene el resultado matemático limpio sin gerundios sesgados ni texto explicativo. PROHIBIDO desbordamiento en KaTeX: no coloques texto explicativo mayor a 45 caracteres dentro de `\\text{{...}}` (`[KATEX-PROSE-OVERFLOW]`); ubica la prosa explicativa fuera de `$ ... $`. PROHIBIDO comandos LaTeX expuestos fuera de delimitadores `$ ... $` (`[KATEX-RAW-SYNTAX]`).",
+            f"5. **[R-15 Paridad Psicométrica / R-18 / R-20 / KATEX-PROSE-OVERFLOW]:** Pre-validación obligatoria: la longitud en caracteres de las 4 opciones no debe diferir en más de un 15% antes de llamar a write_file ([R-15]). Usa siempre `r\"...\"` con `@var@` (PROHIBIDO `rf\"...\"`/`fr\"...\"`/`{{{{...}}}}`; formato `@var:fmt@` permitido, p. ej. `@b:.4f@`; todo `@var@` de stem/stem_variants/options/correct debe existir en `vars`; `\\implies` -> usa `\\Rightarrow`, o `hat{{\\theta}}` sin barra). En `distractors`, `\"val\"` contiene el resultado matemático limpio sin gerundios sesgados ni texto explicativo. PROHIBIDO desbordamiento en KaTeX: no coloques texto explicativo mayor a 45 caracteres dentro de `\\text{{...}}` (`[KATEX-PROSE-OVERFLOW]`); ubica la prosa explicativa fuera de `$ ... $`. PROHIBIDO comandos LaTeX expuestos fuera de delimitadores `$ ... $` (`[KATEX-RAW-SYNTAX]`).",
             f"6. **[Verificadores Reales y Sin Alias Globales]:** Cada verificador debe validar analíticamente las variables en `vars` contra la respuesta (prohibido `return True` trivial). Firma EXACTA: MC7/FIB `def ver_X_N(c, v)`; MS (multiple select, sin clave `correct`) `def ver_X_4(res)`; PROHIBIDO `(res, v=None)`, `*args`, `raise`/`assert`. Usa `_pv(c)` canónico puro Python (sin `import re`) para extraer valores numéricos de cadenas con `=`, `\\le`, `\\ge`. PROHIBIDO definir alias a nivel de módulo (`ver_2 = ver_1`); define cada verificador como función independiente (`def ver_2(res): return ver_1(res)`). Para aprobar `[STEM-DIVERSITY-GATE]`, cada competencia debe alcanzar el mínimo de **stems únicos** indicado en su bloque de la Sección 2 (`Hab-*`: >= {_S4_UNIQ_SKILL}, cuota {_S4_QUOTA_SKILL}; `C-*`/`H-*`: >= {_S4_UNIQ_OTHER}, cuota {_S4_QUOTA_OTHER}), repartidos entre las 4 plantillas (>= {_S4_VARIANTS_SKILL} `stems` por plantilla en habilidades, >= {_S4_VARIANTS_OTHER} en concepto/hecho), además de 3 a 5 `hints` socráticos de >= 25 caracteres.",
             f"7. Compila deterministamente (run_command con `WaitMsBeforeAsync: 15000`, síncrono; el compilador imprime [PRECHECK] con todos los hallazgos estáticos: corrígelos juntos):",
             f"   ```bash",
@@ -1390,10 +1420,12 @@ def dispatch_authors(
             "min_archetypes": 4,
             "prompt_sha256": prompt_sha256,
         }
+        if missing_assumptions_cids:
+            work_order_meta["missing_assumptions"] = missing_assumptions_cids
         item_data = {
             "TypeName": "c2c_shard_author",
             "Role": f"Shard Author {s_id}",
-            "Model": "flash",
+            "Model": "inherit",
             "Workspace": "inherit",
             "shard_id": s_id,
             "assigned_competencies": c_ids,
@@ -1418,7 +1450,7 @@ def dispatch_authors(
             subagent_item = {
                 "TypeName": "c2c_shard_author",
                 "Role": f"Shard Author {s_id}",
-                "Model": "flash",
+                "Model": "inherit",
                 "Prompt": pointer_prompt,
             }
             if os.getenv("C2C_INLINE_AUTHOR_ORDER", "0").lower() in ("1", "true", "yes") and len(shard_list) <= 8:
@@ -1429,7 +1461,7 @@ def dispatch_authors(
                     "\n\n".join(comp_blocks),
                     "",
                     "## 3. EJECUCIÓN",
-                    f"- La orden de trabajo completa YA está en este mensaje: PROHIBIDO `view_file` en Turno 1; tu primera acción es `write_file` de `{out_py}` (`TEMPLATES = [...]`, {_S4_VARIANTS_OTHER}+ stems por plantilla, reglas de contrato en tu system prompt).",
+                    f"- La orden de trabajo completa YA está en este mensaje: PROHIBIDO `read_file` en Turno 1; tu primera acción es `write_file` de `{out_py}` (`TEMPLATES = [...]`, {_S4_VARIANTS_OTHER}+ stems por plantilla, reglas de contrato en tu system prompt).",
                     f"- Compila (run_command con `WaitMsBeforeAsync: 15000`): `{compile_cmd}`",
                     "- Errores: corrige SOLO con la salida del compilador ([PRECHECK] primero, todos juntos). Tras `PASS` no edites más.",
                     f"- Cierre: `DONE: {target_json}`",
@@ -1560,7 +1592,8 @@ def dispatch_judges(
     elif split_batches and max_items_per_judge > 0:
         for bf in split_batches:
             try:
-                b_cnt = len(json.loads(bf.read_text(encoding="utf-8")))
+                b_raw = json.loads(bf.read_text(encoding="utf-8"))
+                b_cnt = len(b_raw.get("items", [])) if isinstance(b_raw, dict) else (len(b_raw) if isinstance(b_raw, list) else 0)
                 if b_cnt > max_items_per_judge:
                     needs_split = True
                     break
@@ -1614,6 +1647,13 @@ def dispatch_judges(
     items_dir = work / "dispatch" / "items"
     items_dir.mkdir(parents=True, exist_ok=True)
 
+    if ids is None:
+        for old_jf in items_dir.glob("judge_*.json"):
+            try:
+                old_jf.unlink()
+            except Exception:
+                pass
+
     subagents: List[Dict[str, Any]] = []
     item_files: List[str] = []
 
@@ -1649,24 +1689,24 @@ def dispatch_judges(
         j_tag = f"judge_{j_id}"
         out_target = f"{work_rel}/verification/judge_responses_{j_id}.json"
         alt_out_target = f"{work_rel}/judges/{j_tag}.json"
-        item_filename = f"judge_{idx:02d}.json"
+        item_filename = f"judge_{j_id}.json"
         item_file_rel = f"{work_rel}/dispatch/items/{item_filename}"
 
         if use_pointer:
             read_paths = [item_file_rel]
             protocol_directives = [
-                f"- **Lee únicamente tu lote asignado con `view_file`:** `{item_file_rel}`.",
+                f"- **Lee únicamente tu lote asignado con `read_file`:** `{item_file_rel}`.",
                 f"- **PROHIBIDO leer cualquier archivo del curso, templates, shards o ground truth distinto de este lote asignado `{item_file_rel}`.**",
                 "- **NO EJECUTES `run_command`:** Resuelve analíticamente desde primeros principios.",
-                "- **Completa tu tarea en 1 SOLO TURNO** escribiendo directamente el archivo de respuestas con `write_to_file`.",
+                f"- **Completa tu tarea en 3 TURNOS LLM (2 turnos de herramientas + 1 cierre terminal DONE:):** Turno 1 con `read_file` sobre tu lote asignado; Turno 2 resolviendo analíticamente y ejecutando en paralelo `write_file` (para persistir tu veredicto) y `send_message` (para notificar al orquestador); y Turno 3 emitiendo el cierre terminal `DONE: {out_target}`.",
                 f"- Sigue estrictamente todas las reglas de tu System Prompt `c2c_judge` y finaliza con: `DONE: {out_target}`.",
             ]
         else:
             read_paths = ["Items inyectados en este prompt"]
             protocol_directives = [
-                "- **NO EJECUTES `view_file` para leer el lote:** Todos los reactivos ya están inyectados abajo.",
+                "- **NO EJECUTES `read_file` para leer el lote:** Todos los reactivos ya están inyectados abajo.",
                 "- **NO EJECUTES `run_command`:** Resuelve analíticamente desde primeros principios.",
-                "- **Completa tu tarea en 1 SOLO TURNO** escribiendo directamente el archivo de respuestas con `write_to_file`.",
+                "- **Completa tu tarea en 1 SOLO TURNO** escribiendo directamente el archivo de respuestas con `write_file`.",
                 f"- Sigue estrictamente todas las reglas de tu System Prompt `c2c_judge` y finaliza con: `DONE: {out_target}`.",
             ]
 
@@ -1686,12 +1726,13 @@ def dispatch_judges(
             done_signal=f"DONE: {out_target}",
         )
 
+        turn_header = "## 1. PROTOCOLO EN 3 TURNOS LLM (2 turnos de herramientas + 1 cierre terminal DONE:)" if use_pointer else "## 1. PROTOCOLO ZERO-WARMUP EN 1 SOLO TURNO"
         prompt_lines = [
             f"# Asignación de Evaluación a Ciegas: Blind Judge `{j_tag}` (C2C v3.21 Zero-Warmup Load Inversion)",
             "",
             scope_header,
             "",
-            "## 1. PROTOCOLO ZERO-WARMUP EN 1 SOLO TURNO",
+            turn_header,
             f"- **Judge ID:** `{j_tag}`",
             f"- **Lote Asignado:** `{bf.name}`",
             f"- **Ruta de Salida Obligatoria:** `{out_target}` (o `{alt_out_target}`)",
@@ -1721,7 +1762,7 @@ def dispatch_judges(
         item_data = {
             "TypeName": "c2c_judge",
             "Role": f"Blind Judge {j_id}",
-            "Model": "flash",
+            "Model": "inherit",
             "Workspace": "inherit",
             "batch_file": bf.name,
             "batch_id": j_id,
@@ -1745,7 +1786,7 @@ def dispatch_judges(
             subagent_item = {
                 "TypeName": "c2c_judge",
                 "Role": f"Blind Judge {j_id}",
-                "Model": "flash",
+                "Model": "inherit",
                 "Prompt": pointer_prompt,
             }
         else:
@@ -2367,7 +2408,7 @@ def build_dispatch(
             shard_fix_path = f"{work_rel}/shards/shard_fixes/{shard_id}/{cid}.py"
             compile_cmd = (
                 f"{cmd_prefix} -u .agents/skills/content-to-course/compile_shard.py "
-                f"--input {out_py} --output {out_json} --work {work_rel} --shard {shard_id} --strict --min-archetypes 4"
+                f"--input {out_py} --output {out_json} --work {work_rel} --shard {shard_id} --strict --min-archetypes 4 --fail-total"
             )
 
             # Generate compact Competence Slice (< 2 KB) for isolated Turn-0 repair
@@ -2492,9 +2533,9 @@ def build_dispatch(
                 f"- **Circuit Breaker Reset:** Se han limpiado automáticamente los contadores previos en `.check_attempts/`.\n\n"
                 f"## 2. DIAGNÓSTICO DEL FALLO & COMPETENCE SLICE\n"
                 f"{error_bullets}"
-                f"Consulta el slice de competencia en `{slice_rel}` con `view_file` para ver la especificación completa.\n\n"
+                f"Consulta el slice de competencia en `{slice_rel}` con `read_file` para ver la especificación completa.\n\n"
                 f"## 3. INSTRUCCIONES DE REPARACIÓN (MATRIZ 2D)\n"
-                f"1. [ORDEN ESTRICTO & MATRIZ 2D]: Usa `edit_file` si errores < 6 y líneas <= 5; usa ModularSplicing `{shard_fix_path}` si errores >= 6 o líneas > 5. PROHIBIDO ejecutar compile_shard.py antes de editar. PROHIBIDO leer `cta.json` o `pre_shard_manifest.json` (usa el slice compacto `{slice_rel}`). Cumple Form-C / Form-B (min_archetypes=4: 'direct','inverse','perturbation','boundary_or_edge_case', 3-tuplas `(did, val, rationale_con_@var@)` len >= 20, FIB sin `$`, verificador real, `\\text{{...}}` <= 45 chars, sin coletillas parentéticas delatoras tipo '(sesgo/error...)').\n"
+                f"1. [ORDEN ESTRICTO & MATRIZ 2D]: Usa `edit_file` si errores < 6 y líneas <= 5; usa ModularSplicing `{shard_fix_path}` si errores >= 6 o líneas > 5. PROHIBIDO ejecutar compile_shard.py antes de editar. PROHIBIDO leer `cta.json` o `pre_shard_manifest.json` (usa el slice compacto `{slice_rel}`). Cumple Form-C (min_archetypes=4: 'direct','inverse','perturbation','boundary_or_edge_case' con `assumption_id`, `rats=RATS` con 2-tuplas `(did, val)` o 3-tuplas `(did, val, rationale_con_@var@)` len >= 20, FIB sin `$`, verificador real, `\\text{{...}}` <= 45 chars, sin coletillas parentéticas delatoras tipo '(sesgo/error...)').\n"
                 f"2. Compila ÚNICAMENTE DESPUÉS de editar para certificar:\n"
                 f"   ```bash\n"
                 f"   {compile_cmd}\n"

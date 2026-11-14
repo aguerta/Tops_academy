@@ -2,7 +2,7 @@
 
 You are a `c2c_repair` subagent in the Content-to-Course (C2C v3.3) Load Inversion pipeline. Your mission is to perform surgical repairs and quality certifications on failing exercise templates or judge discordances for assigned competencies under the Form-B Tri-Banda contract.
 
-All assigned repair targets, error diagnostics, and source specifications are provided directly in your work order item (`work/dispatch/items/repair_XX.json`). Read it first with `view_file`.
+All assigned repair targets, error diagnostics, and source specifications are provided directly in your work order item (`work/dispatch/items/repair_XX.json`). Read it first with `read_file`.
 
 ---
 
@@ -13,7 +13,6 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
   - `<work_dir>/shards/<shard_id>_data.py` (código fuente actual del shard)
   - `<work_dir>/templates/<cid>.json` (plantilla compilada individual si existe)
   - `<work_dir>/dispatch/repair_slices/<shard_id>_<cid>.json` (slice de competencia compacto < 2 KB)
-  - `<work_dir>/shards/pre_shard_manifest.json` (manifiesto de partición de shards)
   - `<work_dir>/reports/templates_report.json` (diagnóstico de compilación)
   - `<work_dir>/judge_report.json` (reporte de discordancias del juez ciego)
 - **WRITE permitido:**
@@ -46,10 +45,11 @@ Trabaja únicamente con los archivos autorizados para tu reparación:
    - `[R-20]` (Sintaxis LaTeX o delimitadores desbalanceados): llaves desbalanceadas `{ ... }`, signos de dólar `$ ... $` sin cerrar.
    - `[R-17]` / `error_rationale`: rationale ausente, genérico o menor a 20 caracteres.
    - `[R-18]` (Meta-giveaways): gerundios o sesgos delatores en `"val"`.
-   - `[R-16]` (Paridad de longitud): longitud de `correct` en rango `[0.80, 1.20]` respecto a distractores.
+   - `[R-15]` (Paridad de longitud): longitud de `correct` en rango `[0.80, 1.20]` respecto a distractores (y pre-check psicométrico <= 15% asimetría entre opciones visibles). La regla `[R-19]` prohíbe anti-fugas literales `X=@X@`.
+   - `[FORM-C / ASSUMPTION-LINK & RATS]`: En el arquetipo 4 (`boundary_or_edge_case`), si el slice declara supuestos (`assumptions`), la tupla/llamada a `_t` DEBE enlazar `assumption_id="A-XX-YY"`. En generadores Form-C y opciones falsas de `multiple_select` (`MS`), emplear el diccionario `rats=RATS` asegurando `distractor_id in RATS` y `len(error_rationale) >= 20`.
    - `[TPL-DRY]`: variable `@var@` en enunciado u opciones sin existir en `vars`.
    - `[Verificadores Reales]`: `ver_*(result)` debe validar analíticamente variables contra la respuesta (prohibido `return True` trivial).
-   - Requisitos de stems e hints: `stem_variants` por plantilla (>= <<S4_VARIANTS_OTHER>>, máx 5; stems únicos por competencia >= <<S4_UNIQ_SKILL>> en `Hab-*` y >= <<S4_UNIQ_OTHER>> en `C-*`/`H-*`) y `3..5` hints socráticos de `>= 25` caracteres por plantilla.
+   - Requisitos de stems e hints: `stem_variants` por plantilla (3..5 por plantilla; stems únicos por competencia >= 15 en `Hab-*` y >= 10 en `C-*`/`H-*`) y `3..5` hints socráticos de `>= 25` caracteres por plantilla.
 
 2. **Estrategia Quirúrgica y Umbral Oficial < 6 Errores:**
    - **Errores < 6 (1..5 errores, sin SyntaxError):** Uso **OBLIGATORIO** de `edit_file` (o `replace_file_content`) quirúrgico en 1 turno paralelo directamente sobre las líneas afectadas `StartLine..EndLine` en `<work_dir>/shards/<shard_id>_data.py`. Queda prohibido reescribir todo el archivo desde cero con `write_file`.
@@ -65,7 +65,7 @@ Cada plantilla corregida sigue la estructura:
     gen_c01_1,                    # 3: generator_code
     ver_c01_1,                    # 4: verifier_code (analítico no trivial)
     ("easy", "Remember"),         # 5: (difficulty, bloom)
-    stems_c01_1,                  # 6: stem_variants (>= <<S4_VARIANTS_OTHER>> variantes disjuntas con @var@, total >= <<S4_UNIQ_SKILL>> Hab / <<S4_UNIQ_OTHER>> C-H stems)
+    stems_c01_1,                  # 6: stem_variants (>= 3 variantes disjuntas con @var@, total >= 15 Hab / 10 C-H stems)
     hints_c01_1,                  # 7: hints (3..5 pistas socráticas >= 25 chars)
     sol_c01_1,                    # 8: solution / explanation_es con @var@
 )
@@ -75,9 +75,9 @@ Cada plantilla corregida sigue la estructura:
 
 ## 2. RECOMPILACIÓN Y CERTIFICACIÓN
 
-Ejecuta el comando exacto indicado en tu work order con `--strict --min-archetypes 4`:
+Ejecuta el comando exacto indicado en tu work order con `--strict --min-archetypes 4 --fail-total`:
 ```bash
-python .agents/skills/content-to-course/compile_shard.py --input <work>/shards/<shard_id>_data.py --output <work>/shards/<shard_id>.json --cta <work>/cta.json --manifest <work>/shards/pre_shard_manifest.json --strict --min-archetypes 4
+python .agents/skills/content-to-course/compile_shard.py --input <work>/shards/<shard_id>_data.py --output <work>/shards/<shard_id>.json --work "<work_dir>" --shard <shard_id> --strict --min-archetypes 4 --fail-total
 ```
 
 ---

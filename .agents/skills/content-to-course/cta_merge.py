@@ -158,6 +158,17 @@ def extract_evidence_keys(evidence_list: Optional[List[Dict[str, Any]]]) -> Set[
     return keys
 
 
+_MATH_SPAN_SPLIT_RE = re.compile(
+    r"((?<!\\)\$\$(?:\\.|[^$]|(?<!\\)\$(?!\$))*?(?<!\\)\$\$|(?<!\\)\$(?:\\.|[^$\\])+\$)",
+    re.DOTALL,
+)
+
+
+def _strip_escaped_dollars(text: str) -> str:
+    """Removes odd-backslash escaped dollar literals (e.g. \\$) without removing \\\\$."""
+    return re.sub(r"(?<!\\)((?:\\\\)*)\\\$", r"\1", text)
+
+
 def try_symmetrical_math_repair(text: str) -> Optional[str]:
     r"""Attempts a non-destructive symmetrical repair for partially delimited math strings like
 
@@ -170,7 +181,7 @@ def try_symmetrical_math_repair(text: str) -> Optional[str]:
 
     # Case: Opening delimiter '(' or '[' before '$' with matching ')' or ']' inside or after '$...$'
     # e.g., r"Sea P(Y \ge $\delta) = 0.95$" -> r"Sea $P(Y \ge \delta) = 0.95$"
-    m_split = re.search(r"([a-zA-Z0-9_]*[\(\[][^\$\(\)\[\]]*)\$([^\$]+)\$", text)
+    m_split = re.search(r"([a-zA-Z0-9_]*[\(\[][^\$\(\)\[\]]*)(?<!\\)\$([^\$]+)(?<!\\)\$", text)
     if m_split:
         prefix_math = m_split.group(1).lstrip()
         inner_math = m_split.group(2)
@@ -183,7 +194,7 @@ def try_symmetrical_math_repair(text: str) -> Optional[str]:
             if _is_valid_katex_span(comb, False):
                 leading_space = len(m_split.group(1)) - len(prefix_math)
                 cand = text[:m_split.start(1) + leading_space] + f"${comb}$" + text[m_split.end():]
-                cand_spans = re.findall(r"(?<!\\)\$([^\$]+)(?<!\\)\$", cand)
+                cand_spans = re.findall(r"(?<!\\)\$((?:\\.|[^$\\])+)\$", cand)
                 if cand_spans and all(_is_valid_katex_span(s, False) for s in cand_spans):
                     return cand
 
@@ -295,7 +306,7 @@ def auto_wrap_bare_latex_in_cta_field(text: str) -> str:
     if not LATEX_CMD_RE.search(text):
         return text
 
-    clean_dollars = text.replace(r"\$", "")
+    clean_dollars = _strip_escaped_dollars(text)
     if "$" not in clean_dollars:
         stripped = text.strip()
         words = re.findall(r"\b[a-zA-Z\u00C0-\u017F]{2,}\b", stripped)
@@ -406,7 +417,7 @@ def auto_wrap_bare_latex_in_cta_field(text: str) -> str:
                                 continue
                     break
                 elif ch == "\\":
-                    m_any_cmd = re.match(r"\\[a-zA-Z]+|\\[,;:! ]", segment[math_end:])
+                    m_any_cmd = re.match(r"\\\\|\\[a-zA-Z]+|\\[,;:! ]", segment[math_end:])
                     if m_any_cmd:
                         math_end += len(m_any_cmd.group(0))
                         math_end = _consume_braces(math_end)
@@ -464,13 +475,13 @@ def auto_wrap_bare_latex_in_cta_field(text: str) -> str:
 
         return "".join(res)
 
-    parts = re.split(r"(\$\$.*?\$\$|\$.*?\$)", text, flags=re.DOTALL)
+    parts = _MATH_SPAN_SPLIT_RE.split(text)
     for i in range(0, len(parts), 2):
         if parts[i]:
             parts[i] = _wrap_segment(parts[i])
     cand_text = "".join(parts)
     if pykatex is not None and cand_text != text:
-        cand_spans = re.findall(r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$(.*?)(?<!\\)\$", cand_text, flags=re.DOTALL)
+        cand_spans = re.findall(r"(?<!\\)\$\$(.*?)(?<!\\)\$\$|(?<!\\)\$((?:\\.|[^$\\])+)\$", cand_text, flags=re.DOTALL)
         for m_span in cand_spans:
             m_text = m_span[0] if m_span[0] else m_span[1]
             m_disp = bool(m_span[0])
@@ -510,15 +521,16 @@ def normalize_orphan_math(text: str, wrap_bare_equations: bool = True) -> str:
     )
 
     text = auto_balance_math_delimiters(text)
-    if wrap_bare_equations:
-        text = auto_wrap_bare_latex_in_cta_field(text)
 
     def _apply_outside_math(s: str, fn) -> str:
-        parts = re.split(r"(\$\$.*?\$\$|\$.*?\$)", s, flags=re.DOTALL)
+        parts = _MATH_SPAN_SPLIT_RE.split(s)
         for i in range(0, len(parts), 2):
             if parts[i]:
                 parts[i] = fn(parts[i])
         return "".join(parts)
+
+    if wrap_bare_equations:
+        text = auto_wrap_bare_latex_in_cta_field(text)
 
     # 0c. \operatorname{plim}_{n \to \infty} or \operatorname{...} operators (BEFORE \infty or symbol conversion)
     text = _apply_outside_math(
@@ -541,14 +553,15 @@ def normalize_orphan_math(text: str, wrap_bare_equations: bool = True) -> str:
     )
 
     # 1b. dot{w} or bar{k} (without backslash) ONLY if argument is a concise math token (1-4 chars, no spaces)
-    text = _apply_outside_math(
-        text,
-        lambda c: re.sub(
-            r"(?<!\\)\b(dot|ddot|bar|hat|tilde|vec)\{([a-zA-Z0-9_+\-*^./]{1,4})\}(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9*+]+))*",
-            lambda m: f"$\\{m.group(1)}{{{m.group(2)}}}{m.group(0)[len(m.group(1)) + len(m.group(2)) + 2:]}$",
-            c,
+    if wrap_bare_equations:
+        text = _apply_outside_math(
+            text,
+            lambda c: re.sub(
+                r"(?<!\\)\b(dot|ddot|bar|hat|tilde|vec)\{([a-zA-Z0-9_+\-*^./]{1,4})\}(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9*+]+))*",
+                lambda m: f"$\\{m.group(1)}{{{m.group(2)}}}{m.group(0)[len(m.group(1)) + len(m.group(2)) + 2:]}$",
+                c,
+            )
         )
-    )
 
     # 2. \frac{a}{b} -> $\frac{a}{b}$ (with backslash, supports 1-level nested braces)
     text = _apply_outside_math(
@@ -561,14 +574,15 @@ def normalize_orphan_math(text: str, wrap_bare_equations: bool = True) -> str:
     )
 
     # 2b. frac{a}{b} (without backslash)
-    text = _apply_outside_math(
-        text,
-        lambda c: re.sub(
-            r"(?<!\\)\b(frac|dfrac|tfrac|cfrac)\{((?:[^{}]|\{[^{}]*\})*)\}\{((?:[^{}]|\{[^{}]*\})*)\}",
-            r"$\\\1{\2}{\3}$",
-            c,
+    if wrap_bare_equations:
+        text = _apply_outside_math(
+            text,
+            lambda c: re.sub(
+                r"(?<!\\)\b(frac|dfrac|tfrac|cfrac)\{((?:[^{}]|\{[^{}]*\})*)\}\{((?:[^{}]|\{[^{}]*\})*)\}",
+                r"$\\\1{\2}{\3}$",
+                c,
+            )
         )
-    )
 
     # 3. \sqrt{x} -> $\sqrt{x}$ (with backslash)
     text = _apply_outside_math(
@@ -581,14 +595,15 @@ def normalize_orphan_math(text: str, wrap_bare_equations: bool = True) -> str:
     )
 
     # 3b. sqrt{x} (without backslash)
-    text = _apply_outside_math(
-        text,
-        lambda c: re.sub(
-            r"(?<!\\)\bsqrt\{((?:[^{}]|\{[^{}]*\})*)\}",
-            r"$\\sqrt{\1}$",
-            c,
+    if wrap_bare_equations:
+        text = _apply_outside_math(
+            text,
+            lambda c: re.sub(
+                r"(?<!\\)\bsqrt\{((?:[^{}]|\{[^{}]*\})*)\}",
+                r"$\\sqrt{\1}$",
+                c,
+            )
         )
-    )
 
     # 4. Greek letters and common math operators with backslash: \alpha -> $\alpha$
     text = _apply_outside_math(
@@ -600,39 +615,40 @@ def normalize_orphan_math(text: str, wrap_bare_equations: bool = True) -> str:
         )
     )
 
-    # 4b. Parenthesized matrix transpose / inverse expressions: (Z'X)^{-1}, X'Z(Z'Z)^{-1}Z'X, (X'X)^{-1}X'y
-    text = _apply_outside_math(
-        text,
-        lambda c: re.sub(
-            r"(?<!\$)(?:(?<=\s)|(?<=^)|(?<=[(\"'«]))"
-            r"([a-zA-Z0-9\\\'_]*(?:\([a-zA-Z0-9\\\'_\+\*\- ]+\)|[a-zA-Z0-9\\\'_])+"
-            r"(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9\*\\+]+))+"
-            r"(?:\([a-zA-Z0-9\\\'_\+\*\- ]+\)|[a-zA-Z0-9\\\'_])*)"
-            r"(?!\$)",
-            lambda m: f"${m.group(1)}$",
-            c,
+    if wrap_bare_equations:
+        # 4b. Parenthesized matrix transpose / inverse expressions: (Z'X)^{-1}, X'Z(Z'Z)^{-1}Z'X, (X'X)^{-1}X'y
+        text = _apply_outside_math(
+            text,
+            lambda c: re.sub(
+                r"(?<!\$)(?:(?<=\s)|(?<=^)|(?<=[(\"'«]))"
+                r"([a-zA-Z0-9\\\'_]*(?:\([a-zA-Z0-9\\\'_\+\*\- ]+\)|[a-zA-Z0-9\\\'_])+"
+                r"(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9\*\\+]+))+"
+                r"(?:\([a-zA-Z0-9\\\'_\+\*\- ]+\)|[a-zA-Z0-9\\\'_])*)"
+                r"(?!\$)",
+                lambda m: f"${m.group(1)}$",
+                c,
+            )
         )
-    )
 
-    # 5. Braced math base with sub/superscripts: {k}^*, {r}^*, {k}_{t+1}
-    text = _apply_outside_math(
-        text,
-        lambda c: re.sub(
-            r"(?<!\$)(?:(?<=\s)|(?<=^)|(?<=[(\"'«]))(\{[a-zA-Z0-9_+\-*./]+\}(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9*+]+))+)(?!\$)",
-            r"$\1$",
-            c,
+        # 5. Braced math base with sub/superscripts: {k}^*, {r}^*, {k}_{t+1}
+        text = _apply_outside_math(
+            text,
+            lambda c: re.sub(
+                r"(?<!\$)(?:(?<=\s)|(?<=^)|(?<=[(\"'«]))(\{[a-zA-Z0-9_+\-*./]+\}(?:[_^](?:\{[^{}]+\}|[a-zA-Z0-9*+]+))+)(?!\$)",
+                r"$\1$",
+                c,
+            )
         )
-    )
 
-    # 5b. Raw subscript or superscript with braces or asterisk: k_{t+1}, k^*, r^*, Q_{zx}^{-1}
-    text = _apply_outside_math(
-        text,
-        lambda c: re.sub(
-            r"(?<!\$)\b([a-zA-Z0-9\\]+(?:[_^](?:\{[a-zA-Z0-9_+\-*./]+\}|[a-zA-Z0-9*+]+))+)(?!\$)",
-            r"$\1$",
-            c,
+        # 5b. Raw subscript or superscript with braces or asterisk: k_{t+1}, k^*, r^*, Q_{zx}^{-1}
+        text = _apply_outside_math(
+            text,
+            lambda c: re.sub(
+                r"(?<!\$)\b([a-zA-Z0-9\\]+(?:[_^](?:\{[a-zA-Z0-9_+\-*./]+\}|[a-zA-Z0-9*+]+))+)(?!\$)",
+                r"$\1$",
+                c,
+            )
         )
-    )
 
     return auto_balance_math_delimiters(text)
 
@@ -675,7 +691,10 @@ def sanitize_competency_math(comp: Dict[str, Any], record_patches: bool = True) 
             ):
                 d_val = d.get(d_field)
                 if isinstance(d_val, str):
-                    new_d_val = normalize_orphan_math(d_val)
+                    new_d_val = normalize_orphan_math(
+                        d_val,
+                        wrap_bare_equations=(False if d_field == "omitted_step" else True),
+                    )
                     if new_d_val != d_val:
                         d[d_field] = new_d_val
                         if record_patches:

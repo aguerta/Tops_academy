@@ -59,10 +59,18 @@ audit_screenshots/
 
 # 7. Scratch y Archivos Temporales de Desarrollo
 scratch/
+scratch_*.py
+report_*.json
+transcripts_*.md
+**/*_payload.json
+**/qa_payload.json
+**/orchestrator_payload.json
+tests/**/*_results.json
+tests/*_results.json
+.agents/teamwork/
 .cache/
 platform/.cache/
 audit_screenshots/
-report_*.json
 *.tmp
 *.temp
 

@@ -1315,42 +1315,23 @@ class CoursePublisher:
             except Exception as e:
                 logger.warning("Could not write publish.cert.json: %s", e)
 
-        # 7. Write QA evaluation artifacts in reports/qa_audits/
+        # 7. Write consolidated self-contained QA report (.md only) in reports/qa_audits/
         if audit_report:
             try:
                 qa_reports_dir = self.project_root / "reports" / "qa_audits"
                 qa_reports_dir.mkdir(parents=True, exist_ok=True)
 
-                # Generate deterministic QA report JSON and Markdown
+                # Generate deterministic self-contained QA Markdown report (with embedded JSON metadata)
                 try:
                     import standardized_audit_engine
                     if hasattr(standardized_audit_engine, "generate_deterministic_qa_report"):
-                        qa_json, qa_md = standardized_audit_engine.generate_deterministic_qa_report(audit_report, parsed)
-                        qa_json_file = qa_reports_dir / f"{course_id}_qa_report.json"
+                        _, qa_md = standardized_audit_engine.generate_deterministic_qa_report(audit_report, parsed)
                         qa_md_file = qa_reports_dir / f"{course_id}_qa_report.md"
-                        qa_json_file.write_text(json.dumps(qa_json, indent=2, ensure_ascii=False), encoding="utf-8")
                         qa_md_file.write_text(qa_md, encoding="utf-8")
                         qa_report_path_str = str(qa_md_file.resolve())
                         logger.info("Published QA audit report to %s", qa_report_path_str)
                 except Exception as ex_gen:
                     logger.debug("Could not generate full deterministic QA markdown: %s", ex_gen)
-
-                # Also write payload file
-                try:
-                    import prepare_course_payload
-                    if hasattr(prepare_course_payload, "summarize_course"):
-                        entry = {
-                            "id": course_id,
-                            "filename": json_path.name,
-                            "title": course_title,
-                            "status": "valid",
-                            "data": parsed,
-                        }
-                        payload_pkg = prepare_course_payload.summarize_course(entry)
-                        payload_file = qa_reports_dir / f"{course_id}_payload.json"
-                        payload_file.write_text(json.dumps(payload_pkg, indent=2, ensure_ascii=False), encoding="utf-8")
-                except Exception as ex_pkg:
-                    logger.debug("Could not write course payload: %s", ex_pkg)
             except Exception as ex_qa:
                 logger.warning("Error saving QA reports to reports/qa_audits: %s", ex_qa)
 

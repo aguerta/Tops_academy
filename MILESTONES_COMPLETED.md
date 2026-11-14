@@ -4,7 +4,7 @@
 > **Hoja de Ruta Activa:** Lo pendiente, en curso o en backlog vive en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md) *(espejo en `docs/future_milestones/FUTURE_MILESTONES.md`)*.  
 > **Conocimiento Tribal y Arquitectura:** La explicación causal de por qué los sistemas funcionan así vive en [`CONOCIMIENTO_TRIBAL.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/CONOCIMIENTO_TRIBAL.md).  
 > **Convención de Certificación:** Cada entrada declara *quién* certificó y *cómo*. «Certificado por el usuario» = prueba manual en sus equipos. «Verificado automáticamente» = tests unitarios, contratos o suites E2E con nombre y resultado.  
-> **Última Actualización:** 2026-11-08 (Branch: `main` / `optimizaciones_test` — Pipeline C2C v4.0 "Más con Menos", DSL Form-C y KaTeXAST, Shift-Left 4 Arquetipos, FSM Hook Guard y M1, 2, 2a, 3, 4, 7, 10, 11 [núcleo], 15 [F1], 16 [F1] cerrados).
+> **Última Actualización:** 2026-11-14 (Branch: `main` / `optimizaciones_test` — Pipeline C2C v4.0 "Más con Menos", DSL Form-C y KaTeXAST, Shift-Left 4 Arquetipos, FSM Hook Guard y M1, 1-T, 2, 2a, 3, 4, 6, 7, 10, 11 [núcleo], 12, 13, 14, 15 [F1], 16 [F1] cerrados).
 
 ---
 
@@ -13,6 +13,7 @@
 | Milestone | Alcance cerrado | Certificación | Commits |
 | :--- | :--- | :--- | :--- |
 | **1** Ergonomía Web (Zoom-Fix, Split 50%, Remediación v3) | Laptops 14" a 150%, TUF F15 a 125%, split 50%, tablets; biblioteca de 3 columnas; prosa en fórmulas | Usuario (2026-10-26) + matriz de 7 viewports + 97 contratos | `05c8f4b`, `12042d0`, `950bd20` |
+| **1-T** Deuda de Pruebas de Ergonomía E2E (Matriz 12 Viewports y AC-CORE) | Matriz ampliada a 12 viewports (incluyendo 1280×590, 610×590, 1536×740, 768×1024, 1024×768); doble validación AC-CORE bajo `Blank-First: ON` y `OFF`; distribución 4+3 y vertical 7; sin desborde horizontal | Automática (`tests/e2e_m1_viewport_matrix.mjs` [12/12 PASS]) | `main` |
 | **2a** Usabilidad móvil | Teléfono: columna única, drawer, footer en flujo | Usuario (2026-10-26) + viewport 390 × 844 en la matriz | los de M1 |
 | **2** PWA Instalable y Modo Offline | Service Worker Workbox, precaching App Shell + fuentes KaTeX, Web App Manifest, suite de iconos (192, 512, maskable), badge `✓ Offline`, navegación nativa popstate (`navigationHistory.ts`), instalación guiada | Automática (`tests/test_pwa_offline.py`, `tests/test_pwa_navigation_and_install.py`) + Verificado en producción PWA (2026-11-01) | `23cb4ec`, `e26769b`, `7e6a238`, `9296f9c` |
 | **3** Anti-Overfitting y Variedad de Plantillas (v3.8 Tri-Banda) | Contrato Tri-Banda (`--min-archetypes 3`, 3 bandas ZPD, $\ge 2$ Bloom, cuota FIB/MS, `[STEM-DIVERSITY-GATE]`) + `ArchetypeEntropyLinter` (`MIN_ARCHETYPES = 3` + `ratio > 0.85` + MPRI) | Automática (`test_new_audit_linters.py`, 11 cursos publicados con 0 infracciones) | `5b5395c`, `be43b08`, `b07cec8` + cierre 2026-10-31 |
@@ -21,6 +22,9 @@
 | **7** Pipeline "Más con Menos" (Target `< 12 min` y `-65%` Tokens) | Deduplicación masiva `-2.0M` tokens en `dispatch.py` (eliminación de triple envío Prompt/work_order/items), recibos criptográficos SHA-256 (`shard_XX.cert.json`) en compilador $< 5\text{ ms}$, subagentes `--lean` por defecto con prompts $\le 5\text{ KB}$, weighted waves de hasta 100 shards concurrentes, precheck estático AST $< 50\text{ ms}$ (`shard_precheck.py`), y suite global de 1,404 tests en 27.76s | Automática (1,404 tests pasando al 100% en 27.76s en `pytest tests/ -q`) + 3 auditorías forenses | `e357df5`, `cb84a16`, `6208088`, `75bfde1`, `c81aaa6` |
 | **10** QA Rubric v2.0 Deep Mastery | 7 linters Path-to-Mastery v2.0, MPRI (/100 pts en 6 pilares, cuota $\ge 25\%$ multimodal), penalizaciones duras, compuerta bloqueante pre-publish `PublishQualityGateError` con mapeo AST | Automática (`tests/test_new_audit_linters.py`) + Auditoría en pipeline sobre 11 cursos | `be43b08`, `24c44f8`, `0e2fd38`, `b07cec8` |
 | **11** Carga de cursos — núcleo | Manifest slim, índice con caché, ETag/304/gzip, manifest inline, IndexedDB, prefetch | Automática (12 tests de API + build); ACs de cliente sin medir | `41435c5`, `b73a5ee`, `2051b8b`, `97fa2f3` |
+| **12** Resiliencia ante Suspensión de la Laptop (SessionStorage & ETag) | Persistencia continua en `sessionStore.ts` (`tops_active_session_v1`), rehidratación reactiva en `PracticeSession.tsx` y `App.tsx`, reconciliación silenciosa `ETag` en `visibilitychange`, endpoint `GET /healthz` en `courseServer.cjs`, script `npm run study` | Automática (`tests/platform/test_m12_session_resilience.py` [14/14 PASS], `platform/dist/` rebuilt) | `main` |
+| **13** Consolidación del Repositorio, Higiene de Artefactos y 4 Dominios de Tests | 4 dominios aislados (`tests/{quality,engine,platform,pipeline}/` + `tests/helpers/`), política Clean Artifacts, `.gitignore` endurecido, purga de 76 volcados JSON huérfanos y 8 scratch scripts; 1,526 tests pasando al 100% en ~51s | Automática (1,526 tests en `tests/{quality,engine,platform,pipeline}/` pasando en ~51s) | `main` |
+| **14** Motor de Maestría Integral 2.0 Estilo Khan Academy | Calibración bidireccional en Challenge/Test/Quiz, degradación por fallo, barra híbrida 80/20, Hint-Cap, Red Dot, fluidez de tiempos y motor 'Up Next for You' (5 niveles) | Automática (`tests/platform/test_mastery_calibration_bidirectional.py` [3/3 PASS], `tests/platform/test_mastery_progress_80_20.py` [5/5 PASS]) | `main` |
 | **15** Gobernanza Formal y FSM Multi-Agente (Fase 1 Isomórfica) | Matriz 2D `decidirEstrategiaEdicion` en `c2c_hook_guard.py` (bloqueo estricto de reescrituras globales si errores $< 6$, imposición de edición quirúrgica y modular splicing), tope duro síncrono (40 turnos / 5M tokens por subagente), y aislamiento AST en subprocesos | Automática (`tests/test_hook_post_pass_and_write_isolation.py`, `tests/test_watchdog_and_hooks.py`) | `e357df5`, `75bfde1`, `c81aaa6` |
 | **16** Certificación Matemática Shift-Left y 4 Arquetipos (Fase 1 Motor) | Stage Contract v4.0 (`engine/stage_contract.py`, `engine/invariants.py`), 4 arquetipos obligatorios en `compile_shard.py` (`direct`, `inverse`, `perturbation`, `boundary_or_edge_case`), supuestos explícitos obligatorios en `cta.json` (`assumptions` + `violation_consequence`), fix silencioso de `np.bool_` en sandbox AST, linters anti-gaming (`[DIAG-MAGIC-MULT]`) | Automática (`tests/test_validator.py`, `tests/test_m3_archetypes_semantic_gate.py`, `tests/test_c2c_author_speedups.py`) | `954a6c8`, `cee3e5d`, `9310ff7`, `75bfde1` |
 
@@ -167,6 +171,85 @@
   5. **Linters Psicométricos Anti-Gaming:** Bloqueo de multiplicadores mágicos (`[DIAG-MAGIC-MULT]`) y opciones de longitud heterogénea en `src/validator/psychometric_checker.py`.
 * **Pruebas:** `tests/test_validator.py`, `tests/test_m3_archetypes_semantic_gate.py`, `tests/test_specific_error_report_and_stem_gate.py`, `tests/test_c2c_author_speedups.py`.
 * **Commits:** `954a6c8`, `cee3e5d`, `9310ff7`, `75bfde1`.
+
+---
+
+## Milestone 14: Motor de Maestría Integral 2.0 Estilo Khan Academy (Calibración Bidireccional, Híbrido 80/20, Fluidez y Motor 'Up Next')
+* **Estado:** ✅ **COMPLETADO / VERIFICADO (Nov 2026) — Componentes Core, Fluidez y Recomendantes.**
+* **Objetivo:** Elevar el motor de maestría ([`masteryStorage.ts`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/utils/masteryStorage.ts)) al estándar completo de Khan Academy: evaluación formativa bidireccional, degradación obligatoria ante fallo, fórmula híbrida de progreso, sistema de fluidez de tiempos (mejor/último tiempo por pregunta), diagnóstico granular consolidado por unidad y motor persistente de recomendación pedagógica *"Up Next for You"*.
+* **Criterios de Aceptación Cumplidos (AC-32 a AC-36):**
+  - **AC-32:** Calibración granular por `competency_id` en Course Challenge, Unit Tests y Quizzes intercalados (`updateCourseChallengeWithSkillCalibration`).
+  - **AC-33:** Todo fallo en `Mastered` degrada a `Proficient` ($-20$ pts); en `Proficient` degrada a `Familiar` ($-30$ pts); en `Familiar` degrada a `Attempted` ($-25$ pts).
+  - **AC-34:** Promoción escalonada ante acierto; ningún Challenge individual promueve de `Not started` a `Mastered` directamente (*Assessment, Not Full Mastery*).
+  - **AC-35:** `CompletionScreen.tsx` despliega paneles diferenciados `Leveled Up` (verde), `Leveled Down` (rojo) y `No change` (gris) basados estrictamente en `TIER_POINTS`, con acceso directo a práctica correctiva, resumen de fluidez y consolidación por unidad de áreas a reforzar.
+  - **AC-36:** Trazabilidad histórica completa `{ date, score, total, type, previous_tier, new_tier, total_seconds, avg_seconds_per_question }`.
+  - **Extensiones Implementadas:** Barra híbrida 80/20 en `calculateCourseProgress`, tope en `Familiar` si se usan pistas (Pistas 2–5), indicador *Red Dot* (`needs_review`), pantalla previa unificada `PreExerciseModal.tsx` con metas de récord de tiempo, y telemetría de latencia por reactivo en `PracticeSession.tsx`.
+  - **Motor Persistente 'Up Next for You' (Jerarquía de 5 Niveles en `CourseOverview.tsx`):**
+    1. *Prioridad 1 (Remediación):* Si hay unidades con `needs_review: true` (rojo/ámbar), recomienda `"Repasar ahora ➔"` para la primera unidad afectada.
+    2. *Prioridad 2 (Nueva Unidad):* Recomienda la primera unidad en orden ordinal no iniciada (`Not started`) con `"Comenzar práctica ➔"`.
+    3. *Prioridad 3 (Unit Test Pendiente):* Si todas están iniciadas pero alguna no tiene Unit Test al 100%, recomienda `"Rendir Unit Test ➔"`.
+    4. *Prioridad 4 (Course Challenge):* Si todos los Unit Tests están al 100%, recomienda `"Rendir Course Challenge ➔"`.
+    5. *Prioridad 5 (Maestría Total 100%):* Banner celebratorio con `"Darle otra repasada ➔"`.
+* **Componentes Obviados / Postergados en esta Sesión de Desarrollo:**
+  - ⏳ **Simulador Cronometrado Adaptativo de Examen Parcial en 2 Módulos (SAT Bluebook):** Postergado y desacoplado hacia **Milestone 14-B**. Se obvió el enrutamiento dinámico a mitad de prueba (Módulo 1 diagnóstico $\to$ Módulo 2 Estándar vs. Avanzado) y el temporizador con reloj de cuenta regresiva de examen universitario para priorizar el motor psicométrico, la telemetría de fluidez y la UX de remediación.
+  - ⏳ **Modelo de Decaimiento Temporal Ebbinghaus en Memoria (SRS):** Obviado de este hito; pertenece formalmente a la especificación de **Milestone 8** (degradación a los 14 y 45 días sin práctica).
+  - ⏳ **Tarjeta 'Mastery Challenge' de 6 Reactivos con Cooldown de 12 Horas:** Obviado de este hito; reservado para **Milestone 8**.
+* **Suite de Verificación:** [`tests/platform/test_mastery_calibration_bidirectional.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/platform/test_mastery_calibration_bidirectional.py) (3/3 PASS) + [`tests/platform/test_mastery_progress_80_20.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/platform/test_mastery_progress_80_20.py) (5/5 PASS).
+> 📄 **Especificación Técnica Completa:** Consultar [`docs/specs/m14_khan_mastery_engine.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/docs/specs/m14_khan_mastery_engine.md) para la matriz psicométrica de 12 filas, interfaces y registro de decisiones.
+
+---
+
+## Milestone 1-T: Deuda de Pruebas de Ergonomía E2E (Matriz 12 Viewports y AC-CORE en Doble Modo)
+* **Estado:** ✅ **Completado y verificado automáticamente al 100% (2026-11-14).**
+* **Objetivo:** Automatizar la verificación exhaustiva contra regresiones visuales y de usabilidad en escenarios reales de laptops de alta densidad (125% y 150%), tablets y pantallas divididas (Split-View 50%), comprobando que el contrato AC-CORE se mantenga inviolable tanto en modo estándar como bajo la cortina de evocación libre (*Blank-First*).
+* **Componentes Técnicos Entregados:**
+  1. **Matriz Expandida de 12 Viewports (`tests/e2e_m1_viewport_matrix.mjs`):**
+     - *Standard & Split Desktop:* `683x768` (Split 1366), `720x900` (Split 1440), `800x900` (Split 1600), `960x1080` (Split 1080p), `1366x768` (Laptop HD), `1440x900` (Desktop), `390x844` (Móvil).
+     - *High-DPI Zoom & Tablets:* `1280x590` (Laptop 14" al 150%), `610x590` (Split 50% en Laptop 14" al 150%), `1536x740` (ASUS TUF 15.6" al 125%), `768x1024` (Tablet Vertical / Portrait), `1024x768` (Tablet Horizontal / Landscape).
+  2. **Verificación Dual-Mode AC-CORE (24 Validaciones Totales):**
+     - *Modo Blank-First: ON (Default):* Cortina y botón de levantamiento visibles, opciones completamente ocultas al inicio, cero desborde horizontal (`scrollWidth <= clientWidth`), KaTeX contenido dentro de sus límites geométricos, botón `Check` inferior visible, pulsación de `Enter` o botón repliega la cortina revelando exactamente 7 alternativas, toast de feedback posicionado sin solapar elementos críticos.
+     - *Modo Blank-First: OFF (Estándar):* Alternado reactivamente vía botón de cabecera; 7 opciones renderizadas inmediatamente con distribución 4+3 en dos columnas (o 7 en columna única bajo 480 px), validación estricta de no-scroll y visibilidad de controles.
+  3. **Aserciones No-Triviales Hardened:**
+     - Validación geométrica de distribución 4+3 por coordenadas de píxeles: Columna 1 contiene items 0..3 apilados verticalmente; Columna 2 contiene items 4..6 apilados verticalmente a la derecha; o 7 items en columna única en `390x844`.
+     - Resiliencia de puertos dinámicos (`find_free_port`), ciclo de vida del servidor gestionado y limpieza forzosa en Windows.
+* **Pruebas:** [`tests/e2e_m1_viewport_matrix.mjs`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/e2e_m1_viewport_matrix.mjs) (12/12 PASS en ambos modos).
+* **Commits:** `main`.
+
+---
+
+## Milestone 12: Resiliencia ante Suspensión de la Laptop (SessionStorage & ETag Reconciliation)
+* **Estado:** ✅ **Completado y verificado automáticamente al 100% (2026-11-14).**
+* **Objetivo:** Garantizar que si el estudiante suspende la laptop, cierra la tapa o el sistema operativo purga la memoria de la pestaña en segundo plano, la sesión de práctica restaure con precisión de milisegundo la pregunta exacta en curso, las opciones marcadas, el estado de la cortina *Blank-First* y la telemetría acumulada, reconciliando silenciosamente el estado del curso vía `ETag` sin recargas destructivas de HMR.
+* **Componentes Técnicos Entregados:**
+  1. **Almacenamiento Continuo de Sesión (`platform/src/utils/sessionStore.ts`):** Clave `tops_active_session_v1` en `sessionStorage` con interfaz tipada `ActiveSessionSnapshot` (`version: 1`, `courseId`, `sessionType`, `competencyId`, `unitIndex`, `questions`, `currentIndex`, `selectedOption`, `selectedMultiOptions`, `fillBlankValue`, `hintsRevealed`, `wrongAttemptsCount`, `isExhausted`, `isChecked`, `isCorrect`, `isCurtainLifted`, `results`, `telemetry`, `elapsedSeconds`, `savedAt`). Funciones `saveActiveSession`, `loadActiveSession` (con filtrado por curso y validación de versión) y `clearActiveSession`.
+  2. **Hidratación Reactiva en `PracticeSession.tsx`:** Soporte de prop opcional `initialSnapshot`. Hidratación segura protegiendo el estado `isCurtainLifted` con `isInitialHydrationRef` para evitar que la cortina se repliegue al montar; sincronización reactiva inmediata en cada respuesta o interacción; desmontaje limpio en `clearActiveSession` al finalizar la sesión, volver a la biblioteca o reiniciar.
+  3. **Rehidratación y Reconciliación en `App.tsx`:** Detección de sesión activa en montaje inicial para saltar directo a la práctica activa; listener en evento `visibilitychange` (`document.visibilityState === 'visible'`) que ejecuta una revalidación silenciosa con `ETag` contra `/api/courses/:id` para detectar si el curso fue modificado en el servidor mientras la máquina dormía, preservando la sesión si el contenido es idéntico (`304 Not Modified`).
+  4. **Health Check Endpoint en `courseServer.cjs`:** Endpoint `GET /healthz` de baja latencia que devuelve `{ status: 'ok', uptime: process.uptime(), courses_count, timestamp }` con código HTTP 200 para monitoreo de estado.
+  5. **Script de Estudio Desacoplado de HMR:** Inclusión de `"study": "npm run build && node server/courseServer.cjs"` en `platform/package.json` para permitir sesiones de estudio de alto rendimiento sin sobrecarga de sockets Vite HMR ni interferencias por desconexión en sleep. Reconstrucción completa de producción en `platform/dist/`.
+* **Pruebas:** [`tests/platform/test_m12_session_resilience.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/platform/test_m12_session_resilience.py) (14/14 PASS), compilación limpia en `npm run build` (tsc + vite + pwa).
+* **Commits:** `main`.
+
+---
+
+## Milestone 13: Consolidación del Repositorio, Higiene de Artefactos y Suite de 4 Dominios
+* **Estado:** ✅ **Completado y verificado automáticamente al 100% (2026-11-14).**
+* **Objetivo:** Erradicar definitivamente la proliferación caótica de artefactos efímeros (*repo bloat*), desacoplar scripts temporales de depuración, blindar `.gitignore` contra volcados JSON gigantes y reestructurar la totalidad de los 1,526 tests del ecosistema en una jerarquía clara de 4 dominios gobernados por contratos arquitectónicos.
+* **Componentes Técnicos Entregados:**
+  1. **Política Estricta *Clean Artifacts* y Endurecimiento de `.gitignore`:**
+     - Exclusión permanente de payloads efímeros de auditoría: `reports/**/qa_payload.json`, `reports/qa_audits/*_payload.json`, `reports/audits_archive/**/qa_payload.json`, `reports/c2c_audits/**/orchestrator_payload.json` y volcados de trazas `.system_generated/`.
+     - Des-indexación y eliminación de 76 archivos `qa_payload.json` obsoletos que inflaban el árbol Git.
+     - Purga total de 8 scripts de scratch y depuración huérfana en la raíz (`scratch_inspect.py`, `scratch_orchestrator_steps.py`, `scratch_stages.py`, `scratch_details.py`, `diagnose_repair_loop.py`, `inspect_solow_h05.py`, `debug_step.py`, `transcripts_shard_28_and_repair_h05.md` y `tests/blind_guess_empirical_results.json`).
+  2. **Arquitectura Consolidada de 4 Dominios de Pruebas:**
+     - `tests/quality/` (129 tests): Certificación de calidad pedagógica, linters MPRI v2.0, auditoría semántica de arquetipos, análisis de distractores a ciegas y compuertas de regresión AB20/AB30/AB40.
+     - `tests/engine/` (506 tests): Validador central, invariantes del sandbox AST, canonicalizador algebraico SymPy, motor LaTeX, gramática `KaTeXAST` y QuickJS.
+     - `tests/platform/` (234 tests): Resiliencia de sesión M12 (`test_m12_session_resilience.py`), contratos de ergonomía M1/M6, PWA offline, navegación popstate, API de cursos y calificación de preguntas.
+     - `tests/pipeline/` (657 tests): Compiladores `compile_cta.py` y `compile_shard.py`, FSM Hook Guard, MapReduce de competencias, deduplicación de prerrequisitos, watchdog de subagentes y weighted sharding M7.
+  3. **Módulo de Soporte Compartido (`tests/helpers/common.py`):**
+     - Funciones de utilidad desacopladas (`find_free_port`, `strip_code_comments`, rutas canónicas de proyecto) y configuración global en `tests/conftest.py`.
+  4. **Rendimiento Global de la Suite:**
+     - 1,526 pruebas automatizadas ejecutadas en aproximadamente **51 segundos** con `pytest-xdist` dinámico en paralelo.
+* **Pruebas:** 1,526 tests pasando al 100% en `pytest tests/` (129 quality, 506 engine, 234 platform, 657 pipeline).
+* **Commits:** `main`.
 
 ---
 *Fin del Registro de Milestones Completados. Para consultar la hoja de ruta pendiente, ver `FUTURE_MILESTONES.md`.*

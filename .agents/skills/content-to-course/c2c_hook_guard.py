@@ -424,52 +424,6 @@ def _extract_command_from_args(args: Dict[str, Any]) -> str:
     return ""
 
 
-def _check_fast_start_command_guard(cmd: str) -> Optional[Dict[str, str]]:
-    """Blocks pre-bootstrap exploration commands (run.py --help, python -c inspecting C2C scripts or counting PDF pages)."""
-    if not cmd:
-        return None
-    cmd_norm = cmd.lower().replace("\\", "/")
-
-    # 1. Block --help / -h on C2C runner/dispatcher scripts
-    if re.search(r"content-to-course/(?:run|dispatch|prepare|ingest)\.py\s+(?:--help|-h)\b", cmd_norm):
-        return {
-            "decision": "deny",
-            "reason": (
-                "C2C Fast-Start Guard: Do NOT run --help on C2C scripts! Execute Fast Bootstrap immediately in Turn 1: "
-                '& ".venv\\Scripts\\python.exe" .agents/skills/content-to-course/run.py --stage bootstrap '
-                "--course-id <id> --sources <path> --cta-mode <direct|mapreduce> "
-                "--granularity <standard|fine|coarse> --director-id <CONVERSATION_ID>"
-            ),
-        }
-
-    # 2. Block python -c inspecting content-to-course/*.py or counting PDF pages manually
-    if re.search(r"(?:python(?:\.exe)?|py(?:\.exe)?)[/\"'\\]*\s+-c\b", cmd_norm):
-        if "content-to-course/" in cmd_norm and any(
-            tok in cmd_norm
-            for tok in ("open(", "read_text", "run.py", "prepare.py", "ingest.py", "dispatch.py")
-        ):
-            return {
-                "decision": "deny",
-                "reason": (
-                    "C2C Fast-Start Guard: Do NOT inspect content-to-course/*.py with python -c! "
-                    "Execute Fast Bootstrap immediately: "
-                    '& ".venv\\Scripts\\python.exe" .agents/skills/content-to-course/run.py --stage bootstrap '
-                    "--course-id <id> --sources <path> --cta-mode <direct|mapreduce> "
-                    "--granularity <standard|fine|coarse> --director-id <CONVERSATION_ID>"
-                ),
-            }
-        if ("import pypdf" in cmd_norm or "import fitz" in cmd_norm) and "content/" in cmd_norm:
-            return {
-                "decision": "deny",
-                "reason": (
-                    "C2C Fast-Start Guard: Do NOT count PDF pages manually with pypdf/fitz! "
-                    "run.py --stage bootstrap automatically discovers all PDFs and counts pages in <0.2s."
-                ),
-            }
-
-    return None
-
-
 def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None) -> Dict[str, Any]:
     """Processes a PreToolUse hook payload and returns decision dict conforming to docs/hooks.md."""
     tool_call = payload.get("toolCall") or payload.get("tool_call") or {}
@@ -496,12 +450,6 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
     paths = _extract_paths_from_args(args)
     cmd = _extract_command_from_args(args)
     cmd_tools = ("run_command", "execute_command", "bash", "powershell", "shell", "terminal")
-
-    # Pre-Bootstrap Fast-Start Guard: applies even before .c2c_subagent_lock.json exists
-    if tool_name in cmd_tools:
-        fast_start_denial = _check_fast_start_command_guard(cmd)
-        if fast_start_denial is not None:
-            return fast_start_denial
 
     active_lock = find_active_c2c_lock(custom_lock_file)
     if not active_lock:

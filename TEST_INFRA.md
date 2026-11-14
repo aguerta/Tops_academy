@@ -5,187 +5,253 @@
 The test suite for the **Top's Academy** platform is constructed upon the following fundamental testing tenets:
 
 1. **Opaque-Box Requirement-Driven Verification**:
-   Tests are written strictly against the observable behavioral specification defined in `ORIGINAL_REQUEST.md` and the UI visual design contract in `ui_spec.md`. The test runner interacts with the system exclusively through standard browser mechanisms (DOM navigation, mouse clicks, keyboard text entry, local storage inspection, and console log capture). Tests do NOT inspect private module internals or rely on mock frontends.
+   Tests are written strictly against observable behavioral specifications and visual/psychometric design contracts. The test runner interacts with the system exclusively through standard browser mechanisms (DOM navigation, mouse clicks, keyboard text entry, local/session storage inspection, and console log capture) or formal CLI / engine interfaces. Tests do NOT inspect private module internals or rely on mock frontends.
 
 2. **Zero-Facade / Ground-Truth Validation**:
-   Tests execute real user workflows against actual rendered DOM trees and SVG graphic surfaces. Facade tests that trivially assert truth without exercising real interactive state transitions (e.g. grading arithmetic, hint drawer toggling, coordinate plane SVG element verification) are prohibited.
+   Tests execute real user workflows against actual rendered DOM trees and SVG graphic surfaces. Facade tests that trivially assert truth without exercising real interactive state transitions (e.g. grading arithmetic, hint drawer toggling, coordinate plane SVG element verification) are strictly prohibited.
 
 3. **Adversarial & Boundary Rigor**:
    Tests systematically probe boundary edge cases:
    - Malformed / corrupted course JSON files dynamically placed into the courses repository.
-   - Mathematical expressions with permutations of spacing, parenthesis, and Greek characters (e.g. `1-(alpha+n)*sigma` vs `1 - \alpha\sigma - n\sigma`).
+   - Mathematical expressions with permutations of spacing, parenthesis, Greek characters, and Spanish comma notation.
    - Multiple-select questions requiring exact all-or-nothing selection.
    - Dynamic session shuffling to prove non-mirroring of the underlying JSON order while preserving grading integrity.
+   - AST sandbox security, blocking unauthorized built-ins, recursion bombs, and memory exhaustion.
 
 4. **Self-Contained & Isolated Execution**:
-   Each test case sets up its own isolated browser context, initializes or clears local state (mastery storage), and cleans up any dynamic fixture files. Tests can run individually or as a complete suite without execution-order coupling.
+   Each test case sets up its own isolated context, initializes or clears local/session storage, and cleans up dynamic fixture files. Tests run individually or as a complete suite without execution-order coupling.
 
 5. **Visual Fidelity Parity Assurance**:
-   In addition to functional assertion logic, the test harness provides automated visual state captures across the 6 platform states (Course Overview, Pre-Exercise, Question with Graph, Good Answer Toast, Exercise Complete with Confetti, and Course Challenge) for automated screenshot comparison by the Reviewer Agent.
+   The test harness automates verification across the entire platform lifecycle: Course Overview, Pre-Exercise, Question with SVG Graph, Feedback Toast, Exercise Complete celebration, and Course Challenge, alongside high-density multi-viewport responsiveness matrices.
 
 ---
 
-## 2. Feature Inventory Mapping to Test Tiers
+## 2. 4-Domain Test Architecture & Consolidation (Milestone 13)
 
-The 10 platform acceptance criteria from `ORIGINAL_REQUEST.md` map to the 4-tier test architecture as follows:
+Under **Milestone 13 (Higiene del Repositorio y Consolidación de Tests)**, all tests across the repository are strictly structured into **4 functional domains** with a dedicated helpers layer, eliminating root clutter and enforcing clean separation of concerns:
 
-| Feature / Acceptance Criterion | Description | Test Tier | Test File |
-| :--- | :--- | :--- | :--- |
-| **AC-01: Library Course Discovery & Hot-Reload** | Lists all courses in `courses/`; dynamic addition of valid course appears upon reload with zero code change. | **Tier 1** | `test_platform_library.py::test_library_lists_all_courses`<br>`test_platform_library.py::test_dynamic_course_hot_reload` |
-| **AC-02: Fault-Tolerant Error Isolation** | Invalid/corrupted course file displays an explicit diagnostic error card without breaking other valid courses. | **Tier 2** | `test_platform_library.py::test_invalid_course_isolated_with_error` |
-| **AC-03: Course Overview & Mastery Matrix** | Shows one unit per competency, full mastery legend (Mastered, Proficient, Familiar, Attempted, Not started, Quiz, Unit test), and course mastery %. | **Tier 1** | `test_platform_course_overview.py::test_course_overview_structure_and_legend` |
-| **AC-04: Full Practice Session Lifecycle** | Wrong answer → incorrect feedback; sequential hint reveal (hints 1..N in order); correct answer → "Good work!" speech-bubble toast with step-by-step solution expansion; completion screen with score. | **Tier 1** | `test_platform_practice_session.py::test_full_practice_lifecycle_wrong_hints_correct_completion` |
-| **AC-05: Session Shuffling & Non-Mirroring** | Across repeated sessions of same unit, question and option orders differ from JSON order and from each other; grading remains correct after shuffling. | **Tier 3** | `test_platform_randomization.py::test_session_question_and_option_shuffling_and_grading` |
-| **AC-06: Multi-Type Interactive Grading** | All 3 types graded correctly: MCQ 7 options; algebraic equivalence (`1-(alpha+n)*sigma` for `1 - \alpha\sigma - n\sigma`, `0.5` for `1/2`); all-or-nothing multi-select. | **Tier 2** | `test_platform_grading_types.py::test_mcq_7_options_grading`<br>`test_platform_grading_types.py::test_fill_in_the_blank_math_equivalence`<br>`test_platform_grading_types.py::test_multiple_select_all_or_nothing` |
-| **AC-07: Mastery Progression & Persistence** | Mastery level increments upon successful practice and persists in LocalStorage across browser reloads. | **Tier 3** | `test_platform_mastery_persistence.py::test_mastery_level_changes_and_persists_across_reloads` |
-| **AC-08: Quizzes, Unit Tests & Course Challenge** | Launch and completion of Unit Quiz, Unit Test, and Course Challenge (~30 questions across units). | **Tier 4** | `test_platform_assessments.py::test_quiz_and_unit_test_flow`<br>`test_platform_assessments.py::test_course_challenge_flow` |
-| **AC-09: SVG / Vector Graph Rendering** | Questions with graph specifications render Cartesian axes, curves, and open/closed points in DOM/SVG. | **Tier 1** | `test_platform_graphs.py::test_coordinate_plane_svg_rendering` |
-| **AC-10: Clean Console / Zero Unhandled Errors** | Zero runtime JavaScript exceptions, unhandled rejections, or React error boundaries during the entire test suite. | **Cross-Tier** | Monitored continuously across all test runs via `conftest.py` page fixture. |
-| **VF-01: Visual Fidelity Screenshot Capture** | Automated capture of the 6 canonical platform states matching reference screenshots. | **Tier 4** | `test_visual_fidelity_capture.py::test_capture_six_canonical_states` |
+```
+tests/
+├── conftest.py                       # Configuración global pytest y fixtures
+├── helpers/
+│   ├── __init__.py
+│   └── common.py                     # Utilidades compartidas (find_free_port, strip_code_comments, paths)
+├── quality/                          # DOMINIO 1: Calidad Pedagógica, Psicométrica y Regresión (129 tests)
+│   ├── test_ab20_regression_gates.py
+│   ├── test_ab30_remediations.py
+│   ├── test_ab40_gate_patches.py
+│   ├── test_blind_guess_empirical.py
+│   ├── test_forensic_replay_ab30cf91.py
+│   ├── test_m3_archetypes_semantic_gate.py
+│   ├── test_new_audit_linters.py
+│   ├── test_specific_error_report_and_stem_gate.py
+│   └── test_template_variability.py
+├── engine/                           # DOMINIO 2: Motor Simbólico, Sandbox AST y KaTeX (506 tests)
+│   ├── test_assemble_katex_and_rationale.py
+│   ├── test_assemble_sanitize_katex_r23.py
+│   ├── test_c2c_validator_prescriptive.py
+│   ├── test_engine_invariants_adversarial.py
+│   ├── test_invariants_and_shard_overescape_r23.py
+│   ├── test_katex_overescape_validator_r23.py
+│   ├── test_katex_prairielearn_tokens.py
+│   ├── test_latex_engine.py
+│   ├── test_milestone4_formc_katex_ast.py
+│   ├── test_pykatex_warn.py
+│   ├── test_sandbox_adversarial.py
+│   ├── test_sandbox_gil_and_circuit_breaker.py
+│   └── test_validator.py
+├── platform/                         # DOMINIO 3: Frontend Web, PWA, Ergonomía y Resiliencia (234 tests)
+│   ├── test_c2c_case_2b_mastery.py
+│   ├── test_course_api_manifest.py
+│   ├── test_keyboard_navigation.mjs
+│   ├── test_m1_zoomfix_contract.py
+│   ├── test_m6_study_harness_contract.py
+│   ├── test_m12_session_resilience.py
+│   ├── test_mastery_calibration_bidirectional.py
+│   ├── test_mastery_progress_80_20.py
+│   ├── test_math_adversarial_suite.mjs
+│   ├── test_math_adversarial_suite.ts
+│   ├── test_platform.py
+│   ├── test_platform_katex_admission_guard.py
+│   ├── test_pwa_navigation_and_install.py
+│   ├── test_pwa_offline.py
+│   ├── test_question_grading.mjs
+│   └── test_unit_isolation.mjs
+├── pipeline/                         # DOMINIO 4: Pipeline C2C, Orquestación y Compiladores (657 tests)
+│   ├── test_append_workflow.py
+│   ├── test_bootstrap_and_wave_streaming.py
+│   ├── test_c2c_author_speedups.py
+│   ├── test_c2c_error_aggregation.py
+│   ├── test_c2c_remediation_optimization.py
+│   ├── test_c2c_solow2_architectural_improvements.py
+│   ├── test_c2c_straggler_and_postproduction_prevention.py
+│   ├── test_c2c_v31_adversarial_plan.py
+│   ├── test_c2c_v321_comp1_cta.py
+│   ├── test_c2c_v321_comp2_shard.py
+│   ├── test_c2c_v321_comp3_dispatch.py
+│   ├── test_c2c_v321_comp4_prompts.py
+│   ├── test_c2c_v321_multi_instance_and_append.py
+│   ├── test_c2c_v40_formal_certification.py
+│   ├── test_compile_cta_error_specificity.py
+│   ├── test_compile_shard.py
+│   ├── test_compile_shard_fail_total.py
+│   ├── test_compile_shard_watchdog.py
+│   ├── test_cta_duplicate_detection_v2.py
+│   ├── test_cta_healing.py
+│   ├── test_cta_mapreduce.py
+│   ├── test_cta_merge_prereq_scoping.py
+│   ├── test_cta_sweetspot_and_autoheal.py
+│   ├── test_delete_course.py
+│   ├── test_dispatch_scope.py
+│   ├── test_dispatch_turn0_and_milestone3_prompts.py
+│   ├── test_fast_ingest_and_cta_append.py
+│   ├── test_forensic_shard06_and_variance_v34.py
+│   ├── test_handouts.py
+│   ├── test_hook_post_pass_and_write_isolation.py
+│   ├── test_orchestration_resilience.py
+│   ├── test_pipeline_optimizations.py
+│   ├── test_pipeline_reparations.py
+│   ├── test_prompts_contract_alignment.py
+│   ├── test_run_templates_and_dispatch_repair.py
+│   ├── test_shard06_and_dry_archetypes.py
+│   ├── test_shard_compiler_hardening.py
+│   ├── test_skill.py
+│   ├── test_skill_v3.py
+│   ├── test_sweetspot_v35_cta_and_shards.py
+│   ├── test_system_prompts_compile_clean.py
+│   ├── test_watchdog_and_hooks.py
+│   └── test_weighted_sharding_m7.py
+└── e2e_m1_viewport_matrix.mjs        # Suite E2E Dual-Mode Playwright (12 Viewports)
+```
+
+### Resumen de Pruebas por Dominio (1,526 Tests Python en ~51 s)
+
+| Dominio | Directorio | Tests | Alcance Principal |
+| :--- | :--- | :---: | :--- |
+| **Calidad** | `tests/quality/` | **129** | Linters Path-to-Mastery v2.0, índice MPRI (6 pilares), comisiones `[STEM-DIVERSITY-GATE]`, compuertas de regresión AB20/AB30/AB40, entropía de arquetipos y test adversarial de adivinanza a ciegas. |
+| **Motor** | `tests/engine/` | **506** | Validador canónico RFC 8259, reglas R-01..R-23, invariantes inductivos `KaTeXAST` (§7.2 `TopsAcademyC2C.lean`), validador QuickJS por columna, SymPy algebraic canonicalizer, seguridad del AST sandbox y circuit breakers GIL. |
+| **Plataforma** | `tests/platform/` | **234** | Resiliencia de sesión ante suspensión M12 (`test_m12_session_resilience.py`), contratos de ergonomía M1 (Zoom-Fix y Split 50%), arnés M6 (Blank-First, mouseless, socrático), PWA offline, historial de navegación popstate y API manifest. |
+| **Pipeline** | `tests/pipeline/` | **657** | Compiladores `compile_cta.py` y `compile_shard.py`, FSM Hook Guard (`c2c_hook_guard.py`), weighted waves de hasta 100 shards concurrentes, deduplicación de prerrequisitos en `cta_merge.py`, recibos SHA-256 y watchdog. |
+| **Total Global** | `tests/` | **1,526** | **100% PASS en ~51 segundos** con ejecución distribuida `pytest-xdist` (`worksteal`). |
 
 ---
 
-## 3. Test Architecture & Runner Setup
+## 3. Comandos de Ejecución de la Suite
 
-### 3.1 Framework Selection: Playwright on Windows
-- **Engine**: Playwright for Python (`playwright>=1.49.0`, `pytest-playwright>=0.7.0`) and/or Node Playwright (`@playwright/test`).
-- **Browser**: Chromium in headless mode (`--headless=new`).
-- **Operating System Compatibility**: Native Windows execution (`win64`).
-- **Console Monitoring**: Strict event handler on `page.on("console", ...)` and `page.on("pageerror", ...)` recording all console errors and failing tests if unhandled errors occur.
-
-### 3.2 Single-Command Execution
-
-The test suite can be run directly with a single command from the repository root:
+### 3.1 Ejecución Completa de la Suite Python
 
 ```powershell
-# Run full E2E test suite in headless mode
-.\.venv\Scripts\python.exe -m pytest tests/e2e/ -v
-# Or using the auto-resolving test runner:
-python run_tests.py tests/e2e/ -v
+# Ejecución global en paralelo con pytest-xdist auto-detect
+.venv\Scripts\python.exe -m pytest -q
 
-# Run specific tier or test file
-.\.venv\Scripts\python.exe -m pytest tests/e2e/test_platform_practice_session.py -v
+# Ejecución de un dominio específico
+.venv\Scripts\python.exe -m pytest tests/quality/ -v
+.venv\Scripts\python.exe -m pytest tests/engine/ -v
+.venv\Scripts\python.exe -m pytest tests/platform/ -v
+.venv\Scripts\python.exe -m pytest tests/pipeline/ -v
 
-# Run visual fidelity screenshot generation
-.\.venv\Scripts\python.exe -m pytest tests/e2e/test_visual_fidelity_capture.py -v
+# Ejecución de un archivo de prueba específico
+.venv\Scripts\python.exe -m pytest tests/platform/test_m12_session_resilience.py -v
 ```
 
-Additionally, an npm wrapper is defined in `package.json`:
-```powershell
-npm.cmd run test:e2e
-```
-
-### 3.3 Server Lifecycle & Orchestration
-The test harness in `conftest.py` manages the web application lifecycle:
-1. **Server Probe / Auto-Spawn**: Checks if the platform development server or static runner is already listening on `http://localhost:5173` or `http://localhost:3000`. If not running, launches the platform server in a managed background subprocess and polls until HTTP 200 is received.
-2. **Dynamic Fixtures Directory**: Pointed at `courses/` and `courses/test_fixtures/`. Temporary fixture files injected during hot-reload tests are automatically unlinked upon test completion.
-3. **Storage Isolation**: Browser contexts start with fresh `localStorage` or inject deterministic seed states where explicitly required.
-
----
-
-## 4. 4-Tier Test Methodology
-
-```
-+-------------------------------------------------------------------------------+
-|  TIER 4: Real-World Scenarios & Full Student Workflows                         |
-|  - Comprehensive Course Challenge (~30 questions across units)                |
-|  - Multi-unit Quiz and Unit Test flows                                        |
-|  - 6-State Visual Fidelity artifact generation                                |
-+-------------------------------------------------------------------------------+
-|  TIER 3: Cross-Feature State & Combinations                                   |
-|  - Random question order + randomized option order + correct grading          |
-|  - Repeated session order divergence (non-mirroring verification)              |
-|  - Mastery level calculation + persistent LocalStorage reload survival        |
-+-------------------------------------------------------------------------------+
-|  TIER 2: Boundary, Corner Cases & Fault Isolation                             |
-|  - Corrupted course JSON error cards while valid courses remain active        |
-|  - Symbolic math equivalence variations (whitespace, signs, fractions)        |
-|  - Multiple-select all-or-nothing grading boundary (partial = incorrect)     |
-+-------------------------------------------------------------------------------+
-|  TIER 1: Primary Feature Coverage & Core Happy Paths                          |
-|  - Course library navigation & dynamic file hot-reload                        |
-|  - Course overview, units, mastery legend, course %                           |
-|  - Pre-exercise screen ("Ready to practice?" & question count)                |
-|  - Question card with inline KaTeX math & SVG coordinate plane                |
-|  - Correct feedback toast ("Good work!") & step-by-step solution expansion    |
-|  - Sequential progressive hint reveal                                         |
-|  - "Exercise complete!" celebration screen with score                         |
-+-------------------------------------------------------------------------------+
-```
-
-### Tier 1: Primary Feature Coverage
-Verifies that all standard user journeys function smoothly from start to finish:
-- Landing on the course library and navigating into a course.
-- Inspecting the course overview with unit competency cards and mastery blocks.
-- Launching practice for a competency and completing questions.
-- Revealing sequential hints in numerical order (Hint 1 -> Hint 2 -> Hint 3).
-- Observing the correct answer feedback toast with the downward speech-bubble pointer and opening the full step-by-step solution.
-
-### Tier 2: Boundary & Corner Cases
-Probes failure modes and edge cases:
-- Adding a syntactically malformed JSON file to `courses/`: the server and UI isolate the faulty course with an error indicator, while existing valid courses remain fully playable.
-- Fill-in-the-blank math engine: verifies that algebraic expressions like `1-(alpha+n)*sigma`, `1 - \alpha\sigma - n\sigma`, `1 - \sigma\alpha - \sigma n` and fractions/decimals like `1/2` vs `0.5` evaluate to correct answers.
-- Multiple-select questions: selects subset of correct options, asserts evaluation is strictly incorrect (all-or-nothing).
-
-### Tier 3: Cross-Feature Combinations
-Verifies multi-system interactions:
-- Shuffling & Non-Mirroring: runs two independent practice sessions of the same unit. Records the presented question sequence and option sequence for each item. Asserts:
-  1. The presented order does not mirror the raw order in the JSON file.
-  2. Successive sessions do not have identical question order.
-  3. Option shuffling properly preserves the correct answer mapping so the student is graded accurately regardless of option position.
-- Mastery Progression & LocalStorage: completes a practice session with all correct answers. Asserts that the competency mastery moves from "Not started" / "Attempted" to "Familiar" or "Proficient". Reloads the browser page and asserts that the updated mastery tier persists.
-
-### Tier 4: Real-World Application Scenarios
-Simulates realistic student learning sessions:
-- Starting and completing a unit quiz and unit test.
-- Starting and completing the full Course Challenge (~30 questions drawn across all course competencies).
-- Capturing high-resolution screenshots for the 6 visual reference states and outputting them to `tests/e2e/screenshots/` for reviewer audit.
-
----
-
-## 5. Pass/Fail Criteria & Diagnostic Reporting
-
-- **Strict Pass Criterion**: 100% of test assertions must pass. Any unhandled browser exception (`pageerror` or `console.error`) immediately fails the test.
-- **Diagnostic Logging**:
-  - Failure screenshots are automatically captured in `tests/e2e/reports/failures/`.
-  - DOM snapshots on failure are saved alongside screenshots.
-  - Verbatim browser console messages are captured and printed in the test traceback.
-
----
-
-## 6. Comprehensive Automated Test Matrix (Python + Node.js)
-
-In addition to the Playwright browser suite, the repository includes a multi-tiered automated test matrix covering the validator engine, pipeline optimizations, sandboxed runtime, and client-side mathematical evaluation:
-
-### 6.1 Python Automated Test Suites (367 items / 363 passed, 4 skipped in 18.05s)
+### 3.2 Ejecución de Suites Node.js y E2E Playwright
 
 ```powershell
-.venv\Scripts\python.exe -m pytest -v
+# Matriz E2E de 12 Viewports en Doble Modo (Blank-First ON / OFF)
+node tests/e2e_m1_viewport_matrix.mjs
+
+# Suite adversarial de equivalencia matemática client-side
+node tests/platform/test_math_adversarial_suite.mjs
+
+# Suite de calificación y normalización de opciones
+node tests/platform/test_question_grading.mjs
+
+# Accesibilidad de navegación mouseless
+node tests/platform/test_keyboard_navigation.mjs
 ```
 
-| Test Suite File | Items | Focus / Coverage |
-| :--- | :---: | :--- |
-| `tests/test_validator.py` | 144 | Scanner léxico, RFC 8259, R-01..R-16, R-17..R-20, R-22, S-01..S-03, KaTeX arity, entornos, llaves residuales |
-| `tests/test_engine_invariants_adversarial.py` | 51 | Invariantes psicométricos, verificación de ensamblaje en sandbox, anti-giveaway |
-| `tests/test_sandbox_adversarial.py` | 49 | Seguridad del AST sandbox, bloqueo de imports prohibidos, memoria y timeouts |
-| `tests/test_skill.py` | 33 | Extracción de contenido, taxonomía CTA, batch generator, SymPy Tier 1, Blind solver Tier 2 |
-| `tests/test_platform.py` | 19 | Endpoints HTTP del servidor, enrutamiento SPA estático, flags CLI (`--scan`, `--help`) |
-| `tests/test_cta_mapreduce.py` | 16 | Partición seccional de corpus, `cta_merge.py`, DAG de prerrequisitos, deduplicación |
-| `tests/test_c2c_validator_prescriptive.py` | 12 | Sugerencias prescriptivas del validador y conformidad de esquema |
-| `tests/test_dispatch_scope.py` | 10 | Segregación de roles de subagentes y contratos de prompts |
-| `tests/test_delete_course.py` | 8 | Eliminación segura de cursos (<300ms), preservación de auditorías históricas, inmutabilidad de `content/` |
-| `tests/test_handouts.py` | 8 | Procesamiento y fallback de handouts visuales |
-| `tests/test_pipeline_optimizations.py` | 6 | Validaciones de rendimiento, optimizaciones de pipeline y multi-core `ProcessPoolExecutor` |
-| `tests/test_skill_v3.py` | 6 | Runner de pipeline de alta velocidad v3 y gates de etapa |
-| `tests/test_template_variability.py` | 5 | Regla `TPL-VAR`, validación de `stem_variants >= 3` y ratio de diversidad $\ge 0.50$ |
+---
 
-### 6.2 Client-Side & Standalone Verification Suites
+## 4. Matriz E2E Playwright de 12 Viewports (Milestone 1-T)
 
-| Suite File | Items / Tests | Status | Focus |
+La suite [`tests/e2e_m1_viewport_matrix.mjs`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/e2e_m1_viewport_matrix.mjs) valida la plataforma de forma determinista contra **12 viewports representativos** de dispositivos reales, ejecutando una verificación dual exhaustiva bajo ambos estados de la cortina *Blank-First* (**24 configuraciones completas**):
+
+```
++---------------------------------------------------------------------------------------+
+|                       MATRIZ E2E EXPANDIDA (12 VIEWPORTS)                             |
++-----------------------------------+---------------------------------------------------+
+| Viewport / Escenario              | Resolución y Dispositivo                          |
++-----------------------------------+---------------------------------------------------+
+| 0. Split 50% en Laptop 1366       | 683 × 768 px                                      |
+| 1. Split 50% en Monitor 1440      | 720 × 900 px                                      |
+| 2. Split 50% en Monitor 1600      | 800 × 900 px                                      |
+| 3. Split 50% en Monitor 1080p     | 960 × 1080 px                                     |
+| 4. Laptop HD Completa             | 1366 × 768 px                                     |
+| 5. Desktop Completa               | 1440 × 900 px                                     |
+| 6. Smartphone Móvil               | 390 × 844 px (iPhone 13 / Android)                |
+| 7. Laptop 14" con Zoom 150%       | 1280 × 590 px (Viewport real renderizado)         |
+| 8. Split 50% Laptop 14" Zoom 150% | 610 × 590 px (Escenario más exigente)             |
+| 9. Laptop Gaming TUF con Zoom 125%| 1536 × 740 px (ASUS TUF 15.6" 125%)               |
+| 10. Tablet Vertical (Portrait)    | 768 × 1024 px (iPad / Android Tablet)             |
+| 11. Tablet Horizontal (Landscape) | 1024 × 768 px (iPad / Android Tablet)             |
++-----------------------------------+---------------------------------------------------+
+```
+
+### Verificación Dual AC-CORE por Viewport:
+
+1. **Modo `Blank-First: ON` (Por Defecto):**
+   - Cortina de evocación libre y botón `[ 💡 Ya tengo mi planteamiento ]` (`lift-curtain-btn`) visibles.
+   - Las 7 alternativas permanecen completamente ocultas antes del levantamiento.
+   - Validación AC-CORE bajo la cortina: cero desborde horizontal (`scrollWidth <= clientWidth`), KaTeX contenido dentro de márgenes y botón inferior de acción visible.
+   - Tecla `Enter` o clic en el botón repliega la cortina y revela inmediatamente las 7 opciones con distribución matemática 4+3 (o columna única en móvil).
+   - Toast de feedback (`FeedbackToast.tsx`) posicionado sin solapar elementos interactivos ni causar scroll vertical forzado.
+
+2. **Modo `Blank-First: OFF` (Estándar):**
+   - Alternado mediante selector accesible de cabecera (`[data-testid="toggle-blank-first-btn"]`).
+   - Cortina ausente; las 7 opciones se renderizan de forma inmediata.
+   - Distribución geométrica de 2 columnas: Columna 1 contiene alternativas 0..3 apiladas verticalmente; Columna 2 contiene alternativas 4..6 apiladas a la derecha. En pantallas `< 480 px` (móvil `390x844`), las 7 alternativas se apilan verticalmente en columna única.
+   - Verificación de no-scroll horizontal, delimitación estricta de KaTeX y visibilidad del botón de calificación (`check-btn`).
+
+**Resultado de Certificación:** ✅ **12 / 12 PASS (100% de éxito).**
+
+---
+
+## 5. Resiliencia ante Suspensión de la Laptop (Milestone 12)
+
+La suite [`tests/platform/test_m12_session_resilience.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/tests/platform/test_m12_session_resilience.py) certifica la continuidad pedagógica cuando el sistema operativo suspende la laptop o descarga la pestaña de memoria:
+
+1. **Contrato de Almacenamiento Reactivo (`sessionStore.ts`):**
+   - Clave `tops_active_session_v1` en `sessionStorage`.
+   - Snapshot tipado: versión, curso, tipo de sesión, competencia, unidad, listado de preguntas, índice activo, opciones seleccionadas, entradas numéricas, pistas reveladas, intentos fallidos, estado de la cortina *Blank-First*, resultados acumulados y telemetría de tiempos por reactivo.
+   - Protección contra corrupción de JSON y migración de esquemas.
+
+2. **Hidratación y Protección de Estado (`PracticeSession.tsx`):**
+   - Hidratación segura del estado inicial mediante `initialSnapshot`.
+   - Salvaguarda `isInitialHydrationRef` para evitar que la cortina se repliegue prematuramente al restaurar una sesión activa.
+   - Persistencia reactiva continua en cada interacción del estudiante.
+   - Desmontaje y limpieza total de la sesión (`clearActiveSession`) al finalizar o abandonar la práctica.
+
+3. **Reconciliación Silenciosa con `ETag` (`App.tsx`):**
+   - Listener de visibilidad de ventana (`visibilitychange`): detecta el retorno tras la suspensión (`visibilityState === 'visible'`).
+   - Envío de cabecera `If-None-Match` al servidor local: respuesta `304 Not Modified` confirma que el curso en disco no cambió y reanuda la práctica sin recarga de página. Si el curso fue modificado en disco, se notifica y actualiza de forma controlada.
+
+4. **Infraestructura de Estudio Desacoplada de HMR:**
+   - Endpoint de monitoreo de salud `GET /healthz` en `courseServer.cjs` (devuelve HTTP 200 con `{ status: 'ok', uptime, courses_count, timestamp }`).
+   - Script `"study": "npm run build && node server/courseServer.cjs"` en `platform/package.json` para sesiones de estudio de alto rendimiento inmunes a desconexiones de WebSockets de Vite HMR durante la suspensión.
+
+**Resultado de Certificación:** ✅ **14 / 14 PASS (100% de éxito).**
+
+---
+
+## 6. Suites Client-Side y Verificación Estándar
+
+| Suite File | Casos / Aserciones | Estado | Foco Principal |
 | :--- | :---: | :---: | :--- |
-| `tests/test_math_adversarial_suite.mjs` | 81 cases | **100% PASS** | Equivalencia algebraica y numérica con coma española (`0,8333`), fracciones, letras griegas, tolerancias |
-| `tests/test_question_grading.mjs` | 1,048 assertions | **100% PASS** | Evaluación y normalización de opciones MC y MS en cursos activos e históricos |
-| `tests/test_keyboard_navigation.mjs` | All assertions | **100% PASS** | Accesibilidad de teclado (1-7 para opciones, Enter para Check/Next) |
-| `tests/test_unit_isolation.mjs` | All assertions | **100% PASS** | Aislamiento de unidades y límites de shuffling independiente |
-| `tests/test_blind_guess_empirical.py` | 50 sample / 250 pop | **100% PASS** | Prueba adversarial empírica de distractores a ciegas (4.0% éxito muestral, 8.0% poblacional vs $\le 30\%$) |
+| `tests/platform/test_math_adversarial_suite.mjs` | 81 casos | **100% PASS** | Equivalencia algebraica y numérica con coma decimal española (`0,8333`), fracciones, expresiones con letras griegas y tolerancias. |
+| `tests/platform/test_question_grading.mjs` | 1,048 aserciones | **100% PASS** | Evaluación rigurosa de respuestas de opción múltiple (MC7) y opción multiselección (MS) en cursos activos e históricos. |
+| `tests/platform/test_keyboard_navigation.mjs` | Todas | **100% PASS** | Accesibilidad 100% sin ratón (teclas `A`–`G` / `1`–`7` para marcar/desmarcar opciones, `Enter` para Check/Next). |
+| `tests/platform/test_unit_isolation.mjs` | Todas | **100% PASS** | Aislamiento estricto de unidades y límites de shuffling independiente entre sesiones repetidas. |
+| `tests/quality/test_blind_guess_empirical.py` | 50 sample / 250 pop | **100% PASS** | Prueba adversarial empírica de distractores a ciegas (4.0% éxito muestral, 8.0% poblacional frente a cota máxima $\le 30\%$). |
 
+---
+*Especificación canónica de infraestructura de pruebas. Cualquier alteración de dominios, contratos de evaluación o matrices de viewport debe actualizarse en este documento.*

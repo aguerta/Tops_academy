@@ -8,7 +8,8 @@
     "prebuild": "node ../scripts/ensure_pwa_icons.cjs",
     "build": "node ../scripts/ensure_pwa_icons.cjs && tsc && vite build",
     "preview": "vite preview",
-    "server": "node server/courseServer.cjs"
+    "server": "node server/courseServer.cjs",
+    "study": "npm run build && node server/courseServer.cjs"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",

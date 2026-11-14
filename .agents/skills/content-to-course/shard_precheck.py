@@ -17,20 +17,93 @@ _MATRIX_RE = re.compile(r"\\begin\{(?:b|p|v)?matrix\}")
 _DOT_DIGIT_RE = re.compile(r"\\dot\{\s*\d+\s*\}")
 
 
+def is_bounded_while(node: ast.While) -> bool:
+    """Return True if while loop has an explicit verifiable iteration bound."""
+    incremented_vars = set()
+    for child in ast.walk(node):
+        if isinstance(child, ast.AugAssign) and isinstance(child.op, (ast.Add, ast.Sub)):
+            if isinstance(child.target, ast.Name):
+                incremented_vars.add(child.target.id)
+        elif isinstance(child, ast.Assign):
+            for t in child.targets:
+                if isinstance(t, ast.Name):
+                    for sub in ast.walk(child.value):
+                        if isinstance(sub, ast.Name) and sub.id == t.id:
+                            incremented_vars.add(t.id)
+
+    if not incremented_vars:
+        return False
+
+    def _check_compare(comp: ast.Compare) -> bool:
+        left = comp.left
+        rights = comp.comparators
+        if isinstance(left, ast.Name) and left.id in incremented_vars:
+            if any(isinstance(r, (ast.Constant, ast.Name)) for r in rights):
+                return True
+        for r in rights:
+            if isinstance(r, ast.Name) and r.id in incremented_vars:
+                if isinstance(left, (ast.Constant, ast.Name)):
+                    return True
+        return False
+
+    if isinstance(node.test, ast.Compare):
+        if _check_compare(node.test):
+            return True
+    elif isinstance(node.test, ast.BoolOp):
+        for val in node.test.values:
+            if isinstance(val, ast.Compare) and _check_compare(val):
+                return True
+
+    for child in ast.walk(node):
+        if isinstance(child, ast.If):
+            has_break = any(isinstance(b, ast.Break) for b in ast.walk(child))
+            if has_break:
+                if isinstance(child.test, ast.Compare) and _check_compare(child.test):
+                    return True
+                elif isinstance(child.test, ast.BoolOp):
+                    for val in child.test.values:
+                        if isinstance(val, ast.Compare) and _check_compare(val):
+                            return True
+
+    return False
+
+
 def precheck_source(source: str) -> List[str]:
     out: List[str] = []
     try:
         tree = ast.parse(source)
     except SyntaxError:
         return out  # the compiler reports syntax errors with exact lines
+
+    func_defs = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+    gen_reachable = set()
+    for fn_name, fn_node in func_defs.items():
+        if fn_name.startswith("gen_") or fn_name.startswith("_gen"):
+            queue = [fn_name]
+            while queue:
+                curr = queue.pop(0)
+                if curr in gen_reachable:
+                    continue
+                gen_reachable.add(curr)
+                callee_node = func_defs.get(curr)
+                if callee_node:
+                    for child in ast.walk(callee_node):
+                        if isinstance(child, ast.Call) and isinstance(child.func, ast.Name):
+                            c_id = child.func.id
+                            if c_id in func_defs and c_id not in gen_reachable:
+                                queue.append(c_id)
+
     for node in tree.body:
         if isinstance(node, ast.FunctionDef):
+            if node.name in gen_reachable:
+                for n in ast.walk(node):
+                    if isinstance(n, ast.While) and not is_bounded_while(n):
+                        out.append(f"L{n.lineno} [TPL-AD-HOC-PERTURBATION] [TPL-UNBOUNDED-LOOP] while en '{node.name}': deriva cada distractor con una formula cerrada (offsets algebraicos), sin bucles de reintento.")
+
             if node.name.startswith("gen_") or node.name.startswith("_gen"):
                 joined_str_constants = {p for js in ast.walk(node) if isinstance(js, ast.JoinedStr) for p in js.values if isinstance(p, ast.Constant)}
                 for n in ast.walk(node):
-                    if isinstance(n, ast.While):
-                        out.append(f"L{n.lineno} [TPL-AD-HOC-PERTURBATION] while en '{node.name}': deriva cada distractor con una formula cerrada (offsets algebraicos), sin bucles de reintento.")
-                    elif isinstance(n, ast.JoinedStr):
+                    if isinstance(n, ast.JoinedStr):
                         if any(isinstance(p, ast.Constant) and isinstance(p.value, str) and _MATRIX_RE.search(p.value) for p in n.values):
                             out.append(f"L{n.lineno} [SYMPY-LATEX-MATRIX] f-string con matriz en '{node.name}': usa sympy.latex() en lugar de ensamblar matrices manualmente en Python.")
                     elif isinstance(n, ast.Constant) and isinstance(n.value, str) and n not in joined_str_constants and _MATRIX_RE.search(n.value):

@@ -1,7 +1,7 @@
 # Informe de Auditoría de Calidad Pedagógica y Psicométrica (QM-OSCQR)
 ## Curso: Quality Gate Verification Unit Test Course (`gate_test_course`)
 
-- **Fecha de Evaluación:** 2026-11-09
+- **Fecha de Evaluación:** 2026-11-14
 - **Evaluador:** Course QA Evaluator — Top's Academy (Modo Determinista)
 - **Estado en Plataforma:** ACTIVO
 - **Calificación Final Certificada:** **20.0 / 20.0 pts**
@@ -60,3 +60,40 @@
 ### 4. Veredicto y Certificación
 
 El curso **Quality Gate Verification Unit Test Course** ha sido **certificado y aprobado** con calificación sobresaliente de **20.0 / 20.0** y MPRI de **100.00 / 100.0**, acreditando el cumplimiento exhaustivo de los estándares Quality Matters, OSCQR y Mastery Learning.
+
+---
+
+<details>
+<summary>Metadatos Estructurados (JSON)</summary>
+
+```json
+{
+  "course_metadata": {
+    "course_id": "gate_test_course",
+    "unit_title": "Quality Gate Verification Unit Test Course",
+    "detected_objective": "",
+    "total_competencies": 3,
+    "total_questions": 25,
+    "question_types_distribution": {
+      "multiple_choice_7_options": 25
+    },
+    "platform_status": "ACTIVO",
+    "evaluator": "Course QA Evaluator — Standardized Deterministic Engine",
+    "evaluation_date": "2026-11-14"
+  },
+  "dimension_scores": {},
+  "penalties_applied": [],
+  "raw_subtotal": 20.0,
+  "final_score": 20.0,
+  "quality_tier": "EXCELENTE (PLATINUM MASTERY)",
+  "mastery_path_readiness": {},
+  "remediation_actions": [
+    "Certificación plena para despliegue en plataforma Top's Academy con Nivel EXCELENTE (PLATINUM MASTERY).",
+    "El banco de 25 reactivos y 3 competencias cumple con los estándares Quality Matters, OSCQR y Mastery Learning."
+  ],
+  "discovered_lint_rules": [],
+  "platform_status": "ACTIVO"
+}
+```
+
+</details>

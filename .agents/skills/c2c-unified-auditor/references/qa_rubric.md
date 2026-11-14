@@ -54,9 +54,9 @@ Se aplican deducciones directas acumulativas sobre la nota final consolidada:
 
 ---
 
-## 4. Esquema JSON de Salida Estructurada
+## 4. Formato de Salida Autocontenido en Markdown (`<course_id>_qa_report.md`)
 
-Cada auditoría debe generar obligatoriamente un bloque de razonamiento `<analysis>...</analysis>` y un bloque JSON estricto:
+Cada auditoría debe generar **únicamente** un archivo Markdown autocontenido (`reports/qa_audits/<course_id>_qa_report.md`), sin archivos `.json` ni `.html` separados. Al final del `.md`, debe incluirse un bloque colapsado `<details><summary>Metadatos Estructurados (JSON)</summary>` con el bloque JSON estricto:
 
 ```json
 {

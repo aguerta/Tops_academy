@@ -108,19 +108,16 @@ flowchart TD
 
 ## 2. Preservación Estricta de Archivos Originales
 
-Siguiendo los requisitos de auditoría de la plataforma:
+Siguiendo los requisitos de auditoría de la plataforma (sin *bloat* de HTML ni JSONs intermedios redundantes):
 - **No se emite únicamente el reporte consolidado.**
-- El sistema guarda y replica **todos los archivos originales individuales** en `reports/audits_archive/<course_id>/`:
-  1. `qa_report.md` (Informe individual de calidad QM-OSCQR).
-  2. `qa_report.json` (Dataset estructurado de puntuaciones y rúbrica).
-  3. `qa_payload.json` (Muestras estratificadas y clusters de riesgo calculados por `StandardizedAuditEngine`).
-  4. `telemetry_report.md` (Informe de unit economics de `audit_engine.py`).
-  5. `telemetry.json` (Consumo detallado de tokens, tiempos y herramientas).
-  6. `traceback_deepdive.md` (Análisis forense turno por turno).
-  7. `traceback_deepdive.json` (Dataset forense de inferencia vs. herramientas y taxonomía).
-  8. `dashboard.html` (Tablero visual interactivo).
-  9. `merged_quality_and_performance.md` (Reporte unificado con Tabla de Contenidos).
-  10. `README.md` (Catálogo interactivo con enlaces clicables a cada documento).
+- El sistema guarda y replica **los artefactos esenciales** en `reports/audits_archive/<course_id>/`:
+  1. `qa_report.md` (Informe individual autocontenido de calidad QM-OSCQR, con metadatos JSON embebidos en `<details>`).
+  2. `telemetry_report.md` (Informe de unit economics de `audit_engine.py`).
+  3. `telemetry.json` (Consumo detallado de tokens, tiempos y herramientas).
+  4. `traceback_deepdive.md` (Análisis forense turno por turno).
+  5. `traceback_deepdive.json` (Dataset forense de inferencia vs. herramientas y taxonomía).
+  6. `merged_quality_and_performance.md` (Reporte unificado con Tabla de Contenidos).
+  7. `README.md` (Catálogo interactivo con enlaces clicables a cada documento).
 
 ---
 
@@ -150,7 +147,7 @@ En el modo conversacional estándar, el orquestador lanza **ambos subagentes en 
       "Role": "Course QA Evaluator",
       "TypeName": "course_qa_auditor",
       "Model": "inherit",
-      "Prompt": "Audita la calidad técnica y pedagógica del curso '<course_id>'. Ingiere el payload en 'reports/qa_audits/<course_id>_payload.json', aplica el Loop de Verificación Semántica sobre los risk clusters y califica las 5 dimensiones normativas de la rúbrica QM-OSCQR emitiendo '<course_id>_qa_report.json' y '<course_id>_qa_report.md'."
+      "Prompt": "Audita la calidad técnica y pedagógica del curso '<course_id>'. Prepara/ingiere el payload transitorio en '%TEMP%/tops_academy_qa/<course_id>_payload.json' (vía prepare_course_payload.py), aplica el Loop de Verificación Semántica sobre los risk clusters y califica las 5 dimensiones normativas de la rúbrica QM-OSCQR emitiendo ÚNICAMENTE el reporte autocontenido 'reports/qa_audits/<course_id>_qa_report.md' (con el bloque <details> de metadatos JSON al final, sin emitir .json ni .html separados)."
     }
   ]
 }
@@ -172,8 +169,8 @@ El orquestador presenta un resumen ejecutivo que incluye:
 - **Diagnóstico Principal de Rendimiento**: Cuello de botella detectado (CTA, straggler de autores o llamadas web de jueces).
 - **Enlaces Clicables**:
   - [Reporte Unificado de Calidad y Rendimiento](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/c2c_audits/merged_quality_and_performance_<course_id>.md) *(con Tabla de Contenidos interactiva)*.
+  - [Reporte Individual de Calidad QA](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/qa_audits/<course_id>_qa_report.md) *(autocontenido en Markdown)*.
   - [Repositorio Permanente de Archivos Originales](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/audits_archive/<course_id>/README.md).
-  - [Dashboard HTML Interactivo](file:///d:/Augusto/personal_portfolio/Tops_academy/reports/audits_archive/<course_id>/dashboard.html).
 
 ---
 

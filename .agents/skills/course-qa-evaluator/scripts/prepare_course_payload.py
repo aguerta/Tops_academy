@@ -11,11 +11,13 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent
 COURSES_DIR = ROOT_DIR / "courses"
 REPORTS_DIR = ROOT_DIR / "reports" / "qa_audits"
+TEMP_PAYLOAD_DIR = Path(tempfile.gettempdir()) / "tops_academy_qa"
 
 # Add current scripts directory to path for local imports
 SCRIPTS_DIR = Path(__file__).resolve().parent
@@ -161,7 +163,7 @@ def summarize_course(course_entry: dict) -> dict:
         "questions_per_competency": {cid: len(ql) for cid, ql in q_by_comp.items()},
         "stage5_judge_audit": judge_audit,
         "evaluator_guidance": {
-            "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0, la Rúbrica Determinista de 20 puntos y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta directamente los reportes JSON y Markdown.",
+            "instruction": "Toda la telemetría métrica estática (incluyendo los 7 linters Path-to-Mastery v2.0, la Rúbrica Determinista de 20 puntos y el Mastery Path Readiness Index MPRI 0-100) ha sido calculada de manera estandarizada y determinista en 'audit_telemetry'. NO escribas ni ejecutes scripts exploratorios en Python. Aplica el Adaptive Semantic Loop con rigor implacable ('Path to Mastery v2.0') y redacta ÚNICAMENTE el reporte autocontenido en Markdown (reports/qa_audits/<course_id>_qa_report.md) incluyendo el bloque <details> con los metadatos JSON al final. NO emitas archivos .json ni .html separados.",
             "risk_score": telemetry.get("risk_score", 0.0),
             "final_score": telemetry.get("final_score", 20.0),
             "quality_tier": telemetry.get("quality_tier", "EXCELENTE (PLATINUM MASTERY)"),
@@ -213,7 +215,7 @@ def main():
         print(json.dumps(summary_list, indent=2, ensure_ascii=False))
         return
 
-    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    TEMP_PAYLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
     target_courses = []
     if args.all:
@@ -238,10 +240,10 @@ def main():
     for c in target_courses:
         pkg = summarize_course(c)
         cid = c.get("id")
-        out_file = REPORTS_DIR / f"{cid}_payload.json"
+        out_file = TEMP_PAYLOAD_DIR / f"{cid}_payload.json"
         out_file.write_text(json.dumps(pkg, indent=2, ensure_ascii=False), encoding="utf-8")
         mpri = pkg.get("evaluator_guidance", {}).get("mastery_path_readiness", {}).get("mpri_score", "N/A")
-        print(f"Prepared enriched payload: {out_file.name} ({pkg['total_questions']} questions, {pkg['total_competencies']} comps, risk_score={pkg['evaluator_guidance']['risk_score']}, MPRI={mpri}/100)")
+        print(f"Prepared transient payload: {out_file} ({pkg['total_questions']} questions, {pkg['total_competencies']} comps, risk_score={pkg['evaluator_guidance']['risk_score']}, MPRI={mpri}/100)")
 
 
 if __name__ == "__main__":

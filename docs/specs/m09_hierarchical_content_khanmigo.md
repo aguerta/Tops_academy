@@ -108,3 +108,56 @@ Las competencias detectadas se etiquetan con el prefijo `PRE-XX` (ej. `PRE-01: I
 1. **Quizzes Formativos de Subtema (3–5 reactivos):** Evaluaciones rápidas intercaladas dentro de la sesión de práctica.
 2. **Challenge Integrador de la PPT (8–12 reactivos):** Evaluación transversal del módulo completo que mide la integración conceptual entre subtemas.
 3. **Course Challenge Global (~30 reactivos):** Calibración muestral holística del curso completo.
+
+---
+
+## 4. Análisis Forense de Implementación, Blast Radius y Estimación con Gemini 4 Hydrogen
+
+> **Actualización de Ingeniería (2026-11-14):** Evaluación técnica del estado real del código fuente y re-estimación del esfuerzo bajo el workflow **Flash Duet** con **Gemini 4 Hydrogen (Medium / High)**.
+
+### 4.1. Hallazgo Clave en el Código Actual (`cta.schema.json` vs. `run.py`)
+Al auditar [`.agents/skills/content-to-course/schemas/cta.schema.json`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/schemas/cta.schema.json#L17-L47) frente a [`.agents/skills/content-to-course/run.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/run.py#L1269-L1277), se verificó que **gran parte de la materia prima de Milestone 9 ya se genera en Stage 1**, pero se descarta antes de llegar a la plataforma web:
+- **`cta.json` ya contiene:** `evidence` (`doc`/`pdf`/`page`), `assumptions` (`id`, `name`, `statement_latex`, `role_in_proof`, `violation_consequence` — equivalente directo de `ExplicitAssumption`), `session`, `unit_index` y `source_examples`.
+- **Dónde se recorta:** En `run.py` (`_instantiate_single_comp`, L1269–L1277), `course_comp_dict` solo exporta 7 campos básicos (`id`, `code`, `name`, `category`, `description`, `mastery_target`, `prerequisites`) hacia `courses/<course_id>.json`.
+
+### 4.2. Impacto del Salto Generacional: Gemini 3.8 Flash vs. Gemini 4 Hydrogen (Medium / High)
+
+| Métrica | Gemini 3.8 Flash | Gemini 4 Hydrogen (Medium) | Gemini 4 Hydrogen (High) | Impacto en Workflow *Flash Duet* |
+| :--- | :---: | :---: | :---: | :--- |
+| **Linaje** | Familia 3.8 | Destilado de **Gemini 4 Carbon** | Destilado de **Gemini 4 Carbon** (default) | Coherencia entre contratos Python (`cta.schema.json`) y TypeScript (`types.ts`). |
+| **Velocidad de Salida** | ~111 tok/s | **~198+ tok/s** | **~180–198 tok/s** | **2.0x a 2.8x más rápido** en lecturas por lotes y edición multi-archivo. |
+| **Intelligence Index** | ~31 | ~46–48 | **~51** (~1.65x vs 3.8 Flash) | Comprensión de esquemas cruzados al primer intento. |
+| **Terminal-Bench 4.1 (Coding)** | **18.2%** | ~48–52% | **57.0% (>3x vs 3.8 Flash)** | Menos ciclos fallidos de `tsc`/`pytest` y menor tasa de retrabajo. |
+| **Tasa de Alucinación** | Línea base (1x) | ~4x menor | **>5x menor** | Preservación estricta de invariantes M1/M6 sin inventar props. |
+
+- **Asignación recomendada en Flash Duet:** **Hydrogen Medium** para Implementadores de frontera cerrada y Auditores Forenses; **Hydrogen High** (o Argon High) para Orquestador / lógica cruzada densa (`CourseOverview.tsx` + `masteryStorage.ts` + `compile_cta.py`).
+
+### 4.3. Desglose Incremental (*Quick Win* vs. *End-to-End*)
+1. **Paso 1 — Anclaje a Diapositivas (`evidence` + `session`):** Exportar `evidence` y `session` en `run.py` $\to$ tipar en `types.ts` $\to$ agrupar visualmente por `doc`/`pdf` y rango de páginas en `CourseOverview.tsx` (**3 archivos**, impacto mínimo).
+2. **Paso 2 — Calentamiento sin Fricción (Unidad 0 `PRE-XX`):** Habilitar prefijo `PRE-` en `cta.schema.json` y `compile_cta.py`, instruir `prompt_cta_architect.md`, y destacar tarjetas `PRE-*` en `CourseOverview.tsx` (**4 archivos**).
+3. **Paso 3 — `ContentCore` en 5 Bloques + Glosario:** *Vía rápida:* exportar `assumptions`, `source_examples` y trampas (`distractors`) ya existentes en `cta.json`. *Vía canónica:* añadir `modules[]` (`ContentCore` 5 bloques + `ContentGlossaryTerm[]`) en `compile_cta.py` y visor `ContentCoreDrawer.tsx` compatible con Split 50% (M1).
+4. **Paso 4 — Jerarquía de 3 Niveles y Evaluación Escalonada:** Agrupar 2–4 competencias por `SubtopicUnit` (`quiz_question_pool` 3–5 reactivos) y `content_challenge_pool` (8–12 reactivos por PPT), manteniendo adaptador retrocompatible (`hierarchyAdapter.ts`) para los cursos planos publicados en `courses/*.json`.
+
+### 4.4. Blast Radius Exacto End-to-End (16 Archivos en 3 Streams Disjuntos)
+
+| Stream (Flash Duet) | Archivo | Acción | Qué cambia |
+| :--- | :--- | :---: | :--- |
+| **9A: Schemas & C2C** | [`.agents/skills/content-to-course/schemas/cta.schema.json`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/schemas/cta.schema.json) | MODIFY | Regex `PRE-XX` + definición opcional de `modules`, `glossary` y `content_core`. |
+| **9A** | [`schemas/course.schema.json`](file:///d:/Augusto/personal_portfolio/Tops_academy/schemas/course.schema.json) (`src/validator/models.py`, `rules.py`) | MODIFY | Admitir `modules?: ContentModule[]`, `evidence`, `assumptions` con retrocompatibilidad v1/v2. |
+| **9A** | [`.agents/skills/content-to-course/compile_cta.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/compile_cta.py) | MODIFY | Compilar `PRE-XX`, `MODULES`/`GLOSSARY`/`CONTENT_CORE` o auto-agrupar desde `evidence`. |
+| **9A** | [`.agents/skills/content-to-course/cta_merge.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/cta_merge.py) & [`check_cta.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/check_cta.py) | MODIFY | Preservar `PRE-XX` al inicio del DAG topológico y validar bloques de `ContentCore`. |
+| **9A** | [`.agents/skills/content-to-course/run.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/run.py#L1269-L1277) & [`course_publisher.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/course_publisher.py) | MODIFY | Propagar `evidence`, `assumptions`, `session` y construir `modules[]` en `course.json`. |
+| **9A** | `system_prompts/lean/prompt_cta_architect.md` & `prompt_cta_harmonizer.md` | MODIFY | Instrucción compacta para emitir `PRE-XX` y `ContentCore` por PPT. |
+| **9B: Plataforma React** | [`platform/src/types.ts`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/types.ts) | MODIFY | Interfaces `ExplicitAssumption`, `ContentGlossaryTerm`, `ContentCore`, `SubtopicUnit`, `ContentModule`. |
+| **9B** | `platform/src/utils/hierarchyAdapter.ts` | NEW | Adaptador puro que sintetiza módulos desde cursos planos existentes sin romper compatibilidad. |
+| **9B** | `platform/src/components/ContentCoreDrawer.tsx` | NEW | Visor ergonómico (Split 50% M1) de los 5 bloques Khanmigo + Supuestos Explícitos + Glosario LaTeX. |
+| **9B** | [`platform/src/components/CourseOverview.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/CourseOverview.tsx) & [`Sidebar.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/components/Sidebar.tsx) | MODIFY | Unidad 0 (`PRE-XX`), acordeones por PPT, acceso a `ContentCore`/Glosario, Subtemas (Quiz 3–5) y Challenge PPT (8–12). |
+| **9B** | [`platform/src/App.tsx`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/App.tsx) & [`masteryStorage.ts`](file:///d:/Augusto/personal_portfolio/Tops_academy/platform/src/utils/masteryStorage.ts) | MODIFY | Lanzamiento de `subtopic_quiz` y `module_challenge` reutilizando calibración bidireccional M14. |
+| **9C: Backfill & Tests** | `scripts/backfill_m9_hierarchy.py` + `tests/platform/test_m9_hierarchy.py` + `tests/pipeline/test_m9_cta_modules.py` | NEW | Inyección determinista de `evidence`/`assumptions`/`modules` en cursos existentes (`< 2 s`) + suite de contratos. |
+
+### 4.5. Estimación de Tiempo Actualizada
+
+| Modalidad | Gemini 3.8 Flash (Legado) | Gemini 4 Hydrogen (Secuencial) | **Flash Duet Paralelo (Hydrogen Medium/High)** |
+| :--- | :---: | :---: | :---: |
+| **Quick Win Incremental** *(Anclaje PPT + Supuestos + `PRE-XX` + Backfill)* | ~1.5 – 2 h | ~18 – 25 min | **~10 – 14 min** |
+| **Milestone 9 Completo End-to-End** *(Gate 1: 9A + 9B $\to$ Gate 2: 9C)* | 5 – 7 h | ~50 – 70 min | **~25 – 35 min** |

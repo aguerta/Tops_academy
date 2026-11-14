@@ -179,7 +179,7 @@ def inspect_subagent_transcript(
     meta: Dict[str, Any],
     brain_dir: Optional[Path] = None,
 ) -> Dict[str, Any]:
-    """Deep inspects a single subagent transcript extracting metrics and thinking traces."""
+    """Deep inspects a single subagent transcript extracting metrics, compiler execution, and thinking traces."""
     if brain_dir is None:
         brain_dir = get_brain_dir()
 
@@ -188,6 +188,14 @@ def inspect_subagent_transcript(
     role = meta.get("role", "subagent")
     type_name = meta.get("type_name", meta.get("type", "generic"))
     model = meta.get("model", "inherit")
+    cohort = meta.get("cohort") or infer_subagent_cohort(role, type_name)
+
+    # Determine whether this subagent is designed to use a compiler
+    if "uses_compiler" in meta:
+        uses_compiler = bool(meta["uses_compiler"])
+    else:
+        # Non-compiler cohorts by design: judges/blind judges, prepare/vision
+        uses_compiler = is_compiler_cohort(cohort, role)
 
     tokens = {
         "input": 0,
@@ -199,6 +207,7 @@ def inspect_subagent_transcript(
     turns_count = 0
     tool_calls_summary: Dict[str, int] = {}
     cli_errors: List[Dict[str, Any]] = []
+    compile_logs: List[Dict[str, Any]] = []
     thinking_traces: List[Dict[str, Any]] = []
 
     if not t_path.is_file():
@@ -206,17 +215,27 @@ def inspect_subagent_transcript(
             "conversation_id": subagent_conv_id,
             "role": role,
             "type_name": type_name,
+            "cohort": cohort,
+            "uses_compiler": uses_compiler,
             "model": model,
             "tokens": tokens,
             "turns_count": turns_count,
             "duration_seconds": 0.0,
             "tool_calls_summary": tool_calls_summary,
             "cli_errors": cli_errors,
+            "compiler_invocations": 0,
+            "compile_logs": compile_logs,
+            "first_pass": None if not uses_compiler else False,
+            "final_pass": None if not uses_compiler else False,
             "thinking_traces": thinking_traces,
         }
 
     records = read_transcript_with_full_resolution(t_path)
     timestamps: List[datetime.datetime] = []
+
+    seen_error_keys = set()
+    seen_compile_keys = set()
+    pending_compile_cmd = False
 
     for i, rec in enumerate(records):
         ts_str = rec.get("created_at")
@@ -247,18 +266,42 @@ def inspect_subagent_transcript(
             # Tool calls in step
             step_tools = []
             for tc in rec.get("tool_calls", []):
-                tname = tc.get("name", "unknown")
+                tname = tc.get("name") or tc.get("function_name") or "unknown"
                 tool_calls_summary[tname] = tool_calls_summary.get(tname, 0) + 1
                 step_tools.append(tname)
 
-            # Check if next step was an error
+                # Track if a compile command was issued
+                if tname == "run_command":
+                    args_raw = tc.get("args") or tc.get("arguments") or {}
+                    if isinstance(args_raw, str):
+                        try:
+                            args_obj = json.loads(args_raw)
+                        except Exception:
+                            args_obj = {"CommandLine": args_raw}
+                    else:
+                        args_obj = args_raw
+                    cmd_line = str(args_obj.get("CommandLine") or args_obj.get("command") or "")
+                    if any(k in cmd_line for k in ("compile_shard.py", "compile_cta.py", "check_templates.py", "check_cta.py")):
+                        pending_compile_cmd = True
+
+            # Check if this turn resulted in an error (inspecting responses until next planner response)
             had_error = False
-            if i + 1 < len(records):
-                next_rec = records[i + 1]
-                if next_rec.get("status") == "ERROR" or next_rec.get("type") == "ERROR_MESSAGE":
+            for j in range(i + 1, len(records)):
+                follow_rec = records[j]
+                if follow_rec.get("type") == "PLANNER_RESPONSE":
+                    break
+                f_type = follow_rec.get("type")
+                f_status = follow_rec.get("status")
+                f_content = str(follow_rec.get("content", "") or "")
+
+                if f_status == "ERROR" or f_type == "ERROR_MESSAGE":
                     had_error = True
-                elif "exited with code 1" in next_rec.get("content", ""):
-                    had_error = True
+                    break
+                if "exited with code" in f_content.lower():
+                    code_m = re.search(r"exited with code\s+(\d+)", f_content, re.IGNORECASE)
+                    if code_m and int(code_m.group(1)) != 0:
+                        had_error = True
+                        break
 
             thinking_traces.append({
                 "step_index": rec.get("step_index", i),
@@ -268,20 +311,60 @@ def inspect_subagent_transcript(
                 "had_error": had_error,
             })
 
-        elif rec_type in ("GENERIC", "TOOL_RESPONSE") and (status == "ERROR" or "exited with code" in rec.get("content", "")):
-            content = rec.get("content", "")
-            is_err = status == "ERROR"
-            if "exited with code" in content:
-                code_m = re.search(r"exited with code\s+(\d+)", content)
-                if code_m and int(code_m.group(1)) != 0:
+        elif rec_type in ("GENERIC", "TOOL_RESPONSE", "SYSTEM_MESSAGE", "TOOL_RESULT", "TASK_COMPLETED"):
+            content = str(rec.get("content", "") or "")
+            code_m = re.search(r"exited with code\s+(\d+)", content, re.IGNORECASE)
+            exit_code = int(code_m.group(1)) if code_m else None
+
+            is_err = False
+            if exit_code is not None:
+                if exit_code != 0:
                     is_err = True
+            elif status == "ERROR" or rec_type == "ERROR_MESSAGE":
+                is_err = True
+
+            # Diagnostic error codes ([TPL-*], [CTA-*], etc.)
+            codes_found = sorted(set(re.findall(r"\[([A-Z0-9_-]{3,40})\]", content)))
 
             if is_err:
-                cli_errors.append({
-                    "step_index": rec.get("step_index", i),
-                    "created_at": ts_str,
-                    "snippet": content[:240].strip(),
-                })
+                task_m = re.search(r'task\s+id\s+["\']?([a-zA-Z0-9_\-\/]+)["\']?', content, re.IGNORECASE)
+                dedup_key = task_m.group(1) if task_m else (rec.get("step_index", i), content[:80].strip())
+                if dedup_key not in seen_error_keys:
+                    seen_error_keys.add(dedup_key)
+                    cli_errors.append({
+                        "step_index": rec.get("step_index", i),
+                        "created_at": ts_str,
+                        "exit_code": exit_code if exit_code is not None else 1,
+                        "error_codes": codes_found,
+                        "snippet": content[:240].strip(),
+                    })
+
+            # Check if this record is a compiler execution result
+            is_compile_output = (
+                pending_compile_cmd
+                or "compile_shard" in content
+                or "compile_cta" in content
+                or "[CONSOLIDATED ERROR PACK]" in content
+                or ("Command exited" in content and any(c.startswith(("TPL-", "CTA-")) for c in codes_found))
+            )
+            if is_compile_output and ("exited with code" in content.lower() or "circuit breaker" in content.lower() or status == "ERROR"):
+                task_m = re.search(r'task\s+id\s+["\']?([a-zA-Z0-9_\-\/]+)["\']?', content, re.IGNORECASE)
+                compile_key = task_m.group(1) if task_m else (rec.get("step_index", i), content[:80].strip())
+                if compile_key not in seen_compile_keys:
+                    seen_compile_keys.add(compile_key)
+                    passed = (
+                        (exit_code == 0 or (exit_code is None and "exited with code 0" in content.lower()))
+                        and ("fail:" not in content.lower())
+                        and ("circuit breaker" not in content.lower())
+                        and ("[blocker]" not in content.lower())
+                    )
+                    compile_logs.append({
+                        "passed": passed,
+                        "exit_code": exit_code if exit_code is not None else (0 if passed else 1),
+                        "codes": codes_found,
+                        "snippet": content[:300].strip(),
+                    })
+                    pending_compile_cmd = False
 
     tokens["total"] = tokens["input"] + tokens["output"] + tokens["cached"]
 
@@ -289,16 +372,35 @@ def inspect_subagent_transcript(
     if len(timestamps) >= 2:
         duration_sec = max(0.0, (timestamps[-1] - timestamps[0]).total_seconds())
 
+    compiler_invocations = len(compile_logs)
+    if not uses_compiler:
+        # Crucial: Judges/blind_judges and non-compiler cohorts MUST NOT report false compilation failures
+        first_pass = None
+        final_pass = None
+    else:
+        if compiler_invocations >= 1:
+            first_pass = bool(compile_logs[0]["passed"])
+            final_pass = bool(compile_logs[-1]["passed"])
+        else:
+            first_pass = False
+            final_pass = False
+
     return {
         "conversation_id": subagent_conv_id,
         "role": role,
         "type_name": type_name,
+        "cohort": cohort,
+        "uses_compiler": uses_compiler,
         "model": model,
         "tokens": tokens,
         "turns_count": turns_count,
         "duration_seconds": round(duration_sec, 2),
         "tool_calls_summary": tool_calls_summary,
         "cli_errors": cli_errors[:10],
+        "compiler_invocations": compiler_invocations,
+        "compile_logs": compile_logs,
+        "first_pass": first_pass,
+        "final_pass": final_pass,
         "thinking_traces": thinking_traces,
     }
 
@@ -335,6 +437,96 @@ def _infer_canonical_subagent_role(p0: str, fallback_role: str, cid: str) -> str
     if fallback_role and not fallback_role.startswith("Subagent"):
         return fallback_role
     return f"Subagent-{cid[:8]}"
+
+
+def infer_subagent_cohort(role: str, type_name: str = "") -> str:
+    """Infers canonical cohort ('judge', 'cta', 'shard', 'repair', 'prepare', 'generic') from role and type."""
+    combined = f"{role} {type_name}".lower()
+    if any(k in combined for k in ("judge", "blind_judge", "c2c-judge")):
+        return "judge"
+    if any(k in combined for k in ("repair", "shard_fixes")):
+        return "repair"
+    if any(k in combined for k in ("cta", "architect", "part_")):
+        return "cta"
+    if any(k in combined for k in ("shard", "author", "c2c-author", "templates")):
+        return "shard"
+    if any(k in combined for k in ("vision", "prepare", "handout")):
+        return "prepare"
+    return "generic"
+
+
+def is_compiler_cohort(cohort: str, role: str = "") -> bool:
+    """Returns True if the cohort/role is designed to invoke compilers (compile_shard, compile_cta)."""
+    ch = cohort.lower()
+    r = role.lower()
+    if "judge" in ch or "judge" in r or "prepare" in ch or "prepare" in r or "vision" in ch or "vision" in r:
+        return False
+    if any(k in ch or k in r for k in ("shard", "author", "cta", "repair")):
+        return True
+    return False
+
+
+def summarize_cohorts(subagents: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """Aggregates subagent metrics by cohort, cleanly separating cohorts with and without compilers."""
+    by_cohort: Dict[str, List[Dict[str, Any]]] = {}
+    for sa in subagents:
+        ch = sa.get("cohort") or infer_subagent_cohort(sa.get("role", ""), sa.get("type_name", ""))
+        by_cohort.setdefault(ch, []).append(sa)
+
+    cohort_summaries: Dict[str, Dict[str, Any]] = {}
+    for ch, items in by_cohort.items():
+        n = len(items)
+        cohort_uses_compiler = any(sa.get("uses_compiler", is_compiler_cohort(ch, sa.get("role", ""))) for sa in items)
+        if ch in ("judge", "prepare"):
+            cohort_uses_compiler = False
+
+        comp_items = [sa for sa in items if sa.get("uses_compiler", cohort_uses_compiler) and sa.get("first_pass") is not None]
+        n_comp = len(comp_items)
+        total_compiler_invocations = sum(sa.get("compiler_invocations", 0) for sa in items)
+
+        summary: Dict[str, Any] = {
+            "count": n,
+            "uses_compiler": cohort_uses_compiler,
+            "compiler_invocations": total_compiler_invocations,
+            "turns_count": sum(sa.get("turns_count", 0) for sa in items),
+            "duration_seconds": round(sum(sa.get("duration_seconds", 0.0) for sa in items), 2),
+            "tokens": {
+                "input": sum(sa.get("tokens", {}).get("input", 0) for sa in items),
+                "output": sum(sa.get("tokens", {}).get("output", 0) for sa in items),
+                "cached": sum(sa.get("tokens", {}).get("cached", 0) for sa in items),
+                "thinking": sum(sa.get("tokens", {}).get("thinking", 0) for sa in items),
+                "total": sum(sa.get("tokens", {}).get("total", 0) for sa in items),
+            },
+            "cli_errors_count": sum(len(sa.get("cli_errors", [])) for sa in items),
+        }
+
+        if cohort_uses_compiler and n_comp > 0:
+            first_pass_count = sum(1 for sa in comp_items if sa.get("first_pass") is True)
+            final_pass_count = sum(1 for sa in comp_items if sa.get("final_pass") is True)
+            summary["first_pass_count"] = first_pass_count
+            summary["final_pass_count"] = final_pass_count
+            summary["first_pass_rate"] = round(first_pass_count / n_comp, 4)
+            summary["final_pass_rate"] = round(final_pass_count / n_comp, 4)
+            summary["fpy_ratio"] = f"{first_pass_count}/{n_comp}"
+            summary["pass_ratio"] = f"{final_pass_count}/{n_comp}"
+        else:
+            # Cohorts without compiler (e.g. judge): DO NOT report false 0/N compilation failures!
+            summary["first_pass_count"] = None
+            summary["final_pass_count"] = None
+            summary["first_pass_rate"] = None
+            summary["final_pass_rate"] = None
+            summary["fpy_ratio"] = "N/A"
+            summary["pass_ratio"] = "N/A"
+            summary["compiler_note"] = "Cohort does not use compiler by design"
+
+        cohort_summaries[ch] = summary
+
+    return cohort_summaries
+
+
+def aggregate_cohort_metrics(subagents: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """Alias for summarize_cohorts for backward and forward compatibility."""
+    return summarize_cohorts(subagents)
 
 
 def extract_stage_subagents(
@@ -626,9 +818,15 @@ def update_master_state(
                             "conversation_id": cid,
                             "role": sa.get("role"),
                             "type_name": sa.get("type_name"),
+                            "cohort": sa.get("cohort") or infer_subagent_cohort(sa.get("role", ""), sa.get("type_name", "")),
+                            "uses_compiler": sa.get("uses_compiler", is_compiler_cohort(sa.get("cohort", ""), sa.get("role", ""))),
+                            "compiler_invocations": sa.get("compiler_invocations", 0),
+                            "first_pass": sa.get("first_pass"),
+                            "final_pass": sa.get("final_pass"),
                             "tokens": sa_toks,
                             "turns_count": sa.get("turns_count"),
                             "duration_seconds": sa.get("duration_seconds"),
+                            "cli_errors_count": len(sa.get("cli_errors", [])),
                         })
                         traces = sa.get("thinking_traces", [])
                         if traces:
@@ -643,6 +841,7 @@ def update_master_state(
 
     state["tokens_total"] = tot_tokens
     state["subagents_summary"] = all_subagents
+    state["cohorts_summary"] = summarize_cohorts(all_subagents)
     state["artifact_counts"] = collect_artifact_counts(work_dir)
     state["thinking_traces_summary"] = {
         "total_thinking_turns": total_thinking_turns,
@@ -734,6 +933,7 @@ def record_stage_telemetry(
         "conversation_id": resolved_conv,
         "stage_tokens": stage_tokens,
         "subagents": subagents,
+        "cohorts_summary": summarize_cohorts(subagents),
         "metadata": meta,
         "collector_overhead_ms": round((time.perf_counter() - t_start) * 1000, 2),
     }
@@ -780,6 +980,12 @@ def main() -> None:
     print(f"[+] Recorded stage telemetry: {res['stage_idx']}_{res['stage_name']} ({res['status']})")
     print(f"    Subagents found: {len(res['subagents'])}")
     print(f"    Total tokens in stage: {res['stage_tokens']['total']}")
+    if res.get("cohorts_summary"):
+        for ch, c_info in res["cohorts_summary"].items():
+            if c_info.get("uses_compiler"):
+                print(f"    Cohort {ch}: n={c_info['count']}, FPY={c_info.get('fpy_ratio')}, PASS={c_info.get('pass_ratio')}")
+            else:
+                print(f"    Cohort {ch}: n={c_info['count']} (No compiler by design)")
     print(f"    Overhead: {res['collector_overhead_ms']} ms")
 
 

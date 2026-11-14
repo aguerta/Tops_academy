@@ -8,12 +8,21 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 from typing import Any
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+SRC_DIR = REPO_ROOT / "src"
+SKILL_DIR = REPO_ROOT / ".agents" / "skills" / "content-to-course"
 COURSES_DIR = REPO_ROOT / "courses"
+
+# Canonical sys.path injection for all test domains
+for p in (REPO_ROOT, SRC_DIR, SKILL_DIR):
+    p_str = str(p)
+    if p_str not in sys.path:
+        sys.path.insert(0, p_str)
 
 _RAW_COURSES_CACHE: dict[str, str] | None = None
 _PARSED_COURSES_CACHE: dict[str, dict[str, Any]] | None = None

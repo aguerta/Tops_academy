@@ -1252,42 +1252,66 @@ def check_extended_quality_rules(data: dict[str, Any]) -> list[ValidationError]:
 
             _check_ans_recursive(q["correct_answer"], "correct_answer")
 
-        # --- Rule R-19: Answer Leak in fill_in_the_blank ---
-        if itype == "fill_in_the_blank":
+        # --- Rule R-19: Answer Leak in fill_in_the_blank, multiple_choice_7_options, and multiple_select ---
+        if itype in ("fill_in_the_blank", "multiple_choice_7_options", "multiple_select"):
             stem = q.get("stem")
-            ans = q.get("correct_answer")
-            if isinstance(stem, str) and ans is not None:
+            if isinstance(stem, str):
                 candidate_answers: list[str] = []
-                if isinstance(ans, (int, float)) and not isinstance(ans, bool):
-                    candidate_answers.append(str(ans))
-                elif isinstance(ans, str):
-                    candidate_answers.append(ans)
-                elif isinstance(ans, list):
-                    for item in ans:
-                        if isinstance(item, (int, float)) and not isinstance(item, bool):
-                            candidate_answers.append(str(item))
-                        elif isinstance(item, str):
-                            candidate_answers.append(item)
-                elif isinstance(ans, dict):
-                    val = ans.get("value")
-                    expr = ans.get("expression")
-                    if isinstance(val, (int, float)) and not isinstance(val, bool):
-                        candidate_answers.append(str(val))
-                    elif isinstance(val, str):
-                        candidate_answers.append(val)
-                    elif isinstance(val, list):
-                        for item in val:
-                            if isinstance(item, (int, float)) and not isinstance(item, bool):
-                                candidate_answers.append(str(item))
-                            elif isinstance(item, str):
-                                candidate_answers.append(item)
-                    if isinstance(expr, str):
-                        candidate_answers.append(expr)
+                if itype == "fill_in_the_blank":
+                    ans = q.get("correct_answer")
+                    if ans is not None:
+                        if isinstance(ans, (int, float)) and not isinstance(ans, bool):
+                            candidate_answers.append(str(ans))
+                        elif isinstance(ans, str):
+                            candidate_answers.append(ans)
+                        elif isinstance(ans, list):
+                            for item in ans:
+                                if isinstance(item, (int, float)) and not isinstance(item, bool):
+                                    candidate_answers.append(str(item))
+                                elif isinstance(item, str):
+                                    candidate_answers.append(item)
+                        elif isinstance(ans, dict):
+                            val = ans.get("value")
+                            expr = ans.get("expression")
+                            if isinstance(val, (int, float)) and not isinstance(val, bool):
+                                candidate_answers.append(str(val))
+                            elif isinstance(val, str):
+                                candidate_answers.append(val)
+                            elif isinstance(val, list):
+                                for item in val:
+                                    if isinstance(item, (int, float)) and not isinstance(item, bool):
+                                        candidate_answers.append(str(item))
+                                    elif isinstance(item, str):
+                                        candidate_answers.append(item)
+                            if isinstance(expr, str):
+                                candidate_answers.append(expr)
+                else:
+                    for opt in (q.get("options") or []):
+                        if isinstance(opt, dict) and opt.get("is_correct") is True:
+                            c_text = opt.get("content") or opt.get("text")
+                            if isinstance(c_text, str) and c_text.strip():
+                                candidate_answers.append(c_text)
+
+                # Detección de fuga literal de token X=@X@ en el stem
+                m_token = re.search(r"\b([a-zA-Z_]\w*)\s*=\s*@\1@(?!\w)", stem)
+                if m_token:
+                    errors.append(ValidationError(
+                        rule_id="R-19",
+                        code="ERR_ANSWER_LEAK",
+                        message=f"Question '{q_id}': Stem explicitly leaks literal PrairieLearn token '{m_token.group(0)}'",
+                        item_id=q_id
+                    ))
 
                 for cand in candidate_answers:
                     clean_cand = cand.strip().strip("$").strip()
                     if not clean_cand:
                         continue
+
+                    # Para MC7 y MS, evitar falsos positivos en variables simbólicas o escalares de un dígito o números simples
+                    if itype in ("multiple_choice_7_options", "multiple_select"):
+                        if len(clean_cand) <= 1 or clean_cand.isdigit():
+                            continue
+
                     escaped_cand = re.escape(clean_cand)
                     leak_pattern = re.compile(
                         rf"(?:=\s*|\bes\s+(?:igual\s+a\s+)?)\$?{escaped_cand}\$?(?=[^0-9a-zA-Z]|$)",

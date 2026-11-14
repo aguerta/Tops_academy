@@ -139,6 +139,37 @@ MATH_ACCENT_COMMANDS = (
     r"binom|overset|underset|stackrel"
 )
 
+_KNOWN_LATEX_COMMANDS = {
+    # Argument / style macros
+    "text", "textbf", "textit", "textrm", "textsf", "texttt", "textsc", "textmd", "textup", "textsl",
+    "mathbf", "boldsymbol", "bm", "mathit", "mathrm", "mathcal", "mathbb",
+    "mathfrak", "mathsf", "mathtt", "mathscr", "symbf", "operatorname",
+    "dot", "ddot", "dddot", "ddddot", "hat", "bar", "tilde", "vec", "acute", "grave", "check",
+    "breve", "mathring", "widehat", "widetilde", "widecheck", "overline", "underline",
+    "frac", "dfrac", "tfrac", "cfrac", "binom", "dbinom", "tbinom", "sqrt",
+    "overset", "underset", "stackrel", "begin", "end",
+    # Functions / operators
+    "sin", "cos", "tan", "csc", "sec", "cot", "arcsin", "arccos", "arctan",
+    "sinh", "cosh", "tanh", "exp", "log", "ln", "det", "dim", "ker", "deg",
+    "gcd", "hom", "inf", "sup", "lim", "liminf", "limsup", "max", "min", "arg",
+    # Greek letters
+    "alpha", "beta", "gamma", "delta", "epsilon", "varepsilon", "zeta", "eta",
+    "theta", "vartheta", "iota", "kappa", "lambda", "mu", "nu", "xi", "pi",
+    "varpi", "rho", "varrho", "sigma", "varsigma", "tau", "upsilon", "phi",
+    "varphi", "chi", "psi", "omega",
+    # Symbols & relations
+    "sum", "prod", "coprod", "int", "iint", "iiint", "oint", "partial", "nabla",
+    "infty", "forall", "exists", "nexists", "in", "notin", "ni", "subset",
+    "subseteq", "supset", "supseteq", "cup", "cap", "setminus", "times",
+    "cdot", "cdots", "ldots", "ddots", "vdots", "circ", "bullet", "star",
+    "ast", "div", "pm", "mp", "leq", "le", "geq", "ge", "neq", "ne",
+    "approx", "equiv", "sim", "simeq", "cong", "propto", "parallel", "perp",
+    "rightarrow", "to", "leftarrow", "gets", "leftrightarrow", "Rightarrow",
+    "implies", "Leftarrow", "Leftrightarrow", "iff", "mapsto", "nearrow",
+    "searrow", "swarrow", "nwarrow", "left", "right", "quad", "qquad",
+    "centernot", "not", "land", "lor", "neg", "top", "bot", "angle", "hbar",
+}
+
 _PL_TOKEN_PATTERN = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*(?::[^@\s{}]+)?)@")
 
 
@@ -773,12 +804,35 @@ def validate_katex_syntax(
     # 11. Over-escaped LaTeX commands: \\frac, \\text, \\to, \\alpha, etc. in memory (R-23)
     # Uses negative lookbehind (?<!\\) and requires an even number of backslashes (\\, \\\\, etc.)
     # to avoid false positives on matrix row breaks immediately preceding a command (e.g. \\\frac = \\ + \frac).
-    for m_over in re.finditer(r"(?<!\\)(?:\\\\)+([a-zA-Z]+)", text):
-        cmd_name = m_over.group(1)
-        errors.append(
-            f"Over-escaped LaTeX command '\\\\{cmd_name}' detected in {context} (R-23). "
-            f"Use single backslash '\\{cmd_name}' in memory."
-        )
+    # Inside matrix/multiline environments ([a-zA-Z]*matrix|cases|aligned|array|split|gathered),
+    # do not flag \\<var> (e.g. x\\y, p\\m) as R-23; keep detection for 4+ slashes (\\\\+) or \\<known_cmd>.
+    matrix_spans: List[Tuple[int, int]] = []
+    matrix_env_re = re.compile(
+        r"\\begin\s*\{+\s*((?:[a-zA-Z]*matrix|cases|aligned|array|split|gathered)\*?)\s*\}+"
+        r"[\s\S]*?"
+        r"\\end\s*\{+\s*\1\s*\}+"
+    )
+    for m_env in matrix_env_re.finditer(text):
+        matrix_spans.append((m_env.start(), m_env.end()))
+
+    for m_over in re.finditer(r"(?<!\\)((?:\\\\)+)([a-zA-Z]+)", text):
+        slashes = m_over.group(1)
+        cmd_name = m_over.group(2)
+        pos = m_over.start()
+        in_matrix = any(s <= pos < e for s, e in matrix_spans)
+        num_slashes = len(slashes)
+
+        if in_matrix:
+            if num_slashes >= 4 or cmd_name.lower() in _KNOWN_LATEX_COMMANDS:
+                errors.append(
+                    f"Over-escaped LaTeX command '\\\\{cmd_name}' detected in {context} (R-23). "
+                    f"Use single backslash '\\{cmd_name}' in memory."
+                )
+        else:
+            errors.append(
+                f"Over-escaped LaTeX command '\\\\{cmd_name}' detected in {context} (R-23). "
+                f"Use single backslash '\\{cmd_name}' in memory."
+            )
 
     # 12. Forbidden linebreak '\\' inside inline math '$...$' outside matrix/cases environment (R-23)
     no_disp = re.sub(r"\$\$[\s\S]*?\$\$", "", re.sub(r"(?<!\\)(?:\\\\)*\\\$", "", text))
@@ -1005,22 +1059,42 @@ def check_instance_invariants(
                 if min_d > 0 and max_d > 0:
                     lower_bound = 0.80 * min_d
                     upper_bound = 1.20 * max_d
+                    c_trunc = correct_content[:40] + ("..." if len(correct_content) > 40 else "")
+                    sample_d = distractor_contents[0] if distractor_contents else ""
+                    d_trunc = sample_d[:40] + ("..." if len(sample_d) > 40 else "")
                     if c_len < lower_bound:
                         errors.append(
-                            f"Length anti-giveaway violation: correct option too short ({c_len} chars < {lower_bound:.1f} = 0.80 * min(D))."
+                            f"Length anti-giveaway violation: correct option too short ({c_len} chars < {lower_bound:.1f} = 0.80 * min(D)): "
+                            f"len(correct)={c_len} ('{c_trunc}'), distractor_lens={d_lens} (min={min_d}, max={max_d}, sample='{d_trunc}')."
                         )
                     elif c_len > upper_bound:
                         errors.append(
-                            f"Length anti-giveaway violation: correct option too long ({c_len} chars > {upper_bound:.1f} = 1.20 * max(D))."
+                            f"Length anti-giveaway violation: correct option too long ({c_len} chars > {upper_bound:.1f} = 1.20 * max(D)): "
+                            f"len(correct)={c_len} ('{c_trunc}'), distractor_lens={d_lens} (min={min_d}, max={max_d}, sample='{d_trunc}')."
                         )
 
             # Check answer leak in stem or early hints
-            if correct_content and len(correct_content) >= 5 and not correct_content.isdigit():
-                # Avoid trivial matches like single numbers
-                if isinstance(stem, str) and correct_content in stem:
-                    errors.append(f"Correct answer '{correct_content}' leaked verbatim in stem text.")
-                if hints and len(hints) >= 1 and isinstance(hints[0], str) and correct_content in hints[0]:
-                    errors.append(f"Correct answer '{correct_content}' leaked verbatim in first hint.")
+            if correct_content:
+                clean_cc = correct_content.strip().strip("$").strip()
+                if len(clean_cc) >= 5 and not clean_cc.isdigit():
+                    # Avoid trivial matches like single numbers
+                    if isinstance(stem, str) and correct_content in stem:
+                        errors.append(f"Correct answer '{correct_content}' leaked verbatim in stem text.")
+                    if hints and len(hints) >= 1 and isinstance(hints[0], str) and correct_content in hints[0]:
+                        errors.append(f"Correct answer '{correct_content}' leaked verbatim in first hint.")
+                # Token leak X=@X@ or direct assignment leak (var = val) for non-trivial values
+                if isinstance(stem, str):
+                    m_tok = re.search(r"\b([a-zA-Z_]\w*)\s*=\s*@\1@(?!\w)", stem)
+                    if m_tok:
+                        errors.append(f"PrairieLearn token leak '{m_tok.group(0)}' detected in stem text.")
+                    elif len(clean_cc) > 1 and not clean_cc.isdigit():
+                        esc_cand = re.escape(clean_cc)
+                        leak_pattern = re.compile(
+                            rf"(?:=\s*|\bes\s+(?:igual\s+a\s+)?)\$?{esc_cand}\$?(?=[^0-9a-zA-Z]|$)",
+                            re.IGNORECASE
+                        )
+                        if leak_pattern.search(stem):
+                            errors.append(f"Correct answer '{clean_cc}' leaked as direct assignment in stem text.")
 
             # Check synthetic boilerplate distractor pattern
             bp_errors = check_synthetic_boilerplate_distractors(correct_content, distractor_contents)
@@ -1028,6 +1102,11 @@ def check_instance_invariants(
 
     # 2. Fill in the blank
     elif interaction_type == "fill_in_the_blank":
+        if isinstance(stem, str):
+            m_tok = re.search(r"\b([a-zA-Z_]\w*)\s*=\s*@\1@(?!\w)", stem)
+            if m_tok:
+                errors.append(f"PrairieLearn token leak '{m_tok.group(0)}' detected in stem text.")
+
         ans = instance.get("correct_answer")
         if ans is None:
             ans = instance.get("correct")
@@ -1101,6 +1180,33 @@ def check_instance_invariants(
             ]
             bp_errors = check_synthetic_boilerplate_distractors(None, ms_distractors)
             errors.extend(bp_errors)
+
+            # Check answer leak in stem or early hints for multiple_select correct options
+            for opt in options:
+                if not isinstance(opt, dict) or opt.get("is_correct") is not True:
+                    continue
+                c_content = str(opt.get("content", "")).strip()
+                clean_cc = c_content.strip().strip("$").strip()
+                if not clean_cc:
+                    continue
+                if len(clean_cc) >= 5 and not clean_cc.isdigit():
+                    if isinstance(stem, str) and c_content in stem:
+                        errors.append(f"MS correct answer '{c_content}' leaked verbatim in stem text.")
+                    if hints and len(hints) >= 1 and isinstance(hints[0], str) and c_content in hints[0]:
+                        errors.append(f"MS correct answer '{c_content}' leaked verbatim in first hint.")
+                # Token leak X=@X@ or direct assignment leak (var = val) for non-trivial values
+                if isinstance(stem, str):
+                    m_tok = re.search(r"\b([a-zA-Z_]\w*)\s*=\s*@\1@(?!\w)", stem)
+                    if m_tok:
+                        errors.append(f"PrairieLearn token leak '{m_tok.group(0)}' detected in stem text.")
+                    elif len(clean_cc) > 1 and not clean_cc.isdigit():
+                        esc_cand = re.escape(clean_cc)
+                        leak_pattern = re.compile(
+                            rf"(?:=\s*|\bes\s+(?:igual\s+a\s+)?)\$?{esc_cand}\$?(?=[^0-9a-zA-Z]|$)",
+                            re.IGNORECASE
+                        )
+                        if leak_pattern.search(stem):
+                            errors.append(f"MS correct answer '{clean_cc}' leaked as direct assignment in stem text.")
 
     # Scaffolding progressive hint answer leak and item-level integrity checks across all interaction types
     raw_hints = instance.get("hints", [])
