@@ -1120,7 +1120,7 @@ class PipelineRunner:
             for cid in known_cids:
                 if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(cid)}(?![A-Za-z0-9_-])", err_str):
                     matched.add(cid)
-            for m in re.finditer(r"\b(?:C|H|Hab)-\d+\b", err_str):
+            for m in re.finditer(r"\b(?:PRE|C|H|Hab)-\d+\b", err_str):
                 cand_cid = m.group(0)
                 if cand_cid in known_cids:
                     matched.add(cand_cid)
@@ -1275,6 +1275,12 @@ class PipelineRunner:
                 "mastery_target": 100,
                 "prerequisites": comp.get("prerequisites", []),
             }
+            if cid.upper().startswith("PRE-") or comp.get("is_prerequisite"):
+                course_comp_dict["is_prerequisite"] = True
+            for opt_key in ("session", "unit_index", "evidence", "assumptions", "source_examples"):
+                opt_val = comp.get(opt_key)
+                if opt_val is not None and opt_val != "" and opt_val != []:
+                    course_comp_dict[opt_key] = opt_val
             comp_templates = templates_by_comp.get(cid, [])
             if not comp_templates:
                 raise ValueError(

@@ -281,14 +281,14 @@ export async function loadCourse(
   // 1. Check memory cache
   const mem = memoryCache.get(summary.id);
   if (mem) {
-    if (!summary.etag || !mem.etag || mem.etag === summary.etag) {
+    if (!summary.etag || mem.etag === summary.etag) {
       onProgress?.(100);
       return mem.course;
     }
   }
 
   // If summary already embedded complete data and etag matches
-  if (summary.data && (!summary.etag || !mem?.etag || mem?.etag === summary.etag)) {
+  if (summary.data && (!summary.etag || mem?.etag === summary.etag)) {
     memoryCache.set(summary.id, { course: summary.data, etag: summary.etag });
     saveToIndexedDB(summary.id, summary.data, summary.etag).catch(() => {});
     onProgress?.(100);
@@ -298,7 +298,7 @@ export async function loadCourse(
   // 2. Check IndexedDB
   const idbRecord = await getFromIndexedDB(summary.id);
   if (idbRecord && idbRecord.course) {
-    if (!summary.etag || !idbRecord.etag || idbRecord.etag === summary.etag) {
+    if (!summary.etag || idbRecord.etag === summary.etag) {
       memoryCache.set(summary.id, {
         course: idbRecord.course,
         etag: idbRecord.etag,

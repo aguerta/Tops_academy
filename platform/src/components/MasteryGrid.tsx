@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Course, CourseMasteryRecord, Competency, MasteryTier } from '../types';
 import { TIER_COLORS, isUnitCompleted, isUnitStarted } from '../utils/masteryStorage';
 import { MathText } from './MathText';
@@ -9,6 +9,7 @@ interface MasteryGridProps {
   onStartPractice: (competency: Competency) => void;
   onStartQuiz: (competency: Competency) => void;
   onStartUnitTest: (competency: Competency) => void;
+  competenciesOverride?: Competency[];
 }
 
 export const MasteryGrid: React.FC<MasteryGridProps> = ({
@@ -17,12 +18,20 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
   onStartPractice,
   onStartQuiz,
   onStartUnitTest,
+  competenciesOverride,
 }) => {
-  const competencies = course.competencies;
+  const [expandedAssumptions, setExpandedAssumptions] = useState<Record<string, boolean>>({});
+  const competencies = competenciesOverride ?? course.competencies;
+
+  const toggleAssumptions = (unitId: string) => {
+    setExpandedAssumptions((prev) => ({ ...prev, [unitId]: !prev[unitId] }));
+  };
 
   return (
     <div className="space-y-6 my-6">
       {competencies.map((unit, idx) => {
+        const globalIdx = course.competencies.findIndex((c) => c.id === unit.id);
+        const displayIdx = unit.unit_index ?? (globalIdx >= 0 ? globalIdx : idx);
         const compMastery = mastery.competencies[unit.id];
         const tier: MasteryTier = compMastery?.status || 'Not started';
         const colors = TIER_COLORS[tier];
@@ -30,6 +39,17 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
         const isCompleted = isUnitCompleted(compMastery);
         const isInProgress = !isCompleted && isUnitStarted(compMastery);
         const statusLabel = isCompleted ? 'Completed' : isInProgress ? 'In Progress' : 'Not Started';
+
+        const isPrereq = unit.is_prerequisite === true || unit.id.startsWith('PRE-');
+        const firstEvidence = unit.evidence?.[0];
+        const evidenceDocRaw = firstEvidence?.doc || firstEvidence?.pdf;
+        const evidenceDoc = evidenceDocRaw
+          ? evidenceDocRaw.split(/[\\/]/).pop() || evidenceDocRaw
+          : undefined;
+        const evidencePage =
+          firstEvidence?.page ?? firstEvidence?.slide ?? firstEvidence?.pages?.[0];
+        const hasAssumptions = Boolean(unit.assumptions && unit.assumptions.length > 0);
+        const isAssumptionsOpen = Boolean(expandedAssumptions[unit.id]);
 
         return (
           <div
@@ -48,9 +68,29 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 min-w-0 flex-wrap">
-                    <span>Unit {idx + 1}</span>
+                    <span>Unit {displayIdx + 1}</span>
                     <span>•</span>
                     <span>{unit.category}</span>
+                    {isPrereq && (
+                      <span
+                        data-testid={`prereq-badge-${unit.id}`}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300"
+                      >
+                        🧭 UNIDAD 0 • GET READY
+                      </span>
+                    )}
+                    {firstEvidence && (
+                      <span
+                        data-testid={`evidence-badge-${unit.id}`}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold normal-case tracking-normal bg-slate-100 text-slate-700 border border-slate-200 max-w-full truncate"
+                      >
+                        <span>📄</span>
+                        <span className="truncate">
+                          {evidenceDoc || 'Documento'}
+                          {evidencePage !== undefined ? ` • pág. ${evidencePage}` : ''}
+                        </span>
+                      </span>
+                    )}
                     {compMastery?.needs_review && (
                       <span
                         data-testid={`red-dot-${unit.id}`}
@@ -162,6 +202,40 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
                     </div>
                   );
                 })()}
+
+                {/* Lightweight Collapsible for Explicit Assumptions */}
+                {hasAssumptions && (
+                  <div className="mt-2.5">
+                    <button
+                      type="button"
+                      onClick={() => toggleAssumptions(unit.id)}
+                      aria-expanded={isAssumptionsOpen}
+                      data-testid={`assumptions-toggle-${unit.id}`}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 transition-colors"
+                    >
+                      <span>⚖️ Supuestos explícitos ({unit.assumptions!.length})</span>
+                      <span className="text-[10px]">{isAssumptionsOpen ? '▲' : '▼'}</span>
+                    </button>
+                    {isAssumptionsOpen && (
+                      <div className="mt-2 space-y-1.5 pl-3 border-l-2 border-indigo-200">
+                        {unit.assumptions!.map((a, aIdx) => (
+                          <div
+                            key={a.id || aIdx}
+                            className="p-2 rounded bg-indigo-50/50 border border-indigo-100 text-xs space-y-1 break-words [overflow-wrap:anywhere]"
+                          >
+                            <div className="font-semibold text-slate-900">
+                              <MathText text={a.statement_latex} inline />
+                            </div>
+                            <div className="text-rose-800">
+                              <span className="font-bold">Si se viola: </span>
+                              <MathText text={a.violation_consequence} inline />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Assessment & Practice Triggers */}
@@ -184,7 +258,7 @@ export const MasteryGrid: React.FC<MasteryGridProps> = ({
                   className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded border border-slate-200 flex items-center gap-1.5 transition-colors shrink-0"
                 >
                   <span className="text-amber-500">⚡</span>
-                  <span>Quiz {idx + 1}</span>
+                  <span>Quiz {displayIdx + 1}</span>
                 </button>
 
                 {/* Unit Test Trigger */}

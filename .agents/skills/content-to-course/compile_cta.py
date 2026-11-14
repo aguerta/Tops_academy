@@ -104,12 +104,13 @@ class CtaDataLineLocator:
             "fact": "H", "hecho": "H", "h": "H",
             "concept": "C", "concepto": "C", "c": "C",
             "skill": "Hab", "habilidad": "Hab", "hab": "Hab",
+            "prerequisite": "PRE", "prerrequisito": "PRE", "pre": "PRE",
         }
 
         # 1. Exact AST-based line number indexing
         try:
             tree = ast.parse(self.source_text)
-            type_counts: Dict[str, int] = {"H": 0, "C": 0, "Hab": 0}
+            type_counts: Dict[str, int] = {"H": 0, "C": 0, "Hab": 0, "PRE": 0}
             global_c_idx = 0
             for stmt in tree.body:
                 comps_nodes = None
@@ -183,10 +184,10 @@ class CtaDataLineLocator:
                             prefix = type_prefix_map.get(raw_t, "C")
                             type_counts[prefix] = type_counts.get(prefix, 0) + 1
                             title_str = str(c_node.elts[1].value).strip() if isinstance(c_node.elts[1], ast.Constant) else ""
-                            m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", title_str, re.IGNORECASE)
+                            m_id = re.search(r"\b(PRE|H|C|Hab|Fact|Concept|Skill)-(\d+)\b", title_str, re.IGNORECASE)
                             if m_id:
                                 pfx = m_id.group(1).upper()
-                                pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                                pfx = "PRE" if pfx == "PRE" else ("Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C"))
                                 cid = f"{pfx}-{int(m_id.group(2)):02d}"
                             else:
                                 cid = f"{prefix}-{type_counts[prefix]:02d}"
@@ -207,10 +208,10 @@ class CtaDataLineLocator:
                             prefix = type_prefix_map.get(raw_t, "C")
                             type_counts[prefix] = type_counts.get(prefix, 0) + 1
                             title_str = str(c_node.elts[1].value).strip() if isinstance(c_node.elts[1], ast.Constant) else ""
-                            m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", title_str, re.IGNORECASE)
+                            m_id = re.search(r"\b(PRE|H|C|Hab|Fact|Concept|Skill)-(\d+)\b", title_str, re.IGNORECASE)
                             if m_id:
                                 pfx = m_id.group(1).upper()
-                                pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                                pfx = "PRE" if pfx == "PRE" else ("Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C"))
                                 cid = f"{pfx}-{int(m_id.group(2)):02d}"
                             else:
                                 cid = f"{prefix}-{type_counts[prefix]:02d}"
@@ -227,10 +228,10 @@ class CtaDataLineLocator:
 
                         elif is_6_format:
                             title_str = str(c_node.elts[0].value).strip() if isinstance(c_node.elts[0], ast.Constant) else ""
-                            m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", title_str, re.IGNORECASE)
+                            m_id = re.search(r"\b(PRE|H|C|Hab|Fact|Concept|Skill)-(\d+)\b", title_str, re.IGNORECASE)
                             if m_id:
                                 pfx = m_id.group(1).upper()
-                                pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                                pfx = "PRE" if pfx == "PRE" else ("Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C"))
                                 cid = f"{pfx}-{int(m_id.group(2)):02d}"
                                 prefix = pfx
                             else:
@@ -260,7 +261,7 @@ class CtaDataLineLocator:
 
                             if len(c_node.elts) > 1 and isinstance(c_node.elts[1], ast.Constant) and c_node.elts[1].value:
                                 val_str = str(c_node.elts[1].value).strip()
-                                if re.match(r"^(?:H|C|Hab|Fact|Concept|Skill)-?\d+$", val_str, re.IGNORECASE):
+                                if re.match(r"^(?:PRE|H|C|Hab|Fact|Concept|Skill)-?\d+$", val_str, re.IGNORECASE):
                                     cid = val_str
                             if not cid:
                                 cid = f"{prefix}-{type_counts[prefix]:02d}"
@@ -429,7 +430,7 @@ class CtaDataLineLocator:
 
         # 2. Regex fallback / supplement
         comp_id_pattern = re.compile(
-            r'[\(\[]\s*["\'](fact|concept|skill)["\']\s*,\s*["\']([A-Za-z0-9_-]+)["\']',
+            r'[\(\[]\s*["\'](fact|concept|skill|prerequisite|pre)["\']\s*,\s*["\']([A-Za-z0-9_-]+)["\']',
             re.IGNORECASE,
         )
         for line_idx, line in enumerate(self.lines, start=1):
@@ -443,7 +444,7 @@ class CtaDataLineLocator:
                         self.competency_lines[cid] = (line_idx, line_idx)
                         self.competency_lines[cid.replace("-", "")] = (line_idx, line_idx)
 
-        id_pattern = re.compile(r'["\'](H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)["\']')
+        id_pattern = re.compile(r'["\'](PRE-\d+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)["\']')
         for line_idx, line in enumerate(self.lines, start=1):
             for m in id_pattern.finditer(line):
                 cid = m.group(1)
@@ -582,7 +583,7 @@ class CtaDataLineLocator:
         m_aid = re.search(r"\b(A-[A-Za-z0-9_-]+)\b", err_msg)
         aid = m_aid.group(1) if m_aid else None
 
-        m_cid = re.search(r"\b(H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+|H\d+|C\d+|Hab\d+)\b", err_msg, re.IGNORECASE)
+        m_cid = re.search(r"\b(PRE-\d+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+|PRE\d+|H\d+|C\d+|Hab\d+)\b", err_msg, re.IGNORECASE)
         found_cid = m_cid.group(1) if m_cid else cid
 
         field_match = None
@@ -1132,12 +1133,16 @@ def compile_cta_module(
         "skill": ("skill", "Hab"),
         "habilidad": ("skill", "Hab"),
         "hab": ("skill", "Hab"),
+        "prerequisite": ("concept", "PRE"),
+        "prerrequisito": ("concept", "PRE"),
+        "pre": ("concept", "PRE"),
     }
 
     counts_by_prefix: Dict[str, int] = {
         "H": max(0, initial_counts.get("H", 0)) if initial_counts else 0,
         "C": max(0, initial_counts.get("C", 0)) if initial_counts else 0,
         "Hab": max(0, initial_counts.get("Hab", 0)) if initial_counts else 0,
+        "PRE": max(0, initial_counts.get("PRE", 0)) if initial_counts else 0,
     }
 
     for comp_idx, item in enumerate(competencies_tuples, start=1):
@@ -1223,10 +1228,10 @@ def compile_cta_module(
                 raw_assumptions = item[6]
                 doc = "material_fuente.pdf"
                 page = 1
-                m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", name, re.IGNORECASE)
+                m_id = re.search(r"\b(PRE|H|C|Hab|Fact|Concept|Skill)-(\d+)\b", name, re.IGNORECASE)
                 if m_id:
                     pfx = m_id.group(1).upper()
-                    pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                    pfx = "PRE" if pfx == "PRE" else ("Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C"))
                     raw_id = f"{pfx}-{int(m_id.group(2)):02d}"
                 else:
                     raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
@@ -1245,10 +1250,10 @@ def compile_cta_module(
                 raw_assumptions = []
                 doc = "material_fuente.pdf"
                 page = 1
-                m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", name, re.IGNORECASE)
+                m_id = re.search(r"\b(PRE|H|C|Hab|Fact|Concept|Skill)-(\d+)\b", name, re.IGNORECASE)
                 if m_id:
                     pfx = m_id.group(1).upper()
-                    pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                    pfx = "PRE" if pfx == "PRE" else ("Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C"))
                     raw_id = f"{pfx}-{int(m_id.group(2)):02d}"
                 else:
                     raw_id = f"{default_prefix}-{counts_by_prefix[default_prefix]:02d}"
@@ -1296,10 +1301,10 @@ def compile_cta_module(
                     page = int(evidence_raw)
 
                 # Determine type, prefix, raw_id
-                m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", name, re.IGNORECASE)
+                m_id = re.search(r"\b(PRE|H|C|Hab|Fact|Concept|Skill)-(\d+)\b", name, re.IGNORECASE)
                 if m_id:
                     pfx = m_id.group(1).upper()
-                    pfx = "Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C")
+                    pfx = "PRE" if pfx == "PRE" else ("Hab" if pfx in ("HAB", "SKILL") else ("H" if pfx in ("H", "FACT") else "C"))
                     norm_type = "skill" if pfx == "Hab" else ("fact" if pfx == "H" else "concept")
                     default_prefix = pfx
                     cand_id = f"{pfx}-{int(m_id.group(2)):02d}"
@@ -1428,6 +1433,8 @@ def compile_cta_module(
             "distractors": compiled_distractors,
             "assumptions": compiled_assumptions,
         }
+        if raw_id.upper().startswith("PRE-") or (isinstance(item, dict) and item.get("is_prerequisite")):
+            comp_dict["is_prerequisite"] = True
         sanitize_competency_math(comp_dict)
         compiled_comps.append(comp_dict)
 
@@ -1863,7 +1870,7 @@ def compile_cta(
                     else:
                         target_cid = (
                             str(override_c[1]).strip()
-                            if len(override_c) > 1 and override_c[1] and isinstance(override_c[1], str) and re.match(r"^(?:H|C|Hab|Fact|Concept|Skill)-?\d+$", override_c[1], re.IGNORECASE)
+                            if len(override_c) > 1 and override_c[1] and isinstance(override_c[1], str) and re.match(r"^(?:PRE|H|C|Hab|Fact|Concept|Skill)-?\d+$", override_c[1], re.IGNORECASE)
                             else ""
                         )
                     if not target_cid:
@@ -1884,7 +1891,7 @@ def compile_cta(
                             if len(c) > 1 and isinstance(c[1], str):
                                 cid = c[1].strip()
                             elif len(c) > 0 and isinstance(c[0], str):
-                                m_id = re.search(r"\b(H|C|Hab|Fact|Concept|Skill)-(\d+)\b", c[0], re.IGNORECASE)
+                                m_id = re.search(r"\b(PRE|H|C|Hab|Fact|Concept|Skill)-(\d+)\b", c[0], re.IGNORECASE)
                                 if m_id:
                                     cid = m_id.group(0)
 
@@ -2002,6 +2009,7 @@ def compile_cta(
         "H": max(0, next_counts["H"] - 1),
         "C": max(0, next_counts["C"] - 1),
         "Hab": max(0, next_counts["Hab"] - 1),
+        "PRE": max(0, next_counts.get("PRE", 1) - 1),
     }
     existing_comp_ids: Set[str] = set(delta_info.get("existing_competency_ids", [])) if delta_info else set()
 
@@ -2317,7 +2325,7 @@ def compile_cta(
     if not is_valid:
         for err in validation_errors:
             found_line = None
-            for m in re.finditer(r"\b(D-[A-Za-z0-9_-]+|A-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", err):
+            for m in re.finditer(r"\b(D-[A-Za-z0-9_-]+|A-[A-Za-z0-9_-]+|PRE-\d+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", err):
                 candidate_id = m.group(1)
                 l_num = locator.get_line(candidate_id)
                 if l_num:
@@ -2701,7 +2709,7 @@ def render_compact_cta_errors(
     # Extract all unique affected competencies across all unique errors
     all_affected_comp_ids: Set[str] = set()
     for e in unique_errors:
-        found_cids = re.findall(r"\b(H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", e)
+        found_cids = re.findall(r"\b(PRE-\d+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", e)
         for cid in found_cids:
             all_affected_comp_ids.add(cid)
         if not found_cids:
@@ -2743,7 +2751,7 @@ def render_compact_cta_errors(
                 start_l = line_num or 1
                 end_l = start_l
 
-            m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|A-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", raw_err)
+            m_id = re.search(r"\b(D-[A-Za-z0-9_-]+|A-[A-Za-z0-9_-]+|PRE-\d+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", raw_err)
             item_id = m_id.group(1) if m_id else ""
 
             suggested = ""
@@ -2763,7 +2771,7 @@ def render_compact_cta_errors(
                 suggested = "Close '$' before trailing punctuation"
 
             # Extract ALL competencies mentioned in raw_err
-            found_comps = re.findall(r"\b(H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", raw_err)
+            found_comps = re.findall(r"\b(PRE-\d+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", raw_err)
             found_comps = list(dict.fromkeys(found_comps))
 
             if len(found_comps) > 1:
@@ -2922,7 +2930,7 @@ def render_compact_cta_errors(
             line_str = f"L{line_num}" if line_num else ""
             rng = None
 
-        found_items = re.findall(r"\b(D-[A-Za-z0-9_-]+|A-[A-Za-z0-9_-]+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", raw_err)
+        found_items = re.findall(r"\b(D-[A-Za-z0-9_-]+|A-[A-Za-z0-9_-]+|PRE-\d+|H-\d+|C-\d+|Hab-\d+|Fact-\d+|Concept-\d+|Skill-\d+)\b", raw_err)
         found_items = list(dict.fromkeys(found_items))
 
         key = (short_rule, cause, action)

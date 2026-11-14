@@ -15,7 +15,14 @@
       "category": "Concept",
       "description": "La inferencia asintotica estudia el comportamiento limite cuando $n \\to \\infty$ debido a la intratabilidad de distribuciones exactas y la fragilidad del supuesto gaussiano ante asimetria y curtosis leptocurtica.",
       "mastery_target": 100,
-      "prerequisites": []
+      "prerequisites": [],
+      "session": "Unidad 3: Limitaciones de Muestras Finitas y Fundamentos de la Inferencia Asintotica",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 3
+        }
+      ]
     },
     {
       "id": "H-01",
@@ -26,6 +33,17 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-01"
+      ],
+      "session": "Unidad 5: Descomposicion Ortogonal del Error Cuadratico Medio",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 5
+        },
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 9
+        }
       ]
     },
     {
@@ -37,6 +55,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-01"
+      ],
+      "session": "Unidad 8: Demostracion del Insesgamiento de la Cuasivarianza Muestral",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 8
+        }
       ]
     },
     {
@@ -48,6 +73,17 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-01"
+      ],
+      "session": "Unidad 10: Convergencia en Probabilidad y Consistencia Debil",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 10
+        },
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 27
+        }
       ]
     },
     {
@@ -60,6 +96,13 @@
       "prerequisites": [
         "H-01",
         "C-02"
+      ],
+      "session": "Unidad 11: Criterio de Convergencia en Media Cuadratica hacia una Constante",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 11
+        }
       ]
     },
     {
@@ -71,6 +114,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-03"
+      ],
+      "session": "Unidad 12: Derivacion Asintotica del Minimo Muestral Exponencial",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 12
+        }
       ]
     },
     {
@@ -82,6 +132,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 14: Demostracion de la Desigualdad de Markov mediante Particion del Espacio Muestral",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 14
+        }
       ]
     },
     {
@@ -93,6 +150,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-03"
+      ],
+      "session": "Unidad 15: Desigualdad de Chebyshev Generalizada y Clasica",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 15
+        }
       ]
     },
     {
@@ -104,6 +168,17 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-02"
+      ],
+      "session": "Unidad 17: Desigualdad de Jensen y Consecuencias en Estimadores Econométricos",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 17
+        },
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 25
+        }
       ]
     },
     {
@@ -115,6 +190,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-04"
+      ],
+      "session": "Unidad 18: Cota de Cauchy-Schwarz para Momentos y Covarianza",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 18
+        }
       ]
     },
     {
@@ -126,6 +208,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-03"
+      ],
+      "session": "Unidad 19: Demostración de Cauchy-Schwarz mediante Formas Cuadráticas y Discriminante",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 19
+        }
       ]
     },
     {
@@ -137,6 +226,17 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-04"
+      ],
+      "session": "Unidad 20: Jerarquía de Modos de Convergencia Estocástica y Monotonía de Normas",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 20
+        },
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 37
+        }
       ]
     },
     {
@@ -148,6 +248,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-05"
+      ],
+      "session": "Unidad 21: Demostración de la Implicación de Convergencia en Media r-ésima hacia Probabilidad",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 21
+        }
       ]
     },
     {
@@ -159,6 +266,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-05"
+      ],
+      "session": "Unidad 23: No Reciprocidad de la Convergencia en Probabilidad y Explosión de Momentos",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 23
+        }
       ]
     },
     {
@@ -170,6 +284,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-06"
+      ],
+      "session": "Unidad 25: Evaluación de Insesgadez Finita y Consistencia Asintótica en Estimadores",
+      "evidence": [
+        {
+          "doc": "Clases_sintetizadas_semana_9.pdf",
+          "page": 25
+        }
       ]
     },
     {
@@ -181,6 +302,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-01"
+      ],
+      "session": "Unidad 3: Fundamentos de la Muestra Aleatoria y el Estimador Puntual",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -192,6 +320,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-07"
+      ],
+      "session": "Unidad 5: Definición y Propiedad de Insesgadez de un Estimador",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 5
+        }
       ]
     },
     {
@@ -203,6 +338,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-04"
+      ],
+      "session": "Unidad 7: Varianza, Error Estándar y Eficiencia Relativa",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 7
+        }
       ]
     },
     {
@@ -215,6 +357,13 @@
       "prerequisites": [
         "H-01",
         "C-08"
+      ],
+      "session": "Unidad 10: Evaluación del Trade-off Sesgo-Varianza en Estimadores Contraídos",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 10
+        }
       ]
     },
     {
@@ -227,6 +376,13 @@
       "prerequisites": [
         "C-07",
         "C-08"
+      ],
+      "session": "Unidad 11: Corrección de Bessel y Cuasivarianza Muestral Insesgada",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 11
+        }
       ]
     },
     {
@@ -238,6 +394,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-07"
+      ],
+      "session": "Unidad 13: Axiomática de Kolmogorov y Álgebra de Eventos",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 13
+        }
       ]
     },
     {
@@ -249,6 +412,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-06"
+      ],
+      "session": "Unidad 15: Variable Aleatoria como Función Medible y Distribución Inducida",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 15
+        }
       ]
     },
     {
@@ -260,6 +430,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-10"
+      ],
+      "session": "Unidad 18: Cálculo de Esperanza y Varianza Teórica mediante Momentos",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 18
+        }
       ]
     },
     {
@@ -272,6 +449,13 @@
       "prerequisites": [
         "C-07",
         "C-10"
+      ],
+      "session": "Unidad 19: Sucesiones de Variables Aleatorias y Comportamiento Asintótico",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 19
+        }
       ]
     },
     {
@@ -283,6 +467,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-11"
+      ],
+      "session": "Unidad 21: Cota Superior de la Desigualdad de Markov",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 21
+        }
       ]
     },
     {
@@ -294,6 +485,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-07"
+      ],
+      "session": "Unidad 23: Cálculo de Cotas de Desviación con la Desigualdad de Chebyshev",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 23
+        }
       ]
     },
     {
@@ -305,6 +503,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 29: Demostración de Consistencia Mediante Descomposición del Error Cuadrático Medio",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 29
+        }
       ]
     },
     {
@@ -316,6 +521,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-10"
+      ],
+      "session": "Unidad 31: Ortogonalidad Teórica entre Insesgadez Muestral y Consistencia Asintótica",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 31
+        }
       ]
     },
     {
@@ -327,6 +539,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 33: Convergencia Casi Segura sobre Espacios de Trayectorias Muestrales",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 33
+        }
       ]
     },
     {
@@ -338,6 +557,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 35: Convergencia en Distribución y Comportamiento Asintótico de Funciones Acumuladas",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 35
+        }
       ]
     },
     {
@@ -349,6 +575,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 40: Ley de los Grandes Números y Convergencia en Probabilidad del Promedio",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 40
+        }
       ]
     },
     {
@@ -360,6 +593,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-18"
+      ],
+      "session": "Unidad 42: Teorema Central del Límite y Distribución Asintótica de la Media",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 42
+        }
       ]
     },
     {
@@ -371,6 +611,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-19"
+      ],
+      "session": "Unidad 44: Inferencia Asintótica e Intervalos de Confianza para Proporciones Muestrales",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 44
+        }
       ]
     },
     {
@@ -382,6 +629,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-18"
+      ],
+      "session": "Unidad 46: Teorema de la Aplicación Continua y Preservación de Límites no Lineales",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 46
+        }
       ]
     },
     {
@@ -393,6 +647,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-18"
+      ],
+      "session": "Unidad 48: Expresión Formal del Teorema de Slutsky",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 48
+        }
       ]
     },
     {
@@ -405,6 +666,13 @@
       "prerequisites": [
         "C-19",
         "C-20"
+      ],
+      "session": "Unidad 50: Expresión Formal y Factor de Corrección del Método Delta",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 50
+        }
       ]
     },
     {
@@ -416,6 +684,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-09"
+      ],
+      "session": "Unidad 51: Cálculo del Error Estándar Asintótico e Intervalos de Confianza mediante el Método Delta",
+      "evidence": [
+        {
+          "doc": "EST3_LEC07_26.2_V2.pdf",
+          "page": 51
+        }
       ]
     }
   ],

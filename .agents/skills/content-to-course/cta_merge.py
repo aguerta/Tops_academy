@@ -103,10 +103,10 @@ def jaccard_similarity(tokens_a: Set[str], tokens_b: Set[str]) -> float:
 def parse_next_ids_by_prefix(delta_info: Optional[Dict[str, Any]]) -> Dict[str, int]:
     """Parse next sequential starting counts from delta_manifest or manifest['delta'].
 
-    Returns {'H': next_h, 'C': next_c, 'Hab': next_hab}.
+    Returns {'H': next_h, 'C': next_c, 'Hab': next_hab, 'PRE': next_pre}.
     Default is 1 for all prefixes (meaning count starts at 0).
     """
-    res = {"H": 1, "C": 1, "Hab": 1}
+    res = {"H": 1, "C": 1, "Hab": 1, "PRE": 1}
     if not isinstance(delta_info, dict):
         return res
 
@@ -118,7 +118,9 @@ def parse_next_ids_by_prefix(delta_info: Optional[Dict[str, Any]]) -> Dict[str, 
 
     def _update(k: str, val: int) -> None:
         clean_k = k.rstrip("-").capitalize()
-        if clean_k in ("Fact", "H"):
+        if clean_k in ("Pre", "Prerequisite"):
+            res["PRE"] = max(res["PRE"], val)
+        elif clean_k in ("Fact", "H"):
             res["H"] = max(res["H"], val)
         elif clean_k in ("Concept", "C"):
             res["C"] = max(res["C"], val)
@@ -1098,7 +1100,8 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
                 page_int = int(m.group(0)) if m else 0
 
             c["_part_key"] = stem
-            c["_sort_key"] = (sp_idx, f_idx, page_int, orig_idx)
+            is_pre = bool(c.get("is_prerequisite")) or str(c.get("id", "")).upper().startswith("PRE-")
+            c["_sort_key"] = (0 if is_pre else 1, sp_idx, f_idx, page_int, orig_idx)
             combined_competencies.append(c)
 
     if not combined_competencies:
@@ -1179,7 +1182,12 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
 
         reordered_competencies.extend([part_comps[i] for i in visited_indices])
 
-    combined_competencies = reordered_competencies
+    def _is_pre_comp(c: Dict[str, Any]) -> bool:
+        return bool(c.get("is_prerequisite")) or str(c.get("id", "")).upper().startswith("PRE-")
+
+    combined_competencies = [c for c in reordered_competencies if _is_pre_comp(c)] + [
+        c for c in reordered_competencies if not _is_pre_comp(c)
+    ]
 
     # Sanitize and normalize orphan LaTeX math in all competencies and distractors
     for comp in combined_competencies:
@@ -1210,6 +1218,7 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         existing_comp_ids.update(manifest_data.get("existing_competency_ids", []))
 
     next_counts = parse_next_ids_by_prefix(delta_info)
+    pre_count = max(0, next_counts.get("PRE", 1) - 1)
     fact_count = max(0, next_counts["H"] - 1)
     concept_count = max(0, next_counts["C"] - 1)
     skill_count = max(0, next_counts["Hab"] - 1)
@@ -1226,7 +1235,12 @@ def merge_cta_parts(work_dir: Union[str, Path]) -> Dict[str, Any]:
         old_cid = comp.get("id", "")
         ctype = comp.get("type", "").lower()
 
-        if ctype == "fact":
+        if _is_pre_comp(comp):
+            pre_count += 1
+            new_cid = f"PRE-{pre_count:02d}"
+            prefix = f"PRE{pre_count:02d}"
+            comp["is_prerequisite"] = True
+        elif ctype == "fact":
             fact_count += 1
             new_cid = f"H-{fact_count:02d}"
             prefix = f"H{fact_count:02d}"

@@ -269,6 +269,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             const compMastery = mastery?.competencies?.[unit.id];
             const isCompleted = isUnitCompleted(compMastery);
             const isInProgress = !isCompleted && isUnitStarted(compMastery);
+            const isPrereq = unit.is_prerequisite === true || unit.id.startsWith('PRE-');
+            const firstEvidence = unit.evidence?.[0];
+            const rawDoc = firstEvidence?.doc || firstEvidence?.pdf;
+            const docName = rawDoc ? rawDoc.split(/[\\/]/).pop() || rawDoc : undefined;
+            const docPage = firstEvidence?.page ?? firstEvidence?.slide ?? firstEvidence?.pages?.[0];
 
             return (
               <button
@@ -286,9 +291,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between gap-1.5 min-w-0">
-                  <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-                    UNIT {idx + 1}
-                  </span>
+                  <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                    <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">
+                      UNIT {idx + 1}
+                    </span>
+                    {isPrereq && (
+                      <span
+                        data-testid={`sidebar-prereq-badge-${unit.id}`}
+                        className="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300 shrink-0"
+                      >
+                        PRE • Get Ready
+                      </span>
+                    )}
+                  </div>
                   {isCompleted ? (
                     <span
                       data-testid={`sidebar-unit-status-${unit.id}`}
@@ -312,6 +327,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <MathText text={unit.name} inline />
                 </span>
+                {firstEvidence && (
+                  <span className="text-[10px] text-slate-500 mt-0.5 block max-w-full truncate">
+                    📄 {docName || 'Doc'}
+                    {docPage !== undefined ? ` • pág. ${docPage}` : ''}
+                  </span>
+                )}
               </button>
             );
           })}

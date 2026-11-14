@@ -15,7 +15,14 @@
       "category": "Fact",
       "description": "La función de producción agregada $Q = F(K, L)$ satisface rendimientos constantes a escala $F(\\mu K, \\mu L) = \\mu F(K, L)$, productos marginales positivos $F_K > 0, F_L > 0$ y rendimientos marginales decrecientes $F_{KK} < 0, F_{LL} < 0$.",
       "mastery_target": 100,
-      "prerequisites": []
+      "prerequisites": [],
+      "session": "Unidad 2: Propiedades de la Función de Producción Neoclásica",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 2
+        }
+      ]
     },
     {
       "id": "C-01",
@@ -26,6 +33,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-01"
+      ],
+      "session": "Unidad 2: Forma Intensiva de la Función de Producción",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 2
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C01-01",
+          "statement_latex": "Homogeneidad de grado 1 en la función agregada $F(\\mu K, \\mu L) = \\mu F(K, L)$",
+          "violation_consequence": "Sin rendimientos constantes a escala la función no puede reducirse a una única variable intensiva de capital por trabajador."
+        }
       ]
     },
     {
@@ -37,6 +58,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-01"
+      ],
+      "session": "Unidad 2: Ecuaciones de Comportamiento del Ahorro y la Fuerza Laboral",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 2
+        }
       ]
     },
     {
@@ -49,6 +77,20 @@
       "prerequisites": [
         "C-01",
         "H-02"
+      ],
+      "session": "Unidad 3: Derivación de la Ecuación Fundamental de Acumulación de Capital",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 3
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab01-01",
+          "statement_latex": "Diferenciabilidad continua de las trayectorias temporales $K(t)$ y $L(t)$",
+          "violation_consequence": "Si las trayectorias de capital o mano de obra presentan saltos discretos, no es aplicable el cálculo diferencial en tiempo continuo."
+        }
       ]
     },
     {
@@ -60,6 +102,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-01"
+      ],
+      "session": "Unidad 3: Existencia y Estabilidad Dinámica del Estado Estacionario",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 3
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C02-01",
+          "statement_latex": "Condiciones de Inada estándar $\\lim_{k \\to 0} \\phi'(k) = \\infty$ y $\\lim_{k \\to \\infty} \\phi'(k) = 0$",
+          "violation_consequence": "Garantizan que la curva de ahorro corte a la recta de dilución en un único punto interior estrictamente positivo y globalmente estable."
+        }
       ]
     },
     {
@@ -71,6 +127,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 4: Propiedades del Crecimiento en Estado Uniforme",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 4
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C03-01",
+          "statement_latex": "Crecimiento exógeno e invariable de la fuerza laboral a tasa $\\lambda > 0$",
+          "violation_consequence": "Si la fuerza de trabajo no se expande a una tasa exponencial constante, el estado uniforme deja de presentar tasas idénticas de crecimiento."
+        }
       ]
     },
     {
@@ -83,6 +153,20 @@
       "prerequisites": [
         "Hab-01",
         "C-02"
+      ],
+      "session": "Unidad 4: Resolución de la Ecuación de Bernoulli para Cobb-Douglas",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 4
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab02-01",
+          "statement_latex": "Elasticidad del capital acotada en el intervalo abierto $0 < \\alpha < 1$",
+          "violation_consequence": "Si $\\alpha = 1$, la ecuación diferencial no exhibe rendimientos decrecientes y no converge a un estado estacionario estable."
+        }
       ]
     },
     {
@@ -94,6 +178,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 2: Crítica Teórica a la Hipótesis del Filo de Navaja de Harrod-Domar",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 2
+        }
       ]
     },
     {
@@ -105,6 +196,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-03"
+      ],
+      "session": "Unidad 10: Dinámica con Proporciones Fijas en la Formulación de Solow",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 10
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C04-01",
+          "statement_latex": "Tecnología Leontief con elasticidad de sustitución factorial nula $\\sigma = 0$",
+          "violation_consequence": "La rigidez absoluta de los coeficientes de producción impide cualquier adaptación marginal de las técnicas productivas ante escasez factorial."
+        }
       ]
     },
     {
@@ -117,6 +222,20 @@
       "prerequisites": [
         "C-02",
         "C-04"
+      ],
+      "session": "Unidad 8: Análisis de Estabilidad con Múltiples Estados Estacionarios",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 8
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab03-01",
+          "statement_latex": "No monotonía en la curvatura de la productividad marginal con zonas de convexidad local",
+          "violation_consequence": "La presencia de múltiples estados estacionarios requiere que la función intensiva no sea cóncava en todo su dominio de definición."
+        }
       ]
     },
     {
@@ -129,6 +248,20 @@
       "prerequisites": [
         "Hab-01",
         "C-02"
+      ],
+      "session": "Unidad 14: Evaluación del Régimen de Crecimiento en Tecnología CES Cuadrática",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 14
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab04-01",
+          "statement_latex": "Elasticidad de sustitución entre capital y trabajo estrictamente mayor que la unidad con parámetro $p = 1/2$",
+          "violation_consequence": "Permite que la productividad marginal del capital permanezca acotada inferiormente por una constante positiva cuando $r$ tiende a infinito."
+        }
       ]
     },
     {
@@ -140,6 +273,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-03"
+      ],
+      "session": "Unidad 17: Condición de No Arbitraje de Activos de Capital y Tasa de Interés",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 17
+        }
       ]
     },
     {
@@ -152,6 +292,20 @@
       "prerequisites": [
         "H-04",
         "C-01"
+      ],
+      "session": "Unidad 16: Ajuste de Precios Factoriales y Pleno Empleo Continuo",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 16
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C05-01",
+          "statement_latex": "Mercados de bienes y factores perfectamente competitivos con ajuste instantáneo de precios",
+          "violation_consequence": "Si existen rigideces salariales o poder de mercado monopólico, las productividades marginales dejan de igualar los precios reales de los factores."
+        }
       ]
     },
     {
@@ -164,6 +318,20 @@
       "prerequisites": [
         "Hab-02",
         "C-03"
+      ],
+      "session": "Unidad 22: Dinámica con Progreso Técnico Neutral en el Sentido de Hicks",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 22
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab05-01",
+          "statement_latex": "Progreso técnico neutral en el sentido de Hicks a tasa exponencial exógena constante $A(t) = e^{gt}$",
+          "violation_consequence": "Si el avance técnico se desacelera o favorece asimétricamente a un factor, la tasa de crecimiento de largo plazo no permanece constante."
+        }
       ]
     },
     {
@@ -176,6 +344,20 @@
       "prerequisites": [
         "C-05",
         "Hab-05"
+      ],
+      "session": "Unidad 25: Tasa de Ahorro Endógena y Efectos de la Política Tributaria",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 25
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C06-01",
+          "statement_latex": "Comportamiento monótono no creciente de la propensión al ahorro respecto a la relación capital-trabajo $s'(r) \\le 0$",
+          "violation_consequence": "Asegura que aumentos en la dotación de capital no generen espirales desestabilizadoras de sobreacumulación incontrolada."
+        }
       ]
     }
   ],

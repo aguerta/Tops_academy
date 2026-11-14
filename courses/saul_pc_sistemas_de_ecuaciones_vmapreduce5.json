@@ -15,7 +15,14 @@
       "category": "Fact",
       "description": "Un sistema de EDO relaciona una variable independiente $t$ con varias funciones dependientes $y_1(t), \\dots, y_m(t)$ y sus derivadas hasta el orden $n$, donde el orden del sistema queda determinado por la derivada más elevada presente en el conjunto de ecuaciones.",
       "mastery_target": 100,
-      "prerequisites": []
+      "prerequisites": [],
+      "session": "Unidad 4: Definición y orden de un sistema de ecuaciones diferenciales ordinarias",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 4
+        }
+      ]
     },
     {
       "id": "C-01",
@@ -26,6 +33,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-01"
+      ],
+      "session": "Unidad 5: Representación matricial de sistemas de EDO lineales",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 5
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C01-01",
+          "statement_latex": "La matriz de coeficientes $A$ es constante en el tiempo $t$",
+          "violation_consequence": "Si los coeficientes varían en el tiempo, el sistema lineal deja de ser autónomo y su análisis requiere matrices fundamentales dependientes de $t$."
+        }
       ]
     },
     {
@@ -37,6 +58,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-01"
+      ],
+      "session": "Unidad 6: Ecuación característica y espectro de autovalores",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 6
+        }
       ]
     },
     {
@@ -49,6 +77,20 @@
       "prerequisites": [
         "C-01",
         "H-02"
+      ],
+      "session": "Unidad 7: Principio de superposición y soluciones elementales de sistemas homogéneos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 7
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C02-01",
+          "statement_latex": "El conjunto de soluciones $\\{X_1(t), \\dots, X_n(t)\\}$ es linealmente independiente",
+          "violation_consequence": "Si las soluciones son linealmente dependientes, la combinación lineal no genera el espacio completo de soluciones de dimensión $n$."
+        }
       ]
     },
     {
@@ -60,6 +102,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-02"
+      ],
+      "session": "Unidad 8: Ecuación característica bidimensional mediante traza y determinante",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 8
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C03-01",
+          "statement_latex": "La dimensión del sistema es estrictamente $2 \\times 2$",
+          "violation_consequence": "Para dimensiones $n \\ge 3$, el polinomio característico involucra invariantes algebraicos adicionales de orden intermedio."
+        }
       ]
     },
     {
@@ -72,6 +128,20 @@
       "prerequisites": [
         "C-02",
         "C-03"
+      ],
+      "session": "Unidad 9: Resolución de sistemas homogéneos con autovalores reales y distintos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 9
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab01-01",
+          "statement_latex": "El discriminante del polinomio característico es estrictamente positivo: $\\Delta > 0$",
+          "violation_consequence": "Si $\\Delta \\le 0$, los autovalores son repetidos o complejos conjugados y la estructura de la base de soluciones cambia por completo."
+        }
       ]
     },
     {
@@ -84,6 +154,20 @@
       "prerequisites": [
         "C-02",
         "C-03"
+      ],
+      "session": "Unidad 10: Resolución de sistemas homogéneos con autovalores complejos conjugados",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 10
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab02-01",
+          "statement_latex": "La parte imaginaria de los autovalores es no nula: $b \\neq 0$",
+          "violation_consequence": "Si $b = 0$, los autovalores son reales y no exhiben dinámica oscilatoria o trigonométrica."
+        }
       ]
     },
     {
@@ -96,6 +180,20 @@
       "prerequisites": [
         "C-02",
         "C-03"
+      ],
+      "session": "Unidad 11: Resolución de sistemas con autovalores repetidos y autovector generalizado",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 11
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab03-01",
+          "statement_latex": "La multiplicidad geométrica del autovalor es deficiente: $\\dim(\\ker(A - \\lambda_1 I)) = 1$",
+          "violation_consequence": "Si la matriz es diagonalizable con multiplicidad geométrica dos, no se requiere autovector generalizado ni término secular lineal $t$."
+        }
       ]
     },
     {
@@ -108,6 +206,20 @@
       "prerequisites": [
         "C-01",
         "Hab-01"
+      ],
+      "session": "Unidad 12: Estructura de la solución general en sistemas no homogéneos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 12
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C04-01",
+          "statement_latex": "El término forzante $B(t)$ es continuo en el intervalo de definición",
+          "violation_consequence": "Si $B(t)$ presenta discontinuidades, la solución particular debe construirse por tramos o mediante análisis distribucional."
+        }
       ]
     },
     {
@@ -119,6 +231,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-04"
+      ],
+      "session": "Unidad 12: Determinación de soluciones particulares en sistemas lineales no homogéneos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 12
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab04-01",
+          "statement_latex": "Para término constante $B$, la matriz $A$ es invertible: $\\det(A) \\neq 0$",
+          "violation_consequence": "Si $A$ es singular, no existe un punto de equilibrio constante único mediante $-A^{-1}B$ y se requiere una forma cuadrática o secular."
+        }
       ]
     },
     {
@@ -130,6 +256,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-01"
+      ],
+      "session": "Unidad 13: Linealización de sistemas no lineales autónomos en puntos de equilibrio",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 13
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C05-01",
+          "statement_latex": "Las funciones del campo vectorial son continuamente diferenciables: $f, g \\in C^1$",
+          "violation_consequence": "Si el campo vectorial carece de derivadas parciales continuas en el entorno de $X^*$, no es válida la expansión de Taylor ni la matriz jacobiana."
+        }
       ]
     },
     {
@@ -141,6 +281,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-05"
+      ],
+      "session": "Unidad 14: Cálculo de equilibrios y construcción del sistema jacobiano linealizado",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 14
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab05-01",
+          "statement_latex": "El punto considerado satisface rigurosamente las condiciones de estado estacionario $f(x^*, y^*) = 0$ y $g(x^*, y^*) = 0$",
+          "violation_consequence": "Si se evalúa en un punto donde las derivadas temporales no son cero, el término constante de orden cero no se anula y la linealización local estándar queda desfasada."
+        }
       ]
     },
     {
@@ -152,6 +306,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-01"
+      ],
+      "session": "Unidad 3: Estructura del Modelo de Inflación-Desempleo con Expectativas Adaptativas",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -163,6 +324,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-03"
+      ],
+      "session": "Unidad 3: Linealización y Análisis de Estabilidad del Modelo Inflación-Desempleo",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 3
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab06-01",
+          "statement_latex": "Parámetros estructurales estrictamente positivos $k, \\beta > 0$ y $0 < j, g \\le 1$",
+          "violation_consequence": "Si los parámetros cambian de signo, la traza y el determinante alteran la estabilidad del sistema."
+        }
       ]
     },
     {
@@ -174,6 +349,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-03"
+      ],
+      "session": "Unidad 4: Ajuste Dinámico y Equilibrio en el Modelo IS-LM Dinámico",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 4
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C06-01",
+          "statement_latex": "Propensión marginal a consumir $0 < c < 1$ e impuestos $0 < \\tau < 1$",
+          "violation_consequence": "Garantiza que la pendiente del gasto efectivo respecto a la producción sea menor que uno, asegurando estabilidad."
+        }
       ]
     },
     {
@@ -185,6 +374,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-06"
+      ],
+      "session": "Unidad 5: Determinación del Estado Estacionario y Raíces Características en el Modelo IS-LM Dinámico",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 5
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab07-01",
+          "statement_latex": "Determinante de la matriz de coeficientes no nulo $\\det(A) \\ne 0$",
+          "violation_consequence": "Si el determinante es cero, el sistema no posee un punto de equilibrio macroeconómico único."
+        }
       ]
     },
     {
@@ -196,6 +399,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-06"
+      ],
+      "session": "Unidad 6: Modelo Básico de Macroeconomía Dinámica con Previsión Perfecta",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 6
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C07-01",
+          "statement_latex": "Previsión perfecta de los agentes $\\dot{p}^e_t = \\dot{p}_t$",
+          "violation_consequence": "Si las expectativas no son racionales o perfectas, la matriz del sistema cambia su estructura de coeficientes y dimensiones."
+        }
       ]
     },
     {
@@ -207,6 +424,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-07"
+      ],
+      "session": "Unidad 7: Cálculo de la Solución de Largo Plazo y Ecuación Característica Macrodinámica",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 7
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab08-01",
+          "statement_latex": "Parámetros estructurales $\\beta_1, \\theta > 0$",
+          "violation_consequence": "Si $\\beta_1=0$, la demanda agregada es insensible a la tasa de interés real, invalidando la inversión de la matriz."
+        }
       ]
     },
     {
@@ -218,6 +449,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-06"
+      ],
+      "session": "Unidad 8: Modelo No Lineal de Producción y Polución Acumulada",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 8
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C08-01",
+          "statement_latex": "Rendimientos decrecientes del capital $0 < \\alpha < 1$ y tasa de depreciación $\\delta > 0$",
+          "violation_consequence": "Si $\\alpha \\ge 1$, el capital no converge a un estado estacionario interior $K^* > 0$."
+        }
       ]
     },
     {
@@ -229,6 +474,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-08"
+      ],
+      "session": "Unidad 9: Linealización Jacobiana y Estabilidad Local del Sistema Capital-Polución",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 9
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab09-01",
+          "statement_latex": "Tasa de asimilación natural de polución $\\gamma > 0$ y $\\alpha < 1$",
+          "violation_consequence": "Si $\\gamma \\le 0$ o $\\alpha > 1$, los valores propios pierden su negatividad y el punto estacionario se vuelve inestable."
+        }
       ]
     },
     {
@@ -240,6 +499,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-09"
+      ],
+      "session": "Unidad 10: Modelo Depredador-Presa de Lotka-Volterra",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 10
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C09-01",
+          "statement_latex": "Parámetros de interacción $r, s, a, b > 0$",
+          "violation_consequence": "Si los parámetros cambian de signo, la relación ecológica pasa de depredación mutua a mutualismo o competencia."
+        }
       ]
     },
     {
@@ -251,6 +524,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-09"
+      ],
+      "session": "Unidad 11: Análisis Espectral de Lotka-Volterra y Órbitas Periódicas",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 11
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab10-01",
+          "statement_latex": "Traza del jacobiano nula $\\operatorname{Tr}(J^*) = 0$ y determinante positivo $\\det(J^*) = ba > 0$",
+          "violation_consequence": "Si la traza no fuera exactamente cero, el sistema generaría espirales estables o inestables en lugar de ciclos cerrados."
+        }
       ]
     },
     {
@@ -262,6 +549,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-09"
+      ],
+      "session": "Unidad 14: Fundamentos y Derivación del Modelo de Ciclos Económicos de Goodwin",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 14
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C10-01",
+          "statement_latex": "Inversión de la totalidad de los beneficios capitalistas $I = \\Pi$",
+          "violation_consequence": "Si los capitalistas consumen parte de los beneficios o los trabajadores ahorran, la tasa de acumulación del capital $\\dot{K}/K$ se altera."
+        }
       ]
     },
     {
@@ -273,6 +574,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-10"
+      ],
+      "session": "Unidad 15: Linealización y Ciclos Conservativos en el Modelo de Goodwin",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 15
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab11-01",
+          "statement_latex": "Tasa neta de crecimiento autónomo $\\gamma = \\frac{1}{\\sigma} - \\alpha - n > 0$ y $a = \\eta + \\alpha > 0$",
+          "violation_consequence": "Si $\\gamma \\le 0$, el producto por unidad de capital no alcanza para cubrir la productividad y el crecimiento poblacional, colapsando el equilibrio interior."
+        }
       ]
     },
     {
@@ -284,6 +599,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-03"
+      ],
+      "session": "Unidad 3: Punto de Equilibrio y Polinomio Característico en Sistemas 2x2",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -295,6 +617,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-04"
+      ],
+      "session": "Unidad 6: Isoclinas de Nulidad y Partición del Espacio de Estados",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 6
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C11-01",
+          "statement_latex": "Diferenciabilidad y continuidad del campo vectorial $F(X)$ en $\\mathbb{R}^2$",
+          "violation_consequence": "Si el campo no es continuo, las isoclinas no delimitan regiones abiertas conexas bien definidas."
+        }
       ]
     },
     {
@@ -306,6 +642,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-11"
+      ],
+      "session": "Unidad 6: Cálculo de Isoclinas de Nulidad y Construcción del Diagrama de Fases Vectorial",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 6
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab12-01",
+          "statement_latex": "Ecuaciones diferenciales $\\dot{x} = f(x, y)$ y $\\dot{y} = g(x, y)$ linealmente independientes",
+          "violation_consequence": "Si las ecuaciones son dependientes, las isoclinas coinciden y no dividen el plano en 4 regiones."
+        }
       ]
     },
     {
@@ -317,6 +667,25 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-04"
+      ],
+      "session": "Unidad 8: Topología del Plano Traza-Determinante y Estabilidad Dinámica",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 8
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C12-01",
+          "statement_latex": "Matriz de coeficientes $A \\in \\mathbb{R}^{2 \\times 2}$ no singular con $\\det(A) \\ne 0$",
+          "violation_consequence": "Si el determinante es cero, el equilibrio no está aislado y existe una recta continua de puntos estacionarios."
+        },
+        {
+          "id": "A-C12-02",
+          "statement_latex": "Parte real de los autovalores no nula para asegurar estabilidad hiperbólica",
+          "violation_consequence": "Si la traza es cero con determinante positivo, el sistema es un vórtice o centro no hiperbólico."
+        }
       ]
     },
     {
@@ -329,6 +698,25 @@
       "prerequisites": [
         "H-04",
         "C-12"
+      ],
+      "session": "Unidad 8: Clasificación Dinámica de Sistemas Lineales 2x2 mediante Traza y Determinante",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 8
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab13-01",
+          "statement_latex": "Sistema autónomo lineal formulado como $\\dot{X} = AX$ con coeficientes constantes",
+          "violation_consequence": "Si los coeficientes varían en el tiempo, los autovalores instantáneos no gobiernan la estabilidad global."
+        },
+        {
+          "id": "A-Hab13-02",
+          "statement_latex": "Determinante de la matriz de coeficientes no nulo $\\det(A) \\ne 0$",
+          "violation_consequence": "Si el determinante es nulo, el sistema no tiene un punto de equilibrio aislado."
+        }
       ]
     },
     {
@@ -340,6 +728,25 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-13"
+      ],
+      "session": "Unidad 13: Análisis Cualitativo de Sistemas Lineales No Homogéneos y Traslación del Equilibrio",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 13
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab14-01",
+          "statement_latex": "Matriz de coeficientes $A$ invertible con determinante no nulo $\\det(A) \\ne 0$",
+          "violation_consequence": "Si la matriz es singular, el sistema no homogéneo carece de un único punto de equilibrio estacionario."
+        },
+        {
+          "id": "A-Hab14-02",
+          "statement_latex": "Vector de términos no homogéneos $B \\in \\mathbb{R}^2$ constante en el tiempo",
+          "violation_consequence": "Si el vector $B$ depende del tiempo, el sistema no es autónomo y no admite un estado estacionario fijo."
+        }
       ]
     },
     {
@@ -351,6 +758,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-12"
+      ],
+      "session": "Unidad 26: Concepto de Isoclinas y Espacio de Fases",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 26
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C13-01",
+          "statement_latex": "Campo vectorial continuamente diferenciable $C^1$ en $\\mathbb{R}^2$",
+          "violation_consequence": "Si el campo no es $C^1$, el teorema de existencia y unicidad falla y las órbitas pueden cruzarse."
+        }
       ]
     },
     {
@@ -362,6 +783,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-13"
+      ],
+      "session": "Unidad 26: Cálculo de Isoclinas y Flujo en Sistemas Lineales",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 26
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab15-01",
+          "statement_latex": "Matriz no singular con determinante no nulo $\\det(A) \\ne 0$",
+          "violation_consequence": "Si el determinante es nulo, las isoclinas coinciden o son paralelas y no existe un punto fijo aislado."
+        }
       ]
     },
     {
@@ -373,6 +808,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-15"
+      ],
+      "session": "Unidad 20: Resolución de Isoclinas No Lineales y Puntos de Silla",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 20
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab16-01",
+          "statement_latex": "Campo no lineal diferenciable con puntos críticos aislados",
+          "violation_consequence": "Si el conjunto de equilibrios formara un continuo, la linealización estándar hiperbólica no sería aplicable."
+        }
       ]
     },
     {
@@ -384,6 +833,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-15"
+      ],
+      "session": "Unidad 29: Equilibrio y Traslación en Sistemas No Homogéneos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 29
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C14-01",
+          "statement_latex": "Vector constante independiente $\\mathbf{b} \\in \\mathbb{R}^2$ invariable en el tiempo",
+          "violation_consequence": "Si el término independiente fuera variable, el sistema sería no autónomo y el equilibrio se movería."
+        }
       ]
     },
     {
@@ -395,6 +858,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-14"
+      ],
+      "session": "Unidad 22: Estructura del Modelo Inflación-Desempleo",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 22
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C15-01",
+          "statement_latex": "Parámetros económicos positivos con expectativas restringidas: $j, k, \\beta > 0$ y $g \\le 1$",
+          "violation_consequence": "Si $g > 1$, la retroalimentación inflacionaria puede superar la amortiguación generando trayectorias divergentes."
+        }
       ]
     },
     {
@@ -406,6 +883,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-15"
+      ],
+      "session": "Unidad 22: Evaluación de Estabilidad en Inflación-Desempleo",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 22
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab17-01",
+          "statement_latex": "Criterio de Routh-Hurwitz para sistemas $2 \\times 2$: $\\text{tra}(A) < 0$ y $\\det(A) > 0$",
+          "violation_consequence": "Si el determinante no fuese positivo, los autovalores tendrían signos opuestos generando inestabilidad tipo silla."
+        }
       ]
     },
     {
@@ -417,6 +908,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-17"
+      ],
+      "session": "Unidad 25: Condiciones de Estabilidad del Modelo Macroeconómico Básico",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 25
+        }
       ]
     },
     {
@@ -428,6 +926,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-05"
+      ],
+      "session": "Unidad 27: Perturbaciones Monetarias y Trayectorias de Ajuste",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 27
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C16-01",
+          "statement_latex": "Velocidad de ajuste de precios positiva y finita $\\mu \\in (0, \\infty)$",
+          "violation_consequence": "Si el ajuste fuera instantáneo $(\\mu \\to \\infty)$, no existiría trayectoria en el plano fase y el producto no fluctuaría."
+        }
       ]
     },
     {
@@ -439,6 +951,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-16"
+      ],
+      "session": "Unidad 29: Linealización del Modelo Depredador-Presa de Lotka-Volterra",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 29
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab18-01",
+          "statement_latex": "Parámetros biológicos estrictamente positivos: $a > 0, b > 0, r > 0, s > 0$",
+          "violation_consequence": "Si alguno de los parámetros fuera nulo o negativo, las interacciones presa-depredador colapsarían."
+        }
       ]
     },
     {
@@ -450,6 +976,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-18"
+      ],
+      "session": "Unidad 29: Órbitas Cerradas y Conservación en Lotka-Volterra",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 29
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C17-01",
+          "statement_latex": "Existencia de una constante de movimiento $V(x,y) = r y - b\\ln y + s x - a\\ln x$ conservada",
+          "violation_consequence": "Sin la función de Lyapunov invariante, perturbaciones de orden superior podrían destruir las órbitas cerradas."
+        }
       ]
     },
     {
@@ -461,6 +1001,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-12"
+      ],
+      "session": "Unidad 4: Clasificación Espectral de Puntos de Equilibrio en Sistemas Bidimensionales",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 4
+        }
       ]
     },
     {
@@ -472,6 +1019,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-06"
+      ],
+      "session": "Unidad 1: Mecanismo de Ajuste Dinámico IS-LM y Sensibilidad de Inversión",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 1
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C18-01",
+          "statement_latex": "Propensión marginal a consumir menor a la unidad $0 < c(1-\\tau) < 1$",
+          "violation_consequence": "Si el multiplicador es divergente no existe estado estacionario económicamente viable."
+        }
       ]
     },
     {
@@ -483,6 +1044,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-18"
+      ],
+      "session": "Unidad 2: Resolución y Simulación Matricial del Sistema IS-LM Dinámico",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 2
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab19-01",
+          "statement_latex": "Matriz de coeficientes regular con $\\det(A) \\ne 0$",
+          "violation_consequence": "Si la matriz es singular el sistema no posee un estado estacionario aislado y único."
+        }
       ]
     },
     {
@@ -494,6 +1069,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-06"
+      ],
+      "session": "Unidad 3: Rendimientos del Conocimiento y Transición en Modelos de Crecimiento con I+D",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 3
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C19-01",
+          "statement_latex": "Condición de rendimientos no explosivos en la generación de conocimiento $\\beta + \\theta < 1$",
+          "violation_consequence": "Si no se satisface esta cota no existe un estado estacionario interior con tasas de crecimiento finitas."
+        }
       ]
     },
     {
@@ -505,6 +1094,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-19"
+      ],
+      "session": "Unidad 3: Linealización y Análisis de Estabilidad Local en Sistemas Dinámicos No Lineales",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 3
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab20-01",
+          "statement_latex": "Punto de reposo interior con tasas de crecimiento estrictamente positivas $g_A^* > 0, g_K^* > 0$",
+          "violation_consequence": "Si el estado estacionario fuera nulo la economía colapsaría a una dinámica trivial sin crecimiento."
+        }
       ]
     },
     {
@@ -516,6 +1119,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-06"
+      ],
+      "session": "Unidad 4: Propiedad de Punto Silla y Dinámica de Salto en Modelos Macroeconómicos",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 4
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C20-01",
+          "statement_latex": "Existencia de al menos una variable no predeterminada o de salto",
+          "violation_consequence": "Si ambas variables fueran rígidas o predeterminadas el sistema divergiría casi con seguridad."
+        }
       ]
     },
     {
@@ -527,6 +1144,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-20"
+      ],
+      "session": "Unidad 4: Cálculo de Ramas Invariantes y Diseño de Políticas en Sistemas con Punto Silla",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 4
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab21-01",
+          "statement_latex": "Parámetros estructurales con jerarquía $0 < \\gamma < \\theta$",
+          "violation_consequence": "Si gamma es mayor o igual a theta ambos autovalores son positivos o nulos destruyendo el punto silla."
+        }
       ]
     },
     {
@@ -538,6 +1169,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-06"
+      ],
+      "session": "Unidad 2: Estructura de Sistemas en Ecuaciones en Diferencias y Autocorrelación",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 2
+        }
       ]
     },
     {
@@ -549,6 +1187,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-07"
+      ],
+      "session": "Unidad 4: Geometría de Valores Propios Complejos y Estabilidad en el Círculo Unitario",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 4
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C21-01",
+          "statement_latex": "La matriz real de transición $A$ posee discriminante negativo $\\text{tr}(A)^2 - 4\\det(A) < 0$",
+          "violation_consequence": "Si el discriminante no es negativo, las raíces características son reales y carecen de dinámica trigonométrica."
+        }
       ]
     },
     {
@@ -560,6 +1212,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-07"
+      ],
+      "session": "Unidad 4: Resolución de Sistemas Homogéneos con Raíces Repetidas y Autovectores Generalizados",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 4
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab22-01",
+          "statement_latex": "La matriz de transición $A$ es defectiva con multiplicidad algebraica 2 y multiplicidad geométrica 1",
+          "violation_consequence": "Si la multiplicidad geométrica fuese 2, existirían dos autovectores independientes y no se requeriría autovector generalizado."
+        }
       ]
     },
     {
@@ -571,6 +1237,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-07"
+      ],
+      "session": "Unidad 5: Determinación de la Solución Particular en Sistemas No Homogéneos",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 5
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab23-01",
+          "statement_latex": "La matriz resolvente $(I - A)$ es no singular, es decir, $\\det(I - A) \\ne 0$ o $\\lambda = 1$ no es autovalor de $A$",
+          "violation_consequence": "Si la matriz es singular, el sistema presenta resonancia discreta y la solución particular no puede ser un vector constante."
+        }
       ]
     },
     {
@@ -582,6 +1262,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-21"
+      ],
+      "session": "Unidad 6: Linealización Jacobiana y Reposo Dinámico en Sistemas No Lineales",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 6
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C22-01",
+          "statement_latex": "Las funciones no lineales $f(x, y)$ y $g(x, y)$ son continuamente diferenciables de clase $C^1$ en el entorno de $X^*$",
+          "violation_consequence": "Si las funciones no son derivables continuamente, la expansión en serie de Taylor de primer orden no aproxima la dinámica local."
+        }
       ]
     },
     {
@@ -593,6 +1287,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-07"
+      ],
+      "session": "Unidad 8: Microfundamentos Dinámicos del Duopolio de Cournot y Umbral de Ajuste",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 8
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C23-01",
+          "statement_latex": "Las firmas duopolistas operan con estructuras tecnológicas simétricas $c_1 = c_2 = c$ y velocidades idénticas $d_1 = d_2 = d$",
+          "violation_consequence": "Si las velocidades de ajuste fuesen heterogéneas, los autovalores cambiarían modificando la cota superior del rango de estabilidad."
+        }
       ]
     },
     {
@@ -605,6 +1313,20 @@
       "prerequisites": [
         "Hab-23",
         "C-23"
+      ],
+      "session": "Unidad 12: Modelización de Sistemas Acoplados: Insumo-Producto de Leontief y Modelo de la Telaraña",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 12
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab24-01",
+          "statement_latex": "El mercado del insumo maíz opera con oferta rezagada mientras que la oferta de cerdos internaliza el precio de ayer del insumo",
+          "violation_consequence": "Si el precio del insumo afectara la demanda en lugar de la oferta, la matriz de transición perdería su estructura triangular inferior."
+        }
       ]
     },
     {
@@ -616,6 +1338,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-07"
+      ],
+      "session": "Unidad 3: Ecuación y Solución Fundamental del Sistema de EED Lineal Homogéneo",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -627,6 +1356,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-08"
+      ],
+      "session": "Unidad 4: Casos de Solución General de Sistemas Lineales según la Naturaleza de los Valores Propios",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 4
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C24-01",
+          "statement_latex": "La matriz $A$ es de orden $2 \\times 2$ con coeficientes reales constantes",
+          "violation_consequence": "Si la matriz tiene orden superior, la estructura de la solución se amplía mediante bloques de Jordan para cada subespacio invariante."
+        }
       ]
     },
     {
@@ -638,6 +1381,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-24"
+      ],
+      "session": "Unidad 7: Resolución de Sistemas de EED No Homogéneos con Vector Constante",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 7
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab25-01",
+          "statement_latex": "La matriz $(I - A)$ es regular, es decir, $\\det(I - A) \\neq 0$",
+          "violation_consequence": "Si $(I - A)$ es singular, el sistema no admite un equilibrio constante único y se debe ensayar un ansatz dependiente de $t$."
+        }
       ]
     },
     {
@@ -649,6 +1406,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-08"
+      ],
+      "session": "Unidad 8: Linealización Local y Matriz Jacobiana de Sistemas Discretos No Lineales",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 8
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C25-01",
+          "statement_latex": "Las funciones $f$ y $g$ poseen derivadas parciales continuas ($f, g \\in C^1$)",
+          "violation_consequence": "Si las derivadas no son continuas, la aproximación de primer orden de Taylor pierde validez formal y no garantiza la aproximación asintótica."
+        }
       ]
     },
     {
@@ -660,6 +1431,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-25"
+      ],
+      "session": "Unidad 10: Cálculo de Puntos de Equilibrio y Matriz Jacobiana en Sistemas de EED",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 10
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab26-01",
+          "statement_latex": "El sistema dinámico se evalúa en el entorno hiperbólico de cada punto fijo aislado",
+          "violation_consequence": "Si un punto de equilibrio no es hiperbólico, la linealización jacobiana no garantiza describir fielmente la estabilidad local del sistema original."
+        }
       ]
     },
     {
@@ -671,6 +1456,21 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-24"
+      ],
+      "session": "Unidad 11: Clasificación Cualitativa de Estabilidad en EED según Valores Propios y Polinomio Característico",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 11
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C26-01",
+          "statement_latex": "Los autovalores satisfacen el principio de hiperbolicidad $",
+          "violation_consequence": "\\lambda_i",
+          "role_in_proof": "\\neq 1$"
+        }
       ]
     },
     {
@@ -683,6 +1483,20 @@
       "prerequisites": [
         "C-26",
         "Hab-25"
+      ],
+      "session": "Unidad 13: Modelización y Estabilidad Dinámica del Duopolio de Cournot en Tiempo Discreto",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 13
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab27-01",
+          "statement_latex": "Las velocidades de ajuste satisfacen $d_1 = d_2 = d > 0$ con costos marginales constantes",
+          "violation_consequence": "Si las velocidades de ajuste difieren entre empresas, los valores propios se modifican y el umbral de estabilidad depende de la media geométrica de las velocidades."
+        }
       ]
     }
   ],

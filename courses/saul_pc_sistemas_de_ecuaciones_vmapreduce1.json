@@ -15,7 +15,14 @@
       "category": "Concept",
       "description": "Un sistema de ecuaciones diferenciales ordinarias relaciona una variable independiente $t$ con varias variables dependientes $y_1(t), \\dots, y_m(t)$ y sus derivadas. El orden del sistema viene determinado por la derivada de mayor orden que figure en cualquiera de sus ecuaciones constituyentes.",
       "mastery_target": 100,
-      "prerequisites": []
+      "prerequisites": [],
+      "session": "Unidad 4: Definición y Orden de un Sistema de EDOs",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 4
+        }
+      ]
     },
     {
       "id": "C-02",
@@ -26,6 +33,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-01"
+      ],
+      "session": "Unidad 5: Representación Matricial y Principio de Superposición en Sistemas Lineales",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 5
+        }
       ]
     },
     {
@@ -37,6 +51,17 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 8: Polinomio Característico mediante Enfoque Traza-Determinante",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 8
+        },
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 7
+        }
       ]
     },
     {
@@ -48,6 +73,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-01"
+      ],
+      "session": "Unidad 9: Estructura de la Solución con Autovalores Reales y Distintos (Caso I)",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 9
+        }
       ]
     },
     {
@@ -59,6 +91,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-03"
+      ],
+      "session": "Unidad 9: Resolución de Sistemas Lineales con Autovalores Reales y Distintos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 9
+        }
       ]
     },
     {
@@ -70,6 +109,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-01"
+      ],
+      "session": "Unidad 10: Estructura de la Solución con Autovalores Complejos Conjugados (Caso II)",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 10
+        }
       ]
     },
     {
@@ -81,6 +127,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-04"
+      ],
+      "session": "Unidad 10: Resolución de Sistemas Lineales con Autovalores Complejos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 10
+        }
       ]
     },
     {
@@ -92,6 +145,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-01"
+      ],
+      "session": "Unidad 11: Autovalores Reales Repetidos y Autovectores Generalizados (Caso III)",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 11
+        }
       ]
     },
     {
@@ -103,6 +163,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-05"
+      ],
+      "session": "Unidad 11: Resolución de Sistemas Lineales con Autovalores Repetidos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 11
+        }
       ]
     },
     {
@@ -114,6 +181,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-03"
+      ],
+      "session": "Unidad 12: Estructura de la Solución de Sistemas No Homogéneos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 12
+        }
       ]
     },
     {
@@ -125,6 +199,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-06"
+      ],
+      "session": "Unidad 12: Cálculo de la Solución Particular mediante Coeficientes Indeterminados",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 12
+        }
       ]
     },
     {
@@ -136,6 +217,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 13: Linealización de Sistemas Autónomos No Lineales mediante Jacobiano",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 13
+        }
       ]
     },
     {
@@ -147,6 +235,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-07"
+      ],
+      "session": "Unidad 14: Linealización Local alrededor de un Punto de Equilibrio",
+      "evidence": [
+        {
+          "doc": "TEMA 2.1 (S'EDOS I ).pdf",
+          "page": 14
+        }
       ]
     },
     {
@@ -158,6 +253,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-05"
+      ],
+      "session": "Unidad 3: Sistemas Lineales y Linealizados de EDOs en Modelación Económica",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -169,6 +271,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-08"
+      ],
+      "session": "Unidad 3: Ecuaciones Estructurales del Modelo Inflación-Desempleo",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -180,6 +289,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-02"
+      ],
+      "session": "Unidad 3: Resolución y Caracterización Dinámica del Sistema Inflación-Desempleo",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -191,6 +307,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-08"
+      ],
+      "session": "Unidad 4: Mecanismo de Desequilibrio IS-LM Dinámico Continuo",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 4
+        }
       ]
     },
     {
@@ -202,6 +325,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-09"
+      ],
+      "session": "Unidad 5: Construcción y Análisis de Estabilidad del Sistema IS-LM Dinámico",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 5
+        }
       ]
     },
     {
@@ -213,6 +343,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-08"
+      ],
+      "session": "Unidad 6: Macroeconomía Dinámica con Previsión Perfecta y Demanda Agregada",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 6
+        }
       ]
     },
     {
@@ -224,6 +361,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-08"
+      ],
+      "session": "Unidad 8: Linealización y Análisis Asintótico del Modelo Producción-Polución",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 8
+        }
       ]
     },
     {
@@ -235,6 +379,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-08"
+      ],
+      "session": "Unidad 10: Modelo Depredador-Presa de Lotka-Volterra y Centro Neutro",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 10
+        }
       ]
     },
     {
@@ -246,6 +397,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-11"
+      ],
+      "session": "Unidad 14: Derivación y Caracterización del Ciclo Distributivo de Goodwin",
+      "evidence": [
+        {
+          "doc": "TEMA 2.2 (APLICACIONES ECONOMICAS).pdf",
+          "page": 14
+        }
       ]
     },
     {
@@ -257,6 +415,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-09"
+      ],
+      "session": "Unidad 3: Definición y Condición de Punto de Equilibrio en Sistemas Autónomos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -268,6 +433,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-03"
+      ],
+      "session": "Unidad 6: Isoclinas Nulas y Pendiente del Campo de Direcciones en el Plano de Fases",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 6
+        }
       ]
     },
     {
@@ -280,6 +452,13 @@
       "prerequisites": [
         "H-01",
         "C-12"
+      ],
+      "session": "Unidad 8: Criterio Cualitativo de Clasificación de Puntos de Equilibrio en el Plano Traza-Determinante",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 8
+        }
       ]
     },
     {
@@ -291,6 +470,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-13"
+      ],
+      "session": "Unidad 10: Clasificación de Sistemas Lineales 2x2 mediante Traza, Determinante y Autovalores",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 10
+        }
       ]
     },
     {
@@ -302,6 +488,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-10"
+      ],
+      "session": "Unidad 13: Cálculo y Análisis de Equilibrio en Sistemas Lineales No Homogéneos 2x2",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 13
+        }
       ]
     },
     {
@@ -313,6 +506,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-12"
+      ],
+      "session": "Unidad 26: Ecuaciones de Isoclinas de Sistemas Dinámicos Planos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 26
+        }
       ]
     },
     {
@@ -324,6 +524,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-05"
+      ],
+      "session": "Unidad 20: Isoclinas No Lineales y Múltiples Puntos de Equilibrio",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 20
+        }
       ]
     },
     {
@@ -335,6 +542,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-05"
+      ],
+      "session": "Unidad 27: Espacio de Fases y Análisis Cualitativo por Isoclinas",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 27
+        }
       ]
     },
     {
@@ -346,6 +560,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-15"
+      ],
+      "session": "Unidad 22: Estabilidad en el Modelo Macroeconómico de Inflación y Desempleo",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 22
+        }
       ]
     },
     {
@@ -357,6 +578,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-15"
+      ],
+      "session": "Unidad 29: Determinación de Isoclinas y Punto de Equilibrio en Sistemas Lineales No Homogéneos",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 29
+        }
       ]
     },
     {
@@ -369,6 +597,13 @@
       "prerequisites": [
         "Hab-12",
         "C-16"
+      ],
+      "session": "Unidad 25: Derivación del Equilibrio e Isoclinas en Macroeconomía Dinámica",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 25
+        }
       ]
     },
     {
@@ -380,6 +615,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-15"
+      ],
+      "session": "Unidad 29: Condición de Centro y Conservación en el Modelo de Lotka-Volterra",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 29
+        }
       ]
     },
     {
@@ -392,6 +634,13 @@
       "prerequisites": [
         "H-06",
         "Hab-12"
+      ],
+      "session": "Unidad 29: Linealización y Clasificación del Equilibrio en Sistemas Depredador-Presa",
+      "evidence": [
+        {
+          "doc": "TEMA 2.3 (S'EDOS II).pdf",
+          "page": 29
+        }
       ]
     },
     {
@@ -403,6 +652,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-13"
+      ],
+      "session": "Unidad 1: Representación Matricial y Estado Estacionario en Sistemas Macroeconómicos Continuos",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 1
+        }
       ]
     },
     {
@@ -414,6 +670,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-17"
+      ],
+      "session": "Unidad 2: Resolución y Análisis de Trayectorias en el Modelo IS-LM Dinámico ante Shocks Estructurales",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 2
+        }
       ]
     },
     {
@@ -425,6 +688,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-17"
+      ],
+      "session": "Unidad 3: Derivación de Ecuaciones de Crecimiento, Linealización y Estabilidad en Modelos de I+D",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -436,6 +706,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-17"
+      ],
+      "session": "Unidad 4: Condición Espectral de Estabilidad Tipo Punto Silla en Sistemas Dinámicos Planos",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 4
+        }
       ]
     },
     {
@@ -447,6 +724,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-07"
+      ],
+      "session": "Unidad 4: Variedades Invariantes y Ajuste Discreto de Política en la Dinámica de la Inflación",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 4
+        }
       ]
     },
     {
@@ -458,6 +742,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-16"
+      ],
+      "session": "Unidad 5: Clasificación Cualitativa, Bifurcaciones y Cuencas de Atracción en Sistemas Competitivos No Lineales",
+      "evidence": [
+        {
+          "doc": "Tema 2.4 MATH_IV_Problem_Set_III_2026_II.pdf",
+          "page": 5
+        }
       ]
     },
     {
@@ -469,6 +760,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-17"
+      ],
+      "session": "Unidad 3: Ecuación Característica en Sistemas Discretos de Segundo Orden",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -480,6 +778,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-08"
+      ],
+      "session": "Unidad 4: Geometría Polar y Dinámica de Autovalores Complejos",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 4
+        }
       ]
     },
     {
@@ -491,6 +796,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-08"
+      ],
+      "session": "Unidad 4: Cálculo de Autovectores Generalizados en Sistemas con Raíces Repetidas",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 4
+        }
       ]
     },
     {
@@ -502,6 +814,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-08"
+      ],
+      "session": "Unidad 5: Solución Particular por Coeficientes Indeterminados con Forzamiento Exponencial",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 5
+        }
       ]
     },
     {
@@ -514,6 +833,13 @@
       "prerequisites": [
         "C-19",
         "Hab-18"
+      ],
+      "session": "Unidad 7: Estado Estacionario y Criterio del Círculo Unitario en Sistemas Discretos",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 7
+        }
       ]
     },
     {
@@ -525,6 +851,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-20"
+      ],
+      "session": "Unidad 8: Dinámica de Ajuste Parcial y Convergencia en el Duopolio de Cournot",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 8
+        }
       ]
     },
     {
@@ -536,6 +869,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-19"
+      ],
+      "session": "Unidad 10: Estructura del Modelo Dinámico de Insumo-Producto de Leontief",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 10
+        }
       ]
     },
     {
@@ -548,6 +888,13 @@
       "prerequisites": [
         "H-09",
         "C-20"
+      ],
+      "session": "Unidad 12: Modelación y Estabilidad de Mercados Interrelacionados de Telaraña",
+      "evidence": [
+        {
+          "doc": "TEMA 3.1 APUNTES GRABACION TEMA 3 (S'EED).pdf",
+          "page": 12
+        }
       ]
     },
     {
@@ -559,6 +906,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-20"
+      ],
+      "session": "Unidad 3: Sistema Lineal Homogéneo de Ecuaciones en Diferencias y Solución Fundamental",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -570,6 +924,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-22"
+      ],
+      "session": "Unidad 4: Resolución de Sistemas de Ecuaciones en Diferencias Lineales según Naturaleza de Autovalores",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 4
+        }
       ]
     },
     {
@@ -581,6 +942,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-22"
+      ],
+      "session": "Unidad 7: Solución Particular de Sistemas de Ecuaciones en Diferencias No Homogéneos",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 7
+        }
       ]
     },
     {
@@ -592,6 +960,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-22"
+      ],
+      "session": "Unidad 8: Linealización y Matriz Jacobiana en Sistemas de Ecuaciones en Diferencias No Lineales",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 8
+        }
       ]
     },
     {
@@ -603,6 +978,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-22"
+      ],
+      "session": "Unidad 11: Criterios de Estabilidad Dinámica y Clasificación de Puntos Fijos Discretos",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 11
+        }
       ]
     },
     {
@@ -615,6 +997,13 @@
       "prerequisites": [
         "C-23",
         "C-24"
+      ],
+      "session": "Unidad 10: Determinación de Puntos de Equilibrio y Linealización Local de Sistemas Discretos No Lineales",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 10
+        }
       ]
     },
     {
@@ -627,6 +1016,13 @@
       "prerequisites": [
         "C-24",
         "H-10"
+      ],
+      "session": "Unidad 12: Modelización y Análisis de Estabilidad Dinámica del Duopolio de Cournot en Tiempo Discreto",
+      "evidence": [
+        {
+          "doc": "TEMA 3.2 (S'EED).pdf",
+          "page": 12
+        }
       ]
     }
   ],

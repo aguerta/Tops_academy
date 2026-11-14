@@ -15,7 +15,14 @@
       "category": "Fact",
       "description": "La condición de estabilidad macroeconómica exige que la propensión marginal total a gastar sea estrictamente menor que la unidad, $c_1 + d_1 < 1$, garantizando un denominador positivo $1 - c_1 - d_1 > 0$ en el multiplicador keynesiano $\\alpha = \\frac{1}{1 - c_1 - d_1}$.",
       "mastery_target": 100,
-      "prerequisites": []
+      "prerequisites": [],
+      "session": "Unidad 4: Condición de Estabilidad Macroeconómica del Gasto Agregado",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 4
+        }
+      ]
     },
     {
       "id": "C-01",
@@ -26,6 +33,25 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-01"
+      ],
+      "session": "Unidad 6: Pendiente y Desplazamientos de la Curva IS en Economía Cerrada",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 6
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C01-01",
+          "statement_latex": "Nivel de precios constante en el corto plazo $P = \\bar{P}$",
+          "violation_consequence": "Permite equiparar variaciones nominales con reales en la tasa de interés e inversión."
+        },
+        {
+          "id": "A-C01-02",
+          "statement_latex": "Capacidad ociosa y ajuste pasivo de la producción por la demanda",
+          "violation_consequence": "Asegura que el producto se determine estrictamente por el gasto agregado planeado."
+        }
       ]
     },
     {
@@ -37,6 +63,25 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-01"
+      ],
+      "session": "Unidad 6: Equilibrio del Mercado Monetario y Pendiente de la Curva LM",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 6
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C02-01",
+          "statement_latex": "Oferta monetaria exógenamente controlada por la autoridad central",
+          "violation_consequence": "Permite aislar choques de liquidez sin endogeneidad bancaria inmediata."
+        },
+        {
+          "id": "A-C02-02",
+          "statement_latex": "Elección de cartera restringida a dinero y bonos",
+          "violation_consequence": "Garantiza que el equilibrio del mercado de dinero vacíe simultáneamente el de bonos por Ley de Walras."
+        }
       ]
     },
     {
@@ -48,6 +93,25 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 7: Casos Extremos de la Curva LM: Trampa de Liquidez y Caso Clásico",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 7
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C03-01",
+          "statement_latex": "Tasa de interés cercana al límite inferior efectivo cero en trampa de liquidez",
+          "violation_consequence": "Fundamenta la perfecta sustitución entre dinero y activos financieros seguros."
+        },
+        {
+          "id": "A-C03-02",
+          "statement_latex": "Velocidad de circulación estable en el enfoque clásico cuantitativo",
+          "violation_consequence": "Asegura la proporcionalidad estricta entre oferta monetaria y transacciones nominales."
+        }
       ]
     },
     {
@@ -60,6 +124,25 @@
       "prerequisites": [
         "C-01",
         "C-02"
+      ],
+      "session": "Unidad 7: Derivación Analítica del Equilibrio Simultáneo IS-LM y Multiplicadores de Política",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 7
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab01-01",
+          "statement_latex": "Determinante del sistema no nulo $(1 - c_1 - d_1)f_2 + d_2 f_1 > 0$",
+          "violation_consequence": "Garantiza la existencia de una solución única y estable para $(Y^*, i^*)$."
+        },
+        {
+          "id": "A-Hab01-02",
+          "statement_latex": "Ajuste instantáneo en el mercado de activos frente al mercado de bienes",
+          "violation_consequence": "Permite que la economía permanezca sobre la curva LM mientras transita hacia el equilibrio general."
+        }
       ]
     },
     {
@@ -72,6 +155,25 @@
       "prerequisites": [
         "C-01",
         "C-02"
+      ],
+      "session": "Unidad 8: Efecto Desplazamiento (Crowding-Out) y Acomodación Monetaria",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 8
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C04-01",
+          "statement_latex": "Estabilidad en la preferencia por liquidez del público",
+          "violation_consequence": "Asegura que el dinero inyectado reduzca o estabilice la tasa de interés y no sea atesorado imprevisiblemente."
+        },
+        {
+          "id": "A-C04-02",
+          "statement_latex": "Horizonte de rigidez de precios donde no opera inflación inmediata",
+          "violation_consequence": "Permite que la expansión monetaria de acomodación altere los saldos reales de forma efectiva."
+        }
       ]
     },
     {
@@ -84,6 +186,25 @@
       "prerequisites": [
         "Hab-01",
         "C-04"
+      ],
+      "session": "Unidad 9: Medición de Brechas Horizontales y Calibración Numérica BCRP",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 9
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab02-01",
+          "statement_latex": "Parámetros estructurales invariantes ante choques fiscales de magnitud moderada",
+          "violation_consequence": "Garantiza la estabilidad lineal de la matriz de coeficientes del modelo."
+        },
+        {
+          "id": "A-Hab02-02",
+          "statement_latex": "Transmisión crediticia fluida según las elasticidades calibradas",
+          "violation_consequence": "Asegura la correspondencia entre las tasas de política y el costo de financiamiento de la inversión."
+        }
       ]
     },
     {
@@ -93,7 +214,14 @@
       "category": "Fact",
       "description": "El tipo de cambio real $\\epsilon = \\frac{E \\cdot P^*}{P}$ mide el precio relativo de los bienes extranjeros expresados en términos de bienes nacionales; su tasa de variación porcentual se aproxima diferenciando logarítmicamente como $\\frac{\\Delta\\epsilon}{\\epsilon} \\approx \\frac{\\Delta E}{E} + \\pi^* - \\pi$, donde $\\pi$ y $\\pi^*$ son las inflaciones local y externa.",
       "mastery_target": 100,
-      "prerequisites": []
+      "prerequisites": [],
+      "session": "Unidad 12: Tipo de Cambio Real Bilateral y Tasa de Variación Logarítmica",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 12
+        }
+      ]
     },
     {
       "id": "Hab-03",
@@ -104,6 +232,25 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-02"
+      ],
+      "session": "Unidad 14: Evaluación Numérica de Desviaciones de la Paridad del Poder Adquisitivo (PPA)",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 14
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab03-01",
+          "statement_latex": "Homogeneidad en las especificaciones funcionales básicas de los bienes comparados",
+          "violation_consequence": "Permite contrastar valoraciones relativas en mercados de competencia imperfecta."
+        },
+        {
+          "id": "A-Hab03-02",
+          "statement_latex": "Ausencia de controles prohibitivos a las operaciones de cambio de divisas",
+          "violation_consequence": "Asegura la vigencia de la cotización nominal observada de mercado."
+        }
       ]
     },
     {
@@ -115,6 +262,25 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-02"
+      ],
+      "session": "Unidad 2: Valor Agregado vs. Valor Bruto en Apertura Comercial: Caso Japonés",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 2
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C05-01",
+          "statement_latex": "Diferenciación estricta entre valor de facturación bruta y valor añadido contable",
+          "violation_consequence": "Evita la doble contabilización en las matrices de insumo-producto."
+        },
+        {
+          "id": "A-C05-02",
+          "statement_latex": "Registro aduanero estandarizado de bienes en frontera a precios FOB y CIF",
+          "violation_consequence": "Garantiza la consistencia métrica entre agregados del PBI y flujos de comercio exterior."
+        }
       ]
     },
     {
@@ -126,6 +292,25 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-05"
+      ],
+      "session": "Unidad 10: Causalidad Acumulativa de Myrdal y Economía de los Flujos Migratorios",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 10
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C06-01",
+          "statement_latex": "Rigidez a la baja de salarios en el sector formal y segmentación laboral",
+          "violation_consequence": "Fundamenta la canalización del excedente de mano de obra hacia actividades informales."
+        },
+        {
+          "id": "A-C06-02",
+          "statement_latex": "Existencia de externalidades y congestión en la provisión de bienes públicos",
+          "violation_consequence": "Explica el incremento en los costos de mantenimiento y reposición de infraestructura estatal."
+        }
       ]
     },
     {
@@ -137,6 +322,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-02"
+      ],
+      "session": "Unidad 15: Paridad Descubierta de Tasas de Interés (UIP)",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 15
+        }
       ]
     },
     {
@@ -150,6 +342,25 @@
         "C-01",
         "H-02",
         "H-03"
+      ],
+      "session": "Unidad 15: Curva IS en Economía Abierta y Doble Canal de Transmisión",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 15
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C07-01",
+          "statement_latex": "Cumplimiento de la condición Marshall-Lerner en el horizonte de análisis",
+          "violation_consequence": "Garantiza que una depreciación real mejore la balanza comercial superando el efecto precio adverso."
+        },
+        {
+          "id": "A-C07-02",
+          "statement_latex": "Régimen cambiario de flotación limpia sin bandas ni fijaciones bilaterales",
+          "violation_consequence": "Permite que el arbitraje de la UIP ajuste instantáneamente el valor de cotización de la divisa."
+        }
       ]
     },
     {
@@ -162,6 +373,25 @@
       "prerequisites": [
         "C-07",
         "Hab-01"
+      ],
+      "session": "Unidad 16: Estática Comparativa de Shocks Macroeconómicos en Economía Abierta con Tipo Flexible",
+      "evidence": [
+        {
+          "doc": "jijas.pdf",
+          "page": 16
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab04-01",
+          "statement_latex": "Alta movilidad internacional de capitales privados sin controles cuantitativos",
+          "violation_consequence": "Permite que los diferenciales de rentabilidad muevan intensamente la cotización cambiaria."
+        },
+        {
+          "id": "A-Hab04-02",
+          "statement_latex": "Estabilidad en las funciones de demanda por importaciones de los socios externos",
+          "violation_consequence": "Asegura la transmisión positiva de las expansiones del PBI mundial hacia las ventas domésticas."
+        }
       ]
     }
   ],

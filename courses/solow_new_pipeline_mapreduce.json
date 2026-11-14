@@ -15,7 +15,14 @@
       "category": "Fact",
       "description": "Expresión del producto por trabajador $q = \\phi(k)$ obtenida al dividir una función homogénea de grado uno $Q = f(K, L)$ entre el insumo laboral $L$, donde $k \\equiv K/L$ representa la relación capital-trabajo.",
       "mastery_target": 100,
-      "prerequisites": []
+      "prerequisites": [],
+      "session": "Unidad 2: Forma intensiva de la función de producción neoclásica",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 2
+        }
+      ]
     },
     {
       "id": "C-01",
@@ -26,6 +33,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-01"
+      ],
+      "session": "Unidad 2: Hipótesis dinámicas de ahorro y crecimiento poblacional en Solow",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 2
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C01-01",
+          "statement_latex": "Ahorro macroeconómico canalizado íntegramente a inversión $I = S = sQ$",
+          "violation_consequence": "Si existe atesoramiento o fricción financiera, la acumulación efectiva de capital se desfasa de la fracción de ahorro."
+        }
       ]
     },
     {
@@ -38,6 +59,29 @@
       "prerequisites": [
         "H-01",
         "C-01"
+      ],
+      "session": "Unidad 3: Derivación de la ecuación diferencial fundamental de Solow",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 3
+        },
+        {
+          "doc": "solow1956.pdf",
+          "page": 6
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab01-01",
+          "statement_latex": "Diferenciabilidad continua de las trayectorias de capital y mano de obra $K(t), L(t) \\in C^1$",
+          "violation_consequence": "Si existen saltos discretos o discontinuidades temporales, no es válido aplicar la regla de Leibniz ni derivar la ecuación."
+        },
+        {
+          "id": "A-Hab01-02",
+          "statement_latex": "Función de producción homogénea de grado 1: $F(\\lambda K, \\lambda L) = \\lambda F(K, L)$",
+          "violation_consequence": "Sin homogeneidad de grado 1 no es posible factorizar $L$ y expresar el producto per cápita exclusivamente en función de $r$."
+        }
       ]
     },
     {
@@ -49,6 +93,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-01"
+      ],
+      "session": "Unidad 3: Estabilidad dinámica del equilibrio y convergencia al estado uniforme",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 3
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C02-01",
+          "statement_latex": "Rendimientos decrecientes del capital per cápita $\\phi''(k) < 0$",
+          "violation_consequence": "Si la función no es estrictamente cóncava, pueden existir múltiples intersecciones o dinámicas no convergentes."
+        }
       ]
     },
     {
@@ -60,6 +118,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 4: Impacto del progreso técnico exógeno sobre la senda de crecimiento",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 4
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C03-01",
+          "statement_latex": "Progreso técnico neutral multiplicativo que preserva homogeneidad $Q = T(t)f(K,L)$",
+          "violation_consequence": "Si el progreso tecnológico desarticula la homogeneidad de la función, la representación intensiva pierde validez matemática directa."
+        }
       ]
     },
     {
@@ -72,6 +144,20 @@
       "prerequisites": [
         "Hab-01",
         "C-02"
+      ],
+      "session": "Unidad 5: Resolución cuantitativa del modelo de Solow con función Cobb-Douglas",
+      "evidence": [
+        {
+          "doc": "05_15_07_El_modelo_de_crecimiento_de_Solow.pdf",
+          "page": 5
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab02-01",
+          "statement_latex": "Elasticidad del capital acotada $0 < \\alpha < 1$",
+          "violation_consequence": "Si $\\alpha = 1$, los rendimientos al capital no son decrecientes y la ecuación diferencial se transforma en lineal sin equilibrio estacionario finito."
+        }
       ]
     },
     {
@@ -83,6 +169,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-01"
+      ],
+      "session": "Unidad 4: Identidad Fundamental de Acumulación y Crecimiento Poblacional Exógeno",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 4
+        }
       ]
     },
     {
@@ -95,6 +188,20 @@
       "prerequisites": [
         "Hab-01",
         "H-02"
+      ],
+      "session": "Unidad 7: Dinámica de Transición y Estabilidad Global del Estado Estacionario",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 7
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C04-01",
+          "statement_latex": "Productividad marginal decreciente del capital: $\\frac{\\partial^2 F}{\\partial K^2} < 0$",
+          "violation_consequence": "Si la productividad marginal no decrece, la curva de inversión no cortará la recta de dilución desde arriba, perdiendo la estabilidad o unicidad."
+        }
       ]
     },
     {
@@ -106,6 +213,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-04"
+      ],
+      "session": "Unidad 8: Patrones Alternativos de Crecimiento: Múltiples Equilibrios e Inexistencia de Estado Estacionario",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 8
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C05-01",
+          "statement_latex": "Violación de las condiciones de Inada globales en la función de producción",
+          "violation_consequence": "Si no se cumplen las condiciones de Inada estándar, $s F(r, 1)$ puede intersectar múltiples veces o no intersectar la recta $n r$."
+        }
       ]
     },
     {
@@ -117,6 +238,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-01"
+      ],
+      "session": "Unidad 10: Análisis del Modelo de Harrod-Domar con Tecnología Leontief",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 10
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab04-01",
+          "statement_latex": "Tecnología de coeficientes técnicos fijos sin sustitución de factores: $Y = \\min\\left(\\frac{K}{a}, \\frac{L}{b}\\right)$",
+          "violation_consequence": "La ausencia de sustituibilidad entre capital y trabajo genera esquinas en las isocuantas e inflexibilidad en los ratios técnicos."
+        }
       ]
     },
     {
@@ -128,6 +263,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-04"
+      ],
+      "session": "Unidad 13: Determinación de la Trayectoria y Estado Estacionario Cobb-Douglas",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 13
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab05-01",
+          "statement_latex": "Función Cobb-Douglas con elasticidad de sustitución unitaria $\\sigma = 1$ y $0 < a < 1$",
+          "violation_consequence": "La elasticidad unitaria y los rendimientos decrecientes garantizan existencia y estabilidad global de un único estado estacionario."
+        }
       ]
     },
     {
@@ -139,6 +288,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-05"
+      ],
+      "session": "Unidad 14: Resolución del Equilibrio de Crecimiento con Función de Factores Sustituibles ($p=1/2$)",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 14
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab06-01",
+          "statement_latex": "Parámetro de sustituibilidad factorial cumple $0 < p < 1$, específicamente $p = 1/2$",
+          "violation_consequence": "Permite que la productividad marginal decrezca adecuadamente y que el producto sea positivo incluso con un solo factor."
+        }
       ]
     },
     {
@@ -150,6 +313,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-01"
+      ],
+      "session": "Unidad 16: Remuneración de Factores y Dependencia Exclusiva del Ratio Capital-Trabajo",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 16
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C06-01",
+          "statement_latex": "Mercados de factores competitivos con flexibilidad instantánea de precios",
+          "violation_consequence": "Si existen rigideces salariales o de alquiler, los factores no recibirán sus productos marginales y surgirá desocupación involuntaria o capacidad ociosa."
+        }
       ]
     },
     {
@@ -161,6 +338,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-06"
+      ],
+      "session": "Unidad 17: Condición de arbitraje entre capital físico y activos financieros",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 17
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C07-01",
+          "statement_latex": "Arbitraje perfecto y previsión perfecta en el mercado de activos",
+          "violation_consequence": "Sin mercados de crédito sin fricciones y previsión perfecta, no rige la paridad instantánea de rendimientos."
+        }
       ]
     },
     {
@@ -172,6 +363,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-07"
+      ],
+      "session": "Unidad 21: Determinación de precios factoriales y distribución en equilibrio Cobb-Douglas",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 21
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab07-01",
+          "statement_latex": "Función de producción Cobb-Douglas con rendimientos constantes $Y = K^a L^{1-a}$",
+          "violation_consequence": "Si la elasticidad de sustitución difiere de la unidad, las participaciones factoriales varían con la relación capital-trabajo."
+        }
       ]
     },
     {
@@ -183,6 +388,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-07"
+      ],
+      "session": "Unidad 22: Progreso técnico neutral y trayectoria asintótica del capital por trabajador",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 22
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C08-01",
+          "statement_latex": "Tasa exógena y constante de progreso técnico neutral $A(t) = e^{gt}$",
+          "violation_consequence": "Si el progreso técnico no es neutral o depende de los precios de los factores, la dinámica de acumulación no exhibe tasas proporcionales constantes."
+        }
       ]
     },
     {
@@ -194,6 +413,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-08"
+      ],
+      "session": "Unidad 24: Análisis de invarianza del estado estacionario con oferta laboral elástica",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 24
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab08-01",
+          "statement_latex": "Oferta de mano de obra con elasticidad constante respecto al salario real $L = L_0 e^{nt} (w/p)^h$",
+          "violation_consequence": "Si la elasticidad depende del nivel de empleo o de un techo demográfico, la trayectoria de transición cambia de forma cualitativa."
+        }
       ]
     },
     {
@@ -205,6 +438,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-07"
+      ],
+      "session": "Unidad 25: Estabilización mediante ahorro sensible a la rentabilidad del capital",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 25
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C09-01",
+          "statement_latex": "La propensión marginal a ahorrar depende positivamente del rendimiento real del capital $q/p$ y por ende $s'(r) \\le 0$",
+          "violation_consequence": "Si los efectos ingreso superan a los de sustitución provocando $s'(r) > 0$, pueden emerger equilibrios múltiples o divergentes."
+        }
       ]
     },
     {
@@ -216,6 +463,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-09"
+      ],
+      "session": "Unidad 26: Regla de traslación del ahorro agregado bajo imposición proporcional sobre el ingreso",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 26
+        }
       ]
     },
     {
@@ -227,6 +481,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-09"
+      ],
+      "session": "Unidad 28: Múltiples equilibrios y trampa de subdesarrollo con crecimiento poblacional endógeno",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 28
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-C10-01",
+          "statement_latex": "La tasa de crecimiento de la fuerza laboral es una función no lineal del ingreso per cápita $n = n(r)$",
+          "violation_consequence": "Si la dinámica poblacional es estrictamente exógena y constante, la ampliación de capital es lineal y desaparecen los equilibrios múltiples."
+        }
       ]
     },
     {
@@ -238,6 +506,20 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-07"
+      ],
+      "session": "Unidad 29: Derivación de la trayectoria de empleo bajo rigidez del salario real",
+      "evidence": [
+        {
+          "doc": "solow1956.pdf",
+          "page": 29
+        }
+      ],
+      "assumptions": [
+        {
+          "id": "A-Hab09-01",
+          "statement_latex": "Salario real fijado institucionalmente en $\\bar{w}$ por encima del nivel de equilibrio de pleno empleo",
+          "violation_consequence": "Si los salarios son perfectamente flexibles a la baja, el mercado de trabajo se vacía instantáneamente eliminando el desempleo involuntario."
+        }
       ]
     }
   ],

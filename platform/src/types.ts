@@ -5,6 +5,66 @@ export type QuestionType =
 
 export type CompetencyCategory = 'Skill' | 'Concept' | 'Fact';
 
+export interface EvidenceRef {
+  doc?: string;
+  pdf?: string;
+  page?: number;
+  pages?: number[];
+  slide?: number;
+  title?: string;
+  snippet?: string;
+}
+
+export interface ExplicitAssumption {
+  id: string;
+  name?: string;
+  statement_latex: string;
+  role_in_proof?: string;
+  violation_consequence: string;
+}
+
+export interface ContentGlossaryTerm {
+  term: string;
+  definition: string;
+  formula_latex?: string;
+  related_competencies?: string[];
+}
+
+export interface ContentCore {
+  title: string;
+  prerequisite_recall: string;
+  intuitive_analogy: string;
+  governing_theorems_and_assumptions: {
+    theorems_latex: string[];
+    assumptions: ExplicitAssumption[];
+  };
+  worked_example: {
+    problem_latex: string;
+    step_by_step_latex: string[];
+  };
+  common_exam_pitfalls: string[];
+}
+
+export interface SubtopicUnit {
+  id: string;
+  title: string;
+  description: string;
+  competency_ids: string[];
+  quiz_question_pool?: string[];
+}
+
+export interface ContentModule {
+  id: string;
+  is_prerequisite_module?: boolean;
+  title: string;
+  source_file: string;
+  slide_range?: [number, number];
+  glossary: ContentGlossaryTerm[];
+  core: ContentCore;
+  subtopics: SubtopicUnit[];
+  content_challenge_pool: string[];
+}
+
 export interface Competency {
   id: string;
   code: string;
@@ -13,6 +73,12 @@ export interface Competency {
   description: string;
   mastery_target: number;
   prerequisites?: string[];
+  is_prerequisite?: boolean;
+  session?: string;
+  unit_index?: number;
+  evidence?: EvidenceRef[];
+  assumptions?: ExplicitAssumption[];
+  source_examples?: unknown[];
 }
 
 export interface CurveSpec {
@@ -88,6 +154,7 @@ export interface Course {
   language?: string;
   competencies: Competency[];
   questions: Question[];
+  modules?: ContentModule[];
 }
 
 export interface CourseSummary {

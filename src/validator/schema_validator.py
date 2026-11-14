@@ -48,6 +48,9 @@ COURSE_SCHEMA: dict[str, Any] = {
         "created_at": {
             "type": "string"
         },
+        "modules": {
+            "type": "array"
+        },
         "competencies": {
             "type": "array",
             "minItems": 1,
@@ -70,7 +73,7 @@ COURSE_SCHEMA: dict[str, Any] = {
             "properties": {
                 "id": {
                     "type": "string",
-                    "pattern": "^(Hab|C|H|Aut|COMP)-[0-9A-Za-z_-]+$"
+                    "pattern": "^(PRE|Hab|C|H|Aut|COMP)-[0-9A-Za-z_-]+$"
                 },
                 "code": {
                     "type": "string"
@@ -89,6 +92,24 @@ COURSE_SCHEMA: dict[str, Any] = {
                 },
                 "mastery_target": {
                     "type": "number"
+                },
+                "session": {
+                    "type": "string"
+                },
+                "unit_index": {
+                    "type": "integer"
+                },
+                "is_prerequisite": {
+                    "type": "boolean"
+                },
+                "evidence": {
+                    "type": "array"
+                },
+                "assumptions": {
+                    "type": "array"
+                },
+                "source_examples": {
+                    "type": "array"
                 }
             }
         },

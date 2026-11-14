@@ -8,6 +8,9 @@
     "course_id": { "type": "string" },
     "title": { "type": "string" },
     "macro_competency": { "type": "string" },
+    "modules": {
+      "type": "array"
+    },
     "competencies": {
       "type": "array",
       "items": { "$ref": "#/definitions/competency" }
@@ -120,8 +123,9 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^(H|C|Hab|Fact|Concept|Skill)-[A-Za-z0-9_-]+$"
+          "pattern": "^(PRE|H|C|Hab|Fact|Concept|Skill)-[A-Za-z0-9_-]+$"
         },
+        "is_prerequisite": { "type": "boolean" },
         "type": {
           "type": "string",
           "enum": ["fact", "concept", "skill"]

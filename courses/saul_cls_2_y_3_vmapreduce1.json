@@ -15,7 +15,14 @@
       "category": "Concept",
       "description": "Marco teórico que formaliza la contaminación como problema de control óptimo distinguiendo variables de control (flujos como emisiones o abatimiento) de variables de estado (stocks acumulados $P$ sujetos a decaimiento natural a tasa $b$). A diferencia del capital tradicional (que rinde servicios positivos como stock y costo de acumulación como flujo), un contaminante típico genera un flujo beneficioso o producto conjunto en la producción pero causa desutilidad o daño social marginal negativo ($u_P < 0$) como stock acumulado.",
       "mastery_target": 100,
-      "prerequisites": []
+      "prerequisites": [],
+      "session": "Unidad 2: Distinción Económica entre Flujo y Stock de Contaminación",
+      "evidence": [
+        {
+          "doc": "SEGUNDO CONTROL DE LECTURA.pdf",
+          "page": 2
+        }
+      ]
     },
     {
       "id": "H-01",
@@ -26,6 +33,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-01"
+      ],
+      "session": "Unidad 3: Estructura del Funcional de Bienestar Social y Regularidad",
+      "evidence": [
+        {
+          "doc": "SEGUNDO CONTROL DE LECTURA.pdf",
+          "page": 3
+        }
       ]
     },
     {
@@ -37,6 +51,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-01"
+      ],
+      "session": "Unidad 5: Estructura Tecnológica y Dinámica del Modelo I",
+      "evidence": [
+        {
+          "doc": "SEGUNDO CONTROL DE LECTURA.pdf",
+          "page": 5
+        }
       ]
     },
     {
@@ -49,6 +70,13 @@
       "prerequisites": [
         "C-02",
         "H-01"
+      ],
+      "session": "Unidad 5: Derivación de Condiciones de Primer Orden y Co-Estados en Modelo I",
+      "evidence": [
+        {
+          "doc": "SEGUNDO CONTROL DE LECTURA.pdf",
+          "page": 5
+        }
       ]
     },
     {
@@ -60,6 +88,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-02"
+      ],
+      "session": "Unidad 6: Equilibrios de Estado Estacionario: Murky Age vs Golden Age",
+      "evidence": [
+        {
+          "doc": "SEGUNDO CONTROL DE LECTURA.pdf",
+          "page": 6
+        }
       ]
     },
     {
@@ -71,6 +106,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-03"
+      ],
+      "session": "Unidad 6: Regla de Acumulación Modificada de Capital en la Golden Age",
+      "evidence": [
+        {
+          "doc": "SEGUNDO CONTROL DE LECTURA.pdf",
+          "page": 6
+        }
       ]
     },
     {
@@ -83,6 +125,13 @@
       "prerequisites": [
         "C-01",
         "H-01"
+      ],
+      "session": "Unidad 10: Determinación del Umbral Crítico y Política de Cierre en Modelo II",
+      "evidence": [
+        {
+          "doc": "SEGUNDO CONTROL DE LECTURA.pdf",
+          "page": 10
+        }
       ]
     },
     {
@@ -95,6 +144,13 @@
       "prerequisites": [
         "Hab-01",
         "Hab-02"
+      ],
+      "session": "Unidad 11: Análisis de Estática Comparativa Dinámica ante Variaciones en la Tasa de Decaimiento",
+      "evidence": [
+        {
+          "doc": "SEGUNDO CONTROL DE LECTURA.pdf",
+          "page": 11
+        }
       ]
     },
     {
@@ -106,6 +162,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "Hab-03"
+      ],
+      "session": "Unidad 12: Principio de Optimalidad de Bellman",
+      "evidence": [
+        {
+          "doc": "TERCER CONTROL DE LECTURA.pdf",
+          "page": 12
+        }
       ]
     },
     {
@@ -117,6 +180,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-04"
+      ],
+      "session": "Unidad 4: Ecuación Recurrente de Asignación Óptima de Bellman",
+      "evidence": [
+        {
+          "doc": "TERCER CONTROL DE LECTURA.pdf",
+          "page": 4
+        }
       ]
     },
     {
@@ -128,6 +198,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "H-03"
+      ],
+      "session": "Unidad 4: Reducción de Dimensionalidad y Dualidad Valor-Política",
+      "evidence": [
+        {
+          "doc": "TERCER CONTROL DE LECTURA.pdf",
+          "page": 4
+        }
       ]
     },
     {
@@ -139,6 +216,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-05"
+      ],
+      "session": "Unidad 6: Estructura de Políticas Óptimas: Convexidad versus Concavidad",
+      "evidence": [
+        {
+          "doc": "TERCER CONTROL DE LECTURA.pdf",
+          "page": 6
+        }
       ]
     },
     {
@@ -150,6 +234,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-06"
+      ],
+      "session": "Unidad 6: Cálculo de Umbrales de Decisión en Políticas de Potencias",
+      "evidence": [
+        {
+          "doc": "TERCER CONTROL DE LECTURA.pdf",
+          "page": 6
+        }
       ]
     },
     {
@@ -161,6 +252,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-04"
+      ],
+      "session": "Unidad 10: Procesos Estocásticos de Decisión y Formulación de Minería de Oro",
+      "evidence": [
+        {
+          "doc": "TERCER CONTROL DE LECTURA.pdf",
+          "page": 10
+        }
       ]
     },
     {
@@ -172,6 +270,13 @@
       "mastery_target": 100,
       "prerequisites": [
         "C-07"
+      ],
+      "session": "Unidad 11: Criterio de Selección por Ratio Ganancia-Pérdida en Procesos Estocásticos",
+      "evidence": [
+        {
+          "doc": "TERCER CONTROL DE LECTURA.pdf",
+          "page": 11
+        }
       ]
     }
   ],

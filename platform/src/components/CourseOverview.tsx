@@ -1,9 +1,11 @@
-import React, { useState, useLayoutEffect, useEffect, useRef } from 'react';
-import { Course, CourseMasteryRecord, Competency } from '../types';
+import React, { useState, useLayoutEffect, useEffect, useRef, useMemo } from 'react';
+import { Course, CourseMasteryRecord, Competency, ContentModule } from '../types';
 import { calculateCourseProgress, isUnitCompleted, isUnitStarted } from '../utils/masteryStorage';
+import { resolveCourseModules } from '../utils/hierarchyAdapter';
 import { MasteryLegend } from './MasteryLegend';
 import { MasteryGrid } from './MasteryGrid';
 import { MathText } from './MathText';
+import { ContentCoreDrawer } from './ContentCoreDrawer';
 
 interface CourseOverviewProps {
   course: Course;
@@ -26,9 +28,16 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
+  const [activeContentModule, setActiveContentModule] = useState<ContentModule | null>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const [barBox, setBarBox] = useState<{ left: number; width: number }>({ left: 0, width: 0 });
+
+  const modules = useMemo(() => resolveCourseModules(course), [course]);
+  const competencyById = useMemo(
+    () => new Map(course.competencies.map((c) => [c.id, c])),
+    [course.competencies]
+  );
 
   // Keep the fixed bar aligned with the overview column (sidebar / centered layout)
   useEffect(() => {
@@ -456,14 +465,91 @@ export const CourseOverview: React.FC<CourseOverviewProps> = ({
             {totalUnits} units total
           </span>
         </div>
-        <MasteryGrid
-          course={course}
-          mastery={mastery}
-          onStartPractice={onStartPractice}
-          onStartQuiz={onStartQuiz}
-          onStartUnitTest={onStartUnitTest}
-        />
+        {modules.length > 0 ? (
+          <div className="space-y-8 my-6">
+            {modules.map((mod) => {
+              const seenIds = new Set<string>();
+              const modCompetencies: Competency[] = [];
+              for (const sub of mod.subtopics || []) {
+                for (const id of sub.competency_ids || []) {
+                  if (seenIds.has(id)) continue;
+                  seenIds.add(id);
+                  const comp = competencyById.get(id);
+                  if (comp) modCompetencies.push(comp);
+                }
+              }
+              if (modCompetencies.length === 0) return null;
+
+              return (
+                <section key={mod.id} className="space-y-3">
+                  <div
+                    data-testid={`module-header-${mod.id}`}
+                    className={`p-3.5 sm:p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      mod.is_prerequisite_module
+                        ? 'bg-amber-50/70 border-amber-200'
+                        : 'bg-slate-50 border-ka-border-subtle'
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {mod.is_prerequisite_module && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                            🧭 UNIDAD 0 • GET READY
+                          </span>
+                        )}
+                        {mod.slide_range && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-white text-slate-600 border border-slate-200">
+                            📄 págs. {mod.slide_range[0]}–{mod.slide_range[1]}
+                          </span>
+                        )}
+                        <span className="text-[11px] font-semibold text-slate-500">
+                          {modCompetencies.length}{' '}
+                          {modCompetencies.length === 1 ? 'unidad' : 'unidades'}
+                        </span>
+                      </div>
+                      <h3 className="text-base font-extrabold text-ka-text-primary mt-1 break-words [overflow-wrap:anywhere]">
+                        <MathText text={mod.title} inline />
+                      </h3>
+                    </div>
+
+                    <button
+                      type="button"
+                      data-testid={`open-content-core-${mod.id}`}
+                      onClick={() => setActiveContentModule(mod)}
+                      className="px-3.5 py-2 rounded-lg bg-white hover:bg-blue-50 text-ka-blue border border-blue-200 text-xs sm:text-sm font-bold shadow-xs transition-colors flex items-center gap-1.5 whitespace-nowrap self-start sm:self-auto shrink-0"
+                    >
+                      <span>📘 Núcleo &amp; Glosario</span>
+                    </button>
+                  </div>
+
+                  <MasteryGrid
+                    course={course}
+                    mastery={mastery}
+                    competenciesOverride={modCompetencies}
+                    onStartPractice={onStartPractice}
+                    onStartQuiz={onStartQuiz}
+                    onStartUnitTest={onStartUnitTest}
+                  />
+                </section>
+              );
+            })}
+          </div>
+        ) : (
+          <MasteryGrid
+            course={course}
+            mastery={mastery}
+            onStartPractice={onStartPractice}
+            onStartQuiz={onStartQuiz}
+            onStartUnitTest={onStartUnitTest}
+          />
+        )}
       </div>
+
+      {/* ContentCore & Glossary Drawer */}
+      <ContentCoreDrawer
+        module={activeContentModule}
+        onClose={() => setActiveContentModule(null)}
+      />
 
       {/* Course Challenge Summary Card */}
       <div
