@@ -3,7 +3,7 @@
 
 > **Documento de Especificación Técnica y Contratos de Datos**  
 > **Hito Vinculado:** Milestone 9 en [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md)  
-> **Estado:** 🏛️ P1 — Arquitectura Curricular y Schemas.  
+> **Estado:** 🏛️ **P1 — Quick Wins Completados y Certificados (2026-11-14)** *(Anclaje PPT, Unidad 0 `PRE-XX`, `ContentCoreDrawer` vía rápida, Backfill 8 cursos / 237 competencias y fix ETag en `courseLoader.ts`)*. **Remanente:** Paso 4 (Quizzes de Subtema 3–5 reactivos, Challenges integradores 8–12 reactivos y emisión nativa LLM de `ContentCore` en `compile_cta.py`).  
 > **Regla de Sincronización:** Cualquier cambio en la estructura de los módulos, bloques de `ContentCore`, tipados de `platform/src/types.ts` o esquemas JSON (`cta.schema.json`, `course.schema.json`) debe registrarse en este archivo y sincronizarse con [`FUTURE_MILESTONES.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/FUTURE_MILESTONES.md).
 
 ---
@@ -133,10 +133,10 @@ Al auditar [`.agents/skills/content-to-course/schemas/cta.schema.json`](file:///
 - **Asignación recomendada en Flash Duet:** **Hydrogen Medium** para Implementadores de frontera cerrada y Auditores Forenses; **Hydrogen High** (o Argon High) para Orquestador / lógica cruzada densa (`CourseOverview.tsx` + `masteryStorage.ts` + `compile_cta.py`).
 
 ### 4.3. Desglose Incremental (*Quick Win* vs. *End-to-End*)
-1. **Paso 1 — Anclaje a Diapositivas (`evidence` + `session`):** Exportar `evidence` y `session` en `run.py` $\to$ tipar en `types.ts` $\to$ agrupar visualmente por `doc`/`pdf` y rango de páginas en `CourseOverview.tsx` (**3 archivos**, impacto mínimo).
-2. **Paso 2 — Calentamiento sin Fricción (Unidad 0 `PRE-XX`):** Habilitar prefijo `PRE-` en `cta.schema.json` y `compile_cta.py`, instruir `prompt_cta_architect.md`, y destacar tarjetas `PRE-*` en `CourseOverview.tsx` (**4 archivos**).
-3. **Paso 3 — `ContentCore` en 5 Bloques + Glosario:** *Vía rápida:* exportar `assumptions`, `source_examples` y trampas (`distractors`) ya existentes en `cta.json`. *Vía canónica:* añadir `modules[]` (`ContentCore` 5 bloques + `ContentGlossaryTerm[]`) en `compile_cta.py` y visor `ContentCoreDrawer.tsx` compatible con Split 50% (M1).
-4. **Paso 4 — Jerarquía de 3 Niveles y Evaluación Escalonada:** Agrupar 2–4 competencias por `SubtopicUnit` (`quiz_question_pool` 3–5 reactivos) y `content_challenge_pool` (8–12 reactivos por PPT), manteniendo adaptador retrocompatible (`hierarchyAdapter.ts`) para los cursos planos publicados en `courses/*.json`.
+1. ✅ **Paso 1 — Anclaje a Diapositivas (`evidence` + `session`):** Exportar `evidence`, `session` y `unit_index` en `run.py` $\to$ tipar en `types.ts` $\to$ agrupar visualmente por `doc`/`pdf` y rango de páginas en `CourseOverview.tsx` + `hierarchyAdapter.ts` *(Completado 2026-11-14)*.
+2. ✅ **Paso 2 — Calentamiento sin Fricción (Unidad 0 `PRE-XX`):** Prefijo `PRE-` y `is_prerequisite` habilitados en `cta.schema.json`, `schema_validator.py`, `compile_cta.py`, `cta_merge.py`, `prompt_cta_architect.md`, `MasteryGrid.tsx` y `Sidebar.tsx` *(Completado 2026-11-14)*.
+3. ✅ **Paso 3 (Vía Rápida) — `ContentCore` en 5 Bloques + Glosario + Backfill:** Propagación de `assumptions` y `source_examples` en `run.py`, síntesis retrocompatible en `hierarchyAdapter.ts`, visor `ContentCoreDrawer.tsx` compatible con Split 50% (M1), hidratación determinista de 8 cursos (237 competencias) vía `scripts/backfill_m9_hierarchy.py` y corrección de invalidación `ETag` sin cabecera previa en `courseLoader.ts` *(Completado 2026-11-14)*.
+4. ⏳ **Paso 4 (Remanente End-to-End) — Jerarquía de 3 Niveles, Emisión Nativa LLM y Evaluación Escalonada:** Emisión explícita de `modules[]` / `ContentCore` en `compile_cta.py` + `prompt_cta_harmonizer.md`, Quizzes formativos por `SubtopicUnit` (3–5 reactivos) y Challenges integradores por PPT (8–12 reactivos) en `App.tsx` + `masteryStorage.ts`.
 
 ### 4.4. Blast Radius Exacto End-to-End (16 Archivos en 3 Streams Disjuntos)
 
