@@ -223,6 +223,7 @@ def decidir_estrategia_edicion(
     existing_lines: int = 0,
     target_type: str = "shard",
     affected_competencies_count: int = 0,
+    distinct_compiles: int = 0,
 ) -> str:
     """Certified 2D Matrix for determining file edition strategy.
 
@@ -230,7 +231,7 @@ def decidir_estrategia_edicion(
         'write_file': Allow monolithic write_file rewrite.
         'edit_file': Require surgical edit_file (block monolithic write_file).
         'modular_splicing': Block monolithic write_file and redirect to modular fix.
-        'legacy_over_250': Legacy fallback for > 250 lines when error_count is absent.
+        'legacy_over_250': Legacy fallback for > line_limit (450 on 1st shard failure, 250 otherwise) when error_count is absent.
     """
     if has_syntax_error or existing_lines < 40:
         return "write_file"
@@ -246,7 +247,8 @@ def decidir_estrategia_edicion(
         if error_count >= 6 or eff_affected > 5:
             return "modular_splicing"
 
-    if existing_lines > 250:
+    line_limit = 450 if (target_type == "shard" and distinct_compiles == 1) else 250
+    if existing_lines > line_limit:
         return "legacy_over_250"
 
     return "write_file"
@@ -1524,6 +1526,9 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                             affected_cids.add(m.group(0).upper())
                                     aff_comp_cnt = max(len(affected_cids), int(c_data.get("affected_competencies_count", 0) or 0))
 
+                                    distinct_compiles = int(c_data.get("distinct_compiles", 0) or 0)
+                                    line_limit = 450 if (target_type == "shard" and distinct_compiles == 1) else 250
+
                                     strategy = decidir_estrategia_edicion(
                                         error_count=error_count,
                                         affected_line_count=affected_lines,
@@ -1531,9 +1536,10 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                         existing_lines=existing_lines,
                                         target_type=target_type,
                                         affected_competencies_count=aff_comp_cnt,
+                                        distinct_compiles=distinct_compiles,
                                     )
 
-                                    extra_250 = " y supera las 250 líneas" if (existing_lines > 250 or new_lines > 250) else ""
+                                    extra_250 = f" y supera las {line_limit} líneas" if (existing_lines > line_limit or new_lines > line_limit) else ""
                                     target_desc = f"{target_id}_data.py" if target_type == "shard" else target_file_on_disk.name
                                     fix_target = "work/shards/shard_fixes/<CID>.py" if target_type == "shard" else "work/cta_fixes/<CID>.py"
 
@@ -1549,7 +1555,7 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
                                             return {
                                                 "decision": "deny",
                                                 "reason": (
-                                                    f"BLOCKER:: El archivo {target_file_on_disk.name} ya fue compilado y supera las 250 líneas. "
+                                                    f"BLOCKER:: El archivo {target_file_on_disk.name} ya fue compilado y supera las {line_limit} líneas. "
                                                     "Para corregir errores de validación usa edit_file quirúrgico sobre las líneas indicadas "
                                                     f"por el compilador o escribe un override modular en {fix_target} "
                                                     "en lugar de reescribir todo el archivo con write_file."

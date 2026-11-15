@@ -628,6 +628,46 @@ def compute_option_length_metrics(
     }
 
 
+_GENERIC_WARNING_BOILERPLATE = "Verifique cuidadosamente los supuestos y cálculos antes de seleccionar su respuesta."
+
+
+def _build_competency_misconception_fallback(
+    competency_id: str,
+    template: Dict[str, Any],
+    cta_distractors_map: Optional[Dict[str, Dict[str, Any]]],
+    gen_result: Dict[str, Any],
+) -> str:
+    """Build a competency-specific misconception warning from CTA distractors or template metadata."""
+    if cta_distractors_map:
+        comp_norm = str(competency_id or "").strip().lower()
+        dict_entries = [e for e in cta_distractors_map.values() if isinstance(e, dict)]
+        comp_entries = [
+            e for e in dict_entries
+            if str(e.get("competency_id", "")).strip().lower() == comp_norm
+        ]
+        if not comp_entries and dict_entries and not any(e.get("competency_id") for e in dict_entries):
+            comp_entries = [dict_entries[0]]
+
+        for d_entry in comp_entries:
+            wb = str(d_entry.get("wrong_belief") or "").strip()
+            os_step = str(d_entry.get("omitted_step") or "").strip()
+            rh = str(d_entry.get("remediation_hint") or "").strip()
+            if wb and os_step:
+                return f"{wb.rstrip('. ')}. Evite omitir: {os_step}"
+            if wb:
+                return wb
+            if os_step:
+                return os_step
+            if rh:
+                return rh
+
+    for candidate in (template.get("error_rationale"), gen_result.get("error_rationale")):
+        if isinstance(candidate, str) and candidate.strip() and not _is_generic_placeholder(candidate):
+            return candidate.strip()
+
+    return f"Revise cuidadosamente los supuestos y pasos clave de la competencia {competency_id} antes de responder."
+
+
 def assemble_question(
     template: Dict[str, Any],
     gen_result: Dict[str, Any],
@@ -685,10 +725,18 @@ def assemble_question(
     if remediation_hints:
         common_misconception_warning = remediation_hints[0]
     else:
-        common_misconception_warning = template.get(
-            "common_misconception_warning",
-            "Verifique cuidadosamente los supuestos y cálculos antes de seleccionar su respuesta."
-        )
+        tpl_warning = template.get("common_misconception_warning")
+        if (
+            isinstance(tpl_warning, str)
+            and tpl_warning.strip()
+            and tpl_warning.strip() != _GENERIC_WARNING_BOILERPLATE
+            and not _is_generic_placeholder(tpl_warning)
+        ):
+            common_misconception_warning = tpl_warning
+        else:
+            common_misconception_warning = _build_competency_misconception_fallback(
+                competency_id, template, cta_distractors_map, gen_result
+            )
 
     clean_comp = re.sub(r"[^A-Za-z0-9]", "", competency_id)
     question_id = f"Q-{clean_comp}-{question_index:03d}"
@@ -720,7 +768,16 @@ def assemble_question(
             format_template_string(clean_warning, variables, is_cta=True)
         )
         if validate_katex_syntax(common_misconception_warning, "common_misconception_warning", allow_template_vars=False):
-            common_misconception_warning = "Verifique cuidadosamente los supuestos y cálculos antes de seleccionar su respuesta."
+            fallback_warning = _build_competency_misconception_fallback(
+                competency_id, template, cta_distractors_map, gen_result
+            )
+            fallback_sanitized = sanitize_katex_syntax(
+                format_template_string(_strip_giveaway_prefix(fallback_warning), variables, is_cta=True)
+            )
+            if validate_katex_syntax(fallback_sanitized, "common_misconception_warning", allow_template_vars=False):
+                common_misconception_warning = f"Revise cuidadosamente los supuestos y pasos clave de la competencia {competency_id} antes de responder."
+            else:
+                common_misconception_warning = fallback_sanitized
         assembled["common_misconception_warning"] = common_misconception_warning
         assembled["misconception_warning"] = common_misconception_warning
 
@@ -800,6 +857,12 @@ def assemble_question(
 
         str_val = str(ans_val).strip()
         str_val = sanitize_katex_syntax(format_template_string(str_val, variables))
+
+        if re.fullmatch(r"[+-]?\d+\.\d{3,}", str_val):
+            stem_lower = stem.lower()
+            if "decimales" not in stem_lower and "redonde" not in stem_lower:
+                stem = f"{stem} (Exprese su respuesta redondeada a 4 decimales)."
+                assembled["stem"] = stem
 
         raw_canonical = gen_result.get("canonical_algebraic")
         if raw_canonical is not None:

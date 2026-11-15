@@ -93,6 +93,7 @@ class EvaluationContext:
                 cls._current["archetype"] = archetype
             if seed is not None:
                 cls._current["seed"] = seed
+            cls._current["start_time"] = time.time()
 
     @classmethod
     def get(cls) -> Dict[str, Any]:
@@ -114,10 +115,11 @@ class EvaluationContext:
 
 
 class _CompilationWatchdog:
-    """Watchdog daemon thread enforcing strict hard timeout budget (< 15.0s) on shard compilation."""
+    """Watchdog daemon thread enforcing per-seed (3.0s) and global process (90.0s) timeout budgets."""
 
-    def __init__(self, timeout: float = 15.0, shard_id: str = "unknown"):
+    def __init__(self, timeout: float = 90.0, shard_id: str = "unknown", seed_timeout: float = 3.0):
         self.timeout = float(timeout)
+        self.seed_timeout = float(seed_timeout)
         self.shard_id = shard_id
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -136,35 +138,131 @@ class _CompilationWatchdog:
 
     def _run(self) -> None:
         while not self._stop_event.wait(0.2):
-            elapsed = time.time() - self.start_time
-            if elapsed >= self.timeout:
-                ctx = EvaluationContext.get()
-                shard_str = ctx.get("shard_id") or self.shard_id or "unknown"
-                tpl_str = ctx.get("template_id") or "unknown"
-                fn_str = ctx.get("gen_fn") or "_gen_unknown"
-                arch_str = ctx.get("archetype") or "?"
-                seed_str = str(ctx.get("seed")) if ctx.get("seed") is not None else "?"
+            now = time.time()
+            ctx = EvaluationContext.get()
+            seed_start = ctx.get("start_time") or self.start_time
+            seed_elapsed = now - seed_start
+            total_elapsed = now - self.start_time
 
+            is_seed_timeout = (ctx.get("seed") is not None) and (seed_elapsed >= self.seed_timeout)
+            is_global_timeout = total_elapsed >= self.timeout
+
+            if not is_seed_timeout and not is_global_timeout:
+                continue
+
+            shard_str = ctx.get("shard_id") or self.shard_id or "unknown"
+            tpl_str = ctx.get("template_id") or "unknown"
+            fn_str = ctx.get("gen_fn") or "_gen_unknown"
+            arch_str = ctx.get("archetype") or "?"
+            seed_str = str(ctx.get("seed")) if ctx.get("seed") is not None else "?"
+
+            short_budget_active_seed = (
+                is_global_timeout
+                and self.timeout < self.seed_timeout
+                and ctx.get("seed") is not None
+            )
+
+            if is_seed_timeout or short_budget_active_seed:
                 diag_msg = (
                     f"\n[-] CRITICAL ERROR: [TIMEOUT_INFINITE_LOOP]\n"
                     f"    Shard:          {shard_str}\n"
                     f"    Template ID:    {tpl_str}\n"
                     f"    Generator Func: {fn_str} (Archetype {arch_str}, Seed {seed_str})\n"
-                    f"    Execution Time: {elapsed:.2f}s (Exceeded hard budget of {self.timeout:.1f}s)\n"
+                    f"    Seed Time:      {seed_elapsed:.2f}s (Exceeded per-seed budget of {self.seed_timeout:.1f}s)\n"
+                    f"    Total Time:     {total_elapsed:.2f}s\n"
                     f"    Diagnostic:     Detected potential infinite loop, unbounded while-loop, \n"
                     f"                    or exhausted rejection sampling. Verify termination predicates \n"
                     f"                    and unbuffered output (-u).\n"
                     f"[-] FAIL: [TIMEOUT_INFINITE_LOOP] En '{tpl_str}' (función '{fn_str}', semilla {seed_str}): "
-                    f"Tiempo de ejecución excedió el límite de {self.timeout:.1f}s.\n"
+                    f"Tiempo de ejecución de la semilla excedió el límite de {self.seed_timeout:.1f}s.\n"
                 )
-                try:
-                    sys.stderr.write(diag_msg)
-                    sys.stderr.flush()
-                    sys.stdout.write(diag_msg)
-                    sys.stdout.flush()
-                except Exception:
-                    pass
-                os._exit(1)
+            else:
+                diag_msg = (
+                    f"\n[-] CRITICAL ERROR: [TIMEOUT_GLOBAL_PROCESS]\n"
+                    f"    Shard:          {shard_str}\n"
+                    f"    Execution Time: {total_elapsed:.2f}s (Exceeded global process budget of {self.timeout:.1f}s)\n"
+                    f"    Diagnostic:     Global shard compilation budget exceeded across multiple templates/seeds.\n"
+                    f"                    Individual seeds were not flagged as infinite loops (last seed elapsed: {seed_elapsed:.2f}s).\n"
+                    f"[-] FAIL: [TIMEOUT_GLOBAL_PROCESS] En shard '{shard_str}': "
+                    f"Tiempo global del proceso excedió el límite de {self.timeout:.1f}s.\n"
+                )
+            try:
+                sys.stderr.write(diag_msg)
+                sys.stderr.flush()
+                sys.stdout.write(diag_msg)
+                sys.stdout.flush()
+            except Exception:
+                pass
+            os._exit(1)
+
+
+_EDIT_FILE_REMINDER = "⚠️ USA edit_file (NO uses write_file con Overwrite=True o el hook bloqueará tu turno)"
+
+_FRANKENSTEIN_SUM_TRIGGER_RE = re.compile(
+    r"\b(?:la\s+suma\s+del?|suma\s+entre|suma\s+total\s+del?|sumando|sume|sumar|[íi]ndice\s+compuesto)\b",
+    re.IGNORECASE,
+)
+
+_FRANKENSTEIN_UNIT_GROUPS: List[Tuple[str, re.Pattern]] = [
+    (
+        "probabilidad",
+        re.compile(
+            r"\b(?:probabilidad(?:es)?|cota\s+(?:superior\s+|inferior\s+)?de\s+probabilidad|p-?valor(?:es)?|valor\s+p|nivel\s+de\s+(?:confianza|significancia))\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "varianza/ECM",
+        re.compile(
+            r"\b(?:varianza(?:s)?|error\s+cuadr[áa]tico\s+medio|ecm|mse)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "escala_lineal",
+        re.compile(
+            r"\b(?:desviaci[óo]n\s+(?:est[áa]ndar|t[íi]pica)|error\s+est[áa]ndar|(?:ancho|amplitud|longitud)\s+(?:del\s+)?intervalo|margen\s+de\s+error)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "tamaño_muestral",
+        re.compile(
+            r"\b(?:tama[ñn]o\s+(?:de\s+(?:la\s+)?)?muestra|tama[ñn]o\s+muestral|n[úu]mero\s+de\s+(?:observaciones|ensayos|muestras))\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "estadístico_Z",
+        re.compile(
+            r"\b(?:estad[íi]stico\s+(?:de\s+prueba\s+)?[zt]|valor\s+cr[íi]tico\s+[zt]|(?:puntaje|puntuaci[óo]n)\s+z)\b",
+            re.IGNORECASE,
+        ),
+    ),
+]
+
+
+def detect_frankenstein_sum(stem: str) -> Optional[Tuple[str, str]]:
+    """Detect artificial sums or composite indices combining incompatible statistical units in a stem."""
+    if not stem:
+        return None
+    clean_stem = re.sub(r"\$\$[\s\S]*?\$\$|\$[^\$]*?\$", " ", str(stem))
+    sentences = re.split(r"[.?!;\n]+", clean_stem)
+    for sent in sentences:
+        m = _FRANKENSTEIN_SUM_TRIGGER_RE.search(sent)
+        if not m:
+            continue
+        post_trigger = sent[m.start():]
+        matched = [name for name, pat in _FRANKENSTEIN_UNIT_GROUPS if pat.search(post_trigger)]
+        if len(matched) < 2 and re.search(
+            r"\b(?:ambos|ambas|dichos|dichas|estas\s+magnitudes|su\s+suma)\b",
+            post_trigger,
+            re.IGNORECASE,
+        ):
+            matched = [name for name, pat in _FRANKENSTEIN_UNIT_GROUPS if pat.search(sent)]
+        if len(matched) >= 2:
+            return matched[0], matched[1]
+    return None
 
 
 def _atomic_write_json(target_path: Path, data: Any) -> None:
@@ -1780,7 +1878,7 @@ def compile_shard(
     att_dir = work_p / ".check_attempts"
     pass_marker = att_dir / f"pass_{norm_shard_id}.json"
 
-    # Watchdog timer enforcement: hard budget <= 15.0 seconds
+    # Watchdog timer enforcement: global process budget <= 90.0 seconds (per-seed <= 3.0s)
     watchdog_timeout_val = kwargs.get("watchdog_timeout")
     if watchdog_timeout_val is None:
         env_timeout = os.getenv("C2C_COMPILE_WATCHDOG_TIMEOUT")
@@ -1788,9 +1886,9 @@ def compile_shard(
             try:
                 watchdog_timeout_val = float(env_timeout)
             except ValueError:
-                watchdog_timeout_val = 15.0
+                watchdog_timeout_val = 90.0
         else:
-            watchdog_timeout_val = 15.0
+            watchdog_timeout_val = 90.0
     else:
         watchdog_timeout_val = float(watchdog_timeout_val)
 
@@ -2024,6 +2122,8 @@ def _compile_shard_body(
         state["error_sha256"] = err_hash
 
         res_msg = msg
+        if _EDIT_FILE_REMINDER not in res_msg:
+            res_msg = f"{res_msg}\n{_EDIT_FILE_REMINDER}"
         if same_error_streak >= 3:
             terminal_stop = (
                 f"\n[-] [CIRCUIT BREAKER HALT: 3 fallos consecutivos idénticos para shard '{shard_id}']. "
@@ -2088,7 +2188,7 @@ def _compile_shard_body(
         full_err_out = (top_banner + "\n" + res_msg) if will_truncate else res_msg
         state["last_errors"] = [full_err_out]
         _atomic_write_json(compile_att_file, state)
-        print(msg, file=sys.stderr)
+        print(res_msg, file=sys.stderr)
         return False, [full_err_out]
 
     # Dual Calibrated Halt Threshold: distinct_compiles > 10
@@ -2815,6 +2915,22 @@ cross_check=verify
                             if _step5_err(err_msg):
                                 return _fail(err_msg)
 
+        # Reject artificial Frankenstein sums of incompatible units in FIB / MC7 stems
+        if interaction_type in ("fill_in_the_blank", "multiple_choice_7_options") and stem_variants:
+            for s_idx, sv in enumerate(stem_variants):
+                frankenstein_pair = detect_frankenstein_sum(sv)
+                if frankenstein_pair:
+                    u1, u2 = frankenstein_pair
+                    line_no = _find_diagnostic_line(curr_loc, gen_fn_name, orig_idx, sv)
+                    err_msg = (
+                        f"FAIL: [TPL-FRANKENSTEIN-SUM] En stem_variants[{s_idx}] de '{tpl_id}' "
+                        f"(Línea {line_no} en {curr_p.name}): El enunciado solicita una suma o índice compuesto "
+                        f"artificial combinando magnitudes con unidades incompatibles ('{u1}' + '{u2}'). "
+                        f"Replantea el reactivo para evaluar una sola magnitud o una suma homogénea."
+                    )
+                    if _step5_err(err_msg):
+                        return _fail(err_msg)
+
         # Hints validation: require 3 to 5 author hints, >= 25 chars, no anti-socratic catchphrases, no literal wrong_belief copy
         cta_comp = cta_comp_map.get(cid, {})
         cta_distractors = cta_comp.get("distractors", [])
@@ -3405,6 +3521,7 @@ cross_check=verify
                             )
                             tautology_recorded = True
                             break
+            EvaluationContext.reset(norm_shard_id)
 
         # Vacuous quantifier check in stem_variants
         if strict:
@@ -4163,6 +4280,7 @@ cross_check=verify
                             f"{cid}.json ({source_name}): [TPL-EXEC-ERROR] En '{tpl_id_m}' (semilla {s_val}), la función generadora falló con excepción: {type(e_seed).__name__}: {e_seed}"
                         )
                         break
+                EvaluationContext.reset(norm_shard_id)
 
                 if telltale_sample:
                     eff_loc = fix_files_by_cid.get(cid) if is_modular_fix else shard_data_path
@@ -4465,7 +4583,10 @@ cross_check=verify
             except Exception:
                 pass
 
-        fail_summary = f"[-] FAIL: {len(raw_errors)} errores detectados ({error_count} errores consolidados) al compilar {shard_id}:\n{compact_report}"
+        fail_summary = (
+            f"[-] FAIL: {len(raw_errors)} errores detectados ({error_count} errores consolidados) "
+            f"al compilar {shard_id}:\n{compact_report}\n{_EDIT_FILE_REMINDER}"
+        )
         total_output_bytes = len(fail_summary.encode("utf-8"))
 
         # Per CONOCIMIENTO_TRIBAL.md §4.3:
@@ -4635,7 +4756,7 @@ def main():
     parser.add_argument("--no-strict", dest="strict", action="store_false", help="Bypass strict validation")
     parser.add_argument("--seeds", type=int, default=50, help="Number of dry-run seeds (default: 50)")
     parser.add_argument("--min-archetypes", dest="min_archetypes", type=int, default=None, help="Minimum disjoint archetypes (tuples) required per competency in TEMPLATES (default: 4)")
-    parser.add_argument("--watchdog-timeout", type=float, default=15.0, help="Watchdog hard timeout budget in seconds (default: 15.0)")
+    parser.add_argument("--watchdog-timeout", type=float, default=90.0, help="Watchdog global process timeout budget in seconds (default: 90.0)")
     parser.add_argument("--fail-total", dest="fail_total", action="store_true", default=True, help="Accumulate all template/tuple validation diagnostics across the shard instead of aborting on the first failure (default)")
     parser.add_argument("--fail-fast", dest="fail_total", action="store_false", help="Abort on first Step 4/5 tuple validation error")
     args = parser.parse_args()

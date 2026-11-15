@@ -37,6 +37,31 @@ MAX_CORRECTION_CYCLES = 3
 DEFAULT_MAX_JUDGES = 10
 DEFAULT_MAX_ITEMS_PER_JUDGE = 20
 
+MC7_STEM_SOLUBILITY_INSTRUCTIONS = (
+    "CRITICAL SOLUBILITY PROTOCOL (MC7): Before comparing against options A..G, you MUST: "
+    "(1) write 'symbolic_formula' derived strictly from the stem, and "
+    "(2) compute 'derived_value_from_stem_only' exclusively from the stem WITHOUT inspecting or reverse-engineering from options A..G. "
+    "If the stem omits a required definition/parameter or requires reverse-engineering from the options, "
+    "you MUST set 'flaw_detected': true and explain the omission in 'flaw_description'."
+)
+
+
+def _build_mc7_judge_contract(has_numeric_options: bool = False) -> Dict[str, Any]:
+    """Builds the blind judge solubility contract and response schema for MC7 items."""
+    return {
+        "requires_stem_only_derivation": True,
+        "has_numeric_options": bool(has_numeric_options),
+        "judge_instructions": MC7_STEM_SOLUBILITY_INSTRUCTIONS,
+        "response_schema": {
+            "item_id": "string",
+            "symbolic_formula": "string (required: symbolic formula derived strictly from stem before inspecting options A..G)",
+            "derived_value_from_stem_only": "number | string | null (required: value computed exclusively from stem before comparing options A..G)",
+            "answer": "string (selected option letter A..G)",
+            "flaw_detected": "boolean (true if stem omits a definition or requires reverse-engineering from options)",
+            "flaw_description": "string (reason when flaw_detected is true)",
+        },
+    }
+
 
 def _load_templates(templates_path: Union[str, Path]) -> List[Dict[str, Any]]:
     """Loads all template objects from a JSON file or directory of JSON files, attaching SHA-256 hashes."""
@@ -509,9 +534,18 @@ def generate_judge_batch(
                     correct_letter = letter
                     correct_content = content
 
+            has_numeric_opts = bool(options_blind) and all(
+                _parse_float(opt.get("content")) is not None for opt in options_blind
+            )
+            mc7_contract = _build_mc7_judge_contract(has_numeric_options=has_numeric_opts)
+
             judge_item["options"] = options_blind
+            judge_item["judge_instructions"] = mc7_contract["judge_instructions"]
+            judge_item["response_schema"] = mc7_contract["response_schema"]
+            judge_item["answer_contract"] = mc7_contract
             gt_record["correct_letter"] = correct_letter
             gt_record["correct_content"] = correct_content
+            gt_record["has_numeric_options"] = has_numeric_opts
 
         elif itype == "multiple_select":
             options_blind = []
@@ -973,6 +1007,10 @@ def emit_judge_redispatch(
                             blind_item["options"] = clean_opts
                         if "answer_contract" in itm:
                             blind_item["answer_contract"] = itm["answer_contract"]
+                        if "judge_instructions" in itm:
+                            blind_item["judge_instructions"] = itm["judge_instructions"]
+                        if "response_schema" in itm:
+                            blind_item["response_schema"] = itm["response_schema"]
                         if "graph" in itm:
                             blind_item["graph"] = itm["graph"]
                         missing_items.append(blind_item)
@@ -1068,6 +1106,34 @@ def _validate_ground_truth_item(gt: Dict[str, Any], itype: str) -> None:
             )
 
 
+def _extract_multiple_select_items(user_ans: Any) -> List[str]:
+    """Extracts raw selected option tokens from list or delimited string."""
+    if isinstance(user_ans, (list, tuple, set)):
+        return [str(x).strip() for x in user_ans if str(x).strip()]
+    if isinstance(user_ans, str):
+        s = user_ans.strip()
+        if s.startswith("[") and s.endswith("]"):
+            try:
+                parsed = json.loads(s)
+                if isinstance(parsed, list):
+                    return [str(x).strip() for x in parsed if str(x).strip()]
+            except Exception:
+                pass
+            return [x.strip() for x in re.split(r"[,;\s]+", s) if x.strip()]
+        return [x.strip() for x in re.split(r"[,;\s]+|\band\b|\by\b", s) if x.strip()]
+    return []
+
+
+def _extract_option_letter_set(val: Any) -> Set[str]:
+    """Normalizes multiple-select answers into a set of single uppercase option letters."""
+    letters: Set[str] = set()
+    for item in _extract_multiple_select_items(val):
+        nl = _normalize_option_letter(item)
+        if len(nl) == 1 and nl.isalpha():
+            letters.add(nl)
+    return letters
+
+
 def _check_single_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) -> Tuple[bool, str]:
     """Evaluates a single judge answer against ground truth for a given interaction type."""
     _validate_ground_truth_item(gt, itype)
@@ -1115,23 +1181,7 @@ def _check_single_answer_match(user_ans: Any, gt: Dict[str, Any], itype: str) ->
         gt_letters = set(_normalize_option_letter(x) for x in gt.get("correct_letters", []))
         gt_contents = set(_normalize_str(c) for c in gt.get("correct_contents", []))
 
-        if isinstance(user_ans, list):
-            raw_items = [str(x).strip() for x in user_ans]
-        elif isinstance(user_ans, str):
-            s = user_ans.strip()
-            if s.startswith("[") and s.endswith("]"):
-                try:
-                    parsed = json.loads(s)
-                    if isinstance(parsed, list):
-                        raw_items = [str(x).strip() for x in parsed]
-                    else:
-                        raw_items = [s]
-                except Exception:
-                    raw_items = [x.strip() for x in re.split(r"[,;\s]+", s) if x.strip()]
-            else:
-                raw_items = [x.strip() for x in re.split(r"[,;\s]+|\band\b|\by\b", s) if x.strip()]
-        else:
-            raw_items = []
+        raw_items = _extract_multiple_select_items(user_ans)
 
         u_letters = set()
         u_contents = set()
@@ -1157,15 +1207,22 @@ def resolve_neuro_symbolic_verdict(
     llm_verdict: Union[str, bool],
     failure_category: Optional[str] = None,
     failure_reasons: Optional[List[str]] = None,
+    interaction_type: Optional[str] = None,
+    solver_answer: Any = None,
+    correct_answer: Any = None,
+    template_failed_seeds: int = 0,
 ) -> Dict[str, Any]:
     """Resolves epistemic verdict with deterministic kernel dominance (alpha_kernel = 0).
     
     Rules:
     1. If kernel_refuted is True: verdict is unconditionally FAIL regardless of LLM verdict.
     2. If kernel_verified is True and LLM verdict is FAIL alleging only math/calculation errors:
-       kernel_override is set to True and verdict resolves to PASS (algebraic proof dominance).
-       However, if LLM points out epistemic insufficiency, ambiguous stem, or answer giveaway,
-       verdict resolves to FAIL requiring template remediation.
+       kernel_override is set to True and verdict resolves to PASS (algebraic proof dominance),
+       UNLESS any anti-false-consensus guard triggers:
+       - (a) In FIB or numeric MC7, solver_answer differs from correct_answer by integer rounding (abs == 1.0).
+       - (b) In multiple_select, Blind Judge explicitly rejects an author-marked true option.
+       - (c) Blind Judge fails on >= 2 seeds of the same template.
+       - Or LLM flags epistemic insufficiency, ambiguous stem, or answer giveaway.
     3. If kernel_verified is True and LLM passes: verdict resolves to PASS.
     4. If neither kernel verification nor refutation occurred: standard LLM verdict applies.
     """
@@ -1174,6 +1231,7 @@ def resolve_neuro_symbolic_verdict(
     cat = (failure_category or "").strip().lower()
     reasons = [str(r).strip() for r in (failure_reasons or []) if str(r).strip()]
     reasons_text = " ".join(reasons).lower()
+    eff_type = (interaction_type or "").strip().lower()
 
     # Rule 1: Deterministic kernel refutation dominance
     if kernel_refuted:
@@ -1189,6 +1247,53 @@ def resolve_neuro_symbolic_verdict(
 
     # Rule 2: Kernel verified with LLM failure
     if kernel_verified and not llm_passed:
+        # Anti-false-consensus Guard (c): >= 2 failed seeds on the same template
+        if template_failed_seeds >= 2:
+            return {
+                "verdict": "FAIL",
+                "passed": False,
+                "kernel_verified": True,
+                "kernel_refuted": False,
+                "kernel_override": False,
+                "failure_category": cat or "multi_seed_judge_failure",
+                "reasons": reasons or [f"Blind judge failed on {template_failed_seeds} seeds of the same template"],
+            }
+
+        # Anti-false-consensus Guard (b): multiple_select rejection of author-marked true option
+        if eff_type == "multiple_select":
+            judge_letters = _extract_option_letter_set(solver_answer) if solver_answer is not None else set()
+            author_letters = _extract_option_letter_set(correct_answer) if correct_answer is not None else set()
+            if solver_answer is None or correct_answer is None or judge_letters != author_letters:
+                return {
+                    "verdict": "FAIL",
+                    "passed": False,
+                    "kernel_verified": True,
+                    "kernel_refuted": False,
+                    "kernel_override": False,
+                    "failure_category": cat or "multiple_select_rejection",
+                    "reasons": reasons or [
+                        f"Blind judge selection {sorted(judge_letters)} disagrees with author-marked options {sorted(author_letters)}"
+                    ],
+                }
+
+        # Anti-false-consensus Guard (a): integer rounding diff == 1.0 in FIB or numeric MC7
+        if eff_type in ("fill_in_the_blank", "fib", "multiple_choice_7_options", "mc7", "multiple_choice", ""):
+            if solver_answer is not None and correct_answer is not None:
+                s_num = _parse_float(solver_answer)
+                c_num = _parse_float(correct_answer)
+                if s_num is not None and c_num is not None and math.isclose(abs(float(s_num) - float(c_num)), 1.0, abs_tol=1e-9):
+                    return {
+                        "verdict": "FAIL",
+                        "passed": False,
+                        "kernel_verified": True,
+                        "kernel_refuted": False,
+                        "kernel_override": False,
+                        "failure_category": cat or "integer_rounding_mismatch",
+                        "reasons": reasons or [
+                            f"Integer rounding discrepancy (|solver - correct| == 1.0): {s_num} vs {c_num}"
+                        ],
+                    }
+
         # Check for epistemic or semantic flaws that must block
         blocking_tokens = (
             "epistemic_insufficiency",
@@ -1260,6 +1365,7 @@ def compare_judge_responses(
     ground_truth: Optional[Dict[str, Dict[str, Any]]] = None,
     cycle: int = 1,
     work_dir: Optional[Union[str, Path]] = None,
+    shards: Optional[Union[List[str], str]] = None,
 ) -> Dict[str, Any]:
     """Compares judge answers against ground truth answer keys and records discordances.
     
@@ -1451,6 +1557,10 @@ def compare_judge_responses(
     comp_items: Dict[str, List[bool]] = {}
     all_complete = (total > 0)
 
+    # First pass: evaluate raw judge agreement per item so we know failed seed counts per template
+    pre_evals: List[Dict[str, Any]] = []
+    template_raw_failures: Dict[str, int] = {}
+
     for item_id, gt in ground_truth.items():
         s_iid = str(item_id)
         reps = resp_replicates.get(s_iid, [])
@@ -1466,25 +1576,24 @@ def compare_judge_responses(
 
         if not tid:
             m = re.match(r"^([A-Za-z0-9_-]+?)_judge_\d+", s_iid)
-            if m:
-                tid = m.group(1)
-            else:
-                tid = "unknown_template"
+            tid = m.group(1) if m else "unknown_template"
         if not cid:
             cid = "unknown_comp"
 
         tpl_items.setdefault(tid, [])
         comp_items.setdefault(cid, [])
 
-        is_match = False
-        reason = ""
-        user_ans: Any = None
-
         is_refuted = bool(gt.get("kernel_refuted", False))
         is_verified = bool(gt.get("kernel_verified", False))
 
         if not is_refuted:
             _validate_ground_truth_item(gt, itype)
+
+        is_match = False
+        reason = ""
+        user_ans: Any = None
+        items_to_check: List[Any] = []
+        flaw_detected = False
 
         if is_refuted:
             is_match = False
@@ -1536,51 +1645,102 @@ def compare_judge_responses(
                     first_fail = next((r_msg for m_ok, r_msg in rep_evals if not m_ok), "Evaluation mismatch")
                     reason = first_fail
 
-                # Neuro-symbolic resolution under kernel dominance (alpha_kernel = 0)
-                if is_verified:
-                    fail_cat = "calculation_error"
-                    fail_reasons = [reason]
-                    for r_item in items_to_check:
-                        if isinstance(r_item, dict):
-                            if r_item.get("flaw_detected"):
-                                fail_cat = str(r_item.get("failure_category") or "epistemic_insufficiency")
-                            elif "failure_category" in r_item:
-                                fail_cat = str(r_item["failure_category"])
-                            elif "category" in r_item:
-                                fail_cat = str(r_item["category"])
-                            if "reason" in r_item:
-                                fail_reasons.append(str(r_item["reason"]))
-                        elif isinstance(r_item, str):
-                            lower_r = r_item.lower()
-                            if any(tok in lower_r for tok in ("blocked", "bloqueado", "epistemic", "carece", "insuficiente", "flaw_detected")):
-                                fail_cat = "epistemic_insufficiency"
-                                fail_reasons.append(r_item)
+        if not is_match and reps:
+            template_raw_failures[tid] = template_raw_failures.get(tid, 0) + 1
 
-                    neuro_verdict = resolve_neuro_symbolic_verdict(
-                        kernel_verified=True,
-                        kernel_refuted=False,
-                        llm_verdict="FAIL",
-                        failure_category=fail_cat,
-                        failure_reasons=fail_reasons,
+        pre_evals.append({
+            "s_iid": s_iid,
+            "gt": gt,
+            "tid": tid,
+            "cid": cid,
+            "itype": itype,
+            "reps": reps,
+            "is_refuted": is_refuted,
+            "is_verified": is_verified,
+            "is_match": is_match,
+            "reason": reason,
+            "user_ans": user_ans,
+            "items_to_check": items_to_check,
+        })
+
+    # Second pass: apply neuro-symbolic resolution with anti-false-consensus guards
+    for ev in pre_evals:
+        s_iid = ev["s_iid"]
+        gt = ev["gt"]
+        tid = ev["tid"]
+        cid = ev["cid"]
+        itype = ev["itype"]
+        reps = ev["reps"]
+        is_verified = ev["is_verified"]
+        is_match = ev["is_match"]
+        reason = ev["reason"]
+        user_ans = ev["user_ans"]
+        items_to_check = ev["items_to_check"]
+
+        if not is_match and reps and is_verified:
+            fail_cat = "calculation_error"
+            fail_reasons = [reason]
+            derived_val = None
+            for r_item in items_to_check:
+                if isinstance(r_item, dict):
+                    if r_item.get("flaw_detected"):
+                        fail_cat = str(r_item.get("failure_category") or "epistemic_insufficiency")
+                    elif "failure_category" in r_item:
+                        fail_cat = str(r_item["failure_category"])
+                    elif "category" in r_item:
+                        fail_cat = str(r_item["category"])
+                    if "reason" in r_item:
+                        fail_reasons.append(str(r_item["reason"]))
+                    if derived_val is None:
+                        derived_val = r_item.get("derived_value_from_stem_only", r_item.get("solver_answer"))
+                elif isinstance(r_item, str):
+                    lower_r = r_item.lower()
+                    if any(tok in lower_r for tok in ("blocked", "bloqueado", "epistemic", "carece", "insuficiente", "flaw_detected")):
+                        fail_cat = "epistemic_insufficiency"
+                        fail_reasons.append(r_item)
+
+            if itype == "fill_in_the_blank":
+                solver_ans = derived_val if derived_val is not None else user_ans
+                correct_ans = gt.get("correct_value")
+            elif itype == "multiple_choice_7_options":
+                solver_ans = derived_val if derived_val is not None else user_ans
+                correct_ans = gt.get("correct_content") if gt.get("correct_content") is not None else gt.get("correct_letter")
+            elif itype == "multiple_select":
+                solver_ans = user_ans
+                correct_ans = gt.get("correct_letters")
+            else:
+                solver_ans = user_ans
+                correct_ans = None
+
+            neuro_verdict = resolve_neuro_symbolic_verdict(
+                kernel_verified=True,
+                kernel_refuted=False,
+                llm_verdict="FAIL",
+                failure_category=fail_cat,
+                failure_reasons=fail_reasons,
+                interaction_type=itype,
+                solver_answer=solver_ans,
+                correct_answer=correct_ans,
+                template_failed_seeds=template_raw_failures.get(tid, 0),
+            )
+            if neuro_verdict.get("kernel_override"):
+                is_match = True
+                reason = "Kernel verified constructive proof overrides LLM calculation disagreement"
+                exp_override = (
+                    gt.get("correct_letter")
+                    if gt.get("correct_letter") is not None
+                    else (
+                        gt.get("correct_value")
+                        if gt.get("correct_value") is not None
+                        else gt.get("correct_letters")
                     )
-                    if neuro_verdict.get("kernel_override"):
-                        is_match = True
-                        reason = "Kernel verified constructive proof overrides LLM calculation disagreement"
-                        exp_override = (
-                            gt.get("correct_letter")
-                            if gt.get("correct_letter") is not None
-                            else (
-                                gt.get("correct_value")
-                                if gt.get("correct_value") is not None
-                                else gt.get("correct_letters")
-                            )
-                        )
-                        kernel_overridden_items.append({
-                            "item_id": s_iid,
-                            "judge_response": user_ans,
-                            "expected": exp_override,
-                            "reason": reason,
-                        })
+                )
+                kernel_overridden_items.append({
+                    "item_id": s_iid,
+                    "judge_response": user_ans,
+                    "expected": exp_override,
+                    "reason": reason,
+                })
 
         tpl_items[tid].append(is_match)
         comp_items[cid].append(is_match)
@@ -1660,8 +1820,19 @@ def compare_judge_responses(
         print(warning_msg, file=sys.stderr)
         logger.warning(warning_msg)
 
+    now_iso = datetime.now(timezone.utc).isoformat()
+    normalized_shards: List[str] = []
+    if shards:
+        raw_shard_list = [shards] if isinstance(shards, str) else list(shards)
+        for s_item in raw_shard_list:
+            for part in str(s_item).split(","):
+                p_clean = part.strip()
+                if p_clean and p_clean not in normalized_shards:
+                    normalized_shards.append(p_clean)
+
     report_data = {
         "cycle": cycle,
+        "timestamp": now_iso,
         "total": total,
         "total_items": total,
         "agreed_items": agreed,
@@ -1691,8 +1862,58 @@ def compare_judge_responses(
         except Exception as e:
             logger.warning("Could not execute check_judge_completeness: %s", e)
 
+        report_p = resolved_work_dir / "judge_report.json"
+        round_1_p = resolved_work_dir / "judge_report_round_1.json"
+        prev_report: Optional[Dict[str, Any]] = None
+
+        if report_p.is_file():
+            try:
+                raw_prev_bytes = report_p.read_bytes()
+                parsed_prev = json.loads(raw_prev_bytes.decode("utf-8"))
+                if isinstance(parsed_prev, dict):
+                    prev_report = parsed_prev
+                if normalized_shards and not round_1_p.exists():
+                    round_1_p.write_bytes(raw_prev_bytes)
+            except Exception as e:
+                logger.warning("Could not read/backup previous judge_report.json: %s", e)
+
+        rounds_history: List[Dict[str, Any]] = []
+        if prev_report is not None:
+            existing_hist = prev_report.get("rounds_history")
+            if isinstance(existing_hist, list) and existing_hist:
+                rounds_history = [dict(entry) for entry in existing_hist if isinstance(entry, dict)]
+            else:
+                prev_failed = prev_report.get("failed_templates") or []
+                prev_failed_cnt = len(prev_failed) if isinstance(prev_failed, list) else int(prev_failed or 0)
+                rounds_history = [{
+                    "round": int(prev_report.get("round") or prev_report.get("cycle") or 1),
+                    "timestamp": prev_report.get("timestamp") or now_iso,
+                    "passed": bool(prev_report.get("passed", False)),
+                    "failed": prev_failed_cnt,
+                    "failed_shards": prev_report.get("failed_shards") or prev_report.get("failed_competencies") or [],
+                    "rejudged_shards": prev_report.get("rejudged_shards") or [],
+                }]
+
+        current_round = (
+            max((int(r.get("round", 0)) for r in rounds_history), default=0) + 1
+            if rounds_history
+            else max(1, int(cycle))
+        )
+        current_entry = {
+            "round": current_round,
+            "timestamp": now_iso,
+            "passed": passed,
+            "failed": len(failed_templates),
+            "failed_shards": failed_competencies,
+            "rejudged_shards": normalized_shards,
+        }
+        rounds_history.append(current_entry)
+        report_data["round"] = current_round
+        report_data["rejudged_shards"] = normalized_shards
+        report_data["rounds_history"] = rounds_history
+
         try:
-            (resolved_work_dir / "judge_report.json").write_text(
+            report_p.write_text(
                 json.dumps(report_data, indent=2, ensure_ascii=False),
                 encoding="utf-8",
             )
@@ -1784,6 +2005,12 @@ def main() -> None:
     comp.add_argument("--responses", required=False, default=None, help="Path to judge responses JSON file or directory")
     comp.add_argument("--work-dir", required=True, help="Working directory containing judge_ground_truth.json")
     comp.add_argument("--cycle", type=int, default=1, help="Current correction cycle (1-3)")
+    comp.add_argument(
+        "--shards",
+        nargs="*",
+        default=None,
+        help="Optional shard IDs for partial re-judge after repair (preserves judge_report_round_1.json and rounds_history)",
+    )
 
     args = parser.parse_args()
 
@@ -1829,7 +2056,13 @@ def main() -> None:
         gt = json.loads(truth_p.read_text(encoding="utf-8"))
         resps = Path(args.responses) if args.responses else None
 
-        report = compare_judge_responses(responses=resps, ground_truth=gt, cycle=args.cycle, work_dir=args.work_dir)
+        report = compare_judge_responses(
+            responses=resps,
+            ground_truth=gt,
+            cycle=args.cycle,
+            work_dir=args.work_dir,
+            shards=args.shards,
+        )
         report_p = Path(args.work_dir) / f"judge_report_cycle_{args.cycle}.json"
         report_p.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
 

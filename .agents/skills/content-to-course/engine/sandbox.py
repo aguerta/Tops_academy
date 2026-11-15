@@ -418,41 +418,52 @@ def call_with_timeout(
         cpu_start = time.thread_time() if has_thread_time else 0.0
         wall_start = time.perf_counter()
 
-        total_steps = [0]
+        steps = [0]
         user_steps = [0]
         unwrapped_func = getattr(func, "__wrapped__", func)
         target_code = getattr(unwrapped_func, "__code__", getattr(func, "__code__", None))
         target_filename = getattr(target_code, "co_filename", None)
+        _perf_counter = time.perf_counter
+        _thread_time = time.thread_time if has_thread_time else None
 
-        def _timeout_tracer(frame, event, arg):
-            total_steps[0] += 1
-            f_code = frame.f_code
-            fn = f_code.co_filename
-            if (
-                f_code is target_code
-                or (target_filename and fn == target_filename)
-                or fn in ("<sandbox>", "<generate_py>", "<cross_check_py>", "<gen_auto_vars>", "<auto_vars>")
-            ):
-                user_steps[0] += 1
-                if max_user_steps and timeout_val is None and user_steps[0] > max_user_steps:
+        def _check_timeout() -> None:
+            if threading.active_count() > 1 and _thread_time is not None:
+                wall_limit = max(timeout_val * 4.0, 2.5)
+                if (_thread_time() - cpu_start) > timeout_val or (_perf_counter() - wall_start) > wall_limit:
                     seed_suffix = f" (seed={seed})" if seed is not None else ""
                     raise SandboxTimeoutError(
-                        f"Infinite loop guard triggered after {max_user_steps} steps{seed_suffix}"
+                        f"Template execution timed out after {timeout}s{seed_suffix}"
+                    )
+            else:
+                if (_perf_counter() - wall_start) > timeout_val:
+                    seed_suffix = f" (seed={seed})" if seed is not None else ""
+                    raise SandboxTimeoutError(
+                        f"Template execution timed out after {timeout}s{seed_suffix}"
                     )
 
-            if timeout_val is not None and (total_steps[0] & 63) == 0:
-                seed_suffix = f" (seed={seed})" if seed is not None else ""
-                if threading.active_count() > 1 and has_thread_time:
-                    wall_limit = max(timeout_val * 4.0, 2.5)
-                    if (time.thread_time() - cpu_start) > timeout_val or (time.perf_counter() - wall_start) > wall_limit:
-                        raise SandboxTimeoutError(
-                            f"Template execution timed out after {timeout}s{seed_suffix}"
-                        )
-                else:
-                    if (time.perf_counter() - wall_start) > timeout_val:
-                        raise SandboxTimeoutError(
-                            f"Template execution timed out after {timeout}s{seed_suffix}"
-                        )
+        def _timeout_tracer(frame, event, arg):
+            if event == "line":
+                steps[0] += 1
+                if max_user_steps and timeout_val is None:
+                    f_code = frame.f_code
+                    fn = f_code.co_filename
+                    if (
+                        f_code is target_code
+                        or (target_filename and fn == target_filename)
+                        or fn in ("<sandbox>", "<generate_py>", "<cross_check_py>", "<gen_auto_vars>", "<auto_vars>")
+                    ):
+                        user_steps[0] += 1
+                        if user_steps[0] > max_user_steps:
+                            seed_suffix = f" (seed={seed})" if seed is not None else ""
+                            raise SandboxTimeoutError(
+                                f"Infinite loop guard triggered after {max_user_steps} steps{seed_suffix}"
+                            )
+                if timeout_val is not None and (steps[0] & 63) == 0:
+                    _check_timeout()
+            elif event == "call":
+                steps[0] += 1
+                if timeout_val is not None and (steps[0] & 63) == 0:
+                    _check_timeout()
 
             if prev_trace is not None:
                 prev_trace(frame, event, arg)

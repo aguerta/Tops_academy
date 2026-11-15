@@ -79,6 +79,68 @@ SHARED_DISTRACTORS_MIN: int = 2
 SCORE_CANDIDATE_THRESHOLD: float = 0.35
 SCORE_STRONG_THRESHOLD: float = 0.60
 DESCRIPTION_SNIPPET_CHARS: int = 280
+MAX_DISTRACTORS_PER_COMPETENCY: int = 10
+DISTRACTOR_DEDUP_JACCARD_THRESHOLD: float = 0.55
+CROSS_PDF_FORMULA_BOOST: float = 0.20
+
+FORMULA_KEY_TERMS: Tuple[str, ...] = (
+    "markov",
+    "chebyshev",
+    "varianza muestral",
+    "error estandar",
+    "slutsky",
+    "insesgado",
+    "sesgo",
+    "gauss-markov",
+    "gauss markov",
+    "bayes",
+    "bernoulli",
+    "poisson",
+    "binomial",
+    "chi-cuadrado",
+    "chi cuadrado",
+    "student",
+    "fisher",
+    "snedecor",
+    "kolmogorov",
+    "smirnov",
+    "jensen",
+    "cauchy-schwarz",
+    "cauchy schwarz",
+    "holder",
+    "minkowski",
+    "lyapunov",
+    "lindeberg",
+    "levy",
+    "borel-cantelli",
+    "borel cantelli",
+    "rao-blackwell",
+    "rao blackwell",
+    "cramer-rao",
+    "cramer rao",
+    "neyman-pearson",
+    "neyman pearson",
+    "lehmann-scheffe",
+    "lehmann scheffe",
+    "maxima verosimilitud",
+    "verosimilitud",
+    "consistencia",
+    "eficiencia",
+    "suficiencia",
+    "ley de los grandes numeros",
+    "teorema central del limite",
+    "intervalo de confianza",
+    "p-valor",
+    "p valor",
+    "error cuadratico medio",
+    "covarianza",
+    "correlacion",
+    "regresion",
+    "minimos cuadrados",
+    "heterocedasticidad",
+    "autocorrelacion",
+    "multicolinealidad",
+)
 
 
 def tokenize_text(text: str) -> Set[str]:
@@ -832,6 +894,67 @@ def _extract_math_tokens(text: str) -> Set[str]:
     return tokens
 
 
+def _token_jaccard(text_a: str, text_b: str) -> float:
+    """Compute Jaccard similarity over accent-folded, stopword-free stemmed tokens."""
+    return jaccard_similarity(normalized_stems(text_a), normalized_stems(text_b))
+
+
+def _extract_source_docs(comp: Dict[str, Any], ev_keys: Set[Tuple[str, str]]) -> Set[str]:
+    """Extract normalized source PDF stems from both evidence and source_ref."""
+    docs: Set[str] = {d for d, _ in ev_keys if d}
+    source_ref = comp.get("source_ref")
+    if not source_ref:
+        return docs
+    refs = source_ref if isinstance(source_ref, list) else [source_ref]
+    for ref in refs:
+        if isinstance(ref, dict):
+            raw = ref.get("doc") or ref.get("pdf") or ref.get("file") or ""
+        else:
+            raw = str(ref or "")
+        raw = raw.split("#", 1)[0].strip()
+        if raw:
+            stem = Path(raw).stem.lower()
+            if stem:
+                docs.add(stem)
+    return docs
+
+
+def _extract_formula_terms(comp: Dict[str, Any]) -> Set[str]:
+    """Extract normalized key formula/theorem terms from key_concepts and distractors."""
+    chunks: List[str] = []
+    kc = comp.get("key_concepts")
+    if isinstance(kc, str) and kc.strip():
+        chunks.append(kc)
+    elif isinstance(kc, list):
+        for item in kc:
+            if isinstance(item, str) and item.strip():
+                chunks.append(item)
+            elif isinstance(item, dict):
+                for val in item.values():
+                    if isinstance(val, str) and val.strip():
+                        chunks.append(val)
+
+    for d_name in comp.get("distractor_names") or []:
+        if isinstance(d_name, str) and d_name.strip():
+            chunks.append(d_name)
+
+    for d in comp.get("distractors") or []:
+        if isinstance(d, dict):
+            for field in ("name", "wrong_belief", "correct_belief", "omitted_step"):
+                val = d.get(field)
+                if isinstance(val, str) and val.strip():
+                    chunks.append(val)
+
+    if not chunks:
+        return set()
+    norm_text = " ".join(_fold_accents(" ".join(chunks).lower()).split())
+    matched: Set[str] = set()
+    for term in FORMULA_KEY_TERMS:
+        if re.search(rf"\b{re.escape(term)}\b", norm_text):
+            matched.add(term)
+    return matched
+
+
 def _comp_view(c: Dict[str, Any]) -> Dict[str, Any]:
     """Normalized view of a competency (works for new competencies and base-course entries)."""
     name = c.get("name") or c.get("title", "")
@@ -848,8 +971,9 @@ def _comp_view(c: Dict[str, Any]) -> Dict[str, Any]:
         "desc_stems": normalized_stems(desc),
         "math_tokens": _extract_math_tokens(f"{name} {desc}"),
         "ev": ev_keys,
-        "ev_docs": {d for d, _ in ev_keys},
+        "ev_docs": _extract_source_docs(c, ev_keys),
         "distractors": _distractor_set(c),
+        "formula_terms": _extract_formula_terms(c),
     }
 
 
@@ -878,6 +1002,7 @@ def _pair_candidate(v1: Dict[str, Any], v2: Dict[str, Any]) -> Optional[Dict[str
     ev_docs1 = v1.get("ev_docs", set())
     ev_docs2 = v2.get("ev_docs", set())
     cross_doc = bool(ev_docs1 and ev_docs2 and ev_docs1.isdisjoint(ev_docs2))
+    shared_formula_terms = v1.get("formula_terms", set()) & v2.get("formula_terms", set())
 
     signals: List[str] = []
     if jaccard_lex >= JACCARD_DUPLICATE_THRESHOLD:
@@ -901,6 +1026,9 @@ def _pair_candidate(v1: Dict[str, Any], v2: Dict[str, Any]) -> Optional[Dict[str
         score = min(1.0, (score / 0.80) + 0.15 * math_sim)
         if name_sim >= 0.45 or (desc_sim >= 0.25 and math_sim >= 0.30) or math_sim >= 0.40:
             signals.append("cross_pdf_match")
+        if shared_formula_terms:
+            score = min(1.0, score + CROSS_PDF_FORMULA_BOOST)
+            signals.append("shared_formula_terms")
 
     if not signals and score >= _env_float("C2C_DUP_SCORE_MIN", SCORE_CANDIDATE_THRESHOLD):
         signals.append("combined_score")
@@ -1016,8 +1144,8 @@ def _build_outline_payload(
         })
 
     draft_count = len(draft_competencies)
-    recommended_min = min(12, max(1, draft_count))
-    recommended_max = 20
+    recommended_min = max(14, int(round(draft_count * 0.50)))
+    recommended_max = max(24, min(32, int(round(draft_count * 0.68))))
     return {
         "course_id": course_id,
         "title": course_title,
@@ -1959,6 +2087,64 @@ def apply_harmonize(
             if not comp_survivor:
                 continue
 
+            absorbed_comps = [
+                c for aid in members
+                if (c := next((x for x in competencies if x["id"] == aid), None)) is not None
+            ]
+
+            # Unify distractors across survivor + absorbed competencies in round-robin order
+            # with exact + semantic (_token_jaccard >= 0.55) deduplication and hard cap.
+            distractor_sources: List[List[Dict[str, Any]]] = [
+                list(comp_survivor.get("distractors", []))
+            ] + [list(ca.get("distractors", [])) for ca in absorbed_comps]
+            survivor_code = root.replace("-", "")
+            seen_dids: Set[str] = {
+                str(d.get("id")) for d in comp_survivor.get("distractors", []) if d.get("id")
+            }
+            seen_signatures: Set[Tuple[str, str, str]] = set()
+            combined_distractors: List[Dict[str, Any]] = []
+            combined_sem_texts: List[str] = []
+            dist_idx = 1
+
+            max_source_len = max((len(src) for src in distractor_sources), default=0)
+            for round_idx in range(max_source_len):
+                if len(combined_distractors) >= MAX_DISTRACTORS_PER_COMPETENCY:
+                    break
+                for src_idx, src in enumerate(distractor_sources):
+                    if len(combined_distractors) >= MAX_DISTRACTORS_PER_COMPETENCY:
+                        break
+                    if round_idx >= len(src):
+                        continue
+                    d = src[round_idx]
+                    sig = (
+                        str(d.get("name", "")).strip().lower(),
+                        str(d.get("wrong_belief", "")).strip().lower(),
+                        str(d.get("omitted_step", "")).strip().lower(),
+                    )
+                    if sig in seen_signatures:
+                        continue
+                    sem_text = f"{str(d.get('wrong_belief') or '').strip()} {str(d.get('omitted_step') or '').strip()}".strip()
+                    if sem_text and any(
+                        _token_jaccard(sem_text, prev_text) >= DISTRACTOR_DEDUP_JACCARD_THRESHOLD
+                        for prev_text in combined_sem_texts
+                        if prev_text
+                    ):
+                        continue
+
+                    d_copy = dict(d)
+                    if src_idx > 0 or not d_copy.get("id"):
+                        new_did = f"D-{survivor_code}-{dist_idx:02d}"
+                        while new_did in seen_dids:
+                            dist_idx += 1
+                            new_did = f"D-{survivor_code}-{dist_idx:02d}"
+                        d_copy["id"] = new_did
+                        seen_dids.add(new_did)
+                    seen_signatures.add(sig)
+                    combined_distractors.append(d_copy)
+                    combined_sem_texts.append(sem_text)
+
+            comp_survivor["distractors"] = combined_distractors
+
             absorbed_concept_with_assumptions = False
             for absorbed_id in members:
                 comp_absorbed = next((c for c in competencies if c["id"] == absorbed_id), None)
@@ -1967,39 +2153,6 @@ def apply_harmonize(
 
                 if comp_absorbed.get("type", "").lower() == "concept" and comp_absorbed.get("assumptions"):
                     absorbed_concept_with_assumptions = True
-
-                # Unify distractors (eliminate exact duplicates by signature)
-                combined_distractors = list(comp_survivor.get("distractors", []))
-                seen_signatures = {
-                    (
-                        str(d.get("name", "")).strip().lower(),
-                        str(d.get("wrong_belief", "")).strip().lower(),
-                        str(d.get("omitted_step", "")).strip().lower(),
-                    )
-                    for d in combined_distractors
-                }
-                seen_dids = {d.get("id") for d in combined_distractors}
-                survivor_code = root.replace("-", "")
-
-                for d in comp_absorbed.get("distractors", []):
-                    sig = (
-                        str(d.get("name", "")).strip().lower(),
-                        str(d.get("wrong_belief", "")).strip().lower(),
-                        str(d.get("omitted_step", "")).strip().lower(),
-                    )
-                    if sig not in seen_signatures:
-                        d_copy = dict(d)
-                        dist_idx = len(combined_distractors) + 1
-                        new_did = f"D-{survivor_code}-{dist_idx:02d}"
-                        while new_did in seen_dids:
-                            dist_idx += 1
-                            new_did = f"D-{survivor_code}-{dist_idx:02d}"
-                        d_copy["id"] = new_did
-                        seen_dids.add(new_did)
-                        seen_signatures.add(sig)
-                        combined_distractors.append(d_copy)
-
-                comp_survivor["distractors"] = combined_distractors
 
                 # Unify evidence citations
                 survivor_evidence = list(comp_survivor.get("evidence", []))

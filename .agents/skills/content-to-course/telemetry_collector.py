@@ -417,7 +417,13 @@ def _infer_canonical_subagent_role(p0: str, fallback_role: str, cid: str) -> str
     if any(k in combined.lower() for k in ("c2c_repair", "repair engineer", "repair_engineer", "prompts/repair", "prompt_repair", "shard_fixes")):
         return fallback_role if ("repair" in fallback_role.lower()) else "Repair Engineer"
 
-    # 2. Check CTA parts and architects
+    # 1.5 Check Orchestrator
+    if any(k in combined.lower() for k in ("orchestrator", "director")):
+        return "Director (Orchestrator)" if "director" in combined.lower() else "Orchestrator"
+
+    # 2. Check CTA parts, harmonizers, and architects
+    if any(k in combined.lower() for k in ("harmonizer", "cta_reduce", "cta-reduce", "cta reduce")):
+        return "CTA Harmonizer"
     m_part = re.search(r"(?:part_|cta_|CTA Architect\s*\(?part_|CTA Architect\s+)(\d+)", combined, re.IGNORECASE)
     if m_part:
         return f"CTA Architect (part_{int(m_part.group(1)):02d})"
@@ -440,8 +446,12 @@ def _infer_canonical_subagent_role(p0: str, fallback_role: str, cid: str) -> str
 
 
 def infer_subagent_cohort(role: str, type_name: str = "") -> str:
-    """Infers canonical cohort ('judge', 'cta', 'shard', 'repair', 'prepare', 'generic') from role and type."""
+    """Infers canonical cohort ('orchestrator', 'harmonizer', 'judge', 'cta', 'shard', 'repair', 'prepare', 'generic') from role and type."""
     combined = f"{role} {type_name}".lower()
+    if any(k in combined for k in ("orchestrator", "director")):
+        return "orchestrator"
+    if any(k in combined for k in ("harmonizer", "cta_reduce", "cta-reduce", "cta reduce")):
+        return "harmonizer"
     if any(k in combined for k in ("judge", "blind_judge", "c2c-judge")):
         return "judge"
     if any(k in combined for k in ("repair", "shard_fixes")):
@@ -459,9 +469,9 @@ def is_compiler_cohort(cohort: str, role: str = "") -> bool:
     """Returns True if the cohort/role is designed to invoke compilers (compile_shard, compile_cta)."""
     ch = cohort.lower()
     r = role.lower()
-    if "judge" in ch or "judge" in r or "prepare" in ch or "prepare" in r or "vision" in ch or "vision" in r:
+    if any(k in ch or k in r for k in ("judge", "prepare", "vision", "orchestrator", "director")):
         return False
-    if any(k in ch or k in r for k in ("shard", "author", "cta", "repair")):
+    if any(k in ch or k in r for k in ("shard", "author", "cta", "repair", "harmonizer")):
         return True
     return False
 
@@ -477,7 +487,7 @@ def summarize_cohorts(subagents: List[Dict[str, Any]]) -> Dict[str, Dict[str, An
     for ch, items in by_cohort.items():
         n = len(items)
         cohort_uses_compiler = any(sa.get("uses_compiler", is_compiler_cohort(ch, sa.get("role", ""))) for sa in items)
-        if ch in ("judge", "prepare"):
+        if ch in ("judge", "prepare", "orchestrator"):
             cohort_uses_compiler = False
 
         comp_items = [sa for sa in items if sa.get("uses_compiler", cohort_uses_compiler) and sa.get("first_pass") is not None]
@@ -549,7 +559,7 @@ def extract_stage_subagents(
     stage_lower = stage_name.lower()
     stage_keywords = {
         "prepare": ["vision", "c2c-vision", "handout"],
-        "cta": ["cta", "cta-direct", "cta-map", "cta-reduce", "c2c-cta", "architect", "part_", "compile_cta"],
+        "cta": ["cta", "cta-direct", "cta-map", "cta-reduce", "harmonizer", "c2c-cta", "architect", "part_", "compile_cta"],
         "shard": ["shard", "author", "compile_shard"],
         "templates": ["author", "c2c-author", "shard_", "exercise", "compile_shard"],
         "build": ["build", "repair", "c2c-repair", "c2c_repair", "shard_fixes"],
