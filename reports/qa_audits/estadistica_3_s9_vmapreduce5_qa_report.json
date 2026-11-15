@@ -4,7 +4,9 @@
     "unit_title": "Estadística Asintótica, Modos de Convergencia y Métodos de Aproximación",
     "detected_objective": "Dominio y aplicación analítica rigurosa de inferencia en muestras grandes, descomposición del ECM, desigualdades fundamentales (Markov, Chebyshev, Jensen, Cauchy-Schwarz), jerarquía de modos de convergencia estocástica (L^r, m.s., p, d, a.s.), Leyes de los Grandes Números, Teorema Central del Límite y Método Delta.",
     "total_competencies": 37,
-    "total_questions": 860
+    "total_questions": 860,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-14 22:37:15"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -104,5 +106,8 @@
     "Incorporar una batería de reactivos 'multiple_select' (10-15% del banco) en competencias conceptuales discriminativas como C-05 (Jerarquía de convergencia) y C-14 (Ortogonalidad insesgadez-consistencia) para entrenar la discriminación de condiciones necesarias frente a suficientes.",
     "Actualizar la expresión regular del linter 'uninterpolated_math_variable_linter' en la suite de linters deterministas para excluir comandos LaTeX canónicos con argumentos entre llaves (\\text, \\bar, \\hat, \\operatorname, \\mathcal, \\xrightarrow), eliminando el ruido de falsos positivos en auditorías futuras.",
     "Personalizar las 'misconception_warnings' en el bloque de 403 reactivos fill_in_the_blank para proporcionar retroalimentación de diagnóstico diferenciada según el rango de dispersión o el signo del error operativo del estudiante."
-  ]
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-14 22:37:15",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

@@ -4,7 +4,9 @@
     "unit_title": "Saul Pre Parcial",
     "detected_objective": "Dominio y aplicación analítica integral de sistemas dinámicos continuos, ecuaciones en derivadas parciales en economía, análisis espectral, estabilidad local y teoría del equilibrio macroeconómico y microeconómico.",
     "total_competencies": 63,
-    "total_questions": 1520
+    "total_questions": 1520,
+    "platform_status": "ELIMINADO",
+    "deleted_at": "2026-11-14 22:37:17"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -64,5 +66,8 @@
       "regex_patch": "r'--\\s*(\\d+)'",
       "rationale": "Corrige anomalías estéticas en matrices y vectores cuando el valor sustituido es un escalar negativo que colisiona con el operador de resta algebraico."
     }
-  ]
+  ],
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-14 22:37:17",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }

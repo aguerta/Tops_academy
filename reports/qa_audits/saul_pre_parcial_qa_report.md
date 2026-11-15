@@ -1,4 +1,9 @@
 # Reporte Normativo de Auditoría de Calidad Pedagógica y Técnica (Course QA)
+> [!WARNING]
+> **CURSO RETIRADO DE LA PLATAFORMA**: Este curso fue eliminado de la plataforma interactiva el **2026-11-14 22:37:17**. Este informe de auditoría se conserva exclusivamente como registro histórico y pedagógico ('legacy').
+
+**Estado en Plataforma:** ELIMINADO  
+**Fecha de Eliminación:** 2026-11-14 22:37:17  
 ## Curso: Saul Pre Parcial (`saul_pre_parcial`)
 
 **Plataforma:** Top's Academy  

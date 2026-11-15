@@ -9,9 +9,10 @@
       "multiple_choice_7_options": 220,
       "fill_in_the_blank": 200
     },
-    "platform_status": "ACTIVO",
+    "platform_status": "ELIMINADO",
     "evaluator": "Course QA Auditor — Top's Academy",
-    "evaluation_date": "2026-11-01"
+    "evaluation_date": "2026-11-01",
+    "deleted_at": "2026-11-14 22:37:17"
   },
   "dimension_scores": {
     "architecture_granularity": {
@@ -49,5 +50,7 @@
     "El banco de 420 reactivos y 18 competencias cumple con la totalidad de los estándares Quality Matters, OSCQR y Mastery Learning."
   ],
   "discovered_lint_rules": [],
-  "platform_status": "ACTIVO"
+  "platform_status": "ELIMINADO",
+  "deleted_at": "2026-11-14 22:37:17",
+  "deletion_note": "Curso retirado de la plataforma interactiva Top's Academy; conservado como registro histórico de auditoría pedagógica."
 }
