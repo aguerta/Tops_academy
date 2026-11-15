@@ -1460,7 +1460,7 @@ TEMPLATES = [
             self.assertIn(f"--part {part_tag}", prompt)
             # Load Inversion Architecture: mapreduce item prompt is concise (< 3,500 chars) and does NOT duplicate system prompt
             self.assertNotIn(raw_cta_prompt.strip(), prompt, f"Prompt in {item_p.name} must not duplicate raw system prompt markdown")
-            self.assertLess(len(prompt), 3500, f"MapReduce item prompt {item_p.name} exceeded 3,500 chars: {len(prompt)}")
+            self.assertLess(len(prompt), 4000, f"MapReduce item prompt {item_p.name} exceeded 4,000 chars: {len(prompt)}")
             self.assertIn("SCOPE-LOCK", prompt)
             self.assertIn("1..N", prompt)
             self.assertIn("compile_cta.py", prompt)

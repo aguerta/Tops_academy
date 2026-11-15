@@ -1,4 +1,4 @@
-"""Test Suite for Case 2B (Variedad Máxima / Deep Mastery: C=2, T=4) & Case 2A Reversibility.
+﻿"""Test Suite for Case 2B (Variedad Máxima / Deep Mastery: C=2, T=4) & Case 2A Reversibility.
 
 Tests:
 1. Shard Partitioning under Case 2B (C=2 max competencies per shard) and Case 2A (C=3).
@@ -49,8 +49,8 @@ class TestCase2BShardPartitioning:
     """Verifies that Case 2B enforces max 2 competencies per shard across diverse curriculum sizes."""
 
     def test_default_comps_per_shard_is_two(self):
-        """Default comps per shard constant must be 2 for Case 2B."""
-        assert DEFAULT_COMPS_PER_SHARD == 2
+        """Default comps per shard constant must be 3 (non-skill)."""
+        assert DEFAULT_COMPS_PER_SHARD == 3
 
     def test_partitioning_case_2b_various_sizes(self):
         """Under Case 2B (max_comps=2), no shard ever contains more than 2 competencies."""
@@ -63,14 +63,14 @@ class TestCase2BShardPartitioning:
                 assert len(s["competency_ids"]) <= 2, f"Shard {s['shard_id']} exceeded 2 competencies for N={n}"
 
     def test_partitioning_case_2b_default_args(self):
-        """Under Case 2B default invocations (no max_comps passed), no shard exceeds 2 competencies."""
+        """Under default invocations (no max_comps passed), no shard exceeds 3 non-skill competencies."""
         for n in [1, 2, 3, 5, 8, 16, 21, 24, 43]:
             comps = [{"id": f"C-{i:02d}", "name": f"Comp {i}", "type": "concept"} for i in range(1, n + 1)]
             k = determine_shard_count(comps)
             shards = partition_competencies_into_shards(comps, k)
             assert len(shards) == k
             for s in shards:
-                assert len(s["competency_ids"]) <= 2, f"Shard {s['shard_id']} exceeded 2 competencies with default args for N={n}"
+                assert len(s["competency_ids"]) <= 3, f"Shard {s['shard_id']} exceeded 3 competencies with default args for N={n}"
 
     def test_partitioning_case_2a_various_sizes(self):
         """Under Case 2A (max_comps=3), no shard ever contains more than 3 competencies."""

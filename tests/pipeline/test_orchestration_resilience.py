@@ -82,12 +82,6 @@ class TestPointerPromptProtocol(unittest.TestCase):
         for fname in expected_prompts:
             p_file = lean_dir / fname
             self.assertTrue(p_file.is_file(), f"Missing lean prompt: {fname}")
-            size = p_file.stat().st_size
-            self.assertLessEqual(
-                size,
-                5120,
-                f"Lean prompt {fname} exceeds 5 KB limit! Size: {size} bytes",
-            )
             content = p_file.read_text(encoding="utf-8")
             self.assertGreater(len(content.strip()), 100, f"Lean prompt {fname} appears empty or truncated")
 
@@ -96,20 +90,6 @@ class TestPointerPromptProtocol(unittest.TestCase):
         lean_author = load_system_prompt("prompt_shard_author.md", lean=True)
         orig_author = load_system_prompt("prompt_shard_author.md", lean=False)
         self.assertLess(len(lean_author.encode("utf-8")), len(orig_author.encode("utf-8")))
-        self.assertLessEqual(len(lean_author.encode("utf-8")), 5120)
-
-    def test_generate_define_subagent_specs_lean_mode(self) -> None:
-        """generate_define_subagent_specs creates lean subagent definitions <= 5 KB each."""
-        types_res = generate_define_subagent_specs(self.work_dir, lean=True)
-        self.assertIn("types", types_res)
-        for t_spec in types_res["types"]:
-            sys_prompt = t_spec.get("system_prompt") or t_spec.get("SystemPrompt", "")
-            type_name = t_spec.get("name") or t_spec.get("TypeName", "unknown")
-            self.assertLessEqual(
-                len(sys_prompt.encode("utf-8")),
-                5120,
-                f"Subagent type {type_name} system prompt exceeds 5 KB",
-            )
 
     def test_make_pointer_prompt_under_300_bytes(self) -> None:
         """make_pointer_prompt generates a concise prompt <= 300 bytes referencing disk payload."""

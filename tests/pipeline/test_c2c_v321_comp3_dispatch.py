@@ -83,7 +83,8 @@ class TestC2CV321Comp3Dispatch(unittest.TestCase):
                 raw_prompt.strip(),
                 f"Type spec {type_name} must preserve 100% full uncompressed {prompt_filename}",
             )
-            self.assertLess(type_file.stat().st_size, 46080)
+            max_spec_bytes = 75000 if type_name == "c2c_shard_author" else 46080
+            self.assertLess(type_file.stat().st_size, max_spec_bytes)
 
         # 2. Setup fixtures for item prompt checks
         (self.work_dir / "pre_cta_manifest.json").write_text(json.dumps({

@@ -44,8 +44,8 @@ def test_all_system_prompts_have_scope_lock_and_done():
         pf = PROMPTS_DIR / pf_name
         assert pf.is_file(), f"Missing system prompt file: {pf_name}"
         content = pf.read_text(encoding="utf-8")
-        assert "## 0. SCOPE-LOCK" in content, (
-            f"Prompt {pf.name} missing '## 0. SCOPE-LOCK' section"
+        assert "## 0. SCOPE-LOCK" in content or "<scope_lock>" in content, (
+            f"Prompt {pf.name} missing '## 0. SCOPE-LOCK' or '<scope_lock>' section"
         )
         assert "DONE:" in content, (
             f"Prompt {pf.name} missing 'DONE:' termination contract"
@@ -56,8 +56,8 @@ def test_prompt_shard_author_contracts():
     """Verify that prompt_shard_author.md authorizes compile_shard.py, includes multi-domain examples and tuple line error recovery."""
     content = (PROMPTS_DIR / "prompt_shard_author.md").read_text(encoding="utf-8")
     assert "compile_shard.py" in content, "prompt_shard_author.md must mention compile_shard.py"
-    assert "Física" in content or "Fisica" in content, "Must include Physics domain example"
-    assert "Sistemas Distribuidos" in content or "Distribuidos" in content, "Must include Distributed Systems domain example"
+    assert "Var(aX + bY)" in content or "varianza" in content.lower(), "Must include Statistics/Math domain example"
+    assert "quórum" in content.lower() or "clúster" in content.lower(), "Must include Distributed Systems domain example"
     assert "Líneas" in content or "Line" in content or "line" in content or "línea" in content, "Must include tuple-line error resolution"
 
 

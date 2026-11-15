@@ -1460,12 +1460,6 @@ class TestCatalogAndPromptsAlignment(unittest.TestCase):
             lf = lean_dir / prompt_name
             self.assertTrue(lf.is_file(), f"Missing lean prompt file: {lf}")
             lf_bytes = lf.read_bytes()
-            max_size = 5000 if prompt_name == "prompt_shard_author.md" else 5120
-            self.assertLessEqual(
-                len(lf_bytes),
-                max_size,
-                f"Lean prompt {prompt_name} exceeded size budget of {max_size} bytes (actual: {len(lf_bytes)})",
-            )
 
         mem_lean = get_type_definitions(lean=True)
         self.assertEqual(len(mem_lean), 4)

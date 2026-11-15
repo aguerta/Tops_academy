@@ -361,8 +361,9 @@ class TestAuthorDispatchAndProtocol(unittest.TestCase):
         content = prompt_file.read_text(encoding="utf-8")
         self.assertIn("compile_shard.py", content)
         self.assertIn("TEMPLATES = [", content)
-        self.assertIn("BLOCKER:: No existe pre_shard_manifest.json", content)
-        self.assertIn("replace_file_content", content)
+        self.assertIn("pre_shard_manifest.json", content)
+        self.assertIn("BLOCKED:", content)
+        self.assertIn("edit_file", content)
 
     def test_build_dispatch_author_includes_cta_json_and_hard_50_turns(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -434,6 +435,50 @@ class TestTelemetryFallback(unittest.TestCase):
         workload = WorkloadExtractor.extract(workspace_root=repo_root, records=records)
         self.assertEqual(workload["questions_count"], 0)
         self.assertEqual(workload["run_status"], "ABORTED_INCOMPLETE")
+
+    def test_audit_engine_deduplicates_workload_and_omits_dashboard_html(self):
+        """audit_engine removes dashboard.html bloat and avoids duplicating telemetry_snapshots/pipeline_state inside workload."""
+        import audit_engine
+
+        auditor = audit_engine.ExecutionAuditor(root_records=[], root_conv_id="conv-test-1234")
+        sample_workload = {
+            "course_id": "test_course",
+            "course_title": "Test Course",
+            "work_dir": "work",
+            "questions_count": 10,
+            "competencies_count": 2,
+            "shards_count": 1,
+            "source_files": [],
+            "total_pages_or_slides": 10,
+            "total_input_mb": 1.0,
+            "pages_needing_vision": 0,
+            "total_handouts": 0,
+            "corpus_chars": 100,
+            "corpus_words": 20,
+            "pipeline_state": {"status": "completed", "current_stage": "publish"},
+            "telemetry_snapshots": [{"stage_idx": "00", "stage_name": "prepare"}],
+        }
+        result = auditor.audit(workload=sample_workload)
+        self.assertNotIn("pipeline_state", result["workload"])
+        self.assertNotIn("telemetry_snapshots", result["workload"])
+        self.assertEqual(result["pipeline_state"], {"status": "completed", "current_stage": "publish"})
+        self.assertEqual(result["telemetry_snapshots"], [{"stage_idx": "00", "stage_name": "prepare"}])
+        self.assertFalse(hasattr(audit_engine.ReportGenerator, "generate_html_dashboard"))
+
+        # Verify markdown report still renders cleanly without dashboard.html
+        md = audit_engine.ReportGenerator.generate_markdown(result)
+        self.assertIn("test_course", md)
+
+        # Verify run.py and SKILL.md no longer reference bloat artifacts
+        run_py_text = (repo_root / ".agents" / "skills" / "content-to-course" / "run.py").read_text(encoding="utf-8")
+        self.assertNotIn("dashboard_html", run_py_text)
+        self.assertNotIn("dashboard.html", run_py_text)
+        self.assertNotIn("Informe QA (JSON)", run_py_text)
+
+        c2c_skill_text = (repo_root / ".agents" / "skills" / "content-to-course" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertNotIn("_qa_report.json", c2c_skill_text)
+        self.assertNotIn("_payload.json", c2c_skill_text)
+        self.assertNotIn("dashboard.html", c2c_skill_text)
 
 
 class TestRepairLoopPurgedSharedPadsAndModuleASanitization(unittest.TestCase):

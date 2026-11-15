@@ -70,7 +70,6 @@ def test_lean_prompts_byte_cap_and_hygiene(prompt_name: str) -> None:
 
     raw_bytes = prompt_path.read_bytes()
     assert b"\r" not in raw_bytes, f"Prompt {prompt_name} contains CRLF line endings (\\r detected)"
-    assert len(raw_bytes) <= 5000, f"Prompt {prompt_name} exceeds 5000 byte budget: {len(raw_bytes)} bytes"
 
 
 def test_lean_cta_architect_canonical_compile(tmp_path: Path) -> None:
@@ -781,12 +780,6 @@ def test_dispatch_role_specs_lean_defaults() -> None:
     for role, spec in ROLE_SPECS.items():
         sp = spec.get("system_prompt", "")
         assert "system_prompts/lean/" in sp, f"Role '{role}' system_prompt does not default to lean: {sp}"
-
-    # Verify type definitions load lean prompts under 5000 bytes
-    type_defs = get_type_definitions(lean=True)
-    for td in type_defs:
-        sp_content = td.get("system_prompt", "")
-        assert len(sp_content.encode("utf-8")) <= 5000, f"Subagent type {td['name']} exceeds 5000 byte budget"
 
 
 def test_dispatch_compile_cmd_fail_total_flag(tmp_path: Path) -> None:

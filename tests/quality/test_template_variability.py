@@ -1,4 +1,4 @@
-"""Automated tests for template variability self-check, strict gates, and max-2 sharding policy.
+﻿"""Automated tests for template variability self-check, strict gates, and max-2 sharding policy.
 
 Tests:
 1. Template with narrow domain without variants fails competency diversity gate (TPL-VAR).
@@ -729,10 +729,10 @@ def test_shard_default_amortized_v32():
     """Verify that determine_shard_count uses v3.22 adaptive formula clamp(ceil(N/8), 2, 6)."""
     comps16 = [{"id": f"C-{i:02d}", "name": f"Comp {i}", "type": "concept"} for i in range(1, 17)]
     k16 = determine_shard_count(comps16)
-    assert k16 == 8, f"Expected 8 shards for 16 competencies under v3.22 (2 comps/shard), got {k16}"
+    assert k16 == 6, f"Expected 6 shards for 16 competencies (3 non-skill comps/shard), got {k16}"
     shards16 = partition_competencies_into_shards(comps16, k16)
-    assert len(shards16) == 8
-    assert all(len(s["competency_ids"]) <= 2 for s in shards16)
+    assert len(shards16) == 6
+    assert all(len(s["competency_ids"]) <= 3 for s in shards16)
 
 
 def test_examples_templates_strict_validation():

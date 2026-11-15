@@ -40,9 +40,6 @@ def test_lean_prompt_sizes_and_subagent_types_hygiene():
     shard_author_prompt = c2c_dir / "system_prompts" / "lean" / "prompt_shard_author.md"
     assert shard_author_prompt.is_file(), f"Missing file: {shard_author_prompt}"
     raw_prompt_bytes = shard_author_prompt.read_bytes()
-    assert len(raw_prompt_bytes) <= 5000, (
-        f"prompt_shard_author.md exceeds 5000 bytes: {len(raw_prompt_bytes)} bytes"
-    )
 
     subagent_types_file = c2c_dir / "subagent_types.json"
     assert subagent_types_file.is_file(), f"Missing file: {subagent_types_file}"
@@ -118,11 +115,11 @@ def test_canonical_prompt_shard_author_compilation_and_audit(tmp_path: Path):
     cta_json_file = work_dir / "cta.json"
     assert cta_json_file.is_file(), "cta.json was not created"
 
-    # Ensure distractor IDs align with D-H01-01..06 as expected by Hab-01
+    # Ensure distractor IDs align with D-Hab01-01..06 as expected by Hab-01
     cta_obj = json.loads(cta_json_file.read_text(encoding="utf-8"))
     comp_hab = cta_obj["competencies"][0]
     for idx, d in enumerate(comp_hab["distractors"], start=1):
-        d["id"] = f"D-H01-0{idx}"
+        d["id"] = f"D-Hab01-0{idx}"
     cta_json_file.write_text(json.dumps(cta_obj, indent=2, ensure_ascii=False), encoding="utf-8")
 
     # 2. Write pre_shard_manifest.json

@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / ".agents" / "skills" / "content-to-course"))
 
 from cta_merge import (  # noqa: E402
+    DESCRIPTION_SNIPPET_CHARS,
     find_duplicate_candidates,
     normalized_stems,
     trigram_dice,
@@ -60,7 +61,7 @@ def test_candidates_have_score_strength_and_truncated_descriptions_sorted_strong
     ]
     cands = find_duplicate_candidates(comps)
     assert cands[0]["strength"] == "strong"
-    assert len(cands[0]["c1_description"]) <= 120
+    assert len(cands[0]["c1_description"]) <= DESCRIPTION_SNIPPET_CHARS
     assert all({"score", "strength"} <= set(c) for c in cands)
     scores = [c["score"] for c in cands if c["strength"] == "strong"]
     assert scores == sorted(scores, reverse=True)

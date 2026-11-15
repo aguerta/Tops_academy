@@ -285,20 +285,20 @@ class TestContinuousIdsAppendAndHarmonize:
 
     def test_parse_next_ids_by_prefix_formats(self):
         """parse_next_ids_by_prefix handles integer, string, and category maps correctly."""
-        assert parse_next_ids_by_prefix(None) == {"H": 1, "C": 1, "Hab": 1}
-        assert parse_next_ids_by_prefix({}) == {"H": 1, "C": 1, "Hab": 1}
+        assert parse_next_ids_by_prefix(None) == {"H": 1, "C": 1, "Hab": 1, "PRE": 1}
+        assert parse_next_ids_by_prefix({}) == {"H": 1, "C": 1, "Hab": 1, "PRE": 1}
 
         # Int map
         info_int = {"next_ids_by_prefix": {"H": 5, "C": 12, "Hab": 8}}
-        assert parse_next_ids_by_prefix(info_int) == {"H": 5, "C": 12, "Hab": 8}
+        assert parse_next_ids_by_prefix(info_int) == {"H": 5, "C": 12, "Hab": 8, "PRE": 1}
 
         # String map with hyphens
         info_str = {"next_ids_by_prefix": {"H-": "H-03", "C-": "C-05", "Hab-": "Hab-04"}}
-        assert parse_next_ids_by_prefix(info_str) == {"H": 3, "C": 5, "Hab": 4}
+        assert parse_next_ids_by_prefix(info_str) == {"H": 3, "C": 5, "Hab": 4, "PRE": 1}
 
         # next_numbers_by_prefix
         info_nums = {"next_numbers_by_prefix": {"H-": 3, "C-": 5, "Hab-": 4}}
-        assert parse_next_ids_by_prefix(info_nums) == {"H": 3, "C": 5, "Hab": 4}
+        assert parse_next_ids_by_prefix(info_nums) == {"H": 3, "C": 5, "Hab": 4, "PRE": 1}
 
     def test_end_to_end_append_direct_and_mapreduce(self, tmp_path: Path):
         """Base course with H-01..02, C-01..04, Hab-01..03 produces delta starting at H-03, C-05, Hab-04."""

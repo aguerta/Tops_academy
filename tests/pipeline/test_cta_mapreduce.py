@@ -190,11 +190,13 @@ class TestCTAMergeMapReduce:
             for d in c["distractors"]:
                 assert d["id"].startswith(f"D-{prefix}-")
 
-        # Verify compact outline structure
+        # Verify outline structure
         outline = json.loads((work_dir / "cta_outline.json").read_text(encoding="utf-8"))
+        assert "target_competency_budget" in outline
         assert len(outline["competencies"]) == 6
         for oc in outline["competencies"]:
-            assert "description_latex" not in oc  # Compact: no long text
+            assert "description_latex" in oc
+            assert "assumptions_count" in oc
             assert "distractor_names" in oc
             assert "distractor_ids" in oc
 
@@ -1027,6 +1029,62 @@ class TestStream1AContractVerification:
         assert (work_dir / "cta_outline.json").is_file()
         assert not (work_dir / "cta.json").exists()
         assert not (work_dir / "cta.md").exists()
+
+    def test_apply_harmonize_fail_total_collects_all_errors(self, tmp_path: Path):
+        """apply_harmonize reports all rename, quota, prerequisite, and DAG errors in one consolidated pass."""
+        work_dir = tmp_path / "work_fail_total"
+        work_dir.mkdir(parents=True)
+
+        c1 = make_mock_competency("C-01", "concept", "Concept 1", session="S1", page=1, prerequisites=[])
+        c2 = make_mock_competency("C-02", "concept", "Concept 2", session="S1", page=2, prerequisites=[])
+        c3 = make_mock_competency("Hab-01", "skill", "Skill 1", session="S1", page=3, prerequisites=[])
+
+        draft = {
+            "course_id": "fail_total_course",
+            "title": "Fail Total Course",
+            "competencies": [c1, c2, c3],
+        }
+        (work_dir / "cta_draft.json").write_text(json.dumps(draft, indent=2), encoding="utf-8")
+        (work_dir / "cta_order.json").write_text(
+            json.dumps({"order": ["C-01", "C-02", "Hab-01"], "order_hash": "h_ft"}, indent=2),
+            encoding="utf-8",
+        )
+        (work_dir / "duplicate_candidates.json").write_text("[]", encoding="utf-8")
+        (work_dir / "pre_cta_manifest.json").write_text(
+            json.dumps({
+                "course_id": "fail_total_course",
+                "cta_mode": "mapreduce",
+                "files": [{"file_index": 0, "doc": "lec01.pdf", "total_pages": 10, "valid_page_range": [1, 10]}],
+            }, indent=2),
+            encoding="utf-8",
+        )
+
+        # Trigger 4 independent errors at once:
+        # 1) rename missing ID, 2) add_prerequisites on absorbed drop_id C-02,
+        # 3) backward-only violation C-01 -> Hab-01, 4) disconnected DAG
+        harmonize_data = {
+            "rename": [{"competency": "H-99", "name": "Missing"}],
+            "duplicate_decisions": [
+                {"decision": "merge", "keep_id": "C-01", "drop_id": "C-02", "reason": "Dup"}
+            ],
+            "add_prerequisites": [
+                {"competency": "C-02", "requires": ["Hab-01"]},
+                {"competency": "C-01", "requires": ["Hab-01"]},
+            ],
+        }
+        (work_dir / "cta_harmonize.json").write_text(json.dumps(harmonize_data, indent=2), encoding="utf-8")
+
+        with pytest.raises(ValueError) as exc_info:
+            apply_harmonize(work_dir)
+
+        msg = str(exc_info.value)
+        assert "[CONSOLIDATED ERROR PACK]" in msg
+        assert "Rename failed: competency 'H-99' not found" in msg
+        assert "Competency 'C-02' not found (absorbed into 'C-01'" in msg
+        assert "Backward-only violation: Competency 'C-01'" in msg
+        assert "Prerequisite DAG validation failed:" in msg
+        assert not (work_dir / "cta.json").exists()
+
 
 
 

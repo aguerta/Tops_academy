@@ -405,7 +405,7 @@ TEMPLATES = [
 
         prompt_path = SKILL_DIR / "system_prompts" / "lean" / "prompt_shard_author.md"
         text = prompt_path.read_text(encoding="utf-8")
-        m = re.search(r"<example>\s*```python\s*(.*?)\s*```\s*</example>", text, re.DOTALL)
+        m = re.search(r"<example>.*?```python\s*(.*?)\s*```.*?</example>", text, re.DOTALL)
         assert m, "Could not locate <example> python block in prompt_shard_author.md"
         example_code = m.group(1)
 
@@ -423,7 +423,7 @@ TEMPLATES = [
             "assumptions": [{"id": "A-Hab01-01", "statement": "Variables enteras positivas con y > x > 0."}],
             "distractors": [
                 {
-                    "id": f"D-H01-0{i}",
+                    "id": f"D-Hab01-0{i}",
                     "wrong_belief": f"Error {i}",
                     "correct_belief": f"Correcto {i}",
                     "manifestation": f"Dist {i}",
