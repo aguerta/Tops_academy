@@ -2,7 +2,7 @@
 ## Manual Canónico de Física de Inferencia, Arquitectura de Sistemas End-to-End, Gobernanza Agéntica y Ergonomía
 
 > **Documento Canónico de Conocimiento Tribal ("Tribal Knowledge")**  
-> **Fecha de Actualización:** 2026-11-09 (Branch: `main` / `optimizaciones_test`)  
+> **Fecha de Actualización:** 2026-11-14 (Branch: `main` / `optimizaciones_test`)  
 > **Áreas:** Pipeline Multi-Agente C2C (`.agents/skills/content-to-course/`), Motor Determinista y Simbólico (`engine/` + `SymPy`/`Z3`/`Lean 4`), Evaluador de Calidad (`course-qa-evaluator`), Plataforma Web (`React 18 + Vite + TypeScript + PWA`) y Ergonomía de Hardware Real.  
 > **Propósito:** Condensar el **por qué** el ecosistema funciona como funciona, fundamentado en leyes físicas de inferencia, mediciones empíricas en hardware de referencia, causas raíz de patologías superadas y convenciones inviolables de calidad pedagógica y psicométrica.  
 > **Archivos Relacionados:**
@@ -214,6 +214,20 @@ La captura de salida estándar (`stdout`) de comandos en el runtime de Google An
 4. **Gobernanza Agéntica para Pipelines y Subagentes:**
    - **Peligro de la Truncación Central:** La poda del centro es crítica en diagnósticos de compilación o auditoría: si un script de linting (`pytest`, `validate_shard.py`, `judge.py`) emite un log masivo, la truncación oculta precisamente las fallas intermedias (`the middle of the output`), obligando al agente a hacer inferencias a ciegas.
    - **Regla Inviolable para Comandos Extensos:** Todo comando de análisis o reporte con potencial de emitir $>10\text{ KiB}$ debe redirigir su salida a un archivo en `work/` (ej. `python run.py --stage audit > work/audit_full.log 2>&1`) y luego inspeccionar secciones quirúrgicas mediante `read_file` con `StartLine` y `EndLine`.
+
+### 4.4. Física Empírica de Hooks `PreToolUse` y Barrera N/N en Antigravity Runtime
+Verificado empíricamente con sonda viva en [.agents/hooks.json](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/hooks.json) sobre invocaciones activas y subagentes recién instanciados (`hook_probe.py`):
+
+1. **Cobertura Real de Herramientas (`toolName` y `argKeys`):**
+   - El runtime de Antigravity **sí dispara `PreToolUse`** desde `.agents/hooks.json` (con `cwd = .agents/`) tanto para herramientas de archivo/shell (`run_command`, `read_file`, `send_message`) como para orquestación de subagentes (`manage_subagents` con `argKeys` `["Action", "ConversationIds"]` y `["Action"]`).
+   - **Condición Crítica de `matcher`:** Si `manage_subagents` no está incluido explícitamente en `PreToolUse[0].matcher` en [.agents/hooks.template.json](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/hooks.template.json) y `.agents/hooks.json`, Antigravity **nunca invoca** el guardián antes de `kill`/`kill_all`, sin importar cuánta lógica defensiva exista dentro de [c2c_hook_guard.py](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/c2c_hook_guard.py).
+2. **Frontera de Carga en Memoria (*Invocation Boundary*):**
+   - Editar `.agents/hooks.json` **no toma efecto a mitad de turno** (*mid-turn*) sobre una llamada inmediatamente posterior en la misma invocación; el runtime recarga los hooks al iniciar **nuevas invocaciones / despertares reactivos** y al instanciar **subagentes nuevos** (`invoke_subagent`).
+   - El comando declarado debe mantenerse relativo a `.agents/` (`"python skills/content-to-course/c2c_hook_guard.py"`), con código de salida `0` y JSON ASCII estricto por `stdout`.
+3. **Reglas de Blindaje de la Barrera N/N contra Alucinaciones del Orquestador:**
+   - **No confiar en `.is_file()` de `.json`:** [`compile_shard.py`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/compile_shard.py) escribe `work/templates/<CID>.json` antes de validar y escribe `work/shards/<shard_id>.json` incluso cuando falla (`"compiled_status": "FAIL"`). Solo `work/shards/<shard_id>.cert.json` (`"passed_50_seeds": true`) junto con `"compiled_status": "PASS"` garantizan compilación exitosa (y en `repair.json`, sus timestamps deben ser $\ge$ `dispatched_at`). En MapReduce CTA (`cta_parts/`), la certificación real es `work/cta_parts/.check_attempts/pass_cta_<part_id>.json` (`"status": "PASS"`).
+   - **Manifiestos reales de despacho:** `dispatch.py dispatch-authors` escribe `dispatch/authors.json` (y `author.json`), no `shards.json`; cualquier guardián de barrera debe inspeccionar `authors.json`, `shards.json`, `shards_wave_*.json`, `repair.json`, `judges.json`, `cta.json` y `cta_reduce.json`.
+   - **Verificación Dual (Artefactos + Transcript):** El guardián debe cruzar el `transcript.jsonl` del Director para confirmar que ningún subagente activo de la ola siga pendiente de `DONE:` / `BLOCKED:` / `CIRCUIT BREAKER` antes de autorizar `manage_subagents(kill/kill_all)` o transiciones prematuras `run.py --stage ...` (`templates`, `build`, `verify`, `publish`, `cta-apply`, `cta-merge`, `repair-matrix`). En paralelo, [`SKILL.md`](file:///d:/Augusto/personal_portfolio/Tops_academy/.agents/skills/content-to-course/SKILL.md) exige reportar únicamente etiquetas cortas (`part_01`, `shard_01`, `C-01`, `batch_01`) en `Completados` / `Pendientes` (sin exponer UUIDs en el chat) durante cada despertar parcial (`k < N`) con `tools=[]`.
 
 ---
 

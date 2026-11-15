@@ -12,6 +12,7 @@ Enforces:
 
 from __future__ import annotations
 
+from datetime import datetime
 import json
 import os
 import re
@@ -424,6 +425,579 @@ def _extract_command_from_args(args: Dict[str, Any]) -> str:
     return ""
 
 
+def _resolve_work_dir(active_lock: Dict[str, Any]) -> Optional[Path]:
+    """Resolves the active C2C work_dir from active_lock or by scanning active lockfiles."""
+    wd_raw = active_lock.get("work_dir")
+    if wd_raw:
+        wd = Path(str(wd_raw))
+        return wd if wd.is_absolute() else (REPO_ROOT / wd)
+
+    now = time.time()
+    candidates: List[Path] = []
+    if "C2C_LOCK_FILE" in os.environ:
+        p = Path(os.environ["C2C_LOCK_FILE"])
+        candidates.append(p if p.is_absolute() else (REPO_ROOT / p))
+    try:
+        cwd = Path.cwd()
+        candidates.extend(cwd.glob("work*/.c2c_subagent_lock.json"))
+        candidates.extend(cwd.glob(".c2c_subagent_lock.json"))
+    except Exception:
+        pass
+    candidates.extend(REPO_ROOT.glob("courses/*/work*/.c2c_subagent_lock.json"))
+    candidates.extend(REPO_ROOT.glob("courses/*/.c2c_subagent_lock.json"))
+    candidates.extend(REPO_ROOT.glob("work*/.c2c_subagent_lock.json"))
+    candidates.extend(REPO_ROOT.glob(".c2c_subagent_lock.json"))
+
+    for p in candidates:
+        try:
+            if not p.is_file() or (now - p.stat().st_mtime) > LOCK_MAX_AGE_SECONDS:
+                continue
+            data = json.loads(p.read_text(encoding="utf-8"))
+            if isinstance(data, dict) and data.get("active") is True:
+                return p.parent
+        except Exception:
+            continue
+    return None
+
+
+def _resolve_output_candidates(path_str: str, work_dir: Path) -> List[Path]:
+    """Returns candidate filesystem Paths for a manifest-referenced file."""
+    p = Path(path_str)
+    if p.is_absolute():
+        return [p]
+    cands = [REPO_ROOT / p, work_dir / p, work_dir.parent / p]
+    norm = path_str.replace("\\", "/")
+    if norm.startswith("work/"):
+        cands.append(work_dir / norm[5:])
+    return cands
+
+
+def _check_file_exists(path_str: str, work_dir: Path, min_bytes: int = 0) -> bool:
+    """Checks whether any candidate path exists on disk and meets min_bytes."""
+    for cand in _resolve_output_candidates(path_str, work_dir):
+        try:
+            if cand.is_file():
+                if min_bytes <= 0 or cand.stat().st_size > min_bytes:
+                    return True
+        except OSError:
+            continue
+    return False
+
+
+def _read_json_safe(path: Path) -> Optional[Dict[str, Any]]:
+    """Reads a JSON object safely, returning None on error."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+
+
+def _load_item_dicts(manifest: Dict[str, Any], work_dir: Path) -> List[Dict[str, Any]]:
+    """Loads JSON dicts for all item_files listed in a dispatch manifest."""
+    items: List[Dict[str, Any]] = []
+    for raw_item in manifest.get("item_files") or []:
+        if not raw_item:
+            continue
+        for cand in _resolve_output_candidates(str(raw_item), work_dir):
+            if cand.is_file():
+                data = _read_json_safe(cand)
+                if data is not None:
+                    items.append(data)
+                break
+    return items
+
+
+def _all_cids_have_blocked_transcript(conv_ids: Any) -> bool:
+    """Returns True iff every requested ConversationId has 'BLOCKED:' in its transcript."""
+    if not isinstance(conv_ids, (list, tuple)) or not conv_ids:
+        return False
+    for cid in conv_ids:
+        cid_str = str(cid).strip()
+        if not cid_str:
+            return False
+        t_path = (
+            USER_HOME
+            / ".gemini"
+            / "antigravity"
+            / "brain"
+            / cid_str
+            / ".system_generated"
+            / "logs"
+            / "transcript.jsonl"
+        )
+        try:
+            if not t_path.is_file():
+                return False
+            if "BLOCKED:" not in t_path.read_text(encoding="utf-8", errors="ignore"):
+                return False
+        except OSError:
+            return False
+    return True
+
+
+def _parse_iso_timestamp(ts_str: Any) -> Optional[float]:
+    """Parses an ISO-8601 timestamp string into a UTC epoch float, or None."""
+    if not ts_str or not isinstance(ts_str, str):
+        return None
+    raw = ts_str.strip()
+    if raw.endswith("Z"):
+        raw = raw[:-1] + "+00:00"
+    try:
+        return datetime.fromisoformat(raw).timestamp()
+    except Exception:
+        return None
+
+
+def _resolve_existing_candidate(path_str: str, work_dir: Path) -> Optional[Path]:
+    """Returns the first existing file Path among manifest-referenced candidates."""
+    for cand in _resolve_output_candidates(path_str, work_dir):
+        try:
+            if cand.is_file():
+                return cand
+        except OSError:
+            continue
+    return None
+
+
+def _file_is_fresh(path: Path, json_data: Optional[Dict[str, Any]], ts_keys: Tuple[str, ...], min_ts: Optional[float]) -> bool:
+    """Checks whether a certified artifact was written at or after min_ts (with 1s skew tolerance)."""
+    if min_ts is None:
+        return True
+    threshold = min_ts - 1.0
+    if isinstance(json_data, dict):
+        for k in ts_keys:
+            val = json_data.get(k)
+            if isinstance(val, (int, float)) and float(val) >= threshold:
+                return True
+    try:
+        return path.stat().st_mtime >= threshold
+    except OSError:
+        return False
+
+
+def _shard_has_circuit_breaker_halt(work_dir: Path, shard_id: str, min_ts: Optional[float] = None) -> bool:
+    """Returns True only if a shard explicitly halted at Circuit Breaker (>=3 consecutive identical fails)."""
+    att_dir = work_dir / "shards" / ".check_attempts"
+    for alias in _shard_id_aliases(shard_id):
+        for fname in (f"compile_{alias}.json", f"{alias}.json"):
+            cand = att_dir / fname
+            if not cand.is_file():
+                continue
+            data = _read_json_safe(cand)
+            if not isinstance(data, dict):
+                continue
+            streak = data.get("same_error_streak") or data.get("consecutive_same_error") or 0
+            if isinstance(streak, int) and streak >= 3 and _file_is_fresh(cand, data, ("updated_at", "timestamp"), min_ts):
+                return True
+    return False
+
+
+def _verify_shard_certified(
+    work_dir: Path,
+    shard_id: str,
+    receipt_hint: Optional[str] = None,
+    min_ts: Optional[float] = None,
+    allow_circuit_breaker: bool = False,
+) -> List[str]:
+    """Verifies a shard has compiled_status PASS, valid .cert.json, and optional freshness."""
+    if allow_circuit_breaker and _shard_has_circuit_breaker_halt(work_dir, shard_id, min_ts=min_ts):
+        return []
+
+    problems: List[str] = []
+    aliases = _shard_id_aliases(shard_id) if shard_id else []
+
+    receipt_path: Optional[Path] = None
+    if receipt_hint:
+        receipt_path = _resolve_existing_candidate(receipt_hint, work_dir)
+    if receipt_path is None:
+        for a in aliases:
+            cand = work_dir / "shards" / f"{a}.json"
+            if cand.is_file():
+                receipt_path = cand
+                break
+
+    receipt_label = receipt_hint or f"work/shards/{shard_id}.json"
+    if receipt_path is None:
+        problems.append(receipt_label)
+    else:
+        r_data = _read_json_safe(receipt_path)
+        if not isinstance(r_data, dict) or str(r_data.get("compiled_status", "")).upper() != "PASS":
+            problems.append(f"{receipt_label} (compiled_status!=PASS)")
+        elif not _file_is_fresh(receipt_path, r_data, ("compiled_at",), min_ts):
+            problems.append(f"{receipt_label} (stale pre-repair)")
+
+    cert_path: Optional[Path] = None
+    for a in aliases:
+        cand = work_dir / "shards" / f"{a}.cert.json"
+        if cand.is_file():
+            cert_path = cand
+            break
+    cert_label = f"work/shards/{shard_id}.cert.json"
+    if cert_path is None:
+        problems.append(cert_label)
+    else:
+        c_data = _read_json_safe(cert_path)
+        if not isinstance(c_data, dict) or c_data.get("passed_50_seeds") is not True:
+            problems.append(f"{cert_label} (unverified)")
+        elif not _file_is_fresh(cert_path, c_data, ("created_at",), min_ts):
+            problems.append(f"{cert_label} (stale pre-repair)")
+
+    return problems
+
+
+def _verify_cta_output_certified(out_str: str, work_dir: Path) -> Optional[str]:
+    """Verifies CTA output file exists and, for cta_parts subparts, has a PASS attempt marker."""
+    if not _check_file_exists(out_str, work_dir, min_bytes=1):
+        return out_str
+    norm = _normalize_path(out_str)
+    m = re.search(r"cta_parts/([a-zA-Z0-9_-]+)\.json$", norm, re.IGNORECASE)
+    if m:
+        part_id = m.group(1)
+        attempts_dir = work_dir / "cta_parts" / ".check_attempts"
+        for a in _cta_id_aliases(part_id):
+            for fname in (f"pass_cta_{a}.json", f"pass_{a}.json"):
+                cand = attempts_dir / fname
+                if cand.is_file():
+                    pdata = _read_json_safe(cand)
+                    if isinstance(pdata, dict) and str(pdata.get("status", "")).upper() == "PASS":
+                        return None
+        return f"work/cta_parts/.check_attempts/pass_cta_{part_id}.json"
+    return None
+
+
+def _worker_transcript_has_signal(cid: str, signals: Tuple[str, ...]) -> bool:
+    """Checks a worker subagent's transcript.jsonl for completion/blocked MODEL signals."""
+    t_path = (
+        USER_HOME
+        / ".gemini"
+        / "antigravity"
+        / "brain"
+        / cid
+        / ".system_generated"
+        / "logs"
+        / "transcript.jsonl"
+    )
+    if not t_path.is_file():
+        return False
+    try:
+        for line in t_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            if not line.strip():
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if obj.get("type") != "PLANNER_RESPONSE" and obj.get("source") != "MODEL":
+                continue
+            if obj.get("type") == "USER_INPUT":
+                continue
+            text = str(obj.get("content") or "")
+            if any(sig in text for sig in signals):
+                return True
+    except OSError:
+        return False
+    return False
+
+
+def _extract_short_worker_label(role: str = "", prompt: str = "", fallback: str = "") -> str:
+    """Extracts concise wave unit label (e.g. part_01, shard_02, C-01, batch_01) instead of raw UUID."""
+    for text in (role, prompt):
+        if not text:
+            continue
+        m_part = re.search(r"\b(part_\d+|shard_\d+|batch_\d+|judge_\d+)\b", text, re.IGNORECASE)
+        if m_part:
+            return m_part.group(1)
+        m_comp = re.search(r"\b(Hab-\d+|PRE-\d+|[CH]-\d+)\b", text)
+        if m_comp:
+            return m_comp.group(1)
+    clean_role = str(role or "").strip()
+    return clean_role or fallback
+
+
+def _find_pending_wave_subagents(active_lock: Dict[str, Any]) -> List[str]:
+    """Identifies active wave workers lacking DONE:/BLOCKED:, returning concise labels when known."""
+    director_id = str(active_lock.get("director_conversation_id") or "").strip()
+    if not director_id:
+        return []
+    t_path = (
+        USER_HOME
+        / ".gemini"
+        / "antigravity"
+        / "brain"
+        / director_id
+        / ".system_generated"
+        / "logs"
+        / "transcript.jsonl"
+    )
+    if not t_path.is_file():
+        return []
+
+    active_cids: List[str] = []
+    cid_labels: Dict[str, str] = {}
+    queued_invoke_labels: List[str] = []
+    completed_cids: Set[str] = set()
+    last_kill_action: Tuple[str, List[str]] = ("", [])
+    signals = ("DONE:", "BLOCKED:", "CIRCUIT BREAKER")
+
+    try:
+        lines = t_path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    except OSError:
+        return []
+
+    for line in lines:
+        if not line.strip():
+            continue
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        src = obj.get("source")
+        step_type = obj.get("type")
+        content = str(obj.get("content") or "")
+
+        if step_type == "PLANNER_RESPONSE":
+            for tc in obj.get("tool_calls") or []:
+                if not isinstance(tc, dict):
+                    continue
+                tname = tc.get("name")
+                targs = tc.get("arguments")
+                if tname == "invoke_subagent" and isinstance(targs, dict):
+                    lbl = _extract_short_worker_label(
+                        role=str(targs.get("Role") or targs.get("role") or ""),
+                        prompt=str(targs.get("Prompt") or targs.get("prompt") or ""),
+                    )
+                    queued_invoke_labels.append(lbl)
+                elif tname == "manage_subagents" and isinstance(targs, dict):
+                    act = str(targs.get("Action") or targs.get("action") or "").strip().lower()
+                    cids = [str(x).strip() for x in (targs.get("ConversationIds") or []) if str(x).strip()]
+                    last_kill_action = (act, cids)
+        elif src == "MODEL" and "Created the following subagent:" in content:
+            m = re.search(r'"conversationId"\s*:\s*"([^"]+)"', content)
+            if m:
+                cid = m.group(1).strip()
+                if cid and cid not in active_cids:
+                    active_cids.append(cid)
+                if cid:
+                    lbl = queued_invoke_labels.pop(0) if queued_invoke_labels else ""
+                    if lbl:
+                        cid_labels[cid] = lbl
+        elif src == "MODEL" and "Successfully killed " in content:
+            act, k_cids = last_kill_action
+            if act == "kill_all":
+                active_cids.clear()
+                completed_cids.clear()
+                queued_invoke_labels.clear()
+            elif act == "kill" and k_cids:
+                k_set = set(k_cids)
+                active_cids = [c for c in active_cids if c not in k_set]
+        elif src == "SYSTEM" and step_type == "SYSTEM_MESSAGE":
+            m = re.search(r"sender=([^\s\]]+)", content)
+            if m and any(sig in content for sig in signals):
+                completed_cids.add(m.group(1).strip())
+
+    pending: List[str] = []
+    for cid in active_cids:
+        if cid in completed_cids:
+            continue
+        if _worker_transcript_has_signal(cid, signals):
+            continue
+        pending.append(cid_labels.get(cid) or cid)
+    return pending
+
+
+def _verify_wave_outputs_before_kill(active_lock: Dict[str, Any], args: Dict[str, Any]) -> Tuple[bool, str]:
+    """Verifies active wave JSON outputs, certificates, and worker DONE signals before kill/kill_all."""
+    action_val = str(args.get("Action") or args.get("action") or "").strip().lower()
+    conv_ids = args.get("ConversationIds") or args.get("conversationIds") or args.get("conversation_ids")
+    if action_val == "kill" and _all_cids_have_blocked_transcript(conv_ids):
+        return (True, "")
+
+    pending_cids = _find_pending_wave_subagents(active_lock)
+    work_dir = _resolve_work_dir(active_lock)
+    if not work_dir:
+        if pending_cids:
+            return (
+                False,
+                f"Barrera N/N: aún hay {len(pending_cids)} subagente(s) activos sin DONE:/BLOCKED:: {', '.join(pending_cids[:6])}",
+            )
+        return (True, "")
+
+    dispatch_dir = work_dir / "dispatch"
+    if not dispatch_dir.is_dir():
+        if pending_cids:
+            return (
+                False,
+                f"Barrera N/N: aún hay {len(pending_cids)} subagente(s) activos sin DONE:/BLOCKED:: {', '.join(pending_cids[:6])}",
+            )
+        return (True, "")
+
+    manifest_candidates: List[Path] = []
+    for name in ("repair.json", "judges.json", "authors.json", "author.json", "shards.json", "cta_reduce.json", "cta.json"):
+        if name == "author.json" and (dispatch_dir / "authors.json").is_file():
+            continue
+        p = dispatch_dir / name
+        if p.is_file():
+            manifest_candidates.append(p)
+    manifest_candidates.extend(p for p in dispatch_dir.glob("shards_wave_*.json") if p.is_file())
+
+    if not manifest_candidates:
+        if pending_cids:
+            return (
+                False,
+                f"Barrera N/N: aún hay {len(pending_cids)} subagente(s) activos sin DONE:/BLOCKED:: {', '.join(pending_cids[:6])}",
+            )
+        return (True, "")
+
+    latest_manifest = max(manifest_candidates, key=lambda p: p.stat().st_mtime)
+    manifest = _read_json_safe(latest_manifest)
+    if manifest is None:
+        if pending_cids:
+            return (
+                False,
+                f"Barrera N/N: aún hay {len(pending_cids)} subagente(s) activos sin DONE:/BLOCKED:: {', '.join(pending_cids[:6])}",
+            )
+        return (True, "")
+
+    m_name = latest_manifest.name
+    missing: List[str] = []
+
+    if m_name == "cta.json":
+        items = _load_item_dicts(manifest, work_dir)
+        checked_any = False
+        for it in items:
+            out = it.get("output_json") or (it.get("work_order") or {}).get("output_json")
+            if out:
+                checked_any = True
+                err = _verify_cta_output_certified(str(out), work_dir)
+                if err:
+                    missing.append(err)
+        if not checked_any:
+            cta_parts = list((work_dir / "cta_parts").glob("*.json")) if (work_dir / "cta_parts").is_dir() else []
+            if not (work_dir / "cta.json").is_file() and not cta_parts:
+                missing.append("work/cta.json")
+
+    elif m_name == "cta_reduce.json":
+        for req_name in ("cta_harmonize.json", "cta.json"):
+            if not (work_dir / req_name).is_file():
+                missing.append(f"work/{req_name}")
+
+    elif m_name in ("authors.json", "author.json", "shards.json") or m_name.startswith("shards_wave_"):
+        items = _load_item_dicts(manifest, work_dir)
+        pre_manifest = _read_json_safe(work_dir / "shards" / "pre_shard_manifest.json") or {}
+        shard_cids_map: Dict[str, List[str]] = {}
+        raw_shards = pre_manifest.get("shards")
+        if isinstance(raw_shards, list):
+            for entry in raw_shards:
+                if isinstance(entry, dict) and entry.get("shard_id"):
+                    cids = entry.get("competencies") or entry.get("assigned_competencies") or entry.get("cids") or []
+                    shard_cids_map[str(entry["shard_id"])] = [str(c) for c in cids]
+        elif isinstance(raw_shards, dict):
+            for sid, cids in raw_shards.items():
+                if isinstance(cids, list):
+                    shard_cids_map[str(sid)] = [str(c) for c in cids]
+
+        cb_ok = not pending_cids
+        for it in items:
+            wo = it.get("work_order") if isinstance(it.get("work_order"), dict) else {}
+            sid = str(it.get("shard_id") or wo.get("shard_id") or "").strip()
+            out = it.get("output_json") or wo.get("output_json")
+            if not sid and out:
+                sid = Path(str(out)).stem
+            if sid:
+                missing.extend(
+                    _verify_shard_certified(
+                        work_dir,
+                        sid,
+                        receipt_hint=str(out) if out else None,
+                        allow_circuit_breaker=cb_ok,
+                    )
+                )
+            elif out and not _check_file_exists(str(out), work_dir):
+                missing.append(str(out))
+
+            if sid and cb_ok and _shard_has_circuit_breaker_halt(work_dir, sid):
+                continue
+
+            exp_tpls = it.get("expected_templates") or wo.get("expected_templates")
+            if isinstance(exp_tpls, list) and exp_tpls:
+                for tpl in exp_tpls:
+                    tpl_str = str(tpl)
+                    if not tpl_str.endswith(".json") and "/" not in tpl_str and "\\" not in tpl_str:
+                        tpl_str = f"work/templates/{tpl_str}.json"
+                    if not _check_file_exists(tpl_str, work_dir, min_bytes=1):
+                        missing.append(tpl_str)
+            else:
+                cids = it.get("assigned_competencies") or wo.get("assigned_competencies") or shard_cids_map.get(sid, [])
+                for cid in cids:
+                    if not _check_file_exists(f"work/templates/{cid}.json", work_dir, min_bytes=1):
+                        missing.append(f"work/templates/{cid}.json")
+
+        if not items:
+            for sid, cids in shard_cids_map.items():
+                missing.extend(_verify_shard_certified(work_dir, sid, allow_circuit_breaker=cb_ok))
+                if cb_ok and _shard_has_circuit_breaker_halt(work_dir, sid):
+                    continue
+                for cid in cids:
+                    if not _check_file_exists(f"work/templates/{cid}.json", work_dir, min_bytes=1):
+                        missing.append(f"work/templates/{cid}.json")
+
+    elif m_name == "judges.json":
+        for it in _load_item_dicts(manifest, work_dir):
+            wo = it.get("work_order") if isinstance(it.get("work_order"), dict) else {}
+            out = it.get("output_json") or it.get("output_target") or wo.get("output_json") or wo.get("output_target")
+            if out and not _check_file_exists(str(out), work_dir, min_bytes=20):
+                missing.append(str(out))
+
+    elif m_name == "repair.json":
+        dispatched_ts = _parse_iso_timestamp(manifest.get("dispatched_at"))
+        checked_shards: Set[str] = set()
+        for it in _load_item_dicts(manifest, work_dir):
+            wo = it.get("work_order") if isinstance(it.get("work_order"), dict) else {}
+            out = it.get("output_json") or wo.get("output_json")
+            sid = str(it.get("shard_id") or wo.get("shard_id") or "").strip()
+            if not sid and out:
+                sid = Path(str(out)).stem
+            if sid and sid not in checked_shards:
+                checked_shards.add(sid)
+                missing.extend(
+                    _verify_shard_certified(
+                        work_dir,
+                        sid,
+                        receipt_hint=str(out) if out else None,
+                        min_ts=dispatched_ts,
+                    )
+                )
+            elif out and not _check_file_exists(str(out), work_dir):
+                missing.append(str(out))
+            exp_tpls = it.get("expected_templates") or wo.get("expected_templates")
+            if isinstance(exp_tpls, list):
+                for tpl in exp_tpls:
+                    tpl_str = str(tpl)
+                    if not tpl_str.endswith(".json") and "/" not in tpl_str and "\\" not in tpl_str:
+                        tpl_str = f"work/templates/{tpl_str}.json"
+                    if not _check_file_exists(tpl_str, work_dir, min_bytes=1):
+                        missing.append(tpl_str)
+
+    if not missing and not pending_cids:
+        return (True, "")
+
+    reasons: List[str] = []
+    if pending_cids:
+        reasons.append(f"{len(pending_cids)} subagente(s) sin DONE:/BLOCKED: [{', '.join(pending_cids[:6])}]")
+    if missing:
+        dedup_missing = list(dict.fromkeys(missing))
+        preview = ", ".join(dedup_missing[:8])
+        if len(dedup_missing) > 8:
+            preview += f" (+{len(dedup_missing) - 8} más)"
+        reasons.append(f"artefactos incompletos/sin certificar: {preview}")
+
+    return (
+        False,
+        f"Barrera N/N ({m_name}): {'; '.join(reasons)}",
+    )
+
+
 def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None) -> Dict[str, Any]:
     """Processes a PreToolUse hook payload and returns decision dict conforming to docs/hooks.md."""
     tool_call = payload.get("toolCall") or payload.get("tool_call") or {}
@@ -502,6 +1076,29 @@ def process_hook(payload: Dict[str, Any], custom_lock_file: Optional[str] = None
 
     # CASE A: Caller IS Director
     if director_id and caller_id == director_id:
+        if tool_name == "manage_subagents":
+            action_val = str(args.get("Action") or args.get("action") or "").strip().lower()
+            if action_val in ("kill", "kill_all"):
+                ok, reason = _verify_wave_outputs_before_kill(active_lock, args)
+                if not ok:
+                    return {"decision": "deny", "reason": reason}
+        if tool_name in cmd_tools and cmd:
+            stage_m = re.search(
+                r"run\.py\b[^;|&\n]*--stage\s+[\"']?(templates|build|verify|publish|cta-apply|cta-merge|repair-matrix)[\"']?",
+                cmd,
+                re.IGNORECASE,
+            )
+            if stage_m:
+                pending_cids = _find_pending_wave_subagents(active_lock)
+                if pending_cids:
+                    stage_name = stage_m.group(1)
+                    return {
+                        "decision": "deny",
+                        "reason": (
+                            f"Barrera N/N: Prohibido ejecutar run.py --stage {stage_name} mientras sigan activos "
+                            f"{len(pending_cids)} subagente(s) sin DONE:/BLOCKED:: {', '.join(pending_cids[:6])}"
+                        ),
+                    }
         file_tools = (
             "read_file",
             "view_file",
